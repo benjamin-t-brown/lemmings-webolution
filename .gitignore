@@ -1,0 +1,19 @@
+build/
+.deps/
+.cache/
+dist/
+compile_commands.json
+.clangd
+*.o
+*.d
+*.a
+*.exe
+*.wasm
+*.dSYM
+*.js
+*.data
+__pycache__/
+.DS_Store
+# Never commit game data -- users supply their own installation.
+*.box
+*.avi

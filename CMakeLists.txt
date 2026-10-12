@@ -1,0 +1,52 @@
+cmake_minimum_required(VERSION 3.28)
+
+project(webolution
+  VERSION 0.1.0
+  DESCRIPTION "Open reimplementation of Lemmings Revolution"
+  LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+endif()
+
+include(cmake/webolution_sources.cmake)
+
+# ---- shared object library ------------------------------------------------
+# One compile of the production sources, reused by every executable.
+
+add_library(webolution_objects OBJECT ${WEBOLUTION_SOURCES})
+target_include_directories(webolution_objects PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+target_compile_options(webolution_objects PUBLIC
+  $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
+
+# GCC's std::print/println live in libstdc++exp until it migrates to the main
+# library. Harmless to link when unused; required the moment anyone uses them.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_link_libraries(webolution_objects PUBLIC stdc++exp)
+endif()
+
+# ---- tools ----------------------------------------------------------------
+
+add_executable(lrtool src/tools/lrtool.cpp)
+target_link_libraries(lrtool PRIVATE webolution_objects)
+
+# ---- tests ----------------------------------------------------------------
+
+include(CTest)
+
+add_executable(test_box src/__test__/test_box.cpp)
+target_link_libraries(test_box PRIVATE webolution_objects)
+add_test(NAME box COMMAND test_box)
+
+# Tests that touch real game data need an installation to point at. Supply it
+# with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
+if(DEFINED WEBOLUTION_GAME_DIR)
+  set_tests_properties(box PROPERTIES
+    ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()

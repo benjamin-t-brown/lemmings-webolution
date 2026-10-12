@@ -149,11 +149,47 @@ This converts "1:1 mechanics" from an aspiration into a regression test. It is h
 we pin down sub-pixel movement, rounding, tick ordering and the exact frame on which
 a builder places a brick — the things that are impossible to get right by observation.
 
-Caveat found in testing: the game reads input through DirectInput and **ignores
-synthetic input** (`SendInput`, `mouse_event`, `keybd_event` all have no effect).
-Driving it therefore needs either a DirectInput shim DLL, scripted memory writes, or
-a human at the keyboard for capture sessions. Resolve this early — the oracle's value
-depends on it.
+### 2.1 Driving the original — solved
+
+The game reads input exclusively through DirectInput and **ignores every form of
+Windows input injection** (`SendInput`, `mouse_event`, `keybd_event` all have no
+effect). That blocked automation entirely.
+
+Its whole input surface turns out to be two `IDirectInputDevice::GetDeviceState`
+calls:
+
+```
+.text:00483B5D   GetDeviceState(0x10,  &DIMOUSESTATE)    device ptr at this+0x28
+.text:00483E1A   GetDeviceState(0x100, keys[256])        device ptr at this+0x100
+```
+
+`tools/dinput-shim` is a 32-bit `dinput.dll` proxy that forwards everything to the
+real `SysWOW64\dinput.dll` and patches exactly two COM vtable slots:
+
+```
+IDirectInputA        vtable[3]  CreateDevice     -> catch each device
+IDirectInputDeviceA  vtable[9]  GetDeviceState   -> serve state from shared memory
+```
+
+No wrapper COM objects, no DLL injection — `dinput.dll` is not a KnownDLL, so the
+application directory wins the search order. Confirmed in the live process:
+
+```
+DINPUT.DLL   C:\progs\Lemmings Revolution\DINPUT.DLL   <- shim
+dinput.dll   C:\WINDOWS\SysWOW64\dinput.dll            <- real, loaded by the shim
+```
+
+`tools/harness/lrinput.py` writes the shared block. **Verified end to end:** the game
+polls at 144 Hz, and scripted `DOWN` taps walk the main menu one item per tap while
+scripted relative mouse motion moves the same highlight — with no human present.
+
+Two properties that matter for the oracle:
+
+- **Frame-accurate.** `mouse_frame` / `key_frame` increment on every read, so the
+  harness can inject exactly one tick of motion and block until it is consumed
+  (`consume_deltas` zeroes the deltas after each read). No sleep-and-hope.
+- **Non-invasive.** With `enable = 0` every call passes straight through, so the game
+  plays completely normally and the shim can stay installed permanently.
 
 ---
 
@@ -204,8 +240,8 @@ Linux, macOS, and WebAssembly via Emscripten.
 ## 4. Risks, ranked
 
 1. **`.LVL` format** — high, and on the critical path. Everything downstream waits on it.
-2. **Exact physics constants** — medium. The oracle de-risks this substantially, but
-   only if we can drive the original reliably (see §2).
+2. **Exact physics constants** — medium. The oracle de-risks this substantially, and
+   driving the original is now solved (§2.1).
 3. **3D model geometry** — low/medium. Assumed to live in the `.LVL` PolyLists;
    unconfirmed. `TEXTURES\MODELS\...` implies separate model data somewhere.
 4. **FMV codecs** — low. Cosmetic, and deferrable to the very end.

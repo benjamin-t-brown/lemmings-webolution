@@ -36,7 +36,8 @@ unset, so the suite is green on a machine without the game.
 
 ## Status
 
-Phase 1 — asset layer, in progress.
+The game runs: `make -C src run`. The level is a built-in test level, because
+`.LVL` is still being reverse engineered.
 
 - [x] `.box` archive format decoded and validated
 - [x] Repo skeleton, CMake presets, test suite
@@ -52,4 +53,5 @@ Phase 1 — asset layer, in progress.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
       eight skills, deterministic ticks. **Rule constants are provisional**
       until validated against the original via the oracle.
-- [ ] Rendering
+- [~] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
+      flat unwrapped view. The cylinder projection and real sprites are next.

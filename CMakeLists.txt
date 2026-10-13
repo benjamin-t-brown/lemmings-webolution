@@ -31,6 +31,61 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_link_libraries(webolution_objects PUBLIC stdc++exp)
 endif()
 
+# ---- SDL2 -----------------------------------------------------------------
+# Emscripten supplies its own SDL2 via -sUSE_SDL=2, so it is not searched for.
+
+if(NOT EMSCRIPTEN)
+  find_package(SDL2 QUIET)
+  if(NOT SDL2_FOUND)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+      pkg_check_modules(SDL2 IMPORTED_TARGET sdl2)
+    endif()
+  endif()
+endif()
+
+set(WEBOLUTION_HAVE_SDL2 FALSE)
+if(EMSCRIPTEN OR SDL2_FOUND)
+  set(WEBOLUTION_HAVE_SDL2 TRUE)
+endif()
+
+# ---- the game -------------------------------------------------------------
+# Built only when SDL2 is present; the asset tools and tests do not need it.
+
+if(WEBOLUTION_HAVE_SDL2)
+  add_executable(webolution src/main.cpp ${WEBOLUTION_GFX_SOURCES})
+  target_include_directories(webolution PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  target_link_libraries(webolution PRIVATE webolution_objects)
+
+  if(EMSCRIPTEN)
+    target_compile_options(webolution PRIVATE -sUSE_SDL=2)
+    target_link_options(webolution PRIVATE
+      -sUSE_SDL=2 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
+      -sALLOW_MEMORY_GROWTH=1 --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html)
+    set_target_properties(webolution PROPERTIES SUFFIX ".html")
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(webolution PRIVATE PkgConfig::SDL2)
+  elseif(TARGET SDL2::SDL2)
+    # SDL2main must precede SDL2: it is a static archive that pulls symbols
+    # out of the shared one, and MinGW's linker is order-sensitive.
+    if(TARGET SDL2::SDL2main)
+      target_link_libraries(webolution PRIVATE SDL2::SDL2main)
+    endif()
+    target_link_libraries(webolution PRIVATE SDL2::SDL2)
+  else()
+    target_include_directories(webolution PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(webolution PRIVATE ${SDL2_LIBRARIES})
+  endif()
+
+  if(WIN32 AND NOT EMSCRIPTEN)
+    target_link_libraries(webolution PRIVATE opengl32)
+  elseif(NOT APPLE AND NOT EMSCRIPTEN)
+    target_link_libraries(webolution PRIVATE GL)
+  endif()
+else()
+  message(STATUS "SDL2 not found -- building the tools and tests only")
+endif()
+
 # ---- tools ----------------------------------------------------------------
 
 add_executable(lrtool src/tools/lrtool.cpp)

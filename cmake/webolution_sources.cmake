@@ -19,6 +19,15 @@ set(WEBOLUTION_SOURCES
   # sim -- the game itself, independent of rendering
   src/sim/Terrain.cpp
   src/sim/World.cpp
+
 )
 
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
+
+# Presentation sources. Separate, because they need SDL2 and the asset tools
+# and tests do not.
+set(WEBOLUTION_GFX_SOURCES
+  src/gfx/Gl.cpp
+  src/gfx/Renderer.cpp
+)
+list(TRANSFORM WEBOLUTION_GFX_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

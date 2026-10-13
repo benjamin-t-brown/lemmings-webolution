@@ -1,13 +1,19 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/cmake/${presetName}",
-      "cacheVariables": { "CMAKE_EXPORT_COMPILE_COMMANDS": "ON" }
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
     },
     {
       "name": "gcc-debug",
@@ -49,17 +55,57 @@
       "name": "dev-debug",
       "inherits": "gcc-debug",
       "displayName": "Default development build"
+    },
+    {
+      "name": "emscripten-release",
+      "inherits": "base",
+      "displayName": "WebAssembly (Emscripten)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+      }
     }
   ],
   "buildPresets": [
-    { "name": "dev-debug", "configurePreset": "dev-debug" },
-    { "name": "gcc-debug", "configurePreset": "gcc-debug" },
-    { "name": "gcc-release", "configurePreset": "gcc-release" },
-    { "name": "clang-debug", "configurePreset": "clang-debug" },
-    { "name": "clang-release", "configurePreset": "clang-release" }
+    {
+      "name": "dev-debug",
+      "configurePreset": "dev-debug"
+    },
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug"
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release"
+    },
+    {
+      "name": "emscripten-release",
+      "configurePreset": "emscripten-release"
+    }
   ],
   "testPresets": [
-    { "name": "dev-debug", "configurePreset": "dev-debug", "output": { "outputOnFailure": true } },
-    { "name": "gcc-release", "configurePreset": "gcc-release", "output": { "outputOnFailure": true } }
+    {
+      "name": "dev-debug",
+      "configurePreset": "dev-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
   ]
 }

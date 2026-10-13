@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Lemmings Webolution</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0d0f18; color: #c9d1d9;
+         font: 14px system-ui, sans-serif; display: flex; flex-direction: column;
+         align-items: center; gap: 12px; padding: 16px; }
+  canvas { background: #000; border: 1px solid #30363d; max-width: 100%; }
+  #status { min-height: 1.2em; color: #8b949e; }
+  kbd { background: #21262d; border: 1px solid #30363d; border-radius: 3px;
+        padding: 1px 5px; font: 12px ui-monospace, monospace; }
+</style>
+<h1 style="font-size:16px;font-weight:600;margin:0">Lemmings Webolution</h1>
+<div id="status">loading…</div>
+<canvas id="canvas" width="1280" height="800" tabindex="-1"
+        oncontextmenu="event.preventDefault()"></canvas>
+<div>
+  <kbd>1</kbd>–<kbd>8</kbd> skill · <kbd>click</kbd> assign ·
+  <kbd>A</kbd>/<kbd>D</kbd> pan · <kbd>space</kbd> pause ·
+  <kbd>.</kbd> step · <kbd>N</kbd> nuke · <kbd>R</kbd> restart
+</div>
+<script>
+  var statusEl = document.getElementById('status');
+  var Module = {
+    canvas: (function () {
+      var c = document.getElementById('canvas');
+      c.addEventListener('webglcontextlost', function (e) {
+        alert('WebGL context lost; reload to continue.');
+        e.preventDefault();
+      }, false);
+      return c;
+    })(),
+    print: function (t) { console.log(t); },
+    printErr: function (t) { console.error(t); },
+    setStatus: function (t) { statusEl.textContent = t; },
+    onRuntimeInitialized: function () { statusEl.textContent = ''; }
+  };
+</script>
+{{{ SCRIPT }}}

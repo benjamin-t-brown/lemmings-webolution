@@ -24,7 +24,7 @@ LRTOOL := $(BUILD_DIR)/lrtool
 endif
 
 .DEFAULT_GOAL := build
-.PHONY: build configure test info dump png clean help
+.PHONY: build configure test run js info dump png clean help
 
 build: configure
 	@cd "$(ROOT)" && cmake --build --preset "$(PRESET)"
@@ -34,6 +34,14 @@ configure:
 	@if [ ! -f "$(BUILD_DIR)/CMakeCache.txt" ]; then \
 		cd "$(ROOT)" && cmake --preset "$(PRESET)" -DWEBOLUTION_GAME_DIR="$(GAME_DIR)"; \
 	fi
+
+run: build
+	@"$(BUILD_DIR)/webolution" || "$(BUILD_DIR)/webolution.exe"
+
+# WebAssembly build; needs an activated Emscripten SDK (EMSDK set).
+js:
+	@if [ -z "$$EMSDK" ]; then echo "error: activate the Emscripten SDK so EMSDK is set" >&2; exit 1; fi
+	@cd "$(ROOT)" && cmake --preset emscripten-release && cmake --build --preset emscripten-release
 
 test: build
 	@cd "$(ROOT)" && ctest --preset "$(PRESET)"
@@ -56,6 +64,8 @@ clean:
 help:
 	@echo "make build     compile (preset: $(PRESET))"
 	@echo "make test      compile and run the test suite"
+	@echo "make run       build and run the game"
+	@echo "make js        build the WebAssembly target (needs EMSDK)"
 	@echo "make info      summarise the game archives"
 	@echo "make dump      extract every archive entry to build/assets"
 	@echo "make png       decode every texture to PNG in build/png"

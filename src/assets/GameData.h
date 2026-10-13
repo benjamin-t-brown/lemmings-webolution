@@ -75,6 +75,39 @@ private:
   std::vector<std::string> strings_;
 };
 
+// RELEASERATE.PC as the simulation wants it.
+//
+// The file is 99 doubles: seconds between one lemming and the next, for the
+// release rates 1 to 99 the player can select. It falls from 5.0 at rate 1 to
+// 0.2 at rate 99, strictly, in 98 distinct step sizes -- a hand-tuned curve
+// rather than anything derivable, which is exactly why it is worth reading
+// from the data instead of approximating with a formula.
+//
+// Because the table is in *seconds*, converting it to ticks needs only our own
+// tick rate, not the original's. That matters: the original's internal update
+// rate is not known, and this conversion does not depend on it.
+class ReleaseRates {
+public:
+  ReleaseRates() = default;
+  explicit ReleaseRates(std::vector<double> seconds) : seconds_(std::move(seconds)) {}
+
+  bool empty() const { return seconds_.empty(); }
+  std::size_t size() const { return seconds_.size(); }
+
+  // Rates are 1-based, as the player sees them. Out of range clamps rather
+  // than throwing: a bad level should not take the game down.
+  double secondsPerLemming(int rate) const;
+
+  // Ticks between spawns, never less than 1 -- a zero interval would release
+  // the whole level in a single tick.
+  int intervalTicks(int rate, int ticksPerSecond) const;
+
+  const std::vector<double>& all() const { return seconds_; }
+
+private:
+  std::vector<double> seconds_;
+};
+
 std::expected<std::vector<LevelInfo>, std::string> parseLevelMap(std::span<const std::byte>);
 std::expected<LevelTable, std::string> parseLevelTable(std::span<const std::byte>);
 std::expected<std::vector<double>, std::string> parseReleaseRates(std::span<const std::byte>);
@@ -83,6 +116,7 @@ std::expected<std::vector<double>, std::string> parseReleaseRates(std::span<cons
 std::expected<std::vector<LevelInfo>, std::string> loadLevelMap(const AssetLibrary&);
 std::expected<LevelTable, std::string> loadLevelTable(const AssetLibrary&);
 std::expected<std::vector<double>, std::string> loadReleaseRates(const AssetLibrary&);
+std::expected<ReleaseRates, std::string> loadReleaseRateTable(const AssetLibrary&);
 std::expected<StringTable, std::string> loadStrings(const AssetLibrary&, std::string_view language);
 
 // Language files present in the retail archives, base plus patch.

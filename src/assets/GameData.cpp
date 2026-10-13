@@ -286,6 +286,29 @@ std::expected<std::vector<double>, std::string> loadReleaseRates(const AssetLibr
   return loadWith(lib, kReleaseRatePath, parseReleaseRates);
 }
 
+double ReleaseRates::secondsPerLemming(int rate) const {
+  if (seconds_.empty())
+    return 0;
+  const int last = static_cast<int>(seconds_.size());
+  const int clamped = rate < 1 ? 1 : (rate > last ? last : rate);
+  return seconds_[static_cast<std::size_t>(clamped - 1)];
+}
+
+int ReleaseRates::intervalTicks(int rate, int ticksPerSecond) const {
+  if (seconds_.empty() || ticksPerSecond <= 0)
+    return 1;
+  const double ticks = secondsPerLemming(rate) * ticksPerSecond;
+  const int rounded = static_cast<int>(ticks + 0.5);
+  return rounded < 1 ? 1 : rounded;
+}
+
+std::expected<ReleaseRates, std::string> loadReleaseRateTable(const AssetLibrary& lib) {
+  auto rates = loadReleaseRates(lib);
+  if (!rates)
+    return std::unexpected(rates.error());
+  return ReleaseRates(std::move(*rates));
+}
+
 std::expected<StringTable, std::string> loadStrings(const AssetLibrary& lib,
                                                     std::string_view language) {
   const std::string path = std::format("LANGUAGE\\{}.LTX", language);

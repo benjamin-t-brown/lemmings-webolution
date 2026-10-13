@@ -23,6 +23,7 @@
 #include "gfx/LemmingSprites.h"
 #include "gfx/Renderer.h"
 #include "assets/Box.h"
+#include "assets/GameData.h"
 #include "sim/World.h"
 
 #include <SDL2/SDL.h>
@@ -54,7 +55,7 @@ constexpr const char* kDefaultGameDir = "C:/progs/Lemmings Revolution";
 // A hand-built level, until .LVL gives us real ones: a floor, some pillars to
 // climb and bash, a gap to build over, and a pit at the seam so the
 // wraparound gets exercised by just playing.
-sim::LevelSetup makeTestLevel() {
+sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate) {
   sim::LevelSetup s;
   const int w = 320, h = 200;
   s.terrain = sim::Terrain(w, h);
@@ -71,7 +72,10 @@ sim::LevelSetup makeTestLevel() {
   s.exits.push_back({230, 138, 12, 14});
   s.totalLemmings = 20;
   s.saveTarget = 10;
-  s.releaseIntervalTicks = 24;
+  // Real spacing, from RELEASERATE.PC, when the data is there. Rate 50 is
+  // mid-curve. Falls back to a plausible constant otherwise.
+  s.releaseIntervalTicks =
+      rates.empty() ? 24 : rates.intervalTicks(releaseRate, kTicksPerSecond);
   return s;
 }
 
@@ -85,6 +89,8 @@ struct App {
   SDL_GLContext context = nullptr;
   gfx::Renderer renderer;
   gfx::LemmingSprites sprites;
+  ReleaseRates releaseRates;
+  int releaseRate = 50;
   sim::World world;
 
   bool running = true;
@@ -99,7 +105,7 @@ struct App {
   bool useSprites = true;
 
   void restart() {
-    world = sim::World(makeTestLevel());
+    world = sim::World(makeTestLevel(releaseRates, releaseRate));
     terrainDirty = true;
   }
 
@@ -255,7 +261,7 @@ int main(int argc, char** argv) {
   // A headless mode so the simulation can be exercised in CI, and so that
   // "does it run" is answerable without a display.
   if (headless) {
-    sim::World w(makeTestLevel());
+    sim::World w(makeTestLevel(ReleaseRates{}, 50));
     for (int i = 0; i < headlessTicks; ++i)
       w.tick();
     std::printf("ticks=%llu active=%d saved=%d dead=%d solid=%zu\n",
@@ -317,8 +323,19 @@ int main(int argc, char** argv) {
     } else {
       for (const auto& m : g_app.sprites.missingSheets())
         std::fprintf(stderr, "sprites: %s\n", m.c_str());
-      std::fprintf(stderr, "sprites: loaded %zu from %s\n", g_app.sprites.definitions().sprites.size(),
-                   gameDir.string().c_str());
+      std::fprintf(stderr, "sprites: loaded %zu from %s\n",
+                   g_app.sprites.definitions().sprites.size(), gameDir.string().c_str());
+
+      // The spawn interval comes from the game's own curve when it is there.
+      if (auto rr = loadReleaseRateTable(*lib)) {
+        g_app.releaseRates = std::move(*rr);
+        std::fprintf(stderr, "release rate %d: %.2f s per lemming, %d ticks\n", g_app.releaseRate,
+                     g_app.releaseRates.secondsPerLemming(g_app.releaseRate),
+                     g_app.releaseRates.intervalTicks(g_app.releaseRate, kTicksPerSecond));
+      } else {
+        std::fprintf(stderr, "release rates: %s (using a fallback interval)\n",
+                     rr.error().c_str());
+      }
     }
   }
 

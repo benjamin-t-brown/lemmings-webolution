@@ -195,6 +195,32 @@ void testRealData() {
   check(table->slotCount() == 125, std::format("125 slots (got {})", table->slotCount()));
   check(rates->size() == 99, std::format("99 release rates (got {})", rates->size()));
 
+  // The same table as the simulation consumes it.
+  {
+    const webo::ReleaseRates rt(*rates);
+    check(rt.size() == 99, "ReleaseRates wraps all 99");
+    check(rt.secondsPerLemming(1) == 5.0, "rate 1 is 5 seconds per lemming");
+    check(rt.secondsPerLemming(99) == 0.2, "rate 99 is 0.2 seconds per lemming");
+
+    // Clamping, not throwing -- and not wrapping to the far end of the curve,
+    // which would turn a bad rate into the fastest possible release.
+    check(rt.secondsPerLemming(0) == rt.secondsPerLemming(1), "rate 0 clamps low");
+    check(rt.secondsPerLemming(-5) == rt.secondsPerLemming(1), "a negative rate clamps low");
+    check(rt.secondsPerLemming(1000) == rt.secondsPerLemming(99), "a huge rate clamps high");
+
+    // Seconds to ticks: 5.0 s at 20 ticks/s is 100 ticks, 0.2 s is 4.
+    check(rt.intervalTicks(1, 20) == 100, "rate 1 at 20 ticks/s is 100 ticks");
+    check(rt.intervalTicks(99, 20) == 4, "rate 99 at 20 ticks/s is 4 ticks");
+    // However coarse the tick rate, the interval must never be zero: that
+    // would release the whole level in one tick.
+    check(rt.intervalTicks(99, 1) >= 1, "the interval is never zero");
+    check(rt.intervalTicks(50, 0) >= 1, "a zero tick rate does not divide by zero");
+
+    const webo::ReleaseRates none;
+    check(none.empty(), "a default table is empty");
+    check(none.intervalTicks(50, 20) == 1, "an empty table still yields a usable interval");
+  }
+
   // Rates run from slowest to fastest and stay positive.
   bool descending = true, positive = true;
   for (std::size_t i = 0; i < rates->size(); ++i) {

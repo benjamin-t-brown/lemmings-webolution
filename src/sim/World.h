@@ -77,6 +77,17 @@ class World {
 public:
   // How fast things happen. Named so the oracle work has something concrete
   // to correct rather than magic numbers scattered through the code.
+  //
+  // **Every value here is still provisional.** They are chosen to make the
+  // simulation play like Lemmings, not because they were read out of the
+  // original -- that is Phase 3, and it needs the differential oracle. None
+  // of them should be cited as the game's real behaviour.
+  //
+  // The one timing constant that *is* real lives elsewhere, which is why it
+  // is worth naming here: the spawn interval comes from RELEASERATE.PC via
+  // webo::ReleaseRates, because the game ships that curve as data. The rule
+  // is to read whatever the data states and guess only the rest; these are
+  // the rest.
   struct Rules {
     int walkSpeed = 1;          // pixels per tick
     int maxStepUp = 6;          // a walker climbs steps up to this high

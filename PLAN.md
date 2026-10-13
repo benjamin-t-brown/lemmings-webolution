@@ -546,10 +546,56 @@ buffer, and correlate it with `lrtool lvlmask` / `rasteriseSurface` (e.g.
   off that head in an obvious `size,size,1,ptr` form. Needs a targeted search
   (byte 256×192, bit-packed, or other stride) while paused in-level.
 
-**Next step for this item:** re-enter a level with `click_yellow.py`, fix the
-in-level detector (UI chrome / uniq colour count, not mean alone), run
-`fast_mask_scan.py` immediately, dump top candidates, correlate with
-`ref_climb_mask.bin`.
+**Second attempt — the search got better, the entry got worse**
+
+*Search.* `fast_mask_scan.py` is replaced by `find_level_data.py`, which is a
+different kind of search and worth preferring on both counts. It looks for
+bytes we already know are in the file -- two consecutive surface vertices (48
+bytes of IEEE doubles), a dense window of the index array, a tile texture
+name -- using `bytes.find`, which is C rather than a Python byte loop. A full
+pass over the process is **168 MB in a few seconds**, against a mask scan
+that never finished.
+
+It also avoids assuming the answer. A mask scan looks for a byte-per-cell
+occupancy grid; if the engine keeps terrain as lattice geometry (which is how
+the *file* stores it) there is no such grid, and finding nothing would have
+told us nothing. Known plaintext does not have that problem: the needles are
+in the file, so if the level is loaded they are in memory unless the loader
+transforms them -- and either answer is informative.
+
+Control run, at the main menu with no level loaded: **zero matches**. So the
+needles do not fire on arbitrary memory.
+
+*Entry.* Driving the mouse is now understood but is **not working for
+clicks**, which blocks the compare:
+
+* Pointer acceleration is on and there is no single scale -- 1.0 px per unit
+  at 5 units, 2.7 at 30, 8.2 at 300. A fixed factor oscillates forever. The
+  earlier "2.5-3.8 units per pixel" note was a mid-range sample of this curve
+  (and its reciprocal). `aim.py` estimates the scale from the previous step
+  and converges in two or three moves; it now reaches a named target to
+  within 8 px.
+* The shim holds one pending delta, so steps must be frame-synced
+  (`glide(..., steps=max(|dx|,|dy|), per_step_frames=1)`). A tight `move()`
+  loop coalesces deltas and the acceleration curve turns a 60-unit nudge into
+  a 500 px jump.
+* Keyboard works: RETURN drives the main menu through "Neues Spiel starten"
+  and its Ja/Nein confirm onto the level map. Arrow keys do nothing on the
+  map, so map entry really is mouse-only.
+* **Mouse motion reaches the game; mouse buttons do not.** With the cursor
+  measured onto a gold node (825, 612; node spans x 804..846), neither a
+  plain press/release nor `long_click` changes anything. The same is true of
+  the "Zurück zum Hauptmenü" label. The shim's header says the game's whole
+  input surface is two `GetDeviceState` calls, and motion through that path
+  demonstrably works, so the button bytes are either being written somewhere
+  the game does not read or the game takes clicks by another route
+  (`GetDeviceData`, vtable[10], is the obvious candidate and is not hooked).
+
+**Next step for this item:** settle the button question before anything else.
+Add a counter to the shim for `GetDeviceData` and for the `cb` values seen by
+`GetDeviceState`, rebuild, and watch which the game actually calls while a
+click is held. That distinguishes "wrong offset" from "wrong entry point" in
+one run. Then re-enter a level and run `find_level_data.py` immediately.
 
 #### Where to go next
 

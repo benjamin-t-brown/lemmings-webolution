@@ -5,6 +5,7 @@
 //   lrtool extract <game-dir> <name> <out-file>
 //   lrtool dump    <game-dir> <out-dir> [substring]
 //   lrtool lvlmap  <game-dir> <level> <out.png>
+//   lrtool lvlkeys <game-dir> [level]
 //
 // <game-dir> is a Lemmings Revolution installation containing lemmings.box
 // (and optionally patch.box, which overrides entries of the same name).
@@ -23,8 +24,10 @@
 #include <cstdio>
 #include <cctype>
 #include <cstring>
+#include <numeric>
 #include <numbers>
 #include <ranges>
+#include <tuple>
 #include <utility>
 #include <filesystem>
 #include <format>
@@ -45,7 +48,8 @@ int usage() {
                "  lrtool list    <game-dir> [substring]\n"
                "  lrtool extract <game-dir> <name> <out-file>\n"
                "  lrtool dump    <game-dir> <out-dir> [substring]\n"
-               "  lrtool lvlmap  <game-dir> <level> <out.png>\n";
+               "  lrtool lvlmap  <game-dir> <level> <out.png>\n"
+               "  lrtool lvlkeys <game-dir> [level]\n";
   return 2;
 }
 
@@ -161,6 +165,182 @@ int cmdLvlMap(const fs::path& gameDir, std::string_view levelName, const fs::pat
                                              [](const std::string& s) { return !s.empty(); });
   std::cout << std::format("{}: {} surface vertices, {} skinned tiles -> {} ({}x{})\n", resolved,
                            mesh->surface.size(), skinned, out.string(), w, h);
+  return 0;
+}
+
+// Probes how the sparse u32 arrays after "Cylinder" are keyed.
+//
+// Settled (see PLAN.md 1.6): the *values* are surface-vertex indices, and the
+// *slots* are a cylindrical lattice. Adjacent keys map to geometrically
+// adjacent vertices:
+//
+//   key+1     often inner <-> outer at the same (ang, y)   dist ≈ thickness 10
+//   key+16    next angular step                            dist ≈ chord(r=50|60)
+//   key+Y     next ring (Y is per-level)                   dist ≈ 16
+//
+// This command reports those median distances so a regression is visible, and
+// dumps a few key->vertex rows when a single level is named.
+int cmdLvlKeys(const fs::path& gameDir, std::string_view levelFilter) {
+  auto lib = webo::AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
+  if (!lib) {
+    std::cerr << "error: " << lib.error() << "\n";
+    return 1;
+  }
+
+  std::string wanted(levelFilter);
+  std::ranges::transform(wanted, wanted.begin(),
+                         [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+
+  constexpr double kOuterChord = 2.0 * 60.0 * std::sin(std::numbers::pi / 32.0);  // ~11.74
+  constexpr double kInnerChord = 2.0 * 50.0 * std::sin(std::numbers::pi / 32.0);  // ~9.80
+
+  const auto medianDist = [](const webo::CylinderMesh& mesh, const std::vector<std::uint32_t>& g,
+                             int delta) -> std::pair<double, std::size_t> {
+    std::vector<double> ds;
+    for (std::size_t k = 0; k + static_cast<std::size_t>(delta) < g.size(); ++k) {
+      const auto a = g[k], b = g[k + static_cast<std::size_t>(delta)];
+      if (a == 0xFFFFFFFFu || b == 0xFFFFFFFFu)
+        continue;
+      if (a >= mesh.surface.size() || b >= mesh.surface.size())
+        continue;
+      const auto& pa = mesh.surface[a];
+      const auto& pb = mesh.surface[b];
+      const double dx = pa.x - pb.x, dy = pa.y - pb.y, dz = pa.z - pb.z;
+      ds.push_back(std::sqrt(dx * dx + dy * dy + dz * dz));
+    }
+    if (ds.empty())
+      return {0, 0};
+    std::ranges::sort(ds);
+    return {ds[ds.size() / 2], ds.size()};
+  };
+
+  struct Row {
+    std::string name;
+    std::size_t surface = 0;
+    std::size_t cells = 0;
+    std::size_t solid0 = 0;
+    std::size_t solid1 = 0;
+    double med1 = 0, med16 = 0;
+    std::size_t n1 = 0, n16 = 0;
+    int ringDelta = 0;
+    double medRing = 0;
+    std::size_t nRing = 0;
+    bool angOk = false;
+    bool thickOk = false;
+  };
+  std::vector<Row> rows;
+  std::map<std::size_t, int> lengthHist;
+  std::size_t gcdAll = 0;
+  int angHits = 0, thickHits = 0;
+
+  for (const auto& name : webo::levelFileNames(*lib)) {
+    if (!wanted.empty() && name.find(wanted) == std::string::npos)
+      continue;
+    auto blob = lib->read(name);
+    if (!blob)
+      continue;
+    auto mesh = webo::findCylinderMesh(*blob);
+    auto index = webo::indexLevel(*blob);
+    if (!mesh || !index || index->grid0.empty())
+      continue;
+
+    Row row;
+    row.name = name;
+    row.surface = mesh->surface.size();
+    row.cells = index->grid0.size();
+    lengthHist[row.cells]++;
+    gcdAll = gcdAll == 0 ? row.cells : std::gcd(gcdAll, row.cells);
+    for (std::uint32_t v : index->grid0)
+      if (v != 0xFFFFFFFFu)
+        ++row.solid0;
+    row.solid1 = index->grid1SolidCells();
+
+    std::tie(row.med1, row.n1) = medianDist(*mesh, index->grid0, 1);
+    std::tie(row.med16, row.n16) = medianDist(*mesh, index->grid0, 16);
+    row.thickOk = row.n1 >= 8 && std::abs(row.med1 - mesh->thickness) < 1.0;
+    row.angOk = row.n16 >= 8 && (std::abs(row.med16 - kOuterChord) < 1.0 ||
+                                std::abs(row.med16 - kInnerChord) < 1.0);
+    if (row.thickOk)
+      ++thickHits;
+    if (row.angOk)
+      ++angHits;
+
+    // Ring stride: multiple of 16 whose median distance is closest to the
+    // ring spacing (16 in the retail mesh).
+    double bestScore = 1e99;
+    for (int delta = 48; delta < static_cast<int>(row.cells) && delta < 20000; delta += 16) {
+      const auto [med, n] = medianDist(*mesh, index->grid0, delta);
+      if (n < 8)
+        continue;
+      const double score = std::abs(med - mesh->ringSpacing());
+      if (score < bestScore) {
+        bestScore = score;
+        row.ringDelta = delta;
+        row.medRing = med;
+        row.nRing = n;
+      }
+    }
+
+    rows.push_back(std::move(row));
+  }
+
+  if (rows.empty()) {
+    std::cerr << "error: no matching levels\n";
+    return 1;
+  }
+
+  std::cout << std::format(
+      "{} levels, array-length gcd {}, {} distinct lengths\n"
+      "grid0 adjacency: delta+1 ≈ thickness in {}/{}, delta+16 ≈ chord in {}/{}\n"
+      "(outer chord {:.2f}, inner chord {:.2f}, thickness 10, ring 16)\n",
+      rows.size(), gcdAll, lengthHist.size(), thickHits, rows.size(), angHits, rows.size(),
+      kOuterChord, kInnerChord);
+
+  const bool detail = !wanted.empty() || rows.size() == 1;
+  if (detail) {
+    for (const auto& r : rows) {
+      std::cout << std::format(
+          "\n{}\n  surface {}  cells {}  solid0 {}  solid1 {}\n"
+          "  +1:   n={} med={:.2f} {}\n"
+          "  +16:  n={} med={:.2f} {}\n"
+          "  +{}: n={} med={:.2f} (best ring-spacing candidate)\n",
+          r.name, r.surface, r.cells, r.solid0, r.solid1, r.n1, r.med1,
+          r.thickOk ? "THICKNESS" : "", r.n16, r.med16, r.angOk ? "CHORD" : "", r.ringDelta,
+          r.nRing, r.medRing);
+
+      auto blob = lib->read(r.name);
+      auto mesh = webo::findCylinderMesh(*blob);
+      auto index = webo::indexLevel(*blob);
+      if (!mesh || !index)
+        continue;
+      int shown = 0;
+      for (std::size_t k = 0; k < index->grid0.size() && shown < 24; ++k) {
+        const std::uint32_t v = index->grid0[k];
+        if (v == 0xFFFFFFFFu)
+          continue;
+        const auto& p = mesh->surface[v];
+        double a = std::atan2(-p.x, p.z) / (2.0 * std::numbers::pi);
+        if (a < 0)
+          a += 1.0;
+        std::cout << std::format("  key {:>6} -> vtx {:>4}  ang {:.3f}  y {:5.1f}\n", k, v, a,
+                                 p.y);
+        ++shown;
+      }
+      if (r.solid0 > 24)
+        std::cout << std::format("  ... {} more\n", r.solid0 - 24);
+    }
+  } else {
+    std::cout << "\n"
+                 "name                                       cells  solid  med+1  med+16  "
+                 "ringΔ   med+Δ\n";
+    for (const auto& r : rows) {
+      const auto shortName = r.name.substr(r.name.find_last_of("\\/") + 1);
+      std::cout << std::format("{:<42} {:>5} {:>6} {:>6.2f}{}"
+                               " {:>6.2f}{} {:>5} {:>6.2f}\n",
+                               shortName, r.cells, r.solid0, r.med1, r.thickOk ? "*" : " ",
+                               r.med16, r.angOk ? "*" : " ", r.ringDelta, r.medRing);
+    }
+  }
   return 0;
 }
 
@@ -655,6 +835,11 @@ int main(int argc, char** argv) {
     if (argc < 5)
       return usage();
     return cmdLvlMap(argv[2], argv[3], argv[4]);
+  }
+  if (cmd == "lvlkeys") {
+    if (argc < 3)
+      return usage();
+    return cmdLvlKeys(argv[2], argc > 3 ? argv[3] : "");
   }
   if (cmd == "dump") {
     if (argc < 4)

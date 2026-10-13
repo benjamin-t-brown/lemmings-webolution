@@ -393,32 +393,46 @@ The second array behaves the same way in 92 of the 102 levels and carries
 larger values in the other 10, so it is probably not the same kind of thing.
 Only the first is asserted.
 
+#### The array key is a cylindrical lattice — settled
+
+The slots are not a hash and not a table of 16-word records (an earlier
+reading that fit `MM_CLIMB_002`'s sparse stride of 16 and failed on the denser
+levels). They are a **spatial lattice on the tube**, and neighbouring keys
+name neighbouring surface vertices. Measured on `grid0` across the corpus,
+and locked down on `MM_CLIMB_002` by reconstructing quads:
+
+| Key step | Geometry | Median distance |
+|---|---|---|
+| `+1` | inner ↔ outer at the same (ang, y) | ≈ thickness **10** |
+| `+16` | next angular step (11.25°) | ≈ chord at r=60 (**11.74**) or r=50 (**9.80**) |
+| `+Y` | next ring (Y is per-level; 8224 on the ~27k arrays) | ≈ ring spacing **16** |
+
+That is why every array length is a multiple of 16: each angular step owns a
+block of 16 slots. `lrtool lvlkeys` reports the median distances; about
+two-thirds of the retail levels hit the chord test on `+16`, and whenever
+`+1` has enough pairs its median is the thickness.
+
+Quads fall out of the same adjacency. On `MM_CLIMB_002`, every fully-populated
+`(k, k+1, k+17, k+16)` is a thickness×chord face, and every
+`(k, k+1, k+Y+1, k+Y)` with `Y=8224` is a thickness×ring face — 28 and 12
+quads respectively, no exceptions among the populated ones.
+
+`grid1` indexes the same surface pool. On the ten levels whose arrays are
+~27k cells long, `grid0 ∪ grid1` partitions the surface vertices almost
+exactly (overlap of a handful). On the other 92 the two arrays only cover a
+minority of the vertices between them — consistent with the sparse clusters
+`lvlmap` already showed. When both are set at the same key they never agree.
+
 #### Where to go next
 
-The surrounding structure is now walked rather than scanned, so every record
-has a known offset and the remaining unknowns are local rather than
-structural. Two concrete threads:
-
-* **The array key.** With values identified, the key is the only unknown
-  left in the arrays. The sparsity and the oversized key space point at a
-  hash or a bucketed spatial lookup.
-
-  One attempt, recorded because it was convincing and wrong. In
-  `MM_CLIMB_002` the non-empty entries sit at indices 1, 17, 33, 49, ... --
-  a stride of 16 -- which would make the array a table of 16-word records
-  with the index in one fixed field, and would have explained the GCD-16
-  result exactly. It does not generalise: allowing a per-level phase (the
-  array locator is heuristic, so the phase could differ), only 4 of the 102
-  levels keep their entries within one or two positions of a 16-word record,
-  and 42 levels have entries at all 16 positions. The stride is a property
-  of the sparse levels' content, not of the format. The GCD-16 of the array
-  *lengths* still stands and is still unexplained.
-* **The surface topology.** The vertices are integer-coordinate and partly on
-  the ring lattice, and they begin as a recognisable quad strip up one
-  angular column -- first quad explicit, then two vertices per quad -- but a
-  new column starts mid-array with no delimiter, so the primitive runs are
-  almost certainly driven by the index arrays rather than by vertex order.
-  That makes the two threads the same thread.
+* **Build the mesh from key adjacency.** The quads above are enough to
+  rasterise a terrain mask for the levels that populate them densely. The
+  per-level ring stride `Y` still has to be read (or searched) rather than
+  hard-coded; the ten large arrays all use 8224, the rest vary.
+* **Decide what the surface *is*.** Even with faces, most of the tube is
+  empty in the vertex data. Either the walkable ground also comes from the
+  skin tiles, or there is another source, or the surface really is sparse
+  platforms. The live-process fallback still stands for settling that.
 
 #### Looking at it: `lrtool lvlmap`
 

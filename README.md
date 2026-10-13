@@ -64,9 +64,11 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
 - [x] `.LVL` cylinder: the tube is identical in every level -- 7 rings, 32
       angular steps of 11.25 degrees, radii 50 and 60 -- which pins the
       coordinate system the simulation wraps in. `lrtool lvlmap` draws it.
-- [~] `.LVL` surface: located and parsed, and the per-level part of the file.
-      The two `u32` arrays index its vertices, but how they are keyed, and so
-      the surface's topology, is still open. See PLAN.md 1.6.
+- [~] `.LVL` surface: located and parsed. The two `u32` arrays index its
+      vertices on a cylindrical lattice (`key+1` = inner/outer, `key+16` =
+      next angle, `key+Y` = next ring), which is enough to rebuild quads.
+      What remains is rasterising them into the walkable mask, and deciding
+      whether the skin tiles also contribute. See PLAN.md 1.6.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
       eight skills, deterministic ticks, the level clock. **Rule constants are
       provisional** until validated against the original via the oracle -- the

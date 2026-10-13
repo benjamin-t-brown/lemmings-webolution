@@ -305,6 +305,59 @@ void testRetail(const fs::path& gameDir) {
   check(indexed == levels.size(), "the first u32 array indexes the surface in every level");
   check(worstCoverage > 0.8, "the highest index comes close to the vertex count");
 
+  // The slots are a cylindrical lattice: key+1 is often inner<->outer
+  // (thickness 10), key+16 is the next angular step (chord at r=50 or r=60).
+  // Enough levels must agree that a regression back to "unknown keying" is
+  // visible. See PLAN.md 1.6 and lrtool lvlkeys.
+  const double outerChord = 2.0 * 60.0 * std::sin(std::numbers::pi / 32.0);
+  const double innerChord = 2.0 * 50.0 * std::sin(std::numbers::pi / 32.0);
+  std::size_t angOk = 0, thickOk = 0, withPairs = 0;
+  for (const auto& name : levels) {
+    auto blob = lib.read(name);
+    if (!blob)
+      continue;
+    auto mesh = webo::findCylinderMesh(*blob);
+    auto index = webo::indexLevel(*blob);
+    if (!mesh || !index || index->grid0.empty())
+      continue;
+
+    const auto medianAt = [&](int delta) -> std::pair<double, std::size_t> {
+      std::vector<double> ds;
+      for (std::size_t k = 0; k + static_cast<std::size_t>(delta) < index->grid0.size(); ++k) {
+        const auto a = index->grid0[k];
+        const auto b = index->grid0[k + static_cast<std::size_t>(delta)];
+        if (a == 0xFFFFFFFFu || b == 0xFFFFFFFFu)
+          continue;
+        if (a >= mesh->surface.size() || b >= mesh->surface.size())
+          continue;
+        const auto& pa = mesh->surface[a];
+        const auto& pb = mesh->surface[b];
+        const double dx = pa.x - pb.x, dy = pa.y - pb.y, dz = pa.z - pb.z;
+        ds.push_back(std::sqrt(dx * dx + dy * dy + dz * dz));
+      }
+      if (ds.empty())
+        return {0, 0};
+      std::sort(ds.begin(), ds.end());
+      return {ds[ds.size() / 2], ds.size()};
+    };
+
+    const auto [med1, n1] = medianAt(1);
+    const auto [med16, n16] = medianAt(16);
+    if (n1 >= 8) {
+      ++withPairs;
+      if (std::abs(med1 - mesh->thickness) < 1.0)
+        ++thickOk;
+    }
+    if (n16 >= 8 &&
+        (std::abs(med16 - outerChord) < 1.0 || std::abs(med16 - innerChord) < 1.0))
+      ++angOk;
+  }
+  std::cout << std::format(
+      "  key adjacency: +1≈thickness in {}/{}, +16≈chord in {}/{}\n", thickOk, withPairs, angOk,
+      levels.size());
+  check(angOk > levels.size() / 2, "key+16 is an angular step in most levels");
+  check(thickOk > withPairs / 2, "key+1 is inner<->outer in most levels that have pairs");
+
   // The point of the exercise: the tube is constant, the surface is not. If
   // the surface were also constant it would not be the terrain, and this
   // whole reading would be suspect.

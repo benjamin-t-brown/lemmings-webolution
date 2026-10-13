@@ -110,6 +110,7 @@ void World::explode(Lemming& l) {
   setup_.terrain.clearCircle(l.x, l.y - rules_.lemmingHeight / 2, rules_.explosionRadius);
   l.state = State::Dead;
   ++dead_;
+  cue(SoundCue::Explode);
 }
 
 void World::stepFaller(Lemming& l) {
@@ -124,6 +125,7 @@ void World::stepFaller(Lemming& l) {
       if (!floating && l.fallDistance > rules_.splatDistance) {
         l.state = State::Splatter;
         ++dead_;
+        cue(SoundCue::Splat);
         return;
       }
       l.state = State::Walker;
@@ -309,6 +311,12 @@ void World::step(Lemming& l, std::size_t index) {
   // The fuse runs regardless of what the lemming is doing.
   if (l.fuse > 0) {
     --l.fuse;
+    // Classic plays "oh no" when the countdown reaches the panic beat, not
+    // when the skill is assigned. One second of fuse left is the audible
+    // moment here; the exact tick is provisional with the rest of the rules
+    // (bomberFuse is written as 5 * 20 for the same reason).
+    if (l.fuse == 20)
+      cue(SoundCue::OhNo);
     if (l.fuse == 0) {
       explode(l);
       return;
@@ -326,6 +334,7 @@ void World::step(Lemming& l, std::size_t index) {
   if (l.state != State::Blocker && atExit(l)) {
     l.state = State::Exited;
     ++saved_;
+    cue(SoundCue::Exit);
     return;
   }
 
@@ -379,16 +388,19 @@ bool World::assign(std::size_t index, Skill skill) {
       if (l.canClimb)
         return false;
       l.canClimb = true;
+      cue(SoundCue::Assign);
       return true;
     case Skill::Floater:
       if (l.canFloat)
         return false;
       l.canFloat = true;
+      cue(SoundCue::Assign);
       return true;
     case Skill::Bomber:
       if (l.fuse >= 0)
         return false;
       l.fuse = rules_.bomberFuse;
+      cue(SoundCue::Assign);
       return true;
     default:
       break;
@@ -416,6 +428,7 @@ bool World::assign(std::size_t index, Skill skill) {
     default: return false;
   }
   l.frame = 0;
+  cue(SoundCue::Assign);
   return true;
 }
 
@@ -442,6 +455,25 @@ void World::nuke() {
   for (auto& l : lemmings_)
     if (l.active() && l.fuse < 0)
       l.fuse = rules_.bomberFuse;
+  // OhNo fires from step() when each fuse reaches the panic beat, so a nuke
+  // does not need a separate cue here.
+}
+
+void World::cue(SoundCue c) {
+  // A nuke lights every fuse on the same tick, and they all panic / explode
+  // together. One sample of each is what you hear in the original; stacking
+  // N identical voices would be louder, not more informative.
+  if (c == SoundCue::OhNo || c == SoundCue::Explode) {
+    if (std::find(cues_.begin(), cues_.end(), c) != cues_.end())
+      return;
+  }
+  cues_.push_back(c);
+}
+
+std::vector<SoundCue> World::takeCues() {
+  std::vector<SoundCue> out;
+  out.swap(cues_);
+  return out;
 }
 
 }  // namespace webo::sim

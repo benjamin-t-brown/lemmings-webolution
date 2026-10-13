@@ -78,6 +78,7 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
       toggles). The skin is scenery: what is solid is still the simulation's
       own terrain mask, drawn over it, because the mapping between artwork and
       collision is part of the unsolved surface topology.
-- [ ] Game shell: menus, level select, saves, audio, FMV
+- [~] Game shell: SDL mixer plays Letsgo / Chink / Ohno / Explode / Splat /
+      Yippee from simulation cues. Menus, level select, saves, FMV still open.
 - [ ] Linux, macOS and WebAssembly builds. The emscripten preset exists but has
       never been run -- no activated EMSDK here -- so it is untested, not done.

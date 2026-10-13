@@ -578,6 +578,11 @@ blocked on reverse engineering rather than on rendering.
 Menus, level select, save games, `.LTX` localisation, audio. FMV is an open question —
 the `.avi` codecs are not yet identified.
 
+Audio is started: `src/audio/Mixer` opens an SDL device, loads cues through
+`Wav`, and the shell drains `World::takeCues()` onto retail names (Letsgo on
+restart; Chink / Ohno / Explode / Splat / Yippee from the sim). Music, menus
+and the rest of the shell are still open.
+
 ### Phase 6 — Platform targets
 Linux, macOS, and WebAssembly via Emscripten.
 

@@ -36,5 +36,6 @@ set(WEBOLUTION_GFX_SOURCES
   src/gfx/Renderer.cpp
   src/gfx/LemmingSprites.cpp
   src/gfx/CylinderSkin.cpp
+  src/audio/Mixer.cpp
 )
 list(TRANSFORM WEBOLUTION_GFX_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

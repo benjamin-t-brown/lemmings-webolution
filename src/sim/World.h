@@ -41,6 +41,17 @@ std::string_view stateName(State s);
 
 enum class Facing : std::int8_t { Left = -1, Right = 1 };
 
+// Moments the shell can hear. The simulation stays free of SDL and of asset
+// names: it only says *what happened*. Mapping each cue onto a `.WAV` is the
+// mixer's job. Drained with takeCues() after each tick (or after assign).
+enum class SoundCue : std::uint8_t {
+  Assign,   // a skill stuck -- Chink
+  OhNo,     // a bomber fuse was lit -- Ohno
+  Explode,  // the fuse ran out -- Explode
+  Splat,    // landed too hard -- Splat
+  Exit,     // reached the exit -- Yippee
+};
+
 struct Lemming {
   int x = 0;
   int y = 0;               // the lemming's feet
@@ -156,7 +167,11 @@ public:
   // Set every remaining lemming's fuse, as the nuke does.
   void nuke();
 
+  // Pending sound cues since the last drain. Cleared by the call.
+  std::vector<SoundCue> takeCues();
+
 private:
+  void cue(SoundCue c);
   void spawn();
   void step(Lemming& l, std::size_t index);
   void stepFaller(Lemming& l);
@@ -183,6 +198,7 @@ private:
   int dead_ = 0;
   int sinceSpawn_ = 0;
   std::size_t nextEntrance_ = 0;
+  std::vector<SoundCue> cues_;
 };
 
 }  // namespace webo::sim

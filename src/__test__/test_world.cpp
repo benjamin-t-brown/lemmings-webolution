@@ -352,6 +352,57 @@ void testTimeLimit() {
   check(u.activeCount() + u.saved() + u.dead() == 4, "all of its lemmings were released");
 }
 
+// Sound cues are how the shell hears the simulation without the simulation
+// knowing about SDL. They have to fire at the right moments and de-dupe the
+// ones a nuke would otherwise stack.
+void testSoundCues() {
+  std::cout << "sound cues\n";
+
+  // No exit on this floor: the bomber test needs the lemming alive for the
+  // whole fuse, and an exit under the entrance would swallow it first.
+  LevelSetup s = flatLevel(80);
+  s.totalLemmings = 1;
+  s.releaseIntervalTicks = 1;
+  World w(s);
+  runFor(w, 30);
+  check(w.activeCount() == 1, "a lemming is out");
+  check(w.takeCues().empty(), "walking emits no cues");
+
+  check(w.assign(0, Skill::Bomber), "bomber assigns");
+  {
+    const auto cues = w.takeCues();
+    check(cues.size() == 1 && cues[0] == SoundCue::Assign, "assigning a bomber chinks once");
+  }
+
+  // Fuse starts at 5*20 = 100. OhNo at fuse==20, Explode at 0.
+  runFor(w, 79);  // fuse counted down to 21
+  check(w.takeCues().empty(), "quiet until the panic beat");
+  w.tick();  // fuse -> 20
+  {
+    const auto cues = w.takeCues();
+    check(cues.size() == 1 && cues[0] == SoundCue::OhNo, "oh-no at one second left");
+  }
+  runFor(w, 20);  // fuse -> 0, explode
+  {
+    const auto cues = w.takeCues();
+    check(std::find(cues.begin(), cues.end(), SoundCue::Explode) != cues.end(),
+          "explode when the fuse runs out");
+  }
+
+  // A splat from a high entrance.
+  LevelSetup tall = flatLevel(80);
+  tall.entrances = {{50, 0}};
+  tall.totalLemmings = 1;
+  tall.releaseIntervalTicks = 1;
+  World splat(tall);
+  runFor(splat, 80);
+  {
+    const auto cues = splat.takeCues();
+    check(std::find(cues.begin(), cues.end(), SoundCue::Splat) != cues.end(),
+          "a long fall splatters audibly");
+  }
+}
+
 }  // namespace
 
 int main() {
@@ -369,6 +420,7 @@ int main() {
   testDeterminism();
   testPickAndNuke();
   testTimeLimit();
+  testSoundCues();
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;

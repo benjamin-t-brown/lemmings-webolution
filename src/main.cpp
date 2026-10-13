@@ -16,6 +16,10 @@
 //   up down         raise and lower the cylinder camera
 //   page up/down    move it closer and further
 //
+// Sound cues (Letsgo, Chink, Ohno, Explode, Splat, Yippee) play when an
+// installation is reachable and the audio device opens. Missing audio is
+// silent, not fatal -- same rule as missing sprites.
+//
 //   --cylinder      start in the cylinder projection
 //   --native        open at the original's 640x480
 //   --size WxH      open at a given size
@@ -32,6 +36,7 @@
 
 #include "assets/Bitmap.h"
 #include "assets/Png.h"
+#include "audio/Mixer.h"
 #include "gfx/Gl.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
@@ -136,6 +141,7 @@ struct App {
   bool drawSkin = true;
   gfx::CylinderView view;
   gfx::CylinderSkin skin;
+  audio::Mixer mixer;
 
   const LevelInfo* levelInfo() const {
     for (const auto& i : levelInfos)
@@ -147,6 +153,28 @@ struct App {
   void restart() {
     world = sim::World(makeTestLevel(releaseRates, releaseRate, levelInfo()));
     terrainDirty = true;
+    // Level-start fanfare. Shell-owned rather than a World cue: restart is
+    // not a simulation event, and the original plays this before anyone
+    // walks out of the entrance.
+    mixer.play("Letsgo");
+  }
+
+  // World speaks in SoundCue; the mixer speaks in retail names.
+  static const char* cueName(sim::SoundCue c) {
+    switch (c) {
+      case sim::SoundCue::Assign: return "Chink";
+      case sim::SoundCue::OhNo: return "Ohno";
+      case sim::SoundCue::Explode: return "Explode";
+      case sim::SoundCue::Splat: return "Splat";
+      case sim::SoundCue::Exit: return "Yippee";
+    }
+    return nullptr;
+  }
+
+  void drainCues() {
+    for (const sim::SoundCue c : world.takeCues())
+      if (const char* name = cueName(c))
+        mixer.play(name);
   }
 
   void handleKey(SDL_Keycode k) {
@@ -213,8 +241,10 @@ struct App {
     const int wy = static_cast<int>(worldH * static_cast<float>(py) / vh);
 
     if (const auto hit = world.pick(wx, wy, 8)) {
-      if (world.assign(*hit, kSkills[static_cast<std::size_t>(skill)]))
+      if (world.assign(*hit, kSkills[static_cast<std::size_t>(skill)])) {
         terrainDirty = true;
+        drainCues();  // Assign / OhNo fire from assign, not from tick
+      }
     }
   }
 
@@ -236,8 +266,10 @@ struct App {
       const std::uint64_t due = stepOnce ? 1 : (now - lastTick) * kTicksPerSecond / 1000;
       for (std::uint64_t i = 0; i < due && i < 8; ++i)
         world.tick();
-      if (due)
+      if (due) {
         lastTick = now;
+        drainCues();
+      }
       stepOnce = false;
       terrainDirty = true;  // skills edit terrain; cheap enough at this size
     }
@@ -382,7 +414,7 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
     std::fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
     return 1;
   }
@@ -495,6 +527,22 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "release rates: %s (using a fallback interval)\n",
                      rr.error().c_str());
       }
+
+      // Sound cues used by the simulation. Missing any one is not fatal --
+      // play() is a no-op for unknown names -- but opening the device is.
+      if (auto r = g_app.mixer.open(); !r) {
+        std::fprintf(stderr, "audio: %s (silent)\n", r.error().c_str());
+      } else {
+        int loaded = 0;
+        for (const char* cue : {"Letsgo", "Chink", "Ohno", "Explode", "Splat", "Yippee"}) {
+          if (auto lr = g_app.mixer.loadFrom(*lib, cue); !lr)
+            std::fprintf(stderr, "audio: %s: %s\n", cue, lr.error().c_str());
+          else
+            ++loaded;
+        }
+        std::fprintf(stderr, "audio: loaded %d cues at %d Hz\n", loaded,
+                     g_app.mixer.sampleRate());
+      }
     }
   }
 
@@ -529,6 +577,7 @@ int main(int argc, char** argv) {
     else
       std::printf("wrote %s (%dx%d)\n", shotPath.c_str(), vw, vh);
 
+    g_app.mixer.close();
     SDL_GL_DeleteContext(g_app.context);
     SDL_DestroyWindow(g_app.window);
     SDL_Quit();
@@ -542,6 +591,7 @@ int main(int argc, char** argv) {
     frameThunk();
 #endif
 
+  g_app.mixer.close();
   SDL_GL_DeleteContext(g_app.context);
   SDL_DestroyWindow(g_app.window);
   SDL_Quit();

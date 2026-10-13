@@ -326,6 +326,23 @@ void Renderer::drawSprite(unsigned texture, float x, float y, float w, float h, 
   push(x, y, w, h, u0, v0, u1, v1, tint);
 }
 
+void Renderer::drawCylinderPatch(unsigned texture, float x, float y, float w, float h,
+                                 int segments) {
+  if (!texture || w <= 0 || h <= 0)
+    return;
+  if (boundTex_ != texture) {
+    flush();
+    boundTex_ = texture;
+  }
+  const int n = segments > 0 ? segments : 1;
+  const float step = w / static_cast<float>(n);
+  for (int i = 0; i < n; ++i) {
+    const float u0 = static_cast<float>(i) / static_cast<float>(n);
+    const float u1 = static_cast<float>(i + 1) / static_cast<float>(n);
+    push(x + step * static_cast<float>(i), y, step, h, u0, 0, u1, 1, {1, 1, 1, 1});
+  }
+}
+
 void Renderer::drawQuad(float x, float y, float w, float h, Colour c) {
   if (boundTex_ != whiteTex_) {
     flush();

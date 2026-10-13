@@ -12,6 +12,7 @@
 //   1..8            choose a skill
 //   A D / left right  pan
 //   C               toggle the cylinder projection
+//   T               toggle the level's skin textures
 //   up down         raise and lower the cylinder camera
 //   page up/down    move it closer and further
 //
@@ -30,6 +31,9 @@
 #include "assets/Bitmap.h"
 #include "assets/Png.h"
 #include "gfx/Gl.h"
+#include "assets/Cylinder.h"
+#include "assets/LevelIndex.h"
+#include "gfx/CylinderSkin.h"
 #include "gfx/LemmingSprites.h"
 #include "gfx/Renderer.h"
 #include "assets/Box.h"
@@ -127,7 +131,9 @@ struct App {
   int animTick = 0;
   bool useSprites = true;
   bool cylinder = false;
+  bool drawSkin = true;
   gfx::CylinderView view;
+  gfx::CylinderSkin skin;
 
   const LevelInfo* levelInfo() const {
     for (const auto& i : levelInfos)
@@ -151,6 +157,7 @@ struct App {
       case SDLK_LEFT: case SDLK_a: pan(-16); break;
       case SDLK_RIGHT: case SDLK_d: pan(16); break;
       case SDLK_c: toggleCylinder(); break;
+      case SDLK_t: drawSkin = !drawSkin; break;
       case SDLK_UP: view.eyeHeight -= 8; view.lookHeight -= 8; break;
       case SDLK_DOWN: view.eyeHeight += 8; view.lookHeight += 8; break;
       case SDLK_PAGEUP: view.distance -= 16; view.clamp(); break;
@@ -246,6 +253,12 @@ struct App {
       renderer.uploadTerrain(world.terrain());
       terrainDirty = false;
     }
+    // The level's own artwork, behind the simulation. It is scenery: what is
+    // solid is the terrain mask, and the mapping between the two is still
+    // open, so the mask is drawn over it rather than replaced by it.
+    if (drawSkin && skin.ready())
+      skin.draw(renderer, worldWidth(), static_cast<float>(world.terrain().height()));
+
     renderer.drawTerrain();
 
     for (const auto& l : world.lemmings()) {
@@ -426,6 +439,32 @@ int main(int argc, char** argv) {
         }
       } else {
         std::fprintf(stderr, "level map: %s (using defaults)\n", infos.error().c_str());
+      }
+
+      // The level's cylinder skin, if a level was named. Its tile textures are
+      // the only part of a .LVL the renderer can use today.
+      if (!g_app.levelId.empty()) {
+        std::string path;
+        for (const auto& candidate : levelFileNames(*lib))
+          if (candidate.find(g_app.levelId) != std::string::npos) {
+            path = candidate;
+            break;
+          }
+        if (path.empty()) {
+          std::fprintf(stderr, "skin: no .LVL matching %s\n", g_app.levelId.c_str());
+        } else if (auto blob = lib->read(path)) {
+          auto mesh = findCylinderMesh(*blob);
+          if (!mesh) {
+            std::fprintf(stderr, "skin: %s\n", mesh.error().c_str());
+          } else if (auto r = g_app.skin.load(*lib, g_app.renderer, *mesh); !r) {
+            std::fprintf(stderr, "skin: %s\n", r.error().c_str());
+          } else {
+            for (const auto& m : g_app.skin.missing())
+              std::fprintf(stderr, "skin: %s\n", m.c_str());
+            std::fprintf(stderr, "skin: %zu outer tiles from %s\n", g_app.skin.tileCount(),
+                         path.c_str());
+          }
+        }
       }
 
       // The spawn interval comes from the game's own curve when it is there.

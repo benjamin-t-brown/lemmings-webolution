@@ -19,6 +19,7 @@
 #include "assets/Box.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
+#include "gfx/CylinderSkin.h"
 
 #include <algorithm>
 #include <cmath>
@@ -286,10 +287,87 @@ void testRetail(const fs::path& gameDir) {
   check(surfaceSizes.size() > 50, "the surface geometry varies from level to level");
 }
 
+// Tile names carry their own position, and reading it out is the whole of the
+// skin's layout logic. The first version of parseTilePosition computed the
+// indices and forgot to write them to its out-parameters, so every tile came
+// back as column 0, row 0 and the level stacked itself in one corner. These
+// are the checks that would have caught it in a second.
+void testTilePositions() {
+  std::cout << "tile positions\n";
+
+  const auto outer = webo::gfx::parseTilePosition("Cylinder\\MM_CLIMB_002\\OUT_MM_CLIMB_002_3_1");
+  check(outer.valid, "a well-formed outer tile parses");
+  check(outer.column == 3, std::format("column is 3 (got {})", outer.column));
+  check(outer.row == 1, std::format("row is 1 (got {})", outer.row));
+  check(outer.outer, "and it is the outer surface");
+
+  const auto inner = webo::gfx::parseTilePosition("Cylinder\\E06_KF_1\\INN_e06_kf_1_7_2");
+  check(inner.valid, "an inner tile parses");
+  check(inner.column == 7 && inner.row == 2, "with its own position");
+  check(!inner.outer, "and is marked inner");
+
+  // Column 0 row 0 is a real position, so it must be distinguishable from the
+  // failure case -- which is exactly what the original bug blurred.
+  const auto origin = webo::gfx::parseTilePosition("Cylinder\\L\\OUT_L_0_0");
+  check(origin.valid && origin.column == 0 && origin.row == 0, "0,0 is a valid position");
+
+  // Rejections, all of which must not silently read as 0,0.
+  for (const char* bad : {"", "OUT_L", "OUT_L_1", "Cylinder\\L\\MID_L_1_1", "OUT_L_x_1",
+                          "OUT_L_1_y", "OUT_L_-1_1", "L_1_1"}) {
+    const auto pos = webo::gfx::parseTilePosition(bad);
+    check(!pos.valid, std::format("'{}' is rejected", bad));
+  }
+
+  // Forward slashes work too; the archive uses both separators.
+  const auto slashes = webo::gfx::parseTilePosition("Cylinder/L/OUT_L_2_2");
+  check(slashes.valid && slashes.column == 2 && slashes.row == 2, "forward slashes parse");
+
+  // Every non-empty tile of every retail level must give a position inside
+  // the 8x3 grid, and the two surfaces must each cover all 24 cells.
+  const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
+  if (!dir)
+    return;
+  auto opened = webo::AssetLibrary::open(fs::path(dir) / "lemmings.box",
+                                         fs::path(dir) / "patch.box");
+  if (!opened)
+    return;
+
+  std::size_t parsed = 0;
+  std::size_t outOfGrid = 0;
+  std::size_t unparsed = 0;
+  for (const auto& name : webo::levelFileNames(*opened)) {
+    auto blob = opened->read(name);
+    if (!blob)
+      continue;
+    auto mesh = webo::findCylinderMesh(*blob);
+    if (!mesh)
+      continue;
+    for (const auto& tile : mesh->tileTextures) {
+      if (tile.empty())
+        continue;
+      const auto pos = webo::gfx::parseTilePosition(tile);
+      if (!pos.valid) {
+        ++unparsed;
+        continue;
+      }
+      ++parsed;
+      if (pos.column >= static_cast<int>(webo::CylinderMesh::kTileColumns) ||
+          pos.row >= static_cast<int>(webo::CylinderMesh::kTileRows))
+        ++outOfGrid;
+    }
+  }
+  std::cout << std::format("  {} retail tile names parsed\n", parsed);
+  check(unparsed == 0, std::format("every retail tile name parses ({} did not)", unparsed));
+  check(outOfGrid == 0,
+        std::format("every position is inside the 8x3 grid ({} were not)", outOfGrid));
+  check(parsed == 102 * 24, std::format("24 tiles per level across 102 levels (got {})", parsed));
+}
+
 }  // namespace
 
 int main() {
   testSynthetic();
+  testTilePositions();
 
   if (const char* dir = std::getenv("WEBOLUTION_GAME_DIR")) {
     if (fs::exists(fs::path(dir) / "lemmings.box"))

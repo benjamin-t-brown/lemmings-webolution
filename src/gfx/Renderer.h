@@ -70,6 +70,10 @@ public:
                   int sheetHeight, int sx, int sy, int sw, int sh, bool mirror = false,
                   Colour tint = {});
 
+  // A textured quad subdivided horizontally, so it can follow the tube's
+  // curve. In the flat view the subdivision is harmless: the pieces abut.
+  void drawCylinderPatch(unsigned texture, float x, float y, float w, float h, int segments);
+
   void endFrame();
 
   int drawCalls() const { return drawCalls_; }

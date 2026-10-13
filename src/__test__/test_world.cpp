@@ -308,6 +308,50 @@ void testPickAndNuke() {
   check(w.finished(), "and the level is finished");
 }
 
+// The level clock. LEVELMAP.DAT gives every level a time limit, so the field
+// has to do something; this pins down exactly what, which is narrower than it
+// sounds. Running out closes the entrance. It does not kill anyone, and it
+// does not end the level -- that is the game shell's call.
+void testTimeLimit() {
+  std::cout << "the level clock\n";
+
+  LevelSetup s = flatLevel();
+  s.totalLemmings = 20;
+  s.releaseIntervalTicks = 5;
+  s.timeLimitTicks = 40;
+  World w(s);
+
+  check(!w.timedOut(), "a fresh level has not timed out");
+  check(w.timeRemainingTicks() == 40, "the clock starts at the limit");
+
+  runFor(w, 20);
+  check(!w.timedOut(), "still running at half time");
+  check(w.timeRemainingTicks() == 20, "the clock counts down");
+  check(w.activeCount() > 0, "lemmings are being released");
+
+  runFor(w, 25);  // past the limit
+  check(w.timedOut(), "the clock runs out");
+  check(w.timeRemainingTicks() == 0, "no time remains");
+
+  // The entrance closes, but the clock itself kills nobody.
+  const int releasedAtTimeout = w.activeCount() + w.saved() + w.dead();
+  runFor(w, 100);
+  const int releasedLater = w.activeCount() + w.saved() + w.dead();
+  check(releasedLater == releasedAtTimeout, "no more lemmings are released after the timeout");
+  check(releasedAtTimeout < s.totalLemmings,
+        "the timeout stopped the entrance before the level emptied");
+
+  // A limit of 0 is untimed, which is what an unsupplied limit gives.
+  LevelSetup untimed = flatLevel();
+  untimed.totalLemmings = 4;
+  untimed.releaseIntervalTicks = 5;
+  World u(untimed);
+  runFor(u, 200);
+  check(!u.timedOut(), "a level with no limit never times out");
+  check(u.timeRemainingTicks() == 0, "and reports no remaining time");
+  check(u.activeCount() + u.saved() + u.dead() == 4, "all of its lemmings were released");
+}
+
 }  // namespace
 
 int main() {
@@ -324,6 +368,7 @@ int main() {
   testExit();
   testDeterminism();
   testPickAndNuke();
+  testTimeLimit();
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;

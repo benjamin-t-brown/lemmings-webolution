@@ -16,6 +16,11 @@
 //   N               nuke
 //   R               restart
 //   Esc             quit
+//
+//   --level <id>    take the level's parameters from LEVELMAP.DAT, e.g.
+//                   --level MM_BLOCK_001_A. The terrain stays the built-in
+//                   one; only the lemming count, save target and time limit
+//                   come from the data.
 
 #include "assets/Bitmap.h"
 #include "assets/Png.h"
@@ -36,6 +41,7 @@
 #include <filesystem>
 #include <format>
 #include <string>
+#include <vector>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -55,7 +61,13 @@ constexpr const char* kDefaultGameDir = "C:/progs/Lemmings Revolution";
 // A hand-built level, until .LVL gives us real ones: a floor, some pillars to
 // climb and bash, a gap to build over, and a pit at the seam so the
 // wraparound gets exercised by just playing.
-sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate) {
+//
+// The terrain is hand-built, but the level's *parameters* need not be
+// invented. LEVELMAP.DAT states the lemming count, the save target and the
+// time limit for all 125 slots, so those are taken from there whenever a
+// record is supplied, and only the shape of the ground is ours.
+sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate,
+                              const LevelInfo* info) {
   sim::LevelSetup s;
   const int w = 320, h = 200;
   s.terrain = sim::Terrain(w, h);
@@ -70,8 +82,10 @@ sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate) {
 
   s.entrances.push_back({20, 130});
   s.exits.push_back({230, 138, 12, 14});
-  s.totalLemmings = 20;
-  s.saveTarget = 10;
+  s.totalLemmings = info ? static_cast<int>(info->totalLemmings) : 20;
+  s.saveTarget = info ? static_cast<int>(info->saveTarget) : 10;
+  if (info)
+    s.timeLimitTicks = static_cast<int>(info->timeLimitSeconds) * kTicksPerSecond;
   // Real spacing, from RELEASERATE.PC, when the data is there. Rate 50 is
   // mid-curve. Falls back to a plausible constant otherwise.
   s.releaseIntervalTicks =
@@ -91,6 +105,9 @@ struct App {
   gfx::LemmingSprites sprites;
   ReleaseRates releaseRates;
   int releaseRate = 50;
+  std::vector<LevelInfo> levelInfos;
+  std::string levelId;      // empty = use the built-in defaults
+  std::string levelName;
   sim::World world;
 
   bool running = true;
@@ -104,8 +121,15 @@ struct App {
   int animTick = 0;
   bool useSprites = true;
 
+  const LevelInfo* levelInfo() const {
+    for (const auto& i : levelInfos)
+      if (i.id == levelId)
+        return &i;
+    return nullptr;
+  }
+
   void restart() {
-    world = sim::World(makeTestLevel(releaseRates, releaseRate));
+    world = sim::World(makeTestLevel(releaseRates, releaseRate, levelInfo()));
     terrainDirty = true;
   }
 
@@ -224,7 +248,8 @@ struct App {
       SDL_GL_SwapWindow(window);
 
     const std::string title = std::format(
-        "Lemmings Webolution  --  {}  |  out {} saved {}/{} dead {}  |  tick {}{}",
+        "Lemmings Webolution  --  {}  |  {}  |  out {} saved {}/{} dead {}  |  tick {}{}",
+        levelName.empty() ? "test level" : levelName,
         sim::skillName(kSkills[static_cast<std::size_t>(skill)]), world.activeCount(),
         world.saved(), world.setup().saveTarget, world.dead(), world.tickCount(),
         paused ? "  [paused]" : "");
@@ -255,13 +280,18 @@ int main(int argc, char** argv) {
       shotPath = argv[++i];
     } else if (a == "--shot-ticks" && i + 1 < argc) {
       shotTicks = std::atoi(argv[++i]);
+    } else if (a == "--level" && i + 1 < argc) {
+      // A level id from LEVELMAP.DAT, e.g. MM_CLIMB_002. Only its parameters
+      // are used so far; the terrain stays the built-in one until .LVL is
+      // solved, and the title bar says so.
+      g_app.levelId = argv[++i];
     }
   }
 
   // A headless mode so the simulation can be exercised in CI, and so that
   // "does it run" is answerable without a display.
   if (headless) {
-    sim::World w(makeTestLevel(ReleaseRates{}, 50));
+    sim::World w(makeTestLevel(ReleaseRates{}, 50, nullptr));
     for (int i = 0; i < headlessTicks; ++i)
       w.tick();
     std::printf("ticks=%llu active=%d saved=%d dead=%d solid=%zu\n",
@@ -325,6 +355,23 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "sprites: %s\n", m.c_str());
       std::fprintf(stderr, "sprites: loaded %zu from %s\n",
                    g_app.sprites.definitions().sprites.size(), gameDir.string().c_str());
+
+      // Level parameters, so the goal and the lemming count are the real
+      // ones even while the terrain is still ours.
+      if (auto infos = loadLevelMap(*lib)) {
+        g_app.levelInfos = std::move(*infos);
+        if (const LevelInfo* info = g_app.levelInfo()) {
+          g_app.levelName = info->name;
+          std::fprintf(stderr, "level %s \"%s\": save %u of %u, %us\n", info->id.c_str(),
+                       info->name.c_str(), info->saveTarget, info->totalLemmings,
+                       info->timeLimitSeconds);
+        } else if (!g_app.levelId.empty()) {
+          std::fprintf(stderr, "level %s: not in LEVELMAP.DAT, using defaults\n",
+                       g_app.levelId.c_str());
+        }
+      } else {
+        std::fprintf(stderr, "level map: %s (using defaults)\n", infos.error().c_str());
+      }
 
       // The spawn interval comes from the game's own curve when it is there.
       if (auto rr = loadReleaseRateTable(*lib)) {

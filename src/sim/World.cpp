@@ -353,7 +353,10 @@ void World::step(Lemming& l, std::size_t index) {
 }
 
 void World::tick() {
-  if (++sinceSpawn_ >= setup_.releaseIntervalTicks) {
+  // Once the clock runs out the entrance stops. The lemmings already out keep
+  // going until they exit or die; deciding that the *level* is over belongs to
+  // the game shell, not here, so the simulation only closes the entrance.
+  if (!timedOut() && ++sinceSpawn_ >= setup_.releaseIntervalTicks) {
     sinceSpawn_ = 0;
     spawn();
   }

@@ -119,6 +119,20 @@ public:
   void tick();
 
   std::uint64_t tickCount() const { return tick_; }
+
+  // The level clock, from LEVELMAP.DAT's per-level time limit. A limit of 0
+  // means untimed, which is how an unsupplied limit behaves.
+  bool timedOut() const {
+    return setup_.timeLimitTicks > 0 &&
+           tick_ >= static_cast<std::uint64_t>(setup_.timeLimitTicks);
+  }
+  // Ticks left on the clock, 0 once it has run out. Untimed levels report 0
+  // too, so check timedOut() or the setup's limit to tell them apart.
+  std::uint64_t timeRemainingTicks() const {
+    if (setup_.timeLimitTicks <= 0 || timedOut())
+      return 0;
+    return static_cast<std::uint64_t>(setup_.timeLimitTicks) - tick_;
+  }
   const Terrain& terrain() const { return setup_.terrain; }
   Terrain& terrain() { return setup_.terrain; }
   const std::vector<Lemming>& lemmings() const { return lemmings_; }

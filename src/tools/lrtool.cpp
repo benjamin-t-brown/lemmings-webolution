@@ -13,9 +13,11 @@
 #include "assets/Bitmap.h"
 #include "assets/Lrz.h"
 #include "assets/Png.h"
+#include "assets/Sprite.h"
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -335,6 +337,140 @@ int cmdLevels(const fs::path& dir) {
   return 0;
 }
 
+int cmdSprites(const fs::path& dir, std::string_view filter) {
+  auto lib = openGame(dir);
+  if (!lib) {
+    std::cerr << lib.error() << "\n";
+    return 1;
+  }
+
+  std::size_t files = 0, failed = 0, totalFrames = 0, missingSheets = 0;
+  for (const auto& name : webo::spriteSheetNames(*lib)) {
+    if (!containsCI(name, filter))
+      continue;
+    auto sheet = webo::loadSpriteSheet(*lib, name);
+    if (!sheet) {
+      std::cerr << "  ! " << sheet.error() << "\n";
+      ++failed;
+      continue;
+    }
+    ++files;
+    totalFrames += sheet->frameCount();
+
+    std::string names;
+    for (std::size_t i = 0; i < sheet->sprites.size() && i < 6; ++i) {
+      if (i)
+        names += ", ";
+      names += sheet->sprites[i].name;
+    }
+    if (sheet->sprites.size() > 6)
+      names += ", ...";
+
+    std::cout << std::format("{:<24} {:>3} sprites {:>5} frames{}  {}\n",
+                             fs::path(name).filename().string(), sheet->sprites.size(),
+                             sheet->frameCount(),
+                             sheet->palette.empty()
+                                 ? std::string("          ")
+                                 : std::format("  {:>2} colours", sheet->palette.size()),
+                             names);
+
+    for (const auto& s : sheet->sprites)
+      for (const auto& a : s.animations)
+        for (const auto& f : a.frames)
+          if (!lib->contains(webo::sheetAssetName(f.sheet)))
+            ++missingSheets;
+  }
+
+  std::cout << std::format("\n{} files, {} frames, {} failed, {} frames referencing a missing sheet\n",
+                           files, totalFrames, failed, missingSheets);
+  return (failed || missingSheets) ? 1 : 0;
+}
+
+// Composite one animation's frames into a horizontal strip, so the rectangles
+// can be checked by eye rather than only by arithmetic.
+int cmdAnim(const fs::path& dir, std::string_view sprName, std::string_view spriteName,
+            const fs::path& out, std::size_t animIndex) {
+  auto lib = openGame(dir);
+  if (!lib) {
+    std::cerr << lib.error() << "\n";
+    return 1;
+  }
+  auto sheet = webo::loadSpriteSheet(*lib, sprName);
+  if (!sheet) {
+    std::cerr << sheet.error() << "\n";
+    return 1;
+  }
+  const webo::Sprite* sprite = sheet->find(spriteName);
+  if (!sprite) {
+    std::cerr << std::format("no sprite '{}'; available:", spriteName);
+    for (const auto& s : sheet->sprites)
+      std::cerr << " " << s.name;
+    std::cerr << "\n";
+    return 1;
+  }
+  if (animIndex >= sprite->animations.size()) {
+    std::cerr << std::format("sprite '{}' has {} animations\n", spriteName,
+                             sprite->animations.size());
+    return 1;
+  }
+  const auto& frames = sprite->animations[animIndex].frames;
+  if (frames.empty()) {
+    std::cerr << "animation has no frames\n";
+    return 1;
+  }
+
+  int stripW = 0, stripH = 0;
+  for (const auto& f : frames) {
+    stripW += static_cast<int>(f.width) + 2;
+    stripH = std::max(stripH, static_cast<int>(f.height));
+  }
+
+  webo::Image strip;
+  strip.width = stripW;
+  strip.height = stripH;
+  strip.rgba.assign(static_cast<std::size_t>(stripW) * stripH * 4, 0);
+
+  std::map<std::string, webo::Image> cache;
+  int penX = 0;
+  for (const auto& f : frames) {
+    const std::string asset = webo::sheetAssetName(f.sheet);
+    auto it = cache.find(asset);
+    if (it == cache.end()) {
+      auto img = webo::loadTexture(*lib, asset);
+      if (!img) {
+        std::cerr << "  ! " << img.error() << "\n";
+        return 1;
+      }
+      it = cache.emplace(asset, std::move(*img)).first;
+    }
+    const webo::Image& src = it->second;
+
+    for (std::uint32_t y = 0; y < f.height; ++y) {
+      const std::uint32_t sy = f.top + y;
+      if (sy >= static_cast<std::uint32_t>(src.height))
+        break;
+      for (std::uint32_t x = 0; x < f.width; ++x) {
+        const std::uint32_t sx = f.left + x;
+        if (sx >= static_cast<std::uint32_t>(src.width))
+          break;
+        const std::uint8_t* s = src.rgba.data() + (static_cast<std::size_t>(sy) * src.width + sx) * 4;
+        std::uint8_t* d = strip.rgba.data() +
+                          (static_cast<std::size_t>(y) * stripW + penX + x) * 4;
+        std::memcpy(d, s, 4);
+      }
+    }
+    penX += static_cast<int>(f.width) + 2;
+  }
+
+  if (auto r = webo::writePng(out, strip); !r) {
+    std::cerr << r.error() << "\n";
+    return 1;
+  }
+  std::cout << std::format("{} '{}' animation {}: {} frames -> {} ({}x{})\n", sprName, spriteName,
+                           animIndex, frames.size(), out.string(), stripW, stripH);
+  return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -377,6 +513,13 @@ int main(int argc, char** argv) {
       return usage();
     return cmdExtract(dir, argv[3], argv[4]);
   }
+  if (cmd == "anim") {
+    if (argc < 6)
+      return usage();
+    return cmdAnim(dir, argv[3], argv[4], argv[5], argc > 6 ? std::stoul(argv[6]) : 0);
+  }
+  if (cmd == "sprites")
+    return cmdSprites(dir, argc > 3 ? argv[3] : "");
   if (cmd == "levels")
     return cmdLevels(dir);
   if (cmd == "png") {

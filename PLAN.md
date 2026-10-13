@@ -83,7 +83,7 @@ Contents:
 | `.LVL` | 102 | Levels. 699 KB – 1.9 MB each. **The unsolved format** |
 | `.ALF` | 81 | 8-bit alpha plane, dimensions match the sibling `.BMP` |
 | `.WAV` | 73 | Standard RIFF PCM, 22050 Hz |
-| `.SPR` | 19 | Sprite sheets; reference texture sheets with frame rects |
+| `.SPR` | 19 | Sprite sheets; reference texture sheets with frame rects (solved, 1.6) |
 | `.LTX` | 6 | Localised string tables |
 | misc | 4 | `LEVELS.MAP`, `LEVELMAP.DAT`, `RELEASERATE.PC`, `PSPBRWSE.JBF` |
 
@@ -142,7 +142,39 @@ wrong, both caught by parsing the real data:
   1250 and Hebrew needs 1255. A single table would silently corrupt three of the
   eight. A `^` inside a string is the game's line break.
 
-### 1.5 `.LVL` — the open problem
+### 1.5 `.SPR` — solved
+
+Undocumented; derived by parsing until all 19 retail files were consumed
+exactly. Nested counts, then a trailing palette:
+
+```
+u32 spriteCount
+  u32 animationCount
+    u32 frameCount
+      u32    bottom, top, left, right      source rect in pixels
+      double bottom, top, left, right      the same, normalised
+      u32    unknown, unknown
+      u32    width, height                 == right-left, bottom-top
+      u32 len; char[len] sheet             "Sheets\$LemSheet8"
+  u32 len; char[len] name                  "walk", "bash", ...
+  double rate
+u32 paletteCount ; each { u32; double[48] }
+```
+
+Two internal consistencies pin the field order down, and both were needed:
+`width`/`height` must equal the rectangle's extents, and dividing each integer
+edge by its normalised twin must recover the sheet's real pixel size. The
+second is what caught the axes being stored **Y before X** -- the wrong reading
+yields a plausible rectangle but transposes the sheet dimensions. Verified over
+all 7,354 frames, and by rendering animation strips and looking at them.
+
+`LEMMINGSLO.SPR` holds the 15 lemming states -- walk, bash, build, climb, dig,
+drown, explode, fall, flip, mine, shrug, float, umbopen, cartwheel, block --
+each with 12 animations, which is how a 2D game on a cylinder shows a lemming
+from several angles. Only the six lemming sheets carry a palette, all the same
+16 colours, the first being 404040: the shade the `$` sigil keys out.
+
+### 1.6 `.LVL` — the open problem
 
 Not publicly documented. Structural probe of `MM_CLIMB_002.LVL` (699 KB):
 

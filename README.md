@@ -46,7 +46,7 @@ Phase 1 — asset layer, in progress.
 - [x] LRZ texture decoder, verified byte-identical to the original
 - [x] `.ALF` alpha planes, the `^ + $ _ ~` name sigils, BMP -> RGBA, PNG export
 - [x] `.LTX` strings (8 languages, 3 codepages), `LEVELMAP.DAT`, `LEVELS.MAP`, `RELEASERATE.PC`
-- [ ] `.SPR` sprite sheets — next
-- [ ] `.LVL` format
+- [x] `.SPR` sprite sheets: 7,354 frames, animation strips render correctly
+- [ ] `.LVL` format — next, and the last unknown
 - [ ] Simulation
 - [ ] Rendering

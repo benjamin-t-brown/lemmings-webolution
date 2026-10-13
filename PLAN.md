@@ -197,6 +197,36 @@ onto a cylinder. The simulation is a flat terrain mask with horizontal wraparoun
 the cylinder is presentation. We can therefore build and test the entire simulation
 before writing a single line of 3D rendering.
 
+#### What is read so far (`src/assets/LevelIndex.cpp`)
+
+Verified across all 102 levels:
+
+* the length-prefixed title at offset 0, and the header words after it;
+* every asset reference -- 9,792 cylinder tiles and 16,229 model textures,
+  **26,021 in total, all of which resolve** to an entry in the archive under
+  `TEXTURES\<reference>.BMP`. That is the evidence the scan reads real fields:
+  a mis-scan yields references that do not resolve;
+* a `Cylinder` chunk followed by two equal `u32` arrays whose byte length the
+  header states twice (110,592 bytes = 27,648 cells in the retail data).
+
+What a level references, beyond textures: placed models (`Models\exitasket`,
+`Models\entrance\lem_box_default`, scenery), sound cues (`Splat`, `Yippee`,
+`Ohno`, `Letsgo`), sprite sheets (`Axe`, `Bits`, `GreyIcons`), and sigil-typed
+script variables.
+
+#### Still open
+
+* **Grid dimensions.** 27,648 factors many ways; rendering the candidates was
+  suggestive (empty above, a ground band below) but not conclusive, so no
+  dimensions are asserted.
+* **Which grid is the terrain.** The second is far denser -- about 6,100 of
+  27,648 cells set against 194 in the first -- so it is the better candidate.
+* The polygon lists (379 `PolyList` chunks in one level), the placed-model
+  transforms, and the script.
+
+The next concrete step is the `SkyIslands` loader in the original executable,
+where the field order can be read off rather than inferred.
+
 ---
 
 ## 2. Verification strategy — the differential oracle

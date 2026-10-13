@@ -63,9 +63,13 @@ add_executable(test_sprite src/__test__/test_sprite.cpp)
 target_link_libraries(test_sprite PRIVATE webolution_objects)
 add_test(NAME sprite COMMAND test_sprite)
 
+add_executable(test_levelindex src/__test__/test_levelindex.cpp)
+target_link_libraries(test_levelindex PRIVATE webolution_objects)
+add_test(NAME levelindex COMMAND test_levelindex)
+
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata sprite PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata sprite levelindex PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

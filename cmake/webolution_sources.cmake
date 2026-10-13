@@ -14,6 +14,7 @@ set(WEBOLUTION_SOURCES
   src/assets/Png.cpp
   src/assets/GameData.cpp
   src/assets/Sprite.cpp
+  src/assets/LevelIndex.cpp
 )
 
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

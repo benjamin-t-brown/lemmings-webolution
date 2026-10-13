@@ -4,6 +4,7 @@
 //   lrtool list    <game-dir> [substring]
 //   lrtool extract <game-dir> <name> <out-file>
 //   lrtool dump    <game-dir> <out-dir> [substring]
+//   lrtool lvlmap  <game-dir> <level> <out.png>
 //
 // <game-dir> is a Lemmings Revolution installation containing lemmings.box
 // (and optionally patch.box, which overrides entries of the same name).
@@ -11,13 +12,20 @@
 #include "assets/Box.h"
 #include "assets/GameData.h"
 #include "assets/Bitmap.h"
+#include "assets/Cylinder.h"
+#include "assets/LevelIndex.h"
 #include "assets/Lrz.h"
 #include "assets/Png.h"
 #include "assets/Sprite.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
+#include <cctype>
 #include <cstring>
+#include <numbers>
+#include <ranges>
+#include <utility>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -36,8 +44,124 @@ int usage() {
                "  lrtool info    <game-dir>\n"
                "  lrtool list    <game-dir> [substring]\n"
                "  lrtool extract <game-dir> <name> <out-file>\n"
-               "  lrtool dump    <game-dir> <out-dir> [substring]\n";
+               "  lrtool dump    <game-dir> <out-dir> [substring]\n"
+               "  lrtool lvlmap  <game-dir> <level> <out.png>\n";
   return 2;
+}
+
+// Unrolls a level's cylinder surface to a flat image, so the geometry can be
+// looked at instead of inferred. This is a diagnostic, not a level loader: it
+// plots the vertices and the ring lattice, and joins consecutive vertices only
+// where they land near each other in the unrolled plane. It deliberately does
+// not fill faces -- the surface's topology is still unknown (see Cylinder.h),
+// and filling would mean asserting one.
+int cmdLvlMap(const fs::path& gameDir, std::string_view levelName, const fs::path& out) {
+  auto lib = webo::AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
+  if (!lib) {
+    std::cerr << "error: " << lib.error() << "\n";
+    return 1;
+  }
+
+  // Accept a bare name, with or without the folder and extension.
+  std::string wanted(levelName);
+  std::ranges::transform(wanted, wanted.begin(),
+                         [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+  std::string resolved;
+  for (const auto& candidate : webo::levelFileNames(*lib))
+    if (candidate.find(wanted) != std::string::npos) {
+      resolved = candidate;
+      break;
+    }
+  if (resolved.empty()) {
+    std::cerr << std::format("error: no level matching '{}'\n", levelName);
+    return 1;
+  }
+
+  auto blob = lib->read(resolved);
+  if (!blob) {
+    std::cerr << "error: " << blob.error() << "\n";
+    return 1;
+  }
+  auto mesh = webo::findCylinderMesh(*blob);
+  if (!mesh) {
+    std::cerr << "error: " << mesh.error() << "\n";
+    return 1;
+  }
+
+  constexpr int kScale = 6;
+  const int h = static_cast<int>(mesh->height()) * kScale + 1;
+  const int w = static_cast<int>(mesh->angularSteps) * kScale * 4;
+
+  webo::Image img;
+  img.width = w;
+  img.height = h;
+  img.rgba.assign(static_cast<std::size_t>(w) * h * 4, 0);
+  const auto plot = [&](int x, int y, std::uint8_t r, std::uint8_t g, std::uint8_t b) {
+    if (x < 0 || y < 0 || x >= w || y >= h)
+      return;
+    std::uint8_t* p = img.rgba.data() + (static_cast<std::size_t>(y) * w + x) * 4;
+    p[0] = r;
+    p[1] = g;
+    p[2] = b;
+    p[3] = 255;
+  };
+
+  // The ring lattice: 32 angular steps and the ring heights, with the 8x3
+  // tile boundaries picked out more brightly.
+  for (std::uint32_t s = 0; s < mesh->angularSteps; ++s) {
+    const int x = static_cast<int>(static_cast<double>(s) / mesh->angularSteps * w);
+    const bool tile = mesh->stepsPerTileColumn() && s % mesh->stepsPerTileColumn() == 0;
+    for (int y = 0; y < h; ++y)
+      plot(x, y, tile ? 70 : 34, tile ? 70 : 34, tile ? 90 : 44);
+  }
+  for (std::uint32_t r = 0; r < mesh->ringCount; ++r) {
+    const int y = h - 1 - static_cast<int>(r * mesh->ringSpacing()) * kScale;
+    const bool tile = mesh->bandsPerTileRow() && r % mesh->bandsPerTileRow() == 0;
+    for (int x = 0; x < w; ++x)
+      plot(x, y, tile ? 70 : 34, tile ? 70 : 34, tile ? 90 : 44);
+  }
+
+  // Unroll a vertex: angle around the tube to X, height to Y.
+  const auto project = [&](const webo::Vec3& v) {
+    double a = std::atan2(-v.x, v.z) / (2.0 * std::numbers::pi);
+    if (a < 0)
+      a += 1.0;
+    return std::pair{static_cast<int>(a * w), h - 1 - static_cast<int>(v.y) * kScale};
+  };
+
+  // Join consecutive vertices when they are close in the unrolled plane. A
+  // jump to a new column exceeds the threshold and is left undrawn rather
+  // than guessed at.
+  const int limit = kScale * 5;
+  for (std::size_t i = 1; i < mesh->surface.size(); ++i) {
+    const auto [x0, y0] = project(mesh->surface[i - 1]);
+    const auto [x1, y1] = project(mesh->surface[i]);
+    if (std::abs(x1 - x0) > limit || std::abs(y1 - y0) > limit)
+      continue;
+    const int steps = std::max(std::abs(x1 - x0), std::abs(y1 - y0));
+    for (int k = 0; k <= steps; ++k) {
+      const double t = steps ? static_cast<double>(k) / steps : 0.0;
+      plot(static_cast<int>(x0 + (x1 - x0) * t), static_cast<int>(y0 + (y1 - y0) * t), 60, 130, 90);
+    }
+  }
+
+  for (const auto& v : mesh->surface) {
+    const auto [x, y] = project(v);
+    plot(x, y, 240, 200, 90);
+    plot(x + 1, y, 240, 200, 90);
+    plot(x, y + 1, 240, 200, 90);
+    plot(x + 1, y + 1, 240, 200, 90);
+  }
+
+  if (auto r = webo::writePng(out, img); !r) {
+    std::cerr << "error: " << r.error() << "\n";
+    return 1;
+  }
+  const auto skinned = std::ranges::count_if(mesh->tileTextures,
+                                             [](const std::string& s) { return !s.empty(); });
+  std::cout << std::format("{}: {} surface vertices, {} skinned tiles -> {} ({}x{})\n", resolved,
+                           mesh->surface.size(), skinned, out.string(), w, h);
+  return 0;
 }
 
 std::string humanBytes(std::uint64_t n) {
@@ -526,6 +650,11 @@ int main(int argc, char** argv) {
     if (argc < 4)
       return usage();
     return cmdPng(dir, argv[3], argc > 4 ? argv[4] : "");
+  }
+  if (cmd == "lvlmap") {
+    if (argc < 5)
+      return usage();
+    return cmdLvlMap(argv[2], argv[3], argv[4]);
   }
   if (cmd == "dump") {
     if (argc < 4)

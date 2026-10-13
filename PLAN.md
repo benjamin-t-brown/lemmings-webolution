@@ -409,6 +409,30 @@ structural. Two concrete threads:
   almost certainly driven by the index arrays rather than by vertex order.
   That makes the two threads the same thread.
 
+#### Looking at it: `lrtool lvlmap`
+
+`lrtool lvlmap <game-dir> <level> <out.png>` unrolls a level's surface --
+angle around the tube to X, height to Y -- and plots the vertices over the
+ring lattice, with the 8x3 tile boundaries picked out. It joins consecutive
+vertices only where they land near each other in the unrolled plane, and
+fills nothing: the topology is unknown, and filled faces would be an
+assertion rather than a picture.
+
+What the pictures show is worth recording, because it narrows what the
+surface can be. The geometry is **sparse and clustered** -- small structures
+of a few vertices each, hugging the ring lines, with large stretches of the
+tube carrying nothing at all. It is plainly level-specific (`MM_CLIMB_002`
+and `MM_FLOAT` look nothing alike) and often symmetric about the tube, which
+matches the 4-fold symmetry already seen in the ring radii.
+
+That sparsity is in the vertex data itself, not an artefact of the drawing
+rule -- the vertices are plotted unconditionally. So the surface array is
+very unlikely to be the complete walkable terrain on its own: most of the
+cylinder would then be empty. The better reading is that it is detail or
+collision geometry sitting on top of a skin whose coverage comes from the
+tile textures, but that is an observation from pictures and is not asserted
+anywhere in the code.
+
 The live-process fallback also stands: the executable loads at a fixed
 `00400000`, `ReadProcessMemory` works, and the DirectInput shim can drive the
 menus by script, so a level can be started and its in-memory terrain read

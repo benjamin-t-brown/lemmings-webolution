@@ -24,7 +24,7 @@ LRTOOL := $(BUILD_DIR)/lrtool
 endif
 
 .DEFAULT_GOAL := build
-.PHONY: build configure test run js info dump png clean help
+.PHONY: build configure test run js info dump png lvlmap clean help
 
 build: configure
 	@cd "$(ROOT)" && cmake --build --preset "$(PRESET)"
@@ -58,6 +58,13 @@ dump: build
 png: build
 	@"$(LRTOOL)" png "$(GAME_DIR)" "$(ROOT)/build/png"
 
+# Unroll a level's cylinder surface to a PNG for inspection.
+#   make lvlmap LEVEL=MM_CLIMB_002
+LEVEL ?= MM_CLIMB_002
+lvlmap: build
+	@mkdir -p "$(ROOT)/build/lvlmap"
+	@"$(LRTOOL)" lvlmap "$(GAME_DIR)" "$(LEVEL)" "$(ROOT)/build/lvlmap/$(LEVEL).png"
+
 clean:
 	@rm -rf "$(ROOT)/build/cmake"
 
@@ -69,6 +76,7 @@ help:
 	@echo "make info      summarise the game archives"
 	@echo "make dump      extract every archive entry to build/assets"
 	@echo "make png       decode every texture to PNG in build/png"
+	@echo "make lvlmap    unroll a level's surface to PNG (LEVEL=name)"
 	@echo "make clean     remove the cmake build tree"
 	@echo ""
 	@echo "GAME_DIR=$(GAME_DIR)"

@@ -24,7 +24,8 @@
 //     surfaceCount * { f64 x, f64 y, f64 z }           the level's surface
 //     u32     zero           0 in every retail level
 //     u32     48
-//     48 * counted string                              tile texture names
+//     48 * counted string                              OUTER tile names
+//     48 * counted string                              INNER tile names
 //
 // The whole chain parses exactly in all 102 retail levels.
 //
@@ -95,9 +96,13 @@ struct CylinderMesh {
   // Unidentified; 1 in every retail level. Recorded, not interpreted.
   std::uint32_t one = 0;
 
-  // The 48 skin tiles: 8 columns x 3 rows, inner and outer.
-  //   "Cylinder\MM_CLIMB_002\INN_MM_CLIMB_002_0_0"
-  std::vector<std::string> tileTextures;
+  // The skin tiles, in two blocks of 48 slots. The count is stated once and
+  // applies to each block; the second follows the first with no header of its
+  // own. Half of each block's slots are empty, so a level names 24 outer and
+  // 24 inner tiles -- one per cell of the 8x3 grid.
+  //   "Cylinder\MM_CLIMB_002\OUT_MM_CLIMB_002_0_0"
+  std::vector<std::string> tileTextures;       // all prefixed OUT_
+  std::vector<std::string> innerTileTextures;  // all prefixed INN_
 
   // Where the mesh was found, so callers can keep parsing after it.
   std::size_t offset = 0;

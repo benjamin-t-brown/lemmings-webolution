@@ -17,6 +17,8 @@
 //   page up/down    move it closer and further
 //
 //   --cylinder      start in the cylinder projection
+//   --native        open at the original's 640x480
+//   --size WxH      open at a given size
 //   space           pause
 //   .               single step while paused
 //   N               nuke
@@ -331,6 +333,11 @@ int main(int argc, char** argv) {
   std::string shotPath;
   int shotTicks = 120;
   bool startCylinder = false;
+  // The original ran at 640x480. That is the reference the renderer is meant
+  // to reproduce, so it is one flag away; a larger window is just easier to
+  // work in.
+  int windowW = 1280;
+  int windowH = 800;
   for (int i = 1; i < argc; ++i) {
     const std::string a = argv[i];
     if (a == "--headless" && i + 1 < argc) {
@@ -343,6 +350,16 @@ int main(int argc, char** argv) {
       shotPath = argv[++i];
     } else if (a == "--shot-ticks" && i + 1 < argc) {
       shotTicks = std::atoi(argv[++i]);
+    } else if (a == "--native") {
+      windowW = 640;
+      windowH = 480;
+    } else if (a == "--size" && i + 1 < argc) {
+      const std::string spec = argv[++i];
+      const auto x = spec.find('x');
+      if (x != std::string::npos) {
+        windowW = std::max(64, std::atoi(spec.substr(0, x).c_str()));
+        windowH = std::max(64, std::atoi(spec.substr(x + 1).c_str()));
+      }
     } else if (a == "--cylinder") {
       startCylinder = true;
     } else if (a == "--level" && i + 1 < argc) {
@@ -385,7 +402,7 @@ int main(int argc, char** argv) {
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
   g_app.window = SDL_CreateWindow("Lemmings Webolution", SDL_WINDOWPOS_CENTERED,
-                                  SDL_WINDOWPOS_CENTERED, 1280, 800,
+                                  SDL_WINDOWPOS_CENTERED, windowW, windowH,
                                   SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
   if (!g_app.window) {
     std::fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
@@ -461,8 +478,9 @@ int main(int argc, char** argv) {
           } else {
             for (const auto& m : g_app.skin.missing())
               std::fprintf(stderr, "skin: %s\n", m.c_str());
-            std::fprintf(stderr, "skin: %zu outer tiles from %s\n", g_app.skin.tileCount(),
-                         path.c_str());
+            std::fprintf(stderr, "skin: %zu tiles (%zu outer, %zu inner) from %s\n",
+                         g_app.skin.tileCount(), g_app.skin.outerCount(),
+                         g_app.skin.innerCount(), path.c_str());
           }
         }
       }

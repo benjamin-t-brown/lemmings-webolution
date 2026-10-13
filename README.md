@@ -45,6 +45,7 @@ make -C src run                                   # the test level
 build/cmake/dev-debug/webolution --level MM_BLOCK_001_A   # real parameters
 build/cmake/dev-debug/webolution --cylinder               # wrapped on the tube
 build/cmake/dev-debug/webolution --level MM_CLIMB_002 --cylinder  # with its artwork
+build/cmake/dev-debug/webolution --native                 # the original's 640x480
 make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
 ```
 
@@ -69,13 +70,13 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
       eight skills, deterministic ticks, the level clock. **Rule constants are
       provisional** until validated against the original via the oracle -- the
       exception being the spawn interval, which comes from `RELEASERATE.PC`.
-- [~] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
+- [x] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
       lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
       unwrapped one and the cylinder projection (`C` toggles), and a named
-      level's own 8x3 skin tiles wrapped onto the tube (`T` toggles). The
-      skin is scenery: what is solid is still the simulation's own terrain
-      mask, drawn over it, because the mapping between artwork and collision
-      is part of the unsolved surface topology.
+      level's own skin tiles wrapped onto the tube, both surfaces (`T`
+      toggles). The skin is scenery: what is solid is still the simulation's
+      own terrain mask, drawn over it, because the mapping between artwork and
+      collision is part of the unsolved surface topology.
 - [ ] Game shell: menus, level select, saves, audio, FMV
 - [ ] Linux, macOS and WebAssembly builds. The emscripten preset exists but has
       never been run -- no activated EMSDK here -- so it is untested, not done.

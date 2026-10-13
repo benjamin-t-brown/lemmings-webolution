@@ -103,10 +103,11 @@ void testSynthetic() {
     putF64(v, 60.0);
   }
 
-  // u32 zero, u32 tileCount, then the names.
+  // u32 zero, u32 tileCount, then two blocks of that many names: outer, then
+  // inner. The count is stated once and covers each block.
   put32(v, 0);
   put32(v, 2);
-  for (std::string_view name : {"INN_0_0", "OUT_0_0"}) {
+  for (std::string_view name : {"OUT_L_0_0", "OUT_L_1_0", "INN_L_0_0", "INN_L_1_0"}) {
     put32(v, static_cast<std::uint32_t>(name.size()));
     for (char c : name)
       v.push_back(static_cast<std::byte>(c));
@@ -128,8 +129,10 @@ void testSynthetic() {
   check(mesh->one == 1, "the unidentified word is recorded verbatim");
   check(mesh->surface.size() == 5, "surface vertex count");
   check(mesh->surface[4].y == 8.0, "surface vertices are read in order");
-  check(mesh->tileTextures.size() == 2, "tile texture count");
-  check(mesh->tileTextures[1] == "OUT_0_0", "tile texture names");
+  check(mesh->tileTextures.size() == 2, "outer tile count");
+  check(mesh->tileTextures[1] == "OUT_L_1_0", "outer tile names");
+  check(mesh->innerTileTextures.size() == 2, "inner tile count");
+  check(mesh->innerTileTextures[0] == "INN_L_0_0", "inner tile names");
   check(std::abs(mesh->innerRadius() - kInner) < 1e-9, "inner radius");
   check(std::abs(mesh->outerRadius() - (kInner + kThickness)) < 1e-9, "outer radius");
   check(std::abs(mesh->ringSpacing() - 16.0) < 1e-9, "ring spacing");
@@ -203,18 +206,42 @@ void testRetail(const fs::path& gameDir) {
     }
 
     // The rest of the chain: radii parallel to the inner vertices, the
-    // per-level surface, and exactly 48 tile names (8 columns x 3 rows,
-    // inner and outer).
-    if (mesh->radii.size() != 7u * 32u || mesh->one != 1 ||
-        mesh->tileTextures.size() != 48) {
-      std::cerr << std::format("  FAIL  {} tail disagrees: radii={} one={} tiles={}\n", name,
-                               mesh->radii.size(), mesh->one, mesh->tileTextures.size());
+    // per-level surface, and two blocks of 48 tile slots -- outer, then inner.
+    if (mesh->radii.size() != 7u * 32u || mesh->one != 1 || mesh->tileTextures.size() != 48 ||
+        mesh->innerTileTextures.size() != 48) {
+      std::cerr << std::format("  FAIL  {} tail disagrees: radii={} one={} outer={} inner={}\n",
+                               name, mesh->radii.size(), mesh->one, mesh->tileTextures.size(),
+                               mesh->innerTileTextures.size());
+      continue;
+    }
+
+    // Each block is half full, and each is entirely one surface. That split is
+    // what lets the skin trust the name prefix rather than the slot index.
+    std::size_t outerNamed = 0;
+    std::size_t innerNamed = 0;
+    bool prefixesAgree = true;
+    for (const auto& t : mesh->tileTextures)
+      if (!t.empty()) {
+        ++outerNamed;
+        prefixesAgree = prefixesAgree && webo::gfx::parseTilePosition(t).outer;
+      }
+    for (const auto& t : mesh->innerTileTextures)
+      if (!t.empty()) {
+        ++innerNamed;
+        prefixesAgree = prefixesAgree && !webo::gfx::parseTilePosition(t).outer;
+      }
+    if (outerNamed != 24 || innerNamed != 24 || !prefixesAgree) {
+      std::cerr << std::format("  FAIL  {} tile blocks: {} outer, {} inner, prefixes {}\n", name,
+                               outerNamed, innerNamed, prefixesAgree ? "agree" : "disagree");
       continue;
     }
     // Every non-empty tile name must resolve to a texture that exists in the
-    // archive. Empty slots are normal -- most levels skin one surface only.
+    // archive. Empty slots are normal: a slot names a tile on one surface.
     bool resolved = true;
-    for (const auto& tile : mesh->tileTextures)
+    std::vector<std::string> allTiles = mesh->tileTextures;
+    allTiles.insert(allTiles.end(), mesh->innerTileTextures.begin(),
+                    mesh->innerTileTextures.end());
+    for (const auto& tile : allTiles)
       if (!tile.empty() && !lib.contains(webo::levelTextureAssetName(tile))) {
         std::cerr << std::format("  FAIL  {} tile {} does not resolve\n", name, tile);
         resolved = false;

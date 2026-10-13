@@ -538,11 +538,25 @@ Two properties that matter for the oracle:
   (anti-grav shafts, trampolines, water, acid, axes, evil rats, cylinder rotation).
 - Validated continuously against the differential oracle.
 
-### Phase 4 — Rendering
+### Phase 4 — Rendering — **done**
 - SDL2 + OpenGL, targeting a GLES3-compatible subset so WebGL2 is nearly free.
-- Flat unwrapped 2D debug view at 640×480 first; then wrap onto the cylinder using
-  the INN/OUT texture grid.
-- `.SPR` sheet-based sprite animation.
+  One shader pair, `#version 330 core` or `#version 300 es` chosen at runtime,
+  nothing outside the common subset. **Caveat: never actually run on GLES or
+  WebGL2.** No EMSDK is activated here, so that half of the claim is a code
+  property, not an observation, and it belongs to Phase 6 to confirm.
+- Flat unwrapped 2D debug view — `--native` opens it at the original's 640×480,
+  `--size WxH` at anything else.
+- Wrapped onto the cylinder using the INN/OUT texture grid: `C` toggles the
+  projection, `T` the skin. Both surfaces are drawn, inner first, so the outer
+  one covers it where it is opaque and the inner shows through its gaps —
+  which is how the original shows the far side of the tube.
+- `.SPR` sheet-based sprite animation, from `LEMMINGSLO.SPR`.
+
+What is *not* in this phase, and is not pretended to be: the skin is scenery.
+What a lemming can stand on is still the simulation's own terrain mask, drawn
+over the artwork, because the mapping between the two is part of the surface
+topology that §1.6 leaves open. Joining them is the next real step, and it is
+blocked on reverse engineering rather than on rendering.
 
 ### Phase 5 — Game shell
 Menus, level select, save games, `.LTX` localisation, audio. FMV is an open question —

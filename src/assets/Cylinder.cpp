@@ -151,21 +151,33 @@ std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::b
     p += 8;
     if (tileCount > 4096)
       return std::unexpected("cylinder: implausible tile texture count");
-    mesh.tileTextures.reserve(tileCount);
-    for (std::uint32_t i = 0; i < tileCount; ++i) {
-      if (!need(4))
-        return std::unexpected("cylinder: the file ends inside the tile texture list");
-      const std::uint32_t len = readAt<std::uint32_t>(data, p);
-      p += 4;
-      // An empty name is normal: it marks a tile slot with no texture on that
-      // surface, and most levels skin only one of the two.
-      if (len > 512 || !need(len))
-        return std::unexpected("cylinder: a tile texture name has an implausible length");
-      std::string name(len, '\0');
-      std::memcpy(name.data(), data.data() + p, len);
-      p += len;
-      mesh.tileTextures.push_back(std::move(name));
-    }
+    // Two blocks of `tileCount` slots: the outer skin, then the inner. The
+    // count is stated once and the second block follows it with no header of
+    // its own, which is why this reads the same loop twice rather than
+    // looking for another count.
+    const auto readTileBlock = [&](std::vector<std::string>& into) -> const char* {
+      into.reserve(tileCount);
+      for (std::uint32_t i = 0; i < tileCount; ++i) {
+        if (!need(4))
+          return "cylinder: the file ends inside a tile texture list";
+        const std::uint32_t len = readAt<std::uint32_t>(data, p);
+        p += 4;
+        // An empty name is normal: half the slots in each block are empty,
+        // because a slot names a tile on one surface only.
+        if (len > 512 || !need(len))
+          return "cylinder: a tile texture name has an implausible length";
+        std::string name(len, '\0');
+        std::memcpy(name.data(), data.data() + p, len);
+        p += len;
+        into.push_back(std::move(name));
+      }
+      return nullptr;
+    };
+
+    if (const char* err = readTileBlock(mesh.tileTextures))
+      return std::unexpected(err);
+    if (const char* err = readTileBlock(mesh.innerTileTextures))
+      return std::unexpected(err);
 
     mesh.endOffset = p;
     return mesh;

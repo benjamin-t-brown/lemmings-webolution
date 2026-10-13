@@ -98,16 +98,18 @@ inline TilePosition parseTilePosition(std::string_view tileName) {
 
 class CylinderSkin {
 public:
-  // Loads every non-empty outer tile of a level and uploads it. Inner tiles
-  // are parsed but not drawn: the camera is outside the tube.
+  // Loads every non-empty tile of a level, both surfaces, and uploads it.
   std::expected<void, std::string> load(const AssetLibrary& lib, Renderer& renderer,
                                         const CylinderMesh& mesh);
 
   bool ready() const { return !tiles_.empty(); }
   std::size_t tileCount() const { return tiles_.size(); }
+  std::size_t outerCount() const;
+  std::size_t innerCount() const;
 
-  // Draws the outer skin across the full circumference and the given height.
-  // `segments` is the subdivision per tile, since a quad cannot bend.
+  // Draws the skin across the full circumference and the given height, inner
+  // surface first so the outer one covers it where it is opaque. `segments` is
+  // the subdivision per tile, since a quad cannot bend.
   void draw(Renderer& renderer, float worldWidth, float worldHeight, int segments = 16) const;
 
   const std::vector<std::string>& missing() const { return missing_; }
@@ -117,6 +119,7 @@ private:
     unsigned texture = 0;
     int column = 0;
     int row = 0;
+    bool outer = true;
   };
 
   std::vector<Tile> tiles_;

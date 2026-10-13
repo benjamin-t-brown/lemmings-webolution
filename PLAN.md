@@ -510,10 +510,51 @@ kinds/sizes remain; they do not change that reading. A live-process terrain
 dump is still the way to prove the sparse lattice matches what the original
 simulates.
 
+#### Live-process terrain dump — harness in place, compare still open
+
+Goal: drive the original into a playable level, dump its in-memory occupancy
+buffer, and correlate it with `lrtool lvlmask` / `rasteriseSurface` (e.g.
+`MM_CLIMB_002` at 256×192, ~12.7% solid).
+
+**Done**
+
+* Shim rebuilt to also serve `DIMOUSESTATE2` (`cb == 0x14`) the same way as
+  `0x10` (`tools/dinput-shim`); still polls at 144 Hz under dgVoodoo.
+* Harness under `tools/harness/`:
+  * `lrinput.py` / `memdump.py` — shared-memory input + `ReadProcessMemory`
+  * `enter_and_dump.py` / `click_yellow.py` — PrintWindow vision: main menu →
+    Continue? → level map → long-click mid yellow start node
+  * Mouse scale under dgVoodoo is ~2.5–3.8 DI units per screen pixel; aim with
+    feedback, not raw pixel deltas
+  * `RETURN` on the level map activates **Back to Main Menu** — never use it
+    there; map entry is mouse-only
+  * Reference mask written: `build/live_dump/ref_climb_mask.{png,bin}` via
+    `lrtool lvlmask … MM_CLIMB_002`
+* End-to-end entry **verified visually**: after a long-click on a yellow map
+  node the original was in the climber tutorial (10 climbers on the panel,
+  cylinder + platforms, timer running). Screenshots `build/live_dump/P*.jpg`.
+
+**Not done**
+
+* The post-entry gate treated dark in-level frames as “main menu”
+  (`mean_rgb < 45`) and **skipped the mask scan** while the level was live.
+* Naïve `memdump --scan` / whole-VA walks are too slow; a fingerprint scan
+  against `ref_climb_mask.bin` (`fast_mask_scan.py`) was started but not
+  finished before the process exited.
+* The object at `0x004CBF84` still only exposes small language-ish buffers
+  (311 / 10661) on the menu and in-level — the walkable mask is not hanging
+  off that head in an obvious `size,size,1,ptr` form. Needs a targeted search
+  (byte 256×192, bit-packed, or other stride) while paused in-level.
+
+**Next step for this item:** re-enter a level with `click_yellow.py`, fix the
+in-level detector (UI chrome / uniq colour count, not mean alone), run
+`fast_mask_scan.py` immediately, dump top candidates, correlate with
+`ref_climb_mask.bin`.
+
 #### Where to go next
 
-* **Live-process terrain dump** — confirm the original's walkable cells match
-  the sparse surface-lattice mask (shim + `ReadProcessMemory`).
+* **Live-process terrain dump** — finish the compare (harness reaches a level;
+  scan + correlate still open — see above).
 * **Hazard / gadget simulation** — placed-model poses are parsed
   (`LevelObjects::placed`); wire anti-grav, teleports, deathrollers, etc.
   into the sim when the behaviours are known.
@@ -646,6 +687,10 @@ Two properties that matter for the oracle:
 ### Phase 2 — `.LVL`
 - Ghidra on the `SkyIslands` loader; incremental parser; debug visualiser.
 - **Milestone: one level's cylinder geometry and terrain mask on screen.**
+- Closed on the file side: cylinder + surface lattice → playable mask,
+  skills trailer, entrance/exit + 417 other placed models (parse only),
+  skin ≠ solidity, PolyList 5/7 = draw attrs, ring stride **derived not
+  stored**. Open: live-process mask dump vs our raster (§1.6).
 
 ### Phase 3 — Simulation (headless, deterministic, unit-tested)
 - Terrain mask with horizontal wrap; fixed timestep; no rendering dependency.

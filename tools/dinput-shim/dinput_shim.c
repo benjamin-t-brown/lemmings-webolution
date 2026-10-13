@@ -143,7 +143,7 @@ static HRESULT STDMETHODCALLTYPE hook_GetDeviceState(void *self, DWORD cb, void 
     /* Count every read, including pass-through ones, so the harness can tell
        the shim is live and the game is polling before taking control. */
     if (b) {
-        if (cb == 0x10)
+        if (cb == 0x10 || cb == 0x14)      /* DIMOUSESTATE / DIMOUSESTATE2 */
             b->mouse_frame++;
         else if (cb == 0x100)
             b->key_frame++;
@@ -152,7 +152,7 @@ static HRESULT STDMETHODCALLTYPE hook_GetDeviceState(void *self, DWORD cb, void 
     if (!b || !b->enable || !data)
         return orig_GetDeviceState(self, cb, data);
 
-    if (cb == 0x10) {                      /* DIMOUSESTATE */
+    if (cb == 0x10 || cb == 0x14) {        /* DIMOUSESTATE / DIMOUSESTATE2 */
         int32_t *axis = (int32_t *)data;
         uint8_t *btn  = (uint8_t *)data + 12;
         axis[0] = b->mouse_dx;
@@ -162,6 +162,13 @@ static HRESULT STDMETHODCALLTYPE hook_GetDeviceState(void *self, DWORD cb, void 
         btn[1] = b->mouse_buttons[1];
         btn[2] = b->mouse_buttons[2];
         btn[3] = b->mouse_buttons[3];
+        if (cb == 0x14) {
+            /* DIMOUSESTATE2 has four extra button bytes after the first four. */
+            btn[4] = 0;
+            btn[5] = 0;
+            btn[6] = 0;
+            btn[7] = 0;
+        }
         if (b->consume_deltas) {
             b->mouse_dx = 0;
             b->mouse_dy = 0;

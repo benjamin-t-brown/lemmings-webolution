@@ -36,8 +36,15 @@ unset, so the suite is green on a machine without the game.
 
 ## Status
 
-The game runs: `make -C src run`. The level is a built-in test level, because
-`.LVL` is still being reverse engineered.
+The game runs: `make -C src run`. The terrain is a built-in test level, because
+`.LVL` is still being reverse engineered -- but the lemmings are drawn with the
+original's own artwork, and the level's parameters come from the game's data:
+
+```sh
+make -C src run                                   # the test level
+build/cmake/dev-debug/webolution --level MM_BLOCK_001_A   # real parameters
+make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
+```
 
 - [x] `.box` archive format decoded and validated
 - [x] Repo skeleton, CMake presets, test suite
@@ -48,10 +55,21 @@ The game runs: `make -C src run`. The level is a built-in test level, because
 - [x] `.ALF` alpha planes, the `^ + $ _ ~` name sigils, BMP -> RGBA, PNG export
 - [x] `.LTX` strings (8 languages, 3 codepages), `LEVELMAP.DAT`, `LEVELS.MAP`, `RELEASERATE.PC`
 - [x] `.SPR` sprite sheets: 7,354 frames, animation strips render correctly
-- [~] `.LVL` partially read: title, header, and all 26,021 asset references across
-      the 102 levels, every one resolving. Geometry, terrain and script still open.
+- [x] `.LVL` header: title, seven header words, and the asset manifest, parsing
+      exactly across all 102 levels
+- [x] `.LVL` cylinder: the tube is identical in every level -- 7 rings, 32
+      angular steps of 11.25 degrees, radii 50 and 60 -- which pins the
+      coordinate system the simulation wraps in. `lrtool lvlmap` draws it.
+- [~] `.LVL` surface: located and parsed, and the per-level part of the file.
+      The two `u32` arrays index its vertices, but how they are keyed, and so
+      the surface's topology, is still open. See PLAN.md 1.6.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
-      eight skills, deterministic ticks. **Rule constants are provisional**
-      until validated against the original via the oracle.
+      eight skills, deterministic ticks, the level clock. **Rule constants are
+      provisional** until validated against the original via the oracle -- the
+      exception being the spawn interval, which comes from `RELEASERATE.PC`.
 - [~] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
-      flat unwrapped view. The cylinder projection and real sprites are next.
+      flat unwrapped view, lemmings drawn from `LEMMINGSLO.SPR`. The cylinder
+      projection is next.
+- [ ] Game shell: menus, level select, saves, audio, FMV
+- [ ] Linux, macOS and WebAssembly builds. The emscripten preset exists but has
+      never been run -- no activated EMSDK here -- so it is untested, not done.

@@ -214,18 +214,50 @@ What a level references, beyond textures: placed models (`Models\exitasket`,
 `Ohno`, `Letsgo`), sprite sheets (`Axe`, `Bits`, `GreyIcons`), and sigil-typed
 script variables.
 
+#### The cylinder is 8 tiles around by 3 tall -- confirmed
+
+Read straight off the loop bounds in the routine that builds tile names
+(`.text:0043AA91`, format string `Cylinder\%s\%s_%d_%d`):
+
+```
+for (col = 0; col < 8; ++col)        ; cmp dword [ebp-4], 8
+  for (row = 0; row < 3; ++row)      ; cmp dword [ebp-110h], 3
+```
+
+Tiles are stored at index `col + row * 8`, with the second surface offset by
+24 (`lea eax, [edx + ecx*8 + 18h]`). That accounts exactly for the 48 tile
+names seen per block: 24 positions, inner and outer.
+
+#### The dense array is NOT a terrain grid -- ruled out
+
+Worth recording as a negative result, because it looked convincing. The
+second array is dense (about 6,100 of 27,648 entries set, against 194 in the
+first), its values are a small set, and rendered at a plausible width it shows
+sky above and a ground band below. All of that fits a terrain mask.
+
+It is not one. Across the 102 levels the arrays take 30 distinct sizes, and
+the greatest common divisor of their entry counts is **16** -- so no constant
+width above 16 can divide them all. Worse, individual counts factor badly:
+5,392 = 16 x 337 with 337 prime, which admits no sensible rectangle. A
+candidate dimension field in the `Cylinder` chunk (always 96) divides only 9
+of the 102 counts.
+
+So the array is far more likely per-face or per-polygon data, which fits the
+`PolyList` chunks sitting next to it. Anything built on the grid reading would
+have looked right and played wrong.
+
 #### Still open
 
-* **Grid dimensions.** 27,648 factors many ways; rendering the candidates was
-  suggestive (empty above, a ground band below) but not conclusive, so no
-  dimensions are asserted.
-* **Which grid is the terrain.** The second is far denser -- about 6,100 of
-  27,648 cells set against 194 in the first -- so it is the better candidate.
+* The terrain representation, now that the obvious candidate is excluded.
 * The polygon lists (379 `PolyList` chunks in one level), the placed-model
   transforms, and the script.
 
-The next concrete step is the `SkyIslands` loader in the original executable,
-where the field order can be read off rather than inferred.
+The next concrete step is the routine that consumes the arrays. `0045F1AD`
+loads a level and `00450696` builds its path; the two allocations at
+`004508A4` and `004508F2` hand 16-byte objects to `00440330` and store them
+at `[004CBF78]` and `[004CBF7C]`. Following those globals to the code that
+indexes them gives the layout directly, rather than inferring it from sizes --
+which is what this round shows cannot be done.
 
 ---
 

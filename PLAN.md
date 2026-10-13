@@ -506,11 +506,11 @@ corpus ~87% of those indices fall inside the surface pool (95%+ on
 
 So PolyList is textured surface (and similar) draw data — colours and UVs
 for vertices we already have — not a denser collision volume. Unmatched
-kinds/sizes remain; they do not change that reading. A live-process terrain
-dump is still the way to prove the sparse lattice matches what the original
-simulates.
+kinds/sizes remain; they do not change that reading. The live-process check
+below is what proves the sparse lattice is what the original actually walks
+on.
 
-#### Live-process terrain dump — harness in place, compare still open
+#### Live-process terrain dump -- the harness, and two false starts
 
 Goal: drive the original into a playable level, dump its in-memory occupancy
 buffer, and correlate it with `lrtool lvlmask` / `rasteriseSurface` (e.g.
@@ -533,6 +533,9 @@ buffer, and correlate it with `lrtool lvlmask` / `rasteriseSurface` (e.g.
 * End-to-end entry **verified visually**: after a long-click on a yellow map
   node the original was in the climber tutorial (10 climbers on the panel,
   cylinder + platforms, timer running). Screenshots `build/live_dump/P*.jpg`.
+  Those are 640x480 frames, which is the clue the next two rounds missed: that
+  run was against the stock exe, and the rounds that then failed to click a map
+  node were against the 2560x1440 one.
 
 **Not done**
 
@@ -614,17 +617,154 @@ across a held click settles two things and overturns one assumption:
   `aim.focus` reports whether Windows actually granted the foreground change
   (it often refuses).
 
-**Next step for this item:** redo the click test under `require_live_frame`,
-with the foreground confirmed, so that the one remaining question -- do the
-button bytes reach the game -- is answered against frames that are real. Only
-if clicks still fail is there a shim bug to find, and the place to look is
-then the offset the game reads buttons from (`DIMOUSESTATE2` keeps them at
-12, but the game may re-read a cached pointer), not the entry point.
+**Next step for this item -- answered below.** The click test was redone under
+`require_live_frame` with the foreground confirmed, and it overturns the
+reading above: the button bytes *do* reach the game.
+
+#### Live-process terrain compare -- done, and it passes
+
+Settled. The short version: the engine keeps **no occupancy buffer at all**,
+so there is nothing to diff against `lrtool lvlmask`; but it does keep the
+.LVL surface lattice byte-for-byte, and the lemmings it simulates on that
+lattice stand exactly where our raster says the floor is.
+
+**Mouse buttons reach the game. The earlier negative was wrong.**
+
+The engine's own mouse structure says so directly. `InputManager::Update`
+(`.text:0048316B`) polls two devices through `this + 0x08` (keyboard) and
+`this + 0x0C` (mouse), and the mouse poll at `.text:00483B5D` copies
+`DIMOUSESTATE` into that object:
+
+```
++0x00 int   button0 down          (rgbButtons[0] & 0x80) != 0
++0x04 int   button1 down
++0x08 int   button0 down, previous frame
++0x0C int   button1 down, previous frame
++0x10 byte  button0 press edge    down now && !down last frame
++0x11 byte  button1 press edge
++0x14 int   time of the last button0 release
++0x1C byte  button0 "click"       cleared every poll; set when two releases
+                                  land less than 500 ms apart
++0x20 int   dx          +0x24 int dy
+```
+
+Writing `0x80` into the shim's button byte flips `+0x00` from 0 to 1 and back,
+and a quick press-release-press-release zeroes `+0x14` -- which only happens
+inside the `< 500 ms` branch that also sets `+0x1C`. So both the plain button
+state and the click edge arrive. `+0x1C` is a **double**-click, not a single
+one: nothing writes `+0x14` on a press, only on a release, so the comparison
+at `.text:00483CD9` measures release-to-release. Its one consumer
+(`.text:00454739`) is the nuke button -- `hovered == 9`, double-click, count
+`> 0`, then `GameObject::StartNuke` -- which is exactly the original's rule.
+
+**What actually blocked level entry: the resolution patch.**
+
+With clicks proven, the main menu, the language submenu and the level map's
+"Back to Main Menu" all respond to a scripted click. The level map's **gold
+nodes do not** -- not to a short click, a 0.6 s hold, a double click, a right
+click, a drag across them, or a 3x3 grid of positions around the centre of
+each of the three start nodes, all with the crosshair measured dead on target
+and every frame confirmed live.
+
+They respond immediately under the **stock `Lemmings Revolution.exe`**. The
+map's text widgets are the 2D layer, which `lr_patch.py` already documents as
+*not* scaling with resolution; the nodes are 3D-picked, and at 2560x1440 the
+pick misses. So: **drive the original at its native 640x480 for anything
+involving the level map.** dgVoodoo still presents a 2560x1440 window and
+scales the 640x480 image into it, pillarboxed, so capture pixels map to game
+pixels as `image = (320 + 3*gx, 3*gy)`.
+
+**Driving by memory instead of by screenshot.**
+
+Three statics make the harness independent of `PrintWindow`, which is the
+component that has produced every wrong conclusion in this item:
+
+```
+0x004C36A0 / 0x004C36A4   cursor x, y in render pixels (clamped to render size)
+0x004CC134                UI state: 0 = playing, 3 = frontend, 5 = results
+0x004C6A08                the game object; +0x55B8 InputManager, +0x572C state
+```
+
+Both were found by experiment, not inference -- the cursor pair by injecting a
+marker delta and diffing `.data`, the mouse object by searching the whole
+address space for that same marker. `tools/harness/lrstate.py` reads them and
+`drive.py` aims with them. Aiming is also simpler than the screenshot aimer
+suggested: frame-synced motion is **linear**, about 1.7 px per unit at any
+distance, because acceleration only bites when several units land in one poll.
+The whole screen is two or three iterations away.
+
+Two further facts worth keeping. The poll rate reports the foreground state
+for free -- 144 Hz when the window has focus, 15 Hz when it does not. And
+keyboard taps need a **long** hold (about 20 polled frames); 2-4 frames is
+reliably ignored, which is why an earlier round concluded RETURN did nothing.
+
+**There is no occupancy buffer in the engine. Scanned for, not assumed.**
+
+With `MM_CLIMB_002` loaded and simulating, a sweep of all 182 MB of committed
+memory finds:
+
+* **no byte-per-cell mask.** Not one page outside a DLL is wholly `{0, 1}`
+  with any set cells; the only such page is 4 KB inside a system DLL.
+* **no small-alphabet grid either.** Widening to "at most 4 distinct byte
+  values, 2-45% non-zero" only turns up 4 KB texture/alpha pages (the
+  `{0, 126, 255}` family) and one record array whose non-zero bytes fall on a
+  fixed stride -- a struct array, not a bitmap.
+* **no face list over the surface pool.** No run of 256 or more `u32` lying
+  entirely below the 897-vertex count exists in the application heap. The only
+  such runs are in the graphics driver's address range, and the big one is
+  897 x 6 -- a D3D index buffer.
+
+So `Terrain` is **our** representation. The original does not rasterise.
+
+**What the engine does keep is our input, verbatim.**
+
+`find_level_data.py` hits all four needles with a level loaded (and still
+nothing at the menu):
+
+* all **897 surface vertices**, bit-identical IEEE doubles, contiguous at
+  `0x0286E7A8` -- 897/897 equal to the file;
+* `grid0` byte-identical at `0x00B90048`, with `grid1` immediately after it;
+* a cylinder tile texture name.
+
+So the engine's terrain input is exactly the lattice our `SurfaceMesh` reads.
+
+**The compare, in the only form the engine allows: its lemmings.**
+
+A walker is standing on terrain by definition, so each walker position read
+live out of the original is one sample of "solid here". A lemming is three
+consecutive `f64` in the heap on the tube (radius 54..62, height inside
+0..96); that matches a few hundred addresses, mostly static geometry, so the
+set is polled for a couple of seconds and only the points that move a little
+every frame without changing height are kept.
+
+Against `build/live_dump/ref_climb_mask.bin` (256x192, 12.70% solid):
+
+```
+standing on a solid mask cell   31/32 and 26/27, on two runs
+solid continues below            same
+clear above                      27/32, 23/27
+```
+
+The single failure in each run is the same kind of point -- near the top of
+the tube at the wrap seam, `y ~ 84.4`, which reads as the entrance hatch
+animation rather than a walker. Every lemming at `y = 32.0` or `32.19`, the
+band they actually walk in this level, lands on a solid cell with solid
+continuing three pixels below it. `tools/harness/live_terrain_check.py`
+reproduces this and writes `build/live_dump/live_terrain_check.png`, an
+overlay of the sampled positions on the mask: the track lies along one of the
+mask's platform lines.
+
+That is the positive result this item was for. It does not prove the raster is
+correct everywhere -- it samples one ledge of one level, and a mask with extra
+solid cells would pass it unchanged. What it does establish is that where the
+original simulates a floor, we have one, at the same place.
 
 #### Where to go next
 
-* **Live-process terrain dump** — finish the compare (harness reaches a level;
-  scan + correlate still open — see above).
+* **Hazard / gadget behaviour from the live original** — the harness now
+  reaches a level reliably and reads world positions out of it, so the same
+  sampling that checked the terrain can check what a teleport or an anti-grav
+  shaft does to a lemming.
 * **Hazard / gadget simulation** — placed-model poses are parsed
   (`LevelObjects::placed`); wire anti-grav, teleports, deathrollers, etc.
   into the sim when the behaviours are known.
@@ -757,10 +897,16 @@ Two properties that matter for the oracle:
 ### Phase 2 — `.LVL`
 - Ghidra on the `SkyIslands` loader; incremental parser; debug visualiser.
 - **Milestone: one level's cylinder geometry and terrain mask on screen.**
-- Closed on the file side: cylinder + surface lattice → playable mask,
-  skills trailer, entrance/exit + 417 other placed models (parse only),
-  skin ≠ solidity, PolyList 5/7 = draw attrs, ring stride **derived not
-  stored**. Open: live-process mask dump vs our raster (§1.6).
+- **Done.** Cylinder + surface lattice → playable mask, skills trailer,
+  entrance/exit + 417 other placed models (parse only), skin ≠ solidity,
+  PolyList 5/7 = draw attrs, ring stride **derived not stored**.
+- The live check that closed it (§1.6): the original keeps **no** occupancy
+  buffer — scanned for across all 182 MB and absent — but holds the .LVL
+  surface lattice byte-for-byte, and 31 of 32 lemmings sampled out of its
+  running simulation stand on cells our raster calls solid. So the raster
+  agrees with the original where the original has a floor. It samples one
+  ledge of one level, so it is a check, not a proof of the whole mask;
+  broader sampling belongs with the differential oracle (§2).
 
 ### Phase 3 — Simulation (headless, deterministic, unit-tested)
 - Terrain mask with horizontal wrap; fixed timestep; no rendering dependency.
@@ -785,8 +931,8 @@ Two properties that matter for the oracle:
 
 What is *not* in this phase, and is not pretended to be: the skin is scenery
 (opaque wrap; see §1.6) and PolyList is draw data for the surface, not
-collision. What a lemming can stand on is the surface-lattice mask. Whether
-that matches the original's in-memory terrain is the remaining RE question.
+collision. What a lemming can stand on is the surface-lattice mask, and §1.6
+now shows the original's own lemmings walking on exactly those cells.
 
 ### Phase 5 — Game shell
 Menus, level select, save games, `.LTX` localisation, audio. FMV is an open question —

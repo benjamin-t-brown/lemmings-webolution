@@ -15,6 +15,10 @@ Layout must stay in sync with LRInputBlock in dinput_shim.c:
     u8[4] mouse_buttons
     u32   consume_deltas   1 = shim zeroes the deltas after each read
     u8[256] keys           DIK scan code -> 0x80 when held
+    u32   data_frame       ++ by the shim on every GetDeviceData call
+    u32   data_items       items the last GetDeviceData returned
+    u32   last_cb          cb of the last GetDeviceState call
+    u32   state_calls      ++ on every GetDeviceState call
 
 Typical use:
 
@@ -32,7 +36,11 @@ import time
 
 MAGIC = 0x4E49524C
 MAPPING_NAME = "Local\\LemmingsRevolutionInput"
-BLOCK_SIZE = 4 * 4 + 4 * 3 + 4 + 4 + 256   # 36 + 4 + 256 = 296
+# Must equal sizeof(LRInputBlock) in dinput_shim.c exactly. A pagefile-backed
+# section keeps the size it was created with, so if the two sides disagree the
+# larger one's MapViewOfFile fails outright and the shim silently serves
+# nothing -- whichever process happened to start first decides.
+BLOCK_SIZE = 36 + 256 + 4 * 4              # keys end at 292, + 16 diagnostics
 
 OFF_MAGIC = 0
 OFF_ENABLE = 4
@@ -44,6 +52,10 @@ OFF_DZ = 24
 OFF_BUTTONS = 28
 OFF_CONSUME = 32
 OFF_KEYS = 36
+OFF_DATA_FRAME = 292
+OFF_DATA_ITEMS = 296
+OFF_LAST_CB = 300
+OFF_STATE_CALLS = 304
 
 PAGE_READWRITE = 0x04
 FILE_MAP_ALL_ACCESS = 0xF001F
@@ -135,6 +147,18 @@ class LRInput:
     @property
     def key_frame(self):
         return self._u32(OFF_KEY_FRAME)
+
+    @property
+    def data_frame(self):
+        return self._u32(OFF_DATA_FRAME)
+
+    @property
+    def state_calls(self):
+        return self._u32(OFF_STATE_CALLS)
+
+    @property
+    def last_cb(self):
+        return self._u32(OFF_LAST_CB)
 
     def wait_frames(self, n=1, timeout=2.0):
         """Block until the game has consumed n more mouse reads."""

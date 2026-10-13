@@ -252,12 +252,37 @@ have looked right and played wrong.
 * The polygon lists (379 `PolyList` chunks in one level), the placed-model
   transforms, and the script.
 
-The next concrete step is the routine that consumes the arrays. `0045F1AD`
-loads a level and `00450696` builds its path; the two allocations at
-`004508A4` and `004508F2` hand 16-byte objects to `00440330` and store them
-at `[004CBF78]` and `[004CBF7C]`. Following those globals to the code that
-indexes them gives the layout directly, rather than inferring it from sizes --
-which is what this round shows cannot be done.
+#### A correction: `[004CBF78]` and `[004CBF7C]` are fonts
+
+An earlier note in this plan read the two 16-byte objects allocated at
+`004508A4` and `004508F2` as the two grid objects, on the strength of their
+sitting beside the level pointer at `[004CBF84]`. They are not. Their class
+(vtable `004B15C8`, constructor `00440330`) initialises `[+8]` to
+`0FFFFFFFFh` and its one hot method, `004404FA` -- twelve of the thirteen
+calls through those globals -- walks a NUL-terminated string a byte at a
+time, looks up a per-character advance, and handles an escape character.
+That is a text renderer, and the `.data` strings `^Font`, `^Font` and
+`_FontSmall` at `004BFF68` confirm it: exactly two fonts, exactly two
+objects.
+
+So this route is closed, and the globals are retagged in the address table
+above. Noted at length because the circumstantial case was good and the
+objects are reachable from the level loader, so it would otherwise be
+re-walked.
+
+#### Where to go next
+
+Not through those globals, and -- per the sizing result above -- not by
+inferring layout from array sizes. The remaining route is the chunk reader
+itself: the `.LVL` parser dispatches on chunk names, and the code handling
+the `Cylinder` chunk reads the two arrays' dimensions out of the file in
+whatever order they are stored. Finding that dispatch gives the field order
+to be read off rather than guessed.
+
+The live-process fallback also stands and is now more attractive than it was:
+the executable loads at a fixed `00400000`, `ReadProcessMemory` works, and
+the DirectInput shim can drive the menus by script, so a level can be started
+and its in-memory grid metadata read directly.
 
 ---
 

@@ -16,7 +16,29 @@
 //     u32     faceCount      112 in every retail level; not yet identified
 //     f64     thickness      10.0 -- outerRadius - innerRadius
 //     u32     ringCount      7
-//     ringCount * 32 * 2 * { f64 x, f64 y, f64 z }
+//     ringCount * 32 * 2 * { f64 x, f64 y, f64 z }     ring vertices
+//     u32     ringCount      again
+//     ringCount * 32 * f64                             per-vertex inner radii
+//     u32     one            1 in every retail level; not yet identified
+//     u32     surfaceCount
+//     surfaceCount * { f64 x, f64 y, f64 z }           the level's surface
+//     u32     zero           0 in every retail level
+//     u32     48
+//     48 * counted string                              tile texture names
+//
+// The whole chain parses exactly in all 102 retail levels.
+//
+// The important asymmetry is that everything above is **constant** across the
+// retail levels except `surfaceCount` and its vertices, which range from 539
+// to 1558. So the per-level terrain is carried as polygon geometry, not as a
+// bitmap mask -- which is what finally explains why the two equal-sized u32
+// arrays in the file never factored as a rectangular grid (see LevelIndex.h).
+//
+// The surface vertices open with a quad -- for the first retail level,
+// (0,0,60) (0,16,60) (-11.74,16,59.02) (-11.74,0,59.02), spanning one angular
+// step and one ring band on the outer skin -- and then continue in pairs, so
+// they read as a strip. The exact primitive and winding are not yet pinned
+// down, so this exposes the vertices without claiming a topology.
 //
 // The vertices are **not** 8-byte aligned in the file (the u32 before them
 // puts them on a 4-byte boundary), so they must be read unaligned.
@@ -62,6 +84,20 @@ struct CylinderMesh {
 
   // ringCount * angularSteps * 2 vertices, inner before outer at each step.
   std::vector<Vec3> vertices;
+
+  // ringCount * angularSteps inner radii, parallel to the inner vertices.
+  // Period 8 in the retail data, so the cross-section has 4-fold symmetry.
+  std::vector<double> radii;
+
+  // The per-level surface geometry. This is the part that varies.
+  std::vector<Vec3> surface;
+
+  // Unidentified; 1 in every retail level. Recorded, not interpreted.
+  std::uint32_t one = 0;
+
+  // The 48 skin tiles: 8 columns x 3 rows, inner and outer.
+  //   "Cylinder\MM_CLIMB_002\INN_MM_CLIMB_002_0_0"
+  std::vector<std::string> tileTextures;
 
   // Where the mesh was found, so callers can keep parsing after it.
   std::size_t offset = 0;

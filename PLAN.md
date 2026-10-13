@@ -248,7 +248,8 @@ have looked right and played wrong.
 
 #### Still open
 
-* The terrain representation, now that the obvious candidate is excluded.
+* The surface strip's primitive type and winding, and how to rasterise it
+  into the simulation's `Terrain` mask.
 * What the two equal-sized `u32` arrays hold.
 * The polygon lists (379 `PolyList` chunks in one level), the placed-model
   transforms, and the script.
@@ -304,11 +305,51 @@ implemented in `src/assets/Cylinder.{h,cpp}`:
 u32   faceCount      112        unidentified; recorded, not interpreted
 f64   thickness      10.0       outerRadius - innerRadius
 u32   ringCount      7
-ringCount x 32 x 2 x { f64 x, f64 y, f64 z }
+ringCount x 32 x 2 x { f64 x, f64 y, f64 z }    ring vertices
+u32   ringCount      again
+ringCount x 32 x f64                            per-vertex inner radii
+u32   one            1          unidentified; recorded, not interpreted
+u32   surfaceCount   505..2772  THE PER-LEVEL PART
+surfaceCount x { f64 x, f64 y, f64 z }          the level's surface
+u32   zero           0
+u32   48
+48 x counted string                             tile texture names
 ```
 
 Vertices are unaligned (the preceding `u32` leaves them on a 4-byte
-boundary), ordered by angle, inner before outer at each step.
+boundary), ordered by angle, inner before outer at each step. The whole
+chain parses exactly in all 102 levels, and every non-empty tile name
+resolves to a texture that exists in the archive. Empty tile names are
+normal: a slot with no texture on that surface, and most levels skin only
+one of the two.
+
+#### The terrain is geometry, not a bitmap
+
+This is the round's real finding, and it falls out of the asymmetry above.
+Everything in the chain is identical across the 102 retail levels except
+`surfaceCount` and its vertices, which take **100 distinct values from 505
+to 2772** -- effectively unique per level.
+
+So the terrain Lemmings walk on is carried as polygon geometry on the tube,
+not as a bitmap mask. That is what finally explains the failure recorded
+further up this section: the two equal-sized `u32` arrays were never going
+to factor as a rectangular grid, because the game does not store a grid.
+The arrays are something else -- per-face or per-polygon data is the natural
+reading now, and it fits both the `0xFFFFFFFF` sentinels and the `PolyList`
+chunks sitting beside them.
+
+It also has a consequence for the simulation, which currently rasterises a
+`Terrain` bitmap. That is still the right internal representation -- digging
+and building need a mutable mask -- but the loader will have to rasterise
+the polygon surface into it rather than copy a stored grid, and the
+rasterisation resolution becomes ours to choose rather than the file's to
+dictate.
+
+The surface vertices open with a quad -- `(0,0,60) (0,16,60)
+(-11.74,16,59.02) (-11.74,0,59.02)` in the first level, spanning one angular
+step and one ring band on the outer skin -- and then continue in pairs, so
+they read as a strip. The exact primitive and winding are not pinned down
+yet, so `Cylinder.h` exposes the vertices without claiming a topology.
 
 The finding is that **every retail level has the identical mesh**: 7 rings at
 y = 0, 16, ... 96, 32 angular steps of exactly 11.25 degrees, inner radius

@@ -7,9 +7,14 @@
 // the tube is a constant of the game that happens to be stored per level.
 //
 // A mis-locate would not survive it. The search accepts a run only if it is a
-// whole number of equal-width rings, so a false positive would have to fake
-// the entire structure, and the per-level agreement would then have to hold by
-// accident 102 times over.
+// whole number of equal-width rings and the whole record chain behind it
+// parses, so a false positive would have to fake the entire structure, and the
+// per-level agreement would then have to hold by accident 102 times over.
+//
+// The complement matters just as much: the surface geometry that follows the
+// tube must *vary*. It does -- 100 distinct vertex counts across the 102
+// levels, from 505 to 2772 -- which is what identifies it as the per-level
+// terrain. Were it constant too, this reading would be suspect.
 
 #include "assets/Box.h"
 #include "assets/Cylinder.h"
@@ -23,6 +28,7 @@
 #include <format>
 #include <iostream>
 #include <numbers>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -81,6 +87,29 @@ void testSynthetic() {
       }
     }
 
+  // u32 ringCount again, then the per-vertex inner radii.
+  put32(v, kRings);
+  for (std::uint32_t i = 0; i < kRings * kSteps; ++i)
+    putF64(v, kInner);
+
+  // u32 one, u32 surfaceCount, then the surface vertices.
+  put32(v, 1);
+  put32(v, 5);
+  for (int i = 0; i < 5; ++i) {
+    putF64(v, 1.0 * i);
+    putF64(v, 2.0 * i);
+    putF64(v, 60.0);
+  }
+
+  // u32 zero, u32 tileCount, then the names.
+  put32(v, 0);
+  put32(v, 2);
+  for (std::string_view name : {"INN_0_0", "OUT_0_0"}) {
+    put32(v, static_cast<std::uint32_t>(name.size()));
+    for (char c : name)
+      v.push_back(static_cast<std::byte>(c));
+  }
+
   auto mesh = webo::findCylinderMesh(v);
   check(mesh.has_value(), "synthetic mesh is found");
   if (!mesh)
@@ -92,7 +121,13 @@ void testSynthetic() {
   check(mesh->thickness == kThickness, "thickness");
   check(mesh->vertices.size() == kRings * kSteps * 2, "vertex count");
   check(mesh->offset == 7, "offset points at the header, past the filler");
-  check(mesh->endOffset == v.size(), "end offset is the end of the vertex run");
+  check(mesh->endOffset == v.size(), "end offset is the end of the whole chain");
+  check(mesh->radii.size() == kRings * kSteps, "one radius per inner vertex");
+  check(mesh->one == 1, "the unidentified word is recorded verbatim");
+  check(mesh->surface.size() == 5, "surface vertex count");
+  check(mesh->surface[4].y == 8.0, "surface vertices are read in order");
+  check(mesh->tileTextures.size() == 2, "tile texture count");
+  check(mesh->tileTextures[1] == "OUT_0_0", "tile texture names");
   check(std::abs(mesh->innerRadius() - kInner) < 1e-9, "inner radius");
   check(std::abs(mesh->outerRadius() - (kInner + kThickness)) < 1e-9, "outer radius");
   check(std::abs(mesh->ringSpacing() - 16.0) < 1e-9, "ring spacing");
@@ -121,13 +156,17 @@ void testRetail(const fs::path& gameDir) {
 
   std::size_t found = 0;
   std::size_t agreed = 0;
+  std::set<std::size_t> surfaceSizes;
   for (const auto& name : levels) {
     auto blob = lib.read(name);
     if (!blob)
       continue;
     auto mesh = webo::findCylinderMesh(*blob);
-    if (!mesh)
+    if (!mesh) {
+      std::cerr << std::format("  FAIL  {}: {}\n", name, mesh.error());
+      ++g_failures;
       continue;
+    }
     ++found;
 
     // Every retail level agrees on all of this.
@@ -160,6 +199,35 @@ void testRetail(const fs::path& gameDir) {
                                name, mesh->stepsPerTileColumn(), mesh->bandsPerTileRow());
       continue;
     }
+
+    // The rest of the chain: radii parallel to the inner vertices, the
+    // per-level surface, and exactly 48 tile names (8 columns x 3 rows,
+    // inner and outer).
+    if (mesh->radii.size() != 7u * 32u || mesh->one != 1 ||
+        mesh->tileTextures.size() != 48) {
+      std::cerr << std::format("  FAIL  {} tail disagrees: radii={} one={} tiles={}\n", name,
+                               mesh->radii.size(), mesh->one, mesh->tileTextures.size());
+      continue;
+    }
+    // Every non-empty tile name must resolve to a texture that exists in the
+    // archive. Empty slots are normal -- most levels skin one surface only.
+    bool resolved = true;
+    for (const auto& tile : mesh->tileTextures)
+      if (!tile.empty() && !lib.contains(webo::levelTextureAssetName(tile))) {
+        std::cerr << std::format("  FAIL  {} tile {} does not resolve\n", name, tile);
+        resolved = false;
+        break;
+      }
+    if (!resolved)
+      continue;
+
+    // The surface is the part that varies, so it is checked for being
+    // present and level-specific rather than for a fixed size.
+    if (mesh->surface.empty()) {
+      std::cerr << std::format("  FAIL  {} has no surface geometry\n", name);
+      continue;
+    }
+    surfaceSizes.insert(mesh->surface.size());
     ++agreed;
   }
 
@@ -167,6 +235,14 @@ void testRetail(const fs::path& gameDir) {
                            levels.size(), agreed);
   check(found == levels.size(), "the cylinder mesh is found in every level");
   check(agreed == levels.size(), "every level agrees on the cylinder geometry");
+
+  // The point of the exercise: the tube is constant, the surface is not. If
+  // the surface were also constant it would not be the terrain, and this
+  // whole reading would be suspect.
+  std::cout << std::format("  surface vertex counts: {} distinct, {}..{}\n", surfaceSizes.size(),
+                           surfaceSizes.empty() ? 0 : *surfaceSizes.begin(),
+                           surfaceSizes.empty() ? 0 : *surfaceSizes.rbegin());
+  check(surfaceSizes.size() > 50, "the surface geometry varies from level to level");
 }
 
 }  // namespace

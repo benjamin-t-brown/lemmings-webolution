@@ -99,13 +99,75 @@ std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::b
     mesh.ringCount = ringCount;
     mesh.angularSteps = static_cast<std::uint32_t>(perRing / 2);
     mesh.offset = at - kHeaderBytes;
-    mesh.endOffset = at + count * kVertexBytes;
     mesh.vertices.reserve(count);
     for (std::size_t i = 0; i < count; ++i) {
       const std::size_t p = at + i * kVertexBytes;
       mesh.vertices.push_back({readAt<double>(data, p), readAt<double>(data, p + 8),
                                readAt<double>(data, p + 16)});
     }
+
+    // Everything past the vertex run is addressed from a known offset rather
+    // than searched for, so a short or malformed tail is a hard failure here
+    // instead of being silently skipped.
+    std::size_t p = at + count * kVertexBytes;
+    mesh.endOffset = p;
+
+    const auto need = [&](std::size_t bytes) { return p + bytes <= data.size(); };
+
+    // u32 ringCount again, then ringCount * angularSteps inner radii.
+    if (!need(4) || readAt<std::uint32_t>(data, p) != ringCount)
+      return std::unexpected("cylinder: the radius array's ring count does not match the mesh");
+    p += 4;
+    const std::size_t radiiCount = static_cast<std::size_t>(ringCount) * mesh.angularSteps;
+    if (!need(radiiCount * sizeof(double)))
+      return std::unexpected("cylinder: the radius array runs past the end of the file");
+    mesh.radii.reserve(radiiCount);
+    for (std::size_t i = 0; i < radiiCount; ++i)
+      mesh.radii.push_back(readAt<double>(data, p + i * sizeof(double)));
+    p += radiiCount * sizeof(double);
+
+    // u32 one, u32 surfaceCount, then that many vertices.
+    if (!need(8))
+      return std::unexpected("cylinder: the file ends before the surface header");
+    mesh.one = readAt<std::uint32_t>(data, p);
+    const std::uint32_t surfaceCount = readAt<std::uint32_t>(data, p + 4);
+    p += 8;
+    if (!need(static_cast<std::size_t>(surfaceCount) * kVertexBytes))
+      return std::unexpected("cylinder: the surface vertices run past the end of the file");
+    mesh.surface.reserve(surfaceCount);
+    for (std::size_t i = 0; i < surfaceCount; ++i) {
+      const std::size_t v = p + i * kVertexBytes;
+      mesh.surface.push_back({readAt<double>(data, v), readAt<double>(data, v + 8),
+                              readAt<double>(data, v + 16)});
+    }
+    p += static_cast<std::size_t>(surfaceCount) * kVertexBytes;
+
+    // u32 zero, u32 tileCount, then that many counted strings.
+    if (!need(8))
+      return std::unexpected("cylinder: the file ends before the tile texture list");
+    if (readAt<std::uint32_t>(data, p) != 0)
+      return std::unexpected("cylinder: expected a zero word before the tile texture list");
+    const std::uint32_t tileCount = readAt<std::uint32_t>(data, p + 4);
+    p += 8;
+    if (tileCount > 4096)
+      return std::unexpected("cylinder: implausible tile texture count");
+    mesh.tileTextures.reserve(tileCount);
+    for (std::uint32_t i = 0; i < tileCount; ++i) {
+      if (!need(4))
+        return std::unexpected("cylinder: the file ends inside the tile texture list");
+      const std::uint32_t len = readAt<std::uint32_t>(data, p);
+      p += 4;
+      // An empty name is normal: it marks a tile slot with no texture on that
+      // surface, and most levels skin only one of the two.
+      if (len > 512 || !need(len))
+        return std::unexpected("cylinder: a tile texture name has an implausible length");
+      std::string name(len, '\0');
+      std::memcpy(name.data(), data.data() + p, len);
+      p += len;
+      mesh.tileTextures.push_back(std::move(name));
+    }
+
+    mesh.endOffset = p;
     return mesh;
   }
 

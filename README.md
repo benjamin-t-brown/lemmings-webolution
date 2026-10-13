@@ -57,6 +57,7 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
 - [x] LRZ texture decoder, verified byte-identical to the original
 - [x] `.ALF` alpha planes, the `^ + $ _ ~` name sigils, BMP -> RGBA, PNG export
 - [x] `.LTX` strings (8 languages, 3 codepages), `LEVELMAP.DAT`, `LEVELS.MAP`, `RELEASERATE.PC`
+- [x] `.WAV` sounds: all 73 retail files decode (17 rates, 8/16-bit, mono/stereo) with load-time resampling
 - [x] `.SPR` sprite sheets: 7,354 frames, animation strips render correctly
 - [x] `.LVL` header: title, seven header words, and the asset manifest, parsing
       exactly across all 102 levels

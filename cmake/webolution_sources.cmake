@@ -16,6 +16,7 @@ set(WEBOLUTION_SOURCES
   src/assets/Sprite.cpp
   src/assets/LevelIndex.cpp
   src/assets/Cylinder.cpp
+  src/assets/Wav.cpp
 
   # sim -- the game itself, independent of rendering
   # gfx bits with no GL dependency, so the tests can reach them

@@ -82,7 +82,7 @@ Contents:
 | `.BMP` | 10,376 | **Not** Windows BMP. LRZ-compressed (see below) |
 | `.LVL` | 102 | Levels. 699 KB – 1.9 MB each. **The unsolved format** |
 | `.ALF` | 81 | 8-bit alpha plane, dimensions match the sibling `.BMP` |
-| `.WAV` | 73 | Standard RIFF PCM, 22050 Hz |
+| `.WAV` | 73 | Standard RIFF PCM (solved, §1.7). 17 rates from 3179–44100 Hz, 8/16-bit, mono/stereo — not a single house rate |
 | `.SPR` | 19 | Sprite sheets; reference texture sheets with frame rects (solved, 1.6) |
 | `.LTX` | 6 | Localised string tables |
 | misc | 4 | `LEVELS.MAP`, `LEVELMAP.DAT`, `RELEASERATE.PC`, `PSPBRWSE.JBF` |
@@ -450,6 +450,21 @@ menus by script, so a level can be started and its in-memory terrain read
 directly -- which sidesteps the file format for terrain entirely and gives a
 ground truth to check any later static reading against.
 
+### 1.7 `.WAV` — solved
+
+Ordinary RIFF PCM, implemented in `src/assets/Wav.{h,cpp}`. The interesting
+fact is the variation: all 73 retail entries decode, but they span **17 sample
+rates** (3179–44100 Hz), both 8- and 16-bit, and both mono and stereo. An
+earlier note that they were uniformly 22050 Hz was wrong for 35 of them.
+Odd rates like 7418 / 5563 / 8363 look like tracker-era sample rates, so these
+are converted assets. Chunk order is not assumed — three files carry a trailing
+`smpl` or `LIST`/`DISP` after `data` — and 8-bit samples are unsigned (centred
+on 128), so the decoder shifts them to signed 16-bit rather than reinterpreting.
+
+`resampleTo` converts to a mixer rate at load time; linear interpolation is
+enough for source material this low-fi. Level cues (`Letsgo`, `Yippee`, …) map
+to `SOUNDS\<CUE>.WAV` via `soundAssetName`. Playback itself is Phase 5.
+
 ---
 
 ## 2. Verification strategy — the differential oracle
@@ -520,12 +535,13 @@ Two properties that matter for the oracle:
   they are 2D/sprite-oriented and would be bypassed by a GL cylinder renderer anyway.
 - Ghidra install (Java 24 is already present), import the exe, seed with §1.1.
 
-### Phase 1 — Asset layer
+### Phase 1 — Asset layer — **done**
 - `lembox` reader, base + patch overlay, reading the user's install at runtime.
 - LRZ decoder ported from the published reference.
 - `.ALF`, `.LTX`, `.WAV`, `LEVELMAP.DAT`, `LEVELS.MAP`, `RELEASERATE.PC`.
 - `lrtool` CLI: list, extract, convert.
 - **Milestone: all 10,376 textures decoded to PNG and visually verified.**
+  `.WAV` closed last: decoder + load-time resampler, all 73 retail files.
 
 ### Phase 2 — `.LVL`
 - Ghidra on the `SkyIslands` loader; incremental parser; debug visualiser.

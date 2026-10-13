@@ -591,11 +591,35 @@ clicks**, which blocks the compare:
   the game does not read or the game takes clicks by another route
   (`GetDeviceData`, vtable[10], is the obvious candidate and is not hooked).
 
-**Next step for this item:** settle the button question before anything else.
-Add a counter to the shim for `GetDeviceData` and for the `cb` values seen by
-`GetDeviceState`, rebuild, and watch which the game actually calls while a
-click is held. That distinguishes "wrong offset" from "wrong entry point" in
-one run. Then re-enter a level and run `find_level_data.py` immediately.
+*That experiment is done.* The shim now counts `GetDeviceData` calls, every
+`GetDeviceState` call, and the last `cb` it was asked for. Watching those
+across a held click settles two things and overturns one assumption:
+
+* **`GetDeviceData` is never called. Not once.** `data_frame` stays at 0
+  through menus, the map, and a button held for over a second. Buffered input
+  is ruled out, and the shim's original note -- that the game's whole input
+  surface is two `GetDeviceState` calls -- is confirmed rather than assumed.
+* **The mouse is polled as often as the keyboard**, exactly: the two counters
+  advance in lockstep (578/578, 780/780, 834/834), one of each per frame. So
+  the mouse path is live and the button bytes are being offered to a game that
+  is reading that structure every frame.
+* **`PrintWindow` returns an all-black bitmap whenever the game window is not
+  foreground.** This is the important one, because it is invisible: the
+  capture succeeds, the image is simply black, and every vision check then
+  reports whatever it reports about darkness. It is almost certainly what
+  produced the earlier "treated dark in-level frames as main menu" symptom,
+  and it means an unknown number of the aiming and clicking results above were
+  measured against frames showing nothing at all. `aim.require_live_frame`
+  now raises `BlankFrame` rather than letting a run proceed on one, and
+  `aim.focus` reports whether Windows actually granted the foreground change
+  (it often refuses).
+
+**Next step for this item:** redo the click test under `require_live_frame`,
+with the foreground confirmed, so that the one remaining question -- do the
+button bytes reach the game -- is answered against frames that are real. Only
+if clicks still fail is there a shim bug to find, and the place to look is
+then the offset the game reads buttons from (`DIMOUSESTATE2` keeps them at
+12, but the game may re-read a cached pointer), not the entry point.
 
 #### Where to go next
 

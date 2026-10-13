@@ -47,6 +47,14 @@ typedef struct {
     volatile uint8_t  mouse_buttons[4];
     volatile uint32_t consume_deltas;/* 1 = zero dx/dy/dz after each read     */
     volatile uint8_t  keys[256];     /* DIK_* scan code -> 0x80 if held       */
+    /* Diagnostics, appended so every offset above stays where lrinput.py
+       expects it. Added to answer one question: clicks do not reach the game
+       while motion does, and these say whether that is because the game asks
+       for its buttons somewhere this shim is not looking. */
+    volatile uint32_t data_frame;    /* ++ on every GetDeviceData call        */
+    volatile uint32_t data_items;    /* items the last GetDeviceData returned */
+    volatile uint32_t last_cb;       /* cb of the last GetDeviceState call    */
+    volatile uint32_t state_calls;   /* ++ on every GetDeviceState call       */
 } LRInputBlock;
 #pragma pack(pop)
 
@@ -72,9 +80,11 @@ static PFN_DllCanUnloadNow     real_DllCanUnloadNow;
 
 typedef HRESULT (STDMETHODCALLTYPE *PFN_CreateDevice)(void *, const GUID *, void **, void *);
 typedef HRESULT (STDMETHODCALLTYPE *PFN_GetDeviceState)(void *, DWORD, void *);
+typedef HRESULT (STDMETHODCALLTYPE *PFN_GetDeviceData)(void *, DWORD, void *, DWORD *, DWORD);
 
 static PFN_CreateDevice   orig_CreateDevice;
 static PFN_GetDeviceState orig_GetDeviceState;
+static PFN_GetDeviceData  orig_GetDeviceData;
 
 static void open_block(void)
 {
@@ -143,6 +153,8 @@ static HRESULT STDMETHODCALLTYPE hook_GetDeviceState(void *self, DWORD cb, void 
     /* Count every read, including pass-through ones, so the harness can tell
        the shim is live and the game is polling before taking control. */
     if (b) {
+        b->state_calls++;
+        b->last_cb = cb;
         if (cb == 0x10 || cb == 0x14)      /* DIMOUSESTATE / DIMOUSESTATE2 */
             b->mouse_frame++;
         else if (cb == 0x100)
@@ -185,6 +197,26 @@ static HRESULT STDMETHODCALLTYPE hook_GetDeviceState(void *self, DWORD cb, void 
     return orig_GetDeviceState(self, cb, data);
 }
 
+/* ---- IDirectInputDevice::GetDeviceData (vtable index 10) ----------------
+   Not hooked to inject anything yet, only to observe. If the game takes its
+   clicks from buffered data rather than immediate state, this counter moves
+   while a click is held and GetDeviceState's button bytes are ignored --
+   which is exactly the ambiguity blocking the live terrain dump. */
+
+static HRESULT STDMETHODCALLTYPE hook_GetDeviceData(void *self, DWORD cbObjectData,
+                                                    void *rgdod, DWORD *pdwInOut,
+                                                    DWORD dwFlags)
+{
+    LRInputBlock *b = g_block;
+    HRESULT hr = orig_GetDeviceData(self, cbObjectData, rgdod, pdwInOut, dwFlags);
+    if (b) {
+        b->data_frame++;
+        if (pdwInOut)
+            b->data_items = *pdwInOut;
+    }
+    return hr;
+}
+
 /* ---- IDirectInput::CreateDevice (vtable index 3) ------------------------ */
 
 static HRESULT STDMETHODCALLTYPE hook_CreateDevice(void *self, const GUID *guid,
@@ -192,6 +224,9 @@ static HRESULT STDMETHODCALLTYPE hook_CreateDevice(void *self, const GUID *guid,
 {
     HRESULT hr = orig_CreateDevice(self, guid, out, outer);
     if (SUCCEEDED(hr) && out && *out) {
+        void *prev10 = patch_slot(*out, 10, (void *)hook_GetDeviceData);
+        if (prev10 && prev10 != (void *)hook_GetDeviceData)
+            orig_GetDeviceData = (PFN_GetDeviceData)prev10;
         void *prev = patch_slot(*out, 9, (void *)hook_GetDeviceState);
         if (prev && prev != (void *)hook_GetDeviceState)
             orig_GetDeviceState = (PFN_GetDeviceState)prev;

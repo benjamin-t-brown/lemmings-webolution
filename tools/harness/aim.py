@@ -40,7 +40,51 @@ attempt down the differencing route.)
 """
 from __future__ import annotations
 
+import ctypes
 import time
+
+
+class BlankFrame(RuntimeError):
+    """Raised when a capture came back black, which is not a game state.
+
+    PrintWindow on this Direct3D window returns an all-black bitmap whenever
+    the window is not the foreground one. Nothing about that is distinguishable
+    from a legitimately dark screen by brightness alone, and treating it as one
+    is how an earlier attempt concluded it was at the main menu while a level
+    was actually running. Every vision helper here goes through
+    `require_live_frame`, so a blank capture stops the run instead of quietly
+    steering it.
+    """
+
+
+def is_blank(img, threshold: float = 0.5) -> bool:
+    small = img.convert("L").resize((64, 36))
+    px = list(small.getdata())
+    return (sum(px) / len(px)) < threshold
+
+
+def focus(hwnd) -> bool:
+    """Brings the game forward. Windows may refuse, so the result is checked."""
+    u = ctypes.windll.user32
+    u.ShowWindow(hwnd, 9)          # SW_RESTORE
+    u.SetForegroundWindow(hwnd)
+    time.sleep(0.4)
+    return u.GetForegroundWindow() == hwnd
+
+
+def require_live_frame(shot_fn, hwnd=None, tries: int = 3):
+    """A capture that is actually showing something, or BlankFrame."""
+    for _ in range(tries):
+        img = shot_fn()
+        if not is_blank(img):
+            return img
+        if hwnd is not None:
+            focus(hwnd)
+        time.sleep(0.6)
+    raise BlankFrame(
+        "capture is black: the game window is probably not foreground. "
+        "Vision results from such a frame mean nothing."
+    )
 
 
 def find_cursor(img, step: int = 2):

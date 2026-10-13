@@ -18,6 +18,9 @@ set(WEBOLUTION_SOURCES
   src/assets/Cylinder.cpp
 
   # sim -- the game itself, independent of rendering
+  # gfx bits with no GL dependency, so the tests can reach them
+  src/gfx/CylinderView.cpp
+
   src/sim/Terrain.cpp
   src/sim/World.cpp
 

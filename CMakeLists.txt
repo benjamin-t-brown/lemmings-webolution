@@ -126,6 +126,10 @@ add_executable(test_cylinder src/__test__/test_cylinder.cpp)
 target_link_libraries(test_cylinder PRIVATE webolution_objects)
 add_test(NAME cylinder COMMAND test_cylinder)
 
+add_executable(test_cylinderview src/__test__/test_cylinderview.cpp)
+target_link_libraries(test_cylinderview PRIVATE webolution_objects)
+add_test(NAME cylinderview COMMAND test_cylinderview)
+
 add_executable(test_terrain src/__test__/test_terrain.cpp)
 target_link_libraries(test_terrain PRIVATE webolution_objects)
 add_test(NAME terrain COMMAND test_terrain)

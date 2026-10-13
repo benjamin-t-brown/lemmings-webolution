@@ -1,12 +1,17 @@
 // Draws the simulation.
 //
-// Everything is textured quads in a single batch with one shader, which is all
-// the 2D view needs and maps straight onto WebGL2. The cylinder comes later;
-// this is the flat, unwrapped view the plan calls for first, and it is what
-// makes the simulation visible while its rules are still being pinned down.
+// Everything is textured quads in a single batch with one shader, which maps
+// straight onto WebGL2.
+//
+// There are two views, and the same batch feeds both: the flat unwrapped one,
+// which is the easier thing to debug a simulation against, and the cylinder
+// projection, which is how the game is actually played. The vertex shader
+// chooses between them, so nothing above the renderer has to know which is
+// active -- a quad at world (x, y) lands in the right place either way.
 
 #pragma once
 
+#include "CylinderView.h"
 #include "assets/Bitmap.h"
 #include "sim/World.h"
 
@@ -34,6 +39,17 @@ public:
   // Camera, in world pixels: what the top-left of the window shows, and how
   // many world pixels wide the window is.
   void setCamera(float originX, float originY, float worldWidth);
+
+  // Switches to the cylinder projection: world X becomes the angle around a
+  // tube of the given radius, world Y becomes height along its axis. Pass a
+  // radius of worldWidth / 2pi to keep texels square, which is what makes the
+  // wrapped view look like the flat one rolled up rather than stretched.
+  //
+  // The view is the camera orbiting the tube; see CylinderView.h.
+  void setCylinder(const CylinderView& view, float worldWidth, float radius);
+  // Back to the flat unwrapped view.
+  void setFlat();
+  bool cylinderEnabled() const { return cylinder_; }
 
   // Uploads a terrain mask as a texture. Call when the terrain changes.
   void uploadTerrain(const sim::Terrain& terrain);
@@ -75,6 +91,13 @@ private:
   int uCamera_ = -1;
   int uViewport_ = -1;
   int uTexture_ = -1;
+  int uViewProj_ = -1;
+  int uCyl_ = -1;
+
+  bool cylinder_ = false;
+  float cylRadius_ = 0;
+  float cylWorldWidth_ = 0;
+  Mat4 viewProj_ = identity();
 
   int terrainW_ = 0;
   int terrainH_ = 0;

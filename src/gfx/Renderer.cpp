@@ -17,14 +17,25 @@ layout(location = 2) in vec4 aColour;
 
 uniform vec4 uCamera;     // originX, originY, worldWidth, worldHeight
 uniform vec2 uViewport;   // pixels
+uniform mat4 uViewProj;   // cylinder mode only
+uniform vec4 uCyl;        // enabled, radius, worldWidth, unused
 
 out vec2 vUv;
 out vec4 vColour;
 
 void main() {
-  vec2 rel = (aPos - uCamera.xy) / uCamera.zw;   // 0..1 across the view
-  vec2 ndc = vec2(rel.x * 2.0 - 1.0, 1.0 - rel.y * 2.0);
-  gl_Position = vec4(ndc, 0.0, 1.0);
+  if (uCyl.x > 0.5) {
+    // World X is the angle around the tube, world Y the height along its
+    // axis. Y is kept pointing down, as the simulation has it, so the camera
+    // carries the sign flip instead of every vertex.
+    float a = aPos.x / uCyl.z * 6.28318530718;
+    vec3 p = vec3(sin(a) * uCyl.y, aPos.y, cos(a) * uCyl.y);
+    gl_Position = uViewProj * vec4(p, 1.0);
+  } else {
+    vec2 rel = (aPos - uCamera.xy) / uCamera.zw;   // 0..1 across the view
+    vec2 ndc = vec2(rel.x * 2.0 - 1.0, 1.0 - rel.y * 2.0);
+    gl_Position = vec4(ndc, 0.0, 1.0);
+  }
   vUv = aUv;
   vColour = aColour;
 }
@@ -128,6 +139,8 @@ std::expected<void, std::string> Renderer::init() {
   uCamera_ = WEBO_GL(GetUniformLocation)(program_, "uCamera");
   uViewport_ = WEBO_GL(GetUniformLocation)(program_, "uViewport");
   uTexture_ = WEBO_GL(GetUniformLocation)(program_, "uTexture");
+  uViewProj_ = WEBO_GL(GetUniformLocation)(program_, "uViewProj");
+  uCyl_ = WEBO_GL(GetUniformLocation)(program_, "uCyl");
 
   WEBO_GL(GenVertexArrays)(1, &vao_);
   WEBO_GL(BindVertexArray)(vao_);
@@ -186,11 +199,26 @@ void Renderer::beginFrame(int viewportWidth, int viewportHeight, Colour clear) {
   viewH_ = viewportHeight > 0 ? viewportHeight : 1;
   glViewport(0, 0, viewW_, viewH_);
   glClearColor(clear.r, clear.g, clear.b, clear.a);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // The flat view draws strictly back to front and wants no depth test; the
+  // cylinder needs one, or the far side of the tube paints over the near.
+  if (cylinder_)
+    glEnable(GL_DEPTH_TEST);
+  else
+    glDisable(GL_DEPTH_TEST);
   drawCalls_ = 0;
   batch_.clear();
   boundTex_ = 0;
 }
+
+void Renderer::setCylinder(const CylinderView& view, float worldWidth, float radius) {
+  cylinder_ = true;
+  cylWorldWidth_ = worldWidth > 1 ? worldWidth : 1;
+  cylRadius_ = radius > 0.01f ? radius : 1;
+  viewProj_ = view.viewProjection(viewW_, viewH_);
+}
+
+void Renderer::setFlat() { cylinder_ = false; }
 
 void Renderer::setCamera(float originX, float originY, float worldWidth) {
   camX_ = originX;
@@ -216,6 +244,8 @@ void Renderer::flush() {
   WEBO_GL(Uniform4f)(uCamera_, camX_, camY_, camWidth_, worldHeight);
   WEBO_GL(Uniform2f)(uViewport_, static_cast<float>(viewW_), static_cast<float>(viewH_));
   WEBO_GL(Uniform1i)(uTexture_, 0);
+  WEBO_GL(Uniform4f)(uCyl_, cylinder_ ? 1.0f : 0.0f, cylRadius_, cylWorldWidth_, 0.0f);
+  WEBO_GL(UniformMatrix4fv)(uViewProj_, 1, GL_FALSE, viewProj_.data());
   WEBO_GL(ActiveTexture)(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, boundTex_ ? boundTex_ : whiteTex_);
 
@@ -235,6 +265,22 @@ void Renderer::drawTerrain() {
   if (boundTex_ != terrainTex_) {
     flush();
     boundTex_ = terrainTex_;
+  }
+
+  if (cylinder_) {
+    // A quad cannot bend, so the tube is drawn as a ring of segments. The
+    // vertex shader turns each one's X into an angle; enough segments and the
+    // silhouette reads as round. 128 is two per degree at the retail size,
+    // which is past the point where more stops being visible.
+    constexpr int kSegments = 128;
+    const float span = static_cast<float>(terrainW_) / kSegments;
+    for (int i = 0; i < kSegments; ++i) {
+      const float x0 = span * static_cast<float>(i);
+      const float u0 = static_cast<float>(i) / kSegments;
+      const float u1 = static_cast<float>(i + 1) / kSegments;
+      push(x0, 0, span, static_cast<float>(terrainH_), u0, 0, u1, 1, {1, 1, 1, 1});
+    }
+    return;
   }
 
   // The level wraps, so draw it as many times as the view needs. GL_REPEAT on

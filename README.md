@@ -43,6 +43,7 @@ original's own artwork, and the level's parameters come from the game's data:
 ```sh
 make -C src run                                   # the test level
 build/cmake/dev-debug/webolution --level MM_BLOCK_001_A   # real parameters
+build/cmake/dev-debug/webolution --cylinder               # wrapped on the tube
 make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
 ```
 
@@ -68,8 +69,10 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
       provisional** until validated against the original via the oracle -- the
       exception being the spawn interval, which comes from `RELEASERATE.PC`.
 - [~] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
-      flat unwrapped view, lemmings drawn from `LEMMINGSLO.SPR`. The cylinder
-      projection is next.
+      lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
+      unwrapped one and the cylinder projection (`C` toggles). What is not
+      there yet is the original's *look*: the terrain is still drawn as
+      material colours, not skinned with the level's tile textures.
 - [ ] Game shell: menus, level select, saves, audio, FMV
 - [ ] Linux, macOS and WebAssembly builds. The emscripten preset exists but has
       never been run -- no activated EMSDK here -- so it is untested, not done.

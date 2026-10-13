@@ -42,6 +42,7 @@ struct GlFunctions {
   PFNGLUNIFORM1IPROC Uniform1i = nullptr;
   PFNGLUNIFORM2FPROC Uniform2f = nullptr;
   PFNGLUNIFORM4FPROC Uniform4f = nullptr;
+  PFNGLUNIFORMMATRIX4FVPROC UniformMatrix4fv = nullptr;
   PFNGLGENVERTEXARRAYSPROC GenVertexArrays = nullptr;
   PFNGLBINDVERTEXARRAYPROC BindVertexArray = nullptr;
   PFNGLDELETEVERTEXARRAYSPROC DeleteVertexArrays = nullptr;

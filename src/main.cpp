@@ -10,7 +10,12 @@
 //
 //   left click      assign the selected skill to the lemming under the cursor
 //   1..8            choose a skill
-//   arrow keys / A D  pan
+//   A D / left right  pan
+//   C               toggle the cylinder projection
+//   up down         raise and lower the cylinder camera
+//   page up/down    move it closer and further
+//
+//   --cylinder      start in the cylinder projection
 //   space           pause
 //   .               single step while paused
 //   N               nuke
@@ -36,6 +41,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <numbers>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -120,6 +126,8 @@ struct App {
   bool terrainDirty = true;
   int animTick = 0;
   bool useSprites = true;
+  bool cylinder = false;
+  gfx::CylinderView view;
 
   const LevelInfo* levelInfo() const {
     for (const auto& i : levelInfos)
@@ -140,12 +148,49 @@ struct App {
       case SDLK_PERIOD: stepOnce = true; break;
       case SDLK_n: world.nuke(); break;
       case SDLK_r: restart(); break;
-      case SDLK_LEFT: case SDLK_a: camX -= 16; break;
-      case SDLK_RIGHT: case SDLK_d: camX += 16; break;
+      case SDLK_LEFT: case SDLK_a: pan(-16); break;
+      case SDLK_RIGHT: case SDLK_d: pan(16); break;
+      case SDLK_c: toggleCylinder(); break;
+      case SDLK_UP: view.eyeHeight -= 8; view.lookHeight -= 8; break;
+      case SDLK_DOWN: view.eyeHeight += 8; view.lookHeight += 8; break;
+      case SDLK_PAGEUP: view.distance -= 16; view.clamp(); break;
+      case SDLK_PAGEDOWN: view.distance += 16; view.clamp(); break;
       default:
         if (k >= SDLK_1 && k <= SDLK_8)
           skill = static_cast<int>(k - SDLK_1);
         break;
+    }
+  }
+
+  float worldWidth() const { return static_cast<float>(world.terrain().width()); }
+
+  // Pans in whichever view is active, keeping the two in step so toggling
+  // does not jump: the flat camera's X and the orbit angle mean the same
+  // thing, one unwrapped and one wrapped.
+  void pan(float dx) {
+    camX += dx;
+    view.centreOnWorldX(camX + camWidth * 0.5f, worldWidth());
+  }
+
+  void toggleCylinder() {
+    cylinder = !cylinder;
+    if (cylinder) {
+      // Radius from the circumference keeps texels square, so the wrapped
+      // view is the flat one rolled up rather than stretched.
+      view.radius = worldWidth() / (2.0f * std::numbers::pi_v<float>);
+      view.height = static_cast<float>(world.terrain().height());
+      view.eyeHeight = view.height * 0.5f;
+      view.lookHeight = view.height * 0.5f;
+      // Far enough back that the whole tube fits, rather than a guessed
+      // multiple of the radius: the test level is far taller than it is wide,
+      // and a radius-based distance crops it badly. Take whichever of height
+      // and diameter needs more room, plus a margin.
+      const float halfFov = std::tan(view.fovY * 0.5f);
+      const float forHeight = view.height * 0.5f / halfFov;
+      const float forWidth = view.radius / halfFov;
+      view.distance = std::max(forHeight, forWidth) * 1.05f + view.radius;
+      view.centreOnWorldX(camX + camWidth * 0.5f, worldWidth());
+      view.clamp();
     }
   }
 
@@ -192,6 +237,10 @@ struct App {
     SDL_GetWindowSize(window, &vw, &vh);
     renderer.beginFrame(vw, vh, {0.06f, 0.07f, 0.12f, 1});
     renderer.setCamera(camX, 0, camWidth);
+    if (cylinder)
+      renderer.setCylinder(view, worldWidth(), view.radius);
+    else
+      renderer.setFlat();
 
     if (terrainDirty) {
       renderer.uploadTerrain(world.terrain());
@@ -268,6 +317,7 @@ int main(int argc, char** argv) {
   int headlessTicks = 0;
   std::string shotPath;
   int shotTicks = 120;
+  bool startCylinder = false;
   for (int i = 1; i < argc; ++i) {
     const std::string a = argv[i];
     if (a == "--headless" && i + 1 < argc) {
@@ -280,6 +330,8 @@ int main(int argc, char** argv) {
       shotPath = argv[++i];
     } else if (a == "--shot-ticks" && i + 1 < argc) {
       shotTicks = std::atoi(argv[++i]);
+    } else if (a == "--cylinder") {
+      startCylinder = true;
     } else if (a == "--level" && i + 1 < argc) {
       // A level id from LEVELMAP.DAT, e.g. MM_CLIMB_002. Only its parameters
       // are used so far; the terrain stays the built-in one until .LVL is
@@ -315,6 +367,9 @@ int main(int argc, char** argv) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 #endif
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  // The cylinder view needs a depth buffer, or the far side of the tube
+  // paints over the near side.
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
   g_app.window = SDL_CreateWindow("Lemmings Webolution", SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, 1280, 800,
@@ -387,6 +442,8 @@ int main(int argc, char** argv) {
   }
 
   g_app.restart();
+  if (startCylinder)
+    g_app.toggleCylinder();
   g_app.lastTick = SDL_GetTicks64();
 
   if (!shotPath.empty()) {

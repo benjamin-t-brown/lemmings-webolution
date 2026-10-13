@@ -52,6 +52,7 @@ std::string loadGlFunctions() {
   load(g_gl.Uniform1i, "glUniform1i");
   load(g_gl.Uniform2f, "glUniform2f");
   load(g_gl.Uniform4f, "glUniform4f");
+  load(g_gl.UniformMatrix4fv, "glUniformMatrix4fv");
   load(g_gl.GenVertexArrays, "glGenVertexArrays");
   load(g_gl.BindVertexArray, "glBindVertexArray");
   load(g_gl.DeleteVertexArrays, "glDeleteVertexArrays");

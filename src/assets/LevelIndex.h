@@ -47,8 +47,8 @@
 //
 // Not yet determined
 // ------------------
-//   * The per-level ring stride Y, as a field rather than a search.
-//   * Whether the walkable terrain is these faces, the skin tiles, or both.
+//   * The per-level ring stride Y, as a stored field (SurfaceMesh searches it).
+//   * Whether skin tiles also encode solidity (surface masks are sparse).
 //   * The polygon lists, the placed-model transforms, and the script.
 //
 // The scan is a *heuristic index*, not a parser: it finds length-prefixed

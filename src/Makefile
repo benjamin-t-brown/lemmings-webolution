@@ -79,4 +79,6 @@ help:
 	@echo "make lvlmap    unroll a level's surface to PNG (LEVEL=name)"
 	@echo "make clean     remove the cmake build tree"
 	@echo ""
+	@echo "lrtool lvlmask <game-dir> <level> <out.png>  -- collision mask"
+	@echo ""
 	@echo "GAME_DIR=$(GAME_DIR)"

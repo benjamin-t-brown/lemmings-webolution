@@ -423,16 +423,28 @@ exactly (overlap of a handful). On the other 92 the two arrays only cover a
 minority of the vertices between them — consistent with the sparse clusters
 `lvlmap` already showed. When both are set at the same key they never agree.
 
+#### Faces → terrain mask — done enough to play
+
+`src/assets/SurfaceMesh` walks both index arrays, keeps every lattice quad
+whose edge lengths match thickness / chord / ring spacing, detects the
+per-level ring stride `Y` by searching multiples of 16, and rasterises the
+**angular and ring edges** into a wraparound occupancy mask (radius is
+discarded by the unroll, so thickness edges collapse to points and are not
+stroked). `--level` loads that mask as the simulation terrain;
+`lrtool lvlmask` writes it as a PNG.
+
+Coverage across the corpus is low — a few percent solid, 12.7% on
+`MM_CLIMB_002` — which matches the sparse clusters `lvlmap` already showed.
+So the surface is platforms / detail, not a filled tube. Skin tiles remain
+scenery until proven otherwise.
+
 #### Where to go next
 
-* **Build the mesh from key adjacency.** The quads above are enough to
-  rasterise a terrain mask for the levels that populate them densely. The
-  per-level ring stride `Y` still has to be read (or searched) rather than
-  hard-coded; the ten large arrays all use 8224, the rest vary.
-* **Decide what the surface *is*.** Even with faces, most of the tube is
-  empty in the vertex data. Either the walkable ground also comes from the
-  skin tiles, or there is another source, or the surface really is sparse
-  platforms. The live-process fallback still stands for settling that.
+* **Entrances, exits, and skills from the .LVL** — spawn points are still
+  guessed from the mask.
+* **Whether skin tiles encode solidity** — compare a live-process terrain
+  dump to the surface mask and to tile alpha.
+* **Ring stride as a stored field** — currently searched, not read.
 
 #### Looking at it: `lrtool lvlmap`
 

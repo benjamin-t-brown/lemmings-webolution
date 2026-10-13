@@ -6,6 +6,7 @@
 //   lrtool dump    <game-dir> <out-dir> [substring]
 //   lrtool lvlmap  <game-dir> <level> <out.png>
 //   lrtool lvlkeys <game-dir> [level]
+//   lrtool lvlmask <game-dir> <level> <out.png>
 //
 // <game-dir> is a Lemmings Revolution installation containing lemmings.box
 // (and optionally patch.box, which overrides entries of the same name).
@@ -15,6 +16,7 @@
 #include "assets/Bitmap.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
+#include "assets/SurfaceMesh.h"
 #include "assets/Lrz.h"
 #include "assets/Png.h"
 #include "assets/Sprite.h"
@@ -49,7 +51,8 @@ int usage() {
                "  lrtool extract <game-dir> <name> <out-file>\n"
                "  lrtool dump    <game-dir> <out-dir> [substring]\n"
                "  lrtool lvlmap  <game-dir> <level> <out.png>\n"
-               "  lrtool lvlkeys <game-dir> [level]\n";
+               "  lrtool lvlkeys <game-dir> [level]\n"
+               "  lrtool lvlmask <game-dir> <level> <out.png>\n";
   return 2;
 }
 
@@ -341,6 +344,81 @@ int cmdLvlKeys(const fs::path& gameDir, std::string_view levelFilter) {
                                r.med16, r.angOk ? "*" : " ", r.ringDelta, r.medRing);
     }
   }
+  return 0;
+}
+
+// Rasterises a level's surface lattice to a flat occupancy PNG -- the same
+// mask the simulation walks on when --level is used. Useful for judging how
+// much of the tube the faces actually cover.
+int cmdLvlMask(const fs::path& gameDir, std::string_view levelName, const fs::path& out) {
+  auto lib = webo::AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
+  if (!lib) {
+    std::cerr << "error: " << lib.error() << "\n";
+    return 1;
+  }
+
+  std::string wanted(levelName);
+  std::ranges::transform(wanted, wanted.begin(),
+                         [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+  std::string resolved;
+  for (const auto& candidate : webo::levelFileNames(*lib))
+    if (candidate.find(wanted) != std::string::npos) {
+      resolved = candidate;
+      break;
+    }
+  if (resolved.empty()) {
+    std::cerr << std::format("error: no level matching '{}'\n", levelName);
+    return 1;
+  }
+
+  auto blob = lib->read(resolved);
+  if (!blob) {
+    std::cerr << "error: " << blob.error() << "\n";
+    return 1;
+  }
+  auto mesh = webo::findCylinderMesh(*blob);
+  auto index = webo::indexLevel(*blob);
+  if (!mesh || !index) {
+    std::cerr << "error: " << (mesh ? index.error() : mesh.error()) << "\n";
+    return 1;
+  }
+  auto faces = webo::buildSurfaceMesh(*mesh, index->grid0, index->grid1);
+  if (!faces) {
+    std::cerr << "error: " << faces.error() << "\n";
+    return 1;
+  }
+  const auto mask = webo::rasteriseSurface(*faces, *mesh, 2);
+
+  webo::Image img;
+  img.width = mask.width;
+  img.height = mask.height;
+  img.rgba.assign(static_cast<std::size_t>(mask.width) * mask.height * 4, 0);
+  for (int y = 0; y < mask.height; ++y) {
+    for (int x = 0; x < mask.width; ++x) {
+      std::uint8_t* p = img.rgba.data() + (static_cast<std::size_t>(y) * mask.width + x) * 4;
+      if (mask.solid[static_cast<std::size_t>(y) * mask.width + x]) {
+        p[0] = 200;
+        p[1] = 160;
+        p[2] = 60;
+        p[3] = 255;
+      } else {
+        p[0] = 20;
+        p[1] = 22;
+        p[2] = 30;
+        p[3] = 255;
+      }
+    }
+  }
+  if (auto r = webo::writePng(out, img); !r) {
+    std::cerr << "error: " << r.error() << "\n";
+    return 1;
+  }
+  const double pct = 100.0 * static_cast<double>(mask.solidCells()) /
+                     (static_cast<double>(mask.width) * mask.height);
+  std::cout << std::format(
+      "{}: {} quads (ang {}, ring {}, stride {}), mask {}x{}, {:.1f}% solid -> {}\n", resolved,
+      faces->quads.size(), faces->angularQuads, faces->ringQuads, faces->ringStride, mask.width,
+      mask.height, pct, out.string());
   return 0;
 }
 
@@ -840,6 +918,11 @@ int main(int argc, char** argv) {
     if (argc < 3)
       return usage();
     return cmdLvlKeys(argv[2], argc > 3 ? argv[3] : "");
+  }
+  if (cmd == "lvlmask") {
+    if (argc < 5)
+      return usage();
+    return cmdLvlMask(argv[2], argv[3], argv[4]);
   }
   if (cmd == "dump") {
     if (argc < 4)

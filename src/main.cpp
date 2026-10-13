@@ -1,12 +1,10 @@
 // Lemmings Webolution.
 //
-// Runs the simulation and draws it. The level is a built-in test level for
-// now: .LVL is still being reverse engineered (see PLAN.md 1.6), so there is
-// no real level to load yet, but everything downstream of it is real --
-// including the lemmings, which are drawn with the original's own artwork
-// when an installation is reachable. Point WEBOLUTION_GAME_DIR at one, or
-// accept the default below. Without it the game still runs and draws
-// placeholder boxes, so the simulation stays testable on a bare checkout.
+// Runs the simulation and draws it. With --level <id> the terrain is rebuilt
+// from the level's surface lattice (see PLAN.md 1.6); without it, a hand-built
+// test level is used so the simulation stays playable on a bare checkout.
+// Lemmings are drawn with the original's artwork when an installation is
+// reachable. Point WEBOLUTION_GAME_DIR at one, or accept the default below.
 //
 //   left click      assign the selected skill to the lemming under the cursor
 //   1..8            choose a skill
@@ -29,10 +27,8 @@
 //   R               restart
 //   Esc             quit
 //
-//   --level <id>    take the level's parameters from LEVELMAP.DAT, e.g.
-//                   --level MM_BLOCK_001_A. The terrain stays the built-in
-//                   one; only the lemming count, save target and time limit
-//                   come from the data.
+//   --level <id>    load that level's surface as the terrain and take its
+//                   parameters from LEVELMAP.DAT, e.g. --level MM_CLIMB_002.
 
 #include "assets/Bitmap.h"
 #include "assets/Png.h"
@@ -40,12 +36,15 @@
 #include "gfx/Gl.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
+#include "assets/SurfaceMesh.h"
 #include "gfx/CylinderSkin.h"
 #include "gfx/LemmingSprites.h"
 #include "gfx/Renderer.h"
 #include "assets/Box.h"
 #include "assets/GameData.h"
 #include "sim/World.h"
+
+#include <optional>
 
 #include <SDL2/SDL.h>
 
@@ -75,14 +74,75 @@ constexpr int kTicksPerSecond = 20;
 // engine never ships data; it reads an existing installation.
 constexpr const char* kDefaultGameDir = "C:/progs/Lemmings Revolution";
 
-// A hand-built level, until .LVL gives us real ones: a floor, some pillars to
-// climb and bash, a gap to build over, and a pit at the seam so the
-// wraparound gets exercised by just playing.
-//
-// The terrain is hand-built, but the level's *parameters* need not be
-// invented. LEVELMAP.DAT states the lemming count, the save target and the
-// time limit for all 125 slots, so those are taken from there whenever a
-// record is supplied, and only the shape of the ground is ours.
+void applyLevelParams(sim::LevelSetup& s, const ReleaseRates& rates, int releaseRate,
+                      const LevelInfo* info) {
+  s.totalLemmings = info ? static_cast<int>(info->totalLemmings) : 20;
+  s.saveTarget = info ? static_cast<int>(info->saveTarget) : 10;
+  if (info)
+    s.timeLimitTicks = static_cast<int>(info->timeLimitSeconds) * kTicksPerSecond;
+  s.releaseIntervalTicks =
+      rates.empty() ? 24 : rates.intervalTicks(releaseRate, kTicksPerSecond);
+}
+
+// Drop an entrance above the leftmost solid cell of the highest occupied row,
+// and an exit on solid ground roughly opposite. Entrances and exits are not
+// yet read from .LVL, so this is a playable stand-in rather than the original
+// placement.
+void placeSpawnPoints(sim::LevelSetup& s) {
+  const auto& t = s.terrain;
+  int topY = -1, leftX = 0, rightX = 0;
+  for (int y = 0; y < t.height(); ++y) {
+    for (int x = 0; x < t.width(); ++x) {
+      if (!t.solid(x, y))
+        continue;
+      if (topY < 0 || y < topY) {
+        topY = y;
+        leftX = x;
+        rightX = x;
+      } else if (y == topY) {
+        leftX = std::min(leftX, x);
+        rightX = std::max(rightX, x);
+      }
+    }
+  }
+  if (topY < 0) {
+    // Empty mask: fall back to the middle of the sky so the level still runs.
+    s.entrances.push_back({t.width() / 4, t.height() / 4});
+    s.exits.push_back({3 * t.width() / 4, t.height() / 2, 12, 14});
+    return;
+  }
+  const int enterY = std::max(0, topY - 10);
+  s.entrances.push_back({leftX, enterY});
+
+  // Exit on a standable cell (solid with empty above) far around the tube
+  // from the entrance.
+  int bestX = leftX, bestY = topY, bestDist = -1;
+  for (int y = 1; y < t.height(); ++y) {
+    for (int x = 0; x < t.width(); ++x) {
+      if (!t.solid(x, y) || t.solid(x, y - 1))
+        continue;
+      const int dx = std::abs(t.wrapX(x - leftX + t.width() / 2) - t.width() / 2);
+      if (dx > bestDist) {
+        bestDist = dx;
+        bestX = x;
+        bestY = y;
+      }
+    }
+  }
+  s.exits.push_back({bestX - 4, bestY - 12, 12, 14});
+}
+
+sim::Terrain terrainFromMask(const OccupancyMask& mask) {
+  sim::Terrain t(mask.width, mask.height);
+  for (int y = 0; y < mask.height; ++y)
+    for (int x = 0; x < mask.width; ++x)
+      if (mask.solid[static_cast<std::size_t>(y) * mask.width + x])
+        t.set(x, y, sim::Material::Earth);
+  return t;
+}
+
+// A hand-built level for when no .LVL surface is loaded: a floor, pillars,
+// a gap, and a pit at the seam so wraparound gets exercised by just playing.
 sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate,
                               const LevelInfo* info) {
   sim::LevelSetup s;
@@ -99,14 +159,16 @@ sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate,
 
   s.entrances.push_back({20, 130});
   s.exits.push_back({230, 138, 12, 14});
-  s.totalLemmings = info ? static_cast<int>(info->totalLemmings) : 20;
-  s.saveTarget = info ? static_cast<int>(info->saveTarget) : 10;
-  if (info)
-    s.timeLimitTicks = static_cast<int>(info->timeLimitSeconds) * kTicksPerSecond;
-  // Real spacing, from RELEASERATE.PC, when the data is there. Rate 50 is
-  // mid-curve. Falls back to a plausible constant otherwise.
-  s.releaseIntervalTicks =
-      rates.empty() ? 24 : rates.intervalTicks(releaseRate, kTicksPerSecond);
+  applyLevelParams(s, rates, releaseRate, info);
+  return s;
+}
+
+sim::LevelSetup makeSurfaceLevel(const OccupancyMask& mask, const ReleaseRates& rates,
+                                 int releaseRate, const LevelInfo* info) {
+  sim::LevelSetup s;
+  s.terrain = terrainFromMask(mask);
+  placeSpawnPoints(s);
+  applyLevelParams(s, rates, releaseRate, info);
   return s;
 }
 
@@ -125,6 +187,9 @@ struct App {
   std::vector<LevelInfo> levelInfos;
   std::string levelId;      // empty = use the built-in defaults
   std::string levelName;
+  // When --level loads a surface successfully, restart uses this instead of
+  // the hand-built test terrain.
+  std::optional<sim::LevelSetup> surfaceLevel;
   sim::World world;
 
   bool running = true;
@@ -151,7 +216,12 @@ struct App {
   }
 
   void restart() {
-    world = sim::World(makeTestLevel(releaseRates, releaseRate, levelInfo()));
+    if (surfaceLevel)
+      world = sim::World(*surfaceLevel);
+    else
+      world = sim::World(makeTestLevel(releaseRates, releaseRate, levelInfo()));
+    camWidth = static_cast<float>(world.terrain().width());
+    camX = 0;
     terrainDirty = true;
     // Level-start fanfare. Shell-owned rather than a World cue: restart is
     // not a simulation event, and the original plays this before anyone
@@ -490,33 +560,6 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "level map: %s (using defaults)\n", infos.error().c_str());
       }
 
-      // The level's cylinder skin, if a level was named. Its tile textures are
-      // the only part of a .LVL the renderer can use today.
-      if (!g_app.levelId.empty()) {
-        std::string path;
-        for (const auto& candidate : levelFileNames(*lib))
-          if (candidate.find(g_app.levelId) != std::string::npos) {
-            path = candidate;
-            break;
-          }
-        if (path.empty()) {
-          std::fprintf(stderr, "skin: no .LVL matching %s\n", g_app.levelId.c_str());
-        } else if (auto blob = lib->read(path)) {
-          auto mesh = findCylinderMesh(*blob);
-          if (!mesh) {
-            std::fprintf(stderr, "skin: %s\n", mesh.error().c_str());
-          } else if (auto r = g_app.skin.load(*lib, g_app.renderer, *mesh); !r) {
-            std::fprintf(stderr, "skin: %s\n", r.error().c_str());
-          } else {
-            for (const auto& m : g_app.skin.missing())
-              std::fprintf(stderr, "skin: %s\n", m.c_str());
-            std::fprintf(stderr, "skin: %zu tiles (%zu outer, %zu inner) from %s\n",
-                         g_app.skin.tileCount(), g_app.skin.outerCount(),
-                         g_app.skin.innerCount(), path.c_str());
-          }
-        }
-      }
-
       // The spawn interval comes from the game's own curve when it is there.
       if (auto rr = loadReleaseRateTable(*lib)) {
         g_app.releaseRates = std::move(*rr);
@@ -526,6 +569,64 @@ int main(int argc, char** argv) {
       } else {
         std::fprintf(stderr, "release rates: %s (using a fallback interval)\n",
                      rr.error().c_str());
+      }
+
+      // Named level: skin tiles for the renderer, surface lattice for the
+      // simulation. Either can fail independently; missing terrain falls back
+      // to the hand-built test level.
+      if (!g_app.levelId.empty()) {
+        std::string path;
+        for (const auto& candidate : levelFileNames(*lib))
+          if (candidate.find(g_app.levelId) != std::string::npos) {
+            path = candidate;
+            break;
+          }
+        if (path.empty()) {
+          std::fprintf(stderr, "level: no .LVL matching %s\n", g_app.levelId.c_str());
+        } else if (auto blob = lib->read(path)) {
+          auto mesh = findCylinderMesh(*blob);
+          if (!mesh) {
+            std::fprintf(stderr, "level: %s\n", mesh.error().c_str());
+          } else {
+            if (auto r = g_app.skin.load(*lib, g_app.renderer, *mesh); !r) {
+              std::fprintf(stderr, "skin: %s\n", r.error().c_str());
+            } else {
+              for (const auto& m : g_app.skin.missing())
+                std::fprintf(stderr, "skin: %s\n", m.c_str());
+              std::fprintf(stderr, "skin: %zu tiles (%zu outer, %zu inner) from %s\n",
+                           g_app.skin.tileCount(), g_app.skin.outerCount(),
+                           g_app.skin.innerCount(), path.c_str());
+            }
+
+            auto index = indexLevel(*blob);
+            if (!index) {
+              std::fprintf(stderr, "terrain: %s\n", index.error().c_str());
+            } else if (auto faces = buildSurfaceMesh(*mesh, index->grid0, index->grid1)) {
+              if (faces->quads.empty()) {
+                std::fprintf(stderr, "terrain: no lattice quads in %s (using test level)\n",
+                             path.c_str());
+              } else {
+                const auto mask = rasteriseSurface(*faces, *mesh, 2);
+                const double pct =
+                    100.0 * static_cast<double>(mask.solidCells()) /
+                    (static_cast<double>(mask.width) * mask.height);
+                g_app.surfaceLevel = makeSurfaceLevel(mask, g_app.releaseRates, g_app.releaseRate,
+                                                      g_app.levelInfo());
+                std::fprintf(stderr,
+                             "terrain: %zu quads (ang %zu, ring %zu, stride %d), "
+                             "mask %dx%d, %.1f%% solid from %s\n",
+                             faces->quads.size(), faces->angularQuads, faces->ringQuads,
+                             faces->ringStride, mask.width, mask.height, pct, path.c_str());
+                if (pct < 5.0)
+                  std::fprintf(stderr,
+                               "terrain: coverage is sparse -- platforms only; "
+                               "skin tiles are still scenery\n");
+              }
+            } else {
+              std::fprintf(stderr, "terrain: %s\n", faces.error().c_str());
+            }
+          }
+        }
       }
 
       // Sound cues used by the simulation. Missing any one is not fatal --

@@ -36,17 +36,16 @@ unset, so the suite is green on a machine without the game.
 
 ## Status
 
-The game runs: `make -C src run`. The terrain is a built-in test level, because
-`.LVL` is still being reverse engineered -- but the lemmings are drawn with the
-original's own artwork, and the level's parameters come from the game's data:
+The game runs: `make -C src run`. With `--level` the terrain is rebuilt from
+the level's surface lattice; without it a hand-built test level is used.
+Lemmings use the original's artwork when an installation is reachable:
 
 ```sh
 make -C src run                                   # the test level
-build/cmake/dev-debug/webolution --level MM_BLOCK_001_A   # real parameters
-build/cmake/dev-debug/webolution --cylinder               # wrapped on the tube
-build/cmake/dev-debug/webolution --level MM_CLIMB_002 --cylinder  # with its artwork
-build/cmake/dev-debug/webolution --native                 # the original's 640x480
-make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
+build/cmake/dev-debug/webolution --level MM_CLIMB_002 --cylinder
+build/cmake/dev-debug/webolution --native
+make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
+# lrtool lvlmask <game-dir> <level> <out.png>     # rasterised collision mask
 ```
 
 - [x] `.box` archive format decoded and validated
@@ -64,11 +63,9 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
 - [x] `.LVL` cylinder: the tube is identical in every level -- 7 rings, 32
       angular steps of 11.25 degrees, radii 50 and 60 -- which pins the
       coordinate system the simulation wraps in. `lrtool lvlmap` draws it.
-- [~] `.LVL` surface: located and parsed. The two `u32` arrays index its
-      vertices on a cylindrical lattice (`key+1` = inner/outer, `key+16` =
-      next angle, `key+Y` = next ring), which is enough to rebuild quads.
-      What remains is rasterising them into the walkable mask, and deciding
-      whether the skin tiles also contribute. See PLAN.md 1.6.
+- [~] `.LVL` surface: cylindrical lattice → quads → occupancy mask. `--level`
+      plays on that terrain (sparse platforms, ~4–13% solid). Skin tiles are
+      still scenery; whether they also encode ground is open. See PLAN.md 1.6.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
       eight skills, deterministic ticks, the level clock. **Rule constants are
       provisional** until validated against the original via the oracle -- the
@@ -77,9 +74,8 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll a level's geometry
       lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
       unwrapped one and the cylinder projection (`C` toggles), and a named
       level's own skin tiles wrapped onto the tube, both surfaces (`T`
-      toggles). The skin is scenery: what is solid is still the simulation's
-      own terrain mask, drawn over it, because the mapping between artwork and
-      collision is part of the unsolved surface topology.
+      toggles). With `--level`, collision comes from the surface lattice and
+      the skin is drawn behind it as scenery.
 - [~] Game shell: SDL mixer plays Letsgo / Chink / Ohno / Explode / Splat /
       Yippee from simulation cues. Menus, level select, saves, FMV still open.
 - [ ] Linux, macOS and WebAssembly builds. The emscripten preset exists but has

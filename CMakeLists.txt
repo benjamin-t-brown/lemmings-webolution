@@ -51,9 +51,13 @@ add_executable(test_lrz src/__test__/test_lrz.cpp)
 target_link_libraries(test_lrz PRIVATE webolution_objects)
 add_test(NAME lrz COMMAND test_lrz)
 
+add_executable(test_bitmap src/__test__/test_bitmap.cpp)
+target_link_libraries(test_bitmap PRIVATE webolution_objects)
+add_test(NAME bitmap COMMAND test_bitmap)
+
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz PROPERTIES
+  set_tests_properties(box lrz bitmap PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

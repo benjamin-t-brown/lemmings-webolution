@@ -9,7 +9,9 @@
 // (and optionally patch.box, which overrides entries of the same name).
 
 #include "assets/Box.h"
+#include "assets/Bitmap.h"
 #include "assets/Lrz.h"
+#include "assets/Png.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -215,6 +217,60 @@ int cmdDump(const fs::path& dir, const fs::path& outDir, std::string_view filter
   return failed ? 1 : 0;
 }
 
+int cmdPng(const fs::path& dir, const fs::path& outDir, std::string_view filter) {
+  auto lib = openGame(dir);
+  if (!lib) {
+    std::cerr << lib.error() << "\n";
+    return 1;
+  }
+  std::size_t written = 0, failed = 0;
+  std::map<std::string, std::size_t> modes;
+
+  for (const auto& name : lib->names()) {
+    if (name.size() < 4 || webo::normaliseAssetName(name).rfind(".BMP") != name.size() - 4)
+      continue;
+    if (!containsCI(name, filter))
+      continue;
+
+    auto img = webo::loadTexture(*lib, name);
+    if (!img) {
+      std::cerr << "  ! " << img.error() << "\n";
+      ++failed;
+      continue;
+    }
+    modes[std::string(webo::alphaModeName(img->alpha))]++;
+
+    fs::path rel;
+    std::string part;
+    for (char c : name) {
+      if (c == '\\' || c == '/') {
+        if (!part.empty())
+          rel /= part;
+        part.clear();
+      } else {
+        part.push_back(c);
+      }
+    }
+    if (!part.empty())
+      rel /= part;
+    rel.replace_extension(".png");
+
+    if (auto r = webo::writePng(outDir / rel, *img); !r) {
+      std::cerr << "  ! " << r.error() << "\n";
+      ++failed;
+      continue;
+    }
+    if (++written % 1000 == 0)
+      std::cerr << std::format("  {} images...\n", written);
+  }
+
+  std::cout << std::format("wrote {} PNGs to {}{}\n", written, outDir.string(),
+                           failed ? std::format(", {} failed", failed) : "");
+  for (const auto& [m, n] : modes)
+    std::cout << std::format("  {:<10} {:>6}\n", m, n);
+  return failed ? 1 : 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -256,6 +312,11 @@ int main(int argc, char** argv) {
     if (argc < 5)
       return usage();
     return cmdExtract(dir, argv[3], argv[4]);
+  }
+  if (cmd == "png") {
+    if (argc < 4)
+      return usage();
+    return cmdPng(dir, argv[3], argc > 4 ? argv[4] : "");
   }
   if (cmd == "dump") {
     if (argc < 4)

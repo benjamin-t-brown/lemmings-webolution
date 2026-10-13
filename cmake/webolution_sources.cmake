@@ -10,6 +10,8 @@ set(WEBOLUTION_SOURCES
   # assets -- reading the original game's data files
   src/assets/Box.cpp
   src/assets/Lrz.cpp
+  src/assets/Bitmap.cpp
+  src/assets/Png.cpp
 )
 
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

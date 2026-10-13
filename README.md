@@ -22,6 +22,7 @@ make -C src            # build
 make -C src test       # build and run the suite
 make -C src info       # summarise the archives in your game installation
 make -C src dump       # extract every archive entry to build/assets
+make -C src png        # decode every texture to PNG in build/png
 ```
 
 Point the tooling at your installation with `GAME_DIR`:
@@ -43,7 +44,8 @@ Phase 1 — asset layer, in progress.
 - [x] `lrtool` CLI: `info`, `list`, `extract`, `dump`
 - [x] Input shim so the original can be driven by script (`tools/dinput-shim/`)
 - [x] LRZ texture decoder, verified byte-identical to the original
-- [ ] `.ALF`, `.LTX`, `.SPR`, `LEVELMAP.DAT`, `LEVELS.MAP` — next
+- [x] `.ALF` alpha planes, the `^ + $ _ ~` name sigils, BMP -> RGBA, PNG export
+- [ ] `.LTX`, `.SPR`, `LEVELMAP.DAT`, `LEVELS.MAP` — next
 - [ ] `.LVL` format
 - [ ] Simulation
 - [ ] Rendering

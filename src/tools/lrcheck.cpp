@@ -34,6 +34,9 @@ int main(int argc, char** argv) {
   std::size_t tried = 0, ok = 0, failed = 0, notBmp = 0;
   std::uint64_t inBytes = 0, outBytes = 0;
   std::map<std::string, std::size_t> errors;
+  std::map<int, std::size_t> bppHist;
+  std::map<std::string, std::size_t> prefixHist;
+  std::size_t withAlf = 0;
 
   for (const auto& name : lib->names()) {
     if (name.size() < 4 || webo::normaliseAssetName(name).rfind(".BMP") != name.size() - 4)
@@ -78,6 +81,19 @@ int main(int argc, char** argv) {
       const std::uint64_t rowBytes = ((std::uint64_t(w) * bpp + 31) / 32) * 4;
       const std::uint64_t needed = offBits + rowBytes * std::uint64_t(h < 0 ? -h : h);
       good = hdrSize == 40 && w > 0 && h != 0 && bpp != 0 && img->size() >= needed;
+      bppHist[bpp]++;
+    }
+    {
+      // Leading sigil on the file name selects how alpha/blending works.
+      const auto slash = name.find_last_of('\\');
+      const char lead = name[slash == std::string::npos ? 0 : slash + 1];
+      const bool sigil = lead == '^' || lead == '+' || lead == '$' || lead == '_' || lead == '~';
+      prefixHist[sigil ? std::string(1, lead) : std::string("(none)")]++;
+      if (lead == '^') {
+        std::string alf = name.substr(0, name.size() - 4) + ".ALF";
+        if (lib->contains(alf))
+          ++withAlf;
+      }
     }
     if (good) {
       ++ok;
@@ -95,6 +111,13 @@ int main(int argc, char** argv) {
   if (outBytes)
     std::cout << std::format("compression   : {} -> {} ({:.1f}%)\n", inBytes, outBytes,
                              100.0 * double(inBytes) / double(outBytes));
+  std::cout << "\nbits per pixel:\n";
+  for (const auto& [k, n] : bppHist)
+    std::cout << std::format("  {:>3}bpp  {:>6}\n", k, n);
+  std::cout << "name prefixes:\n";
+  for (const auto& [k, n] : prefixHist)
+    std::cout << std::format("  {:<7} {:>6}\n", k, n);
+  std::cout << std::format("  '^' with a matching .ALF: {}\n", withAlf);
   for (const auto& [e, n] : errors)
     std::cout << std::format("  {:>6}x  {}\n", n, e);
 

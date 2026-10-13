@@ -20,6 +20,7 @@
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -235,6 +236,46 @@ void testRetail(const fs::path& gameDir) {
                            levels.size(), agreed);
   check(found == levels.size(), "the cylinder mesh is found in every level");
   check(agreed == levels.size(), "every level agrees on the cylinder geometry");
+
+  // Cross-check against LevelIndex: the first of the two u32 arrays holds
+  // indices into this surface. Every non-empty entry must be in range, and
+  // the largest must come close to the vertex count -- an index array covers
+  // nearly all of its pool, where unrelated data would not land just under
+  // the bound in all 102 levels.
+  std::size_t indexed = 0;
+  double worstCoverage = 1.0;
+  for (const auto& name : levels) {
+    auto blob = lib.read(name);
+    if (!blob)
+      continue;
+    auto mesh = webo::findCylinderMesh(*blob);
+    auto index = webo::indexLevel(*blob);
+    if (!mesh || !index || index->grid0.empty())
+      continue;
+
+    std::uint32_t highest = 0;
+    bool inRange = true;
+    for (std::uint32_t v : index->grid0) {
+      if (v == 0xFFFFFFFFu)
+        continue;
+      if (v >= mesh->surface.size()) {
+        inRange = false;
+        break;
+      }
+      highest = std::max(highest, v);
+    }
+    if (!inRange) {
+      std::cerr << std::format("  FAIL  {} has an out-of-range surface index\n", name);
+      continue;
+    }
+    worstCoverage =
+        std::min(worstCoverage, static_cast<double>(highest + 1) / mesh->surface.size());
+    ++indexed;
+  }
+  std::cout << std::format("  {} of {} levels index the surface in range; worst coverage {:.3f}\n",
+                           indexed, levels.size(), worstCoverage);
+  check(indexed == levels.size(), "the first u32 array indexes the surface in every level");
+  check(worstCoverage > 0.8, "the highest index comes close to the vertex count");
 
   // The point of the exercise: the tube is constant, the surface is not. If
   // the surface were also constant it would not be the terrain, and this

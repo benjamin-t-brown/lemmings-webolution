@@ -30,15 +30,25 @@
 //
 // Not yet determined
 // ------------------
-//   * What the two arrays actually are. They are **not** a terrain grid, which
-//     is worth stating because it looked like one. Across the 102 levels they
-//     take 30 distinct sizes whose entry counts have a greatest common divisor
-//     of 16, so no constant width above 16 divides them all, and individual
-//     counts factor badly: 5,392 is 16 x 337 with 337 prime, which admits no
-//     sensible rectangle. Only 4 levels have the 27,648 entries a 192 x 72 x 2
-//     reading would want. Given the 0xFFFFFFFF sentinels and the small value
-//     set, per-face or per-polygon index data fits better -- but that is a
-//     guess, and nothing here asserts it.
+//   * How the two arrays are *keyed*. What they hold is now settled: the
+//     non-empty entries of `grid0` are **indices into the cylinder's surface
+//     vertices** (see Cylinder.h). That holds in all 102 levels, and the
+//     largest index lands just under the vertex count every time -- 87% to
+//     99.8% of it, median 98.6% -- which is what an index array covering
+//     nearly all of its pool looks like, and what unrelated data would not do
+//     102 times running. `test_cylinder` asserts it.
+//
+//     They are **not** a terrain grid, which is worth stating because they
+//     looked like one. Across the 102 levels they take 30 distinct sizes whose
+//     entry counts have a greatest common divisor of 16, so no constant width
+//     above 16 divides them all, and individual counts factor badly: 5,392 is
+//     16 x 337 with 337 prime, which admits no sensible rectangle. Only 4
+//     levels have the 27,648 entries a 192 x 72 x 2 reading would want.
+//
+//     What remains open is the keying. The arrays are sparse -- 194 to 516
+//     non-empty entries out of 5,392 to 27,648 -- so they are a lookup keyed
+//     by something, not a dense face list, and that something is not yet
+//     identified.
 //   * The polygon lists, the placed-model transforms, and the script.
 //
 // The scan is a *heuristic index*, not a parser: it finds length-prefixed

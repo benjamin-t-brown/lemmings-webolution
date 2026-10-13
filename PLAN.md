@@ -250,7 +250,7 @@ have looked right and played wrong.
 
 * The surface strip's primitive type and winding, and how to rasterise it
   into the simulation's `Terrain` mask.
-* What the two equal-sized `u32` arrays hold.
+* How the two `u32` arrays are keyed (their values are now known).
 * The polygon lists (379 `PolyList` chunks in one level), the placed-model
   transforms, and the script.
 
@@ -369,13 +369,45 @@ equal-width rings -- then asserts all of the above in all 102 levels. A
 false positive would have to fake the entire structure and then agree with
 the other 101 by accident.
 
+#### The two `u32` arrays hold surface vertex indices
+
+Settled, and it follows directly from having the surface. Every non-empty
+entry in the first array is a valid index into the cylinder's surface
+vertices, in all 102 levels -- and the largest index lands just under the
+vertex count every time: 87% to 99.8% of it, median 98.6%. That margin is
+the evidence. An index array covers nearly all of its pool, so the maximum
+sits a little below the bound; unrelated data would not land in that narrow
+window 102 times running, and would not stay in range at all.
+
+`test_cylinder` cross-checks the two modules for this: it parses the mesh
+with `findCylinderMesh` and the arrays with `indexLevel`, and asserts both
+the in-range property and the coverage margin across the whole corpus.
+
+What is still open is how the arrays are **keyed**. They are sparse -- 194 to
+516 non-empty entries out of 5,392 to 27,648 -- so each is a lookup from
+something to a vertex, not a dense face list, and the something is not yet
+identified. Their size is also still unexplained, which is consistent with
+that: the key space is larger than the number of entries used.
+
+The second array behaves the same way in 92 of the 102 levels and carries
+larger values in the other 10, so it is probably not the same kind of thing.
+Only the first is asserted.
+
 #### Where to go next
 
-The two arrays remain the open question, and neither of the routes tried this
-round applies to them: not the globals (fonts), and not inference from sizes
-(excluded above). What is new is that the surrounding structure is now walked
-rather than scanned, so their exact position in the file is known, and the
-records before and after them can be decoded in order from a known offset.
+The surrounding structure is now walked rather than scanned, so every record
+has a known offset and the remaining unknowns are local rather than
+structural. Two concrete threads:
+
+* **The array key.** With values identified, the key is the only unknown
+  left in the arrays. The sparsity and the oversized key space point at a
+  hash or a bucketed spatial lookup.
+* **The surface topology.** The vertices are integer-coordinate and partly on
+  the ring lattice, and they begin as a recognisable quad strip up one
+  angular column -- first quad explicit, then two vertices per quad -- but a
+  new column starts mid-array with no delimiter, so the primitive runs are
+  almost certainly driven by the index arrays rather than by vertex order.
+  That makes the two threads the same thread.
 
 The live-process fallback also stands: the executable loads at a fixed
 `00400000`, `ReadProcessMemory` works, and the DirectInput shim can drive the

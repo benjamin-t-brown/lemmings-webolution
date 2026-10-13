@@ -43,6 +43,17 @@ public:
 
   void drawQuad(float x, float y, float w, float h, Colour c);
 
+  // Uploads an RGBA image and returns a texture name for drawSprite. The
+  // renderer owns it and deletes it on destruction.
+  unsigned uploadImage(const Image& image);
+
+  // Draws a sub-rectangle of a sheet, the rectangle given in texels. Mirrors
+  // horizontally when asked, which is how one facing serves for both -- the
+  // sheets only store lemmings walking one way.
+  void drawSprite(unsigned texture, float x, float y, float w, float h, int sheetWidth,
+                  int sheetHeight, int sx, int sy, int sw, int sh, bool mirror = false,
+                  Colour tint = {});
+
   void endFrame();
 
   int drawCalls() const { return drawCalls_; }
@@ -60,6 +71,7 @@ private:
   unsigned vbo_ = 0;
   unsigned whiteTex_ = 0;
   unsigned terrainTex_ = 0;
+  std::vector<unsigned> ownedTextures_;
   int uCamera_ = -1;
   int uViewport_ = -1;
   int uTexture_ = -1;

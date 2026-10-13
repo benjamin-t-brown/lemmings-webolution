@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <format>
+#include <utility>
 #include <vector>
 
 namespace webo::gfx {
@@ -93,6 +94,8 @@ Renderer::~Renderer() {
     glDeleteTextures(1, &whiteTex_);
   if (terrainTex_)
     glDeleteTextures(1, &terrainTex_);
+  for (unsigned tex : ownedTextures_)
+    glDeleteTextures(1, &tex);
 }
 
 std::expected<void, std::string> Renderer::init() {
@@ -240,6 +243,41 @@ void Renderer::drawTerrain() {
   const float u0 = camX_ / static_cast<float>(terrainW_);
   const float u1 = (camX_ + camWidth_) / static_cast<float>(terrainW_);
   push(camX_, 0, camWidth_, static_cast<float>(terrainH_), u0, 0, u1, 1, {1, 1, 1, 1});
+}
+
+unsigned Renderer::uploadImage(const Image& image) {
+  if (image.empty() || image.width <= 0 || image.height <= 0)
+    return 0;
+  unsigned tex = 0;
+  glGenTextures(1, &tex);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+               image.rgba.data());
+  glBindTexture(GL_TEXTURE_2D, boundTex_);
+  ownedTextures_.push_back(tex);
+  return tex;
+}
+
+void Renderer::drawSprite(unsigned texture, float x, float y, float w, float h, int sheetWidth,
+                          int sheetHeight, int sx, int sy, int sw, int sh, bool mirror,
+                          Colour tint) {
+  if (!texture || sheetWidth <= 0 || sheetHeight <= 0)
+    return;
+  if (boundTex_ != texture) {
+    flush();
+    boundTex_ = texture;
+  }
+  float u0 = static_cast<float>(sx) / static_cast<float>(sheetWidth);
+  float u1 = static_cast<float>(sx + sw) / static_cast<float>(sheetWidth);
+  const float v0 = static_cast<float>(sy) / static_cast<float>(sheetHeight);
+  const float v1 = static_cast<float>(sy + sh) / static_cast<float>(sheetHeight);
+  if (mirror)
+    std::swap(u0, u1);
+  push(x, y, w, h, u0, v0, u1, v1, tint);
 }
 
 void Renderer::drawQuad(float x, float y, float w, float h, Colour c) {

@@ -2,7 +2,11 @@
 //
 // Runs the simulation and draws it. The level is a built-in test level for
 // now: .LVL is still being reverse engineered (see PLAN.md 1.6), so there is
-// no real level to load yet, but everything downstream of it is real.
+// no real level to load yet, but everything downstream of it is real --
+// including the lemmings, which are drawn with the original's own artwork
+// when an installation is reachable. Point WEBOLUTION_GAME_DIR at one, or
+// accept the default below. Without it the game still runs and draws
+// placeholder boxes, so the simulation stays testable on a bare checkout.
 //
 //   left click      assign the selected skill to the lemming under the cursor
 //   1..8            choose a skill
@@ -16,7 +20,9 @@
 #include "assets/Bitmap.h"
 #include "assets/Png.h"
 #include "gfx/Gl.h"
+#include "gfx/LemmingSprites.h"
 #include "gfx/Renderer.h"
+#include "assets/Box.h"
 #include "sim/World.h"
 
 #include <SDL2/SDL.h>
@@ -25,6 +31,8 @@
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
+#include <filesystem>
 #include <format>
 #include <string>
 
@@ -35,8 +43,13 @@
 namespace {
 
 using namespace webo;
+namespace fs = std::filesystem;
 
 constexpr int kTicksPerSecond = 20;
+
+// Where to look for the game data when WEBOLUTION_GAME_DIR is not set. The
+// engine never ships data; it reads an existing installation.
+constexpr const char* kDefaultGameDir = "C:/progs/Lemmings Revolution";
 
 // A hand-built level, until .LVL gives us real ones: a floor, some pillars to
 // climb and bash, a gap to build over, and a pit at the seam so the
@@ -71,6 +84,7 @@ struct App {
   SDL_Window* window = nullptr;
   SDL_GLContext context = nullptr;
   gfx::Renderer renderer;
+  gfx::LemmingSprites sprites;
   sim::World world;
 
   bool running = true;
@@ -81,6 +95,8 @@ struct App {
   float camWidth = 320;
   std::uint64_t lastTick = 0;
   bool terrainDirty = true;
+  int animTick = 0;
+  bool useSprites = true;
 
   void restart() {
     world = sim::World(makeTestLevel());
@@ -171,12 +187,19 @@ struct App {
       if (l.fuse > 0)
         c = {1.0f, 0.2f, 0.2f, 1};
 
-      const float x = static_cast<float>(l.x) - 2;
-      const float y = static_cast<float>(l.y) - 8;
-      renderer.drawQuad(x, y, 4, 8, c);
-      // A tuft so facing is visible at this size.
-      renderer.drawQuad(x + (l.facing == sim::Facing::Right ? 3 : -1), y, 2, 2,
-                        {0.3f, 0.9f, 0.3f, 1});
+      // The original's artwork when it loaded, the placeholder box otherwise,
+      // so the game still runs without an installation to read.
+      const bool drawn = useSprites && sprites.draw(renderer, l.state, static_cast<float>(l.x),
+                                                    static_cast<float>(l.y), 8.0f, animTick / 4,
+                                                    l.facing == sim::Facing::Left);
+      if (!drawn) {
+        const float x = static_cast<float>(l.x) - 2;
+        const float y = static_cast<float>(l.y) - 8;
+        renderer.drawQuad(x, y, 4, 8, c);
+        // A tuft so facing is visible at this size.
+        renderer.drawQuad(x + (l.facing == sim::Facing::Right ? 3 : -1), y, 2, 2,
+                          {0.3f, 0.9f, 0.3f, 1});
+      }
     }
 
     // Exits and entrances, so the goal is obvious.
@@ -187,6 +210,8 @@ struct App {
     for (const auto& en : world.setup().entrances)
       renderer.drawQuad(static_cast<float>(en.x) - 4, static_cast<float>(en.y) - 6, 8, 6,
                         {0.9f, 0.9f, 0.2f, 0.55f});
+
+    ++animTick;
 
     renderer.endFrame();
     if (present)
@@ -276,6 +301,25 @@ int main(int argc, char** argv) {
   if (auto r = g_app.renderer.init(); !r) {
     std::fprintf(stderr, "renderer: %s\n", r.error().c_str());
     return 1;
+  }
+
+  // The original's lemming artwork, if an installation is reachable. Not
+  // having one is not an error: the game falls back to placeholder boxes and
+  // still runs, which keeps the simulation testable on a bare checkout.
+  {
+    const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
+    const fs::path gameDir = dir ? fs::path(dir) : fs::path(kDefaultGameDir);
+    auto lib = AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
+    if (!lib) {
+      std::fprintf(stderr, "sprites: %s (drawing placeholders)\n", lib.error().c_str());
+    } else if (auto r = g_app.sprites.load(*lib, g_app.renderer); !r) {
+      std::fprintf(stderr, "sprites: %s (drawing placeholders)\n", r.error().c_str());
+    } else {
+      for (const auto& m : g_app.sprites.missingSheets())
+        std::fprintf(stderr, "sprites: %s\n", m.c_str());
+      std::fprintf(stderr, "sprites: loaded %zu from %s\n", g_app.sprites.definitions().sprites.size(),
+                   gameDir.string().c_str());
+    }
   }
 
   g_app.restart();

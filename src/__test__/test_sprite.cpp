@@ -10,6 +10,7 @@
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
 #include "assets/Sprite.h"
+#include "gfx/LemmingSprites.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -211,6 +212,60 @@ void testRealSheets() {
   std::cout << std::format("    {} frames across {} files\n", frames, names.size());
 }
 
+// Every simulation state the renderer claims artwork for must actually name a
+// sprite that exists in the lemming sheet. Without this the mapping is a list
+// of hopeful strings: a typo would show up only as a lemming silently falling
+// back to a placeholder box on screen, which is easy to miss.
+void testStateMapping() {
+  std::cout << "state to sprite mapping\n";
+
+  constexpr std::array kStates = {
+      webo::sim::State::Faller,   webo::sim::State::Walker,  webo::sim::State::Climber,
+      webo::sim::State::Hoister,  webo::sim::State::Floater, webo::sim::State::Blocker,
+      webo::sim::State::Builder,  webo::sim::State::Basher,  webo::sim::State::Miner,
+      webo::sim::State::Digger,   webo::sim::State::Exploder, webo::sim::State::Splatter,
+      webo::sim::State::Exited,   webo::sim::State::Dead,
+  };
+
+  // The two states with no artwork are deliberate, not oversights.
+  check(webo::gfx::spriteNameForState(webo::sim::State::Exited).empty(), "Exited has no sprite");
+  check(webo::gfx::spriteNameForState(webo::sim::State::Dead).empty(), "Dead has no sprite");
+
+  int named = 0;
+  for (auto s : kStates)
+    if (!webo::gfx::spriteNameForState(s).empty())
+      ++named;
+  check(named == 12, std::format("12 of the 14 states are drawn ({} are)", named));
+
+  const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
+  if (!dir) {
+    std::cout << "    against real sheets: SKIPPED (set WEBOLUTION_GAME_DIR)\n";
+    return;
+  }
+  auto lib = webo::AssetLibrary::open(fs::path(dir) / "lemmings.box", fs::path(dir) / "patch.box");
+  if (!lib) {
+    std::cout << "    against real sheets: SKIPPED\n";
+    return;
+  }
+  auto sheet = webo::loadSpriteSheet(*lib, "SPRITES\\LEMMINGSLO.SPR");
+  if (!sheet) {
+    check(false, std::format("LEMMINGSLO.SPR loads: {}", sheet.error()));
+    return;
+  }
+
+  for (auto s : kStates) {
+    const auto name = webo::gfx::spriteNameForState(s);
+    if (name.empty())
+      continue;
+    const webo::Sprite* sprite = sheet->find(name);
+    check(sprite != nullptr, std::format("sprite '{}' exists in LEMMINGSLO.SPR", name));
+    if (sprite)
+      check(!sprite->animations.empty() && !sprite->animations.front().frames.empty(),
+            std::format("sprite '{}' has at least one frame", name));
+  }
+  std::cout << std::format("    {} states mapped onto {} sprites\n", named, sheet->sprites.size());
+}
+
 }  // namespace
 
 int main() {
@@ -218,6 +273,7 @@ int main() {
   testSynthetic();
   testPalette();
   testRealSheets();
+  testStateMapping();
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;

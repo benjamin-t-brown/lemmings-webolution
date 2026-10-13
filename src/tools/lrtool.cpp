@@ -9,6 +9,7 @@
 // (and optionally patch.box, which overrides entries of the same name).
 
 #include "assets/Box.h"
+#include "assets/GameData.h"
 #include "assets/Bitmap.h"
 #include "assets/Lrz.h"
 #include "assets/Png.h"
@@ -271,6 +272,69 @@ int cmdPng(const fs::path& dir, const fs::path& outDir, std::string_view filter)
   return failed ? 1 : 0;
 }
 
+int cmdLevels(const fs::path& dir) {
+  auto lib = openGame(dir);
+  if (!lib) {
+    std::cerr << lib.error() << "\n";
+    return 1;
+  }
+
+  auto infos = webo::loadLevelMap(*lib);
+  auto table = webo::loadLevelTable(*lib);
+  auto rates = webo::loadReleaseRates(*lib);
+  if (!infos) { std::cerr << infos.error() << "\n"; return 1; }
+  if (!table) { std::cerr << table.error() << "\n"; return 1; }
+  if (!rates) { std::cerr << rates.error() << "\n"; return 1; }
+
+  std::map<std::string, const webo::LevelInfo*> byId;
+  for (const auto& i : *infos)
+    byId[i.id] = &i;
+
+  std::cout << std::format("{} level records, {} slots in {} groups, {} release rates\n\n",
+                           infos->size(), table->slotCount(), table->groups.size(), rates->size());
+
+  for (std::size_t g = 0; g < table->groups.size(); ++g) {
+    std::size_t playable = 0;
+    for (const auto& s : table->groups[g])
+      if (s.id != "blank")
+        ++playable;
+    std::cout << std::format("group {} -- {} slots, {} playable\n", g, table->groups[g].size(),
+                             playable);
+    std::size_t shown = 0;
+    for (const auto& s : table->groups[g]) {
+      if (s.id == "blank")
+        continue;
+      if (shown++ >= 4)
+        break;
+      const auto it = byId.find(s.id);
+      if (it == byId.end()) {
+        std::cout << std::format("    {:<18} (no record)\n", s.id);
+        continue;
+      }
+      const auto* i = it->second;
+      std::cout << std::format("    {:<18} {:<26} {:>4}s  save {:>3} of {:>3}\n", i->id, i->name,
+                               i->timeLimitSeconds, i->saveTarget, i->totalLemmings);
+    }
+    if (playable > 4)
+      std::cout << std::format("    ... and {} more\n", playable - 4);
+  }
+
+  std::cout << std::format("\nrelease rate 1 = {:.3f}s per lemming, 99 = {:.3f}s\n",
+                           rates->front(), rates->back());
+
+  const auto langs = webo::availableLanguages(*lib);
+  std::cout << std::format("languages: {}\n", langs.size());
+  for (const auto& l : langs) {
+    auto t = webo::loadStrings(*lib, l);
+    if (!t) {
+      std::cout << std::format("  {:<8} ERROR {}\n", l, t.error());
+      continue;
+    }
+    std::cout << std::format("  {:<8} {:>4} strings   e.g. \"{}\"\n", l, t->size(), (*t)[2]);
+  }
+  return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -313,6 +377,8 @@ int main(int argc, char** argv) {
       return usage();
     return cmdExtract(dir, argv[3], argv[4]);
   }
+  if (cmd == "levels")
+    return cmdLevels(dir);
   if (cmd == "png") {
     if (argc < 4)
       return usage();

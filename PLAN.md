@@ -121,13 +121,26 @@ Filename prefixes are semantic, and the data matches the documented meanings:
 | `_` | Colour `#000000` is transparent |
 | `~` | Additive blending |
 
-### 1.4 Metadata formats — documented
+### 1.4 Metadata formats — solved
 
-- `LEVELMAP.DAT` — 125 entries: id, display name, time limit, save target, total lemmings.
-- `LEVELS.MAP` — 125 slots, MFC `CArchive` serialisation (`FFFF` new-class tag,
-  schema word, `CLevelSlot`), then Pascal-style strings.
-- `RELEASERATE.PC` — 99 entries of `u32` + IEEE-754 float.
-- `.LTX` — `u32 count`, `u32[count]` offsets, Windows-1252 NUL-terminated strings.
+All four are implemented in `src/assets/GameData.cpp` and parse the retail files
+exactly, consuming every byte. Two of the published descriptions turned out to be
+wrong, both caught by parsing the real data:
+
+- `LEVELMAP.DAT` — 125 entries: id, display name, time limit, save target, total
+  lemmings. Unused slots are present and named `blank`.
+- `LEVELS.MAP` — **five counted groups of 25**, not one flat list of 125. The
+  groups are the difficulty tiers, in play order. Each group restarts MFC's
+  per-archive class table, so its first slot carries the full `CLevelSlot` class
+  header (`FFFF`, schema, name) and the rest use the `8001` "same class" tag.
+  Every slot id resolves against `LEVELMAP.DAT`.
+- `RELEASERATE.PC` — **99 doubles**, not `u32` + float pairs: seconds per lemming,
+  falling from 5.0 at rate 1 to 0.2 at rate 99.
+- `.LTX` — `u32 count`, `u32[count]` offsets, then NUL-terminated strings; 232 per
+  language across 8 languages. The encoding is **not** uniformly Windows-1252:
+  each localisation uses its locale's ANSI codepage, so Polish and Czech need
+  1250 and Hebrew needs 1255. A single table would silently corrupt three of the
+  eight. A `^` inside a string is the game's line break.
 
 ### 1.5 `.LVL` — the open problem
 

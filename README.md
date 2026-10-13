@@ -45,7 +45,8 @@ Phase 1 — asset layer, in progress.
 - [x] Input shim so the original can be driven by script (`tools/dinput-shim/`)
 - [x] LRZ texture decoder, verified byte-identical to the original
 - [x] `.ALF` alpha planes, the `^ + $ _ ~` name sigils, BMP -> RGBA, PNG export
-- [ ] `.LTX`, `.SPR`, `LEVELMAP.DAT`, `LEVELS.MAP` — next
+- [x] `.LTX` strings (8 languages, 3 codepages), `LEVELMAP.DAT`, `LEVELS.MAP`, `RELEASERATE.PC`
+- [ ] `.SPR` sprite sheets — next
 - [ ] `.LVL` format
 - [ ] Simulation
 - [ ] Rendering

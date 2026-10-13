@@ -402,6 +402,17 @@ structural. Two concrete threads:
 * **The array key.** With values identified, the key is the only unknown
   left in the arrays. The sparsity and the oversized key space point at a
   hash or a bucketed spatial lookup.
+
+  One attempt, recorded because it was convincing and wrong. In
+  `MM_CLIMB_002` the non-empty entries sit at indices 1, 17, 33, 49, ... --
+  a stride of 16 -- which would make the array a table of 16-word records
+  with the index in one fixed field, and would have explained the GCD-16
+  result exactly. It does not generalise: allowing a per-level phase (the
+  array locator is heuristic, so the phase could differ), only 4 of the 102
+  levels keep their entries within one or two positions of a 16-word record,
+  and 42 levels have entries at all 16 positions. The stride is a property
+  of the sparse levels' content, not of the format. The GCD-16 of the array
+  *lengths* still stands and is still unexplained.
 * **The surface topology.** The vertices are integer-coordinate and partly on
   the ring lattice, and they begin as a recognisable quad strip up one
   angular column -- first quad explicit, then two vertices per quad -- but a

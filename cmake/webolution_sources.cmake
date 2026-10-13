@@ -15,6 +15,9 @@ set(WEBOLUTION_SOURCES
   src/assets/GameData.cpp
   src/assets/Sprite.cpp
   src/assets/LevelIndex.cpp
+
+  # sim -- the game itself, independent of rendering
+  src/sim/Terrain.cpp
 )
 
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

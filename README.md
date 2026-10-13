@@ -49,6 +49,7 @@ Phase 1 — asset layer, in progress.
 - [x] `.SPR` sprite sheets: 7,354 frames, animation strips render correctly
 - [~] `.LVL` partially read: title, header, and all 26,021 asset references across
       the 102 levels, every one resolving. Geometry, terrain and script still open.
-- [~] Simulation: terrain mask with cylinder wraparound and destructive edits.
-      Lemming state machine not started.
+- [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
+      eight skills, deterministic ticks. **Rule constants are provisional**
+      until validated against the original via the oracle.
 - [ ] Rendering

@@ -18,6 +18,7 @@ set(WEBOLUTION_SOURCES
 
   # sim -- the game itself, independent of rendering
   src/sim/Terrain.cpp
+  src/sim/World.cpp
 )
 
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

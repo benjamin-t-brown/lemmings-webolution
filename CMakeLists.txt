@@ -71,6 +71,10 @@ add_executable(test_terrain src/__test__/test_terrain.cpp)
 target_link_libraries(test_terrain PRIVATE webolution_objects)
 add_test(NAME terrain COMMAND test_terrain)
 
+add_executable(test_world src/__test__/test_world.cpp)
+target_link_libraries(test_world PRIVATE webolution_objects)
+add_test(NAME world COMMAND test_world)
+
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)

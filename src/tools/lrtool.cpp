@@ -9,6 +9,7 @@
 // (and optionally patch.box, which overrides entries of the same name).
 
 #include "assets/Box.h"
+#include "assets/Lrz.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -226,6 +227,31 @@ int main(int argc, char** argv) {
     return cmdInfo(dir);
   if (cmd == "list")
     return cmdList(dir, argc > 3 ? argv[3] : "");
+  if (cmd == "decode") {
+    if (argc < 5)
+      return usage();
+    auto lib = openGame(dir);
+    if (!lib) {
+      std::cerr << lib.error() << "\n";
+      return 1;
+    }
+    auto raw = lib->read(argv[3]);
+    if (!raw) {
+      std::cerr << raw.error() << "\n";
+      return 1;
+    }
+    auto img = webo::lrzDecode(*raw);
+    if (!img) {
+      std::cerr << img.error() << "\n";
+      return 1;
+    }
+    if (!writeFile(argv[4], *img)) {
+      std::cerr << "cannot write\n";
+      return 1;
+    }
+    std::cout << std::format("{} -> {} ({} bytes)\n", argv[3], argv[4], img->size());
+    return 0;
+  }
   if (cmd == "extract") {
     if (argc < 5)
       return usage();

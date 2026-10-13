@@ -42,8 +42,8 @@ Phase 1 — asset layer, in progress.
 - [x] `Box` / `AssetLibrary` reader with patch overlay (`src/assets/`)
 - [x] `lrtool` CLI: `info`, `list`, `extract`, `dump`
 - [x] Input shim so the original can be driven by script (`tools/dinput-shim/`)
-- [ ] LRZ texture decoder — next
-- [ ] `.ALF`, `.LTX`, `.SPR`, `LEVELMAP.DAT`, `LEVELS.MAP`
+- [x] LRZ texture decoder, verified byte-identical to the original
+- [ ] `.ALF`, `.LTX`, `.SPR`, `LEVELMAP.DAT`, `LEVELS.MAP` — next
 - [ ] `.LVL` format
 - [ ] Simulation
 - [ ] Rendering

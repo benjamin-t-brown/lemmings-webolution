@@ -36,6 +36,9 @@ endif()
 add_executable(lrtool src/tools/lrtool.cpp)
 target_link_libraries(lrtool PRIVATE webolution_objects)
 
+add_executable(lrcheck src/tools/lrcheck.cpp)
+target_link_libraries(lrcheck PRIVATE webolution_objects)
+
 # ---- tests ----------------------------------------------------------------
 
 include(CTest)
@@ -44,9 +47,13 @@ add_executable(test_box src/__test__/test_box.cpp)
 target_link_libraries(test_box PRIVATE webolution_objects)
 add_test(NAME box COMMAND test_box)
 
+add_executable(test_lrz src/__test__/test_lrz.cpp)
+target_link_libraries(test_lrz PRIVATE webolution_objects)
+add_test(NAME lrz COMMAND test_lrz)
+
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box PROPERTIES
+  set_tests_properties(box lrz PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

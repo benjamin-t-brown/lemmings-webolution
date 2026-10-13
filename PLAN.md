@@ -89,9 +89,27 @@ Contents:
 
 ### 1.3 Texture format — solved by the community
 
-`.BMP` entries use **LRZ**, a custom ROLZ scheme with canonical-Huffman trees for
-literals, lengths and distances. A reference C implementation (`lrz.c` / `lrz.h`,
-`lrzDecode()` / `lrzGetSize()`) is published in the Lemmings Forums thread.
+`.BMP` entries use **LRZ**, a custom scheme with canonical-Huffman trees for
+literal-run lengths, copy lengths and distances. A reference C implementation is
+published in the Lemmings Forums thread, but only as a login-gated attachment,
+and the prose description of the tree construction is too loose to reimplement
+from. So `src/assets/Lrz.cpp` is transcribed directly from the hand-written
+assembly instead:
+
+```
+.text:00467DE8  decode(src, dst, packedSize, unpackedSize) -> bytes produced
+.text:00467EB7  read one tree (nibble depth list)
+.text:00467F0D  build it into the node arena
+.text:00467FED  decode one number, with or without a tree
+```
+
+The chunk header's third field, undocumented as "usually 4", is a **method id**:
+3 = stored, 4 = compressed. Decoded texture entries are ordinary Windows BMPs.
+
+`tools/lrz-oracle` maps the original exe at its fixed base and calls that routine
+directly, giving a reference implementation to diff against -- the same
+no-relocations trick the differential oracle relies on. Our decoder is **byte
+identical** to it, and decodes all 10,383 texture entries to valid bitmaps.
 
 Filename prefixes are semantic, and the data matches the documented meanings:
 

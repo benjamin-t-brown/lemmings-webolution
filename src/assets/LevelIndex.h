@@ -15,17 +15,30 @@
 //     exists in the archive, under TEXTURES\<reference>.BMP. That is what
 //     makes the scan below trustworthy rather than a guess: a mis-scan would
 //     produce references that do not resolve.
+//   * The title is followed by seven u32 header words, then a u32 count and
+//     that many length-prefixed asset names -- the level's manifest. That
+//     parse consumes exactly, in all 102 levels, and the manifest always
+//     begins with "_curNoLem". An earlier reading of this header had eight
+//     words: the eighth was really the manifest's count, and the ninth word
+//     that "was always 9" was the length prefix of "_curNoLem".
+//   * Header invariants across all 102 levels: word[3] == word[4] (the two
+//     array byte lengths), word[2] - word[1] is always 0x1B0000, and word[0]
+//     repeats the manifest count.
 //   * A chunk named "Cylinder" is followed by two equal-sized arrays of u32
-//     whose byte length is given twice in the file header. In the retail data
-//     both are 110592 bytes, i.e. 27648 cells.
+//     whose byte length is word[3]. The tube's own geometry *is* solved --
+//     see Cylinder.h.
 //
 // Not yet determined
 // ------------------
-//   * The grids' width and height. 27648 factors many ways and rendering the
-//     candidates was not conclusive, so no dimensions are asserted here.
-//   * Which grid is the terrain. The second is far denser (roughly 6k of 27648
-//     cells set, against 194 in the first), so it is the better candidate, but
-//     that is an observation rather than a conclusion.
+//   * What the two arrays actually are. They are **not** a terrain grid, which
+//     is worth stating because it looked like one. Across the 102 levels they
+//     take 30 distinct sizes whose entry counts have a greatest common divisor
+//     of 16, so no constant width above 16 divides them all, and individual
+//     counts factor badly: 5,392 is 16 x 337 with 337 prime, which admits no
+//     sensible rectangle. Only 4 levels have the 27,648 entries a 192 x 72 x 2
+//     reading would want. Given the 0xFFFFFFFF sentinels and the small value
+//     set, per-face or per-polygon index data fits better -- but that is a
+//     guess, and nothing here asserts it.
 //   * The polygon lists, the placed-model transforms, and the script.
 //
 // The scan is a *heuristic index*, not a parser: it finds length-prefixed

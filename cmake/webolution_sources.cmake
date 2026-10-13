@@ -15,6 +15,7 @@ set(WEBOLUTION_SOURCES
   src/assets/GameData.cpp
   src/assets/Sprite.cpp
   src/assets/LevelIndex.cpp
+  src/assets/Cylinder.cpp
 
   # sim -- the game itself, independent of rendering
   src/sim/Terrain.cpp

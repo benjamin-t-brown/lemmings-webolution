@@ -249,6 +249,7 @@ have looked right and played wrong.
 #### Still open
 
 * The terrain representation, now that the obvious candidate is excluded.
+* What the two equal-sized `u32` arrays hold.
 * The polygon lists (379 `PolyList` chunks in one level), the placed-model
   transforms, and the script.
 
@@ -270,19 +271,76 @@ above. Noted at length because the circumstantial case was good and the
 objects are reachable from the level loader, so it would otherwise be
 re-walked.
 
+#### The level header, and the cylinder geometry -- both solved
+
+Chasing the chunk reader in the binary turned out to be unnecessary: `.LVL`
+is a flat, self-describing format, not a chunked or MFC-serialised one. (It
+was worth checking: `LEVELS.MAP` *is* MFC-serialised, but a scan for MFC's
+`FFFF` new-class tag finds none in any level, and there are no chunk-name
+strings in the executable to dispatch on.) The header reads directly:
+
+```
+counted string   title              "Level 23"
+u32 x 7          header words
+u32              manifestCount
+manifestCount x  counted string     asset names, always starting "_curNoLem"
+```
+
+That consumes exactly, in all 102 levels. It also corrects the earlier
+reading of an eight-word header with a mysterious ninth word "always 9": the
+eighth word was the manifest count, and the 9 was the length prefix of
+`_curNoLem`. Invariants over all 102: `word[3] == word[4]` (the array byte
+lengths), `word[2] - word[1]` is always `0x1B0000`, `word[0]` repeats the
+manifest count. `word[5]` is distinct in every level and always even, which
+reads as a seed or checksum.
+
+After the manifest come further counted-string blocks -- the skill-panel icon
+sheets (`Bits`, `GreyIcons`, `BlackIcons`, `AdditiveIcons`, `Axe`, `Smoke`),
+22 sound cues (`Letsgo`, `Yippee`, `Chink`, `Explode`, `Ohno`, ...), and the
+level's own path -- and then the cylinder mesh, which **is** solved and is
+implemented in `src/assets/Cylinder.{h,cpp}`:
+
+```
+u32   faceCount      112        unidentified; recorded, not interpreted
+f64   thickness      10.0       outerRadius - innerRadius
+u32   ringCount      7
+ringCount x 32 x 2 x { f64 x, f64 y, f64 z }
+```
+
+Vertices are unaligned (the preceding `u32` leaves them on a 4-byte
+boundary), ordered by angle, inner before outer at each step.
+
+The finding is that **every retail level has the identical mesh**: 7 rings at
+y = 0, 16, ... 96, 32 angular steps of exactly 11.25 degrees, inner radius
+50, outer radius 60. The tube is effectively a constant of the game that
+happens to be stored per level, so the renderer can treat it as fixed and
+only the skin and terrain vary.
+
+It also pins the coordinate system, which is the part the simulation needs.
+The skin is addressed as 8 tile columns by 3 tile rows (read off the loop
+bounds at `.text:0043AA91`), and the mesh divides evenly by both: 32 / 8 = 4
+angular steps per tile column, and 6 bands / 3 = 2 bands per tile row. That
+is why `Terrain` wraps in X and not in Y.
+
+`test_cylinder` locates the mesh by signature -- the first vertex is
+`(0, 0, innerRadius)`, and a run is accepted only if it is a whole number of
+equal-width rings -- then asserts all of the above in all 102 levels. A
+false positive would have to fake the entire structure and then agree with
+the other 101 by accident.
+
 #### Where to go next
 
-Not through those globals, and -- per the sizing result above -- not by
-inferring layout from array sizes. The remaining route is the chunk reader
-itself: the `.LVL` parser dispatches on chunk names, and the code handling
-the `Cylinder` chunk reads the two arrays' dimensions out of the file in
-whatever order they are stored. Finding that dispatch gives the field order
-to be read off rather than guessed.
+The two arrays remain the open question, and neither of the routes tried this
+round applies to them: not the globals (fonts), and not inference from sizes
+(excluded above). What is new is that the surrounding structure is now walked
+rather than scanned, so their exact position in the file is known, and the
+records before and after them can be decoded in order from a known offset.
 
-The live-process fallback also stands and is now more attractive than it was:
-the executable loads at a fixed `00400000`, `ReadProcessMemory` works, and
-the DirectInput shim can drive the menus by script, so a level can be started
-and its in-memory grid metadata read directly.
+The live-process fallback also stands: the executable loads at a fixed
+`00400000`, `ReadProcessMemory` works, and the DirectInput shim can drive the
+menus by script, so a level can be started and its in-memory terrain read
+directly -- which sidesteps the file format for terrain entirely and gives a
+ground truth to check any later static reading against.
 
 ---
 

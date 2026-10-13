@@ -20,6 +20,7 @@
 
 #include "Terrain.h"
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -82,6 +83,9 @@ struct LevelSetup {
   int saveTarget = 1;
   int releaseIntervalTicks = 20;  // ticks between spawns
   int timeLimitTicks = 0;         // 0 = untimed
+  // Remaining skill-panel counts, indexed like Skill. -1 means unlimited
+  // (hand-built test levels). Retail .LVL loads fill these from the trailer.
+  std::array<int, 8> skills{-1, -1, -1, -1, -1, -1, -1, -1};
 };
 
 class World {

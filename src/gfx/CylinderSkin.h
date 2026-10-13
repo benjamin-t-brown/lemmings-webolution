@@ -7,10 +7,11 @@
 // the slot index. The slot layout is regular (stride 2 within a block), but
 // the name is self-describing and cannot drift out of step with the data.
 //
-// This draws the level as it looks. It does **not** know what is solid: that
-// is the terrain mask, and the mapping between the artwork and collision is
-// still open (see PLAN.md 1.6). So the skin is scenery here, drawn behind the
-// simulation, and nothing reads it back.
+// This draws the level as it looks. It does **not** know what is solid: every
+// retail skin tile is fully opaque (`AlphaMode::Opaque`, no translucent
+// texels), so alpha cannot be a collision mask. Walkable cells come from the
+// surface lattice (see PLAN.md 1.6). The skin is scenery, drawn behind the
+// simulation.
 
 #pragma once
 

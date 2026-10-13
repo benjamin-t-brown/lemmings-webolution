@@ -36,6 +36,7 @@
 #include "gfx/Gl.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
+#include "assets/LevelObjects.h"
 #include "assets/SurfaceMesh.h"
 #include "gfx/CylinderSkin.h"
 #include "gfx/LemmingSprites.h"
@@ -84,10 +85,9 @@ void applyLevelParams(sim::LevelSetup& s, const ReleaseRates& rates, int release
       rates.empty() ? 24 : rates.intervalTicks(releaseRate, kTicksPerSecond);
 }
 
-// Drop an entrance above the leftmost solid cell of the highest occupied row,
-// and an exit on solid ground roughly opposite. Entrances and exits are not
-// yet read from .LVL, so this is a playable stand-in rather than the original
-// placement.
+// Fallback when a .LVL has no readable Entrance.a3d / Exit.a3d transform:
+// drop an entrance above the leftmost solid cell of the highest occupied row,
+// and an exit on solid ground roughly opposite.
 void placeSpawnPoints(sim::LevelSetup& s) {
   const auto& t = s.terrain;
   int topY = -1, leftX = 0, rightX = 0;
@@ -164,10 +164,36 @@ sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate,
 }
 
 sim::LevelSetup makeSurfaceLevel(const OccupancyMask& mask, const ReleaseRates& rates,
-                                 int releaseRate, const LevelInfo* info) {
+                                 int releaseRate, const LevelInfo* info,
+                                 const LevelObjects* objects, const LevelSkills* skills,
+                                 double worldH, int pixelsPerUnit = 2) {
   sim::LevelSetup s;
   s.terrain = terrainFromMask(mask);
-  placeSpawnPoints(s);
+  if (objects) {
+    for (const auto& e : objects->entrances) {
+      const auto [x, y] =
+          worldToMaskPixel(e.position, mask.width, mask.height, worldH, pixelsPerUnit);
+      s.entrances.push_back({x, y});
+    }
+    for (const auto& e : objects->exits) {
+      const auto [x, y] =
+          worldToMaskPixel(e.position, mask.width, mask.height, worldH, pixelsPerUnit);
+      // Exit trigger box roughly matching the basket footprint.
+      s.exits.push_back({x - 6, y - 12, 12, 14});
+    }
+  }
+  // Only the full guesser when nothing was read; a partial read is still
+  // better than inventing a second entrance next to a real one.
+  if (s.entrances.empty() && s.exits.empty())
+    placeSpawnPoints(s);
+  else if (s.entrances.empty())
+    s.entrances.push_back({mask.width / 4, mask.height / 4});
+  else if (s.exits.empty())
+    s.exits.push_back({3 * mask.width / 4, mask.height / 2, 12, 14});
+  if (skills) {
+    for (std::size_t i = 0; i < skills->counts.size(); ++i)
+      s.skills[i] = static_cast<int>(skills->counts[i]);
+  }
   applyLevelParams(s, rates, releaseRate, info);
   return s;
 }
@@ -413,10 +439,14 @@ struct App {
     if (present)
       SDL_GL_SwapWindow(window);
 
+    const int stock = world.setup().skills[static_cast<std::size_t>(skill)];
+    const std::string skillLabel =
+        stock < 0 ? std::string(sim::skillName(kSkills[static_cast<std::size_t>(skill)]))
+                  : std::format("{}×{}", sim::skillName(kSkills[static_cast<std::size_t>(skill)]),
+                                stock);
     const std::string title = std::format(
         "Lemmings Webolution  --  {}  |  {}  |  out {} saved {}/{} dead {}  |  tick {}{}",
-        levelName.empty() ? "test level" : levelName,
-        sim::skillName(kSkills[static_cast<std::size_t>(skill)]), world.activeCount(),
+        levelName.empty() ? "test level" : levelName, skillLabel, world.activeCount(),
         world.saved(), world.setup().saveTarget, world.dead(), world.tickCount(),
         paused ? "  [paused]" : "");
     SDL_SetWindowTitle(window, title.c_str());
@@ -606,12 +636,71 @@ int main(int argc, char** argv) {
                 std::fprintf(stderr, "terrain: no lattice quads in %s (using test level)\n",
                              path.c_str());
               } else {
-                const auto mask = rasteriseSurface(*faces, *mesh, 2);
+                constexpr int kPixelsPerUnit = 2;
+                const auto mask = rasteriseSurface(*faces, *mesh, kPixelsPerUnit);
                 const double pct =
                     100.0 * static_cast<double>(mask.solidCells()) /
                     (static_cast<double>(mask.width) * mask.height);
-                g_app.surfaceLevel = makeSurfaceLevel(mask, g_app.releaseRates, g_app.releaseRate,
-                                                      g_app.levelInfo());
+                LevelObjects objects;
+                if (auto found = findLevelObjects(*blob)) {
+                  objects = std::move(*found);
+                  std::fprintf(stderr, "objects: %zu entrance(s), %zu exit(s), %zu placed\n",
+                               objects.entrances.size(), objects.exits.size(),
+                               objects.placed.size());
+                  for (const auto& e : objects.entrances) {
+                    const auto [x, y] = worldToMaskPixel(e.position, mask.width, mask.height,
+                                                        mesh->height(), kPixelsPerUnit);
+                    std::fprintf(stderr, "  entrance (%.1f,%.1f,%.1f) -> mask %d,%d\n",
+                                 e.position.x, e.position.y, e.position.z, x, y);
+                  }
+                  for (const auto& e : objects.exits) {
+                    const auto [x, y] = worldToMaskPixel(e.position, mask.width, mask.height,
+                                                        mesh->height(), kPixelsPerUnit);
+                    std::fprintf(stderr, "  exit (%.1f,%.1f,%.1f) -> mask %d,%d\n", e.position.x,
+                                 e.position.y, e.position.z, x, y);
+                  }
+                  for (const auto& p : objects.placed) {
+                    const auto [x, y] = worldToMaskPixel(p.pose.position, mask.width, mask.height,
+                                                        mesh->height(), kPixelsPerUnit);
+                    const char* kind = "other";
+                    switch (p.kind) {
+                      case PlacedKind::AntiGrav: kind = "anti_grav"; break;
+                      case PlacedKind::Teleport: kind = "teleport"; break;
+                      case PlacedKind::PressurePad: kind = "pressure_pad"; break;
+                      case PlacedKind::SpeedUp: kind = "speedup"; break;
+                      case PlacedKind::Lever: kind = "lever"; break;
+                      case PlacedKind::Pipe: kind = "pipe"; break;
+                      case PlacedKind::Deathroller: kind = "deathroller"; break;
+                      case PlacedKind::Buzzsaw: kind = "buzzsaw"; break;
+                      case PlacedKind::Creature: kind = "creature"; break;
+                      case PlacedKind::Scenery: kind = "scenery"; break;
+                      case PlacedKind::Other: break;
+                    }
+                    std::fprintf(stderr, "  %s [%s] (%.1f,%.1f,%.1f) -> mask %d,%d\n",
+                                 p.name.c_str(), kind, p.pose.position.x, p.pose.position.y,
+                                 p.pose.position.z, x, y);
+                  }
+                } else {
+                  std::fprintf(stderr, "objects: %s (guessing spawn points)\n",
+                               found.error().c_str());
+                }
+                LevelSkills skills{};
+                const LevelSkills* skillsPtr = nullptr;
+                if (auto found = findLevelSkills(*blob)) {
+                  skills = std::move(*found);
+                  skillsPtr = &skills;
+                  std::fprintf(stderr,
+                               "skills: climb %u float %u bomb %u block %u build %u bash %u "
+                               "mine %u dig %u\n",
+                               skills.counts[0], skills.counts[1], skills.counts[2],
+                               skills.counts[3], skills.counts[4], skills.counts[5],
+                               skills.counts[6], skills.counts[7]);
+                } else {
+                  std::fprintf(stderr, "skills: %s (unlimited)\n", found.error().c_str());
+                }
+                g_app.surfaceLevel = makeSurfaceLevel(
+                    mask, g_app.releaseRates, g_app.releaseRate, g_app.levelInfo(), &objects,
+                    skillsPtr, mesh->height(), kPixelsPerUnit);
                 std::fprintf(stderr,
                              "terrain: %zu quads (ang %zu, ring %zu, stride %d), "
                              "mask %dx%d, %.1f%% solid from %s\n",

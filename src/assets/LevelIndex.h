@@ -45,11 +45,24 @@
 //   That is why every array length is a multiple of 16. `lrtool lvlkeys`
 //   reports the median distances; see PLAN.md 1.6 for the quad reconstruction.
 //
+//   Y itself is not a stored .LVL field: across the 52 levels that have ring
+//   faces it never appears in the header, the Cylinder preamble, or as an
+//   aligned u32 near the grids, and on MM_CLIMB_002 the value 8224 (and
+//   8224/16) does not occur as an aligned u32 anywhere in the file.
+//   SurfaceMesh::detectRingStride derives it from the lattice geometry.
+//
 // Not yet determined
 // ------------------
-//   * The per-level ring stride Y, as a stored field (SurfaceMesh searches it).
-//   * Whether skin tiles also encode solidity (surface masks are sparse).
-//   * The polygon lists, the placed-model transforms, and the script.
+//   * Script / remaining non-world Object 09 subtypes (fish, teleport_fx, …).
+//
+// Skin tiles do **not** encode solidity: all 4,896 named INN/OUT tiles across
+// the corpus are opaque bitmaps with no transparency sigil (ruled out in
+// PLAN.md 1.6 / test_surface).
+//
+// PolyList 09 chunks are render attributes for surface vertices (UV + RGBA),
+// not a second collision mesh -- see PolyList.h.
+//
+// Entrances, exits, other placed models, and skill counts: see LevelObjects.h.
 //
 // The scan is a *heuristic index*, not a parser: it finds length-prefixed
 // strings rather than walking a known structure. It is named accordingly.

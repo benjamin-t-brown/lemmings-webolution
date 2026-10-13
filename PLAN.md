@@ -248,11 +248,9 @@ have looked right and played wrong.
 
 #### Still open
 
-* The surface strip's primitive type and winding, and how to rasterise it
-  into the simulation's `Terrain` mask.
-* How the two `u32` arrays are keyed (their values are now known).
-* The polygon lists (379 `PolyList` chunks in one level), the placed-model
-  transforms, and the script.
+* How the two `u32` arrays are keyed (their values are now known; faces are
+  rebuilt from the lattice in SurfaceMesh).
+* Remaining PolyList kinds / record tails; hazard sim from placed models; script.
 
 #### A correction: `[004CBF78]` and `[004CBF7C]` are fonts
 
@@ -426,25 +424,101 @@ minority of the vertices between them — consistent with the sparse clusters
 #### Faces → terrain mask — done enough to play
 
 `src/assets/SurfaceMesh` walks both index arrays, keeps every lattice quad
-whose edge lengths match thickness / chord / ring spacing, detects the
+whose edge lengths match thickness / chord / ring spacing, derives the
 per-level ring stride `Y` by searching multiples of 16, and rasterises the
 **angular and ring edges** into a wraparound occupancy mask (radius is
 discarded by the unroll, so thickness edges collapse to points and are not
 stroked). `--level` loads that mask as the simulation terrain;
 `lrtool lvlmask` writes it as a PNG.
 
+`Y` is **not a stored .LVL field** — it is only derivable. Correlated across
+all 102 levels against the header words, the Cylinder-chunk preamble (the
+constant `…, 96, f64, 49858, …` block before the grids), words after the
+grids, and bytes near `surfaceCount`: none predict `detectRingStride()`. Of
+the 52 levels that expose ring faces, 35 contain no aligned `u32` equal to
+`Y` anywhere in the file; on `MM_CLIMB_002` neither `8224` nor `514`
+(`Y/16`) appears as an aligned `u32` at all. Same cell-count levels also
+disagree on `Y` (e.g. 5200 → 1008/1520/3104/4096/4608), so it is not a
+function of array size either. The geometric search stays the loader.
+
 Coverage across the corpus is low — a few percent solid, 12.7% on
 `MM_CLIMB_002` — which matches the sparse clusters `lvlmap` already showed.
 So the surface is platforms / detail, not a filled tube. Skin tiles remain
 scenery until proven otherwise.
 
+#### Entrances, exits, and other placed models — solved (parse)
+
+Each level embeds `.a3d` placements. Immediately after the length-prefixed
+model name a nearby `Object 09` opens the instance; four **zero** pad bytes
+and a run of doubles follow, with indices 9, 10, 11 the world-space
+translation and an earlier unit cos/sin pair for yaw. Entrances sit near
+the inner radius (~50), exits just outside the outer (~65).
+`findLevelObjects` partitions entrance/exit variants into
+`LevelObjects::entrances` / `exits` (unchanged API) and everything else into
+`placed` (`PlacedModel` = name + pose + `PlacedKind`).
+`worldToMaskPixel` maps them onto the occupancy mask; `--level` logs all
+three and still only wires entrance/exit into the sim.
+
+Corpus (102 levels): 417 non-entrance/exit world placements across 73
+levels — `lever` (130), `teleport` (54), `anti_grav` (50), `pressure_pad`
+(45), `pipe_drainage`/`pipe_supply` (37/34), `deathroller` (22),
+`speedup_two_way` (16), creatures (`Crab`/`robin`/`Scorp`), plus a little
+scenery (`PlaceHolder`, one `light_green`). Skipped on purpose: `fish.a3d`
+and most `light_*.a3d` (non-zero Object 09 pad — different subtype), and
+`teleport_fx.a3d` (identity at the origin). No hazard simulation yet.
+
+#### Skill counts — solved
+
+Near EOF every `.LVL` carries eight little-endian u32 skill-panel counts in
+classic order (climber, floater, bomber, blocker, builder, basher, miner,
+digger), four pad bytes, then the marker `01 00 00 00 08 00 00 00`.
+`findLevelSkills` reads that trailer; `--level` loads the counts into
+`LevelSetup::skills` and `World::assign` depletes them. Spot-checked against
+the tutorial singles (`Just Climb` = 10 climbers, …) and all 102 retail
+levels parse.
+
+#### Skin tiles do not encode solidity — ruled out
+
+Every named INN/OUT skin tile across all 102 levels (4,896 tiles, ~20M
+texels) loads as `AlphaMode::Opaque` with **zero** translucent pixels and
+essentially no near-black colour-key holes (~0.006%). HI siblings are the
+same. The 8×3 outer grid is a full opaque wrap; the surface occupancy mask
+stays sparse (a few percent). Filling unrolled lattice quads also fails —
+thickness edges collapse when radius is discarded — which is why
+`rasteriseSurface` strokes angular/ring edges instead.
+
+So the artwork is scenery. Walkable cells have to come from geometry, not
+from tile alpha.
+
+#### PolyList 09 — render attributes, not collision
+
+Each level carries hundreds of length-prefixed `PolyList 09` chunks. The
+common kinds obey a fixed size formula after the name:
+
+* kind **5**: payload = `16 + 160 * count`
+* kind **7**: payload = `16 + 212 * count`
+
+Each of the `count` records starts with a `u32` index into
+`CylinderMesh::surface`, then UV and RGBA stored as doubles. Across the
+corpus ~87% of those indices fall inside the surface pool (95%+ on
+`MM_CLIMB_002`), and most unique indices also appear in `grid0`/`grid1`.
+`findPolyLists` reads the formula-matched blocks.
+
+So PolyList is textured surface (and similar) draw data — colours and UVs
+for vertices we already have — not a denser collision volume. Unmatched
+kinds/sizes remain; they do not change that reading. A live-process terrain
+dump is still the way to prove the sparse lattice matches what the original
+simulates.
+
 #### Where to go next
 
-* **Entrances, exits, and skills from the .LVL** — spawn points are still
-  guessed from the mask.
-* **Whether skin tiles encode solidity** — compare a live-process terrain
-  dump to the surface mask and to tile alpha.
-* **Ring stride as a stored field** — currently searched, not read.
+* **Live-process terrain dump** — confirm the original's walkable cells match
+  the sparse surface-lattice mask (shim + `ReadProcessMemory`).
+* **Hazard / gadget simulation** — placed-model poses are parsed
+  (`LevelObjects::placed`); wire anti-grav, teleports, deathrollers, etc.
+  into the sim when the behaviours are known.
+* **Remaining PolyList kinds / trailing record bytes** — only the leading
+  index+UV+RGBA of kinds 5 and 7 are decoded.
 
 #### Looking at it: `lrtool lvlmap`
 
@@ -594,11 +668,10 @@ Two properties that matter for the oracle:
   which is how the original shows the far side of the tube.
 - `.SPR` sheet-based sprite animation, from `LEMMINGSLO.SPR`.
 
-What is *not* in this phase, and is not pretended to be: the skin is scenery.
-What a lemming can stand on is still the simulation's own terrain mask, drawn
-over the artwork, because the mapping between the two is part of the surface
-topology that §1.6 leaves open. Joining them is the next real step, and it is
-blocked on reverse engineering rather than on rendering.
+What is *not* in this phase, and is not pretended to be: the skin is scenery
+(opaque wrap; see §1.6) and PolyList is draw data for the surface, not
+collision. What a lemming can stand on is the surface-lattice mask. Whether
+that matches the original's in-memory terrain is the remaining RE question.
 
 ### Phase 5 — Game shell
 Menus, level select, save games, `.LTX` localisation, audio. FMV is an open question —

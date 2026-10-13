@@ -17,6 +17,8 @@ set(WEBOLUTION_SOURCES
   src/assets/LevelIndex.cpp
   src/assets/Cylinder.cpp
   src/assets/SurfaceMesh.cpp
+  src/assets/LevelObjects.cpp
+  src/assets/PolyList.cpp
   src/assets/Wav.cpp
 
   # sim -- the game itself, independent of rendering

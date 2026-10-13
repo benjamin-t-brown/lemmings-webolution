@@ -130,6 +130,14 @@ add_executable(test_surface src/__test__/test_surface.cpp)
 target_link_libraries(test_surface PRIVATE webolution_objects)
 add_test(NAME surface COMMAND test_surface)
 
+add_executable(test_levelobjects src/__test__/test_levelobjects.cpp)
+target_link_libraries(test_levelobjects PRIVATE webolution_objects)
+add_test(NAME levelobjects COMMAND test_levelobjects)
+
+add_executable(test_polylist src/__test__/test_polylist.cpp)
+target_link_libraries(test_polylist PRIVATE webolution_objects)
+add_test(NAME polylist COMMAND test_polylist)
+
 add_executable(test_wav src/__test__/test_wav.cpp)
 target_link_libraries(test_wav PRIVATE webolution_objects)
 add_test(NAME wav COMMAND test_wav)
@@ -149,6 +157,6 @@ add_test(NAME world COMMAND test_world)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata sprite levelindex cylinder surface wav PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata sprite levelindex cylinder surface wav levelobjects polylist PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

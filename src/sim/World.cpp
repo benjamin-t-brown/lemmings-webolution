@@ -383,25 +383,33 @@ bool World::assign(std::size_t index, Skill skill) {
   if (!l.active())
     return false;
 
+  int& stock = setup_.skills[static_cast<std::size_t>(skill)];
+  if (stock == 0)
+    return false;
+
+  auto take = [&] {
+    if (stock > 0)
+      --stock;
+    cue(SoundCue::Assign);
+    return true;
+  };
+
   switch (skill) {
     case Skill::Climber:
       if (l.canClimb)
         return false;
       l.canClimb = true;
-      cue(SoundCue::Assign);
-      return true;
+      return take();
     case Skill::Floater:
       if (l.canFloat)
         return false;
       l.canFloat = true;
-      cue(SoundCue::Assign);
-      return true;
+      return take();
     case Skill::Bomber:
       if (l.fuse >= 0)
         return false;
       l.fuse = rules_.bomberFuse;
-      cue(SoundCue::Assign);
-      return true;
+      return take();
     default:
       break;
   }
@@ -428,8 +436,7 @@ bool World::assign(std::size_t index, Skill skill) {
     default: return false;
   }
   l.frame = 0;
-  cue(SoundCue::Assign);
-  return true;
+  return take();
 }
 
 std::optional<std::size_t> World::pick(int x, int y, int radius) const {

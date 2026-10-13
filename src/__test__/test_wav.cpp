@@ -272,6 +272,7 @@ void testRetail(const fs::path& dir) {
 int main() {
   testSynthetic();
   testResample();
+  testResample();
   testAssetNames();
 
   if (const char* dir = std::getenv("WEBOLUTION_GAME_DIR")) {

@@ -161,6 +161,6 @@ add_test(NAME corpus COMMAND test_corpus)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata sprite levelindex cylinder surface wav levelobjects polylist corpus PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata sprite levelindex cylinder surface wav levelobjects polylist world corpus PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

@@ -108,6 +108,31 @@ THRESHOLDS = [
     ("splatDistance (kills past this)", 0x004B10A8, 0x004165FF),
 ]
 
+# `bash`, `dig` and `mine` are one class parameterised by its enter hook: all
+# three vtables carry the same slot-1 stepper. The hook sets the animation and
+# the animation rate; it writes no speed, no interval and no reach.
+SKILL_STATES = [
+    ("bash", 0x004B06AC, 0x0040BFAA),
+    ("dig", 0x004B09F0, 0x004159B4),
+    ("mine", 0x004B0B68, 0x0041884A),
+]
+SHARED_SKILL_STEPPER = 0x0041B077
+
+# A terrain-removal function, `FUN_0041B683`. No direct caller in `.text`: it
+# is slot 3 of the `trampoline` vtable `0x004B0D08` and is reached only by
+# virtual dispatch. Whose removal it is, is NOT established -- bash, dig and
+# mine carry different slot-3 entries (`0x00401320`, `0x00415995`,
+# `0x004188C3`), so do not read this as the skills' dig depth or bash reach.
+# What is read is the shape: four cells, and which bits get cleared.
+REMOVAL = 0x0041B683
+# Loop 1 runs `i = 0 .. [0x004B10B8]` inclusive, stepping `y + i * [+0x44]`,
+# so the bound is one less than the number of cells cleared.
+REMOVAL_DEPTH_BOUND = 0x004B10B8
+REMOVAL_CLEARS = [
+    ("column run, [+0x44] direction", 0x0041B783, 0x0000F77C),
+    ("one further cell", 0x0041B801, 0x0000E77C),
+]
+
 
 class Image:
     """The executable as an addressable image."""
@@ -363,6 +388,53 @@ def report_speeds(img: Image):
     print("# 0x200 / 0x4000 exempt lemming types 1 and 2 ([lemming+0x4c]).")
 
 
+def report_skills(img: Image):
+    """The terrain skills: what their states share, and what the removal does.
+
+    The headline is a negative. `bash`, `dig` and `mine` carry no interval, no
+    reach and no speed of their own -- the three vtables share one stepper and
+    their enter hooks differ only in the animation they select and the rate
+    they give it. The stepper's own debug strings call the mechanism a
+    "staggered action": it advances the animation and fires the removal on a
+    new frame, so what classic Lemmings expresses as a tick interval this
+    engine expresses as an animation rate. Nothing here can be promoted into
+    `Rules::basherInterval` and friends without reading the animation clock.
+    """
+    print("# The terrain skills share one stepper, parameterised by the hook:")
+    for name, vt, hook in SKILL_STATES:
+        slot1 = img.u32(vt + 4)
+        shared = "shared" if slot1 == SHARED_SKILL_STEPPER else f"!! {slot1:#010x}"
+        print(f"#   {name:<5} vtable {vt:08x}  enter {hook:08x}  stepper {slot1:08x}  {shared}")
+    print(f"#   the shared stepper is {SHARED_SKILL_STEPPER:#010x}")
+    print()
+    print("# Its timing is the animation's, not a tick count:")
+    print("#   0041b163  cmp dword ptr [edx+0x50], 3   ; the same state tag the")
+    print("#   0041b16e  fdiv qword ptr [0x004b03f8]   ; climb halves on, 0x004137d6")
+    print("#   0041b19b  call 0x00468b5d               ; on the lemming's +0x128")
+    print("# and the 100.0 at 0x004b0ce0 is a percentage in a log line, not a")
+    print("# game constant -- 0x004bf564 is \"Staggered action new frame %d\".")
+    print("# +0x128 is the animation controller: 0x004683e9 writes a double to")
+    print("# its +0x1d8 (dig's hook passes 0.75, against the 0.5 the .SPR sheet")
+    print("# carries for that strip), and 0x00468b04 scales by the 0.06 at")
+    print("# 0x004b1940. So the skill rates live there, and are unread.")
+    print()
+    bound = img.u32(REMOVAL_DEPTH_BOUND)
+    print(f"# A terrain removal is {REMOVAL:#010x} -- slot 3 of the trampoline")
+    print("# vtable 0x004b0d08, no direct caller, and NOT shown to be the skills'.")
+    print(f"#   loop bound [{REMOVAL_DEPTH_BOUND:08x}] = {bound}, inclusive from 0")
+    print(f"#   -> {bound + 1} cells stepped by [+0x44] from the lemming's own cell,")
+    print(f"#      which is {bound + 1} world units = {(bound + 1) * ROWS_PER_UNIT} of our mask rows")
+    for label, site, mask in REMOVAL_CLEARS:
+        cleared = (~mask) & 0xFFFF
+        bits = ", ".join(f"{1 << b:#x}" for b in range(16) if cleared & (1 << b))
+        print(f"#   {site:08x}  and {mask:#06x}  clears {bits}   ({label})")
+    print()
+    print("# No enter hook writes [+0x44], so which way a given skill removes is")
+    print("# not set where the hooks are. Until that is read, the cell count")
+    print("# above cannot be assigned to diggerDepth rather than basherReach,")
+    print("# and `Rules` keeps its provisional values.")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--exe", help="path to the stock Lemmings Revolution.exe")
@@ -425,6 +497,8 @@ def main() -> int:
     print()
 
     report_speeds(img)
+    print()
+    report_skills(img)
     return 0
 
 

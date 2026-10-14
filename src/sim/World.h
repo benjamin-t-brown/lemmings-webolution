@@ -176,6 +176,36 @@ public:
     int splatDistance = 60;     // falling further than this kills
 
     // PROVISIONAL from here down: classic-Lemmings values, not this engine's.
+    //
+    // The skill intervals below were looked for in the binary and are not
+    // there in this form, which is a finding rather than a gap. `bash`, `dig`
+    // and `mine` are one class: all three vtables carry the same slot-1
+    // stepper, 0x0041B077, and their enter hooks differ only in the animation
+    // they select and the rate they give it. That stepper's own debug strings
+    // call the mechanism a "staggered action" -- 0x004BF564 is "Staggered
+    // action new frame %d" -- and it fires the removal when the animation
+    // reaches a new frame. So what classic Lemmings expresses as a tick
+    // interval, this engine expresses as an animation rate living on the
+    // controller at the lemming's +0x128, and reading it means reading that
+    // controller (0x004683E9 writes a double to its +0x1D8; dig's hook passes
+    // 0.75, against the 0.5 its .SPR strip carries). Until then these stay
+    // classic.
+    //
+    // A terrain removal is read, but it is not yet anybody's. FUN_0041B683
+    // clears four cells stepped by [+0x44] from the lemming's own cell --
+    // loop bound 3 at 0x004B10B8, inclusive from 0 -- with `and 0xf77c` at
+    // 0x0041B783 clearing 0x1|0x2|0x80|0x800, plus one further cell with
+    // `and 0xe77c`. Four engine cells is four world units, which is eight of
+    // our mask rows.
+    //
+    // It is deliberately not assigned to a field, for a stronger reason than
+    // the count being ambiguous: that function is slot 3 of the *trampoline*
+    // vtable 0x004B0D08 and has no direct caller in .text, while bash, dig
+    // and mine carry different slot-3 entries (0x00401320, 0x00415995,
+    // 0x004188C3). So it has not been shown to be the skills' removal at all.
+    // Reading what calls it is the next step, and until then neither
+    // diggerDepth nor basherReach may be set from it.
+    // tools/harness/read_steppers.py prints all of this.
     int maxStepUp = 6;          // a walker climbs steps up to this high
     int builderBricks = 12;
     int brickLength = 6;

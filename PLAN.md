@@ -993,16 +993,19 @@ Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
 ### Phase 2 — `.LVL`
 - Ghidra on the `SkyIslands` loader; incremental parser; debug visualiser.
 - **Milestone: one level's cylinder geometry and terrain mask on screen.**
-- **Done.** Cylinder + surface lattice → playable mask, skills trailer,
+- **Done on the file side.** Cylinder + surface lattice → playable mask, skills trailer,
   entrance/exit + 417 other placed models (parse only), skin ≠ solidity,
   PolyList 5/7 = draw attrs, ring stride **derived not stored**.
-- The live check that closed it (§1.6): the original keeps **no** occupancy
-  buffer — scanned for across all 182 MB and absent — but holds the .LVL
-  surface lattice byte-for-byte, and 31 of 32 lemmings sampled out of its
-  running simulation stand on cells our raster calls solid. So the raster
-  agrees with the original where the original has a floor. It samples one
-  ledge of one level, so it is a check, not a proof of the whole mask;
-  broader sampling belongs with the differential oracle (§2).
+- Two live findings stand (§1.6): the original keeps **no** occupancy buffer
+  — scanned for across all 182 MB and absent — and it holds the .LVL surface
+  lattice byte-for-byte, which confirms the file reading outright.
+- **The live confirmation of the raster does not stand yet.** The 31-of-32
+  result reported here was produced by a lemming finder that cannot tell a
+  lemming from a transformed surface vertex on a turning tube, so it may have
+  sampled scenery (see the correction in §2.2). `find_lemmings.py` now
+  separates them by angular velocity; re-running the check with it is listed
+  under Phase 3. Until then the raster is unverified against the original,
+  not disproved — the earlier result is withdrawn, not reversed.
 
 ### Phase 3 — Simulation (headless, deterministic, unit-tested)
 - Terrain mask with horizontal wrap; fixed timestep; no rendering dependency.

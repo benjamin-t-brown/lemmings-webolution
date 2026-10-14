@@ -1,4 +1,4 @@
-"""Drive the original from the frontend into the first playable level.
+"""Drive the original from the frontend into any named level.
 
 Entry is memory-driven, not vision-driven: `lrstate.ui_state` says which
 screen we are on (3 = frontend, 0 = playing, 5 = results) and
@@ -6,7 +6,57 @@ screen we are on (3 = frontend, 0 = playing, 5 = results) and
 `PrintWindow` -- which returns a black bitmap whenever the window is not
 foreground and has produced every wrong conclusion in this area.
 
-The route, all of it established in PLAN.md 1.6:
+Picking a level without knowing where its node is
+-------------------------------------------------
+The level map is a 3D scene the camera orbits, so a node's screen position is
+a projection and not a stored coordinate. Neither `LEVELMAP.DAT` nor
+`LEVELS.MAP` carries one -- they hold the id, the display name and the three
+counts and nothing else -- and the pair (206, 204) appears nowhere in the
+executable. So there is no node table to look up, and finding each node by
+clicking would mean 102 fragile calibrations.
+
+What the engine does keep is a flat table of level records, and the map only
+ever indexes it:
+
+    0x004E35D4              record table, 5 groups x 25 slots
+    + group * 0x1B58        group stride (25 records)
+    + slot  * 0x118         slot stride, and the record size
+    +0x000  char[128]       level id, e.g. "MM_CLIMB_002"
+    +0x080  char[128]       display name, e.g. "Just Climb"
+    +0x100  u32 u32 u32     time limit seconds, total lemmings, save target
+
+The table is zero in the image and filled at startup from `LEVELMAP.DAT`.
+Clicking a node resolves to (group, slot), reads that record, and hands its id
+to the path builder:
+
+    0049b190  call 0x00460610         ; group index, the global 0x005D5A00
+    0049b19d  call 0x00460630         ; slot index, the global 0x005D5A04
+    0049b1a8  lea  ecx, [esi+eax+0x4e35d4]
+    0049b1b5  call 0x0048e530         ; store the id pointer at 0x005D59F0
+    0045d891  call 0x004605f0         ; read it back
+    0045d89d  call 0x0045c9ab         ; sprintf "Compiled\\%s%s" -> 0x004CBBF8
+
+So the whole selection funnels through one record. `select_level` copies the
+record of the level you asked for over slot [0][0] -- the one node whose
+screen position is known -- and the click then loads that level. The copy is
+the whole 0x118 bytes, not just the id, so the clock and the lemming counts
+come from the real level too.
+
+**Do not try to write the index globals instead.** `0x0049B14F` and
+`0x0049B15B` set slot and group from the picked node immediately before
+`0x0049B190` reads them back, so a value written from outside is overwritten
+within the same click. The record swap has no such race: it is read once, at
+click time, long after the write.
+
+The swap mutates the game's own table, so `enter_level` restores slot [0][0]
+afterwards and the table is never left altered. A level entered this way is
+the genuine level, checked three independent ways on MM_DIG_000: the path
+buffer at `0x004CBBF8` reads `Compiled\\MM_DIG_000.lvl`, the save target at
+`0x004CBAB0` reads 10 where MM_CLIMB_002 reads 1, and the release counter
+reached 18 on a level `LEVELMAP.DAT` gives 20 lemmings.
+
+Quirks, all of them the original's behaviour and none of them worked around
+by pretending otherwise:
 
   * The stock 640x480 `Lemmings Revolution.exe` only. Under the resolution
     patch the level map's gold nodes are 3D-picked at the wrong scale and
@@ -17,7 +67,7 @@ The route, all of it established in PLAN.md 1.6:
   * The main menu has five items and the fifth is "Beenden". A blind RETURN
     closed the game during this work, so `find_menu_index` locates the
     highlight variable first (it is on the heap, so it moves every run) and
-    drives it to item 0 before pressing anything.
+    drives it to item 0 before pressing anything. RETURN only at exactly 0.
   * `0x004C416C` is the frontend's own screen id: 3 = main menu, 4 = the
     Ja/Nein confirm, 5 = the level map. That is the only way to tell those
     apart here -- `ui_state` is 3 for all of them and both capture paths
@@ -27,9 +77,16 @@ The route, all of it established in PLAN.md 1.6:
     pixel (206, 204), measured by clicking: PLAN.md's (825, 612) was taken
     under the 2560x1440 build and scales as (x*640/2560, y*480/1440), not
     through the dgVoodoo letterbox.
+  * `consume_deltas` is 0 in the shim block, so the last relative motion is
+    re-read every frame and the cursor slides until it clamps. `drive.aim_at`
+    writes a zero delta before returning; do not click without aiming first.
+  * A 25-frame ESC can fail to leave pause; 40 frames after `focus()` works.
+    ESC from a post-level screen can quit the process.
 
 Usage:
-    python goto_level.py            # navigate, report the ui_state reached
+    python goto_level.py                 # the first node, as before
+    python goto_level.py MM_DIG_000      # any level in the table
+    python goto_level.py --list          # what the live table holds
 """
 from __future__ import annotations
 
@@ -48,6 +105,17 @@ SCREEN_ID = 0x004C416C  # frontend screen: 3 menu, 4 confirm, 5 level map
 PLAYING = 0
 FRONTEND = 3
 RESULTS = 5
+
+# The level record table the map indexes; see the module docstring.
+LEVEL_TABLE = 0x004E35D4
+GROUP_STRIDE = 0x1B58
+SLOT_STRIDE = 0x118
+RECORD_SIZE = 0x118
+GROUPS, SLOTS = 5, 25
+# Where the loader leaves the path it built, and the level's own counts.
+PATH_BUFFER = 0x004CBBF8
+TIME_LIMIT = 0x004CBAA8
+SAVE_TARGET = 0x004CBAB0
 
 
 def focus(pid: int) -> bool:
@@ -156,6 +224,91 @@ def find_menu_index(h, inp, verbose: bool = True) -> int | None:
     return sorted(keep)[0]
 
 
+def write_mem(h, addr: int, data: bytes) -> bool:
+    """Write into the target. Needs a handle from `attach(write=True)`."""
+    import ctypes
+
+    n = ctypes.c_size_t(0)
+    ok = k32.WriteProcessMemory(h, ctypes.c_void_p(addr), data, len(data), ctypes.byref(n))
+    return bool(ok) and n.value == len(data)
+
+
+def level_table(h) -> dict[str, tuple[int, int, int]]:
+    """Every named record in the live table: id -> (group, slot, address).
+
+    Empty slots carry the literal id "blank" and are skipped; the retail data
+    fills 102 of the 125, which is exactly the number of `.LVL` files.
+    """
+    from memdump import read_mem
+
+    out: dict[str, tuple[int, int, int]] = {}
+    for g in range(GROUPS):
+        for s in range(SLOTS):
+            addr = LEVEL_TABLE + g * GROUP_STRIDE + s * SLOT_STRIDE
+            raw = read_mem(h, addr, 16)
+            if not raw:
+                continue
+            name = raw.split(b"\0")[0].decode("latin1", "replace")
+            if name and name != "blank":
+                out[name] = (g, s, addr)
+    return out
+
+
+def select_level(h, name: str, verbose: bool = True):
+    """Point the one clickable node at `name`. Returns slot [0][0]'s old bytes.
+
+    The caller must put those bytes back -- `enter_level` does. Raises
+    LookupError if the live table has no such level, which is better than
+    entering some other level and measuring it by mistake.
+    """
+    from memdump import read_mem
+
+    table = level_table(h)
+    if name not in table:
+        raise LookupError(f"{name!r} is not in the live level table ({len(table)} entries)")
+    g, s, src = table[name]
+    slot0 = LEVEL_TABLE
+    saved = read_mem(h, slot0, RECORD_SIZE)
+    record = read_mem(h, src, RECORD_SIZE)
+    if not saved or not record or len(record) != RECORD_SIZE:
+        raise OSError("could not read the level records")
+    if not write_mem(h, slot0, record):
+        raise OSError("could not write slot [0][0] -- is the handle writable?")
+    if verbose:
+        print(f"  {name} is group {g} slot {s}; copied its record over slot [0][0]")
+    return saved
+
+
+def loaded_level(h) -> str:
+    """The path the loader built, e.g. `Compiled\\MM_DIG_000.lvl`.
+
+    This is the independent answer to "which level is actually running": the
+    engine wrote it, not us, and it reflects the file it opened.
+    """
+    from memdump import read_mem
+
+    raw = read_mem(h, PATH_BUFFER, 64)
+    return raw.split(b"\0")[0].decode("latin1", "replace") if raw else ""
+
+
+def enter_level(h, inp, name: str | None = None, verbose: bool = True) -> int:
+    """Enter `name` (or the first node when None) and restore the table after.
+
+    The restore is in a finally, so an exception or a failed entry still
+    leaves the game's own level table exactly as it was found.
+    """
+    saved = None
+    try:
+        if name:
+            saved = select_level(h, name, verbose=verbose)
+        return enter(h, inp, verbose=verbose)
+    finally:
+        if saved is not None:
+            ok = write_mem(h, LEVEL_TABLE, saved)
+            if verbose:
+                print(f"  slot [0][0] restored: {ok}")
+
+
 def enter(h, inp, verbose: bool = True) -> int:
     """From wherever we are, try to reach ui_state 0. Returns the state."""
     def say(*a):
@@ -224,19 +377,44 @@ def enter(h, inp, verbose: bool = True) -> int:
 
 
 def main() -> int:
-    h, pid = attach()
+    args = [a for a in sys.argv[1:] if a]
+    want_list = "--list" in args
+    level = next((a for a in args if not a.startswith("-")), None)
+
+    # A write handle is only needed when a level was named; asking for one
+    # unconditionally would make the plain case fail on a locked-down process.
+    h, pid = attach(write=bool(level))
     if not h:
         print("the game is not running")
         return 1
+
+    if want_list:
+        table = level_table(h)
+        print(f"{len(table)} levels in the live table")
+        for name, (g, s_, addr) in sorted(table.items(), key=lambda kv: kv[1]):
+            print(f"  group {g} slot {s_:2d}  {addr:08x}  {name}")
+        k32.CloseHandle(h)
+        return 0
+
     focus(pid)
     with LRInput() as inp:
         rate = poll_rate(inp)
         print(f"pid {pid}, poll {rate:.0f} Hz "
               f"({'foreground' if rate > 60 else 'BACKGROUND -- clicks may miss'})")
         inp.enable()
-        state = enter(h, inp)
+        try:
+            state = enter_level(h, inp, level)
+        except LookupError as e:
+            print(f"  {e}")
+            inp.release()
+            k32.CloseHandle(h)
+            return 2
         inp.release()
     print(f"final ui_state {state}")
+    if state == PLAYING:
+        # The engine's own answer to "which level is this", not ours.
+        print(f"loaded: {loaded_level(h)}")
+        print(f"  time limit {i32(h, TIME_LIMIT)}s, save target {i32(h, SAVE_TARGET)}")
     k32.CloseHandle(h)
     return 0 if state == PLAYING else 2
 

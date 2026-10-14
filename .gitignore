@@ -17,3 +17,5 @@ __pycache__/
 # Never commit game data -- users supply their own installation.
 *.box
 *.avi
+# Local checkout of morluto/rea, used as the reverse-engineering agent.
+.rea/

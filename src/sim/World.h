@@ -126,15 +126,27 @@ public:
     // column-128 wall and again up the next. One world unit is two mask rows.
     int climbSpeed = 2;         // mask rows per tick
 
+    // READ FROM THE BINARY, not yet confirmed live. The original's fall state
+    // steps Y with the same instruction shape as the climb and the walk, and
+    // the only difference is the speed constant:
+    //
+    //   0041a758  dc0d400c4b00  fmul qword ptr [0x004b0c40]   ; 25.0
+    //   0041a7b7  db4044        fild dword ptr [eax+0x44]     ; direction, -1
+    //   0041a7ba  dc4de8        fmul qword ptr [ebp-0x18]     ; seconds this chunk
+    //   0041a7bd  dc4210        fadd qword ptr [edx+0x10]     ; + Y
+    //   0041a7d3  dd5910        fstp qword ptr [ecx+0x10]     ; -> Y
+    //
+    // The qword at 0x004b0c40 is 00 00 00 00 00 00 39 40 = 25.0, and it is
+    // referenced from four sites, all inside that one state class. So the
+    // constant is world units per *second*: 25.0 * 0.2 s = 5 world units per
+    // tick, which is 10 mask rows. The same arithmetic with the climb's 5.0
+    // gives 1 world unit per tick and with the walk's 5.0 gives 1 column per
+    // tick, and both of those were measured on the running original -- which
+    // is what fixes the units here. PLAN.md 2.3 has the addresses.
+    int fallSpeed = 10;         // mask rows per tick while falling
+
     // PROVISIONAL from here down: classic-Lemmings values, not this engine's.
     int maxStepUp = 6;          // a walker climbs steps up to this high
-    // PROVISIONAL. One constant for the hatch and for walking off a ledge.
-    // The hatch on MM_CLIMB_002 does not show it: the billboard is written
-    // at y = 32.190. The fall sprite's rate in LEMMINGSLO.SPR (0.467) is
-    // the animation clock, the same number as the floater, not this field.
-    // A climber who tops out on the y = 48 ring is next seen at 32.190 with
-    // no intermediate heights, so the step size is still unread.
-    int fallSpeed = 3;          // pixels per tick while falling
     int floatSpeed = 1;         // pixels per tick under an umbrella
     int floatAfter = 16;        // umbrella opens this far into the fall
     int splatDistance = 63;     // falling further than this kills

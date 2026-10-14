@@ -72,8 +72,10 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
       eight skills, deterministic ticks, the level clock. The step rate (5 Hz),
       the walk (one column per step), and the spawn interval (`RELEASERATE.PC`)
       are measured, and so is the climb: one world unit per step, two mask
-      rows. The fall is one constant for the hatch and a walk-off, and it
-      is still the classic stand-in. PLAN.md Phase 3 says how to read it.
+      rows. The fall is read off the binary rather than measured -- 25.0
+      world units per second at `0x004B0C40`, so 5 units or 10 mask rows
+      per tick -- and still owes a live series. Everything below it in
+      `Rules` is a classic stand-in. PLAN.md 2.3 has the addresses.
 - [x] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
       lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
       unwrapped one and the cylinder projection (`C` toggles), and a named

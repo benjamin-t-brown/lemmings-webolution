@@ -41,10 +41,19 @@ LevelSetup flatLevel(int floorY = 80) {
   LevelSetup s;
   s.terrain = Terrain(200, 100);
   s.terrain.fillBox(0, floorY, 200, 100 - floorY, Material::Earth);
-  // Just above the floor: a drop from the top of the world exceeds the splat
-  // distance, which is correct behaviour but not what most of these tests are
-  // about. testSplat sets up a long fall deliberately.
-  s.entrances.push_back({100, floorY - 10});
+  // High enough above the floor that the fall is observable -- three ticks of
+  // it -- and low enough that it is survivable. Both bounds are read off
+  // Rules rather than written out, because the drop that spans more than one
+  // tick is a function of fallSpeed: at the value this file was first written
+  // against the ten rows it used to hard-code took four ticks, and at the
+  // rate since read off the original (World.h) it lands inside the first one,
+  // which is a property of the number and not a bug in the test. A drop from
+  // the top of the world would exceed splatDistance, which is correct
+  // behaviour but not what most of these tests are about; testSplat sets up a
+  // long fall deliberately.
+  const World::Rules r;
+  const int drop = std::min(r.fallSpeed * 3, r.splatDistance - 1);
+  s.entrances.push_back({100, floorY - drop});
   s.totalLemmings = 1;
   s.saveTarget = 1;
   s.releaseIntervalTicks = 1;

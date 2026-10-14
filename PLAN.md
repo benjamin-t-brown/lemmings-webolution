@@ -1088,6 +1088,251 @@ Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
 `find_fallers.py`, `find_lemming_record.py`, `find_lemmings.py`,
 `measure_release.py`, `measure_tick.py`, `measure_motion.py`, with
 `diffscan.py`, `dump_records.py` and `sample_fast.py` as general tools.
+`read_steppers.py` is the odd one out and needs no running game: it is the
+static read of 2.3 against the shipped exe.
+
+### 2.3 Static reading with REA — in progress
+
+Running the stock exe under dgVoodoo is what blocked the fall. The hatch
+never leaves y = 32.190, and the drop off the y = 48 ring was sampled too
+coarsely to show a step (§Phase 3). [REA](https://github.com/morluto/rea)
+(cloned at `.rea`, gitignored) decompiles the same exe through Ghidra, so
+the constant could be read from the instruction that writes Y instead. A
+decompiler line is not a measurement until the address and the bytes are
+cited, which is the standard everything below is held to.
+
+`fallSpeed` has now been set from this section, at 10 mask rows per tick.
+That is a weaker warrant than the measured fields have and `Rules` says so
+in those words: a read of the shipped bytes, with no live series behind it.
+What makes it more than a plausible number is that the same arithmetic
+reproduces two *measured* fields exactly off the same instruction shape --
+so the units are not a guess even though the fall itself was never
+sampled. Nothing else in `Rules` may be promoted on a static read alone
+without that kind of cross-check, and the fall still owes its live run.
+
+**Setup, already done on this machine.** Ghidra 12.1.4 is at
+`C:\tools\ghidra_12.1.4_PUBLIC` (official zip, SHA-256
+`ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db`).
+JDK 24 at `C:\Program Files\Java\jdk-24` is accepted. Cursor's MCP entry
+is `C:\Users\bbrown\.cursor\mcp.json`; a session started before that file
+existed does not have the tools, so restart Cursor or use the CLI. The
+snapshot here was written by `rea-agents` 6.4.0; `@latest` has since moved
+to 6.5.0, which rejects that snapshot, so pin the version (see the end of
+this section). The git checkout has no Windows
+native addon, so run the npm package, not `node .rea/scripts/rea.mjs`.
+Hopper is not installed and is not offered on Windows. The target is the
+stock 32-bit exe, SHA-256
+`32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f`,
+image base `0x400000`. Snapshot: `C:\tools\lr-rea-snapshot.json`. Each
+CLI invocation starts Ghidra again (about 40 s); an open MCP session
+keeps the database.
+
+```powershell
+$env:GHIDRA_INSTALL_DIR = "C:\tools\ghidra_12.1.4_PUBLIC"
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-24"
+$env:REA_ANALYSIS_PROVIDER = "ghidra"
+$env:REA_GHIDRA_STARTUP_TIMEOUT_MS = "330000"
+npx -y rea-agents@6.4.0 xrefs "C:\progs\Lemmings Revolution\Lemmings Revolution.exe" 0x4137ca --provider ghidra --snapshot C:\tools\lr-rea-snapshot.json --format json
+```
+
+`search`, `decompile`, and `function` take the same path, provider, and
+snapshot. `search` is literal over Ghidra-defined strings.
+
+**Read so far (static, 2026-10-14).** Not a live series.
+
+- `FallSplat` at `0x004C0CD4` is a sound name. `FUN_0045e51f` loads it
+  beside Letsgo, Yippee, Chink, Explode, Splat. It is not a step size.
+- `Climber topping out` at `0x004BF310` is referenced from `FUN_004139bf`
+  (`0x004139BF`). That function tests mask cells through `FUN_0040de60`
+  on the object at `0x004C6A10` and logs topping out or `Climber hit head`
+  (`0x004BF2FC`).
+- `Lemming moved to %d, %d` at `0x004BF464` is inside `FUN_004190f3`,
+  after the string `Mine collision check`. That path writes two ints
+  back into doubles at `+0x08` and `+0x10`. It is not the general mover.
+  Do not start from that string.
+
+**There is no caller to decompile: the states are virtual.** `xrefs` on
+`0x004137CA` returns exactly one address, `0x004B0964`, and it is in
+`.rdata`, not `.text`. It is a vtable slot, so every call to the climb
+stepper is a virtual dispatch. The vtables are 6 slots long, and
+each is referenced from exactly two places: its constructor and its
+destructor. Scanning `.text` for immediates landing in
+`0x004B0900`–`0x004B0A80` is what separated the vtable starts from the
+double literals the compiler parked between them — both are referenced,
+but a literal is referenced from any number of sites and a vtable start
+from two. Those interleaved literals also break the 0x18 stride, so
+`read_steppers.py` finds the tables by their shape instead: slots 4 and 5
+are the same two base stubs, `0x004011D0` and `0x004011E0`, in every one.
+Slot layout, read off the climb vtable at `0x004B0960`:
+
+| slot | climb | role |
+| --- | --- | --- |
+| +0x00 | `0x00413C40` | deleting destructor |
+| +0x04 | `0x004137CA` | **step this state for one tick** |
+| +0x08 | `0x004137A3` | state name |
+| +0x0C | `0x004137BD` | per-state hook, empty in most |
+| +0x10 | `0x004011D0` | common base stub |
+| +0x14 | `0x004011E0` | common base stub |
+
+Slot 2 has a fixed prologue, `55 8b ec 51 89 4d fc 68 <str>`, so scanning
+for those bytes names the states outright. `0x004137AB` pushes
+`0x004BF2D4` = `"climb"`, which is what identifies slot 2 and so the whole
+layout. 46 vtables have this shape. Named so far: `drown` (`0x004B0570`),
+`fall` (`0x004B0680`), `climb` (`0x004B0960`), `flip` (`0x004B0AF8`),
+`fall` (`0x004B0C60`), `shrug` (`0x004B0C78`), `walk` (`0x004B0D28`).
+
+**The fall path is the sibling at `0x004B0C60`.** Of the two `fall`
+states only one steps Y:
+
+- `0x004B0680` slot 1 is `FUN_0040bb26`, 0x40 bytes. It advances the
+  animation through `+0x78` slot `0x2C`, zeroes the remaining time, calls
+  `FUN_0042f5e3`, returns 1. It never touches `+0x10`. A terminal state,
+  not the faller. (`FUN_0042f5e3` is the direction flip:
+  `0x0042F5F0 6b c9 ff`, `imul ecx, ecx, -1` on `+0x44`, then it writes
+  the double 3.0 into `+0x358` when `+0x44` lands on 1.)
+- `0x004B0C60` slot 1 is `FUN_0041a6d5` (`0x0041A6D5`–`0x0041A82F`). It is
+  the climb stepper instruction for instruction with one constant
+  changed. Both loop while the remaining-time double at `param_2` stays
+  positive, both ask a chunk function for a time slice, both take
+  `min(slice, remaining)`, both step Y, both call the `+0x78` slot `0x2C`
+  animation advance with the slice, both subtract the slice, and both
+  leave the loop when their own probe returns non-zero.
+
+The instruction that steps a falling lemming's Y, with the bytes:
+
+```
+0041a758  dc 0d 40 0c 4b 00    fmul  qword ptr [0x004b0c40]   ; 25.0
+0041a7b7  db 40 44             fild  dword ptr [eax+0x44]     ; direction
+0041a7ba  dc 4d e8             fmul  qword ptr [ebp-0x18]     ; slice * 25.0
+0041a7bd  dc 42 10             fadd  qword ptr [edx+0x10]     ; + Y
+0041a7cb  e8 80 37 ff ff       call  0x0040df50               ; clamp
+0041a7d3  dd 59 10             fstp  qword ptr [ecx+0x10]     ; -> Y
+```
+
+and the same lines in the climb, for comparison:
+
+```
+00413869  db 40 44             fild  dword ptr [eax+0x44]
+0041386c  dc 0d b0 10 4b 00    fmul  qword ptr [0x004b10b0]   ; 5.0
+00413872  dc 4d e8             fmul  qword ptr [ebp-0x18]
+00413875  dc 42 10             fadd  qword ptr [edx+0x10]
+00413883  e8 c8 a6 ff ff       call  0x0040df50
+0041388b  dd 59 10             fstp  qword ptr [ecx+0x10]
+```
+
+The qword at `0x004B0C40` is `00 00 00 00 00 00 39 40` = **25.0**, and
+`.text` references it from four addresses, all inside that one state
+class: `0x0041A75A` in the stepper and `0x0041AA6A`, `0x0041AA8F`,
+`0x0041AABA` in its chunk function. The climb's `0x004B10B0` is
+`00 00 00 00 00 00 14 40` = 5.0 and is shared with the walk.
+
+**The constant is world units per second, and the measurements prove it.**
+The chunk functions are mirror images, and they fix the sign:
+
+- `FUN_00413924` (climb) branches on `0x0041393F 83 78 44 01`,
+  `cmp dword ptr [eax+0x44], 1`, and on that branch returns
+  `((int)Y + 1) - Y` divided by 5.0 — the gap *up* to the next whole
+  number, expressed as a time.
+- `FUN_0041aa30` (fall) branches on `0x0041AA4B 83 78 44 ff`,
+  `cmp dword ptr [eax+0x44], -1`, and on that branch returns
+  `Y - (int)Y` divided by 25.0 — the gap *down*, as a time.
+- Each has the same on-grid fallback: if the gap quotient is exactly 0.0
+  and the byte at the state's `+0x18` is set, return `1.0 / speed`
+  (`0x004139A6` and `0x0041AAB2` load 1.0 from `0x004B02D0`). One whole
+  world unit of travel. So the loop sub-steps one unit at a time and
+  probes the mask between units. That fallback is not the per-tick
+  distance, and the earlier note that read it as the climb's step size
+  had the right answer for the wrong reason.
+
+A chunk is therefore seconds and the constant is units per second. A
+whole tick is 0.2 s (measured three ways, §2.2):
+
+| state | constant | × 0.2 s | status |
+| --- | --- | --- | --- |
+| walk | 5.0 at `0x004B10B0`, used `0x0041BE70` | 1 column/tick | **matches the measured `walkSpeed`** |
+| climb | 5.0 at `0x004B10B0`, used `0x0041386C` | 1 world unit/tick | **matches the measured `climbSpeed`** |
+| fall | 25.0 at `0x004B0C40`, used `0x0041A758` | 5 world units/tick | = **10 mask rows** |
+
+The two measured rows are what fix the units. The fall is then the same
+arithmetic with the one constant that changed. `Rules::fallSpeed` is set
+to 10 on that basis, and labelled read-from-the-binary, not measured.
+
+Supporting reads, same disassembly:
+
+- `FUN_0040df50` (`0x0040DF50`) is a **clamp**, not a wrap: below 0.0 it
+  returns 0.0, above the height from `FUN_0040baa0` it returns
+  height − 1, otherwise its argument unchanged. It does not scale the
+  sum. The earlier note left this unread; it is read now.
+- The walk stepper `FUN_0041bdd4` uses the *other* pair — `+0x40` for
+  direction, `+0x08` for position (`0x0041BE7C da 48 40` `fimul`,
+  `0x0041BE95 dd 59 08` `fstp`) — and passes through `FUN_0040dec0`, the
+  horizontal wrap, where the vertical steppers pass through the clamp.
+  That resolves the two fields: `+0x40` is the horizontal facing and
+  `+0x44` the vertical direction, and the cylinder wraps in x only.
+- `+0x44` is a unit direction. The only write that changes it is the
+  `imul ..., −1` at `0x0042F5F0`, which preserves magnitude, and
+  `0x0042DFE7 c7 41 44 01 00 00 00` sets it to 1 in the spawn path (the
+  one that bumps the counter at `0x004CBA78`). Magnitude 1 is also what
+  the climb measurement requires: 1 × 5.0 × 0.2 is the 1.000 world unit
+  per tick that was observed.
+- The fall's loop exit is `FUN_0041a849` (`0x0041A849`), and it probes the
+  terrain through `FUN_0040de60` on the world object `0x004C6A10` — the
+  same mask function on the same object as the climber's head test in
+  `FUN_004139bf`. That is what ties this state to the lemming and to our
+  surface-lattice mask rather than to some other actor.
+
+**Still unread.** Named, because `fallSpeed` is now a number in `Rules`
+and these are the ways it could still be wrong.
+
+- What the faller's `+0x44` holds at entry is inferred, not read. No
+  instruction writes a literal −1 into `+0x44`; the sign comes from the
+  chunk function's `cmp ..., −1` being the only branch that computes a
+  downward gap. A faller entering with `+0x44` = +1 would rise, so −1 is
+  forced by the code, but the write itself was not found.
+- The transition *into* the fall state — who constructs `0x004B0C60`, and
+  when — is unread. So "the hatch and a walk-off share this constant" is
+  still an assumption about which state each enters, not a read.
+- `splatDistance`, `floatSpeed`, `floatAfter`, `maxStepUp` and
+  `lemmingHeight` are untouched classic values. `FUN_0041a849` is where
+  the landing and splat decision lives; it was read only far enough to
+  see the mask probe.
+- The climb's `if ([+0x50] == 3) remaining /= 2.0` at `0x004137D6` has no
+  counterpart in the fall stepper. Which state 3 is, is still not
+  identified.
+- 39 of the 46 vtables are still unnamed. Their slot-2 getters use a
+  different prologue, so the byte scan did not reach them.
+
+**Tension with the one live observation, stated rather than smoothed.**
+The only descent ever sampled was 48.190 → 32.190, 16 world units, the
+next sample 0.39 s later with nothing in between at 30 ms polling. At 5
+world units per tick that fall takes 3.2 ticks = 0.64 s and would have
+shown three intermediate heights. It showed none. So the static read and
+that observation disagree, and the reading here is that the snap was
+never a fall — which is what §Phase 3 already warned, for a different
+reason. It is not evidence against 25.0, and 25.0 is not evidence about
+the snap. Both stay open until a walk-off is sampled.
+
+**Next.** Sample a walk-off the y = 48 ring and look for the predicted
+5.000 world units per 200 ms step. That is the live confirmation
+`fallSpeed` does not have, and it is the same run that tests whether the
+hatch drop and a walk-off share the constant. Then read `FUN_0041a849`
+the rest of the way, for the splat decision. Do not remeasure the climb.
+
+**Re-running these reads.** `tools/harness/read_steppers.py` is the whole
+static read, re-runnable: it maps the sections, finds the 46 state
+vtables, names the 7 it can, disassembles the walk, climb and fall
+steppers with every `.rdata` operand annotated with the double it holds,
+and prints the three speed constants against 0.2 s. It checks the exe's
+SHA-256 first, because every address here belongs to that one build. It
+needs `capstone` and nothing else — neither Ghidra nor the game running.
+REA was needed only for `xrefs`. Note that the snapshot at `C:\tools\lr-rea-snapshot.json` was
+written by `rea-agents` 6.4.0, `@latest` is now 6.5.0, and 6.5.0 rejects
+that snapshot with `evidence_integrity_mismatch` / `profile_mismatch`.
+Pin the version:
+
+```powershell
+npx -y rea-agents@6.4.0 xrefs "C:\progs\Lemmings Revolution\Lemmings Revolution.exe" 0x4137ca --provider ghidra --snapshot C:\tools\lr-rea-snapshot.json --format json
+```
 
 ---
 
@@ -1171,25 +1416,38 @@ Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
   and `testRetailClimb` lock it. The suite was 70 checks, 0 failures,
   with `WEBOLUTION_GAME_DIR` set. From PowerShell the UCRT64 `bin`
   directory has to be on `PATH` or the test executables fail to load.
-- **Handoff.** Do not remeasure the climb. Do not invent the remaining
-  `Rules`. `ticksPerSecond`, `walkSpeed` and `climbSpeed` are the three
-  measured fields.
-  - **Next is `fallSpeed`.** One constant. The hatch and a walk-off use
-    the same rate, and `stepFaller` already shares it. The hatch does not
-    yield the number: `catch_fall.py` writes the new quad at y = 32.190
-    and it stays there. `LEMMINGSLO.SPR`'s `fall` rate is 0.467, the same
-    value as `float`; `walk` is 1 and `climb` is 0.5. The measured climb
-    is one world unit per tick, so that field is the animation clock, not
+- **`fallSpeed` is read from the binary, and is 10 mask rows per tick.**
+  Not measured. The original's fall state is the vtable sibling of the
+  climb state, its Y stepper is the climb stepper with one constant
+  changed, and that constant is 25.0 world units per second against the
+  climb's 5.0 — so 5 world units per 200 ms tick, which is 10 mask rows.
+  The addresses, the bytes and the reasoning are in §2.3, and `Rules`
+  carries the five instructions in a comment. What makes the units safe
+  is that the same arithmetic reproduces the two *measured* fields
+  exactly: the walk's 5.0 gives the measured 1 column per tick and the
+  climb's 5.0 the measured 1 world unit per tick.
+  - It has no live confirmation. The one descent ever sampled, the snap
+    48.190 → 32.190 in under 0.39 s, is *faster* than 5 units per tick
+    and showed no intermediate heights at 30 ms polling, which a 0.64 s
+    fall would have. Read that as the snap not being a fall, not as a
+    refutation of 25.0. Do not set `fallSpeed` from that snap either way.
+    Sixteen world units survived is still only a lower bound on
+    `splatDistance`, and the hoist at the top of the wall was not a clean
+    `lemmingHeight` measurement.
+  - The confirmation still owed is a walk-off the y = 48 ring, checked for
+    5.000 world units per step. That same run is what would show whether
+    the hatch drop and a walk-off share the constant — which §2.3 still
+    lists as an assumption, since the transition into the fall state is
+    unread.
+  - `LEMMINGSLO.SPR`'s `fall` rate is 0.467, the same value as `float`;
+    `walk` is 1 and `climb` is 0.5. Those are the animation clock, not
     mask rows per tick. Do not copy 0.467 into `fallSpeed`.
-  - The only observed descent is the snap 48.190 → 32.190 across about
-    0.39 s, with no intermediate world heights at 30 ms polling. Do not
-    set `fallSpeed` from that snap. Sixteen world units survived is only
-    a lower bound on `splatDistance`. The hoist at the top of the wall
-    was not a clean `lemmingHeight` measurement.
-  - Read it from world Y of a climber leaving the y = 48 ring: every
-    intermediate height and the gap between them. Set `fallSpeed` only
-    when the step is a repeated constant, in mask rows (world units × 2,
-    since `PIXELS_PER_UNIT` is 2).
+- **Handoff.** Do not remeasure the climb. Do not invent the remaining
+  `Rules`. `ticksPerSecond`, `walkSpeed` and `climbSpeed` are the measured
+  fields; `fallSpeed` is read but unconfirmed. Everything below it in
+  `Rules` is still a classic value. Read each from the instruction that
+  implements it, the way §2.3 did the fall, and keep a live series as the
+  check.
   - **Assigning another climber.** The original auto-selects the climber
     on this level; do not click the skill panel. The drawn crosshair is
     the doubles at the object behind `0x004CBFB0`, offsets +0x170 and
@@ -1207,8 +1465,10 @@ Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
     128–168 at y = 32.190; others sit near columns 5–31.
   - After the fall: splat distance, the floater, `maxStepUp`,
     `lemmingHeight`, then the other skills on their own levels. Map nodes
-    besides (206, 204) are not known. Then gadgets. Only from live
-    observation.
+    besides (206, 204) are not known. Then gadgets. Read each from the
+    instruction that implements it (§2.3), and keep a live series as the
+    check. Do not copy a classic value in because the static read is
+    unfinished.
   - The last process seen was pid 12512, `ui_state` 4, screen id 9, clock
     113. Do not assume it is still up. `ui_state`: 0 playing, 2 pause,
     3 frontend, 5 results. Frontend screen id `0x004C416C` is 3 menu,
@@ -1252,9 +1512,12 @@ Linux, macOS, and WebAssembly via Emscripten.
 1. **`.LVL` format** — high, and on the critical path. Everything downstream waits on it.
 2. **Exact physics constants** — medium, and partly retired. The step rate,
    the walking speed, the climb ledge and the climb rate are measured. The
-   fall is one unread constant, shared by the hatch and a walk-off. The
-   hatch billboard never leaves y = 32.190; the way to read the constant
-   is the drop off the y = 48 ring, in Phase 3.
+   fall constant is now read off the binary — 25.0 world units per second
+   at `0x004B0C40`, stepped at `0x0041A7D3`, so 10 mask rows per tick
+   (§2.3) — but it has no live series behind it, and whether the hatch and
+   a walk-off both enter that state is still unread. A walk-off the y = 48
+   ring is the check. The remaining fields are untouched classic values,
+   which is where the residual risk now sits.
 3. **3D model geometry** — low/medium. Assumed to live in the `.LVL` PolyLists;
    unconfirmed. `TEXTURES\MODELS\...` implies separate model data somewhere.
 4. **FMV codecs** — low. Cosmetic, and deferrable to the very end.

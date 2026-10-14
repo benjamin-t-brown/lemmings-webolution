@@ -759,15 +759,124 @@ correct everywhere -- it samples one ledge of one level, and a mask with extra
 solid cells would pass it unchanged. What it does establish is that where the
 original simulates a floor, we have one, at the same place.
 
+**That result was withdrawn, and the re-run does not restore it.**
+
+§2.2 withdrew the 31-of-32 figure: the finder could not tell a lemming from a
+transformed surface vertex. `tools/harness/check_mask.py` is the replacement.
+It keeps a billboard only when its position changes on the 200 ms step
+lattice, by one of the 256 columns per change. Two runs, both with the stock
+exe in the foreground (the shim polled at 144 Hz across the sample; median
+tube spin 0.00000 rad/s). The reference mask was the existing
+`build/live_dump/ref_climb_mask.bin`, 256×192, 6,244/49,152 cells solid
+(12.70%).
+
+The first run caught one walker (30 s, 252 steps). The second waited until
+all ten had been released and caught six (20 s, 1,012 steps). They were the
+same patrol both times. On the six-walker run every track sat at y = 32.190
+with no height change, step gap 201.2–201.3 ms, |dcol| 0.983–0.994, columns
+128.5–167.8, span 38.83–38.87.
+
+```
+column has some solid in it          1012/1012
+  baseline, any solid in the column    213/256 = 83.2%
+foot cell itself solid                  592/1012
+  baseline, solid at row 127            186/256 = 72.7%
+solid in one of the next three rows     578/1012
+column empty from top to bottom         0
+rows occupied                           127, all 1012 samples
+floor-top of the lowest solid run       62, 94, 95, 96, 126
+reversal columns                        128, 129, 166, 167
+```
+
+The script's own exit condition is the first line and the empty-column line,
+and that condition was met. It is too weak to count as a confirmation. 83% of
+columns already have solid somewhere, and the foot cell was solid *less*
+often (58.5%) than row 127 is solid (72.7%). 420 of the 1,012 samples are in
+columns 115–141, which the raster leaves empty at row 127 — the gap between
+the two platforms — and the other 592 are on the platform from column 142 to
+234. The reversal columns are not the raster's walls. Those walls, solid
+through rows 110–125, stand at 22–26, 62–70, 78–86, 110–114, 142–146,
+170–178, 186–194 and 230–234. The openings between them are 35, 7, 23, 27,
+23, 7 and 35 columns wide. None is the 38.8 columns these lemmings patrol.
+
+The offset sweep does not pick out a rotation. Shifting the samples by k
+columns makes every foot cell solid at 108 values of k, in two bands,
+k = 14..67 and k = 150..203 (54 each). A 40-column span dropped onto either
+of the two 93-column platforms at row 127 can sit in 93 − 40 + 1 = 54
+places, and the five best k the script used to print are the end of the
+second band. A patrol of 38.8 columns is also about what the 35-column
+openings would be with the radius-2 raster brush taken back off each wall,
+and that length fits two of those openings, so it is not a unique angle
+either. A search for a second in-memory copy of a uniquely radiused surface
+vertex, rotated by one common yaw, found only the file's own coordinates
+(angle difference 0). The loader's unroll was left alone.
+
+One attempt to read the column of a lemming as it left the entrance — a bulk
+snapshot of the billboard window across a later release — found no
+monotonically falling f64, so that did not disambiguate an angle either. It
+is not a fall measurement.
+
+The withdrawn confirmation stays withdrawn. This run replaces the pending
+re-check, and the raster is not verified. `Rules` was not touched.
+
+**The miss is a dropped edge, not a wrong angle.** `nearest_lattice.py`
+unrolls the same six tracks and the `.LVL` surface with the loader's
+`atan2(-x, z)` and no fitted yaw.
+
+Every sample is at y = 32.190. The nearest surface vertex is on that ring:
+`|dy|` is 0.190, and the signed column residual has median −0.03. Those
+vertices sit on the 8-column angular step. One sample per column has median
+`|dcol|` 2.00, which is what a uniform walk between posts eight columns
+apart measures. There is no constant offset to apply.
+
+The mask is a faithful picture of the edges `rasteriseSurface` strokes, and
+an unfaithful picture of the ledge. Samples within two columns of a stroked
+edge: 592/1012, the same 592 whose foot cell is solid. The other 420 are
+0/420 that close to a stroke. They sit at the left reversal, median 15
+columns from the nearest stroke, and still on the ring.
+
+The vertices under that hole are in the lattice. The outer y = 32 vertices
+at columns 120, 128 and 136 are `grid0` neighbours at key+16 (slots 16689,
+16705, 16721), and the walkers travel 128–144. A face is only kept when the
+thickness partner at key−1 is present, and that slot is empty on those
+three. From column 144 the partner is present, and the strokes resume
+(144–192). The hole is the builder discarding an outer-only angular link.
+
+Not every dropped +16 link is floor. Counting them without a radius cut
+gives 32 at y = 32, a complete ring, and stroking that would pave the
+tube. The outer ones (radius past the midpoint of 50 and 60) are ten
+links in two arcs: columns 112–144 and 232–24. The 420 samples that
+missed the old mask sit on that first arc, 420/420, median column
+distance 0.
+
+The left reversal is the same kind of omission, turned vertical. At
+column 128, key+8224 joins y = 32 to y = 48 on the outer skin and the
+thickness partner is empty at both ends, so no quad was emitted. The
+same shape at columns 0, 8, 16, 240 and 248 sits on the other arc.
+Links that drop from y = 32 to y = 16 exist at every angular step and
+are not walls; those stay out.
+
+`rasteriseSurface` now strokes both sets, from grid0 only. grid1 is the
+dense index of the same pool and running the pass on it fills the ring.
+The climb mask goes from 6,244 solid cells to 9,496 (19.3%). Column 132
+on the ledge is solid, the column-128 wall reaches y = 40, and column
+136 — which the walkers cross — does not grow a wall. The right
+reversal is untouched: they turn at ~168, the strokes continue to 192,
+and there is no outer-only vertical at 168. The nearest one is the
+already-emitted wall at column 172, four columns past where they stop.
+
 #### Where to go next
 
-* **Hazard / gadget behaviour from the live original** — the harness now
-  reaches a level reliably and reads world positions out of it, so the same
-  sampling that checked the terrain can check what a teleport or an anti-grav
-  shaft does to a lemming.
-* **Hazard / gadget simulation** — placed-model poses are parsed
-  (`LevelObjects::placed`); wire anti-grav, teleports, deathrollers, etc.
-  into the sim when the behaviours are known.
+* **The fall, then the other skills.** The climb ledge and the climb
+  rate are measured (Phase 3). `fallSpeed` is still the classic stand-in.
+  It is one constant, shared by the hatch and by walking off a ledge, and
+  the hatch on this level does not show it. The handoff in Phase 3 says
+  how to read it off a climber leaving the y = 48 ring, and how a click
+  assigns the climber. Gadgets stay unmeasured.
+* **Hazard / gadget behaviour, after the mask.** The harness can reach a
+  level and read world positions. Placed-model poses are already parsed
+  (`LevelObjects::placed`); anti-grav, teleports, deathrollers, and the
+  rest are not simulated.
 * **Remaining PolyList kinds / trailing record bytes** — only the leading
   index+UV+RGBA of kinds 5 and 7 are decoded.
 
@@ -953,15 +1062,26 @@ need a skill assigned, which needs the skill panel driven and a lemming picked;
 the panel's button table is located (above) but that work was not done. Those
 fields keep the classic values and `World.h` labels them provisional.
 
+**Correction.** The climb was measured after the paragraph above; Phase 3 has
+the series and the click path. An unassigned release still appears at
+y = 32.190, so the paragraph's scan stands. The fall is one constant for the
+hatch and a walk-off, and it is still unread.
+
 **A correction to 1.6.** `live_terrain_check` identifies lemmings as "an f64
 triple on the tube that moves smoothly at constant height". On a level whose
-tube is turning -- and it does turn, the camera orbits at about 0.25 rad/s --
-that description fits hundreds of transformed *surface vertices*: they move
-smoothly, at constant height, at exactly a lemming's radius. Its 31-of-32 result
-is therefore not safe as stated; it may have sampled scenery. The spin is the
-discriminator (`tools/harness/find_lemmings.py`): every surface vertex shares
-one angular velocity, so a lemming is an outlier against the median. Re-running
-that check properly is listed under Phase 3.
+tube is turning -- an earlier session saw the camera orbit at about 0.25
+rad/s -- that description fits hundreds of transformed *surface vertices*:
+they move smoothly, at constant height, at exactly a lemming's radius. Its
+31-of-32 result is therefore not safe as stated; it may have sampled scenery.
+The spin is the discriminator (`tools/harness/find_lemmings.py`): every
+surface vertex shares one angular velocity, so a lemming is an outlier
+against the median. Re-running that check properly was listed under Phase 3.
+It has since been run, with `check_mask.py` rather than `find_lemmings.py`.
+On MM_CLIMB_002 the camera was still (median spin 0.00000 rad/s), so the spin
+test degenerates, and the 200 ms lattice is what separated the walkers. The
+numbers are in §1.6. The re-check after the half-step wall was added
+does confirm the ledge: ten walkers, 1,231/1,231 foot cells solid, turns
+at both walls. The unroll was not changed.
 
 Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
 `fresh_level.py`, `find_counters.py`, `find_clock.py`, `find_lemming_count.py`,
@@ -999,13 +1119,21 @@ Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
 - Two live findings stand (§1.6): the original keeps **no** occupancy buffer
   — scanned for across all 182 MB and absent — and it holds the .LVL surface
   lattice byte-for-byte, which confirms the file reading outright.
-- **The live confirmation of the raster does not stand yet.** The 31-of-32
-  result reported here was produced by a lemming finder that cannot tell a
-  lemming from a transformed surface vertex on a turning tube, so it may have
-  sampled scenery (see the correction in §2.2). `find_lemmings.py` now
-  separates them by angular velocity; re-running the check with it is listed
-  under Phase 3. Until then the raster is unverified against the original,
-  not disproved — the earlier result is withdrawn, not reversed.
+- **The live confirmation of the raster does not stand.** The 31-of-32
+  result was produced by a lemming finder that cannot tell a lemming from a
+  transformed surface vertex, so it may have sampled scenery (see §2.2). The
+  re-run is done: `check_mask.py` on MM_CLIMB_002, six step-locked walkers,
+  foreground at 144 Hz (§1.6). No visited column is empty top to bottom, but
+  the foot cell is solid only 592/1012, which is below the 72.7% of columns
+  solid on that row, and the offset sweep ties 108 ways. The earlier result
+  stays withdrawn. `nearest_lattice.py` then showed the unroll is not the
+  problem: the residual to the y = 32 ring is ~0 columns and 0.19 units, and
+  the 420 misses are outer-only key+16 links the quad rule drops. Those
+  links, and the outer-only vertical at the left turn (column 128, y 32
+  to 48), are now stroked. The right turn is the half-step at column 168:
+  key+8 holds the post at 172, and the quad that would cross it is blocked
+  so a wall is stroked at 168 instead. A later live check against that mask
+  is below.
 
 ### Phase 3 — Simulation (headless, deterministic, unit-tested)
 - Terrain mask with horizontal wrap; fixed timestep; no rendering dependency.
@@ -1020,14 +1148,71 @@ Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
   literal seconds. `src/sim/World.h` now labels every field measured or
   provisional, `kTicksPerSecond` is 5, and the one test that had encoded the old
   20 Hz fuse arithmetic reads the numbers off `Rules` instead.
-- **Still open, in order.** (1) Re-do the 1.6 terrain check with the
-  spin-corrected lemming finder — the original result may have sampled scenery.
-  (2) Fall physics: `fallSpeed`, `splatDistance`, `floatAfter`, `maxStepUp`,
-  `lemmingHeight`. These need a level with a drop, which needs level-map
-  navigation beyond the first gold node; MM_CLIMB_002's lemmings never leave the
-  ground. (3) Skill timings: fuse, and the builder / basher / miner / digger
-  intervals and reach, which need the skill panel driven — its button table is
-  at `0x004CB920`, stride 0x18, x = 20, 60 ... 340.
+- **Terrain check, confirmed on the climb ledge.** After the outer links
+  and both walls were stroked, `check_mask.py` on MM_CLIMB_002 (stock exe,
+  shim at 144 Hz, ten step-locked walkers, 15 s) put every foot sample on
+  a solid cell: 1,231/1,231, all at row 127 (y = 32.190). Columns spanned
+  128.2–167.8. Reversals at 128, 129, 166 and 167, which is the step back
+  from the walls at 128 and 168. No visited column is empty. The earlier
+  592/1012 figure is the mask from before those strokes.
+- **Climb speed, measured.** A climber on MM_CLIMB_002 rises one world
+  unit per 200 ms step (34.190, 35.190, 36.190 …), which is two mask rows,
+  so `Rules::climbSpeed` is 2. The series is world space. Height is the
+  shared y of the four billboard vertices (`measure_motion.centroid`);
+  the column is `atan2(-x, z)` over the 256-column ring. While walking,
+  the column moved and y stayed 32.190. While climbing, the column froze
+  at 128 and y stepped by 1.000. Screen Y is the projection and is not a
+  height. A second wall continued the same step from 34.190 through at
+  least 58.190. They top out, walk along y = 48.190, and the next sample
+  (0.39 s later, no intermediates) was back at 32.190.
+- **The sim climbs the retail mask.** `restart()` selects the first skill
+  whose stock is greater than 0, which is the climber on this level; a
+  sandbox with unlimited counts stays on the digger. `testClimberTopsOut`
+  and `testRetailClimb` lock it. The suite was 70 checks, 0 failures,
+  with `WEBOLUTION_GAME_DIR` set. From PowerShell the UCRT64 `bin`
+  directory has to be on `PATH` or the test executables fail to load.
+- **Handoff.** Do not remeasure the climb. Do not invent the remaining
+  `Rules`. `ticksPerSecond`, `walkSpeed` and `climbSpeed` are the three
+  measured fields.
+  - **Next is `fallSpeed`.** One constant. The hatch and a walk-off use
+    the same rate, and `stepFaller` already shares it. The hatch does not
+    yield the number: `catch_fall.py` writes the new quad at y = 32.190
+    and it stays there. `LEMMINGSLO.SPR`'s `fall` rate is 0.467, the same
+    value as `float`; `walk` is 1 and `climb` is 0.5. The measured climb
+    is one world unit per tick, so that field is the animation clock, not
+    mask rows per tick. Do not copy 0.467 into `fallSpeed`.
+  - The only observed descent is the snap 48.190 → 32.190 across about
+    0.39 s, with no intermediate world heights at 30 ms polling. Do not
+    set `fallSpeed` from that snap. Sixteen world units survived is only
+    a lower bound on `splatDistance`. The hoist at the top of the wall
+    was not a clean `lemmingHeight` measurement.
+  - Read it from world Y of a climber leaving the y = 48 ring: every
+    intermediate height and the gap between them. Set `fallSpeed` only
+    when the step is a repeated constant, in mask rows (world units × 2,
+    since `PIXELS_PER_UNIT` is 2).
+  - **Assigning another climber.** The original auto-selects the climber
+    on this level; do not click the skill panel. The drawn crosshair is
+    the doubles at the object behind `0x004CBFB0`, offsets +0x170 and
+    +0x178. The hit-test reads `0x004C36A0` / `0x004C36A4`, which stay at
+    the map click (206, 204) through play. Write the lemming's screen
+    position there immediately before the shim click. A screen pair has
+    been found 0x130 bytes before a quad, and that offset is not stable:
+    other copies read (0, 0), 152/255, or garbage. Keep a pair only when
+    it moves over a few tenths of a second, sits inside about x 80–620
+    and y 160–450, and is not within 1.5 of 152 or 255. Release the shim
+    afterwards. A 25-frame ESC can fail to leave pause; a 40-frame ESC
+    after `focus()` did. RETURN only when the menu highlight is exactly
+    0. ESC from a post-level screen can quit the process.
+  - Walkers are not all between columns 135 and 160. The pen is about
+    128–168 at y = 32.190; others sit near columns 5–31.
+  - After the fall: splat distance, the floater, `maxStepUp`,
+    `lemmingHeight`, then the other skills on their own levels. Map nodes
+    besides (206, 204) are not known. Then gadgets. Only from live
+    observation.
+  - The last process seen was pid 12512, `ui_state` 4, screen id 9, clock
+    113. Do not assume it is still up. `ui_state`: 0 playing, 2 pause,
+    3 frontend, 5 results. Frontend screen id `0x004C416C` is 3 menu,
+    4 confirm, 5 map, and it is not stable once a level is running.
 
 ### Phase 4 — Rendering — **done**
 - SDL2 + OpenGL, targeting a GLES3-compatible subset so WebGL2 is nearly free.
@@ -1045,8 +1230,8 @@ Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
 
 What is *not* in this phase, and is not pretended to be: the skin is scenery
 (opaque wrap; see §1.6) and PolyList is draw data for the surface, not
-collision. What a lemming can stand on is the surface-lattice mask, and §1.6
-now shows the original's own lemmings walking on exactly those cells.
+collision. What a lemming can stand on is the surface-lattice mask. The live
+check in §1.6 did not show the original's lemmings walking on those cells.
 
 ### Phase 5 — Game shell
 Menus, level select, save games, `.LTX` localisation, audio. FMV is an open question —
@@ -1065,9 +1250,11 @@ Linux, macOS, and WebAssembly via Emscripten.
 ## 4. Risks, ranked
 
 1. **`.LVL` format** — high, and on the critical path. Everything downstream waits on it.
-2. **Exact physics constants** — medium, and partly retired. The step rate and the
-   walking speed are measured (§2.2); the fall and skill constants are not, and
-   need a level with a drop and the skill panel driven.
+2. **Exact physics constants** — medium, and partly retired. The step rate,
+   the walking speed, the climb ledge and the climb rate are measured. The
+   fall is one unread constant, shared by the hatch and a walk-off. The
+   hatch billboard never leaves y = 32.190; the way to read the constant
+   is the drop off the y = 48 ring, in Phase 3.
 3. **3D model geometry** — low/medium. Assumed to live in the `.LVL` PolyLists;
    unconfirmed. `TEXTURES\MODELS\...` implies separate model data somewhere.
 4. **FMV codecs** — low. Cosmetic, and deferrable to the very end.

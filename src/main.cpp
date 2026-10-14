@@ -252,6 +252,17 @@ struct App {
       world = sim::World(*surfaceLevel);
     else
       world = sim::World(makeTestLevel(releaseRates, releaseRate, levelInfo()));
+    // A level that only stocks climbers (MM_CLIMB_002) has to start on that
+    // skill. The panel default is the digger, and a click with an empty
+    // stock is refused, so on that level nothing would ever climb.
+    skill = 7;
+    const auto& counts = world.setup().skills;
+    for (int i = 0; i < static_cast<int>(counts.size()); ++i) {
+      if (counts[static_cast<std::size_t>(i)] > 0) {
+        skill = i;
+        break;
+      }
+    }
     camWidth = static_cast<float>(world.terrain().width());
     camX = 0;
     terrainDirty = true;

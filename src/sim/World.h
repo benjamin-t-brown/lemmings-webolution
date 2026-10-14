@@ -11,10 +11,10 @@
 // They started as the well-documented classic-Lemmings values (fall 3px/tick,
 // splat above 63px, a six-pixel step-up limit, twelve bricks per builder).
 // Revolution is a Lemmings game and those are the right shape, but it is a
-// different engine, so each one has to be checked against it. Two have been,
+// different engine, so each one has to be checked against it. Three have been,
 // off the running original through the dinput shim (PLAN.md 2.2): the
-// simulation step rate and the walking speed. The rest are still guesses and
-// are marked as such, one by one, on `Rules`.
+// simulation step rate, the walking speed, and the climber's rise. The rest
+// are still guesses and are marked as such, one by one, on `Rules`.
 
 #pragma once
 
@@ -121,13 +121,23 @@ public:
     // a choice of ours. tools/harness/measure_motion.py.
     int walkSpeed = 1;          // mask columns per tick
 
+    // MEASURED. A climber rises one world unit per step. On MM_CLIMB_002 the
+    // billboard went 34.190, 35.190, 36.190 … one per 200 ms tick, up the
+    // column-128 wall and again up the next. One world unit is two mask rows.
+    int climbSpeed = 2;         // mask rows per tick
+
     // PROVISIONAL from here down: classic-Lemmings values, not this engine's.
     int maxStepUp = 6;          // a walker climbs steps up to this high
+    // PROVISIONAL. One constant for the hatch and for walking off a ledge.
+    // The hatch on MM_CLIMB_002 does not show it: the billboard is written
+    // at y = 32.190. The fall sprite's rate in LEMMINGSLO.SPR (0.467) is
+    // the animation clock, the same number as the floater, not this field.
+    // A climber who tops out on the y = 48 ring is next seen at 32.190 with
+    // no intermediate heights, so the step size is still unread.
     int fallSpeed = 3;          // pixels per tick while falling
     int floatSpeed = 1;         // pixels per tick under an umbrella
     int floatAfter = 16;        // umbrella opens this far into the fall
     int splatDistance = 63;     // falling further than this kills
-    int climbSpeed = 1;
     int builderBricks = 12;
     int brickLength = 6;
     int builderInterval = 8;    // ticks between bricks

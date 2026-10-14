@@ -55,7 +55,7 @@ bool looksLikeFace(const Vec3 q[4], double thickness, double ringSpacing, bool r
 }
 
 void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> grid, int ringStride,
-                     SurfaceMesh& out, std::set<std::uint32_t>& used) {
+                     SurfaceMesh& out, std::set<std::uint32_t>& used, bool openEdges) {
   const double thick = mesh.thickness;
   const double ring = mesh.ringSpacing();
 
@@ -84,6 +84,30 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
     used.insert(i1);
     used.insert(i2);
     used.insert(i3);
+
+    // A half-step post (key+8) between the ends means the chord crosses a
+    // wall. MM_CLIMB_002's walkers turn at column 168, the last vertex
+    // before the post at 172, and the same insertion sits at 64, 80 and
+    // 184. The post's own ring quad is a line at the far column; the turn
+    // is at this vertex, so the wall is raised here and the floor stops.
+    if (!isRing && k + 9 < grid.size()) {
+      const auto h0 = grid[k + 8];
+      const auto h1 = grid[k + 9];
+      if (h0 != kEmpty && h1 != kEmpty && h0 < mesh.surface.size() && h1 < mesh.surface.size()) {
+        const Vec3& pa = mesh.surface[h0];
+        const Vec3& pb = mesh.surface[h1];
+        const Vec3& post = std::hypot(pa.x, pa.z) >= std::hypot(pb.x, pb.z) ? pa : pb;
+        const Vec3& near = std::hypot(q.v[0].x, q.v[0].z) >= std::hypot(q.v[1].x, q.v[1].z) ? q.v[0] : q.v[1];
+        const double outerCut = mesh.innerRadius() + mesh.thickness * 0.5;
+        if (std::hypot(post.x, post.z) > outerCut && std::abs(post.y - near.y) < 1.5 && ring > 0) {
+          q.blocked = true;
+          Vec3 top = near;
+          top.y += ring;
+          out.openEdges.push_back({near, top});
+        }
+      }
+    }
+
     out.quads.push_back(q);
     if (isRing)
       ++out.ringQuads;
@@ -96,6 +120,83 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
   if (ringStride > 16) {
     for (std::size_t k = 0; k + static_cast<std::size_t>(ringStride) + 1 < grid.size(); ++k)
       tryQuad(k, ringStride, true);
+  }
+
+  // grid1 is a dense index of the same pool. The walked links were found
+  // in grid0; running this pass on grid1 fills the ring.
+  if (!openEdges)
+    return;
+
+  // Edges the quad pass dropped. The thickness partner lives at key-1; when
+  // it is absent, tryQuad never sees a face, but the outer vertices are
+  // still neighbours. MM_CLIMB_002's walkers travel the key+16 case (the
+  // hole under columns 128..144) and turn at the key+Y case (column 128,
+  // y 32 -> 48). The bottom skirt (y 0 -> 16) is a full ring of such
+  // verticals and is not a wall on the ledge, so it is left out.
+  const double outerCut = mesh.innerRadius() + mesh.thickness * 0.5;
+  const auto outer = [&](const Vec3& v) { return std::hypot(v.x, v.z) > outerCut; };
+  const auto empty = [&](std::size_t slot) {
+    return slot >= grid.size() || grid[slot] == kEmpty || grid[slot] >= mesh.surface.size();
+  };
+
+  for (std::size_t k = 1; k + 16 < grid.size(); ++k) {
+    if (empty(k) || empty(k + 16))
+      continue;
+    // Both thickness partners present: the quad pass owns this edge.
+    if (!empty(k - 1) && !empty(k + 15))
+      continue;
+    const Vec3& a = mesh.surface[grid[k]];
+    const Vec3& b = mesh.surface[grid[k + 16]];
+    if (!outer(a) || !outer(b) || std::abs(a.y - b.y) > 1.5)
+      continue;
+    const double chord = dist(a, b);
+    if (chord < 8.0 || chord > 13.5)
+      continue;
+    // Same half-step rule as the quad pass: a post at key+8 ends the floor
+    // at this vertex instead of letting the chord cross it.
+    if (!empty(k + 8) && mesh.ringSpacing() > 0) {
+      const Vec3& post = mesh.surface[grid[k + 8]];
+      if (outer(post) && std::abs(post.y - a.y) < 1.5) {
+        Vec3 top = a;
+        top.y += mesh.ringSpacing();
+        out.openEdges.push_back({a, top});
+        continue;
+      }
+    }
+    out.openEdges.push_back({a, b});
+  }
+
+  if (ringStride > 16) {
+    const double ring = mesh.ringSpacing();
+    for (std::size_t k = 1; k + static_cast<std::size_t>(ringStride) < grid.size(); ++k) {
+      if (empty(k) || empty(k + static_cast<std::size_t>(ringStride)))
+        continue;
+      // A wall on the ledge: the partner is missing at the foot and at the
+      // top. Requiring the foot to sit above the bottom ring keeps out the
+      // y 0 -> 16 skirt, which is one of these at every angular step.
+      if (!empty(k - 1) || !empty(k - 1 + static_cast<std::size_t>(ringStride)))
+        continue;
+      const Vec3& a = mesh.surface[grid[k]];
+      const Vec3& b = mesh.surface[grid[k + static_cast<std::size_t>(ringStride)]];
+      if (!outer(a) || !outer(b))
+        continue;
+      // Rising from the ledge, not dropping off it. A link from y 32 down to
+      // y 16 exists at every angular step and is not a wall.
+      const double lo = std::min(a.y, b.y);
+      const double hi = std::max(a.y, b.y);
+      if (lo < 31.0 || std::abs((hi - lo) - ring) > 2.0)
+        continue;
+      const auto pa = unrollCylinder(a).first;
+      const auto pb = unrollCylinder(b).first;
+      double dang = pa - pb;
+      if (dang > 0.5)
+        dang -= 1.0;
+      if (dang < -0.5)
+        dang += 1.0;
+      if (std::abs(dang) > 1.0 / 256.0)
+        continue;
+      out.openEdges.push_back({a, b});
+    }
   }
 }
 
@@ -198,9 +299,9 @@ std::expected<SurfaceMesh, std::string> buildSurfaceMesh(const CylinderMesh& mes
     out.ringStride = detectRingStride(mesh, grid1);
 
   std::set<std::uint32_t> used;
-  collectFromGrid(mesh, grid0, out.ringStride, out, used);
+  collectFromGrid(mesh, grid0, out.ringStride, out, used, true);
   if (!grid1.empty())
-    collectFromGrid(mesh, grid1, out.ringStride, out, used);
+    collectFromGrid(mesh, grid1, out.ringStride, out, used, false);
   out.verticesUsed = used.size();
   // An empty face list is a valid sparse level, not a parse failure: the
   // caller gets a blank mask and can fall back. Returning an error here made
@@ -238,6 +339,8 @@ OccupancyMask rasteriseSurface(const SurfaceMesh& faces, const CylinderMesh& mes
   };
 
   for (const auto& q : faces.quads) {
+    if (q.blocked)
+      continue;
     // Prefer the outer vertex of each thickness pair (larger radius) so the
     // stroke sits on the outside of the tube.
     const auto pick = [](const Vec3& a, const Vec3& b) {
@@ -247,6 +350,11 @@ OccupancyMask rasteriseSurface(const SurfaceMesh& faces, const CylinderMesh& mes
     const Vec3 p1 = pick(q.v[3], q.v[2]);  // at key k+step
     const auto [x0, y0] = toPixel(p0);
     const auto [x1, y1] = toPixel(p1);
+    stroke(mask, x0, y0, x1, y1, brush);
+  }
+  for (const auto& e : faces.openEdges) {
+    const auto [x0, y0] = toPixel(e.a);
+    const auto [x1, y1] = toPixel(e.b);
     stroke(mask, x0, y0, x1, y1, brush);
   }
   return mask;

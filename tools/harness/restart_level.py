@@ -50,11 +50,20 @@ def ensure_playing(h, inp, verbose=True, tries=8) -> bool:
             sel = find_menu_index(h, inp, verbose=verbose)
             if sel is None:
                 return False
-            for _ in range(6):
-                if i32(h, sel) == 0:
+            for _ in range(8):
+                v = i32(h, sel)
+                if v == 0:
                     break
+                if v is None or not 0 <= v <= 4:
+                    if verbose:
+                        print(f"  highlight {v} left the menu; stopping")
+                    return False
                 inp.tap(DIK["DOWN"], hold_frames=20)
                 time.sleep(0.5)
+            if i32(h, sel) != 0:
+                if verbose:
+                    print(f"  highlight stayed {i32(h, sel)}; not pressing RETURN")
+                return False
             for _ in range(2):
                 inp.tap(DIK["RETURN"], hold_frames=20)
                 time.sleep(1.8)

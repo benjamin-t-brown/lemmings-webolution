@@ -90,6 +90,24 @@ void testRetail(const fs::path& dir) {
       check(faces->ringQuads >= 12,
             std::format("climb ring quads (>=12, got {})", faces->ringQuads));
       check(mask.solidCells() > 100, "climb rasterises to a visible mask");
+      // The quad pass requires a thickness partner. Where that slot is empty
+      // the outer key+16 link is still floor: the live walkers cross columns
+      // 128..144, which this mask used to leave empty. The matching key+Y
+      // link at column 128, from y 32 to y 48, is the wall they turn at.
+      const auto cell = [&](int col, double worldY) {
+        const int py = static_cast<int>(std::lround((mesh->height() - worldY) * 2.0));
+        return mask.solid[static_cast<std::size_t>(py) * mask.width + col];
+      };
+      check(!faces->openEdges.empty(), "climb keeps the edges the quad pass drops");
+      check(cell(132, 32.0) == 1, "climb: walked ledge at column 132 is solid");
+      check(cell(128, 40.0) == 1, "climb: wall at column 128 rises above the ledge");
+      check(cell(160, 40.0) == 0, "climb: column 160 has floor and no wall above it");
+      check(cell(136, 40.0) == 0, "climb: column 136, which the walkers cross, has no wall");
+      // The right turn. key+8 at column 168 holds the post at 172, and the
+      // walkers stop on 168 rather than crossing to it.
+      check(cell(168, 40.0) == 1, "climb: right turn at column 168 is a wall");
+      check(cell(164, 40.0) == 0, "climb: column 164, on the walked ledge, has no wall");
+      check(cell(164, 32.0) == 1, "climb: the ledge is still solid at column 164");
       // Negative RE result: Y is derived, not read. Climb's stride (and Y/16)
       // never appear as aligned u32s in the file, and no header word holds Y.
       std::size_t asU32 = 0, asY16 = 0;
@@ -194,7 +212,9 @@ void testSkinNotSolidity(const fs::path& dir) {
     const double surfPct =
         100.0 * static_cast<double>(mask.solidCells()) /
         (static_cast<double>(mask.width) * mask.height);
-    check(surfPct < 20.0, std::format("climb surface stays sparse ({:.1f}%)", surfPct));
+    // Walls are a full ring tall, so the mask is denser than the floor strokes
+    // alone. A filled tube would be several times this.
+    check(surfPct < 35.0, std::format("climb surface stays sparse ({:.1f}%)", surfPct));
     check(mesh->tileTextures.size() == 48, "outer skin slot table is 48");
     std::size_t named = 0;
     for (const auto& t : mesh->tileTextures)

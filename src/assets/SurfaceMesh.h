@@ -29,10 +29,21 @@ namespace webo {
 
 struct SurfaceQuad {
   Vec3 v[4]{};  // winding: k, k+1, k+1+step, k+step
+  // A key+8 post sits on this angular step. The chord is not floor; the
+  // walker turns at the near vertex. The wall itself is an open edge.
+  bool blocked = false;
+};
+
+// An edge the quad pass cannot emit. A face needs its thickness partner on
+// both ends; when that slot is empty the outer vertices are still joined
+// (key+16 along a ring, or key+Y up a wall) and the walkers use them.
+struct SurfaceSpan {
+  Vec3 a, b;
 };
 
 struct SurfaceMesh {
   std::vector<SurfaceQuad> quads;
+  std::vector<SurfaceSpan> openEdges;
   int ringStride = 0;  // derived Y; 0 when no ring faces were found
   std::size_t angularQuads = 0;
   std::size_t ringQuads = 0;

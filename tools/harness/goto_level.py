@@ -75,15 +75,24 @@ def focus(pid: int) -> bool:
         return True
 
     user32.EnumWindows(cb, 0)
+    mine = k.GetCurrentThreadId()
+    # Attaching only to the target is not enough when this process did not
+    # receive the last input: Windows then refuses SetForegroundWindow.
+    # Joining the *current* foreground thread's queue is what lifts that.
+    fg = user32.GetForegroundWindow()
+    fg_tid = user32.GetWindowThreadProcessId(fg, None) if fg else 0
+    if fg_tid and fg_tid != mine:
+        user32.AttachThreadInput(fg_tid, mine, True)
     for hwnd in found:
         p = wt.DWORD()
         tid = user32.GetWindowThreadProcessId(hwnd, ctypes.byref(p))
-        mine = k.GetCurrentThreadId()
         user32.AttachThreadInput(mine, tid, True)
         user32.ShowWindow(hwnd, 9)
         user32.BringWindowToTop(hwnd)
         user32.SetForegroundWindow(hwnd)
         user32.AttachThreadInput(mine, tid, False)
+    if fg_tid and fg_tid != mine:
+        user32.AttachThreadInput(fg_tid, mine, False)
     time.sleep(0.5)
     return bool(found) and user32.GetForegroundWindow() in found
 
@@ -163,12 +172,21 @@ def enter(h, inp, verbose: bool = True) -> int:
         say("  could not find the menu index; refusing to press RETURN blind")
         return state
     say(f"  menu index at {sel:#010x} = {i32(h, sel)}")
-    for _ in range(6):
-        if i32(h, sel) == 0:
+    for _ in range(8):
+        v = i32(h, sel)
+        if v == 0:
             break
+        # The last item is "Beenden". A value outside 0..4 means this slot
+        # is not the highlight, and RETURN from here has closed the game.
+        if v is None or not 0 <= v <= 4:
+            say(f"  highlight {v} is outside the menu; refusing RETURN")
+            return state
         inp.tap(DIK["DOWN"], hold_frames=20)
         time.sleep(0.5)
-    say(f"  highlight now {i32(h, sel)} (0 = Neues Spiel starten)")
+    if i32(h, sel) != 0:
+        say(f"  highlight stayed {i32(h, sel)}; refusing RETURN")
+        return state
+    say("  highlight now 0 (Neues Spiel starten)")
 
     # "Neues Spiel starten" -> "Ja" -> level map. Exactly two RETURNs: a
     # third is read by the map as "back to the main menu", which is how an

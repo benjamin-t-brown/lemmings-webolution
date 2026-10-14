@@ -6,9 +6,16 @@
 // height, that each skill does the thing it is named for, and that the whole
 // thing is reproducible tick for tick.
 
+#include "assets/Box.h"
+#include "assets/Cylinder.h"
+#include "assets/LevelIndex.h"
+#include "assets/LevelObjects.h"
+#include "assets/SurfaceMesh.h"
 #include "sim/World.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <filesystem>
 #include <format>
 #include <iostream>
 #include <string>
@@ -165,6 +172,27 @@ void testClimber() {
   check(watch.sawState, "it entered the climbing state");
   check(watch.minY < 50, std::format("and scaled the wall (highest y reached {})", watch.minY));
   check(!watch.everFacedLeft, "a climber does not turn at the wall");
+}
+
+void testClimberTopsOut() {
+  std::cout << "climber pulls up onto the ledge\n";
+  LevelSetup s = flatLevel();
+  // Thick enough that the top is a ledge, not a one-column lip to fall off.
+  s.terrain.fillBox(120, 40, 24, 40, Material::Earth);
+  World w(s);
+  w.tick();
+  check(w.assign(0, Skill::Climber), "climber applies on a ledge");
+  bool walkedOnTop = false;
+  int highest = 1 << 30;
+  for (int i = 0; i < 250 && !w.lemmings().empty(); ++i) {
+    w.tick();
+    const Lemming& l = w.lemmings()[0];
+    highest = std::min(highest, l.y);
+    if (l.state == State::Walker && l.y < 40 && l.x >= 120 && l.x < 144)
+      walkedOnTop = true;
+  }
+  check(walkedOnTop,
+        std::format("it walks on top of the wall (highest y reached {})", highest));
 }
 
 void testBlocker() {
@@ -355,6 +383,85 @@ void testTimeLimit() {
 // Sound cues are how the shell hears the simulation without the simulation
 // knowing about SDL. They have to fire at the right moments and de-dupe the
 // ones a nuke would otherwise stack.
+// The climb tutorial's mask, not a hand-built wall. A climber released at the
+// entrance has to leave the lower ledge: that is the whole of this level.
+void testRetailClimb(const std::filesystem::path& dir) {
+  std::cout << "climber on MM_CLIMB_002\n";
+  auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
+  if (!lib) {
+    check(false, lib.error());
+    return;
+  }
+  const webo::OccupancyMask* mask = nullptr;
+  webo::OccupancyMask owned;
+  int entranceX = 0;
+  int entranceY = 0;
+  for (const auto& name : webo::levelFileNames(*lib)) {
+    if (name.find("MM_CLIMB_002") == std::string::npos)
+      continue;
+    auto blob = lib->read(name);
+    if (!blob) {
+      check(false, blob.error());
+      return;
+    }
+    auto objs = webo::findLevelObjects(*blob);
+    auto mesh = webo::findCylinderMesh(*blob);
+    auto index = webo::indexLevel(*blob);
+    if (!objs || objs->entrances.empty() || !mesh || !index) {
+      check(false, "MM_CLIMB_002 did not yield a surface");
+      return;
+    }
+    auto faces = webo::buildSurfaceMesh(*mesh, index->grid0, index->grid1);
+    if (!faces) {
+      check(false, faces.error());
+      return;
+    }
+    owned = webo::rasteriseSurface(*faces, *mesh, 2);
+    mask = &owned;
+    const auto px = webo::worldToMaskPixel(objs->entrances[0].position, owned.width,
+                                            owned.height, mesh->height(), 2);
+    entranceX = px.first;
+    entranceY = px.second;
+    break;
+  }
+  if (!mask) {
+    check(false, "MM_CLIMB_002 was not in the archive");
+    return;
+  }
+
+  LevelSetup s;
+  s.terrain = Terrain(mask->width, mask->height);
+  for (int y = 0; y < mask->height; ++y)
+    for (int x = 0; x < mask->width; ++x)
+      if (mask->solid[static_cast<std::size_t>(y) * mask->width + x])
+        s.terrain.set(x, y, Material::Earth);
+  s.entrances.push_back({entranceX, entranceY});
+  s.totalLemmings = 1;
+  s.releaseIntervalTicks = 1;
+  s.skills[static_cast<std::size_t>(Skill::Climber)] = 10;
+
+  World w(s);
+  w.tick();
+  check(w.assign(0, Skill::Climber), "the climb level accepts a climber");
+
+  int landed = -1;
+  int highest = 1 << 30;
+  bool climbed = false;
+  for (int i = 0; i < 500 && !w.lemmings().empty(); ++i) {
+    w.tick();
+    const Lemming& l = w.lemmings()[0];
+    if (landed < 0 && l.state == State::Walker)
+      landed = l.y;
+    if (l.state == State::Climber)
+      climbed = true;
+    highest = std::min(highest, l.y);
+  }
+  check(landed > 0, "the climber finds the ledge");
+  check(climbed, "the climber starts up the wall");
+  check(landed > 0 && highest <= landed - 20,
+        std::format("and leaves the ledge (landed {}, highest {})", landed, highest));
+}
+
 void testSoundCues() {
   std::cout << "sound cues\n";
 
@@ -416,6 +523,7 @@ int main() {
   testFloater();
   testWallTurn();
   testClimber();
+  testClimberTopsOut();
   testBlocker();
   testDigger();
   testBasher();
@@ -426,6 +534,16 @@ int main() {
   testPickAndNuke();
   testTimeLimit();
   testSoundCues();
+
+  if (const char* dir = std::getenv("WEBOLUTION_GAME_DIR")) {
+    const std::filesystem::path root(dir);
+    if (std::filesystem::exists(root / "lemmings.box"))
+      testRetailClimb(root);
+    else
+      std::cout << "climber on MM_CLIMB_002: skipped, no lemmings.box\n";
+  } else {
+    std::cout << "climber on MM_CLIMB_002: skipped, WEBOLUTION_GAME_DIR is not set\n";
+  }
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;

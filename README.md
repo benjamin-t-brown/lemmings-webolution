@@ -64,12 +64,16 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
       angular steps of 11.25 degrees, radii 50 and 60 -- which pins the
       coordinate system the simulation wraps in. `lrtool lvlmap` draws it.
 - [~] `.LVL` surface: cylindrical lattice → quads → occupancy mask. `--level`
-      plays on that terrain (sparse platforms, ~4–13% solid). Skin tiles are
-      still scenery; whether they also encode ground is open. See PLAN.md 1.6.
+      plays on that terrain (sparse platforms). On MM_CLIMB_002 the live
+      walkers' feet land on solid cells (1231/1231) and they turn at both
+      walls, column 128 and column 168. Skin tiles are scenery and do not
+      encode solidity. See PLAN.md 1.6.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
-      eight skills, deterministic ticks, the level clock. **Rule constants are
-      provisional** until validated against the original via the oracle -- the
-      exception being the spawn interval, which comes from `RELEASERATE.PC`.
+      eight skills, deterministic ticks, the level clock. The step rate (5 Hz),
+      the walk (one column per step), and the spawn interval (`RELEASERATE.PC`)
+      are measured, and so is the climb: one world unit per step, two mask
+      rows. The fall is one constant for the hatch and a walk-off, and it
+      is still the classic stand-in. PLAN.md Phase 3 says how to read it.
 - [x] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
       lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
       unwrapped one and the cylinder projection (`C` toggles), and a named

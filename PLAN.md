@@ -873,6 +873,102 @@ Two properties that matter for the oracle:
 - **Non-invasive.** With `enable = 0` every call passes straight through, so the game
   plays completely normally and the shim can stay installed permanently.
 
+### 2.2 Reading the rules off the original -- partly done
+
+The `World::Rules` constants were classic-Lemmings values standing in for this
+engine's. Three of them have now been settled against the running original, and
+one was wrong by a factor of four. The rest are still guesses, and
+`src/sim/World.h` now says so field by field.
+
+**Entry, which is the part that actually costs time.** Both capture paths are
+blind here -- `PrintWindow` *and* a desktop `BitBlt` return an all-black bitmap,
+because dgVoodoo presents through a D3D11 swapchain -- so navigation is entirely
+memory-driven. Four facts make it repeatable (`tools/harness/goto_level.py`,
+`restart_level.py`):
+
+* `0x004C416C` is the frontend's own screen id: 3 = main menu, 4 = the Ja/Nein
+  confirm, 5 = the level map. `ui_state` is 3 for all of them, so it cannot tell
+  them apart and nothing else could either.
+* The main menu's highlight index is a **heap** variable, so it moves every run;
+  `find_menu_index` locates it by diffing memory across a DOWN press and keeping
+  the slot that cycles 0..4. This matters: the fifth item is "Beenden", and a
+  blind RETURN closed the game outright during this work.
+* The first gold node is at render pixel **(206, 204)**, established by clicking.
+  1.6's (825, 612) was measured under the 2560x1440 build and scales as
+  `(x*640/2560, y*480/1440)` -- *not* through the dgVoodoo letterbox, which is
+  what the earlier note implied and what sent four rounds of clicks to (168, 204).
+* `consume_deltas` is **0** in the live shim block, so the last relative motion
+  written is re-read every frame and the cursor keeps sliding -- about 60 px a
+  second -- until it clamps at the screen edge. Every click of an earlier sweep
+  landed somewhere other than where it was aimed. `drive.aim_at` now writes a
+  zero delta before it returns.
+
+**Statics found, by known-value and rate diffs over all writable memory:**
+
+| Address | Meaning | How |
+|---|---|---|
+| `004CBA78` | lemmings released so far | the only application slot that goes 0 -> 10 across a level's releases |
+| `004CBAA8` | the level's time limit, whole seconds (300) | matches `LEVELMAP.DAT` |
+| `004CBAAC` | the clock, whole seconds remaining | the only static counting down at 1/s |
+| `004CB920` + 0x18k | skill panel buttons, x = 20, 60 ... 340 | strided table beside the clock |
+
+**Measured -- the release interval is real seconds, from the shipped table.**
+`RELEASERATE.PC`'s doubles are literal seconds and are used as such. On
+MM_CLIMB_002 the engine released a lemming every **2.889 s** (mean of 9 gaps,
+min 2.865, max 2.925); the table's entry 20 is **2.8865 s**. So that level's
+release rate is 20, and the `ReleaseRates` -> `releaseIntervalTicks` derivation
+is right.
+
+**Measured -- the simulation steps 5 times a second, and is not frame-locked.**
+The render and input loop runs at the display rate: the shim's `GetDeviceState`
+counter and the engine's own transformed-vertex buffer both tick at 144 Hz with
+the window foreground. A lemming's position does not. It changes on a flat
+**200 ms** period, and the same 200 ms holds at 144 fps, at 30 fps (dgVoodoo
+`FPSLimit = 30`; 200.03 ms median, no jitter at all) and at the ~27 Hz the game
+drops to when it loses the foreground. The release interval is likewise
+unchanged across that five-fold frame-rate change (2.888 s at 29 Hz against
+2.889 s at 144 Hz). So the engine runs its simulation off a real-time
+accumulator, and **5 steps per second is the rate**, not a frame-rate artefact.
+
+That was the factor-of-four error: `kTicksPerSecond` was 20.
+
+**Measured -- a walker advances exactly one lattice column per step.** Taking
+the centroid of the four vertices the engine writes for a lemming, and unrolling
+it the way `SurfaceMesh` does, the change per step is 1.000 of MM_CLIMB_002's
+256 surface columns -- repeatedly, on several lemmings, in both directions,
+never a fraction of one. So `walkSpeed = 1` was right *per step*; it was the
+step rate that was wrong, and together they had walkers moving four times too
+fast. It also says the horizontal mask resolution is the engine's own unit
+rather than a choice of ours, which is independent corroboration of 1.6's
+lattice reading.
+
+**Not measured, and why.** Everything that needs a lemming to leave the ground:
+`fallSpeed`, `splatDistance`, `floatAfter`, `maxStepUp`, `lemmingHeight`. The
+only level reachable without solving level-map navigation for arbitrary nodes is
+MM_CLIMB_002, whose lemmings walk out of the entrance onto flat ground and never
+fall -- a scan for any f64 in the application heap falling monotonically through
+the tube's height band, triggered on a release, finds nothing, repeatedly.
+`bomberFuse` and the builder / basher / miner / digger intervals and reach also
+need a skill assigned, which needs the skill panel driven and a lemming picked;
+the panel's button table is located (above) but that work was not done. Those
+fields keep the classic values and `World.h` labels them provisional.
+
+**A correction to 1.6.** `live_terrain_check` identifies lemmings as "an f64
+triple on the tube that moves smoothly at constant height". On a level whose
+tube is turning -- and it does turn, the camera orbits at about 0.25 rad/s --
+that description fits hundreds of transformed *surface vertices*: they move
+smoothly, at constant height, at exactly a lemming's radius. Its 31-of-32 result
+is therefore not safe as stated; it may have sampled scenery. The spin is the
+discriminator (`tools/harness/find_lemmings.py`): every surface vertex shares
+one angular velocity, so a lemming is an outlier against the median. Re-running
+that check properly is listed under Phase 3.
+
+Harness added, all re-runnable: `goto_level.py`, `restart_level.py`,
+`fresh_level.py`, `find_counters.py`, `find_clock.py`, `find_lemming_count.py`,
+`find_fallers.py`, `find_lemming_record.py`, `find_lemmings.py`,
+`measure_release.py`, `measure_tick.py`, `measure_motion.py`, with
+`diffscan.py`, `dump_records.py` and `sample_fast.py` as general tools.
+
 ---
 
 ## 3. Phases
@@ -914,6 +1010,21 @@ Two properties that matter for the oracle:
   miner, digger — plus the Revolution-specific mechanics visible in the assets
   (anti-grav shafts, trampolines, water, acid, axes, evil rats, cylinder rotation).
 - Validated continuously against the differential oracle.
+- **Rule constants, partly settled (2.2).** The step rate is **5 Hz**, measured
+  three ways and not frame-locked; it had been guessed at 20, so everything timed
+  in ticks ran four times too fast. A walker moves **one lattice column per
+  step**, measured. `RELEASERATE.PC` and `LEVELMAP.DAT` are confirmed to hold
+  literal seconds. `src/sim/World.h` now labels every field measured or
+  provisional, `kTicksPerSecond` is 5, and the one test that had encoded the old
+  20 Hz fuse arithmetic reads the numbers off `Rules` instead.
+- **Still open, in order.** (1) Re-do the 1.6 terrain check with the
+  spin-corrected lemming finder — the original result may have sampled scenery.
+  (2) Fall physics: `fallSpeed`, `splatDistance`, `floatAfter`, `maxStepUp`,
+  `lemmingHeight`. These need a level with a drop, which needs level-map
+  navigation beyond the first gold node; MM_CLIMB_002's lemmings never leave the
+  ground. (3) Skill timings: fuse, and the builder / basher / miner / digger
+  intervals and reach, which need the skill panel driven — its button table is
+  at `0x004CB920`, stride 0x18, x = 20, 60 ... 340.
 
 ### Phase 4 — Rendering — **done**
 - SDL2 + OpenGL, targeting a GLES3-compatible subset so WebGL2 is nearly free.
@@ -951,8 +1062,9 @@ Linux, macOS, and WebAssembly via Emscripten.
 ## 4. Risks, ranked
 
 1. **`.LVL` format** — high, and on the critical path. Everything downstream waits on it.
-2. **Exact physics constants** — medium. The oracle de-risks this substantially, and
-   driving the original is now solved (§2.1).
+2. **Exact physics constants** — medium, and partly retired. The step rate and the
+   walking speed are measured (§2.2); the fall and skill constants are not, and
+   need a level with a drop and the skill panel driven.
 3. **3D model geometry** — low/medium. Assumed to live in the `.LVL` PolyLists;
    unconfirmed. `TEXTURES\MODELS\...` implies separate model data somewhere.
 4. **FMV codecs** — low. Cosmetic, and deferrable to the very end.

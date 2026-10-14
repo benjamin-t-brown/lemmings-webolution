@@ -313,9 +313,10 @@ void World::step(Lemming& l, std::size_t index) {
     --l.fuse;
     // Classic plays "oh no" when the countdown reaches the panic beat, not
     // when the skill is assigned. One second of fuse left is the audible
-    // moment here; the exact tick is provisional with the rest of the rules
-    // (bomberFuse is written as 5 * 20 for the same reason).
-    if (l.fuse == 20)
+    // moment here; the exact tick is provisional with the rest of the rules,
+    // but "one second" is now a measured second -- rules_.ticksPerSecond is
+    // the original's own 5 Hz step, not a guessed 20.
+    if (l.fuse == rules_.ticksPerSecond)
       cue(SoundCue::OhNo);
     if (l.fuse == 0) {
       explode(l);

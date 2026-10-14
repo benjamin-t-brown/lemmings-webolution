@@ -69,7 +69,11 @@ namespace {
 using namespace webo;
 namespace fs = std::filesystem;
 
-constexpr int kTicksPerSecond = 20;
+// Measured off the running original, not chosen: it steps its lemmings five
+// times a second, on a flat 200 ms period that does not move with the frame
+// rate. See sim::World::Rules::ticksPerSecond, tools/harness/measure_tick.py
+// and PLAN.md 2.2. Keep the two in step.
+constexpr int kTicksPerSecond = 5;
 
 // Where to look for the game data when WEBOLUTION_GAME_DIR is not set. The
 // engine never ships data; it reads an existing installation.
@@ -81,8 +85,10 @@ void applyLevelParams(sim::LevelSetup& s, const ReleaseRates& rates, int release
   s.saveTarget = info ? static_cast<int>(info->saveTarget) : 10;
   if (info)
     s.timeLimitTicks = static_cast<int>(info->timeLimitSeconds) * kTicksPerSecond;
-  s.releaseIntervalTicks =
-      rates.empty() ? 24 : rates.intervalTicks(releaseRate, kTicksPerSecond);
+  // The fallback is a 1.2 second interval, in ticks -- it only applies when
+  // RELEASERATE.PC is missing, which no real install is.
+  s.releaseIntervalTicks = rates.empty() ? (kTicksPerSecond * 6 + 4) / 5
+                                         : rates.intervalTicks(releaseRate, kTicksPerSecond);
 }
 
 // Fallback when a .LVL has no readable Entrance.a3d / Exit.a3d transform:

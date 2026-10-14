@@ -16,6 +16,14 @@ All three were pinned down by experiment, not inference: the cursor pair by
 injecting a marker delta and diffing .data across a known move, and the mouse
 object by searching the whole address space for that same marker.
 
+One thing the shim does *not* do by itself: `consume_deltas` is 0 in the
+live block, so the last relative motion written is re-read every frame and
+the cursor keeps sliding after a `glide` finishes -- about 60 px per second
+at this poll rate, until it clamps at the screen edge. That silently moved
+every click of an earlier sweep away from the pixel it was aimed at. `aim_at`
+therefore writes a zero delta before it returns, and callers that click
+should assume nothing about the cursor until they have.
+
 `aim_at` is then a plain closed loop. Pointer acceleration is still on, so the
 scale is re-estimated from the previous step exactly as the screenshot aimer
 did -- the difference is only that the feedback now costs a 4-byte read and
@@ -66,14 +74,18 @@ def aim_at(h, inp, target, tries: int = 30, tol: int = 6):
                 px_per_unit = max(0.8, min(4.0, moved / units))
         ex, ey = target[0] - pos[0], target[1] - pos[1]
         if abs(ex) <= tol and abs(ey) <= tol:
+            inp.move(0, 0)
             return pos
         ux = max(-400, min(400, round(ex / px_per_unit)))
         uy = max(-400, min(400, round(ey / px_per_unit)))
         if ux == 0 and uy == 0:
+            inp.move(0, 0)
             return pos
         prev, prev_units = pos, (ux, uy)
         inp.glide(ux, uy, steps=max(1, abs(ux), abs(uy)), per_step_frames=1)
+        inp.move(0, 0)
         time.sleep(0.05)
+    inp.move(0, 0)
     return cursor(h)
 
 

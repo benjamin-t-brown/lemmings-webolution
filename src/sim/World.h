@@ -6,15 +6,15 @@
 // commands always produces the same outcome, which is what makes the
 // differential oracle in PLAN.md 2 usable as a regression test.
 //
-// IMPORTANT -- the constants below are PROVISIONAL.
+// Most of the constants below are still provisional; three are not.
 //
-// They are the well-documented classic-Lemmings values (fall 3px/tick, splat
-// above 63px, a six-pixel step-up limit, twelve bricks per builder, and so
-// on). Revolution is a Lemmings game and these are the right shape, but it is
-// a different engine and they have *not* been checked against it. Pinning them
-// down is exactly what the oracle is for: drive the original with the dinput
-// shim, read lemming state out of its memory each tick, and diff. Until that
-// is done this simulates a Lemmings game faithfully, not *this* Lemmings game.
+// They started as the well-documented classic-Lemmings values (fall 3px/tick,
+// splat above 63px, a six-pixel step-up limit, twelve bricks per builder).
+// Revolution is a Lemmings game and those are the right shape, but it is a
+// different engine, so each one has to be checked against it. Two have been,
+// off the running original through the dinput shim (PLAN.md 2.2): the
+// simulation step rate and the walking speed. The rest are still guesses and
+// are marked as such, one by one, on `Rules`.
 
 #pragma once
 
@@ -93,18 +93,35 @@ public:
   // How fast things happen. Named so the oracle work has something concrete
   // to correct rather than magic numbers scattered through the code.
   //
-  // **Every value here is still provisional.** They are chosen to make the
-  // simulation play like Lemmings, not because they were read out of the
-  // original -- that is Phase 3, and it needs the differential oracle. None
-  // of them should be cited as the game's real behaviour.
+  // Each field says whether it was MEASURED off the running original or is
+  // still PROVISIONAL. Do not quietly promote a guess: the point of the
+  // distinction is that a provisional value can be wrong by a factor of four
+  // and nothing in the code will tell you, which is exactly what happened to
+  // the tick rate.
   //
-  // The one timing constant that *is* real lives elsewhere, which is why it
-  // is worth naming here: the spawn interval comes from RELEASERATE.PC via
-  // webo::ReleaseRates, because the game ships that curve as data. The rule
-  // is to read whatever the data states and guess only the rest; these are
-  // the rest.
+  // Two timing facts come from the game's own data rather than from here, and
+  // both have now been confirmed live: the spawn interval comes from
+  // RELEASERATE.PC via webo::ReleaseRates (its doubles are literal seconds --
+  // the original released a lemming every 2.889 s on a level whose table
+  // entry is 2.8865 s), and the level limit comes from LEVELMAP.DAT (its
+  // u32 is literal seconds -- the original counts it down one per real
+  // second, from a static we can read at 0x004CBAAC).
   struct Rules {
-    int walkSpeed = 1;          // pixels per tick
+    // MEASURED. The original steps its lemmings five times a second, on a
+    // flat 200 ms period. It is *not* frame-locked: the same 200 ms holds at
+    // 144, 30 and 27 frames per second, so the engine runs the simulation off
+    // a real-time accumulator and its render loop is free. See
+    // tools/harness/measure_tick.py and PLAN.md 2.2.
+    int ticksPerSecond = 5;
+
+    // MEASURED. A walker advances exactly one lattice column per step --
+    // 1.000 of the 256 columns MM_CLIMB_002's surface ring is divided into,
+    // over many steps on several lemmings, never a fraction of one. Which
+    // also means the horizontal mask resolution is the engine's own unit, not
+    // a choice of ours. tools/harness/measure_motion.py.
+    int walkSpeed = 1;          // mask columns per tick
+
+    // PROVISIONAL from here down: classic-Lemmings values, not this engine's.
     int maxStepUp = 6;          // a walker climbs steps up to this high
     int fallSpeed = 3;          // pixels per tick while falling
     int floatSpeed = 1;         // pixels per tick under an umbrella
@@ -119,7 +136,11 @@ public:
     int minerInterval = 6;
     int diggerInterval = 4;
     int diggerDepth = 1;
-    int bomberFuse = 5 * 20;    // ticks
+    // PROVISIONAL in length -- five seconds is the classic fuse and was not
+    // measured here -- but now expressed at the measured step rate, so it is
+    // five seconds of game time rather than five seconds of a tick rate we
+    // had guessed.
+    int bomberFuse = 5 * 5;     // ticks
     int explosionRadius = 9;
     int lemmingHeight = 8;      // for head-room checks
   };

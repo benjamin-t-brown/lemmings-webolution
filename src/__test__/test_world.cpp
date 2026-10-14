@@ -374,15 +374,20 @@ void testSoundCues() {
     check(cues.size() == 1 && cues[0] == SoundCue::Assign, "assigning a bomber chinks once");
   }
 
-  // Fuse starts at 5*20 = 100. OhNo at fuse==20, Explode at 0.
-  runFor(w, 79);  // fuse counted down to 21
+  // Fuse starts at Rules::bomberFuse = 5 seconds at the measured 5 Hz step,
+  // so 25 ticks; OhNo one second (ticksPerSecond) from the end, Explode at 0.
+  // This arithmetic used to read 100 / 20 / 0, which was the old guessed
+  // 20 ticks a second rather than the original's measured 5.
+  const int fuse = w.rules().bomberFuse;
+  const int panic = w.rules().ticksPerSecond;
+  runFor(w, fuse - panic - 1);
   check(w.takeCues().empty(), "quiet until the panic beat");
-  w.tick();  // fuse -> 20
+  w.tick();  // fuse -> panic
   {
     const auto cues = w.takeCues();
     check(cues.size() == 1 && cues[0] == SoundCue::OhNo, "oh-no at one second left");
   }
-  runFor(w, 20);  // fuse -> 0, explode
+  runFor(w, panic);  // fuse -> 0, explode
   {
     const auto cues = w.takeCues();
     check(std::find(cues.begin(), cues.end(), SoundCue::Explode) != cues.end(),

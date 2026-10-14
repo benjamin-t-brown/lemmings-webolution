@@ -72,10 +72,13 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
       eight skills, deterministic ticks, the level clock. The step rate (5 Hz),
       the walk (one column per step), and the spawn interval (`RELEASERATE.PC`)
       are measured, and so is the climb: one world unit per step, two mask
-      rows. The fall is read off the binary rather than measured -- 25.0
-      world units per second at `0x004B0C40`, so 5 units or 10 mask rows
-      per tick -- and still owes a live series. Everything below it in
-      `Rules` is a classic stand-in. PLAN.md 2.3 has the addresses.
+      rows. The fall, the float, and the umbrella and splat distances are
+      read off the binary rather than measured -- 20.0 world units per
+      second at `0x004B0A18`, so 8 mask rows per tick and 4 under the
+      umbrella, which opens at 20 rows fallen and splats past 60 -- and
+      they still owe a live series. The skill constants are classic
+      stand-ins. PLAN.md 2.3 has the addresses, and
+      `tools/harness/read_steppers.py` re-runs the read.
 - [x] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
       lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
       unwrapped one and the cylinder projection (`C` toggles), and a named

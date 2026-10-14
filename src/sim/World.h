@@ -126,30 +126,57 @@ public:
     // column-128 wall and again up the next. One world unit is two mask rows.
     int climbSpeed = 2;         // mask rows per tick
 
-    // READ FROM THE BINARY, not yet confirmed live. The original's fall state
-    // steps Y with the same instruction shape as the climb and the walk, and
-    // the only difference is the speed constant:
+    // READ FROM THE BINARY, not yet confirmed live. The lemming's own fall is
+    // the state at vtable 0x004B0A20 -- the one that carries the splat test,
+    // the floater check and the umbrella, so it is the state a falling lemming
+    // is in. Its speed comes from an accessor, 0x00416038, which branches on
+    // the lemming's umbrella flag:
     //
-    //   0041a758  dc0d400c4b00  fmul qword ptr [0x004b0c40]   ; 25.0
-    //   0041a7b7  db4044        fild dword ptr [eax+0x44]     ; direction, -1
-    //   0041a7ba  dc4de8        fmul qword ptr [ebp-0x18]     ; seconds this chunk
-    //   0041a7bd  dc4210        fadd qword ptr [edx+0x10]     ; + Y
-    //   0041a7d3  dd5910        fstp qword ptr [ecx+0x10]     ; -> Y
+    //   0041604a  dd05180a4b00  fld   qword ptr [0x004b0a18]  ; 20.0
+    //   00416050  dc35f8034b00  fdiv  qword ptr [0x004b03f8]  ; 2.0, if open
+    //   0041607b  dc4d0c        fmul  qword ptr [ebp+0xc]     ; seconds
     //
-    // The qword at 0x004b0c40 is 00 00 00 00 00 00 39 40 = 25.0, and it is
-    // referenced from four sites, all inside that one state class. So the
-    // constant is world units per *second*: 25.0 * 0.2 s = 5 world units per
-    // tick, which is 10 mask rows. The same arithmetic with the climb's 5.0
-    // gives 1 world unit per tick and with the walk's 5.0 gives 1 column per
-    // tick, and both of those were measured on the running original -- which
-    // is what fixes the units here. PLAN.md 2.3 has the addresses.
-    int fallSpeed = 10;         // mask rows per tick while falling
+    // and the stepper subtracts the result from Y:
+    //
+    //   00416213  db4044        fild  dword ptr [eax+0x44]    ; direction
+    //   00416216  dc4de0        fmul  qword ptr [ebp-0x20]    ; * the distance
+    //   00416219  dc6a10        fsubr qword ptr [edx+0x10]    ; Y - that
+    //
+    // So the constant is world units per *second*: 20.0 * 0.2 s = 4 world
+    // units per tick, which is 8 mask rows, halving to 4 under the umbrella.
+    // The same arithmetic with the climb's 5.0 gives 1 world unit per tick and
+    // with the walk's 5.0 gives 1 column per tick, and both of those were
+    // measured on the running original -- which is what fixes the units here.
+    //
+    // An earlier read took 25.0 from the state at 0x004B0C60 and put this at
+    // 10. That state is also a faller by its animation, but it has no splat
+    // test, no umbrella and no floater check, so it is some other descent and
+    // not this one. PLAN.md 2.3 has both.
+    int fallSpeed = 8;          // mask rows per tick while falling
+
+    // READ FROM THE BINARY, same accessor: exactly half the fall, because the
+    // umbrella path divides by the 2.0 at 0x004B03F8. The flag it branches on
+    // is the lemming's [+0x4b], set when the stepper starts the "float"
+    // animation at 0x004162C2.
+    int floatSpeed = 4;         // mask rows per tick under an umbrella
+
+    // READ FROM THE BINARY. The faller keeps the distance fallen as a double
+    // at its own +0x18, in world units, incremented by 1.0 per sub-step at
+    // 0x00416318, and tests it twice:
+    //
+    //   004162d9  dc1de8034b00  fcomp qword ptr [0x004b03e8]  ; 10.0 -> umbrella
+    //   004165ff  dc1da8104b00  fcomp qword ptr [0x004b10a8]  ; 30.0 -> splat
+    //
+    // Ten and thirty world units, so 20 and 60 mask rows. The splat is skipped
+    // when the lemming's has-floater byte [+0x49] is set -- which is what our
+    // `floating` already stands for, since the umbrella opens well before the
+    // splat distance -- and the landing cell's own flags can exempt it too
+    // (bit 0x80 is not landable at all). The classic values were 16 and 63.
+    int floatAfter = 20;        // umbrella opens this far into the fall
+    int splatDistance = 60;     // falling further than this kills
 
     // PROVISIONAL from here down: classic-Lemmings values, not this engine's.
     int maxStepUp = 6;          // a walker climbs steps up to this high
-    int floatSpeed = 1;         // pixels per tick under an umbrella
-    int floatAfter = 16;        // umbrella opens this far into the fall
-    int splatDistance = 63;     // falling further than this kills
     int builderBricks = 12;
     int brickLength = 6;
     int builderInterval = 8;    // ticks between bricks

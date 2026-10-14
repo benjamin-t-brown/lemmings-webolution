@@ -64,16 +64,23 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
 - [x] `.LVL` cylinder: the tube is identical in every level -- 7 rings, 32
       angular steps of 11.25 degrees, radii 50 and 60 -- which pins the
       coordinate system the simulation wraps in. `lrtool lvlmap` draws it.
-- [~] `.LVL` surface: cylindrical lattice → quads → occupancy mask. `--level`
-      plays on that terrain (sparse platforms). On MM_CLIMB_002 the live
-      walkers' feet land on solid cells (1231/1231) and they turn at both
-      walls, column 128 and column 168. Skin tiles are scenery and do not
-      encode solidity. That live check is one ledge of one level, though,
-      and the corpus is not there yet: `lrtool lvlstats` surveys all 102
-      levels against the rule that a lemming leaving an entrance must land
-      survivably, and only 22 of the 101 that rasterise to anything pass.
-      The 13 levels whose ring stride is 8224 account for 12 of those. See
-      PLAN.md 1.6.
+- [~] `.LVL` collision: the terrain mask is **stored in the level file** --
+      256x96 `u32` flag cells, length-prefixed, read verbatim by the engine
+      into the object it collides against. Verified byte-identical to the
+      running original's own grid on five independently entered levels, and
+      present exactly once in each of the 102 files.
+      `tools/harness/read_lvl_grid.py` reads it from a `.LVL`, `read_grid.py`
+      reads it live. **Not yet wired into the simulation** -- `--level` still
+      plays on the lattice-derived mask below. See PLAN.md 1.6.
+- [~] `.LVL` surface: cylindrical lattice → quads → occupancy mask. This is
+      what the engine **draws**; it is not what a lemming stands on, so the
+      ring stride and the face rules are rendering concerns now. `--level`
+      plays on it for want of the real mask being wired up, and it is far
+      sparser than the original: 1.35-23% solid against the engine's 35-63%.
+      `lrtool lvlstats` surveys that gap across all 102 levels and 22 of 101
+      pass the test that a lemming leaving an entrance lands survivably --
+      a measure of our raster, not of the levels. Skin tiles are scenery and
+      do not encode solidity.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
       eight skills, deterministic ticks, the level clock. The step rate (5 Hz),
       the walk (one column per step), and the spawn interval (`RELEASERATE.PC`)

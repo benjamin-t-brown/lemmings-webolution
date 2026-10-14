@@ -197,6 +197,14 @@ onto a cylinder. The simulation is a flat terrain mask with horizontal wraparoun
 the cylinder is presentation. We can therefore build and test the entire simulation
 before writing a single line of 3D rendering.
 
+**Read "The collision grid is stored in the `.LVL`" below before anything else
+in this section.** The terrain mask is a length-prefixed `u32` array in the
+level file, 256 x 96, byte-identical to what the running engine collides
+against. Several subsections above it were written while that was unknown and
+are superseded; each says so where it stands. In particular the surface
+lattice, which most of this section is about, is what the engine *draws*, not
+what a lemming stands on.
+
 #### What is read so far (`src/assets/LevelIndex.cpp`)
 
 Verified across all 102 levels:
@@ -249,7 +257,10 @@ have looked right and played wrong.
 #### Still open
 
 * How the two `u32` arrays are keyed (their values are now known; faces are
-  rebuilt from the lattice in SurfaceMesh).
+  rebuilt from the lattice in SurfaceMesh). This is a *rendering* question
+  now -- the collision mask is a separate chunk, read below.
+* The collision grid's seven unread flag bits, its anchor in the chunk order,
+  and where its row count is read.
 * Remaining PolyList kinds / record tails; hazard sim from placed models; script.
 * Where the ring stride `Y` comes from. Not stored; searched geometrically,
   and the corpus survey below shows the search is what separates the 13
@@ -327,7 +338,17 @@ resolves to a texture that exists in the archive. Empty tile names are
 normal: a slot with no texture on that surface, and most levels skin only
 one of the two.
 
-#### The terrain is geometry, not a bitmap
+#### The terrain is geometry, not a bitmap -- WITHDRAWN
+
+**This conclusion is wrong, and the section below is kept for its reasoning
+rather than its answer.** The game does store a grid: 256 x 96 `u32` cells,
+length-prefixed, in the level file, read verbatim into the object the engine
+collides against. It is simply nowhere near the two index arrays this
+subsection was reasoning about, which is why factoring *those* as a grid kept
+failing -- the inference "no rectangular factorisation here, therefore no
+bitmap anywhere" was a step too far. See "The collision grid is stored in the
+`.LVL`" below. What stands is the narrower reading: the two `u32` arrays are
+per-face data for the surface, and the surface is geometry.
 
 This is the round's real finding, and it falls out of the asymmetry above.
 Everything in the chain is identical across the 102 retail levels except
@@ -801,6 +822,10 @@ constructor and destructor; `0x00410E30` / `0x00410E44` write 3 and 1 on an
 
 #### The live grid against our raster — our mask is the problem
 
+**Still true, and the cause is now known:** the grid our raster falls short of
+is read verbatim out of the `.LVL`, so the shortfall is not a tuning problem.
+See "The collision grid is stored in the `.LVL`" below.
+
 `read_grid.py --compare` diffs the live grid against `rasteriseSurface`'s
 output for the same level, a live row against the two of our rows that cover
 it, counting ours as solid if either is -- the generous reading, so the miss
@@ -990,6 +1015,12 @@ already-emitted wall at column 172, four columns past where they stop.
 
 #### Corpus survey: the mask is playable on 22 of 101 levels
 
+**Reframed by the grid finding below.** These numbers measure our raster, not
+the levels: the engine's own grid is 35–63% solid on every level sampled, so
+there are no sparse levels in the original and the stride families this
+section leans on are our artefact. The survey keeps its value as a change
+detector, and `test_corpus` still pins it.
+
 The live compare above is one ledge of one level. This is the breadth check,
 and it needs no running original, which is what makes it cheap enough to run
 on every level: **a lemming released from an entrance has to land on
@@ -1052,34 +1083,127 @@ The numbers are also a baseline rather than a target. `test_corpus` pins the
 parse counts exactly and everything else directionally, so the next change
 to the face rule in `SurfaceMesh.cpp` moves one of them visibly.
 
+#### The collision grid is stored in the `.LVL`, not derived — settled
+
+The engine neither rasterises the surface lattice nor stamps the grid from
+object bounds. It **reads the grid out of the level file, verbatim.**
+
+`FUN_0043B640` is the loader for a length-prefixed `u32` array:
+
+```
+0043b654  e8 07 6f fc ff   call  0x00402560     ; N = stream.readU32()
+0043b680  c1 e2 02         shl   edx, 2         ; N * 4 bytes
+0043b68e  e8 1d ff ff ff   call  0x0043b5b0     ; stream.read(data, N*4)
+```
+
+It is called on the world object's `+0x41C` at `0x0043A0C4`, inside the level
+loader `FUN_00439FD3`. `+0x41C` is the container `FUN_0040DE60` probes for
+collision, so the bytes in the file are the bytes a lemming stands on, with no
+transformation in between. `FUN_004311D0`'s box stamps and the builder's
+`or 1` are runtime edits on top of a mask that arrived whole.
+
+**Checked against the live process, not argued.** The 98,304 bytes at offset
+240,011 of `COMPILED\MM_CLIMB_002.LVL` are byte-identical to the grid
+`read_grid.py` reads out of the running game — 0 of 98,304 bytes differ — and
+that sequence occurs exactly once in the file. The `u32` immediately before it
+is 24,576, which is 256 x 96: the array carries its own cell count.
+
+Confirmed on **five levels**, each entered independently through the record
+swap of §2.2 and dumped from its own fresh process. In every case the live
+grid is found byte-identical inside the level file:
+
+| level | offset in file | engine solid | our raster |
+| --- | --- | --- | --- |
+| MM_CLIMB_002 | 240,011 | 63.33% | 22.99% |
+| MM_BUILD | 242,656 | 55.66% | 1.91% |
+| MM_FLOAT | 259,037 | 45.40% | 9.16% |
+| MM_BOMB | 255,157 | 40.79% | 1.88% |
+| MM_DIG_000 | 240,600 | 35.03% | 1.35% |
+
+**Every retail level has one.** Scanning for a length-prefixed array whose
+payload is entirely small flag words matches exactly once in each of the 102
+levels, every one 256 x 96. Median 39.7% solid, from 5.5% (`VH13_KF_1`) to
+77.2% (`H23_MG_1`). Exactly one match per level and never two is itself
+evidence the fingerprint is specific.
+
+`tools/harness/read_lvl_grid.py` is the whole read, re-runnable against a
+`.LVL` with no game and no exe. `tools/harness/dump_grids.py` is the live
+side.
+
+#### What that overturns
+
+* **The surface lattice is render input, not collision.** `grid0`/`grid1`,
+  `SurfaceMesh` and `rasteriseSurface` describe what the engine draws. The
+  ring stride `Y`, the quad rule, the half-step wall rule and the `lo < 31.0`
+  cut have no bearing on what a lemming stands on, and the 49 levels where
+  `detectRingStride` returns 0 stop mattering for terrain.
+* **Ring stride predicts nothing.** `MM_BUILD`, where `detectRingStride`
+  returns 0 and our mask is 1.91% solid, is the engine's second densest level
+  at 55.66%. Treating 8224 as the explanation, or the stride-0 levels as a
+  family, was reading our own artefact.
+* **The engine has no sparse levels.** 35–63% solid on every level sampled,
+  against our 1.35–23%. The corpus survey's "88 sparse levels" are one missing
+  step, not 88 problems, and its 22-of-101 releasable figure measures our
+  raster rather than the terrain. It stays useful as a change detector.
+* **`VH13_KF_1` settles it on its own.** Our loader rasterises *nothing* for
+  that level; the file carries a real if minimal 5.5% mask.
+
+#### The grid's flag bits, and what is still unread
+
+Known from the instructions that test or set them (§2.3): `0x1` solid, `0x2`
+indestructible, `0x80` not-landable, `0x200`/`0x2000`/`0x4000` object zones by
+lemming type, `0x800` blocker.
+
+Seen in the data and **not yet read**: `0x4`, `0x8`, `0x20`, `0x40`, `0x100`,
+`0x400`, `0x8000`. They are not rare — across the corpus `0x403` appears on
+29,654 cells and `0x21` on 20,896 — so the mask is not understood until they
+are read off the instructions that test them. Two specifics worth keeping:
+`0x82` appears **exactly 40 times in every level sampled**, which makes it a
+fixed feature rather than terrain; and `0x20` does not occur in
+`MM_CLIMB_002` at all while accounting for 876 cells on `MM_DIG_000` and
+3,024 on `MM_FLOAT`.
+
+#### The sibling containers, and the grid's anchor
+
+Both siblings load in the same pass of `FUN_00439FD3` and neither is the
+collision grid. `+0x42C` (`0x0043A07C`) is another length-prefixed bulk-read
+`u32` array through the same `FUN_0043B640`. `+0x43C` (`0x0043A0A0`) goes
+through `FUN_0043B9C0`: a count, then a loop deserialising 12-byte records one
+at a time (`0x0043BA1D imul ecx, ecx, 0xc`).
+
+In the file the array immediately after the collision grid is a count of
+12,288 — 256 x 48, half the grid's height — whose payload reads as floats
+rather than flag words. Which container owns it was not established.
+**Hypothesis, unread:** a per-cell float layer at half vertical resolution.
+
+Still unread, and both wanted before a production reader:
+
+* **The chunk's anchor.** The scan above is a fingerprint, not a parse. The
+  framing is consistent — the cell count immediately before, a 12,288 count
+  immediately after — but what precedes it varies between levels (an index
+  array's `0xffffffff` tail on most, ordinary records on `VH13_KF_1`).
+* **Where the row count 96 is read.** `FUN_00439FD3` passes `0x00402560`'s
+  result to `setHeight` at `0x0043A048`, so it is a separate `u32` earlier in
+  the stream than the grid's own cell count. Not located in the file.
+
 #### Where to go next
 
-* **The ring stride, read rather than searched.** This is the critical
-  path, and the corpus survey above is why: the stride families separate
-  the playable levels from the scaffolding almost perfectly. `Y` is not a
-  stored `.LVL` field -- established across all 102 levels -- so
-  `detectRingStride()` searches multiples of 16 for a median pair distance
-  near one ring spacing, and returns 0 on 49 of them. The spread it finds
-  (8224, 4096, 4128, 3104, 1520, 1568, 2032, 2544, 2592, 4608, 5120, 1008)
-  reads like a geometric best fit landing on the real lattice 13 times and
-  on a coincidence otherwise; the recurring low bytes `0x20` and `0xF0`
-  are a hint and nothing more. The way to settle it is the one §2.3 used
-  for the fall: read how the original indexes its own mask. The entry
-  points are already known from that work -- the mask probe is
-  `FUN_0040DE60` on the world object `0x004C6A10`, and `FUN_0040BAA0`
-  returns its height.
-* **De-fit `rasteriseSurface` / `collectFromGrid`.** Three things in
-  `src/assets/SurfaceMesh.cpp` were fitted to `MM_CLIMB_002` and should
-  come out of the same code read, not out of matching a ledge. They are
-  left in place deliberately until there is something better to replace
-  them with, because they are what makes the climb ledge pass.
-  * the vertical-link filter requires the foot of a wall to sit at
-    `y >= 31`, which is that level's ledge at y = 32 written as a
-    constant. A ledge at y = 16 elsewhere is discarded as bottom skirt.
-  * the half-step rule -- a populated `key+8` ends the floor at this
-    vertex and raises a wall -- came from one turn at one column.
-  * the chord window 8.0–13.5 and the 1.5 distance tolerances are tuned,
-    not derived.
+* **Parse the grid chunk, and take `rasteriseSurface` out of the collision
+  path.** This is the critical path and it is now a parsing job: a reader in
+  `src/assets/`, reached through the level's chunk order rather than by
+  fingerprint, feeding `Terrain` directly. The lattice stays for rendering.
+* **Read the seven unread flag bits** before calling the mask understood.
+* **Our mask is 256 x 192; the engine's is 256 x 96** — one cell per world
+  unit, against our two rows. The supersampling is ours alone and the
+  original cannot represent a half-unit feature, so dropping to 96 rows makes
+  every constant in `Rules` the world-unit number read straight off the
+  binary: `climbSpeed` 1, `fallSpeed` 4, `floatSpeed` 2, `floatAfter` 10,
+  `splatDistance` 30, with no conversion anywhere.
+* **The ring stride and the `SurfaceMesh` fits are no longer on the critical
+  path.** `detectRingStride`'s geometric search, the `y >= 31` vertical-link
+  filter, the half-step wall rule and the tuned chord window were all aimed at
+  collision. They now matter only as far as rendering needs them, and that is
+  a much weaker requirement than a mask that has to be exact.
 * **The fall, then the other skills.** The climb ledge, the climb rate and
   now the fall are settled (Phase 3; the fall is read off the binary, not
   measured, and still owes a live series). Gadgets stay unmeasured.
@@ -1221,6 +1345,62 @@ memory-driven. Four facts make it repeatable (`tools/harness/goto_level.py`,
   second -- until it clamps at the screen edge. Every click of an earlier sweep
   landed somewhere other than where it was aimed. `drive.aim_at` now writes a
   zero delta before it returns.
+
+**Any level can now be entered, and not by finding its node.** Navigation was
+stuck on one level because the only known gold node was the first, at render
+pixel (206, 204), found by clicking. Finding the other 101 that way was never
+going to work: the level map is a **3D scene the camera orbits**, so a node's
+screen position is a projection, not stored data. Three checks agree there is
+no table to look up -- `LEVELMAP.DAT` holds only id, name, limit, total and
+save target; `LEVELS.MAP`'s trailing integers are 1/0/0 throughout; and the
+pair (206, 204) appears nowhere in the exe as i16, i32, f32 or f64, in either
+order.
+
+What the engine does keep is a flat record table that the map merely indexes,
+at **`0x004E35D4`** -- 5 groups of 25, record size `0x118`, with the level id
+at `+0x000`, the display name at `+0x080`, and the time limit / total / save
+target at `+0x100`. It is zero in the image and filled at startup from
+`LEVELMAP.DAT`; live it holds 102 named records and 23 reading `blank`, which
+is exactly the 102 `.LVL` files. The selection path:
+
+```
+0049b190  call 0x00460610          ; group index <- the global 0x005D5A00
+0049b19d  call 0x00460630          ; slot index  <- the global 0x005D5A04
+0049b197  imul esi, esi, 0x1b58    ; group stride, 25 records
+0049b1a2  imul eax, eax, 0x118     ; slot stride, and the record size
+0049b1a8  lea  ecx, [esi+eax+0x4e35d4]
+0045d89d  call 0x0045c9ab          ; sprintf "Compiled\%s%s" -> 0x004CBBF8
+```
+
+So the node does not have to be found: **the record it points at can be
+changed.** `goto_level.select_level` copies the wanted level's whole `0x118`
+record over slot `[0][0]`, the one node whose position is known, and the
+existing click loads it. Copying the whole record rather than just the id
+means the clock and the lemming counts come from the real level too, and
+`enter_level` restores the slot in a `finally`.
+
+**Do not write the index globals instead.** `0x0049B14F` and `0x0049B15B` set
+slot and group from the picked node immediately before `0x0049B190` reads them
+back, so a value written from outside is overwritten inside the same click.
+The record swap has no such race -- it is read once, at click time.
+
+**The swap is checked, because it mutates the game's own table.** That a level
+entered this way is the genuine level was confirmed three independent ways on
+`MM_DIG_000`: the path the engine itself built, at `0x004CBBF8`, reads
+`Compiled\MM_DIG_000.lvl`; the save target at `0x004CBAB0` reads 10 where
+`MM_CLIMB_002` reads 1, matching `LEVELMAP.DAT`; and the release counter
+reached 18, consistent with 20 lemmings and not with 10. `dump_grids.py`
+re-checks the path buffer before writing any dump, so a mis-navigation cannot
+be recorded as a measurement of the wrong level.
+
+Changing level means **restarting the process**: there is no route from inside
+a running level back to the map that does not go through ESC, and ESC is the
+one key that has quit the process outright. A relaunch costs about fifteen
+seconds, so `dump_grids.py` restarts between levels.
+
+Still fragile: `find_menu_index` found no candidate on one run in six and the
+script refused to press RETURN blind rather than risk "Beenden". That is the
+safety working; a retry succeeded immediately.
 
 **Statics found, by known-value and rate diffs over all writable memory:**
 
@@ -1705,12 +1885,25 @@ npx -y rea-agents@6.4.0 xrefs "C:\progs\Lemmings Revolution\Lemmings Revolution.
 ### Phase 2 — `.LVL`
 - Ghidra on the `SkyIslands` loader; incremental parser; debug visualiser.
 - **Milestone: one level's cylinder geometry and terrain mask on screen.**
-- **Done on the file side.** Cylinder + surface lattice → playable mask, skills trailer,
+- **Done on the file side.** Cylinder + surface lattice, skills trailer,
   entrance/exit + 417 other placed models (parse only), skin ≠ solidity,
-  PolyList 5/7 = draw attrs, ring stride **derived not stored**.
-- Two live findings stand (§1.6): the original keeps **no** occupancy buffer
-  — scanned for across all 182 MB and absent — and it holds the .LVL surface
-  lattice byte-for-byte, which confirms the file reading outright.
+  PolyList 5/7 = draw attrs, ring stride **derived not stored** — and the
+  collision grid, below, which supersedes the lattice as the mask source.
+- **What is left to close the phase:** parse the grid chunk through the
+  level's chunk order rather than by fingerprint, read its seven unread flag
+  bits, and take `rasteriseSurface` out of the collision path.
+- **The terrain mask is a chunk in the `.LVL`, and that is the finding this
+  phase turned on** (§1.6). 256 x 96 `u32` cells, length-prefixed, read
+  verbatim by `FUN_0043B640` into the object `FUN_0040DE60` collides against.
+  Byte-identical to the live grid on five independently entered levels, and
+  present exactly once in each of the 102 files. So the surface lattice is
+  what the engine *draws*; the mask is not derived from it at all.
+- **An earlier claim here was wrong and is withdrawn:** "the original keeps no
+  occupancy buffer — scanned for across all 182 MB and absent". The sweep
+  looked for a byte-per-cell bitmap or a grid of at most four distinct byte
+  values, and the grid is neither — it is `u32` flag words. What does stand
+  from that round is that the engine holds the `.LVL` surface lattice
+  byte-for-byte, which confirmed the file reading.
 - **The live confirmation of the raster does not stand.** The 31-of-32
   result was produced by a lemming finder that cannot tell a lemming from a
   transformed surface vertex, so it may have sampled scenery (see §2.2). The
@@ -1874,7 +2067,13 @@ Linux, macOS, and WebAssembly via Emscripten.
 
 ## 4. Risks, ranked
 
-1. **`.LVL` format** — high, and on the critical path. Everything downstream waits on it.
+1. **`.LVL` format** — **largely retired for terrain.** The collision mask is a
+   length-prefixed `u32` chunk in the level file, verified byte-identical to
+   the running engine's grid on five levels (§1.6), so the mask is a parsing
+   job rather than a reconstruction. What remains is the chunk's anchor, its
+   seven unread flag bits, and the row count's location. The surface lattice
+   keeps its open questions, but those are now rendering risks, not
+   simulation ones.
 2. **Exact physics constants** — medium, and partly retired. The step rate,
    the walking speed, the climb ledge and the climb rate are measured. The
    fall, the float, the umbrella distance and the splat distance are now

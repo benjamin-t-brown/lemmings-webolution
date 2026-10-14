@@ -722,6 +722,123 @@ memory finds:
 
 So `Terrain` is **our** representation. The original does not rasterise.
 
+**That conclusion is withdrawn. The engine does keep a collision grid, and
+the sweep above could not have found it.** The cells are 4-byte flag words,
+so a page of them is neither `{0, 1}` nor a small-alphabet byte grid --
+both filters above exclude it by construction. The sweep's findings stand as
+written; what does not stand is the inference from them.
+
+The grid is reached through the cell probe, which is a plain read of the
+shipped bytes (`tools/harness/read_grid.py` re-runs all of this):
+
+```
+0040de6a  25 ff 000000    and  eax, 0xff            ; x wraps at 256
+0040de78  3b 91 18040000  cmp  edx, [ecx + 0x418]   ; y clamped to the row count
+0040de9f  c1 e2 08        shl  edx, 8               ; y * 256
+0040dea5  03 c2           add  eax, edx             ; + x
+0040deab  81 c1 1c040000  add  ecx, 0x41c           ; the container
+0040deb1  e8 5a6effff     call 0x00404d10
+```
+
+and `0x00404D10` is a flat `u32` array accessor, `0x00404D20 8d 04 91`,
+`lea eax, [ecx + edx*4]`, over the data pointer at the container's `+0x0C`.
+`FUN_0043AA63(rows)` -- one caller, `0x0043A048`, inside the level load --
+resizes it to `rows * 256` (`0x0043AA6D c1 e0 08`, `shl eax, 8`) and stores
+the row count at `+0x418`, which is the same field `FUN_0040BAA0` returns
+and the fall stepper clamps against. So the world object at `0x004C6A10`
+holds a **256-wide, row-major grid of `u32` flag cells**: row count at
+`0x004C6E28`, data pointer at `0x004C6E38`.
+
+**Read live on MM_CLIMB_002, and it is dense.** `read_grid.py` against the
+stock exe in a running level:
+
+```
+grid       256 x 96   (24,576 cells)
+solid      15,563 = 63.33%     (non-zero and not 0x80 -- the engine's own
+                                landing test at 0x0041A99A)
+distinct cell words   0x00000001  9,339  38.00%   solid
+                      0x00000000  8,973  36.51%   empty
+                      0x00000003  6,224  25.33%   solid | indestructible
+                      0x00000082     40   0.16%   indestructible | not-landable
+rows with any solid cell   96 of 96
+```
+
+Two things fall out of that shape. The grid is **96 rows for a 96-unit tube,
+one cell per world unit** -- so our 192-row mask supersamples at two rows per
+unit, and that factor is *our* choice, not the engine's. And only four
+distinct words appear, none of them the `0x200` / `0x2000` / `0x4000` zone
+bits, so on this level the grid is terrain and nothing else.
+
+**The flag bits, each read off the instruction that tests or sets it.**
+
+| bit | meaning | read at |
+| --- | --- | --- |
+| `0x0001` | solid, destructible | tested `0x00424905` `and edx, 1`; set by the builder `0x004101F8` `or edx, 1` |
+| `0x0002` | indestructible | tested first at `0x004248E6` `and edx, 2`; such a cell is never cleared |
+| `0x0080` | not landable | the faller skips it, `0x0041A99A` `and edx, 0x80`; stamped by `FUN_0043119B` at `0x004311AE` |
+| `0x0200` / `0x2000` / `0x4000` | object zone, by the object's type field `+0x128` = 0 / 1 / 2 | stamped at `0x00428D63`, `0x00428D84`, `0x00428DA5`, `0x0042AFA3`, `0x0042AFC4`, `0x0042B395`, `0x0042B3B6`, `0x0042B4AB`, `0x0042B4CC` |
+| `0x0800` | the blocker's own bit | cleared at `0x0040E1D5` `and eax, 0xf7ff` when a blocker goes away |
+
+A removal clears `0x1`, `0x2`, `0x80` and `0x800` together --
+`0x0041B783 and edx, 0xf77c` -- in the stepper `bash`, `dig` and `mine`
+share. So the grid is live and mutable, which is the other half of why it is
+not just a parse artefact.
+
+`FUN_004311D0(flags)` is the stamp: an axis-aligned box in (column, row)
+space, bounds from the doubles at the object's `+0x48` / `+0x50` and `+0x60`
+/ `+0x68`, wrapping by adding `0x100` to the end column when it crosses the
+seam (`0x00431201 add edx, 0x100`), ORing `flags` into every cell.
+`FUN_0043127E` is its mirror, `&= ~flags`. Those ten sites stamp only the
+zone bits and `0x80`.
+
+**Where the solid bit comes from at load is still unread.** That is the open
+question this read leaves: 15,563 cells carry `0x1` the moment a level is
+running, and none of the ten box stamps writes it -- the builder's `or 1` is
+runtime. Candidates examined and ruled out: `FUN_0043A4CA` is a setter for
+`+0x408` / `+0x40C`; `0x00439DBF` and `0x00439F71` are the world object's
+constructor and destructor; `0x00410E30` / `0x00410E44` write 3 and 1 on an
+0x88-byte stride, which is a record array and not the grid.
+
+#### The live grid against our raster — our mask is the problem
+
+`read_grid.py --compare` diffs the live grid against `rasteriseSurface`'s
+output for the same level, a live row against the two of our rows that cover
+it, counting ours as solid if either is -- the generous reading, so the miss
+below is a floor:
+
+```
+agree                11,054/24,576 = 44.98%
+solid in both         4,114
+live only (we miss)  11,449
+ours only (we add)    2,073
+recall on the engine's solid cells   26.4%
+```
+
+We find **a quarter** of the floor the engine has, and invent 2,073 cells it
+does not. **This is not an alignment error.** Sweeping a vertical flip, row
+offsets −6..+6 and all 32 column offsets leaves every combination between
+41% and 47% agreement and 22% and 27% recall, with the identity alignment as
+good as any -- which separately confirms the `atan2(-x, z)` unroll and the Y
+orientation are right. There is no rotation or offset that rescues it.
+
+So the question the corpus survey left open is answered: the 88 sparse levels
+are **our bug, not the terrain**. The engine's MM_CLIMB_002 is 63.33% solid
+where ours is 22.99%. The 1,231/1,231 foot-cell result in Phase 3 is not
+contradicted -- it sampled one ledge, and a mask with a quarter of the floor
+can still be right on the strip the walkers used -- but it is now clear how
+little of the level that was.
+
+The redirection for the remaining `.LVL` work: the engine's collision is this
+flag grid, and our job is to reproduce the grid, not to stroke lattice edges.
+The lattice is the engine's *render* input (it is held byte-for-byte, as
+above) and the ten box stamps show the grid being written from **object
+bounding boxes** rather than from lattice quads, which is a different source
+of geometry than `SurfaceMesh` uses. The 417 placed `.a3d` models are already
+parsed with their poses (1.6 Entrances, exits...); what is missing is each
+model's own bounds. Whether the load-time solid fill works that way too is
+the unread part named above, and it should be read before any more of
+`rasteriseSurface` is tuned.
+
 **What the engine does keep is our input, verbatim.**
 
 `find_level_data.py` hits all four needles with a level loaded (and still

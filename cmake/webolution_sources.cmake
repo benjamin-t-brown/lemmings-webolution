@@ -18,6 +18,7 @@ set(WEBOLUTION_SOURCES
   src/assets/Cylinder.cpp
   src/assets/SurfaceMesh.cpp
   src/assets/LevelObjects.cpp
+  src/assets/LevelStats.cpp
   src/assets/PolyList.cpp
   src/assets/Wav.cpp
 

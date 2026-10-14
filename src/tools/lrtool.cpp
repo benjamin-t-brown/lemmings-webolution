@@ -7,6 +7,7 @@
 //   lrtool lvlmap  <game-dir> <level> <out.png>
 //   lrtool lvlkeys <game-dir> [level]
 //   lrtool lvlmask <game-dir> <level> <out.png>
+//   lrtool lvlstats <game-dir> [--csv]
 //
 // <game-dir> is a Lemmings Revolution installation containing lemmings.box
 // (and optionally patch.box, which overrides entries of the same name).
@@ -16,10 +17,13 @@
 #include "assets/Bitmap.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
+#include "assets/LevelObjects.h"
+#include "assets/LevelStats.h"
 #include "assets/SurfaceMesh.h"
 #include "assets/Lrz.h"
 #include "assets/Png.h"
 #include "assets/Sprite.h"
+#include "sim/World.h"
 
 #include <algorithm>
 #include <cmath>
@@ -52,7 +56,8 @@ int usage() {
                "  lrtool dump    <game-dir> <out-dir> [substring]\n"
                "  lrtool lvlmap  <game-dir> <level> <out.png>\n"
                "  lrtool lvlkeys <game-dir> [level]\n"
-               "  lrtool lvlmask <game-dir> <level> <out.png>\n";
+               "  lrtool lvlmask <game-dir> <level> <out.png>\n"
+               "  lrtool lvlstats <game-dir> [--csv]\n";
   return 2;
 }
 
@@ -419,6 +424,74 @@ int cmdLvlMask(const fs::path& gameDir, std::string_view levelName, const fs::pa
       "{}: {} quads (ang {}, ring {}, stride {}), mask {}x{}, {:.1f}% solid -> {}\n", resolved,
       faces->quads.size(), faces->angularQuads, faces->ringQuads, faces->ringStride, mask.width,
       mask.height, pct, out.string());
+  return 0;
+}
+
+// Surveys the terrain the lattice rebuilds, across every level, against one
+// invariant that needs no running original: a lemming released from a parsed
+// entrance has to land on something, and a drop past `splatDistance` kills it.
+// So for each entrance, is there a solid cell below it, and is the drop
+// survivable?
+//
+// This is a measurement, not a verdict. It says where the lattice reading
+// stands; PLAN.md 1.6 records what the numbers do and do not support. The
+// splat distance comes from `World::Rules` rather than a literal here, so the
+// oracle tracks the simulation. `--csv` emits one row per level so two runs
+// can be diffed.
+int cmdLvlStats(const fs::path& dir, bool csv) {
+  auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
+  if (!lib) {
+    std::cerr << "error: " << lib.error() << "\n";
+    return 1;
+  }
+
+  const int splat = webo::sim::World::Rules{}.splatDistance;
+  auto rows = webo::surveyLevels(*lib, splat);
+  if (!rows) {
+    std::cerr << "error: " << rows.error() << "\n";
+    return 1;
+  }
+  const auto c = webo::summariseLevels(*rows, splat);
+
+  if (csv) {
+    std::cout << "level,parsed,nonEmptyMask,ringStride,quads,openEdges,solidPct,entrances,"
+                 "exits,withFloor,survivable,medianDropRows\n";
+    for (const auto& r : *rows)
+      std::cout << std::format("{},{},{},{},{},{},{:.2f},{},{},{},{},{}\n", r.shortName,
+                               r.parsed ? 1 : 0, r.nonEmptyMask ? 1 : 0, r.ringStride, r.quads,
+                               r.openEdges, r.solidPercent, r.entrances, r.exits,
+                               r.entrancesWithFloor, r.entrancesSurvivable, r.medianDropRows);
+    return 0;
+  }
+
+  std::cout << std::format("splat distance {} mask rows, from World::Rules\n\n", splat);
+  std::cout << "level                   stride  quads  edges  solid%  ent  floor  surv  drop\n";
+  for (const auto& r : *rows) {
+    if (!r.parsed) {
+      std::cout << std::format("{:<22}       -  (did not parse)\n", r.shortName);
+      continue;
+    }
+    if (!r.nonEmptyMask) {
+      std::cout << std::format("{:<22}  {:>6}  (empty mask)\n", r.shortName, r.ringStride);
+      continue;
+    }
+    std::cout << std::format("{:<22}  {:>6} {:>6} {:>6} {:>7.2f} {:>4} {:>6} {:>5} {:>5}\n",
+                             r.shortName, r.ringStride, r.quads, r.openEdges, r.solidPercent,
+                             r.entrances, r.entrancesWithFloor, r.entrancesSurvivable,
+                             r.medianDropRows);
+  }
+
+  std::cout << std::format(
+      "\n{} levels, {} parsed, {} with a non-empty mask\n"
+      "median solid {:.1f}%, median entrance drop {} mask rows ({:.0f} world units)\n"
+      "entrances: {} total, {} with floor below, {} of those survivable\n"
+      "levels releasable (every entrance with floor survivable): {} of {}\n"
+      "levels survivable by median drop: {} of {}\n"
+      "levels with an entrance that has nothing solid below it: {} ({} entrances)\n",
+      c.levels, c.parsed, c.nonEmptyMasks, c.medianSolidPercent, c.medianDropRows,
+      c.medianDropRows / 2.0, c.entrances, c.entrancesWithFloor, c.entrancesSurvivable,
+      c.survivableLevels, c.nonEmptyMasks, c.survivableByMedian, c.nonEmptyMasks,
+      c.levelsWithFloorlessEntrance, c.floorlessEntrances);
   return 0;
 }
 
@@ -924,6 +997,8 @@ int main(int argc, char** argv) {
       return usage();
     return cmdLvlMask(argv[2], argv[3], argv[4]);
   }
+  if (cmd == "lvlstats")
+    return cmdLvlStats(dir, argc > 3 && std::string_view(argv[3]) == "--csv");
   if (cmd == "dump") {
     if (argc < 4)
       return usage();

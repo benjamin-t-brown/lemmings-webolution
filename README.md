@@ -46,6 +46,7 @@ build/cmake/dev-debug/webolution --level MM_CLIMB_002 --cylinder
 build/cmake/dev-debug/webolution --native
 make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
 # lrtool lvlmask <game-dir> <level> <out.png>     # rasterised collision mask
+# lrtool lvlstats <game-dir> [--csv]              # corpus terrain survey
 ```
 
 - [x] `.box` archive format decoded and validated
@@ -67,7 +68,12 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
       plays on that terrain (sparse platforms). On MM_CLIMB_002 the live
       walkers' feet land on solid cells (1231/1231) and they turn at both
       walls, column 128 and column 168. Skin tiles are scenery and do not
-      encode solidity. See PLAN.md 1.6.
+      encode solidity. That live check is one ledge of one level, though,
+      and the corpus is not there yet: `lrtool lvlstats` surveys all 102
+      levels against the rule that a lemming leaving an entrance must land
+      survivably, and only 22 of the 101 that rasterise to anything pass.
+      The 13 levels whose ring stride is 8224 account for 12 of those. See
+      PLAN.md 1.6.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
       eight skills, deterministic ticks, the level clock. The step rate (5 Hz),
       the walk (one column per step), and the spawn interval (`RELEASERATE.PC`)

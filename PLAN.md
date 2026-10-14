@@ -251,6 +251,12 @@ have looked right and played wrong.
 * How the two `u32` arrays are keyed (their values are now known; faces are
   rebuilt from the lattice in SurfaceMesh).
 * Remaining PolyList kinds / record tails; hazard sim from placed models; script.
+* Where the ring stride `Y` comes from. Not stored; searched geometrically,
+  and the corpus survey below shows the search is what separates the 13
+  playable levels from the other 88.
+* Why `grid0` and `grid1` differ in role. On `MM_CLIMB_002` `grid0` has 194
+  populated slots against `grid1`'s 6,141, yet the walked links were found
+  in `grid0` and only `grid0` gets the dropped-edge pass.
 
 #### A correction: `[004CBF78]` and `[004CBF7C]` are fonts
 
@@ -865,14 +871,101 @@ reversal is untouched: they turn at ~168, the strokes continue to 192,
 and there is no outer-only vertical at 168. The nearest one is the
 already-emitted wall at column 172, four columns past where they stop.
 
+#### Corpus survey: the mask is playable on 22 of 101 levels
+
+The live compare above is one ledge of one level. This is the breadth check,
+and it needs no running original, which is what makes it cheap enough to run
+on every level: **a lemming released from an entrance has to land on
+something, and a drop past `Rules::splatDistance` kills it.** So for each
+parsed entrance, is there a solid cell below it in the rasterised mask, and
+is the drop survivable? `lrtool lvlstats` asks that of all 102 levels and
+`test_corpus` holds the answers as a baseline. Both share
+`src/assets/LevelStats.cpp`, and the splat distance comes from
+`World::Rules` rather than a literal, so the oracle tracks the simulation.
+
+Measured 2026-10-14, splat distance 60 mask rows:
+
+| | |
+|---|---|
+| level entries, and how many parse | 102 of 102 |
+| of those, rasterising to a non-empty mask | **101** — `VH13_KF_1` yields nothing |
+| median solid coverage | **3.9%** |
+| median drop from an entrance to the first solid cell | **132 mask rows = 66 world units** |
+| entrances | 143, of which 132 have a floor below them |
+| entrances whose drop is survivable | **35 of 132** |
+| levels releasable — every entrance with a floor survivable | **22 of 101** |
+| entrances with nothing solid below them at all | 11, across 10 levels |
+
+So on most levels a lemming leaving the hatch would fall two thirds of the
+tube's 96 units and splat. The split is not spread evenly: it tracks the
+per-level ring stride that `detectRingStride()` settles on.
+
+| ring stride | levels | median solid | median drop | releasable |
+| --- | --- | --- | --- | --- |
+| **8224** | 13 | **22.0%** | **26 rows** | **12 of 13** |
+| 0, none detected | 49 | 3.2% | 126 rows | 5 of 49 |
+| 4096 | 12 | 3.2% | 135 rows | 3 of 12 |
+| ten others, 1–5 levels each | 27 | 3.9–14.6% | 26–172 rows | 2 of 27 |
+
+Stride 8224 is 12 of 13 releasable; every other stride together is 10 of 88.
+`MM_CLIMB_002` is in the 8224 family (23.0% solid, a 22-row entrance drop)
+and so is `MM_BASH_002` (27.7%, 24 rows).
+
+**What this supports.** The lattice reading produces terrain a lemming could
+be released onto for one family of 13 levels, and sparse scaffolding for the
+other 88. The level the raster was tuned against is inside that family and
+is near the top of it by coverage, so the live confirmation in the previous
+item — real as it is — was taken on the most favourable level in the corpus.
+
+**What it does not support, stated rather than smoothed.** This is evidence,
+not proof, and there is a real counter-case. A tall hatch is perfectly
+legitimate on `MM_FLOAT`: a floater survives any drop, and that level's
+entrance sits 140 rows up. The survey cannot tell a missing floor from a
+level designed around a long fall, and the 50 `anti_grav` placements in the
+corpus are another way a drop could be broken by something we do not
+simulate. What the counter-case does not cover is the rest of the tutorial
+set, where the skill rules it out: `MM_DIG_000` (1.35% solid, a 144-row =
+72-unit drop), `MM_BOMB` (1.88%, 142 rows) and `MM_BUILD` (1.91%, 124 rows)
+have no floater and need a floor under the hatch for the level to be
+playable at all. Three levels is a small number, so read this as a strong
+indication that floors are missing, and the stride table as where to look —
+not as a measurement of the loader being wrong.
+
+The numbers are also a baseline rather than a target. `test_corpus` pins the
+parse counts exactly and everything else directionally, so the next change
+to the face rule in `SurfaceMesh.cpp` moves one of them visibly.
+
 #### Where to go next
 
-* **The fall, then the other skills.** The climb ledge and the climb
-  rate are measured (Phase 3). `fallSpeed` is still the classic stand-in.
-  It is one constant, shared by the hatch and by walking off a ledge, and
-  the hatch on this level does not show it. The handoff in Phase 3 says
-  how to read it off a climber leaving the y = 48 ring, and how a click
-  assigns the climber. Gadgets stay unmeasured.
+* **The ring stride, read rather than searched.** This is the critical
+  path, and the corpus survey above is why: the stride families separate
+  the playable levels from the scaffolding almost perfectly. `Y` is not a
+  stored `.LVL` field -- established across all 102 levels -- so
+  `detectRingStride()` searches multiples of 16 for a median pair distance
+  near one ring spacing, and returns 0 on 49 of them. The spread it finds
+  (8224, 4096, 4128, 3104, 1520, 1568, 2032, 2544, 2592, 4608, 5120, 1008)
+  reads like a geometric best fit landing on the real lattice 13 times and
+  on a coincidence otherwise; the recurring low bytes `0x20` and `0xF0`
+  are a hint and nothing more. The way to settle it is the one §2.3 used
+  for the fall: read how the original indexes its own mask. The entry
+  points are already known from that work -- the mask probe is
+  `FUN_0040DE60` on the world object `0x004C6A10`, and `FUN_0040BAA0`
+  returns its height.
+* **De-fit `rasteriseSurface` / `collectFromGrid`.** Three things in
+  `src/assets/SurfaceMesh.cpp` were fitted to `MM_CLIMB_002` and should
+  come out of the same code read, not out of matching a ledge. They are
+  left in place deliberately until there is something better to replace
+  them with, because they are what makes the climb ledge pass.
+  * the vertical-link filter requires the foot of a wall to sit at
+    `y >= 31`, which is that level's ledge at y = 32 written as a
+    constant. A ledge at y = 16 elsewhere is discarded as bottom skirt.
+  * the half-step rule -- a populated `key+8` ends the floor at this
+    vertex and raises a wall -- came from one turn at one column.
+  * the chord window 8.0–13.5 and the 1.5 distance tolerances are tuned,
+    not derived.
+* **The fall, then the other skills.** The climb ledge, the climb rate and
+  now the fall are settled (Phase 3; the fall is read off the binary, not
+  measured, and still owes a live series). Gadgets stay unmeasured.
 * **Hazard / gadget behaviour, after the mask.** The harness can reach a
   level and read world positions. Placed-model poses are already parsed
   (`LevelObjects::placed`); anti-grav, teleports, deathrollers, and the

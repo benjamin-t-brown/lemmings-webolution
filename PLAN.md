@@ -1186,19 +1186,136 @@ Still unread, and both wanted before a production reader:
   result to `setHeight` at `0x0043A048`, so it is a separate `u32` earlier in
   the stream than the grid's own cell count. Not located in the file.
 
+#### The grid's anchor, found: the third array after the "Cylinder" chunk
+
+`read_lvl_grid.py` located the grid by fingerprint, honest for a harness and
+not good enough for a loader. The chunk order turns out to be fixed, and the
+walk is short. From the literal length-prefixed `"Cylinder"` string:
+
+```
+u32 8, "Cylinder"
+u32[5]            all zero, in all 102 levels
+u32 height        96, in all 102 levels
+f64               0.36, in all 102 levels
+u32 N, u32[N]     N = 49858 in all 102 levels -- the tube, identical per level
+u32 R, R x 12     the records the engine loads into +0x43C
+                  (FUN_0043B9C0 at 0x0043A0A0, `imul ecx, ecx, 0xc` at 0x0043BA1D)
+u32 C, u32[C]     the collision grid; C == 256 * height
+```
+
+That walk lands on the grid in **all 102 retail levels** — arithmetic, no
+search — and `src/assets/CollisionGrid.h` implements it and fails loudly
+rather than falling back to a scan.
+
+Two things fall out. **The row count is located**: the `u32` in the preamble
+equals `C / 256` in every level, and it is what `FUN_00439FD3` hands to
+`setHeight` at `0x0043A048`, which this section listed as unread. One caveat
+kept in the header — every retail level is 96 rows, so "this field is the
+height" is consistent with the data rather than proven by it. And **the
+12-byte record array is empty on most levels** (`R = 0`), which is why the
+`u32` before the grid's count reads as zero almost everywhere; `E14_KF_1` has
+15 of them.
+
+The array before the records is the tube's own, constant at 49,858 `u32`s in
+every level — and it is **not** `header[3]`, the byte length `LevelIndex`
+uses to place `grid0`/`grid1`. So `indexLevel`'s grids are a different array
+from this one, and walking forward from the end of `grid1` does not reach the
+collision grid (tried: 0 of 102). That is a loose end in the lattice reading,
+not in this one.
+
+#### The simulation now runs on the stored grid
+
+`--level` builds its terrain from `CollisionGrid`, not from
+`rasteriseSurface`. The lattice path is kept and still exercised by
+`lrtool lvlmap` / `lvlmask` / `lvlstats`, and `main.cpp` records in a comment
+that it is the engine's render input, so nobody re-tunes it for collision.
+
+**Resolution is now the engine's: 256 x 96, one cell per world unit.** Our
+raster's 192 rows were two per unit, a supersampling that was ours alone and
+that the original cannot represent. Dropping it makes every constant in
+`Rules` the world-unit number read straight off the binary, with no
+conversion: `climbSpeed` 2 → **1**, `fallSpeed` 8 → **4**, `floatSpeed`
+4 → **2**, `floatAfter` 20 → **10**, `splatDistance` 60 → **30**.
+
+The provisional *distances* were classic-Lemmings pixel values carried at the
+old resolution, so they were halved to keep the physical size they stood in
+for: `maxStepUp` 6→3, `brickLength` 6→3, `basherReach` 4→2,
+`explosionRadius` 9→5, `lemmingHeight` 8→4. Halving a guess leaves a guess,
+and `World.h` says so. **`diggerDepth` stays 1 because it cannot halve**,
+which makes a digger sink twice as fast per tick as before — flagged in the
+header rather than fudged, and a reason to read it off the original.
+
+`worldToMaskPixel`'s `pixelsPerUnit` **default was removed**. The two grids
+disagree — the stored mask is 1 cell per unit, the lattice raster 2 — and a
+silent default there halves or doubles every coordinate, which looks like bad
+level data rather than a bug.
+
+`Terrain::fromCollisionGrid` maps cells by the engine's semantics: not solid
+(zero, or `0x80` not-landable) is `Empty`, `0x2` indestructible is `Steel`,
+everything else solid is `Earth`. **`Rock` has no counterpart** — the engine
+draws one line, destructible or not, so a second one here would be ours. It
+is left unused by this path rather than given invented meaning.
+
+#### The entrance survey against the real mask
+
+`lrtool lvlstats` reports both readings side by side and `test_corpus` pins
+both. The difference is the whole result:
+
+| | our lattice raster | the stored grid |
+| --- | --- | --- |
+| levels with a mask | 101 of 102 | **102 of 102** |
+| median solid | 3.9% | **39.7%** |
+| median entrance drop | 132 rows = 66 world units | **9 cells** |
+| entrances with floor below | 132 of 143 | **134 of 144** |
+| of those, survivable | 35 | **116** |
+| levels releasable | 22 of 101 | **81 of 102** |
+
+On the five levels with live dumps the drop falls from a fatal 62–72 world
+units to 0–12 cells, and the solid percentages match the live grids exactly.
+
+**21 levels are still not releasable, and that is not obviously a terrain
+problem.** This section already records that on MM_CLIMB_002 the engine
+writes a released lemming's billboard at y = 32.190 rather than at the
+entrance object's own height — and that level's entrance sits 12 cells above
+the floor beneath it. So "drop from the parsed entrance position" may not be
+how the original spawns at all, and the residue is at least as likely to be
+our entrance reading or the spawn model as the mask. Settle that before
+treating 81 of 102 as a defect count.
+
+`src/__test__/test_collisiongrid.cpp` pins the parser against the original
+itself: all five live dumps reproduce **byte for byte** from the `.LVL`
+alone, and all 102 levels yield a 256 x 96 grid. Unlike `test_corpus` these
+are not a baseline to improve — a disagreement with a live dump is a bug in
+the parser. It degrades to the corpus checks when the dumps are absent, so it
+is useful on a machine that has never run the original.
+
+#### Still unwired, after the grid landed
+
+* The **seven unread flag bits** (`0x4 0x8 0x20 0x40 0x100 0x400 0x8000`),
+  named `kCellUnreadBits` in `CollisionGrid.h` and not acted on. They are
+  common, not rare, so the mask is not fully understood.
+* `0x200`/`0x2000`/`0x4000` object zones and `0x800` blocker are parsed into
+  named constants and ignored by the simulation.
+* Sprite scale against the halved cell height. The camera and renderer read
+  terrain dimensions dynamically and adapt, but a lemming sprite's size
+  relative to a cell has not been checked since the rows halved.
+* `LevelIndex`'s `grid0`/`grid1` placement does not abut this chunk, which
+  suggests the lattice arrays are somewhere other than where `header[3]`
+  puts them.
+
 #### Where to go next
 
-* **Parse the grid chunk, and take `rasteriseSurface` out of the collision
-  path.** This is the critical path and it is now a parsing job: a reader in
-  `src/assets/`, reached through the level's chunk order rather than by
-  fingerprint, feeding `Terrain` directly. The lattice stays for rendering.
+* **Done: the grid chunk is parsed, anchored and wired in**, at the engine's
+  own 256 x 96, with `Rules` in world units. See the three subsections above.
 * **Read the seven unread flag bits** before calling the mask understood.
-* **Our mask is 256 x 192; the engine's is 256 x 96** — one cell per world
-  unit, against our two rows. The supersampling is ours alone and the
-  original cannot represent a half-unit feature, so dropping to 96 rows makes
-  every constant in `Rules` the world-unit number read straight off the
-  binary: `climbSpeed` 1, `fallSpeed` 4, `floatSpeed` 2, `floatAfter` 10,
-  `splatDistance` 30, with no conversion anywhere.
+  This is now the largest single unknown about the terrain.
+* **Settle how the original spawns a lemming.** The engine writes a released
+  lemming at y = 32.190 on MM_CLIMB_002, whose entrance object sits 12 cells
+  above the floor beneath it, so the entrance position is probably not the
+  spawn position. That decides whether the 21 levels that fail the drop
+  survey are a terrain problem, an entrance-parsing problem, or neither, and
+  it is cheap now that any level can be entered (§2.2).
+* **Check a lemming's sprite scale against the halved cell height.**
 * **The ring stride and the `SurfaceMesh` fits are no longer on the critical
   path.** `detectRingStride`'s geometric search, the `y >= 31` vertical-link
   filter, the half-step wall rule and the tuned chord window were all aimed at

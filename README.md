@@ -69,9 +69,12 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
       into the object it collides against. Verified byte-identical to the
       running original's own grid on five independently entered levels, and
       present exactly once in each of the 102 files.
-      `tools/harness/read_lvl_grid.py` reads it from a `.LVL`, `read_grid.py`
-      reads it live. **Not yet wired into the simulation** -- `--level` still
-      plays on the lattice-derived mask below. See PLAN.md 1.6.
+      Anchored in the chunk order, not by signature: it is the third array
+      after the `Cylinder` chunk, which lands in all 102 levels. `--level`
+      **plays on it** -- the simulation now runs at the engine's own one cell
+      per world unit, and `Rules` carries the world-unit constants read off
+      the binary. All five live dumps reproduce byte for byte from the file
+      alone. See PLAN.md 1.6.
 - [~] `.LVL` surface: cylindrical lattice → quads → occupancy mask. This is
       what the engine **draws**; it is not what a lemming stands on, so the
       ring stride and the face rules are rendering concerns now. `--level`

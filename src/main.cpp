@@ -34,6 +34,7 @@
 #include "assets/Png.h"
 #include "audio/Mixer.h"
 #include "gfx/Gl.h"
+#include "assets/CollisionGrid.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
 #include "assets/LevelObjects.h"
@@ -147,6 +148,11 @@ sim::Terrain terrainFromMask(const OccupancyMask& mask) {
   return t;
 }
 
+// The collision mask the original keeps in the .LVL is one cell per world
+// unit -- 256 x 96 -- so the simulation runs at that resolution and every
+// constant in Rules is a world-unit count with no conversion.
+constexpr int kPixelsPerUnit = 1;
+
 // A hand-built level for when no .LVL surface is loaded: a floor, pillars,
 // a gap, and a pit at the seam so wraparound gets exercised by just playing.
 sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate,
@@ -169,12 +175,12 @@ sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate,
   return s;
 }
 
-sim::LevelSetup makeSurfaceLevel(const OccupancyMask& mask, const ReleaseRates& rates,
+sim::LevelSetup makeSurfaceLevel(const CollisionGrid& mask, const ReleaseRates& rates,
                                  int releaseRate, const LevelInfo* info,
                                  const LevelObjects* objects, const LevelSkills* skills,
-                                 double worldH, int pixelsPerUnit = 2) {
+                                 double worldH, int pixelsPerUnit = kPixelsPerUnit) {
   sim::LevelSetup s;
-  s.terrain = terrainFromMask(mask);
+  s.terrain = sim::Terrain::fromCollisionGrid(mask);
   if (objects) {
     for (const auto& e : objects->entrances) {
       const auto [x, y] =
@@ -645,16 +651,19 @@ int main(int argc, char** argv) {
                            g_app.skin.innerCount(), path.c_str());
             }
 
-            auto index = indexLevel(*blob);
-            if (!index) {
-              std::fprintf(stderr, "terrain: %s\n", index.error().c_str());
-            } else if (auto faces = buildSurfaceMesh(*mesh, index->grid0, index->grid1)) {
-              if (faces->quads.empty()) {
-                std::fprintf(stderr, "terrain: no lattice quads in %s (using test level)\n",
-                             path.c_str());
+            // Collision comes from the mask stored in the .LVL, which is what
+            // the original itself collides against (CollisionGrid.h). The
+            // surface lattice -- indexLevel's grids, buildSurfaceMesh and
+            // rasteriseSurface -- is the engine's *render* input and is not
+            // consulted here; `lrtool lvlmap` / `lvlmask` / `lvlstats` still
+            // exercise it.
+            {
+              auto foundGrid = findCollisionGrid(*blob);
+              if (!foundGrid) {
+                std::fprintf(stderr, "terrain: %s (using test level)\n",
+                             foundGrid.error().c_str());
               } else {
-                constexpr int kPixelsPerUnit = 2;
-                const auto mask = rasteriseSurface(*faces, *mesh, kPixelsPerUnit);
+                const auto& mask = *foundGrid;
                 const double pct =
                     100.0 * static_cast<double>(mask.solidCells()) /
                     (static_cast<double>(mask.width) * mask.height);
@@ -719,17 +728,9 @@ int main(int argc, char** argv) {
                     mask, g_app.releaseRates, g_app.releaseRate, g_app.levelInfo(), &objects,
                     skillsPtr, mesh->height(), kPixelsPerUnit);
                 std::fprintf(stderr,
-                             "terrain: %zu quads (ang %zu, ring %zu, stride %d), "
-                             "mask %dx%d, %.1f%% solid from %s\n",
-                             faces->quads.size(), faces->angularQuads, faces->ringQuads,
-                             faces->ringStride, mask.width, mask.height, pct, path.c_str());
-                if (pct < 5.0)
-                  std::fprintf(stderr,
-                               "terrain: coverage is sparse -- platforms only; "
-                               "skin tiles are still scenery\n");
+                             "terrain: stored collision mask %dx%d, %.1f%% solid from %s\n",
+                             mask.width, mask.height, pct, path.c_str());
               }
-            } else {
-              std::fprintf(stderr, "terrain: %s\n", faces.error().c_str());
             }
           }
         }

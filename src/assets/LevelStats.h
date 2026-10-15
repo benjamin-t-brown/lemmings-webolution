@@ -59,6 +59,20 @@ struct LevelStats {
   std::vector<int> drops;
   // Median of `drops`, or -1 when it is empty.
   int medianDropRows = -1;
+
+  // The same survey against the mask the original actually collides against,
+  // read out of the .LVL (CollisionGrid.h). This is the real terrain; the
+  // fields above describe our lattice raster, which is a different and much
+  // sparser thing. Rows here are world units, because the stored grid is one
+  // cell per unit.
+  bool hasGrid = false;
+  int gridHeight = 0;
+  std::size_t gridSolidCells = 0;
+  double gridSolidPercent = 0;
+  std::size_t gridEntrancesWithFloor = 0;
+  std::size_t gridEntrancesSurvivable = 0;
+  std::vector<int> gridDrops;
+  int gridMedianDropRows = -1;
 };
 
 // What the corpus looks like taken together. Medians are over levels that
@@ -86,16 +100,30 @@ struct CorpusStats {
   // Levels with at least one entrance that has nothing solid below it.
   std::size_t levelsWithFloorlessEntrance = 0;
   std::size_t floorlessEntrances = 0;
+
+  // The same headline counts against the stored collision grid -- the real
+  // terrain. Where the lattice numbers measure our raster, these measure the
+  // game.
+  std::size_t grids = 0;
+  double gridMedianSolidPercent = 0;
+  int gridMedianDropRows = -1;
+  std::size_t gridEntrancesWithFloor = 0;
+  std::size_t gridEntrancesSurvivable = 0;
+  std::size_t gridSurvivableLevels = 0;
+  std::size_t gridFloorlessEntrances = 0;
 };
 
-// Survey every level in the archive. `splatDistanceRows` is the kill
-// distance in mask rows; pass `World::Rules{}.splatDistance` rather than a
-// literal, so the oracle tracks the simulation.
+// Survey every level in the archive. `splatDistanceCells` is the kill
+// distance in terrain cells, which are world units; pass
+// `World::Rules{}.splatDistance` rather than a literal, so the oracle tracks
+// the simulation. The lattice raster is two rows per world unit, so its
+// drops are scaled before the comparison; the stored grid is one cell per
+// unit and needs none.
 std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibrary&,
-                                                                 int splatDistanceRows);
+                                                                 int splatDistanceCells);
 
-// `splatDistanceRows` must be the value passed to surveyLevels; it is needed
-// again only for the median-based count.
-CorpusStats summariseLevels(std::span<const LevelStats>, int splatDistanceRows);
+// `splatDistanceCells` must be the value passed to surveyLevels; it is
+// needed again only for the median-based counts.
+CorpusStats summariseLevels(std::span<const LevelStats>, int splatDistanceCells);
 
 }  // namespace webo

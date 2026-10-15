@@ -86,9 +86,14 @@ std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::b
 // Read the eight skill-panel counts from the level trailer.
 std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byte>);
 
-// Map a world point onto mask / terrain pixels. `pixelsPerUnit` and `worldH`
-// must match the values used to build the occupancy mask.
+// Map a world point onto mask / terrain cells. `pixelsPerUnit` and `worldH`
+// must match the grid being mapped into, and the two grids in this project
+// differ: the stored collision mask (assets/CollisionGrid.h), which is what
+// the simulation runs on, is **1** cell per world unit, while the lattice
+// raster `rasteriseSurface` produces defaults to 2. There is deliberately no
+// default here -- getting it wrong silently halves or doubles every
+// coordinate, which is a bug that looks like bad level data.
 std::pair<int, int> worldToMaskPixel(const Vec3& p, int maskWidth, int maskHeight,
-                                     double worldH, int pixelsPerUnit = 2);
+                                     double worldH, int pixelsPerUnit);
 
 }  // namespace webo

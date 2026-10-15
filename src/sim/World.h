@@ -123,8 +123,11 @@ public:
 
     // MEASURED. A climber rises one world unit per step. On MM_CLIMB_002 the
     // billboard went 34.190, 35.190, 36.190 … one per 200 ms tick, up the
-    // column-128 wall and again up the next. One world unit is two mask rows.
-    int climbSpeed = 2;         // mask rows per tick
+    // column-128 wall and again up the next. The terrain is one cell per
+    // world unit -- the resolution the original's own stored mask uses
+    // (assets/CollisionGrid.h) -- so this is the measured number with no
+    // conversion.
+    int climbSpeed = 1;         // cells per tick
 
     // READ FROM THE BINARY, not yet confirmed live. The lemming's own fall is
     // the state at vtable 0x004B0A20 -- the one that carries the splat test,
@@ -143,7 +146,8 @@ public:
     //   00416219  dc6a10        fsubr qword ptr [edx+0x10]    ; Y - that
     //
     // So the constant is world units per *second*: 20.0 * 0.2 s = 4 world
-    // units per tick, which is 8 mask rows, halving to 4 under the umbrella.
+    // units per tick, halving to 2 under the umbrella. The terrain is one
+    // cell per world unit, so that is the value here as it stands.
     // The same arithmetic with the climb's 5.0 gives 1 world unit per tick and
     // with the walk's 5.0 gives 1 column per tick, and both of those were
     // measured on the running original -- which is what fixes the units here.
@@ -152,13 +156,13 @@ public:
     // 10. That state is also a faller by its animation, but it has no splat
     // test, no umbrella and no floater check, so it is some other descent and
     // not this one. PLAN.md 2.3 has both.
-    int fallSpeed = 8;          // mask rows per tick while falling
+    int fallSpeed = 4;          // cells per tick while falling
 
     // READ FROM THE BINARY, same accessor: exactly half the fall, because the
     // umbrella path divides by the 2.0 at 0x004B03F8. The flag it branches on
     // is the lemming's [+0x4b], set when the stepper starts the "float"
     // animation at 0x004162C2.
-    int floatSpeed = 4;         // mask rows per tick under an umbrella
+    int floatSpeed = 2;         // cells per tick under an umbrella
 
     // READ FROM THE BINARY. The faller keeps the distance fallen as a double
     // at its own +0x18, in world units, incremented by 1.0 per sub-step at
@@ -167,13 +171,14 @@ public:
     //   004162d9  dc1de8034b00  fcomp qword ptr [0x004b03e8]  ; 10.0 -> umbrella
     //   004165ff  dc1da8104b00  fcomp qword ptr [0x004b10a8]  ; 30.0 -> splat
     //
-    // Ten and thirty world units, so 20 and 60 mask rows. The splat is skipped
+    // Ten and thirty world units, and one cell is one world unit, so these
+    // are the read values unchanged. The splat is skipped
     // when the lemming's has-floater byte [+0x49] is set -- which is what our
     // `floating` already stands for, since the umbrella opens well before the
     // splat distance -- and the landing cell's own flags can exempt it too
     // (bit 0x80 is not landable at all). The classic values were 16 and 63.
-    int floatAfter = 20;        // umbrella opens this far into the fall
-    int splatDistance = 60;     // falling further than this kills
+    int floatAfter = 10;        // umbrella opens this far into the fall
+    int splatDistance = 30;     // falling further than this kills
 
     // PROVISIONAL from here down: classic-Lemmings values, not this engine's.
     //
@@ -206,12 +211,20 @@ public:
     // Reading what calls it is the next step, and until then neither
     // diggerDepth nor basherReach may be set from it.
     // tools/harness/read_steppers.py prints all of this.
-    int maxStepUp = 6;          // a walker climbs steps up to this high
-    int builderBricks = 12;
-    int brickLength = 6;
+    // The distances below were classic-Lemmings *pixel* values carried at the
+    // two-rows-per-world-unit resolution our old raster used. The terrain is
+    // now one cell per world unit, matching the original's stored mask, so
+    // each has been halved to keep the physical size it was standing in for.
+    // Halving a guess still leaves a guess: these are no better founded than
+    // before, only expressed in the right unit. diggerDepth stays 1 because
+    // it cannot halve, which makes a digger sink twice as fast per tick as it
+    // used to -- read it off the original before relying on it.
+    int maxStepUp = 3;          // a walker climbs steps up to this high
+    int builderBricks = 12;     // a count, not a distance -- unscaled
+    int brickLength = 3;
     int builderInterval = 8;    // ticks between bricks
     int basherInterval = 4;
-    int basherReach = 4;        // pixels removed per bite
+    int basherReach = 2;        // cells removed per bite
     int minerInterval = 6;
     int diggerInterval = 4;
     int diggerDepth = 1;
@@ -220,8 +233,8 @@ public:
     // five seconds of game time rather than five seconds of a tick rate we
     // had guessed.
     int bomberFuse = 5 * 5;     // ticks
-    int explosionRadius = 9;
-    int lemmingHeight = 8;      // for head-room checks
+    int explosionRadius = 5;    // halved from the classic 9, as above
+    int lemmingHeight = 4;      // for head-room checks
   };
 
   World() = default;

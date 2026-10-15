@@ -158,9 +158,17 @@ add_executable(test_corpus src/__test__/test_corpus.cpp)
 target_link_libraries(test_corpus PRIVATE webolution_objects)
 add_test(NAME corpus COMMAND test_corpus)
 
+add_executable(test_collisiongrid src/__test__/test_collisiongrid.cpp)
+target_link_libraries(test_collisiongrid PRIVATE webolution_objects)
+# The live grid dumps sit in build/live_dump beside the tree, not in the game
+# directory, so the test needs to know where the tree is.
+target_compile_definitions(test_collisiongrid
+  PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_test(NAME collisiongrid COMMAND test_collisiongrid)
+
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata sprite levelindex cylinder surface wav levelobjects polylist world corpus PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata sprite levelindex cylinder surface wav levelobjects polylist world corpus collisiongrid PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

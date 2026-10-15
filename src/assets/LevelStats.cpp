@@ -1,6 +1,7 @@
 #include "assets/LevelStats.h"
 
 #include "assets/Box.h"
+#include "assets/CollisionGrid.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
 #include "assets/LevelObjects.h"
@@ -43,7 +44,7 @@ std::string basename(const std::string& entry) {
 }  // namespace
 
 std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibrary& lib,
-                                                                 int splatDistanceRows) {
+                                                                 int splatDistanceCells) {
   std::vector<LevelStats> out;
   for (const auto& name : levelFileNames(lib)) {
     LevelStats s;
@@ -75,8 +76,6 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
     const auto cells = static_cast<std::size_t>(mask.width) * mask.height;
     row.solidPercent = cells ? 100.0 * static_cast<double>(row.solidCells) / cells : 0.0;
     row.nonEmptyMask = !mask.empty() && row.solidCells > 0;
-    if (!row.nonEmptyMask)
-      continue;
 
     auto objs = findLevelObjects(*blob);
     if (!objs)
@@ -84,7 +83,13 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
     row.entrances = objs->entrances.size();
     row.exits = objs->exits.size();
 
+    // The lattice survey needs a mask with something in it. The grid survey
+    // further down does not depend on it at all, and must not be skipped when
+    // our raster comes up empty -- VH13_KF_1 rasterises to nothing and still
+    // has a real stored grid.
     for (const auto& e : objs->entrances) {
+      if (!row.nonEmptyMask)
+        break;
       const auto [col, top] = worldToMaskPixel(
           e.position, mask.width, mask.height, mesh->height(), kPixelsPerUnit);
       // Straight down the mask column. py grows downward, so this is the
@@ -99,24 +104,72 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
         continue;
       ++row.entrancesWithFloor;
       row.drops.push_back(drop);
-      if (drop <= splatDistanceRows)
+      // The raster is kPixelsPerUnit rows to a world unit; the splat
+      // distance is in world units.
+      if (drop <= splatDistanceCells * kPixelsPerUnit)
         ++row.entrancesSurvivable;
     }
     std::ranges::sort(row.drops);
     row.medianDropRows = median(row.drops);
+
+    // The same question against the mask the original collides against. One
+    // cell per world unit, so no scaling.
+    auto grid = findCollisionGrid(*blob);
+    if (!grid)
+      continue;
+    row.hasGrid = true;
+    row.gridHeight = grid->height;
+    row.gridSolidCells = grid->solidCells();
+    const auto gcells = static_cast<std::size_t>(grid->width) * grid->height;
+    row.gridSolidPercent =
+        gcells ? 100.0 * static_cast<double>(row.gridSolidCells) / gcells : 0.0;
+    for (const auto& e : objs->entrances) {
+      const auto [col, top] =
+          worldToMaskPixel(e.position, grid->width, grid->height, mesh->height(), 1);
+      int drop = -1;
+      for (int y = top; y < grid->height; ++y)
+        if (grid->solid(col, y)) {
+          drop = y - top;
+          break;
+        }
+      if (drop < 0)
+        continue;
+      ++row.gridEntrancesWithFloor;
+      row.gridDrops.push_back(drop);
+      if (drop <= splatDistanceCells)
+        ++row.gridEntrancesSurvivable;
+    }
+    std::ranges::sort(row.gridDrops);
+    row.gridMedianDropRows = median(row.gridDrops);
   }
   return out;
 }
 
-CorpusStats summariseLevels(std::span<const LevelStats> rows, int splatDistanceRows) {
+CorpusStats summariseLevels(std::span<const LevelStats> rows, int splatDistanceCells) {
   CorpusStats c;
   c.levels = rows.size();
-  std::vector<double> solids;
-  std::vector<int> drops;
+  std::vector<double> solids, gridSolids;
+  std::vector<int> drops, gridDrops;
   for (const auto& r : rows) {
     if (!r.parsed)
       continue;
     ++c.parsed;
+
+    // The stored grid is independent of whether our raster produced
+    // anything, so it is accumulated before the raster-only counts bail out.
+    if (r.hasGrid) {
+      ++c.grids;
+      gridSolids.push_back(r.gridSolidPercent);
+      if (r.gridMedianDropRows >= 0)
+        gridDrops.push_back(r.gridMedianDropRows);
+      c.gridEntrancesWithFloor += r.gridEntrancesWithFloor;
+      c.gridEntrancesSurvivable += r.gridEntrancesSurvivable;
+      c.gridFloorlessEntrances += r.entrances - r.gridEntrancesWithFloor;
+      if (r.gridEntrancesWithFloor > 0 &&
+          r.gridEntrancesSurvivable == r.gridEntrancesWithFloor)
+        ++c.gridSurvivableLevels;
+    }
+
     if (!r.nonEmptyMask)
       continue;
     ++c.nonEmptyMasks;
@@ -136,11 +189,14 @@ CorpusStats summariseLevels(std::span<const LevelStats> rows, int splatDistanceR
     // Releasable: something to land on, and nothing that lands fatally.
     if (r.entrancesWithFloor > 0 && r.entrancesSurvivable == r.entrancesWithFloor)
       ++c.survivableLevels;
-    if (r.medianDropRows >= 0 && r.medianDropRows <= splatDistanceRows)
+    if (r.medianDropRows >= 0 && r.medianDropRows <= splatDistanceCells * kPixelsPerUnit)
       ++c.survivableByMedian;
+
   }
   c.medianSolidPercent = median(std::move(solids));
   c.medianDropRows = median(std::move(drops));
+  c.gridMedianSolidPercent = median(std::move(gridSolids));
+  c.gridMedianDropRows = median(std::move(gridDrops));
   return c;
 }
 

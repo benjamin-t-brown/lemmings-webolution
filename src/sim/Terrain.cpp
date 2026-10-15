@@ -1,5 +1,7 @@
 #include "Terrain.h"
 
+#include "assets/CollisionGrid.h"
+
 #include <algorithm>
 
 namespace webo::sim {
@@ -108,6 +110,19 @@ Terrain Terrain::fromLevelGrid(std::span<const std::uint32_t> grid, int width, i
   const std::size_t n = std::min(want, grid.size());
   for (std::size_t i = 0; i < n; ++i)
     t.cells_[i] = (grid[i] == 0xFFFFFFFFu) ? Material::Empty : Material::Earth;
+  return t;
+}
+
+Terrain Terrain::fromCollisionGrid(const CollisionGrid& grid) {
+  Terrain t(grid.width, grid.height);
+  for (int y = 0; y < grid.height; ++y) {
+    for (int x = 0; x < grid.width; ++x) {
+      if (!grid.solid(x, y))
+        continue;
+      t.cells_[t.index(x, y)] = (grid.at(x, y) & kCellIndestructible) ? Material::Steel
+                                                                     : Material::Earth;
+    }
+  }
   return t;
 }
 

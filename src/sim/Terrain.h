@@ -17,6 +17,10 @@
 #include <span>
 #include <vector>
 
+namespace webo {
+struct CollisionGrid;
+}
+
 namespace webo::sim {
 
 enum class Material : std::uint8_t {
@@ -61,10 +65,25 @@ public:
   std::size_t solidCells() const;
   std::span<const Material> cells() const { return cells_; }
 
-  // Builds terrain from the original's cell grid: 0xFFFFFFFF means empty and
-  // anything else is solid. Which index maps to which material is not yet
-  // known, so everything solid becomes Earth; see PLAN.md 1.5.
+  // Builds terrain from the surface lattice's index array: 0xFFFFFFFF means
+  // empty and anything else is solid. That array is the engine's *render*
+  // input, so this is not how a level's terrain is built -- see
+  // fromCollisionGrid. Kept because the lattice tooling still uses it.
   static Terrain fromLevelGrid(std::span<const std::uint32_t> grid, int width, int height);
+
+  // Builds terrain from the collision mask stored in the .LVL -- the one the
+  // original itself collides against (assets/CollisionGrid.h). Solidity is
+  // the engine's own test, and the material comes from the one flag bit that
+  // carries a material distinction:
+  //
+  //   not solid            -> Empty   (zero, or 0x80 not-landable)
+  //   0x2 indestructible   -> Steel   (tested first at 0x004248E6, never cleared)
+  //   otherwise            -> Earth
+  //
+  // Rock has no counterpart in the grid. The engine draws one line, between
+  // destructible and not, so inventing a second here would be our rule and
+  // not the original's; Rock stays unused by this path.
+  static Terrain fromCollisionGrid(const CollisionGrid& grid);
 
 private:
   std::size_t index(int x, int y) const;

@@ -464,8 +464,12 @@ int cmdLvlStats(const fs::path& dir, bool csv) {
     return 0;
   }
 
-  std::cout << std::format("splat distance {} mask rows, from World::Rules\n\n", splat);
-  std::cout << "level                   stride  quads  edges  solid%  ent  floor  surv  drop\n";
+  std::cout << std::format("splat distance {} cells (world units), from World::Rules\n\n",
+                           splat);
+  std::cout << "  the first block is OUR lattice raster; `grid` is the mask the original\n"
+               "  itself collides against, read out of the .LVL (CollisionGrid.h)\n\n";
+  std::cout << "level                   stride  quads  edges  solid%  ent  floor  surv  drop"
+               "   grid%  gfloor  gsurv  gdrop\n";
   for (const auto& r : *rows) {
     if (!r.parsed) {
       std::cout << std::format("{:<22}       -  (did not parse)\n", r.shortName);
@@ -475,10 +479,12 @@ int cmdLvlStats(const fs::path& dir, bool csv) {
       std::cout << std::format("{:<22}  {:>6}  (empty mask)\n", r.shortName, r.ringStride);
       continue;
     }
-    std::cout << std::format("{:<22}  {:>6} {:>6} {:>6} {:>7.2f} {:>4} {:>6} {:>5} {:>5}\n",
+    std::cout << std::format("{:<22}  {:>6} {:>6} {:>6} {:>7.2f} {:>4} {:>6} {:>5} {:>5}"
+                             "  {:>6.2f} {:>7} {:>6} {:>6}\n",
                              r.shortName, r.ringStride, r.quads, r.openEdges, r.solidPercent,
                              r.entrances, r.entrancesWithFloor, r.entrancesSurvivable,
-                             r.medianDropRows);
+                             r.medianDropRows, r.gridSolidPercent, r.gridEntrancesWithFloor,
+                             r.gridEntrancesSurvivable, r.gridMedianDropRows);
   }
 
   std::cout << std::format(
@@ -492,6 +498,15 @@ int cmdLvlStats(const fs::path& dir, bool csv) {
       c.medianDropRows / 2.0, c.entrances, c.entrancesWithFloor, c.entrancesSurvivable,
       c.survivableLevels, c.nonEmptyMasks, c.survivableByMedian, c.nonEmptyMasks,
       c.levelsWithFloorlessEntrance, c.floorlessEntrances);
+
+  std::cout << std::format(
+      "\nthe stored collision grid -- the terrain the original actually uses:\n"
+      "  {} levels carry one, median solid {:.1f}%, median entrance drop {} cells\n"
+      "  entrances: {} with floor below, {} of those survivable\n"
+      "  levels releasable: {} of {}\n"
+      "  entrances with nothing solid below: {}\n",
+      c.grids, c.gridMedianSolidPercent, c.gridMedianDropRows, c.gridEntrancesWithFloor,
+      c.gridEntrancesSurvivable, c.gridSurvivableLevels, c.grids, c.gridFloorlessEntrances);
   return 0;
 }
 

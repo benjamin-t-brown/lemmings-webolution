@@ -16,6 +16,7 @@ set(WEBOLUTION_SOURCES
   src/assets/Sprite.cpp
   src/assets/LevelIndex.cpp
   src/assets/Cylinder.cpp
+  src/assets/CollisionGrid.cpp
   src/assets/SurfaceMesh.cpp
   src/assets/LevelObjects.cpp
   src/assets/LevelStats.cpp

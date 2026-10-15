@@ -1,11 +1,15 @@
-// Corpus baseline for the terrain the surface lattice rebuilds.
+// Corpus baseline for the terrain, both readings of it.
 //
 // This is a change-detector, not a statement that the numbers are right.
-// The current state is bad: on most of the 102 retail levels the parsed
-// entrance sits a fatal drop above anything solid in our mask -- the median
-// is 132 mask rows, which is 66 world units against a splat distance of 60
-// rows. Only 22 of the 101 levels that rasterise to anything could have a
-// lemming released into them and survive the landing.
+//
+// Two masks are surveyed. The **stored collision grid** is the one the
+// original itself collides against, read out of the .LVL, and it is what the
+// simulation now runs on: 39.7% solid at the median, and 81 of 102 levels
+// take a lemming released from a parsed entrance without killing it. The
+// **lattice raster** is our own reconstruction from the surface vertices,
+// which turns out to be the engine's render input rather than its terrain;
+// it is far sparser -- 3.9% solid at the median, 22 of 101 releasable -- and
+// is pinned here only so a change to the face rule moves a number.
 //
 // The invariant is chosen because it needs no running original: a lemming
 // released from an entrance has to land on something, and past
@@ -48,6 +52,12 @@ void check(bool cond, std::string_view what) {
 
 // Measured 2026-10-14 by `lrtool lvlstats`, which shares this survey code.
 constexpr std::size_t kLevels = 102;
+// The stored grid: every level has one, and it is real terrain everywhere.
+constexpr std::size_t kGrids = 102;
+constexpr std::size_t kGridSurvivableLevels = 81;
+constexpr std::size_t kGridEntrancesWithFloor = 134;
+constexpr std::size_t kGridEntrancesSurvivable = 116;
+constexpr int kGridMedianDropCells = 9;
 constexpr std::size_t kNonEmptyMasks = 101;  // VH13_KF_1 rasterises to nothing
 constexpr std::size_t kSurvivableLevels = 22;
 constexpr std::size_t kEntrances = 143;
@@ -97,6 +107,25 @@ void testCorpusBaseline(const fs::path& dir) {
         std::format("median entrance drop <= {} rows (got {})", kMedianDropRows,
                     c.medianDropRows));
 
+  // The stored grid. Exact where the data is the game's own, directional
+  // where our reading of entrances could still improve.
+  check(c.grids == kGrids, std::format("{} levels carry a grid (got {})", kGrids, c.grids));
+  check(c.gridSurvivableLevels >= kGridSurvivableLevels,
+        std::format("releasable on the real grid >= {} (got {})", kGridSurvivableLevels,
+                    c.gridSurvivableLevels));
+  check(c.gridEntrancesWithFloor >= kGridEntrancesWithFloor,
+        std::format("real-grid entrances with floor >= {} (got {})", kGridEntrancesWithFloor,
+                    c.gridEntrancesWithFloor));
+  check(c.gridEntrancesSurvivable >= kGridEntrancesSurvivable,
+        std::format("real-grid entrances survivable >= {} (got {})",
+                    kGridEntrancesSurvivable, c.gridEntrancesSurvivable));
+  check(c.gridMedianDropRows <= kGridMedianDropCells,
+        std::format("real-grid median drop <= {} cells (got {})", kGridMedianDropCells,
+                    c.gridMedianDropRows));
+  // The gap between the two readings is the whole point of keeping both.
+  check(c.gridMedianSolidPercent > c.medianSolidPercent * 5,
+        "the stored grid is far denser than our raster");
+
   // The one level whose ledge is confirmed against the running original
   // (PLAN.md 1.6, 1,231/1,231 foot cells). It must stay releasable, and it
   // must keep the ring stride the live check was made against.
@@ -114,10 +143,14 @@ void testCorpusBaseline(const fs::path& dir) {
   check(sawClimb, "MM_CLIMB_002 is in the corpus");
 
   std::cout << std::format(
-      "  {} levels, {} non-empty masks, median solid {:.1f}%, median drop {} rows\n"
-      "  {} releasable, {} entrances ({} with floor, {} survivable, {} with nothing below)\n",
-      c.levels, c.nonEmptyMasks, c.medianSolidPercent, c.medianDropRows, c.survivableLevels,
-      c.entrances, c.entrancesWithFloor, c.entrancesSurvivable, c.floorlessEntrances);
+      "  raster: {} levels, {} non-empty, median solid {:.1f}%, median drop {} rows\n"
+      "          {} releasable, {} entrances ({} with floor, {} survivable)\n"
+      "  grid:   {} levels, median solid {:.1f}%, median drop {} cells\n"
+      "          {} releasable, {} with floor, {} survivable\n",
+      c.levels, c.nonEmptyMasks, c.medianSolidPercent, c.medianDropRows,
+      c.survivableLevels, c.entrances, c.entrancesWithFloor, c.entrancesSurvivable,
+      c.grids, c.gridMedianSolidPercent, c.gridMedianDropRows,
+      c.gridSurvivableLevels, c.gridEntrancesWithFloor, c.gridEntrancesSurvivable);
 }
 
 }  // namespace

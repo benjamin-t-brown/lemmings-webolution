@@ -222,3 +222,41 @@ added, so there was no new parameter mutation to accept. No production code or o
 installation file changed, and no game process was started. The failed frame and all
 earlier retractions remain in place. Depth/clipping is the next bounded investigation;
 this follow-up does not close A1.
+
+## Depth follow-up: static inventory does not establish runtime planes
+
+The facilitator independently scanned every byte of each file-backed executable section
+for literal memory-indirect calls through the state-method slot, then compared raw windows
+and argument operands with the agent's device-global inventory. Those checks agreed. No
+depth-enable, depth-write, depth-comparison or clipping-state write appeared in that
+bounded direct-global inventory. This is **not** proof that depth testing is disabled:
+register-indirect calls, nonliteral slot selection, other aliases and runtime defaults
+remain outside that conclusion.
+
+The conservative scan is reproducible; its output includes unrelated interfaces and must
+be reviewed rather than treated as a list of device-state calls:
+
+```powershell
+python tools/harness/scan_camera_state_calls.py --output build/tmp/a1-depth-followup/independent-state-call-superset.json
+```
+
+The facilitator also re-read the conditional creation and attachment of a depth surface
+in device setup and checked the local desktop headers. Static setup capability does not
+prove that branch was active in the accepted gameplay frame or establish the effective
+runtime state. Candidate depth predicates and alternate vertex-emitter conventions remain
+in the research record; none is accepted here as a physical camera plane.
+
+**Correction:** the agent initially mislabeled source/destination blend-state calls as
+texture-map blending and culling. The installed desktop header disproved those names;
+the candidate note retains an explicit retraction. No clipping claim may rely on that
+interpretation. The archived Windows CE vertex description was also insufficient evidence
+for the stock desktop runtime.
+
+**Facilitator check and next question:** raw callsite/operand rereads and an independently
+written scan checked the static headline. No new numeric depth parameter was promoted or
+behaviorally tested. The required suite remains green; production code was unchanged.
+The next depth probe must establish the active gameplay draw family and runtime state,
+then use an original fixture with stable overlapping surfaces or a visible depth boundary.
+Its pixel criterion must be declared before capture. The existing static region cannot
+pin a uniform depth scale. Both the failed left-key view and clipping acceptance remain
+open; A1 is still incomplete. No original process was launched during these follow-ups.

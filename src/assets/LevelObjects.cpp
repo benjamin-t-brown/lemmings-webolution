@@ -1,5 +1,7 @@
 #include "LevelObjects.h"
 
+#include "SurfaceMesh.h"
+
 #include <cmath>
 #include <cstring>
 #include <format>
@@ -84,6 +86,45 @@ std::expected<WorldPose, std::string> poseAfterA3d(std::span<const std::byte> d,
   return pose;
 }
 
+std::uint16_t u16At(std::span<const std::byte> d, std::size_t o) {
+  std::uint16_t v;
+  std::memcpy(&v, d.data() + o, 2);
+  return v;
+}
+
+bool integralDouble(double v) {
+  return std::isfinite(v) && v == std::floor(v) && std::abs(v) < 1e6;
+}
+
+// The last length-prefixed printable name record ending just before `at`.
+// The hatch's is the model name, "entrance" or "entrance_acid"; it is
+// reported so a hit can be eyeballed, and is not part of the match.
+std::string nameBefore(std::span<const std::byte> d, std::size_t at) {
+  constexpr std::size_t kBack = 0x40;
+  std::string last;
+  std::size_t i = at > kBack ? at - kBack : 0;
+  while (i + 4 <= at) {
+    const std::uint32_t n = u32At(d, i);
+    if (n >= 3 && n <= 48 && i + 4 + n <= at) {
+      bool printable = true;
+      for (std::size_t k = 0; k < n; ++k) {
+        const auto c = static_cast<unsigned char>(d[i + 4 + k]);
+        if (c < 32 || c >= 127) {
+          printable = false;
+          break;
+        }
+      }
+      if (printable) {
+        last.assign(reinterpret_cast<const char*>(d.data() + i + 4), n);
+        i += 4 + n;
+        continue;
+      }
+    }
+    ++i;
+  }
+  return last;
+}
+
 bool looksLikeA3dName(std::span<const std::byte> bytes) {
   if (bytes.size() < 5 || bytes.size() > 40)
     return false;
@@ -158,6 +199,8 @@ std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::b
     i += 3 + n;
   }
 
+  objs.hatches = findHatchRecords(d);
+
   if (objs.entrances.empty() && objs.exits.empty())
     return std::unexpected(err.empty() ? "no entrance/exit .a3d placements" : err);
   return objs;
@@ -195,6 +238,100 @@ std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byt
   return skills;
 }
 
+std::vector<HatchRecord> findHatchRecords(std::span<const std::byte> d) {
+  // The hatch loader `0x00425E50` calls the base loader `0x0043130E` and then
+  // reads its own fields out of the stream. Stream primitives, each
+  // disassembled with `tools/harness/read_steppers.py --at`:
+  //
+  //   0x00402540 u8   0x00423360 u16   0x00402560 u32   0x00402580 f64
+  //   0x00480BB0 Vec3 (three f64)
+  //
+  // Read order, the tail of `0x0043130E` then `0x00425E50`:
+  //
+  //   0x00431328  Vec3 -> hatch+0x48
+  //   0x0043133A  Vec3 -> hatch+0x60
+  //               f64  (the hatch+0x78 reader)
+  //   0x00425EF1  u32  -> hatch+0xB0   lemming type
+  //   0x00425F02  u16  -> hatch+0x98   release count
+  //   0x00425F14  u16  -> hatch+0x9A   spawn X
+  //   0x00425F26  u16  -> hatch+0x9C   spawn Y
+  //   0x00425F38  u32  -> hatch+0xA0
+  //   0x00425F49  u32  -> hatch+0xA4
+  //   0x00425F5A  u32  -> hatch+0xA8
+  //   0x00425F6B  u8
+  //
+  // So the locator looks for that run of seven doubles -- an 8 x 5 box with
+  // z 0 then z 1, every component integral -- followed by a small type dword
+  // and a plausible triple. Nothing here is an offset carried over from one
+  // level to the next.
+  constexpr std::size_t kDoubles = 7;
+  constexpr std::size_t kTypeAt = kDoubles * 8;
+  constexpr std::size_t kTripleAt = kTypeAt + 4;
+  constexpr std::size_t kTailAt = kTripleAt + 6;
+  constexpr std::size_t kRecordBytes = kTailAt + 12 + 1;
+
+  std::vector<HatchRecord> out;
+  if (d.size() < kRecordBytes)
+    return out;
+  for (std::size_t p = 0; p + kRecordBytes <= d.size(); ++p) {
+    // Cheap reject before reading the rest of the run.
+    const double x0 = f64At(d, p);
+    if (!integralDouble(x0) || x0 < 0.0 || x0 > 4096.0)
+      continue;
+    double v[kDoubles];
+    bool ok = true;
+    for (std::size_t k = 0; k < kDoubles; ++k) {
+      v[k] = f64At(d, p + k * 8);
+      if (!integralDouble(v[k])) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok)
+      continue;
+    if (v[2] != 0.0 || v[5] != 1.0 || v[6] != 0.0)
+      continue;
+    if (v[3] - v[0] != 8.0 || v[4] - v[1] != 5.0)
+      continue;
+    const std::uint32_t type = u32At(d, p + kTypeAt);
+    if (type > 8)
+      continue;
+    const int count = u16At(d, p + kTripleAt);
+    const int x = u16At(d, p + kTripleAt + 2);
+    const int y = u16At(d, p + kTripleAt + 4);
+    if (count < 1 || count > 200 || x >= 256 || y >= 256)
+      continue;
+
+    HatchRecord h;
+    h.count = count;
+    h.x = x;
+    h.y = y;
+    h.type = static_cast<int>(type);
+    h.boxMin = {v[0], v[1], v[2]};
+    h.boxMax = {v[3], v[4], v[5]};
+    h.at = p + kTripleAt;
+    h.model = nameBefore(d, p);
+    out.push_back(std::move(h));
+  }
+  return out;
+}
+
+std::pair<int, int> hatchSpawnCell(const HatchRecord& h, int maskWidth, int maskHeight) {
+  if (maskWidth <= 0 || maskHeight <= 0)
+    return {0, 0};
+  int x = h.x % maskWidth;
+  if (x < 0)
+    x += maskWidth;
+  // The word is already a file row (0x0049C5AC truncates), and
+  // Terrain::fromCollisionGrid flips file row r to height - 1 - r.
+  int y = maskHeight - 1 - h.y;
+  if (y < 0)
+    y = 0;
+  if (y >= maskHeight)
+    y = maskHeight - 1;
+  return {x, y};
+}
+
 std::pair<int, int> worldToMaskPixel(const Vec3& p, int maskWidth, int maskHeight,
                                      double worldH, int pixelsPerUnit) {
   if (maskWidth <= 0 || maskHeight <= 0 || pixelsPerUnit < 1 || worldH <= 0)
@@ -211,6 +348,88 @@ std::pair<int, int> worldToMaskPixel(const Vec3& p, int maskWidth, int maskHeigh
   if (py >= maskHeight)
     py = maskHeight - 1;
   return {x, py};
+}
+
+ExitTrigger exitTriggerFromPose(const WorldPose& pose, int maskWidth, int maskHeight) {
+  ExitTrigger e;
+  if (maskWidth <= 0 || maskHeight <= 0)
+    return e;
+  const auto [ang, yUp] = unrollCylinder(pose.position);
+  // Round 12: live exit AABBs on Exit_water / Exit_any / Exit_acid (and the
+  // 46 corpus placements where ang*width sits past .5) centre on
+  // round(ang*width), not floor. Round 11's two Exit.a3d dumps both had
+  // frac < 0.5, so floor happened to agree. Wrap after rounding so 255.6
+  // becomes column 0, not 256.
+  int col = static_cast<int>(std::lround(ang * static_cast<double>(maskWidth)));
+  col %= maskWidth;
+  if (col < 0)
+    col += maskWidth;
+  // Integer a3d translations truncate to themselves; match hatchSpawnCell's
+  // chop rather than worldToMaskPixel's floor(worldH - y), which is one cell
+  // off for an integer y and was the wrong axis for this box.
+  const int worldY = static_cast<int>(yUp);
+  const int worldMinY = worldY - 9;
+  const int worldMaxY = worldY - 6;
+  e.x = col - 1;
+  e.y = maskHeight - 1 - worldMaxY;
+  e.width = 2;
+  e.height = (maskHeight - 1 - worldMinY) - e.y;  // 3 when the pose is in range
+  if (e.height < 0)
+    e.height = 0;
+  return e;
+}
+
+TeleportTrigger teleportTriggerFromPose(const WorldPose& pose, int maskWidth,
+                                        int maskHeight) {
+  TeleportTrigger t;
+  if (maskWidth <= 0 || maskHeight <= 0)
+    return t;
+  const auto [ang, yUp] = unrollCylinder(pose.position);
+  int col = static_cast<int>(std::lround(ang * static_cast<double>(maskWidth)));
+  col %= maskWidth;
+  if (col < 0)
+    col += maskWidth;
+  const int worldY = static_cast<int>(yUp);
+  // Live AABB on MM_TELE_003: X[col±6] Y[ty .. ty+8], closed.
+  t.x = col - 6;
+  t.y = maskHeight - 1 - (worldY + 8);
+  t.width = 12;
+  t.height = 8;
+  t.destCol = col;
+  t.destWorldY = worldY;
+  return t;
+}
+
+SpeedPadTrigger speedPadTriggerFromPose(const WorldPose& pose, int maskWidth,
+                                        int maskHeight) {
+  SpeedPadTrigger t;
+  if (maskWidth <= 0 || maskHeight <= 0)
+    return t;
+  const auto [ang, yUp] = unrollCylinder(pose.position);
+  int col = static_cast<int>(std::lround(ang * static_cast<double>(maskWidth)));
+  col %= maskWidth;
+  if (col < 0)
+    col += maskWidth;
+  const int worldY = static_cast<int>(yUp);
+  // Live AABB on VH21_JC: X[col±1] Y[ty .. ty+6], closed.
+  t.x = col - 1;
+  t.y = maskHeight - 1 - (worldY + 6);
+  t.width = 2;
+  t.height = 6;
+  return t;
+}
+
+LeverTrigger leverTriggerFromPose(const WorldPose& pose, int maskWidth,
+                                  int maskHeight) {
+  // Same live box shape as SpeedPad (E16_KF_1: X[20..22] Y[13..19] at ty=13).
+  LeverTrigger t;
+  const SpeedPadTrigger box =
+      speedPadTriggerFromPose(pose, maskWidth, maskHeight);
+  t.x = box.x;
+  t.y = box.y;
+  t.width = box.width;
+  t.height = box.height;
+  return t;
 }
 
 }  // namespace webo

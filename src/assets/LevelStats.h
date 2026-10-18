@@ -35,7 +35,8 @@ struct LevelStats {
   // produce a mesh. Such a level contributes to no other count here.
   bool parsed = false;
   // Parsed, and the raster produced a mask with at least one solid cell.
-  // A level can parse and still rasterise to nothing: VH13_KF_1 does.
+  // The header[3] window left VH13_KF_1 empty; the full 49858-word index
+  // rasterises it.
   bool nonEmptyMask = false;
 
   int ringStride = 0; // 0 when no multiple of 16 landed near one ring spacing

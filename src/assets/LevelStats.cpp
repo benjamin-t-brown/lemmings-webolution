@@ -6,6 +6,7 @@
 #include "assets/LevelIndex.h"
 #include "assets/LevelObjects.h"
 #include "assets/SurfaceMesh.h"
+#include "sim/Terrain.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -84,9 +85,8 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
     row.exits = objs->exits.size();
 
     // The lattice survey needs a mask with something in it. The grid survey
-    // further down does not depend on it at all, and must not be skipped when
-    // our raster comes up empty -- VH13_KF_1 rasterises to nothing and still
-    // has a real stored grid.
+    // further down does not depend on it, and must not be skipped when the
+    // raster comes up empty. The stored grid is present either way.
     for (const auto& e : objs->entrances) {
       if (!row.nonEmptyMask)
         break;
@@ -123,12 +123,15 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
     const auto gcells = static_cast<std::size_t>(grid->width) * grid->height;
     row.gridSolidPercent =
         gcells ? 100.0 * static_cast<double>(row.gridSolidCells) / gcells : 0.0;
+    // Same axis as the sim: worldToMaskPixel is y-down, the file grid is
+    // y-up. Terrain::fromCollisionGrid flips once; probe that.
+    const auto terrain = sim::Terrain::fromCollisionGrid(*grid);
     for (const auto& e : objs->entrances) {
       const auto [col, top] =
           worldToMaskPixel(e.position, grid->width, grid->height, mesh->height(), 1);
       int drop = -1;
-      for (int y = top; y < grid->height; ++y)
-        if (grid->solid(col, y)) {
+      for (int y = top; y < terrain.height(); ++y)
+        if (terrain.solid(col, y)) {
           drop = y - top;
           break;
         }

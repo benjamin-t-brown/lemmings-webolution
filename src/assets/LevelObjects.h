@@ -66,11 +66,45 @@ struct PlacedModel {
   PlacedKind kind = PlacedKind::Other;
 };
 
+// A hatch's own record in the level stream. This is where a released
+// lemming's first position comes from: the release tick (hatch vtable
+// `0x004B0F50` slot 5 -> `0x00425A95`) sign-extends the two int16 at hatch
+// `+0x9A` and `+0x9C` and passes them as doubles to the lemming constructor
+// `0x0042DE51` (`0x00425C30`). Nothing copies the `Entrance*.a3d`
+// translation into those words, and nothing subtracts anything from it:
+// the hatch loader `0x00425E50` reads them straight out of the stream at
+// `0x00425F1C` and `0x00425F2E`.
+//
+// MEASURED, three levels, live: `MM_CLIMB_002` (10, 32, 42), `MM_FLOAT`
+// (10, 65, 85), `MM_DIG_000` (20, 84, 79) -- the live hatch words and the
+// live lemming `+0x08` / `+0x10` of a fresh birth are these numbers. See
+// `docs/scratch/phase3-round3.md` and `tools/harness/measure_spawn.py
+// --hatch-words`.
+//
+// OBSERVED over all 144 records in the 102 retail levels, not a rule the
+// code may use: `x == boxMin.x + 4` and `y == entrance world Y - 2`.
+// `spawnCell` below reads the stored words; it does not reconstruct them.
+struct HatchRecord {
+  int count = 0;  // u16 -> hatch+0x98, this hatch's release count
+  int x = 0;      // u16 -> hatch+0x9A, unrolled column; becomes lemming+0x08
+  int y = 0;      // u16 -> hatch+0x9C, world Y, Y-up; becomes lemming+0x10
+  int type = 0;   // u32 -> hatch+0xB0, the lemming-type index
+  // The two Vec3 the base loader's tail reads into hatch+0x48 and +0x60: an
+  // axis-aligned 8 x 5 box in unrolled space, z 0 and 1, on every record in
+  // the corpus. Kept because they are what makes the record recognisable.
+  Vec3 boxMin{};
+  Vec3 boxMax{};
+  std::size_t at = 0;       // file offset of the count word
+  std::string model;        // "entrance" or "entrance_acid"
+};
+
 struct LevelObjects {
   std::vector<WorldPose> entrances;
   std::vector<WorldPose> exits;
   // Everything else that shares the Object 09 + tube translation layout.
   std::vector<PlacedModel> placed;
+  // The hatches' stored spawn words, in stream order.
+  std::vector<HatchRecord> hatches;
 };
 
 // Skill panel order matches classic Lemmings / sim::Skill.
@@ -86,6 +120,33 @@ std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::b
 // Read the eight skill-panel counts from the level trailer.
 std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byte>);
 
+// Every hatch record in the stream, found by the shape of the run the hatch
+// loader reads, not by a remembered offset. See HatchRecord.
+std::vector<HatchRecord> findHatchRecords(std::span<const std::byte>);
+
+// The terrain cell a hatch's stored words name. The words are a world column
+// and a world Y measured **up**, in world units -- one cell each, never the
+// lattice raster's two.
+//
+// The grid and Terrain are Y-**down**: Terrain::fromCollisionGrid maps file
+// row r to terrain row `height - 1 - r`. The engine turns a world Y into a
+// file row by **truncating** it -- its float-to-int helper `0x0049C5AC` sets
+// the x87 rounding field to 11b (`or ah, 0xc`, chop) before `fistp` -- so a
+// word of 42 is file row 42 and terrain row `height - 1 - 42`.
+//
+// That is one cell above what `worldToMaskPixel`'s floor(worldH - y) gives
+// for an *integer* y, and the words are always integers (42 -> row 42 here,
+// row 41 there). What decides it is the chop above plus the *birth* sample:
+// the live `+0x10` of a fresh lemming is the word itself -- 0.0013 off 42 on
+// MM_CLIMB_002 -- so the release starts at world Y 42, not 41.
+//
+// The *landing* does not decide it, and must not be cited as if it did: from
+// either start row the fall rests on the same floor (feet at world Y 32 / 81
+// / 75 on the three levels, the highest solid below being 31 / 80 / 74), so
+// the landing is equally consistent with both mappings. Verified against the
+// stored grids. See docs/scratch/phase3-round3.md.
+std::pair<int, int> hatchSpawnCell(const HatchRecord& h, int maskWidth, int maskHeight);
+
 // Map a world point onto mask / terrain cells. `pixelsPerUnit` and `worldH`
 // must match the grid being mapped into, and the two grids in this project
 // differ: the stored collision mask (assets/CollisionGrid.h), which is what
@@ -95,5 +156,74 @@ std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byt
 // coordinate, which is a bug that looks like bad level data.
 std::pair<int, int> worldToMaskPixel(const Vec3& p, int maskWidth, int maskHeight,
                                      double worldH, int pixelsPerUnit);
+
+// The save-trigger AABB for one Exit*.a3d placement, in Terrain / mask cells
+// (Y-down). MEASURED round 11 on Exit.a3d (MM_CLIMB_002, MM_FLOAT); round 12
+// on Exit_water.a3d (e14_kf_1, MM_W_012), Exit_any.a3d (E16_KF_1), and
+// Exit_acid.a3d (E23_JC_1) — same 2×3 box for every retail exit model:
+//
+//   world-up box:  X ∈ [col-1, col+1],  Y ∈ [ty-9, ty-6],  Z ∈ [0, 1]
+//   col = round(unroll(pose).angle * maskWidth), ty = trunc(pose.y)
+//
+// Converted to Terrain Y-down the same way hatchSpawnCell converts a hatch
+// word (`height - 1 - worldY`), so the closed interval stays three cells
+// tall. width/height are the inclusive spans (2 and 3), matching
+// sim::Exit / World::atExit. See docs/scratch/phase3-round11-exit.md and
+// docs/scratch/phase3-round12-exit-models.md.
+struct ExitTrigger {
+  int x = 0;
+  int y = 0;
+  int width = 2;
+  int height = 3;
+};
+ExitTrigger exitTriggerFromPose(const WorldPose& pose, int maskWidth, int maskHeight);
+
+// The teleport pad AABB for one teleport.a3d placement, in Terrain / mask
+// cells (Y-down). MEASURED round 16 on MM_TELE_003 (four live objects,
+// vtable 0x004B1250): world-up box X ∈ [col−6, col+6], Y ∈ [ty, ty+8],
+// Z ∈ [0, 1]; col = round(unroll(pose).angle * maskWidth), ty = trunc(pose.y).
+// Inclusive spans width=12, height=8. Partner is object+0x260 (linked by
+// stream id at +0x98 via 0x00444BA1). teleport_fx.a3d is FX-only (no pose).
+// See docs/scratch/phase3-round16-teleport.md.
+struct TeleportTrigger {
+  int x = 0;
+  int y = 0;
+  int width = 12;
+  int height = 8;
+  // Destination feet column / world-up Y (before Y-down convert at load).
+  int destCol = 0;
+  int destWorldY = 0;
+};
+TeleportTrigger teleportTriggerFromPose(const WorldPose& pose, int maskWidth,
+                                        int maskHeight);
+
+// SpeedPad AABB for one speedup_two_way.a3d placement (Terrain Y-down).
+// MEASURED round 17 on VH21_JC (vtable 0x004B1178): world-up box
+// X ∈ [col−1, col+1], Y ∈ [ty, ty+6], Z ∈ [0, 1]. Inclusive width=2,
+// height=6. Facing filter / invert flag live at object+0xbc / +0xa0 are
+// not yet parsed from the .LVL — defaults match upright, any-facing pads.
+// See docs/scratch/phase3-round17-speedpad.md.
+struct SpeedPadTrigger {
+  int x = 0;
+  int y = 0;
+  int width = 2;
+  int height = 6;
+};
+SpeedPadTrigger speedPadTriggerFromPose(const WorldPose& pose, int maskWidth,
+                                        int maskHeight);
+
+// Lever AABB for one lever.a3d placement (Terrain Y-down).
+// MEASURED round 21 on E16_KF_1 (vtable 0x004B1288): world-up box
+// X ∈ [col−1, col+1], Y ∈ [ty, ty+6] — same closed 2×6 as SpeedPad.
+// Facing filter is against toggle state +0xb8, not a static pad flag.
+// See docs/scratch/phase3-round21-lever.md.
+struct LeverTrigger {
+  int x = 0;
+  int y = 0;
+  int width = 2;
+  int height = 6;
+};
+LeverTrigger leverTriggerFromPose(const WorldPose& pose, int maskWidth,
+                                  int maskHeight);
 
 }  // namespace webo

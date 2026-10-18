@@ -9,6 +9,7 @@
 #include "assets/LevelIndex.h"
 
 #include <algorithm>
+#include <cstring>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
@@ -40,12 +41,20 @@ void putStr(std::vector<std::byte>& v, std::string_view s) {
   for (char c : s)
     v.push_back(static_cast<std::byte>(c));
 }
+void putF64(std::vector<std::byte>& v, double x) {
+  unsigned char buf[8];
+  std::memcpy(buf, &x, 8);
+  for (unsigned char c : buf)
+    v.push_back(static_cast<std::byte>(c));
+}
 
 void testAssetNames() {
   std::cout << "reference mapping\n";
-  check(webo::levelTextureAssetName("Models\\exit\\basket") == "TEXTURES\\MODELS\\EXIT\\BASKET.BMP",
+  check(webo::levelTextureAssetName("Models\\exit\\basket") ==
+            "TEXTURES\\MODELS\\EXIT\\BASKET.BMP",
         "model reference");
-  check(webo::levelTextureAssetName("Cylinder/A/INN_A_0_0") == "TEXTURES\\CYLINDER\\A\\INN_A_0_0.BMP",
+  check(webo::levelTextureAssetName("Cylinder/A/INN_A_0_0") ==
+            "TEXTURES\\CYLINDER\\A\\INN_A_0_0.BMP",
         "cylinder reference, forward slashes");
 }
 
@@ -60,8 +69,14 @@ void testSynthetic() {
   putStr(d, "Models\\exit\\basket");
   putStr(d, "PolyList 09");
   putStr(d, "Splat");
-  // the "Cylinder" chunk, then two 8-byte grids
+  // the "Cylinder" chunk: five zeros, height, an f64, then one counted
+  // index array. header[3] is deliberately not that count.
   putStr(d, "Cylinder");
+  for (int i = 0; i < 5; ++i)
+    put32(d, 0);
+  put32(d, 96);
+  putF64(d, 0.36);
+  put32(d, 4);
   put32(d, 0xFFFFFFFF);
   put32(d, 0x00000001);
   put32(d, 0x00000003);
@@ -90,9 +105,14 @@ void testSynthetic() {
   check(lvl->polyListCount == 1, "PolyList counted, not stored");
   check(has(lvl->scriptVariables, "_curNoLem"), "script variable found");
   check(has(lvl->shortNames, "Splat"), "short name found");
-  check(lvl->grid0.size() == 2 && lvl->grid1.size() == 2, "two grids of the stated size");
-  if (lvl->grid1.size() == 2)
-    check(lvl->grid1SolidCells() == 1, "solid cell count skips the empty marker");
+  check(lvl->grid0.size() == 4 && lvl->grid1.empty(),
+        "one index array of the counted length");
+  if (lvl->grid0.size() == 4) {
+    check(lvl->grid0[0] == 0xFFFFFFFFu && lvl->grid0[1] == 1 && lvl->grid0[2] == 3 &&
+              lvl->grid0[3] == 0xFFFFFFFFu,
+          "index words sit after the Cylinder preamble");
+    check(lvl->grid1SolidCells() == 0, "grid1 is absent");
+  }
 
   std::vector<std::byte> noTitle;
   put32(noTitle, 0xFFFFFF);
@@ -108,7 +128,8 @@ void testRealLevels() {
     return;
   }
   std::cout << "real levels\n";
-  auto lib = webo::AssetLibrary::open(fs::path(dir) / "lemmings.box", fs::path(dir) / "patch.box");
+  auto lib = webo::AssetLibrary::open(fs::path(dir) / "lemmings.box",
+                                      fs::path(dir) / "patch.box");
   if (!lib) {
     check(false, lib.error());
     return;
@@ -117,7 +138,7 @@ void testRealLevels() {
   const auto names = webo::levelFileNames(*lib);
   check(names.size() == 102, std::format("102 level files (got {})", names.size()));
 
-  std::size_t indexed = 0, refs = 0, unresolved = 0, withGrids = 0, titled = 0;
+  std::size_t indexed = 0, refs = 0, unresolved = 0, withLattice = 0, titled = 0;
   for (const auto& n : names) {
     auto lvl = webo::loadLevelIndex(*lib, n);
     if (!lvl) {
@@ -127,8 +148,8 @@ void testRealLevels() {
     ++indexed;
     if (!lvl->title.empty())
       ++titled;
-    if (!lvl->grid0.empty() && lvl->grid0.size() == lvl->grid1.size())
-      ++withGrids;
+    if (lvl->grid0.size() == 49858 && lvl->grid1.empty())
+      ++withLattice;
 
     for (const auto* list : {&lvl->cylinderTextures, &lvl->modelTextures})
       for (const auto& ref : *list) {
@@ -138,15 +159,18 @@ void testRealLevels() {
       }
   }
 
-  check(indexed == names.size(), std::format("all levels index ({} of {})", indexed, names.size()));
+  check(indexed == names.size(),
+        std::format("all levels index ({} of {})", indexed, names.size()));
   check(titled == names.size(), "every level has a title");
   check(refs > 20000, std::format("tens of thousands of references ({})", refs));
   check(unresolved == 0,
         std::format("every reference resolves in the archive ({} did not)", unresolved));
-  check(withGrids == names.size(),
-        std::format("every level yields two equal grids ({} did)", withGrids));
+  check(
+      withLattice == names.size(),
+      std::format("every level yields the 49858-word index array ({} did)", withLattice));
 
-  std::cout << std::format("    {} levels, {} asset references, all resolving\n", indexed, refs);
+  std::cout << std::format("    {} levels, {} asset references, all resolving\n", indexed,
+                           refs);
 }
 
 }  // namespace

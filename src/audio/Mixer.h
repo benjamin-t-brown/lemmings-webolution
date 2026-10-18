@@ -56,7 +56,16 @@ public:
   bool has(std::string_view cue) const;
   void play(std::string_view cue, float volume = 1.0f);
 
-  // Stops every voice. Does not unload cues.
+  // Looping bed (menu / in-level music). One music voice at a time.
+  std::expected<void, std::string> loadMusicFrom(const AssetLibrary& lib, std::string_view cue);
+  void playMusic(std::string_view cue, float volume = 1.0f);
+  void stopMusic();
+  void setMusicVolume(float volume);
+  void setSfxVolume(float volume);
+  float musicVolume() const { return musicVolume_; }
+  float sfxVolume() const { return sfxVolume_; }
+
+  // Stops every voice including music. Does not unload cues.
   void stopAll();
 
 private:
@@ -68,6 +77,8 @@ private:
     const Clip* clip = nullptr;
     std::size_t cursor = 0;
     float volume = 1.0f;
+    bool loop = false;
+    bool music = false;
   };
 
   static void callback(void* userdata, std::uint8_t* stream, int len);
@@ -76,6 +87,8 @@ private:
   std::uint32_t device_ = 0;
   int sampleRate_ = 0;
   int channels_ = 0;
+  float musicVolume_ = 0.6f;
+  float sfxVolume_ = 1.0f;
 
   std::unordered_map<std::string, Clip> clips_;
   std::vector<Voice> voices_;

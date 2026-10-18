@@ -50,41 +50,10 @@ if(EMSCRIPTEN OR SDL2_FOUND)
 endif()
 
 # ---- the game -------------------------------------------------------------
-# Built only when SDL2 is present; the asset tools and tests do not need it.
-
-if(WEBOLUTION_HAVE_SDL2)
-  add_executable(webolution src/main.cpp ${WEBOLUTION_GFX_SOURCES})
-  target_include_directories(webolution PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-  target_link_libraries(webolution PRIVATE webolution_objects)
-
-  if(EMSCRIPTEN)
-    target_compile_options(webolution PRIVATE -sUSE_SDL=2)
-    target_link_options(webolution PRIVATE
-      -sUSE_SDL=2 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
-      -sALLOW_MEMORY_GROWTH=1 --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html)
-    set_target_properties(webolution PROPERTIES SUFFIX ".html")
-  elseif(TARGET PkgConfig::SDL2)
-    target_link_libraries(webolution PRIVATE PkgConfig::SDL2)
-  elseif(TARGET SDL2::SDL2)
-    # SDL2main must precede SDL2: it is a static archive that pulls symbols
-    # out of the shared one, and MinGW's linker is order-sensitive.
-    if(TARGET SDL2::SDL2main)
-      target_link_libraries(webolution PRIVATE SDL2::SDL2main)
-    endif()
-    target_link_libraries(webolution PRIVATE SDL2::SDL2)
-  else()
-    target_include_directories(webolution PRIVATE ${SDL2_INCLUDE_DIRS})
-    target_link_libraries(webolution PRIVATE ${SDL2_LIBRARIES})
-  endif()
-
-  if(WIN32 AND NOT EMSCRIPTEN)
-    target_link_libraries(webolution PRIVATE opengl32)
-  elseif(NOT APPLE AND NOT EMSCRIPTEN)
-    target_link_libraries(webolution PRIVATE GL)
-  endif()
-else()
-  message(STATUS "SDL2 not found -- building the tools and tests only")
-endif()
+# HARD RESET, 2026-10-18. src/main.cpp and src/gfx moved to old/. There is no
+# runnable executable until the 3D-first renderer and entry point are written
+# (see PLAN.md Phase A). The asset layer, the simulation and the tools below
+# are unaffected and still build and test.
 
 # ---- tools ----------------------------------------------------------------
 
@@ -97,6 +66,13 @@ target_link_libraries(lrcheck PRIVATE webolution_objects)
 # ---- tests ----------------------------------------------------------------
 
 include(CTest)
+
+# Moved to old/src/__test__ by the 2026-10-18 hard reset, because each one
+# depended on src/gfx: test_cylinderview (camera math), test_cylinder's
+# gfx::parseTilePosition checks (INN/OUT tile naming) and test_sprite's
+# gfx::spriteNameForState checks (state -> sprite artwork). The asset-side
+# coverage they also carried is a debt: re-establish it once the new renderer
+# decides where tile parsing and state->sprite mapping live. See PLAN.md.
 
 add_executable(test_box src/__test__/test_box.cpp)
 target_link_libraries(test_box PRIVATE webolution_objects)
@@ -114,17 +90,15 @@ add_executable(test_gamedata src/__test__/test_gamedata.cpp)
 target_link_libraries(test_gamedata PRIVATE webolution_objects)
 add_test(NAME gamedata COMMAND test_gamedata)
 
-add_executable(test_sprite src/__test__/test_sprite.cpp)
-target_link_libraries(test_sprite PRIVATE webolution_objects)
-add_test(NAME sprite COMMAND test_sprite)
+add_executable(test_progress src/__test__/test_progress.cpp)
+target_link_libraries(test_progress PRIVATE webolution_objects)
+add_test(NAME progress COMMAND test_progress)
+
 
 add_executable(test_levelindex src/__test__/test_levelindex.cpp)
 target_link_libraries(test_levelindex PRIVATE webolution_objects)
 add_test(NAME levelindex COMMAND test_levelindex)
 
-add_executable(test_cylinder src/__test__/test_cylinder.cpp)
-target_link_libraries(test_cylinder PRIVATE webolution_objects)
-add_test(NAME cylinder COMMAND test_cylinder)
 
 add_executable(test_surface src/__test__/test_surface.cpp)
 target_link_libraries(test_surface PRIVATE webolution_objects)
@@ -142,9 +116,6 @@ add_executable(test_wav src/__test__/test_wav.cpp)
 target_link_libraries(test_wav PRIVATE webolution_objects)
 add_test(NAME wav COMMAND test_wav)
 
-add_executable(test_cylinderview src/__test__/test_cylinderview.cpp)
-target_link_libraries(test_cylinderview PRIVATE webolution_objects)
-add_test(NAME cylinderview COMMAND test_cylinderview)
 
 add_executable(test_terrain src/__test__/test_terrain.cpp)
 target_link_libraries(test_terrain PRIVATE webolution_objects)
@@ -169,6 +140,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata sprite levelindex cylinder surface wav levelobjects polylist world corpus collisiongrid PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

@@ -1,0 +1,42 @@
+---
+description: Windows native builds use MSYS2 UCRT64 via Invoke-Ucrt64.ps1
+alwaysApply: true
+---
+
+# Windows Build Environment (MSYS2 UCRT64)
+
+Humans build from an MSYS2 UCRT64 terminal, where `g++`, `cmake`, and `make` are already on `PATH`. Agents on Windows run from PowerShell and do **not** inherit that shell.
+
+## Enter UCRT64 from PowerShell
+
+Use `scripts/Invoke-Ucrt64.ps1`. It finds MSYS2 (`MSYS2_ROOT`, or usual locations including `C:\progs\msys2`) and runs the command inside UCRT64.
+
+```powershell
+.\scripts\Invoke-Ucrt64.ps1 "make -C src"
+.\scripts\Invoke-Ucrt64.ps1 "make -C src test"
+.\scripts\Invoke-Ucrt64.ps1 "cmake --preset dev-debug"
+.\scripts\Invoke-Ucrt64.ps1 "cmake --build --preset dev-debug"
+```
+
+Linux/macOS, and a human UCRT64 terminal: `make -C src` directly. Do not invent MSVC, WinLibs, or bare PowerShell `g++` paths.
+
+## Packages (UCRT64 pacman)
+
+```sh
+pacman -S \
+  mingw-w64-ucrt-x86_64-gcc \
+  mingw-w64-ucrt-x86_64-cmake \
+  mingw-w64-ucrt-x86_64-ninja \
+  mingw-w64-ucrt-x86_64-make \
+  mingw-w64-ucrt-x86_64-pkgconf \
+  mingw-w64-ucrt-x86_64-SDL2
+```
+
+Default preset is `dev-debug` (GCC). Plain SDL2 + `opengl32`; no SDL2_image/ttf/mixer.
+
+## PATH traps (this machine)
+
+1. **Built `.exe` need UCRT64 `bin` on `PATH`** or they fail to load with no useful output. Prefer running them through `Invoke-Ucrt64.ps1`, or temporarily prepend `C:\progs\msys2\ucrt64\bin`.
+2. **Do not put UCRT64 `bin` on `PATH` for `tools/harness/*.py`.** That shadows the default Python; `capstone` then disappears. Run harness scripts with the normal PowerShell/Python PATH.
+3. **`tools/dinput-shim`** is 32-bit MinGW (`mingw32`), not UCRT64 — use its `build.sh` / `mingw-w64-i686-gcc`.
+4. The Makefile sets `TMP`/`TEMP` under `build/tmp` because MSYS make drops them and GCC then fails creating temp files.

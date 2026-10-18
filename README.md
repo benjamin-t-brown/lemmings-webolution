@@ -15,7 +15,21 @@ See [PLAN.md](PLAN.md) for the reverse-engineering notes and the phased plan.
 ## Build
 
 Needs CMake 3.28+, Ninja and a C++23 compiler. On Windows use an MSYS2 UCRT64
-shell (see Carcer's README for the package list).
+shell. Agents in PowerShell should wrap commands with
+`scripts/Invoke-Ucrt64.ps1` (same pattern as Carcer) so they get that
+environment instead of guessing at MSVC or bare `g++`.
+
+UCRT64 packages:
+
+```sh
+pacman -S \
+  mingw-w64-ucrt-x86_64-gcc \
+  mingw-w64-ucrt-x86_64-cmake \
+  mingw-w64-ucrt-x86_64-ninja \
+  mingw-w64-ucrt-x86_64-make \
+  mingw-w64-ucrt-x86_64-pkgconf \
+  mingw-w64-ucrt-x86_64-SDL2
+```
 
 ```sh
 make -C src            # build
@@ -23,6 +37,12 @@ make -C src test       # build and run the suite
 make -C src info       # summarise the archives in your game installation
 make -C src dump       # extract every archive entry to build/assets
 make -C src png        # decode every texture to PNG in build/png
+```
+
+From PowerShell:
+
+```powershell
+.\scripts\Invoke-Ucrt64.ps1 "make -C src test"
 ```
 
 Point the tooling at your installation with `GAME_DIR`:
@@ -75,33 +95,36 @@ make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
       per world unit, and `Rules` carries the world-unit constants read off
       the binary. All five live dumps reproduce byte for byte from the file
       alone. See PLAN.md 1.6.
-- [~] `.LVL` surface: cylindrical lattice → quads → occupancy mask. This is
-      what the engine **draws**; it is not what a lemming stands on, so the
-      ring stride and the face rules are rendering concerns now. `--level`
-      plays on it for want of the real mask being wired up, and it is far
-      sparser than the original: 1.35-23% solid against the engine's 35-63%.
-      `lrtool lvlstats` surveys that gap across all 102 levels and 22 of 101
-      pass the test that a lemming leaving an entrance lands survivably --
-      a measure of our raster, not of the levels. Skin tiles are scenery and
-      do not encode solidity.
+- [~] `.LVL` surface: one counted array of 49,858 surface indices after the
+      Cylinder preamble, drawn as quads. It is what the engine **draws**; the
+      stored collision grid is what a lemming stands on. `--level` plays on
+      the grid. The earlier "22 of 101 releasable" figure was a `header[3]`
+      window into that index, not the levels. Three `MM_CLIMB_002` constants
+      in the face builder are marked as render-only fits. Skin tiles are
+      scenery and do not encode solidity.
 - [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
       eight skills, deterministic ticks, the level clock. The step rate (5 Hz),
       the walk (one column per step), and the spawn interval (`RELEASERATE.PC`)
-      are measured, and so is the climb: one world unit per step, two mask
-      rows. The fall, the float, and the umbrella and splat distances are
+      are measured, and so is the climb: one world unit per step, one cell.
+      The fall, the float, and the umbrella and splat distances are
       read off the binary rather than measured -- 20.0 world units per
-      second at `0x004B0A18`, so 8 mask rows per tick and 4 under the
-      umbrella, which opens at 20 rows fallen and splats past 60 -- and
-      they still owe a live series. The skill constants are classic
+      second at `0x004B0A18`, so 4 cells per tick and 2 under the
+      umbrella, which opens at 10 cells fallen and splats past 30 -- and
+      they still owe a live series. A released lemming is created from two
+      hatch int16s plus the constant 0.5 (`0x0042DE51`), not from the
+      entrance object's translation. The sim still drops from that
+      translation. The skill constants are classic
       stand-ins. PLAN.md 2.3 has the addresses, and
       `tools/harness/read_steppers.py` re-runs the read.
 - [x] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
       lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
       unwrapped one and the cylinder projection (`C` toggles), and a named
       level's own skin tiles wrapped onto the tube, both surfaces (`T`
-      toggles). With `--level`, collision comes from the surface lattice and
+      toggles). With `--level`, collision comes from the stored grid and
       the skin is drawn behind it as scenery.
-- [~] Game shell: SDL mixer plays Letsgo / Chink / Ohno / Explode / Splat /
-      Yippee from simulation cues. Menus, level select, saves, FMV still open.
+- [x] Game shell: LTX menus (main / confirm / options / map / results),
+      progress unlocks in `webolution_progress.dat`, in-level HUD, SFX +
+      looping `MUSIC\LEMMING01..13`. FMV still open. `--level` bypasses the
+      shell; default language is UK (English) when present.
 - [ ] Linux, macOS and WebAssembly builds. The emscripten preset exists but has
       never been run -- no activated EMSDK here -- so it is untested, not done.

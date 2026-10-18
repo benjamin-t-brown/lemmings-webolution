@@ -13,13 +13,22 @@ namespace {
 
 constexpr std::uint32_t kEmpty = 0xFFFFFFFFu;
 
+// FIT, render-only, not an engine rule. Window around the retail tube's two
+// angular chords: inner 2*50*sin(pi/32) ≈ 9.80 and outer 2*60*sin(pi/32) ≈
+// 11.76 (Cylinder.h: radii 50 and 60, 32 steps). 8.0..13.5 was chosen so
+// MM_CLIMB_002's quads pass. It is not a constant read off the executable.
+// The simulation collides on CollisionGrid, not on this mesh.
+constexpr double kMinChord = 8.0;
+constexpr double kMaxChord = 13.5;
+
 double dist(const Vec3& a, const Vec3& b) {
   const double dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
   return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 std::pair<double, std::size_t> medianPairDist(const CylinderMesh& mesh,
-                                              std::span<const std::uint32_t> grid, int delta) {
+                                              std::span<const std::uint32_t> grid,
+                                              int delta) {
   std::vector<double> ds;
   for (std::size_t k = 0; k + static_cast<std::size_t>(delta) < grid.size(); ++k) {
     const auto a = grid[k], b = grid[k + static_cast<std::size_t>(delta)];
@@ -48,14 +57,13 @@ bool looksLikeFace(const Vec3 q[4], double thickness, double ringSpacing, bool r
     return false;
   if (ringFace)
     return near(ad, ringSpacing, 1.5) && near(bc, ringSpacing, 1.5);
-  // Angular: outer chord ~11.74, inner ~9.80. Accept anything in between.
-  constexpr double kMinChord = 8.0;
-  constexpr double kMaxChord = 13.5;
+  // kMinChord/kMaxChord: the MM_CLIMB_002 chord-window fit, declared above.
   return ad >= kMinChord && ad <= kMaxChord && bc >= kMinChord && bc <= kMaxChord;
 }
 
-void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> grid, int ringStride,
-                     SurfaceMesh& out, std::set<std::uint32_t>& used, bool openEdges) {
+void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> grid,
+                     int ringStride, SurfaceMesh& out, std::set<std::uint32_t>& used,
+                     bool openEdges) {
   const double thick = mesh.thickness;
   const double ring = mesh.ringSpacing();
 
@@ -68,8 +76,8 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
     const std::uint32_t i3 = grid[k + static_cast<std::size_t>(step)];
     if (i0 == kEmpty || i1 == kEmpty || i2 == kEmpty || i3 == kEmpty)
       return;
-    if (i0 >= mesh.surface.size() || i1 >= mesh.surface.size() || i2 >= mesh.surface.size() ||
-        i3 >= mesh.surface.size())
+    if (i0 >= mesh.surface.size() || i1 >= mesh.surface.size() ||
+        i2 >= mesh.surface.size() || i3 >= mesh.surface.size())
       return;
 
     SurfaceQuad q;
@@ -85,21 +93,28 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
     used.insert(i2);
     used.insert(i3);
 
-    // A half-step post (key+8) between the ends means the chord crosses a
-    // wall. MM_CLIMB_002's walkers turn at column 168, the last vertex
-    // before the post at 172, and the same insertion sits at 64, 80 and
-    // 184. The post's own ring quad is a line at the far column; the turn
-    // is at this vertex, so the wall is raised here and the floor stops.
+    // FIT, render-only, not an engine rule. A populated key+8 (half of the
+    // 16-slot angular block) between the ends is treated as a wall the
+    // chord must not cross. Observed on MM_CLIMB_002: walkers turn at
+    // column 168, the last vertex before the post at 172, and the same
+    // insertion sits at columns 64, 80 and 184. Not read off the executable.
+    // Collision uses CollisionGrid, not this mesh. The post's own ring quad
+    // is a line at the far column; the turn is at this vertex, so the wall
+    // is raised here and the floor stops.
     if (!isRing && k + 9 < grid.size()) {
       const auto h0 = grid[k + 8];
       const auto h1 = grid[k + 9];
-      if (h0 != kEmpty && h1 != kEmpty && h0 < mesh.surface.size() && h1 < mesh.surface.size()) {
+      if (h0 != kEmpty && h1 != kEmpty && h0 < mesh.surface.size() &&
+          h1 < mesh.surface.size()) {
         const Vec3& pa = mesh.surface[h0];
         const Vec3& pb = mesh.surface[h1];
         const Vec3& post = std::hypot(pa.x, pa.z) >= std::hypot(pb.x, pb.z) ? pa : pb;
-        const Vec3& near = std::hypot(q.v[0].x, q.v[0].z) >= std::hypot(q.v[1].x, q.v[1].z) ? q.v[0] : q.v[1];
+        const Vec3& near =
+            std::hypot(q.v[0].x, q.v[0].z) >= std::hypot(q.v[1].x, q.v[1].z) ? q.v[0]
+                                                                             : q.v[1];
         const double outerCut = mesh.innerRadius() + mesh.thickness * 0.5;
-        if (std::hypot(post.x, post.z) > outerCut && std::abs(post.y - near.y) < 1.5 && ring > 0) {
+        if (std::hypot(post.x, post.z) > outerCut && std::abs(post.y - near.y) < 1.5 &&
+            ring > 0) {
           q.blocked = true;
           Vec3 top = near;
           top.y += ring;
@@ -118,12 +133,13 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
   for (std::size_t k = 0; k + 17 < grid.size(); ++k)
     tryQuad(k, 16, false);
   if (ringStride > 16) {
-    for (std::size_t k = 0; k + static_cast<std::size_t>(ringStride) + 1 < grid.size(); ++k)
+    for (std::size_t k = 0; k + static_cast<std::size_t>(ringStride) + 1 < grid.size();
+         ++k)
       tryQuad(k, ringStride, true);
   }
 
-  // grid1 is a dense index of the same pool. The walked links were found
-  // in grid0; running this pass on grid1 fills the ring.
+  // Open edges are walked for the primary lattice only. Retail grid1 is
+  // empty (LevelIndex.h); a second call with openEdges false only adds quads.
   if (!openEdges)
     return;
 
@@ -136,7 +152,8 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
   const double outerCut = mesh.innerRadius() + mesh.thickness * 0.5;
   const auto outer = [&](const Vec3& v) { return std::hypot(v.x, v.z) > outerCut; };
   const auto empty = [&](std::size_t slot) {
-    return slot >= grid.size() || grid[slot] == kEmpty || grid[slot] >= mesh.surface.size();
+    return slot >= grid.size() || grid[slot] == kEmpty ||
+           grid[slot] >= mesh.surface.size();
   };
 
   for (std::size_t k = 1; k + 16 < grid.size(); ++k) {
@@ -150,10 +167,11 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
     if (!outer(a) || !outer(b) || std::abs(a.y - b.y) > 1.5)
       continue;
     const double chord = dist(a, b);
-    if (chord < 8.0 || chord > 13.5)
+    // Same MM_CLIMB_002 chord-window fit as looksLikeFace. Render-only.
+    if (chord < kMinChord || chord > kMaxChord)
       continue;
-    // Same half-step rule as the quad pass: a post at key+8 ends the floor
-    // at this vertex instead of letting the chord cross it.
+    // Same MM_CLIMB_002 half-step fit as the quad pass: a post at key+8
+    // ends the floor at this vertex. Render-only, not an engine rule.
     if (!empty(k + 8) && mesh.ringSpacing() > 0) {
       const Vec3& post = mesh.surface[grid[k + 8]];
       if (outer(post) && std::abs(post.y - a.y) < 1.5) {
@@ -180,8 +198,12 @@ void collectFromGrid(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
       const Vec3& b = mesh.surface[grid[k + static_cast<std::size_t>(ringStride)]];
       if (!outer(a) || !outer(b))
         continue;
-      // Rising from the ledge, not dropping off it. A link from y 32 down to
-      // y 16 exists at every angular step and is not a wall.
+      // FIT, render-only, not an engine rule. 31.0 is MM_CLIMB_002's ledge
+      // height (walkers sit at y = 32) written as a constant, so a vertical
+      // link whose foot is below that ledge is dropped. On that level this
+      // excludes the y 0 -> 16 skirt and the link from y 32 down to y 16,
+      // which exists at every angular step and is not a wall. Other levels
+      // do not share this height. Collision does not consult it.
       const double lo = std::min(a.y, b.y);
       const double hi = std::max(a.y, b.y);
       if (lo < 31.0 || std::abs((hi - lo) - ring) > 2.0)
@@ -267,7 +289,8 @@ int detectRingStride(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
   double bestScore = 1e99;
   int best = 0;
   std::size_t bestN = 0;
-  for (int delta = 48; delta < static_cast<int>(grid.size()) && delta < 20000; delta += 16) {
+  for (int delta = 48; delta < static_cast<int>(grid.size()) && delta < 20000;
+       delta += 16) {
     const auto [med, n] = medianPairDist(mesh, grid, delta);
     if (med < 0)
       continue;
@@ -284,9 +307,9 @@ int detectRingStride(const CylinderMesh& mesh, std::span<const std::uint32_t> gr
   return bestScore < 2.0 ? best : 0;
 }
 
-std::expected<SurfaceMesh, std::string> buildSurfaceMesh(const CylinderMesh& mesh,
-                                                         std::span<const std::uint32_t> grid0,
-                                                         std::span<const std::uint32_t> grid1) {
+std::expected<SurfaceMesh, std::string> buildSurfaceMesh(
+    const CylinderMesh& mesh, std::span<const std::uint32_t> grid0,
+    std::span<const std::uint32_t> grid1) {
   if (mesh.surface.empty())
     return std::unexpected("surface mesh: no surface vertices");
   if (grid0.empty())

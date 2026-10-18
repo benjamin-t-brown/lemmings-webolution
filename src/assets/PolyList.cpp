@@ -18,12 +18,27 @@ double f64At(std::span<const std::byte> d, std::size_t o) {
   return v;
 }
 
-std::size_t strideFor(std::uint32_t kind) {
+// Kind 5 is three of these plus a trailing u32 (160). Kind 7 is four (212).
+constexpr std::size_t kVertexBytes = 52;
+
+std::size_t cornerCountFor(std::uint32_t kind) {
   if (kind == 5)
-    return 160;
+    return 3;
   if (kind == 7)
-    return 212;
+    return 4;
   return 0;
+}
+
+PolyVertex readVertex(std::span<const std::byte> d, std::size_t o) {
+  PolyVertex v;
+  v.index = u32At(d, o);
+  v.u = f64At(d, o + 4);
+  v.v = f64At(d, o + 12);
+  v.r = f64At(d, o + 20);
+  v.g = f64At(d, o + 28);
+  v.b = f64At(d, o + 36);
+  v.a = f64At(d, o + 44);
+  return v;
 }
 
 }  // namespace
@@ -55,7 +70,8 @@ std::expected<PolyLists, std::string> findPolyLists(std::span<const std::byte> d
     const std::size_t payload = next - start;
     const std::uint32_t kind = u32At(d, start);
     const std::uint32_t count = u32At(d, start + 4);
-    const std::size_t stride = strideFor(kind);
+    const std::size_t corners = cornerCountFor(kind);
+    const std::size_t stride = corners == 0 ? 0 : corners * kVertexBytes + 4;
     if (stride == 0 || count == 0 || payload != 16 + stride * count)
       continue;
     if (start + payload > d.size())
@@ -67,18 +83,15 @@ std::expected<PolyLists, std::string> findPolyLists(std::span<const std::byte> d
     block.u2 = u32At(d, start + 8);
     block.u3 = u32At(d, start + 12);
     block.offset = start;
-    block.vertices.reserve(count);
+    block.records.reserve(count);
     for (std::uint32_t n = 0; n < count; ++n) {
       const std::size_t o = start + 16 + n * stride;
-      PolyVertex v;
-      v.index = u32At(d, o);
-      v.u = f64At(d, o + 4);
-      v.v = f64At(d, o + 12);
-      v.r = f64At(d, o + 20);
-      v.g = f64At(d, o + 28);
-      v.b = f64At(d, o + 36);
-      v.a = f64At(d, o + 44);
-      block.vertices.push_back(v);
+      PolyRecord rec;
+      rec.cornerCount = static_cast<std::uint32_t>(corners);
+      for (std::size_t c = 0; c < corners; ++c)
+        rec.corners[c] = readVertex(d, o + c * kVertexBytes);
+      rec.endWord = u32At(d, o + corners * kVertexBytes);
+      block.records.push_back(rec);
     }
     out.blocks.push_back(std::move(block));
     ++out.matchedCount;

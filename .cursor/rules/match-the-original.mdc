@@ -1,0 +1,80 @@
+---
+description: Separate confirmed observations from hypotheses, and match the original game including its quirks
+alwaysApply: true
+---
+
+# Match the original
+
+This is a 1:1 reimplementation of Lemmings Revolution. The stock 640x480 executable is the authority.
+
+## Separate observations from hypotheses
+
+Say which is which, in notes and in code. `Rules` in `src/sim/World.h` labels each field MEASURED or PROVISIONAL. Do not promote a guess because it is plausible or because classic Lemmings used it.
+
+- Measured: a climber's world Y stepped 34.190, 35.190, 36.190, one world unit per 200 ms tick, so `climbSpeed` is 2 mask rows.
+- Hypothesis, still provisional: `fallSpeed = 3`. The hatch and a walk-off share one fall speed, and that step size has not been read.
+
+## Support the conclusion
+
+A claim about the original needs an address and what was read there, a code reference, or a harness script someone can run again.
+
+- `0x004C36A0` is the click hit-test. The drawn crosshair is the doubles at `0x004CBFB0` +0x170 and +0x178.
+- `measure_motion.centroid` is world height. The screen pair is the projection.
+- `tools/harness/check_mask.py` and `measure_motion.py` are re-runnable.
+- Anti-grav is cell bit `0x8000` (round 9): corpus 18/18 with `anti_grav.a3d`,
+  walk probe at `0x0041C154`, gravity flip at `0x0042F5E3`. Re-run
+  `measure_antigrav.py --audit` / `--enter m06_kf_1 --watch-only`. The bit
+  alone is not enough — painting `0x8000` onto MM_CLIMB_002 without an
+  anti-grav object flipped nothing. `compare_tick.py` is superseded; use
+  `measure_steppers.py --compare` and the actor list at `0x004CBB18`.
+- Teleport is object-only (round 16): `teleport.a3d` / vtable `0x004B1250`,
+  overlap `0x00430BA1` at `0x00435467` / `0x004354CB`, partner `+0x260`,
+  countdown 4, relocate `0x0043503C` (Y+2.0). `teleport_fx.a3d` FX-only; no
+  exclusive cell bit. Re-run `measure_teleport.py`.
+- SpeedPad is object-only (round 17): `speedup_two_way.a3d` / vtable
+  `0x004B1178` → FASTER 5.0 s (`+0x50=2`, ~2× walk). Cue `SpeedPad` at
+  `0x004C0D10`. Re-run `measure_speedpad.py`.
+- Balloon cue is unused in retail (round 18, clean negative):
+  `0x004C0D24` registered but never played; no gadget. Re-run
+  `measure_balloon.py --audit`.
+- Fire cue is unused in retail (round 19, clean negative):
+  `0x004C0D2C` registered but never played; no gadget. Re-run
+  `measure_fire.py --audit`.
+- Witch cue is UI-only (round 20): pause easter egg on `e10_kf_1`; no
+  lemming gadget. Re-run `measure_witch.py --audit`.
+- Lever is object-only (round 21): `lever.a3d` / `0x004B1288` facing-gated
+  `+0xb8` toggle; no lemming attach. Re-run `measure_lever.py`.
+- ForceF cue is unused in retail (round 22, clean negative):
+  `0x004C0CC8` registered but never played. Re-run
+  `measure_forcef.py --audit`.
+- Axe is a HUD sprite sheet (round 23): no lemming gadget. Re-run
+  `measure_axe.py --audit`.
+- Bubble cue is SFX on fluid type `0x23` (round 24): no Bubble gadget.
+  Re-run `measure_bubble.py --audit`.
+- Scrape cue is dig/bash refuse SFX (round 25): no Scrape gadget. Re-run
+  `measure_scrape.py --audit`.
+- Rumble cue is object state-commit SFX (round 26): no Rumble gadget.
+  Re-run `measure_rumble.py --audit`.
+- Changeop cue is UI skill/volume SFX (round 27): no Changeop gadget.
+  Re-run `measure_changeop.py --audit`.
+- Die cue is SFX on type-`0x23` enter (round 28): no Die gadget; distinct
+  from FallSplat / unused Splat. Re-run `measure_die.py --audit`.
+- Splat-exemption zones (round 29): Fluid stamps `0x200`/`0x2000`/`0x4000`;
+  hatch → `[+0x4c]`; land skips splat for matching water/acid sheets (lava
+  no arm). Not drown. Re-run `measure_splat_exempt.py --audit`.
+- Inverted steppers (round 30): gravity-flipped step-up/climb/dig; dig
+  refuse `0x20` when inverted. Re-run `measure_inverted.py --audit`.
+- Cell-flag writers (round 31): `0x100` authored-only; `0x400` door/gate
+  stamp `0x004B0F00`. Re-run `measure_cell_writers.py --audit`.
+- The exit save test is object-overlap AABB `0x00430BA1` (round 11), not a
+  guessed 8×8 / 12×14. Exit step `0x0042688D` / list `0x004C88D0`; save state
+  `0x004B0B28` increments `0x004CBAA4`. Live boxes are 2×3 inclusive
+  (`[col±1] × [ty−9 .. ty−6]` vs `Exit*.a3d`). Re-run `measure_exit.py`.
+
+## Preserve quirks
+
+Keep behavior that looks wrong when the original does it. German menus, RETURN only when the highlight is exactly 0, a short ESC that fails to leave pause, and the drawn crosshair disagreeing with the tested cursor are all real. Do not smooth them out.
+
+## Validate against the original
+
+A green unit test shows our sim matches itself. Agreement with the running original is a live read or a differential check, on the stock executable, through `tools/dinput-shim`.

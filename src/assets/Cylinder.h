@@ -31,9 +31,10 @@
 //
 // The important asymmetry is that everything above is **constant** across the
 // retail levels except `surfaceCount` and its vertices, which range from 539
-// to 1558. So the per-level terrain is carried as polygon geometry, not as a
-// bitmap mask -- which is what finally explains why the two equal-sized u32
-// arrays in the file never factored as a rectangular grid (see LevelIndex.h).
+// to 1558. This mesh is what the engine draws. The collision mask is a
+// separate stored grid (CollisionGrid.h). The per-level surface-index array
+// after the Cylinder preamble is one counted run of 49858 words (LevelIndex.h),
+// not two slices of header[3].
 //
 // The surface vertices open with a quad -- for the first retail level,
 // (0,0,60) (0,16,60) (-11.74,16,59.02) (-11.74,0,59.02), spanning one angular

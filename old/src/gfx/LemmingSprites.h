@@ -58,17 +58,27 @@ class Renderer;
 constexpr std::string_view spriteNameForState(sim::State state) {
   switch (state) {
     case sim::State::Faller: return "fall";
+    // MEASURED, round 13: bounce enter 0x0040ecca pushes "fall" at 0x004bf184.
+    case sim::State::Bounce: return "fall";
     case sim::State::Walker: return "walk";
     case sim::State::Climber: return "climb";
     case sim::State::Hoister: return "flip";
     case sim::State::Floater: return "float";
     case sim::State::Blocker: return "block";
     case sim::State::Builder: return "build";
+    // MEASURED, round 6: a spent builder's animation strip is index 10, and
+    // `shrug` is the strip name the enter hook of 0x004B0C78 sets.
+    case sim::State::Shrugger: return "shrug";
     case sim::State::Basher: return "bash";
     case sim::State::Miner: return "mine";
     case sim::State::Digger: return "dig";
     case sim::State::Exploder: return "explode";
     case sim::State::Splatter: return "cartwheel";  // unverified, see above
+    // MEASURED, round 14: drown enter 0x0040874c sets "drown" at 0x004BF130.
+    case sim::State::Drown: return "drown";
+    // MEASURED, round 16: pad FX is teleport_fx.a3d; tele-out/tele-snap are
+    // object states (vtables 0x004B0C1C / 0x004B0CE8), not a lemming strip.
+    case sim::State::Teleporting: return {};
     case sim::State::Exited: return {};
     case sim::State::Dead: return {};
   }

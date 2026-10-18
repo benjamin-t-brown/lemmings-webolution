@@ -178,4 +178,11 @@ std::string soundAssetName(std::string_view cue) {
   return normaliseAssetName(out);
 }
 
+std::string musicAssetName(std::string_view cue) {
+  std::string out = "MUSIC\\";
+  out += cue;
+  out += ".WAV";
+  return normaliseAssetName(out);
+}
+
 }  // namespace webo

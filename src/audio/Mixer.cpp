@@ -121,20 +121,75 @@ bool Mixer::has(std::string_view cue) const {
 }
 
 void Mixer::play(std::string_view cue, float volume) {
-  if (!ready() || volume <= 0.0f)
+  if (!ready() || volume <= 0.0f || sfxVolume_ <= 0.0f)
     return;
 
   SDL_LockAudioDevice(device_);
   const auto it = clips_.find(upperCue(cue));
   if (it != clips_.end() && !it->second.samples.empty()) {
     // Cap concurrent voices so a long nuke cannot grow without bound. Drop
-    // the oldest when full -- short SFX recover; letting the vector grow would.
+    // the oldest non-music when full -- short SFX recover.
     constexpr std::size_t kMaxVoices = 32;
-    if (voices_.size() >= kMaxVoices)
-      voices_.erase(voices_.begin());
-    voices_.push_back(Voice{&it->second, 0, std::clamp(volume, 0.0f, 1.0f)});
+    if (voices_.size() >= kMaxVoices) {
+      for (auto vit = voices_.begin(); vit != voices_.end(); ++vit) {
+        if (!vit->music) {
+          voices_.erase(vit);
+          break;
+        }
+      }
+    }
+    const float v = std::clamp(volume, 0.0f, 1.0f) * sfxVolume_;
+    voices_.push_back(Voice{&it->second, 0, v, false, false});
   }
   SDL_UnlockAudioDevice(device_);
+}
+
+std::expected<void, std::string> Mixer::loadMusicFrom(const AssetLibrary& lib,
+                                                      std::string_view cue) {
+  auto sound = loadSound(lib, musicAssetName(cue));
+  if (!sound)
+    return std::unexpected(sound.error());
+  return load(cue, *sound);
+}
+
+void Mixer::playMusic(std::string_view cue, float volume) {
+  if (!ready())
+    return;
+  SDL_LockAudioDevice(device_);
+  voices_.erase(std::remove_if(voices_.begin(), voices_.end(),
+                               [](const Voice& v) { return v.music; }),
+                voices_.end());
+  const auto it = clips_.find(upperCue(cue));
+  if (it != clips_.end() && !it->second.samples.empty() && musicVolume_ > 0.0f) {
+    const float v = std::clamp(volume, 0.0f, 1.0f) * musicVolume_;
+    voices_.push_back(Voice{&it->second, 0, v, true, true});
+  }
+  SDL_UnlockAudioDevice(device_);
+}
+
+void Mixer::stopMusic() {
+  if (!ready())
+    return;
+  SDL_LockAudioDevice(device_);
+  voices_.erase(std::remove_if(voices_.begin(), voices_.end(),
+                               [](const Voice& v) { return v.music; }),
+                voices_.end());
+  SDL_UnlockAudioDevice(device_);
+}
+
+void Mixer::setMusicVolume(float volume) {
+  musicVolume_ = std::clamp(volume, 0.0f, 1.0f);
+  if (!ready())
+    return;
+  SDL_LockAudioDevice(device_);
+  for (Voice& v : voices_)
+    if (v.music)
+      v.volume = musicVolume_;
+  SDL_UnlockAudioDevice(device_);
+}
+
+void Mixer::setSfxVolume(float volume) {
+  sfxVolume_ = std::clamp(volume, 0.0f, 1.0f);
 }
 
 void Mixer::stopAll() {
@@ -165,9 +220,15 @@ void Mixer::fill(std::int16_t* out, int frames) {
       continue;
     const auto& samples = v.clip->samples;
     const std::size_t totalFrames = samples.size() / ch;
+    if (totalFrames == 0)
+      continue;
     for (int f = 0; f < frames; ++f) {
-      if (v.cursor >= totalFrames)
-        break;
+      if (v.cursor >= totalFrames) {
+        if (v.loop)
+          v.cursor = 0;
+        else
+          break;
+      }
       for (std::size_t c = 0; c < ch; ++c) {
         const double s =
             static_cast<double>(samples[v.cursor * ch + c]) * static_cast<double>(v.volume);
@@ -181,7 +242,11 @@ void Mixer::fill(std::int16_t* out, int frames) {
 
   voices_.erase(std::remove_if(voices_.begin(), voices_.end(),
                                [ch](const Voice& v) {
-                                 return !v.clip || v.cursor >= v.clip->samples.size() / ch;
+                                 if (!v.clip)
+                                   return true;
+                                 if (v.loop)
+                                   return false;
+                                 return v.cursor >= v.clip->samples.size() / ch;
                                }),
                 voices_.end());
 }

@@ -24,23 +24,20 @@ set(WEBOLUTION_SOURCES
   src/assets/Wav.cpp
 
   # sim -- the game itself, independent of rendering
-  # gfx bits with no GL dependency, so the tests can reach them
-  src/gfx/CylinderView.cpp
-
   src/sim/Terrain.cpp
   src/sim/World.cpp
+
+  # shell -- progress / unlock (no SDL)
+  src/shell/Progress.cpp
 
 )
 
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 
-# Presentation sources. Separate, because they need SDL2 and the asset tools
-# and tests do not.
-set(WEBOLUTION_GFX_SOURCES
-  src/gfx/Gl.cpp
-  src/gfx/Renderer.cpp
-  src/gfx/LemmingSprites.cpp
-  src/gfx/CylinderSkin.cpp
-  src/audio/Mixer.cpp
-)
+# Presentation sources. Empty during the 2026-10-18 hard reset: the flat-first
+# renderer and the placeholder shell moved to old/src/gfx and old/src/shell.
+# The replacement is built 3D-first, from what the original's own code says,
+# and is re-added here as it lands. src/audio/Mixer.cpp is kept and correct but
+# has no target to link into until the new entry point exists.
+set(WEBOLUTION_GFX_SOURCES)
 list(TRANSFORM WEBOLUTION_GFX_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

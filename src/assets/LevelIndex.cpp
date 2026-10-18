@@ -99,7 +99,8 @@ std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte> d) 
           cylinderChunk = i + 4 + len;
       } else {
         const char c = s[0];
-        const bool alnum = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+        const bool alnum =
+            (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
         if (alnum)
           lvl.shortNames.push_back(std::move(s));
         else
@@ -111,27 +112,22 @@ std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte> d) 
     ++i;
   }
 
-  // The two grids follow the "Cylinder" chunk. Their byte length is stated
-  // twice in the header; take it from there rather than assuming a size.
-  if (cylinderChunk != std::string::npos && lvl.header.size() > 4) {
-    const std::uint32_t bytesA = lvl.header[3];
-    const std::uint32_t bytesB = lvl.header[4];
-    if (bytesA == bytesB && bytesA >= 4 && bytesA % 4 == 0) {
-      // Skip the chunk's own fields to the first aligned empty cell.
-      std::size_t start = std::string::npos;
-      for (std::size_t o = cylinderChunk; o + 4 <= d.size() && o < cylinderChunk + 128; ++o) {
-        if (u32At(d, o) == kEmptyCell) {
-          start = o;
-          break;
-        }
-      }
-      if (start != std::string::npos &&
-          start + 2 * static_cast<std::size_t>(bytesA) <= d.size()) {
-        const std::size_t cells = bytesA / 4;
-        lvl.grid0.resize(cells);
-        lvl.grid1.resize(cells);
-        std::memcpy(lvl.grid0.data(), d.data() + start, bytesA);
-        std::memcpy(lvl.grid1.data(), d.data() + start + bytesA, bytesA);
+  // One surface-index array sits on the Cylinder walk, not two slices of
+  // header[3]. The preamble is the same skip CollisionGrid.cpp uses to
+  // reach the mask: five u32s, the height u32, and an f64, then u32 N and
+  // N words. N is 49858 in every retail level; it is read, not assumed.
+  // header[3] is a different number and is not consulted here. grid1 stays
+  // empty: the file does not store a second array of that length.
+  if (cylinderChunk != std::string::npos) {
+    constexpr std::size_t kPreambleBytes = 5 * 4 + 4 + 8;
+    const std::size_t countAt = cylinderChunk + kPreambleBytes;
+    if (countAt + 4 <= d.size()) {
+      const std::uint32_t n = u32At(d, countAt);
+      const std::size_t payload = countAt + 4;
+      if (n > 0 && payload + static_cast<std::size_t>(n) * 4 <= d.size()) {
+        lvl.grid0.resize(n);
+        std::memcpy(lvl.grid0.data(), d.data() + payload,
+                    static_cast<std::size_t>(n) * 4);
       }
     }
   }

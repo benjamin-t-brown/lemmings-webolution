@@ -75,4 +75,7 @@ std::vector<std::string> soundNames(const AssetLibrary&);
 // they name textures bare.
 std::string soundAssetName(std::string_view cue);
 
+// "LEMMING01" -> "MUSIC\\LEMMING01.WAV".
+std::string musicAssetName(std::string_view cue);
+
 }  // namespace webo

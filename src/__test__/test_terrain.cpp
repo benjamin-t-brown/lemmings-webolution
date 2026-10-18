@@ -4,6 +4,7 @@
 // level is a cylinder, so x = -1 and x = width - 1 are the same cell, and a
 // box or circle that straddles the seam must act on both sides of it.
 
+#include "assets/CollisionGrid.h"
 #include "sim/Terrain.h"
 
 #include <format>
@@ -62,17 +63,33 @@ void testClearAndFill() {
   check(t.at(2, 2) == Material::Empty && t.at(5, 4) == Material::Empty, "box corners cleared");
   check(t.at(6, 2) == Material::Earth, "just outside the box is untouched");
 
-  const std::size_t circle = t.clearCircle(10, 10, 3);
-  check(circle > 0, "clearCircle removes something");
-  check(t.at(10, 10) == Material::Empty, "circle centre cleared");
-  check(t.at(10, 14) == Material::Earth, "outside the radius is untouched");
+  // The explosion stencil, written out from 0x004B1528: 37 of 49 cells, in a
+  // 7-wide window at columns x-4..x+2 and rows y-4..y+2. A blast at (10, 10)
+  // therefore spans columns 6..12 and rows 6..12.
+  const std::size_t blast = t.clearExplosion(10, 10);
+  check(blast == 37, std::format("the blast stencil is 37 cells (got {})", blast));
+  check(t.at(9, 6) == Material::Empty && t.at(6, 10) == Material::Empty,
+        "the stencil's top row and its left edge are cleared");
+  check(t.at(6, 6) == Material::Earth && t.at(12, 12) == Material::Earth,
+        "and its corners are not");
+  check(t.at(13, 10) == Material::Earth && t.at(5, 10) == Material::Earth,
+        "nor is the column either side of the window");
+  check(t.at(10, 13) == Material::Earth && t.at(10, 5) == Material::Earth,
+        "nor the row above or below it");
 
-  check(t.solidCells() == before - box - circle, "removed counts add up");
+  check(t.solidCells() == before - box - blast, "removed counts add up");
 
   // Steel resists both.
   Terrain s(10, 10, Material::Steel);
   check(s.clearBox(0, 0, 10, 10) == 0, "steel survives digging");
-  check(s.clearCircle(5, 5, 4) == 0, "steel survives explosions");
+  check(s.clearExplosion(5, 5) == 0, "steel survives explosions");
+
+  // And so does a cell carrying a second blocker's field -- 0x0043F63E.
+  Terrain f(20, 20, Material::Earth);
+  f.setBlockerField(10, 10, true);
+  const std::size_t guarded = f.clearExplosion(10, 10);
+  check(guarded == 36, std::format("a blocker's field cell survives (got {})", guarded));
+  check(f.at(10, 10) == Material::Earth, "the guarded cell is still there");
 
   // Building only fills empty cells.
   Terrain b(10, 10);
@@ -91,9 +108,13 @@ void testSeamStraddling() {
   check(t.at(14, 0) == Material::Empty && t.at(15, 0) == Material::Empty, "right of the seam");
   check(t.at(0, 0) == Material::Empty && t.at(1, 0) == Material::Empty, "left of the seam");
 
+  // The blast window wraps too: 0x0043F804's `and eax, 0xff` wraps the
+  // column inside the inner loop.
   Terrain c(16, 16, Material::Earth);
-  c.clearCircle(0, 8, 2);
-  check(c.at(15, 8) == Material::Empty, "circle at x=0 reaches x=width-1");
+  c.clearExplosion(2, 8);
+  check(c.at(14, 8) == Material::Empty,
+        "a blast at x=2 reaches x=width-2 across the seam");
+  check(c.at(13, 8) == Material::Earth, "and stops there");
 }
 
 void testFromLevelGrid() {
@@ -113,6 +134,40 @@ void testFromLevelGrid() {
   check(small.solidCells() == 1, "a short grid fills what it can");
 }
 
+void testAntiGravFromCollisionGrid() {
+  // Round 11 gap: every prior anti-grav test built pads with setAntiGrav, so
+  // the 0x8000 extraction in fromCollisionGrid could be deleted and the
+  // suite would stay green. A hand-built grid word pins the line.
+  std::cout << "anti-grav bit fromCollisionGrid\n";
+  webo::CollisionGrid g;
+  g.width = 8;
+  g.height = 4;
+  g.cells.assign(static_cast<std::size_t>(g.width) * g.height, 0);
+  // File row 1, col 3: solid + 0x8000. fromCollisionGrid flips file row r
+  // to terrain row height-1-r, so the pad lands at terrain (3, 2).
+  g.cells[static_cast<std::size_t>(1) * g.width + 3] =
+      webo::kCellSolid | webo::kCellFlag0x8000;
+  const Terrain t = Terrain::fromCollisionGrid(g);
+  check(t.antiGravCells() == 1, "one pad extracted");
+  check(t.antiGrav(3, 2), "pad at flipped terrain cell (3, 2)");
+  check(!t.antiGrav(3, 1), "neighbours are clear");
+}
+
+void testWaterHazardFromCollisionGrid() {
+  // Round 14: 0x40 extraction in fromCollisionGrid.
+  std::cout << "water-hazard bit fromCollisionGrid\n";
+  webo::CollisionGrid g;
+  g.width = 8;
+  g.height = 4;
+  g.cells.assign(static_cast<std::size_t>(g.width) * g.height, 0);
+  g.cells[static_cast<std::size_t>(1) * g.width + 3] =
+      webo::kCellSolid | webo::kCellFlag0x40;
+  const Terrain t = Terrain::fromCollisionGrid(g);
+  check(t.waterHazardCells() == 1, "one hazard extracted");
+  check(t.waterHazard(3, 2), "hazard at flipped terrain cell (3, 2)");
+  check(!t.waterHazard(3, 1), "neighbours are clear");
+}
+
 }  // namespace
 
 int main() {
@@ -121,6 +176,8 @@ int main() {
   testClearAndFill();
   testSeamStraddling();
   testFromLevelGrid();
+  testAntiGravFromCollisionGrid();
+  testWaterHazardFromCollisionGrid();
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;
 }

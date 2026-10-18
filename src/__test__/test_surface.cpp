@@ -81,12 +81,13 @@ void testRetail(const fs::path& dir) {
     pixels += static_cast<std::size_t>(mask.width) * mask.height;
 
     if (name.find("MM_CLIMB_002") != std::string::npos) {
-      // Hand-counted on this level during RE: 28 angular + 12 vertical on
-      // grid0 alone; grid1 adds more. Accept a floor, not an exact total.
-      check(faces->angularQuads >= 28, std::format("climb angular quads (>=28, got {})",
-                                                   faces->angularQuads));
-      check(faces->ringStride == 8224, std::format("climb ring stride 8224 (got {})",
-                                                   faces->ringStride));
+      // Hand-counted on this level during RE: 28 angular + 12 vertical on the
+      // old header[3] window. The lattice is now the whole 49858-word array,
+      // which contains that window, so the floor still applies.
+      check(faces->angularQuads >= 28,
+            std::format("climb angular quads (>=28, got {})", faces->angularQuads));
+      check(faces->ringStride == 8224,
+            std::format("climb ring stride 8224 (got {})", faces->ringStride));
       check(faces->ringQuads >= 12,
             std::format("climb ring quads (>=12, got {})", faces->ringQuads));
       check(mask.solidCells() > 100, "climb rasterises to a visible mask");
@@ -102,7 +103,8 @@ void testRetail(const fs::path& dir) {
       check(cell(132, 32.0) == 1, "climb: walked ledge at column 132 is solid");
       check(cell(128, 40.0) == 1, "climb: wall at column 128 rises above the ledge");
       check(cell(160, 40.0) == 0, "climb: column 160 has floor and no wall above it");
-      check(cell(136, 40.0) == 0, "climb: column 136, which the walkers cross, has no wall");
+      check(cell(136, 40.0) == 0,
+            "climb: column 136, which the walkers cross, has no wall");
       // The right turn. key+8 at column 168 holds the post at 172, and the
       // walkers stop on 168 rather than crossing to it.
       check(cell(168, 40.0) == 1, "climb: right turn at column 168 is a wall");
@@ -138,9 +140,8 @@ void testRetail(const fs::path& dir) {
       for (std::uint32_t w : index->header)
         if (w == static_cast<std::uint32_t>(faces->ringStride))
           headerHoldsY = true;
-      check(!headerHoldsY,
-            std::format("{}: header must not equal derived ring stride {}", name,
-                        faces->ringStride));
+      check(!headerHoldsY, std::format("{}: header must not equal derived ring stride {}",
+                                       name, faces->ringStride));
     }
   }
 
@@ -209,9 +210,8 @@ void testSkinNotSolidity(const fs::path& dir) {
     auto index = webo::indexLevel(*blob);
     auto faces = webo::buildSurfaceMesh(*mesh, index->grid0, index->grid1);
     const auto mask = webo::rasteriseSurface(*faces, *mesh, 2);
-    const double surfPct =
-        100.0 * static_cast<double>(mask.solidCells()) /
-        (static_cast<double>(mask.width) * mask.height);
+    const double surfPct = 100.0 * static_cast<double>(mask.solidCells()) /
+                           (static_cast<double>(mask.width) * mask.height);
     // Walls are a full ring tall, so the mask is denser than the floor strokes
     // alone. A filled tube would be several times this.
     check(surfPct < 35.0, std::format("climb surface stays sparse ({:.1f}%)", surfPct));

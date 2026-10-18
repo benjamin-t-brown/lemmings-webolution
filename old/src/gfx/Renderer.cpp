@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <format>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -349,6 +350,77 @@ void Renderer::drawQuad(float x, float y, float w, float h, Colour c) {
     boundTex_ = whiteTex_;
   }
   push(x, y, w, h, 0, 0, 1, 1, c);
+}
+
+void Renderer::beginScreenUi(int viewportWidth, int viewportHeight) {
+  setFlat();
+  viewW_ = viewportWidth > 0 ? viewportWidth : 1;
+  viewH_ = viewportHeight > 0 ? viewportHeight : 1;
+  setCamera(0, 0, static_cast<float>(viewW_));
+  glDisable(GL_DEPTH_TEST);
+}
+
+namespace {
+
+std::uint32_t utf8Next(std::string_view& s) {
+  if (s.empty())
+    return 0;
+  const auto b0 = static_cast<unsigned char>(s[0]);
+  if (b0 < 0x80) {
+    s.remove_prefix(1);
+    return b0;
+  }
+  if ((b0 & 0xE0) == 0xC0 && s.size() >= 2) {
+    const auto b1 = static_cast<unsigned char>(s[1]);
+    s.remove_prefix(2);
+    return ((b0 & 0x1F) << 6) | (b1 & 0x3F);
+  }
+  if ((b0 & 0xF0) == 0xE0 && s.size() >= 3) {
+    const auto b1 = static_cast<unsigned char>(s[1]);
+    const auto b2 = static_cast<unsigned char>(s[2]);
+    s.remove_prefix(3);
+    return ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F);
+  }
+  s.remove_prefix(1);
+  return '?';
+}
+
+}  // namespace
+
+void Renderer::drawText(const Font& font, unsigned fontTex, float x, float y, float scale,
+                        std::string_view utf8, Colour c) {
+  if (!fontTex || scale <= 0)
+    return;
+  if (boundTex_ != fontTex) {
+    flush();
+    boundTex_ = fontTex;
+  }
+  float cx = x;
+  float cy = y;
+  const float gw = Font::kGlyph * scale;
+  const float gh = Font::kGlyph * scale;
+  while (!utf8.empty()) {
+    const std::uint32_t cp = utf8Next(utf8);
+    if (cp == 0)
+      break;
+    if (cp == '^' || cp == '\n') {
+      cx = x;
+      cy += gh + 2;
+      continue;
+    }
+    int sx = 0, sy = 0;
+    std::uint32_t cell = cp <= 255 ? cp : '?';
+    if (!font.glyphRect(cell, sx, sy)) {
+      cx += gw;
+      continue;
+    }
+    const float u0 = static_cast<float>(sx) / static_cast<float>(font.atlasW);
+    const float u1 = static_cast<float>(sx + Font::kGlyph) / static_cast<float>(font.atlasW);
+    const float v0 = static_cast<float>(sy) / static_cast<float>(font.atlasH);
+    const float v1 = static_cast<float>(sy + Font::kGlyph) / static_cast<float>(font.atlasH);
+    push(cx, cy, gw, gh, u0, v0, u1, v1, c);
+    cx += gw;
+  }
 }
 
 void Renderer::endFrame() { flush(); }

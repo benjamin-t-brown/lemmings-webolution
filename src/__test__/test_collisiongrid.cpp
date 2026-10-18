@@ -173,10 +173,19 @@ void testTerrainMapping(const webo::AssetLibrary& lib) {
                     grid->solidCells()));
 
   // Every cell must agree with the engine's own test, not just the total.
+  // Across the axis, not along the same row: the file grid is Y-up (0 at the
+  // bottom of the tube) and Terrain is Y-down, so fromCollisionGrid maps file
+  // row r to terrain row height - 1 - r. That flip is live-corroborated --
+  // a walker at world Y 32.190 on this level has solid at file row 31 and
+  // empty at 32 (docs/scratch/phase3-round1.md), and the three Round 3 spawn
+  // landings resolve to the same axis (docs/scratch/phase3-round3.md). This
+  // check compared the same row on both sides, which the flip breaks by
+  // construction; it is the test that was stale, not the parser. The live
+  // dumps above are untouched and still compare byte for byte.
   std::size_t mismatched = 0;
   for (int y = 0; y < grid->height; ++y)
     for (int x = 0; x < grid->width; ++x)
-      if (terrain.solid(x, y) != grid->solid(x, y))
+      if (terrain.solid(x, grid->height - 1 - y) != grid->solid(x, y))
         ++mismatched;
   check(mismatched == 0, std::format("every cell agrees ({} do not)", mismatched));
 

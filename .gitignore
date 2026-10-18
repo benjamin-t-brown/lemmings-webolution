@@ -19,3 +19,4 @@ __pycache__/
 *.avi
 # Local checkout of morluto/rea, used as the reverse-engineering agent.
 .rea/
+.claude/worktrees/

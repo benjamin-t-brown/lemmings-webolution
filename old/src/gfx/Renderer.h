@@ -12,6 +12,7 @@
 #pragma once
 
 #include "CylinderView.h"
+#include "Font.h"
 #include "assets/Bitmap.h"
 #include "sim/World.h"
 
@@ -58,6 +59,13 @@ public:
   void drawTerrain();
 
   void drawQuad(float x, float y, float w, float h, Colour c);
+
+  // Pixel-space UI: setFlat + camera so one unit is one viewport pixel.
+  void beginScreenUi(int viewportWidth, int viewportHeight);
+
+  // UTF-8 text using a Font atlas previously uploaded via uploadImage.
+  void drawText(const Font& font, unsigned fontTex, float x, float y, float scale,
+                std::string_view utf8, Colour c = {1, 1, 1, 1});
 
   // Uploads an RGBA image and returns a texture name for drawSprite. The
   // renderer owns it and deletes it on destruction.

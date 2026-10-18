@@ -56,9 +56,23 @@ Read off the instructions that test and set them, not guessed:
     0x0800  the blocker's own bit: cleared at 0x0040E1D5 (`and eax, 0xf7ff`)
             when a blocker goes away.
 
-A removal clears 0x1, 0x2, 0x80 and 0x800 together --
-`0x0041B783 and edx, 0xf77c` -- in the stepper that `bash`, `dig` and `mine`
-share.
+A skill's removal does not clear a mask of bits: it stores a whole dword 0
+over the cell. `mov dword ptr [ecx], 0` at 0x0040C16D (bash), `mov dword ptr
+[edx], 0` at 0x00415B84 (dig) and 0x00418B29 (mine), through the pointer this
+same probe returns. MEASURED live on the stock exe, 38 of 38 cells: 0x21 ->
+0x00000000 on MM_DIG_000, 0x1 -> 0x00000000 and 0x5 -> 0x00000000 on
+MM_BASH_002 (tools/harness/measure_dig.py).
+
+This docstring used to say the removal was `0x0041B783 and edx, 0xf77c`,
+clearing 0x1|0x2|0x80|0x800. That is a different function -- slot 3 of the
+*trampoline* vtable 0x004B0D08, with no direct caller in .text -- and it is
+not any skill's bite. See docs/scratch/phase3-round5.md and
+phase3-round5-live.md.
+
+The bites refuse a cell rather than clear it when `cell & 0x2`, or when a
+direction-dependent bit is set: 0x4/0x8 for bash and mine (right/left) and
+0x10/0x20 for dig (upright/inverted). `src/assets/CollisionGrid.h` carries
+the addresses.
 
 The landing predicate is therefore **non-zero and not 0x80**, which is what
 `solid()` below implements, and it is the same test the engine makes at

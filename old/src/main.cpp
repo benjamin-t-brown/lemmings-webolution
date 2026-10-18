@@ -25,10 +25,10 @@
 //   .               single step while paused
 //   N               nuke
 //   R               restart
-//   Esc             quit
+//   Esc             pause in-level / back in menus / quit from main
 //
-//   --level <id>    load that level's surface as the terrain and take its
-//                   parameters from LEVELMAP.DAT, e.g. --level MM_CLIMB_002.
+//   --level <id>    skip the shell and load that level (debug bypass)
+//   --lang <name>   force a LANGUAGE\*.LTX (default UK when present)
 
 #include "assets/Bitmap.h"
 #include "assets/Png.h"
@@ -40,10 +40,12 @@
 #include "assets/LevelObjects.h"
 #include "assets/SurfaceMesh.h"
 #include "gfx/CylinderSkin.h"
+#include "gfx/Font.h"
 #include "gfx/LemmingSprites.h"
 #include "gfx/Renderer.h"
 #include "assets/Box.h"
 #include "assets/GameData.h"
+#include "shell/Shell.h"
 #include "sim/World.h"
 
 #include <optional>
@@ -115,14 +117,16 @@ void placeSpawnPoints(sim::LevelSetup& s) {
   if (topY < 0) {
     // Empty mask: fall back to the middle of the sky so the level still runs.
     s.entrances.push_back({t.width() / 4, t.height() / 4});
-    s.exits.push_back({3 * t.width() / 4, t.height() / 2, 12, 14});
+    // Round 11: measured exit AABB is 2 x 3 inclusive, not a guessed 12 x 14.
+    s.exits.push_back({3 * t.width() / 4, t.height() / 2, 2, 3});
     return;
   }
   const int enterY = std::max(0, topY - 10);
   s.entrances.push_back({leftX, enterY});
 
   // Exit on a standable cell (solid with empty above) far around the tube
-  // from the entrance.
+  // from the entrance. Box covers the standable feet row (bestY - 1) inside
+  // the measured 2 x 3 inclusive AABB.
   int bestX = leftX, bestY = topY, bestDist = -1;
   for (int y = 1; y < t.height(); ++y) {
     for (int x = 0; x < t.width(); ++x) {
@@ -136,7 +140,7 @@ void placeSpawnPoints(sim::LevelSetup& s) {
       }
     }
   }
-  s.exits.push_back({bestX - 4, bestY - 12, 12, 14});
+  s.exits.push_back({bestX - 1, bestY - 2, 2, 3});
 }
 
 sim::Terrain terrainFromMask(const OccupancyMask& mask) {
@@ -170,7 +174,8 @@ sim::LevelSetup makeTestLevel(const ReleaseRates& rates, int releaseRate,
   s.terrain.clearBox(310, 150, 20, 50);                        // a gap across the seam
 
   s.entrances.push_back({20, 130});
-  s.exits.push_back({230, 138, 12, 14});
+  // Floor top is y=150; feet rest at 149. Measured 2 x 3 inclusive box.
+  s.exits.push_back({229, 146, 2, 3});
   applyLevelParams(s, rates, releaseRate, info);
   return s;
 }
@@ -182,16 +187,72 @@ sim::LevelSetup makeSurfaceLevel(const CollisionGrid& mask, const ReleaseRates& 
   sim::LevelSetup s;
   s.terrain = sim::Terrain::fromCollisionGrid(mask);
   if (objects) {
-    for (const auto& e : objects->entrances) {
-      const auto [x, y] =
-          worldToMaskPixel(e.position, mask.width, mask.height, worldH, pixelsPerUnit);
-      s.entrances.push_back({x, y});
+    // The original releases from the hatch's own stored words, not from the
+    // Entrance*.a3d translation (webo::HatchRecord, src/sim/World.cpp spawn).
+    // Every retail level has at least one hatch record; the translation stays
+    // the fallback for the levels and test setups that have none.
+    for (const auto& h : objects->hatches) {
+      const auto [x, y] = hatchSpawnCell(h, mask.width, mask.height);
+      s.entrances.push_back(
+          {x, y, sim::Entrance::Source::HatchWords, h.type});
+    }
+    if (objects->hatches.empty()) {
+      for (const auto& e : objects->entrances) {
+        const auto [x, y] =
+            worldToMaskPixel(e.position, mask.width, mask.height, worldH, pixelsPerUnit);
+        s.entrances.push_back({x, y, sim::Entrance::Source::EntranceModel});
+      }
     }
     for (const auto& e : objects->exits) {
-      const auto [x, y] =
-          worldToMaskPixel(e.position, mask.width, mask.height, worldH, pixelsPerUnit);
-      // Exit trigger box roughly matching the basket footprint.
-      s.exits.push_back({x - 6, y - 12, 12, 14});
+      // Round 11: object-overlap AABB from the Exit*.a3d pose, not a
+      // guessed rectangle and not worldToMaskPixel's Y (off by one for
+      // integer ty; wrong axis for this box).
+      const ExitTrigger box = exitTriggerFromPose(e, mask.width, mask.height);
+      s.exits.push_back({box.x, box.y, box.width, box.height});
+    }
+    // Round 16: teleport.a3d pads. Pair file order i ↔ i+n/2 (MEASURED on
+    // MM_TELE_003: four pads → (0,2)(1,3); two-pad levels → (0,1)). The
+    // original links by stream id at object+0x98 via 0x00444BA1; that word
+    // is not yet parsed from the .LVL, so the even-count index rule is the
+    // sim stand-in. teleport_fx.a3d is skipped by findLevelObjects.
+    std::vector<TeleportTrigger> telePads;
+    for (const auto& p : objects->placed) {
+      if (p.kind != PlacedKind::Teleport)
+        continue;
+      telePads.push_back(
+          teleportTriggerFromPose(p.pose, mask.width, mask.height));
+    }
+    const std::size_t n = telePads.size();
+    if (n >= 2 && (n % 2) == 0) {
+      const std::size_t half = n / 2;
+      for (std::size_t i = 0; i < n; ++i) {
+        const auto& src = telePads[i];
+        const auto& dst = telePads[(i + half) % n];
+        s.teleports.push_back({
+            src.x,
+            src.y,
+            src.width,
+            src.height,
+            dst.destCol,
+            mask.height - 1 - dst.destWorldY,
+        });
+      }
+    }
+    // Round 17: speedup_two_way.a3d → SpeedPad AABB (vtable 0x004B1178).
+    for (const auto& p : objects->placed) {
+      if (p.kind != PlacedKind::SpeedUp)
+        continue;
+      const SpeedPadTrigger box =
+          speedPadTriggerFromPose(p.pose, mask.width, mask.height);
+      s.speedPads.push_back({box.x, box.y, box.width, box.height, 0, true});
+    }
+    // Round 21: lever.a3d → Lever AABB (vtable 0x004B1288).
+    for (const auto& p : objects->placed) {
+      if (p.kind != PlacedKind::Lever)
+        continue;
+      const LeverTrigger box =
+          leverTriggerFromPose(p.pose, mask.width, mask.height);
+      s.levers.push_back({box.x, box.y, box.width, box.height, 1});
     }
   }
   // Only the full guesser when nothing was read; a partial read is still
@@ -201,7 +262,7 @@ sim::LevelSetup makeSurfaceLevel(const CollisionGrid& mask, const ReleaseRates& 
   else if (s.entrances.empty())
     s.entrances.push_back({mask.width / 4, mask.height / 4});
   else if (s.exits.empty())
-    s.exits.push_back({3 * mask.width / 4, mask.height / 2, 12, 14});
+    s.exits.push_back({3 * mask.width / 4, mask.height / 2, 2, 3});
   if (skills) {
     for (std::size_t i = 0; i < skills->counts.size(); ++i)
       s.skills[i] = static_cast<int>(skills->counts[i]);
@@ -220,6 +281,8 @@ struct App {
   SDL_GLContext context = nullptr;
   gfx::Renderer renderer;
   gfx::LemmingSprites sprites;
+  gfx::Font font;
+  unsigned fontTex = 0;
   ReleaseRates releaseRates;
   int releaseRate = 50;
   std::vector<LevelInfo> levelInfos;
@@ -229,6 +292,13 @@ struct App {
   // the hand-built test terrain.
   std::optional<sim::LevelSetup> surfaceLevel;
   sim::World world;
+  shell::Shell shell;
+  std::optional<AssetLibrary> library;
+  fs::path gameDir;
+  int playGroup = 0;
+  int playSlot = 0;
+  bool bypassShell = false;  // --level
+  bool resultsShown = false;
 
   bool running = true;
   bool paused = false;
@@ -253,6 +323,10 @@ struct App {
     return nullptr;
   }
 
+  bool inMenus() const {
+    return !bypassShell && shell.screen() != shell::Screen::Playing;
+  }
+
   void restart() {
     if (surfaceLevel)
       world = sim::World(*surfaceLevel);
@@ -272,10 +346,103 @@ struct App {
     camWidth = static_cast<float>(world.terrain().width());
     camX = 0;
     terrainDirty = true;
+    resultsShown = false;
+    paused = false;
     // Level-start fanfare. Shell-owned rather than a World cue: restart is
     // not a simulation event, and the original plays this before anyone
     // walks out of the entrance.
     mixer.play("Letsgo");
+  }
+
+  void playMenuMusic() {
+    if (mixer.has("LEMMING01"))
+      mixer.playMusic("LEMMING01", 1.0f);
+  }
+
+  void playLevelMusic() {
+    const int track = 1 + (playGroup * 25 + playSlot) % 13;
+    const std::string cue = std::format("LEMMING{:02}", track);
+    if (mixer.has(cue))
+      mixer.playMusic(cue, 1.0f);
+    else if (mixer.has("LEMMING01"))
+      mixer.playMusic("LEMMING01", 1.0f);
+  }
+
+  bool loadLevelById(const std::string& id) {
+    if (!library || id.empty())
+      return false;
+    levelId = id;
+    if (const LevelInfo* info = levelInfo())
+      levelName = info->name;
+    else
+      levelName = id;
+
+    std::string path;
+    for (const auto& candidate : levelFileNames(*library))
+      if (candidate.find(id) != std::string::npos) {
+        path = candidate;
+        break;
+      }
+    if (path.empty()) {
+      std::fprintf(stderr, "level: no .LVL matching %s\n", id.c_str());
+      surfaceLevel.reset();
+      return false;
+    }
+    auto blob = library->read(path);
+    if (!blob) {
+      std::fprintf(stderr, "level: read failed\n");
+      return false;
+    }
+    auto mesh = findCylinderMesh(*blob);
+    if (!mesh) {
+      std::fprintf(stderr, "level: %s\n", mesh.error().c_str());
+      return false;
+    }
+    skin = gfx::CylinderSkin{};
+    if (auto r = skin.load(*library, renderer, *mesh); !r)
+      std::fprintf(stderr, "skin: %s\n", r.error().c_str());
+
+    auto foundGrid = findCollisionGrid(*blob);
+    if (!foundGrid) {
+      std::fprintf(stderr, "terrain: %s\n", foundGrid.error().c_str());
+      surfaceLevel.reset();
+      return false;
+    }
+    LevelObjects objects;
+    if (auto found = findLevelObjects(*blob))
+      objects = std::move(*found);
+    LevelSkills skills{};
+    const LevelSkills* skillsPtr = nullptr;
+    if (auto found = findLevelSkills(*blob)) {
+      skills = std::move(*found);
+      skillsPtr = &skills;
+    }
+    surfaceLevel = makeSurfaceLevel(*foundGrid, releaseRates, releaseRate, levelInfo(), &objects,
+                                    skillsPtr, mesh->height(), kPixelsPerUnit);
+    restart();
+    playLevelMusic();
+    return true;
+  }
+
+  void finishLevel(bool won) {
+    if (resultsShown)
+      return;
+    resultsShown = true;
+    if (won && !bypassShell)
+      shell.progress().complete(shell.table(), playGroup, playSlot);
+    shell::ResultsInfo info;
+    info.won = won;
+    info.saved = world.saved();
+    info.saveTarget = world.setup().saveTarget;
+    info.out = world.activeCount();
+    const int left = world.setup().timeLimitTicks - static_cast<int>(world.tickCount());
+    info.timeLeftSec = std::max(0, left) / kTicksPerSecond;
+    if (bypassShell) {
+      running = false;
+      return;
+    }
+    shell.showResults(info);
+    playMenuMusic();
   }
 
   // World speaks in SoundCue; the mixer speaks in retail names.
@@ -296,9 +463,46 @@ struct App {
         mixer.play(name);
   }
 
+  void reloadLanguage() {
+    if (!library)
+      return;
+    if (auto st = loadStrings(*library, shell.language())) {
+      shell.setStrings(std::move(*st));
+      shell.clearLanguageDirty();
+    }
+  }
+
   void handleKey(SDL_Keycode k) {
+    if (inMenus()) {
+      if (auto play = shell.handleKey(static_cast<int>(k))) {
+        playGroup = play->group;
+        playSlot = play->slot;
+        if (!loadLevelById(play->levelId))
+          shell.returnToMap();
+      }
+      if (shell.languageDirty()) {
+        reloadLanguage();
+        shell.applyVolumes(mixer);
+      }
+      if (shell.quitRequested())
+        running = false;
+      return;
+    }
+
     switch (k) {
-      case SDLK_ESCAPE: running = false; break;
+      case SDLK_ESCAPE:
+        if (bypassShell)
+          running = false;
+        else if (!paused)
+          paused = true;
+        else {
+          // Second Esc from pause returns to the map (stock short-Esc quirk
+          // is about leaving pause; we keep a deliberate back path).
+          paused = false;
+          shell.returnToMap();
+          playMenuMusic();
+        }
+        break;
       case SDLK_SPACE: paused = !paused; break;
       case SDLK_PERIOD: stepOnce = true; break;
       case SDLK_n: world.nuke(); break;
@@ -376,8 +580,22 @@ struct App {
         running = false;
       else if (e.type == SDL_KEYDOWN)
         handleKey(e.key.keysym.sym);
-      else if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
+      else if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT &&
+               !inMenus())
         handleClick(e.button.x, e.button.y);
+    }
+
+    int vw = 0, vh = 0;
+    SDL_GetWindowSize(window, &vw, &vh);
+
+    if (inMenus()) {
+      renderer.beginFrame(vw, vh, {0.05f, 0.06f, 0.1f, 1});
+      shell.draw(renderer, font, fontTex, vw, vh);
+      renderer.endFrame();
+      if (present)
+        SDL_GL_SwapWindow(window);
+      SDL_SetWindowTitle(window, "Lemmings Webolution");
+      return;
     }
 
     const std::uint64_t now = SDL_GetTicks64();
@@ -393,8 +611,24 @@ struct App {
       terrainDirty = true;  // skills edit terrain; cheap enough at this size
     }
 
-    int vw = 0, vh = 0;
-    SDL_GetWindowSize(window, &vw, &vh);
+    if (!bypassShell && !resultsShown) {
+      if (world.won())
+        finishLevel(true);
+      else if (world.setup().timeLimitTicks > 0 &&
+               static_cast<int>(world.tickCount()) >= world.setup().timeLimitTicks &&
+               world.activeCount() == 0)
+        finishLevel(false);
+    }
+    if (inMenus()) {
+      // finishLevel may have switched to Results this frame.
+      renderer.beginFrame(vw, vh, {0.05f, 0.06f, 0.1f, 1});
+      shell.draw(renderer, font, fontTex, vw, vh);
+      renderer.endFrame();
+      if (present)
+        SDL_GL_SwapWindow(window);
+      return;
+    }
+
     renderer.beginFrame(vw, vh, {0.06f, 0.07f, 0.12f, 1});
     renderer.setCamera(camX, 0, camWidth);
     if (cylinder)
@@ -429,7 +663,7 @@ struct App {
         case sim::State::Splatter: c = {0.6f, 0.1f, 0.1f, 1}; break;
         default: break;
       }
-      if (l.fuse > 0)
+      if (l.fuseMs > 0)
         c = {1.0f, 0.2f, 0.2f, 1};
 
       // The original's artwork when it loaded, the placeholder box otherwise,
@@ -458,20 +692,59 @@ struct App {
 
     ++animTick;
 
+    // On-canvas HUD from .LTX when the shell has strings.
+    {
+      renderer.beginScreenUi(vw, vh);
+      const float sc = vw >= 900 ? 2.0f : 1.5f;
+      const auto& st = shell.strings();
+      const std::size_t skillIdx =
+          shell::Ltx::SkillClimber + static_cast<std::size_t>(skill);
+      std::string_view skillName =
+          st.size() > skillIdx ? st[skillIdx]
+                               : std::string_view(sim::skillName(kSkills[static_cast<std::size_t>(skill)]));
+      const int stock = world.setup().skills[static_cast<std::size_t>(skill)];
+      const int timeLeft = world.setup().timeLimitTicks > 0
+                               ? std::max(0, world.setup().timeLimitTicks -
+                                                 static_cast<int>(world.tickCount())) /
+                                     kTicksPerSecond
+                               : -1;
+      std::string line1 = std::format("{}  {}{}", skillName, stock < 0 ? "" : "x",
+                                      stock < 0 ? "" : std::to_string(stock));
+      std::string line2 =
+          std::format("{} {}   {} {}/{}   {}",
+                      st.size() > shell::Ltx::Out ? st[shell::Ltx::Out] : "Out",
+                      world.activeCount(),
+                      st.size() > shell::Ltx::Saved ? st[shell::Ltx::Saved] : "Saved",
+                      world.saved(), world.setup().saveTarget,
+                      levelName.empty() ? "test" : levelName);
+      if (timeLeft >= 0)
+        line2 += std::format("   {} {}s",
+                             st.size() > shell::Ltx::TimeRemaining ? st[shell::Ltx::TimeRemaining]
+                                                                  : "Time",
+                             timeLeft);
+      renderer.drawQuad(0, 0, static_cast<float>(vw), 36 * sc / 1.5f, {0, 0, 0, 0.55f});
+      renderer.drawText(font, fontTex, 8, 4, sc, line1, {1, 1, 0.85f, 1});
+      renderer.drawText(font, fontTex, 8, 4 + gfx::Font::kGlyph * sc + 2, sc * 0.85f, line2,
+                        {0.85f, 0.9f, 1, 1});
+      if (paused) {
+        renderer.drawQuad(0, 0, static_cast<float>(vw), static_cast<float>(vh),
+                          {0, 0, 0, 0.45f});
+        const std::string_view pause =
+            st.size() > shell::Ltx::Paused ? st[shell::Ltx::Paused] : "Paused";
+        const int tw = font.measure(pause, sc * 2);
+        renderer.drawText(font, fontTex, static_cast<float>(vw - tw) * 0.5f,
+                          static_cast<float>(vh) * 0.4f, sc * 2, pause, {1, 1, 1, 1});
+      }
+    }
+
     renderer.endFrame();
     if (present)
       SDL_GL_SwapWindow(window);
 
-    const int stock = world.setup().skills[static_cast<std::size_t>(skill)];
-    const std::string skillLabel =
-        stock < 0 ? std::string(sim::skillName(kSkills[static_cast<std::size_t>(skill)]))
-                  : std::format("{}×{}", sim::skillName(kSkills[static_cast<std::size_t>(skill)]),
-                                stock);
     const std::string title = std::format(
-        "Lemmings Webolution  --  {}  |  {}  |  out {} saved {}/{} dead {}  |  tick {}{}",
-        levelName.empty() ? "test level" : levelName, skillLabel, world.activeCount(),
-        world.saved(), world.setup().saveTarget, world.dead(), world.tickCount(),
-        paused ? "  [paused]" : "");
+        "Lemmings Webolution  --  {}  |  out {} saved {}/{}{}",
+        levelName.empty() ? "test level" : levelName, world.activeCount(), world.saved(),
+        world.setup().saveTarget, paused ? "  [paused]" : "");
     SDL_SetWindowTitle(window, title.c_str());
   }
 };
@@ -488,6 +761,7 @@ int main(int argc, char** argv) {
   std::string shotPath;
   int shotTicks = 120;
   bool startCylinder = false;
+  std::string forceLang;
   // The original ran at 640x480. That is the reference the renderer is meant
   // to reproduce, so it is one flag away; a larger window is just easier to
   // work in.
@@ -517,11 +791,11 @@ int main(int argc, char** argv) {
       }
     } else if (a == "--cylinder") {
       startCylinder = true;
+    } else if (a == "--lang" && i + 1 < argc) {
+      forceLang = argv[++i];
     } else if (a == "--level" && i + 1 < argc) {
-      // A level id from LEVELMAP.DAT, e.g. MM_CLIMB_002. Only its parameters
-      // are used so far; the terrain stays the built-in one until .LVL is
-      // solved, and the title bar says so.
       g_app.levelId = argv[++i];
+      g_app.bypassShell = true;
     }
   }
 
@@ -579,184 +853,110 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  g_app.font = gfx::Font::make();
+  g_app.fontTex = g_app.renderer.uploadImage(g_app.font.atlas);
+
   // The original's lemming artwork, if an installation is reachable. Not
   // having one is not an error: the game falls back to placeholder boxes and
   // still runs, which keeps the simulation testable on a bare checkout.
   {
     const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
-    const fs::path gameDir = dir ? fs::path(dir) : fs::path(kDefaultGameDir);
-    auto lib = AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
+    g_app.gameDir = dir ? fs::path(dir) : fs::path(kDefaultGameDir);
+    g_app.shell.setProgressPath(g_app.gameDir / "webolution_progress.dat");
+    auto lib = AssetLibrary::open(g_app.gameDir / "lemmings.box", g_app.gameDir / "patch.box");
     if (!lib) {
       std::fprintf(stderr, "sprites: %s (drawing placeholders)\n", lib.error().c_str());
-    } else if (auto r = g_app.sprites.load(*lib, g_app.renderer); !r) {
-      std::fprintf(stderr, "sprites: %s (drawing placeholders)\n", r.error().c_str());
     } else {
-      for (const auto& m : g_app.sprites.missingSheets())
-        std::fprintf(stderr, "sprites: %s\n", m.c_str());
-      std::fprintf(stderr, "sprites: loaded %zu from %s\n",
-                   g_app.sprites.definitions().sprites.size(), gameDir.string().c_str());
+      g_app.library = std::move(*lib);
+      if (auto r = g_app.sprites.load(*g_app.library, g_app.renderer); !r) {
+        std::fprintf(stderr, "sprites: %s (drawing placeholders)\n", r.error().c_str());
+      } else {
+        std::fprintf(stderr, "sprites: loaded %zu from %s\n",
+                     g_app.sprites.definitions().sprites.size(), g_app.gameDir.string().c_str());
+      }
 
-      // Level parameters, so the goal and the lemming count are the real
-      // ones even while the terrain is still ours.
-      if (auto infos = loadLevelMap(*lib)) {
+      if (auto infos = loadLevelMap(*g_app.library)) {
         g_app.levelInfos = std::move(*infos);
-        if (const LevelInfo* info = g_app.levelInfo()) {
-          g_app.levelName = info->name;
-          std::fprintf(stderr, "level %s \"%s\": save %u of %u, %us\n", info->id.c_str(),
-                       info->name.c_str(), info->saveTarget, info->totalLemmings,
-                       info->timeLimitSeconds);
-        } else if (!g_app.levelId.empty()) {
-          std::fprintf(stderr, "level %s: not in LEVELMAP.DAT, using defaults\n",
-                       g_app.levelId.c_str());
-        }
+        g_app.shell.setLevelInfos(g_app.levelInfos);
       } else {
-        std::fprintf(stderr, "level map: %s (using defaults)\n", infos.error().c_str());
+        std::fprintf(stderr, "level map: %s\n", infos.error().c_str());
       }
 
-      // The spawn interval comes from the game's own curve when it is there.
-      if (auto rr = loadReleaseRateTable(*lib)) {
+      if (auto table = loadLevelTable(*g_app.library)) {
+        g_app.shell.setLevelTable(std::move(*table));
+      } else {
+        std::fprintf(stderr, "levels map: %s\n", table.error().c_str());
+      }
+
+      auto langs = availableLanguages(*g_app.library);
+      g_app.shell.setLanguages(langs);
+      std::string lang = forceLang;
+      if (lang.empty()) {
+        if (auto loaded = shell::loadProgress(g_app.shell.progressPath()); loaded) {
+          g_app.shell.setProgress(std::move(*loaded));
+          lang = g_app.shell.language();
+        } else {
+          // Prefer English (UK.LTX); fall back to the first available table.
+          lang = "UK";
+          bool have = false;
+          for (const auto& l : langs)
+            if (l == "UK")
+              have = true;
+          if (!have && !langs.empty())
+            lang = langs.front();
+          g_app.shell.progress().language = lang;
+          g_app.shell.progress().newGame(g_app.shell.table());
+        }
+      } else {
+        g_app.shell.progress().language = lang;
+      }
+      if (auto st = loadStrings(*g_app.library, lang)) {
+        g_app.shell.setStrings(std::move(*st));
+        std::fprintf(stderr, "language: %s (%zu strings)\n", lang.c_str(),
+                     g_app.shell.strings().size());
+      } else {
+        std::fprintf(stderr, "language: %s\n", st.error().c_str());
+      }
+
+      if (auto rr = loadReleaseRateTable(*g_app.library)) {
         g_app.releaseRates = std::move(*rr);
-        std::fprintf(stderr, "release rate %d: %.2f s per lemming, %d ticks\n", g_app.releaseRate,
-                     g_app.releaseRates.secondsPerLemming(g_app.releaseRate),
-                     g_app.releaseRates.intervalTicks(g_app.releaseRate, kTicksPerSecond));
       } else {
-        std::fprintf(stderr, "release rates: %s (using a fallback interval)\n",
-                     rr.error().c_str());
+        std::fprintf(stderr, "release rates: %s\n", rr.error().c_str());
       }
 
-      // Named level: skin tiles for the renderer, surface lattice for the
-      // simulation. Either can fail independently; missing terrain falls back
-      // to the hand-built test level.
-      if (!g_app.levelId.empty()) {
-        std::string path;
-        for (const auto& candidate : levelFileNames(*lib))
-          if (candidate.find(g_app.levelId) != std::string::npos) {
-            path = candidate;
-            break;
-          }
-        if (path.empty()) {
-          std::fprintf(stderr, "level: no .LVL matching %s\n", g_app.levelId.c_str());
-        } else if (auto blob = lib->read(path)) {
-          auto mesh = findCylinderMesh(*blob);
-          if (!mesh) {
-            std::fprintf(stderr, "level: %s\n", mesh.error().c_str());
-          } else {
-            if (auto r = g_app.skin.load(*lib, g_app.renderer, *mesh); !r) {
-              std::fprintf(stderr, "skin: %s\n", r.error().c_str());
-            } else {
-              for (const auto& m : g_app.skin.missing())
-                std::fprintf(stderr, "skin: %s\n", m.c_str());
-              std::fprintf(stderr, "skin: %zu tiles (%zu outer, %zu inner) from %s\n",
-                           g_app.skin.tileCount(), g_app.skin.outerCount(),
-                           g_app.skin.innerCount(), path.c_str());
-            }
-
-            // Collision comes from the mask stored in the .LVL, which is what
-            // the original itself collides against (CollisionGrid.h). The
-            // surface lattice -- indexLevel's grids, buildSurfaceMesh and
-            // rasteriseSurface -- is the engine's *render* input and is not
-            // consulted here; `lrtool lvlmap` / `lvlmask` / `lvlstats` still
-            // exercise it.
-            {
-              auto foundGrid = findCollisionGrid(*blob);
-              if (!foundGrid) {
-                std::fprintf(stderr, "terrain: %s (using test level)\n",
-                             foundGrid.error().c_str());
-              } else {
-                const auto& mask = *foundGrid;
-                const double pct =
-                    100.0 * static_cast<double>(mask.solidCells()) /
-                    (static_cast<double>(mask.width) * mask.height);
-                LevelObjects objects;
-                if (auto found = findLevelObjects(*blob)) {
-                  objects = std::move(*found);
-                  std::fprintf(stderr, "objects: %zu entrance(s), %zu exit(s), %zu placed\n",
-                               objects.entrances.size(), objects.exits.size(),
-                               objects.placed.size());
-                  for (const auto& e : objects.entrances) {
-                    const auto [x, y] = worldToMaskPixel(e.position, mask.width, mask.height,
-                                                        mesh->height(), kPixelsPerUnit);
-                    std::fprintf(stderr, "  entrance (%.1f,%.1f,%.1f) -> mask %d,%d\n",
-                                 e.position.x, e.position.y, e.position.z, x, y);
-                  }
-                  for (const auto& e : objects.exits) {
-                    const auto [x, y] = worldToMaskPixel(e.position, mask.width, mask.height,
-                                                        mesh->height(), kPixelsPerUnit);
-                    std::fprintf(stderr, "  exit (%.1f,%.1f,%.1f) -> mask %d,%d\n", e.position.x,
-                                 e.position.y, e.position.z, x, y);
-                  }
-                  for (const auto& p : objects.placed) {
-                    const auto [x, y] = worldToMaskPixel(p.pose.position, mask.width, mask.height,
-                                                        mesh->height(), kPixelsPerUnit);
-                    const char* kind = "other";
-                    switch (p.kind) {
-                      case PlacedKind::AntiGrav: kind = "anti_grav"; break;
-                      case PlacedKind::Teleport: kind = "teleport"; break;
-                      case PlacedKind::PressurePad: kind = "pressure_pad"; break;
-                      case PlacedKind::SpeedUp: kind = "speedup"; break;
-                      case PlacedKind::Lever: kind = "lever"; break;
-                      case PlacedKind::Pipe: kind = "pipe"; break;
-                      case PlacedKind::Deathroller: kind = "deathroller"; break;
-                      case PlacedKind::Buzzsaw: kind = "buzzsaw"; break;
-                      case PlacedKind::Creature: kind = "creature"; break;
-                      case PlacedKind::Scenery: kind = "scenery"; break;
-                      case PlacedKind::Other: break;
-                    }
-                    std::fprintf(stderr, "  %s [%s] (%.1f,%.1f,%.1f) -> mask %d,%d\n",
-                                 p.name.c_str(), kind, p.pose.position.x, p.pose.position.y,
-                                 p.pose.position.z, x, y);
-                  }
-                } else {
-                  std::fprintf(stderr, "objects: %s (guessing spawn points)\n",
-                               found.error().c_str());
-                }
-                LevelSkills skills{};
-                const LevelSkills* skillsPtr = nullptr;
-                if (auto found = findLevelSkills(*blob)) {
-                  skills = std::move(*found);
-                  skillsPtr = &skills;
-                  std::fprintf(stderr,
-                               "skills: climb %u float %u bomb %u block %u build %u bash %u "
-                               "mine %u dig %u\n",
-                               skills.counts[0], skills.counts[1], skills.counts[2],
-                               skills.counts[3], skills.counts[4], skills.counts[5],
-                               skills.counts[6], skills.counts[7]);
-                } else {
-                  std::fprintf(stderr, "skills: %s (unlimited)\n", found.error().c_str());
-                }
-                g_app.surfaceLevel = makeSurfaceLevel(
-                    mask, g_app.releaseRates, g_app.releaseRate, g_app.levelInfo(), &objects,
-                    skillsPtr, mesh->height(), kPixelsPerUnit);
-                std::fprintf(stderr,
-                             "terrain: stored collision mask %dx%d, %.1f%% solid from %s\n",
-                             mask.width, mask.height, pct, path.c_str());
-              }
-            }
-          }
-        }
-      }
-
-      // Sound cues used by the simulation. Missing any one is not fatal --
-      // play() is a no-op for unknown names -- but opening the device is.
       if (auto r = g_app.mixer.open(); !r) {
         std::fprintf(stderr, "audio: %s (silent)\n", r.error().c_str());
       } else {
         int loaded = 0;
         for (const char* cue : {"Letsgo", "Chink", "Ohno", "Explode", "Splat", "Yippee"}) {
-          if (auto lr = g_app.mixer.loadFrom(*lib, cue); !lr)
+          if (auto lr = g_app.mixer.loadFrom(*g_app.library, cue); !lr)
             std::fprintf(stderr, "audio: %s: %s\n", cue, lr.error().c_str());
           else
             ++loaded;
         }
-        std::fprintf(stderr, "audio: loaded %d cues at %d Hz\n", loaded,
+        int music = 0;
+        for (int i = 1; i <= 13; ++i) {
+          const std::string cue = std::format("LEMMING{:02}", i);
+          if (auto lr = g_app.mixer.loadMusicFrom(*g_app.library, cue); lr)
+            ++music;
+        }
+        g_app.shell.applyVolumes(g_app.mixer);
+        std::fprintf(stderr, "audio: %d sfx, %d music at %d Hz\n", loaded, music,
                      g_app.mixer.sampleRate());
       }
     }
   }
 
-  g_app.restart();
-  if (startCylinder)
-    g_app.toggleCylinder();
+  if (g_app.bypassShell) {
+    if (!g_app.levelId.empty() && g_app.library)
+      g_app.loadLevelById(g_app.levelId);
+    else
+      g_app.restart();
+    if (startCylinder)
+      g_app.toggleCylinder();
+  } else {
+    g_app.playMenuMusic();
+  }
   g_app.lastTick = SDL_GetTicks64();
 
   if (!shotPath.empty()) {

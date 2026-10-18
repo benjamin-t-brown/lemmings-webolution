@@ -28,13 +28,17 @@ std::string_view stateName(State s) {
     case State::Floater: return "floater";
     case State::Blocker: return "blocker";
     case State::Builder: return "builder";
+    case State::Shrugger: return "shrugger";
     case State::Basher: return "basher";
     case State::Miner: return "miner";
     case State::Digger: return "digger";
     case State::Exploder: return "exploder";
     case State::Splatter: return "splatter";
     case State::Exited: return "exited";
+    case State::Teleporting: return "teleporting";
     case State::Dead: return "dead";
+    case State::Bounce: return "bounce";
+    case State::Drown: return "drown";
   }
   return "?";
 }
@@ -43,8 +47,8 @@ World::World(LevelSetup setup) : World(std::move(setup), Rules{}) {}
 
 World::World(LevelSetup setup, Rules rules) : setup_(std::move(setup)), rules_(rules) {
   lemmings_.reserve(static_cast<std::size_t>(std::max(0, setup_.totalLemmings)));
-  // Release the first lemming on the first tick rather than making the player
-  // wait a full interval for anything to happen.
+
+
   sinceSpawn_ = rules_.walkSpeed > 0 ? setup_.releaseIntervalTicks : 0;
 }
 
@@ -65,6 +69,11 @@ bool World::finished() const {
   return true;
 }
 
+void World::place(Lemming lemming) {
+  lemming.x = setup_.terrain.wrapX(lemming.x);
+  lemmings_.push_back(lemming);
+}
+
 void World::spawn() {
   if (spawned_ >= setup_.totalLemmings || setup_.entrances.empty())
     return;
@@ -75,42 +84,134 @@ void World::spawn() {
   l.x = setup_.terrain.wrapX(e.x);
   l.y = e.y;
   l.state = State::Faller;
+  // Round 29: hatch+0xB0 -> [lemming+0x4c] at 0x0042E05F.
+  l.sheetType = e.sheetType;
   l.facing = Facing::Right;
   lemmings_.push_back(l);
   ++spawned_;
 }
+void World::stampBlockerField(const Lemming& l) {
+  for (int k = 0; k < rules_.blockerFieldHeight; ++k)
+    setup_.terrain.setBlockerField(l.x, l.y - k, true);
+}
+void World::clearBlockerField(const Lemming& l) {
+  for (int k = 0; k < rules_.blockerFieldHeight; ++k)
+    setup_.terrain.setBlockerField(l.x, l.y - k, false);
+}
 
-bool World::blockedBy(const Lemming& l, std::size_t self) const {
-  for (std::size_t i = 0; i < lemmings_.size(); ++i) {
-    if (i == self)
-      continue;
-    const Lemming& b = lemmings_[i];
-    if (b.state != State::Blocker)
-      continue;
-    // A blocker stops anyone who walks into the few pixels either side of it.
-    const int dx = setup_.terrain.wrapX(l.x - b.x + setup_.terrain.width() / 2) -
-                   setup_.terrain.width() / 2;
-    if (std::abs(dx) <= 3 && std::abs(l.y - b.y) < rules_.lemmingHeight)
-      return true;
-  }
-  return false;
+void World::leaveBlocker(Lemming& l) {
+  if (l.state == State::Blocker)
+    clearBlockerField(l);
 }
 
 bool World::atExit(const Lemming& l) const {
   for (const Exit& e : setup_.exits) {
     const int dx = setup_.terrain.wrapX(l.x - e.x + setup_.terrain.width() / 2) -
                    setup_.terrain.width() / 2;
-    if (dx >= 0 && dx < e.width && l.y >= e.y && l.y < e.y + e.height)
+    const int dy = l.y - e.y;
+    if (dx >= 0 && dx <= e.width && dy >= 0 && dy <= e.height)
       return true;
   }
   return false;
 }
 
+const Teleport* World::teleportAt(const Lemming& l) const {
+  for (const Teleport& t : setup_.teleports) {
+    const int dx = setup_.terrain.wrapX(l.x - t.x + setup_.terrain.width() / 2) -
+                   setup_.terrain.width() / 2;
+    const int dy = l.y - t.y;
+    if (dx >= 0 && dx <= t.width && dy >= 0 && dy <= t.height)
+      return &t;
+  }
+  return nullptr;
+}
+
+const SpeedPad* World::speedPadAt(const Lemming& l) const {
+  for (const SpeedPad& p : setup_.speedPads) {
+    const int dx = setup_.terrain.wrapX(l.x - p.x + setup_.terrain.width() / 2) -
+                   setup_.terrain.width() / 2;
+    const int dy = l.y - p.y;
+    if (dx < 0 || dx > p.width || dy < 0 || dy > p.height)
+      continue;
+    if (p.faceFilter != 0 &&
+        static_cast<int>(l.facing) != p.faceFilter)
+      continue;
+    if (p.requireUpright && l.verticalDir != 1)
+      continue;
+    if (!p.requireUpright && l.verticalDir != -1)
+      continue;
+    return &p;
+  }
+  return nullptr;
+}
+
+Lever* World::leverAt(const Lemming& l) {
+  // 0x00436D30: AABB then facing vs +0xb8. state==1 needs face −1; else +1.
+  const int face = static_cast<int>(l.facing);
+  for (Lever& lev : setup_.levers) {
+    const int dx =
+        setup_.terrain.wrapX(l.x - lev.x + setup_.terrain.width() / 2) -
+        setup_.terrain.width() / 2;
+    const int dy = l.y - lev.y;
+    if (dx < 0 || dx > lev.width || dy < 0 || dy > lev.height)
+      continue;
+    if (lev.state == 1) {
+      if (face != -1)
+        continue;
+    } else if (face != 1) {
+      continue;
+    }
+    return &lev;
+  }
+  return nullptr;
+}
+
+void World::stepTeleporting(Lemming& l) {
+  // Countdown mirrors state+0x18 from push 4 (0x0041A317). On zero the
+  // original attaches type 0x2c then writes partner pose (0x0043503C).
+  ++l.frame;
+  if (l.frame < rules_.teleportDelayTicks)
+    return;
+  // destX/destY were stashed in bricksLeft / fallDistance at attach — those
+  // fields are idle for a walker-sourced teleport.
+  l.x = setup_.terrain.wrapX(l.bricksLeft);
+  l.y = l.fallDistance;
+  l.state = State::Walker;
+  l.frame = 0;
+  l.bricksLeft = 0;
+  l.fallDistance = 0;
+}
 void World::explode(Lemming& l) {
-  setup_.terrain.clearCircle(l.x, l.y - rules_.lemmingHeight / 2, rules_.explosionRadius);
+  setup_.terrain.clearExplosion(l.x, l.y);
   l.state = State::Dead;
   ++dead_;
   cue(SoundCue::Explode);
+}
+void World::stepExploder(Lemming& l) {
+
+
+
+
+
+
+  for (int i = 0; i < rules_.fallSpeed && !solidAt(l.x, l.y + 1); ++i)
+    ++l.y;
+
+
+
+
+
+  if ((l.frame + 1) * msPerTick() <= rules_.exploderCycleMs)
+    return;
+
+  ++l.y;
+  explode(l);
+}
+int World::floatOpenCells() const {
+  const int ms = msPerTick();
+  if (ms <= 0)
+    return 0;
+  return (rules_.floatOpenMs * rules_.fallSpeed + ms / 2) / ms;
 }
 
 void World::stepFaller(Lemming& l) {
@@ -118,11 +219,44 @@ void World::stepFaller(Lemming& l) {
   if (floating)
     l.state = State::Floater;
 
-  const int speed = floating ? rules_.floatSpeed : rules_.fallSpeed;
+
+
+
+
+  const bool halved =
+      floating && l.fallDistance >= rules_.floatAfter + floatOpenCells();
+  const int speed = halved ? rules_.floatSpeed : rules_.fallSpeed;
+
+
+
+  const int v = l.verticalDir >= 0 ? 1 : -1;
   for (int i = 0; i < speed; ++i) {
-    if (solidAt(l.x, l.y + 1)) {
-      // Landed.
-      if (!floating && l.fallDistance > rules_.splatDistance) {
+    // Round 14: 0x2f probes the ground cell every sub-step. Live paint of
+    // 0x40 on MM_CLIMB_002 attached drown mid-fall when under=(col,floor)
+    // before the walk land (`measure_water.py`). Ahead of trampoline/splat.
+    if (setup_.terrain.waterHazard(l.x, l.y + v)) {
+      l.state = State::Drown;
+      l.frame = 0;
+      return;
+    }
+    if (solidAt(l.x, l.y + v)) {
+
+
+
+
+      if (setup_.terrain.trampoline(l.x, l.y + v)) {
+        l.state = State::Bounce;
+        l.fallDistance = 0;
+        l.frame = 0;
+        return;
+      }
+
+      // Round 29: after floater, FUN_00416433 skips splat when the foot
+      // cell's 0x200/0x4000 matches sheetType 1/2 (measure_splat_exempt.py).
+      const bool zoneExempt =
+          setup_.terrain.splatExempt(l.x, l.y + v, l.sheetType);
+      if (!floating && !zoneExempt &&
+          l.fallDistance > rules_.splatDistance) {
         l.state = State::Splatter;
         ++dead_;
         cue(SoundCue::Splat);
@@ -133,28 +267,99 @@ void World::stepFaller(Lemming& l) {
       l.frame = 0;
       return;
     }
-    ++l.y;
+    l.y += v;
     ++l.fallDistance;
   }
 }
 
-void World::stepWalker(Lemming& l, std::size_t index) {
-  if (blockedBy(l, index)) {
-    turn(l);
-    return;
-  }
+void World::stepBounce(Lemming& l) {
 
+
+
+
+
+  const int v = l.verticalDir >= 0 ? 1 : -1;
   const int dir = static_cast<int>(l.facing);
+  for (int i = 0; i < rules_.bounceSpeed; ++i) {
+    if (l.fallDistance >= rules_.bounceRiseCells) {
+      l.state = State::Faller;
+      l.fallDistance = 0;
+      l.frame = 0;
+      return;
+    }
+
+    if (solidAt(l.x, l.y - v * rules_.lemmingHeight)) {
+      l.state = State::Faller;
+      l.fallDistance = 0;
+      l.frame = 0;
+      return;
+    }
+    l.y -= v;
+    l.x = setup_.terrain.wrapX(l.x + dir);
+    ++l.fallDistance;
+  }
+}
+
+void World::stepDrown(Lemming& l) {
+  // Round 14. Drown step 0x00408766: add dt to state+8; when > 2.0 return 2
+  // (lemming leaves the actor list). Live: acc reached 2.000 then removal
+  // (~2.0 s). frame accumulates ms via msPerTick.
+  l.frame += msPerTick();
+  // Original: return 2 when accumulator > 2.0. Live removals sat at
+  // acc=2.000 then left within one sample; at 200 ms ticks, >= 2000 ms is
+  // the same discrete length (10 ticks).
+  if (l.frame >= rules_.drownMs) {
+    l.state = State::Dead;
+    ++dead_;
+  }
+}
+
+void World::stepWalker(Lemming& l) {
+  const int dir = static_cast<int>(l.facing);
+
+
+
+
+
+
+  const int v = l.verticalDir >= 0 ? 1 : -1;
+  const auto flipIfAntiGrav = [&] {
+    if (!setup_.terrain.antiGrav(l.x, l.y + v))
+      return false;
+    l.verticalDir = -v;
+    l.state = State::Faller;
+    l.fallDistance = 0;
+    l.frame = 0;
+    return true;
+  };
+  if (flipIfAntiGrav())
+    return;
   for (int s = 0; s < rules_.walkSpeed; ++s) {
     const int nx = l.x + dir;
+    const auto settleOnProbeColumn = [&] {
+      if (l.facing == Facing::Right)
+        l.x = setup_.terrain.wrapX(nx);
+    };
 
-    // Walk up a step if there is one and it is low enough.
+    // Step-up probes along -verticalDir (against gravity). MEASURED round 30:
+    // upright add [+0x44] at 0x0041C48E / 0x0041C528; inverted walkers on
+    // m06 adopted dy -1 / -2 in Y-up (= +rise in this Y-down terrain).
     int rise = 0;
-    while (rise <= rules_.maxStepUp && solidAt(nx, l.y - rise))
+    while (rise <= rules_.maxStepUp) {
+      if (setup_.terrain.blockerField(nx, l.y - rise * v)) {
+        settleOnProbeColumn();
+        turn(l);
+        return;
+      }
+      if (!solidAt(nx, l.y - rise * v))
+        break;
       ++rise;
+    }
 
     if (rise > rules_.maxStepUp) {
-      // A wall. Climbers go up it, everyone else turns around.
+
+
+      settleOnProbeColumn();
       if (l.canClimb) {
         l.state = State::Climber;
         l.frame = 0;
@@ -164,82 +369,149 @@ void World::stepWalker(Lemming& l, std::size_t index) {
       return;
     }
 
-    l.x = setup_.terrain.wrapX(nx);
-    l.y -= rise;
+    if (rise > 0) {
 
-    // Walk off an edge?
-    if (!solidAt(l.x, l.y + 1)) {
-      l.state = State::Faller;
-      l.fallDistance = 0;
-      return;
+
+
+
+      l.x = setup_.terrain.wrapX(nx);
+      l.y -= rise * v;
+      if (flipIfAntiGrav())
+        return;
+      continue;
     }
+    l.x = setup_.terrain.wrapX(nx);
+    if (flipIfAntiGrav())
+      return;
+
+
+
+    if (solidAt(l.x, l.y + v))
+      continue;
+    if (solidAt(l.x, l.y + 2 * v)) {
+      l.y += v;
+      continue;
+    }
+    l.state = State::Faller;
+    l.fallDistance = 0;
+    return;
   }
 }
 
 void World::stepClimber(Lemming& l) {
   const int dir = static_cast<int>(l.facing);
-  // Reached the top of the wall? Pull up.
-  if (!solidAt(l.x + dir, l.y - rules_.lemmingHeight)) {
-    l.state = State::Hoister;
-    l.frame = 0;
-    return;
-  }
-  // Ceiling: climbers that hit one drop back off the wall.
-  if (solidAt(l.x, l.y - rules_.lemmingHeight)) {
+  // Climb advances Y by vdir * 5.0 * dt (0x00413869). Hoist net is
+  // +2*vdir (0x00417D6F / exit). MEASURED round 30 on m06: inverted climb
+  // then hoist walked at Y 12 after enter at ~14.5 (Y-up, against gravity).
+  const int v = l.verticalDir >= 0 ? 1 : -1;
+
+  const int wall = l.facing == Facing::Right
+                       ? l.x
+                       : setup_.terrain.wrapX(l.x - 1);
+
+  if (solidAt(setup_.terrain.wrapX(wall - dir),
+              l.y - v * rules_.lemmingHeight)) {
+    l.x = setup_.terrain.wrapX(l.x - dir);
     turn(l);
     l.state = State::Faller;
     l.fallDistance = 0;
     return;
   }
-  l.y -= rules_.climbSpeed;
+
+  if (!solidAt(wall, l.y - v * rules_.climberTopOut)) {
+    l.state = State::Hoister;
+    l.frame = 0;
+    return;
+  }
+  l.y -= v * rules_.climbSpeed;
 }
 
 void World::stepHoister(Lemming& l) {
-  // Two ticks of pulling over the lip, then walk on.
-  if (l.frame >= 2) {
-    const int dir = static_cast<int>(l.facing);
-    l.x = setup_.terrain.wrapX(l.x + dir);
-    l.y -= rules_.lemmingHeight;
+  if ((l.frame + 1) * msPerTick() <= rules_.hoistCycleMs)
+    return;
+
+  const int v = l.verticalDir >= 0 ? 1 : -1;
+  l.y -= v * rules_.hoistLift;
+  l.state = State::Walker;
+  l.frame = 0;
+}
+static bool bitesThisTick(int frame, int msPerTick, int cycleMs, int percent) {
+  if (cycleMs <= 0 || msPerTick <= 0)
+    return frame == 0;
+  const long long a = static_cast<long long>(frame) * msPerTick;
+  const long long phase = static_cast<long long>(cycleMs) * percent / 100;
+
+  const long long k = a <= phase ? 0 : (a - phase + cycleMs - 1) / cycleMs;
+  const long long t = k * cycleMs + phase;
+  return t >= a && t < a + msPerTick;
+}
+
+int World::msPerTick() const {
+  return rules_.ticksPerSecond > 0 ? 1000 / rules_.ticksPerSecond : 200;
+}
+void World::stepBuilder(Lemming& l) {
+  if (!bitesThisTick(l.frame, msPerTick(), rules_.builderCycleMs,
+                     rules_.builderBrickPercent - rules_.builderEnterPercent))
+    return;
+  const int dir = static_cast<int>(l.facing);
+
+
+
+
+  for (int k = 1; k <= rules_.brickLength; ++k) {
+    const int bx = setup_.terrain.wrapX(l.x + k * dir);
+    if (!setup_.terrain.solid(bx, l.y))
+      setup_.terrain.set(bx, l.y, Material::Built);
+  }
+
+
+
+
+
+  l.y -= 1;
+  if (solidAt(setup_.terrain.wrapX(l.x + dir), l.y)) {
+    turn(l);
+    l.state = State::Walker;
+    l.frame = 0;
+    return;
+  }
+
+  l.x = setup_.terrain.wrapX(l.x + dir);
+  --l.bricksLeft;
+  if (l.bricksLeft <= 0) {
+    l.state = State::Shrugger;
+    l.frame = 0;
+    return;
+  }
+  if (solidAt(l.x, l.y - rules_.lemmingHeight)) {
+    turn(l);
+    l.state = State::Walker;
+    l.frame = 0;
+  }
+}
+void World::stepShrugger(Lemming& l) {
+  if (l.frame * msPerTick() >= rules_.shrugCycleMs) {
     l.state = State::Walker;
     l.frame = 0;
   }
 }
 
-void World::stepBuilder(Lemming& l) {
-  if (l.frame % rules_.builderInterval != 0)
-    return;
-  if (l.bricksLeft <= 0) {
-    l.state = State::Walker;
-    return;
-  }
-
-  const int dir = static_cast<int>(l.facing);
-  // A brick is laid at the feet, then the lemming steps up onto it.
-  const int bx = dir > 0 ? l.x : l.x - rules_.brickLength + 1;
-  setup_.terrain.fillBox(bx, l.y, rules_.brickLength, 1, Material::Built);
-  --l.bricksLeft;
-
-  l.x = setup_.terrain.wrapX(l.x + dir * rules_.brickLength / 2);
-  l.y -= 1;
-
-  // Head against something: stop building and turn.
-  if (solidAt(l.x, l.y - rules_.lemmingHeight)) {
-    turn(l);
-    l.state = State::Walker;
-  }
-}
-
 void World::stepBasher(Lemming& l) {
-  if (l.frame % rules_.basherInterval != 0)
+  if (!bitesThisTick(l.frame, msPerTick(), rules_.basherCycleMs, rules_.basherBitePercent))
     return;
   const int dir = static_cast<int>(l.facing);
-  const int x0 = dir > 0 ? l.x + 1 : l.x - rules_.basherReach;
 
-  // Nothing left to bash, or steel in the way: back to walking.
+
+  const int x0 = l.x + dir;
+
+
+  const int top = l.y - (rules_.basherHeight - 1);
+
+
   bool anySolid = false, anySteel = false;
-  for (int dy = 1; dy <= rules_.lemmingHeight; ++dy)
+  for (int dy = 0; dy < rules_.basherHeight; ++dy)
     for (int dx = 0; dx < rules_.basherReach; ++dx) {
-      const Material m = setup_.terrain.at(x0 + dx, l.y - dy);
+      const Material m = setup_.terrain.at(x0 + dx * dir, top + dy);
       if (m == Material::Steel)
         anySteel = true;
       else if (isSolid(m))
@@ -256,26 +528,42 @@ void World::stepBasher(Lemming& l) {
     return;
   }
 
-  setup_.terrain.clearBox(x0, l.y - rules_.lemmingHeight, rules_.basherReach,
-                          rules_.lemmingHeight);
+  setup_.terrain.clearBox(dir > 0 ? x0 : x0 - rules_.basherReach + 1, top,
+                          rules_.basherReach, rules_.basherHeight);
   l.x = setup_.terrain.wrapX(l.x + dir);
 }
 
 void World::stepMiner(Lemming& l) {
-  if (l.frame % rules_.minerInterval != 0)
+  if (!bitesThisTick(l.frame, msPerTick(), rules_.minerCycleMs, rules_.minerBitePercent))
     return;
   const int dir = static_cast<int>(l.facing);
-  const int x0 = dir > 0 ? l.x : l.x - rules_.basherReach + 1;
 
-  for (int dx = 0; dx < rules_.basherReach; ++dx)
-    if (setup_.terrain.at(x0 + dx, l.y) == Material::Steel) {
-      turn(l);
-      l.state = State::Walker;
-      return;
+
+
+
+
+  for (int dx = 1; dx <= rules_.minerReach; ++dx)
+    for (int arg = -1; arg <= 3; ++arg) {
+      if (arg == 2 && dx == 1)
+        continue;
+      const int cx = l.x + dx * dir;
+      const int cy = l.y - arg;
+      if (setup_.terrain.at(cx, cy) == Material::Steel) {
+        turn(l);
+        l.state = State::Walker;
+        return;
+      }
     }
 
-  setup_.terrain.clearBox(x0, l.y - rules_.lemmingHeight / 2, rules_.basherReach,
-                          rules_.lemmingHeight / 2 + 1);
+  for (int dx = 1; dx <= rules_.minerReach; ++dx)
+    for (int arg = -1; arg <= 3; ++arg) {
+      if (arg == 2 && dx == 1)
+        continue;
+      setup_.terrain.clearBox(l.x + dx * dir, l.y - arg, 1, 1);
+    }
+
+
+
   l.x = setup_.terrain.wrapX(l.x + dir);
   l.y += 1;
 
@@ -286,40 +574,70 @@ void World::stepMiner(Lemming& l) {
 }
 
 void World::stepDigger(Lemming& l) {
-  if (l.frame % rules_.diggerInterval != 0)
+  if (!bitesThisTick(l.frame, msPerTick(), rules_.diggerCycleMs, rules_.diggerBitePercent))
     return;
-  for (int dx = -2; dx <= 2; ++dx)
-    if (setup_.terrain.at(l.x + dx, l.y + 1) == Material::Steel) {
+
+  // Dig toward gravity: row = posY - vdir (0x00415AA0), Y step -= vdir
+  // (0x00415DD2). Refusal mask 0x10 upright / 0x20 inverted (0x00415A86 /
+  // 0x00415A96). MEASURED round 30: inverted cleared painted 0x11 with
+  // Y += 1 per cycle in Y-up (= y -= 1 here) and refused painted 0x21.
+  const int v = l.verticalDir >= 0 ? 1 : -1;
+  const int digY = l.y + v;
+  const int half = rules_.diggerWidth / 2;
+  for (int dx = -half; dx <= half; ++dx) {
+    const int cx = setup_.terrain.wrapX(l.x + dx);
+    if (setup_.terrain.at(cx, digY) == Material::Steel ||
+        setup_.terrain.digRefused(cx, digY, v)) {
       l.state = State::Walker;
       return;
     }
+  }
 
-  const std::size_t removed = setup_.terrain.clearBox(l.x - 2, l.y + 1, 5, rules_.diggerDepth);
-  l.y += rules_.diggerDepth;
+  const std::size_t removed = setup_.terrain.clearBox(l.x - half, digY,
+                                                      rules_.diggerWidth,
+                                                      rules_.diggerDepth);
+  l.y += v * rules_.diggerDepth;
 
-  // Dug through into open air.
-  if (removed == 0 || !solidAt(l.x, l.y + 1)) {
+  if (removed == 0 || !solidAt(l.x, l.y + v)) {
     l.state = State::Faller;
     l.fallDistance = 0;
   }
 }
 
-void World::step(Lemming& l, std::size_t index) {
+void World::step(Lemming& l) {
   if (!l.alive())
     return;
 
-  // The fuse runs regardless of what the lemming is doing.
-  if (l.fuse > 0) {
-    --l.fuse;
-    // Classic plays "oh no" when the countdown reaches the panic beat, not
-    // when the skill is assigned. One second of fuse left is the audible
-    // moment here; the exact tick is provisional with the rest of the rules,
-    // but "one second" is now a measured second -- rules_.ticksPerSecond is
-    // the original's own 5 Hz step, not a guessed 20.
-    if (l.fuse == rules_.ticksPerSecond)
+
+
+
+
+
+
+  if (l.fasterMs > 0) {
+    l.fasterMs -= msPerTick();
+    if (l.fasterMs < 0)
+      l.fasterMs = 0;
+  }
+
+  if (l.fuseMs > 0) {
+    l.fuseMs -= msPerTick();
+    if (l.fuseMs <= 0) {
+
+
+
+
+
+
+      l.fuseMs = 0;
       cue(SoundCue::OhNo);
-    if (l.fuse == 0) {
-      explode(l);
+
+
+
+
+      leaveBlocker(l);
+      l.state = State::Exploder;
+      l.frame = 0;
       return;
     }
   }
@@ -330,8 +648,26 @@ void World::step(Lemming& l, std::size_t index) {
     return;
   }
 
-  // Reaching the exit ends the lemming's run, whatever it was doing, except
-  // that a blocker stays put.
+  if (l.state == State::Drown) {
+    stepDrown(l);
+    return;
+  }
+
+  // Round 14/15: ground cell bit 0x40 attaches drown (side-effect 0x2f /
+  // 0x00415386). Acid-as-hazard uses this same attach (round 15); type 0x2e
+  // Fluid-match sibling never fired live. Checked before exit so a water
+  // cell under the feet kills rather than saves when both overlap —
+  // Exit_water / Exit_acid are separate AABBs (round 12); this is the
+  // hazard bit alone.
+  {
+    const int v = l.verticalDir >= 0 ? 1 : -1;
+    if (setup_.terrain.waterHazard(l.x, l.y + v)) {
+      l.state = State::Drown;
+      l.frame = 0;
+      return;
+    }
+  }
+
   if (l.state != State::Blocker && atExit(l)) {
     l.state = State::Exited;
     ++saved_;
@@ -339,19 +675,69 @@ void World::step(Lemming& l, std::size_t index) {
     return;
   }
 
+  // Round 16: teleport pad AABB (object 0x004B1250 / 0x00430BA1). Ahead of
+  // the walk step so a lemming standing in the box enters Teleporting rather
+  // than walking out. Mutate-alone: delete this arm and testTeleportPad fails.
+  if (l.state == State::Walker) {
+    if (const Teleport* pad = teleportAt(l)) {
+      l.state = State::Teleporting;
+      l.frame = 0;
+      l.bricksLeft = pad->destX;
+      l.fallDistance = pad->destY;
+      return;
+    }
+  }
+
+  // Round 17: SpeedPad AABB (0x004B1178 / FUN_00432742). Rising-edge latch
+  // mirrors object+0xb8 — one FASTER attach per visit. Mutate-alone: delete
+  // this arm and testSpeedPadFaster fails.
+  if (l.state == State::Walker) {
+    if (speedPadAt(l)) {
+      if (!l.speedPadLatched) {
+        l.fasterMs = rules_.fasterMs;
+        l.speedPadLatched = true;
+      }
+    } else {
+      l.speedPadLatched = false;
+    }
+  }
+
+  // Round 21: Lever AABB (0x004B1288 / 0x00436D30). Facing-gated toggle of
+  // Lever::state (object+0xb8); no lemming attach. Mutate-alone: delete this
+  // arm and testLeverToggle fails.
+  if (l.state == State::Walker) {
+    if (Lever* lev = leverAt(l)) {
+      // 0x00436E6A: +0xb8 := pull facing (±1).
+      lev->state = static_cast<int>(l.facing);
+    }
+  }
+
   switch (l.state) {
     case State::Faller:
     case State::Floater: stepFaller(l); break;
-    case State::Walker: stepWalker(l, index); break;
+    case State::Bounce: stepBounce(l); break;
+    case State::Teleporting: stepTeleporting(l); break;
+    case State::Walker:
+      // 0x0042E2BF: while +0x50==2, run the main state twice per frame.
+      stepWalker(l);
+      if (l.fasterMs > 0 && l.state == State::Walker)
+        stepWalker(l);
+      break;
     case State::Climber: stepClimber(l); break;
     case State::Hoister: stepHoister(l); break;
     case State::Builder: stepBuilder(l); break;
+    case State::Shrugger: stepShrugger(l); break;
+    case State::Exploder: stepExploder(l); break;
     case State::Basher: stepBasher(l); break;
     case State::Miner: stepMiner(l); break;
     case State::Digger: stepDigger(l); break;
     case State::Blocker:
-      // A blocker that loses the ground under it falls and reverts.
+
+
+
+
       if (!solidAt(l.x, l.y + 1)) {
+        leaveBlocker(l);
         l.state = State::Faller;
         l.fallDistance = 0;
       }
@@ -363,16 +749,16 @@ void World::step(Lemming& l, std::size_t index) {
 }
 
 void World::tick() {
-  // Once the clock runs out the entrance stops. The lemmings already out keep
-  // going until they exit or die; deciding that the *level* is over belongs to
-  // the game shell, not here, so the simulation only closes the entrance.
+
+
+
   if (!timedOut() && ++sinceSpawn_ >= setup_.releaseIntervalTicks) {
     sinceSpawn_ = 0;
     spawn();
   }
 
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
-    step(lemmings_[i], i);
+    step(lemmings_[i]);
 
   ++tick_;
 }
@@ -407,25 +793,40 @@ bool World::assign(std::size_t index, Skill skill) {
       l.canFloat = true;
       return take();
     case Skill::Bomber:
-      if (l.fuse >= 0)
+
+
+
+
+
+      if (l.fuseMs >= 0)
         return false;
-      l.fuse = rules_.bomberFuse;
+      l.fuseMs = rules_.bomberFuseMs;
       return take();
     default:
       break;
   }
 
-  // The rest replace what the lemming is doing, and only from states that can
-  // be interrupted.
+
+
   if (l.state != State::Walker && l.state != State::Builder && l.state != State::Basher &&
       l.state != State::Miner && l.state != State::Digger && l.state != State::Blocker)
     return false;
 
+
+
+
+  leaveBlocker(l);
+
   switch (skill) {
     case Skill::Blocker:
-      if (!solidAt(l.x, l.y + 1))
+      if (!solidAt(l.x, l.y + 1)) {
+
+        if (l.state == State::Blocker)
+          stampBlockerField(l);
         return false;
+      }
       l.state = State::Blocker;
+      stampBlockerField(l);
       break;
     case Skill::Builder:
       l.state = State::Builder;
@@ -461,16 +862,16 @@ std::optional<std::size_t> World::pick(int x, int y, int radius) const {
 
 void World::nuke() {
   for (auto& l : lemmings_)
-    if (l.active() && l.fuse < 0)
-      l.fuse = rules_.bomberFuse;
-  // OhNo fires from step() when each fuse reaches the panic beat, so a nuke
-  // does not need a separate cue here.
+    if (l.active() && l.fuseMs < 0)
+      l.fuseMs = rules_.bomberFuseMs;
+
+
 }
 
 void World::cue(SoundCue c) {
-  // A nuke lights every fuse on the same tick, and they all panic / explode
-  // together. One sample of each is what you hear in the original; stacking
-  // N identical voices would be louder, not more informative.
+
+
+
   if (c == SoundCue::OhNo || c == SoundCue::Explode) {
     if (std::find(cues_.begin(), cues_.end(), c) != cues_.end())
       return;
@@ -484,4 +885,4 @@ std::vector<SoundCue> World::takeCues() {
   return out;
 }
 
-}  // namespace webo::sim
+}

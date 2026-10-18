@@ -1,4 +1,8 @@
-// Tests for PolyList 09 parsing: size formula, UV/RGBA doubles, surface indices.
+// Tests for PolyList 09 parsing: size formula, repeated vertices, surface indices.
+//
+// Kind 5 is 3 vertices of 52 bytes plus a trailing u32 (160). Kind 7 is 4
+// (212). The ranges pinned here were measured on all 102 retail levels; see
+// tools/harness/read_polylist_tail.py and docs/scratch/phase2-polylist.md.
 
 #include "assets/Box.h"
 #include "assets/Cylinder.h"
@@ -37,8 +41,16 @@ void testRetail(const fs::path& dir) {
     return;
   }
 
-  std::size_t levels = 0, matchedBlocks = 0, verts = 0, inSurface = 0;
-  std::size_t badKind = 0, badCount = 0, badUv = 0;
+  std::size_t levels = 0, matchedBlocks = 0, verts = 0;
+  std::size_t badKind = 0, badCount = 0, badCorners = 0, badUv = 0;
+  std::size_t badFinite = 0, badRgb = 0, badA = 0, records = 0, alphaShared = 0;
+  std::size_t cornerVerts[4] = {};
+  std::size_t cornerInSurface[4] = {};
+  std::uint32_t endMin = 0xffffffffu, endMax = 0;
+  bool sawClimb = false, sawFloat = false, sawSmall = false;
+  auto wholeByte = [](double x) {
+    return std::isfinite(x) && x >= 0.0 && x <= 255.0 && x == std::trunc(x);
+  };
   for (const auto& name : webo::levelFileNames(*lib)) {
     auto blob = lib->read(name);
     if (!blob)
@@ -48,33 +60,84 @@ void testRetail(const fs::path& dir) {
     if (!mesh || !polys)
       continue;
     ++levels;
+    // Stem match, so MM_FLOAT does not also count MM_FLOAT_CLIMB2.
+    const auto isLevel = [&](std::string_view id) {
+      const auto pos = name.find(id);
+      return pos != std::string::npos && pos + id.size() < name.size() &&
+             name[pos + id.size()] == '.';
+    };
+    if (isLevel("MM_CLIMB_002"))
+      sawClimb = true;
+    if (isLevel("MM_FLOAT"))
+      sawFloat = true;
+    if (isLevel("VH13_KF_1"))
+      sawSmall = true;
     matchedBlocks += polys->matchedCount;
     const auto sc = mesh->surface.size();
     for (const auto& block : polys->blocks) {
       if (block.kind != 5 && block.kind != 7)
         ++badKind;
-      if (block.vertices.size() != block.count)
+      if (block.records.size() != block.count)
         ++badCount;
-      for (const auto& v : block.vertices) {
-        ++verts;
-        if (v.index < sc)
-          ++inSurface;
-        if (!std::isfinite(v.u) || !std::isfinite(v.v) || v.u < -0.01 || v.u > 1.01 ||
-            v.v < -0.01 || v.v > 1.01)
-          ++badUv;
+      const std::uint32_t expect = block.kind == 5 ? 3u : block.kind == 7 ? 4u : 0u;
+      for (const auto& rec : block.records) {
+        ++records;
+        if (rec.cornerCount != expect)
+          ++badCorners;
+        if (rec.endWord < endMin)
+          endMin = rec.endWord;
+        if (rec.endWord > endMax)
+          endMax = rec.endWord;
+        const double a0 = rec.corners[0].a;
+        bool sameA = true;
+        for (std::uint32_t c = 0; c < rec.cornerCount && c < 4; ++c) {
+          const auto& v = rec.corners[c];
+          ++verts;
+          ++cornerVerts[c];
+          if (v.index < sc)
+            ++cornerInSurface[c];
+          if (!std::isfinite(v.u) || !std::isfinite(v.v) || !std::isfinite(v.r) ||
+              !std::isfinite(v.g) || !std::isfinite(v.b) || !std::isfinite(v.a))
+            ++badFinite;
+          if (!wholeByte(v.r) || !wholeByte(v.g) || !wholeByte(v.b))
+            ++badRgb;
+          if (!std::isfinite(v.a) || v.a < 0.0 || v.a > 255.0)
+            ++badA;
+          if (v.a != a0)
+            sameA = false;
+          if (!std::isfinite(v.u) || !std::isfinite(v.v) || v.u < -0.01 || v.u > 1.01 ||
+              v.v < -0.01 || v.v > 1.01)
+            ++badUv;
+        }
+        if (sameA)
+          ++alphaShared;
       }
     }
   }
   check(badKind == 0, "every matched block is kind 5 or 7");
-  check(badCount == 0, "vertex vectors match header counts");
+  check(badCount == 0, "record vectors match header counts");
+  check(badCorners == 0, "kind 5 has 3 vertices and kind 7 has 4");
+  check(badFinite == 0, std::format("every vertex double is finite (bad {})", badFinite));
+  check(badRgb == 0, std::format("r, g, b are integers in [0, 255] (bad {})", badRgb));
+  check(badA == 0, std::format("a is in [0, 255] (bad {})", badA));
+  check(alphaShared * 100 >= records * 99,
+        std::format("alpha shared across a record's vertices ({}/{})", alphaShared, records));
+  check(endMax > 1000 && endMin != endMax,
+        std::format("trailing u32 is a wide non-constant word [{}, {}]", endMin, endMax));
   // A few percent sit outside [0,1] (clamped by the GPU); require ≥90% inside.
   check(badUv * 10 < verts, std::format("UVs mostly in unit square (bad {}/{})", badUv, verts));
   check(levels == 102, std::format("102 levels (got {})", levels));
+  check(sawClimb && sawFloat && sawSmall, "MM_CLIMB_002, MM_FLOAT, and VH13_KF_1 were in the 102");
   check(matchedBlocks > 20000, std::format("many matched blocks (got {})", matchedBlocks));
-  const double frac = verts ? 100.0 * static_cast<double>(inSurface) / verts : 0;
-  check(frac > 80.0, std::format("most indices in surface pool ({:.1f}%)", frac));
-  std::cout << std::format("  {} levels, {} blocks, {} verts, {:.1f}% in surface\n", levels,
-                           matchedBlocks, verts, frac);
+  for (int c = 0; c < 4; ++c) {
+    const double frac =
+        cornerVerts[c] ? 100.0 * static_cast<double>(cornerInSurface[c]) / cornerVerts[c] : 0;
+    check(frac > 80.0, std::format("corner {} indices in surface pool ({:.1f}%)", c, frac));
+    std::cout << std::format("  corner {}  {} verts, {:.1f}% in surface\n", c, cornerVerts[c],
+                             frac);
+  }
+  std::cout << std::format("  {} levels, {} blocks, {} verts, trailing u32 [{}, {}]\n", levels,
+                           matchedBlocks, verts, endMin, endMax);
 
   for (const auto& name : webo::levelFileNames(*lib)) {
     if (name.find("MM_CLIMB_002") == std::string::npos)
@@ -100,14 +163,17 @@ void testRetail(const fs::path& dir) {
     std::set<std::uint32_t> seen;
     bool sawWhite = false;
     for (const auto& block : polys->blocks) {
-      for (const auto& v : block.vertices) {
-        if (seen.insert(v.index).second) {
-          ++unique;
-          if (grid.count(v.index))
-            ++inGrid;
+      for (const auto& rec : block.records) {
+        for (std::uint32_t c = 0; c < rec.cornerCount; ++c) {
+          const auto& v = rec.corners[c];
+          if (seen.insert(v.index).second) {
+            ++unique;
+            if (grid.count(v.index))
+              ++inGrid;
+          }
+          if (v.r == 255 && v.g == 255 && v.b == 255 && v.a == 255)
+            sawWhite = true;
         }
-        if (v.r == 255 && v.g == 255 && v.b == 255 && v.a == 255)
-          sawWhite = true;
       }
     }
     check(sawWhite, "climb has opaque white vertex colours");

@@ -1,8 +1,9 @@
 // Surface faces rebuilt from the cylindrical key lattice.
 //
-// The two u32 arrays after "Cylinder" index surface vertices by a spatial
-// key (see PLAN.md 1.6). Neighbouring keys name neighbouring vertices, so
-// the faces are:
+// LevelIndex::grid0 is the u32[N] array on the Cylinder walk. It indexes
+// surface vertices by a spatial key (see PLAN.md 1.6). grid1 is empty; the
+// file has one array, and an empty span contributes nothing. Neighbouring
+// keys name neighbouring vertices, so the faces are:
 //
 //   (k, k+1, k+17, k+16)     thickness x angular step
 //   (k, k+1, k+Y+1, k+Y)     thickness x ring, Y = per-level ring stride
@@ -10,9 +11,10 @@
 // Y is not stored in the .LVL; detectRingStride finds it by scoring multiples
 // of 16 against the mesh's ring spacing (see PLAN.md 1.6).
 //
-// This module walks both arrays, keeps every fully-populated quad whose edge
+// This module walks the lattice, keeps every fully-populated quad whose edge
 // lengths match those expectations, and can rasterise the result into a flat
-// wraparound occupancy mask for the simulation.
+// wraparound occupancy mask. The simulation collides on CollisionGrid; this
+// mesh is render input.
 
 #pragma once
 
@@ -72,10 +74,11 @@ std::pair<double, double> unrollCylinder(const Vec3& v);
 // matching stored field in the retail .LVL files.
 int detectRingStride(const CylinderMesh& mesh, std::span<const std::uint32_t> grid);
 
-// Build faces from grid0 and grid1. Pass both; each contributes independently.
-std::expected<SurfaceMesh, std::string> buildSurfaceMesh(const CylinderMesh& mesh,
-                                                         std::span<const std::uint32_t> grid0,
-                                                         std::span<const std::uint32_t> grid1);
+// Build faces from grid0. grid1 is accepted and walked when non-empty; the
+// retail loader leaves it empty.
+std::expected<SurfaceMesh, std::string> buildSurfaceMesh(
+    const CylinderMesh& mesh, std::span<const std::uint32_t> grid0,
+    std::span<const std::uint32_t> grid1);
 
 // Rasterise quads into a wraparound mask. `pixelsPerUnit` scales world units
 // (mesh height is typically 96) into mask pixels; width is the circumference

@@ -21,38 +21,61 @@
 //     begins with "_curNoLem". An earlier reading of this header had eight
 //     words: the eighth was really the manifest's count, and the ninth word
 //     that "was always 9" was the length prefix of "_curNoLem".
-//   * Header invariants across all 102 levels: word[3] == word[4] (the two
-//     array byte lengths), word[2] - word[1] is always 0x1B0000, and word[0]
-//     repeats the manifest count.
-//   * A chunk named "Cylinder" is followed by two equal-sized arrays of u32
-//     whose byte length is word[3]. The tube's own geometry *is* solved --
-//     see Cylinder.h.
+//   * Header invariants across all 102 levels: word[3] == word[4], word[2] -
+//     word[1] is always 0x1B0000, and word[0] repeats the manifest count.
+//     word[3] is a multiple of 64 and ranges from 20480 to 111936 (30 distinct
+//     values). It is **not** the lattice's byte length. That reading was a
+//     window into the array below; see docs/scratch/phase2-lattice.md.
+//   * The literal "Cylinder" chunk starts a fixed walk, the same one
+//     CollisionGrid.h uses to reach the mask:
+//
+//         u32 8, "Cylinder"
+//         u32[5]     zeros, in all 102 levels
+//         u32        height 96, in all 102 levels
+//         f64        0.36, in all 102 levels
+//         u32 N      49858, in all 102 levels
+//         u32[N]     one surface-index array
+//
+//     Every word is 0xFFFFFFFF or an index into CylinderMesh::surface. The
+//     array is occupied through its last word in all 102 levels (last
+//     non-empty at 49856 or 49857). The tube mesh in Cylinder.h is a
+//     different, earlier object; this array is not that mesh, and its bytes
+//     are not the same from level to level.
+//   * There is no second index array of length word[3]. grid1 is empty.
+//     The collision grid is the next counted array after u32 R and R*12
+//     records (CollisionGrid.h). A counted array of 12288 words follows the
+//     collision payload in all 102 levels; it is not this lattice.
 //
 // Keying — settled
 // ----------------
-//   The non-empty entries of both arrays are indices into the cylinder's
-//   surface vertices (see Cylinder.h). `grid0` is asserted in all 102 levels:
-//   every value is in range and the largest lands just under the vertex count
-//   (87%..99.8%, median 98.6%).
+//   The non-empty entries are indices into the cylinder's surface vertices
+//   (see Cylinder.h). Asserted on the whole 49858-word array in all 102
+//   levels: every value is in range, and (highest + 1) / vertex count is at
+//   worst 0.993 (M18_MT_1). The earlier 87%..99.8% band was the header[3]
+//   window, which drops most of the pool on the short levels.
 //
 //   The *slots* are a cylindrical lattice, not a hash and not a flat terrain
-//   bitmap. Neighbouring keys name neighbouring vertices:
+//   bitmap. Neighbouring keys name neighbouring vertices. Re-measured on the
+//   49858-word array, all 102 levels:
 //
-//     key+1   inner <-> outer (distance ≈ thickness 10)
-//     key+16  next angular step (distance ≈ chord at r=50 or r=60)
-//     key+Y   next ring; Y is per-level (8224 on the ~27k arrays)
+//     key+1   inner <-> outer (median distance within 1 of thickness 10)
+//     key+16  next angular step (median within 1 of the chord at r=50 or r=60)
 //
-//   That is why every array length is a multiple of 16. `lrtool lvlkeys`
-//   reports the median distances; see PLAN.md 1.6 for the quad reconstruction.
+//   The array length is not a multiple of 16: 49858 = 16*3116 + 2. The old
+//   "multiple of 16" note was header[3] / 4, which is a different number.
+//   `lrtool lvlkeys` reports the median distances; see PLAN.md 1.6 for the
+//   quad reconstruction.
 //
-//   Y itself is not a stored .LVL field: across the 52 levels that have ring
-//   faces it never appears in the header, the Cylinder preamble, or as an
-//   aligned u32 near the grids, and on MM_CLIMB_002 the value 8224 (and
-//   8224/16) does not occur as an aligned u32 anywhere in the file.
-//   SurfaceMesh::detectRingStride derives it from the lattice geometry.
+//   The ring stride Y is not a stored .LVL field. On MM_CLIMB_002, MM_FLOAT,
+//   MM_BUILD and VH13_KF_1, SurfaceMesh::detectRingStride returns 8224 and
+//   the median key+8224 distance is exactly one ring (16). MM_CLIMB_002 has
+//   no aligned u32 equal to 8224 or 8224/16 (test_surface).
 //
 // Not yet determined
 // ------------------
+//   * What header word[3] and word[4] are. They match each other in all 102
+//     levels, but neither equals N*4 (199432) and neither is stored as a
+//     count beside the Cylinder chunk.
 //   * Script / remaining non-world Object 09 subtypes (fish, teleport_fx, …).
 //
 // Skin tiles do **not** encode solidity: all 4,896 named INN/OUT tiles across
@@ -64,8 +87,10 @@
 //
 // Entrances, exits, other placed models, and skill counts: see LevelObjects.h.
 //
-// The scan is a *heuristic index*, not a parser: it finds length-prefixed
-// strings rather than walking a known structure. It is named accordingly.
+// The string sweep is a *heuristic index*, not a parser: it finds
+// length-prefixed strings rather than walking a known structure. The
+// surface-index array is the exception. It is the counted u32[N] on the
+// Cylinder walk above, not a scan for 0xFFFFFFFF.
 
 #pragma once
 
@@ -98,8 +123,11 @@ struct LevelIndex {
 
   std::size_t polyListCount = 0;
 
-  // The two equal arrays after the "Cylinder" chunk. Dimensions unknown.
+  // The u32[N] surface-index lattice after the Cylinder preamble. N is 49858
+  // in every retail level. 0xFFFFFFFF is an empty slot.
   std::vector<std::uint32_t> grid0;
+  // Not present in the file. Kept so callers can still pass both spans;
+  // indexLevel leaves it empty.
   std::vector<std::uint32_t> grid1;
 
   // Cells in grid1 that are not the empty marker (0xFFFFFFFF).
@@ -111,7 +139,8 @@ struct LevelIndex {
 std::string levelTextureAssetName(std::string_view reference);
 
 std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte>);
-std::expected<LevelIndex, std::string> loadLevelIndex(const AssetLibrary&, std::string_view name);
+std::expected<LevelIndex, std::string> loadLevelIndex(const AssetLibrary&,
+                                                      std::string_view name);
 
 // Every "COMPILED\\*.LVL" in the archive.
 std::vector<std::string> levelFileNames(const AssetLibrary&);

@@ -1,5 +1,7 @@
 # Windows Build Environment (MSYS2 UCRT64)
 
+> **Canonical for every harness.** Other clients hold pointers, never copies.
+
 Humans build from an MSYS2 UCRT64 terminal, where `g++`, `cmake`, and `make` are already on `PATH`. Agents on Windows run from PowerShell and do **not** inherit that shell.
 
 ## Enter UCRT64 from PowerShell

@@ -1,5 +1,9 @@
 # Match the original
 
+> **Canonical for every harness.** Claude Code, Codex and Cursor all read this file; it is
+> not Claude-specific. Other clients' rule directories hold pointers, never copies — a copy
+> in `.cursor/` went stale and wrong for weeks. Change this file, not a mirror.
+
 This is a 1:1 reimplementation of Lemmings Revolution. The stock 640x480 executable is the authority.
 
 ## Separate observations from hypotheses

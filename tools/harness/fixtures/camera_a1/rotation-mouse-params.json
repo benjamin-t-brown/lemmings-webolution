@@ -1,0 +1,33 @@
+{
+  "viewport": [
+    640,
+    480
+  ],
+  "aspect": 1.3333333333333333,
+  "angle_degrees": 19.03,
+  "yaw_units": 32.0,
+  "yaw_offset": 128.0,
+  "yaw_units_per_turn": 256.0,
+  "zoom_shift": 0,
+  "level_eye_height": 96,
+  "height_bias": 17.392,
+  "eye_distance": 377.516,
+  "fixed_pitch_turns": -0.03135770272046,
+  "pose_pi": 3.1415927410125732,
+  "lens_pi": 3.1415927410125732,
+  "angle_units_per_turn": 360.0,
+  "elevation": 0.0,
+  "center": [
+    319,
+    239
+  ],
+  "mouse_gain": 10.0,
+  "rotation_unit": 24.0,
+  "left_scan": 75,
+  "right_scan": 77,
+  "inversion": 1.0,
+  "control_case": {
+    "updates": 1,
+    "mouse_dx": 24
+  }
+}

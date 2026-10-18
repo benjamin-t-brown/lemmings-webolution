@@ -1,0 +1,166 @@
+{
+  "pid": 20804,
+  "bindings": {
+    "left": 75,
+    "right": 77
+  },
+  "observations": [
+    {
+      "scan_code": 75,
+      "before": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      },
+      "during": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          272.0001220703125,
+          240.0
+        ]
+      },
+      "after": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          272.0001220703125,
+          240.0
+        ]
+      }
+    },
+    {
+      "scan_code": 77,
+      "before": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          272.0001220703125,
+          240.0
+        ]
+      },
+      "during": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      },
+      "after": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      }
+    },
+    {
+      "scan_code": 203,
+      "before": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      },
+      "during": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      },
+      "after": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      }
+    },
+    {
+      "scan_code": 205,
+      "before": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      },
+      "during": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      },
+      "after": {
+        "ui": 1,
+        "mode_i32": 2,
+        "zoom_i32": 0,
+        "scale_i32": 0,
+        "current_yaw": 32.0,
+        "target_yaw": 32.0,
+        "cursor": [
+          320.0,
+          240.0
+        ]
+      }
+    }
+  ],
+  "limitation": "Bounded paused default mode only; no speed-per-second claim, no mode override or direct game-state writes."
+}

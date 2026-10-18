@@ -1,0 +1,14 @@
+{
+  "status": "Recorded before isolated input parameter mutations",
+  "threshold": 0.02,
+  "roi": [100, 80, 280, 410],
+  "cases": [
+    {"name":"rotation-mouse","label":"input-mouse","field":"mouse_gain","mutation":12.0},
+    {"name":"rotation-mouse","label":"input-mouse","field":"rotation_unit","mutation":30.0},
+    {"name":"rotation-mouse","label":"input-mouse","field":"inversion","mutation":-1.0},
+    {"name":"rotation-key-right","label":"input-key-right","field":"right_scan","mutation":78},
+    {"name":"rotation-key-left","label":"input-key-left","field":"left_scan","mutation":74}
+  ],
+  "acceptance": "A field requires a passing original baseline and strictly worse error after its isolated mutation; restore input bytes and baseline PNG hash before the next field. The already failed left-key baseline remains rejected even if its mutation worsens error.",
+  "limitation": "Only the predeclared active grabbed control path is covered. No general per-second key speed, modifier, other-mode or clipping claim."
+}

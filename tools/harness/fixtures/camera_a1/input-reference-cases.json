@@ -1,0 +1,88 @@
+[
+  {
+    "case": {
+      "name": "rotation-mouse",
+      "start_yaw": 32.0,
+      "mouse_dx": 24,
+      "expected_yaw": 22.0,
+      "restore_mouse_dx": -24
+    },
+    "observed": {
+      "yaw": 22.0,
+      "grab": 1,
+      "selected": 0,
+      "cursor": [
+        181.0,
+        249.59999084472656
+      ]
+    },
+    "restored": {
+      "yaw": 32.0,
+      "grab": 1,
+      "selected": 0,
+      "cursor": [
+        181.0,
+        249.59999084472656
+      ]
+    },
+    "restored_camera_sha256": "7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff"
+  },
+  {
+    "case": {
+      "name": "rotation-key-left",
+      "start_yaw": 32.0,
+      "scan_code": 75,
+      "held_polls": 4,
+      "expected_yaw": 36.0,
+      "restore_scan_code": 77
+    },
+    "observed": {
+      "yaw": 36.0,
+      "grab": 1,
+      "selected": 0,
+      "cursor": [
+        181.0,
+        249.59999084472656
+      ]
+    },
+    "restored": {
+      "yaw": 32.0,
+      "grab": 1,
+      "selected": 0,
+      "cursor": [
+        181.0,
+        249.59999084472656
+      ]
+    },
+    "restored_camera_sha256": "7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff"
+  },
+  {
+    "case": {
+      "name": "rotation-key-right",
+      "start_yaw": 32.0,
+      "scan_code": 77,
+      "held_polls": 4,
+      "expected_yaw": 28.0,
+      "restore_scan_code": 75
+    },
+    "observed": {
+      "yaw": 28.0,
+      "grab": 1,
+      "selected": 0,
+      "cursor": [
+        181.0,
+        249.59999084472656
+      ]
+    },
+    "restored": {
+      "yaw": 32.0,
+      "grab": 1,
+      "selected": 0,
+      "cursor": [
+        181.0,
+        249.59999084472656
+      ]
+    },
+    "restored_camera_sha256": "7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff"
+  }
+]

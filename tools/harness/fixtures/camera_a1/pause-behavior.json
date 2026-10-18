@@ -1,0 +1,14 @@
+{
+  "expected": 1,
+  "observed_pause_state": 1,
+  "clock_samples": [
+    288,
+    288,
+    288,
+    286,
+    286,
+    286
+  ],
+  "camera_bytes_unchanged": true,
+  "final_state": 1
+}

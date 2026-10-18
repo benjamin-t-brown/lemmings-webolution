@@ -1,0 +1,13 @@
+{
+  "status": "Recorded before input-reference captures and input-parameter mutations",
+  "scope": "Active gameplay, existing default control mode, right-button grab starting over empty steel, live mouse swap disabled and inversion factor as observed",
+  "cases": [
+    {"name":"rotation-mouse","start_yaw":32.0,"mouse_dx":24,"expected_yaw":22.0,"restore_mouse_dx":-24},
+    {"name":"rotation-key-left","start_yaw":32.0,"scan_code":75,"held_polls":4,"expected_yaw":36.0,"restore_scan_code":77},
+    {"name":"rotation-key-right","start_yaw":32.0,"scan_code":77,"held_polls":4,"expected_yaw":28.0,"restore_scan_code":75}
+  ],
+  "falsifier": "Grab not active, selected object blocks it, observed yaw differs from predeclared value, loaded level changes, or input polling stops. Do not fit step counts or deltas afterward.",
+  "pixel_policy": "Existing fixed ROI and0.02 normalized RGB error, unchanged. Candidate yaw must be computed from input plus executable coefficients, not copied from the resulting live angle.",
+  "mutation_fields": ["mouse_gain","rotation_unit","left_scan","right_scan","inversion"],
+  "restore": "Release input after each operation; apply declared opposite input; verify original camera bytes before next case. A timeout or failed restore invalidates the affected case."
+}

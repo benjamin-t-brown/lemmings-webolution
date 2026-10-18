@@ -17,6 +17,27 @@ there**, or a re-runnable script. A decompiler line is not a measurement.
 SHA-256 of the authority: `32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f`,
 image base `0x400000`, 32-bit PE.
 
+## Camera checkpoint: A1 remains open
+
+The accepted pose/lens operand reads and their exact addresses are in
+[the A1 facilitator check](scratch/phase-a1-camera.md). Its standalone fixture has
+independent original-image mutation/restore proofs; it is not a finished renderer.
+The initial, grabbed-mouse and right-key regions pass the predeclared criterion. The
+left-key frame fails, and numeric near/far planes remain unknown. Do not list either as
+settled or restart the completed simulation work.
+
+The scale helper executes **FPTAN**, not sine (`0x0047B095` calls `0x0049D8D4`,
+`D9 F2` at `0x0049D8F2`). Projection divides by transformed depth and reverses screen y
+(`0x0047D0C0`, `0x0040EAE0`). The captured center was `(319,239)` at stock resolution,
+from BSS globals `0x0058D294` / `0x0058D298`; each component has a separate pixel mutation.
+The conventional center assumption and earlier sine interpretation were explicitly
+corrected. Exact original floating-point intermediate precision is still unestablished.
+
+Control action names do not imply unconditional rotation. The captured default path
+moved the virtual cursor without a grab; a grab over empty scenery changed the meaning of
+the same inputs. Window activation and selection matter. Preserve the failed view and the
+scope limits in the linked note before proposing the next round.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by
@@ -183,8 +204,12 @@ must be taken together.
 - `goto_level` **can silently fail** — it once reported entering one level while the loaded
   path stayed another, and the dump was of the wrong level. Read back the loaded path.
 - `goto_level.focus()` has crashed dgVoodoo on this machine.
-- `ui_state`: 0 playing, 2 pause, 3 frontend, 5 results. Frontend screen id `0x004C416C`: 3
-  menu, 4 confirm, 5 map.
+- **Correction to the retired `2 = pause` shortcut:** P gameplay pause is `ui_state 1`
+  (store at `0x0045D226`), and P resumes `0` (store at `0x0045D508`). The clock was
+  independently observed stopped/running/stopped; changing only the harness's pause
+  classification to the old value failed, then its exact bytes were restored and the
+  suite passed. Do not conflate gameplay pause with the separate menu state.
+  Frontend screen id `0x004C416C` remains: 3 menu, 4 confirm, 5 map.
 - If you write to the live collision grid (a legitimate, proven probe), **log every cell and
   restore all of them**.
 

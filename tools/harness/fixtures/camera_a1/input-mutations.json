@@ -1,0 +1,92 @@
+[
+  {
+    "field": "mouse_gain",
+    "reference_case": "rotation-mouse",
+    "baseline": {
+      "error": 0.016010321075680553,
+      "passes_threshold": true,
+      "png_sha256": "9ee118dbed5a3b69b52739495b6a9f9784667b462ee1afbb3edefc49209a6490"
+    },
+    "mutation": {
+      "error": 0.03201995994806452,
+      "passes_threshold": false,
+      "png_sha256": "c61f57a19b35c4c644f9fd63ec5a0347a4d3232cc5a21d614bf1d465650823ba"
+    },
+    "mutation_strictly_worse": true,
+    "accepted_for_this_fixture": true,
+    "restored_input_sha256": "c6b25b1e72014609bf321f38c5f591528d3efbd00e98aeaf63b4d732140384b1",
+    "restored_png_sha256": "9ee118dbed5a3b69b52739495b6a9f9784667b462ee1afbb3edefc49209a6490"
+  },
+  {
+    "field": "rotation_unit",
+    "reference_case": "rotation-mouse",
+    "baseline": {
+      "error": 0.016010321075680553,
+      "passes_threshold": true,
+      "png_sha256": "9ee118dbed5a3b69b52739495b6a9f9784667b462ee1afbb3edefc49209a6490"
+    },
+    "mutation": {
+      "error": 0.030441715631258116,
+      "passes_threshold": false,
+      "png_sha256": "0ccea35c6cabb52249bf09dc922d1c889007f5c42974b3ee06a52cab7e96edbf"
+    },
+    "mutation_strictly_worse": true,
+    "accepted_for_this_fixture": true,
+    "restored_input_sha256": "c6b25b1e72014609bf321f38c5f591528d3efbd00e98aeaf63b4d732140384b1",
+    "restored_png_sha256": "9ee118dbed5a3b69b52739495b6a9f9784667b462ee1afbb3edefc49209a6490"
+  },
+  {
+    "field": "inversion",
+    "reference_case": "rotation-mouse",
+    "baseline": {
+      "error": 0.016010321075680553,
+      "passes_threshold": true,
+      "png_sha256": "9ee118dbed5a3b69b52739495b6a9f9784667b462ee1afbb3edefc49209a6490"
+    },
+    "mutation": {
+      "error": 0.09395598688409146,
+      "passes_threshold": false,
+      "png_sha256": "380a34036979663dedc019aee93b8f68bd34eb6359ff8ded90e5a14547ae1e36"
+    },
+    "mutation_strictly_worse": true,
+    "accepted_for_this_fixture": true,
+    "restored_input_sha256": "c6b25b1e72014609bf321f38c5f591528d3efbd00e98aeaf63b4d732140384b1",
+    "restored_png_sha256": "9ee118dbed5a3b69b52739495b6a9f9784667b462ee1afbb3edefc49209a6490"
+  },
+  {
+    "field": "right_scan",
+    "reference_case": "rotation-key-right",
+    "baseline": {
+      "error": 0.01477834994828459,
+      "passes_threshold": true,
+      "png_sha256": "88f0ba34f3b72ea162b36e7dfe8df2bea6c31be7194eda8f6f166ee7163f044e"
+    },
+    "mutation": {
+      "error": 0.035027178099073526,
+      "passes_threshold": false,
+      "png_sha256": "e0ada0019e5ccc053ee1b0256ced37281fe339d584a0b096c4e5f901715352a2"
+    },
+    "mutation_strictly_worse": true,
+    "accepted_for_this_fixture": true,
+    "restored_input_sha256": "668404f588f03675d15f2624f9824e17189d77aa56a1a037d6af328d97783576",
+    "restored_png_sha256": "88f0ba34f3b72ea162b36e7dfe8df2bea6c31be7194eda8f6f166ee7163f044e"
+  },
+  {
+    "field": "left_scan",
+    "reference_case": "rotation-key-left",
+    "baseline": {
+      "error": 0.033010761206839635,
+      "passes_threshold": false,
+      "png_sha256": "ecee8098e8ce7c3766b631af64b2158b2d61b2a9069bb7250ca5d65aa2c60551"
+    },
+    "mutation": {
+      "error": 0.048894126449682,
+      "passes_threshold": false,
+      "png_sha256": "e0ada0019e5ccc053ee1b0256ced37281fe339d584a0b096c4e5f901715352a2"
+    },
+    "mutation_strictly_worse": true,
+    "accepted_for_this_fixture": false,
+    "restored_input_sha256": "aaccdcaf60fae84c257dae35d7c1d472c12ca2ace7b73d08fd159af30c611910",
+    "restored_png_sha256": "ecee8098e8ce7c3766b631af64b2158b2d61b2a9069bb7250ca5d65aa2c60551"
+  }
+]

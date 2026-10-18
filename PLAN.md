@@ -75,6 +75,11 @@ The whole phase is "make it look and move like the original". One round per item
   axis, eye height, near/far planes, and how it maps mouse and keys to rotation. Deliverable:
   a camera whose frame matches a captured original frame at a known level, with the
   threshold stated.
+  **In progress, not complete:** the [verified camera checkpoint](docs/scratch/phase-a1-camera.md)
+  retains the operand reads, standalone pixel fixture, individual mutation/restore proofs,
+  and a failed left-key view. Initial, mouse and right-key static regions pass the fixed
+  criterion; the left view and depth/clipping remain open. Finish that verification before
+  treating A1 as closed. The standalone harness does not pay the entry-point debt.
 - **A2. The tube.** INN/OUT texture addressing, draw order, inner surface before outer so
   the far side shows through gaps, and whatever scenery the original draws that we skip.
 - **A3. Sprite view selection.** `.SPR` stores multiple **views** per action — `walk` 12,
@@ -129,10 +134,16 @@ that closes a single thing. One agent owns the running game at a time.
 
 | Role | Model | Does |
 | --- | --- | --- |
-| Facilitator | **Opus** (or the strongest available) | Picks the next round, writes the brief, **independently verifies every headline claim**, owns `PLAN.md`, `docs/` and `.claude/rules/`, lands results |
-| Task agent | **Sonnet** (or equivalent) | Runs one round: reads code, runs the harness, writes the sim/renderer change, writes tests, parks prose in `docs/scratch/` |
+| Facilitator | **Sol** (the Opus role) | Picks the next round, writes the brief, **independently verifies every headline claim**, owns `PLAN.md`, `docs/` and `.claude/rules/`, lands results |
+| Task agent | **Luna** (the Sonnet role) | Runs one round: reads code, runs the harness, writes the sim/renderer change, writes tests, keeps candidate prose outside `docs/` until facilitator verification |
 
-Dispatch task agents with an explicit `model: sonnet`. The reasoning: a round is bounded
+**User-authorized correction for Codex:** use Sol in place of Opus and Luna in place of
+Sonnet. This supersedes the original model names; it does not change the division of work
+or the verification standard. Dispatch task agents with an explicit `model: gpt-6-luna`.
+Keep unverified candidate prose in `build/tmp/` so no original-game number reaches `docs/`
+before the facilitator completes verification; the facilitator lands accepted scratch notes.
+
+The reasoning: a round is bounded
 work against a written brief, where a mid-tier model is fast and cheap enough to run many
 rounds; the facilitation — judging whether a claim is actually supported, noticing an
 over-generalisation, catching a stale document — is where the stronger model earns its cost.
@@ -140,8 +151,8 @@ over-generalisation, catching a stale document — is where the stronger model e
 because headline numbers were re-derived independently, and several rounds had a claim
 narrowed or retracted on re-check.
 
-The facilitator owns `PLAN.md`, `docs/LESSONS.md`, `docs/REA_SETUP.md` and
-`.claude/rules/**`. Task agents own their scratch note, the code and the tests.
+The facilitator owns `PLAN.md`, `docs/**` and `.claude/rules/**`. Task agents own their
+candidate scratch note outside `docs/`, the code and the tests.
 
 Every brief states: the already-settled facts (so nothing is rediscovered), the round's
 question with every lead already in hand, the evidence standard, the mutate-one-thing-alone

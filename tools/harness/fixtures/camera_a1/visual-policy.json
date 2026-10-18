@@ -1,0 +1,10 @@
+{
+  "status": "preregistered before candidate renders",
+  "source_resolution": [640, 480],
+  "metric": "sum(abs(reference RGB - candidate RGB)) / (255 * channel count), on fixed static ROI",
+  "maximum_mean_absolute_rgb_error": 0.02,
+  "roi_selection": "Record before first candidate render; no post-hoc resizing, fitted alignment, or ROI/mask changes",
+  "mutation_requirement": "Each new value alone must strictly worsen original screenshot error; restore and compare file bytes before next mutation",
+  "scope": "Camera comparison only; no whole-renderer fidelity claim from a camera-only fixture",
+  "failure_to_obtain_comparison": "A1 remains incomplete; no camera values promoted to docs or rules"
+}

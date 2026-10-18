@@ -19,8 +19,42 @@ rea inspect "C:\progs\Lemmings Revolution\Lemmings Revolution.exe" --provider gh
 ```
 
 Verified result: `architecture: x86`, `format: pe`, digest matching the authority's SHA-256
-`32675bdb…98b6ab`, and `import_mode: ephemeral-source-immutable` — REA analyses an immutable
+in `docs/LESSONS.md`, and `import_mode: ephemeral-source-immutable` — REA analyses an immutable
 copy and never writes to the game install.
+
+**Correction:** the previous abbreviated digest in this paragraph had an incorrect suffix.
+The facilitator independently hashed the installed stock executable and confirmed the full
+digest already recorded in `docs/LESSONS.md`; do not reuse the retired abbreviation.
+
+## Codex connection is separate from CLI installation
+
+**Setup correction:** the npm package and Ghidra provider were installed, but Codex had no
+REA MCP registration. Installing the CLI or skill alone does not connect an existing client.
+With the provider environment above set, use the installed package's scoped setup:
+
+```powershell
+& "$env:APPDATA\npm\rea.cmd" setup --client codex --dry-run --json
+& "$env:APPDATA\npm\rea.cmd" setup --client codex --yes --json
+& "$env:APPDATA\npm\rea.cmd" doctor --client codex --json
+```
+
+Inspect the dry-run before applying it. The applied setup added only `mcp_servers.rea` to
+`C:\Users\bbrown\.codex\config.toml` and refreshed the installed REA skill. The previous
+configuration is backed up as `config.toml.rea.backup`; an additional configuration and
+skill backup is under `C:\Users\bbrown\.agents\skill-backups\`. A parsed before/after
+comparison confirmed unrelated Codex settings were preserved.
+
+**Facilitator check:** the scoped doctor reported healthy, a separate server completed MCP
+initialization and a session-status call, and after client refresh the actual Codex session's
+`binary_session` call succeeded with Ghidra available. These establish the connection, not a
+camera measurement. Refresh the client when registration changes, then check the actual
+session's tools rather than inferring a connection from a successful CLI command.
+
+The Codex sandbox can hide the user's npm directory and Python user-site packages. In this
+session, Capstone and Pillow were already installed but appeared missing to sandboxed
+Python; running the same interpreter with authorized normal-user access found them. The
+ordinary test command also passed with that access after a sandbox-only progress save/load
+failure. Diagnose access before reinstalling packages or changing source to accommodate it.
 
 ## Two traps that cost time, so you don't repeat them
 

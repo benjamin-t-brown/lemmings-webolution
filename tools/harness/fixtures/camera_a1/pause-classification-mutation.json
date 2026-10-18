@@ -1,0 +1,20 @@
+{
+  "mutated_only": "gameplay_pause_state",
+  "wrong_value": 2,
+  "mutation_failed": true,
+  "restored_sha256": "a54d88670c640cfbb93d1308c73b54b29251d6e3b9511ade09aa1809cc5122ce",
+  "restored_live_probe": {
+    "expected": 1,
+    "observed_pause_state": 1,
+    "clock_samples": [
+      288,
+      288,
+      288,
+      286,
+      286,
+      286
+    ],
+    "camera_bytes_unchanged": true,
+    "final_state": 1
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "status": "Recorded before camera mutations",
+  "baseline": "Hi + bilinear bounded fixture; no changes to geometry, UVs, ROI or threshold",
+  "fields": {"angle_degrees":21.0,"eye_distance":400.0,"height_bias":25.0,"fixed_pitch_turns":0.0,"pose_pi":3.0,"lens_pi":3.0,"angle_units_per_turn":400.0,"yaw_offset":132.0,"yaw_units_per_turn":240.0,"aspect":1.0,"level_eye_height":88,"center[0]":328,"center[1]":248},
+  "requirement": "Change exactly one scalar each time; render; compare to original and require strictly larger fixed-ROI error; restore exact input bytes and hash; re-render restored baseline and require identical PNG hash before next mutation",
+  "limitation": "Significant perturbations prove field influence in this fixture. They do not establish bit-exact numeric precision, every runtime camera mode, clipping planes, or control speed. Elevation is intentionally excluded because the captured zero-zoom case ignores it."
+}

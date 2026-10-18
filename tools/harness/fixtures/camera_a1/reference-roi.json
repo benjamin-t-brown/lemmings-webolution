@@ -1,0 +1,13 @@
+{
+  "status": "Fixed before any original-matched candidate render",
+  "reference": "original-0.png",
+  "reference_sha256": "22b6b04281abf55607ae15029dd2490c0316cd8e9a4bcfd6be519a45836645aa",
+  "roi": [100, 80, 280, 410],
+  "selection_reason": "Static steel pillar panel including its right edge; excludes the HUD, pause caption, lemmings, hatch and balloon. Chosen by inspecting only the original frame.",
+  "threshold": 0.02,
+  "metric": "Normalized mean absolute RGB difference, no resize or fitted alignment",
+  "mutations": "Each newly claimed camera value alone must strictly increase error versus the original, with restoration verified before the next mutation.",
+  "visibility": "Original client was temporarily topmost without activation; visually verified unobscured 640x480 stock paused scene. Original window topmost style restored after capture. No foreground assumption.",
+  "reference_state": "reference-state.json",
+  "limitation": "This ROI validates only the camera/material fixture it contains; it does not establish depth clipping or all input mappings. Separate fixtures are required for claims it cannot falsify."
+}

@@ -3,8 +3,9 @@
 This hands over the **facilitator role** itself, not a research round. Read it before you
 dispatch anything.
 
-Current as of 2026-10-18, on branch `decompile` at commit `562a099`, tree clean, 14 tests
-green. The predecessor's longer Phase 3 version is at `old/docs/FACILITATOR_HANDOFF.md`; its
+Reset handoff recorded on 2026-10-18 at commit `562a099`, with a clean tree and 14 tests
+green. For current round status, read `PLAN.md` and its linked facilitator checks, then
+check the tree. The predecessor's longer Phase 3 version is at `old/docs/FACILITATOR_HANDOFF.md`; its
 mechanics still hold but its paths and status are retired.
 
 ## What the job is
@@ -41,8 +42,10 @@ round wrote its finding as applying to `Exit*.a3d` when it had measured one of f
 and a round inserted its bullet into the **middle** of an existing bullet, orphaning the tail
 so it read as current and revived three claims a later round had closed.
 
-**Agents own** `docs/scratch/phase3-roundN-<topic>.md` (create `docs/scratch/`; it is empty
-after the reset), the code, the tests, and new scripts under `tools/harness/`.
+**Correction to the original scratch-note exception:** the user's stricter promotion gate
+also covers `docs/scratch/`. Agents keep unverified candidate notes in `build/tmp/`; the
+facilitator lands accepted material in `docs/scratch/` only after verification. Agents own
+the code, the tests, and new scripts under `tools/harness/`.
 
 ## The verification loop — this is the job
 
@@ -148,8 +151,10 @@ Facilitator-side — the predecessor's own errors, so you can expect them:
 
 **One round, one question.** One agent owns the running game at a time; say so in the brief.
 
-**Models are split deliberately** (`PLAN.md`): facilitator on **Opus**, task agents
-dispatched with an explicit **`model: sonnet`**. A round is bounded work against a written
+**Models are split deliberately** (`PLAN.md`). **User-authorized correction for Codex:**
+facilitator on **Sol** (the Opus role), task agents on **Luna** (the Sonnet role), dispatched
+with an explicit **`model: gpt-6-luna`**. This supersedes the original Opus/Sonnet names;
+verification still never delegates. A round is bounded work against a written
 brief, where a mid-tier model is fast and cheap enough to run many; the judgement — whether a
 claim is supported, whether it over-generalises, whether a document has gone stale — is where
 the stronger model earns its cost. **Verification never delegates.**
@@ -166,9 +171,10 @@ state of the game process; and "report honestly — do not round, smooth or over
 nothing read, re-dispatch verbatim. Died late with edits on disk, do not re-dispatch — build,
 run the suite, and finish the missing verification yourself.
 
-## Where things stand
+## Reset baseline and current round
 
-Branch `decompile`, commit `562a099`, clean tree, **14/14 tests**.
+The historical reset baseline was branch `decompile`, commit `562a099`, clean tree,
+**14/14 tests**. Do not treat that historical commit or cleanliness as a current status report.
 
 The simulation is **done and correct** — 31 rounds, every `Rules` field a read plus a live
 series, all nine skills, every gadget including eleven clean negatives. It is kept.
@@ -178,10 +184,15 @@ placeholder shell are in `old/src/`. **There is no runnable executable** until t
 3D-first entry point exists, and asset-side test coverage for tile naming and state→sprite
 mapping regressed with three moved tests. Both debts are recorded in `PLAN.md` Phase A.
 
-**Dispatch Phase A1 — camera and projection — first.** Read the original's field of view,
-eye distance from the axis, eye height, near/far planes and its rotation input mapping out of
-the exe with REA, so the new renderer starts from measured values instead of the
-`radius 60` / `distance 150` / `fovY 0.9` guesses now sitting in `old/src/gfx`. Then A2 the
+**A1 has been dispatched and remains open.** Read the
+[verified subset and retained failures](scratch/phase-a1-camera.md) before writing another
+brief. Pose/lens and bounded control fixtures have been checked; the failed left-key view
+and depth/clipping still require work. Do not redispatch settled operand reads or claim
+the entire round passed because the simulation suite is green.
+
+Remaining A1 evidence must still come from the executable and the original frame, using
+REA where needed. The accepted operands replace the camera guesses in `old/src/gfx`;
+they do not establish clipping or full-scene fidelity. After A1, continue with A2 the
 tube, A3 sprite view selection (the largest single "the sprites look wrong" fix — `.SPR`
 stores 12 views for `walk`, 8 for `block`, 7 for `fall`, and the old renderer hardcoded view
 0), then A4 the entry point with revolve as a first-class control.

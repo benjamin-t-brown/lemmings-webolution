@@ -1,0 +1,67 @@
+{
+  "ui_state_stores": [
+    {
+      "va": "0x45d18d",
+      "bytes": "8b912c570000",
+      "op": "edx, dword ptr [ecx + 0x572c]"
+    },
+    {
+      "va": "0x45d226",
+      "bytes": "c7822c57000001000000",
+      "op": "dword ptr [edx + 0x572c], 1"
+    },
+    {
+      "va": "0x45d40a",
+      "bytes": "c7822c57000002000000",
+      "op": "dword ptr [edx + 0x572c], 2"
+    },
+    {
+      "va": "0x45d49c",
+      "bytes": "c7802c57000002000000",
+      "op": "dword ptr [eax + 0x572c], 2"
+    },
+    {
+      "va": "0x45d508",
+      "bytes": "c7812c57000000000000",
+      "op": "dword ptr [ecx + 0x572c], 0"
+    },
+    {
+      "va": "0x45d575",
+      "bytes": "c7802c57000001000000",
+      "op": "dword ptr [eax + 0x572c], 1"
+    },
+    {
+      "va": "0x45d606",
+      "bytes": "c7822c57000003000000",
+      "op": "dword ptr [edx + 0x572c], 3"
+    },
+    {
+      "va": "0x45d743",
+      "bytes": "c7812c57000003000000",
+      "op": "dword ptr [ecx + 0x572c], 3"
+    },
+    {
+      "va": "0x45d80c",
+      "bytes": "c7812c57000000000000",
+      "op": "dword ptr [ecx + 0x572c], 0"
+    },
+    {
+      "va": "0x45d917",
+      "bytes": "c7822c57000000000000",
+      "op": "dword ptr [edx + 0x572c], 0"
+    },
+    {
+      "va": "0x45df33",
+      "bytes": "c7812c57000004000000",
+      "op": "dword ptr [ecx + 0x572c], 4"
+    },
+    {
+      "va": "0x45e0b7",
+      "bytes": "c7802c57000005000000",
+      "op": "dword ptr [eax + 0x572c], 5"
+    }
+  ],
+  "pause_key_wrapper_hex": "558bec51894dfc6a138b4dfce841fdffff8be55dc3",
+  "input_constructor_pause_binding_hex": "c70548595d0019000000",
+  "right_binding_hex": "c70538595d004d000000"
+}

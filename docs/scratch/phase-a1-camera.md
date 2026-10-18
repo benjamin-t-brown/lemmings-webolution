@@ -189,3 +189,36 @@ behavior without inventing conventional near/far planes. The current ROI cannot 
 uniform depth scale, because it cancels in the projection ratios. No numeric clipping
 range is accepted. Preserve the fixed criterion and these failures when extending the
 fixture; do not soften the overall screenshot-fidelity goal or re-measure simulation.
+
+## Failed-view follow-up: carrier alpha ruled out, cause still open
+
+The facilitator independently re-rendered every retained view and recomputed the fixed
+ROI error with a separate pixel loop. Every error and candidate PNG hash reproduced the
+checkpoint above. The failed view remains failed; no camera, threshold or region changed.
+
+The decoded Hi outer BMP carriers contain no embedded alpha for the fixture's RGB
+conversion to discard. The facilitator checked the actual Hi inputs independently of the
+agent's base-texture audit, using file headers and decoded channels. The reproducible
+header reader is `tools/harness/audit_camera_bmp.py`:
+
+```powershell
+python tools/harness/audit_camera_bmp.py build/tmp/a1-facilitator --pattern "tile-*-*HI.bmp"
+```
+
+This rules out dropped embedded BMP alpha in those fixture inputs. It does **not** rule out
+external masks, material alpha state, missing inner geometry or a different stock draw
+route. Texture registration and a generic vertex-submit helper do not establish which
+surface the original draws in the mismatching region. That connection remains open.
+
+**Corrections during review:** the agent initially described the error concentration as
+being on the left; it is near the steel panel's right edge. A quoted instruction byte and
+the wording of a caller relationship also failed the facilitator's raw reread. Those
+candidate descriptions were corrected outside the accepted evidence; no new routing
+claim is promoted here.
+
+**Facilitator check:** independent pixel and carrier audits, original-installation hash
+checks, and the required build and full suite passed. No camera or clipping value was
+added, so there was no new parameter mutation to accept. No production code or original
+installation file changed, and no game process was started. The failed frame and all
+earlier retractions remain in place. Depth/clipping is the next bounded investigation;
+this follow-up does not close A1.

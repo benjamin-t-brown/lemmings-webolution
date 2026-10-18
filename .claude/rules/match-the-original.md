@@ -129,3 +129,18 @@ Keep behavior that looks wrong when the original does it. German menus, RETURN o
 ## Validate against the original
 
 A green unit test shows our sim matches itself. Agreement with the running original is a live read or a differential check, on the stock executable, through `tools/dinput-shim`.
+
+## Acquire foreground automatically
+
+The user authorized automatic foreground acquisition for probes. Use
+`acquire_game_foreground.acquire(pid)` from a hidden worker between input batches, then
+verify its actual foreground owner before sending game input. The helper masks activation
+input from the game and restores the shim's prior input state. Do not ask the user to
+click the window for every probe. A tool console can take focus back immediately, so keep
+acquisition and the input batch in the same hidden worker.
+
+Do not use the older `goto_level.focus()` input-queue attachment path, which has crashed
+the original. An activation API returning success does not prove that the game owns focus.
+Preserve the loaded-path, camera, pause-state and exact-restoration checks. The
+[draw-path facilitator check](../../docs/scratch/phase-a1-cylinder-draw.md) records the
+bounded live verification and its corrections; it does not mark A1 complete.

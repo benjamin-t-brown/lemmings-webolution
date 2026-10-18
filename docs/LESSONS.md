@@ -38,6 +38,13 @@ moved the virtual cursor without a grab; a grab over empty scenery changed the m
 the same inputs. Window activation and selection matter. Preserve the failed view and the
 scope limits in the linked note before proposing the next round.
 
+The [active cylinder draw follow-up](scratch/phase-a1-cylinder-draw.md) corroborates a
+bounded frame-time inner-bank submission at the retained left camera and matches its
+source vertex pool to the stored level. It does not fix the outer-only fixture's failed
+pixels. Use the new foreground-acquisition helper from a hidden worker; it masks
+activation input from the game and verifies actual focus. Do not require a manual click
+for every probe or use the older input-queue attachment helper.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by

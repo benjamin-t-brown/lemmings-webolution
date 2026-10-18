@@ -80,6 +80,9 @@ The whole phase is "make it look and move like the original". One round per item
   and a failed left-key view. Initial, mouse and right-key static regions pass the fixed
   criterion; the left view and depth/clipping remain open. Finish that verification before
   treating A1 as closed. The standalone harness does not pay the entry-point debt.
+  The [active draw-path check](docs/scratch/phase-a1-cylinder-draw.md) now corroborates a
+  bounded inner-bank submission; the next fixture work is actual cell geometry and
+  material routing, with camera operands held fixed.
 - **A2. The tube.** INN/OUT texture addressing, draw order, inner surface before outer so
   the far side shows through gaps, and whatever scenery the original draws that we skip.
 - **A3. Sprite view selection.** `.SPR` stores multiple **views** per action — `walk` 12,

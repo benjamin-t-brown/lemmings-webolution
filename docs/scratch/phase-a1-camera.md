@@ -260,3 +260,13 @@ then use an original fixture with stable overlapping surfaces or a visible depth
 Its pixel criterion must be declared before capture. The existing static region cannot
 pin a uniform depth scale. Both the failed left-key view and clipping acceptance remain
 open; A1 is still incomplete. No original process was launched during these follow-ups.
+
+## Active draw-path follow-up
+
+The [next facilitator check](phase-a1-cylinder-draw.md) corroborates the active surface
+walker, one inner-bank material submission and the stored source vertex pool at the
+retained left camera. The original reference region reproduced exactly and the camera
+was restored exactly. This closes the earlier frame-time routing gap for that bounded
+submission. It does not isolate every failed pixel or implement the missing geometry.
+The failed outer-only frame and depth/clipping acceptance remain open. Automatic
+foreground acquisition is now available without requiring a manual click for each probe.

@@ -190,6 +190,11 @@ brief. Pose/lens and bounded control fixtures have been checked; the failed left
 and depth/clipping still require work. Do not redispatch settled operand reads or claim
 the entire round passed because the simulation suite is green.
 
+The subsequent [active draw-path check](scratch/phase-a1-cylinder-draw.md) corroborates
+one inner-bank submission at the retained left camera. Continue with actual cell geometry
+and material routing under the existing pixel criterion; do not redispatch that bounded
+route trace. Foreground acquisition is automated for probes as recorded in the rules.
+
 Remaining A1 evidence must still come from the executable and the original frame, using
 REA where needed. The accepted operands replace the camera guesses in `old/src/gfx`;
 they do not establish clipping or full-scene fidelity. After A1, continue with A2 the

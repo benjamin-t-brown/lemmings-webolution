@@ -1,0 +1,167 @@
+{
+  "authority_sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f",
+  "scope": "READ-only route and source-bank verification for one actual submission in the retained left camera; no new calibrated parameter, complete geometry implementation, or failed-pixel cause is accepted",
+  "case": "reference-rotation-key-left-state.json",
+  "camera_at_walker_sha256": "16be34b33fc679f30cedbc3a94d451ffbb70b96f9e822ded5978fab6e347ed0e",
+  "same_original_roi_error": 0.0,
+  "camera_restored_exactly": true,
+  "restored_camera_sha256": "7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff",
+  "actual_console_records": [
+    "WALKER_THIS=0x4c6a10 RET=0x441889",
+    "MATERIAL_THIS=0x29002f4 RET=0x43a746",
+    "MATERIAL_THIS=0x29002f4 RET=0x43a746",
+    "MATERIAL_THIS=0x2900234 RET=0x43a746",
+    "DRAW_THIS=0x5d60d0 RET=0x46d45c",
+    "TRACE_DONE"
+  ],
+  "independent_raw_calls": [
+    {
+      "site": "0x45e0e6",
+      "bytes": "e85a37feff",
+      "target": "0x441845"
+    },
+    {
+      "site": "0x441884",
+      "bytes": "e8638cffff",
+      "target": "0x43a4ec"
+    },
+    {
+      "site": "0x43a741",
+      "bytes": "e83a160000",
+      "target": "0x43bd80"
+    },
+    {
+      "site": "0x43a754",
+      "bytes": "e8a47b0200",
+      "target": "0x4622fd"
+    },
+    {
+      "site": "0x46231f",
+      "bytes": "e86c020000",
+      "target": "0x462590"
+    },
+    {
+      "site": "0x46259a",
+      "bytes": "e80174ffff",
+      "target": "0x4599a0"
+    },
+    {
+      "site": "0x4599aa",
+      "bytes": "e811000000",
+      "target": "0x4599c0"
+    },
+    {
+      "site": "0x459ade",
+      "bytes": "e88f380100",
+      "target": "0x46d372"
+    },
+    {
+      "site": "0x46d3b8",
+      "bytes": "e804000000",
+      "target": "0x46d3c1"
+    },
+    {
+      "site": "0x46d457",
+      "bytes": "e804000000",
+      "target": "0x46d460"
+    },
+    {
+      "site": "0x43bdca",
+      "bytes": "e850680300",
+      "target": "0x47261f"
+    },
+    {
+      "site": "0x43bddd",
+      "bytes": "e89e8ffdff",
+      "target": "0x414d80"
+    }
+  ],
+  "source_bank": {
+    "stored_vertex_count": 897,
+    "live_vertex_count": 897,
+    "vertex_bank_matches_stored_bytes": true,
+    "stored_bank_sha256": "4e3a52f579c663fc0e97d217d8ea5d780c246f9c6bb33c112534ac6b20c3b630",
+    "live_bank_sha256": "4e3a52f579c663fc0e97d217d8ea5d780c246f9c6bb33c112534ac6b20c3b630"
+  },
+  "one_material_read": {
+    "material_count": 48,
+    "selected_material_table_index": 35,
+    "selected_material_matches_current_table": true,
+    "texture_record_id": 54,
+    "blend_selector": 0,
+    "uv_offsets": [
+      0.0,
+      0.0
+    ]
+  },
+  "material_names_read_from_inline_world": {
+    "0x44c": "INN_MM_CLIMB_002",
+    "0x550": "OUT_MM_CLIMB_002"
+  },
+  "association": "Observed material uses the +0x18 bank registered from INN name; this does not identify every material or polygon in the failed pixel region",
+  "foreground_safety": {
+    "pid": 57604,
+    "camera_sha256": "7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff",
+    "checks": [
+      {
+        "pid": 57604,
+        "hwnd": 10423778,
+        "foreground_before_pid": 57604,
+        "foreground_after_pid": 57604,
+        "method": "already foreground",
+        "alt_events_sent": 0,
+        "input_queues_attached": false,
+        "game_input_masked_during_activation": true,
+        "camera_unchanged": true,
+        "shim_input_unchanged": true
+      },
+      {
+        "pid": 57604,
+        "hwnd": 10423778,
+        "foreground_before_pid": 57604,
+        "foreground_after_pid": 57604,
+        "method": "already foreground",
+        "alt_events_sent": 0,
+        "input_queues_attached": false,
+        "game_input_masked_during_activation": true,
+        "camera_unchanged": true,
+        "shim_input_unchanged": true
+      }
+    ],
+    "fresh_entry_activation": {
+      "pid": 57604,
+      "hwnd": 10423778,
+      "foreground_before_pid": 15828,
+      "foreground_after_pid": 57604,
+      "method": "ALT-assisted ordinary request",
+      "alt_events_sent": 2,
+      "input_queues_attached": false,
+      "game_input_masked_during_activation": true
+    }
+  },
+  "retained_failures": [
+    "Unmasked activation trial moved camera off reference; excluded from retained-left verification",
+    "First completion parser matched debugger metadata; retracted before acceptance",
+    "First public GDB dump filename used unsupported quotes; failed and detached; corrected tool rechecked"
+  ],
+  "root_protocol": "Late Luna usage-limit failure: saved files preserved, no redispatch; facilitator independently finished raw/live verification",
+  "corrected_public_tool_recheck": {
+    "pid": 57604,
+    "case": "initial",
+    "completed": true,
+    "debugger_attached": false,
+    "camera_matches_reference_at_walker": true,
+    "gdb_exit_code": 0,
+    "foreground": {
+      "pid": 57604,
+      "hwnd": 10423778,
+      "foreground_before_pid": 57604,
+      "foreground_after_pid": 57604,
+      "method": "already foreground",
+      "alt_events_sent": 0,
+      "input_queues_attached": false,
+      "game_input_masked_during_activation": true
+    },
+    "scope": "One live READ sequence; no new calibrated value accepted"
+  }
+}

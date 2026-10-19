@@ -72,6 +72,11 @@ before the next perturbation, and rerun every retained view under the unchanged 
 Do not redispatch camera-operand measurement or claim this trace fixes the failed image.
 No new per-value mutation is claimed in this READ-only round.
 
+**Subsequent checkpoint:** the [cell-fixture replay](phase-a1-cell-oracle.md) attempted
+that question and retains the failed candidate and corrections. Its next probe is
+the original's actual device-vertex emission; do not treat this earlier next-question
+paragraph as an unstarted cell-capture task.
+
 **Facilitator check:** independent raw call decoding, the retained-left live trace,
 source-bank and material-table comparisons, exact camera/input restoration, and the required
 build and full suite were checked. No simulation or production renderer source changed.

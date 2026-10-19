@@ -45,6 +45,12 @@ pixels. Use the new foreground-acquisition helper from a hidden worker; it masks
 activation input from the game and verifies actual focus. Do not require a manual click
 for every probe or use the older input-queue attachment helper.
 
+The [cell-fixture replay](scratch/phase-a1-cell-oracle.md) retains the subsequent
+failed geometry candidate, isolated mutation survivors and explicit corrections.
+Its source/runtime mapping is READ evidence; no new selection or raster value is
+pixel-accepted. The next probe follows a selected quad through the original's final
+device-vertex emission rather than repeating the camera reads or cell capture.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by

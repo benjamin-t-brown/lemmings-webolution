@@ -85,8 +85,12 @@ The whole phase is "make it look and move like the original". One round per item
   subsequently reproduced the retained failure; its isolated selection mutations
   were unprotected. The [device-emission check](docs/scratch/phase-a1-cell-emission.md)
   now corroborates the selected quad's ordered coordinates and UVs, while its depth
-  representation differs from the candidate's. Next follow the original depth/cache
-  producer and clipping path, keeping the camera and pixel criterion fixed.
+  representation differs from the candidate's. The subsequent
+  [projection/cache replay](docs/scratch/phase-a1-projection-cache.md) reproduces the
+  retained matrices and selected depth fields under a diagnostic arithmetic model;
+  its new operands have not cleared isolated pixel mutations. Next render and test
+  that sourced candidate, then resolve remaining clipping and device-state gaps,
+  keeping the camera and pixel criterion fixed.
 - **A2. The tube.** INN/OUT texture addressing, draw order, inner surface before outer so
   the far side shows through gaps, and whatever scenery the original draws that we skip.
 - **A3. Sprite view selection.** `.SPR` stores multiple **views** per action — `walk` 12,

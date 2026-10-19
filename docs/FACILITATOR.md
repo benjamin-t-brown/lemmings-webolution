@@ -201,6 +201,13 @@ cell capture or emission trace. Foreground acquisition is automated for probes
 as recorded in the rules. Explicitly delete hardware breakpoints while the original
 is stopped before detaching, and verify cleanup rather than trusting a detach message.
 
+The subsequent [projection/cache replay](scratch/phase-a1-projection-cache.md)
+records independent source-derived agreement under a diagnostic arithmetic model,
+rejected agent claims, and the review-capacity blocker. Its operands remain READ,
+not pixel-accepted. Continue with the missing candidate render and isolated pixel
+mutations; do not redispatch the located matrix copy stage or run the shelved
+access-watch prototypes. The latest REA session's closure is unconfirmed.
+
 Remaining A1 evidence must still come from the executable and the original frame, using
 REA where needed. The accepted operands replace the camera guesses in `old/src/gfx`;
 they do not establish clipping or full-scene fidelity. After A1, continue with A2 the

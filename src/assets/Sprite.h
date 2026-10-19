@@ -64,11 +64,15 @@ struct SpriteFrame {
 };
 
 struct SpriteAnimation {
+  // The native selector treats this as one temporal entry. Its `frames`
+  // vector contains the ordered directional images available at that time.
   std::vector<SpriteFrame> frames;
 };
 
 struct Sprite {
   std::string name;  // "walk", "bash", "explode", ...
+  // Legacy API name: this indexes temporal animation entries; each entry's
+  // SpriteAnimation::frames is the directional-image list.
   std::vector<SpriteAnimation> animations;
   double rate = 0;
 

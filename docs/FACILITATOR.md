@@ -23,7 +23,11 @@ claims made by the facilitator.
 | File | What it gives you |
 | --- | --- |
 | `docs/LESSONS.md` | **every fact worth carrying**, each with the address or script behind it |
-| `PLAN.md` | the goal, the phases, the model policy |
+| `PLAN.md` | the goal and the phases |
+| `docs/tasks.json` | in-flight / blocked / ready-for-verify |
+| `docs/ORCHESTRATION.md` | orchestrator–worker loop for every harness |
+| `docs/ROLES.md` | model names for *this* harness |
+| `docs/briefs/TEMPLATE.md` | brief skeleton |
 | `docs/REA_SETUP.md` | the verified Ghidra-backed decompiler setup, and two traps |
 | `.claude/rules/*` | the evidence standard you enforce, plus all 31 rounds' findings |
 
@@ -151,13 +155,18 @@ Facilitator-side — the predecessor's own errors, so you can expect them:
 
 **One round, one question.** One agent owns the running game at a time; say so in the brief.
 
-**Models are split deliberately** (`PLAN.md`). **User-authorized correction for Codex:**
-facilitator on **Sol** (the Opus role), task agents on **Luna** (the Sonnet role), dispatched
-with an explicit **`model: gpt-6-luna`**. This supersedes the original Opus/Sonnet names;
-verification still never delegates. A round is bounded work against a written
-brief, where a mid-tier model is fast and cheap enough to run many; the judgement — whether a
-claim is supported, whether it over-generalises, whether a document has gone stale — is where
-the stronger model earns its cost. **Verification never delegates.**
+**Read `docs/tasks.json` before dispatching.** If `active` is `blocked` or
+`ready-for-verify`, finish or unblock that first — do not start a second round that needs
+the live game. Update the queue yourself when you write the brief (`queued`), when the
+worker starts (`running`), when it returns (`ready-for-verify` if they have not), when
+approval/capacity stops you (`blocked` + reason), and when you land (`landed` / clear
+`active`). Schema and permissions: `docs/ORCHESTRATION.md`.
+
+**Models are split deliberately** — names only in `docs/ROLES.md`. Dispatch the round
+agent and optional explore agent the way that table says for *your* harness. A round is
+bounded work against a written brief; judgement (support, over-generalisation, stale docs)
+stays on the strong tier. **Verification never delegates.** A cheap explore or lint pass
+is not verification.
 
 Every brief contains: the authority statement and a read-first table; **what is already
 settled, listed explicitly** so nothing is rediscovered; the round's question with every lead
@@ -166,10 +175,12 @@ evidence standard, with the prediction written **before** the run and its falsif
 mutate-one-thing-alone test requirement and the which-binary warning; build commands and
 environment traps; a must-not-touch list; deliverables including the scratch note and the
 state of the game process; and "report honestly — do not round, smooth or over-claim".
+Point the brief at `docs/tasks.json` `active.id` so the worker knows which queue slot it is.
 
 **If an agent dies mid-round** (it happened three times on rate limits): died early with
 nothing read, re-dispatch verbatim. Died late with edits on disk, do not re-dispatch — build,
-run the suite, and finish the missing verification yourself.
+run the suite, and finish the missing verification yourself. Set `blocked` or
+`ready-for-verify` on the queue so the next harness session sees it.
 
 ## Reset baseline and current round
 
@@ -180,40 +191,88 @@ The simulation is **done and correct** — 31 rounds, every `Rules` field a read
 series, all nine skills, every gadget including eleven clean negatives. It is kept.
 
 The reset of 2026-10-18 retired the *visible* half: the flat-first renderer and the
-placeholder shell are in `old/src/`. **There is no runnable executable** until the new
-3D-first entry point exists, and asset-side test coverage for tile naming and state→sprite
-mapping regressed with three moved tests. Both debts are recorded in `PLAN.md` Phase A.
+placeholder shell are in `old/src/`. At that historical checkpoint there was no runnable
+executable, and asset-side test coverage for tile naming and state→sprite mapping regressed
+with three moved tests. A4a restored the headless executable and asset-side tests; the
+current A4d/A4e state is recorded below and in `PLAN.md` and `docs/tasks.json`.
 
-**A1 has been dispatched and remains open.** Read the
-[verified subset and retained failures](scratch/phase-a1-camera.md) before writing another
-brief. Pose/lens and bounded control fixtures have been checked; the failed left-key view
-and depth/clipping still require work. Do not redispatch settled operand reads or claim
-the entire round passed because the simulation suite is green.
+**A1 is complete for its tested scope.** The early
+[camera checkpoint](scratch/phase-a1-camera.md),
+[cell replay](scratch/phase-a1-cell-oracle.md) and
+[projection/cache replay](scratch/phase-a1-projection-cache.md) retain real earlier
+failures and corrections. The [true live-arena pass](scratch/phase-a1-live-arena.md),
+[depth check](scratch/phase-a1-depth-clipping.md),
+[control mapping](scratch/phase-a1-control-mapping.md), and final
+[zoom/elevation check](scratch/phase-a1-zoom-elevation.md) supersede the old open-A1
+handoff. Do not redispatch settled operands, the cell capture, or the shelved
+access-watch prototypes. The zoom writer and wrapper-internal Z bits remain
+explicit residual unknowns, not grounds to reopen all camera research.
 
-The subsequent [active draw-path check](scratch/phase-a1-cylinder-draw.md) corroborates
-one inner-bank submission at the retained left camera. The subsequent
-[cell-fixture replay](scratch/phase-a1-cell-oracle.md) retains a failed geometry candidate
-and unprotected isolated selection mutations.
-The [emission checkpoint](scratch/phase-a1-cell-emission.md) now checks the selected
-quad's ordered coordinates and UVs. Its next question is the original depth/cache
-producer under the existing pixel criterion; do not redispatch the bounded route,
-cell capture or emission trace. Foreground acquisition is automated for probes
-as recorded in the rules. Explicitly delete hardware breakpoints while the original
-is stopped before detaching, and verify cleanup rather than trusting a detach message.
+**A2's declared fixed-ROI fixture and scenery inventory are complete.** Read the
+[A2 facilitator check](scratch/phase-a2-tube.md) before A3/A4. It corrects the
+brief's unflipped tile rows, implements both OUT banks and center filters, and
+passes nine retained views plus an exposed inner-wall region. Isolated route
+selection and draw-order mutations survive the old ROI; those choices are READ
+evidence, not pixel-discriminated parameters. The wider changed-pixel diagnostic
+still fails (`0.022030839 > 0.02`), as do cavity and upper-rim regions. Keep these
+failures and the omitted-scene inventory for A4; do not call the full scene accepted.
 
-The subsequent [projection/cache replay](scratch/phase-a1-projection-cache.md)
-records independent source-derived agreement under a diagnostic arithmetic model,
-rejected agent claims, and the review-capacity blocker. Its operands remain READ,
-not pixel-accepted. Continue with the missing candidate render and isolated pixel
-mutations; do not redispatch the located matrix copy stage or run the shelved
-access-watch prototypes. The latest REA session's closure is unconfirmed.
+The live suppression probe establishes that the upper gold band persists without
+the tube walker; its exact background model/resource remains unassigned. Every
+temporary byte and camera write was restored, the owned process stopped, and the
+executable/save/wrapper hashes match the starting snapshot. No debugger or hardware
+breakpoints were used. This round's actual REA session was closed. The build and
+all 14 CTest tests pass. Existing unrelated uncommitted harness/configuration and
+A1-note work was preserved; do not infer a clean committed checkpoint from this.
 
-Remaining A1 evidence must still come from the executable and the original frame, using
-REA where needed. The accepted operands replace the camera guesses in `old/src/gfx`;
-they do not establish clipping or full-scene fidelity. After A1, continue with A2 the
-tube, A3 sprite view selection (the largest single "the sprites look wrong" fix — `.SPR`
-stores 12 views for `walk`, 8 for `block`, 7 for `fall`, and the old renderer hardcoded view
-0), then A4 the entry point with revolve as a first-class control.
+**A3 is complete for the tested selection scope.** Read the
+[A3 facilitator check](scratch/phase-a3-sprite-view.md): the old “walk 12 / fall 7
+views” assertion reversed the SPR axes. Those are LO temporal counts; walk/fall
+have five directions per temporal entry, block/cartwheel eight, shrug one. The
+new score/index/mirror helper passes 608 raw native instruction cases and 42 live
+actor-bound predictions, with controlled eight-entry graphics and camera sector
+crossings. Both stock-raster candidate crops and restores are exact; isolated
+index and mirror changes are pixel-visible. The stricter worker sensitivity
+`>0.02` diagnostic remains failed. Production sprite rasterization is not accepted.
+The original's stored basis and phase inputs must be wired faithfully in A4;
+platform sin/cos is not an exact x87 boundary-rounding claim.
+
+The facilitator independently verified eleven isolated source regressions and
+exact restores, then rebuilt and passed all 15 CTest tests. Final worker and
+facilitator memory writes were restored while suspended, both owned processes
+stopped, and executable/save/wrapper hashes match baseline. Earlier failed worker
+attempts and invalid derived scores are retained and narrowed in the A3 note.
+The worker's actual REA session is closed; no debugger was used in this round.
+
+**Current checkpoint, independently verified 2026-10-19: A4e complete for its bounded
+scope.** The user confirmed that the prediction-only predecessor worker was interrupted.
+One replacement worker completed the same slot; the facilitator independently verified
+and landed the [window/control check](scratch/phase-a4-window-controls.md).
+`src/app/main.cpp` now opens the 640x480 SDL window, defaults to the accepted `route`,
+and retains headless `--shot`. The fixed 144 Hz input accumulator consumes queued deltas
+and key edges once; the controller covers the accepted revolve, zoom and flip mapping.
+The title and `--help` describe the core controls. Tile-position and sprite-state tests
+are restored. A4 remains open for actor/simulation presentation and the omitted scene.
+
+The facilitator passes 19/19 CTest, 54 retained-stock input comparisons, a native
+window/SPACE/WM_CLOSE smoke, and nine independent A4d rerenders with unchanged scores and
+PNG hashes. The native initial frame is exactly the explicit route headless frame.
+Fourteen isolated controller/timing/event regressions are discriminated; the zoom-exit
+one initially survived until the worker strengthened its test. Each source mutation was
+restored exactly and the focused test passed. The old default wall independently fails
+the pixel gate. No stock process was started; the stock hash is unchanged and no owned
+process remains. See the linked note for READ corrections and verification artifacts.
+
+**Next proposed round (not dispatched): one actor billboard fixture.** Use the accepted
+A1 camera and A3 selector/SPR axes; establish replacement placement, UV/mirror and depth
+from the sprite path and actor-bound captures before wiring the whole simulation.
+The linked note gives dependencies, worker ownership and acceptance criteria. Do not
+rediscover A3 selection or use billboard fitting as lemming identity. Retain the broader
+A2 and A3 failures. The queue is clear after A4e landing; re-read it before dispatch.
+
+Foreground acquisition is automated as recorded in the rules. If future probes
+use hardware breakpoints, delete them while the original is stopped and verify
+cleanup rather than trusting a detach message.
 
 ## Two standing cautions
 

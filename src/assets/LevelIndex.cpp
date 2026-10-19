@@ -61,6 +61,13 @@ std::string levelTextureAssetName(std::string_view reference) {
   return out;
 }
 
+std::string levelTextureAssetNameHi(std::string_view reference) {
+  std::string out = "TEXTURES\\";
+  out += normaliseAssetName(reference);
+  out += "HI.BMP";
+  return out;
+}
+
 std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte> d) {
   if (d.size() < 64)
     return std::unexpected("too small to be a level");

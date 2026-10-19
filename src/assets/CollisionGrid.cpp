@@ -36,6 +36,13 @@ bool readU32(std::span<const std::byte> d, std::size_t offset, std::uint32_t& ou
   return true;
 }
 
+bool readF64(std::span<const std::byte> d, std::size_t offset, double& out) {
+  if (offset + 8 > d.size())
+    return false;
+  std::memcpy(&out, d.data() + offset, 8);
+  return true;
+}
+
 // The literal `u32 8, "Cylinder"` chunk. `LevelIndex` finds the same string
 // while scanning for references; this looks for it directly because the walk
 // below needs its exact offset.
@@ -89,6 +96,8 @@ std::expected<CollisionGrid, std::string> findCollisionGrid(
     return std::unexpected("collision grid: truncated in the Cylinder preamble");
   if (rows == 0 || rows > kMaxRows)
     return std::unexpected(std::format("collision grid: implausible height {}", rows));
+  double extent = 0.0;
+  const bool haveExtent = readF64(d, p + kZeroWords * 4 + 4, extent);
   p += kPreambleBytes;
 
   // The tube's own array. Its length is the same in every retail level, but
@@ -125,6 +134,7 @@ std::expected<CollisionGrid, std::string> findCollisionGrid(
 
   CollisionGrid grid;
   grid.height = static_cast<int>(rows);
+  grid.cylinderExtent = haveExtent ? extent : 0.0;
   grid.cells.resize(want);
   std::memcpy(grid.cells.data(), d.data() + p, want * 4);
   return grid;

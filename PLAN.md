@@ -75,11 +75,11 @@ The whole phase is "make it look and move like the original". One round per item
   axis, eye height, near/far planes, and how it maps mouse and keys to rotation. Deliverable:
   a camera whose frame matches a captured original frame at a known level, with the
   threshold stated.
-  **In progress, not complete:** the [verified camera checkpoint](docs/scratch/phase-a1-camera.md)
-  retains the operand reads, standalone pixel fixture, individual mutation/restore proofs,
-  and a failed left-key view. Initial, mouse and right-key static regions pass the fixed
-  criterion; the left view and depth/clipping remain open. Finish that verification before
-  treating A1 as closed. The standalone harness does not pay the entry-point debt.
+  **Complete for the tested scope:** the
+  [verified camera checkpoint](docs/scratch/phase-a1-camera.md) retains the operand reads,
+  standalone pixel fixture, and individual mutation/restore proofs. Initial, mouse, right and
+  left static regions now pass the fixed criterion with the live mesh arrays. The
+  entry-point debt remains A4.
   The [active draw-path check](docs/scratch/phase-a1-cylinder-draw.md) now corroborates a
   bounded inner-bank submission. The [cell-fixture check](docs/scratch/phase-a1-cell-oracle.md)
   subsequently reproduced the retained failure; its isolated selection mutations
@@ -88,18 +88,100 @@ The whole phase is "make it look and move like the original". One round per item
   representation differs from the candidate's. The subsequent
   [projection/cache replay](docs/scratch/phase-a1-projection-cache.md) reproduces the
   retained matrices and selected depth fields under a diagnostic arithmetic model;
-  its new operands have not cleared isolated pixel mutations. Next render and test
-  that sourced candidate, then resolve remaining clipping and device-state gaps,
-  keeping the camera and pixel criterion fixed.
+  its new operands have not cleared isolated pixel mutations. The subsequent
+  [sourced candidate](docs/scratch/phase-a1-sourced-candidate.md) rendered the captured
+  radius-60 shell and per-pass depth: it fails `initial` (0.0249) and `left` (0.0304), and
+  its isolated bias mutations are pixel-invisible. It also corrects the mesh-quad decode to
+  file offset 16, which means the earlier "passing" cell candidate was the smooth cylinder
+  alone. The subsequent [diffuse/decode check](docs/scratch/phase-a1-diffuse-decode.md)
+  settles the decode from the object headers (the mesh4 windows are one allocation off) and
+  applies the exact per-quad diffuse (`0x46D460`, chop-rounded). The best candidate still
+  failed before the live capture. The [live-arena check](docs/scratch/phase-a1-live-arena.md)
+  then read the true mesh0 arrays and passed all four views: initial `0.015574`, mouse
+  `0.016047`, right `0.014810`, left `0.015663`. The fixed pixel gate is met. The
+  [depth/clipping check](docs/scratch/phase-a1-depth-clipping.md) then found no numeric
+  near/far planes in the executable, no Z/clip render-state writes, and a normalized 0..1
+  viewport; the device is the shipped wrapper and depth ordering is effective in the frames.
+  The [control mapping](docs/scratch/phase-a1-control-mapping.md) reproduces 473 live points
+  with one 2.9e-4 timing outlier and restores the reference camera block byte-for-byte. The
+  [zoom/elevation check](docs/scratch/phase-a1-zoom-elevation.md) then passed canonical,
+  zoom 1 and both elevation clamps (0.0116–0.0159); the lens is invariant and the eye-vector
+  scaling is verified. **A1 is complete for the tested scope.** Residual unknowns: the
+  gameplay `control+0x10` writer is unlocated (behaviour measured), and the wrapper's
+  internal Z bits are unreadable. A2 and A3 checkpoints follow below; next is A4. The
+  entry-point debt remains A4.
 - **A2. The tube.** INN/OUT texture addressing, draw order, inner surface before outer so
   the far side shows through gaps, and whatever scenery the original draws that we skip.
-- **A3. Sprite view selection.** `.SPR` stores multiple **views** per action — `walk` 12,
-  `block` 8, `fall` 7 — because a lemming's apparent angle depends where it stands on the
-  tube. We hardcoded view 0. Read how the original picks the index from angular position.
-  *This is the single largest "the sprites look wrong" fix.*
+  **Complete for the declared fixed-ROI fixture and scenery inventory:** the
+  [A2 facilitator check](docs/scratch/phase-a2-tube.md) corrects the texture-row
+  flip (192/192 captured cells; the old formula disagrees on 128), implements the
+  source-derived OUT bank selection and center filters, and retains INN-before-OUT
+  as READ evidence. All nine retained views and an exposed INN region pass; 54/54
+  isolated default restores match byte-for-byte. The upper gold band survives live
+  suppression of the whole tube walker, establishing a separate scene contribution.
+  **No whole-scene acceptance:** the wider changed-pixel diagnostic still fails
+  at `0.022030839 > 0.02`; cavity and upper-rim regions fail too. A4 must carry
+  those failures and the omitted scenery/object inventory into integration. The
+  entry-point and asset-test debts remain A4. The A3 checkpoint follows.
+- **A3. Sprite view selection. Complete for the tested selection scope:** the
+  [A3 facilitator check](docs/scratch/phase-a3-sprite-view.md) corrects the old SPR
+  axis claim: walk's 12 and fall's 7 LO entries are temporal; their directional
+  lists have five images. Block/cartwheel have eight directions; shrug has one.
+  The score/index/mirror helpers match 608 native branch cases and 42 live
+  actor-bound predictions, including controlled eight-entry graphics and camera
+  sector crossings. Both shared-stock-raster candidate crops and restores are
+  exact; isolated index and mirror mutations change pixels. The stricter >0.02
+  sensitivity diagnostic still fails. Replacement rasterization, sprite placement
+  and animation integration remain A4; this does not accept a full scene.
 - **A4. Entry point and controls.** A new `src/main.cpp` and renderer, **3D by default**
   with the flat unwrapped view as a debug flag — the inverse of the old arrangement. Revolve
   must be a first-class, discoverable control. Pay debt 1 and debt 2 here.
+  **A4a checkpoint:** the [first production frame](docs/scratch/phase-a4-renderer-core.md)
+  now exists as a headless `webolution` target; 17/17 tests pass and the retired asset-side
+  coverage is restored. It loads a retail level and draws the tube from stored data at the
+  verified A1 camera, but **0/9 retained views pass** (best `0.037812306`). The stored
+  surface pool matches the live bank, yet the per-cell runtime mesh is not the stored
+  `PolyList`/`SurfaceMesh` data (8/450 exact index sets, 0/450 full index+UV). Next is the
+  producer of the per-cell quads at `0x4ECB00`; the SDL window/event loop and revolve
+  controls follow. See the A2/A3 retained failures.
+  **A4b checkpoint:** the [producer check](docs/scratch/phase-a4-cell-mesh-source.md)
+  pins the level-load chain (`0x43A41A -> 0x461344 -> 0x463070(0x4ECB10)`;
+  `0x43A44E -> 0x4608BB`; `0x460A41 -> 0x462264 -> 0x4615E9`;
+  `0x46227E -> 0x463410`; `0x4622ED -> 0x464F9C`) and confirms the topology input
+  is the stored 256x96 collision grid via `0x40DE60`. The exact scan in
+  `FUN_004615E9` and the part table `FUN_00461E1D` remain undecoded, so no production
+  rule landed and the A4a `0/9` result stands. Next: decode those two functions and
+  validate an offline generator against the retained arena.
+  **A4c checkpoint:** the [cell-mesh rule](docs/scratch/phase-a4-cell-mesh-rule.md) is
+  decoded and reproduces the retained arena exactly from stored data (`389/389` mesh0,
+  `387/387` mesh4 by indices, UVs, colour and order). `LevelIndex::grid0` is the
+  `(x, y, layer) -> pool index` table, not a face list; `FUN_004615E9` is the gap pass.
+  `src/assets/CellMesh` and `test_cellmesh` land the rule; 18/18 tests pass. Nine retained
+  views still **0/9** (best `initial` `0.037620585`, a small improvement). The remaining
+  gap is the draw/texture binding: route mesh0/mesh4 through A2's INN/OUT banks, side and
+  center filters, and decide where the constant wall remains. The door path is
+  implemented but unexercised; only `MM_CLIMB_002` is validated.
+  **A4d checkpoint:** the [route check](docs/scratch/phase-a4-cellmesh-route.md) submits
+  the decoded cell mesh through the `0x43A4EC` walker's real order — INN, OUT right
+  mesh4, OUT left mesh0, OUT centre — and replaces the constant wall. The `HI` tile
+  variant is required (plain 0/9, `HI` 9/9). All nine retained views now pass the
+  fixed gate (`initial` 0.015584142, worst `left` 0.015679210); the production frame
+  matches A2's passing fixture at 2.6e-5 full-frame. Swapping mesh0/mesh4 or disabling
+  INN drops to 6/9. The A2 wider/cavity/rim and A3 sensitivity failures remain; the
+  centre filter is not discriminated by this ROI. Next: SDL window/controls, then
+  simulation + A3 actor rendering, then the omitted scene.
+  **A4e checkpoint:** the [window/control check](docs/scratch/phase-a4-window-controls.md)
+  adds the 640x480 SDL window, discoverable grab/revolve/zoom/flip controls and a
+  fixed 144 Hz input accumulator. Normal launch defaults to the accepted tube route;
+  `--shot` remains headless. The facilitator independently passes 19/19 tests,
+  54 retained-stock input comparisons, native window/SPACE/close smoke, and all
+  nine unchanged A4d scores/PNG hashes. Fourteen isolated controller/timing/event
+  regressions are discriminated after strengthening an initially ineffective
+  zoom-exit test; the old default wall independently fails the pixel gate.
+  Byte reads narrow the zoom setup to entry only and add its 0.1 ratio deadzone.
+  No new stock live measurement or full-scene acceptance. Next bounded proposal:
+  one actor billboard placement/raster fixture using A3 selection, before whole
+  simulation integration; ownership/dependencies/acceptance are in the linked note.
 
 ## Phase B — the frontend
 
@@ -141,26 +223,14 @@ open.
 **One round, one question.** A round that half-answers three things is worth less than one
 that closes a single thing. One agent owns the running game at a time.
 
-**Facilitator and task agents are different models, deliberately.**
+**Orchestrator–worker across every harness.** The facilitator plans and verifies; a round
+agent runs one brief; an optional explore agent maps “where is X?”. Shared queue:
+`docs/tasks.json`. Full loop and permissions: `docs/ORCHESTRATION.md`. Model names per
+client: `docs/ROLES.md` only — do not pin a vendor string here.
 
-| Role | Model | Does |
-| --- | --- | --- |
-| Facilitator | **Sol** (the Opus role) | Picks the next round, writes the brief, **independently verifies every headline claim**, owns `PLAN.md`, `docs/` and `.claude/rules/`, lands results |
-| Task agent | **Luna** (the Sonnet role) | Runs one round: reads code, runs the harness, writes the sim/renderer change, writes tests, keeps candidate prose outside `docs/` until facilitator verification |
-
-**User-authorized correction for Codex:** use Sol in place of Opus and Luna in place of
-Sonnet. This supersedes the original model names; it does not change the division of work
-or the verification standard. Dispatch task agents with an explicit `model: gpt-6-luna`.
 Keep unverified candidate prose in `build/tmp/` so no original-game number reaches `docs/`
 before the facilitator completes verification; the facilitator lands accepted scratch notes.
-
-The reasoning: a round is bounded
-work against a written brief, where a mid-tier model is fast and cheap enough to run many
-rounds; the facilitation — judging whether a claim is actually supported, noticing an
-over-generalisation, catching a stale document — is where the stronger model earns its cost.
-**Verification is not optional and does not delegate**: the project's results are sound
-because headline numbers were re-derived independently, and several rounds had a claim
-narrowed or retracted on re-check.
+**Verification is not optional and does not delegate.**
 
 The facilitator owns `PLAN.md`, `docs/**` and `.claude/rules/**`. Task agents own their
 candidate scratch note outside `docs/`, the code and the tests.

@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "updated": "2026-10-19",
+  "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
+  "active": null,
+  "queue": [],
+  "recently_landed": [
+    {
+      "id": "a1-projection-cache-replay",
+      "title": "A1 projection/cache binary32 replay (READ, not pixel-accepted)",
+      "landed_in": "docs/scratch/phase-a1-projection-cache.md",
+      "commit_hint": "ede99d5"
+    },
+    {
+      "id": "a1-outer-route",
+      "title": "A1 outer skin is the same walker with a per-pass bias; 0x47D0C0 is the sprite path",
+      "landed_in": "docs/scratch/phase-a1-outer-route.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a1-sourced-candidate",
+      "title": "A1 sourced candidate fails initial/left; mesh-quad decode corrected to offset 16",
+      "landed_in": "docs/scratch/phase-a1-sourced-candidate.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a1-per-quad-shading",
+      "title": "A1 per-quad diffuse applied and mesh decode settled; best candidate still fails initial/left",
+      "landed_in": "docs/scratch/phase-a1-diffuse-decode.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a1-live-arena-read",
+      "title": "A1 live mesh arrays pass all four retained views at the fixed pixel gate",
+      "landed_in": "docs/scratch/phase-a1-live-arena.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a1-depth-clipping",
+      "title": "A1 depth/clipping: no executable near/far planes; wrapper-managed depth; depth ordering effective",
+      "landed_in": "docs/scratch/phase-a1-depth-clipping.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a1-control-mapping",
+      "title": "A1 control mapping: 473-point predictor, reference camera byte-identical",
+      "landed_in": "docs/scratch/phase-a1-control-mapping.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a1-zoom-elevation",
+      "title": "A1 zoom/elevation branches all pass; A1 complete for the tested scope",
+      "landed_in": "docs/scratch/phase-a1-zoom-elevation.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a2-tube-render",
+      "title": "A2 bounded tube addressing/routing and scenery inventory; broader pixel diagnostic retained as failed",
+      "landed_in": "docs/scratch/phase-a2-tube.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a3-sprite-view",
+      "title": "A3 bounded sprite selection/mirror verified; SPR axes corrected; strict sensitivity failure retained",
+      "landed_in": "docs/scratch/phase-a3-sprite-view.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a4-renderer-core",
+      "title": "A4a runnable headless production frame; stored data does not reproduce the live per-cell mesh; 0/9 retained views pass",
+      "landed_in": "docs/scratch/phase-a4-renderer-core.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a4-cell-mesh-source",
+      "title": "A4b: locate the producer of the per-cell tube mesh from stored level data",
+      "landed_in": "docs/scratch/phase-a4-cell-mesh-source.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a4-cell-mesh-rule",
+      "title": "A4c: decode the collision-grid cell-mesh rule and validate an offline generator",
+      "landed_in": "docs/scratch/phase-a4-cell-mesh-rule.md",
+      "commit_hint": null
+    },
+    {
+      "id": "a4-cellmesh-route",
+      "title": "A4d: route the decoded cell mesh through A2 submission and texture binding",
+      "landed_in": "docs/scratch/phase-a4-cellmesh-route.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: 18/18 CTest; verify_cellmesh_route pins+oracle+pixels; re-rendered 9/9 with identical scores and PNG hashes; isolated mutations swap 6/9, noinn 6/9, plain tiles 0/9, keep-wall 0/9"
+    },
+    {
+      "id": "a4e-window-controls",
+      "title": "A4e: SDL window/event loop and measured A1 camera controls",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-window-controls.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: independent 19/19 CTest; 54 retained-stock input comparisons; native window initial frame exact, posted SPACE changes pixels, WM_CLOSE exit 0; dummy three-frame smoke; 9/9 unchanged A4d scores and PNG hashes; 14 isolated input/timing/event mutations discriminated after zoom-exit test correction; old default wall fails pixel gate; source restores exact; no stock process/writes."
+    }
+  ]
+}

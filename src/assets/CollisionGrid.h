@@ -276,6 +276,14 @@ struct CollisionGrid {
   int height = 0;                    // one cell per world unit; 96 in every retail level
   std::vector<std::uint32_t> cells;  // row-major, cells[y * width + x]
 
+  // The `f64` between the height and the surface array on the same chunk walk:
+  // 0.36 in all 102 retail levels. The tube walker's pass bounds use the same
+  // value as a fraction of a turn (`0x43A4EC` reads it from `world+0x408` and
+  // scales it by 32.0), so it is recorded here rather than assumed. That the
+  // runtime `world+0x408` equals this stored field is an inference, not a
+  // byte-for-byte pairing; the A2 fixture's nine-view pass used 0.36 fixed.
+  double cylinderExtent = 0.0;
+
   bool empty() const { return cells.empty(); }
 
   // The cell at (x, y), X wrapping the way the engine wraps it. Out of range

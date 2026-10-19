@@ -50,10 +50,24 @@ if(EMSCRIPTEN OR SDL2_FOUND)
 endif()
 
 # ---- the game -------------------------------------------------------------
-# HARD RESET, 2026-10-18. src/main.cpp and src/gfx moved to old/. There is no
-# runnable executable until the 3D-first renderer and entry point are written
-# (see PLAN.md Phase A). The asset layer, the simulation and the tools below
-# are unaffected and still build and test.
+# HARD RESET, 2026-10-18: src/main.cpp and src/gfx moved to old/. A4 restores a
+# runnable, 3D-first entry point (src/app). The renderer rasterises on the CPU
+# and presents through SDL2 when a window is requested; without a display the
+# binary still renders and writes a PNG from file data (--shot).
+
+add_executable(webolution ${WEBOLUTION_GFX_SOURCES})
+target_link_libraries(webolution PRIVATE webolution_objects)
+
+if(WEBOLUTION_HAVE_SDL2)
+  target_compile_definitions(webolution PRIVATE WEBOLUTION_HAVE_SDL2=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(webolution PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(webolution PRIVATE PkgConfig::SDL2)
+  endif()
+else()
+  target_compile_definitions(webolution PRIVATE WEBOLUTION_HAVE_SDL2=0)
+endif()
 
 # ---- tools ----------------------------------------------------------------
 
@@ -77,6 +91,20 @@ include(CTest)
 add_executable(test_box src/__test__/test_box.cpp)
 target_link_libraries(test_box PRIVATE webolution_objects)
 add_test(NAME box COMMAND test_box)
+
+add_executable(test_spriteview src/__test__/test_spriteview.cpp)
+target_link_libraries(test_spriteview PRIVATE webolution_objects)
+add_test(NAME spriteview COMMAND test_spriteview)
+
+# Restored asset-side coverage (debt 2): tile names carry their own position,
+# and simulation states map to .SPR names. Both are renderer-independent.
+add_executable(test_tileposition src/__test__/test_tileposition.cpp)
+target_link_libraries(test_tileposition PRIVATE webolution_objects)
+add_test(NAME tileposition COMMAND test_tileposition)
+
+add_executable(test_spritestate src/__test__/test_spritestate.cpp)
+target_link_libraries(test_spritestate PRIVATE webolution_objects)
+add_test(NAME spritestate COMMAND test_spritestate)
 
 add_executable(test_lrz src/__test__/test_lrz.cpp)
 target_link_libraries(test_lrz PRIVATE webolution_objects)
@@ -129,6 +157,14 @@ add_executable(test_corpus src/__test__/test_corpus.cpp)
 target_link_libraries(test_corpus PRIVATE webolution_objects)
 add_test(NAME corpus COMMAND test_corpus)
 
+add_executable(test_cellmesh src/__test__/test_cellmesh.cpp)
+target_link_libraries(test_cellmesh PRIVATE webolution_objects)
+add_test(NAME cellmesh COMMAND test_cellmesh)
+
+add_executable(test_camerainput src/__test__/test_camerainput.cpp src/app/CameraInput.cpp)
+target_include_directories(test_camerainput PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME camerainput COMMAND test_camerainput)
+
 add_executable(test_collisiongrid src/__test__/test_collisiongrid.cpp)
 target_link_libraries(test_collisiongrid PRIVATE webolution_objects)
 # The live grid dumps sit in build/live_dump beside the tree, not in the game
@@ -140,6 +176,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid cellmesh tileposition spritestate PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

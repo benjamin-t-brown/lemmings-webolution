@@ -138,6 +138,23 @@ struct LevelIndex {
 //   "Models\exit\basket" -> "TEXTURES\MODELS\EXIT\BASKET.BMP"
 std::string levelTextureAssetName(std::string_view reference);
 
+// The same mapping with the cylinder skin's high-detail variant:
+//   "Cylinder\MM_CLIMB_002\OUT_MM_CLIMB_002_3_1"
+//     -> "TEXTURES\CYLINDER\MM_CLIMB_002\OUT_MM_CLIMB_002_3_1HI.BMP"
+//
+// The archive stores the tube's tiles twice, "<name>.BMP" and "<name>HI.BMP"
+// (all 48 tile names of every level; 4,897 of the archive's 10,384 ".BMP"
+// entries have such a sibling across the whole corpus). The .LVL names the tile
+// once, without a suffix -- `parseTilePosition` reads the trailing column/row
+// and only that -- so the variant is a loader choice, not a stored reference.
+//
+// The retained originals settle it: at identical geometry the tube's nine
+// retained views and the exposed inner-wall region match only with the HI
+// bitmap (`initial` 0.015574261 with HI vs 0.028511432 with the plain one under
+// the unchanged fixed-ROI gate). That is a pixel measurement, not a byte read of
+// the original's own texture loader.
+std::string levelTextureAssetNameHi(std::string_view reference);
+
 std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte>);
 std::expected<LevelIndex, std::string> loadLevelIndex(const AssetLibrary&,
                                                       std::string_view name);

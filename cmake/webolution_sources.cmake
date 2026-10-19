@@ -17,11 +17,15 @@ set(WEBOLUTION_SOURCES
   src/assets/LevelIndex.cpp
   src/assets/Cylinder.cpp
   src/assets/CollisionGrid.cpp
+  src/assets/CellMesh.cpp
   src/assets/SurfaceMesh.cpp
   src/assets/LevelObjects.cpp
   src/assets/LevelStats.cpp
   src/assets/PolyList.cpp
   src/assets/Wav.cpp
+
+  # gfx -- renderer-independent sprite orientation selection
+  src/gfx/SpriteView.cpp
 
   # sim -- the game itself, independent of rendering
   src/sim/Terrain.cpp
@@ -34,10 +38,16 @@ set(WEBOLUTION_SOURCES
 
 list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 
-# Presentation sources. Empty during the 2026-10-18 hard reset: the flat-first
-# renderer and the placeholder shell moved to old/src/gfx and old/src/shell.
-# The replacement is built 3D-first, from what the original's own code says,
-# and is re-added here as it lands. src/audio/Mixer.cpp is kept and correct but
-# has no target to link into until the new entry point exists.
-set(WEBOLUTION_GFX_SOURCES)
+# Presentation sources for the runnable target. The flat-first renderer and
+# placeholder shell moved to old/src/gfx in the 2026-10-18 reset; the 3D-first
+# replacement lands here. src/audio/Mixer.cpp is kept and correct but is not
+# wired into the entry point yet (it would need an SDL audio device).
+set(WEBOLUTION_GFX_SOURCES
+  # app -- the A4 presentation layer: camera, rasteriser, tube scene, entry point
+  src/app/Camera.cpp
+  src/app/CameraInput.cpp
+  src/app/Raster.cpp
+  src/app/TubeScene.cpp
+  src/app/main.cpp
+)
 list(TRANSFORM WEBOLUTION_GFX_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

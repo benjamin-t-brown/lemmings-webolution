@@ -1,0 +1,39 @@
+{
+  "classification": "bounded READ correlation; no new pixel-accepted calibration",
+  "authority_sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f",
+  "camera_case": "initial",
+  "camera_sha256": "7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff",
+  "selected_cell": {"group": 3, "entry": 2},
+  "quad_sha256": "f150a763f292cf2e743e7c25cc1176bea4b4360ab32f575fd5b60d386546ad39",
+  "source_bank_sha256": "4e3a52f579c663fc0e97d217d8ea5d780c246f9c6bb33c112534ac6b20c3b630",
+  "captured_process_vb_sha256": "190742c0c5c45775a424f95dbae398107d69329e6b6921a8ab1ee6b2902f6508",
+  "buffer_hash_scope": "Agent, independent facilitator and public CLI captures in the same owned process; not a cross-launch golden hash. Specular words are captured but not interpreted.",
+  "independent_checks": {
+    "source_quad_and_material_match": true,
+    "ordered_xy_uv_match_predeclared_prediction": true,
+    "cache_to_checked_tl_fields_exact": true,
+    "original_fixed_region_repeatability_rgb_sum": 0,
+    "raw_retail_payloads_committed": false
+  },
+  "citations": [
+    {"va": "0x4599aa", "literal_bytes_hex": "e811000000", "claim": "inline-quad adapter calls the quad submission helper"},
+    {"va": "0x46d4f3", "literal_bytes_hex": "8955f4", "claim": "current EDX source pointer is stored to the emitter local here; the prior local is stale before this instruction"},
+    {"va": "0x46d4f9", "literal_bytes_hex": "dd4018", "claim": "screen X is loaded from the captured cache record"},
+    {"va": "0x46d510", "literal_bytes_hex": "dd4110", "claim": "submitted depth is loaded from the captured cache record"},
+    {"va": "0x46d51f", "literal_bytes_hex": "dc3dd8194b00", "claim": "RHW conversion uses the file-backed operand and the previously rounded float depth"},
+    {"va": "0x46d52e", "literal_bytes_hex": "dd4250", "claim": "alpha is loaded from the cache field copied from the source quad"},
+    {"va": "0x46d5f3", "literal_bytes_hex": "ff5170", "claim": "actual indirect device-call site used by the conditional capture"}
+  ],
+  "core_emitter_window_reproduction": "python tools/harness/audit_cylinder_draw_bytes.py",
+  "adapter_window_reproduction": "python tools/harness/read_steppers.py --at 0x004599A0 --len 0x20",
+  "live_reproduction": "python tools/harness/trace_cell_emission.py --pid OWNED_PID --output build/tmp/NEW_OUTPUT_DIRECTORY",
+  "calibrated_values_promoted": [],
+  "unresolved": [
+    "source-to-submitted-depth mapping",
+    "effective device depth and clipping state",
+    "physical near/far planes",
+    "retained left-view pixel failure",
+    "specular field meaning",
+    "other polygons and views"
+  ]
+}

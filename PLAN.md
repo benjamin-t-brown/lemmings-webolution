@@ -83,8 +83,10 @@ The whole phase is "make it look and move like the original". One round per item
   The [active draw-path check](docs/scratch/phase-a1-cylinder-draw.md) now corroborates a
   bounded inner-bank submission. The [cell-fixture check](docs/scratch/phase-a1-cell-oracle.md)
   subsequently reproduced the retained failure; its isolated selection mutations
-  were unprotected. Next correlate a selected cell quad with the original's final
-  device vertices and draw arguments, keeping the camera and pixel criterion fixed.
+  were unprotected. The [device-emission check](docs/scratch/phase-a1-cell-emission.md)
+  now corroborates the selected quad's ordered coordinates and UVs, while its depth
+  representation differs from the candidate's. Next follow the original depth/cache
+  producer and clipping path, keeping the camera and pixel criterion fixed.
 - **A2. The tube.** INN/OUT texture addressing, draw order, inner surface before outer so
   the far side shows through gaps, and whatever scenery the original draws that we skip.
 - **A3. Sprite view selection.** `.SPR` stores multiple **views** per action — `walk` 12,

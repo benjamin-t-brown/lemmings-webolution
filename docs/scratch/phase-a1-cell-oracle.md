@@ -85,6 +85,11 @@ through that path before changing the candidate raster. The full outer surrogate
 can hide candidate geometry; neither its retained scores nor the failed controls
 establish the original's effective device state. Numeric near/far remain open.
 
+**Subsequent checkpoint:** the [device-emission check](phase-a1-cell-emission.md)
+completed the selected quad's coordinate/UV correlation. Its submitted depth still
+needs a source-to-cache derivation. Do not redispatch that bounded emission trace
+from this older next-question paragraph.
+
 **Facilitator check:** the independent frozen replay and isolated restorations
 above completed. The required UCRT build and full suite passed 14/14. No simulation
 or production renderer source changed. The owned game closed normally; debugger,

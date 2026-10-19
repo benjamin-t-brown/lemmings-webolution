@@ -144,3 +144,10 @@ the original. An activation API returning success does not prove that the game o
 Preserve the loaded-path, camera, pause-state and exact-restoration checks. The
 [draw-path facilitator check](../../docs/scratch/phase-a1-cylinder-draw.md) records the
 bounded live verification and its corrections; it does not mark A1 complete.
+
+For debugger probes, explicitly delete hardware breakpoints while the original is
+stopped before detaching. Stay within the target's hardware-breakpoint limit, require
+actual console completion markers, and verify cleanup and the surviving process.
+A successful detach message alone is insufficient. The
+[emission check](../../docs/scratch/phase-a1-cell-emission.md) preserves a matching
+Windows debug-trap crash record and the subsequent independent capture and cleanup.

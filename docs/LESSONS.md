@@ -48,8 +48,10 @@ for every probe or use the older input-queue attachment helper.
 The [cell-fixture replay](scratch/phase-a1-cell-oracle.md) retains the subsequent
 failed geometry candidate, isolated mutation survivors and explicit corrections.
 Its source/runtime mapping is READ evidence; no new selection or raster value is
-pixel-accepted. The next probe follows a selected quad through the original's final
-device-vertex emission rather than repeating the camera reads or cell capture.
+pixel-accepted. The subsequent [emission check](scratch/phase-a1-cell-emission.md)
+is now complete for a selected quad's ordered coordinates and UVs. Its submitted depth still needs a
+source-to-cache derivation; matching screen coordinates does not establish depth
+equivalence or physical near/far planes. A1 and the failed left view remain open.
 
 ## Hard-won rules of thumb
 

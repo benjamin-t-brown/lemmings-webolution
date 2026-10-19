@@ -193,9 +193,13 @@ the entire round passed because the simulation suite is green.
 The subsequent [active draw-path check](scratch/phase-a1-cylinder-draw.md) corroborates
 one inner-bank submission at the retained left camera. The subsequent
 [cell-fixture replay](scratch/phase-a1-cell-oracle.md) retains a failed geometry candidate
-and unprotected isolated selection mutations. Continue with actual device-vertex emission
-under the existing pixel criterion; do not redispatch the bounded route or cell capture.
-Foreground acquisition is automated for probes as recorded in the rules.
+and unprotected isolated selection mutations.
+The [emission checkpoint](scratch/phase-a1-cell-emission.md) now checks the selected
+quad's ordered coordinates and UVs. Its next question is the original depth/cache
+producer under the existing pixel criterion; do not redispatch the bounded route,
+cell capture or emission trace. Foreground acquisition is automated for probes
+as recorded in the rules. Explicitly delete hardware breakpoints while the original
+is stopped before detaching, and verify cleanup rather than trusting a detach message.
 
 Remaining A1 evidence must still come from the executable and the original frame, using
 REA where needed. The accepted operands replace the camera guesses in `old/src/gfx`;

@@ -3,13 +3,8 @@ description: Pointer to the canonical Windows MSYS2 build rules. Deliberately co
 alwaysApply: true
 ---
 
-# Windows build environment — read the canonical file
+# Build rules entry point
 
-**The rules are not in this file.** Read, and follow,
-**`.claude/rules/windows-msys2-build.md`** — canonical for *every* harness, not
-Claude-specific. `AGENTS.md` carries the two-line version.
-
-This file was a copy. Its sibling copy of the evidence standard went stale and ended up
-asserting things the canonical file had corrected weeks earlier, so both are pointers now.
-Never paste rule content here: a pointer cannot drift. If the canonical file needs changing,
-change the canonical file.
+Before builds or harness scripts, read the canonical
+[Windows build rules](../../.claude/rules/windows-msys2-build.md).
+This adapter contains no independent build policy.

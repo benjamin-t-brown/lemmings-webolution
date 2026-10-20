@@ -3,13 +3,8 @@ description: Pointer to the cross-harness orchestrator–worker pattern and shar
 alwaysApply: true
 ---
 
-# Orchestration — read the canonical file
+# Orchestration entry point
 
-**The rules are not in this file.** Read, and follow:
-
-- **`docs/ORCHESTRATION.md`** — facilitator / round / explore split, and who may edit what
-- **`docs/tasks.json`** — the single in-flight queue (not a second plan)
-- **`docs/ROLES.md`** — model names for *this* harness
-- **`docs/FACILITATOR.md`** — if you are the facilitator
-
-Never paste those documents into this file. A pointer cannot drift.
+Follow [AGENTS.md](../../AGENTS.md) to select the role and its reading scope.
+[Orchestration](../../docs/ORCHESTRATION.md) owns session boundaries and queue permissions.
+[Roles](../../docs/ROLES.md) owns client dispatch wiring. Do not duplicate those rules here.

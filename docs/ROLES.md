@@ -1,51 +1,18 @@
 # Roles and models, per harness
 
 This repo is driven from more than one agent harness. Roles are defined **by function**
-here; each harness's own entry point maps them to its model names. This table is the only
-place a vendor model name belongs — do not hardcode one in `PLAN.md`,
+here; each harness's own entry point maps them to its model names. This table is the canonical prose
+source for vendor model names — do not hardcode one in `PLAN.md`,
 `docs/FACILITATOR.md` or a rules file, because a string that is right in one client is
 invalid in another.
 
 Session architecture (queue, dispatch loop, permissions): **`docs/ORCHESTRATION.md`**.
 In-flight work: **`docs/tasks.json`**.
 
-## The roles
-
-| Role | Tier | What it does |
-| --- | --- | --- |
-| **Facilitator / planner** | strong | Picks the next round, **splits it into small independently verifiable tasks**, writes the brief, updates `docs/tasks.json`, **independently verifies every headline claim**, owns `PLAN.md`, `docs/**` and the rules files, lands results. Verification never delegates. |
-| **Hard-task worker** | mid | Runs one **escalated** brief that cannot be reduced to the targeted tier: cross-cutting reverse engineering, ambiguous evidence, or a targeted attempt that already failed. The facilitator records why it was escalated. Does not land docs or dispatch agents. |
-| **Targeted worker** — default | cheap/fast | Runs one **small** round against a written brief: reads the exe, runs the harness, writes the code and tests, reports under `build/tmp/`. This is the default tier for every round. Does not land documentation and does not dispatch further agents. |
-| **Explore agent** — read-mostly | cheapest | Answers one “where is X?” map question. No production edits, no live multi-step measurement, no doc landing. Optional before a brief; not a substitute for a round. |
-
-## Task sizing: cheap by default
-
-The facilitator's first job is decomposition, not dispatch. A brief should be small enough
-for the **targeted** tier to finish in one session: one question, one falsifier, one
-ownership area, a bounded command/read list, and a candidate note that fits comfortably in
-the worker's context. If it cannot be stated that way, split it into more queue items.
-
-Signals a brief is still too big:
-
-- it spans more than one subsystem or file area;
-- it needs more than a handful of live runs, or unbounded search;
-- it has no single acceptance check, or the check depends on taste rather than a
-  measurement;
-- it contains “and also”.
-
-Escalate to the **hard** tier only when the work genuinely cannot be split: ambiguous
-cross-cutting reverse engineering, a targeted attempt that failed for a reason other than
-size, or a change whose failure mode needs broad judgement. Record the escalation reason in
-the brief and the queue item. A failed targeted attempt is a signal to split the task
-first, not automatically to escalate it.
-
-The split exists to save time and money: many small targeted rounds are cheaper and easier
-to verify than one large round, and a dead worker loses little work. Judgement — whether a
-claim is actually supported, whether it over-generalises, whether a document has gone stale
-— stays on the strong tier.
-
-A cheap “reviewer” may lint or summarize a diff. **It is not verification.** Address
-re-reads and pixel/behaviour gates stay with the facilitator.
+Role behavior, task sizing and escalation policy live in [ORCHESTRATION.md](ORCHESTRATION.md).
+Round and explore contracts live under [agents/](agents/README.md). This file owns only
+client-specific model choices and dispatch wiring; literal pins also live in executable
+adapter frontmatter/configuration, where the harness requires them.
 
 ## Harness mapping
 

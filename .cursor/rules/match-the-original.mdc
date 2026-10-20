@@ -3,25 +3,9 @@ description: Pointer to the canonical evidence standard. Deliberately contains n
 alwaysApply: true
 ---
 
-# Match the original — read the canonical file
+# Evidence entry point
 
-**The rules are not in this file.** Read, and follow:
-
-- **`.claude/rules/match-the-original.md`** — the evidence standard and every round's
-  findings. Canonical for *every* harness, not Claude-specific.
-- **`docs/LESSONS.md`** — every established fact, each with the address behind it.
-- **`AGENTS.md`** — the short version of the standard, and the read-first order.
-- **`docs/ROLES.md`** — which model tier this harness uses for which role.
-- **`docs/ORCHESTRATION.md`** and **`docs/tasks.json`** — who plans vs who executes.
-
-## Why this file is empty of rules
-
-It used to be a copy, and the copy went stale and wrong. On 2026-10-18 it was found frozen
-at a pre-round-10 state, still asserting that `climbSpeed` is "2 mask rows" — the retired
-factor-of-2 doubling this project calls its single most repeated mistake — offering
-`fallSpeed = 3` as a live hypothesis long after it was measured as 4, and giving superseded
-crosshair offsets. Anything working from it was reading actively wrong rules while the
-canonical file had been correct for weeks.
-
-So: **never paste rule content here.** A pointer cannot drift. If the canonical file needs
-changing, change the canonical file.
+Follow [AGENTS.md](../../AGENTS.md) for role-specific reading. Project workers read
+[guardrails](../../docs/AGENT_SAFETY.md) and their brief's relevant evidence; facilitators
+read the full [canonical evidence rules](../../.claude/rules/match-the-original.md).
+Keep findings in [lessons](../../docs/LESSONS.md), not in this adapter.

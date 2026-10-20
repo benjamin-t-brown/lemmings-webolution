@@ -7,7 +7,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -95,6 +97,61 @@ webo::ActorPoseLevel loadPoseLevel(const fs::path& gameDir) {
   return level;
 }
 
+struct MatchedPauseRow {
+  std::string actor;
+  double plus8[3];
+  int facing{};
+  double model108[3];
+};
+
+std::vector<MatchedPauseRow> loadMatchedPauseTable(const fs::path& path) {
+  std::vector<MatchedPauseRow> rows;
+  if (!fs::exists(path))
+    return rows;
+  std::ifstream in(path);
+  if (!in)
+    throw std::runtime_error("cannot open " + path.string());
+  std::string line;
+  while (std::getline(in, line)) {
+    if (line.empty() || line[0] == '#')
+      continue;
+    std::istringstream ss(line);
+    MatchedPauseRow row;
+    std::string vtable;
+    if (!(ss >> row.actor >> vtable >> row.plus8[0] >> row.plus8[1] >> row.plus8[2] >>
+          row.facing >> row.model108[0] >> row.model108[1] >> row.model108[2]))
+      throw std::runtime_error("bad pose-table line: " + line);
+    rows.push_back(row);
+  }
+  return rows;
+}
+
+void testA6d7MatchedPause(const webo::ActorPoseLevel& level, const fs::path& root) {
+  const auto table = root / "build/tmp/a6d7-live-pose-pair/pose-table.tsv";
+  const auto rows = loadMatchedPauseTable(table);
+  if (rows.empty()) {
+    std::cout << "skip a6d7 matched pause: no pose-table.tsv\n";
+    return;
+  }
+  std::cout << "a6d7 matched pause pose pair (tol 1e-4)\n";
+  constexpr double kModelTol = 1e-4;
+  double worst = 0.0;
+  for (const auto& s : rows) {
+    webo::ActorTerrainSample plus8{s.plus8[0], s.plus8[1], s.plus8[2]};
+    const auto got = webo::actorPoseFromNativeSample(level, plus8, s.facing);
+    double rowWorst = 0.0;
+    for (int i = 0; i < 3; ++i) {
+      const double delta = std::abs(got.modelPosition[i] - s.model108[i]);
+      rowWorst = std::max(rowWorst, delta);
+      check(nearAbs(got.modelPosition[i], s.model108[i], kModelTol),
+            std::format("a6d7 {} model[{}] delta={:.6e}", s.actor, i, delta));
+    }
+    worst = std::max(worst, rowWorst);
+    std::cout << std::format("  {} max_model_delta {:.6e}\n", s.actor, rowWorst);
+  }
+  std::cout << std::format("  worst_over_walkers {:.6e}\n", worst);
+}
+
 void testNativeTable(const webo::ActorPoseLevel& level) {
   std::cout << "actor pose native table\n";
   constexpr double kModelTol = 1e-4;
@@ -122,9 +179,11 @@ int main() {
     std::cout << "skip: WEBOLUTION_GAME_DIR not set\n";
     return 0;
   }
+  const fs::path root = fs::current_path();
   try {
     const auto level = loadPoseLevel(fs::path(env));
     testNativeTable(level);
+    testA6d7MatchedPause(level, root);
   } catch (const std::exception& ex) {
     check(false, ex.what());
   }

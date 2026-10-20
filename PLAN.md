@@ -95,7 +95,8 @@ missing links; each is one round:
 - **A6a pose and basis** — **landed** ([check](docs/scratch/phase-a6-actor-pose.md)):
   `src/app/ActorPose` reproduces native `+0x108` within 1e-4 on three live walkers via
   `0x43D56C` and the `0x43D2B8` template fallback. Basis residual 2.962e-5 is parked (E).
-  Sim → `+8` (sub-cell X, Y flip, Z slab) is unsettled and must be settled in A6d.
+  Sim → `+8` writers/spawn/fall-Y are READ and parked (A6d10–A6d12);
+  walk remainder and live Z 0.75 stay open.
 - **A6b animation clock** — **landed** ([check](docs/scratch/phase-a6-actor-anim-clock.md)):
   `src/app/ActorAnim` carries remainder past `0.06`, scaled by strip rate; strip bind
   resets. Live walker series is integer-ms render slices, not the 200 ms sim tick.
@@ -104,10 +105,40 @@ missing links; each is one round:
   actors draw after INN + three OUT passes, list high→low, no Z-state writes.
   `[elem+0x18] >= 1.0` → `0x43A9BB`. Per-pixel Z vs tube unsettled.
 - **A6d integration** — **started** ([compose](docs/scratch/phase-a6-injected-walkers.md),
-  [bbox vs original-0](docs/scratch/phase-a6-app-bbox-gate.md)): walkers draw after
-  the tube and are on in `main` for `MM_CLIMB_002`. Clause 2 **fails** against
-  the A1 fixture original (wrong pause). Remaining: matched-state original,
-  sim → `+8`, render-clock dt, full-frame 0.02.
+  [original-0](docs/scratch/phase-a6-app-bbox-gate.md),
+  [matched pause](docs/scratch/phase-a6-matched-state-bbox.md)): walkers draw after
+  the tube and inject the live `+0x08` table. Walk temporal does not fix the
+  slope walker. Live `+0x1D8` is **0.0** ([A6d5](docs/scratch/phase-a6-live-phase-1d8.md));
+  clause 2 still **fails** actor 2 at native phase (0.101→0.112). Native view
+  matches ours ([A6d6](docs/scratch/phase-a6-live-view-index.md)). Pose matches
+  live `+0x108` ([A6d7](docs/scratch/phase-a6-live-pose-pair.md)). Overlay
+  composite is A4y `> 0xEF` ([A6d9](docs/scratch/phase-a6-overlay-alpha-ef.md));
+  actor 2 is unchanged (0.101→0.112) because the walk overlay is already 0/255.
+  Remaining: full-frame 0.02. Actor 2 still fails clause 2
+  (0.101→0.112). Screen-Y bias is parked after three rounds:
+  incoming Y has no ±1, `+0x90` is the `0x43D56C` triple, and
+  `0x4C6B88` is the per-draw stack-top copy
+  ([A6d22](docs/scratch/phase-a6-xform-4c6b88.md)).
+  `originY−1` stays an unshipped pixel fit
+  ([A6d17](docs/scratch/phase-a6-actor2-bbox-pixels.md)).
+  `floor(top)` does not move the matched
+  frame ([A6d19](docs/scratch/phase-a6-first-row-floor.md)).
+  Float top is `0x47AB30`; no integer first row
+  ([A6d18](docs/scratch/phase-a6-billboard-top-row.md)).
+  `originY−1` is a pixel fit — do not ship
+  ([A6d17](docs/scratch/phase-a6-actor2-bbox-pixels.md)).
+  full-frame 0.02. Per-pixel actor Z versus tube is a
+  negative READ
+  ([A6d16](docs/scratch/phase-a6-actor-tube-pixel-z.md)).
+  Render-clock dt is parked: `[+0xC8]` is the UV/homogeneous
+  third component, not the A6b clock
+  ([A6d15](docs/scratch/phase-a6-render-c8-dt.md)).
+  Sim → `+8` parked after
+  A6d10–A6d12 ([writers](docs/scratch/phase-a6-sim-plus8-writer.md),
+  [spawn](docs/scratch/phase-a6-plus8-spawn-init.md),
+  [fall Y](docs/scratch/phase-a6-plus8-first-y.md)). Z-order and overlay
+  predicate do not help ([A6d8](docs/scratch/phase-a6-actor2-z-order.md),
+  [A6d9](docs/scratch/phase-a6-overlay-alpha-ef.md)).
 
 **Exit gate (fixed now, not after capture):** on `MM_CLIMB_002`, a paused original frame
 with at least three walkers at the A1 canonical camera, against ours with the same actor
@@ -171,10 +202,61 @@ open.
   [A4aa](docs/scratch/phase-a4-zoom1-filter-provenance.md),
   [A4ae](docs/scratch/phase-a4-pre-actor-subcalls-static.md),
   [A4af](docs/scratch/phase-a4-tube-child-renderers-filter-static.md).
-- **A6 bbox vs `original-0.png`** (parked 2026-10-20 with A6d2). The A6a 10 s
-  poses make all three boxes worse against the A1 camera-fixture original.
-  Resume only with a pause that matches the injected actor list. Evidence:
-  [A6d2](docs/scratch/phase-a6-app-bbox-gate.md).
+- **A6 sim → `+0x08` mapping** (parked 2026-10-20 after A6d10–A6d12).
+  Motion stores, hatch spawn `(+0x9A,+0x9C,0.5)`, and fall Y
+  `0x41627F` = `0x40DF50([+0x10] − [+0x44]×step)` are READ. No complete
+  sim mapper. Resume with first-tick arm order, walk remainder, or Z 0.75
+  init — not another hatch `+0x9A` pass. Evidence:
+  [A6d10](docs/scratch/phase-a6-sim-plus8-writer.md),
+  [A6d11](docs/scratch/phase-a6-plus8-spawn-init.md),
+  [A6d12](docs/scratch/phase-a6-plus8-first-y.md).
+- **A6 screen-Y bias** (parked 2026-10-20 after A6d20–A6d22).
+  Incoming `0x47A75D` Y is `cy − C0/C8` with no ±1. Render `+0x90`
+  is the 24-byte `0x43D56C` result. `0x4C6B88` is a 96-byte copy of
+  the `0x58D5A0` stack top (`0x46BE99`), not a second proven miss
+  in `worldToLensedView`. `originY − 1` still beats actor 2 and is
+  not a native store. Resume only with a live compare of that
+  stack top to our matrix on the matched camera. Evidence:
+  [A6d20](docs/scratch/phase-a6-screen-y-bias.md),
+  [A6d21](docs/scratch/phase-a6-plus90-vector.md),
+  [A6d22](docs/scratch/phase-a6-xform-4c6b88.md).
+- **A6 render-clock dt / `[+0xC8]`** (parked 2026-10-20 after A6d13–A6d15).
+  `[game+0x26028]` is a wrap phase. `0x42F0DC` is `0x43CC68`, which
+  consumes `[this+0xC8]` as `1.0 / C8` UV scale after `0x40EAE0`
+  writes the `+0xB8/+0xC0/+0xC8` triple. That is not the A6b clock
+  (`vtable+0x2C` → `0x43CF30` → `0x468833`). Keep the integer-ms
+  stand-in. Incoming seconds to `0x42E2BF` stay unread; resume only
+  if a temporal change is shown to move the A6 gate. Evidence:
+  [A6d13](docs/scratch/phase-a6-render-clock-dt.md),
+  [A6d14](docs/scratch/phase-a6-walk-budget-ptr.md),
+  [A6d15](docs/scratch/phase-a6-render-c8-dt.md),
+  [A6b](docs/scratch/phase-a6-actor-anim-clock.md).
+- **A6 first-row `floor` vs `ceil`** (parked 2026-10-20 after A6d18–A6d19).
+  No `fistp` on submit. `floor(top)` is pixel-identical to `ceil` on the
+  A6d3 matched frame and fails the A4v y=2 fixture. Initial-view boxes
+  move and still fail. Resume only with a float screen-Y term, not
+  another cover bound. Evidence:
+  [A6d18](docs/scratch/phase-a6-billboard-top-row.md),
+  [A6d19](docs/scratch/phase-a6-first-row-floor.md).
+- **A6 per-pixel actor Z versus tube** (parked 2026-10-20 after A6d16).
+  Submit path has no actor-vs-tube fragment compare. Closest reject is
+  A4y `ALPHAREF 0xEF`. Wrapper depth stays A1 (not an exe read).
+  Resume only if wrapper depth is shown to move the A6 gate. Evidence:
+  [A6d16](docs/scratch/phase-a6-actor-tube-pixel-z.md),
+  [A6c](docs/scratch/phase-a6-actor-tube-composition.md),
+  [A1 depth](docs/scratch/phase-a1-depth-clipping.md).
+- **A6 actor-2 sprite at matched pause** (parked 2026-10-20 after A6d4–A6d9).
+  Temporal 0–11 cannot pass; live `+0x1D8` is 0.0; native view/mirror match
+  `selectSpriteView`. −0.125 is a discarded pixel fit. Pose pair matches
+  live `+0x108`. Before-tube is fully occluded. Overlay `> 0xEF` is the A4y
+  READ and is pixel-identical to `a != 0` on this 0/255 walk path. Resume
+  only with a new lead (not chooser, Z-order, overlay, or blend). Evidence:
+  [A6d4](docs/scratch/phase-a6-actor2-temporal-sweep.md),
+  [A6d5](docs/scratch/phase-a6-live-phase-1d8.md),
+  [A6d6](docs/scratch/phase-a6-live-view-index.md),
+  [A6d7](docs/scratch/phase-a6-live-pose-pair.md),
+  [A6d8](docs/scratch/phase-a6-actor2-z-order.md),
+  [A6d9](docs/scratch/phase-a6-overlay-alpha-ef.md).
 - **Actor basis precision** (parked 2026-10-20 after three A6a rounds). The facing basis
   misses its 1e-6 falsifier by up to 2.962e-5. Native values are float32 and the chain
   `0x43D56C`/`0x401830`/`0x480AC8` is not replayed. It is invisible unless a view index sits

@@ -496,7 +496,7 @@
     },
     {
       "id": "a4ag-zoom1-linear-a0-offline-replay",
-      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) — PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
+      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) \u2014 PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
       "landed_in": "PLAN.md",
       "commit_hint": null
     },
@@ -595,8 +595,388 @@
         "a6d-injected-walkers"
       ],
       "landed_in": "docs/scratch/phase-a6-app-bbox-gate.md",
-      "commit_hint": null,
+      "commit_hint": "c539a61",
       "facilitator_verified": "2026-10-20: independent MAE recompute matches bbox-mae.json exactly (0.035167/0.114519, 0.013474/0.095552, 0.014167/0.085888). Isolated if(false&&) on main inject: default shot hashes 66a8ea3b (tube-only); restored main.cpp byte-identical to backup, default shot hashes cf0d16fb (with-injected). 23/23 CTest. No game; leftover frida-helper processes only. Parked: original-0.png is A1 fixture, not the A6a 10s walk."
+    },
+    {
+      "id": "a6d3-matched-state-bbox",
+      "title": "A6d3: matched pause \u2014 actors 0\u20131 improve; slope walker 0.101\u21920.112 (temporal 0)",
+      "status": "landed",
+      "brief": "build/tmp/a6d3-matched-state-bbox-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "502d6174-fb0f-47ad-a71d-2dea4f85f73e",
+      "owns_live_game": true,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d3-matched-state-bbox/round-note.md",
+      "depends_on": [
+        "a6d2-app-bbox-gate"
+      ],
+      "landed_in": "docs/scratch/phase-a6-matched-state-bbox.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent MAE matches bbox-mae.json exactly (0.113223/0.079130, 0.105638/0.089430, 0.100898/0.112465). plus8 table matches capture.json and TubeScene.cpp. Camera SHA 7e6e1a8a is A1 reference-state. Isolated if(false&&) default hashes 66a8ea3b; main.cpp restored byte-identical. 23/23 CTest after rebuild (test_actorcompose.exe had been missing). No game; dgVoodoo restored. Parked: actor 2 at walk temporal 0."
+    },
+    {
+      "id": "a6d4-actor2-temporal-sweep",
+      "title": "A6d4: walk temporal 0-11 cannot fix actor 2; phase -0.125 is a pixel fit (PROVISIONAL)",
+      "status": "landed",
+      "brief": "build/tmp/a6d4-actor2-temporal-sweep-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "10c1f137-ca0f-4a9a-89e0-b21f952c383f",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d4-actor2-temporal-sweep/round-note.md",
+      "depends_on": [
+        "a6d3-matched-state-bbox"
+      ],
+      "landed_in": "docs/scratch/phase-a6-actor2-temporal-sweep.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent webolution shots: actor2 -0.125 MAE 0.08861160625866508 exact; all 3 boxes beat tube (0.113/0.076, 0.106/0.095, 0.101/0.089). Isolated phase=0 hashes c4e6cf47 (A6d3 inject) actor2 0.11246451442529874. Restored -0.125. Tube 66a8ea3b. 23/23 CTest. composeActorPhase is A3 +0x1D8 (q=phase+0.0625). Not a native read."
+    },
+    {
+      "id": "a6d5-live-phase-1d8",
+      "title": "A6d5: live +0x1D8 is 0.0 on three walkers; -0.125 pixel fit discarded",
+      "status": "landed",
+      "brief": "build/tmp/a6d5-live-phase-1d8-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "d61a8177-d48e-4d02-b2ce-00e4abf55156",
+      "owns_live_game": true,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d5-live-phase-1d8/round-note.md",
+      "depends_on": [
+        "a6d4-actor2-temporal-sweep"
+      ],
+      "landed_in": "docs/scratch/phase-a6-live-phase-1d8.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: actor+0x128+0x1D8 addresses match; bytes 0000000000000000 = 0.0. Default webolution hashes c4e6cf47 actor2 MAE 0.11246451442529874. Isolated -0.125 hashes e3ad3755 (A6d4 fit). Restored 0.0. 23/23 CTest. JSON position_plus8_xyz is +0x108. No game; hashes unchanged; no dgVoodoo write."
+    },
+    {
+      "id": "a6d6-live-view-index",
+      "title": "A6d6: native +0x1B8/+0x1B4 match selectSpriteView at phase 0; actor-2 sprite parked",
+      "status": "landed",
+      "brief": "build/tmp/a6d6-live-view-index-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "d5369a1d-9563-4a59-bcc0-34a174ed9f6c",
+      "owns_live_game": true,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d6-live-view-index/round-note.md",
+      "depends_on": [
+        "a6d5-live-phase-1d8"
+      ],
+      "landed_in": "docs/scratch/phase-a6-live-view-index.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: actor+0x128 matches three controllers. inject-replay (1,1)/(2,1)/(2,1) equals live views. forcedView unused. composeActorPhase 0. 23/23 CTest. No game; no dgVoodoo write. Native slope +0x1CC=4 already in A6d4 sweep (0.11255). Actor-2 sprite parked."
+    },
+    {
+      "id": "a6d7-live-pose-pair",
+      "title": "A6d7: ActorPose matches live +0x108 within 1e-4 (worst 2.188e-6); A6d3 bbox not a pose miss",
+      "status": "landed",
+      "brief": "build/tmp/a6d7-live-pose-pair-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "8f9e64e2-e0ed-43c1-b5f6-3a5e15cd4f94",
+      "owns_live_game": true,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d7-live-pose-pair/round-note.md",
+      "depends_on": [
+        "a6d6-live-view-index"
+      ],
+      "landed_in": "docs/scratch/phase-a6-live-pose-pair.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent test_actorpose 2.188e-6 / 6.776e-7 / 8.551e-7. Isolated modelY+1 fails a6d7 model[1] delta 1.0; ActorPose.cpp restored. 23/23 CTest. Rejected: A6d3 bbox is unpaired +0x08 \u2014 A6d3 captured screenshot and +0x08 together; this pause is a different 10 s walk. No game."
+    },
+    {
+      "id": "a6d8-actor2-z-order",
+      "title": "A6d8: before-tube equals tube-only on all 3 boxes; actor 2 still fails after-tube",
+      "status": "landed",
+      "brief": "build/tmp/a6d8-actor2-z-order-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "f9376238-48c2-40e4-b812-228e4e029001",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d8-actor2-z-order/round-note.md",
+      "depends_on": [
+        "a6d7-live-pose-pair"
+      ],
+      "landed_in": "docs/scratch/phase-a6-actor2-z-order.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent test_actorcompose reprint matches mae-table (actor2 tube 0.10089786756453423 after 0.11246451442529874 before 0.10089786756453423). Default composeActorsBeforeRoute false. 23/23 CTest. TubeScene.cpp unchanged."
+    },
+    {
+      "id": "a6d9-overlay-alpha-ef",
+      "title": "A6d9: overlay a>0xEF is A4y READ; actor 2 still 0.101 to 0.112 on A6d3 pair",
+      "status": "landed",
+      "brief": "build/tmp/a6d9-overlay-alpha-ef-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "45b03c44-815a-4c8a-b577-aa6f074be937",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d9-overlay-alpha-ef/round-note.md",
+      "depends_on": [
+        "a6d8-actor2-z-order"
+      ],
+      "landed_in": "docs/scratch/phase-a6-overlay-alpha-ef.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent mae_check.py on fresh webolution --shot matches worker table (actor2 0.10089786756453423 / 0.11246451442529874). Inject SHA c4e6cf47 equals pre-A6d9 with-injected.png. Re-read 0x00470F39 store 0xEF. Isolated a==0 overlay: same SHA/MAE; mutated test_actorcompose stayed 54/54 (0/255 overlay). Restored TubeScene.cpp 77760fac. 23/23 CTest. No game."
+    },
+    {
+      "id": "a6d10-sim-plus8-writer",
+      "title": "A6d10: +0x08/+0x10/+0x18 writers READ; no sim mapper",
+      "status": "landed",
+      "brief": "build/tmp/a6d10-sim-plus8-writer-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "f5cd2415-f029-4fe0-b1f8-0d17be5f65c1",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d10-sim-plus8-writer/round-note.md",
+      "depends_on": [
+        "a6d9-overlay-alpha-ef"
+      ],
+      "landed_in": "docs/scratch/phase-a6-sim-plus8-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x42EEC9/0x42EE9A/0x42EDF9/0x42EE47, helpers, 0x41BE95/0x41CDAE/0x413A8F, 0x40DEC0 wrap, 0x40DF50 clamp, 0x4B03A8=0.5, 0x4B10C0=0.1. xrefs match. Narrowed: 0x42EEF2 copies +8 into 0x43D56C without +0x360; +0x360 is 0/-1 at 0x42F66B not a cell origin. No mapper, no game, no code."
+    },
+    {
+      "id": "a6d11-plus8-spawn-init",
+      "title": "A6d11: hatch spawn +0x08 from +0x9A/+0x9C, Z=0.5",
+      "status": "landed",
+      "brief": "build/tmp/a6d11-plus8-spawn-init-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "6e01a261-5e7f-4ba1-a4a9-1d890206eeb9",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d11-plus8-spawn-init/round-note.md",
+      "depends_on": [
+        "a6d10-sim-plus8-writer"
+      ],
+      "landed_in": "docs/scratch/phase-a6-plus8-spawn-init.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x4230F9 dest actor+8, 0x425C04/0x425C1A movsx +0x9C/+0x9A, 0x42DE6F 0x3FE00000, 0x42E109 zeros +0x360. Isolated Z 0.5->0.75 fails 3 z checks; X=hatch.y fails 3 x checks; restored. 8/8 actorterrain, 24/24 CTest. Narrowed: 0x4230C5 constructs +8 before the copy. No game."
+    },
+    {
+      "id": "a6d12-plus8-first-y",
+      "title": "A6d12: first lasting +0x10 store is fall 0x41627F; 0x416219 is +0x18 path",
+      "status": "landed",
+      "brief": "build/tmp/a6d12-plus8-first-y-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "1502a6e8-d58a-48b6-90d3-2cb3e8c7707a",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d12-plus8-first-y/round-note.md",
+      "depends_on": [
+        "a6d11-plus8-spawn-init"
+      ],
+      "landed_in": "docs/scratch/phase-a6-plus8-first-y.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x41627F fstp [+0x10] after 0x40DF50([+0x10]-(double)[+0x44]*step); 0x416219 feeds 0x43DA38 then fstp [+0x18] at 0x416236. 0x415FA0 writes vtable 0x4B0A20; 0x4160BD is slot +4 not +14. Ctor 0x42DEAA-0x42E178 has no direct +0x10 store. No mapper, no game. Parked sim->+8 after 3 rounds."
+    },
+    {
+      "id": "a6d13-render-clock-dt",
+      "title": "A6d13: [game+0x26028] phase READ; walk budget pointer still open",
+      "status": "landed",
+      "brief": "build/tmp/a6d13-render-clock-dt-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "ec736f33-0da3-4e41-9901-7243e89c794e",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d13-render-clock-dt/round-note.md",
+      "depends_on": [
+        "a6d12-plus8-first-y"
+      ],
+      "landed_in": "docs/scratch/phase-a6-render-clock-dt.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x45CC3D fstp [ecx+0x26028] after (timer+0x40 + 128)/256; 0x42DCD0 fld [+0x40]; 0x41BE00 fld [[ebp+0xC]]; 0x42F0DC call [vtable+4] with no pushes when [+0x38c]==0. Narrowed: phase is not walk dt. No ActorAnim hook, no game."
+    },
+    {
+      "id": "a6d14-walk-budget-ptr",
+      "title": "A6d14: 0x42F0DC is 0x43CC68 not 0x41BDD4; sim budget via +0x340",
+      "status": "landed",
+      "brief": "build/tmp/a6d14-walk-budget-ptr-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "548925e2-7903-46f0-bc8d-259639706a92",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d14-walk-budget-ptr/round-note.md",
+      "depends_on": [
+        "a6d13-render-clock-dt"
+      ],
+      "landed_in": "docs/scratch/phase-a6-walk-budget-ptr.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x42DEC4/0x43CE3C vtable 0x4B14A8; 0x4B14AC=0x43CC68; 0x43CC94 fld [this+0xC8]; 0x4B1498=0.0003; 0x42E308 copy; 0x42E32B [+0x340]; 0x42E3CF push LEA [ebp-0x1C]. Prediction 0x42F0DC==0x41BDD4 falsified. No ActorAnim, no game."
+    },
+    {
+      "id": "a6d15-render-c8-dt",
+      "title": "A6d15: +0xC8 is UV/homogeneous Z after 0x40EAE0, not A6b dt",
+      "status": "landed",
+      "brief": "build/tmp/a6d15-render-c8-dt-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "f61297ac-f1bb-4ac8-9933-13dae2c21137",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d15-render-c8-dt/round-note.md",
+      "depends_on": [
+        "a6d14-walk-budget-ptr"
+      ],
+      "landed_in": "docs/scratch/phase-a6-render-c8-dt.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x43CC68 1.0/C8 UV; 0x40EB50/0x40EAE0 fstp [dest+0x10] at 0x40EBD5/0x40EB3C; dest=this+0xB8. Independent .text scan: no fstp disp 0xC8. 0x4C6B88 past .data rawsize. Worker no-store headline narrowed. No ActorAnim, no game."
+    },
+    {
+      "id": "a6d16-actor-tube-pixel-z",
+      "title": "A6d16: no per-pixel actor-vs-tube Z compare on submit",
+      "status": "landed",
+      "brief": "build/tmp/a6d16-actor-tube-pixel-z-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "dce7b77f-c772-484e-9c70-24461a10ab4a",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d16-actor-tube-pixel-z/round-note.md",
+      "depends_on": [
+        "a6d15-render-c8-dt"
+      ],
+      "landed_in": "docs/scratch/phase-a6-actor-tube-pixel-z.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x47A75D/0x47ABAF/0x414920-0x4149FD/0x470F39/0x472896/0x43CDA0. E8 list matches A4x. False fcomp hits are fild/fadd and fdivr 0.25. Narrowed: +0xC8 is A6d15 homogeneous third; wrapper depth still A1. No hook, no game."
+    },
+    {
+      "id": "a6d17-actor2-bbox-pixels",
+      "title": "A6d17: extra_coverage 0; originY-1 is a pixel fit (do not ship)",
+      "status": "landed",
+      "brief": "build/tmp/a6d17-actor2-bbox-pixels-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "6bbde40b-82ed-456e-ba70-8b4d6e90eaa2",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d17-actor2-bbox-pixels/round-note.md",
+      "depends_on": [
+        "a6d16-actor-tube-pixel-z"
+      ],
+      "landed_in": "docs/scratch/phase-a6-actor2-bbox-pixels.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: PIL check MAE/106/extra=0/worsen=71; exact neighbor 7 not 94. Isolated originY-1 actor2 0.09760 beats tube; actors 0/1 improve; restored 977BDA40, touch+rebuild, 61/61 compose, 24/24 CTest. 94/12 pins are +6 classifier. No game. No hook."
+    },
+    {
+      "id": "a6d18-billboard-top-row",
+      "title": "A6d18: float top at 0x47AB30; no integer first row",
+      "status": "landed",
+      "brief": "build/tmp/a6d18-billboard-top-row-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "da799898-e120-48e7-8fb3-c8f4c37ce8ff",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d18-billboard-top-row/round-note.md",
+      "depends_on": [
+        "a6d17-actor2-bbox-pixels"
+      ],
+      "landed_in": "docs/scratch/phase-a6-billboard-top-row.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x47A7BB fild +0x34, 0x47AB27 fld/fsub/fstp [+0x160], 0x47AAD6 right edge, 0x46D4F9 fld/fstp dword. No fistp. 0x46D5AC is call 0x46DE90. ActorSprite unchanged. No game."
+    },
+    {
+      "id": "a6d19-first-row-floor",
+      "title": "A6d19: floor(top) identical on matched frame; actor-2 still 0.11246",
+      "status": "landed",
+      "brief": "build/tmp/a6d19-first-row-floor-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "16cf6263-4fa9-4a17-889e-159999d0f150",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d19-first-row-floor/round-note.md",
+      "depends_on": [
+        "a6d18-billboard-top-row"
+      ],
+      "landed_in": "docs/scratch/phase-a6-first-row-floor.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: ActorSprite.cpp SHA 977bda40 matches bak. Floor PNG SHA 15016c20 equals a6d17 ceil temporal-0; 0 pixel diff. Actor-2 MAE 0.11246. Floor log initial-view boxes move vs restored ceil run and still fail. ceil restored. No game."
+    },
+    {
+      "id": "a6d20-screen-y-bias",
+      "title": "A6d20: 0x47A75D entry Y is cy - C0/C8; no pixel bias",
+      "status": "landed",
+      "brief": "build/tmp/a6d20-screen-y-bias-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "114a797e-1289-4d5a-91bd-4b114227a636",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d20-screen-y-bias/round-note.md",
+      "depends_on": [
+        "a6d19-first-row-floor"
+      ],
+      "landed_in": "docs/scratch/phase-a6-screen-y-bias.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x43CCFE fdiv [+0xC8]; 0x43CD1B faddp X; 0x43CD30 DE E9 fsubp Y; pushes X then Y; 0x47A7BB fsubr unknown1. Narrowed worker fsubrp mnemonic. No +/-1. ActorSprite untouched. No game."
+    },
+    {
+      "id": "a6d21-plus90-vector",
+      "title": "A6d21: render +0x90 is 24-byte 0x43D56C copy; 0x4C6B88 still applied",
+      "status": "landed",
+      "brief": "build/tmp/a6d21-plus90-vector-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "effa628f-8d83-43a6-ad5c-b4a2811acdec",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d21-plus90-vector/round-note.md",
+      "depends_on": [
+        "a6d20-screen-y-bias"
+      ],
+      "landed_in": "docs/scratch/phase-a6-plus90-vector.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: 0x4B14B0=0x4658D6; 0x46591A rep movsd 6 to this+0x90; 0x43DA2D returns output ptr. 0x42D3E9 fstp [lemming+0x90] via 0x4B108C=0x42D246. Narrowed: 0x40EAE0 still multiplies by 0x4C6B88. No ActorSprite, no game."
+    },
+    {
+      "id": "a6d22-xform-4c6b88",
+      "title": "A6d22: 0x4C6B88 is a 96-byte copy of the 0x58D5A0 stack top",
+      "status": "landed",
+      "brief": "build/tmp/a6d22-xform-4c6b88-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "7f7dd3cf-8a2f-404a-a413-e13d29015287",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d22-xform-4c6b88/round-note.md",
+      "depends_on": [
+        "a6d21-plus90-vector"
+      ],
+      "landed_in": "docs/scratch/phase-a6-xform-4c6b88.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: re-read 0x46BE99 rep movsd ecx=0x18 from 0x43BCD0/0x58D5A0; 0x46C490 this+0x148; caller chain 0x4C6A08+8+0x30+0x148=0x4C6B88. Narrowed: not shown inside worldToLensedView. No ActorSprite, no game. Screen-Y parked after 3 rounds."
     }
   ]
 }

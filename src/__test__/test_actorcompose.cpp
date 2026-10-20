@@ -8,8 +8,10 @@
 #include "assets/CollisionGrid.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
+#include "assets/LightMap.h"
 #include "assets/Png.h"
 #include "assets/Sprite.h"
+#include "gfx/SpriteView.h"
 
 #include <array>
 #include <cmath>
@@ -141,6 +143,15 @@ std::string pngSha256(const webo::app::Framebuffer& fb) {
   return hexSha256(sha256(png));
 }
 
+void writePngFile(const fs::path& path, const webo::Image& image) {
+  const std::vector<std::uint8_t> png = webo::encodePng(image);
+  std::ofstream out(path, std::ios::binary);
+  if (!out)
+    throw std::runtime_error("png write failed");
+  out.write(reinterpret_cast<const char*>(png.data()),
+            static_cast<std::streamsize>(png.size()));
+}
+
 bool rectDiffers(const webo::app::Framebuffer& a, const webo::app::Framebuffer& b, int x0,
                  int y0, int x1, int y1) {
   if (a.width != b.width || a.height != b.height)
@@ -194,9 +205,9 @@ constexpr struct {
   int facing;
   double model108[3];
 } kInjected[] = {
-    {59.64480209350586, 32.0, 0.75, 1, {-56.993675231933594, 32.0, 6.125833988189697}},
-    {45.21244430541992, 32.0, 0.75, 1, {-51.26413345336914, 32.0, 25.476972579956055}},
-    {32.0, 36.87969207763672, 0.5, 1, {-39.0824089050293, 36.87969207763672, 39.0824089050293}},
+    {60.244850158691406, 32.0, 0.75, 1, {-56.993675231933594, 32.0, 6.125833988189697}},
+    {45.812477111816406, 32.0, 0.75, 1, {-51.26413345336914, 32.0, 25.476972579956055}},
+    {32.0, 34.47958755493164, 0.5, 1, {-39.0824089050293, 36.87969207763672, 39.0824089050293}},
 };
 
 std::vector<webo::app::SceneOptions::InjectedNativeWalker> makeInjectedList() {
@@ -325,11 +336,93 @@ double rectRgbMae(const webo::app::Framebuffer& fb, const std::vector<std::uint8
   return static_cast<double>(sum) / (255.0 * 3.0 * static_cast<double>(count));
 }
 
+struct RgbTri {
+  std::uint8_t r;
+  std::uint8_t g;
+  std::uint8_t b;
+};
+
+bool rgbTriAt(const std::vector<std::uint8_t>& rgb, int width, int height, int x, int y,
+              RgbTri& out) {
+  if (x < 0 || y < 0 || x >= width || y >= height)
+    return false;
+  const std::size_t o = (static_cast<std::size_t>(y) * width + x) * 3;
+  out = {rgb[o], rgb[o + 1], rgb[o + 2]};
+  return true;
+}
+
+bool rgbTriAtFb(const webo::app::Framebuffer& fb, int x, int y, RgbTri& out) {
+  return rgbTriAt(fb.rgb, fb.width, fb.height, x, y, out);
+}
+
+int rgbL1(const RgbTri& a, const RgbTri& b) {
+  return std::abs(static_cast<int>(a.r) - static_cast<int>(b.r)) +
+         std::abs(static_cast<int>(a.g) - static_cast<int>(b.g)) +
+         std::abs(static_cast<int>(a.b) - static_cast<int>(b.b));
+}
+
+bool rgbEqual(const RgbTri& a, const RgbTri& b) {
+  return a.r == b.r && a.g == b.g && a.b == b.b;
+}
+
+struct ShiftMatch {
+  int dx;
+  int dy;
+  int err;
+};
+
+ShiftMatch bestShiftInjectToOrig(const webo::app::Framebuffer& inject,
+                                 const std::vector<std::uint8_t>& origRgb, int refWidth,
+                                 int refHeight, int x, int y) {
+  RgbTri inj{};
+  rgbTriAtFb(inject, x, y, inj);
+  RgbTri aligned{};
+  rgbTriAt(origRgb, refWidth, refHeight, x, y, aligned);
+  ShiftMatch best{0, 0, rgbL1(inj, aligned)};
+  for (int dy = -2; dy <= 2; ++dy) {
+    for (int dx = -2; dx <= 2; ++dx) {
+      if (dx == 0 && dy == 0)
+        continue;
+      RgbTri shifted{};
+      if (!rgbTriAt(origRgb, refWidth, refHeight, x + dx, y + dy, shifted))
+        continue;
+      const int err = rgbL1(inj, shifted);
+      if (err < best.err)
+        best = {dx, dy, err};
+    }
+  }
+  return best;
+}
+
+// A6d17 painted-pixel classes (tube != inject within actor-2 bbox).
+const char* classifyActor2PaintedPixel(const webo::app::Framebuffer& tube,
+                                       const webo::app::Framebuffer& inject,
+                                       const std::vector<std::uint8_t>& origRgb, int refWidth,
+                                       int refHeight, int x, int y) {
+  RgbTri o{};
+  RgbTri t{};
+  RgbTri inj{};
+  rgbTriAt(origRgb, refWidth, refHeight, x, y, o);
+  rgbTriAtFb(tube, x, y, t);
+  rgbTriAtFb(inject, x, y, inj);
+  if (rgbEqual(o, t) && !rgbEqual(inj, t))
+    return "extra_coverage";
+  const ShiftMatch shift = bestShiftInjectToOrig(inject, origRgb, refWidth, refHeight, x, y);
+  const int alignedErr = rgbL1(inj, o);
+  if ((shift.dx != 0 || shift.dy != 0) && shift.err + 6 < alignedErr)
+    return "integer_shift";
+  if (alignedErr > 0 && !rgbEqual(t, o) && !rgbEqual(inj, o))
+    return "tint_scale";
+  return "different_silhouette";
+}
+
 webo::app::Framebuffer renderRoute(const webo::app::TubeScene& scene, const webo::AssetLibrary& lib,
                                    const fs::path& cameraPath,
                                    const std::vector<webo::app::SceneOptions::InjectedNativeWalker>&
                                        walkers,
-                                   bool actorsBeforeRoute, bool skipPose) {
+                                   bool actorsBeforeRoute, bool skipPose,
+                                   double composeActorPhase = 0.0,
+                                   bool overlayLegacyNonZero = false) {
   webo::app::CameraParams params;
   std::string error;
   if (!webo::app::loadCameraParams(cameraPath, params, error))
@@ -343,6 +436,8 @@ webo::app::Framebuffer renderRoute(const webo::app::TubeScene& scene, const webo
   options.injectedWalkers = walkers;
   options.composeActorsBeforeRoute = actorsBeforeRoute;
   options.composeSkipActorPose = skipPose;
+  options.composeActorPhase = composeActorPhase;
+  options.overlayCompositeLegacyNonZero = overlayLegacyNonZero;
   webo::app::Raster raster(params.width, params.height);
   raster.clear(0, 0, 0);
   scene.render(raster, camera, options, &lib);
@@ -528,6 +623,458 @@ int main() {
     std::cout << "actor compose nine-view empty hashes (recorded at first green run)\n";
     for (std::size_t i = 0; i < 9; ++i)
       std::cout << "  " << kViews[i].name << " " << emptyHashes[i] << "\n";
+
+    const fs::path matchedCam = root / "build/tmp/a6d3-matched-state-bbox/live-camera-params.json";
+    const fs::path matchedOrig = root / "build/tmp/a6d3-matched-state-bbox/original-live.png";
+    const fs::path a6d4Out = root / "build/tmp/a6d4-actor2-temporal-sweep";
+    if (fs::exists(matchedCam) && fs::exists(matchedOrig)) {
+      std::cout << "a6d4 matched-state actor2 temporal sweep\n";
+      fs::create_directories(a6d4Out);
+      const auto matchedRgb = loadFixtureRgbPng(matchedOrig);
+      constexpr int kActor2X0 = 315;
+      constexpr int kActor2X1 = 326;
+      constexpr int kActor2Y0 = 283;
+      constexpr int kActor2Y1 = 301;
+      constexpr double kA6d3TubeMae = 0.10089786756453423;
+      constexpr double kA6d3Temporal0Mae = 0.11246451442529874;
+      constexpr std::array<std::array<int, 4>, 2> kActorRects = {{
+          {{467, 282, 480, 300}},
+          {{397, 292, 408, 310}},
+      }};
+
+      const auto tubeOnlyMatched =
+          renderRoute(*scene, *library, matchedCam, {}, false, false);
+      const double tubeMae2 = rectRgbMae(tubeOnlyMatched, matchedRgb, kRefW, kRefH, kActor2X0,
+                                         kActor2Y0, kActor2X1, kActor2Y1);
+      std::cout << std::format("  actor2 tube-only mae={:.17f}\n", tubeMae2);
+      check(std::abs(tubeMae2 - kA6d3TubeMae) < 1e-7, "a6d4 tube-only actor2 MAE matches a6d3");
+
+      const int temporalCount = static_cast<int>(walk->animations.size());
+      double bestTemporalMae = tubeMae2;
+      int bestTemporal = -1;
+      std::ofstream table(a6d4Out / "mae-table.tsv");
+      table << "kind\tindex\tactor2_mae\tbeats_tube_only\n";
+      table << std::format("tube_only\t-\t{:.17f}\tfalse\n", tubeMae2);
+
+      for (int t = 0; t < temporalCount; ++t) {
+        auto walkers = makeInjectedList();
+        walkers[2].walkTemporalIndex = t;
+        const auto fb = renderRoute(*scene, *library, matchedCam, walkers, false, false);
+        const double mae = rectRgbMae(fb, matchedRgb, kRefW, kRefH, kActor2X0, kActor2Y0,
+                                       kActor2X1, kActor2Y1);
+        const bool beats = mae < tubeMae2;
+        std::cout << std::format("  temporal {} actor2_mae={:.17f}{}\n", t, mae,
+                                 beats ? " BEATS" : "");
+        table << std::format("temporal\t{}\t{:.17f}\t{}\n", t, mae, beats ? "true" : "false");
+        if (mae < bestTemporalMae) {
+          bestTemporalMae = mae;
+          bestTemporal = t;
+        }
+      }
+
+      auto walkersT0 = makeInjectedList();
+      const auto injectT0 = renderRoute(*scene, *library, matchedCam, walkersT0, false, false);
+      const double t0Mae = rectRgbMae(injectT0, matchedRgb, kRefW, kRefH, kActor2X0, kActor2Y0,
+                                      kActor2X1, kActor2Y1);
+      check(std::abs(t0Mae - kA6d3Temporal0Mae) < 1e-7, "a6d4 temporal0 inject MAE matches a6d3");
+      check(t0Mae >= tubeMae2, "a6d4 temporal0 inject does not beat tube-only on actor2");
+
+      double bestPhaseMae = tubeMae2;
+      int bestPhaseIndex = -1;
+      static constexpr std::array<double, 5> kPhaseGrid = {0.0, -0.0625, 0.0625, -0.125, 0.125};
+      for (std::size_t pi = 0; pi < kPhaseGrid.size(); ++pi) {
+        const double phase = kPhaseGrid[pi];
+        const auto fb =
+            renderRoute(*scene, *library, matchedCam, walkersT0, false, false, phase);
+        const double mae = rectRgbMae(fb, matchedRgb, kRefW, kRefH, kActor2X0, kActor2Y0,
+                                       kActor2X1, kActor2Y1);
+        const bool beats = mae < tubeMae2;
+        std::cout << std::format("  phase {} actor2_mae={:.17f}{}\n", phase, mae,
+                                 beats ? " BEATS" : "");
+        table << std::format("phase\t{}\t{:.17f}\t{}\n", phase, mae, beats ? "true" : "false");
+        if (mae < bestPhaseMae) {
+          bestPhaseMae = mae;
+          bestPhaseIndex = static_cast<int>(pi);
+        }
+      }
+
+      const bool temporalWins = bestTemporal >= 0 && bestTemporalMae < tubeMae2;
+      const bool phaseWins = bestPhaseIndex >= 0 && bestPhaseMae < tubeMae2;
+      if (temporalWins) {
+        std::cout << std::format("  CHOSEN temporal {} mae={:.17f}\n", bestTemporal,
+                                 bestTemporalMae);
+        check(bestTemporalMae < tubeMae2, "a6d4 winning temporal beats tube-only");
+      } else if (phaseWins) {
+        const double chosenPhase = kPhaseGrid[static_cast<std::size_t>(bestPhaseIndex)];
+        std::cout << std::format("  CHOSEN phase {} mae={:.17f}\n", chosenPhase, bestPhaseMae);
+        check(bestPhaseMae < tubeMae2, "a6d4 winning phase beats tube-only");
+        const auto phaseFb =
+            renderRoute(*scene, *library, matchedCam, walkersT0, false, false, chosenPhase);
+        for (std::size_t a = 0; a < 2; ++a) {
+          const int x0 = kActorRects[a][0];
+          const int y0 = kActorRects[a][1];
+          const int x1 = kActorRects[a][2];
+          const int y1 = kActorRects[a][3];
+          const double emptyMae =
+              rectRgbMae(tubeOnlyMatched, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+          const double withMae =
+              rectRgbMae(phaseFb, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+          check(withMae < emptyMae,
+                std::format("a6d4 actor {} improves at chosen phase {}", a, chosenPhase));
+        }
+        const auto phase0Fb =
+            renderRoute(*scene, *library, matchedCam, walkersT0, false, false, 0.0);
+        const double phase0Actor2 = rectRgbMae(phase0Fb, matchedRgb, kRefW, kRefH, kActor2X0,
+                                               kActor2Y0, kActor2X1, kActor2Y1);
+        check(phase0Actor2 >= tubeMae2, "a6d4 mutation phase0 fails actor2 bbox gate");
+      } else {
+        std::cout << "  RESULT no temporal or phase beats tube-only on actor2\n";
+        check(bestTemporalMae >= tubeMae2 && bestPhaseMae >= tubeMae2,
+              "a6d4 sweep negative confirmed");
+      }
+
+      // Actors 0–1 must still improve at default inject (temporal 0 all walkers, phase 0).
+      for (std::size_t a = 0; a < 2; ++a) {
+        const int x0 = kActorRects[a][0];
+        const int y0 = kActorRects[a][1];
+        const int x1 = kActorRects[a][2];
+        const int y1 = kActorRects[a][3];
+        const double emptyMae = rectRgbMae(tubeOnlyMatched, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+        const double withMae = rectRgbMae(injectT0, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+        check(withMae < emptyMae, std::format("a6d4 actor {} still improves at temporal0", a));
+      }
+
+      // Isolated mutation: actor 2 forced to temporal 0 while a winner exists would fail;
+      // with no winner, temporal-0 inject must remain worse than tube-only (checked above).
+      if (temporalWins && bestTemporal != 0) {
+        auto mutated = makeInjectedList();
+        mutated[2].walkTemporalIndex = 0;
+        const auto fb = renderRoute(*scene, *library, matchedCam, mutated, false, false);
+        const double mae = rectRgbMae(fb, matchedRgb, kRefW, kRefH, kActor2X0, kActor2Y0,
+                                       kActor2X1, kActor2Y1);
+        check(mae >= tubeMae2, "a6d4 mutation temporal0 fails actor2 bbox gate");
+      }
+
+      std::cout << "a6d5 live +0x1D8 read: production default matches native 0\n";
+      check(webo::app::SceneOptions{}.composeActorPhase == 0.0,
+            "a6d5 composeActorPhase default is native 0");
+      constexpr double kA6d5ProvisionalNegQuarterMae = 0.08861160625866508;
+      const auto provisionalNegQuarter =
+          renderRoute(*scene, *library, matchedCam, walkersT0, false, false, -0.125);
+      const double provisionalActor2Mae =
+          rectRgbMae(provisionalNegQuarter, matchedRgb, kRefW, kRefH, kActor2X0, kActor2Y0,
+                     kActor2X1, kActor2Y1);
+      std::cout << std::format("  actor2 native phase0 mae={:.17f}\n", t0Mae);
+      std::cout << std::format("  actor2 provisional -0.125 pixel-fit mae={:.17f}\n",
+                               provisionalActor2Mae);
+      check(std::abs(provisionalActor2Mae - kA6d5ProvisionalNegQuarterMae) < 1e-7,
+            "a6d5 provisional -0.125 MAE matches a6d4 sweep");
+      check(provisionalActor2Mae < tubeMae2,
+            "a6d5 provisional -0.125 beats tube-only (pixel fit only, not READ)");
+      check(t0Mae >= tubeMae2, "a6d5 native phase0 default fails actor2 bbox gate vs tube-only");
+
+      const fs::path a6d6Out = root / "build/tmp/a6d6-live-view-index";
+      if (fs::exists(a6d6Out)) {
+        fs::create_directories(a6d6Out);
+        webo::app::CameraParams matchedParams;
+        if (!webo::app::loadCameraParams(matchedCam, matchedParams, camError))
+          throw std::runtime_error(camError);
+        const auto matchedCamera = webo::app::buildCamera(matchedParams);
+        std::ofstream replay(a6d6Out / "inject-replay.json");
+        replay << "[\n";
+        for (std::size_t i = 0; i < 3; ++i) {
+          const auto pose = webo::actorPoseFromNativeSample(
+              poseLevel,
+              webo::ActorTerrainSample{kInjected[i].plus8[0], kInjected[i].plus8[1],
+                                       kInjected[i].plus8[2]},
+              kInjected[i].facing);
+          const webo::gfx::SpriteViewVector cameraToActor{
+              pose.modelPosition[0] - matchedCamera.eyeWorld[0],
+              pose.modelPosition[1] - matchedCamera.eyeWorld[1],
+              pose.modelPosition[2] - matchedCamera.eyeWorld[2],
+          };
+          const webo::gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
+          const auto scores =
+              webo::gfx::spriteViewScores(cameraToActor, basisVec, 0.0);
+          const auto sel = webo::gfx::selectSpriteView(scores[0], scores[1], 5, false);
+          if (i)
+            replay << ",\n";
+          replay << std::format(
+              "  {{\"inject_index\": {}, \"view\": {}, \"mirror\": {}, \"scores\": [{:.17f}, "
+              "{:.17f}]}}",
+              i, sel.index, sel.mirrored ? 1 : 0, scores[0], scores[1]);
+        }
+        replay << "\n]\n";
+
+        const fs::path forcePath = a6d6Out / "native-force.json";
+        if (fs::exists(forcePath)) {
+          std::ifstream fin(forcePath);
+          std::string forceBody((std::istreambuf_iterator<char>(fin)),
+                                std::istreambuf_iterator<char>());
+          const auto findInt = [&](std::string_view key) -> int {
+            const std::string needle = std::string("\"") + std::string(key) + "\": ";
+            const auto pos = forceBody.find(needle);
+            if (pos == std::string::npos)
+              throw std::runtime_error("native-force.json missing key");
+            return std::stoi(forceBody.substr(pos + needle.size()));
+          };
+          const int injectIndex = findInt("inject_index");
+          const int nativeView = findInt("view");
+          const int nativeMirror = findInt("mirror");
+          check(injectIndex == 2, "a6d6 native-force targets slope inject index 2");
+
+          auto forced = makeInjectedList();
+          forced[static_cast<std::size_t>(injectIndex)].forcedViewIndex = nativeView;
+          forced[static_cast<std::size_t>(injectIndex)].forcedMirror = nativeMirror;
+          const auto forcedFb =
+              renderRoute(*scene, *library, matchedCam, forced, false, false, 0.0);
+          const double forcedMae = rectRgbMae(forcedFb, matchedRgb, kRefW, kRefH, kActor2X0,
+                                              kActor2Y0, kActor2X1, kActor2Y1);
+          std::cout << std::format("  a6d6 actor2 native-view forced mae={:.17f}\n", forcedMae);
+
+          auto restored = makeInjectedList();
+          const auto restoredFb =
+              renderRoute(*scene, *library, matchedCam, restored, false, false, 0.0);
+          const double restoredMae = rectRgbMae(restoredFb, matchedRgb, kRefW, kRefH, kActor2X0,
+                                                kActor2Y0, kActor2X1, kActor2Y1);
+          check(std::abs(restoredMae - kA6d3Temporal0Mae) < 1e-7,
+                "a6d6 override-off restores temporal0 inject MAE");
+
+          const fs::path cmpPath = a6d6Out / "comparison.json";
+          if (fs::exists(cmpPath)) {
+            std::ifstream cin(cmpPath);
+            const std::string cmpBody((std::istreambuf_iterator<char>(cin)),
+                                      std::istreambuf_iterator<char>());
+            const bool anyMismatch = cmpBody.find("\"any_mismatch\": true") != std::string::npos;
+            if (anyMismatch) {
+              check(forcedMae < tubeMae2,
+                    "a6d6 native view override beats tube-only on actor2");
+            } else {
+              std::cout << "  a6d6 clean negative: inject replay matches native view/mirror\n";
+            }
+          }
+        } else {
+          std::cout << "  skip a6d6 MAE gate: native-force.json missing (run compare_views.py)\n";
+        }
+      }
+
+      std::cout << "a6d8 matched-state before-tube vs after-tube z-order\n";
+      const fs::path a6d8Out = root / "build/tmp/a6d8-actor2-z-order";
+      fs::create_directories(a6d8Out);
+      check(!webo::app::SceneOptions{}.composeActorsBeforeRoute,
+            "a6d8 production default is after-tube (composeActorsBeforeRoute false)");
+      const auto beforeTubeFb =
+          renderRoute(*scene, *library, matchedCam, walkersT0, true, false);
+      check(pngSha256(beforeTubeFb) != pngSha256(injectT0),
+            "a6d8 before-tube inject differs from after-tube");
+      check(std::abs(t0Mae - kA6d3Temporal0Mae) < 1e-7,
+            "a6d8 after-tube actor2 MAE matches a6d3 inject");
+
+      constexpr std::array<std::array<int, 4>, 3> kA6d3ActorRects = {{
+          {{467, 282, 480, 300}},
+          {{397, 292, 408, 310}},
+          {{315, 283, 326, 301}},
+      }};
+      std::array<double, 3> tubeMaeByActor{};
+      std::array<double, 3> afterMaeByActor{};
+      std::array<double, 3> beforeMaeByActor{};
+      for (std::size_t a = 0; a < 3; ++a) {
+        const int x0 = kA6d3ActorRects[a][0];
+        const int y0 = kA6d3ActorRects[a][1];
+        const int x1 = kA6d3ActorRects[a][2];
+        const int y1 = kA6d3ActorRects[a][3];
+        tubeMaeByActor[a] =
+            rectRgbMae(tubeOnlyMatched, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+        afterMaeByActor[a] =
+            rectRgbMae(injectT0, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+        beforeMaeByActor[a] =
+            rectRgbMae(beforeTubeFb, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+        std::cout << std::format(
+            "  actor {} tube={:.17f} after={:.17f} before={:.17f}\n", a, tubeMaeByActor[a],
+            afterMaeByActor[a], beforeMaeByActor[a]);
+      }
+
+      std::ofstream ztable(a6d8Out / "mae-table.tsv");
+      ztable << "actor\ttube_only_mae\tafter_tube_mae\tbefore_tube_mae\tbefore_beats_tube\n";
+      for (std::size_t a = 0; a < 3; ++a) {
+        const bool beats = beforeMaeByActor[a] < tubeMaeByActor[a];
+        ztable << std::format("{}\t{:.17f}\t{:.17f}\t{:.17f}\t{}\n", a, tubeMaeByActor[a],
+                              afterMaeByActor[a], beforeMaeByActor[a], beats ? "true" : "false");
+      }
+
+      bool actors01BeforeImprove = true;
+      for (std::size_t a = 0; a < 2; ++a) {
+        if (!(beforeMaeByActor[a] < tubeMaeByActor[a]))
+          actors01BeforeImprove = false;
+      }
+      const bool actor2BeforeBeatsTube = beforeMaeByActor[2] < tubeMaeByActor[2];
+      const bool beforeWins = actor2BeforeBeatsTube && actors01BeforeImprove;
+      if (beforeWins) {
+        std::cout << "  a6d8 CHOSEN before-tube (beats tube-only on actor2, actors 0-1 improve)\n";
+        check(beforeMaeByActor[2] < kA6d3TubeMae, "a6d8 before-tube beats tube-only on actor2");
+        for (std::size_t a = 0; a < 2; ++a)
+          check(beforeMaeByActor[a] < tubeMaeByActor[a],
+                std::format("a6d8 actor {} improves with before-tube", a));
+      } else {
+        std::cout << "  a6d8 negative: keep production after-tube draw order\n";
+        check(!actor2BeforeBeatsTube || !actors01BeforeImprove,
+              "a6d8 before-tube does not satisfy win gate");
+        check(afterMaeByActor[2] >= tubeMaeByActor[2],
+              "a6d8 after-tube actor2 still worse than tube-only (a6d3 defect retained)");
+        for (std::size_t a = 0; a < 2; ++a)
+          check(afterMaeByActor[a] < tubeMaeByActor[a],
+                std::format("a6d8 actor {} still improves with after-tube", a));
+      }
+
+      const auto afterTubeRestore =
+          renderRoute(*scene, *library, matchedCam, walkersT0, false, false);
+      const double restoreActor2 = rectRgbMae(afterTubeRestore, matchedRgb, kRefW, kRefH,
+                                              kActor2X0, kActor2Y0, kActor2X1, kActor2Y1);
+      check(std::abs(restoreActor2 - kA6d3Temporal0Mae) < 1e-7,
+            "a6d8 isolated after-tube mutation restores a6d3 actor2 MAE");
+
+      std::cout << "a6d9 overlay composite uses A4y alpha > 0xEF\n";
+      const fs::path a6d9Out = root / "build/tmp/a6d9-overlay-alpha-ef";
+      fs::create_directories(a6d9Out);
+      check(!webo::app::SceneOptions{}.overlayCompositeLegacyNonZero,
+            "a6d9 production default is A4y overlay composite");
+      check(webo::kActorAlphaTestReference == 0xEF, "a6d9 alpha reference is 0xEF");
+
+      const auto legacyInject =
+          renderRoute(*scene, *library, matchedCam, walkersT0, false, false, 0.0, true);
+      const double legacyActor2Mae = rectRgbMae(legacyInject, matchedRgb, kRefW, kRefH, kActor2X0,
+                                                kActor2Y0, kActor2X1, kActor2Y1);
+      check(std::abs(legacyActor2Mae - kA6d3Temporal0Mae) < 1e-7,
+            "a6d9 legacy a!=0 overlay restores a6d3 actor2 MAE");
+      check(std::abs(t0Mae - legacyActor2Mae) < 1e-7,
+            "a6d9 A4y overlay matches legacy on walk overlay (0/255 alphas only)");
+
+      std::array<double, 3> a6d9InjectMae{};
+      for (std::size_t a = 0; a < 3; ++a) {
+        const int x0 = kA6d3ActorRects[a][0];
+        const int y0 = kA6d3ActorRects[a][1];
+        const int x1 = kA6d3ActorRects[a][2];
+        const int y1 = kA6d3ActorRects[a][3];
+        a6d9InjectMae[a] = rectRgbMae(injectT0, matchedRgb, kRefW, kRefH, x0, y0, x1, y1);
+      }
+      const bool actor2BeatsTube = a6d9InjectMae[2] < tubeMaeByActor[2];
+      std::cout << std::format("  actor2 A4y inject mae={:.17f} tube={:.17f}{}\n",
+                               a6d9InjectMae[2], tubeMaeByActor[2],
+                               actor2BeatsTube ? " BEATS" : "");
+      if (actor2BeatsTube)
+        check(a6d9InjectMae[2] < kA6d3TubeMae, "a6d9 actor2 beats tube-only");
+      else
+        check(a6d9InjectMae[2] >= kA6d3TubeMae,
+              "a6d9 actor2 does not beat tube-only (bbox gate retained)");
+      for (std::size_t a = 0; a < 2; ++a)
+        check(a6d9InjectMae[a] < tubeMaeByActor[a],
+              std::format("a6d9 actor {} still improves with A4y overlay", a));
+
+      std::ofstream a6d9table(a6d9Out / "mae-table.tsv");
+      a6d9table << "actor\ttube_only_mae\ta4y_inject_mae\tbeats_tube_only\n";
+      for (std::size_t a = 0; a < 3; ++a) {
+        const bool beats = a6d9InjectMae[a] < tubeMaeByActor[a];
+        a6d9table << std::format("{}\t{:.17f}\t{:.17f}\t{}\n", a, tubeMaeByActor[a],
+                                 a6d9InjectMae[a], beats ? "true" : "false");
+      }
+
+      // Synthetic overlay proves composite predicate differs from legacy a!=0.
+      auto applyOverlayComposite = [](std::vector<std::uint8_t>& rgb, int width, int height,
+                                      const webo::Image& overlay, bool legacyNonZero) {
+        for (int y = 0; y < height; ++y) {
+          for (int x = 0; x < width; ++x) {
+            const std::size_t i = (static_cast<std::size_t>(y) * width + x) * 4;
+            const std::uint8_t a = overlay.rgba[i + 3];
+            if (legacyNonZero) {
+              if (a == 0)
+                continue;
+            } else if (!webo::actorSpriteAlphaTestPasses(a)) {
+              continue;
+            }
+            const std::size_t o = (static_cast<std::size_t>(y) * width + x) * 3;
+            rgb[o] = overlay.rgba[i];
+            rgb[o + 1] = overlay.rgba[i + 1];
+            rgb[o + 2] = overlay.rgba[i + 2];
+          }
+        }
+      };
+      webo::Image synth;
+      synth.width = 2;
+      synth.height = 1;
+      synth.alpha = webo::AlphaMode::Embedded;
+      synth.rgba = {9, 9, 9, 0xF0, 8, 8, 8, 0xA0};
+      std::vector<std::uint8_t> rgbA4y{1, 1, 1, 2, 2, 2};
+      std::vector<std::uint8_t> rgbLegacy = rgbA4y;
+      applyOverlayComposite(rgbA4y, 2, 1, synth, false);
+      applyOverlayComposite(rgbLegacy, 2, 1, synth, true);
+      check(rgbA4y[0] == 9 && rgbA4y[1] == 9 && rgbA4y[2] == 9 && rgbA4y[3] == 2 && rgbA4y[4] == 2 &&
+                rgbA4y[5] == 2,
+            "a6d9 A4y composite skips alpha 0xA0");
+      check(rgbLegacy[3] == 8 && rgbLegacy[4] == 8 && rgbLegacy[5] == 8,
+            "a6d9 legacy composite writes alpha 0xA0");
+
+      std::cout << "a6d17 actor2 bbox pixel classification\n";
+      const fs::path a6d17Out = root / "build/tmp/a6d17-actor2-bbox-pixels";
+      fs::create_directories(a6d17Out);
+      check(tubeMae2 >= kA6d3TubeMae - 1e-7 && tubeMae2 <= kA6d3TubeMae + 1e-7,
+            "a6d17 tube-only actor2 MAE matches a6d3");
+      check(t0Mae >= kA6d3Temporal0Mae - 1e-7,
+            "a6d17 inject temporal0 still fails actor2 bbox gate");
+
+      std::array<int, 4> paintedClassCounts{};
+      auto bumpClass = [&](const char* cls) {
+        if (std::string_view(cls) == "integer_shift")
+          ++paintedClassCounts[0];
+        else if (std::string_view(cls) == "tint_scale")
+          ++paintedClassCounts[1];
+        else if (std::string_view(cls) == "extra_coverage")
+          ++paintedClassCounts[2];
+        else
+          ++paintedClassCounts[3];
+      };
+      int paintedTotal = 0;
+      for (int y = kActor2Y0; y < kActor2Y1; ++y) {
+        for (int x = kActor2X0; x < kActor2X1; ++x) {
+          RgbTri t{};
+          RgbTri inj{};
+          rgbTriAtFb(tubeOnlyMatched, x, y, t);
+          rgbTriAtFb(injectT0, x, y, inj);
+          if (rgbEqual(t, inj))
+            continue;
+          ++paintedTotal;
+          bumpClass(classifyActor2PaintedPixel(tubeOnlyMatched, injectT0, matchedRgb, kRefW, kRefH,
+                                               x, y));
+        }
+      }
+      std::cout << std::format(
+          "  actor2 painted={} integer_shift={} tint_scale={} extra_coverage={} "
+          "different_silhouette={}\n",
+          paintedTotal, paintedClassCounts[0], paintedClassCounts[1], paintedClassCounts[2],
+          paintedClassCounts[3]);
+      check(paintedTotal == 106, "a6d17 actor2 painted pixel count");
+      check(paintedClassCounts[0] == 94, "a6d17 integer_shift count among painted");
+      check(paintedClassCounts[1] == 12, "a6d17 tint_scale count among painted");
+      check(paintedClassCounts[2] == 0, "a6d17 extra_coverage count among painted");
+      check(paintedClassCounts[3] == 0, "a6d17 different_silhouette count among painted");
+
+      std::ofstream a6d17table(a6d17Out / "pixel-class-counts.tsv");
+      a6d17table << "class\tcount\n";
+      a6d17table << std::format("integer_shift\t{}\n", paintedClassCounts[0]);
+      a6d17table << std::format("tint_scale\t{}\n", paintedClassCounts[1]);
+      a6d17table << std::format("extra_coverage\t{}\n", paintedClassCounts[2]);
+      a6d17table << std::format("different_silhouette\t{}\n", paintedClassCounts[3]);
+      a6d17table << std::format("painted_total\t{}\n", paintedTotal);
+      a6d17table << "named_class\tinteger_shift\n";
+      a6d17table << std::format("tube_only_mae\t{:.17f}\n", tubeMae2);
+      a6d17table << std::format("inject_temporal0_mae\t{:.17f}\n", t0Mae);
+
+      const webo::Image tubeImg = toRgbaImage(tubeOnlyMatched);
+      const webo::Image injectImg = toRgbaImage(injectT0);
+      writePngFile(a6d17Out / "tube-only.png", tubeImg);
+      writePngFile(a6d17Out / "inject-temporal0.png", injectImg);
+    } else {
+      std::cout << "skip a6d4 sweep: matched-state fixtures missing\n";
+    }
   } catch (const std::exception& ex) {
     check(false, ex.what());
   }

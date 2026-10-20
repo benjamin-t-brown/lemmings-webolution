@@ -107,6 +107,10 @@ add_executable(test_actorpose src/__test__/test_actorpose.cpp src/app/ActorPose.
 target_link_libraries(test_actorpose PRIVATE webolution_objects)
 add_test(NAME actorpose COMMAND test_actorpose)
 
+add_executable(test_actorterrain src/__test__/test_actorterrain.cpp src/app/ActorTerrain.cpp)
+target_link_libraries(test_actorterrain PRIVATE webolution_objects)
+add_test(NAME actorterrain COMMAND test_actorterrain)
+
 add_executable(test_actoranim src/__test__/test_actoranim.cpp src/app/ActorAnim.cpp)
 target_link_libraries(test_actoranim PRIVATE webolution_objects)
 add_test(NAME actoranim COMMAND test_actoranim WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

@@ -84,11 +84,19 @@ struct SceneOptions {
     double plus8Y = 0;
     double plus8Z = 0;
     int facing = 1;
+    // Walk SPR temporal strip index for this injected sample (default 0).
+    int walkTemporalIndex = 0;
+    // Diagnostic (A6d6): force chooser output; negative = use selectSpriteView.
+    int forcedViewIndex = -1;
+    int forcedMirror = -1;
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
   bool composeActorsBeforeRoute = false;
+  // Diagnostic (A6d9): composite overlay with legacy `a != 0` replace instead of A4y `> 0xEF`.
+  bool overlayCompositeLegacyNonZero = false;
   bool composeSkipActorPose = false;
-  // Controller +0x1D8 rotation phase; unsettled — default 0 for this slice.
+  // Controller +0x1D8 rotation phase (A3 chooser input; spriteViewScores adds 0.0625).
+  // A6d5 live read: all three matched-pause walkers hold 0.0 at controller+0x1D8.
   double composeActorPhase = 0.0;
 };
 

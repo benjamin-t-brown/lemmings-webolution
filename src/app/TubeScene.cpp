@@ -2,6 +2,7 @@
 
 #include "app/ActorSprite.h"
 #include "assets/Bitmap.h"
+#include "assets/LightMap.h"
 #include "assets/LevelIndex.h"
 #include "assets/PolyList.h"
 #include "assets/SurfaceMesh.h"
@@ -201,7 +202,8 @@ const TubeScene::Tile* TubeScene::findTile(bool outer, int column, int row) cons
 
 namespace {
 
-void compositeActorOverlay(app::Raster& raster, const Image& overlay) {
+void compositeActorOverlay(app::Raster& raster, const Image& overlay,
+                           bool legacyNonZeroAlpha) {
   const app::Framebuffer& srcFb = raster.framebuffer();
   auto& rgb = const_cast<std::vector<std::uint8_t>&>(srcFb.rgb);
   const int width = srcFb.width;
@@ -213,8 +215,12 @@ void compositeActorOverlay(app::Raster& raster, const Image& overlay) {
     for (int x = 0; x < width; ++x) {
       const std::size_t i = (static_cast<std::size_t>(y) * width + x) * 4;
       const std::uint8_t a = overlay.rgba[i + 3];
-      if (a == 0)
+      if (legacyNonZeroAlpha) {
+        if (a == 0)
+          continue;
+      } else if (!webo::actorSpriteAlphaTestPasses(a)) {
         continue;
+      }
       const std::size_t o = (static_cast<std::size_t>(y) * width + x) * 3;
       rgb[o] = overlay.rgba[i];
       rgb[o + 1] = overlay.rgba[i + 1];
@@ -233,14 +239,6 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   rewirePoseLevel();
   const Sprite* walkSprite = lemmingSprites_.find("walk");
   if (walkSprite == nullptr)
-    return;
-
-  constexpr std::size_t kTemporalIndex = 0;
-  if (kTemporalIndex >= walkSprite->animations.size())
-    return;
-  const auto& temporal = walkSprite->animations[kTemporalIndex];
-  const std::size_t dirCount = temporal.frames.size();
-  if (dirCount == 0)
     return;
 
   Image overlay;
@@ -266,9 +264,21 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
         pose.modelPosition[2] - camera.eyeWorld[2],
     };
     const gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
+    const std::size_t temporalIndex =
+        static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
+    if (temporalIndex >= walkSprite->animations.size())
+      continue;
+    const auto& temporal = walkSprite->animations[temporalIndex];
+    const std::size_t dirCount = temporal.frames.size();
+    if (dirCount == 0)
+      continue;
+
     const auto scores = gfx::spriteViewScores(cameraToActor, basisVec, options.composeActorPhase);
-    const auto selection =
-        gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
+    auto selection = gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
+    if (injected.forcedViewIndex >= 0)
+      selection.index = static_cast<std::size_t>(injected.forcedViewIndex);
+    if (injected.forcedMirror >= 0)
+      selection.mirrored = injected.forcedMirror != 0;
     if (selection.index >= dirCount)
       continue;
 
@@ -296,7 +306,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
       continue;
   }
 
-  compositeActorOverlay(raster, overlay);
+  compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
 }
 
 void TubeScene::render(Raster& raster, const CameraBasis& camera,
@@ -659,9 +669,9 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
 
 std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers() {
   return {
-      {59.64480209350586, 32.0, 0.75, 1},
-      {45.21244430541992, 32.0, 0.75, 1},
-      {32.0, 36.87969207763672, 0.5, 1},
+      {60.244850158691406, 32.0, 0.75, 1},
+      {45.812477111816406, 32.0, 0.75, 1},
+      {32.0, 34.47958755493164, 0.5, 1},
   };
 }
 

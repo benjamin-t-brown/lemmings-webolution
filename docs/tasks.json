@@ -2,26 +2,24 @@
   "schema_version": 1,
   "updated": "2026-10-20",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "a6b-actor-anim-clock",
+    "title": "A6b: SPR temporal-index render clock (0.06 advance at controller +0x1CC)",
+    "status": "ready-for-verify",
+    "brief": "build/tmp/a6b-actor-anim-clock-brief.md",
+    "harness": "Cursor",
+    "worker_tier": "targeted",
+    "requested_model": "composer-2.5-fast",
+    "dispatch_id": "3ef46072-db85-41f1-a297-ca06ef77a406",
+    "brief_adaptation": "2026-10-20: SSH -> local mouv session-1; dgVoodoo.conf swap forbidden explicitly; cmake/webolution_sources.cmake added to allowlist (src/Makefile does not list app sources); hash-identical restore required. Question/falsifier/acceptance unchanged.",
+    "owns_live_game": true,
+    "live_owner": null,
+    "worker_output": "build/tmp/a6b-actor-anim-clock/round-note-repair1.md",
+    "depends_on": [],
+    "repair_brief": "build/tmp/a6b-actor-anim-clock-repair1.md",
+    "repair_reason": "Facilitator check: 0x468833..0x4689AE re-read, loop/carry/gate/dust/wrap match helper. Defects: replay derives each delta from native acc/index and re-syncs every frame (circular); time source of param_1 unnamed; fixture in gitignored build/tmp; +0x201 misnamed pingPong. Facilitator MEASURED from series: inferred elapsed is integer ms on all 44 intervals (6..9 ms, max 2.5e-6 off), i.e. render-frame ms, falsifying the worker 0.2 s/tick prediction."
+  },
   "queue": [
-    {
-      "id": "a6a-actor-pose",
-      "title": "A6a: actor +8 to model position +0x108 and facing basis, as a sim::Lemming adapter",
-      "status": "queued",
-      "brief": "build/tmp/a6a-actor-pose-brief.md",
-      "worker_tier": "targeted",
-      "owns_live_game": true,
-      "depends_on": []
-    },
-    {
-      "id": "a6b-actor-anim-clock",
-      "title": "A6b: SPR temporal-index render clock (0.06 advance at controller +0x1CC)",
-      "status": "queued",
-      "brief": "build/tmp/a6b-actor-anim-clock-brief.md",
-      "worker_tier": "targeted",
-      "owns_live_game": true,
-      "depends_on": []
-    },
     {
       "id": "a6c-actor-tube-composition",
       "title": "A6c: actor loop position in the 0x43A4EC tube walker and actor depth state (static)",
@@ -527,6 +525,27 @@
       "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) — PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
       "landed_in": "PLAN.md",
       "commit_hint": null
+    },
+    {
+      "id": "a6a-actor-pose",
+      "title": "A6a: actor +8 -> +0x108 via 0x43D56C cell-mesh interpolation (+0x43D2B8 template fallback); position 1e-4 on 3 live walkers; basis 2.962e-5 misses 1e-6 (parked E); sim->+8 unsettled",
+      "brief": "build/tmp/a6a-actor-pose-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "dc7a6e88-61d3-4aa9-a7ba-04ef8432b4d2",
+      "facilitator_handoff": "2026-10-20 13:4x: user confirmed Cursor facilitator takes over the queue from the Claude Code (Mac/SSH) session that committed 0598e83. Brief adapted from SSH to local mouv session-1 execution; question/tolerances/acceptance unchanged.",
+      "repair1_brief": "build/tmp/a6a-actor-pose-repair1.md",
+      "repair1_result": "Facilitator check 14:0x: 0x43A356/0x43A3AE/0x43D2B8..0x43D313 re-read and match the D2B8 fallback; model 1e-4 met 9/9; basis 1e-6 not met (max 2.962e-5); all native samples float32-exact; output-only float32 rounding mutation did not close it (6 fail), restored hash-exact. Basis residual parked as pixel-invisible.",
+      "repair_brief": "build/tmp/a6a-actor-pose-repair2.md",
+      "repair_reason": "Facilitator check: position match depends on invented synthesizeOuterShell (disabling it alone fails 7/21 incl. 0x28344c0 model X/Z); test loosened basis to 3e-5 vs brief falsifier 1e-6 (5/9 basis checks fail at 1e-6); sim-Y test tautological; mutation pre/post hashes differ; first live run wrote dgVoodoo.conf (must-not-touch, restored). Bytes 0x42EF38/0x4B1040/0x43D56C re-read and agree; 21/21 CTest. Offline repair, no game start. Repair 2: packaging only - label basis check as a 5e-5 regression bound (1e-6 falsifier not met) and restore 21/21.",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6a-actor-pose/round-note-repair2.md",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a6-actor-pose.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: reread 0x42EF30..0x42EF7B, 0x4B1040=0.1, 0x43D56C..0x43D5A8, 0x43A31D..0x43A3B9, 0x43D2B8..0x43D313; native samples float32-exact; on final source (ActorPose.cpp 2CD8B950) basis max bracketed 2.9e-5<max<=3.0e-5, 5 fail at 1e-6; isolated facing*0.1 drop fails 6 at 5e-5 bound, restored hash-exact; fresh full build 21/21 CTest; 0 game processes, 0 LemWeb tasks, install hashes = worker before set. Narrowed: first packet invented outer-shell scaling and loosened tolerance (rejected); dgVoodoo.conf swap was a brief deviation (restored); template==world+0x18 is inference."
     }
   ]
 }

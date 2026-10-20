@@ -103,6 +103,10 @@ add_executable(test_actorsprite src/__test__/test_actorsprite.cpp src/app/ActorS
 target_link_libraries(test_actorsprite PRIVATE webolution_objects)
 add_test(NAME actorsprite COMMAND test_actorsprite)
 
+add_executable(test_actorpose src/__test__/test_actorpose.cpp src/app/ActorPose.cpp)
+target_link_libraries(test_actorpose PRIVATE webolution_objects)
+add_test(NAME actorpose COMMAND test_actorpose)
+
 # Restored asset-side coverage (debt 2): tile names carry their own position,
 # and simulation states map to .SPR names. Both are renderer-independent.
 add_executable(test_tileposition src/__test__/test_tileposition.cpp)
@@ -183,6 +187,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid cellmesh tileposition spritestate PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid cellmesh tileposition spritestate actorpose PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

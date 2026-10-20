@@ -452,6 +452,17 @@ sites (`0x47022B`, `0x470F1E`) and 4 steady-state `(entry, exit)` brackets
 Next: offline replay of retained A4z zoom1 fixture under `{POINT, LINEAR} x
 {0xEF, 0xA0}` (`A4ag`).
 
+**A6a (READ + MEASURED, [check](scratch/phase-a6-actor-pose.md)):** model
+`+0x108` is `0x43D56C` bilinear interpolation of the cell mesh at actor `+0x08`.
+X is bucketed by 8 and wrapped `& 0x1F`, Y is bucketed by 16, and Z blends the
+inner/outer shells. Missing `grid0` keys are filled from the cylinder template by
+`0x43A31D` -> `0x43D2B8`. The basis is the normalized difference after adding
+`facing * 0.1` to X (`0x42EF38`). Three live walkers on `MM_CLIMB_002` match the
+position within 1e-4. The basis misses the 1e-6 falsifier (max 2.962e-5; native
+values are float32) and is parked. **Do not invent missing outer vertices**:
+the first packet's radial scaling fit to 3.7e-7 without an address. Sim -> `+0x08`
+(sub-cell X, Y flip, Z slab) is unsettled.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by
@@ -533,6 +544,9 @@ the splat for `0x200` with `[+0x4c]==1` and `0x4000` with `[+0x4c]==2`. Lava has
 - The engine turns a world Y into a file row by **truncation** — its float-to-int helper
   `0x0049C5AC` sets x87 rounding to chop — **not** `floor(worldH - y)`. The two differ by one
   cell for an integer Y, and that one cell has bitten twice.
+- Actor `+0x08` is not a 3D position: the model position `+0x108` is the cell-mesh
+  interpolation `0x43D56C` of it (8-unit columns `& 0x1F`, 16-unit rows, Z = shell blend).
+  See [A6a](scratch/phase-a6-actor-pose.md).
 - Hatch spawn is the two int16 at hatch `+0x9A` / `+0x9C` (plus count `+0x98`, type `+0xB0`),
   **not** the entrance model's translation: on all 144 retail hatch records the stored Y is
   the translation's world Y minus 2, and that difference is stored, not computed.

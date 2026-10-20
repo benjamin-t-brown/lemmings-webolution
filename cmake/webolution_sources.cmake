@@ -49,6 +49,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/CameraInput.cpp
   src/app/Raster.cpp
   src/app/ActorSprite.cpp
+  src/app/ActorPose.cpp
   src/app/TubeScene.cpp
   src/app/main.cpp
 )

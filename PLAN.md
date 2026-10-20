@@ -92,8 +92,10 @@ the settled facts are in `docs/LESSONS.md`.
 light-map tint. The [A5m map](docs/scratch/phase-a5m-actor-integration-map.md) lists the
 missing links; each is one round:
 
-- **A6a pose and basis** — actor `+8` to model position `+0x108` (`0x43D56C`) and the
-  `facing·0.1` basis, as an adapter from `sim::Lemming`. Queued.
+- **A6a pose and basis** — **landed** ([check](docs/scratch/phase-a6-actor-pose.md)):
+  `src/app/ActorPose` reproduces native `+0x108` within 1e-4 on three live walkers via
+  `0x43D56C` and the `0x43D2B8` template fallback. Basis residual 2.962e-5 is parked (E).
+  Sim → `+8` (sub-cell X, Y flip, Z slab) is unsettled and must be settled in A6d.
 - **A6b animation clock** — the `0.06` temporal advance at controller `+0x1CC` and its
   reset; a render clock separate from `Lemming::frame`. Queued.
 - **A6c composition** — where the actor loops `0x43A9BB`/`0x43AA47` sit in the tube
@@ -163,6 +165,11 @@ open.
   [A4aa](docs/scratch/phase-a4-zoom1-filter-provenance.md),
   [A4ae](docs/scratch/phase-a4-pre-actor-subcalls-static.md),
   [A4af](docs/scratch/phase-a4-tube-child-renderers-filter-static.md).
+- **Actor basis precision** (parked 2026-10-20 after three A6a rounds). The facing basis
+  misses its 1e-6 falsifier by up to 2.962e-5. Native values are float32 and the chain
+  `0x43D56C`/`0x401830`/`0x480AC8` is not replayed. It is invisible unless a view index sits
+  on a sector boundary. Resume only if the A6 gate shows a view-index mismatch. Evidence:
+  [A6a](docs/scratch/phase-a6-actor-pose.md).
 - **Frida hook tooling for live render-state traces** (parked with the above). A4ab's live
   trace crashed the stock game in D3DImm; A4ac/A4ad repaired the binder and stack layout
   offline only, never re-run live. Evidence: [A4ab](docs/scratch/phase-a4-zoom1-filter-trace-failed.md),

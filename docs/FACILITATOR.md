@@ -18,6 +18,30 @@ The project's results are sound because of the verification step, not because th
 reliable. Across 31 rounds, several had a claim narrowed or retracted on re-check — including
 claims made by the facilitator.
 
+## Task sizing: make the cheap tier succeed
+
+Decomposition is part of the job, not a preliminary. Break each request into the smallest
+round a **targeted** worker can finish and you can verify quickly. A good brief has one
+question, one falsifier, one ownership area, a bounded list of addresses/commands, and a
+candidate note that fits comfortably in the worker's context.
+
+Split the work further when the brief:
+
+- spans more than one subsystem or file area;
+- needs more than a handful of live runs, or unbounded search;
+- has no single acceptance check, or the check is a judgement call rather than a
+  measurement;
+- says “and also”.
+
+Use the **hard** tier only when the task genuinely cannot be split — ambiguous cross-cutting
+reverse engineering, a targeted attempt that failed for a reason other than size, or a change
+whose failure mode needs broad judgement. Write the escalation reason in the brief and the
+queue entry. Prefer splitting over escalating; a small failed round usually means the brief
+was too big, not that the worker needed a stronger model.
+
+This is also the recovery plan: if a worker dies mid-round, a small task leaves little work
+lost, and the queue shows exactly where to resume.
+
 ## Read first
 
 | File | What it gives you |
@@ -162,19 +186,21 @@ worker starts (`running`), when it returns (`ready-for-verify` if they have not)
 approval/capacity stops you (`blocked` + reason), and when you land (`landed` / clear
 `active`). Schema and permissions: `docs/ORCHESTRATION.md`.
 
-**Models are split deliberately** — names only in `docs/ROLES.md`. Dispatch the round
-agent and optional explore agent the way that table says for *your* harness. A round is
-bounded work against a written brief; judgement (support, over-generalisation, stale docs)
-stays on the strong tier. **Verification never delegates.** A cheap explore or lint pass
-is not verification.
+**Models are split deliberately** — names only in `docs/ROLES.md`. Dispatch the targeted
+worker by default; escalate to the hard worker only for a recorded reason. An explore agent
+is for map-only work. A round is bounded work against a written brief; judgement (support,
+over-generalisation, stale docs) stays on the strong tier. **Verification never delegates.**
+A cheap explore or lint pass is not verification.
 
 Every brief contains: the authority statement and a read-first table; **what is already
 settled, listed explicitly** so nothing is rediscovered; the round's question with every lead
-you already hold (addresses and bytes, including anything you verified yourself); the
-evidence standard, with the prediction written **before** the run and its falsifier; the
-mutate-one-thing-alone test requirement and the which-binary warning; build commands and
-environment traps; a must-not-touch list; deliverables including the scratch note and the
-state of the game process; and "report honestly — do not round, smooth or over-claim".
+you already hold (addresses and bytes, including anything you verified yourself); **why the
+work fits the targeted tier, or the recorded reason for escalating to the hard tier**; the
+single acceptance check you will re-run; the evidence standard, with the prediction written
+**before** the run and its falsifier; the mutate-one-thing-alone test requirement and the
+which-binary warning; build commands and environment traps; a must-not-touch list;
+deliverables including the scratch note and the state of the game process; and "report
+honestly — do not round, smooth or over-claim".
 Point the brief at `docs/tasks.json` `active.id` so the worker knows which queue slot it is.
 
 **If an agent dies mid-round** (it happened three times on rate limits): died early with
@@ -263,12 +289,27 @@ restored exactly and the focused test passed. The old default wall independently
 the pixel gate. No stock process was started; the stock hash is unchanged and no owned
 process remains. See the linked note for READ corrections and verification artifacts.
 
-**Next proposed round (not dispatched): one actor billboard fixture.** Use the accepted
-A1 camera and A3 selector/SPR axes; establish replacement placement, UV/mirror and depth
-from the sprite path and actor-bound captures before wiring the whole simulation.
-The linked note gives dependencies, worker ownership and acceptance criteria. Do not
-rediscover A3 selection or use billboard fitting as lemming identity. Retain the broader
-A2 and A3 failures. The queue is clear after A4e landing; re-read it before dispatch.
+**A4f landed 2026-10-19 as geometry-verified, pixel-negative.** Read the
+[A4f check](scratch/phase-a4-actor-billboard.md). Corners match native within one ULP;
+seven isolated mutations fail; 20/20 tests; nine tube views unchanged. Pixels fail the
+absent-actor gate because the live actor vertex RGB is 152 while `0x440A10` initialises
+255; a comparison-only 152/255 scale passes, a U flip does not. Do not hard-code 152.
+`ctrl+0x1B0` UV reordering and the unmirrored branch remain READ-only.
+
+**A4g landed narrowed** ([check](scratch/phase-a4-actor-tint-writer.md)): the setter
+`0x406260` and a fluid-only fade were found; walk/block 152 is still unexplained. The worker
+wrongly said the level file was missing, and the facilitator corrected it.
+**A4h landed as a clean negative.** `0x4682a6` copies the actor's controller *into* eight
+prototypes; it never writes the actor. Static leads around `0x406260` are exhausted. **A4i/A4j
+(GDB hardware watches) named no writer.** A4j showed the watch missing a polled write, so
+A4i's "set once" is retracted to inconclusive.
+**A4k–A4q solved the tint** (see the tint-writer note). It is a stored per-level grey light
+map applied by `0x403820`, and the A4f gate now passes with `LightMap`. Lessons for briefs:
+- Frida via REA works where GDB did not.
+- Hooks derived from the *first* backtrace can be on the wrong stack (level-load vs walker).
+- Worker mutation restores that preserve the old mtime leave ninja objects stale. Rebuild
+  after touching the restored files before trusting a CTest result.
+The queue is clear.
 
 Foreground acquisition is automated as recorded in the rules. If future probes
 use hardware breakpoints, delete them while the original is stopped and verify

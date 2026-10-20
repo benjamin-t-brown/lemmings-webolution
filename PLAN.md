@@ -182,6 +182,25 @@ The whole phase is "make it look and move like the original". One round per item
   No new stock live measurement or full-scene acceptance. Next bounded proposal:
   one actor billboard placement/raster fixture using A3 selection, before whole
   simulation integration; ownership/dependencies/acceptance are in the linked note.
+  **A4f checkpoint:** the [actor billboard check](docs/scratch/phase-a4-actor-billboard.md)
+  matches native corners within one float ULP for two mirrored fixtures; seven isolated
+  placement/UV/alpha/scale mutations fail the focused test; 20/20 tests and nine
+  unchanged tube views. Pixels fail the absent-actor gate: the live actor's vertex RGB
+  is 152, not the constructor's 255, and its writer is unfound. Next: find that writer
+  (static), then rerun the pixel gate.
+  **A4g checkpoint:** the [tint-writer check](docs/scratch/phase-a4-actor-tint-writer.md)
+  finds the uniform-RGB setter `0x406260` and a fluid-only fade, but nothing yet that
+  gives walk/block 152. A4h: the `0x4682a6` link copies the actor into prototypes
+  (clean negative). Static leads are exhausted. A4i/A4j GDB hardware watches named no
+  writer and were shown to miss a write (see the linked note).
+  **A4k–A4q checkpoint (2026-10-19): actor tint solved, and the A4f pixel gate passes.**
+  Frida bisects (A4k–A4o) found the writer: `0x403820`, on the lemming's update, copies
+  `palette[map[y·128 + (x & 0xFF)/2]]` into all four vertex records. A4p showed the map
+  (12288 B) and palette (256 × 3 f64) are stored LVL data after the collision grid. A4q
+  (`src/assets/LightMap.{h,cpp}`, MODULATE in `drawActorSprite`) passes both fixtures:
+  0.00323 / 0.00362 against absent-actor 0.00619 / 0.00685. Still open: the modulate op
+  and blend state at `0x414D80` (assumed, unread), an observed colour change across cells,
+  the `_strcmp` guard at `0x42E622`, and wiring actors into the app renderer.
 
 ## Phase B — the frontend
 

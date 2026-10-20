@@ -17,6 +17,7 @@ set(WEBOLUTION_SOURCES
   src/assets/LevelIndex.cpp
   src/assets/Cylinder.cpp
   src/assets/CollisionGrid.cpp
+  src/assets/LightMap.cpp
   src/assets/CellMesh.cpp
   src/assets/SurfaceMesh.cpp
   src/assets/LevelObjects.cpp
@@ -47,6 +48,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/Camera.cpp
   src/app/CameraInput.cpp
   src/app/Raster.cpp
+  src/app/ActorSprite.cpp
   src/app/TubeScene.cpp
   src/app/main.cpp
 )

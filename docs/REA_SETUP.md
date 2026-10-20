@@ -50,6 +50,15 @@ initialization and a session-status call, and after client refresh the actual Co
 camera measurement. Refresh the client when registration changes, then check the actual
 session's tools rather than inferring a connection from a successful CLI command.
 
+**Cursor (2026-10-19):** `~/.cursor/mcp.json` had a `rea` entry pointing into a temporary
+`npm-cache\_npx\…` copy. Cursor reported the server as failing discovery, and `rea doctor
+--client cursor` marked it `stale`. The fix is the same scoped setup with `--client cursor`
+(dry run first). It rewrites only the `rea` entry to the global
+`%APPDATA%\npm\node_modules\rea-agents\scripts\rea.mjs`, keeps `GHIDRA_INSTALL_DIR` /
+`JAVA_HOME`, and backs up to `mcp.json.rea.backup`. Doctor then reports `aligned`.
+Restart Cursor afterwards. The registered Ghidra is `C:\tools\ghidra_12.1.4_PUBLIC`.
+`C:\progs\ghidra\…` also exists; doctor checks the registered one.
+
 The Codex sandbox can hide the user's npm directory and Python user-site packages. In this
 session, Capstone and Pillow were already installed but appeared missing to sandboxed
 Python; running the same interpreter with authorized normal-user access found them. The

@@ -77,6 +77,9 @@ target_link_libraries(lrtool PRIVATE webolution_objects)
 add_executable(lrcheck src/tools/lrcheck.cpp)
 target_link_libraries(lrcheck PRIVATE webolution_objects)
 
+add_executable(actorfixture src/tools/actorfixture.cpp src/app/ActorSprite.cpp src/app/Camera.cpp)
+target_link_libraries(actorfixture PRIVATE webolution_objects)
+
 # ---- tests ----------------------------------------------------------------
 
 include(CTest)
@@ -95,6 +98,10 @@ add_test(NAME box COMMAND test_box)
 add_executable(test_spriteview src/__test__/test_spriteview.cpp)
 target_link_libraries(test_spriteview PRIVATE webolution_objects)
 add_test(NAME spriteview COMMAND test_spriteview)
+
+add_executable(test_actorsprite src/__test__/test_actorsprite.cpp src/app/ActorSprite.cpp src/app/Camera.cpp)
+target_link_libraries(test_actorsprite PRIVATE webolution_objects)
+add_test(NAME actorsprite COMMAND test_actorsprite)
 
 # Restored asset-side coverage (debt 2): tile names carry their own position,
 # and simulation states map to .SPR names. Both are renderer-independent.

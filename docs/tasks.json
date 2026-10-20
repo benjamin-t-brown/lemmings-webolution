@@ -97,6 +97,102 @@
       "landed_in": "docs/scratch/phase-a4-window-controls.md",
       "commit_hint": null,
       "facilitator_verified": "2026-10-19: independent 19/19 CTest; 54 retained-stock input comparisons; native window initial frame exact, posted SPACE changes pixels, WM_CLOSE exit 0; dummy three-frame smoke; 9/9 unchanged A4d scores and PNG hashes; 14 isolated input/timing/event mutations discriminated after zoom-exit test correction; old default wall fails pixel gate; source restores exact; no stock process/writes."
+    },
+    {
+      "id": "a4f-actor-billboard",
+      "title": "A4f: actor billboard corners match native within 1 ULP; pixels fail absent-actor gate on unexplained vertex RGB 152",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-billboard.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: 20/20 CTest; nine tube views identical score+PNG hash; anchor branches re-read at 0x47A75D..0x47AB3F; 0x440A10 RGB 255 init re-read; seven isolated ActorSprite mutations fail test_actorsprite, restored byte-exact; comparison-only 152/255 scale beats absent-actor, U flip does not; install hashes match; no process left."
+    },
+    {
+      "id": "a4g-actor-tint-writer",
+      "title": "A4g: uniform-RGB setter 0x406260 and fluid-only fade found; walk/block 152 still unexplained",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: re-read 0x404372..0x40445F, 0x40E930..0x40E9F9, 0x43CE00, 0x4682A6 and the A4f capture offsets; corrected the worker: the LVL file exists, type 0x23 is fluid, and the 152 records sit on actor+0x128. Static round, no process."
+    },
+    {
+      "id": "a4h-controller-copy",
+      "title": "A4h: 0x4682a6 copies actor+0x128 into 8 prototypes (16*i); clean negative for 152",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: re-read 0x455BA0 rep movsd this->arg 0x6C dwords and loop bound 0x40E924 cmp 8; static, no process."
+    },
+    {
+      "id": "a4i-tint-write-watch",
+      "title": "A4i: hw watch with proven gameplay; walker 152 not rewritten per frame (set once); writer not named [RETRACTED to inconclusive by A4j: hw watch missed a polled write; no post-window read]",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: session-report advancement 4->8 and position delta; empty break list before detach; hashes match; no process. Static: 0x4680f0->0x4409E0->0x440A10 chain; 0x455ba0 callers 0x4682B4/0x454AE2 both copy out; 0x4C6988 is a constant-255 global."
+    },
+    {
+      "id": "a4j-spawn-watch",
+      "title": "A4j: spawn hw watch failed (ecx not a lemming, no advancement, watch missed polled 255->0); over start cap",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: no process left; read A4i report has no post-window tint read, so A4i claim retracted."
+    },
+    {
+      "id": "a4k-frida-tint",
+      "title": "A4k: Frida; fresh walker controllers 255 at construction, 152 later (writer unnamed; script bugs)",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: matched 0x468118 ecx to 152 walkers in live-snapshot; diagnosed legacy Memory.read* API, one-shot MAM re-arm bug, 0x49C611 cap flood, file-not-live byte check; no process; hashes per worker."
+    },
+    {
+      "id": "a4l-frida-tint-fixed",
+      "title": "A4l: fresh walker controller 255 -> 152 within 1-16 ms of construction; not via 0x406260/0x455ba0",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: read POLL_TINT events, process-memory hook bytes match, 0x43CE00 callers scanned."
+    },
+    {
+      "id": "a4m-tint-bisect",
+      "title": "A4m: frame bisect INCONCLUSIVE; hooks came from a level-load stack (0x47B35B); walkers use 0x43CE39<-0x42DECC<-0x425C35<-0x442D44<-0x45DCD9",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: matched backtrace seq 232/236/240/244 to the four 152 walker ctrls; rejected worker's 'after full unwind' conclusion; read 0x46836D (only +0x1F8/+0x1FC); hook bytes 15/15 and hashes per worker; no process."
+    },
+    {
+      "id": "a4n-walker-stack-bisect",
+      "title": "A4n: 152 written after lemming ctor 0x42DE51 returns, before 0x425CE1; only candidate is the first-tick virtual call at 0x425CCC (read: 0x42E2BF)",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: seq 873/874, 1722/1723, 2571/2572 bracket for three walkers; read 0x425C35..0x425CE1 (two hooked calls not hit, one unhooked vcall); vtable 0x4B10E8 slot +0x14 = 0x42E2BF; narrowed worker's 'writer is 0x425A95'; 12/12 hook bytes and hashes per worker; 2 starts."
+    },
+    {
+      "id": "a4o-first-tick-trace",
+      "title": "A4o: writer is 0x403820 (RGB copy to all 4 vertex records); source is a position-indexed colour map at 0x4C6A10 (+0x670 map, +0x678 palette)",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: events seq 6-10 (target 0x42E2BF measured, 0x403820 255->152 on all of RGB); re-read 0x403820, 0x42E62F..0x42E661, 0x403F40/0x403FC0/0x403FA0; corrected 'copy +0xA8->+0x40' to the full four-record cascade; Stalker crashed (not needed); 4/4 hook bytes and hashes per worker; 1 start."
+    },
+    {
+      "id": "a4p-colour-map",
+      "title": "A4p: tint map + 256x24B palette are stored LVL data after the collision grid; lookup == live RGB 20/20 (all on byte 0)",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: live dumps == offline == LVL bytes at 338319/350607; corrected palette size 512 -> 256 entries; histogram and ramp read; A4f fixtures (x~-57,y=32) map to idx 4195/4196 byte 0 = 152; producer chain read by worker only; read-only, 1 start."
+    },
+    {
+      "id": "a4q-actor-light-map",
+      "title": "A4q: LightMap parse + exact lookup + MODULATE; A4f pixel gate PASSES (0.00323/0.00362 vs absent 0.00619/0.00685)",
+      "status": "landed",
+      "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: forced rebuild (worker restores kept old mtimes -> stale objects), 20/20 CTest; own reverts no-&0xFF, floor, no-modulate each fail and restore passes; gate rerun reproduces worker numbers, --no-light-lookup reproduces old failure; all 102 palettes integral 0..255; new code has no tube/app caller."
     }
   ]
 }

@@ -13,9 +13,12 @@
 
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
+#include "assets/LightMap.h"
 #include "assets/LevelIndex.h"
 #include "sim/Terrain.h"
 
+#include <array>
+#include <cstring>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -158,6 +161,84 @@ void testCorpus(const webo::AssetLibrary& lib) {
                            kHeight, minPct, maxPct);
 }
 
+void testActorLightMap(const webo::AssetLibrary& lib) {
+  std::cout << "actor light map on MM_CLIMB_002\n";
+  auto blob = lib.read("COMPILED\\MM_CLIMB_002.LVL");
+  if (!blob) {
+    check(false, blob.error());
+    return;
+  }
+  const auto light = webo::findActorLightMap(*blob);
+  if (!light) {
+    check(false, light.error());
+    return;
+  }
+  check(light->map.size() == webo::ActorLightMap::kMapBytes, "map length is 12288");
+  check(light->histogram(0) == 9381, std::format("byte 0 count is 9381 (got {})", light->histogram(0)));
+  check(light->histogram(12) == 641, std::format("byte 12 count is 641 (got {})", light->histogram(12)));
+
+  const std::array<std::uint8_t, 13> expected{152, 147, 140, 131, 123, 116, 107, 98, 92, 82, 74, 68, 61};
+  for (int i = 0; i < 13; ++i) {
+    const auto& rgb = light->palette[static_cast<std::size_t>(i)];
+    check(rgb[0] == expected[static_cast<std::size_t>(i)] &&
+              rgb[1] == expected[static_cast<std::size_t>(i)] &&
+              rgb[2] == expected[static_cast<std::size_t>(i)],
+          std::format("palette[{}] grey {}", i, expected[static_cast<std::size_t>(i)]));
+  }
+
+  // Facilitator-measured file offsets for the map count and palette start.
+  constexpr std::size_t kMapCountOffset = 338315;
+  constexpr std::size_t kPaletteOffset = 350607;
+  std::uint32_t mapCount = 0;
+  std::memcpy(&mapCount, blob->data() + kMapCountOffset, 4);
+  check(mapCount == 12288, "map count u32 at file offset 338315");
+  check(blob->size() >= kPaletteOffset + webo::ActorLightMap::kPaletteBytes,
+        "palette fits after offset 350607");
+
+  const int idxFixture = webo::actorLightMapIndex(-56.99833297729492, 32.0);
+  const int idxMinus57 = webo::actorLightMapIndex(-57.0, 32.0);
+  check(idxFixture == 4196, std::format("A4f fixture index is 4196 (got {})", idxFixture));
+  check(idxMinus57 == 4195, std::format("X=-57 index is 4195 (got {})", idxMinus57));
+  check(light->map[static_cast<std::size_t>(idxFixture)] == 0, "fixture map byte is 0");
+  check(light->map[static_cast<std::size_t>(idxMinus57)] == 0, "X=-57 map byte is 0");
+  const auto fixtureTint = webo::actorLightTintAt(*light, -56.99833297729492, 32.0);
+  check(fixtureTint.has_value() && (*fixtureTint)[0] == 152 && (*fixtureTint)[1] == 152 &&
+            (*fixtureTint)[2] == 152,
+        "fixture lookup RGB is 152");
+  check(webo::actorLightMapIndex(-0.25, 32.0) == webo::actorLightMapIndex(0.0, 32.0),
+        "X in (-1,0) uses trunc toward zero");
+
+  std::size_t nonzeroIndex = light->map.size();
+  for (std::size_t i = 0; i < light->map.size(); ++i)
+    if (light->map[i] == 12) {
+      nonzeroIndex = i;
+      break;
+    }
+  check(nonzeroIndex < light->map.size(), "found a map cell with byte 12");
+  if (nonzeroIndex < light->map.size()) {
+    int row = -1;
+    int xLow = -1;
+    for (int candidateRow = 0; candidateRow < 96; ++candidateRow) {
+      const int rem = static_cast<int>(nonzeroIndex) - ((candidateRow << 8) / 2);
+      if (rem < 0 || rem > 127)
+        continue;
+      xLow = rem * 2;
+      row = candidateRow;
+      break;
+    }
+    check(row >= 0 && xLow >= 0 && xLow <= 255, "derived row/X for byte-12 cell");
+    const double worldX = static_cast<double>(xLow);
+    check(webo::actorLightMapIndex(worldX, static_cast<double>(row)) ==
+              static_cast<int>(nonzeroIndex),
+          "constructed X/Y hits the byte-12 map cell");
+    const auto tint = webo::actorLightTintAt(*light, worldX, static_cast<double>(row));
+    check(tint.has_value(), "non-zero map cell resolves through the palette");
+    if (tint)
+      check((*tint)[0] == 61 && (*tint)[1] == 61 && (*tint)[2] == 61,
+            "palette entry 12 is grey 61");
+  }
+}
+
 void testTerrainMapping(const webo::AssetLibrary& lib) {
   std::cout << "collision grid -> Terrain\n";
   auto grid = webo::loadCollisionGrid(lib, "COMPILED\\MM_CLIMB_002.LVL");
@@ -226,6 +307,7 @@ int main() {
   // The dumps sit beside the build, not in the game directory.
   testAgainstLiveDumps(*lib, fs::path(WEBOLUTION_SOURCE_DIR) / "build" / "live_dump");
   testCorpus(*lib);
+  testActorLightMap(*lib);
   testTerrainMapping(*lib);
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);

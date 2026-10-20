@@ -222,6 +222,57 @@ is capped at 0.25 s. Main has no object-attachment/picking or pause/menu integra
 Next proposal: one actor billboard fixture using accepted A3 selection, then
 simulation integration and omitted scene. A2/A3 broader failures remain retained.
 
+## A4f checkpoint: actor billboard geometry exact; pixels fail on vertex tint
+
+The [A4f check](scratch/phase-a4-actor-billboard.md) adds `src/app/ActorSprite`. For the
+two retained mirrored fixtures, destination corners match native within one binary32
+ULP. Rule from `0x47A75D`: Y minus `unknown1` at full scale before the branch; mirror
+byte `ctrl+0x1B4` selects the branch; the mirrored branch rescales `unknown1`, the
+unmirrored one never does (an asymmetry to preserve). Scale delta is the global
+`[0x58D53C] − [0x58CB38]`. `ctrl+0x1B0` reorders UV arguments and is not modelled.
+The unmirrored branch is READ only.
+
+Pixels are **not** accepted: candidate MAE is worse than an absent-actor render
+(five 0.00797 vs 0.00619; eight 0.00934 vs 0.00685). `0x440A10` initialises vertex
+RGB to 255.0, but the live actor holds 152.0 in all four records; the writer is
+unfound. A comparison-only 152/255 scale beats absent-actor on both fixtures, a U flip
+does not. Do not hard-code 152. 20/20 tests; nine tube views unchanged.
+
+**A4g narrowing** ([check](scratch/phase-a4-actor-tint-writer.md)): the 152 records sit
+on the controller `actor+0x128`, not the draw object `actor+0x78`. `0x406260` is the
+uniform-RGB setter. Its one computed caller, `0x404434`, is the type-`0x23` **fluid**
+sinking fade `(Y − [lvl+0x50]) / [lvl+0x98]`, clamped to 1, ×255, so it does not apply to
+walk/block. `0x40E9EC` gives prototype controllers `16·i` (never 152). A4h reads `0x4682a6`/`0x455ba0`
+as copying `actor+0x128` **into** eight prototypes (`rep movsd`, `0x1B0` bytes, `i < 8`),
+so the actor is the source, never the target. `0x454AE2` is a second copy-out that is
+tinted by a constant-255 global. A4i/A4j's GDB hardware watches gave no writer, and A4j
+caught one missing a polled 255 → 0 change. A4i's "not rewritten" is therefore
+**retracted to inconclusive**. A4k (Frida, measured): four walker controllers built by the
+spawn chain (`0x4409E0` from `0x468118`, 255.0) later hold 152.0, so the 152 is written
+after construction. Its writer is still unnamed (A4k's script bugs are recorded in the note).
+A4l puts the flip within 1–16 ms of construction, and it is not via `0x406260` or `0x455ba0`.
+In A4m, walker controllers come through the lemming-constructor stack (`0x43CE39` ←
+`0x42DECC` ← `0x425C35` ← `0x442D44` ← `0x45DCD9`). The 17 level-load constructions
+(`0x47B35B` …) are a separate stack, so a backtrace taken from the first spawn is not a
+walker's. A4n (measured bracket, three walkers): the lemming constructor `0x42DE51` returns
+with 255. The flip comes before the spawner `0x425A95` reaches `0x425CE1`, which leaves the
+virtual call `[vtable+0x14]` at `0x425CCC`: the new lemming's first update, read as
+`0x42E2BF` via vtable `0x4B10E8`. **A4o (measured + read): the writer is `0x403820`**, which
+copies one RGB-double triple into all four vertex records (`+0x178 → +0x110 → +0xA8 →
++0x40`). It goes 255 → 152/152/152 on the first update. The source is
+`0x403F40(0x4C6A10, ftol(actor+0x08), ftol(actor+0x10))`:
+`palette[0x4C6A10+0x678 + 0x18·map[(b<<8)/2 + (a&0xFF)/2]]`, with the map at
+`[0x4C6A10+0x670]`. **The lemming tint is a position-indexed colour map**, not a
+per-action constant. **A4p (measured):** the map is the stored `u32 12288, u8[12288]` block
+after the collision grid (`MM_CLIMB_002.LVL` offset 338319). A 6,144-byte palette of 256
+× 3 f64 follows with no prefix, at 350607. Both are byte-identical live. `MM_CLIMB_002`
+uses entries 0–12, a grey ramp starting 152, 147, 140 …. In 20/20 samples the lookup
+(`idx = y·128 + (x & 0xFF)/2`, x = `actor+0x08`, y = `actor+0x10`) equals the vertex RGB,
+but every sample was on byte 0, so a colour change between cells is not yet observed.
+**A4q:** `src/assets/LightMap` implements it, and the A4f pixel gate passes (0.00323 /
+0.00362, both below absent-actor). Every palette double in all 102 levels is a whole
+number in 0–255.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by

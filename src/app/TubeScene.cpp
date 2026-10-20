@@ -1,9 +1,11 @@
 #include "TubeScene.h"
 
+#include "app/ActorSprite.h"
 #include "assets/Bitmap.h"
 #include "assets/LevelIndex.h"
 #include "assets/PolyList.h"
 #include "assets/SurfaceMesh.h"
+#include "gfx/SpriteView.h"
 #include "gfx/TilePosition.h"
 
 #include <algorithm>
@@ -155,7 +157,38 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     }
   }
 
+  if (scene.haveCollision_ && !grid0.empty()) {
+    scene.poseGrid0_.assign(grid0.begin(), grid0.end());
+    scene.poseSurface_ = scene.mesh_.surface;
+    scene.poseCylinderTemplate_ = scene.mesh_;
+    scene.poseLevel_.gridHeight = scene.collision_.height;
+    scene.poseLevel_.grid0 = scene.poseGrid0_;
+    scene.poseLevel_.surface = scene.poseSurface_;
+    scene.poseLevel_.cylinderTemplate = &scene.poseCylinderTemplate_;
+    scene.havePoseLevel_ = true;
+  }
+  if (auto light = findActorLightMap(levelBytes))
+    scene.actorLight_ = std::move(*light);
+  if (auto sprites = loadSpriteSheet(lib, "SPRITES\\LEMMINGSHI.SPR")) {
+    scene.lemmingSprites_ = std::move(*sprites);
+    scene.haveLemmingSprites_ = true;
+    if (scene.lemmingSprites_.find("walk") == nullptr)
+      scene.missing_.push_back("compose: walk action missing from LEMMINGSHI.SPR");
+  } else {
+    scene.missing_.push_back(std::format("compose: {}", sprites.error()));
+  }
+
+  scene.rewirePoseLevel();
   return scene;
+}
+
+void TubeScene::rewirePoseLevel() const {
+  if (!havePoseLevel_)
+    return;
+  auto* self = const_cast<TubeScene*>(this);
+  self->poseLevel_.grid0 = poseGrid0_;
+  self->poseLevel_.surface = poseSurface_;
+  self->poseLevel_.cylinderTemplate = &poseCylinderTemplate_;
 }
 
 const TubeScene::Tile* TubeScene::findTile(bool outer, int column, int row) const {
@@ -166,8 +199,108 @@ const TubeScene::Tile* TubeScene::findTile(bool outer, int column, int row) cons
   return nullptr;
 }
 
+namespace {
+
+void compositeActorOverlay(app::Raster& raster, const Image& overlay) {
+  const app::Framebuffer& srcFb = raster.framebuffer();
+  auto& rgb = const_cast<std::vector<std::uint8_t>&>(srcFb.rgb);
+  const int width = srcFb.width;
+  const int height = srcFb.height;
+  if (overlay.width != width || overlay.height != height ||
+      overlay.rgba.size() != static_cast<std::size_t>(width) * height * 4)
+    return;
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      const std::size_t i = (static_cast<std::size_t>(y) * width + x) * 4;
+      const std::uint8_t a = overlay.rgba[i + 3];
+      if (a == 0)
+        continue;
+      const std::size_t o = (static_cast<std::size_t>(y) * width + x) * 3;
+      rgb[o] = overlay.rgba[i];
+      rgb[o + 1] = overlay.rgba[i + 1];
+      rgb[o + 2] = overlay.rgba[i + 2];
+    }
+  }
+}
+
+}  // namespace
+
+void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
+                                    const SceneOptions& options,
+                                    const AssetLibrary& lib) const {
+  if (options.injectedWalkers.empty() || !haveLemmingSprites_ || !havePoseLevel_)
+    return;
+  rewirePoseLevel();
+  const Sprite* walkSprite = lemmingSprites_.find("walk");
+  if (walkSprite == nullptr)
+    return;
+
+  constexpr std::size_t kTemporalIndex = 0;
+  if (kTemporalIndex >= walkSprite->animations.size())
+    return;
+  const auto& temporal = walkSprite->animations[kTemporalIndex];
+  const std::size_t dirCount = temporal.frames.size();
+  if (dirCount == 0)
+    return;
+
+  Image overlay;
+  overlay.width = raster.framebuffer().width;
+  overlay.height = raster.framebuffer().height;
+  overlay.alpha = AlphaMode::Embedded;
+  overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
+
+  for (auto it = options.injectedWalkers.rbegin(); it != options.injectedWalkers.rend(); ++it) {
+    const auto& injected = *it;
+    ActorTerrainSample plus8{injected.plus8X, injected.plus8Y, injected.plus8Z};
+    ActorPoseResult pose;
+    if (options.composeSkipActorPose) {
+      pose.modelPosition = {plus8.x, plus8.y, plus8.z};
+      pose.basis = {1.0, 0.0, 0.0};
+    } else {
+      pose = actorPoseFromNativeSample(poseLevel_, plus8, injected.facing);
+    }
+
+    const gfx::SpriteViewVector cameraToActor{
+        pose.modelPosition[0] - camera.eyeWorld[0],
+        pose.modelPosition[1] - camera.eyeWorld[1],
+        pose.modelPosition[2] - camera.eyeWorld[2],
+    };
+    const gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
+    const auto scores = gfx::spriteViewScores(cameraToActor, basisVec, options.composeActorPhase);
+    const auto selection =
+        gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
+    if (selection.index >= dirCount)
+      continue;
+
+    const auto& frame = temporal.frames[selection.index];
+    auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
+    if (!texture)
+      continue;
+
+    const std::array<double, 3> worldPosition{
+        pose.modelPosition[0], pose.modelPosition[1], pose.modelPosition[2]};
+    auto placement =
+        app::actorSpritePlacement(frame, worldPosition, camera, selection.mirrored, -1);
+    if (!placement)
+      continue;
+
+    std::array<std::uint8_t, 3> tint{255, 255, 255};
+    if (!actorLight_.empty()) {
+      if (auto looked = actorLightTintAt(actorLight_, worldPosition[0], worldPosition[1]))
+        tint = *looked;
+    }
+
+    if (!app::drawActorSprite(overlay, frame, *texture, *placement, selection.mirrored, tint,
+                              true)
+             .has_value())
+      continue;
+  }
+
+  compositeActorOverlay(raster, overlay);
+}
+
 void TubeScene::render(Raster& raster, const CameraBasis& camera,
-                       const SceneOptions& options) const {
+                       const SceneOptions& options, const AssetLibrary* composeAssets) const {
   raster.setDepthEnabled(options.depthTest);
   const int steps = static_cast<int>(mesh_.angularSteps);
   const int bands = static_cast<int>(mesh_.bandCount());
@@ -364,6 +497,15 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
     }
   }
 
+  const auto maybeCompose = [&]() {
+    if (!options.drawCellRoute || options.injectedWalkers.empty() || composeAssets == nullptr)
+      return;
+    drawInjectedWalkers(raster, camera, options, *composeAssets);
+  };
+
+  if (options.drawCellRoute && options.composeActorsBeforeRoute)
+    maybeCompose();
+
   if (options.drawCellRoute && cellMesh_.buckets > 0 && cellMesh_.bands > 0) {
     // The original's tube submission, `0x43A4EC`. Everything here is a port of
     // that walker and its four callees; see the round note for the addresses.
@@ -489,6 +631,9 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
     }
   }
 
+  if (options.drawCellRoute && !options.composeActorsBeforeRoute)
+    maybeCompose();
+
   if (options.drawPolyList) {
     for (const auto& face : poly_) {
       std::array<std::array<double, 4>, 3> p{};
@@ -510,6 +655,14 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       raster.triangle(p, t, tile->texture, face.modulate);
     }
   }
+}
+
+std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers() {
+  return {
+      {59.64480209350586, 32.0, 0.75, 1},
+      {45.21244430541992, 32.0, 0.75, 1},
+      {32.0, 36.87969207763672, 0.5, 1},
+  };
 }
 
 }  // namespace webo::app

@@ -107,6 +107,21 @@ add_executable(test_actorpose src/__test__/test_actorpose.cpp src/app/ActorPose.
 target_link_libraries(test_actorpose PRIVATE webolution_objects)
 add_test(NAME actorpose COMMAND test_actorpose)
 
+add_executable(test_actoranim src/__test__/test_actoranim.cpp src/app/ActorAnim.cpp)
+target_link_libraries(test_actoranim PRIVATE webolution_objects)
+add_test(NAME actoranim COMMAND test_actoranim WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+add_executable(test_actorcompose
+  src/__test__/test_actorcompose.cpp
+  src/app/TubeScene.cpp
+  src/app/Camera.cpp
+  src/app/Raster.cpp
+  src/app/ActorSprite.cpp
+  src/app/ActorPose.cpp)
+target_link_libraries(test_actorcompose PRIVATE webolution_objects z)
+target_compile_definitions(test_actorcompose PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME actorcompose COMMAND test_actorcompose WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 # Restored asset-side coverage (debt 2): tile names carry their own position,
 # and simulation states map to .SPR names. Both are renderer-independent.
 add_executable(test_tileposition src/__test__/test_tileposition.cpp)
@@ -187,6 +202,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid cellmesh tileposition spritestate actorpose PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

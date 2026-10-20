@@ -96,12 +96,18 @@ missing links; each is one round:
   `src/app/ActorPose` reproduces native `+0x108` within 1e-4 on three live walkers via
   `0x43D56C` and the `0x43D2B8` template fallback. Basis residual 2.962e-5 is parked (E).
   Sim → `+8` (sub-cell X, Y flip, Z slab) is unsettled and must be settled in A6d.
-- **A6b animation clock** — the `0.06` temporal advance at controller `+0x1CC` and its
-  reset; a render clock separate from `Lemming::frame`. Queued.
-- **A6c composition** — where the actor loops `0x43A9BB`/`0x43AA47` sit in the tube
-  walker's order and what depth state they draw under. Queued, static.
-- **A6d integration** — wire World → pose → selection → clock → placement → raster into
-  `main.cpp`, composited with the tube per A6c. Briefed after A6a–c land.
+- **A6b animation clock** — **landed** ([check](docs/scratch/phase-a6-actor-anim-clock.md)):
+  `src/app/ActorAnim` carries remainder past `0.06`, scaled by strip rate; strip bind
+  resets. Live walker series is integer-ms render slices, not the 200 ms sim tick.
+  Outer budget writer unsettled; A6d must not feed `Lemming::frame`.
+- **A6c composition** — **landed** ([check](docs/scratch/phase-a6-actor-tube-composition.md)):
+  actors draw after INN + three OUT passes, list high→low, no Z-state writes.
+  `[elem+0x18] >= 1.0` → `0x43A9BB`. Per-pixel Z vs tube unsettled.
+- **A6d integration** — **started** ([compose](docs/scratch/phase-a6-injected-walkers.md),
+  [bbox vs original-0](docs/scratch/phase-a6-app-bbox-gate.md)): walkers draw after
+  the tube and are on in `main` for `MM_CLIMB_002`. Clause 2 **fails** against
+  the A1 fixture original (wrong pause). Remaining: matched-state original,
+  sim → `+8`, render-clock dt, full-frame 0.02.
 
 **Exit gate (fixed now, not after capture):** on `MM_CLIMB_002`, a paused original frame
 with at least three walkers at the A1 canonical camera, against ours with the same actor
@@ -165,6 +171,10 @@ open.
   [A4aa](docs/scratch/phase-a4-zoom1-filter-provenance.md),
   [A4ae](docs/scratch/phase-a4-pre-actor-subcalls-static.md),
   [A4af](docs/scratch/phase-a4-tube-child-renderers-filter-static.md).
+- **A6 bbox vs `original-0.png`** (parked 2026-10-20 with A6d2). The A6a 10 s
+  poses make all three boxes worse against the A1 camera-fixture original.
+  Resume only with a pause that matches the injected actor list. Evidence:
+  [A6d2](docs/scratch/phase-a6-app-bbox-gate.md).
 - **Actor basis precision** (parked 2026-10-20 after three A6a rounds). The facing basis
   misses its 1e-6 falsifier by up to 2.962e-5. Native values are float32 and the chain
   `0x43D56C`/`0x401830`/`0x480AC8` is not replayed. It is invisible unless a view index sits

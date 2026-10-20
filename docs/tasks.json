@@ -2,34 +2,8 @@
   "schema_version": 1,
   "updated": "2026-10-20",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "a6b-actor-anim-clock",
-    "title": "A6b: SPR temporal-index render clock (0.06 advance at controller +0x1CC)",
-    "status": "ready-for-verify",
-    "brief": "build/tmp/a6b-actor-anim-clock-brief.md",
-    "harness": "Cursor",
-    "worker_tier": "targeted",
-    "requested_model": "composer-2.5-fast",
-    "dispatch_id": "3ef46072-db85-41f1-a297-ca06ef77a406",
-    "brief_adaptation": "2026-10-20: SSH -> local mouv session-1; dgVoodoo.conf swap forbidden explicitly; cmake/webolution_sources.cmake added to allowlist (src/Makefile does not list app sources); hash-identical restore required. Question/falsifier/acceptance unchanged.",
-    "owns_live_game": true,
-    "live_owner": null,
-    "worker_output": "build/tmp/a6b-actor-anim-clock/round-note-repair1.md",
-    "depends_on": [],
-    "repair_brief": "build/tmp/a6b-actor-anim-clock-repair1.md",
-    "repair_reason": "Facilitator check: 0x468833..0x4689AE re-read, loop/carry/gate/dust/wrap match helper. Defects: replay derives each delta from native acc/index and re-syncs every frame (circular); time source of param_1 unnamed; fixture in gitignored build/tmp; +0x201 misnamed pingPong. Facilitator MEASURED from series: inferred elapsed is integer ms on all 44 intervals (6..9 ms, max 2.5e-6 off), i.e. render-frame ms, falsifying the worker 0.2 s/tick prediction."
-  },
-  "queue": [
-    {
-      "id": "a6c-actor-tube-composition",
-      "title": "A6c: actor loop position in the 0x43A4EC tube walker and actor depth state (static)",
-      "status": "queued",
-      "brief": "build/tmp/a6c-actor-tube-composition-brief.md",
-      "worker_tier": "targeted",
-      "owns_live_game": false,
-      "depends_on": []
-    }
-  ],
+  "active": null,
+  "queue": [],
   "recently_landed": [
     {
       "id": "a1-projection-cache-replay",
@@ -546,6 +520,83 @@
       "landed_in": "docs/scratch/phase-a6-actor-pose.md",
       "commit_hint": null,
       "facilitator_verified": "2026-10-20: reread 0x42EF30..0x42EF7B, 0x4B1040=0.1, 0x43D56C..0x43D5A8, 0x43A31D..0x43A3B9, 0x43D2B8..0x43D313; native samples float32-exact; on final source (ActorPose.cpp 2CD8B950) basis max bracketed 2.9e-5<max<=3.0e-5, 5 fail at 1e-6; isolated facing*0.1 drop fails 6 at 5e-5 bound, restored hash-exact; fresh full build 21/21 CTest; 0 game processes, 0 LemWeb tasks, install hashes = worker before set. Narrowed: first packet invented outer-shell scaling and loosened tolerance (rejected); dgVoodoo.conf swap was a brief deviation (restored); template==world+0x18 is inference."
+    },
+    {
+      "id": "a6b-actor-anim-clock",
+      "title": "A6b: +0x1CC advances by elapsedSeconds*[strip+0x10] past 0.06 with remainder carried; integer-ms walker series; 0x468AB8 resets; outer budget writer unsettled",
+      "status": "landed",
+      "brief": "build/tmp/a6b-actor-anim-clock-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "3ef46072-db85-41f1-a297-ca06ef77a406",
+      "brief_adaptation": "2026-10-20: SSH -> local mouv session-1; dgVoodoo.conf swap forbidden explicitly; cmake/webolution_sources.cmake added to allowlist (src/Makefile does not list app sources); hash-identical restore required. Question/falsifier/acceptance unchanged.",
+      "owns_live_game": true,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6b-actor-anim-clock/round-note-repair1.md",
+      "repair_brief": "build/tmp/a6b-actor-anim-clock-repair1.md",
+      "repair_reason": "Facilitator check: 0x468833..0x4689AE re-read, loop/carry/gate/dust/wrap match helper. Defects: replay derives each delta from native acc/index and re-syncs every frame (circular); time source of param_1 unnamed; fixture in gitignored build/tmp; +0x201 misnamed pingPong. Facilitator MEASURED from series: inferred elapsed is integer ms on all 44 intervals (6..9 ms, max 2.5e-6 off), i.e. render-frame ms, falsifying the worker 0.2 s/tick prediction.",
+      "landed_in": "docs/scratch/phase-a6-actor-anim-clock.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: reread 0x468833..0x4689AE, 0x4B1940=0.06, 0x468AB8 reset, 0x43CF30, 0x41BDD4 and 0x41BF61 (time-to-next-cell / 5.0, not ms origin). Independent kElapsedMs recompute matches embed; forward replay 0 index fails, acc<=1e-6. Isolated remainder-reset 45 fails and omit-rate 1 fail; ActorAnim.cpp 838fd66b restore hash-exact; 22/22 CTest. Rejected 0x42EEF2->0x41BDD4 (Render, no E8). No game, no LemWeb task."
+    },
+    {
+      "id": "a6c-actor-tube-composition",
+      "title": "A6c: actors after INN+3 OUT passes, list high-to-low; no Z SetRenderState; worker reversed >=1.0 branch (A4ae correct)",
+      "status": "landed",
+      "worker_output": "build/tmp/a6c-actor-tube-composition/round-note.md",
+      "brief": "build/tmp/a6c-actor-tube-composition-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "05b267bb-fbac-4037-a4a0-f036d68c025a",
+      "brief_adaptation": "2026-10-20: SSH line replaced with local mouv byte reads. Question/falsifier/acceptance unchanged.",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "landed_in": "docs/scratch/phase-a6-actor-tube-composition.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: reread 0x43A754/7F4/87C/8FA/908 and 0x43A90D..0x43AA62. Independent: 0 tube E8 after 0x43A908; 0 whole-text SetRenderState last-push 7/14/23/47. Re-ran worker script sha256_ok, 0 Z hits, 13 actor +0x58 sites. Corrected branch: test ah,1 / jne 0x43A9C3 => [elem+0x18]>=1.0 -> 0x43A9BB (A4ae); worker note and script notes reversed. Prediction polarity was right. No src/live changes."
+    },
+    {
+      "id": "a6d-injected-walkers",
+      "title": "A6d: test-path compose of 3 injected walkers after tube; app list still empty; original bbox gate not scored",
+      "status": "landed",
+      "worker_output": "build/tmp/a6d-injected-walkers/round-note.md",
+      "brief": "build/tmp/a6d-injected-walkers-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "4306f1f4-2de3-4bb8-8adf-fb7055ae031f",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a6a-actor-pose",
+        "a6b-actor-anim-clock",
+        "a6c-actor-tube-composition"
+      ],
+      "landed_in": "docs/scratch/phase-a6-injected-walkers.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: initial empty PNG hash 66a8ea3b matches A4e. Independent production mutations: drop after-route compose fails 3/3 actor rects; force skip-pose fails 3/3 correct-pose rects. TubeScene.cpp restored 53760420. 23/23 CTest. Narrowed: main never fills injectedWalkers; skip-pose unit check inverted vs prediction; bbox vs original-0.png not run; 5/9 cameras live under gitignored build/tmp."
+    },
+    {
+      "id": "a6d2-app-bbox-gate",
+      "title": "A6d2: walkers on in main for MM_CLIMB_002; bbox vs original-0.png worse in all 3 boxes (wrong pause)",
+      "status": "landed",
+      "brief": "build/tmp/a6d2-app-bbox-gate-brief.md",
+      "harness": "Cursor",
+      "worker_tier": "targeted",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "8d13050b-e2f5-4442-86fb-ba60b140464d",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d2-app-bbox-gate/round-note.md",
+      "depends_on": [
+        "a6d-injected-walkers"
+      ],
+      "landed_in": "docs/scratch/phase-a6-app-bbox-gate.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent MAE recompute matches bbox-mae.json exactly (0.035167/0.114519, 0.013474/0.095552, 0.014167/0.085888). Isolated if(false&&) on main inject: default shot hashes 66a8ea3b (tube-only); restored main.cpp byte-identical to backup, default shot hashes cf0d16fb (with-injected). 23/23 CTest. No game; leftover frida-helper processes only. Parked: original-0.png is A1 fixture, not the A6a 10s walk."
     }
   ]
 }

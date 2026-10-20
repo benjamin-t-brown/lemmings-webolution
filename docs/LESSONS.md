@@ -463,6 +463,36 @@ values are float32) and is parked. **Do not invent missing outer vertices**:
 the first packet's radial scaling fit to 3.7e-7 without an address. Sim -> `+0x08`
 (sub-cell X, Y flip, Z slab) is unsettled.
 
+**A6b (READ + MEASURED, [check](scratch/phase-a6-actor-anim-clock.md)):** controller
+`+0x1CC` advances in `0x468833` by `acc += elapsedSeconds * [strip+0x10]`, then
+while `acc > 0.06` increments the index and **subtracts** 0.06 (remainder
+carried). `0x468AB8` resets index and accumulator on strip bind. `+0x201` set
+wraps to 0; clear holds at count-1. A 45-sample walker series is integer
+milliseconds (6–9) per interval; a no-resync forward replay matches. **Do not
+use `Lemming::frame` as the SPR temporal index.** Immediate `param_1` is
+`min(remaining budget, time-to-next-cell / 5.0)` from `0x41BDD4`; the outer
+budget writer is unsettled. The first packet's 0.2 s/tick prediction is
+falsified.
+
+**A6c (READ, [check](scratch/phase-a6-actor-tube-composition.md)):** actors in
+`0x4C6A10+0x1E88` draw **after** INN and all three OUT passes, walking the
+list **high index to 0**. `[elem+0x18] >= 1.0` uses `0x43A9BB`; `< 1.0` uses
+`0x43AA47` (A4ae; the A6c packet reversed this). No executable
+`SetRenderState` for ZENABLE/ZWRITE/ZFUNC/ZBIAS. Per-pixel actor Z versus
+tube Z is unsettled.
+
+**A6d (repo MEASURED, [check](scratch/phase-a6-injected-walkers.md)):** the
+production *route* can overlay three injected A6a walkers after the tube
+(pose → A3 view / walk temporal 0 → sprite). Empty list keeps the A4e
+initial PNG hash.
+
+**A6d2 (MEASURED negative, [check](scratch/phase-a6-app-bbox-gate.md)):**
+`main` now injects the three A6a walkers on `MM_CLIMB_002` route. Against
+A1 `original-0.png`, all three placement boxes get **worse** MAE (0.035→0.115,
+0.013→0.096, 0.014→0.086). That original is the camera fixture, not the A6a
+pause — do not treat this as a compose-path failure until the actor-list
+state matches. Sim → `+0x08` remains unsettled.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by

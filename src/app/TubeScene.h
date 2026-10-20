@@ -17,11 +17,14 @@
 
 #pragma once
 
+#include "app/ActorPose.h"
 #include "app/Camera.h"
 #include "app/Raster.h"
 #include "assets/CellMesh.h"
 #include "assets/CollisionGrid.h"
 #include "assets/Cylinder.h"
+#include "assets/LightMap.h"
+#include "assets/Sprite.h"
 
 #include <array>
 #include <cstddef>
@@ -32,6 +35,7 @@
 
 namespace webo {
 class AssetLibrary;
+struct Sprite;
 }
 
 namespace webo::app {
@@ -72,6 +76,20 @@ struct SceneOptions {
   // Debug: unwrap the outer skin into a 2D 8x3 tile atlas instead of the 3D
   // view. Never the default.
   bool flat = false;
+  // Injected A6a native `+0x08` samples (not sim lemmings). Empty leaves the
+  // tube frame unchanged. Drawn after the route passes unless
+  // composeActorsBeforeRoute (diagnostic).
+  struct InjectedNativeWalker {
+    double plus8X = 0;
+    double plus8Y = 0;
+    double plus8Z = 0;
+    int facing = 1;
+  };
+  std::vector<InjectedNativeWalker> injectedWalkers;
+  bool composeActorsBeforeRoute = false;
+  bool composeSkipActorPose = false;
+  // Controller +0x1D8 rotation phase; unsettled — default 0 for this slice.
+  double composeActorPhase = 0.0;
 };
 
 class TubeScene {
@@ -82,7 +100,8 @@ class TubeScene {
                                                      std::span<const std::uint32_t> grid0,
                                                      bool highDetailTiles = true);
 
-  void render(Raster& raster, const CameraBasis& camera, const SceneOptions& options) const;
+  void render(Raster& raster, const CameraBasis& camera, const SceneOptions& options,
+              const AssetLibrary* composeAssets = nullptr) const;
 
   std::size_t outerTiles() const { return outerTileCount_; }
   std::size_t innerTiles() const { return innerTileCount_; }
@@ -102,8 +121,20 @@ class TubeScene {
   };
 
   const Tile* findTile(bool outer, int column, int row) const;
+  void rewirePoseLevel() const;
+  void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
+                           const SceneOptions& options, const AssetLibrary& lib) const;
 
   CylinderMesh mesh_;
+  CylinderMesh poseCylinderTemplate_;
+  std::vector<std::uint32_t> poseGrid0_;
+  std::vector<Vec3> poseSurface_;
+  ActorPoseLevel poseLevel_{};
+  bool havePoseLevel_ = false;
+  ActorLightMap actorLight_;
+  SpriteSheet lemmingSprites_;
+  bool haveLemmingSprites_ = false;
+
   bool haveCollision_ = false;
   CollisionGrid collision_;
   std::vector<Tile> outer_;
@@ -133,5 +164,8 @@ class TubeScene {
   // The stored `f64` cylinder extent (0.36), the walker's pass-bound fraction.
   double cylinderExtent_ = 0.36;
 };
+
+// Settled A6a native `+0x08` samples for MM_CLIMB_002 injected compose (not sim).
+std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers();
 
 }  // namespace webo::app

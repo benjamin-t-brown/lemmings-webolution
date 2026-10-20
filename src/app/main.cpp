@@ -73,6 +73,7 @@ struct Args {
   std::string gameDir;
   int frames = 0;
   bool help = false;
+  bool noInjectedWalkers = false;
 };
 
 Args parseArgs(int argc, char** argv) {
@@ -98,6 +99,7 @@ Args parseArgs(int argc, char** argv) {
     }
     else if (arg == "--no-depth") a.noDepth = true;
     else if (arg == "--flat") a.flat = true;
+    else if (arg == "--no-injected-walkers") a.noInjectedWalkers = true;
     else if (arg == "--game-dir") a.gameDir = next();
   }
   if (a.gameDir.empty()) {
@@ -218,11 +220,15 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "route: unknown mutation term '%s'\n", args.route.c_str());
     return 1;
   }
+  if (options.drawCellRoute && args.level.find("MM_CLIMB_002") != std::string::npos &&
+      !args.noInjectedWalkers) {
+    options.injectedWalkers = app::defaultMmClimb002InjectedWalkers();
+  }
 
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {
     const auto frameCamera = app::buildCamera(frameParams);
     target.clear(0, 0, 0);
-    scene->render(target, frameCamera, options);
+    scene->render(target, frameCamera, options, &*library);
     return frameCamera;
   };
   app::Raster raster(params.width, params.height);

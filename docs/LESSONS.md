@@ -273,6 +273,18 @@ but every sample was on byte 0, so a colour change between cells is not yet obse
 0.00362, both below absent-actor). Every palette double in all 102 levels is a whole
 number in 0–255.
 
+**A4r (READ, [check](scratch/phase-a4-actor-render-state.md)):** material updater
+`0x47261F` writes stage-0 `MODULATE(TEXTURE, DIFFUSE)` RGB on all three paths that
+write material states. Pointer and flags caches can skip those writes. Alpha is
+texture-only or texture-times-diffuse depending on ordered flag branches; bit 8
+and bit 0x10 return before the low-bit tests. Blend routine `0x414D80` separately
+selects disabled, ONE/ONE, SRCALPHA/ONE, or SRCALPHA/INVSRCALPHA. Device3 API names
+are a strong layout/call-shape inference; the actor's flags and selector remain
+unresolved. This supports A4q's RGB rule without accepting actor-specific alpha,
+blend state, effective device state, or the sprite residual. Independent checker
+`tools/harness/verify_actor_render_state_a4r.py` pins operands, branch exits and SDK
+definitions. No production behavior changed; 20/20 tests pass.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by

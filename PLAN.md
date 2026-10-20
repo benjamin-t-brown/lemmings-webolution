@@ -198,9 +198,17 @@ The whole phase is "make it look and move like the original". One round per item
   `palette[map[y·128 + (x & 0xFF)/2]]` into all four vertex records. A4p showed the map
   (12288 B) and palette (256 × 3 f64) are stored LVL data after the collision grid. A4q
   (`src/assets/LightMap.{h,cpp}`, MODULATE in `drawActorSprite`) passes both fixtures:
-  0.00323 / 0.00362 against absent-actor 0.00619 / 0.00685. Still open: the modulate op
-  and blend state at `0x414D80` (assumed, unread), an observed colour change across cells,
-  the `_strcmp` guard at `0x42E622`, and wiring actors into the app renderer.
+  0.00323 / 0.00362 against absent-actor 0.00619 / 0.00685.
+  **A4r checkpoint (static):** the [render-state check](docs/scratch/phase-a4-actor-render-state.md)
+  reads RGB `MODULATE(TEXTURE, DIFFUSE)` on all state-writing material paths in
+  `0x47261F`, conditional alpha handling and the blend-selector table at `0x414D80`.
+  Device3 names are inferred from paired vtable layout and call shape; caches skip
+  assignments. The actor's material flags and blend selector are still unresolved,
+  so actor-specific alpha/blend behavior and effective device state remain open.
+  No production behavior change; independent operand/SDK check and 20/20 CTest pass.
+  Next bounded question: establish those actor flags and selector. Other open items:
+  an observed colour change across cells, the `_strcmp` guard at `0x42E622`, the
+  sprite-pixel residual, and wiring actors into the app renderer.
 
 ## Phase B — the frontend
 

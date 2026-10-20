@@ -193,6 +193,24 @@
       "landed_in": "docs/scratch/phase-a4-actor-tint-writer.md",
       "commit_hint": null,
       "facilitator_verified": "2026-10-19: forced rebuild (worker restores kept old mtimes -> stale objects), 20/20 CTest; own reverts no-&0xFF, floor, no-modulate each fail and restore passes; gate rerun reproduces worker numbers, --no-light-lookup reproduces old failure; all 102 palettes integral 0..255; new code has no tube/app caller."
+    },
+    {
+      "id": "a4r-actor-render-state",
+      "title": "A4r: read actor texture-stage and blend states behind A4q modulation assumption",
+      "status": "landed",
+      "brief": "build/tmp/a4r-actor-render-state-brief.md",
+      "harness": "Codex",
+      "worker_tier": "targeted",
+      "requested_model": "gpt-6-luna",
+      "dispatch_id": "/root/a4r_actor_render_state",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a4r-actor-render-state/round-note.md",
+      "repair_brief": "build/tmp/a4r-actor-render-state-repair2.md",
+      "repair_reason": "Alternate material branch operands were misdecoded: 0x4727EB sets COLOROP, not ALPHAOP; both caches need accounting.",
+      "landed_in": "docs/scratch/phase-a4-actor-render-state.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-19: independent 34 setter tuples, 21 byte/branch anchors, 3 SDK offsets, 20 enums; original bytes and Ghidra material control flow reread. Corrected final packet: flag8/flag0x10 return before low-bit alpha tests. API identity narrowed to strong layout inference; actor flags/selector unresolved. 20/20 CTest; no production/live changes; no game processes; REA closed."
     }
   ]
 }

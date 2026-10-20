@@ -310,7 +310,10 @@ Worker note `build/tmp/a4q-actor-light-map/round-note.md`. Code round, no live g
     and the tests), so the nine views are unaffected by construction. The worker re-scored
     all nine; only `initial`'s hash was compared against a recorded value.
 - Still open:
-  - the MODULATE/blend state;
+  - the actor-specific alpha/blend state; the later
+    [A4r static check](phase-a4-actor-render-state.md) supports RGB modulation and
+    reads conditional alpha/blend assignments, but leaves actor flags and selector
+    unresolved;
   - a live colour *change* across map cells;
   - the `_strcmp` guard strings at `0x42E622`;
   - the ~0.08 sprite-pixel residual;

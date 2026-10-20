@@ -623,6 +623,28 @@ matrix `0x43CC71` passes to `0x40EAE0`. Not file-static identity.
 Not shown to equal `worldToLensedView`. No `ActorSprite` hook.
 Screen-Y bias parked after this third round.
 
+**A6d23 (MEASURED + READ, [check](scratch/phase-a6-native-camera-pair.md)):**
+at a fresh canonical-camera pause, compiled production screen Y agrees with
+three actor-cache triples within **8.963683444562776e-05 px** (predeclared
+1e-4 target). No screenshot; not the A6d3 pause, no A6 pixel pass. Affine
+depth is about 0.0003 above cache: `0x43CCB5` subtracts `0x4B1498`, then
+`0x43CDAD` stores through `(render+0xB0)+0x18`, aliasing **render+0xC8**.
+The existing production bias is consistent; do not fit another offset.
+Between-draw matrix provenance remains unproven. Screen-Y lead re-parked;
+24/24 CTest. Entry-slot restoration readback matches 280 bytes, but the
+audit intercepts restoration only, not the initial imported writer.
+
+**A6d24 (offline MEASURED, [check](scratch/phase-a6-full-frame-gate.md)):**
+the unscored full-frame A6 clause now **fails**: unchanged actors-on is
+`49,881,782 / 235,008,000 = 0.21225567640250545`, not <=0.02. Tube-only is
+`49,888,588 / 235,008,000`. Fresh PNGs byte-match A6d3; this is not a new
+regression. Fixed boxes still improve for actors 0/1 and worsen for actor 2
+(0.10089786756453423 -> 0.11246451442529874). Independent integer/histogram
+recompute, single-channel scorer check and 24/24 CTest pass. No named scene
+cause measured; full controller/temporal pairing incomplete. Localize dominant
+global error before more actor pixel-fit work; do not shrink the full-frame gate
+to A4d's passing ROI.
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by

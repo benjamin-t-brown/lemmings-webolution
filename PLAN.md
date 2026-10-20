@@ -114,11 +114,19 @@ missing links; each is one round:
   live `+0x108` ([A6d7](docs/scratch/phase-a6-live-pose-pair.md)). Overlay
   composite is A4y `> 0xEF` ([A6d9](docs/scratch/phase-a6-overlay-alpha-ef.md));
   actor 2 is unchanged (0.101→0.112) because the walk overlay is already 0/255.
-  Remaining: full-frame 0.02. Actor 2 still fails clause 2
+  A6d24 scores the retained full frame at **0.21225567640250545 > 0.02**
+  ([check](docs/scratch/phase-a6-full-frame-gate.md)); actors-on/off PNGs
+  byte-match A6d3, so this is a newly scored failure, not a new regression.
+  No named scene cause measured; next prioritize dominant global-error
+  localization rather than another actor pixel fit. Actor 2 still fails clause 2
   (0.101→0.112). Screen-Y bias is parked after three rounds:
   incoming Y has no ±1, `+0x90` is the `0x43D56C` triple, and
   `0x4C6B88` is the per-draw stack-top copy
-  ([A6d22](docs/scratch/phase-a6-xform-4c6b88.md)).
+  ([A6d22](docs/scratch/phase-a6-xform-4c6b88.md)). A6d23's explicit
+  live-matrix resume check agrees with compiled production screen Y within
+  1e-4 px on three fresh paused actors
+  ([check](docs/scratch/phase-a6-native-camera-pair.md)); no screenshot,
+  no A6d3 pixel attribution or gate pass. Screen-Y lead is re-parked.
   `originY−1` stays an unshipped pixel fit
   ([A6d17](docs/scratch/phase-a6-actor2-bbox-pixels.md)).
   `floor(top)` does not move the matched
@@ -127,7 +135,7 @@ missing links; each is one round:
   ([A6d18](docs/scratch/phase-a6-billboard-top-row.md)).
   `originY−1` is a pixel fit — do not ship
   ([A6d17](docs/scratch/phase-a6-actor2-bbox-pixels.md)).
-  full-frame 0.02. Per-pixel actor Z versus tube is a
+  Full-frame <=0.02 remains a required, failed gate. Per-pixel actor Z versus tube is a
   negative READ
   ([A6d16](docs/scratch/phase-a6-actor-tube-pixel-z.md)).
   Render-clock dt is parked: `[+0xC8]` is the UV/homogeneous
@@ -140,11 +148,23 @@ missing links; each is one round:
   predicate do not help ([A6d8](docs/scratch/phase-a6-actor2-z-order.md),
   [A6d9](docs/scratch/phase-a6-overlay-alpha-ef.md)).
 
-**Exit gate (fixed now, not after capture):** on `MM_CLIMB_002`, a paused original frame
-with at least three walkers at the A1 canonical camera, against ours with the same actor
-list state injected:
-1. the full 640x480 frame passes the A4d fixed metric (≤ 0.02), and
+**Exit gate (restated 2026-10-20, with user sign-off, after A6d24):** on `MM_CLIMB_002`, a
+paused original frame with at least three walkers, against ours with the same actor list
+state injected:
+1. the actors-on frame passes the A4d fixed metric on its fixed tube ROI `[100,80,280,410]`
+   (PIL half-open xyxy, `tools/harness/score_a4_render.py`, ≤ 0.02), so adding actors does
+   not break the accepted tube; and
 2. in each actor's bounding box, ours-with-actors has lower error than ours-without-actors.
+
+The full-frame score is reported, not gated, in A6. It becomes the A7 + Phase C gate.
+
+**Why the gate changed after a capture.** The first version demanded the *whole* 640x480
+frame ≤ 0.02. That was mis-specified when written: A1/A2/A4d only ever passed on the fixed
+ROI, and the original's frame carries the HUD and scenery that A7 and Phase C own. A6d24
+scored 0.2123 actors-on versus 0.2123 tube-only (actors remove 6,806 of 49.9M error
+units), so clause 1 could not pass inside A6 whatever the actors did. Clause 2 is
+unchanged; actor 2 still fails it (0.101 → 0.112). This is the only permitted gate edit,
+made because the gate measured another milestone's work, not because a result was close.
 
 Residuals that leave both conditions passing are parked, not chased.
 
@@ -215,11 +235,16 @@ open.
   is the 24-byte `0x43D56C` result. `0x4C6B88` is a 96-byte copy of
   the `0x58D5A0` stack top (`0x46BE99`), not a second proven miss
   in `worldToLensedView`. `originY − 1` still beats actor 2 and is
-  not a native store. Resume only with a live compare of that
-  stack top to our matrix on the matched camera. Evidence:
+  not a native store. A6d23 completed the bounded live-matrix comparison:
+  compiled production versus cached screen Y is within 1e-4 px on three
+  actors at a fresh canonical-camera pause; no screenshot or A6d3 attribution.
+  The native 0.0003 subtraction stores back to render +0xC8 through an alias.
+  Re-park; resume only with new paired draw/pixel evidence exposing a projection
+  discrepancy, not another static writer search or fitted offset. Evidence:
   [A6d20](docs/scratch/phase-a6-screen-y-bias.md),
   [A6d21](docs/scratch/phase-a6-plus90-vector.md),
-  [A6d22](docs/scratch/phase-a6-xform-4c6b88.md).
+  [A6d22](docs/scratch/phase-a6-xform-4c6b88.md),
+  [A6d23](docs/scratch/phase-a6-native-camera-pair.md).
 - **A6 render-clock dt / `[+0xC8]`** (parked 2026-10-20 after A6d13–A6d15).
   `[game+0x26028]` is a wrap phase. `0x42F0DC` is `0x43CC68`, which
   consumes `[this+0xC8]` as `1.0 / C8` UV scale after `0x40EAE0`

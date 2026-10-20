@@ -2,7 +2,17 @@
   "schema_version": 1,
   "updated": "2026-10-20",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "a6e-restated-gate-rescore",
+    "title": "A6e: rescore retained A6d3 matched pause under the restated A6 gate (tube ROI + actor boxes)",
+    "status": "running",
+    "brief": "build/tmp/a6e-restated-gate-rescore-brief.md",
+    "harness": "Claude Code",
+    "worker_tier": "targeted",
+    "requested_model": "session model (no pin)",
+    "owns_live_game": false,
+    "live_owner": null
+  },
   "queue": [],
   "recently_landed": [
     {
@@ -496,7 +506,7 @@
     },
     {
       "id": "a4ag-zoom1-linear-a0-offline-replay",
-      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) \u2014 PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
+      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) — PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
       "landed_in": "PLAN.md",
       "commit_hint": null
     },
@@ -600,7 +610,7 @@
     },
     {
       "id": "a6d3-matched-state-bbox",
-      "title": "A6d3: matched pause \u2014 actors 0\u20131 improve; slope walker 0.101\u21920.112 (temporal 0)",
+      "title": "A6d3: matched pause — actors 0–1 improve; slope walker 0.101→0.112 (temporal 0)",
       "status": "landed",
       "brief": "build/tmp/a6d3-matched-state-bbox-brief.md",
       "harness": "Cursor",
@@ -691,7 +701,7 @@
       ],
       "landed_in": "docs/scratch/phase-a6-live-pose-pair.md",
       "commit_hint": null,
-      "facilitator_verified": "2026-10-20: independent test_actorpose 2.188e-6 / 6.776e-7 / 8.551e-7. Isolated modelY+1 fails a6d7 model[1] delta 1.0; ActorPose.cpp restored. 23/23 CTest. Rejected: A6d3 bbox is unpaired +0x08 \u2014 A6d3 captured screenshot and +0x08 together; this pause is a different 10 s walk. No game."
+      "facilitator_verified": "2026-10-20: independent test_actorpose 2.188e-6 / 6.776e-7 / 8.551e-7. Isolated modelY+1 fails a6d7 model[1] delta 1.0; ActorPose.cpp restored. 23/23 CTest. Rejected: A6d3 bbox is unpaired +0x08 — A6d3 captured screenshot and +0x08 together; this pause is a different 10 s walk. No game."
     },
     {
       "id": "a6d8-actor2-z-order",
@@ -977,6 +987,57 @@
       "landed_in": "docs/scratch/phase-a6-xform-4c6b88.md",
       "commit_hint": null,
       "facilitator_verified": "2026-10-20: re-read 0x46BE99 rep movsd ecx=0x18 from 0x43BCD0/0x58D5A0; 0x46C490 this+0x148; caller chain 0x4C6A08+8+0x30+0x148=0x4C6B88. Narrowed: not shown inside worldToLensedView. No ActorSprite, no game. Screen-Y parked after 3 rounds."
+    },
+    {
+      "id": "a6d23-native-camera-pair",
+      "title": "A6d23: compiled production screen Y matches three fresh paused caches within 1e-4 px; no screenshot or A6 gate acceptance",
+      "status": "landed",
+      "brief": "build/tmp/a6d23-native-camera-pair-brief.md",
+      "harness": "OpenCode",
+      "worker_tier": "targeted",
+      "requested_model": "openai/gpt-6-luna",
+      "requested_variant": "high",
+      "dispatch_id": "ses_ea4856736ffev3CmVwYrwzv2Xv",
+      "dispatch_state": "Initial Task and same-session repair completed; resolved configured model/high verified by opencode debug agent; actual execution model not independently exposed by Task return.",
+      "repair_brief": "build/tmp/a6d23-native-camera-pair-repair1.md",
+      "repair_reason": "Initial packet only inventories missing retained fields; rejected as incomplete rather than accepted as a transform negative. Repair made the authorized one-start capture.",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d23-native-camera-pair/round-note-repair1.md",
+      "depends_on": [
+        "a6d3-matched-state-bbox",
+        "a6d20-screen-y-bias",
+        "a6d21-plus90-vector",
+        "a6d22-xform-4c6b88"
+      ],
+      "round_cap_exception": "Fourth screen-Y-family round plus one missing-evidence repair after three static rounds; explicit PLAN Phase E live-matrix resume condition. One start total, no production correction or automatic follow-up; lead re-parked.",
+      "landed_in": "docs/scratch/phase-a6-native-camera-pair.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent raw-byte identities/digests, entire two snapshots equal, compiled unchanged production helper probe reproduces max Y error 8.963683444562776e-05 px (target 1e-4); isolated originY-1 and no-depth-bias in-memory mutations fail, restored baseline and source hashes exact. Re-read 0x40EAE0/0x40EB50/0x40EBE0/0x40EBF0/0x43CC68/0x43CDA0 and 20 pins. Corrected worker's unsettled depth delta: 0x43CCB5 subtracts 0.0003, setter 0x43CDAD at (render+B0)+18 aliases render+C8. Narrowed write ledger: 280-byte restore event, not 128; imported select_level initial write not intercepted; saved original passed to restore and exact raw readback support restoration. Install hashes independently unchanged; no game/webolution/LemWeb task. Full build + 24/24 CTest pass. No screenshot, no old-pause pixel attribution, no draw-time provenance or A6 gate pass. No production changes; no commit authorization assumed."
+    },
+    {
+      "id": "a6d24-full-frame-gate",
+      "title": "A6d24: retained full-frame score 0.2122556764 fails 0.02; actor 2 box still fails",
+      "status": "landed",
+      "brief": "build/tmp/a6d24-full-frame-gate-brief.md",
+      "harness": "OpenCode",
+      "worker_tier": "targeted",
+      "requested_model": "openai/gpt-6-luna",
+      "requested_variant": "high",
+      "dispatch_id": "ses_ea4699bbaffe6tExXNcex61qMy",
+      "dispatch_state": "Task round-agent completed on configured OpenCode pin/high; actual execution model not independently exposed by Task return.",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a6d24-full-frame-gate/round-note.md",
+      "depends_on": [
+        "a4-cellmesh-route",
+        "a6d3-matched-state-bbox",
+        "a6d23-native-camera-pair"
+      ],
+      "gate_served": "First direct A6 clause 1 full-frame score audit; no parked pixel-fit question reopened.",
+      "landed_in": "docs/scratch/phase-a6-full-frame-gate.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: separate ImageChops histogram and exact Fraction checker reproduces actors-on 49881782/235008000 and off 49888588/235008000; required actors-on exceeds 1/50. All fixed-box integers reproduce (actor 2 15283->17035 over 151470); fresh PNGs byte-identical to prior A6d3 outputs, input/executable hashes checked, source injection path reread. Independent single-channel mutation changes global numerator -1 and restored baseline identical. Narrowed normalized_exact_decimal to float display and overall field's diagnostic off requirement (irrelevant to this failure, not a general pass verifier); full native controller-state pairing incomplete. Full build no work + 24/24 CTest pass; no game/webolution/LemWeb task, zero stock/live operations and no production edits. No causal region measured; next priority dominant global-error localization with unchanged gate. No commit authorization assumed."
     }
   ]
 }

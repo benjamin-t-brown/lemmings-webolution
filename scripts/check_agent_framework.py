@@ -66,6 +66,38 @@ def repo_path(value):
             and "\\" not in value and ".." not in value.split("/"))
 
 
+def frontmatter_field(text, name):
+    front = re.match(r"\A---\n(.*?)\n---", text, re.S)
+    field = re.search(r"^" + re.escape(name) + r":\s*([^\n]+)$",
+                      front.group(1), re.M) if front else None
+    return field.group(1).strip() if field else None
+
+
+def check_opencode_facilitator(root, roles, errors):
+    path = ".opencode/agent/facilitator.md"
+    text = read(root, path, errors)
+    links(root, path, text, errors)
+    if "../../docs/FACILITATOR.md" not in text:
+        errors.append(f"{path}: missing facilitator contract pointer")
+    model = frontmatter_field(text, "model")
+    variant = frontmatter_field(text, "variant")
+    if not model or model == "inherit" or f"`{model}`" not in roles:
+        errors.append(f"{path}: explicit model missing or absent from ROLES.md")
+    if frontmatter_field(text, "mode") != "primary":
+        errors.append(f"{path}: facilitator must be a primary agent")
+    if variant != "max":
+        errors.append(f"{path}: facilitator variant must be max")
+
+    command_path = ".opencode/commands/facilitator.md"
+    command = read(root, command_path, errors)
+    if frontmatter_field(command, "agent") != "facilitator":
+        errors.append(f"{command_path}: missing facilitator agent binding")
+    if frontmatter_field(command, "model") is not None:
+        errors.append(f"{command_path}: omit model override and use the pinned facilitator agent")
+    if frontmatter_field(command, "subtask") != "false":
+        errors.append(f"{command_path}: facilitator must run in the current session")
+
+
 def check_brief(root, path, errors):
     text = read(root, path, errors)
     links(root, path, text, errors)
@@ -117,13 +149,20 @@ def validate(root, brief=None):
                 errors.append(f"{path}: missing shared contract pointer")
             front = re.match(r"\A---\n(.*?)\n---", text, re.S)
             model = re.search(r"^model:\s*(\S+)", front.group(1), re.M) if front else None
-            if not model or model.group(1) == "inherit" or f"`{model.group(1)}`" not in roles:
+            # Claude Code workers inherit the session model; a pin there misroutes.
+            if client == ".claude":
+                if model:
+                    errors.append(f"{path}: Claude Code workers must not pin a model")
+            elif not model or model.group(1) == "inherit" or f"`{model.group(1)}`" not in roles:
                 errors.append(f"{path}: explicit model missing or absent from ROLES.md")
         path = f"{client}/commands/facilitator.md"
         text = read(root, path, errors)
         links(root, path, text, errors)
         if "../../docs/FACILITATOR.md" not in text:
             errors.append(f"{path}: missing facilitator contract pointer")
+        if "../../docs/ORCHESTRATION.md#facilitator-invocation" not in text:
+            errors.append(f"{path}: missing facilitator invocation pointer")
+    check_opencode_facilitator(root, roles, errors)
     try:
         queue = json.loads(read(root, "docs/tasks.json", errors))
     except (ValueError, TypeError):

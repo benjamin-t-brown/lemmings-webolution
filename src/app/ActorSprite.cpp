@@ -92,7 +92,8 @@ std::expected<void, std::string> drawActorSprite(webo::Image& overlay,
                                                  const webo::Image& sheet,
                                                  const ActorSpritePlacement& p,
                                                  bool horizontalMirror,
-                                                 std::array<std::uint8_t, 3> vertexRgb) {
+                                                 std::array<std::uint8_t, 3> vertexRgb,
+                                                 bool alphaTest) {
   if (overlay.width <= 0 || overlay.height <= 0 ||
       overlay.rgba.size() != static_cast<std::size_t>(overlay.width) * overlay.height * 4)
     return std::unexpected("actor sprite: invalid overlay storage");
@@ -102,17 +103,30 @@ std::expected<void, std::string> drawActorSprite(webo::Image& overlay,
   if (frame.width == 0 || frame.height == 0 || p.right <= p.left || p.bottom <= p.top)
     return std::unexpected("actor sprite: empty frame or destination");
 
-  const int x0 = std::max(0, static_cast<int>(std::ceil(p.left - 0.5)));
-  const int x1 = std::min(overlay.width, static_cast<int>(std::ceil(p.right - 0.5)));
-  const int y0 = std::max(0, static_cast<int>(std::ceil(p.top - 0.5)));
-  const int y1 = std::min(overlay.height, static_cast<int>(std::ceil(p.bottom - 0.5)));
+  // A4v (MEASURED offline on the two retained fixtures; no exe byte states the
+  // pixel-centre convention): the native raster matches as if the pixel centre
+  // is the INTEGER coordinate, not x+0.5. Pixel x is covered when
+  // left <= x < right and its UV is (x - left) / (right - left); likewise for
+  // y. The earlier x+0.5 centre was this project's choice and sat half a pixel
+  // up-left of native (support MAE 0.0819/0.0778 before, 0.0014/0.0015 after).
+  // Sampling stays nearest-texel. READ: 0x470F29(linear) writes TSS stage-0
+  // 0x10 and 0x11 (MAG/MIN) with value 1 by default and 2 only when its arg and
+  // byte [this+0x3a1] are both nonzero (0x470F32/0x470F5E, pushes at
+  // 0x470F72/0x470F8F); 0x47A766 calls it with 0 when [0x58D53C]==0. That the
+  // value 1 is D3D7 POINT (2 = LINEAR) is header knowledge, not an exe byte;
+  // bilinear scores worse here (support MAE 0.027). Whether this call is the one
+  // in force for actor sprites is not traced.
+  const int x0 = std::max(0, static_cast<int>(std::ceil(p.left)));
+  const int x1 = std::min(overlay.width, static_cast<int>(std::ceil(p.right)));
+  const int y0 = std::max(0, static_cast<int>(std::ceil(p.top)));
+  const int y1 = std::min(overlay.height, static_cast<int>(std::ceil(p.bottom)));
   for (int y = y0; y < y1; ++y) {
-    const double v = (y + 0.5 - p.top) / (p.bottom - p.top);
+    const double v = (y - p.top) / (p.bottom - p.top);
     const double sourceV = frame.uTop + v * (frame.uBottom - frame.uTop);
     const int sy = std::clamp(static_cast<int>(std::floor(sourceV * sheet.height)),
                               static_cast<int>(frame.top), static_cast<int>(frame.bottom) - 1);
     for (int x = x0; x < x1; ++x) {
-      double u = (x + 0.5 - p.left) / (p.right - p.left);
+      double u = (x - p.left) / (p.right - p.left);
       if (horizontalMirror)
         u = 1.0 - u;
       const double sourceU = frame.uLeft + u * (frame.uRight - frame.uLeft);
@@ -122,7 +136,11 @@ std::expected<void, std::string> drawActorSprite(webo::Image& overlay,
       const std::size_t dst = (static_cast<std::size_t>(y) * overlay.width + x) * 4;
       const std::array<std::uint8_t, 4> tex{sheet.rgba[src], sheet.rgba[src + 1],
                                             sheet.rgba[src + 2], sheet.rgba[src + 3]};
-      const auto out = modulateActorSpritePixel(tex, vertexRgb);
+      if (alphaTest && !actorSpriteAlphaTestPasses(tex[3]))
+        continue;
+      auto out = modulateActorSpritePixel(tex, vertexRgb);
+      if (alphaTest)
+        out[3] = 255;  // row 3 / selector 0: opaque replace, no blend
       for (int c = 0; c < 4; ++c)
         overlay.rgba[dst + c] = out[static_cast<std::size_t>(c)];
     }

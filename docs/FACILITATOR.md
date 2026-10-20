@@ -1,5 +1,9 @@
 # Facilitator contract
 
+An explicit `/facilitator` invocation resumes project facilitation without needing
+another task description. Apply the [invocation and queue-selection rules](ORCHESTRATION.md#facilitator-invocation);
+reading these instructions is the startup step, not the completed task.
+
 For project facilitation, read in order: [lessons](LESSONS.md), [plan](../PLAN.md),
 [queue](tasks.json), [orchestration](ORCHESTRATION.md), [model mapping](ROLES.md),
 [guardrails](AGENT_SAFETY.md), and the full canonical
@@ -18,6 +22,10 @@ evidence links and the plan section, rather than requiring the entire history. S
 lessons for related findings before dispatch. Distinguish established evidence from optional
 leads and hypotheses. State the question and acceptance criteria without prescribing an
 unproven answer; the worker records its prediction and falsifier before a live run.
+
+Before choosing the question, apply the
+[milestone, gate and round-cap rules](ORCHESTRATION.md#milestones-gates-and-round-caps):
+name the milestone gate the round serves, and count earlier rounds on the same question.
 
 Keep ownership explicit, including the narrow queue-field exception in orchestration.
 Run `python scripts/check_agent_framework.py --brief <path>` before dispatching a new brief.

@@ -43,12 +43,16 @@ std::expected<ActorSpritePlacement, std::string> actorSpritePlacement(
     const webo::SpriteFrame& frame, const std::array<double, 3>& worldPosition,
     const ActorProjectionInput& projection, bool horizontalMirror, int scaleDelta = -1);
 
-// Candidate CPU raster for the selected SPR rectangle. The retained five/eight
-// pixel comparison fails the absent-actor gate; native vertex diffuse source
-// and texture modulation remain unresolved.
+// Candidate CPU raster for the selected SPR rectangle. RGB is MODULATE(texture,
+// vertexRgb). With alphaTest (default, A4u) a texel is written only when its
+// alpha passes the material row 3 test (see kActorAlphaTestReference in
+// LightMap.h; A4x/A4y in-draw reference 0xEF, tested encoded path) and is written
+// opaquely (overlay alpha 255, no blend, so the harness composite becomes a pure
+// replace). alphaTest=false is the pre-A4u diagnostic: every texel is written
+// keeping texture alpha.
 std::expected<void, std::string> drawActorSprite(
     webo::Image& overlay, const webo::SpriteFrame& frame, const webo::Image& sheet,
     const ActorSpritePlacement& placement, bool horizontalMirror,
-    std::array<std::uint8_t, 3> vertexRgb = {255, 255, 255});
+    std::array<std::uint8_t, 3> vertexRgb = {255, 255, 255}, bool alphaTest = true);
 
 }  // namespace webo::app

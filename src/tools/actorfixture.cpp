@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   if (get("--game-dir").empty() || get("--out").empty()) {
     std::cerr << "usage: actorfixture --game-dir DIR --out PNG --action-index N "
                  "--temporal N --direction N --mirror 0|1 --x X --y Y --z Z "
-                 "[--level COMPILED\\\\MM_CLIMB_002.LVL] [--tint R,G,B] [--no-light-lookup]\n";
+                 "[--level COMPILED\\\\MM_CLIMB_002.LVL] [--tint R,G,B] [--no-light-lookup] [--no-alpha-test]\n";
     return 2;
   }
   try {
@@ -111,8 +111,9 @@ int main(int argc, char** argv) {
     overlay.height = 480;
     overlay.alpha = webo::AlphaMode::Embedded;
     overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
+    const bool alphaTest = args.find("--no-alpha-test") == args.end();
     if (auto rendered = webo::app::drawActorSprite(overlay, frame, *texture, *placement, mirror,
-                                                   vertexRgb);
+                                                   vertexRgb, alphaTest);
         !rendered)
       throw std::runtime_error(rendered.error());
     if (auto saved = webo::writePng(get("--out"), overlay); !saved)
@@ -125,13 +126,13 @@ int main(int argc, char** argv) {
         "\"uv\":[{:.17g},{:.17g},{:.17g},{:.17g}],\"position\":[{:.17g},{:.17g},{:.17g}],"
         "\"origin\":[{:.17g},{:.17g}],\"rect\":[{:.17g},{:.17g},{:.17g},{:.17g}],"
         "\"scale_delta\":{},\"alpha\":\"{}\",\"vertex_tint\":[{}, {}, {}],"
-        "\"light_map_index\":{},\"light_map_byte\":{}}}\n",
+        "\"light_map_index\":{},\"light_map_byte\":{},\"alpha_test\":{}}}\n",
         tintSource, actionIndex, action.name, temporal, direction, mirror ? "true" : "false",
         frame.left, frame.top, frame.right, frame.bottom, frame.unknown0, frame.unknown1,
         frame.uLeft, frame.uTop, frame.uRight, frame.uBottom, position[0], position[1],
         position[2], placement->originX, placement->originY, placement->left, placement->top,
         placement->right, placement->bottom, scaleDelta, webo::alphaModeName(texture->alpha),
-        vertexRgb[0], vertexRgb[1], vertexRgb[2], mapIndex, mapByte);
+        vertexRgb[0], vertexRgb[1], vertexRgb[2], mapIndex, mapByte, alphaTest ? "true" : "false");
   } catch (const std::exception& e) {
     std::cerr << "actorfixture: " << e.what() << "\n";
     return 1;

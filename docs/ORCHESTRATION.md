@@ -99,6 +99,29 @@ for “what is in flight”. It is **not** a second plan. Goals and settled fact
 
 ## Dispatch loop (every harness)
 
+### Facilitator invocation
+
+`/facilitator` is an instruction to resume project facilitation now, even without
+arguments. Follow the required startup reading, then act on the queue. Do not stop
+after reading the operating rules or ask the user to supply a task merely because
+`active` is null or the waiting queue is empty.
+
+- An existing `running` task retains its owner. Check that session's status and
+  respect the handoff/termination rules before resuming its work.
+- Resolve an existing `blocked` task or verify a `ready-for-verify` result first.
+- When no task is active, start the next queued brief if present. When both are
+  empty, use `PLAN.md`, `LESSONS.md` and the latest landed evidence to select and
+  decompose the next unfinished question, write and lint its brief, and dispatch
+  one worker using the client mapping. Selecting that question is the facilitator's job.
+
+Optional command arguments constrain the work; they are not required. Stop for a
+concrete ownership conflict, unavailable delegation/model, external blocker, or
+a decision the project sources cannot resolve, and report the specific evidence.
+An explicit request to review or repair the framework remains framework maintenance;
+it does not invoke project facilitation.
+
+### Round lifecycle
+
 1. Facilitator follows the reading order in [FACILITATOR.md](FACILITATOR.md).
 2. If `active.status` is `blocked` or `ready-for-verify`, finish or unblock that — do not
    start a parallel research round that needs the live game.
@@ -113,6 +136,30 @@ for “what is in flight”. It is **not** a second plan. Goals and settled fact
    For incomplete work, dispatch a continuation brief identifying existing edits, remaining
    work and ownership. Do not restart blindly or finish implementation yourself. An old
    queue timestamp alone does not establish that a worker has died.
+
+## Milestones, gates and round caps
+
+Added 2026-10-20 after Phase A4 spent eleven rounds on vertex tint, eight on material and
+alpha state that was mostly pixel-invisible, and seven on one zoom 1 residual.
+
+- **Work to a fixed gate.** Each `PLAN.md` milestone states its exit gate before its rounds
+  start. Do not change a gate after seeing a capture. A milestone is done when its gate
+  passes.
+- **Rank by gate error.** The next question is the one expected to remove the most error
+  against the current gate, not the most interesting open residual.
+- **Three rounds per question.** Count repairs and continuations. After three, park the
+  question in `PLAN.md` Phase E with its evidence links and a resume brief, or record in the
+  next brief why a fourth round is expected to move the gate.
+- **Park residuals under the gate.** A residual that leaves the gate passing, or a
+  correction that is pixel-invisible on every fixture, gets a unit test if it is cheap and
+  then a Phase E line. It does not get its own investigation line.
+- **Tooling needs a gate justification.** A round that builds or repairs instrumentation
+  (hooks, tracers, capture rigs) states which gate measurement it unblocks. Tooling that
+  only serves a parked question is parked with it.
+- **One facilitator owns the queue.** Two concurrent facilitator sessions must not both
+  dispatch from `docs/tasks.json`. Hand off explicitly or stop one first.
+- **Commit between rounds.** Land each verified round as its own commit (when the user has
+  authorized commits) so the next round starts from a clean, attributable tree.
 
 ## Client adapters
 

@@ -52,6 +52,11 @@ def main() -> int:
         action="store_true",
         help="draw without level light-map tint (reproduces the pre-A4q candidate)",
     )
+    parser.add_argument(
+        "--no-alpha-test",
+        action="store_true",
+        help="draw every texel keeping texture alpha (reproduces the pre-A4u candidate)",
+    )
     args = parser.parse_args()
 
     capture = rooted(args.capture)
@@ -87,6 +92,8 @@ def main() -> int:
         ]
         if args.no_light_lookup:
             command.append("--no-light-lookup")
+        if args.no_alpha_test:
+            command.append("--no-alpha-test")
         completed = subprocess.run(command, check=True, capture_output=True, text=True, env=env)
         metadata = json.loads(completed.stdout)
         background = Image.open(capture / f"{label}-background-no-actor.png").convert("RGBA")

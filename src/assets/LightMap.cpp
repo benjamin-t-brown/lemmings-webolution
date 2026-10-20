@@ -150,4 +150,8 @@ std::array<std::uint8_t, 4> modulateActorSpritePixel(const std::array<std::uint8
           static_cast<std::uint8_t>((tex[2] * tint[2]) / 255), tex[3]};
 }
 
+bool actorSpriteAlphaTestPasses(std::uint8_t textureAlpha) {
+  return textureAlpha > kActorAlphaTestReference;
+}
+
 }  // namespace webo

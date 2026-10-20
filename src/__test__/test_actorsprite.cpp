@@ -181,6 +181,123 @@ int main() {
   require(tintedPixel(2, 2, 0) == static_cast<std::uint8_t>((200 * 152) / 255),
           "draw path applies MODULATE");
 
-  std::cout << "PASS: actor sprite placement, UV mirror, light tint and alpha key\n";
+  // A4y: material row 3 alpha test, GREATER against the in-draw reference 0xEF
+  // (A4x: 0x47A75D calls 0x470F29(0) at 0x47A776 before the draw; the writer
+  // 0x470F39 sets [0x4C24E0]=0xEF; reader 0x472896). 4x1 sheet of alpha
+  // 0xA1 / 0xEF / 0xF0 / 0x00 on a sentinel overlay. The raster assertions run
+  // first and read destination pixels, so reverting the reference or the
+  // strictness fails on pixels, not on the helper or the literal constant.
+  webo::Image aSheet;
+  aSheet.width = 4;
+  aSheet.height = 1;
+  aSheet.rgba = {200, 100, 50, 0xA1, 200, 100, 50, 0xEF, 200, 100, 50, 0xF0, 200, 100, 50, 0x00};
+  webo::Image aOverlay;
+  aOverlay.width = 8;
+  aOverlay.height = 8;
+  aOverlay.alpha = webo::AlphaMode::Embedded;
+  const auto resetOverlay = [&] {
+    aOverlay.rgba.assign(8 * 8 * 4, 0);
+    for (std::size_t i = 0; i < aOverlay.rgba.size(); i += 4) {
+      aOverlay.rgba[i] = 9; aOverlay.rgba[i + 1] = 8; aOverlay.rgba[i + 2] = 7;
+      aOverlay.rgba[i + 3] = 6;
+    }
+  };
+  resetOverlay();
+  webo::SpriteFrame aFrame;
+  aFrame.left = 0; aFrame.top = 0; aFrame.right = 4; aFrame.bottom = 1;
+  aFrame.width = 4; aFrame.height = 1;
+  aFrame.uLeft = 0; aFrame.uTop = 0; aFrame.uRight = 1; aFrame.uBottom = 1;
+  webo::app::ActorSpritePlacement aQuad{0, 0, 1, 0, 0, 4, 1};
+  const auto ap = [&](int x, int c) { return aOverlay.rgba[(0 * 8 + x) * 4 + c]; };
+  const std::array<std::uint8_t, 3> aTint{152, 152, 152};
+  require(webo::app::drawActorSprite(aOverlay, aFrame, aSheet, aQuad, false, aTint).has_value(),
+          "alpha-test draw");
+  require(ap(0, 0) == 9 && ap(0, 1) == 8 && ap(0, 2) == 7 && ap(0, 3) == 6,
+          "alpha 0xA1 below the reference leaves the destination untouched");
+  require(ap(1, 0) == 9 && ap(1, 1) == 8 && ap(1, 2) == 7 && ap(1, 3) == 6,
+          "alpha 0xEF at the reference is rejected (strictly greater) and leaves the destination untouched");
+  require(ap(2, 0) == 119 && ap(2, 3) == 255,
+          "alpha 0xF0 above the reference is drawn (modulated, opaque)");
+  require(ap(3, 0) == 9 && ap(3, 3) == 6, "alpha 0x00 texel leaves the destination untouched");
+
+  // Helper and its literal reference describe the same threshold; they come after
+  // the raster checks so a mutation fails on destination pixels first.
+  require(webo::kActorAlphaTestReference == 0xEF, "alpha reference is 0xEF");
+  require(!webo::actorSpriteAlphaTestPasses(0xEF), "alpha 0xEF is rejected (strictly greater)");
+  require(webo::actorSpriteAlphaTestPasses(0xF0), "alpha 0xF0 is accepted");
+  require(!webo::actorSpriteAlphaTestPasses(0xEE), "alpha 0xEE is rejected");
+  require(!webo::actorSpriteAlphaTestPasses(0x00) && webo::actorSpriteAlphaTestPasses(0xFF),
+          "alpha 0x00 rejected, 0xFF accepted");
+
+  // Diagnostic path (alphaTest=false) is the pre-A4u write: every texel, texture alpha kept.
+  resetOverlay();
+  require(webo::app::drawActorSprite(aOverlay, aFrame, aSheet, aQuad, false, aTint, false)
+              .has_value(),
+          "keep-alpha diagnostic draw");
+  require(ap(0, 3) == 0xA1 && ap(1, 3) == 0xEF && ap(2, 3) == 0xF0 && ap(3, 3) == 0x00,
+          "diagnostic path keeps texture alpha on every texel");
+
+  // A4v: integer pixel-centre raster (pixel x covered iff left <= x < right, UV
+  // (x-left)/(right-left)). 8x1 opaque sheet drawn at 2:1 into [1.3,5.3) x [1.3,2.3)
+  // on a sentinel overlay. The old x+0.5 rule covered x=1..4 / y=1 and sampled texels
+  // 0/2/4/6; the integer-centre rule covers x=2..5 / y=2 with texels 1/3/5/7.
+  webo::Image cSheet;
+  cSheet.width = 8;
+  cSheet.height = 1;
+  for (std::uint8_t i = 0; i < 8; ++i) {
+    const std::uint8_t px[4] = {static_cast<std::uint8_t>(10 * (i + 1)), 0, 0, 255};
+    cSheet.rgba.insert(cSheet.rgba.end(), px, px + 4);
+  }
+  webo::Image cOverlay;
+  cOverlay.width = 8;
+  cOverlay.height = 8;
+  cOverlay.alpha = webo::AlphaMode::Embedded;
+  cOverlay.rgba.assign(8 * 8 * 4, 0);
+  webo::SpriteFrame cFrame;
+  cFrame.left = 0; cFrame.top = 0; cFrame.right = 8; cFrame.bottom = 1;
+  cFrame.width = 8; cFrame.height = 1;
+  cFrame.uLeft = 0; cFrame.uTop = 0; cFrame.uRight = 1; cFrame.uBottom = 1;
+  webo::app::ActorSpritePlacement cQuad{0, 0, 1, 1.3, 1.3, 5.3, 2.3};
+  require(webo::app::drawActorSprite(cOverlay, cFrame, cSheet, cQuad, false).has_value(),
+          "fractional-edge draw");
+  const auto cp = [&](int x, int y, int c) { return cOverlay.rgba[(y * 8 + x) * 4 + c]; };
+  // Footprint: x in [ceil(1.3), ceil(5.3)) = 2..5, y in [ceil(1.3), ceil(2.3)) = 2.
+  require(cp(1, 2, 3) == 0 && cp(6, 2, 3) == 0, "integer-centre coverage leaves x=1 and x=6 empty");
+  require(cp(2, 2, 3) == 255 && cp(5, 2, 3) == 255, "integer-centre coverage draws x=2..5");
+  require(cp(2, 1, 3) == 0 && cp(2, 3, 3) == 0, "integer-centre coverage draws only y=2");
+  // Sampling: texel = floor((x-1.3)/4*8) = 1, 3, 5, 7 for x = 2..5 (R = 10*(i+1)).
+  require(cp(2, 2, 0) == 20 && cp(3, 2, 0) == 40 && cp(4, 2, 0) == 60 && cp(5, 2, 0) == 80,
+          "integer-centre UV selects texels 1,3,5,7");
+
+  // Same rule on the V axis. The 8x1 sheet above cannot select by V, so use a 1x8
+  // sheet with distinct rows (R = 10*(i+1)) drawn at 2:1 into x [1.3,2.3) x y [1.3,5.3).
+  // Integer centre covers y=2..5 with v = (y-1.3)/4 -> row floor(v*8) = 1,3,5,7; the
+  // old y+0.5 centre would sample rows 2,4,6,7 (v = 0.3,0.55,0.8,1.05 clamped).
+  webo::Image vSheet;
+  vSheet.width = 1;
+  vSheet.height = 8;
+  for (std::uint8_t i = 0; i < 8; ++i) {
+    const std::uint8_t px[4] = {static_cast<std::uint8_t>(10 * (i + 1)), 0, 0, 255};
+    vSheet.rgba.insert(vSheet.rgba.end(), px, px + 4);
+  }
+  webo::Image vOverlay;
+  vOverlay.width = 8;
+  vOverlay.height = 8;
+  vOverlay.alpha = webo::AlphaMode::Embedded;
+  vOverlay.rgba.assign(8 * 8 * 4, 0);
+  webo::SpriteFrame vFrame;
+  vFrame.left = 0; vFrame.top = 0; vFrame.right = 1; vFrame.bottom = 8;
+  vFrame.width = 1; vFrame.height = 8;
+  vFrame.uLeft = 0; vFrame.uTop = 0; vFrame.uRight = 1; vFrame.uBottom = 1;
+  webo::app::ActorSpritePlacement vQuad{0, 0, 1, 1.3, 1.3, 2.3, 5.3};
+  require(webo::app::drawActorSprite(vOverlay, vFrame, vSheet, vQuad, false).has_value(),
+          "fractional-top V draw");
+  const auto vp = [&](int x, int y, int c) { return vOverlay.rgba[(y * 8 + x) * 4 + c]; };
+  require(vp(2, 1, 3) == 0 && vp(2, 2, 3) == 255 && vp(2, 5, 3) == 255 && vp(2, 6, 3) == 0,
+          "integer-centre V coverage draws y=2..5 only");
+  require(vp(2, 2, 0) == 20 && vp(2, 3, 0) == 40 && vp(2, 4, 0) == 60 && vp(2, 5, 0) == 80,
+          "integer-centre V selects rows 1,3,5,7");
+
+  std::cout << "PASS: actor sprite placement, UV mirror, light tint, alpha test and alpha key\n";
   return 0;
 }

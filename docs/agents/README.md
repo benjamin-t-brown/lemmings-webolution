@@ -15,7 +15,7 @@
 | Historical checkpoints | [Facilitator history](../FACILITATOR_HISTORY.md) |
 
 Client frontmatter is executable configuration; retain its literal model and permission
-settings. Client bodies point to shared contracts. Change a shared rule in its owner,
+settings (Claude Code workers deliberately have no model; see [ROLES.md](../ROLES.md)). Client bodies point to shared contracts. Change a shared rule in its owner,
 not in every client. Model changes require checking client support separately; this
 refactor does not change pins or claim current provider availability.
 
@@ -38,6 +38,11 @@ the active framework, adapter contract pointers/model declarations, queue struct
 live-owner consistency, and new brief fields and ownership. Historical notes and legacy
 completed briefs are not linted as current contracts. An in-flight legacy brief is checked
 for existence; strict brief validation is opt-in before a new dispatch.
+
+Facilitator commands must link to the canonical invocation/queue-selection rule.
+The OpenCode check also requires a primary facilitator agent, its explicit
+model/variant, and matching command binding in the current session, so a command
+cannot silently inherit an unrelated session model.
 
 For machine validation, write the brief's **Owned files/paths** as comma-separated
 repository-relative paths or globs in backticks, and **Owns live game** as `yes` or `no`.

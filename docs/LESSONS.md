@@ -285,6 +285,173 @@ blend state, effective device state, or the sprite residual. Independent checker
 `tools/harness/verify_actor_render_state_a4r.py` pins operands, branch exits and SDK
 definitions. No production behavior changed; 20/20 tests pass.
 
+**A4s (retained observation + READ, [check](scratch/phase-a4-actor-material-binding.md)):**
+the two A4f controllers at `actor+0x128` are the submit objects consumed by
+`0x414920`. Both recorded first dwords are selector **0**; their selected
+direction records supply resource handles 119/120 (session-local). Selector zero
+encodes blend-disable on a cache miss, not proof of effective device state.
+Resolved material `+0x24` flags remain unrecorded in the checked packets, so the
+actor's material/alpha branch remains unresolved. BSS placement does **not** prove
+the flags cannot be derived statically. No production change or new pixel claim;
+independent fixture/byte checks and 20/20 CTest pass.
+
+**A4t (MEASURED + READ, [check](scratch/phase-a4-actor-material-flags.md)):** live on
+`MM_CLIMB_002`, the material descriptor `[[handle·0x88 + [0x58CB84] + 0x80]] + 0x24`
+(manager object `0x58CB48`, pool at `+0x30`) holds flags **`0x2`** for both lemming
+sheets read, `$LemSheetHi15` and `$LemSheetHi12`. Five walkers and a controlled
+eight fixture all hit those two descriptors. In A4r's order, `0x2` selects
+**row 3**: alpha `SELECTARG1(TEXTURE)`, alpha test GREATER against
+`[0x4C24E0]` = `0xA0`. Selector is 0, which encodes blend-disable. This is the
+encoded path on a flags-cache miss, not effective device state. Other
+actions/levels and the raster residual are not covered. A worker's "session 0
+blocks scheduled tasks" diagnosis was wrong: the session-1 task worked, and the
+defect was dereferencing the embedded `actor+0x128`.
+
+**A4u (code + offline MEASURED, [check](scratch/phase-a4-actor-alpha-test.md)):**
+`drawActorSprite` now applies row 3. A texel is drawn only when its alpha is greater than
+`0xA0`. A drawn texel is written opaque, with no blend. The reference load is reread at
+`0x472896`, and the state pushes `0xF`/`0x18`/`0x19` at `0x472880..0x4728C2`. The test is
+**pixel-invisible** on both A4f fixtures: their source frames are strictly 0/255 alpha,
+and the gate MAE and composed hashes equal A4q's. Only the synthetic unit test
+discriminates `>` from `>=`. The five fixture's frame is on `$LEMSHEETHI13`, whose flags
+A4t did not measure (A4t read Hi15 and Hi12), so row 3 there is assumed.
+
+**A4v (code + offline MEASURED, [check](scratch/phase-a4-actor-support-residual.md)):**
+the ~0.08 support residual was a **half-pixel convention**, not filtering. Native matches
+an integer pixel centre: cover `left <= x < right`, UV `(x − left)/(right − left)`, nearest
+texel. Footprint now equals native on both fixtures; support MAE 0.0819 → 0.00143 and
+0.0778 → 0.00152. It is a two-fixture fit, not a byte. `0x470F29` writes alpha reference
+`0xEF` then `0xA0` only on its LINEAR filter branch, and A4t read `0xA0` live, so the
+filter in force at actor draw is **untraced** and contradicts the nearest-texel fit. The
+gate passes under each reverted part; only the unit test protects them, and the first V
+test could not see V.
+
+**A4w (MEASURED live, [check](scratch/phase-a4-actor-hi13-flags.md)):** `$LemSheetHi13`
+descriptor `+0x24` = **`0x2`** on `MM_CLIMB_002`, read through a bound actor with no
+measurement writes (level entry uses the restored `enter_fast.py` swap). Every `$LemSheetHi0..23` entry in the 139-entry pool reads `0x2`, so row 3
+holds for all lemming sheets on this level (encoded flags; device state still unread).
+
+**A4x (READ + MEASURED live, [check](scratch/phase-a4-actor-filter-state.md)):** the
+actor submit `0x47A75D` brackets its draw with `0x470F29(0)` before (`0x47A776`, when
+`[0x58D53C]` == 0, which it read live) and `0x470F29(1)` after (`0x47AB8B`). So actors
+draw under **POINT** filtering with alpha reference **`0xEF`**. The `0xA0` A4t and A4w read
+is the between-draw value (live: `0xEF` in 0.43% of 1 kHz samples). `dgVoodoo.conf`
+filtering is `appdriven`. **Lesson: a global read between draws is not the state at
+draw**; look for a bracket around the consumer before trusting a sampled render global.
+A4u's `> 0xA0` should be `> 0xEF` (pixel-invisible on both fixtures).
+
+**A4y (code + offline MEASURED, [check](scratch/phase-a4-actor-alpha-reference.md)):**
+the actor alpha reference is now **`0xEF`**, with strict `>`. Destination-pixel tests
+reject `0xA1` and `0xEF`, accept `0xF0`, and fail under either the old `0xA0` constant
+or an isolated `>=` mutation. The facilitator's separate exhaustive raster checker
+passes all 256 alpha values; both A4f gate results and image hashes equal A4v's
+exactly (binary-alpha fixtures cannot see the correction). Fresh 20/20 CTest pass;
+no new live measurement, effective-state claim or app actor integration. A4x's
+scope limits and A2/A3's broader failures stand. Next queued action: A5m map.
+
+**A5m (repository map, [check](scratch/phase-a5m-actor-integration-map.md)):** the
+app still draws the tube only; helpers exist but no World-to-actor draw chain.
+Do not pass terrain x/y straight as 3D world coordinates or treat `Lemming::frame`
+as a universal temporal index: the drowning path adds milliseconds, unlike the
+general frame increment. World-pose conversion, orientation basis/phase/prior
+mirror, animation progression and shared tube depth remain adapter prerequisites.
+No new original-game measurement or implementation landed. Next queued: A4z,
+whose environment-specific brief needs adapting before a local Windows dispatch.
+
+**A4z (live capture + offline replay, [check](scratch/phase-a4-actor-third-fixture.md)):**
+the new half-scale sample passes (support MAE 0.001380834), but full-scale zoom1
+fails even after matched-camera replay: 27 extra candidate pixels and support
+MAE 0.0284529 > 0.0151558. This does not isolate the pixel-centre convention as
+the cause. **A4x's POINT/EF claim is zero-zoom scoped:** `0x47A766 833d3cd5580000`
+and `0x47A76D 750c` skip that setter at nonzero zoom. Inherited zoom1
+filter/alpha state remains open; do not fix it by fitting pixels. Own recompute,
+byte pins, replay and 20/20 CTest pass; source/install unchanged and process
+stopped. enter_fast's raw level-slot restoration bytes were not retained, so
+the live ledger is not fully byte-audited. Next: zoom1 filter/alpha provenance.
+
+**A4aa (READ, [check](scratch/phase-a4-zoom1-filter-provenance.md)):** no unique
+pre-zoom1-actor assignment was established within the bounded static trace.
+The explicit frame/tube bodies have no immediate 0x470F29 call, but unresolved
+subdraws and unexamined descendants are not certified clean. The setter chooses
+local 1/EF or conditional 2/A0 **before** requesting the two filter states; it
+does not necessarily send POINT then LINEAR. Global ALPHAREF source and cached
+device ALPHAREF are different evidence. Own 38 byte pins, independent A4r checker
+and 20/20 CTest pass. Nearest-prologue heuristic graphs/literal-address scans do
+not prove transitive or computed-writer absence. Next: actor-correlated zoom1
+filter-request observation; no production raster fix or effective-state claim.
+
+**A4ab (failed live experiment, [check](scratch/phase-a4-zoom1-filter-trace-failed.md)):**
+the five-hook run crashed in D3DImm, with zero bound draws/request tuples retained.
+No hook-specific cause was isolated. HOOK_INSTALL records were emitted before
+attach; they are announcements, not success proof. Buffered unpersisted callbacks
+mean an empty trace is not proof callbacks never ran. Own mock reproduction finds
+Number.add in the actor binder; that is a dormant harness defect, not a native
+crash diagnosis. Mid-call esp[0] is the device argument, not a return address.
+This run's raw slot ledger and install hashes match; live hook-code restoration
+readback was not achieved. Own cleanup, hashes and 20/20 CTest pass; no filter or
+pixel acceptance. Next: offline binder repair before any new stock attempt.
+
+**A4ac (offline harness regression, [check](scratch/phase-a4-actor-binder-offline.md)):**
+`hooks_a4ac_candidate.js` repairs four dormant binder bugs while keeping
+`hooks_a4ab.js` byte-identical: (1) converts scalar `arrAddr` with `ptr(arrAddr)`
+and guards slot reads via `u32(arr.add(i*4))`; (2) returns `{ actors, match }` on
+match instead of returning `match` directly (which lacked `.match` and caused
+`DRAW` `if (!snap.match)` to misclassify matches as `BIND_MISS`); (3) uses
+`ptr(...).add(0x128).toString()` for `selection.ctrl` instead of `hexN(ptr(...))`
+(which coerced a pointer object to `'0x0'`); and (4) binds only on `actor+0x128`,
+rejecting the unmeasured `action_obj+0xb0` alias. Four isolated single-line
+mutations fail the `node:vm` suite and restore byte-exact; 20/20 CTest pass.
+
+**A4ad (offline harness regression + READ, [check](scratch/phase-a4-hook-stack-announce-offline.md)):**
+`hooks_a4ad_candidate.js` (`1445dad5...`) repairs the two non-binder trace-script
+defects from A4ab while keeping `hooks_a4ab.js` and `hooks_a4ac_candidate.js`
+byte-identical: (1) `attachWithAnnounce` calls `Interceptor.attach` before
+emitting `HOOK_INSTALL` and emits `HOOK_ATTACH_FAIL` on throw; (2) mid-call
+`0x470F86` (`ff90a0000000`) and `0x470FA3` (`ff91a0000000`) record `retaddr: null`,
+`stack_convention: 'pre_call_stdcall_4'`, `device` (`[esp+0]`), `stage` (`[esp+4]`),
+`state` (`[esp+8]`) and `value` (`[esp+12]`) while preserving function-entry
+`retaddr` at `0x470F29` (`55 8bec`). Full 134-byte PE read of `0x470F29..0x470FAE`
+(including `0x470F8F 51 push ecx`) and four isolated single-feature mutations
+under `node:vm` pass; 20/20 CTest pass. Next: static provenance of `0x437BA3`
+(`0x441879`) and the indirect tube subdraws (`0x43A9BB`, `0x43AA47`).
+
+**A4ae (READ, [check](scratch/phase-a4-pre-actor-subcalls-static.md)):**
+`0x437BA3` (`0x441879`, `ecx = 0x4CBB48`) forwards `ecx+0x10` to `0x47496D`, which
+pushes/pops matrix stack `0x58D5A0` (`0x45FDB0`/`0x43BBE0`), swaps `[0x58CE24]`,
+and dispatches `0x4749A7: call [edx+4]`; its depth-4 `E8` tree has zero direct
+`0x470F29` calls and zero `0x4C24E0` references. Auditing all 5 `.text` call
+sites of `0x43B517` (`0x42A241`, `0x42E153`, `0x42FCD1`, `0x43212A`, `0x43231D`)
+corrects A4x/A4aa's draw-site assumption: **lemmings (`vtable 0x4B10E8`,
+`+0x10 = 0x42EEF2`) are pushed into `0x4C6A10+0x1E88` (`0x4C8898`) and drawn
+inside `0x43A4EC` at `0x43A9BB`/`0x43AA47`**, whereas `0x4C6A08+0x1F70` (`0x44190D`)
+holds `0x2A8`-byte `0x4B1020` objects (`+0x10 = 0x42C5C9`). Thus the downward
+`0x4C8898` walk inside `0x43A4EC` dispatches `0x42C5C9` (`0x4B1020`), `0x42EEF2`
+(`0x4B10E8`), and `0x4323EB` (`0x4B0E00`) before `0x44190D` runs.
+Narrowed worker `find_function_prologue` heuristic (`0x42A0EB`/`0x42FBDB` false
+mid-function `55 8b ec` matches and `+0x340` subobject `0x415FA0`). Next: static
+audit of `0x42C5C9`, `0x4323EB`, and `0x42EEF2` (`A4af`).
+
+**A4af (READ, [check](scratch/phase-a4-tube-child-renderers-filter-static.md)):**
+`0x42EEF2` (`Lemming::Render`) dispatches `lemming+0x78` (`vtable 0x4B14A8+4 =
+0x43CC68`) at `0x42F0DC`, which adds `0xB0` (`ecx = lemming+0x128`) and calls
+`0x47A75D` at `0x43CD4E` (one of only 2 `.text` callers of `0x47A75D`, the other
+being HUD loop `0x45B784`); `0x42C5C9` tail-calls `0x4323EB` (`0x42C709`), and
+neither calls `0x470F29`. Across the entire `.text` section, `0x470F29` is the
+**only** function that requests stage-0 `MAGFILTER`/`MINFILTER` (`0x10`/`0x11`,
+out of 24 `+0xA0` sites) or writes `[0x4C24E0]` (out of 3 `0x4C24E0` sites), has
+0 literal pointer occurrences in the PE, and has 10 `E8` call sites: 2 init/option
+sites (`0x47022B`, `0x470F1E`) and 4 steady-state `(entry, exit)` brackets
+(`0x44E165..0x44E1A5`, `0x454C89..0x454CAF`, `0x45B6D9..0x45B706`,
+`0x47A776..0x47AB8B`, all `ecx = 0x58CD80`), every one of which restores
+`0x470F29(1)` on exit. Backward CFG reachability on `[0x47A75D, 0x47AB96)`
+(narrowing worker `fall_through()` on `call`) proves 0 instructions before
+`0x47AB84` can reach `0x47AB93` (`ret 0x10`) without executing `0x47AB84..0x47AB8B`
+(`0x470F29(1)`). Thus when `[0x58D53C] != 0` (zoom1), `0x47A75D` skips
+`0x47A776: call 0x470f29(0)` and runs under the preceding `0x470F29(1)` state
+(`MAGFILTER=2, MINFILTER=2`, `[0x4C24E0]=0xA0` when `[0x58CD80+0x3A1] != 0`).
+Next: offline replay of retained A4z zoom1 fixture under `{POINT, LINEAR} x
+{0xEF, 0xA0}` (`A4ag`).
+
 ## Hard-won rules of thumb
 
 1. **One cell is one world unit.** Never multiply a height or distance by

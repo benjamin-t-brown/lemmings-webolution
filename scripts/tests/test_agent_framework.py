@@ -47,6 +47,77 @@ class FrameworkChecks(unittest.TestCase):
         self.assertTrue(any("missing shared contract" in e for e in errors))
         self.assertTrue(any("explicit model" in e for e in errors))
 
+    def test_claude_workers_reject_model_pin(self):
+        path = self.root / ".claude/agents/round-agent.md"
+        path.write_text(path.read_text(encoding="utf-8").replace(
+            "tools:", "model: sonnet\ntools:", 1), encoding="utf-8")
+        errors = framework.validate(self.root)
+        self.assertTrue(any("must not pin a model" in e for e in errors))
+
+    def test_facilitator_commands_require_invocation_contract(self):
+        self.write(".opencode/commands/facilitator.md",
+                   "---\ndescription: Read rules\n---\n"
+                   "Read [contract](../../docs/FACILITATOR.md).\n")
+        errors = framework.validate(self.root)
+        self.assertTrue(any("missing facilitator invocation pointer" in e for e in errors))
+        self.assertTrue(any("missing facilitator agent binding" in e for e in errors))
+        self.assertFalse(any("omit model override" in e for e in errors))
+
+    def test_opencode_facilitator_cannot_be_a_subagent(self):
+        path = ".opencode/agent/facilitator.md"
+        self.write(path, (self.root / path).read_text(encoding="utf-8")
+                   .replace("mode: primary", "mode: subagent"))
+        errors = framework.validate(self.root)
+        self.assertTrue(any("must be a primary agent" in e for e in errors))
+
+    def test_opencode_facilitator_command_cannot_override_pinned_agent(self):
+        path = ".opencode/commands/facilitator.md"
+        text = (self.root / path).read_text(encoding="utf-8")
+        text = text.replace("agent: facilitator", "agent: facilitator\nmodel: openrouter/other-model#high")
+        self.write(path, text)
+        errors = framework.validate(self.root)
+        self.assertTrue(any("omit model override" in e for e in errors))
+
+    def test_opencode_facilitator_variant_and_session_binding(self):
+        path = ".opencode/agent/facilitator.md"
+        self.write(path, (self.root / path).read_text(encoding="utf-8")
+                   .replace("variant: max", "variant: high"))
+        path = ".opencode/commands/facilitator.md"
+        self.write(path, (self.root / path).read_text(encoding="utf-8")
+                   .replace("subtask: false", "subtask: true"))
+        errors = framework.validate(self.root)
+        self.assertTrue(any("variant must be max" in e for e in errors))
+        self.assertTrue(any("must run in the current session" in e for e in errors))
+
+    def test_opencode_workers_use_luna_and_keep_their_permissions(self):
+        for role, edit in [("round-agent", "allow"), ("explore-agent", "deny")]:
+            with self.subTest(role=role):
+                text = (self.root / f".opencode/agent/{role}.md").read_text(encoding="utf-8")
+                self.assertEqual(framework.frontmatter_field(text, "model"), "openai/gpt-6-luna")
+                self.assertEqual(framework.frontmatter_field(text, "variant"), "high")
+                self.assertEqual(framework.frontmatter_field(text, "mode"), "subagent")
+                self.assertIn(f"  edit: {edit}\n", text)
+                self.assertIn("  task: deny\n", text)
+
+    def test_opencode_default_uses_luna_without_changing_facilitator(self):
+        config = json.loads((self.root / ".opencode/opencode.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["model"], {
+            "providerID": "openai", "model": "gpt-6-luna", "variant": "max"})
+        text = (self.root / ".opencode/agent/facilitator.md").read_text(encoding="utf-8")
+        self.assertEqual(framework.frontmatter_field(text, "model"), "openai/gpt-6.1-sol")
+        self.assertEqual(framework.frontmatter_field(text, "variant"), "max")
+
+    def test_stale_opencode_deepseek_worker_pin_is_rejected(self):
+        for role in ["round-agent", "explore-agent"]:
+            with self.subTest(role=role):
+                path = f".opencode/agent/{role}.md"
+                text = (self.root / path).read_text(encoding="utf-8")
+                self.write(path, text.replace("model: openai/gpt-6-luna",
+                                              "model: openrouter/deepseek/deepseek-v4.1-flash"))
+                errors = framework.validate(self.root)
+                self.assertTrue(any(path in e and "explicit model" in e for e in errors), errors)
+                self.write(path, text)
+
     def test_bad_json_and_shape(self):
         for content in ["{", "[]"]:
             self.write("docs/tasks.json", content)

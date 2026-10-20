@@ -18,10 +18,17 @@ adapter frontmatter/configuration, where the harness requires them.
 
 | Harness | Facilitator / planner | Hard-task worker | Targeted worker (default) | Explore | Configured in |
 | --- | --- | --- | --- | --- | --- |
-| **Claude Code** | `opus` via `/facilitator` | `sonnet`, dispatched explicitly for a recorded hard round | `haiku` via `.claude/agents/round-agent.md` | `haiku` via `.claude/agents/explore-agent.md` | `/facilitator` → `.claude/commands/facilitator.md`; agents under `.claude/agents/`. Facilitator model is the session launch model. If the harness cannot override the agent pin, dispatch the same brief to a general worker on `sonnet`. |
+| **Claude Code** | session launch model via `/facilitator` | session model (no pin; split instead of escalating) | session model via `.claude/agents/round-agent.md` (no pin) | session model via `.claude/agents/explore-agent.md` (no pin) | `/facilitator` → `.claude/commands/facilitator.md`; agents under `.claude/agents/`. No `model` in frontmatter and no `model` argument on dispatch. |
 | **Codex** | `astra` | `sol`, dispatched explicitly for a recorded hard round | `luna` — default worker pin | `luna`, read-only brief | `AGENTS.md`; REA MCP in `~/.codex/config.toml`. No in-repo agent pin file. |
-| **OpenCode** | `openrouter/~deepseek/deepseek-flash-latest` at `max` via `@.opencode/commands/facilitator.md` | same round pin (no separate hard tier) | `openrouter/deepseek/deepseek-v4.1-flash` at `high` via `.opencode/agent/round-agent.md` | `opencode/deepseek-v4.1-flash-free` at `high` via `.opencode/agent/explore-agent.md` | `.opencode/opencode.json` + `.opencode/commands/` + `.opencode/agent/*.md` |
+| **OpenCode** | `openai/gpt-6.1-sol` at `max` via `/facilitator` → `.opencode/agent/facilitator.md` | same round pin (no separate hard tier) | `openai/gpt-6-luna` at `high` via `.opencode/agent/round-agent.md` | `openai/gpt-6-luna` at `high` via `.opencode/agent/explore-agent.md` | `.opencode/opencode.json` + `.opencode/commands/` + `.opencode/agent/*.md` |
 | **Cursor** | **Claude Opus 5.5** via `/facilitator` (chat picker, e.g. `claude-opus-5-5-medium`) | same Cursor-pool worker as targeted — **do not** escalate to Opus; split the brief instead | Task → `round-agent` pinned to `composer-2.5-fast` | Task → `explore-agent` pinned to `composer-2.5-fast` | `/facilitator` → `.cursor/commands/facilitator.md`; workers in `.cursor/agents/*.md`; `.cursor/rules/*.mdc` stay **pointers only**. |
+
+For **Claude Code**: there is **no model routing**. Workers carry no `model` frontmatter and are
+dispatched without a `model` argument, so they run on the session model. Removed 2026-10-20: the
+`haiku` and then `sonnet` pins kept misrouting through the Bedrock gateway (workers silently on Opus,
+named teammates ignoring pins, intermittent `LLM Provider NOT provided` failures on the pinned
+name). Split a hard brief rather than escalating. The checker rejects a `model` line in
+`.claude/agents/*.md`.
 
 For **Cursor**: start the facilitator chat on **Claude Opus 5.5**. Workers are pinned in
 `.cursor/agents/` to **`composer-2.5-fast`** (Cursor included pool). Auto is a parent-chat
@@ -31,21 +38,37 @@ split the brief instead of escalating the model. When dispatching via Task, do n
 third-party `model` override.
 
 For OpenCode, `high` and `max` are provider-specific reasoning-effort variants, set with the
-`variant` field. The round worker uses **DeepSeek V4.1 Flash** through OpenRouter at `high`;
-the explore worker uses the OpenCode-provider **DeepSeek V4.1 Flash Free** at `high` for
-map-only work. The facilitator stays on the existing Flash Latest `max` configuration.
+`variant` field. The facilitator uses **GPT 6.1 Sol** through OpenAI at `max`.
+Both the round and explore workers use **GPT 6 Luna** through OpenAI
+(`openai/gpt-6-luna`) at `high`; explore remains read-only and map-only. The general
+session default in `.opencode/opencode.json` also uses Luna, retaining its `max`
+variant, and is separate from the facilitator agent pin.
 OpenCode has no separate hard-tier pin; an unusually hard round still uses the same round
 pin, or the work is split instead.
+
+For OpenCode, invoke `/facilitator` as a command. Its frontmatter binds the primary
+`facilitator` agent; that agent pins `openai/gpt-6.1-sol` and `variant: max`,
+overriding the model already selected in a session. The command
+has no separate model override, so OpenCode resolves the agent's provider/model ID
+and variant directly. Reading or attaching the Markdown file does not apply command
+frontmatter. Verified the agent pin with local OpenCode 1.19.3 `debug agent facilitator`;
+this makes no model request. OpenCode's command guide says the selected agent's
+configured model takes effect when the command runs:
+[command execution](https://dev.opencode.ai/v2/docs/commands/#execution).
 
 Both worker pins are explicit and independent of the facilitator session. If a pinned model
 is unavailable or rate-limited, record the blocker and report it; do not silently switch
 pins.
 
-Verified 2026-10-19 against the local OpenCode model catalog and the
-[official model list](https://dev.opencode.ai/v2/docs/console/models/). The free DeepSeek
-entry advertises a 200,000-token context and 32,000-token output limit, with zero input,
-output and cache-read prices. Free availability is time-limited by the provider, so
-re-check the IDs when updating these pins.
+Changed 2026-10-20 at the user's request: both OpenCode workers now use OpenAI Luna
+instead of DeepSeek, and the general session default was changed to Luna too.
+The facilitator remains on Sol. Use `opencode debug agent round-agent`,
+`opencode debug agent explore-agent` and `opencode debug config` to verify the
+resolved models and variants; configuration resolution does not prove provider
+availability or a completed dispatch. Historical queue dispatch records are not
+rewritten by this framework change.
+Quit and restart OpenCode after changing agent configuration: an already-running
+session keeps its loaded settings.
 
 Claude Code's `Agent` tool accepts only `sonnet`, `opus`, `haiku` and `fable` — a Codex name
 passed there is rejected outright. That is why the mapping is a table and not a sentence.

@@ -6,6 +6,8 @@ or a re-runnable script; decompiler prose is not a measurement. Work on `decompi
 
 ## Select the role from the user's request
 
+- `/facilitator` explicitly selects project facilitation and authorizes resuming the
+  project from its queue and plan; no additional task text is required.
 - Project planning/research/implementation: read [facilitator contract](docs/FACILITATOR.md).
 - Assigned round: read [worker contract](docs/agents/ROUND.md) and the assigned brief.
 - Assigned map-only question: read [explore contract](docs/agents/EXPLORE.md).

@@ -31,6 +31,15 @@ pacman -S \
 
 Default preset is `dev-debug` (GCC). Plain SDL2 + `opengl32`; no SDL2_image/ttf/mixer.
 
+## Line endings (every harness)
+
+**All text in this repo is LF, not CRLF.** `.gitattributes` enforces
+`* text=auto eol=lf`. Do not configure an editor or tool to write CRLF.
+
+If `git status`, `git diff`, `git add`, or a commit hook warns that a working-copy file has
+CRLF, convert that file to LF before continuing; do not commit the warning. Check with
+`git ls-files --eol <path>` and expect `w/lf`.
+
 ## PATH traps (this machine)
 
 1. **Built `.exe` need UCRT64 `bin` on `PATH`** or they fail to load with no useful output. Prefer running them through `Invoke-Ucrt64.ps1`, or temporarily prepend `C:\progs\msys2\ucrt64\bin`.

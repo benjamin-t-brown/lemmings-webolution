@@ -4,7 +4,9 @@ Facilitator fills this before dispatch. Copy to `build/tmp/<id>-brief.md` (or ke
 `docs/briefs/` only after the round is landed, if you want a permanent record).
 
 - **Queue id:** (must match `docs/tasks.json` → `active.id`)
-- **Harness / worker:** round-agent | explore-agent
+- **Harness / worker:** targeted | hard | explore
+- **Why this tier:** one sentence. Targeted is the default; a hard round needs a recorded
+  reason why the work cannot be split.
 - **Owns live game:** yes | no
 
 ## Already settled (do not re-derive)
@@ -16,6 +18,12 @@ Facilitator fills this before dispatch. Copy to `build/tmp/<id>-brief.md` (or ke
 One sentence. What would falsify the prediction?
 
 ## Prediction (before any live run)
+
+-
+
+## Acceptance criteria
+
+The single exact check the facilitator will re-run independently. One check, not a bundle.
 
 -
 

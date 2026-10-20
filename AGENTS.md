@@ -13,7 +13,9 @@ Work on the `decompile` branch.
 | --- | --- |
 | `docs/LESSONS.md` | **every fact already established**, each with the address or script behind it. Read it before touching anything, so you do not re-derive settled work |
 | `PLAN.md` | the goal and the phases |
-| `docs/ROLES.md` | the facilitator / round-agent split and the model name for *your* harness |
+| `docs/tasks.json` | **what is in flight** — blocked / running / ready-for-verify (not a second plan) |
+| `docs/ORCHESTRATION.md` | facilitator / round / explore split and dispatch loop for every harness |
+| `docs/ROLES.md` | the model name for *your* harness |
 | `.claude/rules/match-the-original.md` | the evidence standard — **canonical for every harness**, not Claude-specific |
 | `.claude/rules/windows-msys2-build.md` | build and PATH traps |
 | `docs/REA_SETUP.md` | the Ghidra-backed decompiler, installed and verified |
@@ -23,11 +25,34 @@ Work on the `decompile` branch.
 reset. Nothing was deleted. Code comments citing `docs/scratch/phase3-*.md` mean
 `old/docs/scratch/`.
 
-## Models for this harness (Codex)
+## Models and orchestration
 
-**Facilitator: `sol`. Round agent: `luna`.** `docs/ROLES.md` carries the full mapping and is
-the only place model names belong — other harnesses use different ones, so do not copy a
-name into a rules file or the plan.
+Model names differ per client; `docs/ROLES.md` is the only place they belong. On **Cursor**,
+the facilitator chat is Opus 5.5; workers are pinned in `.cursor/agents/` to Composer
+(`composer-2.5-fast`), not inherited Opus. Resume the facilitator with `/facilitator`
+(Cursor / Claude Code) or `@.opencode/commands/facilitator.md` (OpenCode). How sessions
+split (facilitator plans and verifies; round agents do one brief; explore is
+read-mostly): `docs/ORCHESTRATION.md`. Check `docs/tasks.json` before starting work so you
+do not ignore a blocked or ready-for-verify round.
+
+## Agent workflow
+
+For feature requests that require code changes, act as the **facilitator**:
+
+- Inspect the repository and current task queue, then turn the request into bounded tasks
+  with acceptance criteria, file ownership, and dependencies. Follow `docs/ORCHESTRATION.md`
+  and do not collide with work already in flight.
+- Delegate implementation tasks to the appropriate available worker. Work is **targeted by
+  default**: split the request into small tasks a cheap worker can finish and the facilitator
+  can verify. Use the hard tier only when the work cannot be split, and record why. Keep
+  workers' file ownership separate. Review their results and independently verify changes;
+  verification does not delegate.
+- If this harness cannot delegate, return the task plan and state that delegation is
+  unavailable. Do not silently implement the feature yourself.
+
+When assigned a specific worker task, implement only that scope. Do not re-plan the overall
+request or take on sibling tasks. Report changed files, checks performed, and blockers to the
+facilitator.
 
 ## The short version of the standard
 
@@ -58,6 +83,9 @@ name into a rules file or the plan.
 
 MSYS2 UCRT64. Do **not** put UCRT64 `bin` on `PATH` for `tools/harness/*.py` — it shadows
 the default Python and `capstone` disappears.
+
+**All text files are LF, not CRLF.** `.gitattributes` enforces it. If git warns about CRLF,
+convert the affected file(s) to LF before continuing.
 
 ## Who owns what
 

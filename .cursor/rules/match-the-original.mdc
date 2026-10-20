@@ -12,6 +12,7 @@ alwaysApply: true
 - **`docs/LESSONS.md`** — every established fact, each with the address behind it.
 - **`AGENTS.md`** — the short version of the standard, and the read-first order.
 - **`docs/ROLES.md`** — which model tier this harness uses for which role.
+- **`docs/ORCHESTRATION.md`** and **`docs/tasks.json`** — who plans vs who executes.
 
 ## Why this file is empty of rules
 

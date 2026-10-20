@@ -20,3 +20,6 @@ __pycache__/
 # Local checkout of morluto/rea, used as the reverse-engineering agent.
 .rea/
 .claude/worktrees/
+# OpenCode local install; keep agent markdown and opencode.json tracked.
+.opencode/node_modules/
+.opencode/package-lock.json

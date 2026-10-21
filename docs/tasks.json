@@ -2,7 +2,21 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "d1i-release-to-actor",
+    "title": "D1i: what delays a released lemming entering the actor list (~1.02 s cycle)",
+    "status": "queued",
+    "brief": "build/tmp/d1i-release-to-actor-brief.md",
+    "worker_tier": "targeted",
+    "owns_live_game": false,
+    "live_owner": null,
+    "depends_on": [
+      "d1h-per-lemming-phase"
+    ],
+    "gate_served": "PLAN Phase D, D1 release and walk-out",
+    "question_round_count": 1,
+    "dispatch_note": "Standing run d-playable. Offline; no stock start."
+  },
   "queue": [],
   "recently_landed": [
     {
@@ -1782,27 +1796,8 @@
     "owner": "Claude Code facilitator session, 2026-10-21 (handoff: no task was running, standing_run.owner was null)",
     "rounds_run": 8,
     "stock_starts_used": 4,
-    "pending_questions": [
-      {
-        "question": "D1's gate, as literally written, requires every lemming's cell X/Y, facing and state to match the original each tick. After 8 rounds (D1a-h), both named blockers (release timing, left-turn stall) are fixed and independently verified; one residual remains: a self-healing, single-tick facing-only label mismatch at turn instants (6 occurrences in a 150-tick/10-lemming capture), x exact on every surrounding tick. D1h traced every instance to the live-capture harness's one pooled global alignment phase differing from that lemming's own measured phase, not to a World defect -- 3 of 6 flip to an exact match when re-aligned per-lemming; the other 3 fail for bounded, understood reasons (zero residual, a 0.01s near-miss at the 0.02s raw-sample grid, a wrong-signed residual at the phase method's wraparound boundary). Does D1's gate need amending to exclude this harness-precision-bounded, x-unaffected label artifact (the same kind of amendment A7's gate received for HUD elements), or should work continue toward closing it outright (which would need sub-20ms live sampling or a per-lemming-aware harness -- a tooling investment, not a sim fix)?",
-        "options": [
-          "Amend the gate to exclude a self-healing, single-tick facing-label mismatch where x matches exactly on the surrounding ticks, then re-score and accept D1 if nothing else is found",
-          "Invest in a harness/tooling round (finer live sampling or per-lemming alignment) to try to close the residual outright before deciding on acceptance",
-          "Leave the gate as written and record D1 as not accepted, parked at this residual, until a later round revisits it"
-        ],
-        "recommendation": "Option 1. All 6 instances now have a complete, individually-verified explanation (D1h); none is a reappearance of either fixed defect; x is exact throughout. This is the same shape of amendment already used for A7 (excluding a HUD element the gate was never meant to cover). Option 2 is a real tooling investment with an uncertain payoff (the 3 non-flipping cases are bounded by raw-sample spacing, not obviously fixable by precision alone) and option 3 leaves a fully-understood, cosmetic residual blocking an otherwise-solid milestone indefinitely.",
-        "evidence": [
-          "docs/scratch/phase-d1-release-walkout-trace.md",
-          "docs/scratch/phase-d1-release-trigger.md",
-          "docs/scratch/phase-d1-door-open-duration.md",
-          "docs/scratch/phase-d1-hatch-step-clock.md",
-          "docs/scratch/phase-d1-release-timing-implementation.md",
-          "docs/scratch/phase-d1-left-turn-fix.md",
-          "docs/scratch/phase-d1-full-gate-recheck.md"
-        ]
-      }
-    ],
-    "handoff": "2026-10-21: D1h landed (docs/scratch/phase-d1-full-gate-recheck.md, D1h follow-up section) -- the per-lemming-phase hypothesis explains 3/6 of D1g's facing residuals outright and the other 3's non-flip too, each for a distinct bounded reason; corrected D1g's own event-type mischaracterization (only 3 of 6 are the D1f branch, not all 6) in PLAN.md/LESSONS.md and the scratch doc itself. Both named D1 blockers remain fixed and verified across 8 rounds; the one remaining residual is fully characterized. Paused here on a pending_question (D1's gate would need to change, or a tooling round authorized, to accept it) rather than deciding unilaterally -- this does not end the standing run; D2/D3 are unstarted and do not depend on this specific question, so the next session can either resolve the pending question first or start D2 research in parallel, at the user's direction.",
+    "pending_questions": [],
+    "handoff": "2026-10-21: user kept D1 gate as written. Facilitator found the 161-entry spawn drift is not 200 ms discretization: in both D1a and D1g captures, actors appear in the actor list on a ~1.02 s cycle (2.04 + k*1.02 s) after the released counter steps at 2.88 s intervals; World spawns on the counter. D1i (offline read + model, queued) names that mechanism. Next: verify D1i, implement, fresh live recheck, then revisit the deferred facing question (standing_run.deferred_questions[0]) only if facing residuals remain. D2 research may run alongside if it needs no live game.",
     "stopped": null,
     "history": [
       {
@@ -1838,6 +1833,27 @@
             "resolution": "User excluded the ten skill-panel buttons (gate amended in PLAN A7). Facilitator re-score: nine views pass. Resumed with A7q."
           }
         ]
+      }
+    ],
+    "deferred_questions": [
+      {
+        "question": "D1's gate, as literally written, requires every lemming's cell X/Y, facing and state to match the original each tick. After 8 rounds (D1a-h), both named blockers (release timing, left-turn stall) are fixed and independently verified; one residual remains: a self-healing, single-tick facing-only label mismatch at turn instants (6 occurrences in a 150-tick/10-lemming capture), x exact on every surrounding tick. D1h traced every instance to the live-capture harness's one pooled global alignment phase differing from that lemming's own measured phase, not to a World defect -- 3 of 6 flip to an exact match when re-aligned per-lemming; the other 3 fail for bounded, understood reasons (zero residual, a 0.01s near-miss at the 0.02s raw-sample grid, a wrong-signed residual at the phase method's wraparound boundary). Does D1's gate need amending to exclude this harness-precision-bounded, x-unaffected label artifact (the same kind of amendment A7's gate received for HUD elements), or should work continue toward closing it outright (which would need sub-20ms live sampling or a per-lemming-aware harness -- a tooling investment, not a sim fix)?",
+        "options": [
+          "Amend the gate to exclude a self-healing, single-tick facing-label mismatch where x matches exactly on the surrounding ticks, then re-score and accept D1 if nothing else is found",
+          "Invest in a harness/tooling round (finer live sampling or per-lemming alignment) to try to close the residual outright before deciding on acceptance",
+          "Leave the gate as written and record D1 as not accepted, parked at this residual, until a later round revisits it"
+        ],
+        "recommendation": "Option 1. All 6 instances now have a complete, individually-verified explanation (D1h); none is a reappearance of either fixed defect; x is exact throughout. This is the same shape of amendment already used for A7 (excluding a HUD element the gate was never meant to cover). Option 2 is a real tooling investment with an uncertain payoff (the 3 non-flipping cases are bounded by raw-sample spacing, not obviously fixable by precision alone) and option 3 leaves a fully-understood, cosmetic residual blocking an otherwise-solid milestone indefinitely.",
+        "evidence": [
+          "docs/scratch/phase-d1-release-walkout-trace.md",
+          "docs/scratch/phase-d1-release-trigger.md",
+          "docs/scratch/phase-d1-door-open-duration.md",
+          "docs/scratch/phase-d1-hatch-step-clock.md",
+          "docs/scratch/phase-d1-release-timing-implementation.md",
+          "docs/scratch/phase-d1-left-turn-fix.md",
+          "docs/scratch/phase-d1-full-gate-recheck.md"
+        ],
+        "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question."
       }
     ]
   }

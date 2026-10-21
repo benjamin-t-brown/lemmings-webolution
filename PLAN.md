@@ -574,6 +574,14 @@ self-healing single-tick `facing`-label residual**, which traces to the live-cap
 harness's alignment precision (not the simulation), not conclusively a sim defect. See
 Phase E for the parking decision.
 
+**D1 direction (user, 2026-10-21) and facilitator observation:** the D1 gate stays as
+written. The facing-label question is deferred until the spawn drift is fixed. The drift is
+not 200 ms discretization. In both saved captures the `released` counter steps every
+2.88–2.90 s, while lemmings enter the actor list only on a ~1.02 s cycle
+(`2.04 + k * 1.02` s within one 0.02 s sample in D1g; ~1.013 s in D1a). `World` spawns on
+the counter. This is an observation from the saved meta files; the mechanism is D1i's
+question.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

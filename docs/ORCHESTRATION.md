@@ -193,6 +193,10 @@ brief's own per-round budget, and per-round commits. Everything in
 - A decision only the user can make, while other ranked work does not depend on it: add it
   to `standing_run.pending_questions` with options, evidence and your recommendation, then
   continue with that other work.
+  A gate question lists every residual family still failing the gate, each with its count
+  and its evidence, not only the one it asks about. Before calling a residual an alignment
+  or rounding artifact, test that against the saved raw data: a pattern with a stable period
+  or a growing lag is a mechanism to read, not rounding.
 - Running low on context: leave the queue resumable, write `standing_run.handoff`, and say
   that the user should run `/facilitator` again. This does not set `stopped`.
 

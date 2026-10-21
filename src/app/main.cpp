@@ -39,9 +39,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <format>
+#include <iterator>
 #include <optional>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -74,6 +78,7 @@ struct Args {
   int frames = 0;
   bool help = false;
   bool noInjectedWalkers = false;
+  std::string walkers;
 };
 
 Args parseArgs(int argc, char** argv) {
@@ -100,6 +105,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--no-depth") a.noDepth = true;
     else if (arg == "--flat") a.flat = true;
     else if (arg == "--no-injected-walkers") a.noInjectedWalkers = true;
+    else if (arg == "--walkers") a.walkers = next();
     else if (arg == "--game-dir") a.gameDir = next();
   }
   if (a.gameDir.empty()) {
@@ -223,6 +229,42 @@ int main(int argc, char** argv) {
   if (options.drawCellRoute && args.level.find("MM_CLIMB_002") != std::string::npos &&
       !args.noInjectedWalkers) {
     options.injectedWalkers = app::defaultMmClimb002InjectedWalkers();
+  }
+  if (!args.walkers.empty()) {
+    std::ifstream input(args.walkers, std::ios::binary);
+    if (!input) {
+      std::fprintf(stderr, "walkers: cannot open %s\n", args.walkers.c_str());
+      return 1;
+    }
+    const std::string json((std::istreambuf_iterator<char>(input)), {});
+    const std::string number = R"([-+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?)";
+    const std::regex document(R"(^\s*\{\s*"walkers"\s*:\s*\[\s*(?:\{\s*"plus8"\s*:\s*\[\s*)" +
+                              number + R"(\s*,\s*)" + number + R"(\s*,\s*)" + number +
+                              R"(\s*\]\s*,\s*"facing"\s*:\s*-?[0-9]+\s*\}\s*(?:,\s*\{\s*"plus8"\s*:\s*\[\s*)" +
+                              number + R"(\s*,\s*)" + number + R"(\s*,\s*)" + number +
+                              R"(\s*\]\s*,\s*"facing"\s*:\s*-?[0-9]+\s*\}\s*)*\s*)?\]\s*\}\s*$)");
+    if (!std::regex_match(json, document)) {
+      std::fprintf(stderr, "walkers: expected {\"walkers\":[{\"plus8\":[x,y,z],\"facing\":n},...]}\n");
+      return 1;
+    }
+    const std::regex walker("\\{\\s*\"plus8\"\\s*:\\s*\\[\\s*(" + number +
+                            ")\\s*,\\s*(" + number + ")\\s*,\\s*(" + number +
+                            ")\\s*\\]\\s*,\\s*\"facing\"\\s*:\\s*(-?[0-9]+)\\s*\\}");
+    std::vector<app::SceneOptions::InjectedNativeWalker> loaded;
+    for (std::sregex_iterator it(json.begin(), json.end(), walker), end; it != end; ++it) {
+      app::SceneOptions::InjectedNativeWalker row;
+      try {
+        row.plus8X = std::stod((*it)[1].str()); row.plus8Y = std::stod((*it)[2].str());
+        row.plus8Z = std::stod((*it)[3].str()); row.facing = std::stoi((*it)[4].str());
+      } catch (...) {
+        std::fprintf(stderr, "walkers: invalid numeric value\n"); return 1;
+      }
+      if (!std::isfinite(row.plus8X) || !std::isfinite(row.plus8Y) || !std::isfinite(row.plus8Z)) {
+        std::fprintf(stderr, "walkers: coordinates must be finite\n"); return 1;
+      }
+      loaded.push_back(row);
+    }
+    options.injectedWalkers = std::move(loaded);
   }
 
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {

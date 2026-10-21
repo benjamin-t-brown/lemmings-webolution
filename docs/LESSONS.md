@@ -647,6 +647,35 @@ to A4d's passing ROI.
 
 ## Hard-won rules of thumb
 
+**A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):
+one start reached entry pause but failed before walking/PNG; no fresh A6 gate
+measurement. Patching an importing module's `write_mem` does not intercept a
+function's globals in its defining module: the only retained slot event was the
+restore, not the initial `goto_level.select_level` write. Helper-only mocks missed
+this integration boundary. Main CLI candidate removed; baseline restored, 24/24
+CTest. Start allowance exhausted; no automatic live retry. A6e actor-2 failure stands.
+
+**A6f repair3 failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md#repair3-renewed-attempt-also-failed-acquisition-before-game-creation)):
+the renewed attempt failed before game creation: copying the capture script without
+its `OUT/dgVoodoo.windowed.conf` dependency makes `read_bytes()` fail before the
+empty-file fallback. Independent pure-read reproduction supports this diagnosis;
+the PowerShell wrapper lost the full traceback. Finalizer's config rewrite is not
+in `writes: []`; hash equality supports restored contents, not a complete write log.
+No fresh gate score or production change; own build and 24/24 CTest pass. Stop-on-failure
+forbids automatic retry despite no new stock process. The stricter old audit was waived.
+
+**A6f repair4 (offline MEASURED, [check](scratch/phase-a6-fresh-pause-pixel-result.md)):**
+one carried-over authorized start produced a fresh image/table: ROI **708159/45441000**
+passes, and all three scored components improve. Own rerenders and isolated input-loader
+bypass discriminate the optional `--walkers` path; exact source restored, 24/24 CTest.
+**Not A6 acceptance:** `same_pause` is a literal with no second stability snapshot;
+`actors[:3]` omits full-list count/identity, and box component rank is not actor-row
+identity. The worker corrected those labels offline without changing any scores.
+Full frame remains 0.2122073 (diagnostic). Old actor-2 failure stands; no slope sample
+or cause established. Install hashes match, no game/tasks remain, start consumed.
+Further live work needs explicit authorization and a full-list/stability brief;
+do not revive the waived initial-write audit or call passing arithmetic full qualification.
+
 1. **One cell is one world unit.** Never multiply a height or distance by
    `PIXELS_PER_UNIT`. The factor-of-2 lattice raster is retired, and doubling a world-unit
    delta is the single most repeated mistake in this project's history — it survived in the

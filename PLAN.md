@@ -83,8 +83,8 @@ the settled facts are in `docs/LESSONS.md`.
 | A3 sprite view selection | **done** | 608 native branch cases, 42/42 live actor-bound index/mirror |
 | A4 entry point, tube route, window | **done** | `webolution` runs 3D by default; 9/9 views on the production route (A4d); SDL controls (A4e) |
 | A5 one actor billboard raster | **done** (zoom 0) | Both A4f fixtures beat absent-actor; footprint exact (A4v); POINT + `> 0xEF` (A4x/A4y). Zoom 1 residual parked (E) |
-| **A6 sim lemmings in the app frame** | **next** | See below |
-| A7 scene completeness | open | See below |
+| A6 sim lemmings in the app frame | **done** | Restated gate on the repair 4 pause: tube ROI 0.015584142; all three actor boxes improve. A6d3 slope walker parked (E) |
+| **A7 scene completeness** | **next** | See below |
 
 ### A6. Sim lemmings in the app frame
 
@@ -104,7 +104,7 @@ missing links; each is one round:
 - **A6c composition** — **landed** ([check](docs/scratch/phase-a6-actor-tube-composition.md)):
   actors draw after INN + three OUT passes, list high→low, no Z-state writes.
   `[elem+0x18] >= 1.0` → `0x43A9BB`. Per-pixel Z vs tube unsettled.
-- **A6d integration** — **started** ([compose](docs/scratch/phase-a6-injected-walkers.md),
+- **A6d integration** — **landed** (accepted via A6f repair 4) ([compose](docs/scratch/phase-a6-injected-walkers.md),
   [original-0](docs/scratch/phase-a6-app-bbox-gate.md),
   [matched pause](docs/scratch/phase-a6-matched-state-bbox.md)): walkers draw after
   the tube and inject the live `+0x08` table. Walk temporal does not fix the
@@ -135,7 +135,7 @@ missing links; each is one round:
   ([A6d18](docs/scratch/phase-a6-billboard-top-row.md)).
   `originY−1` is a pixel fit — do not ship
   ([A6d17](docs/scratch/phase-a6-actor2-bbox-pixels.md)).
-  Full-frame <=0.02 remains a required, failed gate. Per-pixel actor Z versus tube is a
+  Full-frame is reported, not gated, under the restated gate. Per-pixel actor Z versus tube is a
   negative READ
   ([A6d16](docs/scratch/phase-a6-actor-tube-pixel-z.md)).
   Render-clock dt is parked: `[+0xC8]` is the UV/homogeneous
@@ -157,6 +157,39 @@ state injected:
 2. in each actor's bounding box, ours-with-actors has lower error than ours-without-actors.
 
 The full-frame score is reported, not gated, in A6. It becomes the A7 + Phase C gate.
+
+**A6e under the restated gate** ([check](docs/scratch/phase-a6-restated-gate-rescore.md)):
+clause 1 **passes** (tube ROI 0.015584142, actors-on identical to tube-only inside it);
+clause 2 still **fails** on actor 2 only. A6 is not accepted.
+
+**A6f fresh-pause attempt** ([check](docs/scratch/phase-a6-fresh-pause-gate-failed.md)):
+the only authorized stock start aborted at entry pause on a scratch-ledger exception,
+before the planned walk or screenshot. No fresh gate result; A6e's failure stands.
+Optional production CLI removed. Further live work is blocked by the exhausted
+one-start allowance and requires offline integrated write-audit validation first.
+
+**A6f repair3:** a renewed user-authorized attempt reused A6d3 and waived that stricter
+audit, but failed before game creation on a missing copied windowed-config dependency
+([check](docs/scratch/phase-a6-fresh-pause-gate-failed.md#repair3-renewed-attempt-also-failed-acquisition-before-game-creation)).
+No new image/table/score; A6e still governs. No retry under repair3's stop-on-failure
+rule. Further live invocation needs renewed authorization plus bounded offline
+dependency/full-stderr preflight, not a return to the waived ledger tooling.
+
+**A6f repair4:** the user carried over repair3's unused start. Dependency and
+launcher checks passed; one fresh capture now passes the ROI and three component
+calculations (ROI 0.015584142; every scored box improves)
+([check](docs/scratch/phase-a6-fresh-pause-pixel-result.md)).
+The `--walkers` loader is independently checked; the default render is unchanged.
+
+**A6 accepted (2026-10-20, user decision).** The repair 4 frame meets the exit gate
+as written. Its acquisition has the same limits as the A6d3 capture made with the same
+script: `same_pause` is asserted, not re-snapshotted; only three actor rows are kept;
+the boxes are difference components, not actor-bound rectangles. A6d3 was accepted as
+evidence with those limits, so repair 4 is held to the same standard, not a stricter
+one. The repair 4 walkers are all flat (Y = 32). The A6d3 slope walker's clause-2
+failure (0.101 → 0.112) still stands and is not explained by this sample. Every
+actor-2 lead is already parked at its round cap, and the failure leaves the gate
+passing, so it is parked in Phase E rather than chased.
 
 **Why the gate changed after a capture.** The first version demanded the *whole* 640x480
 frame ≤ 0.02. That was mis-specified when written: A1/A2/A4d only ever passed on the fixed
@@ -222,6 +255,15 @@ open.
   [A4aa](docs/scratch/phase-a4-zoom1-filter-provenance.md),
   [A4ae](docs/scratch/phase-a4-pre-actor-subcalls-static.md),
   [A4af](docs/scratch/phase-a4-tube-child-renderers-filter-static.md).
+- **A6d3 slope walker clause 2** (parked 2026-10-20 when A6 was accepted on the repair 4 pause).
+  Actor 2 at `+0x08` `(32, 34.4796, 0.5)` scores 0.10089786756453423 tube-only versus
+  0.11246451442529874 actors-on. View, temporal and `+0x1D8` (A6d4–A6d6), pose, screen Y
+  (A6d7, A6d20–A6d23) and first row (A6d17–A6d19) are all parked. `originY − 1` beats the
+  box but is a pixel fit with no address; do not ship it. Resume only with a new native read
+  of how a slope (non-integer Y) walker is drawn, or when a slope walker is needed by a later
+  gate. Evidence: [A6d3](docs/scratch/phase-a6-matched-state-bbox.md),
+  [A6e](docs/scratch/phase-a6-restated-gate-rescore.md),
+  [repair 4](docs/scratch/phase-a6-fresh-pause-pixel-result.md).
 - **A6 sim → `+0x08` mapping** (parked 2026-10-20 after A6d10–A6d12).
   Motion stores, hatch spawn `(+0x9A,+0x9C,0.5)`, and fall Y
   `0x41627F` = `0x40DF50([+0x10] − [+0x44]×step)` are READ. No complete

@@ -488,6 +488,20 @@ per-level selector. On `MM_CLIMB_002` (rate 20, clamped to `[1,50]`), that row i
 first release's own `~0.72 s` residual (`1.3 s` seed vs. D1a's measured `2.020 s`) is left
 to the door-opening animation's own duration, not yet measured. D1 is still not accepted.
 
+**D1c door-open duration, derived** ([check](docs/scratch/phase-d1-door-open-duration.md)):
+a live, read-only capture of the hatch object (located by vtable `0x004B0F50`) missed the
+literal `+0xAC` arming flip (object-location overhead ate the `~0.72 s` window), but
+directly measured the countdown's rollover landing in `(2.020, 2.030]` s — confirming
+D1a's first release from a second, independent field — and a linear fit of the
+pre-rollover countdown (slope `-0.997`, residual `<=0.006 s`) derives `arm_time ~= 0.723 s`;
+`arm_time + 1.3 s ~= 2.023 s` matches D1a's `2.020 s` to `~3 ms`. D1's tick-1
+release-timing divergence is now closed to a few milliseconds. Open, not blocking: whether
+`0.723 s` is a fixed universal delay or itself a per-level animation length, and whether
+the hatch's countdown is genuinely continuous (render-frame-driven, consecutive samples
+step unevenly at roughly 144 Hz rather than in 200 ms chunks) or only reads that way —
+flagged, not settled. D1 is still not accepted; next is a static read of the hatch step's
+own call cadence, then an implementation round against this now-measured mechanism.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

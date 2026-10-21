@@ -161,6 +161,42 @@ alpha state that was mostly pixel-invisible, and seven on one zoom 1 residual.
 - **Commit between rounds.** Land each verified round as its own commit (when the user has
   authorized commits) so the next round starts from a clean, attributable tree.
 
+## Standing run
+
+A standing run is a user authorization for a facilitator to keep going round after round
+toward one milestone gate without returning to the user between rounds. The active one, if
+any, is `standing_run` in [tasks.json](tasks.json). When it is set, `/facilitator` runs this
+loop:
+
+1. Resolve the active task as usual: verify `ready-for-verify`, repair or unblock `blocked`,
+   or dispatch `queued`.
+2. Verify with the full [verification loop](FACILITATOR.md#the-verification-loop--this-is-the-job),
+   land the docs and set the task `landed`.
+3. Commit that round alone on `decompile`: name the paths, add attribution, no push, no
+   `checkout`, `reset` or `stash`.
+4. Pick the next question by gate error and the round caps, write and lint its brief, queue it,
+   and dispatch. Do not stop to report between rounds.
+5. Repeat until a stop condition holds.
+
+**Granted by a standing run** (only what its entry lists): stock-game starts, within each
+brief's own per-round budget, and per-round commits. Everything in
+[AGENT_SAFETY.md](AGENT_SAFETY.md) and the evidence rules still applies.
+
+**Stop and report to the user** when any of these holds:
+- the milestone gate passes on the facilitator's own independent re-score;
+- the gate, its mask or its exclusions would need to change;
+- a guardrail breach: install hashes not restored, a process you cannot attribute, a write
+  left unrestored, or a worker exceeding its brief's start budget or using an excluded method;
+- the round cap is hit and no other question is ranked;
+- delegation or the pinned model is unavailable, or another session owns the queue;
+- the session is running out of context. Leave the queue in a resumable state and say so.
+
+At a stop, write `standing_run.stopped` (date, reason, last commit) and report the gate
+score, the rounds run and the starts used.
+
+Only the session named in `standing_run.owner` dispatches. Another session that wants to
+take over records the handoff there first.
+
 ## Client adapters
 
 [ROLES.md](ROLES.md) owns model choices and client-specific launch/dispatch wiring.

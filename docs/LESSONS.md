@@ -773,6 +773,16 @@ Durable caption-excluded score remains `2624993/135798210`. Gate unchanged.
 A later pair has to pass the fixed ROI against its own retained original
 before the route prologues are patched.
 
+**A7n (MEASURED negative, [check](scratch/phase-a7-input-view-masks.md)):**
+one start, pid 23460. All eight baselines fail ROI `[100,80,280,410)`
+against their retained originals. Left is `6476525/45441000 =
+0.14252602275478093`; right is `7028355/45441000 = 0.15466990163068595`.
+Those two are the prescribed key steps. `canonical/baseline.png` matches
+`banner-check-after.png`. `elev_down` and `elev0_neg` are one PNG. The logged
+zoom i32 is `control+0x0C`; `0x45CC61` is `mov ecx, [eax+0x10]`. No `C3`
+prologue, no wider-mask score, camera-block bytes not saved. Gate unchanged.
+Do not repeat this input list.
+
 ## Hard-won rules of thumb
 
 **A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):

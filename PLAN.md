@@ -324,9 +324,27 @@ The production render against the same original remains
 `7444647/84031425 = 0.08859360649899725` scores the production render on that
 drifted frame (camera doubles `+0x50` and `+0x60` moved). It is not a gate
 score. The durable caption-excluded initial score remains
-`2624993/135798210 = 0.019330100153750186`. Next is one authorized start on
-the A1 input path, rejecting any baseline whose fixed ROI against its retained
-original is above 0.02 (`build/tmp/a7n-input-view-masks-brief.md`).
+`2624993/135798210 = 0.019330100153750186`.
+
+**A7n input path, negative** ([check](docs/scratch/phase-a7-input-view-masks.md)):
+one authorized start, pid 23460. All eight baselines fail the fixed ROI
+against their retained originals. The best prescribed cases are left
+`6476525/45441000 = 0.14252602275478093` and right
+`7028355/45441000 = 0.15466990163068595`. `canonical/baseline.png` is
+byte-identical to the post-unpause banner frame. `elev_down` and `elev0_neg`
+are one PNG. No prologue was changed to `C3`, and there is no wider-mask
+score. The logged zoom i32 is `control+0x0C`; `0x45CC61` reads `[eax+0x10]`.
+The camera block was not saved, so its differing offsets are unread. The
+durable caption-excluded score is unchanged. Do not repeat this input list.
+Another stock start is not authorized.
+
+**A7n diagnosis (facilitator, hypothesis):** A7n paused about 1 s after entry
+(timer 04:59, no lemmings out). Its logged camera hash `2b33a708…` is not the
+reference `7e6e1a8a…` that A6f repair 4 reached after a 14 s walk, and its
+`canonical` baseline sits about a quarter turn from the retained original. The
+likely cause is an opening camera move that had not finished. A7o tests this:
+14 s walk, pause, hash and canonical ROI checked before any view input. Under the
+standing run `a7-complete` (2026-10-21) A7o has one start.
 
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
 end in 3D is the next visible result.

@@ -3,25 +3,46 @@
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": {
-    "id": "a7n-input-view-masks",
-    "title": "A7n: one MM_CLIMB_002 start; keep a view pair only when its baseline passes the fixed ROI against the retained original",
+    "id": "a7o-settled-camera-masks",
+    "title": "A7o: capture view pairs from the settled reference camera (14 s walk, hash 7e6e1a8a before any view input)",
     "status": "queued",
-    "brief": "build/tmp/a7n-input-view-masks-brief.md",
+    "brief": "build/tmp/a7o-settled-camera-masks-brief.md",
     "worker_tier": "targeted",
     "owns_live_game": true,
     "live_owner": null,
     "depends_on": [
-      "a7m-view-masks"
+      "a7n-input-view-masks"
     ],
-    "gate_served": "A7 restated: wider mask minus caption panel [277,422,363,454) <=0.02 on nine views + one second level",
+    "gate_served": "A7 restated gate",
     "stock_starts_remaining": 1,
-    "question_round_count": 2,
-    "round_cap_note": "Round 2 is justified: round 1 never tried the A1 input path, and its raw camera write moved +0x50/+0x60. The ROI reject is the new acceptance check. Second level stays out of this round.",
-    "dispatch_note": "User 2026-10-21 authorized the one MM_CLIMB_002 stock start for A7n. Do not dispatch on Cursor Composer; Cursor workers are pinned to grok-4.7-high-fast (ROLES).",
-    "stock_starts_authorized": 1
+    "question_round_count": 3,
+    "dispatch_note": "Standing run a7-complete authorizes this start. Dispatch from another session; not Cursor Composer."
   },
   "queue": [],
   "recently_landed": [
+    {
+      "id": "a7n-input-view-masks",
+      "title": "A7n: eight baselines failed the fixed ROI; no wider-mask pair; zoom was logged at +0x0C",
+      "status": "landed",
+      "brief": "build/tmp/a7n-input-view-masks-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "dispatch_id": "79ec7415-8a19-41c4-a6fa-aea56e3ed819",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a7n-input-view-masks/round-note.md",
+      "landed_in": "docs/scratch/phase-a7-input-view-masks.md",
+      "depends_on": [
+        "a7m-view-masks"
+      ],
+      "gate_served": "A7 restated: wider mask minus caption panel [277,422,363,454) <=0.02 on nine views + one second level",
+      "stock_starts_consumed": 1,
+      "stock_starts_authorized": 1,
+      "question_round_count": 2,
+      "facilitator_verified": "2026-10-21: independent histogram. All eight numerators match, including left 6476525/45441000 and right 7028355/45441000. Canonical baseline SHA-256 equals banner-check-after.png. elev_down and elev0_neg share one SHA-256. Right vs canonical is 2156669/45441000. Identical-original numerator is 0. Black-filled 6px shift is 7196538/45441000. Round-note 0.1502430624326049 and 0.1017641380435627 were not reproduced. Prologues 0x4622FD, 0x4623A5, 0x462404, 0x462465, and 0x43A4EC read 0x55. 0x45CC61 reads [eax+0x10]. writes empty. Install hashes match. No game process. Pid 23460. Ninja had no work. CTest 24/24.",
+      "commit_hint": null
+    },
     {
       "id": "a7m-view-masks",
       "title": "A7m: four launches saved one drifted frame; mouse and right files match initial; 0.088 is not a gate score",
@@ -1494,5 +1515,20 @@
         "Actual gate remains 0.0220410125. Eight other views and a second level still have no mask."
       ]
     }
-  ]
+  ],
+  "standing_run": {
+    "id": "a7-complete",
+    "goal": "A7 restated gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) excluded, <=0.02",
+    "authorized": "User 2026-10-21",
+    "grants": {
+      "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
+      "commits": "each verified round on decompile, no push/checkout/reset/stash"
+    },
+    "workers": "other sessions (Cursor grok-4.7-high-fast, OpenCode per ROLES); not Cursor Composer",
+    "owner": null,
+    "rounds_run": 0,
+    "stock_starts_used": 0,
+    "stopped": null,
+    "rules": "docs/ORCHESTRATION.md#standing-run"
+  }
 }

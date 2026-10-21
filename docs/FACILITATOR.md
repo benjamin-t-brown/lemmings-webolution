@@ -10,6 +10,9 @@ For project facilitation, read in order: [lessons](LESSONS.md), [plan](../PLAN.m
 [evidence rules](../.claude/rules/match-the-original.md).
 Read build/REA instructions when the task uses those tools.
 
+If `standing_run` is set in the queue, follow [the standing run](ORCHESTRATION.md#standing-run):
+loop round after round toward its gate and stop only on its stop conditions.
+
 Orchestration is the authority for decomposition, ownership, dispatch, repair and recovery.
 If delegation is unavailable, report the limitation and the bounded task plan; do not
 perform worker research or implementation yourself. Historical checkpoints and failure

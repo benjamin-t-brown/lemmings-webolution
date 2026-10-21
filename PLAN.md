@@ -459,6 +459,20 @@ LESSONS "The simulation"). D1 cannot pass without fixing it, and the blocker-tur
 expectation moves with it. The release cadence and the exit boxes are already measured
 (`measure_release.py`, `measure_exit.py`).
 
+**D1a first-divergence localization** ([check](docs/scratch/phase-d1-release-walkout-trace.md)):
+a new offline sim-trace tool (`src/tools/SimReleaseTrace.cpp`) and a new live no-input
+capture of `MM_CLIMB_002` (one stock start, 30 s / 150 ticks off the actor list) found the
+gate's **first** disagreement at tick 1, in the released count, not the previously-known
+left-turn tick — our sim's `World` releases its first lemming unconditionally on tick 1
+(`sinceSpawn_ = releaseIntervalTicks` at construction), while the original visibly waits
+`t = 2.020 s` (~10.1 ticks, neither tick 1 nor a full measured interval) before its first
+release, then releases every `2.887 s` (14.433 ticks) thereafter — a non-integer gap no
+`int releaseIntervalTicks` can track exactly. The left-turn divergence was never reached.
+No behavioral fix was made (out of this round's scope); the original's actual
+release-trigger mechanism (what determines the first delay, and whether the gap is
+level-specific or derives from `RELEASERATE.PC` through a mapping this project has not
+found — `LevelInfo` carries no release-rate index) is unread. D1 is not accepted.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

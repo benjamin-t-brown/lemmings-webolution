@@ -80,6 +80,9 @@ target_link_libraries(lrcheck PRIVATE webolution_objects)
 add_executable(actorfixture src/tools/actorfixture.cpp src/app/ActorSprite.cpp src/app/Camera.cpp)
 target_link_libraries(actorfixture PRIVATE webolution_objects)
 
+add_executable(SimReleaseTrace src/tools/SimReleaseTrace.cpp)
+target_link_libraries(SimReleaseTrace PRIVATE webolution_objects)
+
 # ---- tests ----------------------------------------------------------------
 
 include(CTest)

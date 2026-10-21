@@ -1,24 +1,46 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-20",
+  "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": {
-    "id": "a7m-view-masks",
-    "title": "A7m: capture the eight missing view masks and a second-level mask; score the restated A7 gate",
+    "id": "a7n-input-view-masks",
+    "title": "A7n: one MM_CLIMB_002 start; keep a view pair only when its baseline passes the fixed ROI against the retained original",
     "status": "queued",
-    "brief": "build/tmp/a7m-view-masks-brief.md",
+    "brief": "build/tmp/a7n-input-view-masks-brief.md",
     "worker_tier": "targeted",
     "owns_live_game": true,
     "live_owner": null,
     "depends_on": [
-      "a7l-25c64-writers"
+      "a7m-view-masks"
     ],
     "gate_served": "A7 restated: wider mask minus caption panel [277,422,363,454) <=0.02 on nine views + one second level",
-    "stock_starts_remaining": 2,
-    "dispatch_note": "Awaiting user authorization of the two stock starts before dispatch."
+    "stock_starts_remaining": 1,
+    "question_round_count": 2,
+    "round_cap_note": "Round 2 is justified: round 1 never tried the A1 input path, and its raw camera write moved +0x50/+0x60. The ROI reject is the new acceptance check. Second level stays out of this round.",
+    "dispatch_note": "User 2026-10-21 authorized the one MM_CLIMB_002 stock start for A7n. Do not dispatch on Cursor Composer; Cursor workers are pinned to grok-4.7-high-fast (ROLES).",
+    "stock_starts_authorized": 1
   },
   "queue": [],
   "recently_landed": [
+    {
+      "id": "a7m-view-masks",
+      "title": "A7m: four launches saved one drifted frame; mouse and right files match initial; 0.088 is not a gate score",
+      "status": "landed",
+      "brief": "build/tmp/a7m-view-masks-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "dispatch_id": "0eaaf76b-606d-4e2b-9e23-47706d37a93b",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a7m-view-masks/round-note.md",
+      "landed_in": "docs/scratch/phase-a7-view-masks.md",
+      "stock_starts_consumed": 4,
+      "stock_starts_authorized": 2,
+      "question_round_count": 1,
+      "facilitator_verified": "2026-10-21: independent histogram check. initial/mouse/right baselines share SHA-256 b80f4a06442bc14df243490d5eb34083ced83157d9f1c1f42d595b590e2b79f2. Fresh ROI vs original-0 and the durable baseline is 6117452/45441000 = 0.1346240619704672. Production vs those references is 708159/45441000 = 0.015584142074338152. Fresh wider row 7444647/84031425 = 0.08859360649899725 is that render on the drifted frame (camera +0x50 and +0x60). Durable caption-excluded score 2624993/135798210 stands. File prologues 0x55. Install hashes match the log. No game process. Four PIDs 63180, 62032, 34140, 16700. Worker mouse/right MAEs discarded as the same baseline.",
+      "commit_hint": null
+    },
     {
       "id": "a1-projection-cache-replay",
       "title": "A1 projection/cache binary32 replay (READ, not pixel-accepted)",

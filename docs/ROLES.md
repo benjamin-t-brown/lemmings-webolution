@@ -21,7 +21,7 @@ adapter frontmatter/configuration, where the harness requires them.
 | **Claude Code** | session launch model via `/facilitator` | session model (no pin; split instead of escalating) | session model via `.claude/agents/round-agent.md` (no pin) | session model via `.claude/agents/explore-agent.md` (no pin) | `/facilitator` → `.claude/commands/facilitator.md`; agents under `.claude/agents/`. No `model` in frontmatter and no `model` argument on dispatch. |
 | **Codex** | `astra` | `sol`, dispatched explicitly for a recorded hard round | `luna` — default worker pin | `luna`, read-only brief | `AGENTS.md`; REA MCP in `~/.codex/config.toml`. No in-repo agent pin file. |
 | **OpenCode** | `openai/gpt-6.1-sol` at `max` via `/facilitator` → `.opencode/agent/facilitator.md` | `disasm-agent` (Sol) for disassembly reads; otherwise the round pin | `openai/gpt-6-luna` at `high` via `.opencode/agent/round-agent.md` | `openai/gpt-6-luna` at `high` via `.opencode/agent/explore-agent.md` | `.opencode/opencode.json` + `.opencode/commands/` + `.opencode/agent/*.md` |
-| **Cursor** | **Claude Opus 5.5** via `/facilitator` (chat picker, e.g. `claude-opus-5-5-medium`) | same Cursor-pool worker as targeted — **do not** escalate to Opus; split the brief instead | Task → `round-agent` pinned to `composer-2.5-fast` | Task → `explore-agent` pinned to `composer-2.5-fast` | `/facilitator` → `.cursor/commands/facilitator.md`; workers in `.cursor/agents/*.md`; `.cursor/rules/*.mdc` stay **pointers only**. |
+| **Cursor** | **Claude Opus 5.5** via `/facilitator` (chat picker, e.g. `claude-opus-5-5-medium`) | same Cursor-pool worker as targeted — **do not** escalate to Opus; split the brief instead | Task → `round-agent` pinned to `grok-4.7-high-fast` | Task → `explore-agent` pinned to `grok-4.7-high-fast` | `/facilitator` → `.cursor/commands/facilitator.md`; workers in `.cursor/agents/*.md`; `.cursor/rules/*.mdc` stay **pointers only**. |
 
 For **Claude Code**: there is **no model routing**. Workers carry no `model` frontmatter and are
 dispatched without a `model` argument, so they run on the session model. Removed 2026-10-20: the
@@ -31,11 +31,17 @@ name). Split a hard brief rather than escalating. The checker rejects a `model` 
 `.claude/agents/*.md`.
 
 For **Cursor**: start the facilitator chat on **Claude Opus 5.5**. Workers are pinned in
-`.cursor/agents/` to **`composer-2.5-fast`** (Cursor included pool). Auto is a parent-chat
-mode only — it cannot be set on a custom subagent — so the worker pin is Composer, not
-`inherit` (inherit would keep workers on Opus). Hard rounds stay on the same Composer pin;
+`.cursor/agents/` to **`grok-4.7-high-fast`**. Auto is a parent-chat mode only — it cannot
+be set on a custom subagent — so the worker pin is explicit, not `inherit` (inherit would
+keep workers on Opus). Hard rounds stay on the same Grok pin;
 split the brief instead of escalating the model. When dispatching via Task, do not pass a
 third-party `model` override.
+
+Changed 2026-10-21 at the user's request: Cursor workers moved from `composer-2.5-fast` to
+Grok. On A7m, the Composer worker launched the game four times against an authorization of
+two, and used a raw camera write that the brief excluded. The ID `grok-4.7-high-fast` is the
+newest Grok ID in mouv's Cursor storage. It was not checked with a dispatch; if Cursor
+rejects it, record the blocker rather than switching back silently.
 
 For OpenCode, `high` and `max` are provider-specific reasoning-effort variants, set with the
 `variant` field. The facilitator uses **GPT 6.1 Sol** through OpenAI at `max`.
@@ -83,7 +89,7 @@ the normal worker pin.
 | **OpenCode** | Task → `disasm-agent` (`.opencode/agent/disasm-agent.md`), pinned to `openai/gpt-6.1-sol` at `high`; same round contract |
 | **Codex** | `sol`, dispatched explicitly |
 | **Claude Code** | unchanged: `round-agent` on the session model, no `model` argument |
-| **Cursor** | unchanged: `composer-2.5-fast`; split the brief |
+| **Cursor** | unchanged: `grok-4.7-high-fast`; split the brief |
 
 If a pinned worker is unavailable, record the blocker and report it; do not silently fall
 back to the normal round pin.

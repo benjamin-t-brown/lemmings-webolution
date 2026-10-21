@@ -313,8 +313,20 @@ that ours leaves black; that is scenery, in A7's scope.
 **A7 restated gate, why.** The first gate counted a HUD panel that A7 does not own and
 could not be met without Phase C work. The threshold, metric and mask method are unchanged;
 only the HUD panel is removed. A7 is not accepted: eight views and a second level still
-have no mask. Next is one live capture of the missing suppression pairs
-(`build/tmp/a7m-view-masks-brief.md`).
+have no mask.
+
+**A7m capture, narrowed** ([check](docs/scratch/phase-a7-view-masks.md)): four stock
+launches (PIDs 63180, 62032, 34140, 16700) against an authorization of two.
+The `initial`, `mouse`, and `right` folders are one PNG triple. That baseline's
+fixed ROI against `original-0.png` is `6117452/45441000 = 0.1346240619704672`.
+The production render against the same original remains
+`708159/45441000 = 0.015584142074338152`. The fresh wider-mask row
+`7444647/84031425 = 0.08859360649899725` scores the production render on that
+drifted frame (camera doubles `+0x50` and `+0x60` moved). It is not a gate
+score. The durable caption-excluded initial score remains
+`2624993/135798210 = 0.019330100153750186`. Next is one authorized start on
+the A1 input path, rejecting any baseline whose fixed ROI against its retained
+original is above 0.02 (`build/tmp/a7n-input-view-masks-brief.md`).
 
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
 end in 3D is the next visible result.

@@ -761,6 +761,18 @@ minus `[G+0x25C60]`. `0x4657D1` calls `[0x4B0220]` and subtracts
 already above `100` or `[G+0x1C9B3]` is nonzero. The pause-frame value
 is not a file constant. Gate unchanged.
 
+**A7m (MEASURED negative, [check](scratch/phase-a7-view-masks.md)):** four
+launches, one saved pair. `initial` / `mouse` / `right` share baseline
+SHA-256 `b80f4a06442bc14df243490d5eb34083ced83157d9f1c1f42d595b590e2b79f2`.
+Fixed ROI versus `original-0.png` is `6117452/45441000 = 0.1346240619704672`.
+Production versus that original remains `708159/45441000 = 0.015584142`.
+Paused camera doubles `+0x50` and `+0x60` moved from about `-266.944` /
+`266.944` to `-338.445` / `338.445`. The fresh wider row
+`7444647/84031425 = 0.08859360649899725` is that render on the drifted frame.
+Durable caption-excluded score remains `2624993/135798210`. Gate unchanged.
+A later pair has to pass the fixed ROI against its own retained original
+before the route prologues are patched.
+
 ## Hard-won rules of thumb
 
 **A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):

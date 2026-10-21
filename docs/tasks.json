@@ -1583,9 +1583,13 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session, this host, 2026-10-21",
-    "rounds_run": 2,
-    "stock_starts_used": 2,
-    "stopped": null,
+    "rounds_run": 3,
+    "stock_starts_used": 3,
+    "stopped": {
+      "date": "2026-10-21",
+      "reason": "Milestone gate passes on the facilitator's own independent re-score (stop condition 1): A7q's second level (MM_DIG_000, no-camera-input) scores 2606399/132499530 = 0.019671005625453916, reproduced by independent checker build/tmp/a7-review/a7q/verify.py. Combined with A7p's nine MM_CLIMB_002 views (all <=0.02), the amended A7 gate -- nine views plus one second level, caption panel and ten skill-panel boxes excluded -- now passes in full. A7 is accepted in PLAN.md. No further A7 rounds are queued.",
+      "last_commit": "dc05351"
+    },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "history": [
       {

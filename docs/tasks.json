@@ -6,6 +6,30 @@
   "queue": [],
   "recently_landed": [
     {
+      "id": "a7p-unpause-then-masks",
+      "title": "A7p: reference camera matched; eight wider scores pass; zoom1 fails on the skill-panel intersection",
+      "status": "landed",
+      "brief": "build/tmp/a7p-unpause-then-masks-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "018c156f-6ebf-4c38-8c7a-87d22bf6d9bf",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a7p-unpause-then-masks/round-note.md",
+      "landed_in": "docs/scratch/phase-a7-unpause-view-masks.md",
+      "depends_on": [
+        "a7o-settled-camera-masks"
+      ],
+      "gate_served": "A7 restated gate",
+      "stock_starts_consumed": 1,
+      "stock_starts_authorized": 1,
+      "question_round_count": 4,
+      "facilitator_verified": "2026-10-21: verify.py recomputed all nine ROI numerators and all nine wider numerators, including zoom1 5473596/228864285. Post-walk camera hash is 7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff. Canonical ROI is 156/45441000. Skill-panel rectangles from state.json hold 21600 zoom1 mask pixels and 1738618 error units; outside them 3734978*50 is within 212340285. A 6px shift raises the zoom1 numerator to 8709817. Initial self-score is 0. Prologues read 55. Install hashes match. Pid 26648 gone. Ninja had no work. CTest 24/24.",
+      "commit_hint": null
+    },
+    {
       "id": "a7o-settled-camera-masks",
       "title": "A7o: entry pause only; tap returns None, so the 14 s walk never ran",
       "status": "landed",
@@ -1535,9 +1559,13 @@
     },
     "workers": "other sessions (Cursor grok-4.7-high-fast, OpenCode per ROLES); not Cursor Composer",
     "owner": "cursor:54ff1c52-d9ec-42ca-8edc-560ea85e7e79",
-    "rounds_run": 1,
-    "stock_starts_used": 1,
-    "stopped": null,
+    "rounds_run": 2,
+    "stock_starts_used": 2,
+    "stopped": {
+      "date": "2026-10-21",
+      "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
+      "last_commit": null
+    },
     "rules": "docs/ORCHESTRATION.md#standing-run"
   }
 }

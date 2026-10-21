@@ -357,6 +357,18 @@ score is unchanged. The opening-camera hypothesis is untested. This is round 3
 of acquisition; a fourth round is justified because the stop was the return
 check, and the A6f walk that produced `7e6e1a8a…` does not test `tap`'s return.
 
+**A7p settled camera, eight views pass** ([check](docs/scratch/phase-a7-unpause-view-masks.md)):
+one start, pid 26648. After a 14 s walk the camera hash is
+`7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff` and the
+canonical ROI is `156/45441000`. All nine fixed-ROI numerators are at or
+under 908820. Eight caption-excluded wider scores pass. `zoom1` is
+`5473596/228864285 = 0.023916339764415404` and fails. Its saved camera hash
+matches `params-zoom1.json`. The logged skill-panel rectangles hold 21600 of
+that mask's pixels and 1738618 error units; outside them the inequality
+holds. Those pixels stay in the score. No timer rectangle was read. No second
+level was captured. A7 is not accepted. The standing run stops on this
+intersection rather than changing the exclusion.
+
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
 end in 3D is the next visible result.
 

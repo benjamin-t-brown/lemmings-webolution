@@ -783,6 +783,38 @@ zoom i32 is `control+0x0C`; `0x45CC61` is `mov ecx, [eax+0x10]`. No `C3`
 prologue, no wider-mask score, camera-block bytes not saved. Gate unchanged.
 Do not repeat this input list.
 
+## A7 checkpoint: amended scene-completeness gate passes
+
+A7n paused too early (about 1 s after entry): the opening camera move had not
+settled, so its `canonical` baseline sat a quarter turn from the retained
+original. **A7p ([check](scratch/phase-a7-unpause-view-masks.md))** fixed this
+by walking 14 s unpaused before pausing: the settled camera hash is
+`7e6e1a8a77c29f860f82dd8cde3f60c9f89ecf3f1352d3c2a6801cc9867d0fff`, and eight of
+nine `MM_CLIMB_002` views then pass the wider mask (caption panel removed).
+`zoom1` alone failed (`5473596/228864285`) until the user also excluded the ten
+skill-panel buttons (x `[18,90)`, object `0x4C9208` stride `0x1B0`, y bands
+`[12,44)`…`[372,404)`): with that exclusion all nine views pass
+(`0.011169`–`0.019314`).
+
+**A7q ([check](scratch/phase-a7-second-level-mask.md))** generalized the
+no-camera-input case to a second level, `MM_DIG_000`, reusing A7p's capture
+path unedited: `2606399/132499530 = 0.019671005625453916`, passing the same
+amended mask. This needed reading two camera-block fields the renderer's own
+input contract uses but `render_camera_skin.py` only approximates with a fixed
+fixture constant: `aspect` at offset 288 and `angle_turn_parameter` at offset
+280 of the 360-byte block at `0x4CBFC8` (confirmed against
+`tools/harness/fixtures/camera_a1/reference-state.json`). The live row count at
+`0x004C6E28` read 96 on both `MM_CLIMB_002` and `MM_DIG_000` — a two-level
+observation, not an established level-independence rule.
+
+**The amended A7 gate — nine `MM_CLIMB_002` views plus one second level, with
+the pause caption panel `[277,422,363,454)` and the ten skill-panel boxes
+excluded, each ≤0.02 — now passes in full**, on the facilitator's own
+independent re-score of A7p and A7q. A7 is accepted in `PLAN.md`. Left open,
+explicitly out of this gate's scope: camera movement (zoom/rotation/elevation)
+on any level but `MM_CLIMB_002`, and whether `world_rows` is level-independent
+in general.
+
 ## Hard-won rules of thumb
 
 **A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):

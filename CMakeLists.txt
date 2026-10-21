@@ -83,6 +83,13 @@ target_link_libraries(actorfixture PRIVATE webolution_objects)
 add_executable(SimReleaseTrace src/tools/SimReleaseTrace.cpp)
 target_link_libraries(SimReleaseTrace PRIVATE webolution_objects)
 
+# D1f (round 6): re-added. old/src/tools/compare_tick.cpp already exists and
+# already builds against the current World/LevelSetup/Terrain API unchanged;
+# tools/harness/measure_steppers.py --compare shells out to this exact path
+# (build/cmake/<preset>/compare_tick.exe).
+add_executable(compare_tick old/src/tools/compare_tick.cpp)
+target_link_libraries(compare_tick PRIVATE webolution_objects)
+
 # ---- tests ----------------------------------------------------------------
 
 include(CTest)

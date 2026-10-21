@@ -531,6 +531,19 @@ point, drifting by 0-4 ticks from discretizing the original's continuous accumul
 our 200 ms grid. The already-known left-turn divergence (`0x0041C67E`) was never reached
 in this comparison and remains the other open D1 blocker. D1 is still not accepted.
 
+**D1f left-turn fix, implemented** ([check](docs/scratch/phase-d1-left-turn-fix.md)):
+`World::stepWalker` now takes its post-turn step within the same tick when the walker
+*was* facing Left (not, as this round's own brief mis-stated, when it turns *to* face
+Left — corrected and reported by the round itself before any test literal changed).
+Offline `compare_tick` reproduces round 10's own cited numbers exactly, fixed and
+reverted; one live start matched 40/40 ticks with no regression, though it did not
+itself freshly cross the specific left-wall scenario within the printed window (flagged
+plainly, substituted with round 10's own already-landed live measurement). One test
+literal changed as a direct, justified consequence (`testBlockerTurnsWalkers`'s second
+sub-case, `131`→`132`); the first sub-case and `testWallTurn` are unaffected. **Both
+named D1 blockers are now fixed.** D1 is still not accepted — a fresh, comprehensive live
+re-check of the full gate (150 ticks, no input, every lemming) is the next D1 round.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

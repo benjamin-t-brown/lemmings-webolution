@@ -316,8 +316,11 @@ void World::stepDrown(Lemming& l) {
 
 void World::stepWalker(Lemming& l) {
   const int dir = static_cast<int>(l.facing);
-
-
+  // D1f (round 6), MEASURED via old/docs/scratch/phase3-round10-steppers.md
+  // Part 6 (0x0041C67E): captured before either `turn(l)` below can run, so
+  // it reflects the facing this call actually walked in on, not any facing
+  // a recursive continuation already flipped.
+  const bool wasLeft = l.facing == Facing::Left;
 
 
 
@@ -349,6 +352,17 @@ void World::stepWalker(Lemming& l) {
       if (setup_.terrain.blockerField(nx, l.y - rise * v)) {
         settleOnProbeColumn();
         turn(l);
+        // MEASURED, round 10 Part 6 (0x0041C67E, after 0x0041C679 calls
+        // 0x0042F66B): the original's turn arm returns 0, so its slice loop
+        // (0x0041BDD4) keeps going in the SAME tick and a walker that was
+        // facing Left steps once in its new (now Right) direction
+        // immediately -- live went 24, 25, 26, 27 against the column-23
+        // wall where ours went 24, 24, 25, 26. A walker that was facing
+        // Right already consumed the tick moving onto the wall column via
+        // settleOnProbeColumn() above, so it must NOT get this extra step
+        // ("right-facing turns already match" -- do not add it there).
+        if (wasLeft)
+          stepWalker(l);
         return;
       }
       if (!solidAt(nx, l.y - rise * v))
@@ -366,6 +380,10 @@ void World::stepWalker(Lemming& l) {
         return;
       }
       turn(l);
+      // Same mechanism as the blocker-field turn above: only a walker that
+      // was facing Left gets the same-tick continuation. D1f, round 6.
+      if (wasLeft)
+        stepWalker(l);
       return;
     }
 

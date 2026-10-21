@@ -526,7 +526,20 @@ void testBlockerTurnsWalkers() {
     check(w.lemmings()[1].state == State::Walker, "and it is still walking");
   }
   // Approaching from the right, facing left: it stops one cell further out,
-  // because the probe column is cell + facing either way.
+  // because the probe column is cell + facing either way, and -- new in
+  // D1f, round 6 -- it is *this* sub-case, not the first one, that the
+  // left-facing-turn fix touches: the walker was facing Left when it hit
+  // the field, so it gets the same-tick continuation and is already one
+  // column into its new (rightward) walk by the time this loop samples it.
+  // (The first sub-case above approaches facing Right, turns to Left, and
+  // is unaffected -- "right-facing turns already match", round 10 Part 6 --
+  // confirmed unchanged at 130 by this round's own ctest run; a plausible
+  // text in this round's brief guessed the opposite sub-case would move,
+  // but the measured mechanism and the actual failure both point here.)
+  // 131 -> 132 is a DIRECT, JUSTIFIED CONSEQUENCE of the fix: `nearest`
+  // below still bottoms out at 131 (x never visits 130; the continuation
+  // steps it straight from 131 to 132 within the turning tick), so only
+  // the turn-moment sample moves.
   {
     World w(placedLevel());
     w.place(walkerAt(130, Facing::Right));
@@ -541,7 +554,7 @@ void testBlockerTurnsWalkers() {
       if (turnedAt < 0 && l.facing == Facing::Right)
         turnedAt = l.x;
     }
-    check(turnedAt == 131, std::format("turned in cell 131 (got {})", turnedAt));
+    check(turnedAt == 132, std::format("turned in cell 132 (got {})", turnedAt));
     check(nearest == 131,
           std::format("never entered the blocker's column: nearest {}", nearest));
   }

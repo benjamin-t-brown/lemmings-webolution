@@ -502,6 +502,24 @@ step unevenly at roughly 144 Hz rather than in 200 ms chunks) or only reads that
 flagged, not settled. D1 is still not accepted; next is a static read of the hatch step's
 own call cadence, then an implementation round against this now-measured mechanism.
 
+**D1d hatch step clock, read** ([check](docs/scratch/phase-d1-hatch-step-clock.md)):
+`0x00425A95` is reached only through virtual dispatch (vtable `0x004B0F50`+`0x14`), via a
+generic per-object step dispatcher (`0x004423D2`) called from exactly three sites inside
+`0x0045CFF9` — an unconditional per-pass "leftover" call carrying real wall-clock time, a
+queue-drain call, and a paused fallback with a fixed `dt=0.0`. `0x0045CFF9` itself has
+exactly one caller, once per rendered frame. **Verdict: the release countdown is
+frame-driven, the same continuous-accumulator shape as the project's already-documented
+`+0x1CC` animation clock, not the lemming stepper's discrete 200 ms tick** — explaining
+D1c's uneven per-sample deltas as the real mechanism. The `dt` getter
+(`[hatch+0x44]+0x48`) narrows to firing only once per hatch (the arm transition), not on
+the recurring decrement; its concrete target, and whether D1c's `0.723 s` generalizes
+beyond `MM_CLIMB_002`, are unresolved by static reading (an independent REA/Ghidra pass
+hit the identical wall). D1 is still not accepted; next is an implementation round against
+this now-fully-measured shape (continuous real-seconds accumulator, not an integer tick
+count), using the general, confidently-known constants (`1.3 s` seed,
+`RELEASERATE.PC`-derived interval) and leaving the unresolved `arm_time` generalization as
+an explicit open parameter.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

@@ -1572,7 +1572,7 @@
       "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
       "commits": "each verified round on decompile, no push/checkout/reset/stash"
     },
-    "workers": "other sessions (Cursor grok-4.7-high-fast, OpenCode per ROLES); not Cursor Composer",
+    "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": null,
     "rounds_run": 2,
     "stock_starts_used": 2,

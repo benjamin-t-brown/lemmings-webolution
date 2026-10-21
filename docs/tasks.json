@@ -1810,7 +1810,7 @@
         "stop": {
           "date": "2026-10-21",
           "reason": "D1's gate, as literally written, would need to change (or a tooling investment authorized) to accept D1 given the one remaining, fully-characterized residual (see pending_questions above). Per docs/ORCHESTRATION.md#standing-run this is a stop condition, not a decision for the facilitator to make unilaterally. Both named D1 blockers are fixed and independently verified across 8 rounds (D1a-h); no other ranked D1 question remains unparked.",
-          "last_commit": null
+          "last_commit": "d70c292"
         },
         "resolution": null
       }

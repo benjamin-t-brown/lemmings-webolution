@@ -1564,7 +1564,7 @@
     "stopped": {
       "date": "2026-10-21",
       "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
-      "last_commit": null
+      "last_commit": "e8f52e0"
     },
     "rules": "docs/ORCHESTRATION.md#standing-run"
   }

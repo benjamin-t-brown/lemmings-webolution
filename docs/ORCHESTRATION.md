@@ -163,39 +163,59 @@ alpha state that was mostly pixel-invisible, and seven on one zoom 1 residual.
 
 ## Standing run
 
-A standing run is a user authorization for a facilitator to keep going round after round
-toward one milestone gate without returning to the user between rounds. The active one, if
-any, is `standing_run` in [tasks.json](tasks.json). When it is set, `/facilitator` runs this
-loop:
+A standing run is a user authorization for a facilitator to keep going round after round,
+and milestone after milestone, without returning to the user. The active one, if any, is
+`standing_run` in [tasks.json](tasks.json). Its `milestones` list names, in order, the
+milestones it covers. Each gate must already be signed off in `PLAN.md`. When it is set,
+`/facilitator` runs this loop:
 
 1. Resolve the active task as usual: verify `ready-for-verify`, repair or unblock `blocked`,
-   or dispatch `queued`.
+   or dispatch `queued`. If `active` is null, select and decompose the next question yourself.
 2. Verify with the full [verification loop](FACILITATOR.md#the-verification-loop--this-is-the-job),
    land the docs and set the task `landed`.
 3. Commit that round alone on `decompile`: name the paths, add attribution, no push, no
-   `checkout`, `reset` or `stash`.
-4. Pick the next question by gate error and the round caps, write and lint its brief, queue it,
-   and dispatch. Do not stop to report between rounds.
-5. Repeat until a stop condition holds.
+   `checkout`, `reset` or `stash`. Update `rounds_run`, `stock_starts_used` and `handoff`.
+4. If the current milestone's gate now passes on your own re-score, mark it done in
+   `PLAN.md`, commit, and move `current` to the next listed milestone. Continue.
+5. Pick the next question by gate error and the round caps, write and lint its brief, queue it,
+   and dispatch. Do not stop to report between rounds or between milestones.
+6. Repeat until a stop condition holds.
 
 **Granted by a standing run** (only what its entry lists): stock-game starts, within each
 brief's own per-round budget, and per-round commits. Everything in
 [AGENT_SAFETY.md](AGENT_SAFETY.md) and the evidence rules still applies.
 
-**Stop and report to the user** when any of these holds:
-- the milestone gate passes on the facilitator's own independent re-score;
-- the gate, its mask or its exclusions would need to change;
+**Handle these yourself; they are not stops:**
+- A worker's tool, launch or harness bug (a helper returning `None`, a missing file, a
+  crashed capture) gets a bounded repair round. It counts toward the round cap.
+- A round cap reached on one question: park it in Phase E with a resume brief, then rank
+  the next question.
+- A decision only the user can make, while other ranked work does not depend on it: add it
+  to `standing_run.pending_questions` with options, evidence and your recommendation, then
+  continue with that other work.
+- Running low on context: leave the queue resumable, write `standing_run.handoff`, and say
+  that the user should run `/facilitator` again. This does not set `stopped`.
+
+**Stop and report to the user** only when one of these holds:
+- the last listed milestone's gate passes on your own independent re-score;
+- a gate, its mask or its exclusions would need to change;
 - a guardrail breach: install hashes not restored, a process you cannot attribute, a write
   left unrestored, or a worker exceeding its brief's start budget or using an excluded method;
-- the round cap is hit and no other question is ranked;
-- delegation or the pinned model is unavailable, or another session owns the queue;
-- the session is running out of context. Leave the queue in a resumable state and say so.
+- every remaining ranked question waits on `pending_questions` or is parked;
+- delegation or the pinned model is unavailable, or another session is running a task.
 
 At a stop, write `standing_run.stopped` (date, reason, last commit) and report the gate
-score, the rounds run and the starts used.
+scores, the rounds run, the starts used and any pending questions, each with a
+recommendation.
 
-Only the session named in `standing_run.owner` dispatches. Another session that wants to
-take over records the handoff there first.
+**Ownership.** Only the session named in `standing_run.owner` dispatches. When the user
+starts `/facilitator` in a new session and no task is `running` under another session, that
+start is the handoff: record the new owner and the date, then continue from `handoff`.
+If a task is `running`, check that worker first, as in the dispatch loop.
+
+**`handoff`** is one short paragraph kept current at every commit: the current milestone,
+the last landed round, the next action, and anything in flight. A fresh session reads it
+after the startup reading and acts on it.
 
 ## Client adapters
 

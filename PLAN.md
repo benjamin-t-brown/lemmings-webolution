@@ -408,7 +408,7 @@ second level (A7q), all ≤0.02. A7 is accepted. The standing run `a7-complete` 
 per its "gate passes" condition (`docs/ORCHESTRATION.md#standing-run`).
 
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
-end in 3D is the next visible result.
+end in 3D is the next visible result. Its milestones and gates are under Phase D.
 
 
 ## Phase B — the frontend
@@ -442,6 +442,22 @@ live read of `[G+0x25C64]` at pause, in Phase C. Evidence:
 Wire spawn, exits, skill assignment and the measured gadgets into the new renderer, and get a
 retail level playable end to end in 3D. Starts as soon as A6 passes; it runs alongside A7
 and comes before B and C.
+
+**Milestones and exit gates (user sign-off 2026-10-21, before any D round).** Every gate is
+scored against the original's actor list at `0x004CBB18`
+(`measure_steppers.py --compare` is the per-tick oracle), never against our own sim. Do not
+change a gate after seeing a result; a needed change stops the standing run.
+
+| Milestone | Status | Exit gate |
+| --- | --- | --- |
+| D1 release and walk-out | **next** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
+| D2 click-to-assign | queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
+| D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
+
+Notes for D1: our sim has a known one-tick divergence on a left-facing turn (`0x0041C67E`,
+LESSONS "The simulation"). D1 cannot pass without fixing it, and the blocker-turn
+expectation moves with it. The release cadence and the exit boxes are already measured
+(`measure_release.py`, `measure_exit.py`).
 
 ## Phase E — the remaining debts
 

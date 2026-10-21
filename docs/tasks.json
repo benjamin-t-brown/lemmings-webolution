@@ -1574,32 +1574,49 @@
     }
   ],
   "standing_run": {
-    "id": "a7-complete",
-    "goal": "A7 amended gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) and ten skill-panel boxes x[18,90) excluded, <=0.02",
-    "authorized": "User 2026-10-21",
+    "id": "d-playable",
+    "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
+    "milestones": [
+      "D1 release and walk-out",
+      "D2 click-to-assign",
+      "D3 one retail level end to end"
+    ],
+    "current": "D1 release and walk-out",
+    "authorized": "User 2026-10-21: Phase D gates signed off; same grants as a7-complete",
     "grants": {
       "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
       "commits": "each verified round on decompile, no push/checkout/reset/stash"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": "Claude Code facilitator session, this host, 2026-10-21",
-    "rounds_run": 3,
-    "stock_starts_used": 3,
-    "stopped": {
-      "date": "2026-10-21",
-      "reason": "Milestone gate passes on the facilitator's own independent re-score (stop condition 1): A7q's second level (MM_DIG_000, no-camera-input) scores 2606399/132499530 = 0.019671005625453916, reproduced by independent checker build/tmp/a7-review/a7q/verify.py. Combined with A7p's nine MM_CLIMB_002 views (all <=0.02), the amended A7 gate -- nine views plus one second level, caption panel and ten skill-panel boxes excluded -- now passes in full. A7 is accepted in PLAN.md. No further A7 rounds are queued.",
-      "last_commit": "dc05351"
-    },
+    "owner": null,
+    "rounds_run": 0,
+    "stock_starts_used": 0,
+    "pending_questions": [],
+    "handoff": "A7 accepted (dc05351, f162fe8). D1 starts with no queued brief. Next action: select and decompose the first D1 question. Suggested first round: run the per-tick comparison from level start on MM_CLIMB_002 against the original actor list, and report where and when our sim first diverges, before any code change.",
+    "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "history": [
+    "previous": [
       {
-        "date": "2026-10-21",
-        "stop": {
+        "id": "a7-complete",
+        "goal": "A7 amended gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) and ten skill-panel boxes x[18,90) excluded, <=0.02",
+        "rounds_run": 3,
+        "stock_starts_used": 3,
+        "stopped": {
           "date": "2026-10-21",
-          "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
-          "last_commit": "e8f52e0"
+          "reason": "Milestone gate passes on the facilitator's own independent re-score (stop condition 1): A7q's second level (MM_DIG_000, no-camera-input) scores 2606399/132499530 = 0.019671005625453916, reproduced by independent checker build/tmp/a7-review/a7q/verify.py. Combined with A7p's nine MM_CLIMB_002 views (all <=0.02), the amended A7 gate -- nine views plus one second level, caption panel and ten skill-panel boxes excluded -- now passes in full. A7 is accepted in PLAN.md. No further A7 rounds are queued.",
+          "last_commit": "dc05351"
         },
-        "resolution": "User excluded the ten skill-panel buttons (gate amended in PLAN A7). Facilitator re-score: nine views pass. Resumed with A7q."
+        "history": [
+          {
+            "date": "2026-10-21",
+            "stop": {
+              "date": "2026-10-21",
+              "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
+              "last_commit": "e8f52e0"
+            },
+            "resolution": "User excluded the ten skill-panel buttons (gate amended in PLAN A7). Facilitator re-score: nine views pass. Resumed with A7q."
+          }
+        ]
       }
     ]
   }

@@ -582,6 +582,25 @@ not 200 ms discretization. In both saved captures the `released` counter steps e
 the counter. This is an observation from the saved meta files; the mechanism is D1i's
 question.
 
+**D1i actor-list delay explained: harness artifact, not an exe mechanism**
+([check](docs/scratch/phase-d1-release-to-actor.md)): the ~1.02 s cycle above does not
+exist in the game. The Lemming constructor (`0x0042DE51`) publishes the new pointer into
+the `0x004CBB18` actor list strictly before it increments the `RELEASED` counter at
+`0x004CBA78`, a few instructions later inside the same synchronous call — no clock read, no
+animation-frame check, on the path (`0x00425A95`→`0x0042DE51`→`0x004230A2`→`0x004233A0`,
+addresses and bytes read and independently re-read). The ~1.02 s period is
+`tools/harness/measure_d1_release_trace.py`'s own `t - last_enum > 1.0` re-enumeration
+throttle landing on its `1/hz = 0.02 s` sampling grid; an offline model replaying that
+throttle against each capture's own real per-pass timestamps reproduces all twenty saved
+`first_seen_seconds` values exactly (independently reproduced from scratch, plus a
+discriminating no-throttle control that fails as expected). `released_count` in the D1
+gate means the counter, which the exe read shows is the same quantity as the actor-list
+size at any instant in the original — they diverge only in this project's own measurement.
+**New, unactioned finding**: `measure_d1_release_trace.py::build_table()` builds its
+per-tick `released`/`existence` columns from this same throttled `first_seen`, so D1e/D1g's
+161-tick spawn-drift residual may be partly or wholly this harness bias rather than a sim
+timing defect — open for D1j, not yet checked.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

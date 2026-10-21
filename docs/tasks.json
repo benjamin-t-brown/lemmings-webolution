@@ -3,22 +3,92 @@
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": {
-    "id": "d1i-release-to-actor",
-    "title": "D1i: what delays a released lemming entering the actor list (~1.02 s cycle)",
-    "status": "queued",
-    "brief": "build/tmp/d1i-release-to-actor-brief.md",
+    "id": "d1j-harness-throttle-fix",
+    "title": "D1j: fix the capture harness's re-enumeration throttle; re-check how much of D1g's 161-tick residual it explains",
+    "status": "running",
+    "brief": "build/tmp/d1j-harness-throttle-fix-brief.md",
     "worker_tier": "targeted",
-    "owns_live_game": false,
+    "owns_live_game": true,
     "live_owner": null,
     "depends_on": [
-      "d1h-per-lemming-phase"
+      "d1i-release-to-actor"
     ],
     "gate_served": "PLAN Phase D, D1 release and walk-out",
     "question_round_count": 1,
-    "dispatch_note": "Standing run d-playable. Offline; no stock start."
+    "stock_starts_authorized": 1,
+    "stock_starts_consumed": 0,
+    "dispatch_note": "Standing run d-playable. One stock start authorized.",
+    "harness": "Claude Code",
+    "requested_model": "session (no pin)",
+    "worker_agent": "round-agent"
   },
-  "queue": [],
+  "queue": [
+    {
+      "id": "d3a-retail-level-setup",
+      "title": "D3a: production retail-level loader (.LVL -> sim::LevelSetup)",
+      "status": "queued",
+      "brief": "build/tmp/d3a-retail-level-setup-brief.md",
+      "worker_tier": "targeted",
+      "owns_live_game": false,
+      "live_owner": null,
+      "question_round_count": 1,
+      "depends_on": [],
+      "gate_served": "PLAN Phase D, D3 one retail level end to end (prerequisite); keeps D1 sim trace byte-identical",
+      "dispatch_note": "Offline; no stock start. Owns src/sim/RetailLevel.*, LevelObjects hatch rate words, SimReleaseTrace; must not touch src/sim/World.* (D1 fix owns it)."
+    },
+    {
+      "id": "d2a-pick-rule",
+      "title": "D2a: the original's in-level pick rule, read and ported as a pure function",
+      "status": "queued",
+      "brief": "build/tmp/d2a-pick-rule-brief.md",
+      "worker_tier": "targeted",
+      "owns_live_game": false,
+      "live_owner": null,
+      "question_round_count": 1,
+      "depends_on": [],
+      "gate_served": "PLAN Phase D, D2 click-to-assign (a)",
+      "dispatch_note": "Offline exe read + src/app/Pick.* unit tests; no stock start. Live D2(a) capture is a later round."
+    },
+    {
+      "id": "d3b-app-sim-loop",
+      "title": "D3b: sim::World ticking in webolution, lemmings drawn on the tube",
+      "status": "queued",
+      "brief": "build/tmp/d3b-app-sim-loop-brief.md",
+      "worker_tier": "targeted",
+      "owns_live_game": false,
+      "live_owner": null,
+      "question_round_count": 1,
+      "depends_on": [
+        "d3a-retail-level-setup"
+      ],
+      "gate_served": "PLAN Phase D, D3 (app tick loop; A6/A7 command lines must stay byte-identical)",
+      "dispatch_note": "Offline; no stock start. Owns src/app/main.cpp, TubeScene.*, SimClock.*."
+    }
+  ],
   "recently_landed": [
+    {
+      "id": "d1i-release-to-actor",
+      "title": "D1i: no exe-side gate; the ~1.02 s actor-list-entry cycle is the capture harness's own re-enumeration throttle",
+      "status": "landed",
+      "brief": "build/tmp/d1i-release-to-actor-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/d1i-release-to-actor/round-note.md",
+      "depends_on": [
+        "d1h-per-lemming-phase"
+      ],
+      "gate_served": "PLAN Phase D, D1 release and walk-out",
+      "question_round_count": 1,
+      "stock_starts_consumed": 0,
+      "stock_starts_authorized": 0,
+      "landed_in": "docs/scratch/phase-d1-release-to-actor.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independently re-read 0x0042dff1 (RELEASED increment, 8 bytes) and 0x00423146 (actor-list ecx load + call to 0x4233a0) directly against the installed exe -- byte-identical to the worker's dump; confirmed call-site ordering from the raw addresses alone (0x0042dea5 < 0x0042dff1, actor-list insert precedes the counter increment in the same function). Independently grepped measure_d1_release_trace.py and confirmed the literal 't - last_enum > 1.0' line and 'hz=50.0' default at the reported location; confirmed diff_trace.py's literal 'field': 'released_count' citation and PLAN.md's literal D1 gate text ('released count and order match'). Wrote a fresh, independent checker (not importing model.py) that re-derives all twenty first_seen_seconds values from each capture's own live_trace.meta.json/live_raw.jsonl with the gate logic expressed from scratch -- exact match to floating-point precision in both captures. Added a discriminating control absent from the worker's packet: a naive no-throttle model (first_seen == release_t) against the same data fails 9/10 points in D1a and 9/10 in D1g (diffs up to +1.00s), confirming the throttle model is required, not merely plausible. No Lemmings Revolution process or LemWeb-* scheduled task running (PowerShell Get-Process/Get-ScheduledTask); git status shows no src/**, tools/harness/**, or other docs/** file touched by the worker, only this task's permitted docs/tasks.json fields plus this facilitator's own PLAN.md/docs/scratch landing edits; no rebuild needed (no source changed). Found and recorded, beyond the worker's own scope, that measure_d1_release_trace.py's per-tick 'released'/'existence' columns (fed into D1g's 161-tick residual) are built from this same throttled first_seen -- queued as D1j, not yet checked."
+    },
     {
       "id": "d1h-per-lemming-phase",
       "title": "D1h: per-lemming-phase hypothesis explains 3/6 outright and the other 3's non-flip; corrects D1g's event-type characterization",
@@ -1793,11 +1863,11 @@
       "commits": "each verified round on decompile, no push/checkout/reset/stash"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": "Claude Code facilitator session, 2026-10-21 (handoff: no task was running, standing_run.owner was null)",
-    "rounds_run": 8,
+    "owner": "Claude Code facilitator session lemmings-webolution-88, 2026-10-21 (handoff: no task was running under the prior owner, d1i was still queued)",
+    "rounds_run": 9,
     "stock_starts_used": 4,
     "pending_questions": [],
-    "handoff": "2026-10-21: user kept D1 gate as written. Facilitator found the 161-entry spawn drift is not 200 ms discretization: in both D1a and D1g captures, actors appear in the actor list on a ~1.02 s cycle (2.04 + k*1.02 s) after the released counter steps at 2.88 s intervals; World spawns on the counter. D1i (offline read + model, queued) names that mechanism. Next: verify D1i, implement, fresh live recheck, then revisit the deferred facing question (standing_run.deferred_questions[0]) only if facing residuals remain. D2 research may run alongside if it needs no live game.",
+    "handoff": "2026-10-21 (after d1i landed): current milestone D1; last landed D1i. D1i found there is no exe-side gate between release and actor-list entry -- the ~1.02s cycle D1g/D1 direction observed is this project's own capture-harness re-enumeration throttle (measure_d1_release_trace.py's 't - last_enum > 1.0'), not a sim timing question, so no src/sim/World.* implementation brief is warranted from it. It also surfaced that D1g's own 161-tick spawn-drift residual was computed from that same throttled first_seen, so some or all of it may be harness bias, not a sim defect -- unactioned until checked. Critical path, active: d1j (running, one stock start) fixes the harness throttle, re-captures MM_CLIMB_002, and re-runs diff_trace.py to see how much of the 161 collapses. Next after d1j: if residual collapses or is re-characterized, a fresh full D1 gate recheck (D1g-style) decides whether D1 passes on its own re-score; only then revisit the deferred facing-label question (user direction stands: facing deferred until the drift question is settled). Queued behind d1j, all offline and file-disjoint from World.*: d3a retail loader, d2a pick rule, d3b app sim loop (after d3a). Rank: a D1 implementation/recheck round goes ahead of the queue when it exists; otherwise take the queue in order. After D1: D2b live capture of 20 cursor positions + four 50-tick assignment traces; D3c click-to-assign in the app (Pick + World::assign); D3d scripted solution + level-end/timer; D3 re-score incl. A6/A7 gates.",
     "stopped": null,
     "history": [
       {

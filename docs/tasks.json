@@ -2,7 +2,21 @@
   "schema_version": 1,
   "updated": "2026-10-20",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "a7m-view-masks",
+    "title": "A7m: capture the eight missing view masks and a second-level mask; score the restated A7 gate",
+    "status": "queued",
+    "brief": "build/tmp/a7m-view-masks-brief.md",
+    "worker_tier": "targeted",
+    "owns_live_game": true,
+    "live_owner": null,
+    "depends_on": [
+      "a7l-25c64-writers"
+    ],
+    "gate_served": "A7 restated: wider mask minus caption panel [277,422,363,454) <=0.02 on nine views + one second level",
+    "stock_starts_remaining": 2,
+    "dispatch_note": "Awaiting user authorization of the two stock starts before dispatch."
+  },
   "queue": [],
   "recently_landed": [
     {
@@ -1093,6 +1107,370 @@
       "landed_in": "docs/scratch/phase-a6-fresh-pause-pixel-result.md",
       "commit_hint": null,
       "acceptance": "User 2026-10-20 accepted repair 4 at the A6d3 evidence standard (same script, same qualification limits). Slope-walker clause-2 failure parked in PLAN Phase E."
+    },
+    {
+      "id": "a7a-wider-mask-localize",
+      "title": "A7a: current wider-mask failure reproduced; lower-band cells lead the error ranking, no cause attributed",
+      "status": "landed",
+      "brief": "build/tmp/a7a-wider-mask-localize-brief.md",
+      "worker_tier": "targeted",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna",
+      "requested_variant": "high",
+      "dispatch_id": "ses_ea370bb13ffe4K7dJYPfV74fmd",
+      "dispatch_state": "Task round-agent completed. debug agent resolves required pin/high; local message metadata records openai/gpt-6-luna. No live owner.",
+      "facilitator_session": "ses_ea3735f58ffeGgMGJk0cLv33l0",
+      "brief_adaptation": "Corrected prior-score premise from A4d; primary render uses --no-injected-walkers; permits only read-only archive loading by replacement renderer; fixed disjoint excess accounting and synthetic scorer check. No stock start or production changes authorized.",
+      "worker_output": "build/tmp/a7a-wider-mask-localize/round-note.md",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a6f-fresh-pause-gate"
+      ],
+      "gate_served": "A7 wider changed-pixel diagnostic <=0.02 (nine views + second level); only initial has an identified retained matching mask",
+      "question_round_count": 1,
+      "landed_in": "docs/scratch/phase-a7-wider-mask-localize.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent histogram checker reproduces production 3031085/137520225, A2 3029686/137520225, all 1200 cell rows, signed/positive excess and top-five ranking; own fresh render byte-identical SHA66a8ea3b, retained capture hashes verified. Top-five share 25.9333% falsifies concentration under fixed grid; no causal claim. Fixed ROI 708159/45441000 passes; cavity/rim fail unchanged. Synthetic masked one-channel check exact7 excludes unmasked765. Narrowed mask inventory to checked identified evidence; earlier same-view suppression image does not supply new gate view. Full build no work, 24/24 CTest; zero game/webolution processes and LemWeb tasks; no source/live/installation writes or new native claims. No commit authorized.",
+      "remaining_blockers": [
+        "Wider-mask production diagnostic still exceeds 0.02; cause unassigned. Next bounded offline question is lower-band characterization using retained isolation/restoration images.",
+        "Eight other view masks and a second-level suppression pair not identified; full A7 gate cannot yet be scored. Any new stock capture requires a separately authorized live brief; zero starts renewed."
+      ]
+    },
+    {
+      "id": "a7b-lower-band-characterize",
+      "title": "A7b: lower-band residual is stable; native cause unresolved; localization capped and parked",
+      "status": "landed",
+      "brief": "build/tmp/a7b-lower-band-characterize-brief.md",
+      "worker_tier": "targeted",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna",
+      "requested_variant": "high",
+      "dispatch_id": "ses_ea36317c9ffeSRKYMjjoitFgo1",
+      "dispatch_state": "Initial Task plus same-session offline repair1 complete. Model/high configuration verified; local message metadata records required OpenAI Luna. No owned process.",
+      "repair_brief": "build/tmp/a7b-lower-band-characterize-repair1.md",
+      "repair_reason": "Synthetic advertised765 but used255 and had zero out-of-region error; note copied11380 onto both full-frame restores despite JSON49411 for no-walker. U cells contiguous, not a general disjoint-union algorithm. All repaired; real metrics unchanged.",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a7b-lower-band-characterize/round-note-repair1.md",
+      "depends_on": [
+        "a7a-wider-mask-localize"
+      ],
+      "question_round_count": 3,
+      "gate_served": "A7 unchanged wider-mask <=0.02; offline lower-band attribution and error-removal potential, no new masks or live starts",
+      "landed_in": "docs/scratch/phase-a7-lower-band-characterize.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent histogram/explicit-cell-union checker confirms all6 PNG identities/dimensions, global3031085/137520225, B3491/302804, U922/200664, all15 baseline contrast records, suppression equality, bboxes and repair real-metric equality. Both restores exactly baseline in B/U; whole-frame E11380 vs49411 corrected. Actual-helper synthetic whole E18/N2 vs region E7/N1 independently passes; own isolated in-memory mask/region bypasses each assert, analyzer SHA00c0fab4 unchanged. Best-case total2728281/137520225=.0198391255 is only maximal error-removal arithmetic, actual gate still fails. Visual Paused-caption lead not native attribution. Full build no work, fresh24/24 CTest, lints/diff check pass; own zero game/webolution/LemWeb tasks. No production/live/install write or commit.",
+      "parked_in": "PLAN.md Phase E A7 lower-band cause",
+      "resume_brief": "build/tmp/a7-lower-band-native-resume-brief.md",
+      "remaining_blockers": [
+        "Native draw/resource/coverage ownership unresolved; three-dispatch localization cap includes repair. Resume only with new native evidence or explicit gate-based fourth-round justification, not another pixel scoring sweep.",
+        "A7 actual gate remains failing; eight other view masks and second-level pair not identified. No new live authorization."
+      ]
+    },
+    {
+      "id": "a7c-pause-caption-native",
+      "title": "A7c: byte-backed pause-state/key map; caption draw owner unresolved, cause re-parked",
+      "status": "landed",
+      "disposition": "bounded negative recorded; no composition rule or implementation accepted",
+      "worker_output": "build/tmp/a7c-pause-caption-native/round-note.md",
+      "brief": "build/tmp/a7c-pause-caption-native-brief.md",
+      "worker_tier": "targeted",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna",
+      "requested_variant": "high",
+      "dispatch_id": "ses_ea34e52f3ffeZncQ64LRINGY0Z",
+      "dispatch_state": "Task round-agent completed. Required pin/high resolved before dispatch; local message metadata records expected model/provider. Owned Ghidra closed; no target processes.",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7b-lower-band-characterize"
+      ],
+      "question_round_count": 4,
+      "round_cap_exception": "User proceed activates proposed native continuation. Explicit fourth-round exception: image localization and restore checks cannot settle caption ownership/coverage; a bounded native trace supplies a new evidence source and could support correction of E302804, whose maximal removal moves initial gate to0.0198391. Not another pixel sweep; no fifth round or automatic repair authorized.",
+      "gate_served": "A7 unchanged wider-mask <=0.02; native rule to justify one later offline composition test, no implementation or live start",
+      "landed_in": "docs/scratch/phase-a7-pause-caption-native.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent struct PE reader verifies authority digest/raw bounds, all4 raw pin windows, pause newline literal, known state stores, STR_PAUSED key and pointer. Own read_steppers/Capstone aligned rereads and independent expectation-flip rejection/restoration; manifest SHA5d06218a unchanged. Imported/authenticated21 REA records and checked retained procedure view without reopening target. Corrected candidate pointer prose +0xC to +0 and mislabeled evidence record; key/data are not native caption resource/consumer. One event/state function inspected; no draw-owner/resource/layout/coverage bridge or composition test supported. Full build no work,24/24 CTest, lint/diff pass. Own zero games/webolution/LemWeb tasks; current_document target_unavailable confirms no open provider target. No source/live/install write/commit; bounded negative landed, no fifth repair.",
+      "parked_in": "PLAN.md Phase E A7 lower-band cause",
+      "resume_brief": "build/tmp/a7-lower-band-native-resume-brief.md",
+      "remaining_blockers": [
+        "Missing byte-backed bridge from established in-level draw-loop pause selection to caption text/sprite consumer. State-handler/key exact-xref search does not identify rendering, layout or coverage. Re-park after fourth-round exception; no automatic fifth dispatch.",
+        "A7 score unchanged0.0220410125; other view/second-level masks not identified. No new stock-start allowance or production correction."
+      ]
+    },
+    {
+      "id": "a7d-draw-loop-caption-bridge",
+      "title": "A7d: base text-list draw reached; pause-selected producer/content unresolved",
+      "status": "landed",
+      "disposition": "partial READ route accepted; no Paused ownership, implementation or pixel claim",
+      "worker_output": "build/tmp/a7d-draw-loop-caption-bridge/round-note.md",
+      "brief": "build/tmp/a7d-draw-loop-caption-bridge-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6.1-sol",
+      "requested_variant": "max",
+      "model_preference_question": "Before disassembly dispatch: particular model or normal worker pin? Asked under then-current ROLES.md rule.",
+      "model_preference_answer": "User: ues sol for this (use Sol). Historical one-off OpenAI Sol/max; no persistent config edits by this dispatch.",
+      "dispatch_adapter": "Owned OpenCode CLI round-agent process; process-local model/variant and CLI-primary override, same worker contract and task-deny. Subsequent new disasm-agent framework mapping preserved for future rounds.",
+      "dispatch_id": "ses_ea332d351ffeQ4l7QVMwHhWwh4",
+      "dispatch_state": "Completed. Local metadata confirms openai/gpt-6.1-sol max round-agent, final stop; supervisor exit.json records CLI rc0 at2026-10-21T05:07:11.953316Z. Owned CLI/supervisor no longer present.",
+      "dispatch_artifacts": "build/tmp/a7d-dispatch/",
+      "worker_pid": 29412,
+      "supervisor_pid": 53508,
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7c-pause-caption-native"
+      ],
+      "question_round_count": 5,
+      "round_cap_exception": "Explicit fifth dispatch: accepted frame0x441845 post-scene calls0x441A71->0x45B639 and0x441A7F->0x44CD06 supply a new draw route rather than A7c event handler. Native producer/coverage evidence could support correction of E302804, but no savings guaranteed. No automatic sixth dispatch or repair.",
+      "gate_served": "A7 unchanged wider-mask <=0.02; state-to-caption ownership prerequisite before any reconstruction test",
+      "landed_in": "docs/scratch/phase-a7-draw-loop-caption-bridge.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20 project date: independently parsed raw authority via pefile and decoded Capstone16 pin windows/25 relative targets; re-read all8 retained full assembly ranges, matching928 instruction boundaries and receiver/state/text/timer distinctions. Authenticated39 REA records without target reopen. Independent expected432->433 mutation rejected/restored, own worker control subprocesses rc[0,2,0], manifest SHA43d0cd74 and original exe unchanged. Accepted H=frameReceiver+0x2018 ->44CD06 ->44D0ED ->44E150 ->element414920; immediate432 is not final screen placement or pause identity. H producer/contents and pause-state1 linkage unresolved; H+224/H+758/H+77C distinct. Full build no work,24/24 CTest; lints/diff clean; no target provider open, zero games/webolution/LemWeb tasks, CLI/supervisor exited. Concurrent ROLES/disasm-agent edits preserved. No production/live/install writes or commit.",
+      "parked_in": "PLAN.md Phase E A7 lower-band cause",
+      "resume_brief": "build/tmp/a7-lower-band-native-resume-brief.md",
+      "remaining_blockers": [
+        "Exact base-list H producer must connect gameplay pause1 to text/index/content and H+50/global gate; current draw consumer is not proven Paused owner. No automatic sixth dispatch.",
+        "No caption atlas/layout/coverage/raster rule or pixel improvement accepted. Actual gate remains0.0220410125; missing other view/second-level masks and zero renewed live starts."
+      ]
+    },
+    {
+      "id": "a7e-base-list-producer",
+      "title": "A7e: builder 0x45D27B writes G+0x25C68, not exact base list H",
+      "status": "landed",
+      "disposition": "bounded negative recorded; no H producer, implementation, or pixel claim",
+      "brief": "build/tmp/a7e-base-list-producer-continue1.md",
+      "prior_brief": "build/tmp/a7e-base-list-producer-brief.md",
+      "worker_output": "build/tmp/a7e-base-list-producer/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "3a457148-bd69-499d-9a54-8971ac67933f",
+      "prior_harness": "OpenCode",
+      "prior_requested_model": "openai/gpt-6.1-sol",
+      "prior_dispatch_id": "ses_ea31b80ffffeeZekSmfh15jHZm",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7d-draw-loop-caption-bridge"
+      ],
+      "question_round_count": 7,
+      "round_cap_exception": "User explicitly continued the usage-limit abort. Result is a negative on this caller. No automatic eighth dispatch.",
+      "gate_served": "A7 unchanged wider-mask <=0.02; this caller eliminated as exact H producer",
+      "landed_in": "docs/scratch/phase-a7-base-list-producer.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent verify.py re-decoded dispatch, case 0/1, builder args, lookup wrapper, frame this, and H add 0x2018. LIST_IMM 0x25C68->0x2018 failed both adds and restored hash 08fed147. Worker checker 11 pins; mutated expectation failed builder-list-base-add only. Narrowed: case 0 is conditional; case 1 stores 2 and 0 and has no builder call; same arm calls 0x44DF40 and 0x44E010 on G+0x25C68. prediction.md still claims H and is falsified on destination. Build no work, 24/24 CTest. No game/webolution/Ghidra. No production or install writes.",
+      "parked_in": "PLAN.md Phase E A7 lower-band cause",
+      "resume_brief": "build/tmp/a7-lower-band-native-resume-brief.md",
+      "remaining_blockers": [
+        "H producer still unknown. 0x45D27B writes G+0x25C68 with index 0x54. Do not repeat that call. A later caller must show destination +0x2018, or a byte path from G+0x25C68 into H.",
+        "Index 0x54 string unread. Actual gate remains 0.0220410125. No new stock start."
+      ]
+    },
+    {
+      "id": "a7f-caller-dest-offset",
+      "title": "A7f: no direct 0x4404FA caller passes list immediate 0x2018",
+      "status": "landed",
+      "disposition": "bounded negative recorded; H producer still unknown",
+      "brief": "build/tmp/a7f-caller-dest-offset-brief.md",
+      "worker_output": "build/tmp/a7f-caller-dest-offset/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "669ef96b-b7a4-410c-8844-d35ea5a8544b",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7e-base-list-producer"
+      ],
+      "question_round_count": 1,
+      "gate_served": "A7 unchanged wider-mask <=0.02; direct builder destinations classified",
+      "landed_in": "docs/scratch/phase-a7-caller-dest-offset.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent verify.py re-scanned 17 E8 sites, found no imm 0x2018 in 160 bytes before each, re-decoded 0x44CD06 list adds 0x758/0x77C/0x224, frame add 0x2018, 0x44D316 this at [ebp-0x38], and sole caller 0x444B92 add ecx,0x2018 from [ebp-0x10]. CONTROL_IMM 0x25C68->0x2018 failed and restored. Narrowed: 0x44D348 is not inside 0x44D0ED. [ebp-0x10] unread. Build no work, 24/24 CTest. No game/webolution/Ghidra.",
+      "parked_in": "PLAN.md Phase E A7 lower-band cause",
+      "resume_brief": "build/tmp/a7-lower-band-native-resume-brief.md",
+      "remaining_blockers": [
+        "No direct builder call writes H. Next byte question is a copy from G+0x25C68 into H, or the identity of [ebp-0x10] at 0x444B8F.",
+        "Actual gate remains 0.0220410125. No new stock start."
+      ]
+    },
+    {
+      "id": "a7g-25c68-to-h",
+      "title": "A7g: ten 0x25C68 adds, none stores the pointer at +0x2018",
+      "status": "landed",
+      "disposition": "bounded negative recorded; 0x45E33C calls 0x44E150 on G+0x25C68",
+      "brief": "build/tmp/a7g-25c68-to-h-brief.md",
+      "worker_output": "build/tmp/a7g-25c68-to-h/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "aaf6797c-99e1-4919-ae0e-ff8eca60e997",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7f-caller-dest-offset"
+      ],
+      "question_round_count": 1,
+      "gate_served": "A7 unchanged wider-mask <=0.02; 0x25C68 immediates classified",
+      "landed_in": "docs/scratch/phase-a7-25c68-to-h.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent verify.py found the same ten immediates, six G adds inside the single 0x45CFF9 prologue span, and 0x45E342 call 0x44E150. CONTROL_IMM 0x25C68->0x2018 failed and restored hash 723a3e98. Narrowed: six G uses not seven; 0x4AD43E calls 0x449130 so it is not a mirror of 0x45BE4E; SEH label not adopted. Build no work, 24/24 CTest. No game/webolution/Ghidra.",
+      "parked_in": "PLAN.md Phase E A7 lower-band cause",
+      "resume_brief": "build/tmp/a7-lower-band-native-resume-brief.md",
+      "remaining_blockers": [
+        "0x45E33C draws G+0x25C68 through 0x44E150. That is not H and not a caption proof. [ebp-0x10] at 0x444B8F remains unread.",
+        "A copy into H that never re-encodes 0x25C68 was not searched. Actual gate remains 0.0220410125."
+      ]
+    },
+    {
+      "id": "a7h-pause-list-draw",
+      "title": "A7h: G+0x25C68 draw has no constant in band B",
+      "status": "landed",
+      "disposition": "arguments recorded; stack order corrected; rectangle deferred to a7i",
+      "brief": "build/tmp/a7h-pause-list-draw-brief.md",
+      "worker_output": "build/tmp/a7h-pause-list-draw/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "1f5347ef-c883-4108-9686-0736710b9826",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7g-25c68-to-h"
+      ],
+      "question_round_count": 1,
+      "gate_served": "A7 wider-mask <=0.02; this round found no band constant on G+0x25C68",
+      "landed_in": "docs/scratch/phase-a7-pause-list-draw.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent verify.py re-decoded push order, +0x14/+0x18 stores, 0x44E010 immediates, state==1 gate, bare ret at 0x44E1AD, H push 432 and mov 0x140, and rect stores 160/480/180/260. Expected add 0x2018 at 0x45E33C failed; restored hash 11cf4ee1. Narrowed: worker swapped [ebp+8] and [ebp+0xC] on the G placement call. 0x45E331 also calls 0x44DE60 on G+0x25C90. Build no work, 24/24 CTest. No game process.",
+      "remaining_blockers": [
+        "G+0x25C68 has no y 432..447 constant. 160/480/180/260 go to 0x47AD8C on G+0x26000; edge order is the next question.",
+        "Actual gate remains 0.0220410125. Eight other views and a second level still have no mask."
+      ]
+    },
+    {
+      "id": "a7i-rect-26000",
+      "title": "A7i: unscaled vertical span 180..260 misses band B; scale path can move it",
+      "status": "landed",
+      "disposition": "edges recorded; band miss narrowed to the unscaled branch",
+      "brief": "build/tmp/a7i-rect-26000-brief.md",
+      "worker_output": "build/tmp/a7i-rect-26000/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "2037836d-65a0-49fd-b299-ee9e53c293fa",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7h-pause-list-draw"
+      ],
+      "question_round_count": 1,
+      "gate_served": "A7 wider-mask <=0.02; unscaled rect misses the band, scaled rect depends on G+0x25FF8",
+      "landed_in": "docs/scratch/phase-a7-rect-26000.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-20: independent verify.py re-read stores 160/480/180/260, fsub at 0x47ADAA, vertical flds, ret 0x20, scale adjustments, and qwords 760 and 3040. Expecting 432 at [ebp-0x54] failed; restored hash d05620f7. Narrowed: jne 0x45E157 leaves the span at 180..260; fall-through adds round(760*(value-0.5)^2) to 260. Build no work, 24/24 CTest. No game process.",
+      "remaining_blockers": [
+        "G+0x25FF8 is unread, so the scaled rectangle may or may not enter y 432..447.",
+        "Actual gate remains 0.0220410125. Eight other views and a second level still have no mask."
+      ]
+    },
+    {
+      "id": "a7j-25ff8-stores",
+      "title": "A7j: 3.5 skips the rectangle; 1.5 would scale the top to 1020",
+      "status": "landed",
+      "disposition": "three stores recorded; value at the scale read still depends on +0x1C968",
+      "brief": "build/tmp/a7j-25ff8-stores-brief.md",
+      "worker_output": "build/tmp/a7j-25ff8-stores/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "5a054369-90e0-419d-a061-e55e0f83492b",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7i-rect-26000"
+      ],
+      "question_round_count": 1,
+      "gate_served": "A7 wider-mask <=0.02; constants classified against the 1.5 entry test",
+      "landed_in": "docs/scratch/phase-a7-25ff8-stores.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independent verify.py re-read 11 displacement hits, fstp 3.5 at 0x45CB39, conditional fsub 2.0 at 0x45CBB2, fsub +0x1C968 at 0x45CEB3, and both calls with ecx=[ebp-0x94]. Expecting qword 1.0 at 0x4B1810 failed; restored hash 3473c249. Narrowed: 3.5 does not enter the scale block; 7100 is the formula off that path. 1.5 would reach upper edge 1020 only if it is still the field at 0x45E113. Build no work, 24/24 CTest. No game process.",
+      "remaining_blockers": [
+        "The dword in [ebp-0x28] stored to +0x1C968 before 0x45DA48 is unread, so the field at the scale compare is not one number.",
+        "Actual gate remains 0.0220410125. Eight other views and a second level still have no mask."
+      ]
+    },
+    {
+      "id": "a7k-1c968-source",
+      "title": "A7k: subtracted double is G+0x25C64 divided by 1000",
+      "status": "landed",
+      "disposition": "formula recorded; integer at the fild is not a constant",
+      "brief": "build/tmp/a7k-1c968-source-brief.md",
+      "worker_output": "build/tmp/a7k-1c968-source/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "a7454dcf-03db-4b5a-addd-c3640a520f0e",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7j-25ff8-stores"
+      ],
+      "question_round_count": 1,
+      "gate_served": "A7 wider-mask <=0.02; formula shows integer 0 with V_init 1.5 reaches y 1020",
+      "landed_in": "docs/scratch/phase-a7-1c968-source.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independent verify.py re-read fild at 0x45DA1B, fdiv by qword 1000.0, fstp [ebp-0x28], store through edx=[ebp-0x94], call 0x45CC09, je 0x45D875, +0x26024 test, and the byte store of 1 at 0x45CAD6. Expecting +0x1C96C failed; restored hash 63c338a4. Integer at the fild remains unread. Build no work, 24/24 CTest. No game process.",
+      "remaining_blockers": [
+        "Writers of [G+0x25C64] are not classified. Integer 0 with V_init 1.5 would put the scaled top at 1020.",
+        "Actual gate remains 0.0220410125. Eight other views and a second level still have no mask."
+      ]
+    },
+    {
+      "id": "a7l-25c64-writers",
+      "title": "A7l: scale integer is a timer delta or a conditional 100",
+      "status": "landed",
+      "disposition": "writers recorded; pause-frame value is not a file constant",
+      "brief": "build/tmp/a7l-25c64-writers-brief.md",
+      "worker_output": "build/tmp/a7l-25c64-writers/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "composer-2.5-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "d4338e72-b47c-422c-b602-f97c3af97e3e",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "a7k-1c968-source"
+      ],
+      "question_round_count": 1,
+      "gate_served": "A7 wider-mask <=0.02; static writers do not fix the pause-frame integer",
+      "landed_in": "docs/scratch/phase-a7-25c64-writers.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independent verify.py re-read 8 displacement hits, store at 0x45D09D of 0x4657D1([G+0x557C]) minus [G+0x25C60], conditional store of round(0.1*1000) at 0x45D96B, fild at 0x45DA1B, and qwords 1000.0 and 0.1. Expecting divisor 1.0 failed; restored hash e6e8eb91. 0x4657D1 calls [0x4B0220] and subtracts [ecx+8]. Build no work, 24/24 CTest. No game process.",
+      "remaining_blockers": [
+        "Pause-frame [G+0x25C64] is a runtime tick delta or a conditional 100. A memory read can place the rectangle. It does not finish A7.",
+        "Actual gate remains 0.0220410125. Eight other views and a second level still have no mask."
+      ]
     }
   ]
 }

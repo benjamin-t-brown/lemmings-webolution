@@ -204,8 +204,117 @@ Residuals that leave both conditions passing are parked, not chased.
 ### A7. Scene completeness
 
 The A2 wider/cavity/rim failures (`0.022030839 > 0.02`), the upper gold band, and the
-omitted scenery and object models (entrances, exits, gadgets). **Exit gate:** the A2
-wider changed-pixel diagnostic ≤ 0.02 on the nine retained views and on one second level.
+omitted scenery and object models (entrances, exits, gadgets). **Exit gate (restated
+2026-10-21, with user sign-off, after A7l):** the A2 wider changed-pixel diagnostic ≤ 0.02 on
+the nine retained views and on one second level, with the pause caption panel
+`[277,422,363,454)` (PIL half-open xyxy) removed from each view's mask. Each view's mask
+comes from its own suppression pair (baseline versus four cell routes suppressed), and is
+scored against that same baseline. If another screen-fixed HUD element (timer, skill panel)
+intersects a view's mask, it is reported to the user, not excluded silently.
+
+**A7a offline baseline/localization** ([check](docs/scratch/phase-a7-wider-mask-localize.md)):
+current tube-only production reproduces A4d at `3031085/137520225 = 0.0220410125`,
+still failing. Under a predeclared disjoint 16×16 partition, the top five cells
+carry only 25.93% of positive excess (concentration falsifier triggered); four
+are in the lower y=432 band. No cause identified. Only initial has an identified
+matching suppression pair; eight other view masks and a second-level pair remain
+unavailable in the checked evidence. Next bounded offline question is lower-band
+residual characterization, not a fitted raster fix. This is round 1 of that
+localization question; no stock start is authorized. A7 is not accepted.
+
+**A7b stable lower-band diagnostic** ([check](docs/scratch/phase-a7-lower-band-characterize.md)):
+B=`[0,432,640,448)` contributes E302804 (9.99% of global masked error);
+both restorations are pixel-identical there and both suppression conditions give
+identical band pixels. Removing all B error would ideally give 0.0198391255,
+but **no correction or cause is accepted**. Paused-caption composition is only
+a native-trace lead. The localization family has reached three dispatches
+including packet repair and is parked in Phase E; no fourth pixel-only round.
+A7's unchanged actual score is still 0.0220410125 and its other masks are missing.
+
+**A7c native exception, bounded negative** ([check](docs/scratch/phase-a7-pause-caption-native.md)):
+fourth dispatch confirmed the known pause-state writes and `STR_PAUSED` key at
+0x4C3C18 (pointer at0x4C35E4), but found no caption draw/resource/layout/coverage
+chain. One broad event/state function was inspected, not a complete draw graph.
+No supported composition test or fix; actual gate unchanged. Cause re-parked;
+future evidence must bridge from the in-level draw loop, not repeat the pause
+event-handler/key-only search. No automatic fifth round or live start.
+
+**A7d Sol draw-loop exception, partial READ** ([check](docs/scratch/phase-a7-draw-loop-caption-bridge.md)):
+frame0x441845 -> H=receiver+0x2018 ->0x44CD06 ->0x44D0ED ->0x44E150 reaches
+a base text-list submission; one flag arm passes placement argument432. This
+is not yet a Paused owner: the producer/content of H and its connection to pause
+state1 remain missing. H+0x224 timer and H+0x758/+0x77C text records are distinct.
+No font/coverage/pixel fix. Re-park at the exact base-list producer boundary after
+dispatch5; no automatic sixth round. Actual gate and missing masks unchanged.
+
+**A7e continuation, negative READ** ([check](docs/scratch/phase-a7-base-list-producer.md)):
+the user moved the aborted sixth dispatch here. Builder `0x45D27B` uses the
+same `0x45CFF9` receiver that is passed to frame `0x441845`, and then stores
+pause state 1, but the list pointer it passes is `G+0x25C68`, not H
+(`G+0x2018`). Lookup index `0x54` is not a read string. Switch case 1 does not
+reach this call. Later calls on that arm, `0x44DF40` and `0x44E010`, use the
+same `G+0x25C68` object. H's producer is still unknown. No eighth pass on
+`0x45D27B`. Actual gate and missing masks unchanged.
+
+**A7f direct-caller scan, negative READ** ([check](docs/scratch/phase-a7-caller-dest-offset.md)):
+17 direct calls to `0x4404FA`, none with list immediate `0x2018`. The frame
+path's builder calls are H+`0x758`, H+`0x77C`, and H+`0x224`. `0x44D316`
+is entered with `[ebp-0x10]+0x2018` and then builds at `+0x758` / `+0x77C`;
+that slot is not identified as the frame receiver. The open producer
+question is whether `G+0x25C68` is copied into H. Gate unchanged.
+
+**A7g immediate scan, negative READ** ([check](docs/scratch/phase-a7-25c68-to-h.md)):
+ten `add ..., 0x25C68` sites. Six are `G+0x25C68` inside `0x45CFF9`, and
+`0x45E33C` calls `0x44E150` on that object. None stores the pointer at
+`+0x2018`. The other four use different frame slots. A copy that does not
+re-encode the immediate, and `[ebp-0x10]` at `0x444B8F`, stay unread. Gate
+unchanged.
+
+**A7h draw arguments, READ** ([check](docs/scratch/phase-a7-pause-list-draw.md)):
+G+`0x25C68` is placed from two runtime formulas and drawn by `0x44E150`
+only while pause state is 1. No constant in that setup lies in band B.
+`160/480/180/260` belong to G+`0x26000` via `0x47AD8C`, not to this object.
+The gate is unchanged, so A7 is not accepted.
+
+**A7i rectangle edges, READ** ([check](docs/scratch/phase-a7-rect-26000.md)):
+unscaled, the vertical pair is 180..260 and misses band B. A scale branch
+adds `round(760 * ([G+0x25FF8] - 0.5)^2)` to 260 before the push, so the
+miss is not on every path. The gate is unchanged. A7 is not accepted.
+
+**A7j field stores, READ** ([check](docs/scratch/phase-a7-25ff8-stores.md)):
+`0x45CB39` writes `3.5`, which misses the rectangle setup. A later
+subtract of `2.0` can leave `1.5`, and `1.5` would scale the top edge to
+`1020`. `0x45CEB3` then subtracts `[G+0x1C968]`. The gate is unchanged.
+A7 is not accepted.
+
+**A7k divisor, READ** ([check](docs/scratch/phase-a7-1c968-source.md)):
+the subtracted double is `[G+0x25C64] / 1000.0`. With that integer at `0`
+and `V_init` at `1.5`, the scaled top is `1020` and includes band B. The
+integer is not a file constant. The gate is unchanged. A7 is not accepted.
+
+**A7l scale integer, READ** ([check](docs/scratch/phase-a7-25c64-writers.md)):
+`[G+0x25C64]` is a runtime tick delta (`0x45D09D`) or a conditional `100` (`0x45D96B`),
+not a file constant. Which one holds at pause needs a memory read. Gate unchanged.
+
+**Review of A7a–A7l (2026-10-21).** A7c–A7l traced what draws the **Paused** caption over
+band B. That caption is a translucent HUD panel; A2's own scenery inventory assigns the
+pause banner to Phase C. It entered A7's mask only because the reference is a paused frame,
+the same mis-specification A6's first gate had. A7f–A7l ran seven rounds after A7e's
+"no automatic eighth dispatch" with no recorded round-cap exception. No round addressed the
+eight missing view masks or the second level. The caption chain is **parked in Phase C**.
+
+Facilitator re-score, separate summer (`build/tmp/a7-review/caption.py`, output
+`caption.json`): the `initial` mask with the caption panel removed scores
+**2624993/135798210 = 0.019330100**, passing. The panel held 2,251 mask pixels and
+406,092 error units. Removing whole band B instead scores 0.020232 because the panel
+spans y 422–453. Below the tube the original also draws a green and purple floor ring
+that ours leaves black; that is scenery, in A7's scope.
+
+**A7 restated gate, why.** The first gate counted a HUD panel that A7 does not own and
+could not be met without Phase C work. The threshold, metric and mask method are unchanged;
+only the HUD panel is removed. A7 is not accepted: eight views and a second level still
+have no mask. Next is one live capture of the missing suppression pairs
+(`build/tmp/a7m-view-masks-brief.md`).
 
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
 end in 3D is the next visible result.
@@ -224,6 +333,15 @@ The skill panel art and counts, and the counters the engine names itself: `^save
 `^time`, the icon sets `GreyIcons` / `BlackIcons` / `AdditiveIcons`, and the cursor set
 (`_curLem`, `_curNoLem`, `_curEnt`, `_curExit`, and the left/right variants). Panel indices
 0, 1, 3, 4 and 7 are known; 2, 5, 6, 8, 9 are not.
+
+The **Paused** caption panel (`[277,422,363,454)` on the 640x480 frame) belongs here. A7c–A7l
+traced it without finding its draw owner, parked 2026-10-21: `STR_PAUSED` key at `0x4C3C18`;
+`G+0x25C68` list drawn by `0x44E150` only while pause state is 1; rectangle
+`G+0x26000` via `0x47AD8C`, whose top edge scales with `[G+0x25FF8]` and
+`[G+0x25C64] / 1000.0`, the latter a tick delta or a conditional `100`. Resume from a
+live read of `[G+0x25C64]` at pause, in Phase C. Evidence:
+[A7c](docs/scratch/phase-a7-pause-caption-native.md) through
+[A7l](docs/scratch/phase-a7-25c64-writers.md).
 
 ## Phase D — reconnect the simulation
 
@@ -246,6 +364,26 @@ open.
 - Platform targets: Linux, macOS, WebAssembly. The old GLES3/WebGL2 claim was a code
   property that was never actually run.
 - Intro, music and FMV. The `.avi` codecs are still unidentified.
+- **A7 lower-band cause** (open after A7l: the scale integer is a runtime tick).
+  B=`[0,432,640,448)` has stable E302804 over maskN3491. Removing every B
+  error would reach 0.0198391255 on the one scored view; eight other views
+  and a second level still have no mask. `[G+0x25C64]` is either
+  `0x4657D1([G+0x557C]) - [G+0x25C60]` or a conditional `100`. `0x4657D1`
+  calls `[0x4B0220]` and subtracts `[ecx+8]`. A paused read of that dword
+  can place the rectangle; it cannot finish A7 while the other masks are
+  missing. Do not repeat the writer scan. Evidence:
+  [A7a](docs/scratch/phase-a7-wider-mask-localize.md),
+  [A7b](docs/scratch/phase-a7-lower-band-characterize.md),
+  [A7c](docs/scratch/phase-a7-pause-caption-native.md),
+  [A7d](docs/scratch/phase-a7-draw-loop-caption-bridge.md),
+  [A7e](docs/scratch/phase-a7-base-list-producer.md),
+  [A7f](docs/scratch/phase-a7-caller-dest-offset.md),
+  [A7g](docs/scratch/phase-a7-25c68-to-h.md),
+  [A7h](docs/scratch/phase-a7-pause-list-draw.md),
+  [A7i](docs/scratch/phase-a7-rect-26000.md),
+  [A7j](docs/scratch/phase-a7-25ff8-stores.md),
+  [A7k](docs/scratch/phase-a7-1c968-source.md),
+  [A7l](docs/scratch/phase-a7-25c64-writers.md).
 - **Actor filter/alpha state at zoom 1** (parked 2026-10-20 after seven rounds, A4z–A4af).
   The full-scale zoom 1 fixture fails (27 candidate-only pixels, support MAE 0.0284529
   against 0.0151558); A4af READ that nonzero zoom skips the pre-draw `0x470F29(0)` and

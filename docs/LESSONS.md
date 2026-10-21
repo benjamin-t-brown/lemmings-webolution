@@ -645,6 +645,122 @@ cause measured; full controller/temporal pairing incomplete. Localize dominant
 global error before more actor pixel-fit work; do not shrink the full-frame gate
 to A4d's passing ROI.
 
+**A7a (offline MEASURED, [check](scratch/phase-a7-wider-mask-localize.md)):** current
+tube-only production wider-mask score reproduces A4d: **3031085/137520225 =
+0.022041012512886742**, still >0.02. Mask and error reference come from the
+durable A2 baseline/suppression pair, not A1 `original-0.png`. Predeclared 16×16
+top five cells carry only **25.93%** of positive cell excess; four are in the
+lower y=432 band. This falsifies five-cell concentration, not a connected-region
+or causal claim. No missing-model attribution or production change. Only initial
+has an identified matching wider mask in the checked retained evidence; do not
+reuse it for other cameras. Independent full/cell histogram checks, fresh PNG
+identity and 24/24 CTest pass. A7 remains open; no live allowance renewed.
+
+**A7b (offline MEASURED, [check](scratch/phase-a7-lower-band-characterize.md)):**
+lower band `[0,432,640,448)` has masked E302804/N3491 (9.99% of global error).
+Both original restorations equal baseline there; both suppression images match
+each other. The discrepancy is stable in those pairs, but its native cause is
+unresolved. Paused-caption composition is a visual lead, not a native ownership
+or alpha claim. Ideal removal of every B error gives 2728281/137520225 =
+0.0198391255; actual score remains 0.0220410125. Full-frame restores share bbox
+and changed count823 but **not** error (11380 vs49411). Initial synthetic exclusion
+test was ineffective; repaired actual-helper controls and isolated bypasses are
+independently discriminated. Independent image checks and 24/24 CTest pass.
+Three-dispatch localization cap reached including repair; cause parked in Phase E.
+
+**A7c (READ negative, [check](scratch/phase-a7-pause-caption-native.md)):** explicit
+fourth-round native exception did not locate the caption renderer. `STR_PAUSED`
+is stored at0x4C3C18, with a pointer at0x4C35E4 **offset0**, not+0xC as the
+candidate pin prose claimed. This is a key-like identifier, not the display
+resource. Known pause/resume stores re-read; one event/state function inspected.
+Exact-address xref misses do not prove no indexed consumer. No draw/layout/alpha
+rule or composition test accepted. Independent raw pins/bundle authentication
+and24/24 CTest pass; re-park after count4. Future bridge must begin at the in-level
+draw path, not another pause-event-handler or key-only search.
+
+**A7d (partial READ, [check](scratch/phase-a7-draw-loop-caption-bridge.md)):**
+frame0x441845 passes H=receiver+0x2018 to0x44CD06, which can call0x44D0ED
+and base-list draw0x44E150 -> per-element0x414920. One +0x48 flag arm passes
+argument432; final screen placement and Paused identity are unproved. Gate
+0x4E33C8/nonzero and H+0x50/positive are not connected to pause state1.
+The missing edge is **who fills H and selects its text**, not whether a generic
+text-to-list/list-to-submit path exists. Timer H+0x224 and index0x44/0x45 records
+H+0x758/+0x77C are separate. Do not infer no indexed consumer from absent exact
+xrefs or invent BSS table contents. Independent16 pin windows/25 targets/eight
+full assembly ranges, authenticated39-record bundle and24/24 CTest pass. No
+implementation or gate improvement; re-park after dispatch5 with exact producer
+resume condition and no automatic sixth round.
+
+**A7e (READ negative, [check](scratch/phase-a7-base-list-producer.md)):**
+builder call `0x45D27B` does not fill H. `0x45CFF9` entry `ecx` is `[ebp-0x94]`,
+and that slot is also the `this` of frame `0x441845`, but the builder's stack
+object is `G+0x25C68` with `this=[G+0x5570]` and lookup index `0x54` via
+`0x486847`. `0x25C68` is `0x23C50` away from `0x2018`. The call sits on one
+case-0 branch that stores `[G+0x572C]=1`; switch case 1 at `0x45D459` does not
+call `0x4404FA`. The same arm later calls placement helper `0x44DF40` and
+`0x44E010` on `G+0x25C68`, not draw `0x44E150` on H. Index `0x54` text and any
+copy from `G+0x25C68` into H are unread. Independent list-immediate mutation
+`0x25C68` to `0x2018` fails and restores; 24/24 CTest. Gate unchanged. Do not
+repeat `0x45D27B` as the H producer.
+
+**A7f (READ negative, [check](scratch/phase-a7-caller-dest-offset.md)):**
+17 direct `E8` calls to `0x4404FA`, and none has immediate `0x2018` in the
+160 bytes before the call. `0x44CD06`'s only direct caller is the frame's
+`add ecx, 0x2018`, and its builder calls pass that `this` plus `0x758`,
+`0x77C`, or `0x224`. `0x44D348` / `0x44D389` are in `0x44D316`, whose only
+direct caller does `add ecx, 0x2018` from `[ebp-0x10]` and then builds at
+`this+0x758` / `this+0x77C`. `[ebp-0x10]` is not shown to be the frame
+receiver. Control `0x45D25D` remains `add edx, 0x25C68`. A copy from
+`G+0x25C68` into H was not searched. Gate unchanged.
+
+**A7g (READ negative, [check](scratch/phase-a7-25c68-to-h.md)):** ten
+`.text` encodings of immediate `0x25C68`, each an `add` then a call or
+push. Six are inside `0x45CFF9` and use `[ebp-0x94]`, so they are
+`G+0x25C68`. `0x45E33C` calls `0x44E150` on that object. The other four use
+`[ebp-0x14]` or `[ebp-0x40]` in other frames; `0x4AD43E` calls `0x449130`,
+not the `0x415140` used at `0x45BE4E`. No hit stores the pointer at
+`+0x2018`. Independent immediate mutation `0x25C68` to `0x2018` fails and
+restores; 24/24 CTest. Gate unchanged.
+
+**A7h (READ, [check](scratch/phase-a7-pause-list-draw.md)):** the
+G+`0x25C68` placement call pushes `[0x58CB44] - 2*metric` first
+(`[ebp+0xC]` → `[this+0x18]`) and the `sar` difference second
+(`[ebp+8]` → `[this+0x14]`). Neither immediate is `432` or `320`.
+`0x44E010` gets dwords `0x3F613404` and `0xEA4A8C15`. `0x44E150` at
+`0x45E342` has no stack arguments and runs only when `[G+0x572C] == 1`.
+No constant in that trio lies in y `432..447`. The same function stores
+`160`, `480`, `180`, and `260` and passes them to `0x47AD8C` on
+G+`0x26000` before another `0x44E150`. Gate unchanged.
+
+**A7i (READ, [check](scratch/phase-a7-rect-26000.md)):** `0x47AD8C`
+walks from double `160` toward `480` (`fsub` at `0x47ADAA`). The other
+pair, `180` and `260`, is passed through and does not meet y `432..447`
+when left unchanged. `0x45E157` can instead add and subtract
+`round(760 * ([G+0x25FF8] - 0.5)^2)` (`0x4B1810` is `760.0`) before the
+same push, which can move the upper edge through the band. That double
+is unread. Gate unchanged.
+
+**A7j (READ, [check](scratch/phase-a7-25ff8-stores.md)):** three `fstp`
+to `+0x25FF8`. `0x45CB39` writes `3.5`. `0x45CBB2` subtracts `2.0` when
+`[obj+0x1CB7C] == 0`. `0x45CEB3` subtracts `[obj+0x1C968]`. `0x45CFF9`
+calls those functions at `0x45D89D` and `0x45DA48` with `[ebp-0x94]`
+before the scale read. A field of `3.5` leaves the rectangle setup
+because it is above `1.5`. A field of `1.5` would scale the top edge to
+`1020`. The value at the read is still open. Gate unchanged.
+
+**A7k (READ, [check](scratch/phase-a7-1c968-source.md)):** the value
+subtracted at `0x45DA48` is `(double)(int32)[G+0x25C64] / 1000.0`.
+`0x4B1758` is `1000.0`, and `edx` at the copy is `[ebp-0x94]`. With the
+integer at `0` and `V_init` at `1.5`, the scaled top is `1020`. The
+integer is not a constant on this path. Gate unchanged.
+
+**A7l (READ, [check](scratch/phase-a7-25c64-writers.md)):** two stores
+of `[G+0x25C64]`. `0x45D09D` writes the return of `0x4657D1([G+0x557C])`
+minus `[G+0x25C60]`. `0x4657D1` calls `[0x4B0220]` and subtracts
+`[ecx+8]`. `0x45D96B` stores `100` (`0.1 * 1000.0`) when the dword is
+already above `100` or `[G+0x1C9B3]` is nonzero. The pause-frame value
+is not a file constant. Gate unchanged.
+
 ## Hard-won rules of thumb
 
 **A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):

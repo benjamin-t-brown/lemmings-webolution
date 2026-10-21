@@ -473,6 +473,21 @@ release-trigger mechanism (what determines the first delay, and whether the gap 
 level-specific or derives from `RELEASERATE.PC` through a mapping this project has not
 found — `LevelInfo` carries no release-rate index) is unread. D1 is not accepted.
 
+**D1b release-trigger mechanism, read** ([check](docs/scratch/phase-d1-release-trigger.md)):
+a per-hatch real-time countdown (`hatch+0xC0`) drives every release, compared against
+`0.0` at `0x00425A95`. It is seeded once to a fixed `1.3 s` (`0x004B0F48`) the moment a
+door sub-object (`hatch+0x44`) finishes opening, then every later release *adds back* the
+per-level interval at `hatch+0xB8` (a rollover, not a reset) — two different numbers
+sharing one field, not one shared threshold with only a different start time. `hatch+0xB8`
+is resolved at load (`0x00425DE3`) by clamping a per-hatch rate (`hatch+0xA0`, already
+present but unnamed in `findHatchRecords`'s own file-format comment, alongside `+0xA4`
+min / `+0xA8` max) into a 99-row table loaded at runtime from `Compiled\ReleaseRate.pc`
+(`0x0042609D`) — exactly `src/assets/GameData.h`'s `ReleaseRates`, not yet wired to a
+per-level selector. On `MM_CLIMB_002` (rate 20, clamped to `[1,50]`), that row is
+`2.8864866275534937 s`, matching D1a's measured mean gap (`2.8867 s`) to `0.0002 s`. The
+first release's own `~0.72 s` residual (`1.3 s` seed vs. D1a's measured `2.020 s`) is left
+to the door-opening animation's own duration, not yet measured. D1 is still not accepted.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

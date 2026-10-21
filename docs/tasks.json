@@ -3,25 +3,49 @@
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": {
-    "id": "d1b-release-trigger-read",
-    "title": "D1b: read the original's release-trigger mechanism (disassembly read)",
+    "id": "d1c-door-open-duration",
+    "title": "D1c: measure the hatch door-opening duration (arm_time) on MM_CLIMB_002",
     "status": "running",
-    "brief": "build/tmp/d1b-release-trigger-read-brief.md",
+    "brief": "build/tmp/d1c-door-open-duration-brief.md",
     "worker_tier": "targeted",
     "harness": "Claude Code",
     "requested_model": "session (no pin)",
     "worker_agent": "round-agent",
-    "disassembly_read": true,
-    "owns_live_game": false,
-    "live_owner": null,
+    "owns_live_game": true,
+    "live_owner": "claude-code round-agent (unnamed, dispatched by facilitator session this turn)",
     "depends_on": [
-      "d1a-release-walkout-trace"
+      "d1a-release-walkout-trace",
+      "d1b-release-trigger-read"
     ],
     "gate_served": "PLAN Phase D, D1 release and walk-out",
     "question_round_count": 1
   },
   "queue": [],
   "recently_landed": [
+    {
+      "id": "d1b-release-trigger-read",
+      "title": "D1b: release trigger is per-hatch real-time countdown; 1.3s first seed + RELEASERATE.PC-derived recurring interval (rollover, not reset)",
+      "status": "landed",
+      "brief": "build/tmp/d1b-release-trigger-read-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "disassembly_read": true,
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "d1a-release-walkout-trace"
+      ],
+      "gate_served": "PLAN Phase D, D1 release and walk-out",
+      "question_round_count": 1,
+      "stock_starts_consumed": 0,
+      "stock_starts_authorized": 1,
+      "worker_output": "build/tmp/d1b-release-trigger-read/round-note.md",
+      "landed_in": "docs/scratch/phase-d1-release-trigger.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independently re-disassembled 0x00425A95 (296 bytes), 0x00425DE3 and 0x0042609D in full against the installed exe (read_steppers.py, fresh dumps, not re-running the worker's scripts); 0x00425DE3/0x0042609D match byte-exact including the loop bound 0x63=99 and store address 0x00426116; 0x00425A95 matches every substantive claim (1.3 seed at 0x004B0F48, dt subtraction, 0.0 compare at 0x004B0338, ctor call + 3 args, +0xB8 rollover-add) but had minor citation errors corrected in the landed note (wrong add-ax,1 byte encoding, two off-by-a-few-bytes address/register slips, one RMW decomposed into 3 real instructions, and one branch's parenthetical interpretation that does not hold under the traced control flow) -- none affect the two load-bearing claims. Independently read the filename string at 0x004BF6B0 directly from the file (exact). Independently re-parsed the extracted RELEASERATE.PC (fresh struct.unpack, not parse_hatch_rate.py): row 20 = 2.8864866275534937, exact match. Independently re-parsed the extracted MM_CLIMB_002.LVL hatch record at the cited offset with fresh code, using findHatchRecords's own pre-existing (pre-this-round) field-offset comment: type=0 count=10 x=32 y=42 rate=20 min=1 max=50, exact match, and the record's own box-shape doubles satisfy the existing locator's filter. git status --short shows only docs/tasks.json's permitted fields changed; no game process was started (stock_starts_consumed 0); no src/sim/World.* or other production file touched."
+    },
     {
       "id": "d1a-release-walkout-trace",
       "title": "D1a: first divergence is tick-1 released-count (sim over-eager), not the known left-turn bug; original's trigger mechanism unread",
@@ -1627,10 +1651,10 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session, 2026-10-21 (handoff: no task was running, standing_run.owner was null)",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 1,
     "pending_questions": [],
-    "handoff": "2026-10-21: D1a landed (docs/scratch/phase-d1-release-walkout-trace.md) -- first D1 divergence is tick 1's released count (our sim over-eager; original waits ~2.02s), not the previously-known left-turn bug, which was never reached. Dispatched D1b (build/tmp/d1b-release-trigger-read-brief.md) to read the original's actual release-trigger mechanism (what determines the first-release delay and whether the inter-release gap is level-specific or derives from RELEASERATE.PC) before patching World.cpp's sinceSpawn_ init -- per project method, do not patch a guess. Not yet verified.",
+    "handoff": "2026-10-21: D1b landed (docs/scratch/phase-d1-release-trigger.md) -- the release trigger is a per-hatch real-time countdown (hatch+0xC0 vs 0.0), seeded once to a fixed 1.3s on door-open, then rolling over by the RELEASERATE.PC-derived interval (hatch+0xB8) every later release; confirmed numerically against D1a (row 20 = 2.8864866275534937s vs measured 2.8867s). Open: the door-opening animation's own duration (the ~0.72s between the 1.3s seed and D1a's measured 2.020s first release) is unmeasured -- the natural next D1 round, since D1's gate needs exact per-tick timing, not an approximate fix. Dispatched D1c to measure it. Not yet verified.",
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [

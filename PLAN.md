@@ -601,6 +601,31 @@ per-tick `released`/`existence` columns from this same throttled `first_seen`, s
 161-tick spawn-drift residual may be partly or wholly this harness bias rather than a sim
 timing defect — open for D1j, not yet checked.
 
+**D1j harness throttle fixed; mixed, precisely-characterized result**
+([check](docs/scratch/phase-d1-harness-throttle-fix.md)): a landed fix (targeted tail
+discovery off the already-unthrottled `RELEASED` read, not a full re-scan) eliminates the
+throttle's detection lag outright — `first_seen` now matches the counter to
+floating-point precision for all 10 lemmings in a fresh capture, independently confirmed.
+Re-running D1a's/D1g's own unmodified comparators against this fix is a **mixed** result,
+not a clean "fixed": the raw divergence count did **not** shrink (167 → 537 naturally,
+275 even after correcting for a second, independent harness bug found as a byproduct —
+below), but the metric the fix actually targets, each lemming's own spawn-tick drift
+magnitude, **did** collapse, from up to 4 ticks (9/10 lemmings) down to at most 1 tick
+(8/10 lemmings, consistent with the structural floor of discretizing a continuous release
+onto a 200 ms tick, not with the throttle explaining nothing). The raw count does not track
+drift magnitude once forward-propagation is accounted for (one tick of drift at spawn
+produces one `x`-mismatch row per remaining tick). The already-parked 6-entry `facing`
+family (D1g/D1h) is unchanged, as predicted. **D1 is still not accepted.**
+
+A second, previously unknown harness bug was found as a byproduct, not fixed this round:
+`build_table()`'s `n_min` (how many tick-grid points precede the capture's own `t=0`) is a
+step function of the inferred per-capture `phase` landing on one side of zero or the other,
+so two otherwise-equivalent captures' tick labels can differ by a full 200 ms — confirmed
+by relabeling this round's own capture one tick earlier and reproducing D1g's exact
+tick-10 first-divergence shape. This is queued next as D1k: fix the phase/`n_min` boundary,
+then re-run a clean, uncorrected full-gate comparison. No new live capture is needed —
+both D1g's and D1j's raw samples are already saved.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

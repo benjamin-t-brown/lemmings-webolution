@@ -26,6 +26,20 @@ Read lemmings from the actor list (0x004CBB18) only -- measure_steppers
 .lemmings()/.sample() already do, never a billboard quad (LESSONS.md,
 "A plausible series can come from the wrong object").
 
+D1j fix (this file only, queue id `d1j-harness-throttle-fix`): `capture()`'s
+re-enumeration of that actor list used to be gated on a fixed 1.0 s wall
+timer, so a newly-released lemming could go unsampled for up to ~1.02 s past
+its true appearance (see docs/scratch/phase-d1-release-to-actor.md,
+"Implication for D1g's spawn-tick-drift residual" -- D1i proved there is no
+such gate in the original, so that lag was purely this script's own
+artifact). `capture()` and the new `discover_new_actors()` now trigger
+discovery off the RELEASED counter's own unthrottled per-pass read (already
+happening every pass for the release-event log) and do a targeted tail read
+of only the newly appended pointers, not a full vector re-scan -- see
+`capture()`'s own docstring for the cost argument and
+`build/tmp/d1j-harness-throttle-fix/prediction.md` for the full reasoning
+written before the live re-check.
+
 The new work: generalizing a tick clock across several live lemmings
 ------------------------------------------------------------------
 Round 1/10 found that a WALKER's X, and a CLIMBER's Y, land on an exact
@@ -95,6 +109,7 @@ import hashlib
 import json
 import os
 import statistics
+import struct
 import subprocess
 import sys
 import time
@@ -102,8 +117,8 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lrstate import attach, i32, ui_state  # noqa: E402
-from memdump import k32  # noqa: E402
+from lrstate import attach, i32, u32, ui_state  # noqa: E402
+from memdump import k32, read_mem  # noqa: E402
 import measure_spawn as SP  # noqa: E402
 import measure_steppers as S  # noqa: E402
 
@@ -115,6 +130,7 @@ WINDOWED_CONF = ROOT / "build/tmp/a1-zoom-elevation/dgVoodoo.windowed.conf"
 
 RELEASED = S.RELEASED
 CLOCK = S.CLOCK
+ACTOR_LIST = SP.ACTOR_LIST
 TICK_SECONDS = 0.2   # Rules::ticksPerSecond = 5, measured (docs/LESSONS.md)
 ANCHOR_TOL = 0.06    # world units; LESSONS "the walk probe snaps X to an
                      # exact integer before every test" -- generous of the
@@ -164,61 +180,186 @@ def install_hashes() -> dict[str, str]:
 # --- capture -----------------------------------------------------------------
 
 
+def discover_new_actors(h, scanned: int):
+    """Targeted tail read: examine only raw array slots not yet scanned.
+
+    D1j fix (see docs/scratch/phase-d1-release-to-actor.md, "Implication for
+    D1g's spawn-tick-drift residual"). The old mechanism re-scanned the
+    *whole* actor-list vector every re-enumeration, including every slot
+    already examined, costing one `u32` vtable-check read per already-seen
+    slot on every re-scan. The array is append-only (D1i's exe read:
+    `0x00423146`/`0x004233A0`, grow-if-full then unconditional
+    `array[count] = ptr; count += 1`, never shrinks, never reorders), so
+    anything at raw index < `scanned` has already been examined and
+    classified -- there is no reason to touch it again.
+
+    `scanned` is the number of raw array *slots* already read and vtable-
+    checked (by any previous call), not the number of lemmings accepted --
+    the two differ whenever a slot's `u32` read does not come back as a
+    lemming actor vtable (observed live: MM_CLIMB_002's actor list holds a
+    couple of non-lemming entries ahead of/interleaved with the lemmings,
+    rejected by the filter below but still occupying raw slots). Passing
+    `len(order)` instead of a true raw-scanned count here would under-count
+    how far the array has actually been read, and the next call would
+    needlessly re-examine already-rejected (or already-accepted) slots --
+    still correct (duplicates are caught by the caller's `first_seen`
+    dedup, and a filtered-out vtable never flips to a lemming one), but a
+    few more `u32` reads than the minimum. This function takes the raw
+    count explicitly so the caller can track it precisely.
+
+    Returns (new_ptrs, count, scanned_now):
+      new_ptrs    newly classified lemming-actor pointers in this window,
+                  already vtable-filtered, in array order (callers must
+                  still dedup against anything already known -- this
+                  function does not see the caller's `first_seen`)
+      count       the array's own current size (for logging)
+      scanned_now how many raw slots have now been examined (== count when
+                  the read succeeded; == `scanned` unchanged on any read
+                  failure, so a caller never thinks it scanned something it
+                  could not actually read)
+    """
+    count = i32(h, ACTOR_LIST)
+    if count is None or count <= scanned:
+        return [], count, scanned
+    arr = u32(h, ACTOR_LIST + 0x0C)
+    if arr is None or arr < 0x10000:
+        return [], count, scanned
+    n_window = count - scanned
+    raw_tail = read_mem(h, arr + scanned * 4, n_window * 4)
+    if not raw_tail or len(raw_tail) != n_window * 4:
+        return [], count, scanned
+    candidates = struct.unpack(f"<{n_window}I", raw_tail)
+    new_ptrs = [p for p in candidates if u32(h, p) in (SP.LEMMING_VT, SP.OTHER_VT)]
+    return new_ptrs, count, count
+
+
 def capture(h, seconds: float, hz: float):
     """Sample every lemming plus RELEASED/CLOCK at a capped rate.
 
-    Returns (order, first_seen, raw, released_events):
+    Returns (order, first_seen, raw, released_events, discovery_log):
       order         actor pointers, first-seen order == spawn order (spawn()
                     only ever appends -- the same identity World::lemmings()
                     uses for its own vector index)
       first_seen    {ptr: t} the wall time each pointer was first observed
       raw           {ptr: [(t, x, y, facing, vt), ...]}
       released_events  [(t, before, after, clock), ...] on every RELEASED change
+      discovery_log [(t, reason, n_new, array_count), ...] every time new
+                    pointer(s) were added to `order`/`live`, and why (see
+                    "D1j fix" below)
+
+    D1j fix: detecting a newly-released lemming no longer waits for a fixed
+    1.0 s re-enumeration timer (which could delay first sampling of a brand
+    new pointer by up to ~1.02 s past its true appearance -- see
+    docs/scratch/phase-d1-release-to-actor.md). `RELEASED`
+    (`0x004CBA78`) is already read every pass below, unthrottled, for the
+    release-event log; this reuses that exact read as the discovery
+    trigger, at zero marginal read cost on the passes where nothing
+    changed. D1i's exe read showed the actor-list `push_back` executes
+    strictly before this same counter's increment, inside one synchronous
+    constructor call with no clock/animation-frame check between them -- so
+    by the pass this poll observes `RELEASED` having grown, the new
+    pointer is already in the array; there is no race to wait out. On a
+    trigger, `discover_new_actors` does a targeted tail read (cost bounded
+    by how many pointers are actually new, not by how many are already
+    known) instead of re-scanning the whole vector.
+
+    A full `S.lemmings(h)` re-scan (the old, `O(total_count)` mechanism)
+    is kept as a low-frequency (5 s), non-authoritative diagnostic backstop:
+    logged if it ever disagrees with what the delta trigger already found,
+    not trusted over it, and not on the sampling hot path. 5 s is slower
+    than the old 1.0 s throttle (so this backstop alone would still have the
+    old lag), but it no longer needs to be fast -- the delta trigger is now
+    the thing that has to be prompt, and it is driven by a read that already
+    happens every pass, not by this backstop's own timer.
     """
     order: list[int] = []
     first_seen: dict[int, float] = {}
     raw: dict[int, list] = {}
     released_events = []
+    discovery_log = []
     last_released = i32(h, RELEASED)
     t0 = time.perf_counter()
-    last_enum = -1.0
+    last_backstop = -1.0
     live: list[int] = []
+    scanned = 0  # raw actor-list slots examined so far -- see
+                 # discover_new_actors's docstring on why this is tracked
+                 # separately from len(order) (not every raw slot is a
+                 # lemming actor)
     gap = 1.0 / hz if hz > 0 else 0.0
     passes = 0
+
+    def add_new(ptrs, t):
+        n_added = 0
+        for p in ptrs:
+            if p not in first_seen:
+                first_seen[p] = t
+                order.append(p)
+                live.append(p)
+                n_added += 1
+        return n_added
+
     while True:
         t = time.perf_counter() - t0
         if t >= seconds:
             break
-        if t - last_enum > 1.0:
-            live = S.lemmings(h)
-            for p in live:
-                if p not in first_seen:
-                    first_seen[p] = t
-                    order.append(p)
-            last_enum = t
+        rel = i32(h, RELEASED)
+        new_release = rel is not None and rel != last_released
+        # Discovery trigger: the unthrottled RELEASED read above (not a new
+        # read added by this fix), plus a bootstrap check before the very
+        # first lemming exists (cheap: 1 extra i32 read/pass, only while
+        # `live` is still empty).
+        if new_release or not live:
+            new_ptrs, count, scanned = discover_new_actors(h, scanned)
+            if new_ptrs:
+                n_added = add_new(new_ptrs, t)
+                if n_added:
+                    discovery_log.append((
+                        t, "released_delta" if new_release else "bootstrap",
+                        n_added, count,
+                    ))
         for p in live:
             smp = S.sample(h, p, t)
             if smp is None:
                 continue
             raw.setdefault(p, []).append((t, smp.x, smp.y, smp.facing, smp.vt))
-        rel = i32(h, RELEASED)
-        if rel is not None and rel != last_released:
+        if new_release:
             released_events.append((t, last_released, rel, i32(h, CLOCK)))
             last_released = rel
+        # Diagnostic-only backstop (see docstring): full O(total_count)
+        # re-scan at most every 5 s, cross-checked against `order` and
+        # logged -- never silently trusted -- rather than relied on for
+        # sampling or for the discovery timing this round is fixing.
+        if t - last_backstop > 5.0:
+            full = S.lemmings(h)
+            missed = [p for p in full if p not in first_seen]
+            if missed:
+                print(f"  WARNING: backstop scan at t={t:.3f}s found"
+                      f" {len(missed)} pointer(s) the delta trigger missed;"
+                      " adding them now (late)", flush=True)
+                add_new(missed, t)
+                discovery_log.append((t, "backstop_missed", len(missed), None))
+            last_backstop = t
         passes += 1
         if gap:
             # Capping the rate matters -- measure_steppers.py's own warning:
             # an uncapped single-lemming loop drove ~300k ReadProcessMemory/s
-            # and killed the game twice. Here, up to ~10 lemmings * 2 reads
-            # each * hz passes/s; hz 50 is comfortably under that.
+            # and killed the game twice. The pass rate here is still capped
+            # at `hz` exactly as before; this fix changes what happens
+            # *inside* a pass (a handful of extra, population-bounded reads
+            # only on the passes a release/backstop actually fires), not
+            # whether passes themselves are rate-limited. Up to ~10 lemmings
+            # * 2 reads each + a small, bounded discovery/backstop overhead,
+            # * hz passes/s; hz 50 is comfortably under the danger threshold
+            # above (see prediction.md's cost argument for the arithmetic).
             nxt = t0 + passes * gap
             while time.perf_counter() < nxt:
                 pass
     n_samples = sum(len(v) for v in raw.values())
     print(f"  {passes} passes, {n_samples} lemming samples, {len(order)} lemmings"
-          f" seen, {len(released_events)} release events over {seconds:.1f}s"
+          f" seen, {len(released_events)} release events,"
+          f" {len(discovery_log)} discovery trigger(s) over {seconds:.1f}s"
           f" ({n_samples / max(seconds, 1e-9):.0f} reads/s)", flush=True)
-    return order, first_seen, raw, released_events
+    return order, first_seen, raw, released_events, discovery_log
 
 
 # --- tick-grid inference -----------------------------------------------------
@@ -352,7 +493,8 @@ def build_table(order, first_seen, raw, phase: float, ticks: int,
 
 def write_outputs(out_dir: Path, rows, order, first_seen, released_events,
                    anchors, per_lemming_anchors, phase,
-                   spread, fallback, n_min, rel_resid: dict, meta_extra: dict):
+                   spread, fallback, n_min, rel_resid: dict, meta_extra: dict,
+                   discovery_log: list | None = None):
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / "live_trace.csv"
     with open(csv_path, "w", newline="") as f:
@@ -377,6 +519,16 @@ def write_outputs(out_dir: Path, rows, order, first_seen, released_events,
             for t, b, a, c in released_events
         ],
         "release_residuals_diagnostic_not_used_for_phase": rel_resid,
+        # D1j: when/why each pointer was added to `order` -- "released_delta"
+        # is the fix's own trigger (the already-unthrottled RELEASED read
+        # noticed growth), "bootstrap" is the pre-first-lemming fallback
+        # check, "backstop_missed" would mean the delta trigger missed a
+        # pointer the 5s diagnostic re-scan later found (expected to be
+        # empty; not silently assumed empty -- see round-note.md).
+        "discovery_log": [
+            {"t": t, "reason": reason, "n_new": n, "array_count": c}
+            for t, reason, n, c in (discovery_log or [])
+        ],
     }
     meta.update(meta_extra)
     meta_path = out_dir / "live_trace.meta.json"
@@ -478,7 +630,7 @@ def run_live(level: str, seconds: float, hz: float, ticks: int, out_dir: Path,
         print(f"capturing {seconds:.1f}s / target {ticks} ticks at {hz:.0f} Hz,"
               " no further input ...", flush=True)
         t_start_wall = time.time()
-        order, first_seen, raw, released_events = capture(h, seconds, hz)
+        order, first_seen, raw, released_events, discovery_log = capture(h, seconds, hz)
         t_end_wall = time.time()
 
         after_state = ui_state(h)
@@ -494,6 +646,12 @@ def run_live(level: str, seconds: float, hz: float, ticks: int, out_dir: Path,
               flush=True)
         print(f"  release residuals (diagnostic, NOT used for phase):"
               f" {rel_resid}", flush=True)
+        backstop_misses = [d for d in discovery_log if d[1] == "backstop_missed"]
+        print(f"  D1j discovery log: {len(discovery_log)} trigger(s)"
+              f" ({sum(1 for d in discovery_log if d[1] == 'released_delta')}"
+              f" released_delta, {len(backstop_misses)} backstop_missed"
+              " -- backstop_missed>0 would mean the delta trigger lagged"
+              " and the diagnostic backstop had to catch up)", flush=True)
 
         rows, n_min = build_table(order, first_seen, raw, phase, ticks)
         write_raw_dump(out_dir, order, first_seen, raw, released_events)
@@ -511,7 +669,8 @@ def run_live(level: str, seconds: float, hz: float, ticks: int, out_dir: Path,
                 "released_at_entry": released0, "clock_at_entry": clock0,
                 "released_at_end": i32(h, RELEASED), "clock_at_end": i32(h, CLOCK),
                 "pid": pid, "boot_wait_seconds": boot_wait,
-            })
+            },
+            discovery_log=discovery_log)
         return 0
     except Exception as exc:  # the one-shot rule: report, do not relaunch
         failure = f"exception during capture: {exc!r}"

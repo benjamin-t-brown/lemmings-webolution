@@ -544,6 +544,21 @@ sub-case, `131`→`132`); the first sub-case and `testWallTurn` are unaffected. 
 named D1 blockers are now fixed.** D1 is still not accepted — a fresh, comprehensive live
 re-check of the full gate (150 ticks, no input, every lemming) is the next D1 round.
 
+**D1g full gate re-check, both fixes confirmed, one residual found**
+([check](docs/scratch/phase-d1-full-gate-recheck.md)): a fresh live capture (new stock
+start) confirms the tick-10 alignment artifact still appears first, and — checked for the
+first time — lemming 0's wall turn at column 64 matches exactly (though that turn
+exercises the already-good "right-facing" case, not D1f's new branch). Scanning the full
+150-tick window past tick 10 found 167 more disagreements: 161 are D1e's already-known
+spawn-tick drift propagating forward, and 6 are a new, smaller, self-healing single-tick
+`facing`-only mismatch at every "walker was facing Left, turns Right" event — exactly
+D1f's own target scenario, though `x` matches exactly before and after and an independent
+full scan found zero reappearance of the stall D1f fixed. Whether this is a genuine sim
+gap or an artifact of the harness's single global-phase alignment (D1a's own open
+limitation: individual lemmings have stable but different phases) is unresolved. D1 is
+still not accepted; the next D1 round is this one narrow, fully offline question — no new
+live capture needed.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

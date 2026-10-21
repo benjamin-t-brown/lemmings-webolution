@@ -3,26 +3,50 @@
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": {
-    "id": "d1g-full-gate-recheck",
-    "title": "D1g: fresh, comprehensive live re-check of the D1 gate with both fixes in place",
+    "id": "d1h-per-lemming-phase",
+    "title": "D1h: is the single-tick facing residual a harness alignment artifact? (offline only)",
     "status": "running",
-    "brief": "build/tmp/d1g-full-gate-recheck-brief.md",
+    "brief": "build/tmp/d1h-per-lemming-phase-brief.md",
     "worker_tier": "targeted",
     "harness": "Claude Code",
     "requested_model": "session (no pin)",
     "worker_agent": "round-agent",
-    "owns_live_game": true,
-    "live_owner": "claude-code round-agent (unnamed, dispatched by facilitator session this turn)",
+    "owns_live_game": false,
+    "live_owner": null,
     "depends_on": [
       "d1a-release-walkout-trace",
-      "d1e-release-timing-implementation",
-      "d1f-left-turn-fix"
+      "d1g-full-gate-recheck"
     ],
     "gate_served": "PLAN Phase D, D1 release and walk-out",
     "question_round_count": 1
   },
   "queue": [],
   "recently_landed": [
+    {
+      "id": "d1g-full-gate-recheck",
+      "title": "D1g: both fixes confirmed on a fresh capture; one new, smaller self-healing facing residual found past tick 10",
+      "status": "landed",
+      "brief": "build/tmp/d1g-full-gate-recheck-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "d1a-release-walkout-trace",
+        "d1e-release-timing-implementation",
+        "d1f-left-turn-fix"
+      ],
+      "gate_served": "PLAN Phase D, D1 release and walk-out",
+      "question_round_count": 1,
+      "stock_starts_consumed": 1,
+      "stock_starts_authorized": 1,
+      "worker_output": "build/tmp/d1g-full-gate-recheck/round-note.md",
+      "landed_in": "docs/scratch/phase-d1-full-gate-recheck.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: fresh rebuild, ctest 24/24; reproduced D1a's own unmodified diff_trace.py result against the fresh pair (tick 10/existence, exact); independently re-derived the full divergence list with fresh code reading only the raw CSVs -- field-level counts match exactly and all six facing divergences match exactly (same ticks/lemmings/values: (59,1),(85,0),(88,3),(114,2),(139,1),(143,4)); independently re-scanned both traces for the D1f stall signature across all 10 lemmings, all 150 ticks: zero in either trace; independently re-read the raw actor-list samples around lemming 0's turn (t=16.92 facing-1, t=16.94 facing+1, exact match) and recomputed the nominal tick times from the capture's own saved phase/n_min (tick84=16.78s, tick85=16.98s, exact match). No stray process, exe hash matches authority, git status clean (round's files all under gitignored build/tmp/)."
+    },
     {
       "id": "d1f-left-turn-fix",
       "title": "D1f: left-turn tick divergence fixed; both named D1 blockers now addressed",
@@ -1749,10 +1773,10 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session, 2026-10-21 (handoff: no task was running, standing_run.owner was null)",
-    "rounds_run": 6,
-    "stock_starts_used": 3,
+    "rounds_run": 7,
+    "stock_starts_used": 4,
     "pending_questions": [],
-    "handoff": "2026-10-21: D1f landed (docs/scratch/phase-d1-left-turn-fix.md) -- the left-turn tick divergence is fixed (World::stepWalker continues its step within the same tick for a walker that WAS facing Left, the reverse of this round's own brief's mis-stated framing, corrected and reported by the worker itself); compare_tick re-added to CMakeLists.txt. Both named D1 blockers (release timing, D1a-e; left-turn, D1f) are now fixed and independently verified. Dispatched D1g: a fresh, comprehensive live re-check of the full D1 gate on MM_CLIMB_002 (one new stock start) against both fixes, extending D1a's diff_trace.py to report divergences past the first one (not just stop at it), to see whether the left-turn fix also closes a real per-cell divergence around the column-64 wall (tick ~33-40) that D1a's original capture never got to examine past tick 10's existence gap. Not yet verified.",
+    "handoff": "2026-10-21: D1g landed (docs/scratch/phase-d1-full-gate-recheck.md) -- a fresh live capture confirms both fixes hold (tick-10 artifact unchanged, column-64 turn exact, zero D1f-stall reappearance anywhere), and found one new, smaller residual past tick 10: 6 single-tick, self-healing facing-only mismatches at exactly D1f's target scenario, x exact before/after. Dispatched D1h (offline only, no live game, no source change) to test whether this is a harness alignment artifact (D1a's own open limitation: individual lemmings have stable but different phases, while the harness uses one pooled global phase) rather than a sim defect, by computing each flagged lemming's own phase from already-saved raw data and checking whether re-aligning with it moves the flagged tick to match. Not yet verified.",
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [

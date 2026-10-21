@@ -2,24 +2,33 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "a7o-settled-camera-masks",
-    "title": "A7o: capture view pairs from the settled reference camera (14 s walk, hash 7e6e1a8a before any view input)",
-    "status": "queued",
-    "brief": "build/tmp/a7o-settled-camera-masks-brief.md",
-    "worker_tier": "targeted",
-    "owns_live_game": true,
-    "live_owner": null,
-    "depends_on": [
-      "a7n-input-view-masks"
-    ],
-    "gate_served": "A7 restated gate",
-    "stock_starts_remaining": 1,
-    "question_round_count": 3,
-    "dispatch_note": "Standing run a7-complete authorizes this start. Dispatch from another session; not Cursor Composer."
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "a7o-settled-camera-masks",
+      "title": "A7o: entry pause only; tap returns None, so the 14 s walk never ran",
+      "status": "landed",
+      "brief": "build/tmp/a7o-settled-camera-masks-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "dispatch_id": "f9285bba-bafa-4589-bdb3-340043496d41",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/a7o-settled-camera-masks/round-note.md",
+      "landed_in": "docs/scratch/phase-a7-settled-camera-masks.md",
+      "depends_on": [
+        "a7n-input-view-masks"
+      ],
+      "gate_served": "A7 restated gate",
+      "stock_starts_consumed": 1,
+      "stock_starts_authorized": 1,
+      "question_round_count": 3,
+      "facilitator_verified": "2026-10-21: verify.py rehashed the 360-byte entry-pause block to 619ef313758bffa1630fe465d30df802d4447bab3c4caab27ea848d35a84702b. Both score tables are []. tap has no return and walk_14 branches on not inp.tap. Prediction mtime 02:38:47 precedes the 02:42:03 log. Prologues 0x4622FD, 0x4623A5, 0x462404, 0x462465, and 0x43A4EC read 0x55. Install hashes match the A7n set and the backups. Launcher stderr empty, exit 1, pid 58432. No game process. Live 0x4CBAAC was not re-read. Ninja had no work. CTest 24/24.",
+      "commit_hint": null
+    },
     {
       "id": "a7n-input-view-masks",
       "title": "A7n: eight baselines failed the fixed ROI; no wider-mask pair; zoom was logged at +0x0C",
@@ -1525,9 +1534,9 @@
       "commits": "each verified round on decompile, no push/checkout/reset/stash"
     },
     "workers": "other sessions (Cursor grok-4.7-high-fast, OpenCode per ROLES); not Cursor Composer",
-    "owner": null,
-    "rounds_run": 0,
-    "stock_starts_used": 0,
+    "owner": "cursor:54ff1c52-d9ec-42ca-8edc-560ea85e7e79",
+    "rounds_run": 1,
+    "stock_starts_used": 1,
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run"
   }

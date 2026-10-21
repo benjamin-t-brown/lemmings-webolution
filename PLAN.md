@@ -346,6 +346,17 @@ likely cause is an opening camera move that had not finished. A7o tests this:
 14 s walk, pause, hash and canonical ROI checked before any view input. Under the
 standing run `a7-complete` (2026-10-21) A7o has one start.
 
+**A7o settled-camera attempt, negative** ([check](docs/scratch/phase-a7-settled-camera-masks.md)):
+one authorized start, pid 58432, reached entry pause on `MM_CLIMB_002` and then
+raised because `LRInput.tap` returns `None`. The 14 s walk, the post-walk hash,
+and every view ROI were not measured. The saved entry-pause block at `0x4CBFC8`
+is 360 bytes, SHA-256 `619ef313758bffa1630fe465d30df802d4447bab3c4caab27ea848d35a84702b`,
+which is neither the reference `7e6e1a8a…` nor A7n's `2b33a708…`. No prologue
+was changed to `C3`. There is no wider-mask score. The durable caption-excluded
+score is unchanged. The opening-camera hypothesis is untested. This is round 3
+of acquisition; a fourth round is justified because the stop was the return
+check, and the A6f walk that produced `7e6e1a8a…` does not test `tap`'s return.
+
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
 end in 3D is the next visible result.
 

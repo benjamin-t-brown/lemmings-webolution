@@ -2,24 +2,33 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "a7q-second-level-mask",
-    "title": "A7q: one amended wider-mask pair on MM_DIG_000 after the 14 s walk",
-    "status": "queued",
-    "brief": "build/tmp/a7q-second-level-mask-brief.md",
-    "worker_tier": "targeted",
-    "owns_live_game": true,
-    "live_owner": null,
-    "depends_on": [
-      "a7p-unpause-then-masks"
-    ],
-    "gate_served": "A7 amended gate: second level",
-    "stock_starts_remaining": 1,
-    "question_round_count": 1,
-    "dispatch_note": "Standing run a7-complete authorizes this start. Dispatch from another session; not Cursor Composer."
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "a7q-second-level-mask",
+      "title": "A7q: second level (MM_DIG_000) no-camera-input wider-mask score passes; A7 amended gate accepted",
+      "status": "landed",
+      "brief": "build/tmp/a7q-second-level-mask-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "claude-code background round-agent (unnamed), no model override",
+      "owns_live_game": true,
+      "live_owner": null,
+      "worker_output": "build/tmp/a7q-second-level-mask/round-note.md",
+      "depends_on": [
+        "a7p-unpause-then-masks"
+      ],
+      "gate_served": "A7 amended gate: second level",
+      "stock_starts_consumed": 1,
+      "stock_starts_authorized": 1,
+      "question_round_count": 1,
+      "landed_in": "docs/scratch/phase-a7-second-level-mask.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independent re-score (build/tmp/a7-review/a7q/verify.py, separate code from capture.py and from a7p/rescore.py, reading only the three saved PNGs) reproduces numerator 2606399, denominator 132499530, N 173202, MAE 0.019671005625453916, pass, mask bbox [87,24,640,480), raw_changed 175498, caption-excluded 2210, skill-excluded 86/3646, and the 4 timer-area coords exactly. A 6px x-shift of render.png alone raises the numerator to 5360684 (fails), confirming discrimination. Independently re-read: installed exe SHA-256 32675bdb... matches the authority; all five prologues (0x4622FD/0x4623A5/0x462404/0x462465/0x43A4EC) read 0x55 in the installed exe (not only from worker logs); camera-block offsets 280/288 decoded against tools/harness/fixtures/camera_a1/reference-state.json's raw_hex for the 7e6e1a8a... camera match angle_turn_parameter and aspect exactly; derive_params.py's OPERANDS addresses are byte-identical to build/tmp/a1-zoom-elevation/build_params.py's established set. Fresh ctest --preset dev-debug 24/24; ninja had no work; git status --short shows only docs/tasks.json changed on the tracked tree; own PowerShell/Get-Process and Get-ScheduledTask checks confirm no Lemming/webolution process and no LemWeb-* task. A7's amended gate now passes on this independent re-score: nine MM_CLIMB_002 views (A7p) plus this second level, all <=0.02. A7 accepted; standing run a7-complete stopped on its 'gate passes' condition."
+    },
     {
       "id": "a7p-unpause-then-masks",
       "title": "A7p: reference camera matched; eight wider scores pass; zoom1 fails on the skill-panel intersection",
@@ -1573,7 +1582,7 @@
       "commits": "each verified round on decompile, no push/checkout/reset/stash"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": null,
+    "owner": "Claude Code facilitator session, this host, 2026-10-21",
     "rounds_run": 2,
     "stock_starts_used": 2,
     "stopped": null,

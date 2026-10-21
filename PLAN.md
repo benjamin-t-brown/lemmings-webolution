@@ -84,7 +84,7 @@ the settled facts are in `docs/LESSONS.md`.
 | A4 entry point, tube route, window | **done** | `webolution` runs 3D by default; 9/9 views on the production route (A4d); SDL controls (A4e) |
 | A5 one actor billboard raster | **done** (zoom 0) | Both A4f fixtures beat absent-actor; footprint exact (A4v); POINT + `> 0xEF` (A4x/A4y). Zoom 1 residual parked (E) |
 | A6 sim lemmings in the app frame | **done** | Restated gate on the repair 4 pause: tube ROI 0.015584142; all three actor boxes improve. A6d3 slope walker parked (E) |
-| **A7 scene completeness** | **next** | See below |
+| **A7 scene completeness** | **done** | Amended gate passes: nine `MM_CLIMB_002` views (A7p) + one second level (A7q), caption panel + ten skill-panel boxes excluded, all ≤0.02. See below |
 
 ### A6. Sim lemmings in the app frame
 
@@ -382,6 +382,30 @@ skill panel also removed (user, 2026-10-21) the nine views score: initial 0.0192
 canonical 0.019314, mouse 0.017612, right 0.017604, left 0.017716, zoom1 0.017590, elev_up
 0.012934, elev_down 0.011169, elev0_neg 0.017576. All nine pass. A7 still needs the second
 level.
+
+**A7q second level, gate passes** ([check](docs/scratch/phase-a7-second-level-mask.md)):
+one start, pid 21464, reused A7p's entry/14s-walk/pause path unedited on `MM_DIG_000`. The
+no-camera-input wider-mask score (own baseline, caption panel and ten skill-panel boxes
+excluded) is `2606399/132499530 = 0.019671005625453916`, passing. The params-derivation
+self-check reproduced `params-canonical.json` on all 16 renderer-read fields from A7p's own
+saved state (needing two offsets beyond the brief's cited lines: camera-block `aspect` at
++288 and `angle_turn_parameter` at +280, located against
+`tools/harness/fixtures/camera_a1/reference-state.json` and confirmed). 4 mask pixels fall
+in an informational, unexcluded timer-area box (a placement-argument read, not a measured
+rectangle) and stayed in the score. Camera movement on a second level, and whether
+`world_rows == 96` is level-independent in general, are unmeasured.
+
+**A7q facilitator check and gate acceptance:** an independent re-score
+(`build/tmp/a7-review/a7q/verify.py`, separate code reading only the three saved PNGs)
+reproduces every number exactly; a 6px x-shift of the render alone raises the numerator
+from 2606399 to 5360684 (fails), confirming the checker discriminates. The installed exe
+hash, the five prologues (all `0x55`), and the camera-block offset decode were
+independently re-verified against the executable and the A1 camera fixture, not just
+read back from the worker's own logs. Fresh `ctest --preset dev-debug` is 24/24; `ninja`
+had no work; no stock process or scheduled task remained. **The amended A7 gate now
+passes on this independent re-score**: all nine `MM_CLIMB_002` views (A7p) plus this
+second level (A7q), all ≤0.02. A7 is accepted. The standing run `a7-complete` stops here
+per its "gate passes" condition (`docs/ORCHESTRATION.md#standing-run`).
 
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
 end in 3D is the next visible result.

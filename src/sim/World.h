@@ -320,6 +320,29 @@ struct LevelSetup {
   int totalLemmings = 10;
   int saveTarget = 1;
   int releaseIntervalTicks = 20;  // ticks between spawns
+  // Additive, optional real-seconds release-timing model (phase D1,
+  // docs/scratch/phase-d1-release-trigger.md / phase-d1-door-open-duration.md /
+  // phase-d1-hatch-step-clock.md). The original's hatch keeps a per-hatch
+  // double countdown (hatch+0xC0): a one-time arm once the door has been open
+  // `releaseArmSeconds` real seconds (derived, MM_CLIMB_002-specific:
+  // ~0.723061695938398 s), seeded then to the fixed engine constant
+  // `releaseFirstCountdownSeconds` (READ: 1.3, at 0x004B0F48 -- not
+  // per-level), decremented every real-time step, firing spawn() at <= 0.0
+  // and rolling the recurring, RELEASERATE.PC-derived
+  // `releaseIntervalSeconds` back into the SAME accumulator (not a reset).
+  // This is frame-driven in the original (phase-d1-hatch-step-clock.md); here
+  // it is sampled once per World::tick() call, at the already-measured 200 ms
+  // tick (Rules::ticksPerSecond), which reproduces the original as observed
+  // at each 200 ms boundary.
+  //
+  // Leaving `releaseIntervalSeconds` at its default 0.0 keeps the exact old
+  // `releaseIntervalTicks` integer-tick behavior untouched -- every existing
+  // hand-built LevelSetup that does not set these three fields is unaffected.
+  // Setting `releaseIntervalSeconds > 0.0` opts this World instance into the
+  // new model instead.
+  double releaseArmSeconds = 0.0;             // DERIVED, MM_CLIMB_002 only
+  double releaseFirstCountdownSeconds = 0.0;  // READ: the fixed seed is 1.3
+  double releaseIntervalSeconds = 0.0;        // READ: RELEASERATE.PC row, seconds
   int timeLimitTicks = 0;         // 0 = untimed
   // Remaining skill-panel counts, indexed like Skill. -1 means unlimited
   // (hand-built test levels). Retail .LVL loads fill these from the trailer.
@@ -1065,6 +1088,11 @@ private:
   int saved_ = 0;
   int dead_ = 0;
   int sinceSpawn_ = 0;
+  // New real-seconds release model (phase D1e), only touched when
+  // setup_.releaseIntervalSeconds > 0.0 -- see LevelSetup's own comment.
+  double releaseElapsedSeconds_ = 0.0;  // real seconds since construction
+  bool releaseArmed_ = false;
+  double releaseCountdown_ = 0.0;
   std::size_t nextEntrance_ = 0;
   std::vector<SoundCue> cues_;
 };

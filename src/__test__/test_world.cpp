@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
@@ -2145,6 +2146,128 @@ void testRetailSpawn(const std::filesystem::path& dir) {
   }
 }
 
+// D1e: wiring the measured real-seconds release-timing mechanism
+// (docs/scratch/phase-d1-release-trigger.md, phase-d1-door-open-duration.md,
+// phase-d1-hatch-step-clock.md) into World, against the one level/hatch it
+// was measured on. Additive: this sets the three new, opt-in LevelSetup
+// fields; every other test in this file leaves them at their 0.0 default and
+// so keeps the untouched releaseIntervalTicks model.
+//
+// The three constants:
+//   releaseFirstCountdownSeconds = 1.3   READ: the fixed engine seed at
+//                                         0x004B0F48 -- not per-level.
+//   releaseIntervalSeconds = 2.8864866275534937  READ: RELEASERATE.PC row 20,
+//                                         MM_CLIMB_002's resolved rate.
+//   releaseArmSeconds = 0.723061695938398  DERIVED, MM_CLIMB_002-specific
+//                                         only (not yet known to generalize).
+//
+// The expected pattern is D1a's own measured, saved live capture
+// (build/tmp/d1a-release-walkout-trace/live_trace.csv, read directly for
+// this test, not re-derived): the "released" column reads 0 through tick 10
+// and 1 from tick 11 on (the row at tick 10 shows a lemming already visible
+// at its unfallen spawn cell with released still 0 -- a one-tick alignment
+// artifact D1a's own "Open limitation" section already flagged, not a second
+// mechanism), then climbs by one every 11, 26, 41, 56, 71, 87, 102, 112, 127,
+// 142 -- gaps of 15, 15, 15, 15, 16, 15, 10, 15, 15, mean 14.44, against the
+// table value's own 2.8864866275534937 / 0.2 = 14.432433 ticks. Our World is
+// a per-tick accumulator, not the original's continuous one, so it cannot
+// reproduce that series tick-for-tick (the brief's own "Already settled"
+// section: agreement is only expected at each 200 ms sample boundary) --
+// this test instead checks the same three properties the brief's acceptance
+// criterion 2 names: no release through tick 10, the first release landing
+// at tick 10 or 11, and the recurring gap averaging close to 14.432433
+// ticks.
+void testRetailReleaseTiming(const std::filesystem::path& dir) {
+  std::cout << "release timing on MM_CLIMB_002, the measured real-seconds model\n";
+  auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
+  if (!lib) {
+    check(false, lib.error());
+    return;
+  }
+  std::string file;
+  for (const auto& name : webo::levelFileNames(*lib))
+    if (name.find("MM_CLIMB_002") != std::string::npos) {
+      file = name;
+      break;
+    }
+  if (file.empty()) {
+    check(false, "MM_CLIMB_002 is not in the archive");
+    return;
+  }
+  auto blob = lib->read(file);
+  if (!blob) {
+    check(false, blob.error());
+    return;
+  }
+  auto objs = webo::findLevelObjects(*blob);
+  auto grid = webo::findCollisionGrid(*blob);
+  if (!objs || !grid) {
+    check(false, "MM_CLIMB_002: no objects or no grid");
+    return;
+  }
+  check(objs->hatches.size() == 1,
+        std::format("MM_CLIMB_002: one hatch record (got {})", objs->hatches.size()));
+  if (objs->hatches.empty())
+    return;
+  const auto& h = objs->hatches.front();
+
+  const auto [cx, cy] = webo::hatchSpawnCell(h, grid->width, grid->height);
+  LevelSetup s;
+  s.terrain = Terrain::fromCollisionGrid(*grid);
+  Entrance e;
+  e.x = cx;
+  e.y = cy;
+  e.source = Entrance::Source::HatchWords;
+  e.sheetType = h.type;
+  s.entrances.push_back(e);
+  s.totalLemmings = h.count;
+  // The measured constants -- see this function's own comment above.
+  s.releaseArmSeconds = 0.723061695938398;
+  s.releaseFirstCountdownSeconds = 1.3;
+  s.releaseIntervalSeconds = 2.8864866275534937;
+
+  World w(s);
+  std::vector<int> transitionTicks;  // the tick each new spawned() count first appears
+  int prevSpawned = 0;
+  for (int t = 1; t <= 150; ++t) {
+    w.tick();
+    if (t <= 10)
+      check(w.spawned() == 0,
+            std::format("MM_CLIMB_002 release timing: no release by tick {} (spawned {})",
+                        t, w.spawned()));
+    if (w.spawned() > prevSpawned) {
+      transitionTicks.push_back(t);
+      prevSpawned = w.spawned();
+    }
+  }
+
+  check(!transitionTicks.empty() && (transitionTicks.front() == 10 || transitionTicks.front() == 11),
+        std::format("MM_CLIMB_002 release timing: first release at tick 10 or 11 (got {})",
+                    transitionTicks.empty() ? -1 : transitionTicks.front()));
+
+  check(transitionTicks.size() >= 3,
+        std::format("MM_CLIMB_002 release timing: at least three releases in 150 ticks (got {})",
+                    transitionTicks.size()));
+  if (transitionTicks.size() >= 3) {
+    double sumGaps = 0.0;
+    std::size_t nGaps = 0;
+    for (std::size_t i = 1; i < transitionTicks.size(); ++i) {
+      sumGaps += static_cast<double>(transitionTicks[i] - transitionTicks[i - 1]);
+      ++nGaps;
+    }
+    const double meanGap = sumGaps / static_cast<double>(nGaps);
+    const double expectedGap = 2.8864866275534937 / 0.2;  // 14.432433... ticks
+    check(std::abs(meanGap - expectedGap) < 1.0,
+          std::format("MM_CLIMB_002 release timing: recurring gap averages near {:.3f} "
+                      "ticks (got {:.3f} over {} gaps)",
+                      expectedGap, meanGap, nGaps));
+  }
+
+  check(w.spawned() == h.count,
+        std::format("MM_CLIMB_002 release timing: all {} lemmings released within 150 "
+                    "ticks (got {})", h.count, w.spawned()));
+}
+
 void testSoundCues() {
   std::cout << "sound cues\n";
 
@@ -2261,6 +2384,7 @@ int main() {
     if (std::filesystem::exists(root / "lemmings.box")) {
       testRetailClimb(root);
       testRetailSpawn(root);
+      testRetailReleaseTiming(root);
     } else
       std::cout << "climber on MM_CLIMB_002: skipped, no lemmings.box\n";
   } else {

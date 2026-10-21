@@ -16,7 +16,8 @@
 // hand-places a Lemming the way the retired old/src/tools/compare_tick.cpp
 // did; World::tick()'s own spawn() releases from the Entrance.
 //
-//   SimReleaseTrace <game-dir> <level> <ticks> <releaseIntervalTicks> [totalLemmings]
+//   SimReleaseTrace <game-dir> <level> <ticks> <releaseIntervalTicks>
+//       [totalLemmings] [--real-seconds <armSeconds> <firstCountdownSeconds> <intervalSeconds>]
 //
 // <releaseIntervalTicks> is NOT guessed here: LevelInfo carries no
 // release-rate index field (see the brief's "Already settled" -- no code
@@ -26,6 +27,16 @@
 // ticks at the measured 200 ms / 5 Hz tick). [totalLemmings], if given,
 // overrides the hatch's own release count word (hatch+0x98); otherwise that
 // word is used, matching testRetailSpawn.
+//
+// D1e extension: the optional trailing "--real-seconds <arm> <first>
+// <interval>" flag sets LevelSetup::releaseArmSeconds /
+// releaseFirstCountdownSeconds / releaseIntervalSeconds, which switches
+// World::tick() over to the new real-seconds accumulator model
+// (docs/scratch/phase-d1-release-trigger.md and the D1c/D1d follow-ups)
+// instead of the integer-tick model <releaseIntervalTicks> alone drives. The
+// positional <releaseIntervalTicks> argument is still required (and still
+// read by LevelSetup) even when this flag is given, since it is otherwise
+// unused by the new model and the old CLI shape is not being redesigned.
 //
 // Output (stdout) is a CSV with a header row:
 //   tick,lemming_index,x,y,facing,state,spawned,saved,dead
@@ -53,7 +64,8 @@ namespace {
 
 int usage() {
   std::cerr << "usage: SimReleaseTrace <game-dir> <level> <ticks> "
-               "<releaseIntervalTicks> [totalLemmings]\n";
+               "<releaseIntervalTicks> [totalLemmings] "
+               "[--real-seconds <armSeconds> <firstCountdownSeconds> <intervalSeconds>]\n";
   return 2;
 }
 
@@ -67,7 +79,25 @@ int main(int argc, char** argv) {
   const std::string levelName = argv[2];
   const int ticks = std::atoi(argv[3]);
   const int releaseIntervalTicks = std::atoi(argv[4]);
-  const int totalLemmingsOverride = argc > 5 ? std::atoi(argv[5]) : -1;
+
+  int totalLemmingsOverride = -1;
+  double realSecondsArm = 0.0, realSecondsFirst = 0.0, realSecondsInterval = 0.0;
+  bool useRealSeconds = false;
+
+  int argi = 5;
+  if (argi < argc && std::string(argv[argi]) != "--real-seconds") {
+    totalLemmingsOverride = std::atoi(argv[argi]);
+    ++argi;
+  }
+  if (argi < argc && std::string(argv[argi]) == "--real-seconds") {
+    if (argi + 3 >= argc)
+      return usage();
+    realSecondsArm = std::atof(argv[argi + 1]);
+    realSecondsFirst = std::atof(argv[argi + 2]);
+    realSecondsInterval = std::atof(argv[argi + 3]);
+    useRealSeconds = true;
+    argi += 4;
+  }
 
   if (ticks <= 0 || releaseIntervalTicks <= 0) {
     std::cerr << "error: ticks and releaseIntervalTicks must be positive\n";
@@ -128,6 +158,11 @@ int main(int argc, char** argv) {
   setup.entrances.push_back(e);
   setup.totalLemmings = totalLemmingsOverride >= 0 ? totalLemmingsOverride : h.count;
   setup.releaseIntervalTicks = releaseIntervalTicks;
+  if (useRealSeconds) {
+    setup.releaseArmSeconds = realSecondsArm;
+    setup.releaseFirstCountdownSeconds = realSecondsFirst;
+    setup.releaseIntervalSeconds = realSecondsInterval;
+  }
 
   std::cerr << std::format(
       "{}: hatch words x {} y {} count {} type {} -> cell ({}, {})\n", levelName, h.x,
@@ -135,6 +170,12 @@ int main(int argc, char** argv) {
   std::cerr << std::format(
       "totalLemmings {}  releaseIntervalTicks {}  ticks {}\n", setup.totalLemmings,
       setup.releaseIntervalTicks, ticks);
+  if (useRealSeconds) {
+    std::cerr << std::format(
+        "real-seconds model: armSeconds {}  firstCountdownSeconds {}  intervalSeconds {}\n",
+        setup.releaseArmSeconds, setup.releaseFirstCountdownSeconds,
+        setup.releaseIntervalSeconds);
+  }
 
   World w(setup);
 
@@ -145,6 +186,15 @@ int main(int argc, char** argv) {
   for (int t = 1; t <= ticks; ++t) {
     w.tick();
     const auto& lemmings = w.lemmings();
+    if (lemmings.empty()) {
+      // D1e: the real-seconds model can leave the hatch unarmed/counting down
+      // for several ticks, so "no lemmings yet" is no longer tick 0 only --
+      // emit the same marker row shape (blank lemming_index) so a reader
+      // that pulls "spawned" per tick (diff_trace.py's load_sim) has a row
+      // at every tick, matching the pre-existing tick-0 convention above.
+      std::cout << std::format("{},,,,,,{},{},{}\n", t, w.spawned(), w.saved(), w.dead());
+      continue;
+    }
     for (std::size_t i = 0; i < lemmings.size(); ++i) {
       const Lemming& l = lemmings[i];
       std::cout << std::format("{},{},{},{},{},{},{},{},{}\n", t, i, l.x, l.y,

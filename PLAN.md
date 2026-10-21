@@ -520,6 +520,17 @@ count), using the general, confidently-known constants (`1.3 s` seed,
 `RELEASERATE.PC`-derived interval) and leaving the unresolved `arm_time` generalization as
 an explicit open parameter.
 
+**D1e release timing, implemented** ([check](docs/scratch/phase-d1-release-timing-implementation.md)):
+wired additively into `World` (new optional `LevelSetup` fields; every existing
+`releaseIntervalTicks`-based setup is byte-for-byte unaffected). D1a's own unmodified
+`diff_trace.py`, against D1a's own unmodified live capture and a freshly regenerated sim
+trace using the measured constants, now first diverges at **tick 10** (an `existence`
+alignment artifact — sim has no row yet where live already shows the lemming existing one
+tick early) instead of **tick 1**; spawn-count transition ticks agree at every shared
+point, drifting by 0-4 ticks from discretizing the original's continuous accumulator onto
+our 200 ms grid. The already-known left-turn divergence (`0x0041C67E`) was never reached
+in this comparison and remains the other open D1 blocker. D1 is still not accepted.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

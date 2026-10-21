@@ -750,11 +750,35 @@ void World::step(Lemming& l) {
 
 void World::tick() {
 
-
-
-  if (!timedOut() && ++sinceSpawn_ >= setup_.releaseIntervalTicks) {
-    sinceSpawn_ = 0;
-    spawn();
+  // Round D1e: an additive, opt-in real-seconds release model
+  // (docs/scratch/phase-d1-release-trigger.md and the two D1c/D1d follow-ups),
+  // alongside the untouched integer-tick model it extends. A LevelSetup that
+  // leaves releaseIntervalSeconds at its default 0.0 runs the exact old
+  // branch, byte-for-byte.
+  if (!timedOut()) {
+    if (setup_.releaseIntervalSeconds > 0.0) {
+      const double dt = rules_.ticksPerSecond > 0 ? 1.0 / rules_.ticksPerSecond : 0.2;
+      releaseElapsedSeconds_ += dt;
+      if (!releaseArmed_ && releaseElapsedSeconds_ >= setup_.releaseArmSeconds) {
+        // Arm once, this tick: seed the countdown but do not also decrement
+        // it the same tick it was seeded (matches the original's continuous
+        // arm-then-seed instant; the decrement is "every step while armed",
+        // starting from the next one).
+        releaseArmed_ = true;
+        releaseCountdown_ = setup_.releaseFirstCountdownSeconds;
+      } else if (releaseArmed_) {
+        releaseCountdown_ -= dt;
+        if (releaseCountdown_ <= 0.0) {
+          spawn();
+          // Rollover, not a reset: D1b measured the recurring interval added
+          // back into whatever the countdown currently holds.
+          releaseCountdown_ += setup_.releaseIntervalSeconds;
+        }
+      }
+    } else if (++sinceSpawn_ >= setup_.releaseIntervalTicks) {
+      sinceSpawn_ = 0;
+      spawn();
+    }
   }
 
   for (std::size_t i = 0; i < lemmings_.size(); ++i)

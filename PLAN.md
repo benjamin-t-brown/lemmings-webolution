@@ -207,9 +207,13 @@ The A2 wider/cavity/rim failures (`0.022030839 > 0.02`), the upper gold band, an
 omitted scenery and object models (entrances, exits, gadgets). **Exit gate (restated
 2026-10-21, with user sign-off, after A7l):** the A2 wider changed-pixel diagnostic ≤ 0.02 on
 the nine retained views and on one second level, with the pause caption panel
-`[277,422,363,454)` (PIL half-open xyxy) removed from each view's mask. Each view's mask
+`[277,422,363,454)` (PIL half-open xyxy) removed from each view's mask. **Amended
+2026-10-21, user sign-off, after A7p:** the ten skill-panel buttons are also removed, x
+`[18,90)` by y `[12,44)`, `[52,84)`, `[92,124)`, `[132,164)`, `[172,204)`, `[212,244)`,
+`[252,284)`, `[292,324)`, `[332,364)`, `[372,404)` (read live at `0x4C9208`, stride `0x1B0`).
+Both are Phase C HUD. Each view's mask
 comes from its own suppression pair (baseline versus four cell routes suppressed), and is
-scored against that same baseline. If another screen-fixed HUD element (timer, skill panel)
+scored against that same baseline. If another screen-fixed HUD element (timer)
 intersects a view's mask, it is reported to the user, not excluded silently.
 
 **A7a offline baseline/localization** ([check](docs/scratch/phase-a7-wider-mask-localize.md)):
@@ -369,6 +373,16 @@ holds. Those pixels stay in the score. No timer rectangle was read. No second
 level was captured. A7 is not accepted. The standing run stops on this
 intersection rather than changing the exclusion.
 
+**A7p facilitator check and gate amendment:** a separate PIL re-score
+(`build/tmp/a7-review/a7p/rescore.py`) reproduces every A7p numerator, denominator
+and skill-panel count exactly. Saved camera blocks hash `0d03f6d4…` at the entry pause and
+`7e6e1a8a…` after the 14 s walk, so the opening-camera hypothesis is now measured. Install
+hashes and the five prologues match their start values; no process remained. With the
+skill panel also removed (user, 2026-10-21) the nine views score: initial 0.019216,
+canonical 0.019314, mouse 0.017612, right 0.017604, left 0.017716, zoom1 0.017590, elev_up
+0.012934, elev_down 0.011169, elev0_neg 0.017576. All nine pass. A7 still needs the second
+level.
+
 After A7, Phase D's playable slice comes before B and C: a retail level playable end to
 end in 3D is the next visible result.
 
@@ -386,6 +400,9 @@ The skill panel art and counts, and the counters the engine names itself: `^save
 `^time`, the icon sets `GreyIcons` / `BlackIcons` / `AdditiveIcons`, and the cursor set
 (`_curLem`, `_curNoLem`, `_curEnt`, `_curExit`, and the left/right variants). Panel indices
 0, 1, 3, 4 and 7 are known; 2, 5, 6, 8, 9 are not.
+
+The ten skill-panel buttons (x `[18,90)`, objects at `0x4C9208`) are excluded from the A7
+gate for the same reason and are drawn here.
 
 The **Paused** caption panel (`[277,422,363,454)` on the 640x480 frame) belongs here. A7c–A7l
 traced it without finding its draw owner, parked 2026-10-21: `STR_PAUSED` key at `0x4C3C18`;

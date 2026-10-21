@@ -2,7 +2,22 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "a7q-second-level-mask",
+    "title": "A7q: one amended wider-mask pair on MM_DIG_000 after the 14 s walk",
+    "status": "queued",
+    "brief": "build/tmp/a7q-second-level-mask-brief.md",
+    "worker_tier": "targeted",
+    "owns_live_game": true,
+    "live_owner": null,
+    "depends_on": [
+      "a7p-unpause-then-masks"
+    ],
+    "gate_served": "A7 amended gate: second level",
+    "stock_starts_remaining": 1,
+    "question_round_count": 1,
+    "dispatch_note": "Standing run a7-complete authorizes this start. Dispatch from another session; not Cursor Composer."
+  },
   "queue": [],
   "recently_landed": [
     {
@@ -1551,21 +1566,28 @@
   ],
   "standing_run": {
     "id": "a7-complete",
-    "goal": "A7 restated gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) excluded, <=0.02",
+    "goal": "A7 amended gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) and ten skill-panel boxes x[18,90) excluded, <=0.02",
     "authorized": "User 2026-10-21",
     "grants": {
       "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
       "commits": "each verified round on decompile, no push/checkout/reset/stash"
     },
     "workers": "other sessions (Cursor grok-4.7-high-fast, OpenCode per ROLES); not Cursor Composer",
-    "owner": "cursor:54ff1c52-d9ec-42ca-8edc-560ea85e7e79",
+    "owner": null,
     "rounds_run": 2,
     "stock_starts_used": 2,
-    "stopped": {
-      "date": "2026-10-21",
-      "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
-      "last_commit": "e8f52e0"
-    },
-    "rules": "docs/ORCHESTRATION.md#standing-run"
+    "stopped": null,
+    "rules": "docs/ORCHESTRATION.md#standing-run",
+    "history": [
+      {
+        "date": "2026-10-21",
+        "stop": {
+          "date": "2026-10-21",
+          "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
+          "last_commit": "e8f52e0"
+        },
+        "resolution": "User excluded the ten skill-panel buttons (gate amended in PLAN A7). Facilitator re-score: nine views pass. Resumed with A7q."
+      }
+    ]
   }
 }

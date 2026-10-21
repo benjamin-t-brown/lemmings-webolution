@@ -450,7 +450,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| D1 release and walk-out | **next** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
+| D1 release and walk-out | **pending gate decision** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
 | D2 click-to-assign | queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
 | D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
@@ -559,6 +559,21 @@ limitation: individual lemmings have stable but different phases) is unresolved.
 still not accepted; the next D1 round is this one narrow, fully offline question — no new
 live capture needed.
 
+**D1h per-lemming-phase check, mixed result** ([check](docs/scratch/phase-d1-full-gate-recheck.md#d1h-follow-up-the-per-lemming-phase-hypothesis-mixed-result-2026-10-21)):
+re-aligning each flagged lemming with its own measured phase (not the harness's one
+pooled global phase) flips 3 of the 6 residuals to match exactly; the other 3 each have a
+distinct, fully-characterized reason they don't (zero residual, a 0.01 s near-miss bounded
+by raw-sample spacing, a wrong-signed residual at the phase method's own wraparound
+boundary). **Correction surfaced in the same round, confirmed independently**: only 3 of
+the 6 flagged ticks are the D1f-fixed "turns Right" scenario; the other 3 are the
+already-good "turns Left" case, misattributed in D1g's own text (now corrected there too).
+Every one of the 6 now has a complete, understood explanation, and an independent
+full-trace scan found zero reappearance of the stall D1f fixed. **Both named D1 blockers
+remain fixed and verified; the only open item is this one small, well-understood,
+self-healing single-tick `facing`-label residual**, which traces to the live-capture
+harness's alignment precision (not the simulation), not conclusively a sim defect. See
+Phase E for the parking decision.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds
@@ -566,8 +581,29 @@ Short, and explicitly parked rather than cancelled. **The gadget backlog is gone
 gadget at all. See the gadget table in `docs/LESSONS.md` before assuming anything here is
 open.
 
-- The left-facing turn tick (`0x0041C67E`), entangled with the blocker-turn expectation, so
-  the two must be fixed together.
+- **D1 single-tick `facing`-label residual** (parked 2026-10-21 after D1h). Both named D1
+  blockers (release timing, D1a-e; the left-turn tick, `0x0041C67E`, D1f — the line
+  formerly here listing it as open is retired) are fixed and independently verified. One
+  smaller residual remains: a self-healing, single-tick `facing`-only mismatch at turn
+  instants, found on a fresh live capture (D1g) and fully characterized by D1h — every
+  instance traces to the live-capture harness's one pooled global phase differing from
+  that lemming's own measured phase (D1a's own "Open limitation"), not to a defect in
+  `World`; `x` is exact on every tick before and after, and an independent full-trace
+  scan found zero reappearance of the stall D1f fixed. Closing it fully would need
+  sub-20 ms live sampling or a per-lemming-aware harness (a tooling investment, not a sim
+  fix) and needs its own gate justification before a future round is spent on it. D1's
+  gate, as literally written ("every lemming's cell X/Y, facing and state match... each
+  tick"), does not pass with this residual present; whether to amend the gate to exclude
+  a self-healing, x-unaffected, harness-precision-bounded label mismatch, or to invest in
+  harness precision to close it outright, is a user decision (`standing_run.pending_questions`),
+  not a gate change made unilaterally by the facilitator. Evidence:
+  [D1a](docs/scratch/phase-d1-release-walkout-trace.md),
+  [D1b](docs/scratch/phase-d1-release-trigger.md),
+  [D1c](docs/scratch/phase-d1-door-open-duration.md),
+  [D1d](docs/scratch/phase-d1-hatch-step-clock.md),
+  [D1e](docs/scratch/phase-d1-release-timing-implementation.md),
+  [D1f](docs/scratch/phase-d1-left-turn-fix.md),
+  [D1g/D1h](docs/scratch/phase-d1-full-gate-recheck.md).
 - 14 of the 19 call sites of the object-overlap predicate `0x00430BA1` are still
   unidentified. Anti-grav, exit, teleport, SpeedPad and lever account for five.
 - Panel indices 2, 5, 6, 8 and 9 (jump table at `0x0045A4DD`). Needed for Phase C.

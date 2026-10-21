@@ -31,9 +31,16 @@ all 150 ticks, finds zero duplicate-`x` walker-state stalls in either):
    largest drift — a sustained one-column `x` offset through their entire
    subsequent walk. Not a new mechanism.
 2. **6 entries**: a recurring, single-tick, self-healing `facing`-only
-   mismatch, every time at a "walker was facing Left, turns to face
-   Right" event — the exact scenario D1f's fix targets. `x` matches
-   exactly immediately before and after each one. Raw (unaligned)
+   mismatch. **Correction (2026-10-21, from D1h's independent check,
+   confirmed by the facilitator against `sim_trace.csv`): only 3 of the 6
+   are the "walker was facing Left, turns to face Right" event D1f's fix
+   targets** (column 24: lemming 0 @ tick 85, lemming 2 @ 114, lemming 4 @
+   143). **The other 3 are the opposite, already-good "Right turns Left"
+   case at wall column 64** (lemming 1 @ ticks 59 and 139, lemming 3 @ 88) —
+   not the D1f branch at all. This paragraph originally said all 6 were one
+   scenario; that was wrong, and is corrected here rather than only in D1h's
+   own note. `x` matches exactly immediately before and after each one
+   regardless of type. Raw (unaligned)
    actor-list samples for one instance show the true continuous turnaround
    lands at `t ≈ 16.93 s`, between two raw samples (`t=16.92` facing −1,
    `t=16.94` facing +1) — closer to the harness's own nominal "tick 85"
@@ -75,9 +82,48 @@ all 150 ticks, finds zero duplicate-`x` walker-state stalls in either):
 Accepted as landed. **D1's gate does not yet pass** — both major defects
 (release timing, left-turn stall) are fixed and hold across a fresh,
 comprehensive check, but one smaller, well-characterized residual remains:
-a single-tick `facing`-label rounding at left-to-right turn instants,
-self-healing, with zero effect on `x`. Whether this is a genuine sim gap or
-an artifact of the harness's known single global-phase alignment (D1a's own
-open limitation: individual lemmings showed stable but *different* phases)
-is the natural next, narrow, fully offline question — no new live capture is
-needed; the raw data is already saved.
+a single-tick `facing`-label rounding at turn instants, self-healing, with
+zero effect on `x`. Whether this is a genuine sim gap or an artifact of the
+harness's known single global-phase alignment (D1a's own open limitation:
+individual lemmings showed stable but *different* phases) is the natural
+next, narrow, fully offline question — no new live capture is needed; the
+raw data is already saved.
+
+## D1h follow-up: the per-lemming-phase hypothesis, mixed result (2026-10-21)
+
+Computing each flagged lemming's own phase (the same `infer_phase` function,
+restricted to that lemming's own anchors — the per-lemming phases D1a's
+"Open limitation" already observed: lemming 0 at `-0.08`, lemming 1 at
+`+0.02`, lemming 2 at `-0.10`, lemming 3 at `-0.02`, lemming 4 at `+0.08`,
+against the global pooled `-0.02`) and re-aligning with it flips **3 of the
+6** flagged ticks to match `live` exactly (lemming 0 @ 85, lemming 1 @ 59
+and 139). The other 3 do not flip, each for a distinct, fully-characterized
+reason: lemming 3's own phase coincides with the global value (no
+correction available), lemming 2's residual has the right sign but falls
+`0.01 s` short of the needed shift (bounded by the `0.02 s` raw-sample
+spacing), and lemming 4's residual has the wrong sign and sits at the
+phase-inference method's own wraparound boundary (`±0.10 s`, half a tick).
+
+**Facilitator check**: independently recomputed every lemming's own phase
+with the unedited `find_anchors`/`infer_phase` functions, restricted to
+each lemming's own raw samples — exact match to all five values (`-0.08,
++0.02, -0.10, -0.02, +0.08`) and their anchor counts (`136, 123, 109, 94,
+79`). Independently confirmed the event-type correction above directly from
+`sim_trace.csv`: ticks `59/lem1`, `88/lem3`, `139/lem1` are all at `x=64`
+with facing `1→-1` (the already-good case); ticks `85/lem0`, `114/lem2`,
+`143/lem4` are all at `x=24` with facing lagging to `-1→1` one tick late
+(the D1f-fixed case) — matching exactly. Hand-verified the tick-85/lemming-0
+flip arithmetic from the raw samples.
+
+**Conclusion**: the per-lemming-phase hypothesis is directly supported (every
+flagged lemming has a stable, nonzero, individually-explicable residual
+against the pooled global phase) but does not, on this data, resolve all 6
+— it resolves half, and the other half's non-resolution is itself explained
+by the same residual arithmetic (too small, zero, or wrong-signed), not an
+unrelated mechanism. This residual stays in the "harness alignment
+precision limit, not conclusively a sim defect" family: every one of its 6
+instances now has a complete, understood explanation, and none shows the
+stall D1f fixed recurring. Parked in `PLAN.md` Phase E — closing it fully
+would need sub-20 ms live sampling or a per-lemming-aware harness, which is
+a tooling investment, not a simulation fix, and needs its own gate
+justification before another round is spent on it.

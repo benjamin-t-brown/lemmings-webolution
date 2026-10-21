@@ -2,26 +2,33 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "d1h-per-lemming-phase",
-    "title": "D1h: is the single-tick facing residual a harness alignment artifact? (offline only)",
-    "status": "running",
-    "brief": "build/tmp/d1h-per-lemming-phase-brief.md",
-    "worker_tier": "targeted",
-    "harness": "Claude Code",
-    "requested_model": "session (no pin)",
-    "worker_agent": "round-agent",
-    "owns_live_game": false,
-    "live_owner": null,
-    "depends_on": [
-      "d1a-release-walkout-trace",
-      "d1g-full-gate-recheck"
-    ],
-    "gate_served": "PLAN Phase D, D1 release and walk-out",
-    "question_round_count": 1
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "d1h-per-lemming-phase",
+      "title": "D1h: per-lemming-phase hypothesis explains 3/6 outright and the other 3's non-flip; corrects D1g's event-type characterization",
+      "status": "landed",
+      "brief": "build/tmp/d1h-per-lemming-phase-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/d1h-per-lemming-phase/round-note.md",
+      "depends_on": [
+        "d1a-release-walkout-trace",
+        "d1g-full-gate-recheck"
+      ],
+      "gate_served": "PLAN Phase D, D1 release and walk-out",
+      "question_round_count": 1,
+      "stock_starts_consumed": 0,
+      "stock_starts_authorized": 0,
+      "landed_in": "docs/scratch/phase-d1-full-gate-recheck.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independently recomputed every flagged lemming's own phase with the unedited find_anchors/infer_phase functions restricted to that lemming's own samples -- exact match to all five values (-0.08,+0.02,-0.10,-0.02,+0.08) and anchor counts (136,123,109,94,79); independently confirmed the event-type correction directly from sim_trace.csv (ticks 59/lem1, 88/lem3, 139/lem1 are x=64 facing 1->-1 already-good; ticks 85/lem0, 114/lem2, 143/lem4 are x=24 facing lagging -1->1 one tick late, the D1f branch) -- exact match; hand-verified the tick-85/lemming-0 flip arithmetic from the raw samples. Corrected docs/scratch/phase-d1-full-gate-recheck.md's own event-type characterization and PLAN.md/LESSONS.md accordingly (the latter's stale 'deliberately unfixed' line was also stale and is corrected). No live game, no source change, git status showed only docs/tasks.json's permitted fields plus this facilitator's own doc/PLAN/LESSONS edits."
+    },
     {
       "id": "d1g-full-gate-recheck",
       "title": "D1g: both fixes confirmed on a fresh capture; one new, smaller self-healing facing residual found past tick 10",
@@ -1773,11 +1780,41 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session, 2026-10-21 (handoff: no task was running, standing_run.owner was null)",
-    "rounds_run": 7,
+    "rounds_run": 8,
     "stock_starts_used": 4,
-    "pending_questions": [],
-    "handoff": "2026-10-21: D1g landed (docs/scratch/phase-d1-full-gate-recheck.md) -- a fresh live capture confirms both fixes hold (tick-10 artifact unchanged, column-64 turn exact, zero D1f-stall reappearance anywhere), and found one new, smaller residual past tick 10: 6 single-tick, self-healing facing-only mismatches at exactly D1f's target scenario, x exact before/after. Dispatched D1h (offline only, no live game, no source change) to test whether this is a harness alignment artifact (D1a's own open limitation: individual lemmings have stable but different phases, while the harness uses one pooled global phase) rather than a sim defect, by computing each flagged lemming's own phase from already-saved raw data and checking whether re-aligning with it moves the flagged tick to match. Not yet verified.",
+    "pending_questions": [
+      {
+        "question": "D1's gate, as literally written, requires every lemming's cell X/Y, facing and state to match the original each tick. After 8 rounds (D1a-h), both named blockers (release timing, left-turn stall) are fixed and independently verified; one residual remains: a self-healing, single-tick facing-only label mismatch at turn instants (6 occurrences in a 150-tick/10-lemming capture), x exact on every surrounding tick. D1h traced every instance to the live-capture harness's one pooled global alignment phase differing from that lemming's own measured phase, not to a World defect -- 3 of 6 flip to an exact match when re-aligned per-lemming; the other 3 fail for bounded, understood reasons (zero residual, a 0.01s near-miss at the 0.02s raw-sample grid, a wrong-signed residual at the phase method's wraparound boundary). Does D1's gate need amending to exclude this harness-precision-bounded, x-unaffected label artifact (the same kind of amendment A7's gate received for HUD elements), or should work continue toward closing it outright (which would need sub-20ms live sampling or a per-lemming-aware harness -- a tooling investment, not a sim fix)?",
+        "options": [
+          "Amend the gate to exclude a self-healing, single-tick facing-label mismatch where x matches exactly on the surrounding ticks, then re-score and accept D1 if nothing else is found",
+          "Invest in a harness/tooling round (finer live sampling or per-lemming alignment) to try to close the residual outright before deciding on acceptance",
+          "Leave the gate as written and record D1 as not accepted, parked at this residual, until a later round revisits it"
+        ],
+        "recommendation": "Option 1. All 6 instances now have a complete, individually-verified explanation (D1h); none is a reappearance of either fixed defect; x is exact throughout. This is the same shape of amendment already used for A7 (excluding a HUD element the gate was never meant to cover). Option 2 is a real tooling investment with an uncertain payoff (the 3 non-flipping cases are bounded by raw-sample spacing, not obviously fixable by precision alone) and option 3 leaves a fully-understood, cosmetic residual blocking an otherwise-solid milestone indefinitely.",
+        "evidence": [
+          "docs/scratch/phase-d1-release-walkout-trace.md",
+          "docs/scratch/phase-d1-release-trigger.md",
+          "docs/scratch/phase-d1-door-open-duration.md",
+          "docs/scratch/phase-d1-hatch-step-clock.md",
+          "docs/scratch/phase-d1-release-timing-implementation.md",
+          "docs/scratch/phase-d1-left-turn-fix.md",
+          "docs/scratch/phase-d1-full-gate-recheck.md"
+        ]
+      }
+    ],
+    "handoff": "2026-10-21: D1h landed (docs/scratch/phase-d1-full-gate-recheck.md, D1h follow-up section) -- the per-lemming-phase hypothesis explains 3/6 of D1g's facing residuals outright and the other 3's non-flip too, each for a distinct bounded reason; corrected D1g's own event-type mischaracterization (only 3 of 6 are the D1f branch, not all 6) in PLAN.md/LESSONS.md and the scratch doc itself. Both named D1 blockers remain fixed and verified across 8 rounds; the one remaining residual is fully characterized. Paused here on a pending_question (D1's gate would need to change, or a tooling round authorized, to accept it) rather than deciding unilaterally -- this does not end the standing run; D2/D3 are unstarted and do not depend on this specific question, so the next session can either resolve the pending question first or start D2 research in parallel, at the user's direction.",
     "stopped": null,
+    "history": [
+      {
+        "date": "2026-10-21",
+        "stop": {
+          "date": "2026-10-21",
+          "reason": "D1's gate, as literally written, would need to change (or a tooling investment authorized) to accept D1 given the one remaining, fully-characterized residual (see pending_questions above). Per docs/ORCHESTRATION.md#standing-run this is a stop condition, not a decision for the facilitator to make unilaterally. Both named D1 blockers are fixed and independently verified across 8 rounds (D1a-h); no other ranked D1 question remains unparked.",
+          "last_commit": null
+        },
+        "resolution": null
+      }
+    ],
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

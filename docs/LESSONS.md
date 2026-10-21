@@ -981,9 +981,16 @@ boundary as `trunc(X)+1` facing right and `trunc(X)` facing left. Truncation giv
 edge to the right-hand cell, so a right-facing walker stops **on** the wall column and a
 left-facing one at wall+1. This is why climbers sit at exactly X 232.000 / 128.00 / 64.000.
 
-**Known divergence, deliberately unfixed**: a left-facing turn costs our sim a tick and the
-original nothing (`0x0041C67E`). Fixing it perturbs the blocker-turn expectation, so the two
-must be taken together.
+**Formerly a known divergence, fixed in Phase D (D1f, 2026-10-21)**: a walker that *was*
+facing Left, turning to face Right at a wall, used to cost our sim a tick the original
+never loses (`0x0041C67E`) — the original's turn arm returns 0 so its slice loop
+(`0x0041BDD4`) keeps going in the same tick and the walker steps once more immediately.
+`World::stepWalker` now does the same, gated on the facing the walker had *entering* the
+call (not the facing a turn just produced), and only for that direction — a walker that
+*was* facing Right already consumed the tick moving onto the wall column, so it must not
+get the extra step. One `testBlockerTurnsWalkers` literal moved (131→132) as a direct,
+justified consequence; the already-good "was Right, turns Left" case is unaffected and
+still matches. See `docs/scratch/phase-d1-left-turn-fix.md`.
 
 ## The tooling
 

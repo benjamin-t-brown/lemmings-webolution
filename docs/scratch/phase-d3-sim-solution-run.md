@@ -90,3 +90,71 @@ the end-time half is not, by a large, precisely-measured, well-explained-but-not
 confirmed margin. The assignment-timing-model hypothesis is falsifiable and testable
 offline (vary the probe's own assignment delay, not `src/**`, and see what delay
 reproduces ~208 s) before considering any live re-capture or `src/**` change.
+
+## Round 2 (repair 1): a structured click-pacing model gets close, but no integer value hits 208 s exactly
+
+[Repair 1 brief](../../build/tmp/d3e-sim-solution-run-repair1-brief.md). Offline only;
+zero stock starts; no live game process at any point.
+
+A parametrized copy of round 1's probe (`SimSolutionRunDelay.cpp`) tested two
+assignment-delay models, swept over many values, entirely offline:
+
+- **`uniform D`**: each lemming's own assignment is delayed `D` ticks after that
+  lemming's own spawn (independent per-lemming delay — round 1's own hypothesis in
+  its simplest form).
+- **`serial CI`**: a single globally-paced serialized clicking process, one click
+  every `CI` ticks, processed in spawn order (modelling one person serializing ten
+  clicks, rather than ten independent per-lemming delays).
+
+**Correction to round 1's own cited anchor, found by re-reading the oracle's raw log
+this round**: D3d's round-note's "~0,3,6,9,12,15s" click-landing estimate is **not**
+literally computable from `build/tmp/d3d-solution-discovery/run1.log` — that file logs
+each assignment attempt but prints no `t=` timestamp until the watch phase, which only
+begins after all ten clicks have already landed. What *is* directly computable: from
+`clock_at_entry=298` and the first watch sample's `clock=187`, the entire ten-click
+assignment loop took **111 real/game seconds end-to-end** — a different, larger
+number than the brief's cited estimate, reported honestly rather than silently
+reconciled.
+
+**Both models are step functions, not linear** (confirmed by direct tick-trace diff): a
+1-tick change in the delay parameter can shift the finish time by 112 ticks — the cost
+of one lemming narrowly missing the wall-climb window and having to walk a full extra
+lap. **Neither model's integer sweep lands on exactly 1040 ticks (208 s)**:
+`uniform` jumps 994→1106 between `D=513` and `D=514` (nearest: 198.8 s or 221.2 s);
+`serial` jumps 1011→1106 between `CI=71` and `CI=72`, with a closer intermediate value
+at `CI=77–78` giving 1074 (214.8 s, +6.8 s over).
+
+**`uniform`'s closest value is implausible**: it would require even the *first*
+assigned lemming to wait over 100 seconds, directly contradicted by `run1.log`'s own
+record of the first click landing within two attempts of the first spawn. **`serial`'s
+closest value (14.2–15.6 s/click) is far more plausible**: structurally consistent with
+one person serializing ten clicks, and its implied total loop duration (≈128–140 s) is
+the same order of magnitude as the independently-computed 111 s figure above (not an
+exact match, but a real, loose agreement between two independently-arrived-at numbers).
+D1's own already-landed per-event residuals remain explicitly ruled out — the needed
+delays here are two to three orders of magnitude larger.
+
+### Facilitator check (round 2)
+
+Independently recompiled `SimSolutionRunDelay.cpp` from source, relinked against the
+current `webolution_objects` object files; the `uniform 0` sanity case reproduces round
+1's exact result (`finishedAtTick 514`, `wonAtTick 384`). Independently reran the four
+cited boundary points: `uniform 513` → `994`, `uniform 514` → `1106`, `serial 71` →
+`1011`, `serial 72` → `1106`, `serial 77` → `1074` — all byte-for-byte matching the
+round's own sweep table. Independently confirmed the "111 s" clock arithmetic directly
+from `build/tmp/d3d-solution-discovery/solution.json` (`clock_at_entry: 298`) and
+`run1.log` (`t   0.00s saved=7 clock=187 ...`): `298 − 187 = 111`, exactly as claimed.
+Independently grepped `run1.log` for `t=`/timestamp markers before the watch phase:
+none exist — confirms the round's correction to the brief's own cited anchor is
+accurate, not a misreading. `git status` shows only `docs/tasks.json`'s permitted
+fields — no `src/**`, `CMakeLists.txt`, or other `docs/**` file touched; zero stock
+starts used.
+
+**Accepted as reported.** Neither delay model reproduces the original's exact 208 s;
+the `serial` model's closest approach is within 5.8–6.8 s (under 4% of 208 s) and is
+mechanistically and numerically plausible, while `uniform`'s is not. This is round 2 of
+the question's 3-round cap. Whether to spend round 3 on a still-more-structured model,
+accept this as a close-but-not-exact result and raise D3's own gate wording as a
+pending question (the same shape of decision already deferred for D1), or something
+else is recorded as a pending question for the user, not decided unilaterally — see
+`standing_run.pending_questions`.

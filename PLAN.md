@@ -1085,6 +1085,26 @@ reproduce that delay by construction. D1's own already-landed per-event residual
 explicitly ruled out as far too small to explain a gap this size. D3's gate does not
 pass: the saved-count half is met, the end-time half is not.
 
+**D3e repair 1: a structured click-pacing model gets close, but no integer value hits
+208 s exactly** ([check](docs/scratch/phase-d3-sim-solution-run.md)): offline only,
+zero stock starts. Swept two assignment-delay models in a parametrized probe:
+`uniform` (independent per-lemming delay) and `serial` (one globally-paced clicking
+process). Both are step functions, not linear (a 1-tick delay change can shift the
+finish time by 112 ticks — an extra walk-turn-walk lap). Neither model's integer sweep
+lands on exactly 1040 ticks (208 s): `uniform` jumps 994→1106 between `D=513`/`514`;
+`serial` jumps 1011→1106 between `CI=71`/`72`, with `CI=77-78` giving 1074 (+6.8 s).
+**`uniform`'s closest value is implausible** (would require the very first lemming to
+wait 100+ seconds, contradicted by the oracle's own log). **`serial`'s closest value
+(14.2-15.6 s/click) is far more plausible** — structurally consistent with one person
+serializing ten clicks, and numerically the same order of magnitude as an
+independently-computed 111 s total-loop-duration figure (`clock_at_entry 298` minus
+the first watch sample's `clock 187`, read directly from D3d's own saved log — a
+correction to D3d's own round-note, whose cited "~0,3,6,9,12,15s" estimate turns out
+not to be literally present in the raw log it summarized). D1's own per-event
+residuals remain ruled out. D3's gate, as literally written ("the same end time in
+whole seconds"), does not pass on this close-but-not-exact result; recorded as a
+pending question for the user below, not decided unilaterally.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

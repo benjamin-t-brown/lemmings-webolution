@@ -6,7 +6,7 @@
     {
       "id": "b1h-atlas-independent-match",
       "title": "B1h: atlas-independent geometry-preserving glyph match (fourth-pass exception)",
-      "status": "queued",
+      "status": "running",
       "brief": "build/tmp/b1h-atlas-independent-match-brief.md",
       "worker_tier": "targeted",
       "harness": "OpenCode Mac clone",
@@ -21,8 +21,9 @@
       "round_cap_exception": "Explicit fourth pass on same question, not reset: first2 attempts omitted glyph search; third uses unverified fixed packing and double resizing. Independent control proves scale invariance. Atlas-independent candidates with preserved geometry now test a concrete falsifier expected to yield real source/layout evidence. No automatic fifth.",
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
-      "dispatch_id": null,
+      "dispatch_id": "ses_e9a8c2165ffeq0o5CzvhVt4g1o",
       "previous_dispatch_id": "ses_e9aa91ebeffeCjF2Y6Dy7yeGQD",
+      "continuation_dispatch_id": "ses_e9a8c2165ffeq0o5CzvhVt4g1o",
       "continuation_brief": "build/tmp/b1h-mac-continuation-brief.md",
       "continuation_note": "User2026-10-22 authorizes same facilitator session on Mac llmgw after quota. Read-only mouv API confirms original B1h failed/idle provider.quota429usage_limit_reached, active sessions empty. Saved helpers/segmentation/prediction/note preserved; no registration scored. Explicit fifth-dispatch quota recovery (counting prior4), narrowed to actual Quit registration only, no sixth automatic pass. Mac -mac worker owns local code, shared scratch; harness runs via SSH, old mouv OpenCode stays idle."
       ,"worker_output": "build/tmp/b1h-atlas-independent-match/round-note.md"
@@ -2530,7 +2531,7 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 same facilitator resumes on Mac llmgw after quota; local/mouv FF clean at e6815ff. B1h original session confirmed failed/idle429usage_limit_reached and no active mouv sessions; saved note is partial segmentation only, no actual glyph registration. B1h queued for explicit fifth-dispatch quota continuation under -mac pin, narrowed ONLY Quit-row registration; preserve old packet and helpers, no completed search/export/native trace repeated. See build/tmp/b1h-mac-continuation-brief.md (lint passed). Harness runs on mouv via SSH snapshots; local tracked code and shared scratch ownership, GitHub sync after commits. No sixth automatic attempt. B1f method remains parked; B1e/C1a previously verified; B1 production menu/gate still open. Next verify actual one-row scores/controls then select remaining layout/render work without promoting helper tests or text-free surrogate scores.",
+    "handoff": "2026-10-22 same facilitator resumes on Mac llmgw after quota; recovery queued/pushed e76b4ce and mouv FF clean. B1h original session confirmed failed/idle429usage_limit_reached and no active mouv sessions; saved note partial segmentation only. B1h quota continuation now RUNNING under round-agent-mac ses_e9a8c2165ffeq0o5CzvhVt4g1o (explicit dispatch5/prior4), narrowed ONLY Quit-row registration. Preserve packet/helpers, no completed search/export/native trace repeated. See build/tmp/b1h-mac-continuation-brief.md, lint passed. Harness on mouv via SSH snapshots; worker owns local code/shared scratch, not remote tracked files; GitHub sync after commits. No sixth automatic attempt. B1f parked; B1e/C1a verified; B1 production menu/gate still open. Next independently verify actual one-row registration/scores/controls, then rank remaining layout/render work; do not promote helper tests or omission scores.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

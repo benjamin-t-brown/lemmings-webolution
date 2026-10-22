@@ -2270,7 +2270,7 @@
     "stopped": {
       "date": "2026-10-22",
       "reason": "All three Phase D milestones have reached either an accepted state or a state requiring a user decision: D1 (release and walk-out) has a fully-characterized discretization-floor residual with a pending gate-amendment decision already recorded (three successive re-askings, most recently after D1n); D2 (click-to-assign) is accepted (part (a) in full, part (b) as 3-of-4 skills, digger parked in Phase E with a resume brief needing a materially larger architectural change); D3 (one retail level end to end) now has its own gate-amendment-shaped pending question (saved count matches exactly, end time close but not exact, mechanism structurally understood). No ranked, undecided work remains that does not depend on one of these two user decisions.",
-      "last_commit": "pending (this round's own commit, see git log)"
+      "last_commit": "bef0521"
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [

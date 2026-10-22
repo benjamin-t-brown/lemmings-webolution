@@ -46,6 +46,40 @@ hashes before/after match:
 | `dgVoodoo.conf` | `d639e220814d80b7956b96bad0ca708b768458bd348bfd607afbf1913598e72b` |
 | `SavedGame.dat` | `f7f8603928890fb13d022d828c8a602cf7a7619ab24de82c7de4ae86ec337e6a` |
 
+## Round 2 (repair 1): second crash, earlier in the sequence
+
+[Repair 1 brief](../../build/tmp/d2e-rescore-repair1-brief.md). Same script, unmodified
+(`git diff` on `measure_d2_rescore.py`, `src/app/Pick.cpp`, `measure_d2_pick.py`,
+`measure_d2_tie.py`, and `acquire_game_foreground.py` all empty both before and after).
+Offline self-test/file-table check reproduced exactly. The one authorized live start
+(pid 2216) crashed again with the same exit code (`0xC0000005`), this time **before**
+`attach()` ever succeeded — during the fixed 12-second boot wait, earlier than round 1's
+crash (which reached main menu `ui_state 3`/`screen 3` and died later, during
+foreground-acquisition polling before the first `Down`). No `ui_state` was ever read.
+No `picks.jsonl`. Restoration again confirmed clean (same three hashes, unchanged across
+both rounds). Per the repair brief's own round-cap instruction, the worker correctly did
+not attempt a round 3 on its own and reported back instead.
+
+### Facilitator diagnostic note (round 2, not part of either round's own evidence)
+
+Neither round queried the Windows Application event log or WER for the crash itself. A
+facilitator-only, read-only check (no debugger, no process attach) after round 2 found:
+no `AppCrash_Lemmings*` WER report folder with a `LastWriteTime` inside either crash's
+~1-minute window (01:35:15–01:35:17 for round 1's pid 23616, 01:46:12–01:46:14 for round
+2's pid 2216) — so the specific faulting module for *these two* crashes is not
+established by this check. Two things ARE established: (1) the WER `ReportArchive`
+already holds a long pre-existing history of `AppCrash_Lemmings Revolut_...` folders
+from unrelated prior sessions — this exe crashing on this machine is not new to this
+round; and (2) the Application log in both crash windows shows only benign
+`Microsoft-Windows-Video-For-Windows` "requires Indeo Decoders of type IV50" entries (a
+known, long-standing missing-codec message for this game's intro video, not an error
+tied to the exit code) and, more notably, the surrounding minutes show the host cycling
+`Microsoft-Windows-Winlogon` logon/logoff events and `CodexSandboxService.OpenAI.Codex`
+service restarts roughly every 40–70 seconds throughout this session. Whether that
+session churn is the actual cause of either access violation is **not established** —
+this is an environmental correlation noticed in passing, not a diagnosed fault chain, and
+is reported as an open, unactioned lead, not a conclusion.
+
 ## Facilitator check (2026-10-22)
 
 Independently re-ran, outside the worker's own invocation: `python
@@ -69,3 +103,18 @@ live key on an eligible candidate (samples with a missing key are discarded at
 or `LemWeb-*` scheduled task after this check. Fresh `cmake --build --preset dev-debug` +
 `ctest --preset dev-debug`: **28/28**. `stock_starts_consumed` corrected 0 to 1 (pid 23616
 did launch). D2 part (a) does not pass; no new data was added toward it.
+
+**Round 2 facilitator check:** independently re-ran `--self-test`/`--check-file` myself
+(exact reproduction) and independently re-hashed all three install files directly with
+PowerShell `Get-FileHash` after the second run: all three again match
+(`32675bdb...`, `d639e220...`, `f7f86039...`), unchanged across both rounds. Confirmed
+`git diff --stat` shows zero change to any file this round touched other than
+`docs/tasks.json`'s permitted fields. No Lemmings/dgVoodoo process after the check. Did
+the event-log/WER forensic pass described above myself (round 2's own evidence packet
+did not include it). `stock_starts_consumed` corrected 0 to 1 for this round (pid 2216
+did launch). D2 part (a) still does not pass; two consecutive clean negatives, same exit
+code, no 20-position data collected either time. Round 3 of 3 (the question's last
+pre-authorized round) is queued next with one addition: capture the Application
+event log immediately after any crash, within the same round, to see whether a WER
+report lands this time — read-only OS log reading, not a debugger attach, so it stays
+inside the brief's "no debugger" rule.

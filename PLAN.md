@@ -811,6 +811,19 @@ before any key was sent, before the level was entered. No retry, per the brief's
 D2d left it. Restoration confirmed (process gone, all three install hashes unchanged,
 independently re-verified).
 
+**D2e repair 1: second crash, earlier in the sequence, round 2 of 3**
+([check](docs/scratch/phase-d2-rescore-crash.md)): same unmodified script, same offline
+self-tests reproduced exactly. The one authorized live start crashed again with the same
+`0xC0000005` exit code, this time *before* the harness ever attached to the process
+(during the fixed boot wait), earlier than round 1's crash (which reached the main menu
+and died during foreground-acquisition polling). No data collected; restoration again
+clean. A facilitator-only, read-only event-log/WER pass found no crash report for either
+specific incident, a long pre-existing history of this exe crashing on this machine in
+unrelated prior sessions, and the host cycling logon/sandbox-restart events roughly
+every 40-70 seconds through both crash windows -- an unproven environmental correlation,
+not a diagnosed cause. Per the round cap, the worker correctly did not self-dispatch a
+third attempt. D2 part (a) still does not pass.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

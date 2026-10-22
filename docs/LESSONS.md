@@ -1053,6 +1053,18 @@ still matches. See `docs/scratch/phase-d1-left-turn-fix.md`.
   Frontend screen id `0x004C416C` remains: 3 menu, 4 confirm, 5 map.
 - If you write to the live collision grid (a legitimate, proven probe), **log every cell and
   restore all of them**.
+- **Open lead, not a diagnosed cause (D2e, 2026-10-22):** two consecutive stock-exe crashes
+  (`0xC0000005`, access violation) on back-to-back rounds, each earlier in the launch
+  sequence than the last (main-menu foreground polling, then the boot-wait/first-`attach()`
+  window). Neither round's own evidence names a faulting module, and a facilitator-only
+  read-only Application-event-log/WER pass covering both crash windows found no matching
+  `AppCrash_Lemmings*` report for either specific incident. Two things that check *did*
+  find: this exe has a long pre-existing history of crashing on this machine in unrelated
+  prior sessions (`WER\ReportArchive`), and the host was cycling `Microsoft-Windows-Winlogon`
+  logon/logoff and `CodexSandboxService.OpenAI.Codex` restarts roughly every 40-70 seconds
+  through both crash windows. The correlation is unproven, not a cause — reported so a
+  future round reads the event log immediately after any crash rather than re-discovering
+  this from scratch. See `docs/scratch/phase-d2-rescore-crash.md`.
 
 ## Useful strings the engine keeps
 

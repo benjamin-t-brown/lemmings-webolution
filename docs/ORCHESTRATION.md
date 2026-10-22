@@ -113,6 +113,8 @@ after reading the operating rules or ask the user to supply a task merely becaus
   empty, use `PLAN.md`, `LESSONS.md` and the latest landed evidence to select and
   decompose the next unfinished question, write and lint its brief, and dispatch
   one worker using the client mapping. Selecting that question is the facilitator's job.
+  Fill up to three slots when independent offline briefs exist
+  ([concurrency](#concurrent-offline-rounds)).
 
 Optional command arguments constrain the work; they are not required. Stop for a
 concrete ownership conflict, unavailable delegation/model, external blocker, or
@@ -120,16 +122,35 @@ a decision the project sources cannot resolve, and report the specific evidence.
 An explicit request to review or repair the framework remains framework maintenance;
 it does not invoke project facilitation.
 
+### Concurrent offline rounds
+
+Added 2026-10-21, user decision. `active` may be one task object, or a list of up to
+**three**. The facilitator alone dispatches all of them. They must satisfy:
+
+- **At most one owns the live game.** The others are offline: no stock start, no debugger.
+- **Owned paths are disjoint.** Compare the briefs' **Owned files/paths** before dispatch.
+  Shared wiring (`cmake/webolution_sources.cmake`, `CMakeLists.txt`) counts as owned. Two
+  rounds that each add one test target may share it only if both briefs say "one test
+  target" and the facilitator merges in landing order.
+- **No `depends_on` edge** between two concurrent tasks.
+- **Verify and land one at a time**, each as its own commit, in any order. A result that
+  changes another running brief's settled facts is sent to that worker as a continuation
+  note. It is not silently absorbed.
+
+A round counts toward its own question's cap, not toward the others'. Dispatch one worker
+per task (one `Agent` call each, all in one message, when the harness allows it).
+
 ### Round lifecycle
 
 1. Facilitator follows the reading order in [FACILITATOR.md](FACILITATOR.md).
-2. If `active.status` is `blocked` or `ready-for-verify`, finish or unblock that — do not
-   start a parallel research round that needs the live game.
+2. If any active task is `blocked` or `ready-for-verify`, finish or unblock it first. Never
+   start a second round that needs the live game.
 3. Decompose the question into the smallest independently verifiable round, then write the
    brief (see `FACILITATOR.md`). Put its path in `active.brief`.
 4. Set `active.status` to `queued`, then `running` when the worker starts. Choose the
    targeted tier by default; use the hard tier only with a recorded escalation reason.
-5. Dispatch **one** worker with the brief. Optional explore first for map-only work.
+5. Dispatch **one** worker per brief. Offline briefs may run concurrently under
+   [the concurrency rules](#concurrent-offline-rounds). Optional explore first for map-only work.
 6. On worker return: facilitator verifies (own scripts, own address reads, mutate-one-alone /
    pixel gate). Then land docs and set `landed`, return a bounded repair, or set `blocked` with a real reason.
 7. After confirmed worker termination, inspect saved artifacts. Verify completed work.
@@ -169,8 +190,10 @@ and milestone after milestone, without returning to the user. The active one, if
 milestones it covers. Each gate must already be signed off in `PLAN.md`. When it is set,
 `/facilitator` runs this loop:
 
-1. Resolve the active task as usual: verify `ready-for-verify`, repair or unblock `blocked`,
-   or dispatch `queued`. If `active` is null, select and decompose the next question yourself.
+1. Resolve the active task(s) as usual: verify `ready-for-verify`, repair or unblock `blocked`,
+   or dispatch `queued`. Fill free concurrency slots from the queue under
+   [the concurrency rules](#concurrent-offline-rounds). If nothing is active or queued,
+   select and decompose the next question yourself.
 2. Verify with the full [verification loop](FACILITATOR.md#the-verification-loop--this-is-the-job),
    land the docs and set the task `landed`.
 3. Commit that round alone on `decompile`: name the paths, add attribution, no push, no
@@ -178,7 +201,8 @@ milestones it covers. Each gate must already be signed off in `PLAN.md`. When it
 4. If the current milestone's gate now passes on your own re-score, mark it done in
    `PLAN.md`, commit, and move `current` to the next listed milestone. Continue.
 5. Pick the next question by gate error and the round caps, write and lint its brief, queue it,
-   and dispatch. Do not stop to report between rounds or between milestones.
+   and dispatch. Work on a later listed milestone may run concurrently when it does not depend
+   on the current one. Do not stop to report between rounds or between milestones.
 6. Repeat until a stop condition holds.
 
 **Granted by a standing run** (only what its entry lists): stock-game starts, within each

@@ -25,6 +25,7 @@ HEADINGS = [
     "Hypotheses", "Must not touch", "Deliverables", "Report honestly",
 ]
 STATUSES = {"queued", "running", "blocked", "ready-for-verify", "landed"}
+MAX_ACTIVE = 3
 
 
 def read(root, path, errors):
@@ -181,8 +182,14 @@ def validate(root, brief=None):
         errors.append("docs/tasks.json: queue must be a list")
         pending = []
     active = queue.get("active")
+    # Concurrent offline rounds (ORCHESTRATION.md): active is null, one task, or up to three.
+    actives = active if isinstance(active, list) else ([active] if active is not None else [])
+    if len(actives) > MAX_ACTIVE:
+        errors.append(f"docs/tasks.json: at most {MAX_ACTIVE} active tasks")
+    if sum(1 for a in actives if isinstance(a, dict) and a.get("owns_live_game")) > 1:
+        errors.append("docs/tasks.json: at most one active task may own the live game")
     ids = set()
-    for item in ([active] if active is not None else []) + pending:
+    for item in actives + pending:
         if not isinstance(item, dict):
             errors.append("docs/tasks.json: task must be an object")
             continue
@@ -208,7 +215,7 @@ def validate(root, brief=None):
             value = item.get(key)
             if not repo_path(value) or not (root / value).is_file():
                 errors.append(f"{task_id}: {key} must name an existing repository file")
-        if item is not active and status != "queued":
+        if not any(item is a for a in actives) and status != "queued":
             errors.append(f"{task_id}: waiting queue items must be queued")
     if brief:
         check_brief(root, brief, errors)

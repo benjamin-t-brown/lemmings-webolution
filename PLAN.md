@@ -418,6 +418,17 @@ German), the screen state machine, level select and the map. Preserve the quirks
 **RETURN only when the menu highlight is exactly 0**, and a short ESC that fails to leave
 pause. Frontend screen ids are already known (`0x004C416C`: 3 menu, 4 confirm, 5 map).
 
+**PROPOSED milestones, drafted 2026-10-21 (CEO review). Not signed off: no B round may start
+until the user approves or edits these gates.** The metric is the A4d fixed changed-pixel
+score, scored with `tools/harness/score_a4_render.py` methods on a full 640x480 frame unless
+stated. The threshold is 0.02, the same as A1/A2/A7.
+
+| Milestone | Status | Proposed exit gate |
+| --- | --- | --- |
+| B1 frontend assets and text | proposed | Background, button and font sprites and `.LTX` German strings load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
+| B2 screen state machine | proposed | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirks preserved: RETURN only at highlight 0, short ESC does not leave pause |
+| B3 level select and map | proposed | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -437,6 +448,15 @@ live read of `[G+0x25C64]` at pause, in Phase C. Evidence:
 [A7c](docs/scratch/phase-a7-pause-caption-native.md) through
 [A7l](docs/scratch/phase-a7-25c64-writers.md).
 
+**PROPOSED milestones, drafted 2026-10-21 (CEO review). Not signed off: no C round may start
+until the user approves or edits these gates.**
+
+| Milestone | Status | Proposed exit gate |
+| --- | --- | --- |
+| C1 skill panel | proposed | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
+| C2 counters, cursor, pause caption | proposed | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
+| C3 full frame | proposed | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
+
 ## Phase D — reconnect the simulation
 
 Wire spawn, exits, skill assignment and the measured gadgets into the new renderer, and get a
@@ -450,7 +470,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| D1 release and walk-out | **pending gate decision** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
+| D1 release and walk-out | **gate held; D1m queued** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
 | D2 click-to-assign | queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
 | D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
@@ -668,6 +688,21 @@ outright (which would mean re-deriving the sim's spawn/landing timing at sub-tic
 precision or changing the tick architecture — not a bounded round), or to leave D1
 parked. The standing run stops here per
 [its gate-change stop condition](docs/ORCHESTRATION.md#standing-run).
+
+**D1 direction after D1l (user, 2026-10-21, CEO review): gate held as written, not amended.**
+Review observation, a hypothesis and not a measurement: D1l's own raw 50 Hz samples look
+continuous, not stepped. X changes on 7224 of 7464 consecutive 20 ms samples. The walk-out
+fits `32 + 5.0·(t − land)` within −0.022..+0.115 over 2684 samples. The fall at 20.0 u/s from
+Y 42 lands at release + 0.50 s for 10/10 lemmings. On its spawn tick our `World` has already
+fallen one full 4-unit step. Re-run with `python build/tmp/ceo-2026-10-21/continuous_fit.py`.
+If the original integrates real `dt` per frame, as D1d already found for the hatch, then
+"discretization floor" is the wrong name. The residual is a model mismatch, and the fix is
+the sim's clock, not the gate. Neither the "5 Hz, measured three ways" lesson nor any D1
+round has tested a fixed step against a continuous one: the speeds are 5.0 and 20.0 per
+second, and a fixed 0.2 s step turns them into 1 and 4. **D1m** reads the lemming step's
+`dt` source and replays the saved captures with a zero-parameter continuous model. If the
+answer is continuous, D1n changes `World`'s clock. If it is stepped, the gate question goes
+back to the user with D1m's evidence.
 
 ## Phase E — the remaining debts
 

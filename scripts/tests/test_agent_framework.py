@@ -134,6 +134,21 @@ class FrameworkChecks(unittest.TestCase):
                          "waiting queue items"]:
             self.assertTrue(any(expected in e for e in errors), errors)
 
+    def test_concurrent_active_limits(self):
+        self.write("brief.md", "legacy brief")
+        def task(n, live=False):
+            return {"id": f"t{n}", "status": "running", "owns_live_game": live,
+                    "live_owner": "worker" if live else None, "brief": "brief.md"}
+        self.write("docs/tasks.json", json.dumps(
+            {"schema_version": 1, "active": [task(1, True), task(2)], "queue": []}))
+        self.assertEqual(framework.validate(self.root), [])
+        self.write("docs/tasks.json", json.dumps(
+            {"schema_version": 1, "active": [task(1, True), task(2, True)], "queue": []}))
+        self.assertTrue(any("one active task may own" in e for e in framework.validate(self.root)))
+        self.write("docs/tasks.json", json.dumps(
+            {"schema_version": 1, "active": [task(n) for n in range(4)], "queue": []}))
+        self.assertTrue(any("at most 3 active" in e for e in framework.validate(self.root)))
+
     def test_ready_requires_artifact_and_released_owner(self):
         self.write("brief.md", "legacy brief")
         self.write("docs/tasks.json", json.dumps({"schema_version": 1, "queue": [], "active": {

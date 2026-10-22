@@ -5,6 +5,20 @@
   "active": null,
   "queue": [
     {
+      "id": "d1m-stepper-clock",
+      "title": "D1m: does the original step lemmings on a fixed 200 ms tick or on per-frame real dt? Offline read + zero-parameter replay of saved D1 captures",
+      "status": "queued",
+      "brief": "build/tmp/d1m-stepper-clock-brief.md",
+      "worker_tier": "targeted",
+      "dispatch_tag": "disassembly read",
+      "owns_live_game": false,
+      "live_owner": null,
+      "question_round_count": 1,
+      "depends_on": [],
+      "gate_served": "PLAN Phase D, D1 release and walk-out (the D1 gate decision is held on this answer)",
+      "dispatch_note": "Offline; no stock start; owns build/tmp/d1m-stepper-clock/** only. Concurrent with d2a and d3a (file-disjoint). If the verdict is continuous, the next D1 round is an implementation brief that owns src/sim/World.*; do not run it concurrently with d3b."
+    },
+    {
       "id": "d3a-retail-level-setup",
       "title": "D3a: production retail-level loader (.LVL -> sim::LevelSetup)",
       "status": "queued",
@@ -1904,7 +1918,7 @@
     }
   ],
   "standing_run": {
-    "id": "d-playable",
+    "id": "d-playable-2",
     "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
     "milestones": [
       "D1 release and walk-out",
@@ -1912,35 +1926,59 @@
       "D3 one retail level end to end"
     ],
     "current": "D1 release and walk-out",
-    "authorized": "User 2026-10-21: Phase D gates signed off; same grants as a7-complete",
+    "authorized": "User 2026-10-21 (CEO review session): new standing run, same grants as d-playable, plus up to three concurrent offline rounds (ORCHESTRATION#concurrent-offline-rounds). D1 gate held as written pending D1m.",
     "grants": {
-      "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
-      "commits": "each verified round on decompile, no push/checkout/reset/stash"
+      "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
+      "commits": "each verified round on decompile, no push/checkout/reset/stash",
+      "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": "Claude Code facilitator session lemmings-webolution-88, 2026-10-21 (handoff: no task was running under the prior owner, d1i was still queued)",
-    "rounds_run": 12,
-    "stock_starts_used": 6,
+    "owner": null,
+    "rounds_run": 0,
+    "stock_starts_used": 0,
     "pending_questions": [],
-    "handoff": "2026-10-21 (after d1l landed, standing run stopped): current milestone D1, not accepted. Last landed d1l. Both known harness biases (D1j's throttle lag, D1k's grid-alignment boundary) are fixed, independently verified, and hold on a fresh capture. d1l took the first full D1 gate measurement with neither bias present and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows is now named: the already-parked facing/turn-rounding family (Phase E, 14), spawn-tick-drift propagation (3/10 lemmings' share), and a newly-isolated landing-tick-drift propagation (6/10 lemmings' share -- the faller-to-walker transition drifts -1/-2 ticks for all 10 lemmings, including the 6 with zero spawn drift; not previously measured as its own quantity). Zero rows are unexplained by any of these. This is a gate-amendment-shaped decision (same kind as A7's HUD exclusion), recorded in deferred_questions below, not decided unilaterally -- the standing run stops here per its own gate-change stop condition. No task is running; no live owner. Ranked work not blocked by this decision (d2a-pick-rule, d3a-retail-level-setup -- both offline, file-disjoint from World.*) remains queued and could be picked up by a fresh /facilitator invocation while awaiting the user's decision, but this session is stopping rather than deciding to continue it unilaterally, since the project's prior practice (see history below) treated an equivalent gate-change situation as a full stop.",
-    "stopped": {
-      "date": "2026-10-21",
-      "reason": "D1l (the first full D1 gate measurement taken with both known harness biases fixed and independently verified) still does not pass the gate as literally written, and now every residual row is fully named: the already-parked facing/turn-rounding family (14 of 657), spawn-tick-drift propagation (3/10 lemmings), and a newly-isolated landing-tick-drift propagation (6/10 lemmings, previously folded unnamed into the spawn-tick story). Zero rows are unexplained. Per docs/ORCHESTRATION.md#standing-run, a gate needing to change is a stop condition, not a decision for the facilitator to make unilaterally -- see deferred_questions below for the updated, complete picture and recommendation.",
-      "last_commit": "d01c304"
-    },
-    "history": [
-      {
-        "date": "2026-10-21",
-        "stop": {
-          "date": "2026-10-21",
-          "reason": "D1's gate, as literally written, would need to change (or a tooling investment authorized) to accept D1 given the one remaining, fully-characterized residual (see pending_questions above). Per docs/ORCHESTRATION.md#standing-run this is a stop condition, not a decision for the facilitator to make unilaterally. Both named D1 blockers are fixed and independently verified across 8 rounds (D1a-h); no other ranked D1 question remains unparked.",
-          "last_commit": "d70c292"
-        },
-        "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Resumed with d1i; d1i/d1j/d1k fixed and verified both known harness biases; d1l's fresh, bias-free full gate recheck is the re-check -- see this history entry's own stop above for the result."
-      }
-    ],
+    "handoff": "2026-10-21 (CEO review, no round run): current milestone D1, not accepted, gate held as written. Dispatch d1m-stepper-clock, d2a-pick-rule and d3a-retail-level-setup together (all offline, file-disjoint; d2a and d3a each add one test target, so merge the cmake wiring in landing order). d3b waits on d3a. When d1m lands: if the original stepper is continuous (real dt), write D1n, a World clock change that owns src/sim/World.* and SimReleaseTrace, re-scored offline against all four saved captures before one live recheck; hold d3b while D1n runs. If stepped, re-ask the user the D1 gate question with d1m's evidence added (deferred_questions) and continue D2/D3. D2b (live 20-cursor capture) follows d2a; D3c (click-to-assign in the app) follows d2a and d3b. Phase B/C gates in PLAN are PROPOSED, not signed off: do not start B/C rounds.",
+    "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
+      {
+        "id": "d-playable",
+        "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
+        "milestones": [
+          "D1 release and walk-out",
+          "D2 click-to-assign",
+          "D3 one retail level end to end"
+        ],
+        "current": "D1 release and walk-out",
+        "authorized": "User 2026-10-21: Phase D gates signed off; same grants as a7-complete",
+        "grants": {
+          "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
+          "commits": "each verified round on decompile, no push/checkout/reset/stash"
+        },
+        "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
+        "owner": "Claude Code facilitator session lemmings-webolution-88, 2026-10-21 (handoff: no task was running under the prior owner, d1i was still queued)",
+        "rounds_run": 12,
+        "stock_starts_used": 6,
+        "pending_questions": [],
+        "handoff": "2026-10-21 (after d1l landed, standing run stopped): current milestone D1, not accepted. Last landed d1l. Both known harness biases (D1j's throttle lag, D1k's grid-alignment boundary) are fixed, independently verified, and hold on a fresh capture. d1l took the first full D1 gate measurement with neither bias present and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows is now named: the already-parked facing/turn-rounding family (Phase E, 14), spawn-tick-drift propagation (3/10 lemmings' share), and a newly-isolated landing-tick-drift propagation (6/10 lemmings' share -- the faller-to-walker transition drifts -1/-2 ticks for all 10 lemmings, including the 6 with zero spawn drift; not previously measured as its own quantity). Zero rows are unexplained by any of these. This is a gate-amendment-shaped decision (same kind as A7's HUD exclusion), recorded in deferred_questions below, not decided unilaterally -- the standing run stops here per its own gate-change stop condition. No task is running; no live owner. Ranked work not blocked by this decision (d2a-pick-rule, d3a-retail-level-setup -- both offline, file-disjoint from World.*) remains queued and could be picked up by a fresh /facilitator invocation while awaiting the user's decision, but this session is stopping rather than deciding to continue it unilaterally, since the project's prior practice (see history below) treated an equivalent gate-change situation as a full stop.",
+        "stopped": {
+          "date": "2026-10-21",
+          "reason": "D1l (the first full D1 gate measurement taken with both known harness biases fixed and independently verified) still does not pass the gate as literally written, and now every residual row is fully named: the already-parked facing/turn-rounding family (14 of 657), spawn-tick-drift propagation (3/10 lemmings), and a newly-isolated landing-tick-drift propagation (6/10 lemmings, previously folded unnamed into the spawn-tick story). Zero rows are unexplained. Per docs/ORCHESTRATION.md#standing-run, a gate needing to change is a stop condition, not a decision for the facilitator to make unilaterally -- see deferred_questions below for the updated, complete picture and recommendation.",
+          "last_commit": "d01c304"
+        },
+        "history": [
+          {
+            "date": "2026-10-21",
+            "stop": {
+              "date": "2026-10-21",
+              "reason": "D1's gate, as literally written, would need to change (or a tooling investment authorized) to accept D1 given the one remaining, fully-characterized residual (see pending_questions above). Per docs/ORCHESTRATION.md#standing-run this is a stop condition, not a decision for the facilitator to make unilaterally. Both named D1 blockers are fixed and independently verified across 8 rounds (D1a-h); no other ranked D1 question remains unparked.",
+              "last_commit": "d70c292"
+            },
+            "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Resumed with d1i; d1i/d1j/d1k fixed and verified both known harness biases; d1l's fresh, bias-free full gate recheck is the re-check -- see this history entry's own stop above for the result."
+          }
+        ],
+        "rules": "docs/ORCHESTRATION.md#standing-run"
+      },
       {
         "id": "a7-complete",
         "goal": "A7 amended gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) and ten skill-panel boxes x[18,90) excluded, <=0.02",
@@ -2005,7 +2043,7 @@
           "docs/scratch/phase-d1-phase-nmin-fix.md",
           "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md"
         ],
-        "resolution": null
+        "resolution": "User 2026-10-21 (CEO review session): hold the gate as written; do not amend yet. Raw 50 Hz samples suggest the original moves lemmings continuously (X changes on 7224 of 7464 consecutive 20 ms samples; walk-out fits 32 + 5.0*(t - land) within -0.022..+0.115; the fall lands at release + 0.50 s for 10/10). The drift may be a model mismatch, not a discretization floor. Run D1m first, then re-ask with its answer."
       }
     ]
   }

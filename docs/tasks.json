@@ -1,9 +1,50 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-21",
+  "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
-  "queue": [],
+  "active": {
+    "id": "d1o-continuous-live-recheck",
+    "title": "D1o: fresh live D1 recheck, scored against the continuous stepper clock; parks D1 after this round",
+    "status": "queued",
+    "brief": "build/tmp/d1o-continuous-live-recheck-brief.md",
+    "worker_tier": "targeted",
+    "harness": "Claude Code",
+    "requested_model": "session (no pin)",
+    "worker_agent": "round-agent",
+    "owns_live_game": true,
+    "live_owner": null,
+    "depends_on": [
+      "d1n-world-continuous-clock",
+      "d1l-full-gate-recheck"
+    ],
+    "gate_served": "PLAN Phase D, D1 release and walk-out (parking evidence)",
+    "question_round_count": 1,
+    "stock_starts_authorized": 1,
+    "stock_starts_consumed": 0
+  },
+  "queue": [
+    {
+      "id": "d3f-timed-solution",
+      "title": "D3f: a timed scripted solution, recorded live and replayed in our World",
+      "status": "queued",
+      "brief": "build/tmp/d3f-timed-solution-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "d3d-solution-discovery",
+        "d3e-sim-solution-run"
+      ],
+      "gate_served": "PLAN Phase D, D3 one retail level end to end",
+      "question_round_count": 1,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "note": "Queued behind d1o: both own the live game, so only one runs at a time."
+    }
+  ],
   "recently_landed": [
     {
       "id": "d3e-sim-solution-run",
@@ -2232,48 +2273,61 @@
     }
   ],
   "standing_run": {
-    "id": "d-playable-2",
-    "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
+    "id": "d-playable-3",
+    "goal": "Park D1 after one more live recheck (d1o); answer D3's end-time residual with a timed replay (d3f); then Phase B (frontend) and Phase C (in-level HUD) milestones B1-C3 pass their signed-off gates (PLAN.md Phase B / Phase C)",
     "milestones": [
-      "D1 release and walk-out",
-      "D2 click-to-assign",
-      "D3 one retail level end to end"
+      "D1 release and walk-out (parking round)",
+      "D3 one retail level end to end",
+      "B1 frontend assets and text",
+      "B2 screen state machine",
+      "B3 level select and map",
+      "C1 skill panel",
+      "C2 counters, cursor, pause caption",
+      "C3 full frame"
     ],
-    "current": "D1 release and walk-out",
-    "authorized": "User 2026-10-21 (CEO review session): new standing run, same grants as d-playable, plus up to three concurrent offline rounds (ORCHESTRATION#concurrent-offline-rounds). D1 gate held as written pending D1m.",
+    "current": "D1 release and walk-out (parking round)",
+    "authorized": "User 2026-10-22 (CEO review): D1 -- option 4 (park) plus one live recheck (build/tmp/d1o-continuous-live-recheck-brief.md), then park D1 regardless of its result unless it passes the gate literally. D3 -- do not amend the gate and do not run a third click-model round; run build/tmp/d3f-timed-solution-brief.md instead. Phase B and Phase C gates signed off as drafted (PLAN.md Phase B / Phase C tables, drafted 2026-10-21). Add B1-C3 to a new standing run.",
     "grants": {
       "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
       "commits": "each verified round on decompile, no push/checkout/reset/stash",
       "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": "Claude Code facilitator session lemmings-webolution-a5 (handoff 2026-10-22): the Cursor facilitator session broke (user-reported); no Cursor process was running on this machine, no Lemmings/dgVoodoo process, no LemWeb-* task, and the dispatched Cursor worker (6a656cc6-4b11-4cd9-ae44-14d6a3507298) had left zero artifacts under build/tmp/d2e-rescore/. This session takes the queue and re-dispatches d2e-rescore's existing round-1 brief under Claude Code, not a new round.",
-    "rounds_run": 22,
-    "stock_starts_used": 11,
-    "pending_questions": [
-      {
-        "question": "D3's gate reads: 'One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state.' D3d measured the original's own result for one scripted solution (climber to every lemming in arrival order) on MM_CLIMB_002: saved 10/10, end time 208 whole seconds, a confirmed level-end state. D3e ran the identical scripted solution through our own sim::World offline: saved 10/10 matches exactly; end time does not. Round 1 (instant assignment) finishes in 514 ticks (102-103s), about half the original. Round 2 swept two assignment-delay models to test whether the original's own non-instantaneous click-landing process explains the gap: a naive 'uniform' per-lemming delay can get numerically close (within 9-13s at its nearest integer value) but is mechanistically implausible (it would require even the first lemming to wait 100+ seconds, contradicted by the oracle's own log) and never hits 1040 ticks exactly (jumps 994->1106 ticks, i.e. 198.8s->221.2s, straight over 208s). A more structured 'serial' click-pacing model fits distinctly better -- plausible in shape, and its own needed pacing (14.2-15.6s/click) is the same order of magnitude as an independently-computed 111-second total assignment-loop duration read directly off the oracle's own clock -- but ALSO never lands on exactly 1040 ticks (closest: 1074 ticks/214.8s at CI=77-78, +6.8s over; or 1011 ticks/202.2s at CI=71, -5.8s under). Both models' failure mode is structural: the walk/turn/climb mechanic produces step-function finish times (a 1-tick delay change can shift the result by 112 ticks, a full extra lap), so no amount of further parameter tuning within either model's own shape can be expected to land exactly on 1040. Does D3's gate need amending to accept a close-but-not-exact end time (e.g. within one 'lap' cost, or within a stated percentage) given this is a click-timing-modeling question rather than any traced World/stepper defect, should a third, still-more-structured round be spent trying to land exactly on 1040 (the question's last pre-authorized round), or should D3 be left parked at this result, which is already far more informative than a plain pass/fail (saved count exact, end time understood and bounded within single-digit seconds, cause structurally explained even though not exactly reproduced)?",
-        "options": [
-          "Amend the gate to accept a close-but-not-exact end time for this class of result (saved count exact, end time within a stated tolerance, e.g. a few percent or one 'lap' cost, with the mechanism named), and accept D3 on this basis",
-          "Invest the question's third and final pre-authorized round in a still-more-structured click model (e.g. using the oracle's own per-click retry counts from run1.log, not just a uniform interval) to see if it can land exactly on 1040 ticks",
-          "Leave D3 parked at this result -- saved count matches exactly, end time is understood and bounded (closest approaches 202-215s against the original's 208s) but not exactly reproduced, with a structurally-explained, not merely unexplained, residual -- and revisit only if a later need changes the calculus"
-        ],
-        "recommendation": "Option 1, with option 3 as the practical fallback if the user prefers not to amend a gate so soon after D3 first ran. This residual is categorically different from D1's own still-pending discretization-floor question: it is not a World/stepper correctness defect (every individual skill and stepper this depends on is already independently measured and correct; the saved count, which IS a pure World-correctness measure, matches exactly) -- it is a question of how precisely this project chooses to model the ORIGINAL HUMAN'S click-landing latency when reproducing a 'scripted solution,' which is an app/UI-timing modeling choice, not a simulation-engine question. A third round chasing an exact match forces an increasingly elaborate click-timing model (the step-function structure means even a well-fit model is unlikely to land on the exact integer) for a quantity (click latency) this project does not otherwise claim to reproduce byte-for-byte anywhere else in Phase D. Given D1's own precedent (A7's HUD exclusion, this same shape of amendment), I recommend accepting 'saved count exact + end time within a few seconds, mechanism understood' as meeting the gate's intent.",
-        "evidence": [
-          "docs/scratch/phase-d3-solution-discovery.md",
-          "docs/scratch/phase-d3-sim-solution-run.md"
-        ],
-        "resolution": null
-      }
-    ],
-    "handoff": "2026-10-22: landed d3e-sim-solution-run rounds 1-2. Round 1 (offline): ran D3d's scripted solution through our own sim::World -- saved 10/10 matches exactly, end time (102-103s) is roughly half the original's 208s, every lemming taking exactly 373 identical ticks under instant assignment. Round 2 (offline): swept two assignment-delay models to test the click-timing hypothesis; neither lands exactly on 208s (both are step functions, not linear), but a structured 'serial' click-pacing model gets within 5.8-6.8s and is mechanistically/numerically plausible, while a naive 'uniform' per-lemming delay is not. D1's per-event residuals remain ruled out as the cause. This is now a gate-amendment-shaped pending question (D3's literal 'same end time' requirement vs. a close-but-not-exact, structurally-explained result) -- recorded above with options and a recommendation, not decided unilaterally. D2 part (a) stays accepted; D2 part (b) stays accepted as 3-of-4 (digger parked in Phase E). D1's own gate-amendment question remains separately unresolved. All three Phase D milestones have now reached either an accepted state (D2) or a pending-decision state (D1, D3) -- per the standing run's own stop condition ('every remaining ranked question waits on pending_questions or is parked'), this session stops here and reports both open decisions to the user.",
-    "stopped": {
-      "date": "2026-10-22",
-      "reason": "All three Phase D milestones have reached either an accepted state or a state requiring a user decision: D1 (release and walk-out) has a fully-characterized discretization-floor residual with a pending gate-amendment decision already recorded (three successive re-askings, most recently after D1n); D2 (click-to-assign) is accepted (part (a) in full, part (b) as 3-of-4 skills, digger parked in Phase E with a resume brief needing a materially larger architectural change); D3 (one retail level end to end) now has its own gate-amendment-shaped pending question (saved count matches exactly, end time close but not exact, mechanism structurally understood). No ranked, undecided work remains that does not depend on one of these two user decisions.",
-      "last_commit": "bef0521"
-    },
+    "owner": "Claude Code facilitator session (2026-10-22 /facilitator invocation): handoff from d-playable-2, which stopped with both Phase D decisions pending. The user resolved both in the same message that signed off Phase B/C, so this session opens the next standing run directly rather than reporting a bare stop.",
+    "rounds_run": 0,
+    "stock_starts_used": 0,
+    "pending_questions": [],
+    "handoff": "2026-10-22: new standing run opened directly from d-playable-2's stop. D1's and D3's pending decisions are both resolved (see deferred_questions) and each is already folded into a bounded, linted round brief: d1o-continuous-live-recheck (one stock start, parks D1 after this round regardless of result) and d3f-timed-solution (one stock start, timed replay for D3's end time). Both own the live game, so they run one at a time, not concurrently -- d1o dispatched first (D1 is listed first and is the current milestone), d3f queued behind it. Phase B/C gates are signed off in PLAN.md as drafted 2026-10-21; no B/C brief is written yet -- B1 is the next question once D1 and D3 are both parked/landed.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
+      {
+        "id": "d-playable-2",
+        "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
+        "milestones": [
+          "D1 release and walk-out",
+          "D2 click-to-assign",
+          "D3 one retail level end to end"
+        ],
+        "current": "D1 release and walk-out",
+        "authorized": "User 2026-10-21 (CEO review session): new standing run, same grants as d-playable, plus up to three concurrent offline rounds (ORCHESTRATION#concurrent-offline-rounds). D1 gate held as written pending D1m.",
+        "grants": {
+          "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
+          "commits": "each verified round on decompile, no push/checkout/reset/stash",
+          "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
+        },
+        "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
+        "owner": "Claude Code facilitator session lemmings-webolution-a5 (handoff 2026-10-22): the Cursor facilitator session broke (user-reported); no Cursor process was running on this machine, no Lemmings/dgVoodoo process, no LemWeb-* task, and the dispatched Cursor worker (6a656cc6-4b11-4cd9-ae44-14d6a3507298) had left zero artifacts under build/tmp/d2e-rescore/. This session takes the queue and re-dispatches d2e-rescore's existing round-1 brief under Claude Code, not a new round.",
+        "rounds_run": 22,
+        "stock_starts_used": 11,
+        "pending_questions": [],
+        "handoff": "2026-10-22: landed d3e-sim-solution-run rounds 1-2. Round 1 (offline): ran D3d's scripted solution through our own sim::World -- saved 10/10 matches exactly, end time (102-103s) is roughly half the original's 208s, every lemming taking exactly 373 identical ticks under instant assignment. Round 2 (offline): swept two assignment-delay models to test the click-timing hypothesis; neither lands exactly on 208s (both are step functions, not linear), but a structured 'serial' click-pacing model gets within 5.8-6.8s and is mechanistically/numerically plausible, while a naive 'uniform' per-lemming delay is not. D1's per-event residuals remain ruled out as the cause. This is now a gate-amendment-shaped pending question (D3's literal 'same end time' requirement vs. a close-but-not-exact, structurally-explained result) -- recorded above with options and a recommendation, not decided unilaterally. D2 part (a) stays accepted; D2 part (b) stays accepted as 3-of-4 (digger parked in Phase E). D1's own gate-amendment question remains separately unresolved. All three Phase D milestones have now reached either an accepted state (D2) or a pending-decision state (D1, D3) -- per the standing run's own stop condition ('every remaining ranked question waits on pending_questions or is parked'), this session stops here and reports both open decisions to the user.",
+        "stopped": {
+          "date": "2026-10-22",
+          "reason": "All three Phase D milestones have reached either an accepted state or a state requiring a user decision: D1 (release and walk-out) has a fully-characterized discretization-floor residual with a pending gate-amendment decision already recorded (three successive re-askings, most recently after D1n); D2 (click-to-assign) is accepted (part (a) in full, part (b) as 3-of-4 skills, digger parked in Phase E with a resume brief needing a materially larger architectural change); D3 (one retail level end to end) now has its own gate-amendment-shaped pending question (saved count matches exactly, end time close but not exact, mechanism structurally understood). No ranked, undecided work remains that does not depend on one of these two user decisions.",
+          "last_commit": "bef0521"
+        },
+        "rules": "docs/ORCHESTRATION.md#standing-run"
+      },
       {
         "id": "d-playable",
         "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
@@ -2393,8 +2447,22 @@
           "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md",
           "docs/scratch/phase-d2h-skill-assign-floater.md"
         ],
-        "resolution": null,
+        "resolution": "User 2026-10-22 (CEO review): option 4 -- leave D1 parked and proceed with the rest of Phase D and beyond. Before parking, run one more live round (d1o): D1n's improvement was only checked against saved captures, so take one fresh live, no-input capture of MM_CLIMB_002 and score both the flag-off and flag-on (--continuous-stepper-clock) sim against it. D1 is parked after that round regardless of its result, unless the result passes the gate literally; the round measures, it does not tune further.",
         "update_2026_10_22": "D2h (investigating D2 part (b)'s floater skill, unrelated question) found and fixed a disassembly-confirmed move-then-check ordering bug in stepFaller, then re-checked it against D1a's/D1g's/D1j's/D1l's own saved captures per this question's own 'ruled out' spirit: all four regenerated traces are byte-for-byte identical to D1n's pre-fix baselines -- zero measurable effect on this question's landing-tick-drift family. The fix's trigger condition (gap-to-ground exactly fallSpeed+1 at a tick's start) does not occur for any of D1's own captured lemmings' drop heights. This rules out one specific, independently-motivated candidate explanation; it does not change D1n's own partial-improvement numbers above or supply a reason to revisit this pending decision -- recorded as additional evidence, not a resolution."
+      },
+      {
+        "question": "D3's gate reads: 'One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state.' D3d measured the original's own result for one scripted solution (climber to every lemming in arrival order) on MM_CLIMB_002: saved 10/10, end time 208 whole seconds, a confirmed level-end state. D3e ran the identical scripted solution through our own sim::World offline: saved 10/10 matches exactly; end time does not. Round 1 (instant assignment) finishes in 514 ticks (102-103s), about half the original. Round 2 swept two assignment-delay models to test whether the original's own non-instantaneous click-landing process explains the gap: a naive 'uniform' per-lemming delay can get numerically close (within 9-13s at its nearest integer value) but is mechanistically implausible (it would require even the first lemming to wait 100+ seconds, contradicted by the oracle's own log) and never hits 1040 ticks exactly (jumps 994->1106 ticks, i.e. 198.8s->221.2s, straight over 208s). A more structured 'serial' click-pacing model fits distinctly better -- plausible in shape, and its own needed pacing (14.2-15.6s/click) is the same order of magnitude as an independently-computed 111-second total assignment-loop duration read directly off the oracle's own clock -- but ALSO never lands on exactly 1040 ticks (closest: 1074 ticks/214.8s at CI=77-78, +6.8s over; or 1011 ticks/202.2s at CI=71, -5.8s under). Both models' failure mode is structural: the walk/turn/climb mechanic produces step-function finish times (a 1-tick delay change can shift the result by 112 ticks, a full extra lap), so no amount of further parameter tuning within either model's own shape can be expected to land exactly on 1040. Does D3's gate need amending to accept a close-but-not-exact end time (e.g. within one 'lap' cost, or within a stated percentage) given this is a click-timing-modeling question rather than any traced World/stepper defect, should a third, still-more-structured round be spent trying to land exactly on 1040 (the question's last pre-authorized round), or should D3 be left parked at this result, which is already far more informative than a plain pass/fail (saved count exact, end time understood and bounded within single-digit seconds, cause structurally explained even though not exactly reproduced)?",
+        "options": [
+          "Amend the gate to accept a close-but-not-exact end time for this class of result (saved count exact, end time within a stated tolerance, e.g. a few percent or one 'lap' cost, with the mechanism named), and accept D3 on this basis",
+          "Invest the question's third and final pre-authorized round in a still-more-structured click model (e.g. using the oracle's own per-click retry counts from run1.log, not just a uniform interval) to see if it can land exactly on 1040 ticks",
+          "Leave D3 parked at this result -- saved count matches exactly, end time is understood and bounded (closest approaches 202-215s against the original's 208s) but not exactly reproduced, with a structurally-explained, not merely unexplained, residual -- and revisit only if a later need changes the calculus"
+        ],
+        "recommendation": "Option 1, with option 3 as the practical fallback if the user prefers not to amend a gate so soon after D3 first ran. This residual is categorically different from D1's own still-pending discretization-floor question: it is not a World/stepper correctness defect (every individual skill and stepper this depends on is already independently measured and correct; the saved count, which IS a pure World-correctness measure, matches exactly) -- it is a question of how precisely this project chooses to model the ORIGINAL HUMAN'S click-landing latency when reproducing a 'scripted solution,' which is an app/UI-timing modeling choice, not a simulation-engine question. A third round chasing an exact match forces an increasingly elaborate click-timing model (the step-function structure means even a well-fit model is unlikely to land on the exact integer) for a quantity (click latency) this project does not otherwise claim to reproduce byte-for-byte anywhere else in Phase D. Given D1's own precedent (A7's HUD exclusion, this same shape of amendment), I recommend accepting 'saved count exact + end time within a few seconds, mechanism understood' as meeting the gate's intent.",
+        "evidence": [
+          "docs/scratch/phase-d3-solution-discovery.md",
+          "docs/scratch/phase-d3-sim-solution-run.md"
+        ],
+        "resolution": "User 2026-10-22 (CEO review): neither listed option -- do not amend the gate, and do not spend the question's own third pre-authorized round on a still-more-structured click-pacing model. Instead run a new round (d3f) that replaces the modeled click pacing with recorded ground truth: capture exactly when each assignment landed in the live run, relative to that lemming's own release, then replay our World with precisely those recorded times rather than any fitted uniform/serial delay model."
       }
     ]
   }

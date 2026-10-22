@@ -418,16 +418,16 @@ German), the screen state machine, level select and the map. Preserve the quirks
 **RETURN only when the menu highlight is exactly 0**, and a short ESC that fails to leave
 pause. Frontend screen ids are already known (`0x004C416C`: 3 menu, 4 confirm, 5 map).
 
-**PROPOSED milestones, drafted 2026-10-21 (CEO review). Not signed off: no B round may start
-until the user approves or edits these gates.** The metric is the A4d fixed changed-pixel
-score, scored with `tools/harness/score_a4_render.py` methods on a full 640x480 frame unless
-stated. The threshold is 0.02, the same as A1/A2/A7.
+**Milestones and exit gates, drafted 2026-10-21 (CEO review), signed off as drafted by the
+user 2026-10-22.** The metric is the A4d fixed changed-pixel score, scored with
+`tools/harness/score_a4_render.py` methods on a full 640x480 frame unless stated. The
+threshold is 0.02, the same as A1/A2/A7.
 
-| Milestone | Status | Proposed exit gate |
+| Milestone | Status | Exit gate |
 | --- | --- | --- |
-| B1 frontend assets and text | proposed | Background, button and font sprites and `.LTX` German strings load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
-| B2 screen state machine | proposed | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirks preserved: RETURN only at highlight 0, short ESC does not leave pause |
-| B3 level select and map | proposed | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
+| B1 frontend assets and text | queued | Background, button and font sprites and `.LTX` German strings load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
+| B2 screen state machine | queued | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirks preserved: RETURN only at highlight 0, short ESC does not leave pause |
+| B3 level select and map | queued | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
 ## Phase C — the in-level HUD
 
@@ -448,14 +448,14 @@ live read of `[G+0x25C64]` at pause, in Phase C. Evidence:
 [A7c](docs/scratch/phase-a7-pause-caption-native.md) through
 [A7l](docs/scratch/phase-a7-25c64-writers.md).
 
-**PROPOSED milestones, drafted 2026-10-21 (CEO review). Not signed off: no C round may start
-until the user approves or edits these gates.**
+**Milestones and exit gates, drafted 2026-10-21 (CEO review), signed off as drafted by the
+user 2026-10-22.**
 
-| Milestone | Status | Proposed exit gate |
+| Milestone | Status | Exit gate |
 | --- | --- | --- |
-| C1 skill panel | proposed | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
-| C2 counters, cursor, pause caption | proposed | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
-| C3 full frame | proposed | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
+| C1 skill panel | queued | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
+| C2 counters, cursor, pause caption | queued | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
+| C3 full frame | queued | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
 ## Phase D — reconnect the simulation
 

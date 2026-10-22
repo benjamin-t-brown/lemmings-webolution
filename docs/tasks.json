@@ -4,11 +4,36 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
+      "id": "b1h-atlas-independent-match",
+      "title": "B1h: atlas-independent geometry-preserving glyph match (fourth-pass exception)",
+      "status": "queued",
+      "brief": "build/tmp/b1h-atlas-independent-match-brief.md",
+      "worker_tier": "targeted",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna (high)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["b1f-menu-template-match", "b1e-menu-image-layout", "b1b-reference-screengrab"],
+      "gate_served": "PLAN B1 actual glyph/layout evidence then production full-frame <=0.02",
+      "question_round_count": 4,
+      "prior_question_dispatches": 3,
+      "round_cap_exception": "Explicit fourth pass on same question, not reset: first2 attempts omitted glyph search; third uses unverified fixed packing and double resizing. Independent control proves scale invariance. Atlas-independent candidates with preserved geometry now test a concrete falsifier expected to yield real source/layout evidence. No automatic fifth.",
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "dispatch_id": null
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
+    {
       "id": "b1f-menu-template-match",
-      "title": "B1f: measure menu layout by matching verified retail templates",
-      "status": "running",
-      "worker_output": "build/tmp/b1f-menu-template-match/repair1-note.md",
+      "title": "B1f partial image measurements; invalid glyph/scale method discarded and parked",
+      "status": "landed",
+      "disposition": "Retain diagnostic code/partial background-panel results; discard glyph rejection and reconstruction-pass inference. Fixed-cell method parked after3 dispatches.",
+      "worker_output": "build/tmp/b1f-menu-template-match/repair2-note.md",
       "brief": "build/tmp/b1f-menu-template-match-brief.md",
+      "repair_briefs": ["build/tmp/b1f-menu-template-match-repair1-brief.md", "build/tmp/b1f-menu-template-match-repair2-brief.md"],
       "worker_tier": "targeted",
       "harness": "OpenCode",
       "requested_model": "openai/gpt-6-luna (high)",
@@ -16,19 +41,14 @@
       "owns_live_game": false,
       "live_owner": null,
       "depends_on": ["b1e-menu-image-layout", "b1b-reference-screengrab"],
-      "gate_served": "PLAN B1 full-frame menu <=0.02; actual image layout matching before production renderer",
+      "gate_served": "PLAN B1 full-frame main menu <=0.02; no production pass achieved",
       "question_round_count": 3,
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
-      "dispatch_id": "ses_e9ab100a0ffeV4qSV6O4Se9cHm",
-      "dispatch_history": ["ses_e9abb2b10ffeMJkJP0v0ZOGVUf", "ses_e9ab4a54effekZsW4H6YxnJ0a8"],
-      "previous_dispatch_id": "ses_e9abb2b10ffeMJkJP0v0ZOGVUf",
-      "repair_brief": "build/tmp/b1f-menu-template-match-repair2-brief.md",
-      "repair_reason": "Repair1 fixes five panel-like support bands and adds source components, but still implements no glyph similarity search. Split further: repair2 owns only actual glyph-to-row matching, starting with Quit falsifier, reusing all export/background/panel work. Third dispatch; all surrogate scores remain diagnostic-only, no gate acceptance."
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_history": ["ses_e9abb2b10ffeMJkJP0v0ZOGVUf", "ses_e9ab4a54effekZsW4H6YxnJ0a8", "ses_e9ab100a0ffeV4qSV6O4Se9cHm"],
+      "landed_in": "docs/scratch/phase-b1-template-match-attempts.md",
+      "facilitator_verified": "Independent full-frame integer scorer reproduces background5651991 and panel-only2625270 over235008000; no gate acceptance because glyphs absent. All7 tests pass but own synthetic control proves scales1/2 return identical zero error/source/destination due double resize, so fractional-scale/font rejection invalid. Direct pixel comparison corrects FONT/FONTFE claim: RGBA differs, alpha equals. Source16x16 ASCII32 packing and target identity/order unverified, no layout accepted. Fresh full wrapper build+CTest29/29, no production change. Method parked after3; B1h fourth-pass exception explicitly tests concrete packing/registration defects, no native trace or cap reset."
+    },
     {
       "id": "c1a-panel-index-read",
       "title": "C1a: physical indices0..9 identified; 8 fast-forward, 9 Armageddon",
@@ -2486,7 +2506,7 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22): explicit user handoff after Claude Code B1d worker aa948e797d9d77dd0 hit its session limit before launching. No other game process or LemWeb task; resume saved script and prediction under the same budget.",
-    "rounds_run": 11,
+    "rounds_run": 14,
     "stock_starts_used": 4,
     "pending_questions": [],
     "resolved_questions": [
@@ -2505,7 +2525,7 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 B1e export landed a1ed143; C1a indices independently verified/landed b6024ed, HUD pixels still open. B1f first pass omitted glyphs; repair1 fixes five panel-like support bands and adds alpha components but STILL no glyph search. Do not accept its surrogate score. Further split repair2 now RUNNING under ses_e9ab100a0ffeV4qSV6O4Se9cHm: ONLY glyph-to-row matching, start Quit falsifier, reuse existing inputs/panel work; third ordinary-cap dispatch. Preserve first-pass/repair1 outputs. Next verify actual scored matching/control evidence, then use prepared b1g renderer brief only if useful layout is verified; otherwise cap/park or explicitly justify an exception, no fourth automatic pass. B1 remains current; no production menu/accepted gate score yet. Full suite29/29 and source restoration already verified; zero new stock starts. No repeated completed native/export work; CEO/framework commits preserved.",
+    "handoff": "2026-10-22 B1f3 passes landed as partial/discard: background/panel diagnostics retained, glyph rejection invalid. Own control proves scale1/2 invariance from double resize; source fixed16x16 ASCII packing never verified. FONT/FONTFE alpha equal but RGBA different. Old method parked inPhaseE. B1h queued as explicitly justified fourth pass on SAME question (count4, prior3), atlas-independent source candidates and geometry-preserving registration; no automatic fifth. Verify real glyph source/layout/control evidence, then adapt prepared b1g renderer brief; no production menu/gate pass yet. B1e export/C1a mapping already verified, fresh build+CTest29/29,7 Pillow tests green but insufficient. Zero new stock starts; preserve all prior packets and CEO/framework commits.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

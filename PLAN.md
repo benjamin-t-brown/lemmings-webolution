@@ -502,6 +502,15 @@ parsed raw UK.LTX, checked exported pixels/metadata, discriminated an isolated w
 language mutation and verified restoration; 29/29 tests pass. No actual image matching
 or gate score yet; B1f is the next bounded matching round, then the app renderer.
 
+**B1f: partial image work; glyph inference rejected after3 dispatches**
+([check](docs/scratch/phase-b1-template-match-attempts.md)): background registration and
+five candidate colour-support bands are available, but no text reconstruction. The
+glyph attempt assumed unverified fixed-cell ASCII packing and normalized source
+silhouettes to target size, erasing scale discrimination; its poor scores do not
+reject the retail fonts. The text-free diagnostic under0.02 is not a gate pass.
+That method is parked in Phase E. B1h has an explicitly justified fourth-pass exception
+to test atlas-independent matching with preserved geometry; no fifth automatic pass.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -1227,6 +1236,13 @@ Short, and explicitly parked rather than cancelled. **The gadget backlog is gone
 gadget at all. See the gadget table in `docs/LESSONS.md` before assuming anything here is
 open.
 
+- **B1f fixed-cell glyph-matching method** (parked after3 dispatches,2026-10-22).
+  Unsupported16x16 ASCII32 source packing, independent target-component reuse and
+  double resizing make the glyph/scale inference invalid. Diagnostic frame omits text;
+  its passing scalar is not B1 acceptance. [Evidence/limits](docs/scratch/phase-b1-template-match-attempts.md).
+  Do not repeat this method or a menu-vtable trace. Resume only with a valid source-
+  packing/geometry-preserving matcher; B1h's fourth-dispatch exception brief explicitly
+  scopes that test in build/tmp/b1h-atlas-independent-match-brief.md. No automatic fifth.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

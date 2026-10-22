@@ -1052,6 +1052,22 @@ That window path was not executed. A6 and A7 PNG hashes are unchanged and
 `--sim-ticks` 15 and 75 stderr are unchanged. 28/28 tests pass. This does not
 grade D2's or D3's gate. The live 20-cursor comparison remains D2b.
 
+**D3d: one scripted solution for `MM_CLIMB_002`, with the original's own saved count
+and end time** ([check](docs/scratch/phase-d3-solution-discovery.md)): oracle-gathering,
+no `src/**` change. The solution: assign climber (panel 0) to every lemming in arrival
+order as each becomes hoverable, reusing the exact click mechanism D2(b)'s rounds
+already proved. One live run (1 of 2 authorized stock starts) reaches a clean win:
+**saved 10 of 10** (`SAVED_WORD` `0x004CBAA4`) against a save target of 1
+(`0x004CBAB0`), **end time 208 whole seconds** (`time_limit` 300 at `0x004CBAA8` minus
+the level clock's 92 at `0x004CBAAC` the instant `ui_state` left in-level play).
+Honestly left open: whether `ui_state 4` (this run's own end state) and `ui_state 5`
+(an unrelated earlier round's results-screen reading, under an artificially-raised
+save target) are the same state reached at different moments or two different states;
+whether fewer than 10 climbers would also win (this round matched the level's own
+apparent "give everyone the one skill it ships" design, not a minimal solution, per
+the brief's "one solution" framing). This is the oracle the next D3 round's own
+`sim::World` run is compared against.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

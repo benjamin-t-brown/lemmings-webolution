@@ -791,6 +791,14 @@ the three doubles at `screen+0x58`, `+0x60`, and `+0x68`, subtracted from
 a priority. Sample 15's winner is still open, because the live field and the
 positions were not saved. D2 part (a) does not pass.
 
+**D2d: one live overlap with the real tie keys, round 1**
+([check](docs/scratch/phase-d2-tie-live.md)): one cursor on `MM_CLIMB_002`
+overlaps two walkers. Both have `[state+0x14] = 0x12` and priority 0, live and
+in the file. The reference at `screen+0x58` is `(32.0, 48.0, 0.5)`. Squared
+distance selects index 3 (`698.64`) over index 2 (`1070.03`), and index 3 is
+the lemming at `[screen+0x16D8]`. D2 part (a) still does not pass: this is one
+overlap, not the 20 positions, and it reads only table index `0x12`.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

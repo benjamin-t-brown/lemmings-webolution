@@ -221,6 +221,21 @@ add_executable(test_pick src/__test__/test_pick.cpp src/app/Pick.cpp)
 target_include_directories(test_pick PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME pick COMMAND test_pick)
 
+# D3c: offline click-to-assign wiring. Same shape as test_retaillevel (links
+# the object library, needs the install) plus the app sources the accessor
+# compiles with, following test_actorcompose.
+add_executable(test_clicktoassign
+  src/__test__/test_clicktoassign.cpp
+  src/app/TubeScene.cpp
+  src/app/Camera.cpp
+  src/app/Raster.cpp
+  src/app/ActorSprite.cpp
+  src/app/ActorPose.cpp
+  src/app/Pick.cpp)
+target_link_libraries(test_clicktoassign PRIVATE webolution_objects)
+target_compile_definitions(test_clicktoassign PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME clicktoassign COMMAND test_clicktoassign WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 add_executable(test_collisiongrid src/__test__/test_collisiongrid.cpp)
 target_link_libraries(test_collisiongrid PRIVATE webolution_objects)
 # The live grid dumps sit in build/live_dump beside the tree, not in the game
@@ -232,6 +247,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

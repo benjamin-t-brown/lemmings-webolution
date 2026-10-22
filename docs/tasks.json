@@ -2,9 +2,53 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "d2b-pick-capture",
+    "title": "D2b repair: main-menu Down moved no highlight byte; then the 20-position capture if entry works",
+    "status": "queued",
+    "brief": "build/tmp/d2b-pick-capture-repair-brief.md",
+    "worker_tier": "targeted",
+    "harness": "Cursor",
+    "requested_model": "grok-4.7-high-fast",
+    "worker_agent": "round-agent",
+    "owns_live_game": true,
+    "live_owner": null,
+    "worker_output": "build/tmp/d2b-pick-capture/round-note.md",
+    "depends_on": [
+      "d2a-pick-rule"
+    ],
+    "gate_served": "PLAN Phase D, D2 click-to-assign part (a)",
+    "question_round_count": 2,
+    "stock_starts_authorized": 2,
+    "stock_starts_consumed": 1,
+    "dispatch_id": null,
+    "repair_of": "pid 47392: ui_state 3 screen 3, menu-index candidates 0, Return not sent, loaded empty. stock_starts_consumed corrected 0 to 1."
+  },
   "queue": [],
   "recently_landed": [
+    {
+      "id": "d3c-click-to-assign",
+      "title": "D3c: wire click-to-assign into webolution offline (Pick + World::assign), no live game",
+      "status": "landed",
+      "brief": "build/tmp/d3c-click-to-assign-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/d3c-click-to-assign/round-note.md",
+      "depends_on": [
+        "d2a-pick-rule",
+        "d3b-app-sim-loop"
+      ],
+      "gate_served": "PLAN Phase D, D3 one retail level end to end (prerequisite wiring; not itself graded against D2/D3's gate)",
+      "question_round_count": 1,
+      "continuation_note": "Claude Code round-agent a864d6ed07f2416e7 terminated 2026-10-21 on a session rate limit while reading Pick.cpp. No source, test, or round-note was written. This dispatch is the same round 1 brief, not a second question.",
+      "dispatch_id": "b0b848db-cbad-45ad-9ca9-a270c19b0232",
+      "landed_in": "docs/scratch/phase-d3-click-to-assign.md",
+      "facilitator_verified": "2026-10-22: hashed A6/A7 PNGs before==after (c4e6cf47... and 78305c5c..., the D3b hashes). sim-ticks 15/75 stderr byte-identical. Re-read 0x0045578C as push 0x20; push 0x20. Ran test_clicktoassign with WEBOLUTION_GAME_DIR: tick 25, two alive, chosen=0, far=nullptr. Own mutation boxes[i]=nullopt failed the screen-box check; restored TubeScene.cpp sha256 ec3a3afc... and the test passed. ctest 28/28. No stock process. Narrowing: the test does not call World::assign; that call is only in the unexecuted window handler."
+    },
     {
       "id": "d1n-world-continuous-clock",
       "title": "D1n: additive continuous sub-tick clock; landing-tick drift reduced (not closed) on 3/4 captures, spawn-tick drift unchanged for a now-structural reason; D1 still not accepted",
@@ -1978,11 +2022,11 @@
       "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": "Claude Code facilitator session (handoff 2026-10-21: no task was running under the prior owner; standing_run.owner was null, d1m/d2a/d3a were queued, this session dispatched all three, verified and landed all three, then dispatched d1n and d3b)",
-    "rounds_run": 5,
-    "stock_starts_used": 0,
+    "owner": "Cursor facilitator session (handoff 2026-10-21): Claude Code session 1a9a806c and its D3c worker a864d6ed07f2416e7 had both stopped on a session rate limit; no task was still running. This session takes the queue.",
+    "rounds_run": 6,
+    "stock_starts_used": 1,
     "pending_questions": [],
-    "handoff": "2026-10-21: landed d1n (build/tmp/d1n-world-continuous-clock/round-note.md, docs/scratch/phase-d1-continuous-stepper-clock.md): the continuous stepper clock closes landing-tick drift substantially on 3/4 captures (D1g 10/10->5/10 max3->1, D1j 10/10->3/10 max2->1, D1l 10/10->5/10 max2->1) but NOT on D1a (gets nominally worse, explained by D1a predating the harness-throttle fix -- an unreliable reference, not a sim defect) and does NOT close spawn-tick drift at all, anywhere, for a now-understood structural reason (spawn() fixes the existence tick before any budget is computed). Landed d3b alongside it (docs/scratch/phase-d3-app-sim-loop.md): webolution --sim/--sim-ticks wired, byte-identical regression holds, --sim-ticks matches SimReleaseTrace exactly. Both independently verified (addresses/hashes re-checked, mutate-one-alone caught via the offline capture comparator -- the unit suite alone did NOT catch the D1n mutation, confirming the comparator is the real discriminator for this class of change -- fresh 27/27 ctest). Deliberately did NOT spend a stock start on a fresh live D1 recheck this round, deviating from the prior handoff's literal branch: the offline re-score already used three independent, already-bias-free-harness captures (D1g/D1j/D1l) with a consistent result (partial, not full, closure), so a fourth live capture is judged low marginal value for the stock-start cost -- recorded as a judgment call, not hidden. D1's gate-amendment deferred_question (below) is updated with this new evidence per the user's own prior instruction to re-ask once D1m/D1n's results were in, but NOT decided here. Next, not yet dispatched: (1) report the updated D1 evidence to the user for the gate-amendment decision (deferred_questions, below) -- this does not block other work; (2) D3c (click-to-assign wired into the app via D2a's Pick.* and D3b's SimClock/World plumbing, offline, no live game) is the next clearly-ranked offline round and has no brief yet -- write one before dispatch; (3) D2b (the D2(a) live 20-cursor capture) needs a live game session and has no brief yet either -- write one when ready to spend a stock start. Phase B/C gates in PLAN are PROPOSED, not signed off: do not start B/C rounds.",
+    "handoff": "2026-10-22: landed d3c (docs/scratch/phase-d3-click-to-assign.md). Offline pick test passes; World::assign is compiled into the unexecuted --sim window handler. D2b repair is queued, not yet dispatched: pid 47392 stayed on the main menu (menu-index candidates 0). One new start is authorized in build/tmp/d2b-pick-capture-repair-brief.md. D1 gate question remains unresolved and does not block D2b.",
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [

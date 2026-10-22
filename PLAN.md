@@ -827,6 +827,16 @@ clock wired to `World::tick()`. Ran concurrently with D1n (file-disjoint); its o
 were relative (before/after the same build), not against a frozen `World.cpp`. 27/27 tests
 pass. D3c (click-to-assign in the app) depends on this round and D2a and may now be queued.
 
+**D3c: click-to-assign wired offline, round 1** ([check](docs/scratch/phase-d3-click-to-assign.md)):
+`TubeScene::injectedWalkerScreenBoxes` exposes the sprite box `drawInjectedWalkers`
+already computes, and `test_clicktoassign` selects lemming 0 from that box and
+selects nothing from the same box shifted +10000 in x. Tick 25 on `MM_CLIMB_002`
+has two alive lemmings. The windowed `--sim` path calls `World::assign` on a
+left click, with keys 1–8 as a debug skill stand-in, not the original panel.
+That window path was not executed. A6 and A7 PNG hashes are unchanged and
+`--sim-ticks` 15 and 75 stderr are unchanged. 28/28 tests pass. This does not
+grade D2's or D3's gate. The live 20-cursor comparison remains D2b.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

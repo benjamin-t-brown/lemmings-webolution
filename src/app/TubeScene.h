@@ -18,6 +18,7 @@
 #pragma once
 
 #include "app/ActorPose.h"
+#include "app/ActorSprite.h"
 #include "app/Camera.h"
 #include "app/Raster.h"
 #include "assets/CellMesh.h"
@@ -29,6 +30,7 @@
 #include <array>
 #include <cstddef>
 #include <expected>
+#include <optional>
 #include <span>
 #include <string>
 #include <vector>
@@ -110,6 +112,18 @@ class TubeScene {
 
   void render(Raster& raster, const CameraBasis& camera, const SceneOptions& options,
               const AssetLibrary* composeAssets = nullptr) const;
+
+  // Read-only screen box for each `options.injectedWalkers` entry, in that
+  // vector's order (forward). Each placement is the one `drawInjectedWalkers`
+  // would pass to `drawActorSprite` for that walker; nullopt when that walker
+  // is skipped before the draw. Does not draw and does not modify the scene.
+  //
+  // `injectedWalkersFromWorld` emits one walker per alive lemming, in
+  // `World::lemmings()` order. While every lemming is alive the returned
+  // vector is index-aligned with `World::lemmings()`. A dead or exited
+  // lemming has no walker, so it has no entry here.
+  std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
+      const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const;
 
   std::size_t outerTiles() const { return outerTileCount_; }
   std::size_t innerTiles() const { return innerTileCount_; }

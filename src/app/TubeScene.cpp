@@ -229,6 +229,86 @@ void compositeActorOverlay(app::Raster& raster, const Image& overlay,
   }
 }
 
+// Pose, view selection, sheet load, placement and tint for one injected
+// walker: the steps `drawInjectedWalkers` already ran immediately before
+// `drawActorSprite`. nullopt is one of that loop's `continue`s (temporal
+// index, empty direction list, forced view out of range, sheet-load failure,
+// placement failure). This does not draw. Callers own iteration order.
+struct PreparedInjectedWalker {
+  webo::SpriteFrame frame;
+  webo::Image texture;
+  ActorSpritePlacement placement{};
+  bool mirrored = false;
+  std::array<std::uint8_t, 3> tint{255, 255, 255};
+};
+
+std::optional<PreparedInjectedWalker> prepareInjectedWalker(
+    const ActorPoseLevel& poseLevel, const SpriteSheet& sprites, const ActorLightMap& light,
+    const CameraBasis& camera, const SceneOptions& options,
+    const SceneOptions::InjectedNativeWalker& injected, const AssetLibrary& lib) {
+  const Sprite* walkSprite = sprites.find("walk");
+  if (walkSprite == nullptr)
+    return std::nullopt;
+
+  ActorTerrainSample plus8{injected.plus8X, injected.plus8Y, injected.plus8Z};
+  ActorPoseResult pose;
+  if (options.composeSkipActorPose) {
+    pose.modelPosition = {plus8.x, plus8.y, plus8.z};
+    pose.basis = {1.0, 0.0, 0.0};
+  } else {
+    pose = actorPoseFromNativeSample(poseLevel, plus8, injected.facing);
+  }
+
+  const gfx::SpriteViewVector cameraToActor{
+      pose.modelPosition[0] - camera.eyeWorld[0],
+      pose.modelPosition[1] - camera.eyeWorld[1],
+      pose.modelPosition[2] - camera.eyeWorld[2],
+  };
+  const gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
+  const std::size_t temporalIndex =
+      static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
+  if (temporalIndex >= walkSprite->animations.size())
+    return std::nullopt;
+  const auto& temporal = walkSprite->animations[temporalIndex];
+  const std::size_t dirCount = temporal.frames.size();
+  if (dirCount == 0)
+    return std::nullopt;
+
+  const auto scores = gfx::spriteViewScores(cameraToActor, basisVec, options.composeActorPhase);
+  auto selection = gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
+  if (injected.forcedViewIndex >= 0)
+    selection.index = static_cast<std::size_t>(injected.forcedViewIndex);
+  if (injected.forcedMirror >= 0)
+    selection.mirrored = injected.forcedMirror != 0;
+  if (selection.index >= dirCount)
+    return std::nullopt;
+
+  const auto& frame = temporal.frames[selection.index];
+  auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
+  if (!texture)
+    return std::nullopt;
+
+  const std::array<double, 3> worldPosition{pose.modelPosition[0], pose.modelPosition[1],
+                                            pose.modelPosition[2]};
+  auto placement = app::actorSpritePlacement(frame, worldPosition, camera, selection.mirrored, -1);
+  if (!placement)
+    return std::nullopt;
+
+  std::array<std::uint8_t, 3> tint{255, 255, 255};
+  if (!light.empty()) {
+    if (auto looked = actorLightTintAt(light, worldPosition[0], worldPosition[1]))
+      tint = *looked;
+  }
+
+  PreparedInjectedWalker prepared;
+  prepared.frame = frame;
+  prepared.texture = std::move(*texture);
+  prepared.placement = *placement;
+  prepared.mirrored = selection.mirrored;
+  prepared.tint = tint;
+  return prepared;
+}
+
 }  // namespace
 
 void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
@@ -248,65 +328,35 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
 
   for (auto it = options.injectedWalkers.rbegin(); it != options.injectedWalkers.rend(); ++it) {
-    const auto& injected = *it;
-    ActorTerrainSample plus8{injected.plus8X, injected.plus8Y, injected.plus8Z};
-    ActorPoseResult pose;
-    if (options.composeSkipActorPose) {
-      pose.modelPosition = {plus8.x, plus8.y, plus8.z};
-      pose.basis = {1.0, 0.0, 0.0};
-    } else {
-      pose = actorPoseFromNativeSample(poseLevel_, plus8, injected.facing);
-    }
-
-    const gfx::SpriteViewVector cameraToActor{
-        pose.modelPosition[0] - camera.eyeWorld[0],
-        pose.modelPosition[1] - camera.eyeWorld[1],
-        pose.modelPosition[2] - camera.eyeWorld[2],
-    };
-    const gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
-    const std::size_t temporalIndex =
-        static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
-    if (temporalIndex >= walkSprite->animations.size())
+    // Reverse order, same skips, and the same frame/texture/placement/mirror/tint
+    // fed to drawActorSprite. alphaTest stays true. The helper does not draw.
+    auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
+                                          options, *it, lib);
+    if (!prepared)
       continue;
-    const auto& temporal = walkSprite->animations[temporalIndex];
-    const std::size_t dirCount = temporal.frames.size();
-    if (dirCount == 0)
-      continue;
-
-    const auto scores = gfx::spriteViewScores(cameraToActor, basisVec, options.composeActorPhase);
-    auto selection = gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
-    if (injected.forcedViewIndex >= 0)
-      selection.index = static_cast<std::size_t>(injected.forcedViewIndex);
-    if (injected.forcedMirror >= 0)
-      selection.mirrored = injected.forcedMirror != 0;
-    if (selection.index >= dirCount)
-      continue;
-
-    const auto& frame = temporal.frames[selection.index];
-    auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
-    if (!texture)
-      continue;
-
-    const std::array<double, 3> worldPosition{
-        pose.modelPosition[0], pose.modelPosition[1], pose.modelPosition[2]};
-    auto placement =
-        app::actorSpritePlacement(frame, worldPosition, camera, selection.mirrored, -1);
-    if (!placement)
-      continue;
-
-    std::array<std::uint8_t, 3> tint{255, 255, 255};
-    if (!actorLight_.empty()) {
-      if (auto looked = actorLightTintAt(actorLight_, worldPosition[0], worldPosition[1]))
-        tint = *looked;
-    }
-
-    if (!app::drawActorSprite(overlay, frame, *texture, *placement, selection.mirrored, tint,
-                              true)
+    if (!app::drawActorSprite(overlay, prepared->frame, prepared->texture, prepared->placement,
+                              prepared->mirrored, prepared->tint, true)
              .has_value())
       continue;
   }
 
   compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
+}
+
+std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreenBoxes(
+    const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const {
+  std::vector<std::optional<ActorSpritePlacement>> boxes(options.injectedWalkers.size());
+  if (options.injectedWalkers.empty() || !haveLemmingSprites_ || !havePoseLevel_)
+    return boxes;
+  rewirePoseLevel();
+  if (lemmingSprites_.find("walk") == nullptr)
+    return boxes;
+  for (std::size_t i = 0; i < options.injectedWalkers.size(); ++i) {
+    if (auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
+                                              options, options.injectedWalkers[i], lib))
+      boxes[i] = prepared->placement;
+  }
+  return boxes;
 }
 
 void TubeScene::render(Raster& raster, const CameraBasis& camera,

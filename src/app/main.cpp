@@ -31,12 +31,19 @@
 //                     N times before rendering, independent of frame count.
 //                     Implies --sim. Prints the tick, lemming count and every
 //                     live lemming's cell to stderr.
+//   Debug stand-in, windowed --sim only (not the original skill panel):
+//                     keys 1-8 select Climber, Floater, Bomber, Blocker,
+//                     Builder, Basher, Miner, Digger in that enum order, and
+//                     a left click assigns the selected skill to the lemming
+//                     under a 32x32 cursor box centered on the click. Logs
+//                     the index, skill and World::assign's return to stderr.
 //
 // No live game and no captured arena data are used. Everything comes from the
 // install named by WEBOLUTION_GAME_DIR (default C:/progs/Lemmings Revolution).
 
 #include "app/Camera.h"
 #include "app/CameraInput.h"
+#include "app/Pick.h"
 #include "app/Raster.h"
 #include "app/SimClock.h"
 #include "app/TubeScene.h"
@@ -48,6 +55,7 @@
 #include "sim/RetailLevel.h"
 #include "sim/World.h"
 
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
@@ -152,6 +160,62 @@ Image toImage(const app::Framebuffer& fb) {
   }
   return image;
 }
+
+#if WEBOLUTION_HAVE_SDL2
+// Toward-zero truncation. Pick.h documents that the original's screen-box
+// fields are truncated doubles; this debug path uses that conversion on the
+// placement the accessor returns. Not a new exe read.
+app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
+  return app::PickBox{
+      static_cast<int>(placement.left),
+      static_cast<int>(placement.top),
+      static_cast<int>(placement.right),
+      static_cast<int>(placement.bottom),
+  };
+}
+
+// Debug click-to-assign. Not the original skill panel. The cursor is a 32x32
+// box centered on the window click (sprite size named in Pick.h at
+// 0x0045578C); pickBoxOverlaps applies the +/-4 adjustment itself. The window
+// and the raster are both 640x480, so the click is in the placement's pixel
+// space. priority and distanceSquared stay 0, the inherited D2a limitation:
+// first eligible overlapping candidate in list order wins only when every
+// candidate is tied on both keys.
+void debugClickToAssign(sim::World& world, const app::TubeScene& scene,
+                        const app::SceneOptions& options, const AssetLibrary& library,
+                        const app::CameraBasis& camera, int x, int y, sim::Skill skill) {
+  const auto boxes = scene.injectedWalkerScreenBoxes(camera, options, library);
+  std::vector<app::PickCandidate> candidates;
+  std::size_t walker = 0;
+  const auto& lemmings = world.lemmings();
+  for (std::size_t i = 0; i < lemmings.size(); ++i) {
+    if (!lemmings[i].alive())
+      continue;
+    if (walker < boxes.size() && boxes[walker]) {
+      app::PickCandidate candidate;
+      candidate.id = reinterpret_cast<void*>(static_cast<std::uintptr_t>(i));
+      candidate.box = pickBoxFromPlacement(*boxes[walker]);
+      candidate.eligible = true;
+      candidate.priority = 0;
+      candidate.distanceSquared = 0.0;
+      candidates.push_back(candidate);
+    }
+    ++walker;
+  }
+  const app::PickBox cursor{x - 16, y - 16, x + 16, y + 16};
+  const app::PickCandidate* hit = app::pickHoveredLemming(candidates, cursor);
+  const std::string skillText(sim::skillName(skill));
+  if (hit == nullptr) {
+    std::fprintf(stderr, "click-to-assign: no lemming at (%d,%d) skill=%s\n", x, y,
+                 skillText.c_str());
+    return;
+  }
+  const auto index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(hit->id));
+  const bool assigned = world.assign(index, skill);
+  std::fprintf(stderr, "click-to-assign: index=%zu skill=%s assign=%d\n", index, skillText.c_str(),
+               assigned ? 1 : 0);
+}
+#endif
 
 }  // namespace
 
@@ -377,6 +441,9 @@ int main(int argc, char** argv) {
   // World at tick 0 regardless of --sim-ticks, which is a headless-only,
   // deterministic-render concern (see this file's own --sim-ticks comment).
   app::SimClock simClock;
+  // Debug stand-in for a skill panel. Keys 1-8 follow sim::Skill's declaration
+  // order. This is not the original panel and is ignored unless --sim is on.
+  sim::Skill debugAssignSkill = sim::Skill::Climber;
   while (running && (args.frames <= 0 || rendered < args.frames)) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -390,6 +457,14 @@ int main(int argc, char** argv) {
         if (focused) { rightDown = true; SDL_SetRelativeMouseMode(SDL_TRUE); }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
         rightDown = false; SDL_SetRelativeMouseMode(SDL_FALSE);
+      } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
+                 event.button.button == SDL_BUTTON_LEFT) {
+        // Debug only. A command line without --sim never enters this branch.
+        if (focused) {
+          debugClickToAssign(*world, *scene, options, *library,
+                             app::buildCamera(controls.camera()), event.button.x, event.button.y,
+                             debugAssignSkill);
+        }
       } else if (event.type == SDL_MOUSEMOTION) {
         if (focused) pending.mouse(event.motion.xrel, event.motion.yrel);
       } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
@@ -397,6 +472,27 @@ int main(int argc, char** argv) {
         if (focused && (key == SDL_SCANCODE_SPACE || key == SDL_SCANCODE_LCTRL || key == SDL_SCANCODE_RCTRL)) pending.zoom();
         if (focused && key == SDL_SCANCODE_BACKSPACE) pending.flip();
         if (key == SDL_SCANCODE_ESCAPE) running = false;
+        if (args.sim && world && focused) {
+          sim::Skill selected = debugAssignSkill;
+          bool choose = false;
+          switch (key) {
+            case SDL_SCANCODE_1: selected = sim::Skill::Climber; choose = true; break;
+            case SDL_SCANCODE_2: selected = sim::Skill::Floater; choose = true; break;
+            case SDL_SCANCODE_3: selected = sim::Skill::Bomber; choose = true; break;
+            case SDL_SCANCODE_4: selected = sim::Skill::Blocker; choose = true; break;
+            case SDL_SCANCODE_5: selected = sim::Skill::Builder; choose = true; break;
+            case SDL_SCANCODE_6: selected = sim::Skill::Basher; choose = true; break;
+            case SDL_SCANCODE_7: selected = sim::Skill::Miner; choose = true; break;
+            case SDL_SCANCODE_8: selected = sim::Skill::Digger; choose = true; break;
+            default: break;
+          }
+          if (choose) {
+            debugAssignSkill = selected;
+            std::fprintf(stderr,
+                         "click-to-assign: debug skill %s (stand-in, not the original skill panel)\n",
+                         std::string(sim::skillName(debugAssignSkill)).c_str());
+          }
+        }
       }
     }
     const Uint8* keys = SDL_GetKeyboardState(nullptr);

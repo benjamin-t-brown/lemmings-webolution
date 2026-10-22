@@ -643,6 +643,32 @@ is not re-litigated. **D1 is still not accepted.** Both known harness biases (D1
 throttle lag, D1k's grid alignment) are now fixed; the next D1 round is a fresh, clean,
 full live gate recheck against the fully-fixed harness.
 
+**D1l: first full gate measurement with both harness biases fixed — does not pass, every
+residual named**
+([check](docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md)): a fresh live
+capture reproduces the predicted tick 11/`released_count` first divergence and the
+≤1-tick spawn-drift floor exactly (3/10 lemmings, magnitude 1). **New finding**: the
+faller→walker landing tick drifts −1 or −2 ticks for **all 10 lemmings**, including the 6
+with zero spawn drift — a second, previously-unisolated discretization-floor mechanism
+(a continuous landing event quantized onto the 200 ms tick), not the same quantity as
+spawn-tick drift though structurally analogous. Of 657 total divergences in the 150-tick
+window, every one is attributed: 14 to the already-parked `facing`/turn-rounding family
+(Phase E), 643 to forward propagation from spawn-tick drift (3/10 lemmings) or
+landing-tick drift (6/10 lemmings) — **0 unexplained**. Read against the gate's literal
+text, every named field (X, Y, facing, state) and the released-count clause shows at
+least one disagreement; order does not. **D1 does not pass, and every residual is now a
+named, bounded, deterministic discretization-floor or already-parked quantity — none is
+an open, untraced defect.**
+
+This is recorded as a pending question for the user (`docs/tasks.json`'s
+`standing_run.pending_questions`), not decided here: whether to amend D1's gate to
+exclude this now-fully-characterized discretization-floor class of residual (the same
+shape of amendment already granted to A7 for HUD elements), to invest in closing it
+outright (which would mean re-deriving the sim's spawn/landing timing at sub-tick
+precision or changing the tick architecture — not a bounded round), or to leave D1
+parked. The standing run stops here per
+[its gate-change stop condition](docs/ORCHESTRATION.md#standing-run).
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

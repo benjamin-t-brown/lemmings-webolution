@@ -2,28 +2,7 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "d1l-full-gate-recheck",
-    "title": "D1l: fresh full D1 gate recheck with the fully-fixed harness",
-    "status": "running",
-    "brief": "build/tmp/d1l-full-gate-recheck-brief.md",
-    "worker_tier": "targeted",
-    "owns_live_game": true,
-    "live_owner": null,
-    "depends_on": [
-      "d1i-release-to-actor",
-      "d1j-harness-throttle-fix",
-      "d1k-phase-nmin-fix"
-    ],
-    "gate_served": "PLAN Phase D, D1 release and walk-out",
-    "question_round_count": 1,
-    "stock_starts_authorized": 1,
-    "stock_starts_consumed": 0,
-    "dispatch_note": "Standing run d-playable. One stock start authorized.",
-    "harness": "Claude Code",
-    "requested_model": "session (no pin)",
-    "worker_agent": "round-agent"
-  },
+  "active": null,
   "queue": [
     {
       "id": "d3a-retail-level-setup",
@@ -68,6 +47,32 @@
     }
   ],
   "recently_landed": [
+    {
+      "id": "d1l-full-gate-recheck",
+      "title": "D1l: first full D1 gate measurement with both harness biases fixed; does not pass; every one of 657 residuals named (facing family, spawn-tick drift, newly-isolated landing-tick drift); 0 unexplained",
+      "status": "landed",
+      "brief": "build/tmp/d1l-full-gate-recheck-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "worker_output": "build/tmp/d1l-full-gate-recheck/round-note.md",
+      "depends_on": [
+        "d1i-release-to-actor",
+        "d1j-harness-throttle-fix",
+        "d1k-phase-nmin-fix"
+      ],
+      "gate_served": "PLAN Phase D, D1 release and walk-out",
+      "question_round_count": 1,
+      "stock_starts_consumed": 1,
+      "stock_starts_authorized": 1,
+      "continuation_note": "First worker's live capture, sim-trace regen/diff, and both comparator runs completed cleanly (process terminated, config/hashes restored, stock start consumed productively) before being terminated by an external API rate-limit error, before writing the round-note or drift table. A zero-stock-start continuation finished the write-up from the already-saved artifacts only. The first worker also disclosed an accidental bare `--version` process launch before the real run (killed immediately, hash re-verified unchanged, no harness state touched) -- accepted as not consuming the authorized stock start, consistent with every prior D1 round's usage of that term.",
+      "landed_in": "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independently re-grepped full_divergence_report.txt for the field breakdown (x 592, y 29, facing 14, state 13, released_count 9, summing exactly to 657) and the three coverage gaps (ticks 25/1, 54/3, 126/8, exactly the three nonzero-spawn-drift lemmings). Independently recomputed both the spawn-tick drift table and the newly-claimed landing-tick drift table with fresh code reading only sim_trace.csv/live_trace.csv directly -- exact match to every cell in both delivered tables. Independently confirmed all 14 facing divergences sit at sim_trace.csv columns 64 or ~25 at the cited ticks, including lemming 1's two-consecutive-tick variant (64->63 at both turn pairs). Confirmed sim_trace.csv byte-identical to D1g's/D1j's own via diff. No Lemmings Revolution process or LemWeb-* scheduled task running; exe SHA-256 matches authority; git status shows only docs/tasks.json's permitted fields -- no src/**, tools/harness/**, or other docs/**/PLAN.md touched. This is the most complete evidence gathered on D1's gate: with both known harness biases fixed and independently verified, the gate still does not pass, and every residual is now named (0 unexplained) -- recorded as a pending question for the user rather than decided unilaterally, per the standing run's gate-change stop condition."
+    },
     {
       "id": "d1k-phase-nmin-fix",
       "title": "D1k: phase/n_min tick-grid boundary fixed; D1g and D1j now agree exactly on first divergence (tick 11, released_count)",
@@ -1914,11 +1919,15 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session lemmings-webolution-88, 2026-10-21 (handoff: no task was running under the prior owner, d1i was still queued)",
-    "rounds_run": 11,
-    "stock_starts_used": 5,
+    "rounds_run": 12,
+    "stock_starts_used": 6,
     "pending_questions": [],
-    "handoff": "2026-10-21 (after d1k landed): current milestone D1; last landed D1k. Both known harness biases are now fixed and independently verified: D1j's re-enumeration throttle (zero detection lag) and D1k's phase/n_min grid-alignment boundary (D1g's and D1j's captures now agree exactly on first divergence: tick 11, released_count, sim=1 live=0, where they previously disagreed in both tick and field). D1g's own historical figures changed as a flagged, correct consequence (167/tick10 -> 653/tick11 under the corrected grid). The raw-count gap between captures (653 vs 537) persists even with aligned grids and is understood (D1j: count tracks propagation length past a drifted spawn, not drift magnitude) -- not a new open question. Critical path, active: d1l (running, one stock start) takes the first full D1 gate measurement with both fixes already in place, read plainly against the gate's literal text, and reports every residual family present, not just the headline one. Decision point after d1l: if it passes, accept D1 on this facilitator's independent re-score and move to D2; if a residual remains (the ≤1-tick structural floor D1j found is expected to reappear, since it is a property of the original's continuous accumulator vs our discrete tick, not of the harness), judge whether it is parkable as D1h's facing residual was, or whether the gate itself needs a user decision on amendment -- do not decide a gate amendment unilaterally, add it to pending_questions with evidence and a recommendation instead. Only after D1 is resolved one way or another does the already-deferred facing-label question get revisited (user direction stands). Queued behind d1l, all offline and file-disjoint from World.*: d3a retail loader, d2a pick rule, d3b app sim loop (after d3a). Rank: a D1 implementation/recheck round goes ahead of the queue when it exists; otherwise take the queue in order. After D1: D2b live capture of 20 cursor positions + four 50-tick assignment traces; D3c click-to-assign in the app (Pick + World::assign); D3d scripted solution + level-end/timer; D3 re-score incl. A6/A7 gates.",
-    "stopped": null,
+    "handoff": "2026-10-21 (after d1l landed, standing run stopped): current milestone D1, not accepted. Last landed d1l. Both known harness biases (D1j's throttle lag, D1k's grid-alignment boundary) are fixed, independently verified, and hold on a fresh capture. d1l took the first full D1 gate measurement with neither bias present and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows is now named: the already-parked facing/turn-rounding family (Phase E, 14), spawn-tick-drift propagation (3/10 lemmings' share), and a newly-isolated landing-tick-drift propagation (6/10 lemmings' share -- the faller-to-walker transition drifts -1/-2 ticks for all 10 lemmings, including the 6 with zero spawn drift; not previously measured as its own quantity). Zero rows are unexplained by any of these. This is a gate-amendment-shaped decision (same kind as A7's HUD exclusion), recorded in deferred_questions below, not decided unilaterally -- the standing run stops here per its own gate-change stop condition. No task is running; no live owner. Ranked work not blocked by this decision (d2a-pick-rule, d3a-retail-level-setup -- both offline, file-disjoint from World.*) remains queued and could be picked up by a fresh /facilitator invocation while awaiting the user's decision, but this session is stopping rather than deciding to continue it unilaterally, since the project's prior practice (see history below) treated an equivalent gate-change situation as a full stop.",
+    "stopped": {
+      "date": "2026-10-21",
+      "reason": "D1l (the first full D1 gate measurement taken with both known harness biases fixed and independently verified) still does not pass the gate as literally written, and now every residual row is fully named: the already-parked facing/turn-rounding family (14 of 657), spawn-tick-drift propagation (3/10 lemmings), and a newly-isolated landing-tick-drift propagation (6/10 lemmings, previously folded unnamed into the spawn-tick story). Zero rows are unexplained. Per docs/ORCHESTRATION.md#standing-run, a gate needing to change is a stop condition, not a decision for the facilitator to make unilaterally -- see deferred_questions below for the updated, complete picture and recommendation.",
+      "last_commit": null
+    },
     "history": [
       {
         "date": "2026-10-21",
@@ -1927,7 +1936,7 @@
           "reason": "D1's gate, as literally written, would need to change (or a tooling investment authorized) to accept D1 given the one remaining, fully-characterized residual (see pending_questions above). Per docs/ORCHESTRATION.md#standing-run this is a stop condition, not a decision for the facilitator to make unilaterally. Both named D1 blockers are fixed and independently verified across 8 rounds (D1a-h); no other ranked D1 question remains unparked.",
           "last_commit": "d70c292"
         },
-        "resolution": null
+        "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Resumed with d1i; d1i/d1j/d1k fixed and verified both known harness biases; d1l's fresh, bias-free full gate recheck is the re-check -- see this history entry's own stop above for the result."
       }
     ],
     "rules": "docs/ORCHESTRATION.md#standing-run",
@@ -1973,7 +1982,30 @@
           "docs/scratch/phase-d1-left-turn-fix.md",
           "docs/scratch/phase-d1-full-gate-recheck.md"
         ],
-        "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question."
+        "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Superseded by the entry below, which re-asks the same decision with the completed re-check's full evidence."
+      },
+      {
+        "question": "D1's gate requires every lemming's cell X/Y, facing and state to match the original each tick. The spawn drift has now been fixed and re-checked, as the prior resolution asked: D1i found the capture harness itself, not the game, produced the appearance of a ~1.02s release-to-actor-list gate; D1j fixed that throttle (zero detection lag, independently verified); D1k fixed a second harness bug (a tick-grid alignment boundary that could mislabel every tick by 200ms between two equivalent captures, independently verified). D1l then took the first full, bias-free live gate measurement and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows in a 150-tick/10-lemming capture is named, not just the facing-label question this was deferred for: (1) the already-parked single-tick facing-label mismatch at turn instants (Phase E, D1g/D1h, 14 occurrences this round, x exact throughout, same two wall columns as every prior capture); (2) spawn-tick drift, a <=1-tick discretization of the original's continuous release accumulator onto the 200ms sim tick (3/10 lemmings, magnitude exactly 1); (3) a newly-isolated landing-tick drift, a -1/-2-tick discretization of the original's continuous faller-to-walker transition onto the same grid, affecting all 10/10 lemmings including the 6 with zero spawn drift -- not previously measured as its own quantity, previously folded unnamed into 'the already-documented spawn-tick discretization drift.' Zero rows are unexplained by any of the three. All three are deterministic, bounded (<=1-2 ticks), and structurally the same shape: a continuous original-game event quantized onto our discrete 200ms tick, not an untraced sim bug. Does D1's gate need amending to exclude this now-fully-characterized, bounded discretization-floor class of residual (the same shape of amendment A7's gate received for HUD elements), should work continue toward closing it outright (which would need either sub-tick-precision live measurement of the original's release/landing timing, or changing the sim's own tick architecture away from a fixed 200ms discrete step -- a substantial redesign, not a bounded round), or should D1 be left parked at this residual?",
+        "options": [
+          "Amend the gate to exclude single-tick (and, for the landing transition, up-to-two-tick) discretization-floor residuals of this fully-characterized shape, then accept D1 on the facilitator's re-score if nothing else is found",
+          "Invest in closing the discretization floor outright -- either sub-tick live measurement of the original's release/landing timing, or a redesign of the sim's tick granularity -- before deciding on acceptance",
+          "Leave the gate as written and record D1 as not accepted, parked at this now-fully-understood residual, revisited only if a later milestone's needs change the calculus"
+        ],
+        "recommendation": "Option 1. All three residual families are now completely named with addresses/mechanisms or precise measured characterizations (facing: D1g/D1h; spawn-tick drift: D1a/D1e/D1i/D1j; landing-tick drift: D1l), each is bounded and deterministic, and none is a reappearance of a fixed defect or an unknown mechanism -- 0 of 657 rows are unexplained. This is the same shape of amendment already granted to A7 (excluding HUD elements the gate was never meant to cover) and is consistent with the user's own 2026-10-21 direction to fix the spawn drift first and re-check, which is now done. Option 2's sub-tick measurement path has no established method in this project (D1c already flagged a related render-frame-vs-tick ambiguity as unresolved by static reading) and a tick-architecture redesign would touch far more than D1 alone (D2/D3 both build on the same 200ms World tick). Option 3 leaves an otherwise-solid, fully-understood milestone blocked indefinitely on residuals that are bounded and known rather than open.",
+        "evidence": [
+          "docs/scratch/phase-d1-release-walkout-trace.md",
+          "docs/scratch/phase-d1-release-trigger.md",
+          "docs/scratch/phase-d1-door-open-duration.md",
+          "docs/scratch/phase-d1-hatch-step-clock.md",
+          "docs/scratch/phase-d1-release-timing-implementation.md",
+          "docs/scratch/phase-d1-left-turn-fix.md",
+          "docs/scratch/phase-d1-full-gate-recheck.md",
+          "docs/scratch/phase-d1-release-to-actor.md",
+          "docs/scratch/phase-d1-harness-throttle-fix.md",
+          "docs/scratch/phase-d1-phase-nmin-fix.md",
+          "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md"
+        ],
+        "resolution": null
       }
     ]
   }

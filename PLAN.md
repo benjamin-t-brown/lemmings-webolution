@@ -799,6 +799,18 @@ distance selects index 3 (`698.64`) over index 2 (`1070.03`), and index 3 is
 the lemming at `[screen+0x16D8]`. D2 part (a) still does not pass: this is one
 overlap, not the 20 positions, and it reads only table index `0x12`.
 
+**D2e: 20-position rescore attempt, clean negative — the stock exe crashed before the
+scan, round 1 of 3** ([check](docs/scratch/phase-d2-rescore-crash.md)): a new
+`measure_d2_rescore.py` feeds every eligible candidate's real live priority and real
+squared distance (never a forced 0) into the landed `pickHoveredLemming` through a
+driver built from an unedited HEAD snapshot of `Pick.{h,cpp}`. The one authorized live
+start (pid 23616) reached the main menu, then died with an access violation
+(`0xC0000005`) while the harness was acquiring foreground for the first menu `Down` —
+before any key was sent, before the level was entered. No retry, per the brief's
+"no second Popen." No 20-position data was collected; D2 part (a) remains exactly where
+D2d left it. Restoration confirmed (process gone, all three install hashes unchanged,
+independently re-verified).
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

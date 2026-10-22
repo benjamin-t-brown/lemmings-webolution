@@ -2544,8 +2544,8 @@
     "stopped": {
       "date": "2026-10-22",
       "reason": "user: stop after B1h",
-      "last_commit": "00f4243",
-      "last_commit_note": "Previous committed checkpoint; final stop-disposition commit hash will be recorded after creation.",
+      "last_commit": "3f5fb22",
+      "last_commit_note": "B1h final disposition/stop round commit; subsequent hash-record bookkeeping does not resume work.",
       "current_gate": "B1 full-frame640x480<=0.02 remains open; no valid production score exists",
       "rounds_run": 16,
       "stock_starts_used": 4,

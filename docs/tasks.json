@@ -4,9 +4,28 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
+      "id": "b1f-menu-template-match",
+      "title": "B1f: measure menu layout by matching verified retail templates",
+      "status": "running",
+      "brief": "build/tmp/b1f-menu-template-match-brief.md",
+      "worker_tier": "targeted",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna (high)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["b1e-menu-image-layout", "b1b-reference-screengrab"],
+      "gate_served": "PLAN B1 full-frame menu <=0.02; actual image layout matching before production renderer",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "dispatch_id": "ses_e9abb2b10ffeMJkJP0v0ZOGVUf"
+    },
+    {
       "id": "c1a-panel-index-read",
       "title": "C1a: read panel-index actions 0..9 using REA and raw dispatch bytes",
-      "status": "running",
+      "status": "ready-for-verify",
+      "worker_output": "build/tmp/c1a-panel-index-read/round-note.md",
       "brief": "build/tmp/c1a-panel-index-read-brief.md",
       "worker_tier": "hard",
       "escalation_reason": "disassembly read: explicit stronger-worker mapping for a bounded native dispatch trace",
@@ -2479,7 +2498,7 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 after server restart recovery: B1e split export prerequisite landed (two dispatches, first prose-only). FrontendAssetDump exports seven real backdrop/font candidates plus232 UK strings; independently verified all raw strings, PNG metadata, authority-install repeatability, isolated wrong-language failure and source/binary restore; full suite29/29. No matches/render/score yet. Next: lint/dispatch prepared build/tmp/b1f-menu-template-match-brief.md using verified exports, then production renderer. C1a remains independent offline; same session resumed after restart from saved REA/byte traces/checker, no completed read repeated. CEO B1d and REA framework commits remain separate (cba4a7e/8480fed); no new stock starts, install unchanged."
+    "handoff": "2026-10-22 after server restart recovery: B1e split export prerequisite landed in a1ed143 (two dispatches, first prose-only). FrontendAssetDump exports seven real backdrop/font candidates plus232 UK strings; independently verified all raw strings, PNG metadata, authority-install repeatability, isolated wrong-language failure and source/binary restore; full suite29/29. No matches/render/score yet. B1f queued for actual image matching using verified exports; production renderer follows. C1a remains independent offline; same session resumed after restart from saved REA/byte traces/checker, no completed read repeated. Queue handoff missing comma introduced at B1e landing fixed before B1f dispatch; framework lint re-run. CEO B1d and REA framework commits remain separate (cba4a7e/8480fed); no new stock starts, install unchanged.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

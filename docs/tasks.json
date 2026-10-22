@@ -4,9 +4,31 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
+      "id": "c1b-panel-icon-render",
+      "title": "C1b: render the ten skill-panel icons at their measured rectangles, score the skill-only ROI",
+      "status": "queued",
+      "brief": "build/tmp/c1b-panel-icon-render-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["c1a-panel-index-read"],
+      "gate_served": "PLAN C1 skill-panel rendering clause (buttons only; counts/digits out of scope per overlord directive)",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel",
+      "dispatch_id": "claude-code background round-agent a3f53f555ba21330f, no model override"
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
+    {
       "id": "b1h-atlas-independent-match",
-      "title": "B1h: atlas-independent geometry-preserving glyph match (fourth-pass exception)",
-      "status": "blocked",
+      "title": "B1h: atlas-independent geometry-preserving glyph match (fourth-pass exception) -- returned incomplete, parked in Phase E",
+      "status": "landed",
       "brief": "build/tmp/b1h-atlas-independent-match-brief.md",
       "worker_tier": "targeted",
       "harness": "OpenCode Mac clone",
@@ -29,18 +51,16 @@
       ,"worker_output": "build/tmp/b1h-atlas-independent-match/facilitator-return-note.md"
       ,"original_worker_output": "build/tmp/b1h-atlas-independent-match/round-note.md"
       ,"blocked_reason": "User: stop after B1h. Mac worker interrupted at user request about16:17 after~65min against35min budget, no final worker report. Returned incomplete/over budget; actual saved crop scores and pixel controls independently reproduced, but incorrect glyph identities/layout remain and no B1 production/full-frame pass. No new round/repair/phase/milestone authorized."
-      ,"disposition": "returned incomplete; blocked by explicit user stop; saved diagnostic code/pixels retained, semantic glyph/layout inference not accepted"
+      ,"disposition": "returned incomplete; explicitly discarded at B1's round cap per the overlord directive (docs/DIRECTIVE.md, 2026-10-22): B1 glyph question parked in Phase E, saved diagnostic code/pixels retained, semantic glyph/layout inference not accepted, no further B1 round authorized"
       ,"investigation_budget_minutes": 35
       ,"investigation_elapsed_minutes_approx": 65
       ,"budget_exceeded_minutes_approx": 30
       ,"budget_breach": "Worker continued past investigation limit until user interruption; no original stock start or live guardrail use. This is recorded, not retroactively authorized."
       ,"worker_final_report": false
       ,"verified_in": "docs/scratch/phase-b1h-interrupted-quit-registration.md"
-      ,"facilitator_verified": "Confirmed interrupted/idle session and no sibling worker. Independent no-import checker authenticated reference/source hashes and exact RGB numerators for10 saved runs; latest grouped crop render/control pixels independently reconstructed without search rerun. FONT/FONTFE29712/1472625=.020176215940921824 versus blank80390; first placement+1px36462, wrongscale61322, restored pixels exact. Wrong letters and residual remain, no semantic match/retail font rejection accepted. Several grouped family destination boxes overlap; actual96beam differs emitted160 and no tests execute register_family. Six snapshot tests and fresh authoritative CTest29/29 pass. No Python/game process/LemWeb task, exe/config/save hashes equal baseline; no install/REA/live writes. Input/template pixels unchanged. Code/test snapshot hashes7186347bac8e196729f77e8504c7f45e29bee017d68faef15ce345a399217b4d / bcecd5a4e277f8f5d7cfd3f23264d6e461dc21298ace00314f8991bcc1dfa83a. No fullframe gate score or production menu exists."
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      ,"landed_in": "PLAN.md Phase E (B1h atlas-independent Quit registration) and docs/scratch/phase-b1h-interrupted-quit-registration.md"
+      ,"facilitator_verified": "Confirmed interrupted/idle session and no sibling worker. Independent no-import checker authenticated reference/source hashes and exact RGB numerators for10 saved runs; latest grouped crop render/control pixels independently reconstructed without search rerun. FONT/FONTFE29712/1472625=.020176215940921824 versus blank80390; first placement+1px36462, wrongscale61322, restored pixels exact. Wrong letters and residual remain, no semantic match/retail font rejection accepted. Several grouped family destination boxes overlap; actual96beam differs emitted160 and no tests execute register_family. Six snapshot tests and fresh authoritative CTest29/29 pass. No Python/game process/LemWeb task, exe/config/save hashes equal baseline; no install/REA/live writes. Input/template pixels unchanged. Code/test snapshot hashes7186347bac8e196729f77e8504c7f45e29bee017d68faef15ce345a399217b4d / bcecd5a4e277f8f5d7cfd3f23264d6e461dc21298ace00314f8991bcc1dfa83a. No fullframe gate score or production menu exists. 2026-10-22 (this facilitator invocation): closed out of active per the overlord directive's explicit B1-park decision -- no new verification performed, bookkeeping only (status blocked->landed, moved into recently_landed), since this task's own disposition and evidence were already fully verified by the prior session and PLAN.md Phase E already records the park."
+    },
     {
       "id": "b1f-menu-template-match",
       "title": "B1f partial image measurements; invalid glyph/scale method discarded and parked",
@@ -2500,30 +2520,52 @@
     }
   ],
   "standing_run": {
-    "id": "d-playable-3",
-    "goal": "Park D1 after one more live recheck (d1o); answer D3's end-time residual with a timed replay (d3f); then Phase B (frontend) and Phase C (in-level HUD) milestones B1-C3 pass their signed-off gates (PLAN.md Phase B / Phase C)",
+    "id": "c1-skill-panel",
+    "goal": "C1 skill panel milestone (PLAN.md Phase C) passes its signed-off gate: the ten buttons and their counts render inside x[18,90) <=0.02 against the A7p/A7q captures, with the A7 panel exclusion removed.",
     "milestones": [
-      "D1 release and walk-out (parking round)",
-      "D3 one retail level end to end",
-      "B1 frontend assets and text",
-      "B2 screen state machine",
-      "B3 level select and map",
-      "C1 skill panel",
-      "C2 counters, cursor, pause caption",
-      "C3 full frame"
+      "C1 skill panel"
     ],
-    "current": "B1 frontend assets and text",
-    "authorized": "User 2026-10-22 (CEO review): D1 -- option 4 (park) plus one live recheck (build/tmp/d1o-continuous-live-recheck-brief.md), then park D1 regardless of its result unless it passes the gate literally. D3 -- do not amend the gate and do not run a third click-model round; run build/tmp/d3f-timed-solution-brief.md instead. Phase B and Phase C gates signed off as drafted (PLAN.md Phase B / Phase C tables, drafted 2026-10-21). Add B1-C3 to a new standing run.",
+    "current": "C1 skill panel",
+    "authorized": "Overlord directive, docs/DIRECTIVE.md, Status: active, issued 2026-10-22 (user, overlord review 2026-10-22). Offline first; reuse C1a's physical indices; render the ten button sprites before counts; counts need digit glyphs, which is where B1 stalled -- if the font mapping is not already read from bytes, score the buttons alone, report that, and do not start glyph fitting. Budget: reuse d-playable-3's grants (stock starts within each brief's own budget, per-round commits, up to three offline concurrent rounds); three rounds per question. Decisions already made, do not re-ask: B1 glyph question parked in Phase E (closed out in this invocation, see recently_landed b1h-atlas-independent-match); B1 stays not accepted, its gate unchanged; English menus are the reference, do not reset the install language. Do not advance to C2 or B2 on this directive -- the overlord ranks the next pass.",
     "grants": {
-      "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
+      "stock_starts": "within each brief's own budget, no retry after Popen; at most one live owner at a time",
       "commits": "each verified round on decompile, no push/checkout/reset/stash",
       "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22), same session resumed on Mac clone via user /facilitator-mac quota-recovery handoff. Mac llmgw/-mac workers only; old mouv OpenCode idle and read-only API confirms no active sessions. GitHub FF/push sync, shared scratch, SSH Windows execution per ROLES/MOUV_SSH.",
-    "rounds_run": 16,
-    "stock_starts_used": 4,
+    "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running under a prior owner; the only active item (b1h) was blocked on an explicit user stop predating this directive and is closed out below, not resumed.",
+    "rounds_run": 0,
+    "stock_starts_used": 0,
     "pending_questions": [],
+    "stop_point": "Stop and report when the C1 gate passes on the facilitator's own independent re-score, or when C1 is parked at its round cap, or on any ORCHESTRATION stop condition. Do not advance to C2 or B2 on this directive.",
+    "handoff": "2026-10-22: new standing run opened per the overlord directive. Closed out b1h-atlas-independent-match (moved active->recently_landed, status blocked->landed; already fully verified by the prior session, PLAN.md Phase E already records the park -- bookkeeping only, no new verification). Wrote and linted build/tmp/c1b-panel-icon-render-brief.md: locate/decode the GreyIcons/BlackIcons/AdditiveIcons sprite sheet(s) (never chased down before, unlike every audited cue), render the ten C1a-indexed icons at the already-measured panel_boxes rectangles, and score the skill-only ROI that A7p's own verify.py already isolates (skill_numerator/skill_pixels) against the already-saved A7p/A7q baseline.png and render.png -- entirely offline, zero stock starts, reusing existing captures. Dispatching c1b now.",
+    "previous": [
+      {
+        "id": "d-playable-3",
+        "goal": "Park D1 after one more live recheck (d1o); answer D3's end-time residual with a timed replay (d3f); then Phase B (frontend) and Phase C (in-level HUD) milestones B1-C3 pass their signed-off gates (PLAN.md Phase B / Phase C)",
+        "milestones": [
+          "D1 release and walk-out (parking round)",
+          "D3 one retail level end to end",
+          "B1 frontend assets and text",
+          "B2 screen state machine",
+          "B3 level select and map",
+          "C1 skill panel",
+          "C2 counters, cursor, pause caption",
+          "C3 full frame"
+        ],
+        "current": "B1 frontend assets and text",
+        "authorized": "User 2026-10-22 (CEO review): D1 -- option 4 (park) plus one live recheck (build/tmp/d1o-continuous-live-recheck-brief.md), then park D1 regardless of its result unless it passes the gate literally. D3 -- do not amend the gate and do not run a third click-model round; run build/tmp/d3f-timed-solution-brief.md instead. Phase B and Phase C gates signed off as drafted (PLAN.md Phase B / Phase C tables, drafted 2026-10-21). Add B1-C3 to a new standing run.",
+        "grants": {
+          "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
+          "commits": "each verified round on decompile, no push/checkout/reset/stash",
+          "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
+        },
+        "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
+        "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22), same session resumed on Mac clone via user /facilitator-mac quota-recovery handoff. Mac llmgw/-mac workers only; old mouv OpenCode idle and read-only API confirms no active sessions. GitHub FF/push sync, shared scratch, SSH Windows execution per ROLES/MOUV_SSH.",
+        "rounds_run": 16,
+        "stock_starts_used": 4,
+        "pending_questions": [],
+        "resolved_questions_ref": "see rooted copy below (unchanged, preserved for history)",
     "resolved_questions": [
       {
         "question": "B1b captured a valid, structurally-confirmed 640x480 main-menu reference screengrab (screen id 3, highlight 0, both live-read at capture time) -- but its text is English, not German. match-the-original.md documents \"German menus\" as a preserved quirk, and goto_level.py's own docstring assumed German is the frontends default. The installs persisted SavedGame.dat (created 2026-10-12, modified many times since across many live rounds over multiple days) has no backup or pristine copy anywhere to compare against, so there is no way to determine, from this installs own state, whether English is a residue of some earlier rounds navigation (undocumented, not necessarily a guardrail breach since every individual rounds own before/after restore check has passed on its own terms) or whether the game simply remembers the last-selected language as real stock behaviour and this install happened to have English selected before this project ever touched it. Should a follow-up round spend its one live stock start explicitly navigating into \"Language Selection\" and selecting German (a deliberate, not-undone persisted change to the shared installs save data, on the reasoning that German is the documented correct default and resetting to it is a restoration rather than a new deviation) before capturing the real B1 reference image, or should English be accepted as this installs now-real persisted state and the German-menus quirk note be narrowed to \"the retail games own default,\" with B1s reference image captured in whatever language the install actually produces?",
@@ -2717,6 +2759,8 @@
           "docs/scratch/phase-d3-sim-solution-run.md"
         ],
         "resolution": "User 2026-10-22 (CEO review): neither listed option -- do not amend the gate, and do not spend the question's own third pre-authorized round on a still-more-structured click-pacing model. Instead run a new round (d3f) that replaces the modeled click pacing with recorded ground truth: capture exactly when each assignment landed in the live run, relative to that lemming's own release, then replay our World with precisely those recorded times rather than any fitted uniform/serial delay model."
+      }
+    ]
       }
     ]
   }

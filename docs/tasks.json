@@ -2,14 +2,16 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
-  "queue": [
+  "active": [
     {
       "id": "d1m-stepper-clock",
       "title": "D1m: does the original step lemmings on a fixed 200 ms tick or on per-frame real dt? Offline read + zero-parameter replay of saved D1 captures",
-      "status": "queued",
+      "status": "running",
       "brief": "build/tmp/d1m-stepper-clock-brief.md",
       "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
       "dispatch_tag": "disassembly read",
       "owns_live_game": false,
       "live_owner": null,
@@ -21,9 +23,12 @@
     {
       "id": "d3a-retail-level-setup",
       "title": "D3a: production retail-level loader (.LVL -> sim::LevelSetup)",
-      "status": "queued",
+      "status": "running",
       "brief": "build/tmp/d3a-retail-level-setup-brief.md",
       "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
       "owns_live_game": false,
       "live_owner": null,
       "question_round_count": 1,
@@ -34,16 +39,21 @@
     {
       "id": "d2a-pick-rule",
       "title": "D2a: the original's in-level pick rule, read and ported as a pure function",
-      "status": "queued",
+      "status": "running",
       "brief": "build/tmp/d2a-pick-rule-brief.md",
       "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
       "owns_live_game": false,
       "live_owner": null,
       "question_round_count": 1,
       "depends_on": [],
       "gate_served": "PLAN Phase D, D2 click-to-assign (a)",
       "dispatch_note": "Offline exe read + src/app/Pick.* unit tests; no stock start. Live D2(a) capture is a later round."
-    },
+    }
+  ],
+  "queue": [
     {
       "id": "d3b-app-sim-loop",
       "title": "D3b: sim::World ticking in webolution, lemmings drawn on the tube",
@@ -1933,11 +1943,11 @@
       "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": null,
+    "owner": "Claude Code facilitator session (handoff 2026-10-21: no task was running under the prior owner; standing_run.owner was null, d1m/d2a/d3a were queued, this session dispatched all three)",
     "rounds_run": 0,
     "stock_starts_used": 0,
     "pending_questions": [],
-    "handoff": "2026-10-21 (CEO review, no round run): current milestone D1, not accepted, gate held as written. Dispatch d1m-stepper-clock, d2a-pick-rule and d3a-retail-level-setup together (all offline, file-disjoint; d2a and d3a each add one test target, so merge the cmake wiring in landing order). d3b waits on d3a. When d1m lands: if the original stepper is continuous (real dt), write D1n, a World clock change that owns src/sim/World.* and SimReleaseTrace, re-scored offline against all four saved captures before one live recheck; hold d3b while D1n runs. If stepped, re-ask the user the D1 gate question with d1m's evidence added (deferred_questions) and continue D2/D3. D2b (live 20-cursor capture) follows d2a; D3c (click-to-assign in the app) follows d2a and d3b. Phase B/C gates in PLAN are PROPOSED, not signed off: do not start B/C rounds.",
+    "handoff": "2026-10-21: dispatched d1m-stepper-clock, d2a-pick-rule and d3a-retail-level-setup together as three concurrent offline rounds (all file-disjoint, none owns the live game). d3b waits on d3a. When d1m lands: if the original stepper is continuous (real dt), write D1n, a World clock change that owns src/sim/World.* and SimReleaseTrace, re-scored offline against all four saved captures before one live recheck; hold d3b while D1n runs. If stepped, re-ask the user the D1 gate question with d1m's evidence added (deferred_questions) and continue D2/D3. D2b (live 20-cursor capture) follows d2a; D3c (click-to-assign in the app) follows d2a and d3b. Phase B/C gates in PLAN are PROPOSED, not signed off: do not start B/C rounds.",
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [

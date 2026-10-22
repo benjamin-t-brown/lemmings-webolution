@@ -509,6 +509,22 @@ void World::stepClimber(Lemming& l) {
                        ? l.x
                        : setup_.terrain.wrapX(l.x - 1);
 
+  // READ round 2 of d2f-skill-assign-capture (repair 1), disassembly of
+  // 0x004137CA (the outer per-tick stepper) and 0x004139BF (the function it
+  // calls at 0x004138E8). The Y write-back (0x00413875-0x0041388B) happens
+  // strictly BEFORE 0x004139BF's own biased-position read (0x0042F35F,
+  // called from 0x004139DD), which both the ceiling probe (0x00413a53) and
+  // the topout probe (0x00413b50) are built from. So both checks below test
+  // the lemming's Y AFTER this tick's climb move, not before it -- moving
+  // first and checking the new Y, below, matches the native ordering.
+  // build/tmp/d2f-skill-assign-capture-repair1/disasm_notes.md has the full
+  // byte trace. This corrects old/docs/scratch/phase3-round10-steppers.md's
+  // "tests the ceiling first (the original's order)" claim, which asserted
+  // check-then-move without having the 0x4137CA/0x4139BF call split in view;
+  // round 1's live capture (45/50 ticks, one residual: our Hoister label one
+  // tick later than the original at the same Y) is what exposed it.
+  l.y -= v * rules_.climbSpeed;
+
   if (solidAt(setup_.terrain.wrapX(wall - dir),
               l.y - v * rules_.lemmingHeight)) {
     l.x = setup_.terrain.wrapX(l.x - dir);
@@ -521,9 +537,7 @@ void World::stepClimber(Lemming& l) {
   if (!solidAt(wall, l.y - v * rules_.climberTopOut)) {
     l.state = State::Hoister;
     l.frame = 0;
-    return;
   }
-  l.y -= v * rules_.climbSpeed;
 }
 
 void World::stepHoister(Lemming& l) {

@@ -497,8 +497,19 @@ void testClimbWallColumnTopOutAndHoist() {
   check(climberX == 120,
         std::format("the climber stands ON the wall column 120 (got {})",
                     climberX));
-  check(lastClimbingY == 41,
-        std::format("its last climbing row is 41, one inside the wall (got {})",
+  // Corrected round 2 of d2f-skill-assign-capture (repair 1): this used to
+  // read 41. The disassembly of 0x004137CA/0x004139BF
+  // (build/tmp/d2f-skill-assign-capture-repair1/disasm_notes.md) shows the
+  // original's topout probe reads Y AFTER that tick's climb move, in the
+  // same call, so the state flips to Hoister on the very tick Y reaches the
+  // topout row (41) -- there is no tick where the lemming is still
+  // Climber-labelled AT y 41. The last Climber-labelled sample is therefore
+  // one row shallower, 42, and 41 is where Hoister's own first sample lands
+  // (see testClimbTopsOutSameTickAsHoistHandoff below, and round 1's live
+  // trace: sim/live both reach Y 49 on the same tick, and live is already
+  // Hoister there).
+  check(lastClimbingY == 42,
+        std::format("its last Climber-labelled row is 42, one inside the wall (got {})",
                     lastClimbingY));
   check(hoistTicks == 4,
         std::format("the hoist holds for four ticks (got {})", hoistTicks));
@@ -506,6 +517,59 @@ void testClimbWallColumnTopOutAndHoist() {
         std::format("and holds X on the wall column (got {})", hoistX));
   check(walkedOnTopY == 39,
         std::format("then it stands on top at y 39 (got {})", walkedOnTopY));
+}
+
+// Round 2 of d2f-skill-assign-capture (repair 1). READ: 0x004137CA's Y
+// write-back (0x00413875-0x0041388B) runs strictly before the call to
+// 0x004139BF at 0x004138E8, and 0x004139BF's own topout probe
+// (0x00413b50-0x00413b58) is built from that already-moved Y -- see
+// build/tmp/d2f-skill-assign-capture-repair1/disasm_notes.md. So the
+// original hands off Climber -> Hoister on the SAME tick Y first reaches the
+// topout row, never leaving a Climber-labelled sample at that Y. This test
+// fails against the pre-fix check-then-move stepClimber (which leaves one
+// extra Climber tick at the topout Y before handing off one tick later, at
+// the same Y, with no further movement) and passes after the move-then-check
+// reorder. MEASURED live, round 1: sim tick 42 and live tick 43 both read
+// (64, 49, 1); live was already `hoister`, ours was still `climber`
+// (build/tmp/d2f-skill-assign-capture/live_trace.csv).
+void testClimbTopsOutSameTickAsHoistHandoff() {
+  std::cout << "the climb hands off to hoist on the same tick Y reaches the"
+               " topout row\n";
+  World w(placedLevel());
+  // Same wall as testClimbWallColumnTopOutAndHoist: columns 120..143 solid
+  // from row 40 down, so the topmost solid row is 40 and the topout row
+  // (round 10's `topSolid - 1` mapped into our Y-down grid, `t + 1`) is 41.
+  w.terrain().fillBox(120, 40, 24, 40, Material::Earth);
+  w.place(walkerAt(110, Facing::Right));
+  check(w.assign(0, Skill::Climber), "climber applies");
+
+  std::vector<std::pair<int, State>> series;
+  for (int i = 0; i < 80 && !w.lemmings().empty(); ++i) {
+    w.tick();
+    const Lemming& l = w.lemmings()[0];
+    series.emplace_back(l.y, l.state);
+  }
+
+  int firstHoistY = -1;
+  for (const auto& [y, state] : series) {
+    if (state == State::Hoister) {
+      firstHoistY = y;
+      break;
+    }
+  }
+  check(firstHoistY >= 0, "the climb reaches the hoist state");
+  check(firstHoistY == 41,
+        std::format("the hoist's first sample is at y 41 (got {})", firstHoistY));
+
+  bool climberSampledAtHoistY = false;
+  for (const auto& [y, state] : series) {
+    if (state == State::Climber && y == firstHoistY)
+      climberSampledAtHoistY = true;
+  }
+  check(!climberSampledAtHoistY,
+        std::format("no Climber-labelled tick shares the hoist's own y {} "
+                    "(a pre-fix stepper spends one extra tick there)",
+                    firstHoistY));
 }
 
 // The float halving waits for the `umbopen` animation, so a floater keeps
@@ -2458,6 +2522,7 @@ int main() {
   testClimberTopsOut();
   testWalkerStepsDownOneCell();
   testClimbWallColumnTopOutAndHoist();
+  testClimbTopsOutSameTickAsHoistHandoff();
   testFloatHalvingIsDelayed();
   testBlockerField();
   testBlockerTurnsWalkers();

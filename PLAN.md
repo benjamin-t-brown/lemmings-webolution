@@ -860,6 +860,25 @@ four skills attempted; this skill has an open residual). Queued next: a disassem
 read of the native climb/hoist handoff ordering, offline-only (no new live capture
 needed — replays round 1's own saved trace), to confirm and fix the one-tick lag.
 
+**D2f repair 1: the one-tick lag read with bytes and fixed; climber now 50/50**
+([check](docs/scratch/phase-d2-skill-assign-capture.md)): offline only, zero stock
+starts. Disassembly of `0x004137CA` (the climb stepper's outer loop) and `0x004139BF`
+(the check function it calls) shows the native stepper moves the lemming's Y
+(`0x0041388B`, the write-back) **before** calling the check function, which reads that
+already-moved position at entry (`0x4139DD`→`0x42F35F`) for both the ceiling-hit and
+topout probes, and installs the Hoist state (`0x417C80`/`0x42E696`) inside that same
+call — move, check, and transition all happen in one call, same tick. `World.cpp`'s
+`stepClimber` is fixed to match: move first, then check. A new unit test
+(`testClimbTopsOutSameTickAsHoistHandoff`) fails against the old ordering and passes
+after; one existing test's literal (`lastClimbingY`, `41`→`42`) changed as a named,
+explained consequence, not a silent edit. Re-checked against round 1's own unmodified
+live capture, offline: **50 of 50 ticks now match exactly** (was 45/50).
+**Correction, beyond this round's own question**: this also settles the ceiling-hit
+check's timing as post-move, correcting `old/docs/scratch/phase3-round10-steppers.md`'s
+"tests the ceiling first" characterization — that note did not have this call-graph
+split in view. Climber is now a full match; D2 part (b) overall remains open (floater,
+blocker, digger untested).
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

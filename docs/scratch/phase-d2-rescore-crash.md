@@ -1,4 +1,4 @@
-# D2e: 20-position rescore attempt — clean negative (stock exe crashed before the scan)
+# D2e: 20-position rescore — two crashes, then a passing 20/20 sample on round 3
 
 Queue id `d2e-rescore`, round 1 of 3. [Brief](../../build/tmp/d2e-rescore-brief.md).
 
@@ -80,7 +80,73 @@ session churn is the actual cause of either access violation is **not establishe
 this is an environmental correlation noticed in passing, not a diagnosed fault chain, and
 is reported as an open, unactioned lead, not a conclusion.
 
-## Facilitator check (2026-10-22)
+## Round 3 (repair 2): level reached, full 20-position sample, 20/20 agree
+
+[Repair 2 brief](../../build/tmp/d2e-rescore-repair2-brief.md). Same unmodified script.
+The one authorized live start (pid 31324) attached immediately, reached the main menu,
+entered `Compiled\MM_CLIMB_002.lvl` on the first try, and `sample_loop` filled all 20
+rows with zero discards. No third crash occurred, so the brief's added event-log/WER
+diagnostic step was never triggered.
+
+**Result: 20 rows, 10 original-none, 4 two-overlap rows, 20/20 agreement** between the
+landed `pickHoveredLemming` (fed live priority and live squared distance, never forced
+to 0) and the original's own stored pick at `[screen+0x16D8]`. All four pair rows are
+walker-vs-walker ties at priority 0, decided by squared distance, extending D2d's single
+measured overlap to five agreeing live overlaps. Restoration again confirmed clean (same
+three hashes as rounds 1-2, unchanged for the third time running).
+
+### Facilitator check (round 3)
+
+**Independently reproduced the headline from scratch**, not by re-running the worker's
+own driver or script: wrote a standalone Python checker
+(`verify_d2e_round3.py`, no imports from `tools/harness/` or `src/app/Pick.cpp`) that
+reads only `picks.jsonl`'s raw per-candidate fields (box, live priority, live squared
+distance) and reimplements the pick rule directly. Two earlier formula guesses (plain
+inclusive AABB; half-open `[left,right)` AABB) each produced spurious extra overlaps on
+several rows and were rejected by the data itself. The formula that reproduces every one
+of the 20 rows' overlap sets and all 20 picks exactly is: **the cursor box is inset by
+4px on every edge before an inclusive (`<=`/`>=`) AABB test against the lemming's own
+box** — exactly the mechanism D2a's own mutate-one-alone falsifier already named
+("`cursor.right-4 == lemming.left` is still a hit"), now confirmed end-to-end against 20
+fresh live samples with a fully independent implementation, not a re-run of the ported
+code. Final tally from this independent script: 20 rows, 10 none, 4 pairs, **20/20
+agree, 0 overlap-set mismatches** — exact reproduction of the round's own claim.
+
+**Correction to the round's own narrative:** the round-note claims "no row this round
+produced a nonzero live priority dword." That is **false as stated** and is narrowed
+here: three candidates across rows 6, 11, and 16 (actor-list indices 6, 7, and 8
+respectively, all at `state+0x14 = 19`, distinct from the walker's already-known `18`)
+read a live priority dword of **2**, matching the file table's own index-19 entry
+(`head_20[19] = 2`) exactly, with `priority_dword_live_matches_file: true` on every one.
+This is the **first nonzero live priority value observed in the entire D2 investigation**
+(D2b/c/d and this round's other samples had only ever read index `0x12 = 18`, priority
+0). The round's claim is corrected to its true, narrower form: none of *these three*
+nonzero-priority candidates ever overlapped a sampled cursor box, so the
+priority-beats-distance branch of the tie-break was still never exercised live — but a
+nonzero priority value has now been read and cross-checked against the file, closing
+part of the open gap.
+
+Independently re-ran `--self-test`/`--check-file` (exact reproduction, third time
+running). Independently re-hashed all three install files after the run: unchanged
+(`32675bdb...`, `d639e220...`, `f7f86039...`). Confirmed `build/tmp/d2e-rescore/snap/app/Pick.{h,cpp}`
+is still byte-identical to `src/app/Pick.{h,cpp}` and `git diff --stat` shows no change
+to any file this round besides `docs/tasks.json`'s permitted fields. No Lemmings/dgVoodoo
+process after the check. Fresh `cmake --build --preset dev-debug` (no work) +
+`ctest --preset dev-debug`: **28/28**.
+
+### D2 part (a): accepted
+
+The gate text (`PLAN.md`, Phase D) reads: *"For 20 recorded cursor positions, the
+in-level pick ... picks the same lemming as the original, or none when it picks none."*
+This round's independently-reproduced sample is exactly that: 20 recorded cursor
+positions on `Compiled\MM_CLIMB_002.lvl`, scored with the live tie keys through the
+landed, unmodified `pickHoveredLemming`, agreeing with the original's own pick on all 20
+— re-verified by a from-scratch independent implementation, not just the ported code
+talking to itself. **D2 part (a) is accepted.** D2 part (b) (climber/floater/blocker/
+digger assignment, 50-tick post-assignment match) is untouched by this round and remains
+open.
+
+## Facilitator check (rounds 1-2, 2026-10-22)
 
 Independently re-ran, outside the worker's own invocation: `python
 tools/harness/measure_d2_rescore.py --self-test` (driver self-test + protocol self-test,

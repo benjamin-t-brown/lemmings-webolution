@@ -471,7 +471,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
 | D1 release and walk-out | **gate held; not accepted (D1n partial)** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
-| D2 click-to-assign | queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
+| D2 click-to-assign | **(a) accepted**, (b) queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
 | D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
 Notes for D1: our sim has a known one-tick divergence on a left-facing turn (`0x0041C67E`,
@@ -823,6 +823,23 @@ unrelated prior sessions, and the host cycling logon/sandbox-restart events roug
 every 40-70 seconds through both crash windows -- an unproven environmental correlation,
 not a diagnosed cause. Per the round cap, the worker correctly did not self-dispatch a
 third attempt. D2 part (a) still does not pass.
+
+**D2e repair 2: third attempt reaches the level; 20/20 agree; D2 part (a) accepted**
+([check](docs/scratch/phase-d2-rescore-crash.md)): same unmodified script, round 3 of 3
+(the question's last pre-authorized round). No third crash -- the one authorized start
+attached immediately, entered `MM_CLIMB_002` on the first try, and filled all 20 rows
+with zero discards: 10 original-none, 4 two-overlap rows, **20/20 agreement** between
+the landed `pickHoveredLemming` (fed live priority and live squared distance) and the
+original's own stored pick. The facilitator independently reproduced this from scratch
+with a standalone checker that imports nothing from the project's own harness or ported
+code, empirically re-deriving the exact overlap formula (the cursor box inset 4px on
+every edge, then an inclusive AABB test) before it matched all 20 rows exactly -- not
+merely re-running the worker's own driver. This also caught and narrowed an error in the
+round's own report: a nonzero live priority dword (`2`, at `state+0x14 = 19`, matching
+the file table exactly) **was** read this round, on three candidates that simply never
+overlapped a sampled cursor box -- the first nonzero live priority value seen in the
+entire D2 investigation, though the priority-beats-distance tie-break branch remains
+untested live. **D2 part (a) is accepted.** D2 part (b) is untouched and remains open.
 
 ### D3. One retail level end to end
 

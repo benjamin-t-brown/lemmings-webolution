@@ -99,6 +99,19 @@ class FrameworkChecks(unittest.TestCase):
                 self.assertIn(f"  edit: {edit}\n", text)
                 self.assertIn("  task: deny\n", text)
 
+    def test_opencode_mac_agents_use_llmgw_and_mirror_permissions(self):
+        path = ".opencode/agent/round-agent-mac.md"
+        self.write(path, (self.root / path).read_text(encoding="utf-8")
+                   .replace("model: llmgw/gpt-6-luna", "model: openai/gpt-6-luna")
+                   .replace("  edit: allow", "  edit: deny"))
+        path = ".opencode/commands/facilitator-mac.md"
+        self.write(path, (self.root / path).read_text(encoding="utf-8")
+                   .replace("agent: facilitator-mac", "agent: facilitator"))
+        errors = framework.validate(self.root)
+        self.assertTrue(any("pin an llmgw model" in e for e in errors))
+        self.assertTrue(any("permissions must match" in e for e in errors))
+        self.assertTrue(any("facilitator-mac agent binding" in e for e in errors))
+
     def test_opencode_default_uses_luna_without_changing_facilitator(self):
         config = json.loads((self.root / ".opencode/opencode.json").read_text(encoding="utf-8"))
         self.assertEqual(config["model"], {

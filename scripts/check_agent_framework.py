@@ -99,6 +99,44 @@ def check_opencode_facilitator(root, roles, errors):
         errors.append(f"{command_path}: facilitator must run in the current session")
 
 
+MAC_AGENTS = ["facilitator", "round-agent", "explore-agent", "disasm-agent"]
+
+
+def frontmatter_without(text, names):
+    front = re.match(r"\A---\n(.*?)\n---", text, re.S)
+    lines = front.group(1).splitlines() if front else []
+    return [line for line in lines if not re.match(r"(" + "|".join(names) + r"):", line)]
+
+
+def check_opencode_mac(root, roles, errors):
+    # The Mac clone's opencode2 only has the llmgw provider; its -mac agents mirror mouv's.
+    for role in MAC_AGENTS:
+        path = f".opencode/agent/{role}-mac.md"
+        text = read(root, path, errors)
+        links(root, path, text, errors)
+        model = frontmatter_field(text, "model") or ""
+        if not model.startswith("llmgw/") or f"`{model}`" not in roles:
+            errors.append(f"{path}: Mac agents pin an llmgw model listed in ROLES.md")
+        if frontmatter_field(text, "variant") != "high":
+            errors.append(f"{path}: Mac agent variant must be high")
+        base = read(root, f".opencode/agent/{role}.md", errors)
+        keep = ["name", "description", "model"]
+        if frontmatter_without(text, keep) != frontmatter_without(base, keep):
+            errors.append(f"{path}: mode, variant and permissions must match {role}.md")
+    command_path = ".opencode/commands/facilitator-mac.md"
+    command = read(root, command_path, errors)
+    links(root, command_path, command, errors)
+    if frontmatter_field(command, "agent") != "facilitator-mac":
+        errors.append(f"{command_path}: missing facilitator-mac agent binding")
+    if frontmatter_field(command, "model") is not None:
+        errors.append(f"{command_path}: omit model override and use the pinned agent")
+    if frontmatter_field(command, "subtask") != "false":
+        errors.append(f"{command_path}: facilitator must run in the current session")
+    for target in ["../../docs/FACILITATOR.md", "../../docs/ORCHESTRATION.md#facilitator-invocation"]:
+        if target not in command:
+            errors.append(f"{command_path}: missing pointer {target}")
+
+
 def check_brief(root, path, errors):
     text = read(root, path, errors)
     links(root, path, text, errors)
@@ -164,6 +202,7 @@ def validate(root, brief=None):
         if "../../docs/ORCHESTRATION.md#facilitator-invocation" not in text:
             errors.append(f"{path}: missing facilitator invocation pointer")
     check_opencode_facilitator(root, roles, errors)
+    check_opencode_mac(root, roles, errors)
     try:
         queue = json.loads(read(root, "docs/tasks.json", errors))
     except (ValueError, TypeError):

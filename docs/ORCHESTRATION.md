@@ -196,8 +196,9 @@ milestones it covers. Each gate must already be signed off in `PLAN.md`. When it
    select and decompose the next question yourself.
 2. Verify with the full [verification loop](FACILITATOR.md#the-verification-loop--this-is-the-job),
    land the docs and set the task `landed`.
-3. Commit that round alone on `decompile`: name the paths, add attribution, no push, no
-   `checkout`, `reset` or `stash`. Update `rounds_run`, `stock_starts_used` and `handoff`.
+3. Commit that round alone on `decompile`: name the paths, add attribution, no push
+   (except the GitHub sync between the Mac and mouv clones in
+   [ROLES.md](ROLES.md#opencode-on-the-mac-clone)), no `checkout`, `reset` or `stash`. Update `rounds_run`, `stock_starts_used` and `handoff`.
 4. If the current milestone's gate now passes on your own re-score, mark it done in
    `PLAN.md`, commit, and move `current` to the next listed milestone. Continue.
 5. Pick the next question by gate error and the round caps, write and lint its brief, queue it,

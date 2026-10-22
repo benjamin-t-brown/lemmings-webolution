@@ -20,7 +20,7 @@ adapter frontmatter/configuration, where the harness requires them.
 | --- | --- | --- | --- | --- | --- |
 | **Claude Code** | session launch model via `/facilitator` | session model (no pin; split instead of escalating) | session model via `.claude/agents/round-agent.md` (no pin) | session model via `.claude/agents/explore-agent.md` (no pin) | `/facilitator` → `.claude/commands/facilitator.md`; agents under `.claude/agents/`. No `model` in frontmatter and no `model` argument on dispatch. |
 | **Codex** | `astra` | `sol`, dispatched explicitly for a recorded hard round | `luna` — default worker pin | `luna`, read-only brief | `AGENTS.md`; REA MCP in `~/.codex/config.toml`. No in-repo agent pin file. |
-| **OpenCode** | `openai/gpt-6.1-sol` at `high` via `/facilitator` → `.opencode/agent/facilitator.md` | `disasm-agent` (Sol) for disassembly reads; otherwise the round pin | `openai/gpt-6-luna` at `high` via `.opencode/agent/round-agent.md` | `openai/gpt-6-luna` at `high` via `.opencode/agent/explore-agent.md` | `.opencode/opencode.json` + `.opencode/commands/` + `.opencode/agent/*.md` |
+| **OpenCode** | `openai/gpt-6.1-sol` at `high` via `/facilitator` → `.opencode/agent/facilitator.md` (Mac clone: [`/facilitator-mac`](#opencode-on-the-mac-clone)) | `disasm-agent` (Sol) for disassembly reads; otherwise the round pin | `openai/gpt-6-luna` at `high` via `.opencode/agent/round-agent.md` | `openai/gpt-6-luna` at `high` via `.opencode/agent/explore-agent.md` | `.opencode/opencode.json` + `.opencode/commands/` + `.opencode/agent/*.md` |
 | **Cursor** | **Claude Opus 5.5** via `/facilitator` (chat picker, e.g. `claude-opus-5-5-medium`) | same Cursor-pool worker as targeted — **do not** escalate to Opus; split the brief instead | Task → `round-agent` pinned to `grok-4.7-high-fast` | Task → `explore-agent` pinned to `grok-4.7-high-fast` | `/facilitator` → `.cursor/commands/facilitator.md`; workers in `.cursor/agents/*.md`; `.cursor/rules/*.mdc` stay **pointers only**. |
 
 For **Claude Code**: there is **no model routing**. Workers carry no `model` frontmatter and are
@@ -76,6 +76,41 @@ availability or a completed dispatch. Historical queue dispatch records are not
 rewritten by this framework change.
 Quit and restart OpenCode after changing agent configuration: an already-running
 session keeps its loaded settings.
+
+### OpenCode on the Mac clone
+
+Added 2026-10-22 at the user's request. The Mac runs `opencode2` (2.0.16) from a local
+clone at `~/progs/lemmings-webolution`, not over the sshfs mount. Its only provider is
+`llmgw`: the gateway plugin removes every other provider, so the `openai/` pins above do
+not resolve there. The Mac uses its own provider through a parallel set of agents.
+mouv keeps the set above, unchanged.
+
+| Role | Mac agent | Pin |
+| --- | --- | --- |
+| Facilitator | `/facilitator-mac` → `.opencode/agent/facilitator-mac.md` | `llmgw/gpt-6.1-sol` at `high` |
+| Targeted worker | `round-agent-mac` | `llmgw/gpt-6-luna` at `high` |
+| Explore | `explore-agent-mac` | `llmgw/gpt-6-luna` at `high` |
+| Disassembly read | `disasm-agent-mac` | `llmgw/gpt-6.1-sol` at `high` |
+
+The gateway offers `low`, `medium`, `high` and `xhigh` for these models, not `max`. Both
+models answered through `llmgw` on 2026-10-22. On the Mac, dispatch the `-mac` agents
+only; an `openai/` agent fails there. Environment and global-config overrides do not
+replace a project agent's pin (checked 2026-10-22), which is why these are separate agents.
+
+**Sync is through GitHub** (`origin`, branch `decompile`), at the user's request. This is
+the one exception to "no push" in the standing run, and it applies to both clones:
+`git pull --ff-only` before selecting work, and `git push origin decompile` after each round
+commit. Never force-push. If the pull does not fast-forward, stop and report it.
+`build/tmp/` is gitignored, yet it holds the briefs and round evidence that `tasks.json`
+cites (about 1.4 GB on mouv). Git cannot carry it, so the Mac clone's `build/tmp` is a symlink to mouv's
+copy through the sshfs mount (`~/mouv-progs/lemmings-webolution/build/tmp`). There is one
+scratch tree, and the mount's `._*` and temp-file rules in
+[MOUV_SSH.md](agents/MOUV_SSH.md) apply to it. Put Mac-only build output in `build/mac`.
+A round that needs the original, a Windows build or a Windows-only script still runs on
+mouv, per [running the original on mouv](agents/MOUV_SSH.md). Push before the mouv step,
+and pull mouv's result back afterwards. The Mac clone builds natively (`cmake -S . -B
+build/mac`); CTest passes there, but `lrtool` does not compile under Apple clang
+(`constexpr std::sin`), and the authoritative build is still mouv's.
 
 ## Disassembly reads use a stronger worker
 

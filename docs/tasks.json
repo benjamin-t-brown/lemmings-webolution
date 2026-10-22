@@ -6,7 +6,7 @@
     {
       "id": "b1h-atlas-independent-match",
       "title": "B1h: atlas-independent geometry-preserving glyph match (fourth-pass exception)",
-      "status": "running",
+      "status": "blocked",
       "brief": "build/tmp/b1h-atlas-independent-match-brief.md",
       "worker_tier": "targeted",
       "harness": "OpenCode Mac clone",
@@ -26,8 +26,17 @@
       "continuation_dispatch_id": "ses_e9a8c2165ffeq0o5CzvhVt4g1o",
       "continuation_brief": "build/tmp/b1h-mac-continuation-brief.md",
       "continuation_note": "User2026-10-22 authorizes same facilitator session on Mac llmgw after quota. Read-only mouv API confirms original B1h failed/idle provider.quota429usage_limit_reached, active sessions empty. Saved helpers/segmentation/prediction/note preserved; no registration scored. Explicit fifth-dispatch quota recovery (counting prior4), narrowed to actual Quit registration only, no sixth automatic pass. Mac -mac worker owns local code, shared scratch; harness runs via SSH, old mouv OpenCode stays idle."
-      ,"worker_output": "build/tmp/b1h-atlas-independent-match/round-note.md"
-      ,"blocked_reason": "No scored actual-retail-glyph registration, reconstruction, or actual wrong-scale/placement/family controls; thresholded Quit support segmentation yielded three clusters rather than the predicted four. Diagnostics/tests are partial only; B1 gate remains open."
+      ,"worker_output": "build/tmp/b1h-atlas-independent-match/facilitator-return-note.md"
+      ,"original_worker_output": "build/tmp/b1h-atlas-independent-match/round-note.md"
+      ,"blocked_reason": "User: stop after B1h. Mac worker interrupted at user request about16:17 after~65min against35min budget, no final worker report. Returned incomplete/over budget; actual saved crop scores and pixel controls independently reproduced, but incorrect glyph identities/layout remain and no B1 production/full-frame pass. No new round/repair/phase/milestone authorized."
+      ,"disposition": "returned incomplete; blocked by explicit user stop; saved diagnostic code/pixels retained, semantic glyph/layout inference not accepted"
+      ,"investigation_budget_minutes": 35
+      ,"investigation_elapsed_minutes_approx": 65
+      ,"budget_exceeded_minutes_approx": 30
+      ,"budget_breach": "Worker continued past investigation limit until user interruption; no original stock start or live guardrail use. This is recorded, not retroactively authorized."
+      ,"worker_final_report": false
+      ,"verified_in": "docs/scratch/phase-b1h-interrupted-quit-registration.md"
+      ,"facilitator_verified": "Confirmed interrupted/idle session and no sibling worker. Independent no-import checker authenticated reference/source hashes and exact RGB numerators for10 saved runs; latest grouped crop render/control pixels independently reconstructed without search rerun. FONT/FONTFE29712/1472625=.020176215940921824 versus blank80390; first placement+1px36462, wrongscale61322, restored pixels exact. Wrong letters and residual remain, no semantic match/retail font rejection accepted. Several grouped family destination boxes overlap; actual96beam differs emitted160 and no tests execute register_family. Six snapshot tests and fresh authoritative CTest29/29 pass. No Python/game process/LemWeb task, exe/config/save hashes equal baseline; no install/REA/live writes. Input/template pixels unchanged. Code/test snapshot hashes7186347bac8e196729f77e8504c7f45e29bee017d68faef15ce345a399217b4d / bcecd5a4e277f8f5d7cfd3f23264d6e461dc21298ace00314f8991bcc1dfa83a. No fullframe gate score or production menu exists."
     }
   ],
   "queue": [],
@@ -2512,7 +2521,7 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22), same session resumed on Mac clone via user /facilitator-mac quota-recovery handoff. Mac llmgw/-mac workers only; old mouv OpenCode idle and read-only API confirms no active sessions. GitHub FF/push sync, shared scratch, SSH Windows execution per ROLES/MOUV_SSH.",
-    "rounds_run": 14,
+    "rounds_run": 16,
     "stock_starts_used": 4,
     "pending_questions": [],
     "resolved_questions": [
@@ -2531,7 +2540,18 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 same facilitator resumes on Mac llmgw after quota; recovery queued/pushed e76b4ce and mouv FF clean. B1h original session confirmed failed/idle429usage_limit_reached and no active mouv sessions; saved note partial segmentation only. B1h quota continuation now RUNNING under round-agent-mac ses_e9a8c2165ffeq0o5CzvhVt4g1o (explicit dispatch5/prior4), narrowed ONLY Quit-row registration. Preserve packet/helpers, no completed search/export/native trace repeated. See build/tmp/b1h-mac-continuation-brief.md, lint passed. Harness on mouv via SSH snapshots; worker owns local code/shared scratch, not remote tracked files; GitHub sync after commits. No sixth automatic attempt. B1f parked; B1e/C1a verified; B1 production menu/gate still open. Next independently verify actual one-row registration/scores/controls, then rank remaining layout/render work; do not promote helper tests or omission scores.",
+    "handoff": "2026-10-22 STOPPED by user after B1h, no new dispatch/repair/phase/milestone advance. B1h returned incomplete/blocked: original quota interruption plus Mac continuation interrupted about16:17 after~65min versus35min budget, no final worker report. Independent saved-output checks authenticate/reconstruct10 retained runs; latest FONT/FONTFE Quit-row29712/1472625, blank80390, isolated placement36462/scale61322, restored pixels exact. Wrong letters/residual remain; no semantic glyph layout, all-five-label render or B1 production/fullframe pass. Six Python tests and authoritative29CTests pass; no process/task/changed install. Counts16 returned/completed dispatches in standing run,4 stock starts (B1h0), glyph question5. Evidence docs/scratch/phase-b1h-interrupted-quit-registration.md and shared scratch/facilitator-return-note.md. Next recommended action ONLY after new explicit authorization: review existing source identity/target boundaries and require one semantic glyph discriminator before more fitting; reuse exports/reference, preserve gate, do not auto-resume broad glyph or native menu-vtable search. No followup queued; B1 remains current. Mac/mouv GitHub sync after stop commit.",
+    "stopped": {
+      "date": "2026-10-22",
+      "reason": "user: stop after B1h",
+      "last_commit": "00f4243",
+      "last_commit_note": "Previous committed checkpoint; final stop-disposition commit hash will be recorded after creation.",
+      "current_gate": "B1 full-frame640x480<=0.02 remains open; no valid production score exists",
+      "rounds_run": 16,
+      "stock_starts_used": 4,
+      "pending_questions": [],
+      "no_further_dispatch": true
+    },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

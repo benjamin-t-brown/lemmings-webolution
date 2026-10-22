@@ -946,8 +946,30 @@ the splat for `0x200` with `[+0x4c]==1` and `0x4000` with `[+0x4c]==2`. Lava has
 
 ## The simulation — measured, and worth keeping
 
-The tick is **5 Hz (200 ms)**, measured three ways and not frame-locked. It had been guessed
-at 20 Hz, which made everything timed in ticks run four times too fast.
+**The "5 Hz, measured three ways" claim below is withdrawn as of D1m (round 2026-10-21,
+Phase D) — see [D1m](scratch/phase-d1-stepper-clock.md).** Two of the three old
+measurements rest on the billboard-quad centroid method this project's own guardrails
+already flag as unreliable for a closely related claim (the climbSpeed quad-lock
+retraction, round 10); re-run against the actor list, the same level shows the *opposite*
+pattern (position changes on 97% of consecutive 20 ms samples, not the ~10% a flat 200 ms
+step would produce). The third measured the hatch's release gap, not the lemming stepper,
+and D1d already found the hatch's own countdown is itself continuous. D1m's own bounded
+disassembly read of the walk stepper (`0x0041BDD4`) found a mutable, re-checked,
+byref time-budget loop — a shape with no reason to exist under a fixed step — and a
+zero-fitted-parameter continuous replay collapsed the fall/landing-tick mismatch count by
+76–100% against three live captures. **The conclusion is not yet "the tick rate is
+wrong"** — `World::tick()` is still called once per 200 ms and nothing below has been
+re-measured or re-implemented — but the premise that lemmings *step* discretely at 5 Hz,
+rather than moving continuously and being *sampled* at 200 ms, no longer has supporting
+evidence and has active evidence against it. D1n (queued) is the implementation/re-score
+round; until it lands, read every `Rules` field below as "the per-tick arithmetic that
+reproduces the original when driven once per 200 ms," not as a confirmed hardware step
+rate.
+
+The tick was **measured three ways** as 5 Hz (200 ms) and not frame-locked — see the
+withdrawal above. It had been guessed at 20 Hz, which made everything timed in ticks run
+four times too fast; that specific correction (20 Hz → 5 Hz bookkeeping) stands regardless
+of D1m, since the alternative is now "continuous, sampled at 5 Hz," not "20 Hz."
 
 **Durations are animation lengths, not tick counts**: `frames x 0.06 s` (the double at
 `0x004B1940`), fired when the animation's integer percent reaches a stored frame. A single

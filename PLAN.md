@@ -470,7 +470,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| D1 release and walk-out | **gate held; D1m queued** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
+| D1 release and walk-out | **gate held; D1n queued** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
 | D2 click-to-assign | queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
 | D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
@@ -703,6 +703,87 @@ second, and a fixed 0.2 s step turns them into 1 and 4. **D1m** reads the lemmin
 `dt` source and replays the saved captures with a zero-parameter continuous model. If the
 answer is continuous, D1n changes `World`'s clock. If it is stepped, the gate question goes
 back to the user with D1m's evidence.
+
+**D1m: continuous, on both a structural read and a behavioural replay**
+([check](docs/scratch/phase-d1-stepper-clock.md)): the walk stepper (`0x0041BDD4`) takes
+its time budget as a mutable, re-checked, byref double that it can spend across more than
+one lattice column per call and writes the decremented remainder back through the same
+pointer — a shape with no reason to exist under a fixed 0.2 s step, independent of any
+live measurement. A zero-fitted-parameter continuous replay (release, fall 20.0 u/s, land,
+walk 5.0 u/s, no wall-turn logic) against all three saved captures (D1l, D1j, D1g)
+collapses the `y`-field mismatch count 76–100% (29→4, 28→0, 10→1) — the landing-tick-drift
+floor D1l isolated as its own mechanism nearly disappears once fall/land timing is modelled
+continuously — while the full-150-tick total is honestly worse (the model was deliberately
+given no wall-turn logic, as scoped). The re-examined "5 Hz, measured three ways" lesson
+does not survive: two of the three rest on the retracted billboard-quad method and the
+third measured the hatch, not the lemming (full correction in
+[LESSONS.md](docs/LESSONS.md#the-simulation--measured-and-worth-keeping)). Open, disclosed
+gap: the exact caller chain from the frame dispatcher to the Lemming's own stepper was not
+traced within budget; the verdict rests on the stepper's own loop shape, not a completed
+chain. **D1 is still not accepted.** Per the pre-authorized branch, the next round is
+**D1n**: a bounded `World`/`SimReleaseTrace` clock change, re-scored offline against all
+four saved captures, before any live recheck — not a re-ask of the discretization-floor
+gate question, since a confirmed model mismatch calls for fixing the model.
+
+### D2. Click-to-assign
+
+**D2a: the pick rule read and ported, round 1** ([check](docs/scratch/phase-d2-pick-rule.md)):
+`src/app/Pick.{h,cpp}` ports the original's in-level cursor-to-lemming pick
+(`0x00454D33`/`0x00454CB9`/`0x00455F20`/`0x0045A0E0` chain, `0x00454D6C`'s full
+accept/skip/tie-break body). **Falsifies the brief's own hypothesis**: the tie-break is
+**priority (desc, from a per-state category table) then squared distance (asc, strict)**,
+not list order — list order only breaks an exact tie on both keys, keeping the earlier
+node. All four box edges are inclusive (`<=`/`>=` with the cursor's own ±4px adjustment
+already folded in), confirmed by re-disassembling `0x00454CB9` directly, not by trusting
+the cited old note's prose. Two skip gates not in the brief's "already settled" list were
+found and excluded from the ported function with reasons: a facing-filter UI pair
+(`screen+0x16b1`/`+0x16b2`) and the skill-stock validity gate (`0x0045A0E0`) — both depend
+on runtime UI/skill state, not lemming-vs-cursor geometry, so D2(a)'s own geometry gate
+does not model them; the brief explicitly named the skill-stock gate as something to
+report, not omit silently. Two upstream widget-hit-test loops (lists `0x4C88F8`/`0x4C8908`)
+can suppress the pick before the lemming loop even runs if a UI panel is hit first —
+flagged for the D2(a) live capture to avoid. Two genuine gaps, reported not guessed: the
+priority-category table's contents (`0x004C05D0`) and what `screen+0x58` holds (the
+distance reference point) are both runtime facts this round's static reads cannot settle.
+
+### D3. One retail level end to end
+
+**D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):
+`webo::sim::loadRetailLevel`/`loadRetailLevelReport` (`src/sim/RetailLevel.{h,cpp}`) build
+a `LevelSetup` for any retail level from the archive alone — terrain, entrances, release
+timing, exits/teleports/speed-pads/levers, totals and skills, each from an already-tested
+reader. **All 102 retail levels load**, matching a prediction written before coding. D1b's
+open "no retail rate falls outside its clamp" is now checked and holds (0 of 144 hatch
+records across all 102 levels). `SimReleaseTrace` rebuilt on the new loader is
+byte-identical to its pre-change output on D1g's own invocation (sha256
+`7653aedb4108d06aa0ad8026a70df645fe60273638db358638f2368ee7dde664`, both before and after).
+Named loss, not hidden: 33 of 102 levels have more than one hatch, but `LevelSetup` carries
+one shared release-timing triple — every hatch's own position still becomes an `Entrance`,
+and every hatch's own rate/min/max is still read and reported, but only the first hatch's
+cadence drives the shared accumulator. `releaseArmSeconds` (`0.723061695938398`) stays the
+MM_CLIMB_002-only DERIVED constant for every level, per the brief's own instruction, not
+re-derived elsewhere. Deliberately no `old/src`-style guessed fallback for a hatch-less or
+exit-less level — none exists in the retail corpus, so this path is untested because it
+never fires, not because it was masked.
+
+**Facilitator check on D2a and D3a (2026-10-21):** independently re-read the cited
+addresses against the installed exe — `0x00454CB9` (the whole box-overlap-test function,
+byte-for-byte match) and `0x004551E4`-`0x00455203` (the priority/distance tie-break,
+byte-for-byte match). Independently confirmed the new hatch tail-word offsets
+(`src/assets/LevelObjects.cpp`'s `kTailAt = kTripleAt + 6`, i.e. hatch+0x9A+6 = +0xA0,
++0xA4, +0xA8) match D1b's already-landed offsets exactly. Ran one isolated
+mutate-one-alone test per round, each rebuilt and re-tested in the full tree (both rounds
+landed into the same working copy): swapping `RetailLevel.cpp`'s entrance `e.x`/`e.y`
+assignment is caught by `test_retaillevel`'s MM_CLIMB_002 check (`FAIL  entrance at
+hatchSpawnCell (32, 53) (got (53, 32))`); loosening `Pick.cpp`'s left-edge comparison from
+`<=` to `<` is caught by `test_pick`'s exact-boundary-hit case (`FAIL: left edge:
+cursor.right-4 == lemming.left is still a hit`). Both files restored to their
+worker-delivered SHA-256 and a fresh full rebuild plus `ctest --preset dev-debug` passes
+**26/26** (both `retaillevel` and `pick` included), confirming the two concurrently
+dispatched rounds' shared `CMakeLists.txt`/`cmake/webolution_sources.cmake` edits merged
+without conflict, exactly as their dispatch note anticipated. No Lemmings Revolution
+process ran for either round. D3b (app sim-loop integration, depends on D3a) and D1n
+(World clock change) do not share an owned file and may now run concurrently.
 
 ## Phase E — the remaining debts
 

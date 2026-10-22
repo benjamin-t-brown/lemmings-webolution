@@ -782,6 +782,15 @@ pick none and nine name a lemming. An earlier start, pid 47392, never left the
 main menu and took no rows. D2 part (a) does not pass. The priority table and
 `screen+0x58` remain the open tie keys. Part (b) was not run.
 
+**D2c: tie-key operands, round 1** ([check](docs/scratch/phase-d2-tie-keys.md)):
+the priority load at `0x004550CC` indexes `0x004C05D0` with `[state+0x14]`,
+and `state` is `[lemming+0x340]`, not the vtable. The distance reference is
+the three doubles at `screen+0x58`, `+0x60`, and `+0x68`, subtracted from
+`lemming+8`. The walker constructor writes index `0x12` beside vtable
+`0x004B0D28`, and that file dword is 0. Equal vtables are not forced to share
+a priority. Sample 15's winner is still open, because the live field and the
+positions were not saved. D2 part (a) does not pass.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

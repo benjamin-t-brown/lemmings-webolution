@@ -6,6 +6,28 @@
   "queue": [],
   "recently_landed": [
     {
+      "id": "d2c-tie-keys",
+      "title": "D2c: what indexes the priority table, and what screen+0x58 holds",
+      "status": "landed",
+      "brief": "build/tmp/d2c-tie-keys-brief.md",
+      "worker_output": "build/tmp/d2c-tie-keys/round-note.md",
+      "worker_tier": "targeted",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "dispatch_tag": "disassembly read",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "d2b-pick-capture"
+      ],
+      "gate_served": "PLAN Phase D, D2 click-to-assign part (a), the one remaining overlap",
+      "question_round_count": 1,
+      "dispatch_id": "c0dafbaa-0e13-4be7-a40d-944a0c1973b1",
+      "landed_in": "docs/scratch/phase-d2-tie-keys.md",
+      "facilitator_verified": "2026-10-22: re-read 0x004550CC (mov edx,[eax*4+0x4c05d0]), 0x00430A7A ([eax+0x14]), the [lemming+0x340] call, 0x004551B1/0x004551CE (add 0x58), 0x00401830 three fsub qwords, and 0x0041BD7B ([this+0x14]=0x12). Disp32 d0054c00 occurs once. File dword index 0x12 is 0. No stock process. Sample 15 still open. Caller stores into screen+0x58 were not re-derived."
+    },
+    {
       "id": "d2b-pick-capture",
       "title": "D2b repair: main-menu Down moved no highlight byte; then the 20-position capture if entry works",
       "status": "landed",
@@ -2026,10 +2048,10 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Cursor facilitator session (handoff 2026-10-21): Claude Code session 1a9a806c and its D3c worker a864d6ed07f2416e7 had both stopped on a session rate limit; no task was still running. This session takes the queue.",
-    "rounds_run": 7,
+    "rounds_run": 8,
     "stock_starts_used": 2,
     "pending_questions": [],
-    "handoff": "2026-10-22: landed d2b in the working tree (docs/scratch/phase-d2-pick-capture.md). 19/20 live picks agree; sample 15 is a two-lemming overlap the zero priority/distance keys cannot decide. D2 part (a) does not pass. Next is an offline read of the priority lookup at 0x004C05D0 and the distance reference at screen+0x58, not another 20-position capture. D1 gate question remains unresolved.",
+    "handoff": "2026-10-22: landed d2c. Priority index is [state+0x14] via [lemming+0x340], not the vtable. Distance reference is the 3-double at screen+0x58. Sample 15 still open. Next is one live overlap that logs those fields and recomputes the winner. D2 part (a) does not pass. D1 gate question remains unresolved.",
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [

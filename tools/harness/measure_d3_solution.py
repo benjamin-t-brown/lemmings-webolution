@@ -54,12 +54,13 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from lrstate import attach, i32, ui_state  # noqa: E402
+from lrstate import attach, i32, read_mem, ui_state  # noqa: E402
 from memdump import k32  # noqa: E402
 import assign_skill as A  # noqa: E402
 import measure_spawn as SP  # noqa: E402
@@ -127,15 +128,20 @@ def assign_climber_to_every_lemming(h, inp, total_lemmings: int,
 
 
 def watch_to_level_end(h, poll_hz: float = 5.0, hard_cap_seconds: float = 330.0,
-                       verbose: bool = True) -> dict:
+                       verbose: bool = True, t0: float | None = None) -> dict:
     """Poll SAVED_WORD/CLOCK/RELEASED/ui_state/alive-count, no input sent.
 
     Stops on the first `ui_state != 0` (the level's own end state) or when
     `hard_cap_seconds` of wall time elapses (a safety bound well past the level's own
     300s time limit, to absorb this script's own assignment-phase latency plus a
     results-screen settle margin). Returns every sample plus the final reading.
+
+    `t0` (D3f addition, optional): share a `time.perf_counter()` base with
+    another watcher (`watch_assignment_timing`'s) so both sets of samples
+    report against the same clock. Defaults to `None`, which takes its own
+    base exactly as before -- no behaviour change for any existing caller.
     """
-    t0 = time.perf_counter()
+    t0 = time.perf_counter() if t0 is None else t0
     samples = []
     prev_saved = None
     prev_ui = None
@@ -164,12 +170,135 @@ def watch_to_level_end(h, poll_hz: float = 5.0, hard_cap_seconds: float = 330.0,
     return dict(samples=samples, final=samples[-1])
 
 
+# --- D3f addition: a 50 Hz side-channel timing watcher ----------------------
+#
+# D3e round 2 found D3d's own `solution.json` has no per-assignment timestamp
+# at all (`run1.log` prints no `t=` marker until the watch phase, which only
+# starts after all ten clicks have already landed). This round's own brief
+# (`build/tmp/d3f-timed-solution-brief.md`) asks to record exactly when each
+# assignment landed, as an offset from that same lemming's own first
+# appearance in the actor list, so the next sim run can replay those exact
+# times instead of a fitted model.
+#
+# This watcher is deliberately independent of `assign_skill.assign`'s own
+# click loop: it is a read-only background poll of the actor list
+# (`0x004CBB18`, via `assign_skill.lemmings`) and each tracked lemming's own
+# `[lemming+0x48]` climber byte (`assign_skill.OFF_CLIMBER`), the same
+# attribute `assign_skill.assign` already uses as its own landing evidence
+# (`climber_before`/`climber_after`). Nothing here clicks, writes, or changes
+# `assign_skill.py`; it only reads faster and in parallel, so the recorded
+# landing moment does not have to wait for `assign()`'s own 0.6 s
+# double-click settle window before it can be timestamped.
+
+
+def _climber_flag(h, lem: int):
+    b = read_mem(h, lem + A.OFF_CLIMBER, 1)
+    return b[0] if b else None
+
+
+def watch_assignment_timing(h, stop_evt: "threading.Event", t0: float,
+                             poll_hz: float = 50.0) -> dict:
+    """Background poll: first actor-list appearance, climber-flag landing,
+    and last-seen (exit proxy) time/`CLOCK`, per live lemming pointer.
+
+    Returns dict(sample_count, poll_hz, first_seen, climber_landed, exited),
+    each of the three per-pointer dicts mapping `lemming ptr -> (t, clock)`,
+    `t` measured against the caller's own `t0` (`time.perf_counter()` base),
+    so it shares a clock with `watch_to_level_end`'s own samples when the
+    caller passes the same `t0` to both (this round's `run_live` does).
+    """
+    period = 1.0 / poll_hz if poll_hz > 0 else 0.02
+    first_seen: dict[int, tuple] = {}
+    last_seen: dict[int, tuple] = {}
+    had_climber_zero: set = set()
+    climber_landed: dict[int, tuple] = {}
+    exited: dict[int, tuple] = {}
+    present_prev: set = set()
+    sample_count = 0
+    while not stop_evt.is_set():
+        t = time.perf_counter() - t0
+        clk = i32(h, CLOCK)
+        ptrs = set(A.lemmings(h))
+        sample_count += 1
+        for p in ptrs:
+            if p not in first_seen:
+                first_seen[p] = (t, clk)
+            last_seen[p] = (t, clk)
+            if p not in climber_landed:
+                flag = _climber_flag(h, p)
+                if flag == 0:
+                    had_climber_zero.add(p)
+                elif flag and p in had_climber_zero:
+                    climber_landed[p] = (t, clk)
+        for p in present_prev - ptrs:
+            if p not in exited and p in last_seen:
+                exited[p] = last_seen[p]
+        present_prev = ptrs
+        stop_evt.wait(period)
+    return dict(sample_count=sample_count, poll_hz=poll_hz,
+                first_seen=first_seen, climber_landed=climber_landed,
+                exited=exited)
+
+
+def build_assignment_timing(watch: dict, assign_results: list[dict],
+                             tick_seconds: float = 0.2) -> dict:
+    """Join the watcher's per-pointer dicts with the click loop's own
+    `assign_results` (which pointer the engine actually accepted each skill
+    on) into the per-lemming table `replay.py` consumes.
+
+    `arrival_index` is the watcher's own `first_seen` order (ascending `t`),
+    which is `World::spawn`'s own append order in our sim (`lemmings_.
+    push_back`, `src/sim/World.cpp`, read this round) -- so index i here is
+    exactly the i-th entry of `World::lemmings()` in a matching sim run, with
+    no pointer-identity matching needed on the sim side (pointers are never
+    stable between runs, already an established fact, D3d's own round-note).
+    """
+    first_seen = watch["first_seen"]
+    climber_landed = watch["climber_landed"]
+    exited = watch["exited"]
+    assigned_ptrs = {r["lemming"] for r in assign_results if r.get("ok")}
+
+    arrival_order = sorted(first_seen.items(), key=lambda kv: kv[1][0])
+    rows = []
+    for idx, (ptr, (fs_t, fs_clk)) in enumerate(arrival_order):
+        land = climber_landed.get(ptr)
+        ex = exited.get(ptr)
+        offset_seconds = (land[0] - fs_t) if land is not None else None
+        offset_ticks = (round(offset_seconds / tick_seconds)
+                        if offset_seconds is not None else None)
+        rows.append(dict(
+            arrival_index=idx,
+            lemming=hex(ptr),
+            first_seen_t=fs_t, first_seen_clock=fs_clk,
+            landed_t=land[0] if land else None,
+            landed_clock=land[1] if land else None,
+            offset_seconds=offset_seconds,
+            offset_ticks=offset_ticks,
+            exit_t=ex[0] if ex else None,
+            exit_clock=ex[1] if ex else None,
+            assigned_via_click=ptr in assigned_ptrs,
+        ))
+
+    unmatched_climber_landings = [hex(p) for p in climber_landed
+                                 if p not in assigned_ptrs]
+    missing_landings_for_assigned = [hex(p) for p in assigned_ptrs
+                                     if p not in climber_landed]
+    return dict(
+        poll_hz=watch["poll_hz"], sample_count=watch["sample_count"],
+        tick_seconds=tick_seconds,
+        lemmings_by_arrival_order=rows,
+        unmatched_climber_landings=unmatched_climber_landings,
+        missing_landings_for_assigned=missing_landings_for_assigned,
+    )
+
+
 # --- live run -----------------------------------------------------------------
 
 
 def run_live(level: str, out_dir: Path, boot_wait: float = 10.0,
              assign_attempts: int = 4, assign_wait: float = 20.0,
-             poll_hz: float = 5.0, hard_cap_seconds: float = 330.0) -> int:
+             poll_hz: float = 5.0, hard_cap_seconds: float = 330.0,
+             timing_poll_hz: float = 50.0) -> int:
     if not D1.STOCK_EXE.exists():
         print(f"error: {D1.STOCK_EXE} not found", file=sys.stderr)
         return 1
@@ -246,6 +375,20 @@ def run_live(level: str, out_dir: Path, boot_wait: float = 10.0,
                       " clean level start)")
             return 2
 
+        # D3f addition: start the 50 Hz side-channel timing watcher right
+        # after level entry, before the hatch has released anyone, so it
+        # catches the very first lemming's own first appearance. Shares
+        # `t0` with `watch_to_level_end` below.
+        t0 = time.perf_counter()
+        timing_stop = threading.Event()
+        timing_result: dict = {}
+        timing_thread = threading.Thread(
+            target=lambda: timing_result.update(
+                watch_assignment_timing(h, timing_stop, t0,
+                                        poll_hz=timing_poll_hz)),
+            daemon=True)
+        timing_thread.start()
+
         print("  waiting for the hatch to release at least one lemming"
               " (no input sent) ...", flush=True)
         n0 = A.wait_for_lemmings(h, seconds=20.0)
@@ -284,8 +427,22 @@ def run_live(level: str, out_dir: Path, boot_wait: float = 10.0,
 
         print("  watching for a level-end state (no further input) ...",
               flush=True)
-        watch = watch_to_level_end(h, poll_hz=poll_hz, hard_cap_seconds=hard_cap_seconds)
+        watch = watch_to_level_end(h, poll_hz=poll_hz,
+                                   hard_cap_seconds=hard_cap_seconds, t0=t0)
         final = watch["final"]
+
+        # D3f addition: stop the timing watcher only now -- it has to keep
+        # running through the whole post-assignment watch too, since exits
+        # (the last-seen proxy) and further climber landings keep happening
+        # for most of that window, not just during the click loop.
+        timing_stop.set()
+        timing_thread.join(timeout=5.0)
+        assignment_timing = build_assignment_timing(timing_result, assign_results)
+        print(f"  timing watcher: {timing_result.get('sample_count', 0)} samples"
+              f" at {timing_poll_hz:.0f} Hz, "
+              f"{len(assignment_timing['unmatched_climber_landings'])} unmatched"
+              f" landings, {len(assignment_timing['missing_landings_for_assigned'])}"
+              " assigned-but-not-detected", flush=True)
 
         end_clock = final["clock"]
         end_time_seconds = (
@@ -314,10 +471,23 @@ def run_live(level: str, out_dir: Path, boot_wait: float = 10.0,
             won=bool(save_target0 is not None and final["saved"] is not None
                     and final["saved"] >= save_target0),
             reached_level_end_state=bool(final["ui_state"] not in (0, None)),
+            # D3f addition, additive key only -- every key above this one is
+            # unchanged from D3d's own schema.
+            assignment_timing=assignment_timing,
         )
         (out_dir / "solution.json").write_text(json.dumps(result, indent=2, default=str))
         (out_dir / "watch_samples.json").write_text(
             json.dumps(watch["samples"], indent=2, default=str))
+        # D3f addition: the watcher's raw per-pointer dicts, for audit
+        # (keys are pointer ints, which `json.dumps` cannot use as object
+        # keys, so these are written as [ptr, (t, clock)] pair lists).
+        (out_dir / "timing_samples.json").write_text(json.dumps(dict(
+            poll_hz=timing_poll_hz,
+            sample_count=timing_result.get("sample_count"),
+            first_seen=[[p, v] for p, v in timing_result.get("first_seen", {}).items()],
+            climber_landed=[[p, v] for p, v in timing_result.get("climber_landed", {}).items()],
+            exited=[[p, v] for p, v in timing_result.get("exited", {}).items()],
+        ), indent=2, default=str))
         print(f"\nRESULT: ui_state {final['ui_state']} (results screen ="
               f" {RESULTS_UI_STATE})  saved {final['saved']} / target"
               f" {save_target0}  end_time_seconds={end_time_seconds}"
@@ -374,6 +544,9 @@ def main() -> int:
     ap.add_argument("--hard-cap-seconds", type=float, default=330.0,
                     help="safety bound on the post-assignment watch, past the"
                          " level's own 300s time limit")
+    ap.add_argument("--timing-poll-hz", type=float, default=50.0,
+                    help="D3f addition: the side-channel assignment-timing"
+                         " watcher's own poll rate, independent of --poll-hz")
     args = ap.parse_args()
 
     if not args.run_live:
@@ -385,7 +558,8 @@ def main() -> int:
     return run_live(args.level, args.out_dir, boot_wait=args.boot_wait,
                     assign_attempts=args.assign_attempts,
                     assign_wait=args.assign_wait, poll_hz=args.poll_hz,
-                    hard_cap_seconds=args.hard_cap_seconds)
+                    hard_cap_seconds=args.hard_cap_seconds,
+                    timing_poll_hz=args.timing_poll_hz)
 
 
 if __name__ == "__main__":

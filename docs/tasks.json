@@ -2,30 +2,35 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "d3f-timed-solution",
-    "title": "D3f: a timed scripted solution, recorded live and replayed in our World",
-    "status": "running",
-    "brief": "build/tmp/d3f-timed-solution-brief.md",
-    "worker_tier": "targeted",
-    "harness": "Claude Code",
-    "requested_model": "session (no pin)",
-    "worker_agent": "round-agent",
-    "owns_live_game": true,
-    "live_owner": null,
-    "depends_on": [
-      "d3d-solution-discovery",
-      "d3e-sim-solution-run"
-    ],
-    "gate_served": "PLAN Phase D, D3 one retail level end to end",
-    "question_round_count": 1,
-    "stock_starts_authorized": 1,
-    "stock_starts_consumed": 0,
-    "note": "Queued behind d1o: both own the live game, so only one runs at a time.",
-    "dispatch_id": "claude-code background round-agent, this facilitator session, no model override"
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "d3f-timed-solution",
+      "title": "D3f: a timed scripted solution, recorded live and replayed in our World",
+      "status": "landed",
+      "brief": "build/tmp/d3f-timed-solution-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "d3d-solution-discovery",
+        "d3e-sim-solution-run"
+      ],
+      "gate_served": "PLAN Phase D, D3 one retail level end to end",
+      "question_round_count": 1,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "note": "Queued behind d1o: both own the live game, so only one runs at a time.",
+      "dispatch_id": "claude-code background round-agent a0204f1187ec2c2b5, no model override",
+      "worker_output": "build/tmp/d3f-timed-solution/round-note.md",
+      "landed_in": "docs/scratch/phase-d3-timed-solution.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-22: reviewed measure_d3_solution.diff directly -- purely additive (new optional t0 parameter on watch_to_level_end, default None, unchanged behaviour for every existing caller; one new output key assignment_timing; no existing key, signature or CLI default removed or altered). Independently recompiled SimSolutionRunTimed.cpp from source (g++ -std=c++23 -Wall -Wextra -Wpedantic, clean, no warnings) and relinked against the current webolution_objects object files with the round's own saved link_cmd.txt (path-substituted only). Independently reran the sanity-zero check (all-ten-offsets-0): FINAL lastTick 514 finishedAtTick 514 wonAtTick 384 -- exactly reproduces D3e's own result on my own binary. Independently reran the full timed replay with the ten offsets read directly from solution.json's own assignment_timing table (6,3,6,9,14,8,19,12,5,37), both clock settings: both give finishedAtTick 626 (125.2s), matching the round's headline exactly; full output CSVs byte-identical to the worker's saved replay_off_stdout.csv/replay_on_stdout.csv (differing only by a UTF-8 BOM my own PowerShell redirection added to the header line -- identical from line 2 onward). Independently recomputed the 6.345s last-save-to-ui_state-transition delay directly from solution.json/watch_samples.json raw data (max exit_t 125.72596..., final watch sample t 132.07096..., difference 6.345004...) -- matches exactly; confirmed end_saved_count 10, end_time_seconds 133, won true, reached_level_end_state true directly from the JSON. Confirmed no Lemmings/dgVoodoo process running and the installed exe SHA-256 matches the authority constant. git status showed only docs/tasks.json's two permitted fields and the additive measure_d3_solution.py diff -- no src/**, CMakeLists.txt, PLAN.md, or other docs/** file. stock_starts_consumed corrected 0 to 1 (the worker correctly left it alone as outside its own edit permission). Round accepted as reported; nothing narrowed. D3 does not pass the gate literally, and more importantly this round demonstrates the gate's own premise does not hold for the original itself: two live runs of the identical script differ by 75 real seconds before any sim comparison. Per the user's 2026-10-22 decision (no gate amendment, no further click-model round), D3 is now parked in Phase E -- PLAN.md's D3 gate-table row and Phase E list updated accordingly. Work proceeds to Phase B (B1)."
+    },
     {
       "id": "d1o-continuous-live-recheck",
       "title": "D1o: fresh live D1 recheck, scored against the continuous stepper clock; parks D1 after this round",
@@ -2290,7 +2295,7 @@
       "C2 counters, cursor, pause caption",
       "C3 full frame"
     ],
-    "current": "D3 one retail level end to end",
+    "current": "B1 frontend assets and text",
     "authorized": "User 2026-10-22 (CEO review): D1 -- option 4 (park) plus one live recheck (build/tmp/d1o-continuous-live-recheck-brief.md), then park D1 regardless of its result unless it passes the gate literally. D3 -- do not amend the gate and do not run a third click-model round; run build/tmp/d3f-timed-solution-brief.md instead. Phase B and Phase C gates signed off as drafted (PLAN.md Phase B / Phase C tables, drafted 2026-10-21). Add B1-C3 to a new standing run.",
     "grants": {
       "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
@@ -2299,10 +2304,10 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (2026-10-22 /facilitator invocation): handoff from d-playable-2, which stopped with both Phase D decisions pending. The user resolved both in the same message that signed off Phase B/C, so this session opens the next standing run directly rather than reporting a bare stop.",
-    "rounds_run": 1,
-    "stock_starts_used": 1,
+    "rounds_run": 2,
+    "stock_starts_used": 2,
     "pending_questions": [],
-    "handoff": "2026-10-22: landed d1o-continuous-live-recheck. One fresh live, no-input capture of MM_CLIMB_002 scored with the continuous-stepper-clock flag both off and on: fails the D1 gate literally under both settings (657 and 305 total divergences), but confirms D1n's flag-on improvement generalizes to fresh data, with two new source-traced qualifications (weaker landing-tick-drift improvement on this capture; the x-closure is binary per lemming, tied to whether landing drift equals spawn drift). Per the user's 2026-10-22 decision, D1 is now parked in Phase E -- PLAN.md updated, no further D1 round queued. Promoted d3f-timed-solution from queue to active and dispatching it next: a timed scripted solution for D3's end-time residual, recorded live and replayed in our World, per the user's decision not to amend D3's gate or run a third click-model round. After D3 is resolved (landed or parked), the next ranked question is B1 (frontend assets and text) -- no B/C brief is written yet.",
+    "handoff": "2026-10-22: landed d3f-timed-solution. Recorded real assignment-landing times in one live run and replayed World with exactly those times (no fitting). Unanticipated, directly-measured finding: two live runs of the identical scripted solution ended 75 real seconds apart (208s vs 133s) -- the gate's own premise does not hold for the original itself. The self-consistent comparison (this run's own recorded times fed back through World, vs that same run's own result) matches to the whole second on the finished() quantity; against the gate's literal end_time_seconds field the residual is -8s, split into a named twice-measured unmodeled delay (-6.3s) and a small remainder inside D1's own budget (-1.7s/-0.53s). Per the user's 2026-10-22 decision, D3 is now parked in Phase E alongside D1 -- no further D3 round authorized. Both Phase D decisions from the user's message are now fully executed (D1 parked after d1o; D3 parked after d3f). Next ranked question per the signed-off milestone order is B1 (frontend assets and text) -- no B1 brief exists yet; the facilitator will decompose and write one next, following the same round-sizing and lint discipline as every prior round.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

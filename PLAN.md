@@ -472,7 +472,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 | --- | --- | --- |
 | D1 release and walk-out | **parked in Phase E (2026-10-22, user decision); not accepted** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
 | D2 click-to-assign | **(a) accepted**; (b) 3 of 4 (climber/blocker/floater), digger parked | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
-| D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
+| D3 one retail level end to end | **parked in Phase E (2026-10-22, user decision); not accepted** | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
 Notes for D1: our sim has a known one-tick divergence on a left-facing turn (`0x0041C67E`,
 LESSONS "The simulation"). D1 cannot pass without fixing it, and the blocker-turn
@@ -1117,6 +1117,27 @@ residuals remain ruled out. D3's gate, as literally written ("the same end time 
 whole seconds"), does not pass on this close-but-not-exact result; recorded as a
 pending question for the user below, not decided unilaterally.
 
+**D3f: recorded real assignment times, replayed exactly; then parked (user decision,
+2026-10-22, CEO review)** ([check](docs/scratch/phase-d3-timed-solution.md)): per the user's
+decision not to amend the gate and not to run a third fitted click-model round, this round
+recorded each assignment's real landing time in one live run and replayed `World` with
+exactly those times — no fitting or sweeping. Unanticipated, directly-measured finding: two
+live runs of the identical scripted solution ended 75 real seconds apart (208 s vs 133 s),
+confirming by direct measurement, not a model sweep, that the gate's own premise (a
+scripted solution has *a* reproducible end time) does not hold for the original itself. On
+the self-consistent comparison this round can actually run — this run's own recorded times
+fed back through `World`, compared to that same run's own result — saved count matches
+exactly (10/10) and `World::finished()` matches the run's own last save to the whole second
+exactly (125 s vs 125 s), well inside D1's own already-parked few-tick budget. Against the
+gate's own literal `end_time_seconds` field (133 s, the `ui_state` transition, not the last
+save), the residual is -8 s: -6.3 s of it is an already-named, now twice-independently-
+measured last-save-to-`ui_state`-transition delay `World` does not model (6.345 s here vs
+D3d's 6.4 s, on two absolute timescales 75 s apart); the remainder (-1.7 s whole-second /
+-0.53 s continuous) is left unattributed beyond D1's budget, not assumed into either
+bucket. **D3 does not pass literally and is now parked in Phase E** at this result — the
+same posture D1 reached after D1o, for the same reason (the question's authorized rounds
+are spent and the user's decision forecloses both a gate amendment and a further round).
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds
@@ -1147,6 +1168,21 @@ open.
   hypothesis is already disproven, not just untried. Evidence:
   [D2i round 1](docs/scratch/phase-d2i-skill-assign-digger.md),
   [D2i repair 1](docs/scratch/phase-d2i-skill-assign-digger.md#round-2-repair-1-the-1-hypothesis-corrected-not-confirmed--no-fix-applied).
+- **D3 one retail level end to end — whole milestone parked** (parked 2026-10-22 after
+  D3f, user decision, CEO review). Saved count matches the original exactly (10/10); the
+  end time does not. D3f's own live run directly measured that two live runs of the
+  identical scripted solution end 75 real seconds apart (208 s vs 133 s) — the gate's own
+  premise (a reproducible end time to match) does not hold for the original itself. The
+  self-consistent comparison this round could actually run (a run's own recorded assignment
+  times fed back through `World`, compared to that same run's own result) matches to the
+  whole second on the quantity `World::finished()` computes. Against the gate's literal
+  field, the residual (-8 s) splits into a named, twice-measured delay `World` does not
+  model (-6.3 s) and a small remainder inside D1's own already-parked budget (-1.7 s /
+  -0.53 s). Per the user's decision (no gate amendment, no further click-model round), no
+  further D3 round is authorized. Evidence:
+  [D3f](docs/scratch/phase-d3-timed-solution.md),
+  [D3e](docs/scratch/phase-d3-sim-solution-run.md),
+  [D3d](docs/scratch/phase-d3-solution-discovery.md).
 - **D1 release and walk-out — whole milestone parked** (parked 2026-10-22 after D1o, user
   decision, CEO review). D1's gate does not pass, measured literally on a fresh live
   capture with the continuous-stepper-clock fix (D1n) both off and on: 657 and 305 total

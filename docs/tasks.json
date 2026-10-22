@@ -6,7 +6,7 @@
     {
       "id": "b1f-menu-template-match",
       "title": "B1f: measure menu layout by matching verified retail templates",
-      "status": "ready-for-verify",
+      "status": "running",
       "worker_output": "build/tmp/b1f-menu-template-match/round-note.md",
       "brief": "build/tmp/b1f-menu-template-match-brief.md",
       "worker_tier": "targeted",
@@ -17,10 +17,13 @@
       "live_owner": null,
       "depends_on": ["b1e-menu-image-layout", "b1b-reference-screengrab"],
       "gate_served": "PLAN B1 full-frame menu <=0.02; actual image layout matching before production renderer",
-      "question_round_count": 1,
+      "question_round_count": 2,
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
-      "dispatch_id": "ses_e9abb2b10ffeMJkJP0v0ZOGVUf"
+      "dispatch_id": "ses_e9ab4a54effekZsW4H6YxnJ0a8",
+      "previous_dispatch_id": "ses_e9abb2b10ffeMJkJP0v0ZOGVUf",
+      "repair_brief": "build/tmp/b1f-menu-template-match-repair1-brief.md",
+      "repair_reason": "Facilitator independently reproduced background and surrogate full-frame numbers and four tests; actual matcher is incomplete: no glyph code, panel_runs row threshold fragments/excludes bars. Surrogate score under0.02 is explicitly rejected as acceptance. Repair implements actual panel/glyph path and real-font controls, preserving prior evidence."
     }
   ],
   "queue": [],
@@ -2501,7 +2504,7 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 C1a landed: physical0..7 classic mapping confirmed,8 fast-forward,9 Armageddon. Eligibility0x45A4DD differs from factory0x45B570; commands must not be inferred from latent factory/art labels. Independent raw-byte/table checks, own index mutation,26 REA Evidence validation and cleanup pass; no HUD pixel acceptance. B1 remains current. B1f returned an incomplete matching implementation: background match measured, panel segmentation faulty/glyphs unresolved, diagnostic score explicitly invalid. Verify/narrow packet then repair actual panel/glyph matching, not another export/native trace. Prepared b1g renderer brief must wait for verified image layout. Source restore/full29-test suite completed after server restart; no stock starts or install changes. Separate CEO/framework commits preserved.",
+    "handoff": "2026-10-22 recovery continued: B1e export landed a1ed143, queue syntax corrected43da072; C1a panel actions independently verified/landed b6024ed (8 fast-forward,9 Armageddon; pixel gate open). B1f first pass implemented no glyph routine and fragmented panel rows. Own full-frame checker reproduced background5651991/235008000 and surrogate3041316/235008000, but surrogate is rejected as acceptance despite passing scalar0.02. B1f repair1 now RUNNING under ses_e9ab4a54effekZsW4H6YxnJ0a8 to fix actual panel segmentation and glyph matching; preserve first-pass evidence and verify repair before landing. Prepared build/tmp/b1g-menu-render-brief.md waits on verified layout, then render in webolution and score unchanged gate. No new stock starts, source mutation restored, full suite29/29; no repeated REA trace/export after restart. Separate CEO/framework commits preserved.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

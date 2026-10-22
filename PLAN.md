@@ -471,7 +471,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
 | D1 release and walk-out | **gate held; not accepted (D1n partial)** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
-| D2 click-to-assign | **(a) accepted**, (b) queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
+| D2 click-to-assign | **(a) accepted**; (b) 3 of 4 (climber/blocker/floater), digger parked | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
 | D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
 Notes for D1: our sim has a known one-tick divergence on a left-facing turn (`0x0041C67E`,
@@ -966,6 +966,27 @@ three other already-measured steppers sharing the same helper. D2 part (b) is no
 complete: climber/blocker/floater are full matches, digger is not. A disassembly round
 is queued, scoped to digger's own call site only.
 
+**D2i repair 1: the `+1` hypothesis corrected, not confirmed; no fix applied; digger
+parked** ([check](docs/scratch/phase-d2i-skill-assign-digger.md)): offline only, zero
+stock starts. Disassembly of `0x0041B077` (the shared bash/dig/mine stepper, confirmed
+byte-identical across all three vtables) shows it is **not** a discrete tick counter at
+all: it is a continuous, real-valued percent-of-cycle clock (`lemming+0x128`'s own
+`0x00468B04`/`0x00468B5D` accessors) that fires at most one scheduled record per call
+and hands the unspent time budget back by reference; the generic per-lemming dispatch
+loop (`0x0042E2BF`) re-invokes the same stepper with that leftover until exhausted --
+the real mechanism behind two records firing in one tick, not a tick-granularity
+coincidence. The controller's own clock does not reset at state entry (confirmed: no
+caller found from digger's enter hook to the one zeroing function located in a full
+`.text` scan), corroborated by round 1's own saved live data (first bite at ~130-140ms,
+well under a from-zero calculation's ~300ms). **Round 1's `+1` hypothesis is corrected,
+not confirmed** -- there is no discrete counter to add one to. No fix was applied;
+`World.h`/`World.cpp`/`test_world.cpp` are untouched. Closing this properly needs a
+persistent cross-state percent clock plus a generic same-tick leftover-budget
+re-invocation dispatch -- a materially larger change than one bounded round. **Digger
+is parked in Phase E** (see below) rather than spending a third round on an attempt
+already known to need more than a bounded fix. D2 part (b) is accepted as 3-of-4: climber,
+blocker and floater are full matches; digger is the one open, parked residual.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):
@@ -1038,6 +1059,29 @@ Short, and explicitly parked rather than cancelled. **The gadget backlog is gone
 gadget at all. See the gadget table in `docs/LESSONS.md` before assuming anything here is
 open.
 
+- **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
+  and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
+  digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically
+  by bash/dig/mine) is a continuous, real-valued percent-of-cycle clock
+  (`lemming+0x128`'s `0x00468B04`/`0x00468B5D`) that fires at most one scheduled
+  record per call and hands the unspent time budget back to a generic per-lemming
+  dispatch loop (`0x0042E2BF`), which re-invokes the same stepper with that leftover
+  until exhausted or the state changes -- the real, same-tick, cross-call mechanism
+  behind multiple records firing in one tick. The clock does not reset at state entry
+  (no caller found from digger's enter hook to the one zeroing function located in a
+  full `.text` scan), so a newly-assigned digger inherits whatever phase the prior
+  state's animation was at, not a fresh 0%. Our own `World::stepDigger` is a single,
+  self-contained, discrete-frame call with no cross-call leftover-budget handoff and
+  no persisted animation phase -- an architectural mismatch, not a tunable constant or
+  a one-line reorder like climber's/faller's fixes. Closing it needs a persistent,
+  cross-state, real-valued percent clock on `Lemming` plus a generic leftover-budget
+  re-invocation dispatch touching every stepper's call site, not just digger's -- a
+  materially larger change than one bounded round. Resume only with that
+  architectural change explicitly scoped and budgeted as its own multi-round effort,
+  not another "disassembly plus one-line fix" attempt; the `+1`-at-the-call-site
+  hypothesis is already disproven, not just untried. Evidence:
+  [D2i round 1](docs/scratch/phase-d2i-skill-assign-digger.md),
+  [D2i repair 1](docs/scratch/phase-d2i-skill-assign-digger.md#round-2-repair-1-the-1-hypothesis-corrected-not-confirmed--no-fix-applied).
 - **D1 single-tick `facing`-label residual** (parked 2026-10-21 after D1h). Both named D1
   blockers (release timing, D1a-e; the left-turn tick, `0x0041C67E`, D1f — the line
   formerly here listing it as open is retired) are fixed and independently verified. One

@@ -193,6 +193,14 @@ add_executable(test_world src/__test__/test_world.cpp)
 target_link_libraries(test_world PRIVATE webolution_objects)
 add_test(NAME world COMMAND test_world)
 
+# D3a: the production retail-level loader (sim/RetailLevel.*). Writes
+# build/tmp/d3a-retail-level-setup/sweep.txt as a deliverable when
+# WEBOLUTION_GAME_DIR is set, so it needs the source tree as its working
+# directory, the same reason actoranim/actorcompose already set it.
+add_executable(test_retaillevel src/__test__/test_retaillevel.cpp)
+target_link_libraries(test_retaillevel PRIVATE webolution_objects)
+add_test(NAME retaillevel COMMAND test_retaillevel WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 add_executable(test_corpus src/__test__/test_corpus.cpp)
 target_link_libraries(test_corpus PRIVATE webolution_objects)
 add_test(NAME corpus COMMAND test_corpus)
@@ -205,6 +213,10 @@ add_executable(test_camerainput src/__test__/test_camerainput.cpp src/app/Camera
 target_include_directories(test_camerainput PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME camerainput COMMAND test_camerainput)
 
+add_executable(test_pick src/__test__/test_pick.cpp src/app/Pick.cpp)
+target_include_directories(test_pick PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME pick COMMAND test_pick)
+
 add_executable(test_collisiongrid src/__test__/test_collisiongrid.cpp)
 target_link_libraries(test_collisiongrid PRIVATE webolution_objects)
 # The live grid dumps sit in build/live_dump beside the tree, not in the game
@@ -216,6 +228,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

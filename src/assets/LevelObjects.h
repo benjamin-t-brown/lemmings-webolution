@@ -89,6 +89,16 @@ struct HatchRecord {
   int x = 0;      // u16 -> hatch+0x9A, unrolled column; becomes lemming+0x08
   int y = 0;      // u16 -> hatch+0x9C, world Y, Y-up; becomes lemming+0x10
   int type = 0;   // u32 -> hatch+0xB0, the lemming-type index
+  // The three tail u32s. READ, D1b (docs/scratch/phase-d1-release-trigger.md):
+  // `0x00425DE3` clamps `rate` into `[rateMin, rateMax]` and uses the result
+  // as a 1-based index into the 99-row `RELEASERATE.PC` table
+  // (`webo::ReleaseRates::secondsPerLemming`) to get this hatch's own
+  // seconds-per-lemming. MEASURED on the full retail corpus (D3a, round 1):
+  // of 144 hatch records across all 102 levels, 0 have `rate` outside their
+  // own `[rateMin, rateMax]` -- D1b's "this is unchecked" hypothesis holds.
+  int rate = 0;      // u32 -> hatch+0xA0, preferred RELEASERATE.PC row
+  int rateMin = 1;   // u32 -> hatch+0xA4, clamp lower bound
+  int rateMax = 99;  // u32 -> hatch+0xA8, clamp upper bound
   // The two Vec3 the base loader's tail reads into hatch+0x48 and +0x60: an
   // axis-aligned 8 x 5 box in unrolled space, z 0 and 1, on every record in
   // the corpus. Kept because they are what makes the record recognisable.

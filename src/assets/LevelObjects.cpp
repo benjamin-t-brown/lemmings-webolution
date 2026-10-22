@@ -302,11 +302,21 @@ std::vector<HatchRecord> findHatchRecords(std::span<const std::byte> d) {
     if (count < 1 || count > 200 || x >= 256 || y >= 256)
       continue;
 
+    // The three tail u32s (hatch+0xA0/+0xA4/+0xA8), right after the
+    // count/x/y u16 triple -- see HatchRecord's own comment and D1b
+    // (docs/scratch/phase-d1-release-trigger.md).
+    const std::uint32_t rate = u32At(d, p + kTailAt);
+    const std::uint32_t rateMin = u32At(d, p + kTailAt + 4);
+    const std::uint32_t rateMax = u32At(d, p + kTailAt + 8);
+
     HatchRecord h;
     h.count = count;
     h.x = x;
     h.y = y;
     h.type = static_cast<int>(type);
+    h.rate = static_cast<int>(rate);
+    h.rateMin = static_cast<int>(rateMin);
+    h.rateMax = static_cast<int>(rateMax);
     h.boxMin = {v[0], v[1], v[2]};
     h.boxMax = {v[3], v[4], v[5]};
     h.at = p + kTripleAt;

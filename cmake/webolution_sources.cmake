@@ -31,6 +31,7 @@ set(WEBOLUTION_SOURCES
   # sim -- the game itself, independent of rendering
   src/sim/Terrain.cpp
   src/sim/World.cpp
+  src/sim/RetailLevel.cpp
 
   # shell -- progress / unlock (no SDL)
   src/shell/Progress.cpp
@@ -47,6 +48,7 @@ set(WEBOLUTION_GFX_SOURCES
   # app -- the A4 presentation layer: camera, rasteriser, tube scene, entry point
   src/app/Camera.cpp
   src/app/CameraInput.cpp
+  src/app/Pick.cpp
   src/app/Raster.cpp
   src/app/ActorSprite.cpp
   src/app/ActorPose.cpp

@@ -4,12 +4,15 @@
 // build/tmp/d1a-release-walkout-trace/diff_trace.py).
 //
 // D1a (PLAN.md "Phase D -- reconnect the simulation", D1 release and
-// walk-out). Read-only use of the existing sim/assets API: this builds the
-// same LevelSetup src/__test__/test_world.cpp::testRetailSpawn already
-// builds for MM_CLIMB_002 (terrain from the stored collision grid, one
-// Entrance from the hatch's own stored words via webo::hatchSpawnCell), and
-// runs World::tick() for N ticks instead of one, printing one CSV row per
-// lemming per tick. src/sim/World.* and src/assets/** are not modified.
+// walk-out). D3a (round 1) rebuilt this tool's LevelSetup on the new
+// production loader, webo::sim::loadRetailLevelReport (sim/RetailLevel.h),
+// instead of hand-building the minimal entrance-only setup
+// src/__test__/test_world.cpp::testRetailSpawn also used to build. The CLI
+// is unchanged -- every argument here is still read and still applied on
+// top of the loader's own result, in the same order, so a caller cannot
+// tell the difference, and D3a's own round-note shows a byte-identical
+// re-run of D1g's exact invocation as the proof. src/sim/World.* is not
+// modified.
 //
 // A default-constructed Lemming spawned by World::spawn() starts
 // Facing::Right, State::Faller (World.h ~line 76-79) -- this tool never
@@ -49,9 +52,7 @@
 // the live capture uses (first-seen order in the actor list).
 
 #include "assets/Box.h"
-#include "assets/CollisionGrid.h"
-#include "assets/LevelIndex.h"
-#include "assets/LevelObjects.h"
+#include "sim/RetailLevel.h"
 #include "sim/World.h"
 
 #include <cstdlib>
@@ -110,52 +111,30 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  std::string file;
-  for (const auto& name : webo::levelFileNames(*lib))
-    if (name.find(levelName) != std::string::npos) {
-      file = name;
-      break;
-    }
-  if (file.empty()) {
-    std::cerr << "error: " << levelName << " is not in the archive\n";
+  // D3a (round 1): the production loader replaces this tool's own
+  // hand-built, entrance-only LevelSetup -- it now also carries the real
+  // exits/teleports/speed pads/levers/skills/totals the brief's D3 gate
+  // needs, none of which this tool used to set (every field it left
+  // default was LevelSetup's own default, matching World.h). The CLI below
+  // still overrides totalLemmings/releaseIntervalTicks/the real-seconds
+  // triple exactly as before, in the same order, so this tool's own output
+  // contract (and D1's byte-identical re-run of it) is unchanged.
+  auto report = webo::sim::loadRetailLevelReport(*lib, levelName);
+  if (!report) {
+    std::cerr << "error: " << report.error() << "\n";
     return 1;
   }
-
-  auto blob = lib->read(file);
-  if (!blob) {
-    std::cerr << "error: " << blob.error() << "\n";
-    return 1;
+  if (report->hatches.size() > 1) {
+    std::cerr << "warning: " << levelName << ": " << report->hatches.size()
+              << " hatch records; the loader used the first for release timing"
+                 " (this tool traces one hatch's spawns; see RetailLevel.h)\n";
   }
-
-  auto objs = webo::findLevelObjects(*blob);
-  auto grid = webo::findCollisionGrid(*blob);
-  if (!objs || !grid) {
-    std::cerr << "error: " << levelName << ": no objects or no grid\n";
-    return 1;
-  }
-  if (objs->hatches.empty()) {
-    std::cerr << "error: " << levelName << ": no hatch record\n";
-    return 1;
-  }
-  if (objs->hatches.size() > 1) {
-    std::cerr << "warning: " << levelName << ": " << objs->hatches.size()
-              << " hatch records; using the first (this brief's scope is"
-                 " MM_CLIMB_002, which has exactly one)\n";
-  }
-  const auto& h = objs->hatches.front();
+  const auto& h = report->hatches.front();
 
   using namespace webo::sim;
 
-  const auto [cx, cy] = webo::hatchSpawnCell(h, grid->width, grid->height);
-
-  LevelSetup setup;
-  setup.terrain = Terrain::fromCollisionGrid(*grid);
-  Entrance e;
-  e.x = cx;
-  e.y = cy;
-  e.source = Entrance::Source::HatchWords;
-  e.sheetType = h.type;
-  setup.entrances.push_back(e);
+  LevelSetup setup = std::move(report->setup);
+  const Entrance primaryEntrance = setup.entrances.front();
   setup.totalLemmings = totalLemmingsOverride >= 0 ? totalLemmingsOverride : h.count;
   setup.releaseIntervalTicks = releaseIntervalTicks;
   if (useRealSeconds) {
@@ -166,7 +145,7 @@ int main(int argc, char** argv) {
 
   std::cerr << std::format(
       "{}: hatch words x {} y {} count {} type {} -> cell ({}, {})\n", levelName, h.x,
-      h.y, h.count, h.type, cx, cy);
+      h.y, h.count, h.type, primaryEntrance.x, primaryEntrance.y);
   std::cerr << std::format(
       "totalLemmings {}  releaseIntervalTicks {}  ticks {}\n", setup.totalLemmings,
       setup.releaseIntervalTicks, ticks);

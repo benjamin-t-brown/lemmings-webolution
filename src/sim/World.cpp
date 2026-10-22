@@ -273,6 +273,25 @@ void World::stepFaller(Lemming& l) {
 
   const int v = l.verticalDir >= 0 ? 1 : -1;
   for (int i = 0; i < units; ++i) {
+    // d2h repair 1 (round 2): native (0x004160bd) writes this sub-unit's
+    // move back to lemming+0x10 (0x0041627f) strictly BEFORE calling the
+    // land/floater/splat check (0x0041632b -> 0x00416433), which re-reads
+    // the lemming's position fresh at its own entry (0x42f22e) -- so the
+    // check below tests the cell neighbouring the Y this sub-unit's OWN
+    // move already reached, not the Y before it. Moving first here (unlike
+    // the prior check-then-move shape) matches that: it lets the final
+    // sub-unit of a tick whose fall exactly reaches the ground see the
+    // ground as `l.y + v` using the just-updated `l.y`, instead of
+    // deferring that same-tick landing to the next call's first sub-unit.
+    // build/tmp/d2h-skill-assign-floater-repair1/disasm_confirmation.md has
+    // the full byte trace and the gap-to-ground invariant (established from
+    // stepWalker's own Faller-entry condition) that makes an unconditional
+    // move safe here -- a fall's gap-to-ground is never 1 at the start of
+    // any stepFaller call, so this can never walk a lemming INTO solid
+    // ground before its own post-move check gets a chance to catch it.
+    l.y += v;
+    ++l.fallDistance;
+
     // Round 14: 0x2f probes the ground cell every sub-step. Live paint of
     // 0x40 on MM_CLIMB_002 attached drown mid-fall when under=(col,floor)
     // before the walk land (`measure_water.py`). Ahead of trampoline/splat.
@@ -305,22 +324,24 @@ void World::stepFaller(Lemming& l) {
       l.fallDistance = 0;
       l.frame = 0;
       if (hasTrackedPhase) {
-        // D1n: the landing instant is `i * unitSeconds` into this call's
-        // own budget; everything after that was never fall time to begin
-        // with (the lemming was already standing on the ground) -- hand
-        // it to the walk stepper in the SAME tick instead of dropping it,
-        // which is the mechanism D1m's replay showed collapses the
+        // D1n: the landing instant is `(i + 1) * unitSeconds` into this
+        // call's own budget -- updated from `i * unitSeconds` as a direct,
+        // named consequence of the repair-1 reorder above: this sub-unit's
+        // OWN move (now counted before this check runs) is part of the
+        // consumed budget, so the (i+1)-th sub-unit, not the i-th, is what
+        // actually landed. Everything after that was never fall time to
+        // begin with (the lemming was already standing on the ground) --
+        // hand it to the walk stepper in the SAME tick instead of dropping
+        // it, which is the mechanism D1m's replay showed collapses the
         // landing-tick drift (docs/scratch/phase-d1-stepper-clock.md).
         // Gated on hasTrackedPhase (see above): only when this fall's own
         // budget already carries a real measured sub-tick offset.
-        const double leftover = budget - i * unitSeconds;
+        const double leftover = budget - (i + 1) * unitSeconds;
         l.stepBudgetSeconds = leftover - dt;
         stepWalker(l);
       }
       return;
     }
-    l.y += v;
-    ++l.fallDistance;
   }
   if (continuous)
     l.stepBudgetSeconds = budget - units * unitSeconds;  // cross-tick carry

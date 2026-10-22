@@ -572,6 +572,75 @@ void testClimbTopsOutSameTickAsHoistHandoff() {
                     firstHoistY));
 }
 
+// d2h repair 1 (round 2 of d2h-skill-assign-floater). READ:
+// build/tmp/d2h-skill-assign-floater-repair1/disasm_confirmation.md --
+// 0x004160bd's per-sub-unit move write-back (0x0041627f) runs strictly
+// before that same sub-unit's own call to the land check (0x0041632b ->
+// 0x00416433), whose 0x42f22e re-read observes the already-moved Y. So a
+// fall whose final tick needs its FULL sub-unit budget to reach the ground
+// (gap-to-ground == fallSpeed + 1 at that tick's start, here 5 == 4 + 1)
+// lands THAT SAME tick in the original, never leaving a Faller-labelled
+// sample at the resting Y. This is the same class of bug as
+// testClimbTopsOutSameTickAsHoistHandoff above, in the sibling stepper:
+// fails against the pre-fix check-then-move stepFaller (which uses this
+// tick's full budget to reach the resting Y, same as the fix, but needs a
+// SECOND, otherwise-idle tick to notice it has landed, since checking
+// before moving can only detect "gap == 1" with one look-ahead fewer than
+// moving first provides) and passes after the move-then-check reorder.
+// MEASURED live, D2h round 1: sim tick 11 and live tick 12 both read
+// (80, 22, 1); live was already `walker`, ours was still `faller`
+// (build/tmp/d2h-skill-assign-floater/live_trace.csv).
+void testFallLandsSameTickAsWalkHandoff() {
+  std::cout << "the fall hands off to walk on the same tick Y reaches the"
+               " ground, even when the landing move spends the tick's whole"
+               " sub-unit budget\n";
+  LevelSetup s;
+  s.terrain = Terrain(80, 60);
+  // Floor's top solid row is 40.
+  s.terrain.fillBox(0, 40, 80, 20, Material::Earth);
+  s.totalLemmings = 0;
+  s.saveTarget = 0;
+  World w(s);
+  Lemming faller;
+  faller.x = 40;
+  // gap-to-ground = 40 - 35 = 5 = fallSpeed(4) + 1: the exact boundary where
+  // a check-before-move loop needs a fifth look-ahead this tick's four
+  // sub-units do not have, but a move-then-check loop reaches and detects
+  // the landing using the very same four sub-units.
+  faller.y = 35;
+  faller.facing = Facing::Right;
+  faller.state = State::Faller;
+  faller.verticalDir = 1;
+  faller.fallDistance = 0;
+  w.place(faller);
+
+  w.tick();
+  const Lemming& l0 = w.lemmings()[0];
+  check(l0.state == State::Walker,
+        std::format("one tick is enough to both finish the fall and hand off "
+                    "to walk (state={})", stateName(l0.state)));
+  check(l0.y == 39,
+        std::format("it rests one cell above the floor's top solid row, 39 "
+                    "(got {})", l0.y));
+
+  // Across a longer run, no Faller-labelled sample should ever share the
+  // resting y with a Walker-labelled one -- same discipline as
+  // testClimbTopsOutSameTickAsHoistHandoff's climberSampledAtHoistY check.
+  World w2(s);
+  Lemming faller2 = faller;
+  w2.place(faller2);
+  bool fallerSampledAtRestY = false;
+  for (int i = 0; i < 10; ++i) {
+    w2.tick();
+    const Lemming& l = w2.lemmings()[0];
+    if (l.state == State::Faller && l.y == 39)
+      fallerSampledAtRestY = true;
+  }
+  check(!fallerSampledAtRestY,
+        "no Faller-labelled tick shares the walker's own resting y 39 "
+        "(a pre-fix stepper spends one extra tick there)");
+}
+
 // The float halving waits for the `umbopen` animation, so a floater keeps
 // falling at full speed for 480 ms after its umbrella opens.
 //
@@ -2523,6 +2592,7 @@ int main() {
   testWalkerStepsDownOneCell();
   testClimbWallColumnTopOutAndHoist();
   testClimbTopsOutSameTickAsHoistHandoff();
+  testFallLandsSameTickAsWalkHandoff();
   testFloatHalvingIsDelayed();
   testBlockerField();
   testBlockerTurnsWalkers();

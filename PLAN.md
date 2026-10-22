@@ -751,6 +751,18 @@ user's pending D1-gate-amendment decision (`docs/tasks.json`
 `standing_run.deferred_questions`) is for a future round or the user to weigh — not decided
 here.
 
+**Addendum from D2h (2026-10-22), cross-referenced not re-litigated**: a disassembly-
+confirmed move-then-check fix to `stepFaller` (found while investigating D2 part (b)'s
+floater skill, [check](docs/scratch/phase-d2h-skill-assign-floater.md)) was re-checked
+against D1a's/D1g's/D1j's/D1l's own saved captures and produced byte-for-byte identical
+traces to D1n's pre-fix baselines on all four — no measurable effect on the
+landing-tick-drift family this section's own gate-amendment question is about. The two
+mechanisms share a family (same-tick landing-handoff timing) but are not the same
+occurrence of it: the fix's trigger condition (gap-to-ground exactly `fallSpeed + 1` at
+a tick's start) does not occur for any of D1's own captured lemmings' drop heights. This
+rules out one specific, plausible-looking candidate explanation; it does not change
+D1n's own partial-improvement result or the pending decision below.
+
 ### D2. Click-to-assign
 
 **D2a: the pick rule read and ported, round 1** ([check](docs/scratch/phase-d2-pick-rule.md)):
@@ -912,6 +924,29 @@ on D1's own pending gate-amendment question (`standing_run.deferred_questions`) 
 reported here as a lead, not acted on; D1's gate stays exactly where the user left it.
 A disassembly-read repair round is queued, re-checking any fix against D1's own already-
 saved captures (no new live start) as well as this round's floater capture.
+
+**D2h repair 1: fixed with a byte-confirmed read; floater now 50/50; zero effect on D1,
+a clean negative** ([check](docs/scratch/phase-d2h-skill-assign-floater.md)): offline
+only, zero stock starts (one attempt was interrupted by a session rate limit mid-round,
+after the disassembly read but before any code change; a continuation worker completed
+it from the already-saved reads, nothing redone). Disassembly of `0x004160bd` (the fall
+stepper's outer per-sub-unit loop) and `0x00416433` (the land/floater/splat check it
+calls) shows the native moves each sub-unit's Y **before** calling the check, which
+reads the already-moved position — the same move-then-check architecture as climber's
+fix, nested inside a loop that runs up to `fallSpeed` (4) times per tick.
+`World.cpp`'s `stepFaller` is fixed to match (move unconditionally, every sub-unit,
+before the landing checks), with a checked invariant (not an assumption) showing the
+unconditional move can never walk a lemming through solid ground. Re-checked against
+D2h's own unmodified live capture: **50 of 50 ticks now match** (was 11/50).
+**Also re-checked, as scoped, against D1's own already-saved population captures
+(D1a/D1g/D1j/D1l, zero new live starts): all four regenerated traces are byte-for-byte
+identical to their pre-fix baselines** — this fix has no measurable effect on D1's
+landing-tick-drift family. The disassembly explains why: this fix's trigger condition
+(a fall's gap-to-ground exactly `fallSpeed + 1` at a tick's start) does not occur for
+any of the ten lemmings' actual drop heights in any of the four captures. This is a new,
+independently-confirmed data point for D1's own pending gate-amendment question (see
+Phase E below) — it does not resolve that question. Climber, blocker and floater are now
+full matches; digger remains the last untested D2(b) skill.
 
 ### D3. One retail level end to end
 

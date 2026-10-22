@@ -112,3 +112,99 @@ investigation, as a starting address). That round's scope explicitly includes
 re-checking the fix, if any, against D1's own already-saved captures (D1l/D1j/D1g — no
 new live start needed) to see whether it moves D1's gate, without deciding D1's pending
 gate-amendment question unilaterally.
+
+## Round 2 (repair 1): fixed, 50/50 on D2h; zero effect on D1 (interrupted once, then completed)
+
+[Repair 1 brief](../../build/tmp/d2h-skill-assign-floater-repair1-brief.md). Offline
+only; zero stock starts; the live game was never launched this round.
+
+**First attempt terminated mid-round** on a session rate limit after finishing the
+disassembly read (two dumps, `disasm_0x4160BD_full.txt` and
+`disasm_0x416433_land_check.txt`) but before writing any code. No `src/**` file was
+touched by that attempt. A continuation worker picked up from the saved dumps (verified,
+not re-disassembled) and completed the round.
+
+**Disassembly, confirmed with bytes**: the native fall stepper's outer per-sub-unit loop
+(`0x004160bd`) writes each sub-unit's move back to `lemming+0x10` at `0x0041627f`
+**strictly before** calling the land/floater/splat check (`0x0041632b: call 0x416433`),
+which re-reads the lemming's position fresh at its own entry (`0x00416459: call
+0x42f22e`) — so that check necessarily observes the already-moved Y. The trampoline-bit
+test inside it sits at exactly `0x00416560`, the same address `match-the-original.md`
+already cited from the unrelated bounce investigation. This is move-then-check, the same
+architecture as climber's already-fixed residual, but nested inside a loop that can run
+up to `fallSpeed` (4) sub-units per tick rather than once.
+
+**Fix**: `src/sim/World.cpp`'s `stepFaller` now moves (`l.y += v; ++l.fallDistance;`)
+unconditionally at the top of each sub-unit, before the water/solid/trampoline/splat
+checks — matching the native ordering. A safety invariant was checked, not assumed,
+before relying on an unconditional move: `stepWalker`'s own Faller-entry condition
+guarantees a fall's gap-to-ground is never less than 3 at its first `stepFaller` call,
+and a call that does not land leaves a gap of at least 2 going into the next call — so
+gap-to-ground is never 1 at the start of any call, meaning the unconditional move can
+never walk a lemming through solid ground before its own post-move check gets a chance
+to catch it. **Named consequence**: the existing D1n continuous-clock `leftover` formula
+changed from `budget - i*unitSeconds` to `budget - (i+1)*unitSeconds`, since the sub-unit
+that lands is now counted as consumed before the check runs.
+
+**New test** (`test_world.cpp`): `testFallLandsSameTickAsWalkHandoff`, same shape as
+D2f's `testClimbTopsOutSameTickAsHoistHandoff`. No existing test literal needed changing.
+
+**D2h's own residual: closed.** Re-run against round 1's unmodified `live_trace.csv`:
+**50 of 50 ticks now match** (was 11/50).
+
+**D1's landing-tick drift: unaffected — a clean negative, not softened.** `SimReleaseTrace.exe`
+rebuilt against the fix and rerun with D1n's own exact invocations for D1a and for
+D1g/D1j/D1l's shared argument shape: all four regenerated traces are **byte-for-byte
+identical** to D1n's own saved pre-fix baselines. Every named D1 residual family
+(landing-tick drift, spawn-tick drift, the facing label) is numerically unchanged. The
+disassembly explains why: this fix's trigger condition is a fall whose gap-to-ground at
+a tick's start is exactly `fallSpeed + 1` (5, for `fallSpeed=4`) — and that specific gap
+does not occur for any of the ten lemmings' actual drop heights on `MM_CLIMB_002` in any
+of the four saved captures. The two mechanisms (D1's population-wide landing-tick drift,
+and this floater residual) share a *family* (same-tick landing handoff timing) but are
+not the *same* occurrence of it — this round's own `prediction.md` named both outcomes
+("partially" vs. "not unaffected") as falsifiers in advance, and the data falsified
+"partially" in favor of "not unaffected."
+
+### Facilitator check (round 2)
+
+Independently re-ran `read_steppers.py` against both cited address ranges
+(`--at 0x004160BD --len 0x2b0`, `--at 0x00416433 --len 0x2c3`) directly against the
+installed exe: both raw dumps byte-identical to the saved files (produced by the first,
+interrupted attempt, before the rate limit — confirming they were accurate before the
+continuation worker ever read them). Walked the actual instruction bytes myself: `0041627f:
+fstp qword ptr [ecx+0x10]` (the Y write-back) precedes `0041632b: call 0x416433` in
+program order within the same loop body; `00416459: call 0x42f22e` is the land-check
+function's own first substantive call, confirming it reads position at its own entry
+(necessarily after the caller's write-back); `00416560: and edx, 0x1000` matches
+`match-the-original.md`'s existing citation exactly.
+
+Independent mutate-one-alone: restored `World.cpp` to the pre-fix content (`git show
+HEAD`, SHA-256 `99c288b8...`, the same hash D2f's own commit left behind), rebuilt
+`test_world.exe` alone: **345 checks, 2 failures** — the exact two predicted failures,
+reproduced exactly. Restored to the worker-delivered SHA-256 (`37b75c74...`), full
+rebuild, fresh `ctest --preset dev-debug`: **28/28**.
+
+Independently recompiled and relinked the D2h probe from scratch against the fixed
+object files, reran with round 1's exact seed: byte-identical to the round's own saved
+trace; independently reran `diff_assign_trace.py` against round 1's unmodified
+`live_trace.csv`: **50/50 exactly**, confirming the headline.
+
+Independently rebuilt `SimReleaseTrace.exe` and regenerated **two** of the four D1
+traces myself from scratch (D1a's own argument shape, and D1g's/D1j's/D1l's shared
+shape): both match the round's own saved post-fix traces exactly, and both are
+**byte-identical to D1n's own saved pre-fix baselines** — independently confirming the
+"zero effect" finding for the two distinct trace-generation paths this project uses (the
+other two captures, D1j and D1l, are documented, pre-existing byte-identical copies of
+D1g's own trace, not separately generated, so verifying D1g's generation path covers
+them too).
+
+No Lemmings/dgVoodoo process ran this round or during this check (zero stock starts, as
+authorized). `git status` shows exactly the two expected production files
+(`src/sim/World.cpp`, `src/__test__/test_world.cpp`) plus `docs/tasks.json`'s permitted
+fields. **Floater is accepted as a full 50/50 match.** The D1-relevant negative finding
+is recorded in `PLAN.md`'s Phase E and in `standing_run.deferred_questions`' evidence
+list as a new, independently-confirmed data point — it does not resolve D1's pending
+gate-amendment question, which remains the user's to decide. D2 part (b) now has three
+of four skills fully matching (climber, blocker, floater); digger is the last untested
+skill.

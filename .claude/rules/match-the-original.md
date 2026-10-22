@@ -124,7 +124,11 @@ A claim about the original needs an address and what was read there, a code refe
 
 ## Preserve quirks
 
-Keep behavior that looks wrong when the original does it. German menus, RETURN only when the highlight is exactly 0, a short ESC that fails to leave pause, and the drawn crosshair disagreeing with the tested cursor are all real. Do not smooth them out.
+Keep behavior that looks wrong when the original does it. RETURN only when the highlight is exactly 0, a short ESC that fails to leave pause, and the drawn crosshair disagreeing with the tested cursor are all real. Do not smooth them out.
+
+**Menu language is not a quirk** (user, 2026-10-22). German menus came from an early harness round that
+changed the language setting; the install's English `SavedGame.dat` is fine. Match whichever language the
+reference capture shows (English today), and do not reset the install's language.
 
 ## Validate against the original
 

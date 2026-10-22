@@ -815,6 +815,17 @@ explicitly out of this gate's scope: camera movement (zoom/rotation/elevation)
 on any level but `MM_CLIMB_002`, and whether `world_rows` is level-independent
 in general.
 
+## Frontend checkpoint: B1 boot-menu vtables observed
+
+[B1d](scratch/phase-b1-menu-vtable-live-read.md), one no-input stock boot, three identical
+screen-counter-3 reads: the active global `[0x5D59EC]` points to an object with vtable
+`0x4B1E88`, and the observed list head `[0x5D59E4]` has vtable `0x4B2528` (B1c ctor#15,
+one of its seven backdrop-sharing candidates). Getter bytes at `0x487F93` / `0x487FB3`
+and next-link offset +4 at `0x487BCA` were independently re-read. Do not repeat the
+seven-candidate identity search. This is not a traced draw routine, semantic proof of
+the list's role, or a B1 pixel-gate pass. The saved poll cannot distinguish an unreadable
+terminal next pointer from null; one observed node does not prove list cardinality.
+
 ## Hard-won rules of thumb
 
 **A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):
@@ -868,9 +879,10 @@ do not revive the waived initial-write audit or call passing arithmetic full qua
    derived from the field it tests passes at any value. Reverting a whole round at once
    proves only that *something* was tested.
 7. **A clean negative is a result.** So is "this does not appear in any reachable level".
-8. **Preserve quirks.** German menus, RETURN only when the menu highlight is exactly 0, a
+8. **Preserve quirks.** RETURN only when the menu highlight is exactly 0, a
    short ESC that fails to leave pause, the drawn crosshair disagreeing with the tested
-   cursor. All real. Do not smooth them out.
+   cursor. All real. Do not smooth them out. Menu language is not a quirk: the German
+   menus were an early harness side effect (user, 2026-10-22); the English install is fine.
 
 ## The data formats — solved
 

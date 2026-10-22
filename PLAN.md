@@ -413,8 +413,8 @@ end in 3D is the next visible result. Its milestones and gates are under Phase D
 
 ## Phase B — the frontend
 
-The original's own screens: backgrounds, buttons, fonts, `.LTX` localised text (the menus are
-German), the screen state machine, level select and the map. Preserve the quirks —
+The original's own screens: backgrounds, buttons, fonts, `.LTX` localised text (English in the
+reference install), the screen state machine, level select and the map. Preserve the quirks —
 **RETURN only when the menu highlight is exactly 0**, and a short ESC that fails to leave
 pause. Frontend screen ids read as `0x004C416C`: 3 menu, 4 confirm, 5 map — **B1's own recon
 corrected the reading of this global**: it is not a hand-picked enum, it is a monotonic
@@ -431,7 +431,7 @@ threshold is 0.02, the same as A1/A2/A7.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| B1 frontend assets and text | **in progress** | Background, button and font sprites and `.LTX` German strings load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
+| B1 frontend assets and text | **in progress** | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
 | B2 screen state machine | queued | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirks preserved: RETURN only at highlight 0, short ESC does not leave pause |
 | B3 level select and map | queued | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
@@ -454,9 +454,10 @@ German as this project's own preserved-quirk note describes. The shared install'
 `SavedGame.dat` (created 2026-10-12, written many times since across many live rounds) has
 no pristine baseline anywhere to compare against, so the cause (an earlier round's
 undocumented navigation, or genuine persisted stock behaviour) cannot be determined from
-this install alone. Recorded as a pending question for the user
-(`standing_run.pending_questions`), not decided unilaterally; other B1 work not blocked by
-language continues.
+this install alone. Initially recorded as a pending question rather than decided
+unilaterally. **Resolved by the user, 2026-10-22:** the German-menu quirk was a mistake
+from an early harness language change, not behaviour to preserve. The English reference
+is accepted; leave the install's language unchanged. B1's pixel metric is unchanged.
 
 **B1c: the frontend's construction factory traced; main-menu vtable narrowed, not
 confirmed** ([check](docs/scratch/phase-b1-draw-dispatch-trace.md)): a single 37-case
@@ -473,6 +474,17 @@ not isolated within budget. Font layout remains a clean negative (`_FONT.BMP`'s 
 not appear anywhere in the exe's own bytes). A cheap, live, no-input follow-up (read which
 content vtable is active at screen id 3) is queued next to settle the remaining
 uncertainty.
+
+**B1d: boot-menu vtables read live** ([check](docs/scratch/phase-b1-menu-vtable-live-read.md)):
+the interrupted worker's saved script/prediction were reused for one no-input stock
+start. Three identical counter-3 polls read active-object vtable `0x4B1E88` and an
+observed list-head vtable `0x4B2528` (B1c ctor#15), selecting one of the seven content
+candidates for that boot state. Facilitator independently checked the accessor bytes,
+raw-PE vtable entries, JSON consistency, install/save hashes and cleanup; 29/29 tests
+pass. Narrowed the worker's claimed null termination: the poll does not distinguish
+an unreadable terminal link from zero, so this establishes one observed node, not
+complete-list cardinality. Actual draw submission and font metrics remain unlocated;
+no menu render or B1 full-frame score exists yet.
 
 ## Phase C — the in-level HUD
 

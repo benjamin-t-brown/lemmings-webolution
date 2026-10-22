@@ -2,28 +2,36 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "b1d-menu-vtable-live-read",
-    "title": "B1d: live, no-input read of which content vtable is active at the main menu",
-    "status": "running",
-    "brief": "build/tmp/b1d-menu-vtable-live-read-brief.md",
-    "worker_tier": "targeted",
-    "harness": "Claude Code",
-    "requested_model": "session (no pin)",
-    "worker_agent": "round-agent",
-    "owns_live_game": true,
-    "live_owner": null,
-    "depends_on": [
-      "b1c-draw-dispatch-trace"
-    ],
-    "gate_served": "PLAN Phase B, B1 frontend assets and text (render half: confirming the menu vtable)",
-    "question_round_count": 1,
-    "stock_starts_authorized": 1,
-    "stock_starts_consumed": 0,
-    "dispatch_id": "claude-code background round-agent aa948e797d9d77dd0, no model override"
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "b1d-menu-vtable-live-read",
+      "title": "B1d: boot-menu active vtable 0x4B1E88 and observed list-node vtable 0x4B2528",
+      "status": "landed",
+      "brief": "build/tmp/b1d-menu-vtable-live-read-brief.md",
+      "continuation_brief": "build/tmp/b1d-menu-vtable-live-read-continuation-brief.md",
+      "worker_tier": "targeted",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna (high)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "b1c-draw-dispatch-trace"
+      ],
+      "gate_served": "PLAN Phase B, B1 frontend assets and text (render half: confirming the menu vtable)",
+      "question_round_count": 2,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "dispatch_id": "ses_e9ad7da41ffeqrumfySWhR0HGb",
+      "previous_dispatch_id": "claude-code background round-agent aa948e797d9d77dd0, no model override",
+      "continuation_note": "2026-10-22 user confirms prior worker terminated at a session limit BEFORE launching. Saved prediction.md and read_menu_vtables.py preserved and reused; original one unused stock start, no new allowance. Count is 2 dispatches including interrupted attempt per continuation cap; one stock process total. User also resolves language: German-menu quirk was a harness mistake, do not preserve/reset it.",
+      "worker_output": "build/tmp/b1d-menu-vtable-live-read/round-note.md",
+      "landed_in": "docs/scratch/phase-b1-menu-vtable-live-read.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-22: separate offline checker independently recomputed three identical counter-3 rows, active vtable 0x4B1E88 and observed head-node vtable 0x4B2528 (ctor#15), from raw live-read.json. Re-read all three complete accessors with read_steppers.py and independently pinned their operands with a raw-PE parser; separately decoded both eight-slot vtables from .rdata, all code pointers and shared slot 3=0x4886E4. No second live run: accepted one capture as brief allows. Narrowing: worker claimed null termination; offline mock demonstrates final next-read None and zero give identical output, so only one observed node, not complete-list cardinality, is accepted. Specific prediction guess ctor#5 was wrong; broad candidate/chrome structure supported. Independently rehashed exe/config/save against own pre-dispatch hashes and both worker snapshots, and compared save bytes to pre-run backup: exact matches. Saved script and prediction hashes match packet. Own process/task check empty; only reported install write was restored config swap. Fresh wrapper build no work + full CTest 29/29. No production behavioural change, so mutation gate not applicable beyond the offline limitation discriminator. Source/harness unchanged; unrelated pre-existing framework edits excluded from landing. Start consumed corrected to 1 (PID 36132)."
+    },
     {
       "id": "b1c-draw-dispatch-trace",
       "title": "B1c: trace the main menu vtable and its draw dispatch; locate font-layout format",
@@ -2405,10 +2413,11 @@
       "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-    "owner": "Claude Code facilitator session (2026-10-22 /facilitator invocation): handoff from d-playable-2, which stopped with both Phase D decisions pending. The user resolved both in the same message that signed off Phase B/C, so this session opens the next standing run directly rather than reporting a bare stop.",
-    "rounds_run": 5,
-    "stock_starts_used": 3,
-    "pending_questions": [
+    "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22): explicit user handoff after Claude Code B1d worker aa948e797d9d77dd0 hit its session limit before launching. No other game process or LemWeb task; resume saved script and prediction under the same budget.",
+    "rounds_run": 7,
+    "stock_starts_used": 4,
+    "pending_questions": [],
+    "resolved_questions": [
       {
         "question": "B1b captured a valid, structurally-confirmed 640x480 main-menu reference screengrab (screen id 3, highlight 0, both live-read at capture time) -- but its text is English, not German. match-the-original.md documents \"German menus\" as a preserved quirk, and goto_level.py's own docstring assumed German is the frontends default. The installs persisted SavedGame.dat (created 2026-10-12, modified many times since across many live rounds over multiple days) has no backup or pristine copy anywhere to compare against, so there is no way to determine, from this installs own state, whether English is a residue of some earlier rounds navigation (undocumented, not necessarily a guardrail breach since every individual rounds own before/after restore check has passed on its own terms) or whether the game simply remembers the last-selected language as real stock behaviour and this install happened to have English selected before this project ever touched it. Should a follow-up round spend its one live stock start explicitly navigating into \"Language Selection\" and selecting German (a deliberate, not-undone persisted change to the shared installs save data, on the reasoning that German is the documented correct default and resetting to it is a restoration rather than a new deviation) before capturing the real B1 reference image, or should English be accepted as this installs now-real persisted state and the German-menus quirk note be narrowed to \"the retail games own default,\" with B1s reference image captured in whatever language the install actually produces?",
         "options": [
@@ -2421,10 +2430,10 @@
           "docs/scratch/phase-b1-reference-screengrab.md",
           "docs/scratch/phase-b1-frontend-recon.md"
         ],
-        "resolution": null
+        "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22: landed b1c (static disassembly trace). Closed and corrected the recon's vtable gap (20/20 paired, one address removed), found the frontend's single 37-case construction factory, and confirmed a load-bearing negative: the screen-id counter (3/4/5) and the factory's own selector are independent numbering schemes -- the menu cannot be found by calling the factory with 3. Narrowed the main-menu vtable from 20 candidates to a 1-of-7 content set behind a shared chrome class, not fully resolved. Confirmed the step/input side of the interface stays inside the frontend's own address range, separate from the in-level draw chain, one level deep; did not isolate the specific draw call. Font-layout remains a clean negative. Facilitator independently re-derived the central negative finding and the vtable-slot claims from raw file bytes, from scratch, not by re-running the worker's own tooling. Next: dispatch a cheap, live, no-input round (b1d) to read which of the 7 content vtables is active via the 0x5d59e4 list at screen id 3, settling the menu-vtable question the static trace could not. The open language pending_question (b1b) remains separately unresolved and does not block this.",
+    "handoff": "2026-10-22 OpenCode: B1d landed after reusing saved script/prediction from terminated worker aa948e797d9d77dd0. One stock start (PID 36132), three identical counter-3 polls: active chrome vtable 0x4B1E88; observed content-list node 0x4B2528 (ctor#15). Independent accessor/vtable byte reads, JSON check, hashes/save-backup comparison, cleanup and full CTest 29/29 pass. Narrowed null-termination claim: one observed node, terminal None vs zero unrecorded. Two dispatches including interrupted attempt counted toward rounds_run/question cap; one start total. No active worker/live owner. B1 remains current and unpassed: next action is a bounded offline native draw-submission/layout bridge from the now-observed 0x4B2528 and chrome 0x4B1E88; font metrics and production menu render/score remain missing. Language resolved by user: English reference accepted, do not reset install. Unrelated pre-existing framework edits remain uncommitted and excluded from round landing.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

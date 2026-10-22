@@ -879,6 +879,15 @@ check's timing as post-move, correcting `old/docs/scratch/phase3-round10-stepper
 split in view. Climber is now a full match; D2 part (b) overall remains open (floater,
 blocker, digger untested).
 
+**D2g: one live blocker assignment, 50/50 ticks match on the first attempt**
+([check](docs/scratch/phase-d2g-skill-assign-blocker.md)): second of four D2(b) skills,
+reusing D2f's exact pattern. On `MM_BLOCK_001_A`, panel index 3, one live assignment
+holds the sampled lemming frozen at `(137, 14, 1, blocker)` for all 50 ticks, matching
+an offline `sim::World` seeded via `World::place()` + `assign(0, Skill::Blocker)`
+exactly, no repair needed. `tools/harness/measure_d2b_skill_trace.py` gained
+`--skill`/`--skill-name` options (purely additive; climber's prior default behaviour is
+unchanged). Blocker is a full match; floater and digger remain untested.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

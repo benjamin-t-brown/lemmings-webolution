@@ -179,7 +179,8 @@ def click_and_capture(h, inp, scr: int, skill: int, post_seconds: float,
 
 def run_live(level: str, post_seconds: float, post_ticks: int, hz: float,
              out_dir: Path, boot_wait: float = 10.0,
-             click_attempts: int = 4) -> int:
+             click_attempts: int = 4, skill: int = 0,
+             skill_name: str = "climber") -> int:
     if not D1.STOCK_EXE.exists():
         print(f"error: {D1.STOCK_EXE} not found", file=sys.stderr)
         return 1
@@ -265,24 +266,24 @@ def run_live(level: str, post_seconds: float, post_ticks: int, hz: float,
             inp.enable()
             try:
                 click_result = click_and_capture(
-                    h, inp, scr, skill=0, post_seconds=post_seconds, hz=hz,
+                    h, inp, scr, skill=skill, post_seconds=post_seconds, hz=hz,
                     click_attempts=click_attempts)
             finally:
                 inp.release()
 
         if not click_result.get("ok"):
-            failure = (f"climber assignment never landed in"
+            failure = (f"{skill_name} assignment never landed in"
                       f" {click_result.get('attempts')} attempts:"
                       f" {click_result.get('reason')}")
             return 3
 
         print(f"  assignment landed on {click_result['lemming']:#010x}"
-              f"  climber {click_result['climber_before']} ->"
+              f"  +0x48(climber) {click_result['climber_before']} ->"
               f" {click_result['climber_after_quick']} (quick) ->"
               f" {click_result['climber_after_final']} (after capture)"
-              f"  stock[0] {click_result['counts_before'][0]} ->"
-              f" {click_result['counts_after_quick'][0]} (quick) ->"
-              f" {click_result['counts_after_final'][0]} (after capture)",
+              f"  stock[{skill}] {click_result['counts_before'][skill]} ->"
+              f" {click_result['counts_after_quick'][skill]} (quick) ->"
+              f" {click_result['counts_after_final'][skill]} (after capture)",
               flush=True)
 
         after_state = ui_state(h)
@@ -324,7 +325,7 @@ def run_live(level: str, post_seconds: float, post_ticks: int, hz: float,
             out_dir, rows, order, first_seen, released_events, anchors,
             per_lemming_anchors, phase, spread, fallback, n_min, rel_resid,
             {
-                "level": level, "skill_index": 0, "skill_name": "climber",
+                "level": level, "skill_index": skill, "skill_name": skill_name,
                 "requested_post_seconds": post_seconds,
                 "requested_post_ticks": post_ticks, "hz": hz,
                 "ui_state_after_entry": state, "ui_state_after_capture": after_state,
@@ -401,9 +402,18 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run-live", action="store_true",
                     help="launch the stock game (ONE authorized start),"
-                         " enter --level, wait for lemmings, assign climber"
+                         " enter --level, wait for lemmings, assign --skill"
                          " once, sample 50+ ticks, write artifacts, tear down")
     ap.add_argument("--level", default="MM_CLIMB_002")
+    ap.add_argument("--skill", type=int, default=0, metavar="INDEX",
+                    help="panel index to select and assign (default 0,"
+                         " climber; e.g. 3 for blocker -- see"
+                         " assign_skill.PANEL_HINT)")
+    ap.add_argument("--skill-name", default="climber", metavar="NAME",
+                    help="human-readable name recorded in"
+                         " live_trace.meta.json's skill_name field; purely"
+                         " cosmetic/for-the-record, never used to pick the"
+                         " panel index (--skill is the only thing that does)")
     ap.add_argument("--post-seconds", type=float, default=14.0,
                     help="post-click capture window, real seconds"
                          " (default 14s: 10s/50 ticks the brief asks for,"
@@ -424,7 +434,8 @@ def main() -> int:
 
     return run_live(args.level, args.post_seconds, args.post_ticks, args.hz,
                     out_dir, boot_wait=args.boot_wait,
-                    click_attempts=args.click_attempts)
+                    click_attempts=args.click_attempts,
+                    skill=args.skill, skill_name=args.skill_name)
 
 
 if __name__ == "__main__":

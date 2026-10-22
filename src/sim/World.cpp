@@ -74,7 +74,7 @@ void World::place(Lemming lemming) {
   lemmings_.push_back(lemming);
 }
 
-void World::spawn() {
+void World::spawn(double budgetSeconds) {
   if (spawned_ >= setup_.totalLemmings || setup_.entrances.empty())
     return;
   const Entrance& e = setup_.entrances[nextEntrance_ % setup_.entrances.size()];
@@ -87,6 +87,19 @@ void World::spawn() {
   // Round 29: hatch+0xB0 -> [lemming+0x4c] at 0x0042E05F.
   l.sheetType = e.sheetType;
   l.facing = Facing::Right;
+  // D1n: under the opt-in continuous stepper clock, a lemming released
+  // partway through the tick that spawned it (continuous release model
+  // only -- the caller passes a reduced budgetSeconds in that case) should
+  // not get a full tick's worth of fall time before the next World::tick()
+  // call. budgetSeconds < 0.0 (every integer-release-model call, and every
+  // continuous-release call that happened to land exactly on a tick
+  // boundary) means "the full tick," matching the old unconditional
+  // behaviour.
+  if (setup_.continuousStepperClock) {
+    const double dt = tickDtSeconds();
+    const double budget = budgetSeconds >= 0.0 ? budgetSeconds : dt;
+    l.stepBudgetSeconds = budget - dt;
+  }
   lemmings_.push_back(l);
   ++spawned_;
 }
@@ -219,18 +232,47 @@ void World::stepFaller(Lemming& l) {
   if (floating)
     l.state = State::Floater;
 
-
-
-
+  // D1n: opt-in continuous sub-tick clock (LevelSetup::continuousStepperClock,
+  // docs/scratch/phase-d1-stepper-clock.md). Off (the default, `continuous`
+  // false below): `units` is exactly `speed` and `dt`/`unitSeconds`/`budget`
+  // are never read, so the loop runs byte-for-byte as it did before this
+  // round. On: `units` is how many whole fall cells this tick's own
+  // real-time budget (this tick's dt, plus whatever a prior call could not
+  // spend -- Lemming::stepBudgetSeconds) actually buys, and a landing
+  // mid-loop hands the unconsumed remainder of that budget to stepWalker()
+  // within the SAME tick instead of discarding it.
 
   const bool halved =
       floating && l.fallDistance >= rules_.floatAfter + floatOpenCells();
   const int speed = halved ? rules_.floatSpeed : rules_.fallSpeed;
 
-
+  const bool continuous = setup_.continuousStepperClock && speed > 0;
+  // D1n: whether this call already carries a REAL, measured sub-tick phase
+  // (traced back to a reduced spawn budget from the continuous release
+  // model, or a same-tick handoff from an earlier stepper this very tick --
+  // see Lemming::stepBudgetSeconds). A fall that has run only on whole,
+  // tick-aligned dt budgets so far (every ordinary mid-walk ledge fall,
+  // where nothing upstream ever set a fractional carry) reaches its OWN
+  // landing tick with `stepBudgetSeconds == 0.0` even though the loop below
+  // may stop partway through this tick's `speed` sub-units -- that
+  // leftover is an artifact of how this implementation happens to batch a
+  // whole tick's fall into `speed` equal-sized cell crossings, not a
+  // measured real-time quantity (nothing in D1m's reading establishes that
+  // the original's own per-frame dt is quantized to 1/fallSpeed of a
+  // 200ms tick), so it must NOT be handed to the walker -- only a call that
+  // is already carrying real phase may extend that same real phase forward.
+  const bool hasTrackedPhase = continuous && l.stepBudgetSeconds != 0.0;
+  const double dt = continuous ? tickDtSeconds() : 0.0;
+  const double unitSeconds = continuous ? dt / speed : 0.0;
+  const double budget = continuous ? dt + l.stepBudgetSeconds : 0.0;
+  const int units = continuous
+      ? std::clamp(static_cast<int>(std::floor(budget / unitSeconds + 1e-9)), 0, speed)
+      : speed;
+  if (continuous)
+    l.stepBudgetSeconds = 0.0;  // consumed; set again below if a transition needs to carry it
 
   const int v = l.verticalDir >= 0 ? 1 : -1;
-  for (int i = 0; i < speed; ++i) {
+  for (int i = 0; i < units; ++i) {
     // Round 14: 0x2f probes the ground cell every sub-step. Live paint of
     // 0x40 on MM_CLIMB_002 attached drown mid-fall when under=(col,floor)
     // before the walk land (`measure_water.py`). Ahead of trampoline/splat.
@@ -240,9 +282,6 @@ void World::stepFaller(Lemming& l) {
       return;
     }
     if (solidAt(l.x, l.y + v)) {
-
-
-
 
       if (setup_.terrain.trampoline(l.x, l.y + v)) {
         l.state = State::Bounce;
@@ -265,11 +304,26 @@ void World::stepFaller(Lemming& l) {
       l.state = State::Walker;
       l.fallDistance = 0;
       l.frame = 0;
+      if (hasTrackedPhase) {
+        // D1n: the landing instant is `i * unitSeconds` into this call's
+        // own budget; everything after that was never fall time to begin
+        // with (the lemming was already standing on the ground) -- hand
+        // it to the walk stepper in the SAME tick instead of dropping it,
+        // which is the mechanism D1m's replay showed collapses the
+        // landing-tick drift (docs/scratch/phase-d1-stepper-clock.md).
+        // Gated on hasTrackedPhase (see above): only when this fall's own
+        // budget already carries a real measured sub-tick offset.
+        const double leftover = budget - i * unitSeconds;
+        l.stepBudgetSeconds = leftover - dt;
+        stepWalker(l);
+      }
       return;
     }
     l.y += v;
     ++l.fallDistance;
   }
+  if (continuous)
+    l.stepBudgetSeconds = budget - units * unitSeconds;  // cross-tick carry
 }
 
 void World::stepBounce(Lemming& l) {
@@ -322,9 +376,20 @@ void World::stepWalker(Lemming& l) {
   // a recursive continuation already flipped.
   const bool wasLeft = l.facing == Facing::Left;
 
-
-
-
+  // D1n: opt-in continuous sub-tick clock -- see the matching comment in
+  // stepFaller. Off (the default, `continuous` false below): `units` is
+  // exactly `rules_.walkSpeed` and `dt`/`unitSeconds`/`budget` are never
+  // read, so the loop runs byte-for-byte as it did before this round.
+  const bool continuous = setup_.continuousStepperClock && rules_.walkSpeed > 0;
+  const double dt = continuous ? tickDtSeconds() : 0.0;
+  const double unitSeconds = continuous ? dt / rules_.walkSpeed : 0.0;
+  const double budget = continuous ? dt + l.stepBudgetSeconds : 0.0;
+  const int units = continuous
+      ? std::clamp(static_cast<int>(std::floor(budget / unitSeconds + 1e-9)), 0,
+                   rules_.walkSpeed)
+      : rules_.walkSpeed;
+  if (continuous)
+    l.stepBudgetSeconds = 0.0;  // consumed; set again below if a transition needs to carry it
   const int v = l.verticalDir >= 0 ? 1 : -1;
   const auto flipIfAntiGrav = [&] {
     if (!setup_.terrain.antiGrav(l.x, l.y + v))
@@ -337,7 +402,7 @@ void World::stepWalker(Lemming& l) {
   };
   if (flipIfAntiGrav())
     return;
-  for (int s = 0; s < rules_.walkSpeed; ++s) {
+  for (int s = 0; s < units; ++s) {
     const int nx = l.x + dir;
     const auto settleOnProbeColumn = [&] {
       if (l.facing == Facing::Right)
@@ -361,8 +426,16 @@ void World::stepWalker(Lemming& l) {
         // Right already consumed the tick moving onto the wall column via
         // settleOnProbeColumn() above, so it must NOT get this extra step
         // ("right-facing turns already match" -- do not add it there).
-        if (wasLeft)
+        if (wasLeft) {
+          // D1n: only when the recursive call actually happens -- the
+          // right-facing case above must stay byte-for-byte untouched, so
+          // the leftover-budget handoff lives inside this branch alone.
+          if (continuous) {
+            const double leftover = budget - s * unitSeconds;
+            l.stepBudgetSeconds = leftover - dt;
+          }
           stepWalker(l);
+        }
         return;
       }
       if (!solidAt(nx, l.y - rise * v))
@@ -382,8 +455,15 @@ void World::stepWalker(Lemming& l) {
       turn(l);
       // Same mechanism as the blocker-field turn above: only a walker that
       // was facing Left gets the same-tick continuation. D1f, round 6.
-      if (wasLeft)
+      if (wasLeft) {
+        // D1n: same leftover-budget handoff as the blocker-field turn
+        // above, same restriction to the wasLeft branch only.
+        if (continuous) {
+          const double leftover = budget - s * unitSeconds;
+          l.stepBudgetSeconds = leftover - dt;
+        }
         stepWalker(l);
+      }
       return;
     }
 
@@ -414,6 +494,8 @@ void World::stepWalker(Lemming& l) {
     l.fallDistance = 0;
     return;
   }
+  if (continuous)
+    l.stepBudgetSeconds = budget - units * unitSeconds;  // cross-tick carry
 }
 
 void World::stepClimber(Lemming& l) {
@@ -466,6 +548,9 @@ static bool bitesThisTick(int frame, int msPerTick, int cycleMs, int percent) {
 
 int World::msPerTick() const {
   return rules_.ticksPerSecond > 0 ? 1000 / rules_.ticksPerSecond : 200;
+}
+double World::tickDtSeconds() const {
+  return rules_.ticksPerSecond > 0 ? 1.0 / rules_.ticksPerSecond : 0.2;
 }
 void World::stepBuilder(Lemming& l) {
   if (!bitesThisTick(l.frame, msPerTick(), rules_.builderCycleMs,
@@ -773,9 +858,13 @@ void World::tick() {
   // alongside the untouched integer-tick model it extends. A LevelSetup that
   // leaves releaseIntervalSeconds at its default 0.0 runs the exact old
   // branch, byte-for-byte.
+  // D1n: the stepper clock's own dt is the same number the release model
+  // already computes below -- shared via tickDtSeconds() so both read the
+  // exact same value, per the brief's "Already settled" note.
+  const double dt = tickDtSeconds();
+
   if (!timedOut()) {
     if (setup_.releaseIntervalSeconds > 0.0) {
-      const double dt = rules_.ticksPerSecond > 0 ? 1.0 / rules_.ticksPerSecond : 0.2;
       releaseElapsedSeconds_ += dt;
       if (!releaseArmed_ && releaseElapsedSeconds_ >= setup_.releaseArmSeconds) {
         // Arm once, this tick: seed the countdown but do not also decrement
@@ -785,9 +874,18 @@ void World::tick() {
         releaseArmed_ = true;
         releaseCountdown_ = setup_.releaseFirstCountdownSeconds;
       } else if (releaseArmed_) {
+        // D1n: capture the countdown BEFORE the decrement -- if it crosses
+        // zero this tick, it crossed `countdownBefore` seconds into this
+        // tick's own dt window, not at the window's start, so only
+        // `dt - countdownBefore` of real time remains in this tick for the
+        // new lemming's first fall call (see World::spawn()).
+        const double countdownBefore = releaseCountdown_;
         releaseCountdown_ -= dt;
         if (releaseCountdown_ <= 0.0) {
-          spawn();
+          const double spawnBudget = setup_.continuousStepperClock
+                                          ? std::max(0.0, dt - countdownBefore)
+                                          : -1.0;
+          spawn(spawnBudget);
           // Rollover, not a reset: D1b measured the recurring interval added
           // back into whatever the countdown currently holds.
           releaseCountdown_ += setup_.releaseIntervalSeconds;

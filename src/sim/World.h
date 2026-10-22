@@ -118,6 +118,27 @@ struct Lemming {
   // docs/scratch/phase3-round29-splat-exempt.md.
   int sheetType = 0;
 
+  // Continuous sub-tick clock carry (phase D1n,
+  // docs/scratch/phase-d1-stepper-clock.md), only touched when
+  // LevelSetup::continuousStepperClock is true. It is the real-seconds
+  // adjustment to this lemming's NEXT call to stepFaller/stepWalker's own
+  // per-tick time budget (`dt + stepBudgetSeconds`): 0.0 means "just this
+  // tick's own dt" (every lemming's steady state, and the only value this
+  // field ever takes when the opt-in is off). World::spawn() sets a
+  // negative value when a lemming is released partway through the tick
+  // that spawned it (continuous release model only), so its first fall
+  // call gets less than a full tick. A stepper sets a negative value
+  // itself, immediately before handing the unconsumed remainder of ITS OWN
+  // budget to the next state's stepper within the SAME World::tick() call
+  // (a landing faller handing its leftover to the walker it becomes; a
+  // walker's own already-existing same-tick turn continuation handing its
+  // leftover to its own recursive call) -- so that call's own
+  // `dt + stepBudgetSeconds` resolves to the leftover, not a fresh dt. A
+  // non-negative value otherwise carries an unconverted fractional
+  // remainder forward into the next tick. See World::stepFaller/
+  // stepWalker.
+  double stepBudgetSeconds = 0.0;
+
   bool alive() const { return state != State::Exited && state != State::Dead; }
   bool active() const { return alive() && state != State::Splatter; }
 };
@@ -343,6 +364,28 @@ struct LevelSetup {
   double releaseArmSeconds = 0.0;             // DERIVED, MM_CLIMB_002 only
   double releaseFirstCountdownSeconds = 0.0;  // READ: the fixed seed is 1.3
   double releaseIntervalSeconds = 0.0;        // READ: RELEASERATE.PC row, seconds
+
+  // Additive, optional continuous sub-tick clock for the fall/walk steppers
+  // (phase D1n, docs/scratch/phase-d1-stepper-clock.md). D1m found the
+  // original's walk/fall motion is driven by a real per-frame dt that the
+  // walk stepper itself keeps as a mutable, re-checked, byref budget -- not
+  // a fixed 0.2s step -- and that a zero-fitted-parameter continuous replay
+  // (release at the real instant, fall at 20.0 u/s, land, walk at 5.0 u/s,
+  // sampled onto the SAME 200ms tick grid the harness already computes)
+  // collapsed the landing-tick-drift mismatch count 76-100% against three
+  // saved live captures (build/tmp/d1m-stepper-clock/replay.py). This flag
+  // is a separate opt-in from releaseIntervalSeconds above -- the two
+  // accumulators are not conflated, per D1n's brief -- following D1e's own
+  // additive shape exactly: `false` (every existing hand-built LevelSetup)
+  // runs the exact old stepFaller/stepWalker fixed-count-per-tick loops,
+  // byte-for-byte; `true` lets a lemming's own real-time tick budget (this
+  // tick's own dt, plus any leftover real seconds a prior call could not
+  // spend on a whole lattice unit -- see Lemming::stepBudgetSeconds) carry
+  // across a state transition within the SAME World::tick() call, instead
+  // of discarding it the way the old fixed-count loop does when it lands
+  // or turns before using up its whole per-tick count.
+  bool continuousStepperClock = false;
+
   int timeLimitTicks = 0;         // 0 = untimed
   // Remaining skill-panel counts, indexed like Skill. -1 means unlimited
   // (hand-built test levels). Retail .LVL loads fill these from the trailer.
@@ -1038,7 +1081,11 @@ public:
 
 private:
   void cue(SoundCue c);
-  void spawn();
+  // D1n: optional real-seconds budget for the new lemming's first fall
+  // call, under the opt-in continuous stepper clock -- see
+  // Lemming::stepBudgetSeconds. -1.0 (every existing call site) means "a
+  // full tick's dt," the old behaviour.
+  void spawn(double budgetSeconds = -1.0);
   void step(Lemming& l);
   void stepFaller(Lemming& l);
   void stepBounce(Lemming& l);
@@ -1055,6 +1102,10 @@ private:
   // Milliseconds in one step, from the measured 5 Hz tick. The skills' cycles
   // are in milliseconds because they are not whole ticks (see Rules).
   int msPerTick() const;
+  // The same tick length in real seconds (D1n). Shared by World::tick()'s
+  // own release-model dt and by stepFaller/stepWalker's opt-in continuous
+  // clock, so both read the exact same number.
+  double tickDtSeconds() const;
   // How far a floater still falls at `fallSpeed` after its umbrella opens:
   // `floatOpenMs` of `umbopen` animation. See Rules::floatOpenMs.
   int floatOpenCells() const;

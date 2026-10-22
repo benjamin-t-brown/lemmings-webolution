@@ -137,6 +137,113 @@ void testFallAndWalk() {
   check(l.x > 100, "it walks in its facing direction");
 }
 
+// D1n: the opt-in continuous sub-tick stepper clock
+// (docs/scratch/phase-d1-stepper-clock.md), additive alongside the untouched
+// fixed-count-per-tick stepFaller/stepWalker loops every other test in this
+// file exercises (LevelSetup::continuousStepperClock defaults to false).
+//
+// Two properties pinned here:
+//  1. Turning the opt-in on WITHOUT ever giving a lemming a reduced,
+//     fractional spawn budget (i.e. the continuous release model stays off,
+//     its own 0.0 default) must change nothing: World::stepFaller's
+//     hasTrackedPhase guard exists precisely so that reusing the existing
+//     whole-cell fall loop as a time budget never invents a same-tick
+//     land -> walk handoff out of a fall that has only ever run on whole,
+//     tick-aligned dt budgets (see World.cpp's own comment on why that
+//     would be a modelling artifact, not a measured quantity). The full
+//     per-tick (x, y, facing, state) trajectory must be byte-for-byte
+//     identical to the flag off.
+//  2. A continuous release model engineered to cross zero partway through
+//     its own tick (not at a tick boundary -- see World::tick()'s
+//     `countdownBefore` comment) gives the newly spawned lemming a real,
+//     fractional first-fall budget, and that visibly changes how many
+//     ticks after spawning it reaches State::Walker, relative to an
+//     otherwise-identical run that spawns on the very same tick but never
+//     carries that fractional budget (continuousStepperClock off) --
+//     proving the mechanism is not a no-op once real phase exists.
+void testContinuousStepperClock() {
+  std::cout << "continuous sub-tick stepper clock (D1n)\n";
+
+  using Row = std::tuple<int, int, int, State>;
+  auto trajectory = [](const LevelSetup& s, int ticks) {
+    World w(s);
+    std::vector<Row> rows;
+    for (int i = 0; i < ticks; ++i) {
+      w.tick();
+      if (w.lemmings().empty()) {
+        rows.push_back({0, 0, 0, State::Dead});  // "no lemming yet" sentinel
+        continue;
+      }
+      const Lemming& l = w.lemmings()[0];
+      rows.push_back({l.x, l.y, static_cast<int>(l.facing), l.state});
+    }
+    return rows;
+  };
+  auto ticksToWalk = [](const std::vector<Row>& rows) {
+    for (std::size_t i = 0; i < rows.size(); ++i)
+      if (std::get<3>(rows[i]) == State::Walker)
+        return static_cast<int>(i) + 1;
+    return -1;
+  };
+  auto spawnTick = [](const std::vector<Row>& rows) {
+    for (std::size_t i = 0; i < rows.size(); ++i)
+      if (std::get<3>(rows[i]) != State::Dead)
+        return static_cast<int>(i) + 1;
+    return -1;
+  };
+
+  // (1) inert without a continuous release model.
+  {
+    LevelSetup off = flatLevel();
+    LevelSetup on = off;
+    on.continuousStepperClock = true;
+    const auto rowsOff = trajectory(off, 40);
+    const auto rowsOn = trajectory(on, 40);
+    check(rowsOff == rowsOn,
+          "continuousStepperClock changes nothing without a continuous "
+          "release model (no lemming ever carries a fractional budget)");
+  }
+
+  // (2) a genuinely fractional spawn budget changes the landing tick,
+  // holding the spawn tick itself fixed (both runs use the SAME continuous
+  // release constants, so both spawn on the same tick; only
+  // continuousStepperClock differs).
+  {
+    LevelSetup s = flatLevel();
+    s.releaseArmSeconds = 0.0;
+    // Crosses zero mid-tick, not at a tick boundary: 0.17s of this 0.2s
+    // tick elapses before the countdown goes negative (World::tick()'s own
+    // countdownBefore), leaving a genuine fractional 0.03s first-fall
+    // budget -- not a whole multiple of the 0.05s-per-cell fall unit
+    // (Rules::fallSpeed = 4 cells per 0.2s tick).
+    s.releaseFirstCountdownSeconds = 0.17;
+    s.releaseIntervalSeconds = 10.0;  // only the first release matters here
+
+    LevelSetup frac = s;
+    frac.continuousStepperClock = true;
+    LevelSetup control = s;  // same spawn tick, no fractional-budget effect
+
+    const auto rowsFrac = trajectory(frac, 40);
+    const auto rowsControl = trajectory(control, 40);
+
+    const int fracSpawn = spawnTick(rowsFrac);
+    const int controlSpawn = spawnTick(rowsControl);
+    check(fracSpawn > 0 && fracSpawn == controlSpawn,
+          std::format("both runs spawn on the same tick ({} vs {}) -- the "
+                      "continuous release constants are shared",
+                      fracSpawn, controlSpawn));
+
+    const int fracLand = ticksToWalk(rowsFrac);
+    const int controlLand = ticksToWalk(rowsControl);
+    check(fracLand > 0 && controlLand > 0, "both runs land within the window");
+    check(fracLand != controlLand,
+          std::format("a genuinely fractional first-fall budget changes the "
+                      "landing tick (frac {} vs control {}) even though both "
+                      "spawned on tick {}",
+                      fracLand, controlLand, fracSpawn));
+  }
+}
+
 void testSplat() {
   std::cout << "splatting\n";
   LevelSetup s = flatLevel(99);   // floor at the very bottom
@@ -2342,6 +2449,7 @@ void testSoundCues() {
 
 int main() {
   testFallAndWalk();
+  testContinuousStepperClock();
   testSplat();
   testFloater();
   testWallTurn();

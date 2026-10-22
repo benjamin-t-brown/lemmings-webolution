@@ -41,6 +41,14 @@
 // read by LevelSetup) even when this flag is given, since it is otherwise
 // unused by the new model and the old CLI shape is not being redesigned.
 //
+// D1n extension: an independent, optional "--continuous-stepper-clock"
+// switch (no argument, may appear anywhere after the required four
+// positionals, in any order relative to "--real-seconds") sets
+// LevelSetup::continuousStepperClock, the opt-in fall/walk sub-tick clock
+// (docs/scratch/phase-d1-stepper-clock.md). Omitting it, as every call site
+// predating this round does, leaves World's fixed-count-per-tick
+// stepFaller/stepWalker loops untouched.
+//
 // Output (stdout) is a CSV with a header row:
 //   tick,lemming_index,x,y,facing,state,spawned,saved,dead
 // tick 0 is the initial state, before any World::tick() call -- always no
@@ -60,13 +68,15 @@
 #include <format>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace {
 
 int usage() {
   std::cerr << "usage: SimReleaseTrace <game-dir> <level> <ticks> "
                "<releaseIntervalTicks> [totalLemmings] "
-               "[--real-seconds <armSeconds> <firstCountdownSeconds> <intervalSeconds>]\n";
+               "[--real-seconds <armSeconds> <firstCountdownSeconds> <intervalSeconds>] "
+               "[--continuous-stepper-clock]\n";
   return 2;
 }
 
@@ -84,18 +94,30 @@ int main(int argc, char** argv) {
   int totalLemmingsOverride = -1;
   double realSecondsArm = 0.0, realSecondsFirst = 0.0, realSecondsInterval = 0.0;
   bool useRealSeconds = false;
+  bool useContinuousStepperClock = false;
 
-  int argi = 5;
-  if (argi < argc && std::string(argv[argi]) != "--real-seconds") {
-    totalLemmingsOverride = std::atoi(argv[argi]);
+  // D1n: pull "--continuous-stepper-clock" out of the tail first, wherever
+  // it appears, so the rest of the (unchanged) positional/"--real-seconds"
+  // parsing below sees exactly the argument shape it always has.
+  std::vector<std::string> tail;
+  for (int i = 5; i < argc; ++i) {
+    if (std::string(argv[i]) == "--continuous-stepper-clock")
+      useContinuousStepperClock = true;
+    else
+      tail.push_back(argv[i]);
+  }
+
+  std::size_t argi = 0;
+  if (argi < tail.size() && tail[argi] != "--real-seconds") {
+    totalLemmingsOverride = std::atoi(tail[argi].c_str());
     ++argi;
   }
-  if (argi < argc && std::string(argv[argi]) == "--real-seconds") {
-    if (argi + 3 >= argc)
+  if (argi < tail.size() && tail[argi] == "--real-seconds") {
+    if (argi + 3 >= tail.size())
       return usage();
-    realSecondsArm = std::atof(argv[argi + 1]);
-    realSecondsFirst = std::atof(argv[argi + 2]);
-    realSecondsInterval = std::atof(argv[argi + 3]);
+    realSecondsArm = std::atof(tail[argi + 1].c_str());
+    realSecondsFirst = std::atof(tail[argi + 2].c_str());
+    realSecondsInterval = std::atof(tail[argi + 3].c_str());
     useRealSeconds = true;
     argi += 4;
   }
@@ -142,6 +164,7 @@ int main(int argc, char** argv) {
     setup.releaseFirstCountdownSeconds = realSecondsFirst;
     setup.releaseIntervalSeconds = realSecondsInterval;
   }
+  setup.continuousStepperClock = useContinuousStepperClock;
 
   std::cerr << std::format(
       "{}: hatch words x {} y {} count {} type {} -> cell ({}, {})\n", levelName, h.x,
@@ -154,6 +177,10 @@ int main(int argc, char** argv) {
         "real-seconds model: armSeconds {}  firstCountdownSeconds {}  intervalSeconds {}\n",
         setup.releaseArmSeconds, setup.releaseFirstCountdownSeconds,
         setup.releaseIntervalSeconds);
+  }
+  if (useContinuousStepperClock) {
+    std::cerr << "D1n: continuous sub-tick stepper clock ON "
+                 "(LevelSetup::continuousStepperClock)\n";
   }
 
   World w(setup);

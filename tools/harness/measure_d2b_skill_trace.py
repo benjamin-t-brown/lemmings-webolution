@@ -93,13 +93,29 @@ def install_hashes() -> dict:
 
 def click_and_capture(h, inp, scr: int, skill: int, post_seconds: float,
                        hz: float, click_attempts: int = 4,
-                       verbose: bool = True):
+                       verbose: bool = True, attr_name: str = "climber"):
     """Select, aim, click once, then sample continuously from the click.
 
     Returns a dict with the click bookkeeping plus whatever `D1.capture`
     returned, so the caller can run the same alignment/output functions D1a
     uses. Only the FIRST landed click is sampled -- this round assigns one
     climber, once, per the brief.
+
+    `attr_name` (D2h): D2f/D2g's own `landed` check only ever looked at
+    `A.read_lem(...)["climber"]` (the byte at `+0x48`), which is correct for
+    climber and harmless for blocker (blocker's landing was always decided
+    by the stock-count branch of the `or`, since +0x48 never moves for a
+    state-based skill) but would silently never exercise the attribute-byte
+    half of the check for floater, whose own landed attribute is `+0x49`
+    (`A.read_lem`'s `"floater"` key -- see `old/docs/scratch/
+    phase3-assign-skill.md`'s Observation 5 and this brief's own cited
+    quirk). `attr_name="climber"` (the default) reproduces D2f/D2g's exact
+    prior behaviour byte for byte; passing `"floater"` generalizes the SAME
+    already-read dict key rather than adding a new memory read. Both the
+    `climber`/`floater` keys are still captured unconditionally in `out`
+    below regardless of `attr_name`, so nothing about this change narrows
+    what gets recorded -- it only widens which key the pass/fail `landed`
+    decision itself is allowed to look at.
     """
     out = dict(ok=False, reason="", lemming=0, attempts=0)
     if A.selected(h) != skill and not A.select_skill(h, inp, skill):
@@ -138,13 +154,13 @@ def click_and_capture(h, inp, scr: int, skill: int, post_seconds: float,
         counts_after = A.counts(h)
         landed = bool(
             after_quick and before and
-            (after_quick["climber"] != before["climber"] or
+            (after_quick[attr_name] != before[attr_name] or
              (counts_before and counts_after and
               counts_after[skill] == counts_before[skill] - 1)))
         if verbose:
-            print(f"  attempt {n}: {target:#010x} climber"
-                  f" {before['climber'] if before else '?'} ->"
-                  f" {after_quick['climber'] if after_quick else '?'}"
+            print(f"  attempt {n}: {target:#010x} {attr_name}"
+                  f" {before[attr_name] if before else '?'} ->"
+                  f" {after_quick[attr_name] if after_quick else '?'}"
                   f"  stock[{skill}] {counts_before[skill] if counts_before else '?'}"
                   f" -> {counts_after[skill] if counts_after else '?'}"
                   f"  landed={landed}", flush=True)
@@ -152,11 +168,19 @@ def click_and_capture(h, inp, scr: int, skill: int, post_seconds: float,
             out["reason"] = "clicked on a hovered lemming, no attribute/stock change seen"
             continue
 
-        out.update(ok=True, lemming=target, reason="climber attribute or stock moved",
+        out.update(ok=True, lemming=target,
+                   reason=f"{attr_name} attribute or stock moved",
                    state_before=sb[1], t_click=t_click,
                    counts_before=counts_before, counts_after_quick=counts_after,
+                   attr_name=attr_name,
+                   # Both attribute bytes are recorded unconditionally -- see
+                   # the docstring above -- so a floater round still reports
+                   # the (always-0) climber byte too, and vice versa, rather
+                   # than silently dropping the key an older reader expects.
                    climber_before=before["climber"] if before else None,
                    climber_after_quick=after_quick["climber"] if after_quick else None,
+                   floater_before=before["floater"] if before else None,
+                   floater_after_quick=after_quick["floater"] if after_quick else None,
                    x_before=before["x"] if before else None,
                    y_before=before["y"] if before else None)
         if verbose:
@@ -169,7 +193,8 @@ def click_and_capture(h, inp, scr: int, skill: int, post_seconds: float,
         counts_final = A.counts(h)
         after_final = A.read_lem(h, target)
         out.update(counts_after_final=counts_final,
-                   climber_after_final=after_final["climber"] if after_final else None)
+                   climber_after_final=after_final["climber"] if after_final else None,
+                   floater_after_final=after_final["floater"] if after_final else None)
         return out
     return out
 
@@ -180,7 +205,7 @@ def click_and_capture(h, inp, scr: int, skill: int, post_seconds: float,
 def run_live(level: str, post_seconds: float, post_ticks: int, hz: float,
              out_dir: Path, boot_wait: float = 10.0,
              click_attempts: int = 4, skill: int = 0,
-             skill_name: str = "climber") -> int:
+             skill_name: str = "climber", attr_name: str = "climber") -> int:
     if not D1.STOCK_EXE.exists():
         print(f"error: {D1.STOCK_EXE} not found", file=sys.stderr)
         return 1
@@ -267,7 +292,7 @@ def run_live(level: str, post_seconds: float, post_ticks: int, hz: float,
             try:
                 click_result = click_and_capture(
                     h, inp, scr, skill=skill, post_seconds=post_seconds, hz=hz,
-                    click_attempts=click_attempts)
+                    click_attempts=click_attempts, attr_name=attr_name)
             finally:
                 inp.release()
 
@@ -277,10 +302,20 @@ def run_live(level: str, post_seconds: float, post_ticks: int, hz: float,
                       f" {click_result.get('reason')}")
             return 3
 
+        # Both attribute bytes are printed unconditionally (D2h) -- +0x48
+        # (climber) and +0x49 (floater) -- regardless of which one
+        # `attr_name` used to decide `landed` above, so this line stays
+        # informative (not misleading) whichever skill is being assigned:
+        # for climber, +0x49 correctly reads 0 -> 0 -> 0; for floater,
+        # +0x48 correctly reads 0 -> 0 -> 0 and +0x49 is the one that moves.
         print(f"  assignment landed on {click_result['lemming']:#010x}"
+              f"  (landed-check attribute: {attr_name})"
               f"  +0x48(climber) {click_result['climber_before']} ->"
               f" {click_result['climber_after_quick']} (quick) ->"
               f" {click_result['climber_after_final']} (after capture)"
+              f"  +0x49(floater) {click_result['floater_before']} ->"
+              f" {click_result['floater_after_quick']} (quick) ->"
+              f" {click_result['floater_after_final']} (after capture)"
               f"  stock[{skill}] {click_result['counts_before'][skill]} ->"
               f" {click_result['counts_after_quick'][skill]} (quick) ->"
               f" {click_result['counts_after_final'][skill]} (after capture)",
@@ -345,6 +380,16 @@ def run_live(level: str, post_seconds: float, post_ticks: int, hz: float,
                 "climber_byte_before": click_result["climber_before"],
                 "climber_byte_after_quick": click_result["climber_after_quick"],
                 "climber_byte_after_capture": click_result["climber_after_final"],
+                # D2h: the floater attribute byte (+0x49), recorded
+                # unconditionally alongside climber's (+0x48) regardless of
+                # which skill this run assigned -- see click_and_capture's
+                # own docstring. For this round's floater assignment this is
+                # the acceptance-criterion byte; for a climber/blocker rerun
+                # it is expected to read 0/0/0 throughout.
+                "floater_byte_before": click_result["floater_before"],
+                "floater_byte_after_quick": click_result["floater_after_quick"],
+                "floater_byte_after_capture": click_result["floater_after_final"],
+                "landed_check_attr_name": attr_name,
                 "x_before_click": click_result["x_before"],
                 "y_before_click": click_result["y_before"],
                 "assigned_lemming_own_phase_seconds_diagnostic": t_phase,
@@ -414,6 +459,18 @@ def main() -> int:
                          " live_trace.meta.json's skill_name field; purely"
                          " cosmetic/for-the-record, never used to pick the"
                          " panel index (--skill is the only thing that does)")
+    ap.add_argument("--attr-name", default="climber", choices=["climber", "floater"],
+                    metavar="NAME",
+                    help="D2h: which permanent-attribute byte in"
+                         " assign_skill.read_lem's dict the landed-check"
+                         " uses as its independent (non-stock-count) signal"
+                         " -- 'climber' (+0x48, the default, reproduces"
+                         " D2f/D2g's exact prior behaviour) or 'floater'"
+                         " (+0x49, for this round's assignment). Both bytes"
+                         " are always recorded in the output regardless of"
+                         " this choice; this only selects which one the"
+                         " pass/fail decision inside click_and_capture may"
+                         " look at.")
     ap.add_argument("--post-seconds", type=float, default=14.0,
                     help="post-click capture window, real seconds"
                          " (default 14s: 10s/50 ticks the brief asks for,"
@@ -435,7 +492,8 @@ def main() -> int:
     return run_live(args.level, args.post_seconds, args.post_ticks, args.hz,
                     out_dir, boot_wait=args.boot_wait,
                     click_attempts=args.click_attempts,
-                    skill=args.skill, skill_name=args.skill_name)
+                    skill=args.skill, skill_name=args.skill_name,
+                    attr_name=args.attr_name)
 
 
 if __name__ == "__main__":

@@ -888,6 +888,31 @@ exactly, no repair needed. `tools/harness/measure_d2b_skill_trace.py` gained
 `--skill`/`--skill-name` options (purely additive; climber's prior default behaviour is
 unchanged). Blocker is a full match; floater and digger remain untested.
 
+**D2h: one live floater assignment, 11/50 ticks match -- a second landing-tick-drift
+instance, flagged to D1** ([check](docs/scratch/phase-d2h-skill-assign-floater.md)):
+fourth D2(b) skill. Live-reconfirms the already-known parasol quirk (the original never
+makes floater a `state` change, only a permanent attribute flip at `[lemming+0x49]`;
+our sim already models this the same way). The sampled lemming's two falls (8 cells
+each) never reached `floatAfter`, so `State::Floater` itself was not exercised, but
+every tick's X/Y/facing/state was still compared. **11 of 50 ticks match**; the
+residual is `stepFaller` labelling `faller` for one tick after actually reaching the
+landing cell, the same shape of bug D2f's repair 1 found and fixed in `stepClimber` --
+but here in a sibling stepper, not yet confirmed against the original's bytes.
+Independently ruled out (confirmed twice, including by the facilitator): this is not
+the already-known D1n continuous-clock gap, since a directly-placed lemming never
+carries a tracked sub-tick phase.
+
+**Flagged, not decided: this residual looks like the same mechanism as D1's own
+"landing-tick drift"** ([D1l](docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md),
+[D1n](docs/scratch/phase-d1-continuous-stepper-clock.md)) -- the fall-to-walker
+transition D1l found drifting on 10/10 lemmings population-wide, which D1n's
+continuous-clock fix shrank but did not close. If a native-bytes-confirmed reorder (the
+same technique that fully closed climber's residual) also closes this one, it may bear
+on D1's own pending gate-amendment question (`standing_run.deferred_questions`) --
+reported here as a lead, not acted on; D1's gate stays exactly where the user left it.
+A disassembly-read repair round is queued, re-checking any fix against D1's own already-
+saved captures (no new live start) as well as this round's floater capture.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

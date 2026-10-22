@@ -13,6 +13,7 @@ CORE = [
     "docs/agents/ROUND.md", "docs/agents/EXPLORE.md", "docs/briefs/TEMPLATE.md",
     ".cursor/rules/match-the-original.mdc", ".cursor/rules/orchestration.mdc",
     ".cursor/rules/windows-msys2-build.mdc", ".opencode/README.md",
+    "docs/OVERLORD.md", "scripts/overlord/README.md",
 ]
 CLIENTS = [(".claude", "agents"), (".cursor", "agents"), (".opencode", "agent")]
 FIELDS = [
@@ -201,6 +202,15 @@ def validate(root, brief=None):
             errors.append(f"{path}: missing facilitator contract pointer")
         if "../../docs/ORCHESTRATION.md#facilitator-invocation" not in text:
             errors.append(f"{path}: missing facilitator invocation pointer")
+    # The overlord directs facilitators; its command must not read as a facilitator invocation.
+    for client in [".claude", ".cursor"]:
+        path = f"{client}/commands/overlord.md"
+        text = read(root, path, errors)
+        links(root, path, text, errors)
+        if "../../docs/OVERLORD.md" not in text:
+            errors.append(f"{path}: missing overlord contract pointer")
+        if "ORCHESTRATION.md#facilitator-invocation" in text:
+            errors.append(f"{path}: overlord must not invoke facilitation")
     check_opencode_facilitator(root, roles, errors)
     check_opencode_mac(root, roles, errors)
     try:

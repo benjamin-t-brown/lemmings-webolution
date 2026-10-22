@@ -19,7 +19,7 @@ class FrameworkChecks(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         # Copy only framework reference material; never operate on the real queue or game.
-        for name in ["docs", ".claude", ".cursor", ".opencode"]:
+        for name in ["docs", ".claude", ".cursor", ".opencode", "scripts/overlord"]:
             shutil.copytree(ROOT / name, self.root / name,
                             ignore=shutil.ignore_patterns("worktrees", "sessions"))
         for name in ["AGENTS.md", "PLAN.md"]:
@@ -111,6 +111,13 @@ class FrameworkChecks(unittest.TestCase):
         self.assertTrue(any("pin an llmgw model" in e for e in errors))
         self.assertTrue(any("permissions must match" in e for e in errors))
         self.assertTrue(any("facilitator-mac agent binding" in e for e in errors))
+
+    def test_overlord_command_points_to_contract_not_facilitation(self):
+        self.write(".claude/commands/overlord.md",
+                   "Run [queue rules](../../docs/ORCHESTRATION.md#facilitator-invocation).\n")
+        errors = framework.validate(self.root)
+        self.assertTrue(any("missing overlord contract pointer" in e for e in errors))
+        self.assertTrue(any("must not invoke facilitation" in e for e in errors))
 
     def test_opencode_default_uses_luna_without_changing_facilitator(self):
         config = json.loads((self.root / ".opencode/opencode.json").read_text(encoding="utf-8"))

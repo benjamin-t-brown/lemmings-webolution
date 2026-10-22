@@ -7,6 +7,7 @@
 | Entry point and role selection | [AGENTS.md](../../AGENTS.md) |
 | Roles, ownership, sizing, dispatch, queue and repair | [ORCHESTRATION.md](../ORCHESTRATION.md) |
 | Independent verification procedure | [FACILITATOR.md](../FACILITATOR.md) |
+| Directing facilitators and evaluating passes | [OVERLORD.md](../OVERLORD.md) |
 | Round and explore execution | [ROUND.md](ROUND.md), [EXPLORE.md](EXPLORE.md) |
 | Client model choices and wiring | [ROLES.md](../ROLES.md) |
 | Mandatory project guardrails | [AGENT_SAFETY.md](../AGENT_SAFETY.md) |

@@ -14,6 +14,7 @@ round (capacity, approval, dead agent) is visible in every client.
 
 | Role | Tier | Owns | Must not |
 | --- | --- | --- | --- |
+| **Overlord** | strong | Macro direction across milestones, launching, resuming and steering facilitator sessions, evaluating each pass, proposals to the user ([contract](OVERLORD.md)) | Writing briefs; dispatching workers; verifying or landing rounds; editing `docs/tasks.json`; running a second facilitator on the queue |
 | **Facilitator / planner** (architect / primary) | strong | Next question, **task decomposition**, brief, `docs/tasks.json`, verification, landing into `PLAN.md` / `docs/**` / `.claude/rules/**` | Heavy exploratory diffs; promoting unverified numbers |
 | **Hard-task worker** | mid | One escalated brief that genuinely cannot be split to the targeted tier | Expanding scope; landing docs; dispatching further agents |
 | **Targeted worker** (default builder) | cheap/fast | One small brief: exe reads, harness, code, tests, candidate note under `build/tmp/` | Editing facilitator-owned docs; dispatching further agents; owning the live game after the brief ends |

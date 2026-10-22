@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": null,
+  "queue": [],
+  "recently_landed": [
     {
       "id": "d1n-world-continuous-clock",
-      "title": "D1n: additive continuous sub-tick clock for the walk/fall steppers, re-scored offline against all four saved D1 captures",
-      "status": "running",
+      "title": "D1n: additive continuous sub-tick clock; landing-tick drift reduced (not closed) on 3/4 captures, spawn-tick drift unchanged for a now-structural reason; D1 still not accepted",
+      "status": "landed",
       "brief": "build/tmp/d1n-world-continuous-clock-brief.md",
       "worker_tier": "targeted",
       "harness": "Claude Code",
@@ -14,18 +16,21 @@
       "worker_agent": "round-agent",
       "owns_live_game": false,
       "live_owner": null,
-      "question_round_count": 1,
+      "worker_output": "build/tmp/d1n-world-continuous-clock/round-note.md",
       "depends_on": [
         "d1m-stepper-clock",
         "d3a-retail-level-setup"
       ],
       "gate_served": "PLAN Phase D, D1 release and walk-out",
-      "dispatch_note": "Offline; no stock start. Owns src/sim/World.*, SimReleaseTrace. File-disjoint from d3b-app-sim-loop (src/app/**); concurrent with it."
+      "question_round_count": 1,
+      "landed_in": "docs/scratch/phase-d1-continuous-stepper-clock.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independently confirmed flag-off regression safety (ran SimReleaseTrace myself with D1g's own invocation, diff -q against build/tmp/d1g-full-gate-recheck/sim_trace.csv -- no output). Independently reproduced D1g's after-score with a fresh invocation (not reusing the worker's saved CSV): generated the trace myself with --continuous-stepper-clock, ran D1g's own already-landed diff_trace_all.py against it -- reproduced 303 divergence(s) exactly, with 252 x and 10 y field counts matching exactly. Independently re-derived the D1l landing-tick-drift table from scratch with fresh Python (no prior round's comparator code, just direct CSV parsing) -- reproduced 10/10->5/10, max 2->max 1 exactly, cell for cell. Own mutate-one-alone: changed the fall-landing leftover computation (budget - i*unitSeconds -> budget - (i+1)*unitSeconds), rebuilt -- ctest -R world did not catch it (confirming the unit suite alone is not the discriminator for this class of change), but regenerating the D1l trace under the mutation showed 252 of 1500 rows diverge from the unmutated trace, confirming the offline capture comparator discriminates. Restored World.cpp to the worker-delivered SHA-256 (d65fcff2...), rebuilt, full ctest --preset dev-debug: 27/27 (merged with the concurrently-landed D3b round). No Lemmings Revolution process was started by this round or by this check. git status showed only the brief's owned files plus this task's two permitted docs/tasks.json fields. D1 remains not accepted; the partial improvement is reported to PLAN.md as a finding, not used to unilaterally resolve the pending D1-gate-amendment deferred_question."
     },
     {
       "id": "d3b-app-sim-loop",
-      "title": "D3b: sim::World ticking in webolution, lemmings drawn on the tube",
-      "status": "running",
+      "title": "D3b: sim::World ticking in webolution, lemmings drawn on the tube; byte-identical regression holds, --sim-ticks matches SimReleaseTrace exactly",
+      "status": "landed",
       "brief": "build/tmp/d3b-app-sim-loop-brief.md",
       "worker_tier": "targeted",
       "harness": "Claude Code",
@@ -33,16 +38,16 @@
       "worker_agent": "round-agent",
       "owns_live_game": false,
       "live_owner": null,
-      "question_round_count": 1,
+      "worker_output": "build/tmp/d3b-app-sim-loop/round-note.md",
       "depends_on": [
         "d3a-retail-level-setup"
       ],
       "gate_served": "PLAN Phase D, D3 (app tick loop; A6/A7 command lines must stay byte-identical)",
-      "dispatch_note": "Offline; no stock start. Owns src/app/main.cpp, TubeScene.*, SimClock.*."
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "question_round_count": 1,
+      "landed_in": "docs/scratch/phase-d3-app-sim-loop.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independently hashed the four saved before/after PNGs directly from disk (A6 c4e6cf47..., A7 78305c5c..., both before==after) -- the A6 hash also independently cross-checked against the value already on record in docs/LESSONS.md's A6d9 entry for the same matched-state frame. Independently cross-checked the saved --sim-ticks 75 stderr against the saved release-trace.csv by direct text comparison -- every field matches exactly. Reviewed the main.cpp diff directly: the new --sim code path is entirely inside if(args.sim), placed after every pre-existing injectedWalkers assignment. Own isolated mutate-one-alone, compiled standalone with g++ outside the shared build tree (to avoid racing the concurrently-running D1n round's edits to src/sim/World.*): mutated SimClock::takeStep's cap comparison from >= to >, confirmed the suite fails exactly as expected, restored to the worker-delivered SHA-256, confirmed it passes again. After D1n landed and the build tree stabilized, ran a full cmake --build + ctest --preset dev-debug: 27/27. No Lemmings Revolution process was started by this round or by this check."
+    },
     {
       "id": "d1m-stepper-clock",
       "title": "D1m: continuous (real per-frame dt), not a fixed 200ms step -- structural disassembly read plus zero-parameter replay collapses y-field mismatches 76-100% on all three saved captures; D1n queued",
@@ -1974,10 +1979,10 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (handoff 2026-10-21: no task was running under the prior owner; standing_run.owner was null, d1m/d2a/d3a were queued, this session dispatched all three, verified and landed all three, then dispatched d1n and d3b)",
-    "rounds_run": 3,
+    "rounds_run": 5,
     "stock_starts_used": 0,
     "pending_questions": [],
-    "handoff": "2026-10-21: landed d1m (verdict: continuous, not a fixed 200ms step -- docs/scratch/phase-d1-stepper-clock.md; LESSONS.md's '5Hz, measured three ways' claim corrected/withdrawn), d3a (production retail-level loader, all 102 levels load) and d2a (pick rule ported, falsifies its own last-in-list-wins hypothesis). Per d1m's continuous verdict and the pre-authorized branch, dispatched d1n (build/tmp/d1n-world-continuous-clock-brief.md: additive, opt-in continuous sub-tick clock for the walk/fall steppers, owns src/sim/World.*, re-scored offline against all four saved D1 captures before any live recheck) concurrently with d3b (build/tmp/d3b-app-sim-loop-brief.md: World ticking inside webolution, owns src/app/**, updated with a note that d1n may run concurrently and that the old '5Hz MEASURED' framing is withdrawn). Both are offline, file-disjoint, no live game. When d1n lands: if it closes (fully or partially) the spawn-tick/landing-tick drift without regressing test_world, queue a live D1 gate recheck; if it does not improve the drift, report back to the user with the new evidence rather than tuning further (round cap 3 on the D1n question). When d3b lands: D3c (click-to-assign in the app) follows d2a and d3b. D2b (live 20-cursor capture, the D2(a) live recheck) is queued-but-not-yet-dispatched next, after d1n/d3b free a concurrency slot or alongside them if it stays the only live-game owner. Phase B/C gates in PLAN are PROPOSED, not signed off: do not start B/C rounds.",
+    "handoff": "2026-10-21: landed d1n (build/tmp/d1n-world-continuous-clock/round-note.md, docs/scratch/phase-d1-continuous-stepper-clock.md): the continuous stepper clock closes landing-tick drift substantially on 3/4 captures (D1g 10/10->5/10 max3->1, D1j 10/10->3/10 max2->1, D1l 10/10->5/10 max2->1) but NOT on D1a (gets nominally worse, explained by D1a predating the harness-throttle fix -- an unreliable reference, not a sim defect) and does NOT close spawn-tick drift at all, anywhere, for a now-understood structural reason (spawn() fixes the existence tick before any budget is computed). Landed d3b alongside it (docs/scratch/phase-d3-app-sim-loop.md): webolution --sim/--sim-ticks wired, byte-identical regression holds, --sim-ticks matches SimReleaseTrace exactly. Both independently verified (addresses/hashes re-checked, mutate-one-alone caught via the offline capture comparator -- the unit suite alone did NOT catch the D1n mutation, confirming the comparator is the real discriminator for this class of change -- fresh 27/27 ctest). Deliberately did NOT spend a stock start on a fresh live D1 recheck this round, deviating from the prior handoff's literal branch: the offline re-score already used three independent, already-bias-free-harness captures (D1g/D1j/D1l) with a consistent result (partial, not full, closure), so a fourth live capture is judged low marginal value for the stock-start cost -- recorded as a judgment call, not hidden. D1's gate-amendment deferred_question (below) is updated with this new evidence per the user's own prior instruction to re-ask once D1m/D1n's results were in, but NOT decided here. Next, not yet dispatched: (1) report the updated D1 evidence to the user for the gate-amendment decision (deferred_questions, below) -- this does not block other work; (2) D3c (click-to-assign wired into the app via D2a's Pick.* and D3b's SimClock/World plumbing, offline, no live game) is the next clearly-ranked offline round and has no brief yet -- write one before dispatch; (3) D2b (the D2(a) live 20-cursor capture) needs a live game session and has no brief yet either -- write one when ready to spend a stock start. Phase B/C gates in PLAN are PROPOSED, not signed off: do not start B/C rounds.",
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
@@ -2084,6 +2089,22 @@
           "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md"
         ],
         "resolution": "User 2026-10-21 (CEO review session): hold the gate as written; do not amend yet. Raw 50 Hz samples suggest the original moves lemmings continuously (X changes on 7224 of 7464 consecutive 20 ms samples; walk-out fits 32 + 5.0*(t - land) within -0.022..+0.115; the fall lands at release + 0.50 s for 10/10). The drift may be a model mismatch, not a discretization floor. Run D1m first, then re-ask with its answer."
+      },
+      {
+        "question": "As the prior resolution asked: D1m ran first (docs/scratch/phase-d1-stepper-clock.md). Verdict: the original's walk/fall motion is continuous (a structural disassembly read of the walk stepper's own time parameter, plus a zero-fitted-parameter continuous replay that collapsed the landing-tick-drift mismatch count 76-100% against three saved captures) -- this IS a model mismatch, not (only) a discretization floor, confirming the CEO review's own hypothesis. D1n then implemented it (docs/scratch/phase-d1-continuous-stepper-clock.md): an additive, opt-in continuous sub-tick clock for the fall/walk steppers. Result, honestly measured against all four saved captures: landing-tick drift shrinks substantially on 3 of 4 (D1g 10/10->5/10 lemmings nonzero, max drift 3->1; D1j 10/10->3/10, max 2->1; D1l 10/10->5/10, max 2->1) but does NOT close fully on any of them, and gets nominally worse on the fourth (D1a, explained by that capture predating the harness-throttle fix, not a sim defect). Spawn-tick drift does not close AT ALL, on any capture, for a now-understood structural reason: World::spawn() fixes which tick a lemming exists on before any continuous budget is even computed, so no fall-timing change can move it. So: the model-mismatch fix is real and measurably helps, but is NOT a complete fix -- D1 still does not pass even under the corrected continuous model, with a now-smaller but still nonzero residual of the same discretization-floor shape the gate-amendment question was originally about, plus an entirely unaddressed spawn-tick family. Does D1's gate need amending now (to accept the current, improved-but-incomplete state), should further rounds pursue either closing the remaining landing-tick residual (a smaller target than before) or the spawn-tick family (would need redesigning when/how World::spawn() fixes existence, not a bounded tweak), or should D1 be left parked at this new, better-understood-but-still-incomplete residual while other Phase D milestones (D2, D3) proceed in parallel (neither depends on D1's gate)?",
+        "options": [
+          "Amend the gate now to accept the current continuous-clock state (landing-tick drift bounded to <=1 tick on the 3 reliable captures, spawn-tick drift a separately-named, still-open residual), and move D1 to Phase E alongside D2/D3 work",
+          "Invest a second D1n-family round in the smaller remaining landing-tick-drift target (D1g's 5, D1j's 3, D1l's 5 still-nonzero lemmings) before deciding -- round 2 of the 3-round cap already opened on this question",
+          "Invest in redesigning when World::spawn() fixes a lemming's existence tick (the structural blocker for spawn-tick drift) -- a larger change than D1n's additive one, not yet scoped",
+          "Leave D1 parked as currently landed and proceed with D2/D3 (already unblocked, no depends_on edge to D1), revisiting D1 only if a later milestone's needs change the calculus"
+        ],
+        "recommendation": "Option 4, with option 2 as a cheap follow-up if the user wants to spend one more round before parking. D1's own milestone gate is not a dependency for D2 or D3 (checked: neither's queue entry lists a depends_on edge to any D1 task), so parking D1 here costs nothing for Phase D's visible-progress goal. The remaining landing-tick residual is now small (at most 5/10 lemmings, magnitude capped at 1) and the spawn-tick family has a clear, named, structural cause rather than an open mystery -- this is a materially better place to leave D1 than before D1m/D1n, even though it is not a pass. Amending the gate (option 1) is premature: two different residual families remain, one of which (spawn-tick) this round did not even attempt to address, so 'accept with an amendment' would be amending around an admittedly-incomplete fix rather than a fully-characterized one the way A7's HUD exclusion was.",
+        "evidence": [
+          "docs/scratch/phase-d1-stepper-clock.md",
+          "docs/scratch/phase-d1-continuous-stepper-clock.md",
+          "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md"
+        ],
+        "resolution": null
       }
     ]
   }

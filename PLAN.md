@@ -470,7 +470,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| D1 release and walk-out | **gate held; D1n queued** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
+| D1 release and walk-out | **gate held; not accepted (D1n partial)** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
 | D2 click-to-assign | queued | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
 | D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
@@ -725,6 +725,32 @@ chain. **D1 is still not accepted.** Per the pre-authorized branch, the next rou
 four saved captures, before any live recheck — not a re-ask of the discretization-floor
 gate question, since a confirmed model mismatch calls for fixing the model.
 
+**D1n: implemented, partial result — landing-tick drift reduced, not closed; spawn-tick
+drift unchanged, now structurally explained** ([check](docs/scratch/phase-d1-continuous-stepper-clock.md)):
+an additive, opt-in continuous sub-tick clock (`LevelSetup::continuousStepperClock`,
+default `false`, byte-for-byte old behaviour when off — confirmed by `diff -q` against each
+capture's own checked-in `sim_trace.csv`) lets a landing faller hand its unconsumed
+real-seconds budget to the walker it becomes within the same tick. The landing-tick-drift
+family D1l isolated **shrinks substantially on D1g/D1j/D1l**: roughly half of the
+previously-drifting lemmings now land on the exact tick, the rest from magnitude up to 3 to
+at most 1 (aggregate totals more than halve: 653→303, 537→183, 657→302). **D1a gets
+nominally worse** (162→514) — explained, not papered over: D1a's own live capture predates
+the already-landed D1i/D1j harness-throttle-lag fix, so it is the one capture whose own
+ground truth is independently known to be mistimed; a more temporally faithful sim
+naturally diverges more from a mistimed reference. Spawn-tick drift is **unchanged on every
+capture**, for a now-understood structural reason: `spawn()` fixes which tick a lemming
+exists on before the budget it receives is even computed, so no fall-budget reduction can
+move it. A real bug in the round's own first draft (an unguarded landing handoff that
+regressed D1a before the `hasTrackedPhase` guard was added) is disclosed in the check, not
+hidden. 27/27 tests pass (4 new, 0 edited); the facilitator's own mutate-one-alone (a
+one-line leftover-budget off-by-one) was not caught by the unit suite but was caught by the
+offline capture comparator (252 of 1500 rows diverge), confirming that comparator — not the
+unit suite alone — is the real discriminator for this class of change. **D1 is still not
+accepted.** Whether this partial, honestly-measured improvement changes the calculus on the
+user's pending D1-gate-amendment decision (`docs/tasks.json`
+`standing_run.deferred_questions`) is for a future round or the user to weigh — not decided
+here.
+
 ### D2. Click-to-assign
 
 **D2a: the pick rule read and ported, round 1** ([check](docs/scratch/phase-d2-pick-rule.md)):
@@ -784,6 +810,22 @@ dispatched rounds' shared `CMakeLists.txt`/`cmake/webolution_sources.cmake` edit
 without conflict, exactly as their dispatch note anticipated. No Lemmings Revolution
 process ran for either round. D3b (app sim-loop integration, depends on D3a) and D1n
 (World clock change) do not share an owned file and may now run concurrently.
+
+**D3b: `sim::World` ticking inside `webolution`, round 1** ([check](docs/scratch/phase-d3-app-sim-loop.md)):
+`webolution --sim`/`--sim-ticks <N>` (off by default) builds a `World` via D3a's
+`loadRetailLevel` and draws its live lemmings through the existing
+`drawInjectedWalkers`/`terrainSampleFromLemming` path (`TubeScene::injectedWalkersFromWorld`,
+one entry per `alive()` lemming). A new `SimClock` (`src/app/SimClock.*`) drives the
+windowed loop's ticking off real time, independent of the 144 Hz camera clock, capped at 10
+ticks (2.0 s) per frame with any backlog carried, not dropped. Every pre-existing command
+line renders byte-identically (A6 and A7 PNG hashes unchanged); `--sim --sim-ticks N` at
+N = 0, 15, 75 matches an independent `SimReleaseTrace` run on the same level exactly. Named
+limitation, reported as its own prediction anticipated: `drawInjectedWalkers` only has a
+`"walk"` sprite action, so non-`Walker` alive states (10 of 181 sampled live-lemming-ticks
+were `Faller`) reuse that same strip at a fixed phase — no sprite invented, no animation
+clock wired to `World::tick()`. Ran concurrently with D1n (file-disjoint); its own checks
+were relative (before/after the same build), not against a frozen `World.cpp`. 27/27 tests
+pass. D3c (click-to-assign in the app) depends on this round and D2a and may now be queued.
 
 ## Phase E — the remaining debts
 

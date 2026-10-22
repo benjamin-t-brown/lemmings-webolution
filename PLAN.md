@@ -948,6 +948,24 @@ independently-confirmed data point for D1's own pending gate-amendment question 
 Phase E below) — it does not resolve that question. Climber, blocker and floater are now
 full matches; digger remains the last untested D2(b) skill.
 
+**D2i: one live digger assignment, 16/50 ticks match -- a new residual shape, not yet
+fixed** ([check](docs/scratch/phase-d2i-skill-assign-digger.md)): fourth and last D2(b)
+skill. The assigned lemming dug three rows before falling and walking -- longer and
+more informative than the cited ~271ms instant-refusal quirk, which this capture did
+not reproduce. Each dig "bite" lands one tick late in our sim, self-healing each time
+(the same shape D2f's/D2h's fixes already addressed, at a different transition); the
+digger-to-faller handoff then compounds into a larger gap during the fall, settling
+into a constant one-tick/one-column lag for the rest of the walk. **Hypothesized, not
+yet disassembly-confirmed**: `stepDigger` (and `stepBuilder`/`stepBasher`/`stepMiner`,
+sharing the same `bitesThisTick` helper) lack the `+1` compensation
+`stepHoister`/`stepExploder` already apply for the same postfix `++l.frame` placement --
+a real asymmetry in the code, confirmed by direct read, but not proven to be *the*
+cause (builder already has its own separate enter-hook timing compensation that digger
+may or may not need equivalently). Correctly not fixed this round, given the risk to
+three other already-measured steppers sharing the same helper. D2 part (b) is not
+complete: climber/blocker/floater are full matches, digger is not. A disassembly round
+is queued, scoped to digger's own call site only.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

@@ -86,8 +86,8 @@ def check_opencode_facilitator(root, roles, errors):
         errors.append(f"{path}: explicit model missing or absent from ROLES.md")
     if frontmatter_field(text, "mode") != "primary":
         errors.append(f"{path}: facilitator must be a primary agent")
-    if variant != "max":
-        errors.append(f"{path}: facilitator variant must be max")
+    if variant != "high":
+        errors.append(f"{path}: facilitator variant must be high")
 
     command_path = ".opencode/commands/facilitator.md"
     command = read(root, command_path, errors)

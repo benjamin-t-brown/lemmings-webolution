@@ -81,12 +81,12 @@ class FrameworkChecks(unittest.TestCase):
     def test_opencode_facilitator_variant_and_session_binding(self):
         path = ".opencode/agent/facilitator.md"
         self.write(path, (self.root / path).read_text(encoding="utf-8")
-                   .replace("variant: max", "variant: high"))
+                   .replace("variant: high", "variant: max"))
         path = ".opencode/commands/facilitator.md"
         self.write(path, (self.root / path).read_text(encoding="utf-8")
                    .replace("subtask: false", "subtask: true"))
         errors = framework.validate(self.root)
-        self.assertTrue(any("variant must be max" in e for e in errors))
+        self.assertTrue(any("variant must be high" in e for e in errors))
         self.assertTrue(any("must run in the current session" in e for e in errors))
 
     def test_opencode_workers_use_luna_and_keep_their_permissions(self):
@@ -105,7 +105,7 @@ class FrameworkChecks(unittest.TestCase):
             "providerID": "openai", "model": "gpt-6-luna", "variant": "max"})
         text = (self.root / ".opencode/agent/facilitator.md").read_text(encoding="utf-8")
         self.assertEqual(framework.frontmatter_field(text, "model"), "openai/gpt-6.1-sol")
-        self.assertEqual(framework.frontmatter_field(text, "variant"), "max")
+        self.assertEqual(framework.frontmatter_field(text, "variant"), "high")
 
     def test_stale_opencode_deepseek_worker_pin_is_rejected(self):
         for role in ["round-agent", "explore-agent"]:

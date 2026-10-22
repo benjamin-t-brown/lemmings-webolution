@@ -10,7 +10,7 @@ Use [AGENTS.md](../AGENTS.md) to select the role from the user request.
 Run `/facilitator` in a session opened from this repository. No arguments are
 required: it resumes the queue or selects the next bounded task from the plan.
 The [command](commands/facilitator.md) explicitly selects the primary facilitator
-agent, whose own configuration pins the model and `max` variant even when the current
+agent, whose own configuration pins the model and `high` variant even when the current
 session uses another model. Optional arguments constrain that work.
 `@.opencode/commands/facilitator.md` only
 attaches prompt text; it does not apply executable command frontmatter.
@@ -24,7 +24,7 @@ opencode debug agent explore-agent
 opencode debug config
 ```
 
-Expect the primary facilitator's configured model and `max` variant, and the
+Expect the primary facilitator's configured model and `high` variant, and the
 `facilitator` command's agent binding without a command-level model override. Resolved configuration verifies
 discovery and pins; it does not prove a live worker dispatch or provider availability.
 Both worker agents use the OpenAI Luna pin at `high` documented in `ROLES.md`;

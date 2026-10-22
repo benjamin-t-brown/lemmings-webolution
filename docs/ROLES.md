@@ -20,7 +20,7 @@ adapter frontmatter/configuration, where the harness requires them.
 | --- | --- | --- | --- | --- | --- |
 | **Claude Code** | session launch model via `/facilitator` | session model (no pin; split instead of escalating) | session model via `.claude/agents/round-agent.md` (no pin) | session model via `.claude/agents/explore-agent.md` (no pin) | `/facilitator` → `.claude/commands/facilitator.md`; agents under `.claude/agents/`. No `model` in frontmatter and no `model` argument on dispatch. |
 | **Codex** | `astra` | `sol`, dispatched explicitly for a recorded hard round | `luna` — default worker pin | `luna`, read-only brief | `AGENTS.md`; REA MCP in `~/.codex/config.toml`. No in-repo agent pin file. |
-| **OpenCode** | `openai/gpt-6.1-sol` at `max` via `/facilitator` → `.opencode/agent/facilitator.md` | `disasm-agent` (Sol) for disassembly reads; otherwise the round pin | `openai/gpt-6-luna` at `high` via `.opencode/agent/round-agent.md` | `openai/gpt-6-luna` at `high` via `.opencode/agent/explore-agent.md` | `.opencode/opencode.json` + `.opencode/commands/` + `.opencode/agent/*.md` |
+| **OpenCode** | `openai/gpt-6.1-sol` at `high` via `/facilitator` → `.opencode/agent/facilitator.md` | `disasm-agent` (Sol) for disassembly reads; otherwise the round pin | `openai/gpt-6-luna` at `high` via `.opencode/agent/round-agent.md` | `openai/gpt-6-luna` at `high` via `.opencode/agent/explore-agent.md` | `.opencode/opencode.json` + `.opencode/commands/` + `.opencode/agent/*.md` |
 | **Cursor** | **Claude Opus 5.5** via `/facilitator` (chat picker, e.g. `claude-opus-5-5-medium`) | same Cursor-pool worker as targeted — **do not** escalate to Opus; split the brief instead | Task → `round-agent` pinned to `grok-4.7-high-fast` | Task → `explore-agent` pinned to `grok-4.7-high-fast` | `/facilitator` → `.cursor/commands/facilitator.md`; workers in `.cursor/agents/*.md`; `.cursor/rules/*.mdc` stay **pointers only**. |
 
 For **Claude Code**: there is **no model routing**. Workers carry no `model` frontmatter and are
@@ -44,7 +44,8 @@ newest Grok ID in mouv's Cursor storage. It was not checked with a dispatch; if 
 rejects it, record the blocker rather than switching back silently.
 
 For OpenCode, `high` and `max` are provider-specific reasoning-effort variants, set with the
-`variant` field. The facilitator uses **GPT 6.1 Sol** through OpenAI at `max`.
+`variant` field. The facilitator uses **GPT 6.1 Sol** through OpenAI at `high`.
+Changed 2026-10-22 at the user's request: `max` was spending too many tokens.
 Both the round and explore workers use **GPT 6 Luna** through OpenAI
 (`openai/gpt-6-luna`) at `high`; explore remains read-only and map-only. The general
 session default in `.opencode/opencode.json` also uses Luna, retaining its `max`
@@ -53,7 +54,7 @@ OpenCode has no separate hard-tier pin; an unusually hard round still uses the s
 pin, or the work is split instead.
 
 For OpenCode, invoke `/facilitator` as a command. Its frontmatter binds the primary
-`facilitator` agent; that agent pins `openai/gpt-6.1-sol` and `variant: max`,
+`facilitator` agent; that agent pins `openai/gpt-6.1-sol` and `variant: high`,
 overriding the model already selected in a session. The command
 has no separate model override, so OpenCode resolves the agent's provider/model ID
 and variant directly. Reading or attaching the Markdown file does not apply command

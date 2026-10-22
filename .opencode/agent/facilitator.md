@@ -3,7 +3,7 @@ name: facilitator
 description: Primary project facilitator; selects bounded work from the queue and plan, dispatches workers, independently verifies and lands results.
 mode: primary
 model: openai/gpt-6.1-sol
-variant: max
+variant: high
 ---
 
 Follow the shared [facilitator contract](../../docs/FACILITATOR.md) and

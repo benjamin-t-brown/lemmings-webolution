@@ -2,27 +2,32 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "b1c-draw-dispatch-trace",
-    "title": "B1c: trace the main menu vtable and its draw dispatch; locate font-layout format",
-    "status": "running",
-    "brief": "build/tmp/b1c-draw-dispatch-trace-brief.md",
-    "worker_tier": "targeted",
-    "harness": "Claude Code",
-    "requested_model": "session (no pin)",
-    "worker_agent": "round-agent",
-    "dispatch_tag": "disassembly read",
-    "owns_live_game": false,
-    "live_owner": null,
-    "depends_on": [
-      "b1-frontend-recon"
-    ],
-    "gate_served": "PLAN Phase B, B1 frontend assets and text (render half: identifying the draw path)",
-    "question_round_count": 1,
-    "dispatch_id": "claude-code background round-agent a0f69aad99425c8cf, no model override"
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "b1c-draw-dispatch-trace",
+      "title": "B1c: trace the main menu vtable and its draw dispatch; locate font-layout format",
+      "status": "landed",
+      "brief": "build/tmp/b1c-draw-dispatch-trace-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "dispatch_tag": "disassembly read",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b1-frontend-recon"
+      ],
+      "gate_served": "PLAN Phase B, B1 frontend assets and text (render half: identifying the draw path)",
+      "question_round_count": 1,
+      "dispatch_id": "claude-code background round-agent a0f69aad99425c8cf, no model override",
+      "worker_output": "build/tmp/b1c-draw-dispatch-trace/round-note.md",
+      "landed_in": "docs/scratch/phase-b1-draw-dispatch-trace.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-22: independently re-derived the rounds most load-bearing claims directly from the raw PE file, not trusting its own printed tables. Read the factory prologue and dispatch at 0x0048726f-0x004872c4 with read_steppers.py: byte-for-byte match. Independently decoded the 37-byte remap table (0x487b0f) and 37-entry jump table (0x487ab3) from scratch with a standalone Python script reading the raw file: matches the rounds cited bytes exactly, and selectors 3/4/5 each independently resolve to remap index 22 -> jump target 0x4879bb, reproducing the central negative finding from first principles. Independently confirmed vtable slot 3 is the identical value 0x4886e4 across all 20 vtables (the rounds own corrected 20-address list) via a from-scratch struct unpack of the raw .rdata bytes -- all 20 decoded to sensible function pointers, corroborating the corrected vtable list itself. Independently confirmed the font-layout negative (_FONT.BMP occurs 0 times in the exe bytes) and that main_logo.bmp/small_back.bmp each occur exactly once as literal strings. git status showed only docs/tasks.json permitted fields -- no src/**, PLAN.md, or other docs/** file. No live game or debugger used by this round or this check. Round accepted as reported; nothing narrowed, one genuine correction to the prior recon confirmed correct (0x4b2600 does not belong to any of the 20). Disclosed procedural deviation (prediction.md written after, not before, the deep trace) noted, not escalated, per the D1m precedent -- the verdict rests on independently reproducible bytes. The rounds own proposed live, no-input next step (read the active content vtable via the 0x5d59e4 list at screen id 3) is adopted as the next B1 round."
+    },
     {
       "id": "b1b-reference-screengrab",
       "title": "B1b: capture a 640x480 main-menu (highlight 0) reference screengrab",
@@ -2382,7 +2387,7 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (2026-10-22 /facilitator invocation): handoff from d-playable-2, which stopped with both Phase D decisions pending. The user resolved both in the same message that signed off Phase B/C, so this session opens the next standing run directly rather than reporting a bare stop.",
-    "rounds_run": 4,
+    "rounds_run": 5,
     "stock_starts_used": 3,
     "pending_questions": [
       {
@@ -2400,7 +2405,7 @@
         "resolution": null
       }
     ],
-    "handoff": "2026-10-22: landed b1a (frontend asset/.LTX loading wired into a new app-side test, 29/29 passing) and b1b (640x480 highlight-0 main-menu reference capture). b1b surfaced an unplanned finding: the captured menu is English, not German -- the shared installs SavedGame.dat has no pristine baseline to compare against, and the cause of the language drift (an earlier rounds navigation, or genuine persisted stock behaviour) cannot be determined from this install alone. Recorded as a pending_question (reset to German vs accept English vs fresh install) with a recommendation, not decided unilaterally -- other B1 work not blocked by language continues per the standing runs own guidance. Next: scope and dispatch the frontend draw-dispatch/font-layout tracing round (B1c), independent of the language question.",
+    "handoff": "2026-10-22: landed b1c (static disassembly trace). Closed and corrected the recon's vtable gap (20/20 paired, one address removed), found the frontend's single 37-case construction factory, and confirmed a load-bearing negative: the screen-id counter (3/4/5) and the factory's own selector are independent numbering schemes -- the menu cannot be found by calling the factory with 3. Narrowed the main-menu vtable from 20 candidates to a 1-of-7 content set behind a shared chrome class, not fully resolved. Confirmed the step/input side of the interface stays inside the frontend's own address range, separate from the in-level draw chain, one level deep; did not isolate the specific draw call. Font-layout remains a clean negative. Facilitator independently re-derived the central negative finding and the vtable-slot claims from raw file bytes, from scratch, not by re-running the worker's own tooling. Next: dispatch a cheap, live, no-input round (b1d) to read which of the 7 content vtables is active via the 0x5d59e4 list at screen id 3, settling the menu-vtable question the static trace could not. The open language pending_question (b1b) remains separately unresolved and does not block this.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

@@ -458,6 +458,22 @@ this install alone. Recorded as a pending question for the user
 (`standing_run.pending_questions`), not decided unilaterally; other B1 work not blocked by
 language continues.
 
+**B1c: the frontend's construction factory traced; main-menu vtable narrowed, not
+confirmed** ([check](docs/scratch/phase-b1-draw-dispatch-trace.md)): a single 37-case
+factory (`0x0048726f`) behind two thin wrappers constructs all 20 frontend-screen
+subclasses from a remapped selector. Load-bearing negative, independently re-derived from
+raw file bytes: the screen-id counter's menu/confirm/map values (3/4/5) and the factory's
+own selector are two independent numbering schemes — the menu cannot be found by calling
+the factory with 3. A shared "chrome" class (vtable `0x4b1e88`) is the strongest candidate
+for list-style navigation screens generally; the menu's actual *content* is narrowed to 1
+of 7 candidate vtables (all sharing the `main_logo.bmp` backdrop), not resolved to 1. The
+step/input side of the interface is confirmed to stay inside the frontend's own address
+range, separate from the in-level draw chain, one level deep; the specific draw call was
+not isolated within budget. Font layout remains a clean negative (`_FONT.BMP`'s name does
+not appear anywhere in the exe's own bytes). A cheap, live, no-input follow-up (read which
+content vtable is active at screen id 3) is queued next to settle the remaining
+uncertainty.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,

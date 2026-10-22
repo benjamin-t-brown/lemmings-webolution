@@ -2,7 +2,26 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "b1d-menu-vtable-live-read",
+    "title": "B1d: live, no-input read of which content vtable is active at the main menu",
+    "status": "running",
+    "brief": "build/tmp/b1d-menu-vtable-live-read-brief.md",
+    "worker_tier": "targeted",
+    "harness": "Claude Code",
+    "requested_model": "session (no pin)",
+    "worker_agent": "round-agent",
+    "owns_live_game": true,
+    "live_owner": null,
+    "depends_on": [
+      "b1c-draw-dispatch-trace"
+    ],
+    "gate_served": "PLAN Phase B, B1 frontend assets and text (render half: confirming the menu vtable)",
+    "question_round_count": 1,
+    "stock_starts_authorized": 1,
+    "stock_starts_consumed": 0,
+    "dispatch_id": "claude-code background round-agent aa948e797d9d77dd0, no model override"
+  },
   "queue": [],
   "recently_landed": [
     {

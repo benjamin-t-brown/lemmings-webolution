@@ -557,6 +557,23 @@ Both native paths and the 0..7 factory/constructor mapping were independently re
 from raw bytes; REA evidence canonically validated. Exact input/stock/timing behavior
 and all panel rendering remain unmeasured here. C1's gate is not yet accepted.
 
+**C1b: the ten base icons' sheet was not located (clean negative), round 1 of 3**
+([check](docs/scratch/phase-c1-panel-icon-render.md)): the three sprite-sheet names
+LESSONS.md already flagged as unchased — `GreyIcons`/`BlackIcons`/`AdditiveIcons` — each
+decode (two independent decoders) to exactly **one** sprite (`bomb` 18x25, `questionmark`
+16x20x19, `armageddon` 13x15x18), not ten 72x32 panel-index-ordered icons; the shared
+registrar `FUN_0045e51f` only loads handles, with no draw call, corroborating round 23's
+`Axe` finding rather than contradicting it. Every other `.SPR`, every `TEXTURES\SHEETS\*`
+and bare `TEXTURES\*` entry, and the exe's PE resource table were searched with no
+ten-icon candidate found. The actual draw call sits behind an untraced per-skill vtable.
+A tested, additive compositing primitive (`src/app/SkillPanel.h`/`.cpp`) is built but not
+wired to any guess. The skill-only MAE (reusing A7p's own `verify.py` isolate) fails on
+both fixtures: `initial` 0.10767973856209151, `a7q` 0.0554187566499468 — both independently
+reproduced and the `a7q` figures (86 pixels, 3646 error units) match
+[A7q's own already-landed numbers](docs/scratch/phase-a7-second-level-mask.md) exactly.
+30/30 CTest; a mutate-one-alone swap of the one blend-formula line fails exactly one check
+and restores byte-identically. Two rounds remain before parking per the round cap.
+
 ## Phase D — reconnect the simulation
 
 Wire spawn, exits, skill assignment and the measured gadgets into the new renderer, and get a

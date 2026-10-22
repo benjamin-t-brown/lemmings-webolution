@@ -4,10 +4,35 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "c1b-panel-icon-render",
-      "title": "C1b: render the ten skill-panel icons at their measured rectangles, score the skill-only ROI",
+      "id": "c1c-panel-icon-draw-trace",
+      "title": "C1c: trace the native draw call that paints the ten skill-panel base icons",
       "status": "queued",
+      "brief": "build/tmp/c1c-panel-icon-draw-trace-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["c1a-panel-index-read", "c1b-panel-icon-render"],
+      "gate_served": "PLAN C1 skill-panel rendering clause (buttons only; counts/digits out of scope per overlord directive)",
+      "question_round_count": 2,
+      "prior_question_dispatches": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel",
+      "dispatch_id": "claude-code background round-agent a7ef88fd46d058a7b, no model override"
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
+    {
+      "id": "c1b-panel-icon-render",
+      "title": "C1b: ten base icons' sheet not located (clean negative, round 1 of 3); compositing primitive built/tested, not wired",
+      "status": "landed",
       "brief": "build/tmp/c1b-panel-icon-render-brief.md",
+      "worker_output": "build/tmp/c1b-panel-icon-render/round-note.md",
       "worker_tier": "targeted",
       "harness": "Claude Code",
       "requested_model": "session (no pin)",
@@ -20,11 +45,10 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "c1-skill-panel",
-      "dispatch_id": "claude-code background round-agent a3f53f555ba21330f, no model override"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_id": "claude-code background round-agent a3f53f555ba21330f, no model override",
+      "landed_in": "PLAN.md Phase C (C1b) and docs/scratch/phase-c1-panel-icon-render.md; docs/LESSONS.md 'Useful strings the engine keeps'",
+      "facilitator_verified": "2026-10-22: independent REA session (SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, matches authority) re-read all three string addresses (0x4c0d44/0x4c0d50/0x4c0d5c) and their exactly-one xref each, and independently re-decompiled the shared registrar FUN_0045e51f (0x45e51f-0x45ed80) directly: confirms it registers Bits/GreyIcons/BlackIcons/AdditiveIcons/Axe/Smoke via the same FUN_00446040 loader (corroborating round 23's Axe finding) with no draw call anywhere in the function. Session closed read-only, no write. Independently re-decoded the three sheets from raw bytes with a from-scratch Python parser (not importing project code), following only Sprite.h's documented field order: reproduced the exact sprite names (bomb/questionmark/armageddon), animation/frame counts (1/16/13) and max frame sizes (18x25/20x19/15x18) exactly, with each file's byte count consumed exactly to the palette field -- a second, independent decoder agreeing with the worker's own production-reader result. Forced a real rebuild (touched the three new files so ninja did not report 'no work to do'): compiles cleanly from scratch; the clangd diagnostics reported during this session were an editor include-path artifact, not a build defect. Fresh ctest: 30/30, including skillpanel run verbosely (34/34 checks against the real archive). Mutate-one-alone: swapped the one blend-formula line in compositeIconRegion, exactly one check failed (partial blend), reverted, sha256sum byte-identical before/after (690a8b3a...), rebuilt, 30/30 again. Independently reran tools/harness/score_c1_panel.py fresh: reproduced skill_numerator/skill_pixels/MAE exactly for both views (initial 15157/184/0.10767973856209151, a7q 3646/86/0.0554187566499468), both failing <=0.02 as reported. Cross-checked the a7q figures (86 pixels, 3646 error units) against docs/scratch/phase-a7-second-level-mask.md's own already-landed text -- exact match, an independent cross-check from a separate round's separate script. initial's wider_numerator/denominator (2616762/135529695) match docs/scratch/phase-a7-unpause-view-masks.md's existing row exactly, confirming no accidental regression from the additive CMakeLists.txt/source-list changes. git status showed only the two purely-additive CMake files (reviewed directly), the four new allowlisted files, and docs/tasks.json's two permitted fields -- no src/app/main.cpp, src/app/TubeScene.cpp, PLAN.md, or other docs/** file touched by the worker, confirming the 'nothing wired' claim. No Lemmings Revolution.exe/webolution.exe process found running before or after this check; no stock save/config touched; no REA write issued. Round accepted as reported; nothing narrowed. This is round 1 of 3 on the gate-serving question; dispatching round 2 (c1c) to trace the per-skill vtable for the actual draw call."
+    },
     {
       "id": "b1h-atlas-independent-match",
       "title": "B1h: atlas-independent geometry-preserving glyph match (fourth-pass exception) -- returned incomplete, parked in Phase E",
@@ -2534,11 +2558,11 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running under a prior owner; the only active item (b1h) was blocked on an explicit user stop predating this directive and is closed out below, not resumed.",
-    "rounds_run": 0,
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the C1 gate passes on the facilitator's own independent re-score, or when C1 is parked at its round cap, or on any ORCHESTRATION stop condition. Do not advance to C2 or B2 on this directive.",
-    "handoff": "2026-10-22: new standing run opened per the overlord directive. Closed out b1h-atlas-independent-match (moved active->recently_landed, status blocked->landed; already fully verified by the prior session, PLAN.md Phase E already records the park -- bookkeeping only, no new verification). Wrote and linted build/tmp/c1b-panel-icon-render-brief.md: locate/decode the GreyIcons/BlackIcons/AdditiveIcons sprite sheet(s) (never chased down before, unlike every audited cue), render the ten C1a-indexed icons at the already-measured panel_boxes rectangles, and score the skill-only ROI that A7p's own verify.py already isolates (skill_numerator/skill_pixels) against the already-saved A7p/A7q baseline.png and render.png -- entirely offline, zero stock starts, reusing existing captures. Dispatching c1b now.",
+    "handoff": "2026-10-22: landed c1b-panel-icon-render (round 1 of 3 on the icon-rendering question) -- a well-evidenced clean negative: GreyIcons/BlackIcons/AdditiveIcons each decode to one sprite (bomb/questionmark/armageddon), not ten icons; every other archive sheet and the PE resource table were searched with no candidate found; the real draw call sits behind an untraced per-skill vtable. Independently re-verified (REA re-read + re-decompile, a second from-scratch .SPR decoder, mutate-one-alone on the new compositing primitive, fresh rebuild, 30/30 CTest, independent score reproduction cross-checked against A7q's own already-landed numbers). Landed into PLAN.md Phase C, docs/scratch/phase-c1-panel-icon-render.md and docs/LESSONS.md. C1's gate still does not pass (skill MAE 0.108/0.055 against <=0.02). Wrote and linted build/tmp/c1c-panel-icon-draw-trace-brief.md (round 2 of 3): trace the per-skill vtable dispatch for the actual icon draw call, or confirm the LemmingsLO pose-thumbnail lead. Dispatching c1c now.",
     "previous": [
       {
         "id": "d-playable-3",

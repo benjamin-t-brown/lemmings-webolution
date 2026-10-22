@@ -56,6 +56,13 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/ActorTerrain.cpp
   src/app/ActorAnim.cpp
   src/app/TubeScene.cpp
+  # C1b: compositing primitive for the ten skill-panel button icons. Not
+  # called from main.cpp yet -- see src/app/SkillPanel.h's own header for why
+  # (the archive's three candidate sheets are read, not guessed, to not be
+  # the ten icons; no confirmed replacement was found within this round's
+  # budget). Listed here so it is ready to use the moment a later round
+  # identifies the correct sheet and placement rule.
+  src/app/SkillPanel.cpp
   src/app/main.cpp
 )
 list(TRANSFORM WEBOLUTION_GFX_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

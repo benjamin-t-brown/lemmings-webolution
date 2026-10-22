@@ -1,0 +1,71 @@
+// C1b: compositing primitive for the ten skill-panel button icons.
+//
+// This round (c1b-panel-icon-render) located the three sprite-sheet names
+// LESSONS.md already names as unchased ("Useful strings the engine keeps"):
+// GreyIcons, BlackIcons, AdditiveIcons. Reading their real archive .SPR files
+// (SPRITES\GREYICONS.SPR, SPRITES\BLACKICONS.SPR, SPRITES\ADDITIVEICONS.SPR)
+// with the already-tested production Sprite.h reader shows each resolves to
+// exactly ONE named sprite -- "bomb" (18x25, one frame), "questionmark"
+// (~20x16, 16 near-duplicate frames) and "armageddon" (<=15x18, 13 tiny
+// frames) -- not ten 72x32 panel-index-ordered icons. test_skillpanel.cpp's
+// `skillPanelIconSheetsAreNotTheTenIcons` check reproduces this against the
+// real archive. See build/tmp/c1b-panel-icon-render/round-note.md for the
+// REA addresses (string refs, the shared registrar FUN_0045e51f at
+// 0x45e51f-0x45ed80) and the full archive/PE-resource search this rules out.
+//
+// Because no sheet holding the ten base icons was found by reading bytes
+// within this round's budget, nothing calls this function from main.cpp or
+// TubeScene -- wiring it to an unconfirmed guess would misattribute a guess
+// as a read finding, which match-the-original.md forbids. This header exists
+// so the compositing primitive itself is written, tested and ready the
+// moment a later round identifies the correct sheet and its per-button
+// placement rule.
+
+#pragma once
+
+#include "assets/Bitmap.h"
+
+#include <cstddef>
+
+namespace webo::app {
+
+// Where in `source` the icon lives, and where in `dest` to place it.
+// Coordinates are plain pixel offsets, top-down, in each image's own space --
+// not normalised, not perspective-projected (this is a 2D screen-space HUD
+// overlay, drawn after the 3D tube frame, not a 3D quad).
+struct SkillIconPlacement {
+  int destX = 0;
+  int destY = 0;
+  int srcX = 0;
+  int srcY = 0;
+  int width = 0;
+  int height = 0;
+};
+
+// Alpha-composites the `placement` sub-rectangle of `source` onto `dest` at
+// (destX, destY), in dest's own pixel space. Both images are the RGBA8,
+// top-down `webo::Image` (assets/Bitmap.h) that `webo::loadTexture` already
+// produces, with alpha already resolved from the archive's own sigil
+// (AlphaMode: colour-key, .ALF plane, embedded, or opaque) -- this function
+// does not decide transparency, it only honours whatever alpha the source
+// image's pixels already carry:
+//
+//   alpha == 0    source pixel is fully transparent: dest is left unchanged
+//   alpha == 255  source pixel fully replaces dest
+//   1..254        linearly blended
+//
+// Read, not assumed: Bitmap.cpp's own `applyColourKey` (KeyBlack '_' /
+// KeyGrey '$') only ever writes alpha 0 or leaves the opaque default (255),
+// so those two modes never produce an intermediate value. `applyAlfAlpha`
+// (AlfFile '^') copies the sibling .ALF's bytes verbatim into alpha and can
+// legitimately carry any 0..255 value, so the blended case is real, not
+// hypothetical, for that one AlphaMode.
+//
+// Both `placement`'s source rectangle and its destination placement are
+// clipped to each image's own bounds; nothing is read or written out of
+// range in either image. Returns the number of pixels actually written
+// (after clipping), 0 if the placement is entirely out of bounds or either
+// image is empty.
+std::size_t compositeIconRegion(Image& dest, const Image& source, const SkillIconPlacement& placement);
+
+}  // namespace webo::app

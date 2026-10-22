@@ -170,6 +170,13 @@ add_executable(test_frontend src/__test__/test_frontend.cpp)
 target_link_libraries(test_frontend PRIVATE webolution_objects)
 add_test(NAME frontend COMMAND test_frontend)
 
+# C1b: the panel-icon compositing primitive (offline) plus the real-archive
+# negative finding that GreyIcons/BlackIcons/AdditiveIcons are not the ten
+# skill-panel icons (gated the same way `frontend`'s archive half is).
+add_executable(test_skillpanel src/__test__/test_skillpanel.cpp src/app/SkillPanel.cpp)
+target_link_libraries(test_skillpanel PRIVATE webolution_objects)
+add_test(NAME skillpanel COMMAND test_skillpanel)
+
 add_executable(test_progress src/__test__/test_progress.cpp)
 target_link_libraries(test_progress PRIVATE webolution_objects)
 add_test(NAME progress COMMAND test_progress)
@@ -259,6 +266,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata frontend progress levelindex surface wav levelobjects polylist world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

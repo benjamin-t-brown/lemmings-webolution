@@ -1099,6 +1099,23 @@ exit hover test — both matter for Phase C.
 **Every cue in that list has now been chased down** (rounds 18–28), and most were clean
 negatives. Do not re-investigate them; see the gadget table below.
 
+**`GreyIcons`/`BlackIcons`/`AdditiveIcons` are chased (C1b, round 1): each sheet decodes to
+exactly one sprite, not ten icons.** `SPRITES\GREYICONS.SPR`→`bomb` (18×25, one frame),
+`SPRITES\BLACKICONS.SPR`→`questionmark` (16 near-duplicate frames, max 20×19),
+`SPRITES\ADDITIVEICONS.SPR`→`armageddon` (13 frames, max 15×18) — independently re-decoded
+twice, from the production reader and from a from-scratch parser. All three, plus `Bits`,
+`Axe` and `Smoke`, are registered by the **same** function, `FUN_0045e51f`, through the
+**same** generic sheet-loader `FUN_00446040` round 23 already named for `Axe`; that
+function only loads handles, it does not draw. These three read as per-button **badges**
+(questionmark→fast-forward's multiplier cycle, armageddon→the detonation animation,
+bomb→plausibly a greyed/disabled overlay), not the ten base icons' strip — do not reuse
+them as the panel's base art. `SPRITES\BITS.SPR` is the lemming's death-gib body parts, a
+sibling clean negative. The ten base icons' actual sheet/draw call is still unlocated
+([C1b](scratch/phase-c1-panel-icon-render.md)): the hover/selection chain
+(`FUN_00454d6c`→`FUN_004532e2`→`0x45cff9`) contains no draw call; the real draw sits behind
+an untraced per-skill vtable. Do not repeat the archive/PE-resource search — it was
+exhaustive.
+
 ## Gadgets — all settled, rounds 9 and 13–31
 
 Implemented in `src/sim` and not to be re-investigated:

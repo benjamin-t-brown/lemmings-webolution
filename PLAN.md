@@ -626,6 +626,23 @@ tick-10 first-divergence shape. This is queued next as D1k: fix the phase/`n_min
 then re-run a clean, uncorrected full-gate comparison. No new live capture is needed —
 both D1g's and D1j's raw samples are already saved.
 
+**D1k phase/n_min boundary fixed; D1g and D1j now agree on first divergence**
+([check](docs/scratch/phase-d1-phase-nmin-fix.md)): `n_min` (which tick-grid point is
+"tick 1") was a sign test on a per-capture `phase` value that is always within half a
+tick of exact zero by construction, with zero margin at the test's own boundary.
+Replacing it with a nearest-grid-point choice (`round(-phase/TICK_SECONDS)`, provably
+always `0` under the current `phase` definition, independently confirmed over 200,000
+sampled values) makes D1g's and D1j's captures agree exactly on first divergence (tick
+11, `released_count`, sim=1 live=0) where they previously disagreed in both tick and
+field. **D1g's own historical figures change as a direct, flagged consequence**: its
+167-total/tick-10 result becomes 653-total/tick-11 under the corrected grid — the old
+number measured a mis-aligned grid, not a better one. The raw-count gap between the two
+captures (653 vs 537) persists even with aligned grids, consistent with D1j's
+already-landed finding that count tracks propagation length, not drift magnitude; this
+is not re-litigated. **D1 is still not accepted.** Both known harness biases (D1i/D1j's
+throttle lag, D1k's grid alignment) are now fixed; the next D1 round is a fresh, clean,
+full live gate recheck against the fully-fixed harness.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

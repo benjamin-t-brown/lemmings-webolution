@@ -447,11 +447,38 @@ def live_cell(x: float, y: float) -> tuple[int, int]:
 def build_table(order, first_seen, raw, phase: float, ticks: int,
                  match_tol: float = TICK_SECONDS / 2.0):
     """One row per (tick, lemming_index) with the nearest raw sample."""
-    # Tick 1 is the first grid point >= 0 (the capture's own t=0, the wall
-    # instant sampling began right after enter() confirmed ui_state 0).
-    n_min = 0
-    while phase + n_min * TICK_SECONDS < -1e-9:
-        n_min += 1
+    # Tick 1 is the grid point NEAREST to 0 (the capture's own t=0, the wall
+    # instant sampling began right after enter() confirmed ui_state 0) --
+    # not the first grid point AT OR AFTER 0.
+    #
+    # D1k fix (queue id `d1k-phase-nmin-fix`; see
+    # docs/scratch/phase-d1-harness-throttle-fix.md, "A second, unrelated
+    # harness fragility"): the old rule picked the smallest n_min with
+    # `phase + n_min*TICK_SECONDS >= 0` -- a floor/sign test on `phase`
+    # itself. `infer_phase`'s own residual formula
+    # (`t - TICK_SECONDS*round(t/TICK_SECONDS)`) always returns `phase` inside
+    # `(-TICK_SECONDS/2, TICK_SECONDS/2]`, i.e. within half a tick of exact
+    # zero, by construction -- so that sign test was being evaluated exactly
+    # at the one point (phase == 0) with no margin on either side. Two
+    # captures of the same level under the same no-input protocol produced
+    # phase = -0.0199999 and phase = +0.0000001 -- both "near zero" in the
+    # same half-tick band, but on opposite sides of the sign test, which
+    # shifted every tick's label by a full TICK_SECONDS between the two
+    # otherwise-equivalent captures (measured, not assumed: see
+    # build/tmp/d1k-phase-nmin-fix/round-note.md).
+    #
+    # The fix: choose the n_min that minimizes
+    # |phase + n_min*TICK_SECONDS| (nearest grid point) instead of the
+    # smallest n_min satisfying a non-negativity test. Because `phase` is
+    # always inside (-TICK_SECONDS/2, TICK_SECONDS/2], `n_min=0` is *always*
+    # the nearest-grid-point answer under the current phase definition
+    # (|phase| <= TICK_SECONDS/2 - epsilon is always < |phase + TICK_SECONDS|
+    # >= TICK_SECONDS/2 + epsilon) -- deterministic, not dependent on which
+    # side of exact zero a noisy pooled-median estimate happens to land on.
+    # Written as an explicit nearest-integer search (not hardcoded to 0) so
+    # the reasoning stays auditable if `phase`'s own range assumption ever
+    # changes.
+    n_min = round(-phase / TICK_SECONDS)
     rows = []
     for T in range(1, ticks + 1):
         t_t = phase + (n_min + T - 1) * TICK_SECONDS

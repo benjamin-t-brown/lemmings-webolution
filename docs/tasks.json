@@ -3,22 +3,23 @@
   "updated": "2026-10-21",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": {
-    "id": "d1k-phase-nmin-fix",
-    "title": "D1k: fix the phase/n_min tick-grid boundary fragility, then re-run a clean D1 comparison",
+    "id": "d1l-full-gate-recheck",
+    "title": "D1l: fresh full D1 gate recheck with the fully-fixed harness",
     "status": "running",
-    "brief": "build/tmp/d1k-phase-nmin-fix-brief.md",
+    "brief": "build/tmp/d1l-full-gate-recheck-brief.md",
     "worker_tier": "targeted",
-    "owns_live_game": false,
+    "owns_live_game": true,
     "live_owner": null,
     "depends_on": [
       "d1i-release-to-actor",
-      "d1j-harness-throttle-fix"
+      "d1j-harness-throttle-fix",
+      "d1k-phase-nmin-fix"
     ],
     "gate_served": "PLAN Phase D, D1 release and walk-out",
     "question_round_count": 1,
-    "stock_starts_authorized": 0,
+    "stock_starts_authorized": 1,
     "stock_starts_consumed": 0,
-    "dispatch_note": "Standing run d-playable. Offline; no stock start -- reprocesses D1g's and D1j's saved raw data.",
+    "dispatch_note": "Standing run d-playable. One stock start authorized.",
     "harness": "Claude Code",
     "requested_model": "session (no pin)",
     "worker_agent": "round-agent"
@@ -67,6 +68,30 @@
     }
   ],
   "recently_landed": [
+    {
+      "id": "d1k-phase-nmin-fix",
+      "title": "D1k: phase/n_min tick-grid boundary fixed; D1g and D1j now agree exactly on first divergence (tick 11, released_count)",
+      "status": "landed",
+      "brief": "build/tmp/d1k-phase-nmin-fix-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/d1k-phase-nmin-fix/round-note.md",
+      "depends_on": [
+        "d1i-release-to-actor",
+        "d1j-harness-throttle-fix"
+      ],
+      "gate_served": "PLAN Phase D, D1 release and walk-out",
+      "question_round_count": 1,
+      "stock_starts_consumed": 0,
+      "stock_starts_authorized": 0,
+      "landed_in": "docs/scratch/phase-d1-phase-nmin-fix.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-21: independently re-read infer_phase's literal residual formula from the file (confirmed bounded to (-0.1, 0.1]) and re-derived phase/n_min for both captures from raw live_raw.jsonl with fresh driver code calling the now-patched find_anchors/infer_phase/build_table -- exact match to the delivered live_trace.meta.json files. Independently verified the fixed n_min formula (round(-phase/TICK_SECONDS)) equals 0 over 200,000 randomly sampled phase values spanning the full valid range, not just the two cited data points. Confirmed D1j's reprocessed output byte-identical to its original (diff empty). Confirmed D1g's one-tick relabeling claim directly against the delivered files: new[T]==old[T-1] holds for all 734 non-blank rows, zero mismatches (caught and corrected my own first attempt, which tested the wrong direction and produced 715/723 false mismatches before the arithmetic was redone correctly). Independently re-ran D1a's own unmodified diff_trace.py against both delivered reprocessed captures: reproduced tick 11/released_count/sim=1/live=0 exactly for both. Independently re-ran D1g's own unmodified diff_trace_all.py against both: reproduced 653 (D1g-fixed) and 537 (D1j-fixed, unchanged) exactly. Found and corrected one imprecision in the round's own narrative: its 'facing family reproduces identically in both' claim holds only for the one cited row (tick 146/lemming 7) -- the two reports' facing-divergence counts actually differ (15 vs 13) -- noted in the landed doc, not escalated, no effect on any load-bearing claim. No Lemmings Revolution process running; git status shows only the owned harness file plus docs/tasks.json's permitted fields; no live game was started this round."
+    },
     {
       "id": "d1j-harness-throttle-fix",
       "title": "D1j: throttle fix verified (zero detection lag; drift collapses 4 ticks -> 1); raw divergence count did not collapse, and a second harness bug (phase/n_min boundary) was found as a byproduct",
@@ -1889,10 +1914,10 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session lemmings-webolution-88, 2026-10-21 (handoff: no task was running under the prior owner, d1i was still queued)",
-    "rounds_run": 10,
+    "rounds_run": 11,
     "stock_starts_used": 5,
     "pending_questions": [],
-    "handoff": "2026-10-21 (after d1j landed): current milestone D1; last landed D1j. D1i found there is no exe-side gate between release and actor-list entry; D1j fixed the capture harness's resulting throttle lag outright (verified: zero detection lag) and found, by the metric that actually measures drift, each lemming's spawn-tick drift magnitude collapsed from up to 4 ticks to at most 1 (the structural floor of discretizing a continuous release onto a 200ms tick) -- but the RAW divergence count D1g used to size '161' did not shrink, both because count tracks forward-propagation length, not drift size, and because D1j found a second, independent, unfixed harness bug: build_table's n_min (tick-grid offset) is a step function of which side of exact zero the inferred per-capture phase lands on, so two equivalent captures can have every tick mislabeled by a full 200ms relative to each other. Critical path, active: d1k (running, no live game -- reprocesses D1g's and D1j's already-saved raw data) fixes that phase/n_min boundary, then re-runs a clean comparison. After d1k: a fresh, clean full D1 gate recheck (D1g-style, one live capture) decides whether D1 passes on its own re-score given the now-understood ≤1-tick structural floor -- if that floor itself blocks the gate as literally written, that is a new decision for the user (same shape as the already-deferred facing-label question), to be added to pending_questions rather than decided unilaterally. Only after D1 is resolved one way or another does the deferred facing-label question get revisited (user direction stands). Queued behind d1k, all offline and file-disjoint from World.*: d3a retail loader, d2a pick rule, d3b app sim loop (after d3a). Rank: a D1 implementation/recheck round goes ahead of the queue when it exists; otherwise take the queue in order. After D1: D2b live capture of 20 cursor positions + four 50-tick assignment traces; D3c click-to-assign in the app (Pick + World::assign); D3d scripted solution + level-end/timer; D3 re-score incl. A6/A7 gates.",
+    "handoff": "2026-10-21 (after d1k landed): current milestone D1; last landed D1k. Both known harness biases are now fixed and independently verified: D1j's re-enumeration throttle (zero detection lag) and D1k's phase/n_min grid-alignment boundary (D1g's and D1j's captures now agree exactly on first divergence: tick 11, released_count, sim=1 live=0, where they previously disagreed in both tick and field). D1g's own historical figures changed as a flagged, correct consequence (167/tick10 -> 653/tick11 under the corrected grid). The raw-count gap between captures (653 vs 537) persists even with aligned grids and is understood (D1j: count tracks propagation length past a drifted spawn, not drift magnitude) -- not a new open question. Critical path, active: d1l (running, one stock start) takes the first full D1 gate measurement with both fixes already in place, read plainly against the gate's literal text, and reports every residual family present, not just the headline one. Decision point after d1l: if it passes, accept D1 on this facilitator's independent re-score and move to D2; if a residual remains (the ≤1-tick structural floor D1j found is expected to reappear, since it is a property of the original's continuous accumulator vs our discrete tick, not of the harness), judge whether it is parkable as D1h's facing residual was, or whether the gate itself needs a user decision on amendment -- do not decide a gate amendment unilaterally, add it to pending_questions with evidence and a recommendation instead. Only after D1 is resolved one way or another does the already-deferred facing-label question get revisited (user direction stands). Queued behind d1l, all offline and file-disjoint from World.*: d3a retail loader, d2a pick rule, d3b app sim loop (after d3a). Rank: a D1 implementation/recheck round goes ahead of the queue when it exists; otherwise take the queue in order. After D1: D2b live capture of 20 cursor positions + four 50-tick assignment traces; D3c click-to-assign in the app (Pick + World::assign); D3d scripted solution + level-end/timer; D3 re-score incl. A6/A7 gates.",
     "stopped": null,
     "history": [
       {

@@ -1068,6 +1068,23 @@ apparent "give everyone the one skill it ships" design, not a minimal solution, 
 the brief's "one solution" framing). This is the oracle the next D3 round's own
 `sim::World` run is compared against.
 
+**D3e: our own `World` matches the saved count exactly; the end time does not, by
+roughly half** ([check](docs/scratch/phase-d3-sim-solution-run.md)): entirely offline,
+zero stock starts. A round-local probe loads `MM_CLIMB_002` through the unmodified
+production loader and assigns climber to every lemming on its very first active tick
+(matching `World::assign`'s own `Skill::Climber` branch, which has no `State::Walker`
+requirement, confirmed by direct read). Result: **saved 10 of 10, matching the
+original exactly** — but **finishes at tick 514 (102-103 s), roughly half the
+original's 208 s.** Every one of the ten lemmings takes exactly 373 ticks from spawn
+to save with zero variance, because instant assignment means every lemming takes the
+shortest possible identical path (no lemming-vs-lemming collision exists in this
+engine). **Named, falsifiable candidate cause, not yet confirmed**: D3d's own live
+capture shows the original's assignment process was not instantaneous (~95 s of
+real/game time to land all ten clicks) — this probe's instant-at-spawn rule cannot
+reproduce that delay by construction. D1's own already-landed per-event residuals are
+explicitly ruled out as far too small to explain a gap this size. D3's gate does not
+pass: the saved-count half is met, the end-time half is not.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

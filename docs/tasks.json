@@ -6,6 +6,33 @@
   "queue": [],
   "recently_landed": [
     {
+      "id": "d3e-sim-solution-run",
+      "title": "D3e: our World matches saved count (10/10) exactly; end time is ~half the original's (102s vs 208s)",
+      "status": "landed",
+      "brief": "build/tmp/d3e-sim-solution-run-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatch_id": "claude-code background round-agent a558bffcb4c5b258c, no model override",
+      "continuation_note": "Worker was interrupted by a session rate limit immediately after writing the complete round-note.md and all artifacts, before updating this object's own status/worker_output fields (found still reading 'running'). No continuation worker was needed -- the deliverable was already complete; the facilitator finished the queue bookkeeping directly.",
+      "depends_on": [
+        "d3d-solution-discovery",
+        "d3a-retail-level-setup",
+        "d3b-app-sim-loop"
+      ],
+      "gate_served": "PLAN Phase D, D3 one retail level end to end (the gate's own core comparison)",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "worker_output": "build/tmp/d3e-sim-solution-run/round-note.md",
+      "landed_in": "docs/scratch/phase-d3-sim-solution-run.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-22: independently recompiled SimSolutionRun.cpp from source, relinked against the current webolution_objects object files, reran with the same arguments (MM_CLIMB_002, tick cap 2000): byte-for-byte identical stderr output -- FINAL saved 10 dead 0 spawned 10, finished() at tick 514 (102.8s), won() at tick 384 (76.8s), reproduced exactly. Directly read World.cpp's assign() entry guard and Skill::Climber branch: confirms no State::Walker requirement. Directly read the wall-hit climb transition (rise > maxStepUp -> if canClimb, State::Climber): confirms the 'instant climb-enable means identical shortest path for every lemming' explanation. Independently recomputed all ten spawn-to-save tick differences from run_stdout.csv: exactly 373 for every pair, zero variance. git status showed only docs/tasks.json's permitted fields and this round's own gitignored build/tmp/** files -- no src/**, CMakeLists.txt, or other docs/** file touched; zero stock starts used, as authorized. Accepted as reported. D3's gate does not pass: saved-count half met exactly (10/10), end-time half not (102-103s vs 208s, roughly half). The assignment-timing-model hypothesis (instant-at-spawn here vs. a real, non-instantaneous click process in the original) is named as a candidate, not confirmed, and is falsifiable offline (vary the probe's own assignment delay) before considering any live re-capture or src/** change."
+    },
+    {
       "id": "d3d-solution-discovery",
       "title": "D3d: one scripted solution for MM_CLIMB_002 -- saved 10/10, end time 208s",
       "status": "landed",
@@ -2219,10 +2246,10 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session lemmings-webolution-a5 (handoff 2026-10-22): the Cursor facilitator session broke (user-reported); no Cursor process was running on this machine, no Lemmings/dgVoodoo process, no LemWeb-* task, and the dispatched Cursor worker (6a656cc6-4b11-4cd9-ae44-14d6a3507298) had left zero artifacts under build/tmp/d2e-rescore/. This session takes the queue and re-dispatches d2e-rescore's existing round-1 brief under Claude Code, not a new round.",
-    "rounds_run": 20,
+    "rounds_run": 21,
     "stock_starts_used": 11,
     "pending_questions": [],
-    "handoff": "2026-10-22: landed d3d-solution-discovery -- the first D3 round, oracle-gathering only (no src/** change). The scripted solution: assign climber to every lemming in arrival order as each becomes hoverable (10 assignments, reusing D2(b)'s already-proven click mechanism). One live run (1 of 2 authorized starts) wins cleanly: saved 10/10 (0x004CBAA4) against a save target of 1 (0x004CBAB0), end time 208 whole seconds (time_limit 300 at 0x004CBAA8 minus clock 92 at 0x004CBAAC when ui_state left in-level play). Honestly left open: whether ui_state 4 (this run's end state) and ui_state 5 (an unrelated earlier round's results-screen reading under a raised save target) are the same state at different moments or two different ones; whether fewer than 10 climbers would also win. This is now the oracle (10 climber assignments -> saved 10, end time 208s) the next D3 round's own sim::World run is compared against -- that round wires the same scripted sequence through our own World/app (reusing D3b's --sim path and D2a's/D3c's assign/pick wiring) and checks whether our saved count and end time match. D2 part (a) stays accepted; D2 part (b) stays accepted as 3-of-4 (digger parked in Phase E). D1 gate question remains unresolved and parked pending the user's decision.",
+    "handoff": "2026-10-22: landed d3e-sim-solution-run (round 1, offline-only, zero stock starts). Ran D3d's own scripted solution (climber to every lemming, instant on first active tick) through our own sim::World via a round-local probe: saved 10/10, matching the original exactly -- but finishes at tick 514 (102-103s), roughly HALF the original's 208s. Every lemming takes exactly 373 ticks spawn-to-save with zero variance (instant assignment gives every lemming the identical shortest path, no lemming-vs-lemming collision in this engine). Named, falsifiable candidate cause, not confirmed: D3d's own live capture shows the original's assignment process took ~95s of real time to land all ten clicks, which this instant-at-spawn probe cannot reproduce by construction; D1's own per-event residuals are explicitly ruled out as too small to explain a gap this size. D3's gate does not pass: saved-count half met, end-time half not. Next: an offline round 2 varying the probe's own assignment delay (not src/**) to see what delay reproduces ~208s, testing whether the magnitude is plausible against the live capture's own click cadence, before considering any live re-capture or src/** change. D2 part (a) stays accepted; D2 part (b) stays accepted as 3-of-4 (digger parked in Phase E). D1 gate question remains unresolved and parked pending the user's decision.",
     "stopped": null,
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [

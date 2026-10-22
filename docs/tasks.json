@@ -2,7 +2,25 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "b1c-draw-dispatch-trace",
+    "title": "B1c: trace the main menu vtable and its draw dispatch; locate font-layout format",
+    "status": "running",
+    "brief": "build/tmp/b1c-draw-dispatch-trace-brief.md",
+    "worker_tier": "targeted",
+    "harness": "Claude Code",
+    "requested_model": "session (no pin)",
+    "worker_agent": "round-agent",
+    "dispatch_tag": "disassembly read",
+    "owns_live_game": false,
+    "live_owner": null,
+    "depends_on": [
+      "b1-frontend-recon"
+    ],
+    "gate_served": "PLAN Phase B, B1 frontend assets and text (render half: identifying the draw path)",
+    "question_round_count": 1,
+    "dispatch_id": "claude-code background round-agent a0f69aad99425c8cf, no model override"
+  },
   "queue": [],
   "recently_landed": [
     {

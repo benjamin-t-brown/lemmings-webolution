@@ -4,10 +4,36 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "c1c-panel-icon-draw-trace",
-      "title": "C1c: trace the native draw call that paints the ten skill-panel base icons",
+      "id": "c1d-panel-icon-widget-trace",
+      "title": "C1d: identify the levelScreen+0x3c object and its vtable+4 draw dispatch (round 3 of 3)",
       "status": "queued",
+      "brief": "build/tmp/c1d-panel-icon-widget-trace-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["c1a-panel-index-read", "c1b-panel-icon-render", "c1c-panel-icon-draw-trace"],
+      "gate_served": "PLAN C1 skill-panel rendering clause (buttons only; counts/digits out of scope per overlord directive)",
+      "question_round_count": 3,
+      "prior_question_dispatches": 2,
+      "round_cap_note": "Last pre-authorized round on this question. If this comes back negative, park in Phase E with a resume brief; no automatic fourth round.",
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel",
+      "dispatch_id": "claude-code background round-agent af3fe6eb52b47a9d5, no model override"
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
+    {
+      "id": "c1c-panel-icon-draw-trace",
+      "title": "C1c: per-skill vtables and LemmingsLO also falsified (round 2 of 3); one concrete unresolved thread found (levelScreen+0x3c)",
+      "status": "landed",
       "brief": "build/tmp/c1c-panel-icon-draw-trace-brief.md",
+      "worker_output": "build/tmp/c1c-panel-icon-draw-trace/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
       "harness": "Claude Code",
@@ -22,11 +48,10 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "c1-skill-panel",
-      "dispatch_id": "claude-code background round-agent a7ef88fd46d058a7b, no model override"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_id": "claude-code background round-agent a7ef88fd46d058a7b, no model override",
+      "landed_in": "PLAN.md Phase C (C1c) and docs/scratch/phase-c1-panel-icon-render.md; docs/LESSONS.md 'Useful strings the engine keeps'",
+      "facilitator_verified": "2026-10-22: independent REA session (SHA-256 matches authority) re-ran search_strings for LEMMINGSLO case-insensitive: zero matches, exactly as claimed. Re-ran xrefs on 0x4c9208: exactly 9 references (0x45480a,0x454840,0x45487d,0x4548b3,0x4548ea,0x4554e0,0x4554f7,0x45550e,0x455525), all inside the cited hit-test function range -- matches exactly. Re-ran procedure_callers on 0x45cff9: exactly one caller 0x450696 -- matches. Independently read 64 bytes of the climber vtable (0x4b0978) and hand-decoded 14 dword slots, all in the 0x00400000-0x00500000 code range, matching the worker's 'richer base class, 14-16 slots' claim and cited slot list, followed by a float constant (not a 15th slot). Independently re-decompiled FUN_00454a85 directly: reproduces the quoted pseudocode exactly, including both resource-index branches, the FUN_00414920 call, and the unresolved (**(code**)(**(...)+0x3c)+4))() dispatch verbatim. Independently re-decompiled 0x413f15 (climber's cited position/animation-timer slot): confirms the description, no draw/blit call. No Lemmings Revolution.exe/webolution.exe process found running before or after this check. git status showed only docs/tasks.json's permitted fields -- no src/** file touched, confirming the read-only-round claim. REA session closed cleanly, no write. Round accepted as reported; nothing narrowed. This is round 2 of 3; one round remains. Dispatching round 3 (c1d) to trace the levelScreen+0x3c object and its vtable+4 slot -- the last pre-authorized round on this question."
+    },
     {
       "id": "c1b-panel-icon-render",
       "title": "C1b: ten base icons' sheet not located (clean negative, round 1 of 3); compositing primitive built/tested, not wired",
@@ -2558,11 +2583,11 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running under a prior owner; the only active item (b1h) was blocked on an explicit user stop predating this directive and is closed out below, not resumed.",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the C1 gate passes on the facilitator's own independent re-score, or when C1 is parked at its round cap, or on any ORCHESTRATION stop condition. Do not advance to C2 or B2 on this directive.",
-    "handoff": "2026-10-22: landed c1b-panel-icon-render (round 1 of 3 on the icon-rendering question) -- a well-evidenced clean negative: GreyIcons/BlackIcons/AdditiveIcons each decode to one sprite (bomb/questionmark/armageddon), not ten icons; every other archive sheet and the PE resource table were searched with no candidate found; the real draw call sits behind an untraced per-skill vtable. Independently re-verified (REA re-read + re-decompile, a second from-scratch .SPR decoder, mutate-one-alone on the new compositing primitive, fresh rebuild, 30/30 CTest, independent score reproduction cross-checked against A7q's own already-landed numbers). Landed into PLAN.md Phase C, docs/scratch/phase-c1-panel-icon-render.md and docs/LESSONS.md. C1's gate still does not pass (skill MAE 0.108/0.055 against <=0.02). Wrote and linted build/tmp/c1c-panel-icon-draw-trace-brief.md (round 2 of 3): trace the per-skill vtable dispatch for the actual icon draw call, or confirm the LemmingsLO pose-thumbnail lead. Dispatching c1c now.",
+    "handoff": "2026-10-22: landed c1c-panel-icon-draw-trace (round 2 of 3) -- both of C1b's pre-registered leads independently confirmed falsified (all nine skill-constructor vtables are sim/eligibility/pose-name code, no draw; LemmingsLO's string does not exist anywhere in the exe, unconfirmable by any xref). A new per-frame candidate (FUN_0045cff9, the main loop) contains one confirmed real draw call (FUN_00414920) via FUN_00454a85, but only for one overlay quad/text label, never ten; panel_boxes has exactly 9 xrefs, all inside the already-read hit-test function, so no second draw-side reader exists. One concrete unresolved thread remains: an indirect virtual dispatch on an unidentified object at levelScreen+0x3c (REA's own 'unresolved indirect call'). Independently re-verified (fresh REA session re-reading every cited address/xref/decompile). Landed into PLAN.md Phase C, docs/scratch/phase-c1-panel-icon-render.md and docs/LESSONS.md. Wrote and linted build/tmp/c1d-panel-icon-widget-trace-brief.md (round 3 of 3, the last pre-authorized round on this question): identify the levelScreen+0x3c object and decompile its vtable+4 slot. If this comes back negative, park the question in Phase E with a resume brief -- no automatic fourth round. Dispatching c1d now.",
     "previous": [
       {
         "id": "d-playable-3",

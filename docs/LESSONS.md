@@ -1116,6 +1116,20 @@ sibling clean negative. The ten base icons' actual sheet/draw call is still unlo
 an untraced per-skill vtable. Do not repeat the archive/PE-resource search — it was
 exhaustive.
 
+**C1c (round 2): the per-skill vtables don't draw either, and `LemmingsLO` is unconfirmable.**
+All nine skill-constructor vtables' ~50 virtual-method bodies are simulation physics,
+eligibility, cell-flag writers, or (several skills) a call into `FUN_0042fd25` that sets the
+**lemming's own in-level action-pose animation name** — the input to the actor-rendering
+pipeline (A4r/A4t), not the panel. `SPRITES\LEMMINGSLO.SPR`'s name string does not exist
+anywhere in the exe's string table, so that lead cannot even be xref-searched. `panel_boxes`
+(`0x4c9208`) has exactly 9 xrefs, all inside the hit-test function `0x454d6c`-`0x455656` — no
+second, draw-side reader exists anywhere in the binary; do not re-check this. The per-level
+main loop `FUN_0045cff9` (sole caller `0x450696`) calls `FUN_00414920` (confirmed real draw
+primitive) via `FUN_00454a85`, but only for one resource-indexed overlay quad/text label per
+frame, never a ten-slot array. One concrete unresolved lead remains for whoever resumes this:
+`FUN_00454a85`'s closing indirect dispatch `(**(code**)(**(int**)(levelScreen+0x3c)+4))()` on
+an unidentified object — REA's own "unresolved indirect call" limitation, not yet a target.
+
 ## Gadgets — all settled, rounds 9 and 13–31
 
 Implemented in `src/sim` and not to be re-investigated:

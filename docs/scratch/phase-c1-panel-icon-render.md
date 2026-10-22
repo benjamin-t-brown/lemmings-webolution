@@ -151,3 +151,85 @@ skill constructors C1a already located points at, looking for a draw/blit
 call), or confirmed via the `LemmingsLO` lead above. This is round 1 of 3 on
 this question (`docs/ORCHESTRATION.md#milestones-gates-and-round-caps`); two
 rounds remain before parking in Phase E.
+
+## C1c: both pre-registered leads also falsified; one concrete unresolved thread found (round 2 of 3)
+
+Worker packet `build/tmp/c1c-panel-icon-draw-trace/round-note.md`. Offline REA
+only, read-only, zero stock starts, no `src/**` change (read-only round).
+
+### Result
+
+A further-narrowed clean negative, not a located draw call:
+
+- **All nine skill-constructor vtables** (C1a's addresses) were read and every
+  one of their ~50 deduplicated virtual-method bodies decompiled. None
+  contains a texture/sprite/blit call or references the sheet-loader
+  `FUN_00446040`. They are simulation physics/eligibility/cell-flag code, or
+  (for several skills) a call into `FUN_0042fd25` that sets the **lemming's
+  own in-level action-pose animation name** (`"build"`/`"float"`/etc.) — the
+  input to the already-identified actor-rendering pipeline, not the panel.
+  This also explains C1b's `LemmingsLO.SPR` name-coincidence lead: those are
+  the lemming's own pose names, now confirmed reachable from the skill-tick
+  code, but still feeding the in-level actor sprite.
+- `SPRITES\LEMMINGSLO.SPR`'s own name string does **not exist anywhere** in
+  the exe's string table (`search_strings` for `"LEMMINGSLO"`, zero matches;
+  a broader `"Lemmings"` search found nothing matching), so the lead is not
+  just unconfirmed, it is unconfirmable by any xref path.
+- A new candidate was traced: the per-level main loop `FUN_0045cff9`
+  (`0x45cff9`-`0x45e486`, confirmed sole caller `0x450696` — the application's
+  own per-level message pump). Its sibling call next to C1b's already-read
+  hover chain, `0x453027`, is camera-pan/edge-scroll math, not a draw. Its
+  unconditional per-frame call, `FUN_00454a85`, **does** contain a confirmed
+  real draw call into `FUN_00414920` (the same primitive A4r/A4t already
+  identified for actor rendering) — but for exactly **one** resource-indexed
+  overlay quad (field `levelScreen+0x2a`) and one text-glyph list (field
+  `levelScreen+0x2c`, drawn via `FUN_0044e150`), never a ten-slot,
+  panel-index-ordered array.
+- `xrefs` on `panel_boxes` (`0x4c9208`) returns exactly 9 references, all
+  inside the already-read hit-test function (`0x454d6c`-`0x455656`) — no
+  second, draw-side reader of this table exists anywhere in the binary.
+- **One concrete, unresolved thread remains**: `FUN_00454a85` ends with
+  `(**(code**)(**(int**)(param_1+0x3c)+4))()` — an indirect virtual
+  "draw yourself" dispatch on whatever object lives at `levelScreen+0x3c`,
+  which REA reports as an unresolved computed/indirect call (its own stated
+  limitation). Its concrete target was not identified this round. Four
+  state-transition functions inside `FUN_0045cff9` (win/lose/AVI-only, not
+  per-frame) were also left untraced as poor candidates for a continuously-
+  visible panel.
+
+### Facilitator check
+
+- Fresh, independent REA session against the installed exe (SHA-256
+  `32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f`, matches
+  authority). Re-ran `search_strings` for `"LEMMINGSLO"` (case-insensitive):
+  **zero matches**, confirming the worker's claim exactly.
+- Re-ran `xrefs` on `0x4c9208`: exactly 9 references
+  (`0x45480a,0x454840,0x45487d,0x4548b3,0x4548ea,0x4554e0,0x4554f7,0x45550e,0x455525`),
+  all inside the cited hit-test function's range — matches exactly.
+- Re-ran `procedure_callers` on `0x45cff9`: exactly one caller, `0x450696` —
+  matches exactly.
+- Independently read 64 bytes (16 dwords) of the climber vtable (`0x4b0978`)
+  and decoded it by hand: 14 dword slots, all resolving to addresses inside
+  `0x00400000`-`0x00500000` (matching the worker's own "richer base class,
+  14-16 slots" claim and its cited slot list), followed by a floating-point
+  constant, not a 15th slot.
+- Independently re-decompiled `FUN_00454a85` directly: reproduces the quoted
+  pseudocode exactly, including both resource-index branches, the
+  `FUN_00414920` call, and the unresolved `(**(code**)(**(...)+0x3c)+4))()`
+  dispatch verbatim.
+- Independently re-decompiled `0x413f15` (climber's cited "position/
+  animation-timer update" slot): confirms the description — `this+8`/
+  `this+0x38`/`this+0x20` double-precision timer/position math and a
+  `FUN_004404fa` text-builder call, no draw/blit primitive.
+- No `Lemmings Revolution.exe`/`webolution.exe` process found running, before
+  or after this check. `git status --short` showed only `docs/tasks.json`'s
+  permitted fields — no `src/**` file touched, confirming the "read-only
+  round" claim. REA session closed cleanly, no write.
+
+Round accepted as reported; nothing narrowed. Both of C1b's own pre-registered
+leads are now independently confirmed falsified, and one new, concrete,
+untraced thread exists (`levelScreen+0x3c`'s vtable+4 slot) that is a stronger
+lead than either prior one, because it is a genuine unresolved-by-tool
+indirect call on an object this round did not yet identify, sitting directly
+on the per-frame draw path that already contains one confirmed real draw
+call. This is round 2 of 3; one round remains before parking in Phase E.

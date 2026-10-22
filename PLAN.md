@@ -574,6 +574,21 @@ reproduced and the `a7q` figures (86 pixels, 3646 error units) match
 30/30 CTest; a mutate-one-alone swap of the one blend-formula line fails exactly one check
 and restores byte-identically. Two rounds remain before parking per the round cap.
 
+**C1c: both pre-registered leads also falsified; one concrete thread found, round 2 of 3**
+([check](docs/scratch/phase-c1-panel-icon-render.md#c1c-both-pre-registered-leads-also-falsified-one-concrete-unresolved-thread-found-round-2-of-3)):
+all ~50 virtual-method bodies across all nine skill-constructor vtables (C1a) read; none
+draws — they are simulation physics/eligibility/cell-flag code or the lemming's own
+in-level pose-name selection, explaining C1b's `LemmingsLO` name coincidence without
+confirming it as the panel's source. `LemmingsLO`'s string does not exist anywhere in the
+exe, so that lead is unconfirmable, not merely untraced. A new per-frame candidate,
+`FUN_0045cff9` (confirmed sole caller of the main loop), contains one confirmed real draw
+call (`FUN_00414920`, independently corroborating A4r/A4t) but for exactly one overlay
+quad/text label, never ten. `panel_boxes` has exactly 9 xrefs, all inside the already-read
+hit-test function — no second draw-side reader exists. One concrete unresolved lead
+remains: an indirect virtual dispatch on `levelScreen+0x3c`, reported unresolved by REA
+itself. One round remains before parking per the round cap; dispatched to trace that
+object.
+
 ## Phase D — reconnect the simulation
 
 Wire spawn, exits, skill assignment and the measured gadgets into the new renderer, and get a

@@ -7,7 +7,7 @@
       "id": "b1f-menu-template-match",
       "title": "B1f: measure menu layout by matching verified retail templates",
       "status": "running",
-      "worker_output": "build/tmp/b1f-menu-template-match/round-note.md",
+      "worker_output": "build/tmp/b1f-menu-template-match/repair1-note.md",
       "brief": "build/tmp/b1f-menu-template-match-brief.md",
       "worker_tier": "targeted",
       "harness": "OpenCode",
@@ -17,13 +17,14 @@
       "live_owner": null,
       "depends_on": ["b1e-menu-image-layout", "b1b-reference-screengrab"],
       "gate_served": "PLAN B1 full-frame menu <=0.02; actual image layout matching before production renderer",
-      "question_round_count": 2,
+      "question_round_count": 3,
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
-      "dispatch_id": "ses_e9ab4a54effekZsW4H6YxnJ0a8",
+      "dispatch_id": "ses_e9ab100a0ffeV4qSV6O4Se9cHm",
+      "dispatch_history": ["ses_e9abb2b10ffeMJkJP0v0ZOGVUf", "ses_e9ab4a54effekZsW4H6YxnJ0a8"],
       "previous_dispatch_id": "ses_e9abb2b10ffeMJkJP0v0ZOGVUf",
-      "repair_brief": "build/tmp/b1f-menu-template-match-repair1-brief.md",
-      "repair_reason": "Facilitator independently reproduced background and surrogate full-frame numbers and four tests; actual matcher is incomplete: no glyph code, panel_runs row threshold fragments/excludes bars. Surrogate score under0.02 is explicitly rejected as acceptance. Repair implements actual panel/glyph path and real-font controls, preserving prior evidence."
+      "repair_brief": "build/tmp/b1f-menu-template-match-repair2-brief.md",
+      "repair_reason": "Repair1 fixes five panel-like support bands and adds source components, but still implements no glyph similarity search. Split further: repair2 owns only actual glyph-to-row matching, starting with Quit falsifier, reusing all export/background/panel work. Third dispatch; all surrogate scores remain diagnostic-only, no gate acceptance."
     }
   ],
   "queue": [],
@@ -2504,7 +2505,7 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 recovery continued: B1e export landed a1ed143, queue syntax corrected43da072; C1a panel actions independently verified/landed b6024ed (8 fast-forward,9 Armageddon; pixel gate open). B1f first pass implemented no glyph routine and fragmented panel rows. Own full-frame checker reproduced background5651991/235008000 and surrogate3041316/235008000, but surrogate is rejected as acceptance despite passing scalar0.02. B1f repair1 now RUNNING under ses_e9ab4a54effekZsW4H6YxnJ0a8 to fix actual panel segmentation and glyph matching; preserve first-pass evidence and verify repair before landing. Prepared build/tmp/b1g-menu-render-brief.md waits on verified layout, then render in webolution and score unchanged gate. No new stock starts, source mutation restored, full suite29/29; no repeated REA trace/export after restart. Separate CEO/framework commits preserved.",
+    "handoff": "2026-10-22 B1e export landed a1ed143; C1a indices independently verified/landed b6024ed, HUD pixels still open. B1f first pass omitted glyphs; repair1 fixes five panel-like support bands and adds alpha components but STILL no glyph search. Do not accept its surrogate score. Further split repair2 now RUNNING under ses_e9ab100a0ffeV4qSV6O4Se9cHm: ONLY glyph-to-row matching, start Quit falsifier, reuse existing inputs/panel work; third ordinary-cap dispatch. Preserve first-pass/repair1 outputs. Next verify actual scored matching/control evidence, then use prepared b1g renderer brief only if useful layout is verified; otherwise cap/park or explicitly justify an exception, no fourth automatic pass. B1 remains current; no production menu/accepted gate score yet. Full suite29/29 and source restoration already verified; zero new stock starts. No repeated completed native/export work; CEO/framework commits preserved.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

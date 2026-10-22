@@ -506,8 +506,9 @@ or gate score yet; B1f is the next bounded matching round, then the app renderer
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
 `^time`, the icon sets `GreyIcons` / `BlackIcons` / `AdditiveIcons`, and the cursor set
-(`_curLem`, `_curNoLem`, `_curEnt`, `_curExit`, and the left/right variants). Panel indices
-0, 1, 3, 4 and 7 are known; 2, 5, 6, 8, 9 are not.
+(`_curLem`, `_curNoLem`, `_curEnt`, `_curExit`, and the left/right variants). C1a identifies
+all physical panel indices: 0 climber, 1 floater, 2 bomber, 3 blocker, 4 builder,
+5 basher, 6 miner, 7 digger, 8 fast-forward, 9 Armageddon (READ, not new live assignments).
 
 The ten skill-panel buttons (x `[18,90)`, objects at `0x4C9208`) are excluded from the A7
 gate for the same reason and are drawn here.
@@ -526,9 +527,17 @@ user 2026-10-22.**
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| C1 skill panel | queued | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
+| C1 skill panel | indices identified; render pending | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
 | C2 counters, cursor, pause caption | queued | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
 | C3 full frame | queued | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
+
+**C1a: physical panel mapping read** ([check](docs/scratch/phase-c1-panel-indices.md)):
+the ten-entry table at `0x45A4DD` is eligibility, distinct from the nine-entry skill
+factory table `0x45B570`. Physical index8 bypasses selection and requests a seven-pass
+simulation-budget loop; index9 requests Armageddon, not an ordinary per-lemming skill.
+Both native paths and the 0..7 factory/constructor mapping were independently re-read
+from raw bytes; REA evidence canonically validated. Exact input/stock/timing behavior
+and all panel rendering remain unmeasured here. C1's gate is not yet accepted.
 
 ## Phase D — reconnect the simulation
 
@@ -1296,7 +1305,8 @@ open.
   [D1g/D1h](docs/scratch/phase-d1-full-gate-recheck.md).
 - 14 of the 19 call sites of the object-overlap predicate `0x00430BA1` are still
   unidentified. Anti-grav, exit, teleport, SpeedPad and lever account for five.
-- Panel indices 2, 5, 6, 8 and 9 (jump table at `0x0045A4DD`). Needed for Phase C.
+- C1 panel composition/counts remain; the old panel-index debt is paid by
+  [C1a](docs/scratch/phase-c1-panel-indices.md), including command slots8/9.
 - Platform targets: Linux, macOS, WebAssembly. The old GLES3/WebGL2 claim was a code
   property that was never actually run.
 - Intro, music and FMV. The `.avi` codecs are still unidentified.

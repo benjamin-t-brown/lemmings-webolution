@@ -1050,8 +1050,11 @@ still matches. See `docs/scratch/phase-d1-left-turn-fix.md`.
 - `lrstate.attach` returns `(handle, pid)`. `read_lvl_grid.find_grid` returns
   `(offset, cells)`.
 - **Skill assignment must go through the panel.** Proof is the stock count at `0x004C91D8`
-  **decrementing**, not a sprite change. Panel indices known: 0 climber, 1 parasol, 3
-  blocker, 4 builder, 7 digger; 2, 5, 6, 8, 9 unidentified.
+  **decrementing**, not a sprite change. Physical indices ([C1a READ](scratch/phase-c1-panel-indices.md)):
+  0 climber, 1 parasol, 2 bomber, 3 blocker, 4 builder, 5 basher, 6 miner, 7 digger;
+  8 fast-forward and 9 Armageddon are commands, not ordinary per-lemming skills.
+  `0x45A4DD` is eligibility; `0x45B570` is a separate factory with a latent special
+  index8 path. Do not infer physical index8 behavior from its `questionmark` art key.
 - **Cap live sampling.** An uncapped single-lemming run at ~300k `ReadProcessMemory`/s killed
   two game processes. `--hz 2000` is safe.
 - `goto_level` **can silently fail** — it once reported entering one level while the loaded

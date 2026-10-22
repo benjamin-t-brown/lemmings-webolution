@@ -6,7 +6,8 @@
     {
       "id": "b1f-menu-template-match",
       "title": "B1f: measure menu layout by matching verified retail templates",
-      "status": "running",
+      "status": "ready-for-verify",
+      "worker_output": "build/tmp/b1f-menu-template-match/round-note.md",
       "brief": "build/tmp/b1f-menu-template-match-brief.md",
       "worker_tier": "targeted",
       "harness": "OpenCode",
@@ -20,15 +21,18 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "dispatch_id": "ses_e9abb2b10ffeMJkJP0v0ZOGVUf"
-    },
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1a-panel-index-read",
-      "title": "C1a: read panel-index actions 0..9 using REA and raw dispatch bytes",
-      "status": "ready-for-verify",
-      "worker_output": "build/tmp/c1a-panel-index-read/round-note.md",
+      "title": "C1a: physical indices0..9 identified; 8 fast-forward, 9 Armageddon",
+      "status": "landed",
       "brief": "build/tmp/c1a-panel-index-read-brief.md",
+      "worker_output": "build/tmp/c1a-panel-index-read/round-note.md",
       "worker_tier": "hard",
-      "escalation_reason": "disassembly read: explicit stronger-worker mapping for a bounded native dispatch trace",
+      "escalation_reason": "disassembly read, bounded native dispatch trace",
       "harness": "OpenCode",
       "requested_model": "openai/gpt-6.1-sol (high)",
       "worker_agent": "disasm-agent",
@@ -36,16 +40,15 @@
       "owns_live_game": false,
       "live_owner": null,
       "depends_on": [],
-      "gate_served": "PLAN C1 first clause: identify panel indices 2,5,6,8,9; no pixel gate claim",
+      "gate_served": "PLAN C1 index-identification clause; rendering/count gate remains open",
       "question_round_count": 2,
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "dispatch_id": "ses_e9ac60b4affeWBBtSqCKqG7f9u",
-      "continuation_note": "2026-10-22: server restarted twice during facilitator B1e verification. Resumed same C1a session with saved REA evidence/byte dumps and existing read_c1_panel_indices.py; instructed not to repeat completed reads and finish missing checker/control/writeup only. No new live budget or scope."
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "continuation_note": "Same session resumed after server restarts from existing REA evidence/checker; no completed native trace repeated.",
+      "landed_in": "docs/scratch/phase-c1-panel-indices.md",
+      "facilitator_verified": "Independent raw-PE/Capstone checker authenticated836 original-byte records, independently decoded both tables/ctors/art labels and walked physical8/9 handler/consumer bytes. Own factory[6]->[5] control changes miner ctor to basher and is detected; worker[5]->[6] self-test independently reproduced. Canonical REA import validated26 full Evidence records, digest matches; no repeated decompilation. Narrowed7-pass interpretation to simulation budget loop, not7 fixed200ms ticks or measured7x real-time. No live timing/stock/latent reachability claim. Last full same-source CTest29/29; no production code changed. Current exe/config/save hashes equal baselines, no original process."
+    },
     {
       "id": "b1e-menu-image-layout",
       "title": "B1e: decoded retail-template export prerequisite (split repair)",
@@ -2479,7 +2482,7 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22): explicit user handoff after Claude Code B1d worker aa948e797d9d77dd0 hit its session limit before launching. No other game process or LemWeb task; resume saved script and prediction under the same budget.",
-    "rounds_run": 9,
+    "rounds_run": 11,
     "stock_starts_used": 4,
     "pending_questions": [],
     "resolved_questions": [
@@ -2498,7 +2501,7 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 after server restart recovery: B1e split export prerequisite landed in a1ed143 (two dispatches, first prose-only). FrontendAssetDump exports seven real backdrop/font candidates plus232 UK strings; independently verified all raw strings, PNG metadata, authority-install repeatability, isolated wrong-language failure and source/binary restore; full suite29/29. No matches/render/score yet. B1f queued for actual image matching using verified exports; production renderer follows. C1a remains independent offline; same session resumed after restart from saved REA/byte traces/checker, no completed read repeated. Queue handoff missing comma introduced at B1e landing fixed before B1f dispatch; framework lint re-run. CEO B1d and REA framework commits remain separate (cba4a7e/8480fed); no new stock starts, install unchanged.",
+    "handoff": "2026-10-22 C1a landed: physical0..7 classic mapping confirmed,8 fast-forward,9 Armageddon. Eligibility0x45A4DD differs from factory0x45B570; commands must not be inferred from latent factory/art labels. Independent raw-byte/table checks, own index mutation,26 REA Evidence validation and cleanup pass; no HUD pixel acceptance. B1 remains current. B1f returned an incomplete matching implementation: background match measured, panel segmentation faulty/glyphs unresolved, diagnostic score explicitly invalid. Verify/narrow packet then repair actual panel/glyph matching, not another export/native trace. Prepared b1g renderer brief must wait for verified image layout. Source restore/full29-test suite completed after server restart; no stock starts or install changes. Separate CEO/framework commits preserved.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

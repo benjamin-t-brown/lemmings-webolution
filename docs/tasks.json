@@ -2,26 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "b1a-asset-loading",
-      "title": "B1a: wire the already-tested texture/.LTX readers into an app-side load",
-      "status": "queued",
-      "brief": "build/tmp/b1a-asset-loading-brief.md",
-      "worker_tier": "targeted",
-      "harness": "Claude Code",
-      "requested_model": "session (no pin)",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "PLAN Phase B, B1 frontend assets and text (load half)",
-      "question_round_count": 1
-    },
+  "active": null,
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b1b-reference-screengrab",
       "title": "B1b: capture a 640x480 main-menu (highlight 0) reference screengrab",
-      "status": "queued",
+      "status": "landed",
       "brief": "build/tmp/b1b-reference-screengrab-brief.md",
       "worker_tier": "targeted",
       "harness": "Claude Code",
@@ -33,11 +20,33 @@
       "gate_served": "PLAN Phase B, B1 frontend assets and text (reference image)",
       "question_round_count": 1,
       "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "stock_starts_consumed": 1,
+      "dispatch_id": "claude-code background round-agent af87119b459dd5ac1, no model override",
+      "worker_output": "build/tmp/b1b-reference-screengrab/round-note.md",
+      "landed_in": "docs/scratch/phase-b1-reference-screengrab.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-22: reviewed metadata.json directly -- self-consistent (screen_id and highlight exact across all three samples, install hashes equal before/after). Viewed menu_highlight0.png directly: a clean, correctly-cropped 640x480 image; confirms the reported English text exactly and Start New Game highlighted at item 0, matching the metadata. Independently confirmed SavedGame.dat current LastWriteTime (11:58:35, same as d3f-timed-solutions own run.log -- read as a restore-copy consistent with DMs own hash-matched-restore claim, not new evidence of cause) and that no backup/pristine copy exists anywhere to compare against, and that LESSONS.md/AGENT_SAFETY.md have never previously mentioned SavedGame.dat -- a genuinely new gap. git status showed only this tasks permitted docs/tasks.json fields; no src/**, PLAN.md, .claude/rules/**, or other docs/** file touched. stock_starts_consumed corrected 0 to 1. Round accepted as reported; nothing narrowed. The structural capture (640x480, screen id 3, highlight 0) is valid and usable. The language mismatch (English captured, German documented as the preserved quirk) is recorded as a pending_question below, not decided unilaterally. Other B1 work not blocked by language continues."
+    },
+    {
+      "id": "b1a-asset-loading",
+      "title": "B1a: wire the already-tested texture/.LTX readers into an app-side load",
+      "status": "landed",
+      "brief": "build/tmp/b1a-asset-loading-brief.md",
+      "worker_tier": "targeted",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "PLAN Phase B, B1 frontend assets and text (load half)",
+      "question_round_count": 1,
+      "dispatch_id": "claude-code background round-agent aa635967b2b3da082, no model override",
+      "worker_output": "build/tmp/b1a-asset-loading/round-note.md",
+      "landed_in": "docs/scratch/phase-b1-asset-loading.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-22: reviewed CMakeLists.txt diff (additive: one new test_frontend target, added to the existing WEBOLUTION_GAME_DIR injection list) and test_frontend.cpp content directly -- calls only already-tested production readers (AssetLibrary::open, loadTexture, availableLanguages, loadStrings), touches none of src/assets/**. Fresh full rebuild (cmake --build --preset dev-debug, no stale work) + fresh ctest --preset dev-debug: 29/29. Independently reran ctest -R frontend -V: reproduces the exact same output (640x480 opaque MAIN_LOGO.BMP, 256x240 key-black _FONT.BMP, 232 strings GERMAN.LTX, [1]=\"Weiter mit X-Taste\"). Independently bypassed the test entirely for the .LTX claim: extracted LANGUAGE\\GERMAN.LTX's raw bytes with lrtool and decoded the header myself with a fresh Python script (u32 count field, offset table, NUL-terminated strings) -- count 232, string[0]=\"\" (empty), string[1]=\"Weiter mit X-Taste\" -- matches exactly, independent of the production StringTable::parse code path. Did not independently re-decode the BMP dimensions outside the production LRZ/Bitmap code path (lrtool extract/dump both return the raw LRZ-compressed bytes, not a decoded image; a from-scratch LRZ decode was not attempted this check) -- relies on re-running the already-separately-tested Lrz.cpp/Bitmap.cpp unit tests (test_lrz, test_bitmap, both in the same 29/29 green run) plus the fresh reproduction of this round's own test output, not a third independent decode. git status showed only CMakeLists.txt, the new test_frontend.cpp, and docs/tasks.json's permitted fields -- no src/assets/**, PLAN.md, or other docs/** file. No live game involved. Round accepted as reported; nothing narrowed. B1's \"assets load\" half is now demonstrated end to end for a representative background, the font texture and German text."
+    },
     {
       "id": "b1-frontend-recon",
       "title": "B1 recon: where do frontend background/button/font sprites and .LTX text live, and what does the main-menu draw path look like?",
@@ -2355,10 +2364,25 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (2026-10-22 /facilitator invocation): handoff from d-playable-2, which stopped with both Phase D decisions pending. The user resolved both in the same message that signed off Phase B/C, so this session opens the next standing run directly rather than reporting a bare stop.",
-    "rounds_run": 2,
-    "stock_starts_used": 2,
-    "pending_questions": [],
-    "handoff": "2026-10-22: landed d3f-timed-solution. Recorded real assignment-landing times in one live run and replayed World with exactly those times (no fitting). Unanticipated, directly-measured finding: two live runs of the identical scripted solution ended 75 real seconds apart (208s vs 133s) -- the gate's own premise does not hold for the original itself. The self-consistent comparison (this run's own recorded times fed back through World, vs that same run's own result) matches to the whole second on the finished() quantity; against the gate's literal end_time_seconds field the residual is -8s, split into a named twice-measured unmodeled delay (-6.3s) and a small remainder inside D1's own budget (-1.7s/-0.53s). Per the user's 2026-10-22 decision, D3 is now parked in Phase E alongside D1 -- no further D3 round authorized. Both Phase D decisions from the user's message are now fully executed (D1 parked after d1o; D3 parked after d3f). Next ranked question per the signed-off milestone order is B1 (frontend assets and text) -- no B1 brief exists yet; the facilitator will decompose and write one next, following the same round-sizing and lint discipline as every prior round.",
+    "rounds_run": 4,
+    "stock_starts_used": 3,
+    "pending_questions": [
+      {
+        "question": "B1b captured a valid, structurally-confirmed 640x480 main-menu reference screengrab (screen id 3, highlight 0, both live-read at capture time) -- but its text is English, not German. match-the-original.md documents \"German menus\" as a preserved quirk, and goto_level.py's own docstring assumed German is the frontends default. The installs persisted SavedGame.dat (created 2026-10-12, modified many times since across many live rounds over multiple days) has no backup or pristine copy anywhere to compare against, so there is no way to determine, from this installs own state, whether English is a residue of some earlier rounds navigation (undocumented, not necessarily a guardrail breach since every individual rounds own before/after restore check has passed on its own terms) or whether the game simply remembers the last-selected language as real stock behaviour and this install happened to have English selected before this project ever touched it. Should a follow-up round spend its one live stock start explicitly navigating into \"Language Selection\" and selecting German (a deliberate, not-undone persisted change to the shared installs save data, on the reasoning that German is the documented correct default and resetting to it is a restoration rather than a new deviation) before capturing the real B1 reference image, or should English be accepted as this installs now-real persisted state and the German-menus quirk note be narrowed to \"the retail games own default,\" with B1s reference image captured in whatever language the install actually produces?",
+        "options": [
+          "Reset the install to German via one more live round (explicit Language Selection + RETURN navigation, scope beyond any round's brief so far) before capturing B1's real reference image, on the reasoning that German is the documented default and resetting to it restores rather than further deviates",
+          "Accept English as this install's现actual persisted state, capture B1's reference image in English, and narrow match-the-original.md's \"German menus\" quirk note to describe the fresh-install default rather than a live invariant",
+          "Install a second, fresh copy of the game (or otherwise obtain a known-pristine SavedGame.dat) to settle definitively whether German is really the fresh-install default before deciding either way"
+        ],
+        "recommendation": "Option 1. match-the-original.md's \"German menus\" quirk is stated plainly, without a caveat about persisted language choice, and the project has never until now needed to reckon with SavedGame.dat drift -- resetting the shared install's language to German before capturing any pixel-comparison reference is the smallest, most defensible action that keeps every future B1/B2/B3 capture unambiguous, and costs only one more live round. Option 3 is the most certain but the most expensive and disruptive (a second install) for a question option 1 likely settles just as well. Option 2 risks quietly smoothing over exactly the kind of quirk this project's rules explicitly warn against doing.",
+        "evidence": [
+          "docs/scratch/phase-b1-reference-screengrab.md",
+          "docs/scratch/phase-b1-frontend-recon.md"
+        ],
+        "resolution": null
+      }
+    ],
+    "handoff": "2026-10-22: landed b1a (frontend asset/.LTX loading wired into a new app-side test, 29/29 passing) and b1b (640x480 highlight-0 main-menu reference capture). b1b surfaced an unplanned finding: the captured menu is English, not German -- the shared installs SavedGame.dat has no pristine baseline to compare against, and the cause of the language drift (an earlier rounds navigation, or genuine persisted stock behaviour) cannot be determined from this install alone. Recorded as a pending_question (reset to German vs accept English vs fresh install) with a recommendation, not decided unilaterally -- other B1 work not blocked by language continues per the standing runs own guidance. Next: scope and dispatch the frontend draw-dispatch/font-layout tracing round (B1c), independent of the language question.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

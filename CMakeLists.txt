@@ -158,6 +158,14 @@ add_executable(test_gamedata src/__test__/test_gamedata.cpp)
 target_link_libraries(test_gamedata PRIVATE webolution_objects)
 add_test(NAME gamedata COMMAND test_gamedata)
 
+# B1a: app-side wiring proof -- a representative background texture, the
+# font texture and GERMAN.LTX's strings, through the same production readers
+# (loadTexture/loadStrings) src/app/TubeScene.cpp already calls. No new
+# reverse engineering; see src/__test__/test_frontend.cpp's own header.
+add_executable(test_frontend src/__test__/test_frontend.cpp)
+target_link_libraries(test_frontend PRIVATE webolution_objects)
+add_test(NAME frontend COMMAND test_frontend)
+
 add_executable(test_progress src/__test__/test_progress.cpp)
 target_link_libraries(test_progress PRIVATE webolution_objects)
 add_test(NAME progress COMMAND test_progress)
@@ -247,6 +255,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata progress levelindex surface wav levelobjects polylist world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata frontend progress levelindex surface wav levelobjects polylist world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

@@ -416,7 +416,13 @@ end in 3D is the next visible result. Its milestones and gates are under Phase D
 The original's own screens: backgrounds, buttons, fonts, `.LTX` localised text (the menus are
 German), the screen state machine, level select and the map. Preserve the quirks —
 **RETURN only when the menu highlight is exactly 0**, and a short ESC that fails to leave
-pause. Frontend screen ids are already known (`0x004C416C`: 3 menu, 4 confirm, 5 map).
+pause. Frontend screen ids read as `0x004C416C`: 3 menu, 4 confirm, 5 map — **B1's own recon
+corrected the reading of this global**: it is not a hand-picked enum, it is a monotonic
+object-creation counter shared by a common frontend-screen base class (ctor `0x004882c0`,
+independently re-read byte-for-byte), and each screen captures the pre-increment value as
+its own id at construction. 3/4/5 are simply which screens get constructed first in the
+boot sequence, not semantically chosen constants — the observed values are unaffected,
+only their explanation is corrected.
 
 **Milestones and exit gates, drafted 2026-10-21 (CEO review), signed off as drafted by the
 user 2026-10-22.** The metric is the A4d fixed changed-pixel score, scored with
@@ -425,9 +431,32 @@ threshold is 0.02, the same as A1/A2/A7.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| B1 frontend assets and text | queued | Background, button and font sprites and `.LTX` German strings load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
+| B1 frontend assets and text | **in progress** | Background, button and font sprites and `.LTX` German strings load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
 | B2 screen state machine | queued | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirks preserved: RETURN only at highlight 0, short ESC does not leave pause |
 | B3 level select and map | queued | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
+
+**B1 recon** ([check](docs/scratch/phase-b1-frontend-recon.md)): background/button/font art
+is plain LRZ-compressed `.BMP` under `TEXTURES\`, already decoded by the existing
+`Box`/`Bitmap`/`Lrz` pipeline; `.LTX` text parsing (`GameData.cpp`) is already implemented
+and tested against the real archive. Nothing in `src/app/` wired either into a frontend
+load yet; no usable reference screengrab existed.
+
+**B1a: already-tested readers wired into an app-side load** ([check](docs/scratch/phase-b1-asset-loading.md)):
+a new test, `test_frontend`, loads `MAIN_LOGO.BMP` (640×480, opaque), `_FONT.BMP`
+(256×240, colour-keyed on black, the key demonstrably fires on real glyph data) and
+`GERMAN.LTX` (232 strings) through the unmodified production readers. 29/29 tests pass.
+`src/assets/**` untouched.
+
+**B1b: reference screengrab captured — in English, not German** ([check](docs/scratch/phase-b1-reference-screengrab.md)):
+one live, no-RETURN run confirmed (live memory reads bracketing the capture) screen id 3,
+highlight 0, image exactly 640×480. Unplanned finding: the menu's own text is English, not
+German as this project's own preserved-quirk note describes. The shared install's
+`SavedGame.dat` (created 2026-10-12, written many times since across many live rounds) has
+no pristine baseline anywhere to compare against, so the cause (an earlier round's
+undocumented navigation, or genuine persisted stock behaviour) cannot be determined from
+this install alone. Recorded as a pending question for the user
+(`standing_run.pending_questions`), not decided unilaterally; other B1 work not blocked by
+language continues.
 
 ## Phase C — the in-level HUD
 

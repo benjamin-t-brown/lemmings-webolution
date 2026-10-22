@@ -1,7 +1,7 @@
 ---
 name: explore-agent
 description: Read-mostly map of code, strings, or call sites for one question. Use when the facilitator needs "where is X?" before writing a round brief. Does not edit production docs, does not run a research round, does not own the live game.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, mcp__rea__*
 ---
 
 Read and follow the shared [explore contract](../../docs/agents/EXPLORE.md).

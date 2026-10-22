@@ -57,6 +57,14 @@ session's tools rather than inferring a connection from a successful CLI command
 `%APPDATA%\npm\node_modules\rea-agents\scripts\rea.mjs`, keeps `GHIDRA_INSTALL_DIR` /
 `JAVA_HOME`, and backs up to `mcp.json.rea.backup`. Doctor then reports `aligned`.
 Restart Cursor afterwards. The registered Ghidra is `C:\tools\ghidra_12.1.4_PUBLIC`.
+
+**Claude Code (2026-10-22):** registered with `rea setup --client claude_code` (dry run
+first; the client id is `claude_code`, not `claude`). It added only the `rea` entry to
+`C:\Users\bbrown\.claude.json` (backup `.claude.json.rea.backup`) and installed the REA skill
+under `~\.claude\skills\reverse-engineer-anything`. `rea doctor --client claude_code` reports
+`aligned` and `claude mcp list` shows `rea` connected. A session loads MCP servers at start,
+so restart the facilitator. `.claude/agents/round-agent.md` and `explore-agent.md` grant
+`mcp__rea__*`; without that, their `tools:` allowlist hides every MCP tool from workers.
 `C:\progs\ghidra\…` also exists; doctor checks the registered one.
 
 The Codex sandbox can hide the user's npm directory and Python user-site packages. In this

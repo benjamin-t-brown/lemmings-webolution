@@ -12,7 +12,11 @@ recovery rules are in [orchestration](../ORCHESTRATION.md); client pins are in
 3. Read the exact lesson headings, plan section and evidence sources listed in the brief.
    Search [LESSONS.md](../LESSONS.md) for related terms before investigating. Follow linked
    evidence for any claim you depend on. Read broader context if the findings require it.
-4. Read build/REA/live-probe instructions only when using those capabilities.
+4. Read build/REA/live-probe instructions only when using those capabilities. For a
+   disassembly read, use REA (MCP `rea`, or the CLI per [REA setup](../REA_SETUP.md)) for
+   function structure, callers and decompilation, and capstone (`read_steppers.py`) for the
+   bytes you cite. Query narrowly; whole-function JSON runs to hundreds of KB. State in the
+   round note whether REA was used.
 
 If the brief lacks relevant reading references, locate the relevant sections with a bounded
 search and report the gap. Do not substitute a facilitator hypothesis for original evidence.

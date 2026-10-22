@@ -486,6 +486,14 @@ an unreadable terminal link from zero, so this establishes one observed node, no
 complete-list cardinality. Actual draw submission and font metrics remain unlocated;
 no menu render or B1 full-frame score exists yet.
 
+**Approach steering (user, CEO review 2026-10-22):** measure the retained menu image by
+template-matching retail sprites and font glyphs in a rerunnable script, then render
+that measured layout in `webolution` and score the unchanged full-frame 0.02 gate.
+Read executable code only for facts the image cannot show; do not make another native
+menu-vtable/draw-chain trace a prerequisite. B1e is the offline layout-measurement
+round; the production renderer follows its independently verified measurements.
+An independent offline C1 index read using REA may run in parallel.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,

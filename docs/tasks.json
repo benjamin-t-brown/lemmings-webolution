@@ -1926,7 +1926,7 @@
     "stopped": {
       "date": "2026-10-21",
       "reason": "D1l (the first full D1 gate measurement taken with both known harness biases fixed and independently verified) still does not pass the gate as literally written, and now every residual row is fully named: the already-parked facing/turn-rounding family (14 of 657), spawn-tick-drift propagation (3/10 lemmings), and a newly-isolated landing-tick-drift propagation (6/10 lemmings, previously folded unnamed into the spawn-tick story). Zero rows are unexplained. Per docs/ORCHESTRATION.md#standing-run, a gate needing to change is a stop condition, not a decision for the facilitator to make unilaterally -- see deferred_questions below for the updated, complete picture and recommendation.",
-      "last_commit": null
+      "last_commit": "d01c304"
     },
     "history": [
       {

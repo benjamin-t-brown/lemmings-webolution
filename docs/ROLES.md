@@ -112,6 +112,16 @@ and pull mouv's result back afterwards. The Mac clone builds natively (`cmake -S
 build/mac`); CTest passes there, but `lrtool` does not compile under Apple clang
 (`constexpr std::sin`), and the authoritative build is still mouv's.
 
+### Overlord
+
+Added 2026-10-22 at the user's request. The [overlord](OVERLORD.md) runs in Claude Code on
+the Mac, on the session model, through `/overlord` (`.claude/commands/overlord.md`; Cursor
+has the same command). It launches OpenCode facilitators: `/facilitator` on mouv and
+`/facilitator-mac` in the Mac clone, with the launchers in
+[scripts/overlord/](../scripts/overlord/README.md). When it resumes a Mac facilitator
+session, it passes `--model 'llmgw/gpt-6.1-sol#high'`, because a session imported from mouv
+keeps its `openai/` model, which the Mac cannot resolve.
+
 ## Disassembly reads use a stronger worker
 
 A round whose main work is reading the original's machine code (tracing what a function at

@@ -10,6 +10,10 @@ For project facilitation, read in order: [lessons](LESSONS.md), [plan](../PLAN.m
 [evidence rules](../.claude/rules/match-the-original.md).
 Read build/REA instructions when the task uses those tools.
 
+Then read [the overlord directive](DIRECTIVE.md). If it is `Status: active`, it is the
+user's authorization for the next standing run when the queue's run is stopped or absent;
+follow its scope and stop point.
+
 If `standing_run` is set in the queue and `stopped` is null, follow
 [the standing run](ORCHESTRATION.md#standing-run): read its `handoff`, take ownership as that
 section describes, and loop round after round and milestone after milestone. Stop only on its

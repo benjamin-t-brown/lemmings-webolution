@@ -511,6 +511,15 @@ reject the retail fonts. The text-free diagnostic under0.02 is not a gate pass.
 That method is parked in Phase E. B1h has an explicitly justified fourth-pass exception
 to test atlas-independent matching with preserved geometry; no fifth automatic pass.
 
+**B1h returned incomplete; standing run stopped by user2026-10-22**
+([check](docs/scratch/phase-b1h-interrupted-quit-registration.md)): original dispatch
+hit quota; explicitly counted Mac continuation was interrupted after~65min against35min
+budget, without final worker report. Independent saved-output verification reproduces
+actual Quit-row crops/control pixels, but wrong letters and substantial residual remain;
+no glyph identities/layout accepted. Latest FONT/FONTFE row29712/1472625=.0201762 is
+**not** a full-frame B1 score. Six diagnostic tests and29CTests pass. No production
+menu/B1 pass. User ends this run here: no new round/repair/phase or milestone advance.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -1243,6 +1252,14 @@ open.
   Do not repeat this method or a menu-vtable trace. Resume only with a valid source-
   packing/geometry-preserving matcher; B1h's fourth-dispatch exception brief explicitly
   scopes that test in build/tmp/b1h-atlas-independent-match-brief.md. No automatic fifth.
+- **B1h atlas-independent Quit registration** (returned incomplete/parked2026-10-22,
+  user stop after B1h). Two dispatches including explicit quota continuation, same
+  glyph question total5. Mac continuation over budget~65/35min, interrupted, no final
+  worker report. Actual pixel attempts preserved but arbitrary/incoherent letters are
+  not glyph evidence; [independent check](docs/scratch/phase-b1h-interrupted-quit-registration.md).
+  Resume only under new explicit authorization after reviewing source identity/target
+  boundaries and a semantic glyph discriminator, not scalar-only optimizer fits.
+  No continuation/repair is currently authorized or queued.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

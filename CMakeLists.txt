@@ -77,6 +77,10 @@ target_link_libraries(lrtool PRIVATE webolution_objects)
 add_executable(lrcheck src/tools/lrcheck.cpp)
 target_link_libraries(lrcheck PRIVATE webolution_objects)
 
+# B1e repair 1: offline decoded retail template export through production readers.
+add_executable(FrontendAssetDump src/tools/FrontendAssetDump.cpp)
+target_link_libraries(FrontendAssetDump PRIVATE webolution_objects)
+
 add_executable(actorfixture src/tools/actorfixture.cpp src/app/ActorSprite.cpp src/app/Camera.cpp)
 target_link_libraries(actorfixture PRIVATE webolution_objects)
 

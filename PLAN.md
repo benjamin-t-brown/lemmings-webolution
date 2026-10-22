@@ -494,6 +494,14 @@ menu-vtable/draw-chain trace a prerequisite. B1e is the offline layout-measureme
 round; the production renderer follows its independently verified measurements.
 An independent offline C1 index read using REA may run in parallel.
 
+**B1e: retail-template export prerequisite landed** ([check](docs/scratch/phase-b1-template-export.md)):
+after a prose-only first pass, the brief was split. `FrontendAssetDump` now exports seven
+candidate backdrop/font images and all 232 indexed UK strings through existing readers.
+The five visible menu labels are UK indices 125/126/120/3/43. Facilitator independently
+parsed raw UK.LTX, checked exported pixels/metadata, discriminated an isolated wrong-
+language mutation and verified restoration; 29/29 tests pass. No actual image matching
+or gate score yet; B1f is the next bounded matching round, then the app renderer.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,

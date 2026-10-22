@@ -4,24 +4,6 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "b1e-menu-image-layout",
-      "title": "B1e: measure retained main-menu layout by retail sprite/glyph template matching",
-      "status": "running",
-      "brief": "build/tmp/b1e-menu-image-layout-brief.md",
-      "worker_tier": "targeted",
-      "harness": "OpenCode",
-      "requested_model": "openai/gpt-6-luna (high)",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": ["b1a-asset-loading", "b1b-reference-screengrab", "b1d-menu-vtable-live-read"],
-      "gate_served": "PLAN B1 full-frame main-menu highlight 0 <=0.02; measured image layout prerequisite to renderer",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "dispatch_id": "ses_e9ac60b60ffesQSI7xmWgF2Gt4"
-    },
-    {
       "id": "c1a-panel-index-read",
       "title": "C1a: read panel-index actions 0..9 using REA and raw dispatch bytes",
       "status": "running",
@@ -36,14 +18,39 @@
       "live_owner": null,
       "depends_on": [],
       "gate_served": "PLAN C1 first clause: identify panel indices 2,5,6,8,9; no pixel gate claim",
-      "question_round_count": 1,
+      "question_round_count": 2,
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
-      "dispatch_id": "ses_e9ac60b4affeWBBtSqCKqG7f9u"
+      "dispatch_id": "ses_e9ac60b4affeWBBtSqCKqG7f9u",
+      "continuation_note": "2026-10-22: server restarted twice during facilitator B1e verification. Resumed same C1a session with saved REA evidence/byte dumps and existing read_c1_panel_indices.py; instructed not to repeat completed reads and finish missing checker/control/writeup only. No new live budget or scope."
     }
   ],
   "queue": [],
   "recently_landed": [
+    {
+      "id": "b1e-menu-image-layout",
+      "title": "B1e: decoded retail-template export prerequisite (split repair)",
+      "status": "landed",
+      "brief": "build/tmp/b1e-menu-image-layout-brief.md",
+      "repair_brief": "build/tmp/b1e-menu-image-layout-repair1-brief.md",
+      "worker_output": "build/tmp/b1e-menu-image-layout/repair1-note.md",
+      "worker_tier": "targeted",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna (high)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["b1a-asset-loading", "b1b-reference-screengrab", "b1d-menu-vtable-live-read"],
+      "gate_served": "PLAN B1 full-frame menu <=0.02; retail-template export prerequisite",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "dispatch_id": "ses_e9ac32494ffe7SpzmTqLSH1spn",
+      "previous_dispatch_id": "ses_e9ac60b60ffesQSI7xmWgF2Gt4",
+      "repair_reason": "First pass produced prediction only, no code/matches/score. Split repair implemented existing-reader template export; image matcher/app renderer are subsequent tasks.",
+      "landed_in": "docs/scratch/phase-b1-template-export.md",
+      "facilitator_verified": "Separate authority-install export byte-equals worker outputs from no-space install copy. Independent raw UK.LTX offset/NUL/CP1252 parse agrees on all 232 entries and five menu indices125/126/120/3/43. Pillow confirms seven PNG dimensions and alpha support; no independent LRZ decoder claimed. Isolated helper UK->GERMAN mutation rebuilt/exported and failed independent checker at index1; source restored SHA b1bac8fb6e2ba4ef1037fc314c3710fb677a00404fee1b02feacb8baafe996c7. Server restarts interrupted final build, not mutation restoration; resumed restore hash/rebuild only. Full fresh build + CTest29/29, restored binary exports byte-identical to pre-mutation. No original game/REA/install writes. No B1 image measurement or pixel score claimed."
+    },
     {
       "id": "b1d-menu-vtable-live-read",
       "title": "B1d: boot-menu active vtable 0x4B1E88 and observed list-node vtable 0x4B2528",
@@ -2453,7 +2460,7 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22): explicit user handoff after Claude Code B1d worker aa948e797d9d77dd0 hit its session limit before launching. No other game process or LemWeb task; resume saved script and prediction under the same budget.",
-    "rounds_run": 7,
+    "rounds_run": 9,
     "stock_starts_used": 4,
     "pending_questions": [],
     "resolved_questions": [
@@ -2472,7 +2479,7 @@
         "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
       }
     ],
-    "handoff": "2026-10-22 CEO steering applied: B1d already landed separately in cba4a7e; intentional Claude REA framework edits separately committed in 8480fed and preserved. B1 changes approach: image/template measurement first, exe reads only for facts the image cannot show. B1e queued to measure retained English menu using retail sprite/glyph templates and rerunnable script; next dependent round implements webolution menu and scores full-frame <=0.02 with no exclusions. C1a is independent/offline and queued in parallel for REA panel-index read. Both own disjoint paths, neither starts stock; B1e alone may add one helper target. No native menu-vtable continuation is authorized by this steering.",
+    "handoff": "2026-10-22 after server restart recovery: B1e split export prerequisite landed (two dispatches, first prose-only). FrontendAssetDump exports seven real backdrop/font candidates plus232 UK strings; independently verified all raw strings, PNG metadata, authority-install repeatability, isolated wrong-language failure and source/binary restore; full suite29/29. No matches/render/score yet. Next: lint/dispatch prepared build/tmp/b1f-menu-template-match-brief.md using verified exports, then production renderer. C1a remains independent offline; same session resumed after restart from saved REA/byte traces/checker, no completed read repeated. CEO B1d and REA framework commits remain separate (cba4a7e/8480fed); no new stock starts, install unchanged."
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

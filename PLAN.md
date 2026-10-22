@@ -772,6 +772,16 @@ flagged for the D2(a) live capture to avoid. Two genuine gaps, reported not gues
 priority-category table's contents (`0x004C05D0`) and what `screen+0x58` holds (the
 distance reference point) are both runtime facts this round's static reads cannot settle.
 
+**D2b: 20 live cursor positions, round 2** ([check](docs/scratch/phase-d2-pick-capture.md)):
+pid 39764 reached `Compiled\MM_CLIMB_002.lvl` after the highlight scan found one
+candidate. Twenty live sprite-box positions give 19 agreements with
+`[screen+0x16D8]` and 1 disagreement. Sample 15 overlaps two lemmings, both
+state vtable `0x004b0d28`, both passed to the port with priority 0 and distance
+0; the port keeps index 2 and the original stores index 6. Eleven positions
+pick none and nine name a lemming. An earlier start, pid 47392, never left the
+main menu and took no rows. D2 part (a) does not pass. The priority table and
+`screen+0x58` remain the open tie keys. Part (b) was not run.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

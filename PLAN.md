@@ -841,6 +841,25 @@ overlapped a sampled cursor box -- the first nonzero live priority value seen in
 entire D2 investigation, though the priority-beats-distance tie-break branch remains
 untested live. **D2 part (a) is accepted.** D2 part (b) is untouched and remains open.
 
+**D2f: one live climber assignment, 45/50 ticks match, one bounded residual found**
+([check](docs/scratch/phase-d2-skill-assign-capture.md)): the first round of D2 part
+(b), climber only. Reused already-proven tooling throughout (`assign_skill.py`'s panel
+click, `measure_d1_release_trace.py`'s sampling) for a live climber assignment on
+`MM_CLIMB_002`, then compared the assigned lemming's 50-tick post-assignment trace
+against a fresh `sim::World` seeded at the live-measured cell via the already-existing
+`World::place()`. **45 of 50 ticks match exactly** (the full walk-approach and the full
+14-tick climb run, X/Y/facing/state all exact), independently reproduced by the
+facilitator from a from-scratch recompile and relink, byte-identical output. The one
+divergence: our `World`'s climb stepper stays in `State::Climber` one tick longer than
+the original at the topout cell before handing off to `State::Hoister` — both reach the
+same cell at the same tick, but only the state label lags by one tick, which then
+propagates as a constant one-tick shift for the remaining captured rows (hoist duration
+and post-hoist walk speed are both still exactly right). `climbSpeed`/`climberTopOut`
+are independently reconfirmed live, unaffected. D2 part (b) is not yet settled (one of
+four skills attempted; this skill has an open residual). Queued next: a disassembly
+read of the native climb/hoist handoff ordering, offline-only (no new live capture
+needed — replays round 1's own saved trace), to confirm and fix the one-tick lag.
+
 ### D3. One retail level end to end
 
 **D3a: production retail-level loader, round 1** ([check](docs/scratch/phase-d3-retail-level-setup.md)):

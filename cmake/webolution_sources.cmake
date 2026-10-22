@@ -48,6 +48,7 @@ set(WEBOLUTION_GFX_SOURCES
   # app -- the A4 presentation layer: camera, rasteriser, tube scene, entry point
   src/app/Camera.cpp
   src/app/CameraInput.cpp
+  src/app/SimClock.cpp
   src/app/Pick.cpp
   src/app/Raster.cpp
   src/app/ActorSprite.cpp

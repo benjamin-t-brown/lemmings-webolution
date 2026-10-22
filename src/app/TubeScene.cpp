@@ -675,4 +675,24 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
   };
 }
 
+std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
+    const sim::World& world, int terrainHeight) {
+  std::vector<SceneOptions::InjectedNativeWalker> out;
+  out.reserve(world.lemmings().size());
+  for (const sim::Lemming& lemming : world.lemmings()) {
+    if (!lemming.alive())
+      continue;
+    const ActorTerrainSample sample = terrainSampleFromLemming(lemming, terrainHeight);
+    SceneOptions::InjectedNativeWalker walker;
+    walker.plus8X = sample.x;
+    walker.plus8Y = sample.y;
+    walker.plus8Z = sample.z;
+    walker.facing = static_cast<int>(lemming.facing);
+    // walkTemporalIndex stays 0 for every state -- see this function's own
+    // declaration comment in TubeScene.h.
+    out.push_back(walker);
+  }
+  return out;
+}
+
 }  // namespace webo::app

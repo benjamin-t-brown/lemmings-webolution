@@ -213,6 +213,10 @@ add_executable(test_camerainput src/__test__/test_camerainput.cpp src/app/Camera
 target_include_directories(test_camerainput PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME camerainput COMMAND test_camerainput)
 
+add_executable(test_simclock src/__test__/test_simclock.cpp src/app/SimClock.cpp)
+target_include_directories(test_simclock PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME simclock COMMAND test_simclock)
+
 add_executable(test_pick src/__test__/test_pick.cpp src/app/Pick.cpp)
 target_include_directories(test_pick PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME pick COMMAND test_pick)

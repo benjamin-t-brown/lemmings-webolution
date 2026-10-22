@@ -22,6 +22,15 @@
 //                    what the retained originals were captured with)
 //   --no-depth       disable the software depth test (diagnostic)
 //   --flat           debug: unwrap the skin to 2D instead of the 3D view
+//   --sim            tick a sim::World (D3a's loadRetailLevel) instead of the
+//                     fixed injected-walker fixtures, and draw its live
+//                     lemmings through the same drawInjectedWalkers path
+//                     (TubeScene::injectedWalkersFromWorld). Off by default;
+//                     every pre-existing command line is unaffected.
+//   --sim-ticks <N>  headless only (with --shot): call World::tick() exactly
+//                     N times before rendering, independent of frame count.
+//                     Implies --sim. Prints the tick, lemming count and every
+//                     live lemming's cell to stderr.
 //
 // No live game and no captured arena data are used. Everything comes from the
 // install named by WEBOLUTION_GAME_DIR (default C:/progs/Lemmings Revolution).
@@ -29,12 +38,15 @@
 #include "app/Camera.h"
 #include "app/CameraInput.h"
 #include "app/Raster.h"
+#include "app/SimClock.h"
 #include "app/TubeScene.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
 #include "assets/Png.h"
+#include "sim/RetailLevel.h"
+#include "sim/World.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -79,6 +91,8 @@ struct Args {
   bool help = false;
   bool noInjectedWalkers = false;
   std::string walkers;
+  bool sim = false;
+  int simTicks = 0;
 };
 
 Args parseArgs(int argc, char** argv) {
@@ -106,6 +120,8 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--flat") a.flat = true;
     else if (arg == "--no-injected-walkers") a.noInjectedWalkers = true;
     else if (arg == "--walkers") a.walkers = next();
+    else if (arg == "--sim") a.sim = true;
+    else if (arg == "--sim-ticks") { a.sim = true; a.simTicks = std::atoi(next().c_str()); }
     else if (arg == "--game-dir") a.gameDir = next();
   }
   if (a.gameDir.empty()) {
@@ -267,6 +283,39 @@ int main(int argc, char** argv) {
     options.injectedWalkers = std::move(loaded);
   }
 
+  // D3b: a ticking sim::World, built by the D3a production loader, replaces
+  // the fixed injected-walker fixtures above -- but only when --sim/--sim-ticks
+  // is given. Every pre-existing command line (no --sim) leaves
+  // options.injectedWalkers exactly as the blocks above already set it.
+  std::optional<sim::World> world;
+  int terrainHeight = 0;
+  if (args.sim) {
+    auto setup = sim::loadRetailLevel(*library, args.level);
+    if (!setup) {
+      std::fprintf(stderr, "sim: %s\n", setup.error().c_str());
+      return 1;
+    }
+    world.emplace(*setup);
+    for (int i = 0; i < args.simTicks; ++i)
+      world->tick();
+    terrainHeight = world->terrain().height();
+    options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
+
+    const auto& lemmings = world->lemmings();
+    std::size_t liveCount = 0;
+    for (const auto& l : lemmings)
+      if (l.alive()) ++liveCount;
+    std::fprintf(stderr, "sim: tick=%d lemmings=%zu live=%zu spawned=%d saved=%d dead=%d\n",
+                args.simTicks, lemmings.size(), liveCount, world->spawned(), world->saved(),
+                world->dead());
+    for (std::size_t i = 0; i < lemmings.size(); ++i) {
+      const sim::Lemming& l = lemmings[i];
+      std::fprintf(stderr, "sim: lemming %zu cell=(%d,%d) facing=%d state=%s alive=%d\n", i,
+                  l.x, l.y, static_cast<int>(l.facing),
+                  std::string(sim::stateName(l.state)).c_str(), l.alive() ? 1 : 0);
+    }
+  }
+
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {
     const auto frameCamera = app::buildCamera(frameParams);
     target.clear(0, 0, 0);
@@ -322,6 +371,12 @@ int main(int argc, char** argv) {
   const Uint64 frequency = SDL_GetPerformanceFrequency();
   Uint64 previous = SDL_GetPerformanceCounter();
   app::FixedCameraClock fixedClock;
+  // D3b: the sim ticks at its own measured 200 ms period (SimClock.h),
+  // independent of this window's 144 Hz camera clock and its render rate --
+  // only active when --sim was given; windowed mode always starts the
+  // World at tick 0 regardless of --sim-ticks, which is a headless-only,
+  // deterministic-render concern (see this file's own --sim-ticks comment).
+  app::SimClock simClock;
   while (running && (args.frames <= 0 || rendered < args.frames)) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -363,7 +418,17 @@ int main(int argc, char** argv) {
       input.zoomPressed = input.backspacePressed = false;
       updated = true;
     }
-    if (updated) {
+    bool simTicked = false;
+    if (args.sim && world) {
+      simClock.advance(elapsed);
+      while (simClock.takeStep()) {
+        world->tick();
+        simTicked = true;
+      }
+      if (simTicked)
+        options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
+    }
+    if (updated || simTicked) {
       params = controls.camera();
       renderFrame(params, windowRaster);
       SDL_UpdateTexture(texture, nullptr, windowRaster.framebuffer().rgb.data(), 640 * 3);

@@ -176,4 +176,25 @@ class TubeScene {
 // Settled A6a native `+0x08` samples for MM_CLIMB_002 injected compose (not sim).
 std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers();
 
+// D3b: one `InjectedNativeWalker` per live `sim::Lemming`, through the same
+// `terrainSampleFromLemming` adapter the A6a fixture samples stand in for
+// (ActorPose.h), so `drawInjectedWalkers` stays the only actor draw path --
+// a ticking `World`'s lemmings reuse it rather than growing a second one.
+// `terrainHeight` is the loaded level's own grid height (matches
+// `sim::World::terrain().height()` when both are read from the same `.LVL`
+// collision grid, which `webolution`'s `main.cpp` guarantees by construction).
+//
+// Only lemmings with `Lemming::alive()` (not yet Exited or Dead) are
+// included -- Dead/Exited lemmings stay in `World::lemmings()` forever (see
+// World.h) and are not part of what is "on the tube" any more.
+//
+// Every entry's `walkTemporalIndex` is 0: the walk-cycle animation phase is
+// not wired to any per-lemming clock here (that is A6b's `ActorAnim`, which
+// this round does not drive off `World::tick()`), and every non-Walker
+// `sim::State` also reuses the walk strip at that same fixed phase -- there
+// is no other sprite to draw it with (see TubeScene.cpp's round note). Both
+// are named limitations, not a hidden default.
+std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
+    const sim::World& world, int terrainHeight);
+
 }  // namespace webo::app

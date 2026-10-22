@@ -470,7 +470,7 @@ change a gate after seeing a result; a needed change stops the standing run.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| D1 release and walk-out | **gate held; not accepted (D1n partial)** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
+| D1 release and walk-out | **parked in Phase E (2026-10-22, user decision); not accepted** | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
 | D2 click-to-assign | **(a) accepted**; (b) 3 of 4 (climber/blocker/floater), digger parked | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
 | D3 one retail level end to end | queued | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
@@ -762,6 +762,18 @@ occurrence of it: the fix's trigger condition (gap-to-ground exactly `fallSpeed 
 a tick's start) does not occur for any of D1's own captured lemmings' drop heights. This
 rules out one specific, plausible-looking candidate explanation; it does not change
 D1n's own partial-improvement result or the pending decision below.
+
+**D1o: one fresh live recheck, then parked (user decision, 2026-10-22, CEO review)**
+([check](docs/scratch/phase-d1-continuous-live-recheck.md)): a new no-input live capture of
+`MM_CLIMB_002` (150 ticks), scored with the continuous-stepper-clock flag both off and on.
+Fails the gate literally under both settings (657 and 305 total divergences). The flag-on
+improvement reproduces on fresh data (not an artifact of D1n's three saved captures), with
+two new, source-traced qualifications: this capture's landing-tick-drift improvement (8/10
+still nonzero) is weaker than any of D1n's three, which is why `y` does not collapse at all
+here even though `x` and `facing` do; and the `x`-closure is binary per lemming, tied to
+whether a lemming's own landing drift happens to equal its spawn drift, not a uniform
+shrink. Per the user's decision, **D1 is now parked in Phase E** at this result — measured,
+not tuned, and not re-opened by this round. Work proceeds to D3, then Phase B/C.
 
 ### D2. Click-to-assign
 
@@ -1135,6 +1147,21 @@ open.
   hypothesis is already disproven, not just untried. Evidence:
   [D2i round 1](docs/scratch/phase-d2i-skill-assign-digger.md),
   [D2i repair 1](docs/scratch/phase-d2i-skill-assign-digger.md#round-2-repair-1-the-1-hypothesis-corrected-not-confirmed--no-fix-applied).
+- **D1 release and walk-out — whole milestone parked** (parked 2026-10-22 after D1o, user
+  decision, CEO review). D1's gate does not pass, measured literally on a fresh live
+  capture with the continuous-stepper-clock fix (D1n) both off and on: 657 and 305 total
+  divergences respectively. The fix is confirmed, on new data, to meaningfully help and not
+  be an artifact of the three saved captures it was built against, but it does not close the
+  gate. Three named residual families remain, each already independently characterized by
+  its own evidence chain, none unexplained: the single-tick `facing`-label residual (below),
+  spawn-tick drift (a `World::spawn()` structural limit — the tick is fixed before any
+  continuous budget exists), and landing-tick drift (reduced, not closed, and
+  capture-dependent in size). Per the user's decision this supersedes the narrower,
+  facing-only framing below as the operative parking record for the whole milestone; no
+  further D1 round is authorized. Evidence:
+  [D1o](docs/scratch/phase-d1-continuous-live-recheck.md),
+  [D1n](docs/scratch/phase-d1-continuous-stepper-clock.md),
+  [D1m](docs/scratch/phase-d1-stepper-clock.md).
 - **D1 single-tick `facing`-label residual** (parked 2026-10-21 after D1h). Both named D1
   blockers (release timing, D1a-e; the left-turn tick, `0x0041C67E`, D1f — the line
   formerly here listing it as open is retired) are fixed and independently verified. One

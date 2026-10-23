@@ -2,13 +2,15 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b1i-font-charmap-read",
       "title": "Font charmap read: character code to glyph cell, advance and placement (offline, disassembly read)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b1i-font-charmap-read-brief.md",
-      "worker_output": null,
+      "worker_output": "build/tmp/b1i-font-charmap-read/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
       "harness": "Claude Code",
@@ -23,21 +25,23 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "font-charmap-c1-live",
-      "dispatch_id": "claude-code background round-agent a043029e81981fdf4, no model override"
+      "dispatch_id": "claude-code background round-agent a043029e81981fdf4, no model override",
+      "landed_in": "PLAN.md Phase B (B1i) and Phase E (B1f/B1h superseded notes); docs/scratch/phase-b1i-font-charmap.md",
+      "facilitator_verified": "2026-10-22: independently re-disassembled FUN_004404cf, FUN_00440d50 and the advance update at 0x440711-0x44071e with tools/harness/read_steppers.py (not the worker's own REA session) -- byte-for-byte match on every cited opcode/operand. Independently read the raw ^Font (0x4BF968) and _FontSmall (0x4BFC10) glyph tables directly from the installed exe file with a from-scratch Python struct unpack: lineHeight 29/14 exact, the '&' zero-width quirk (X=74,Y=0,width=0) exact, and the Q/u/i/t 'Quit' replay table entries exact, summing to the same 41px advance. Independently re-read the two constructor-wrapper call sites (0x4403A7 push 0x20, 0x4403E5 push 0x30) and their table/name address operands -- exact. Independently ran a case-insensitive 'font' byte search over the whole exe: exactly 3 hits (the same three strings), reproducing the sibling-sheet negative exactly. git status showed only this item's two permitted tasks.json fields; no live process was ever started (confirmed by Get-Process, matching the round's own offline-only scope); ctest --preset dev-debug is 30/30 (no src/** change expected or found). Round accepted as reported; nothing narrowed. This is a READ result, byte-verified end to end -- it answers docs/DIRECTIVE.md question 1 and stops it per the directive's own stop condition ('read from bytes and checked against one string')."
     },
     {
       "id": "c1f-panel-icon-live-read",
       "title": "C1 skill-panel icon-draw mechanism: live read of widget +8 and its dispatch (one stock start)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/c1f-panel-icon-live-read-brief.md",
-      "worker_output": null,
+      "worker_output": "build/tmp/c1f-panel-icon-live-read/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "live memory read",
       "harness": "Claude Code",
       "requested_model": "session (no pin)",
       "worker_agent": "round-agent",
       "owns_live_game": true,
-      "live_owner": "claude-code background round-agent a1dbca3e22eec8ba6",
+      "live_owner": null,
       "depends_on": [
         "c1a-panel-index-read",
         "c1b-panel-icon-render",
@@ -52,11 +56,10 @@
       "stock_starts_consumed": 0,
       "standing_run": "font-charmap-c1-live",
       "dispatch_id": "claude-code background round-agent a1dbca3e22eec8ba6, no model override",
-      "question_lineage_note": "Round 1 of this new live-read question's own 3-round cap (docs/DIRECTIVE.md), distinct from the exhausted 4-round static-search question (C1b-C1e, parked 2026-10-22) that preceded it per PLAN.md Phase E."
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "question_lineage_note": "Round 1 of this new live-read question's own 3-round cap (docs/DIRECTIVE.md), distinct from the exhausted 4-round static-search question (C1b-C1e, parked 2026-10-22) that preceded it per PLAN.md Phase E.",
+      "landed_in": "PLAN.md Phase C (C1f) and Phase E (C1 icon-draw mechanism, updated/still parked); docs/scratch/phase-c1-panel-icon-render.md",
+      "facilitator_verified": "2026-10-22: independently re-read all three of the round's static pin-check addresses from raw PE bytes (tools/harness/read_steppers.py, not the worker's own REA session): 0x457868, 0x4B1774 (vtable dwords), 0x452BC2 -- all byte-for-byte match the round's own citations and C1d/C1e's prior reads. Independently re-verified the saved live artifacts: readings-1-and-2.json's per-widget table (address = screen_ptr+0x70+i*0x238, +8 = i+8 for all ten) and frida-dispatch-count.json (461 hits, 143.9/s, distinct_ecx_count=1, 0x28c6cd8 = widget 6) both reproduce the round note's figures exactly. Opened panel-paused.png directly and independently confirmed the key visual claim: roughly nine distinct icon images are visible on the panel before any unpause input. Independently re-hashed all three install files against the round's claimed pre-launch baselines (Lemmings Revolution.exe, SavedGame.dat, dgVoodoo.conf) -- all three match exactly, confirming the manual dgVoodoo.conf restore-bug fix the round self-reported actually worked. A fresh Get-Process query found no Lemmings/webolution process running. git status showed only this item's three permitted tasks.json fields (status, worker_output, live_owner cleared). ctest --preset dev-debug is 30/30 (no src/** change expected or found). Round accepted as reported; nothing narrowed. Also found and fixed a genuine pre-existing PLAN.md documentation-integrity defect while landing this round: the C1d heading in docs/scratch/phase-c1-panel-icon-render.md was accidentally split across two '##' lines, silently breaking all four of its own pre-existing PLAN.md anchor links (introduced before this session, not by C1f) -- merged back into one heading line; a from-scratch link/anchor checker over PLAN.md and both touched scratch files now reports zero broken links. This answers docs/DIRECTIVE.md question 2 (the one authorized stock start was spent and the read was recorded) and stops it per the directive's own stop condition, though the underlying C1 render gate is redirected, not closed -- the real base-icon source and the +0x3c writer remain open and are recorded in PLAN.md Phase E as the resume lead."
+    },
     {
       "id": "c1e-panel-icon-dispatch-index",
       "title": "C1e: both cap-exception sub-questions clean negatives; question parked in Phase E (round 4)",
@@ -2694,11 +2697,11 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running or queued under a prior owner (active and queue were both empty); the prior standing run (c1-skill-panel) was already stopped and is preserved under previous, not resumed.",
-    "rounds_run": 0,
-    "stock_starts_used": 0,
+    "rounds_run": 2,
+    "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Stop and report when both questions are answered (landed, or parked at their cap), or on any ORCHESTRATION stop condition. Do not advance to B2, C2 or C3 on this directive, and do not re-attempt the B1 or C1 gate until the overlord ranks it. A passing gate on the facilitator's own independent re-score also stops the run.",
-    "handoff": "2026-10-22: facilitator invocation found active=[] and queue=[] with the prior standing run (c1-skill-panel) already stopped at its round cap, and docs/DIRECTIVE.md Status: active with a new two-question scope. Recorded this new standing run, wrote and linted two briefs (build/tmp/b1i-font-charmap-read-brief.md, offline disassembly read; build/tmp/c1f-panel-icon-live-read-brief.md, one live stock start), and dispatched both as concurrent active tasks (disjoint owned paths, only the C1 live read owns the game). Both are round 1 of their respective 3-round caps. Awaiting worker return.",
+    "handoff": "2026-10-22: both of docs/DIRECTIVE.md's questions are now answered and independently verified. Question 1 (b1i-font-charmap-read): landed -- the character-to-glyph-cell index rule, the per-glyph proportional advance rule and two real font instances were read from bytes and checked against a retail string ('Quit'), all independently re-derived by the facilitator from raw PE bytes. Question 2 (c1f-panel-icon-live-read): landed -- the one authorized stock start was spent and the live read was recorded; it overturned two of C1d/C1e's static-era conclusions (widget +8 IS written, to index+8; levelScreen+0x3c IS written at runtime, moving from widget 0 to widget 6) but did not close C1's gate -- it redirects the open question to 'what actually draws the other nine icons', since FUN_00457868 is now live-shown to be a single-target-per-frame draw, not the per-button renderer. Landed both into PLAN.md Phase B/Phase C/Phase E and docs/scratch/phase-b1i-font-charmap.md + phase-c1-panel-icon-render.md (C1f section). Per the directive's own stop point ('Stop and report when both questions are answered'), this standing run stops here. B1 and C1 remain not accepted; their gates are unchanged. Next facilitator action is the overlord's to rank, not a new round on this directive.",
     "previous": [
       {
         "id": "c1-skill-panel",
@@ -2955,6 +2958,16 @@
           }
         ]
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-22",
+      "reason": "Both of docs/DIRECTIVE.md's questions are answered (landed, independently verified) -- the directive's own stop condition. Question 1 closed cleanly (charmap/advance read and checked against a retail string). Question 2 spent its one authorized stock start and recorded the read, but redirects C1's open question rather than closing it (the real base-icon source and the +0x3c writer are still unidentified). Per the directive, do not advance to B2, C2 or C3, and do not re-attempt the B1 or C1 gate until the overlord ranks the next pass.",
+      "last_commit": "PENDING",
+      "current_gate": "B1 full-frame <=0.02 still open (charmap now read, not yet wired into a renderer); C1 render clause (buttons+counts <=0.02) still open, redirected to a new base-icon-source question plus the unwired B1 charmap",
+      "rounds_run": 2,
+      "stock_starts_used": 1,
+      "pending_questions": [],
+      "no_further_dispatch": true
+    }
   }
 }

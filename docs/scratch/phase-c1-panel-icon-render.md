@@ -234,8 +234,7 @@ indirect call on an object this round did not yet identify, sitting directly
 on the per-frame draw path that already contains one confirmed real draw
 call. This is round 2 of 3; one round remains before parking in Phase E.
 
-## C1d: the ten-widget array and its real icon draw are located; the full
-## dispatch to all ten, and the per-widget icon index, remain open (round 3 of 3)
+## C1d: the ten-widget array and its real icon draw are located; the full dispatch to all ten, and the per-widget icon index, remain open (round 3 of 3)
 
 Worker packet `build/tmp/c1d-panel-icon-widget-trace/round-note.md`. Offline REA
 only, read-only, zero stock starts, no `src/**` change.
@@ -358,3 +357,89 @@ instruction ("no fifth round is pre-authorized regardless of outcome"), **this q
 now parked in Phase E** — see `PLAN.md`. The remaining residual (the other nine widgets'
 dispatch mechanism, and the `+8` index assignment) needs a live memory read, not more
 static analysis, and is recorded as the resume lead.
+
+## C1f: live read falsifies two static-era assumptions; `FUN_00457868` is not the per-button renderer (round 1 of a new live-read question, one stock start)
+
+Queue `c1f-panel-icon-live-read`, authorized by `docs/DIRECTIVE.md` as the live-read resume
+from C1e's park. Worker packet `build/tmp/c1f-panel-icon-live-read/round-note.md` and
+prediction `build/tmp/c1f-panel-icon-live-read/prediction.md`. Exactly one stock start
+(`subprocess.Popen`), no retry; a Frida attach to that same already-running process (not a
+second launch) supplied the dispatch-count evidence.
+
+### Result
+
+Live reads (`ReadProcessMemory`, no debugger/breakpoint) against the already-identified
+object layout (`levelScreen_ptr = u32(0x4CBFB0)`, widget `i` at `+0x70 + i*0x238`) **MEASURED**
+three things, each falsifying a piece of the brief's own main-line prediction:
+
+1. **Widget `+8` is not `0..9`.** All ten widgets' `+8` field, read three times across the
+   round (entry-pause, after one unpause/pause cycle, at cleanup) and byte-identical every
+   time, is the consecutive sequence **8, 9, 10, 11, 12, 13, 14, 15, 16, 17** — exactly
+   `widget_index + 8`. C1e's open residual ("maybe `+8` is simply never written") is
+   refuted: it is written, to a real, distinct, per-widget value, just not the value the
+   brief's prediction guessed.
+2. **`levelScreen+0x3C` is not permanently fixed to widget 0.** It held widget 0's address
+   at level entry, then — after one unpause/re-pause `P`-tap cycle with **no explicit skill
+   click sent** — held widget 6's address, and stayed there through cleanup. C1d/C1e's "no
+   writer exists" was a true report of what a resolved-call static search can see; it is not
+   true of the live system. The actual writer remains unidentified (candidate, unverified:
+   the cursor-hover/hit-test path against `panel_boxes` at `0x4C9208`, per the already-
+   documented mouse-delta-replay quirk in `drive.py` — not tested this round).
+3. **`FUN_00457868` fires once per rendered frame, for exactly one widget.** A Frida hook on
+   its entry (ephemeral attach to PID 40564, not a new launch), running 3.2 s, recorded 461
+   hits (143.9/s, matching an independently measured 144.0 Hz poll rate in the same
+   session) with `distinct_ecx_count == 1`: every hit's `this` equalled the one widget
+   `levelScreen+0x3C` named at that moment (widget 6), never any other.
+
+Combined with a screenshot taken *before* any unpause input (while `+0x3C` still named
+widget 0): the panel already shows roughly nine visually distinct icon images stacked
+vertically. Since `FUN_00457868` only ever touched widget 0 up to that point (by the
+dispatch-field evidence) and only ever draws one widget per observed frame (by the Frida
+evidence), those other icons' pixels did not come from this round's observed
+`FUN_00457868` calls. **This live round does not close C1's rendering gate; it redirects
+the open question** — `FUN_00457868`/vtable slot+4 looks like a single-target
+(selection-highlight?) draw, not the base per-button icon renderer C1b–C1e were chasing,
+and the real source of the other icons' base artwork is still unidentified.
+
+A real harness defect in this round's own `probe.py` (its `cleanup` subcommand ran as a
+separate process with fresh in-memory state, so its `dgVoodoo.conf`-restore branch never
+fired, and its `save_state()` call clobbered part of `state.json`) was caught and fixed
+*within the same round*, before this note was written: a post-cleanup hash check found
+`dgVoodoo.conf` still swapped, the worker copied the saved pre-launch backup back over the
+install file by hand, and re-hashed to confirm an exact match. Reported honestly rather
+than silently patched over, per this project's own standard.
+
+### Facilitator check
+
+Independently re-read all three of the round's static pin-check addresses from the raw PE
+bytes (`tools/harness/read_steppers.py`, not the worker's own REA session): `0x457868`
+(`55 8b ec 83 ec 28 89 4d d8 8b 45 d8 33 c9 8a 88 18 02 00 00 85 c9 0f 84 e0 00 00 00`),
+`0x4B1774` (`a0 79 45 00 68 78 45 00 00 7c 45 00 70 7b 45 00 c0 7e 45 00 10 7f 45 00` →
+`0x4579A0, 0x457868, 0x457C00, 0x457B70, 0x457EC0, 0x457F10`), and `0x452BC2`
+(`55 8b ec 6a ff 68 89 cd 4a 00 64 a1 00 00 00 00`) — all three byte-for-byte match the
+round's own citations and C1d/C1e's prior reads.
+
+Independently re-verified the live artifacts: `readings-1-and-2.json`'s per-widget table
+reproduces the round note's `+8`/vtable/address columns exactly, including the address
+arithmetic (`screen_ptr + 0x70 + i*0x238`); `frida-dispatch-count.json` reproduces the 461
+hits / 143.9 Hz / `distinct_ecx_count=1` / `0x28c6cd8` (widget 6) figures exactly. Opened
+`panel-paused.png` directly: the skill panel visibly shows roughly nine distinct icon
+images (umbrella/floater with a "10" count badge, a walking-lemming icon, a bomb icon,
+several more lemming-pose variants, a double-chevron fast-forward icon, and a dark
+circular icon at the bottom) plus the "Paused" caption and "05:00" timer already landed by
+A7 — independently corroborating the round's key visual claim from the saved image itself,
+not just its prose description.
+
+Independently re-hashed all three install files against the round's claimed pre-launch
+baselines: `Lemmings Revolution.exe` (`32675bdb...3737a2f`), `SavedGame.dat`
+(`f7f86039...e337e6a`), and `dgVoodoo.conf` (`d639e220...e4ef4e72` — post-manual-fix value)
+all **match exactly**. A fresh `Get-Process` query for `*Lemming*`/`*webolution*` found
+**no process running**. `git status --short` showed only `docs/tasks.json`'s three
+permitted fields changed for this item (`status`, `worker_output`, `live_owner` cleared).
+`ctest --preset dev-debug` (no `src/**` change expected or found): **30/30 passed**.
+
+Round accepted as reported; nothing narrowed. This is real, independently-verified
+progress — it overturns two of C1d/C1e's own "static search found nothing" framings with
+live counter-evidence, while being honest that it does not itself identify either the
+`+0x3C` writer or the other icons' real draw source. See `PLAN.md` Phase C/Phase E for the
+landed disposition.

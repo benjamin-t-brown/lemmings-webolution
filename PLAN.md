@@ -520,6 +520,36 @@ no glyph identities/layout accepted. Latest FONT/FONTFE row29712/1472625=.020176
 **not** a full-frame B1 score. Six diagnostic tests and29CTests pass. No production
 menu/B1 pass. User ends this run here: no new round/repair/phase or milestone advance.
 
+**B1i: the font charmap, advance and placement rule read from bytes, not fitted**
+([check](docs/scratch/phase-b1i-font-charmap.md)), 2026-10-22, authorized by
+`docs/DIRECTIVE.md` as the replacement for B1f/B1h's parked pixel-fitting approach. The
+per-character build loop `FUN_004404fa` (`0x4404FA`) computes
+`cellRecordPtr = glyphTable + (((charByte & 0xff) - firstChar) & 0xff) * 3 + 4`
+(`FUN_004404cf` + `FUN_00440d50`) into a per-font-object blob: a 4-byte shared `lineHeight`
+header followed by 256 packed 3-byte `{X, Y, width}` records — **proportional width, one
+shared height per font**, not a fixed grid (the brief's own fixed-width Hypothesis 1 and
+the worker's own pre-reading guess are both falsified; only the `charCode - firstChar`
+subtraction survives). The advance is `X += pbVar10[2]` (the table's own per-glyph width
+byte), unconditional, with no fixed immediate anywhere in the function. Two real instances
+were decoded from raw bytes: `"^Font"` (`lineHeight=29`, proportional) and `"_FontSmall"`
+(`lineHeight=14`, digits uniformly width 6 by data, not by mechanism); a genuine quirk —
+`&` in `^Font` is an explicit zero-width table entry (`X=74,Y=0,width=0`), present but
+invisible, a real preserved-quirk candidate per `match-the-original.md`. Resources resolve
+by a short internal name string (`"^Font"`/`"_FontSmall"`), not the archive filename —
+refining, not contradicting, B1c's already-settled `_FONT.BMP`-absence negative. A
+code-only replay of `"Quit"` reproduces exact per-glyph cells/UVs and a 41 px final cursor
+advance, independently re-derived by the facilitator from the raw `^Font` table bytes.
+**This is a READ result, not a rendered pixel** — it does not move B1's full-frame gate by
+itself (no glyph was drawn in `webolution`), but it removes the "no glyph-layout rule was
+ever read" blocker B1f/B1h's parked pixel-fitting attempts left behind. Open: whether
+`_FONTFE`/`^FONTH`/`^FONTP` share this exact mechanism (no literal name string found for
+any of the three — a well-supported inference, not an observation); `FUN_00474519`
+(name→resource-index resolver) untraced. An incidental, unverified lead from the same
+read: `FUN_004404fa`'s caller `0x44CD06` is the exact function A7d–A7g already traced from
+the Paused-caption receiver `H`, and its body shows `H+0x758`/`H+0x77C`/`H+0x224` each
+filled through this same glyph-builder — offered to whoever next picks up that Phase C
+thread, not claimed as resolved here.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -538,14 +568,16 @@ traced it without finding its draw owner, parked 2026-10-21: `STR_PAUSED` key at
 `[G+0x25C64] / 1000.0`, the latter a tick delta or a conditional `100`. Resume from a
 live read of `[G+0x25C64]` at pause, in Phase C. Evidence:
 [A7c](docs/scratch/phase-a7-pause-caption-native.md) through
-[A7l](docs/scratch/phase-a7-25c64-writers.md).
+[A7l](docs/scratch/phase-a7-25c64-writers.md). Phase B's B1i (above) found an unverified
+lead for the same "who fills H" thread (`0x44CD06`'s body filling
+`H+0x758`/`H+0x77C`/`H+0x224` through the font glyph-builder) — not yet followed up here.
 
 **Milestones and exit gates, drafted 2026-10-21 (CEO review), signed off as drafted by the
 user 2026-10-22.**
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| C1 skill panel | indices identified; icon-draw mechanism parked (Phase E) | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
+| C1 skill panel | indices identified; icon-draw mechanism live-read, redirected, parked (Phase E) | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
 | C2 counters, cursor, pause caption | queued | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
 | C3 full frame | queued | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
@@ -630,6 +662,31 @@ field anywhere in `.text`. Both independently re-verified exactly. Per the round
 (see below). C1's rendering clause does not pass; it is blocked on two parked
 dependencies (this icon-draw mechanism, and B1's already-parked digit-font question for
 the counts half of the same gate clause).
+
+**C1f: the live-read resume — two static-era assumptions overturned; the real base-icon
+source still unidentified** ([check](docs/scratch/phase-c1-panel-icon-render.md#c1f-live-read-falsifies-two-static-era-assumptions-fun_00457868-is-not-the-per-button-renderer-round-1-of-a-new-live-read-question-one-stock-start)),
+2026-10-22, authorized by `docs/DIRECTIVE.md` question 2, exactly one stock start. Live
+reads (no debugger/breakpoint) **MEASURED** all ten widgets' `+8` field as the consecutive
+sequence **8–17** (`widget_index + 8`, not `0–9` as predicted) — C1e's "maybe `+8` is
+simply never written" residual is refuted. `levelScreen+0x3C` is **not** permanently fixed
+to widget 0: it held widget 0's address at level entry, then moved to widget 6's address
+after one unpause/pause cycle with no explicit skill click sent — overturning C1d/C1e's
+"no writer exists" as a true report of what static resolved-call analysis can see, not of
+the live system; the actual writer is still unidentified (candidate, unverified: cursor
+hover/hit-test against `panel_boxes` at `0x4C9208`). A Frida hook on `FUN_00457868`'s
+entry (461 hits in 3.2 s, matching the independently measured 144 Hz poll rate) found
+`distinct_ecx_count == 1`: every hit's `this` equalled the one widget `levelScreen+0x3C`
+named at that moment — it fires once per frame, for exactly one widget, never more. A
+screenshot taken *before* any unpause input (while `+0x3C` still named widget 0) already
+shows roughly nine distinct icon images on the panel simultaneously, independently
+confirmed by the facilitator opening the saved PNG. **This redirects C1's open question
+rather than closing it**: `FUN_00457868`/vtable slot+4 looks like a single-target draw
+(selection highlight?), not the base per-button icon renderer C1b–C1e were chasing: the
+real source of the other icons' base artwork, and the `+0x3C` writer, remain
+unidentified. C1's rendering clause still does not pass; both halves (this redirected
+icon-source question, and B1's digit-font question — now substantially de-blocked by B1i,
+above, though not yet wired into a renderer) stay in Phase E pending the overlord's next
+ranking, per the directive's stop point.
 
 ## Phase D — reconnect the simulation
 
@@ -1319,33 +1376,37 @@ Short, and explicitly parked rather than cancelled. **The gadget backlog is gone
 gadget at all. See the gadget table in `docs/LESSONS.md` before assuming anything here is
 open.
 
-- **C1 skill-panel icon-draw mechanism** (parked 2026-10-22 after C1b-C1e, 4 rounds
-  including one recorded cap exception). `levelScreen`'s constructor (`0x452bc2`) builds
-  exactly ten identical sub-widgets at a constant `0x238`-byte stride (`+0x70, +0x2a8,
-  +0x4e0, +0x718, +0x950, +0xb88, +0xdc0, +0xff8, +0x1230, +0x1468`) — matching the
-  panel's known physical button count exactly — each via one shared constructor
-  (`FUN_004576b0`) and one shared vtable (`0x4b1774`) whose slot+4 (`FUN_00457868`) is a
-  confirmed real icon draw: resource lookup by the widget's own `+8` index, UV rect from
-  the widget's own pixel rect, drawn via `FUN_00414920`. `levelScreen+0x3c` (the field the
-  one resolved dispatch in `FUN_00454a85` reads) is fixed to widget 0 at construction;
-  no resolved caller reaches the other nine widgets, and no writer of any widget's `+8`
-  was found anywhere in `.text` by two independent exhaustive searches (a `0x238`-stride
-  literal scan and a ten-offset `+8` literal scan, plus a full re-read of every
-  most-likely candidate function). `GreyIcons`/`BlackIcons`/`AdditiveIcons`/`Bits`/
-  `LemmingsLO` are all independently ruled out as the icon sheet or draw path (C1b/C1c).
-  Closing this needs a **live** read (which widget's `+8` holds what value during an
-  actual authorized stock start, and whether an indirect/computed dispatch the static
-  tool cannot enumerate reaches the other nine) — a different kind of round than the four
-  static-only ones already run, needing a stock start this question's own budget did not
-  authorize. Resume only with that live read explicitly scoped, not another static
-  byte/literal search — the static search is exhaustive by two independent methods.
+- **C1 skill-panel icon-draw mechanism** (parked 2026-10-22; superseded by C1f's live
+  read, same date, still parked). C1b–C1e (4 static-only rounds, including one recorded
+  cap exception) located `levelScreen`'s ten identical sub-widgets (`0x452bc2`, stride
+  `0x238`), their shared constructor (`FUN_004576b0`) and vtable (`0x4b1774`), and slot+4's
+  confirmed icon draw `FUN_00457868` — but could not statically find a writer of any
+  widget's `+8` index or a dispatch reaching widgets other than 0. **C1f (one live stock
+  start, authorized by `docs/DIRECTIVE.md`) overturned both of those static-era
+  conclusions with live counter-evidence**: `+8` *is* written, to `widget_index + 8` for
+  all ten; `levelScreen+0x3c` *is* written at runtime (observed moving from widget 0 to
+  widget 6 across one unpause/pause cycle, writer still unidentified — candidate: cursor
+  hover/hit-test against `panel_boxes` at `0x4C9208`, unverified); and `FUN_00457868`
+  fires once per frame for exactly the one widget `+0x3c` currently names (461 Frida hits,
+  `distinct_ecx_count=1`), while a screenshot taken before any widget-0-only dispatch
+  already shows ~9 distinct panel icons — strong evidence `FUN_00457868` is a
+  single-target draw (selection highlight?), **not** the base per-button icon renderer
+  this question was chasing. `GreyIcons`/`BlackIcons`/`AdditiveIcons`/`Bits`/`LemmingsLO`
+  remain independently ruled out as the icon sheet or draw path (C1b/C1c). **Still open,
+  genuinely unresolved**: the `+0x3c` writer, and — now the real open question — where the
+  other icons' base artwork actually comes from, if not `FUN_00457868`. Resume needs
+  either a correlated live read (cursor position + hit-test + `+0x3c` at the same
+  timestamps) or a new static search specifically for the real base-icon draw call, not a
+  repeat of C1e's two already-exhausted stride-`0x238`/`+8`-literal scans (those answered
+  "does `FUN_00457868` dispatch to all ten", not "what else draws the other nine").
   Evidence: [C1b](docs/scratch/phase-c1-panel-icon-render.md#result),
   [C1c](docs/scratch/phase-c1-panel-icon-render.md#c1c-both-pre-registered-leads-also-falsified-one-concrete-unresolved-thread-found-round-2-of-3),
   [C1d](docs/scratch/phase-c1-panel-icon-render.md#c1d-the-ten-widget-array-and-its-real-icon-draw-are-located-the-full-dispatch-to-all-ten-and-the-per-widget-icon-index-remain-open-round-3-of-3),
-  [C1e](docs/scratch/phase-c1-panel-icon-render.md#c1e-both-cap-exception-sub-questions-are-clean-negatives--question-parked-round-4).
-  C1's render gate also depends on the separately-parked B1 digit-font question for the
-  counts half of the same clause (see the B1f/B1h entries below) — both halves are parked,
-  so C1 cannot progress further without new authorization on either.
+  [C1e](docs/scratch/phase-c1-panel-icon-render.md#c1e-both-cap-exception-sub-questions-are-clean-negatives--question-parked-round-4),
+  [C1f](docs/scratch/phase-c1-panel-icon-render.md#c1f-live-read-falsifies-two-static-era-assumptions-fun_00457868-is-not-the-per-button-renderer-round-1-of-a-new-live-read-question-one-stock-start).
+  C1's render gate also depends on the B1 digit-font question for the counts half of the
+  same clause (see the B1f/B1h/B1i entries below) — both halves stay parked, so C1 cannot
+  progress further without new authorization on either, per the directive's stop point.
 - **B1f fixed-cell glyph-matching method** (parked after3 dispatches,2026-10-22).
   Unsupported16x16 ASCII32 source packing, independent target-component reuse and
   double resizing make the glyph/scale inference invalid. Diagnostic frame omits text;
@@ -1353,6 +1414,8 @@ open.
   Do not repeat this method or a menu-vtable trace. Resume only with a valid source-
   packing/geometry-preserving matcher; B1h's fourth-dispatch exception brief explicitly
   scopes that test in build/tmp/b1h-atlas-independent-match-brief.md. No automatic fifth.
+  **Superseded by B1i's reading-based approach** (above) — a future resume should render
+  text using B1i's measured charmap/advance rule, not revive this fitting method.
 - **B1h atlas-independent Quit registration** (returned incomplete/parked2026-10-22,
   user stop after B1h). Two dispatches including explicit quota continuation, same
   glyph question total5. Mac continuation over budget~65/35min, interrupted, no final
@@ -1360,7 +1423,9 @@ open.
   not glyph evidence; [independent check](docs/scratch/phase-b1h-interrupted-quit-registration.md).
   Resume only under new explicit authorization after reviewing source identity/target
   boundaries and a semantic glyph discriminator, not scalar-only optimizer fits.
-  No continuation/repair is currently authorized or queued.
+  No continuation/repair is currently authorized or queued. **B1i (above) answers what
+  this fitting approach was trying to infer, from bytes instead** — a resume should wire
+  B1i's charmap into a renderer and score pixels, not resume glyph fitting.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

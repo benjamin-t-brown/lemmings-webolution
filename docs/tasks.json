@@ -2617,7 +2617,7 @@
     "stopped": {
       "date": "2026-10-22",
       "reason": "C1 is parked at its round cap (the overlord directive's own stop point). Four rounds on the icon-render question (C1b-C1e, including one recorded cap exception) located and fully confirmed a real ten-widget icon-draw mechanism matching the panel's physical button count exactly, but the dispatch reaching the other nine widgets and the per-widget icon-index writer are both clean negatives under exhaustive static search. C1's render gate also needs the separately-parked B1 digit-font work for its counts half. Neither parked item can be resolved by another offline round under this directive's scope.",
-      "last_commit": "9610c0d",
+      "last_commit": "5266a74",
       "current_gate": "C1 render clause (ten buttons + counts, <=0.02) remains open; indices identified (C1a), icon-draw mechanism located but not fully wired (C1b-C1e), counts blocked on B1's parked digit font",
       "rounds_run": 4,
       "stock_starts_used": 0,

@@ -1476,6 +1476,14 @@ Short, and explicitly parked rather than cancelled. **The gadget backlog is gone
 gadget at all. See the gadget table in `docs/LESSONS.md` before assuming anything here is
 open.
 
+- **B2 screen state machine** (parked 2026-10-23 at the three-round cap; B2a preflight failed
+  closed, B2b read the key-poll flag `[0x5D5970]` and the focus-store shape, B2c read the
+  file-backed chain `[0x5D59E4]` -> `+4` -> node with vtable `0x4B2528`). **Zero stock starts
+  used; the one granted start was not spent.** Resume brief: (1) read the producer of the event
+  number passed to `0x48896A` (key -> event, incl. why RETURN acts only at highlight 0);
+  (2) establish the writer of `[menu+0x10]` or the real highlight accessor; (3) confirm, map,
+  level entry, pause and back; (4) only then a complete byte-based route preflight and one
+  stock start in session 1. See `docs/scratch/phase-b2c-menu-chain.md`.
 - **C1 skill-panel icon-draw mechanism** (parked 2026-10-22; superseded by C1f's live
   read, same date, still parked). C1b–C1e (4 static-only rounds, including one recorded
   cap exception) located `levelScreen`'s ten identical sub-widgets (`0x452bc2`, stride

@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b2c-menu-chain",
       "title": "B2 path to the menu object and key-to-event edge",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b2c-menu-chain-brief.md",
       "worker_output": "build/tmp/b2c-menu-chain/round-note.md",
       "worker_tier": "targeted",
@@ -26,11 +28,17 @@
       "stock_starts_consumed": 0,
       "standing_run": "b1-loader-b2-sequence",
       "investigation_budget_minutes": 40,
-      "body_cap": 12
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "body_cap": 12,
+      "disposition": "partial: file-backed menu chain read ([0x5D59E4] list walk by +4 to vtable 0x4B2528); key-to-event edge unread; B2 at cap",
+      "landed_in": "docs/scratch/phase-b2c-menu-chain.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-23: 22 pins equal exe; re-read 0x48744C, 0x48EC90 vtable writes, 0x487FA0, 0x487F90, 0x487CC0/0x487CA0/0x487C60/0x487C80, 0x486EC7; one caller of 0x48EC90; 12 controls OK; alone NEXT_OFF 4->8 fails 5 and dropping the single-menu check fails 3; install hashes equal startup; no game process. Not re-derived: id-7 switch, runtime list order.",
+      "remaining_blockers": [
+        "Key-to-event edge (producer of the 0x48896A event argument) unread; RETURN-at-highlight-0 unexplained.",
+        "[menu+0x10] dispatch-container identity unproved; no writer found.",
+        "Confirm/map/level/pause/back route unread; no live capture preflight."
+      ]
+    },
     {
       "id": "b1q-archive-open",
       "title": "Archive registration order and open route for Textures\\^Font",
@@ -3064,7 +3072,7 @@
     "id": "b1-loader-b2-sequence",
     "goal": "Resolve generic texture loader; render B1 only on unique read source; capture and implement B2 sequence under active directive.",
     "milestones": ["B1 frontend assets and text", "B2 screen state machine"],
-    "current": "Q1 round 2 (unread loader source edges) and Q3 round 2 (B2 preflight continuation) independent; Q2 render still conditional on exactly one source.",
+    "current": "B2 parked at its round cap (b2c landed). Q1 at round 2 of 3; Q1 round 3 on registration-before-load is the only remaining ranked work; Q2 render only on exactly one source.",
     "authorized": "docs/DIRECTIVE.md active issued2026-10-23 superseding prior sheet directive: Q1 generic-loader new question cap3; Q2 offline B1 renderer cap2 only if unique source; Q3 B2 cap3 exactly one stock start after byte-based preflight, no retry after Popen. No B3 or Phase C advance.",
     "grants": {
       "stock_starts": "Q1/Q2 zero; Q3 exactly one only after complete offline preflight, no retry after Popen",
@@ -3073,11 +3081,11 @@
     },
     "workers": "OpenCode mapping docs/ROLES.md: disasm-agent for native reads, round-agent for capture-only/render/implementation rounds; no model override.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 invocation. Took over from OpenCode facilitator ses_e96a3d099ffeQpsc1kgKEdfDBJ at the user's /facilitator-ssh start: no task was `running` (both dispatched rounds were ready-for-verify, packets finished 09:44/09:34), so the start is the handoff per ORCHESTRATION#standing-run. opencode.exe processes exist on mouv and were not attributed to a session; the prior session was not contacted.",
-    "rounds_run": 4,
+    "rounds_run": 5,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
-    "handoff": "2026-10-23 B1p, B2a, B2b, B1q landed as bounded negatives/partials. B1q: archive order is PATCH, LEMMINGS, CDPath LEMMINGS; ^Font still converges on the base pair, but whether registration ran before the font load is unread (callers 0x450771, 0x45BEA7). Q1 is at round 2 of 3. Running offline: b2c-menu-chain (Q3 round 3, last; hard 12-body cap). Next: after b2c, either a Q1 round 3 on the registration-before-load edge or park; Q2 render only on exactly one source. Zero stock starts used. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
+    "handoff": "2026-10-23 B1p, B2a, B2b, B1q, B2c landed as bounded negatives/partials. B2 PARKED in PLAN Phase E at round 3 (file-backed menu chain read; key-to-event edge and route unread). Zero stock starts used. Next: Q1 round 3 (registration before the font load at 0x45019E: callers 0x450771, 0x45BEA7, gate 0x47F230, 0x47E105); Q2 render only if exactly one source; then stop per directive. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [{

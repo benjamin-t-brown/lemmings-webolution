@@ -902,6 +902,16 @@ focus store `[container+0x10]` at `0x48F80C`. Candidate highlight
 `rows.index([[menu+0x10]+0x10])` is a shape, not an accessor: no file-backed chain to the
 `0x4B2528` menu and no key-to-event edge. The worker exceeded its body cap (about 17 of 12).
 
+## B2 menu object chain (B2a-B2c, 2026-10-23, READ only)
+
+`[0x5D59E4]` is the screen-list head (`0x487FA0` writes it; `0x487CC0` stores `[obj+4]`). The
+main-menu object (vtable `0x4B2528`) is built only for screen id 7 (`0x48744C`, `0x5C` bytes,
+sole ctor caller `0x487469`) and is found by walking `+4` from the head. `[0x5D59E8]` has one
+writer (`0x486ECE`); `[0x5D59EC]` is the chrome object, not the menu. Open: key -> event
+producer for `0x48896A`, and the writer of `[menu+0x10]`. `0x487C60`/`0x487C80` store
+`+0x24`/`+0x28`, not `+0x10`. B2 is parked (PLAN Phase E); no stock start used.
+Evidence: `docs/scratch/phase-b2c-menu-chain.md`.
+
 ## Pause text at 0x44CD06
 
 [C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with

@@ -2820,7 +2820,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the B1 gate passes on the facilitator independent re-score, or when question 1 reaches its three-round cap and question 2 is landed or parked. Also stop on any ORCHESTRATION stop condition. Do not advance to B2, C1, C2 or C3.",
-    "handoff": "2026-10-22 STOPPED. Question 1 used three rounds (b1j, b1k, b1l) and did not score the B1 gate. The labels are the table at 0x4C4214, Y starts at 320, X is a signed half of [0x58CB40], and that word has no file store. ^Font does not name a BMP in the exe. Question 2 landed: 0x44CD06 draws Out, Saved, and a MM:SS timer. No stock starts. Do not dispatch another round on this directive.",
+    "handoff": "2026-10-22 STOPPED. Question 1 used three rounds (b1j, b1k, b1l) and did not score the B1 gate. The labels are the table at 0x4C4214, Y starts at 320, X is a signed half of [0x58CB40], and that word has no file store. ^Font does not name a BMP in the exe. Question 2 landed: 0x44CD06 draws Out, Saved, and a MM:SS timer. No stock starts. Do not dispatch another round on this directive. Stop commit 0f91521.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -3116,7 +3116,7 @@
     "stopped": {
       "date": "2026-10-22",
       "reason": "Question 1 reached its three-round cap without a B1 gate score, and question 2 is landed. The horizontal word and the ^Font texture are file-negatives, so a score would require a guessed X or a guessed sheet. That is the directive stop, not a gate change.",
-      "last_commit": null,
+      "last_commit": "0f91521",
       "current_gate": "B1 full-frame highlight 0 <=0.02 was not scored. C2 was groundwork only and was not scored.",
       "rounds_run": 5,
       "stock_starts_used": 0,

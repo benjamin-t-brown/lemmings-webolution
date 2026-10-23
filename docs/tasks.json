@@ -2922,12 +2922,12 @@
       ]
     }],
     "stop_point": "B1 gate passes independently, B1 parked (cap, conditional Q3 preflight failure or start spent without binding), or ORCHESTRATION stop. Q1 ambiguity routes to explicitly authorized Q3 preflight, not automatic render or live launch.",
-    "handoff": "2026-10-23 STOPPED per directive Q3 preflight-failure condition. B1n ambiguity verified/committed/pushed b3afffe (five tested candidates, no identity, narrowed inventory/table ranges); B1o negative preflight verified at eight bodies (highlight and complete source unproved), no launch. Two dispatches/zero starts this run, runtime question4 total. B1 unscored/unaccepted, no renderer or milestone advance.30/30 CTest, all install hashes match own startup, no process/task. Active/queue empty. Next action user/overlord new authorization or re-ranking; no fifth dispatch or automatic use of unused conditional start.",
+    "handoff": "2026-10-23 STOPPED per directive Q3 preflight-failure condition. B1n ambiguity verified/committed/pushed b3afffe (five tested candidates, no identity, narrowed inventory/table ranges); B1o negative preflight verified/committed/pushed ce42232 at eight bodies (highlight and complete source unproved), no launch. Two dispatches/zero starts this run, runtime question4 total. B1 unscored/unaccepted, no renderer or milestone advance.30/30 CTest, all install hashes match own startup, no process/task. Active/queue empty. Next action user/overlord new authorization or re-ranking; no fifth dispatch or automatic use of unused conditional start.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": {
       "date": "2026-10-23",
       "reason": "Directive Q3 mandatory offline preflight failed at eight-body cap: byte-proved highlight accessor and complete actual-source attribution not established. Explicit stop and park; no stock launch, fifth runtime round, renderer with guessed source or milestone advance.",
-      "last_commit": "b3afffe",
+      "last_commit": "ce42232",
       "current_gate": "B1 highlight0 full-frame <=0.02 unchanged and unscored/unaccepted",
       "rounds_run": 2,
       "stock_starts_used": 0,

@@ -909,6 +909,13 @@ at `0x450A46`, whose chain pushes `^Font` at `0x4403B5`. The registrar body is s
 `[0x5D5610]==0`; the setter is unread, as are the loose-file helpers and the working directory.
 `^Font` -> `lemmings.box` BMP+ALF stays conditional. Evidence: `docs/scratch/phase-b1r-load-order.md`.
 
+## Live `^Font` read (B1t, 2026-10-23, OBSERVED, negative)
+
+One stock start under `trace_font_source.py --launch` (`starti`, one hardware execute breakpoint at
+`0x47E4AD`, 90 s): no hit, so the `^Font` source is **not observed**. This does not distinguish the loose route,
+a load before the breakpoint was live, a debug register that missed the loading thread, or a condition that did
+not match. `starti` itself works on the stock exe. Evidence: `docs/scratch/phase-b1t-font-live-read.md`.
+
 ## B2 menu object chain (B2a-B2c, 2026-10-23, READ only)
 
 `[0x5D59E4]` is the screen-list head (`0x487FA0` writes it; `0x487CC0` stores `[obj+4]`). The

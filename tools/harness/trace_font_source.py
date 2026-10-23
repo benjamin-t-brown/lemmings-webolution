@@ -40,6 +40,7 @@ import json
 import re
 import struct
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -91,7 +92,8 @@ def cond_matches(memory: dict[int, int], prefix: bytes = ENTRY_PREFIX, name_addr
     return all(memory.get(name_address + i) == prefix[i] for i in range(len(prefix)))
 
 
-def breakpoint_actions(stop_after: int) -> list[str]:
+def breakpoint_actions(stop_after: int, dump_dir: str = ".") -> list[str]:
+    """`dump_dir` must be absolute in launch mode: GDB's cwd there is the install directory."""
     return [
         "silent",
         "set $hits=$hits+1",
@@ -102,7 +104,7 @@ def breakpoint_actions(stop_after: int) -> list[str]:
         f'printf "{HIT_MARKER} n=%d this=%#x rec=%#x archidx=%u archobj=%#x size=%u offset=%u gate=%u req=%s entry=%s archive=%s\\n",'
         "$hits,$obj,$rec,$aidx,$arch,*(unsigned*)($rec+0x104),*(unsigned*)($rec+0x108),"
         f"*(unsigned*){GATE:#x},(char*)($obj+0x14),(char*)($rec+4),(char*)($arch+0x38)",
-        "dump binary memory record-last.bin $rec $rec+0x10c",
+        f"dump binary memory {dump_dir}/record-last.bin $rec $rec+0x10c",
         f"if $hits >= {stop_after}",
         f'printf "{STOP_MARKER}\\n"',
         "else",
@@ -210,28 +212,42 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--boot-timeout", type=float, default=90.0,
                    help="launch mode: seconds to wait for the entry stop and for the first hit")
     p.add_argument("--output", type=Path, help="new directory under build/tmp")
-    p.add_argument("--stop-after", type=int, default=4, help="stop after this many matching hits")
+    p.add_argument("--stop-after", type=int, default=None,
+                   help="stop after this many matching hits (default: 2 with --launch, the expected ^FONT.BMP + .ALF pair; 4 with --pid)")
     p.add_argument("--timeout", type=float, default=120.0, help="seconds to wait for the stop marker")
     p.add_argument("--ui-state", type=int, default=1,
                    help="required lrstate.ui_state (1 = paused level, the precedent guard); -1 skips the guard")
     p.add_argument("--gdb", type=Path, default=Path(r"C:\progs\msys2\mingw32\bin\gdb.exe"))
     p.add_argument("--selftest", action="store_true", help="exercise argument/guard logic on synthetic data only")
     args = p.parse_args(argv)
+    if args.stop_after is None:
+        args.stop_after = 2 if args.launch else 4
     validate_args(args)
     return args
 
 
-def arm_and_collect(mi, args, report: dict, timeout: float) -> None:
-    """Insert the one breakpoint, run to the stop marker, delete it while stopped."""
-    mi.console("set $hits=0")
-    # One fixed dump file, overwritten per hit: GDB cannot interpolate $hits into a name.
-    mi.breakpoint(BP_ADDRESS, prefix_condition(), breakpoint_actions(args.stop_after))
-    report["breakpoint_armed"] = True
-    mi.resume()
-    mi.wait_marker(STOP_MARKER, timeout=timeout)
+def collect_hits(mi, report: dict) -> None:
+    """Copy every hit already printed into the report; safe to call after a failed wait."""
     lines = [json.loads(x[1:]).strip() for x in mi.lines if x.startswith("~")]
     report["console"] = [x for x in lines if HIT_MARKER in x or STOP_MARKER in x]
     report["hits"] = [h for h in map(parse_hit, lines) if h]
+
+
+def arm_and_collect(mi, args, report: dict, timeout: float, dump_dir: str = ".") -> None:
+    """Insert the one breakpoint, run to the stop marker, delete it while stopped."""
+    mi.console("set $hits=0")
+    # One fixed dump file, overwritten per hit: GDB cannot interpolate $hits into a name.
+    mi.breakpoint(BP_ADDRESS, prefix_condition(), breakpoint_actions(args.stop_after, dump_dir))
+    report["breakpoint_armed"] = True
+    mi.resume()
+    try:
+        mi.wait_marker(STOP_MARKER, timeout=timeout)
+    except BaseException as exc:
+        # A timeout or an unexpected stop must still report the hits that fired (gdb-mi.log has them too).
+        report["wait_error"] = repr(exc)
+        collect_hits(mi, report)
+        raise
+    collect_hits(mi, report)
     # Delete while stopped, then prove the debug registers are empty before detach.
     mi.command("-break-delete", timeout=10)
     mi.console("info breakpoints")
@@ -296,25 +312,55 @@ def run_live(args: argparse.Namespace) -> int:
     return 0 if report.get("completed") and clean else 1
 
 
-def run_launch(args: argparse.Namespace) -> int:
-    """Opt-in arming mode: GDB creates the stock process, stops at its first instruction,
-    the breakpoint is inserted there, then the game runs. ONE start, no retry.
-
-    UNPROVEN offline: GDB `starti` on this Windows build, and that a debug register set at
-    that stop is applied to the thread that later runs the startup chain.
-    """
+def launch_preflight() -> dict:
+    """Machine state read before the exe exists (tasklist, install hashes). Replaced in --selftest."""
     import subprocess
     from hashlib import sha256
-    sys.path.insert(0, str(ROOT / "tools" / "harness"))
-    from trace_cell_emission import MI
+    tasklist = subprocess.run(["tasklist"], capture_output=True, text=True, timeout=30).stdout
+    return {"install_sha256": {k: sha256((INSTALL_DIR / k).read_bytes()).hexdigest() for k in INSTALL_SHA256},
+            "tasklist": tasklist}
 
-    class LaunchMI(MI):
+
+def launch_mi_class(base):
+    """GDB/MI session class that starts the stock exe instead of attaching. `base` is MI (or a recorder)."""
+
+    class LaunchMI(base):
         def start(self) -> None:
             for setting in ("pagination off", "confirm off", "auto-solib-add off", "mi-async on"):
                 self.command("-gdb-set " + setting)
             self.command("-environment-cd " + json.dumps(INSTALL_DIR.as_posix()))  # the game expects its own directory
             self.command("-file-exec-and-symbols " + json.dumps(STOCK_EXE.as_posix()))
 
+        def wait_any_stop(self, timeout: float = 10, since: int | None = None) -> str:
+            if since is None:
+                return super().wait_any_stop(timeout)
+            # command() drains the queue while waiting for its result token, so a `*stopped`
+            # record that arrives before `^done` is gone from the queue but stays in self.lines.
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                for line in self.lines[since:]:
+                    if line.startswith("*stopped"):
+                        self.running = False
+                        return line
+                time.sleep(0.1)
+            raise TimeoutError("inferior stop")
+
+    return LaunchMI
+
+
+def make_launch_mi(gdb: Path, output: Path):
+    sys.path.insert(0, str(ROOT / "tools" / "harness"))
+    from trace_cell_emission import MI
+    return launch_mi_class(MI)(gdb, 0, output)
+
+
+def run_launch(args: argparse.Namespace, preflight=launch_preflight, mi_factory=make_launch_mi) -> int:
+    """Opt-in arming mode: GDB creates the stock process, stops at its first instruction,
+    the breakpoint is inserted there, then the game runs. ONE start, no retry.
+
+    UNPROVEN offline: GDB `starti` on this Windows build, and that a debug register set at
+    that stop is applied to the thread that later runs the startup chain.
+    """
     output = check_output_dir(args.output, ROOT / "build" / "tmp")
     output.mkdir(parents=True, exist_ok=False)
     report: dict = {"mode": "launch", "breakpoint": hex(BP_ADDRESS), "completed": False, "launch_attempted": False,
@@ -322,31 +368,32 @@ def run_launch(args: argparse.Namespace) -> int:
     mi = None
     try:
         # Every guard that can be checked before the exe exists runs first; the start is spent after.
-        tasklist = subprocess.run(["tasklist"], capture_output=True, text=True, timeout=30).stdout
-        ctx = {"install_sha256": {k: sha256((INSTALL_DIR / k).read_bytes()).hexdigest() for k in INSTALL_SHA256},
-               "tasklist": tasklist, "launch_attempted": report["launch_attempted"]}
+        ctx = dict(preflight(), launch_attempted=report["launch_attempted"])
         failed = run_guards(LAUNCH_GUARDS, ctx)
         if failed:
             raise RuntimeError("; ".join(failed))
         report["install_sha256"] = ctx["install_sha256"]
         if not args.gdb.exists():
             raise RuntimeError(f"gdb not found: {args.gdb}")
-        mi = LaunchMI(args.gdb, 0, output)
+        mi = mi_factory(args.gdb, output)
         mi.start()
         report["launch_attempted"] = True   # recorded before the start; a failure below is final
+        mark = len(mi.lines)
         mi.console("starti")
         mi.attached = True                  # from here cleanup must delete the breakpoint and detach
         report["debugger_attached"] = True
-        report["entry_stop"] = mi.wait_any_stop(timeout=args.boot_timeout)
+        report["entry_stop"] = mi.wait_any_stop(timeout=args.boot_timeout, since=mark)
         mem = mi.command("-data-read-memory-bytes %#x %d" % (BP_ADDRESS, len(SITE_BYTES)))
         site = parse_memory_bytes(mem)
         failed = run_guards(ENTRY_STOP_GUARDS, {"site_bytes": site})
         if failed:
             raise RuntimeError("; ".join(failed))
         report["entry_stop_site_bytes"] = site.hex()
+        while not mi.messages.empty():     # a stale entry-stop record must not be read as an unexpected stop
+            mi.messages.get_nowait()
         pids = re.findall(r'pid="(\d+)"', mi.command("-list-thread-groups"))
         report["pid"] = int(pids[0]) if pids else None
-        arm_and_collect(mi, args, report, timeout=args.boot_timeout)
+        arm_and_collect(mi, args, report, timeout=args.boot_timeout, dump_dir=output.as_posix())
     except Exception as exc:
         report["error"] = repr(exc)
     finally:
@@ -454,6 +501,107 @@ def selftest() -> int:
     check("MUTATION without guard site the changed bytes are accepted", run_guards({}, {"site_bytes": b"x"}) == [])
     check("parse_memory_bytes", parse_memory_bytes('1^done,memory=[{begin="0x0047e4ad",contents="8b95d8feffff8b45e8"}]') == SITE_BYTES)
     check("game_processes ignores unrelated rows", game_processes("cmd.exe 1\nLemmings Revolution.exe 2\n") == ["Lemmings Revolution.exe 2"])
+    # ---- launch flow end to end against a recording stub (no GDB, no process)
+    try:
+        from trace_cell_emission import MI
+    except Exception as exc:  # Windows-only imports; run the selftest on mouv for these checks
+        print("SKIP launch stub checks (MI import failed: %s)" % type(exc).__name__)
+        MI = None
+    if MI is not None:
+        import queue
+        import shutil
+        import tempfile
+
+        def hit_line(n, entry):
+            return (f"{HIT_MARKER} n={n} this=0x19f9a4 rec=0x5d5730 archidx=1 archobj=0x2a3b40 size=10 offset=20 gate=1 "
+                    f"req=Textures\\^Font.x entry={entry} archive=C:\\x\\lemmings.box")
+
+        class Rec(MI):
+            script_hits = 2
+            marker = True
+            sequence: list = []
+
+            def __init__(self, gdb, pid, output):
+                self.messages = queue.Queue(); self.lines = []; self.token = 0; self.attached = False
+                self.running = False; self.bp_numbers = []; self.output = output; self.pid = pid
+                self.proc = type("P", (), {"poll": lambda s: None if not self.exited else 0,
+                                           "wait": lambda s, timeout=None: 0})()
+                self.exited = False
+                Rec.sequence = []
+
+            def emit(self, line):
+                self.lines.append(line); self.messages.put(line)
+
+            def command(self, text, timeout=20):
+                Rec.sequence.append(text)
+                if text == "-gdb-exit":
+                    self.exited = True
+                elif text.startswith("-interpreter-exec console"):
+                    inner = json.loads(text.split(" ", 2)[2])
+                    if inner == "starti":
+                        self.emit('*stopped,reason="signal-received",signal-name="SIGTRAP"')
+                    elif inner == "info breakpoints":
+                        self.emit("~" + json.dumps("No breakpoints or watchpoints.\n"))
+                elif text.startswith("-exec-continue"):
+                    self.emit('*running,thread-id="all"')
+                    for i in range(1, self.script_hits + 1):
+                        self.emit("~" + json.dumps(hit_line(i, "TEXTURES\\^FONT.%s" % ("BMP", "ALF")[i % 2 == 0]) + "\n"))
+                    if self.marker:
+                        self.emit("~" + json.dumps(STOP_MARKER + "\n"))
+                        self.emit('*stopped,reason="breakpoint-hit"')
+                elif text.startswith("-data-read-memory-bytes"):
+                    return '1^done,memory=[{begin="0x0047e4ad",contents="%s"}]' % SITE_BYTES.hex()
+                elif text.startswith("-list-thread-groups"):
+                    return '1^done,groups=[{id="i1",type="process",pid="4242"}]'
+                elif text.startswith("-break-insert"):
+                    return '1^done,bkpt={number="1"}'
+                return "1^done"
+
+        good_pre = lambda: {"install_sha256": dict(INSTALL_SHA256), "tasklist": "explorer.exe 4\n"}
+        tmp_root = ROOT / "build" / "tmp"
+        tmp_root.mkdir(parents=True, exist_ok=True)
+
+        def launch_case(**attrs):
+            work = Path(tempfile.mkdtemp(dir=tmp_root, prefix="selftest-"))
+            try:
+                for k, v in attrs.items():
+                    setattr(Rec, k, v)
+                a = parse_args(["--launch", "--output", str(work / "out"), "--boot-timeout", "1"])
+                a.gdb = Path(sys.executable)   # exists; never executed (stub MI)
+                import contextlib, io
+                with contextlib.redirect_stdout(io.StringIO()):
+                    rc = run_launch(a, preflight=good_pre, mi_factory=lambda g, o: launch_mi_class(Rec)(g, 0, o))
+                return rc, json.loads((work / "out" / "trace-result.json").read_text()), list(Rec.sequence), a
+            finally:
+                shutil.rmtree(work, ignore_errors=True)
+                Rec.script_hits, Rec.marker = 2, True
+
+        rc, rep, seq, a = launch_case()
+        check("launch default --stop-after is 2", a.stop_after == 2)
+        check("attach default --stop-after stays 4", parse_args(["--pid", "1", "--output", "x"]).stop_after == 4)
+        check("launch stub: two hits reported", [h["matched_entry"] for h in rep.get("hits", [])] == ["TEXTURES\\^FONT.BMP", "TEXTURES\\^FONT.ALF"])
+        check("launch stub: completed, deleted before detach, clean cleanup",
+              rc == 0 and rep["completed"] and rep["breakpoints_deleted_before_detach"] and rep["debugger_attached_after_cleanup"] is False)
+        order = [i for i, t in enumerate(seq) if t.startswith("-file-exec-and-symbols")], \
+                [i for i, t in enumerate(seq) if "starti" in t], \
+                [i for i, t in enumerate(seq) if t.startswith("-break-insert")], \
+                [i for i, t in enumerate(seq) if t.startswith("-exec-continue")], \
+                [i for i, t in enumerate(seq) if t == "-break-delete"], \
+                [i for i, t in enumerate(seq) if t == "-target-detach"]
+        flat = [x[0] for x in order if x]
+        check("launch stub: every step present once and in order", len(flat) == 6 and flat == sorted(flat))
+        acts = breakpoint_actions(2, "C:/x/out")
+        check("dump path carries the output dir", any(x.startswith("dump binary memory C:/x/out/record-last.bin") for x in acts))
+        rc, rep, seq, a = launch_case(script_hits=1, marker=False)
+        check("timeout: nonzero rc, error recorded, the fired hit still in the report",
+              rc == 1 and "wait_error" in rep and len(rep.get("hits", [])) == 1 and rep["completed"] is False)
+        check("timeout: breakpoint still deleted before detach by cleanup",
+              rep.get("breakpoints_deleted_before_detach") is True and rep["debugger_attached_after_cleanup"] is False)
+        print("RECORDED_SEQUENCE_BEGIN")
+        rc, rep, seq, a = launch_case()
+        for t in seq:
+            print("  " + t[:230])
+        print("RECORDED_SEQUENCE_END")
     print("selftest:", "FAILED " + ", ".join(failures) if failures else "all passed (synthetic data only)")
     return 1 if failures else 0
 

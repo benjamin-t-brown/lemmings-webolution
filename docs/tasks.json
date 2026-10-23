@@ -4,31 +4,6 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "b1t-font-live-read",
-      "title": "Live read of the ^Font source at 0x47E4AD (one hardware breakpoint, one stock start)",
-      "status": "running",
-      "brief": "build/tmp/b1t-font-live-read-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "live capture",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "dispatch_id": "ab1t-font-live-read-b66d90dba67e6189",
-      "owns_live_game": true,
-      "live_owner": "b1t-font-live-read",
-      "depends_on": [
-        "b1s-font-live-preflight"
-      ],
-      "gate_served": "B1 unchanged highlight0 full-frame <=0.02; directive Q1 live read (round 3, cap exception)",
-      "question_round_count": 3,
-      "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
-      "standing_run": "b1-source-read-b2-esc",
-      "investigation_budget_minutes": 60,
-      "body_cap": 0,
-      "worker_output": null
-    },
-    {
       "id": "b2g-esc-sweep-preflight",
       "title": "Offline preflight for the second B2 capture (ESC hold sweep, level to map, +8 link)",
       "status": "running",
@@ -3289,6 +3264,38 @@
         "Pause-frame [G+0x25C64] is a runtime tick delta or a conditional 100. A memory read can place the rectangle. It does not finish A7.",
         "Actual gate remains 0.0220410125. Eight other views and a second level still have no mask."
       ]
+    },
+    {
+      "id": "b1t-font-live-read",
+      "title": "Live read of the ^Font source at 0x47E4AD (one hardware breakpoint, one stock start)",
+      "status": "landed",
+      "brief": "build/tmp/b1t-font-live-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live capture",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab1t-font-live-read-b66d90dba67e6189",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "b1s-font-live-preflight"
+      ],
+      "gate_served": "B1 unchanged highlight0 full-frame <=0.02; directive Q1 live read (round 3, cap exception)",
+      "question_round_count": 3,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "standing_run": "b1-source-read-b2-esc",
+      "investigation_budget_minutes": 60,
+      "body_cap": 0,
+      "worker_output": "build/tmp/b1t-font-live-read/round-note.md",
+      "landed_in": "docs/scratch/phase-b1t-font-live-read.md",
+      "disposition": "one stock start (13:53:07 MDT): starti works, hw breakpoint 0x47E4AD accepted, 90 s run, zero hits; ^Font source NOT observed (loose route / late breakpoint / missed thread / condition not separable); Q1 parked, Q2 not run",
+      "facilitator_verified": "2026-10-23: read trace-result.json and gdb-mi.log (no FONT_HIT, two *stopped); re-read 0x47E4A0.. on the exe; install hashes equal before/after/startup; script hash Mac==mouv; selftest passes; launch stop-after default mutated alone fails the selftest; ctest 31/31; game pid 42624 left running by worker, ended by facilitator after check; no gdb/LemWeb left. Not verified: live events beyond the log, cause of no hit.",
+      "remaining_blockers": [
+        "source not observed; loose route, late breakpoint, thread and condition not separable",
+        "dump binary memory path never ran live"
+      ]
     }
   ],
   "standing_run": {
@@ -3298,7 +3305,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "Q1 round 3 (b1t, live) and Q3 round 1 (b2g, offline preflight) dispatched.",
+    "current": "b1t landed (no hit; Q1 parked, Q2 not run). b2g (Q3 offline preflight) running; Q3 live capture next once b2g verifies.",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, second directive of the day): Q1 live read one round and one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 three new rounds (preflight, capture, implement) and one stock start. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3307,11 +3314,11 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; directive active and prior run stopped with no task running, so this start is the handoff.",
-    "rounds_run": 0,
-    "stock_starts_used": 0,
+    "rounds_run": 1,
+    "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 started. b1t (Q1 live read, owns live game) and b2g (Q3 offline preflight) dispatched together. Q3 live capture waits for b1t to release the game; Q2 only if b1t observes exactly one source.",
+    "handoff": "2026-10-23 b1t landed: one start spent on Q1, no hit, source unobserved, Q1 parked in PLAN Phase E; Q2 will not run. b2g (Q3 preflight, offline) in flight. Next: verify/land b2g, then Q3 live capture (the second and last start, game is free), then Frontend update.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

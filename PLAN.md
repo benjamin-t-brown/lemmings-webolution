@@ -1482,6 +1482,10 @@ open.
   misses (`0x47E89B`, `0x49DD81`, `0x47E105`, `0x47EF48`, `0x47EF92`, cwd `0x450600`/`0x4A8EF4`
   unread) and the `0x414B90` -> `0x45019E` link is the path. Q2 (render) not started; never
   choose a sheet by score. See `docs/scratch/phase-b1r-load-order.md`.
+  **Live read (B1t, 2026-10-23, one stock start): no hit at `0x47E4AD`; source not observed.** The
+  loose route, a late breakpoint, a missed thread and a non-matching condition are not separable. Q2
+  still not started. Resume brief: arm `{0x47E4AD, 0x47E463}` together (needs a fresh start grant), or
+  read the gate setter and loose helpers offline first. See `docs/scratch/phase-b1t-font-live-read.md`.
 - **B2 screen state machine** (parked 2026-10-23 at the three-round cap; B2a preflight failed
   closed, B2b read the key-poll flag `[0x5D5970]` and the focus-store shape, B2c read the
   file-backed chain `[0x5D59E4]` -> `+4` -> node with vtable `0x4B2528`). **Zero stock starts

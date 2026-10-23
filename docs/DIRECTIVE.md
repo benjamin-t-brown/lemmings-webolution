@@ -7,8 +7,11 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
 Issued: 2026-10-22 (user, overlord review 2026-10-22)
+Closed: 2026-10-22 (facilitator) — stop point reached: C1 is parked at its round cap.
+See `docs/tasks.json` `standing_run.previous` (`c1-skill-panel`, `stopped`) and `PLAN.md`
+Phase E ("C1 skill-panel icon-draw mechanism"). The overlord ranks the next pass.
 
 ## Scope
 

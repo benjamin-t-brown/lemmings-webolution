@@ -26,6 +26,31 @@
       "stock_starts_consumed": 0,
       "standing_run": "b1-loader-b2-sequence",
       "investigation_budget_minutes": 35
+    },
+    {
+      "id": "b2c-menu-chain",
+      "title": "B2 path to the menu object and key-to-event edge",
+      "status": "running",
+      "brief": "build/tmp/b2c-menu-chain-brief.md",
+      "worker_output": "build/tmp/b2c-menu-chain/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab2c-menu-chain-85ff1d1d5dfdb681",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b2b-highlight-keypath"
+      ],
+      "gate_served": "B2 fixed scripted key sequence/construction-order matching; offline prerequisite only",
+      "question_round_count": 3,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-loader-b2-sequence",
+      "investigation_budget_minutes": 40,
+      "body_cap": 12
     }
   ],
   "queue": [],
@@ -3043,7 +3068,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
-    "handoff": "2026-10-23 B1p, B2a, B2b landed as bounded negatives/partial (B2b: key-poll flag and focus-store shape read; menu-object chain and key-to-event edge unread). b1q-archive-open (Q1 round 2) still running offline. B2 is at round 2 of 3; round 3 is the last before parking: dispatch b2c on the two missing edges. Zero stock starts used; the one B2 start needs a complete route preflight first. Q2 render only if b1q yields exactly one source.",
+    "handoff": "2026-10-23 B1p, B2a, B2b landed (bounded negatives / partial); head 9d09ba8. Running offline, zero stock starts: b1q-archive-open (Q1 round 2) and b2c-menu-chain (Q3 round 3, last under the directive; hard 12-body cap, prediction.md must predate reads). On b2c return: verify and land; if both edges are not closed, park B2 in PLAN Phase E with a resume brief. Q2 render only if b1q yields exactly one source. The one B2 stock start stays unused until a complete route preflight exists. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [{

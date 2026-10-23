@@ -548,7 +548,8 @@ any of the three — a well-supported inference, not an observation); `FUN_00474
 read: `FUN_004404fa`'s caller `0x44CD06` is the exact function A7d–A7g already traced from
 the Paused-caption receiver `H`, and its body shows `H+0x758`/`H+0x77C`/`H+0x224` each
 filled through this same glyph-builder — offered to whoever next picks up that Phase C
-thread, not claimed as resolved here.
+thread, not claimed as resolved here. C2a re-read that function from the file;
+see Phase C.
 
 **B1j: none of `FUN_004404fa`'s callers draws the five main-menu labels**
 ([check](docs/scratch/phase-b1j-menu-callers.md)), 2026-10-22, round 1 of the
@@ -578,9 +579,21 @@ traced it without finding its draw owner, parked 2026-10-21: `STR_PAUSED` key at
 `[G+0x25C64] / 1000.0`, the latter a tick delta or a conditional `100`. Resume from a
 live read of `[G+0x25C64]` at pause, in Phase C. Evidence:
 [A7c](docs/scratch/phase-a7-pause-caption-native.md) through
-[A7l](docs/scratch/phase-a7-25c64-writers.md). Phase B's B1i (above) found an unverified
-lead for the same "who fills H" thread (`0x44CD06`'s body filling
-`H+0x758`/`H+0x77C`/`H+0x224` through the font glyph-builder) — not yet followed up here.
+[A7l](docs/scratch/phase-a7-25c64-writers.md).
+
+**C2a: `0x44CD06` fills two indexed lists and a separate timer**
+([check](docs/scratch/phase-c2a-pause-timer.md)), 2026-10-22, round 1 of the
+pause-caption question. This is groundwork. The C2 gate was not attempted.
+All three lists use `ecx = [0x4CBF78]`. `H+0x758` gets string index `0x44`
+at horizontal 520, vertical 15. `H+0x77C` gets index `0x45` at horizontal
+520, vertical 45. `H+0x224` formats `[0x4CBAAC] / 60` as `"%02d:0%d"` when
+the remainder is below 10, otherwise `"%02d:%02d"`, at horizontal 560,
+vertical 430. The second divide reloads the same dword. The binder at
+`0x486C4E` registers that font object with table `0x4BF968` and the name
+`"^Font"`. The in-range characters for indices `0x44` and `0x45` are a
+runtime lookup; the file fallback is `"Unknown String"`, and these bytes do
+not say the text is `Paused`. `[0x4E33C8] == 1` skips the timer submit and
+is not identified as pause state. No stock start.
 
 **Milestones and exit gates, drafted 2026-10-21 (CEO review), signed off as drafted by the
 user 2026-10-22.**

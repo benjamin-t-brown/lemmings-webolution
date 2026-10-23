@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c2a-pause-timer-read",
       "title": "What 0x44CD06 draws for the pause caption and timer, which font, and where",
-      "status": "ready-for-verify",
+      "status": "landed",
       "brief": "build/tmp/c2a-pause-timer-read-brief.md",
       "worker_output": "build/tmp/c2a-pause-timer-read/round-note.md",
       "worker_tier": "targeted",
@@ -23,11 +25,10 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "b1-menu-render",
-      "dispatch_id": null
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_id": "73d52ced-49fb-44e7-a3ff-c1d7cc62ce54",
+      "landed_in": "PLAN.md Phase C (C2a); docs/scratch/phase-c2a-pause-timer.md; docs/LESSONS.md Pause text at 0x44CD06",
+      "facilitator_verified": "2026-10-22: read_steppers re-read the three fills. push 0x44 then [0x4CBF78] then call 0x4404FA; anchors push 15 then push 0x208 (520) for H+0x758, push 0x45 then 45 and 520 for H+0x77C, push 0x1AE (430) then push 0x230 (560) for H+0x224. 0x44DFCF stores the second push at +0x14; 0x440D00 returns [record+0x14]+[record+0x1C]. Formats at 0x4C01DC and 0x4C01E8 match. 0x4BF968 lineHeight dword is 29. 0x4BFF68 and 0x4BFF70 are ^Font. 0x486C47 calls 0x486A9C and 0x486C4E calls 0x4403A7. Narrowed: the [0x4CBF78] load is at 0x486A9F after the prologue, and the second idiv reloads [0x4CBAAC]. In-range index text and binder-before-draw order stay unsettled. No src change. Suite already 30/30 on this tree. No Lemmings process. C2 gate not scored."
+    },
     {
       "id": "b1j-menu-text-caller",
       "title": "Which FUN_004404fa caller draws the main menu, with which font, sheet and placement",
@@ -2743,11 +2744,11 @@
     },
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast, including disassembly reads. Do not escalate to Opus.",
     "owner": "Cursor facilitator session, this /facilitator invocation, 2026-10-22. No task was running or queued. The prior standing run font-charmap-c1-live has stopped.no_further_dispatch and is preserved under previous. This start is the handoff.",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the B1 gate passes on the facilitator independent re-score, or when question 1 reaches its three-round cap and question 2 is landed or parked. Also stop on any ORCHESTRATION stop condition. Do not advance to B2, C1, C2 or C3.",
-    "handoff": "2026-10-22: b1j-menu-text-caller landed. The 17 FUN_004404fa calls are not the five main-menu labels; the label draw is unread. c2a-pause-timer-read is ready-for-verify and is the next land. No stock starts. B1 gate unchanged.",
+    "handoff": "2026-10-22: b1j landed and pushed (fa7bd57). c2a landed in this commit, not yet pushed. Menu labels are not the 17 glyph-builder calls. 0x44CD06 draws index 0x44 at (520,15), index 0x45 at (520,45), and a MM:SS timer at (560,430) through the ^Font registration of [0x4CBF78]. Next reads: the menu label draw, and the characters for indices 0x44 and 0x45. No stock starts. B1 gate unchanged. C2 gate not attempted.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

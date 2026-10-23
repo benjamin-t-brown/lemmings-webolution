@@ -834,6 +834,17 @@ does not occur in `.text`. The only `push 120` (`0x487511`) calls allocator
 `0x49C1A8`. The five labels' draw function is still unread. Do not repeat this
 caller scan, and do not treat those calls as the main menu.
 
+## Pause text at 0x44CD06
+
+[C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with
+string index `0x44` at (520, 15), `H+0x77C` with index `0x45` at (520, 45),
+and `H+0x224` with `[0x4CBAAC] / 60` at (560, 430). The below-10 format is
+`"%02d:0%d"`; otherwise `"%02d:%02d"`. The font pointer `[0x4CBF78]` is
+registered through `0x4403A7` as `"^Font"` / table `0x4BF968`. The index
+characters are a runtime lookup, not the file string `"Unknown String"`
+except on the out-of-range path. Do not call either list `Paused` from
+these bytes. The C2 gate was not attempted.
+
 ## Hard-won rules of thumb
 
 **A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):

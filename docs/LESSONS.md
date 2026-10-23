@@ -916,6 +916,14 @@ One stock start under `trace_font_source.py --launch` (`starti`, one hardware ex
 a load before the breakpoint was live, a debug register that missed the loading thread, or a condition that did
 not match. `starti` itself works on the stock exe. Evidence: `docs/scratch/phase-b1t-font-live-read.md`.
 
+## Both-arms preflight (B1u, 2026-10-23, OBSERVED on a throwaway, READ on the exe)
+
+Hardware breakpoints set at the `starti` stop do not fire in the main thread (throwaway exe, GDB 17.2); only later
+threads. B1t's single breakpoint was probably blind for that reason. Arming from a one-shot software stop at the entry
+point `0x49D518` works; it is a debugger probe beyond the two hardware breakpoints, so it needs authorization. A third
+route (`jne 0x47E598` when `[0x5D5604] != 0`) executes neither arm. Not run against the stock exe. Evidence:
+`docs/scratch/phase-b1u-font-both-arms-preflight.md`.
+
 ## Pause exit keys (B2g, 2026-10-23, READ only)
 
 In pause (`0x45D459`) a newly pressed P (action `0x13`) **or** ESC (action `0xE`) stores `ui_state` 0 at

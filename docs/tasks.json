@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b1u-font-both-arms-preflight",
       "title": "Preflight: arm both ^Font arms, prove breakpoints live, read hit counts",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b1u-font-both-arms-preflight-brief.md",
       "worker_tier": "targeted",
       "work_kind": "research",
@@ -25,11 +27,12 @@
       "standing_run": "b1-final-read-b2-level-map",
       "investigation_budget_minutes": 45,
       "body_cap": 12,
-      "worker_output": null
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "worker_output": "build/tmp/b1u-font-both-arms-preflight/round-note.md",
+      "disposition": "build/tmp/b1u-font-both-arms-preflight/round-note.md",
+      "landed_in": "docs/scratch/phase-b1u-font-both-arms-preflight.md",
+      "landed_at": "2026-10-23 15:35:31 MDT",
+      "facilitator_verified": "2026-10-23: selftest 81 PASS on mouv; ARM_ARCHIVE mutation alone fails exactly one assertion on a scratch copy; entry and arm bytes re-read; ctest 31/31; hashes equal; no leftovers"
+    },
     {
       "id": "b2k-level-to-map-input-end",
       "title": "Read input end of screen-0x20 to map path and old-node fate",
@@ -3466,11 +3469,27 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
-    "pending_questions": [],
+    "pending_questions": [
+      {
+        "id": "q1-entry-int3",
+        "question": "Q1 live read needs the hardware breakpoints armed in the main thread. B1u shows breakpoints set at the starti stop never fire in the main thread (throwaway exe), so B1t was probably blind. The fix is a one-shot GDB software int3 at the exe entry point 0x49D518, removed by GDB when it reports the stop. Directive Q1 says two hardware breakpoints and no other debugger probe. May the Q1 start use that one int3?",
+        "evidence": [
+          "docs/scratch/phase-b1u-font-both-arms-preflight.md",
+          "docs/scratch/phase-b1t-font-live-read.md",
+          "docs/DIRECTIVE.md"
+        ],
+        "options": [
+          "Authorize the entry-point int3 for the one Q1 start (soft mode, liveness proven before the arms)",
+          "Run the start with --entry-stop starti, known blind in the main thread on the throwaway",
+          "Park Q1 for good under the directive"
+        ],
+        "recommendation": "Authorize the int3: it is one probe, GDB-managed and removed on report, and without it the start repeats B1t. Residual: the stock exe may not tolerate it, TLS callbacks before 0x49D518 are unread, and the archive-only route (jne 0x47E598) executes neither arm, so a miss would still not prove no request was made."
+      }
+    ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 2026-10-23 15:20:30 MDT: b2j, b2k landed; Q3 parked (no named path, start skipped, no implement). Running: b1u (Q1 preflight). Next: verify b1u; then b1v (Q1 start) if it clears the four causes; Q2 only on exactly one source.",
+    "handoff": "2026-10-23 2026-10-23 15:35:31 MDT: b1u, b2j, b2k landed. Q3 parked (no named path). Q1 start (b1v) waits on pending question q1-entry-int3; Q2 follows only on exactly one observed source. Both stock starts unspent.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4032,6 +4051,11 @@
           }
         ]
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-23",
+      "reason": "Every remaining ranked question waits on pending_questions or is parked: Q1 start needs the entry-point int3 authorized (q1-entry-int3), Q2 depends on Q1, Q3 parked with no named path.",
+      "last_commit": "pending"
+    }
   }
 }

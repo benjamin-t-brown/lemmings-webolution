@@ -1486,6 +1486,7 @@ open.
   loose route, a late breakpoint, a missed thread and a non-matching condition are not separable. Q2
   still not started. Resume brief: arm `{0x47E4AD, 0x47E463}` together (needs a fresh start grant), or
   read the gate setter and loose helpers offline first. See `docs/scratch/phase-b1t-font-live-read.md`.
+- **B1 source, both arms** (b1u landed 2026-10-23, start b1v not run): script arms `{0x47E4AD, 0x47E463}`, proves liveness, reads hit counts; hardware breakpoints at the `starti` stop do not reach the main thread (throwaway), so the start needs a one-shot entry-point int3 the directive does not name. Waiting on the user (`q1-entry-int3`). See `docs/scratch/phase-b1u-font-both-arms-preflight.md`.
 - **B2 level-to-map** (parked 2026-10-23, directive Q3: B2j and B2k named **no** key or click path, so the
   start was skipped and `Frontend` has nothing new to replay). Read: screen 0x20 handler `0x486510` -> `0x4886E4`
   (selector 0x23, map by inference from B2h's node `0x4B3EB8`) -> factory; producer `0x48FCDD`; screen 0x20 built when

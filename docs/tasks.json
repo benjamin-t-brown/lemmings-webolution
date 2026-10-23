@@ -4,10 +4,36 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "c1d-panel-icon-widget-trace",
-      "title": "C1d: identify the levelScreen+0x3c object and its vtable+4 draw dispatch (round 3 of 3)",
+      "id": "c1e-panel-icon-dispatch-index",
+      "title": "C1e: find the all-ten dispatch loop (if any) and the per-widget icon-index writer (round 4, cap exception)",
       "status": "queued",
+      "brief": "build/tmp/c1e-panel-icon-dispatch-index-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session (no pin)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["c1a-panel-index-read", "c1b-panel-icon-render", "c1c-panel-icon-draw-trace", "c1d-panel-icon-widget-trace"],
+      "gate_served": "PLAN C1 skill-panel rendering clause (buttons only; counts/digits out of scope per overlord directive)",
+      "question_round_count": 4,
+      "prior_question_dispatches": 3,
+      "round_cap_exception": "Recorded in PLAN.md Phase C after C1d: not a residual, the literal missing gate piece, narrowed to two concrete bounded sub-questions (stride-0x238 dispatch loop; +8 index writer). Facilitator-authorized per docs/ORCHESTRATION.md#milestones-gates-and-round-caps. No fifth round pre-authorized regardless of this round's outcome.",
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel",
+      "dispatch_id": "claude-code background round-agent afb769f1e34e2c682, no model override"
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
+    {
+      "id": "c1d-panel-icon-widget-trace",
+      "title": "C1d: ten-widget array and real icon draw located; full dispatch and icon-index writer still open (round 3 of 3)",
+      "status": "landed",
       "brief": "build/tmp/c1d-panel-icon-widget-trace-brief.md",
+      "worker_output": "build/tmp/c1d-panel-icon-widget-trace/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
       "harness": "Claude Code",
@@ -19,15 +45,13 @@
       "gate_served": "PLAN C1 skill-panel rendering clause (buttons only; counts/digits out of scope per overlord directive)",
       "question_round_count": 3,
       "prior_question_dispatches": 2,
-      "round_cap_note": "Last pre-authorized round on this question. If this comes back negative, park in Phase E with a resume brief; no automatic fourth round.",
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "c1-skill-panel",
-      "dispatch_id": "claude-code background round-agent af3fe6eb52b47a9d5, no model override"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_id": "claude-code background round-agent af3fe6eb52b47a9d5, no model override",
+      "landed_in": "PLAN.md Phase C (C1d + round-cap exception) and docs/scratch/phase-c1-panel-icon-render.md; docs/LESSONS.md 'Useful strings the engine keeps'",
+      "facilitator_verified": "2026-10-22: independent REA session (SHA-256 matches authority) re-decompiled FUN_00452bc2 in full: reproduces every cited offset and the ten FUN_004576b0 calls at the exact stride-0x238 sequence (0x70,0x2a8,0x4e0,0x718,0x950,0xb88,0xdc0,0xff8,0x1230,0x1468) and the *(int*)(this+0x3c)=this+0x70 store, verbatim. Re-decompiled FUN_004576b0: matches exactly. Re-decompiled FUN_00457868 (vtable slot+4): matches exactly, including the FUN_00414a10/FUN_00440c50/FUN_0043cda0/FUN_00414920 call chain. Independently read 32 bytes of the vtable at 0x4b1774 and hand-decoded it: +0x00=0x4579a0, +0x04=0x457868, +0x08=0x457c00, +0x0c=0x457b70, +0x10=0x457ec0, +0x14=0x457f10, then two null dwords -- matches the worker's table exactly. xrefs(0x4b1774) returns exactly 3 addresses, matching. procedure_callers(0x457868) and procedure_callers(0x4579a0) both empty; procedure_callers(0x4576b0) is exactly [\"0x452bc2\"] -- all three match exactly. No live process found running before or after. git status showed only docs/tasks.json's permitted fields, confirming the read-only-round claim. Round accepted as reported; nothing narrowed. This is the strongest C1 result yet: a confirmed real icon-draw primitive on a ten-widget array matching the panel's exact physical count, with the current dispatch reaching only one of ten. Round-cap reached (3 of 3), but this is not a residual -- it is the gate's literal missing piece, now narrowed to two concrete bounded sub-questions. Facilitator records a round-cap exception in PLAN.md (per ORCHESTRATION's own exception clause) and dispatches round 4 (c1e), explicitly not pre-authorizing a fifth."
+    },
     {
       "id": "c1c-panel-icon-draw-trace",
       "title": "C1c: per-skill vtables and LemmingsLO also falsified (round 2 of 3); one concrete unresolved thread found (levelScreen+0x3c)",
@@ -2583,11 +2607,11 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running under a prior owner; the only active item (b1h) was blocked on an explicit user stop predating this directive and is closed out below, not resumed.",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the C1 gate passes on the facilitator's own independent re-score, or when C1 is parked at its round cap, or on any ORCHESTRATION stop condition. Do not advance to C2 or B2 on this directive.",
-    "handoff": "2026-10-22: landed c1c-panel-icon-draw-trace (round 2 of 3) -- both of C1b's pre-registered leads independently confirmed falsified (all nine skill-constructor vtables are sim/eligibility/pose-name code, no draw; LemmingsLO's string does not exist anywhere in the exe, unconfirmable by any xref). A new per-frame candidate (FUN_0045cff9, the main loop) contains one confirmed real draw call (FUN_00414920) via FUN_00454a85, but only for one overlay quad/text label, never ten; panel_boxes has exactly 9 xrefs, all inside the already-read hit-test function, so no second draw-side reader exists. One concrete unresolved thread remains: an indirect virtual dispatch on an unidentified object at levelScreen+0x3c (REA's own 'unresolved indirect call'). Independently re-verified (fresh REA session re-reading every cited address/xref/decompile). Landed into PLAN.md Phase C, docs/scratch/phase-c1-panel-icon-render.md and docs/LESSONS.md. Wrote and linted build/tmp/c1d-panel-icon-widget-trace-brief.md (round 3 of 3, the last pre-authorized round on this question): identify the levelScreen+0x3c object and decompile its vtable+4 slot. If this comes back negative, park the question in Phase E with a resume brief -- no automatic fourth round. Dispatching c1d now.",
+    "handoff": "2026-10-22: landed c1d-panel-icon-widget-trace (round 3 of 3, the cap) -- the strongest C1 result yet. levelScreen's constructor builds exactly ten identical sub-objects at stride 0x238 (matching the panel's physical button count exactly), each with a shared vtable whose slot+4 is a confirmed real icon draw (resource lookup by the widget's own index, UV rect from its own pixel rect, drawn via FUN_00414920). levelScreen+0x3c is fixed to widget 0 at construction; the one resolved dispatch reaches only that one widget per frame. No resolved caller reaches the other nine, and no writer of any widget's own +8 resource index was found. Independently re-verified byte-for-byte (constructor, per-widget ctor, vtable bytes, slot+4 body, three procedure_callers checks all exact). This is not a residual -- it's the gate's literal missing piece, now narrowed to two concrete bounded sub-questions. Recorded a round-cap exception in PLAN.md per ORCHESTRATION's own exception clause (round 3 is the pre-authorized cap, but a fourth is explicitly justified in writing, not a silent reset). Wrote and linted build/tmp/c1e-panel-icon-dispatch-index-brief.md (round 4, cap exception; no fifth pre-authorized regardless of outcome): find any stride-0x238 dispatch loop (literal-operand search, since procedure_callers only sees resolved calls) and find the +8 index writer (a field-store search, not a call-graph search). Dispatching c1e now.",
     "previous": [
       {
         "id": "d-playable-3",

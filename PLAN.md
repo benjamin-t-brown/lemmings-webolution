@@ -589,6 +589,35 @@ remains: an indirect virtual dispatch on `levelScreen+0x3c`, reported unresolved
 itself. One round remains before parking per the round cap; dispatched to trace that
 object.
 
+**C1d: the ten-widget array and its real icon draw are located; full dispatch and the
+per-widget icon index remain open, round 3 of 3**
+([check](docs/scratch/phase-c1-panel-icon-render.md#c1d-the-ten-widget-array-and-its-real-icon-draw-are-located-the-full-dispatch-to-all-ten-and-the-per-widget-icon-index-remain-open-round-3-of-3)):
+the level-screen constructor (`0x452bc2`) builds exactly **ten** identical sub-objects at
+a constant `0x238`-byte stride — exactly the panel's physical button count (C1a) — each
+sharing one constructor (`FUN_004576b0`, used nowhere else) and one six-slot vtable
+(`0x4b1774`). `levelScreen+0x3c` (the field `FUN_00454a85`'s dispatch reads) is set
+unconditionally to the first widget at construction; no other writer exists. The vtable's
+slot+4 (`FUN_00457868`) is a genuine, confirmed real icon draw — resource lookup by the
+widget's own index, UV rect from the widget's own pixel rect divided by the resource's
+width/height, drawn via `FUN_00414920` (A4r/A4t/C1c's confirmed primitive) — exactly the
+shape a per-button icon draw needs. But the dispatch actually reaches only **one** of the
+ten per frame; no resolved caller reaches the other nine or the `+8` resource-index
+writer. Independently re-verified byte-for-byte (constructor, per-widget ctor, vtable
+bytes, slot+4 body, three `procedure_callers` checks all exact matches).
+
+**Round-cap exception, recorded per `docs/ORCHESTRATION.md#milestones-gates-and-round-caps`**
+("record in the next brief why a fourth round is expected to move the gate"): this is not
+a residual that leaves the gate passing, nor an open-ended fishing expedition — it is the
+literal missing piece of C1's gate, now narrowed from "where is the draw call" (open) to
+two concrete, bounded, nameable questions: (1) is there a stride-`0x238` dispatch loop
+elsewhere in `.text` that REA's resolved-call analysis cannot see because it is computed/
+indirect (a literal-operand search for the constant `0x238`/`568`, the same technique
+this project's own prior rounds have used for other stride constants, e.g. `panel_boxes`'s
+`0x1b0`); and (2) where each widget's own `+8` resource index is written (a field-store
+search, not a call-graph search — distinct from what C1b/C1c already looked for). A fourth
+round is authorized on this specific, narrow continuation; it is not a reset of the
+question's round count and no fifth round is pre-authorized.
+
 ## Phase D — reconnect the simulation
 
 Wire spawn, exits, skill assignment and the measured gadgets into the new renderer, and get a

@@ -233,3 +233,70 @@ lead than either prior one, because it is a genuine unresolved-by-tool
 indirect call on an object this round did not yet identify, sitting directly
 on the per-frame draw path that already contains one confirmed real draw
 call. This is round 2 of 3; one round remains before parking in Phase E.
+
+## C1d: the ten-widget array and its real icon draw are located; the full
+## dispatch to all ten, and the per-widget icon index, remain open (round 3 of 3)
+
+Worker packet `build/tmp/c1d-panel-icon-widget-trace/round-note.md`. Offline REA
+only, read-only, zero stock starts, no `src/**` change.
+
+### Result — not a third clean negative
+
+This is the strongest result yet, though still not a closed answer. The level-
+screen constructor `0x452bc2` builds **exactly ten** identical sub-objects at a
+constant stride of `0x238` bytes (`this+0x70, +0x2a8, +0x4e0, +0x718, +0x950,
++0xb88, +0xdc0, +0xff8, +0x1230, +0x1468` — each delta exactly `0x238`), each via
+the same constructor `FUN_004576b0` (used nowhere else in the binary) and the
+same six-slot vtable at `0x4b1774`. **Ten identical sibling widgets is exactly
+the panel's known physical button count (C1a).** `levelScreen+0x3c` — the field
+`FUN_00454a85`'s closing indirect dispatch reads — is set unconditionally, once,
+to the *first* widget (`this+0x70`) by this same constructor, and no other
+writer of that field was found.
+
+The vtable's slot+4, `FUN_00457868`, is a **genuine, confirmed real icon draw**:
+it looks up a resource by the widget's own stored index (`+8`, via
+`FUN_00414a10`), computes UV fractions from the widget's own pixel rect
+(`+0x21c/+0x220/+0x224/+0x228`) divided by that resource's width/height, writes
+them onto an inner quad (`+0x10`), and draws it with `FUN_00414920` — the same
+confirmed real draw primitive A4r/A4t/C1c already established. This is exactly
+the shape a per-button icon draw needs (resource-index + UV-rect, reused across
+ten identical instances).
+
+**What remains open, exactly:** the dispatch `FUN_00454a85` actually reaches
+only **one** of the ten widgets (the one fixed at `+0x3c` = widget 0) every
+frame; no loop over the ten and no second resolved caller of the slot+4
+function or of vtable slot 0 exists anywhere in the binary, per REA's resolved-
+call analysis — which, as the worker correctly notes, does **not** prove no
+loop exists, only that none was found through *resolved* calls (an indirect
+dispatch computed from a runtime loop variable would not appear as a named
+caller). Separately, no writer of any widget's own `+8` resource index was
+found this round (C1b/C1c already fully read the one function most likely to
+hold it, `FUN_004532e2`, and found no `FUN_00414920` call there — consistent
+with the actual draw living one level deeper, behind the vtable, as this round
+found, but a plain non-call field store to `+8` would not have been visible in
+that prior read, since neither prior round was looking for it).
+
+### Facilitator check
+
+Independent REA session (SHA-256 matches authority). Re-decompiled
+`FUN_00452bc2` in full: reproduces every cited offset and the ten
+`FUN_004576b0` calls at the exact stride-`0x238` sequence, and the
+`*(int*)(this+0x3c) = this+0x70` store, verbatim. Re-decompiled `FUN_004576b0`:
+matches exactly (vtable store to `0x4b1774`, `+0x218` flag set). Re-decompiled
+`FUN_00457868`: matches exactly, including the `FUN_00414a10`/`FUN_00440c50`/
+`FUN_0043cda0`/`FUN_00414920` call chain. Independently read 32 bytes of the
+vtable at `0x4b1774` and decoded it by hand: `+0x00=0x4579a0, +0x04=0x457868,
++0x08=0x457c00, +0x0c=0x457b70, +0x10=0x457ec0, +0x14=0x457f10`, then two null
+dwords — matches the worker's table exactly. `xrefs(0x4b1774)` returns exactly
+3 addresses, matching. `procedure_callers(0x457868)` and
+`procedure_callers(0x4579a0)` are both empty; `procedure_callers(0x4576b0)` is
+exactly `["0x452bc2"]` — all three match exactly. No live process found running
+before or after. `git status --short` showed only `docs/tasks.json`'s permitted
+fields — confirmed read-only round.
+
+Round accepted as reported; nothing narrowed. This is round 3 of 3 — the
+pre-authorized cap for this question is reached, but the result is not a clean
+negative that leaves the gate's current state fully characterized; it is a
+strong partial positive with two concrete, bounded, nameable open threads
+(find the stride-`0x238` dispatch loop, if any; find the `+8` index writer).
+See PLAN.md for the facilitator's round-cap-exception decision.

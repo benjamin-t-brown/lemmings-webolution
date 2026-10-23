@@ -1130,6 +1130,19 @@ frame, never a ten-slot array. One concrete unresolved lead remains for whoever 
 `FUN_00454a85`'s closing indirect dispatch `(**(code**)(**(int**)(levelScreen+0x3c)+4))()` on
 an unidentified object — REA's own "unresolved indirect call" limitation, not yet a target.
 
+**C1d (round 3): the ten-widget array is found; full dispatch and the icon index are
+still open.** `levelScreen`'s constructor (`0x452bc2`) builds exactly ten identical
+sub-objects at stride `0x238` (`+0x70, +0x2a8, +0x4e0, +0x718, +0x950, +0xb88, +0xdc0,
++0xff8, +0x1230, +0x1468`), one shared constructor `FUN_004576b0` (used nowhere else),
+one shared six-slot vtable `0x4b1774`. Slot+4 (`FUN_00457868`) is a genuine icon draw:
+resource lookup by the widget's own `+8` index via `FUN_00414a10`, UV rect from the
+widget's own `+0x21c..+0x228` divided by the resource's `+0x14/+0x18`, drawn via
+`FUN_00414920`. `levelScreen+0x3c` is fixed to widget 0 at construction; the dispatch
+`FUN_00454a85` reaches only that one widget per frame. No resolved caller reaches the
+other nine, and no writer of any widget's `+8` was found. Do not re-derive any of this;
+resume only on the two named open threads (a stride-`0x238` literal search for a possible
+unresolved-indirect dispatch loop; a field-store search for `+8`).
+
 ## Gadgets — all settled, rounds 9 and 13–31
 
 Implemented in `src/sim` and not to be re-investigated:

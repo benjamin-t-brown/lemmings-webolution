@@ -834,6 +834,15 @@ does not occur in `.text`. The only `push 120` (`0x487511`) calls allocator
 `0x49C1A8`. The five labels' draw function is still unread. Do not repeat this
 caller scan, and do not treat those calls as the main menu.
 
+## Main-menu labels are the table at 0x4C4214
+
+[B1k](scratch/phase-b1k-menu-label-draw.md): the file dwords are 125, 126,
+120, 3, 43. `FUN_0048ecdf` pushes that table with count 5. `FUN_0048aa5e`
+walks the strings through `0x4404CF` on the `"^Font"` object at `[0x4CBF78]`.
+The first row is 320. Horizontal placement is a signed half of the word at
+`[0x58CB40]`, and that word's value is not in the file. No BMP filename is
+on this path. Do not repeat the 17-call scan.
+
 ## Pause text at 0x44CD06
 
 [C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with

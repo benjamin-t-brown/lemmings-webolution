@@ -561,6 +561,18 @@ allocator `0x49C1A8`. The call-site font operand is `[0x4CBF78]` or
 `+8 = -1`, not a glyph table. The label draw itself is unread. The full-frame
 gate is unchanged. No stock start.
 
+**B1k: the five labels are the dwords at `0x4C4214`**
+([check](docs/scratch/phase-b1k-menu-label-draw.md)), 2026-10-22, round 2 of 3.
+The file dwords are 125, 126, 120, 3, 43. `FUN_0048ecdf` (`0x48ECDF`, vtable
+`0x4B252C`) pushes that table with count 5. `FUN_0048aa5e` walks each string
+and calls `0x4404CF` on the font at `[0x4CBF78]`, bound to `"^Font"` / table
+`0x4BF968` / `lineHeight` 29. It does not call `FUN_004404fa`. The first row
+is 320 when `0x488554` is called with 1 against base `0xDC`. Horizontal
+placement is a signed half of the BSS word `[0x58CB40]`; the `sub eax, edx`
+before the shift is the `cdq` sign mask, not a second coordinate. The pixel
+X and the texture behind the name `"^Font"` are unread. No BMP filename is
+on the path. The gate was not scored.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -1447,9 +1459,11 @@ open.
   Resume only under new explicit authorization after reviewing source identity/target
   boundaries and a semantic glyph discriminator, not scalar-only optimizer fits.
   No continuation/repair is currently authorized or queued. **B1i (above) answers the
-  glyph rule from bytes. B1j found that none of `FUN_004404fa`'s callers draws the five
-  menu labels, so a resume looks for that label draw.** Do not revive glyph fitting, and
-  do not wire those 17 calls as the menu.
+  glyph rule from bytes. B1j found that none of `FUN_004404fa`'s direct callers draws
+  the five menu labels. B1k found the labels themselves: the dwords at `0x4C4214`,
+  walked by `FUN_0048aa5e`.** Do not revive glyph fitting, and do not wire those 17
+  direct calls as the menu. The unread pieces are the horizontal word `[0x58CB40]`
+  and the texture the name `"^Font"` selects.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

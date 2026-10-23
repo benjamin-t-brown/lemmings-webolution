@@ -15,6 +15,18 @@ Guards, all fail-closed: stock exe hash; one stock process; foreground acquired 
 exactly 0 (quirk: RETURN only at highlight 0); the loaded path is read from `0x004CBBF8` after level
 entry; `ui_state` (`0x004CC134`, 1 = paused) is read around the pause steps; ESC steps are opt-in
 (`--allow-esc`) because ESC has quit the process; install-file hashes before and after.
+
+ESC hold sweep (b2g-esc-sweep-preflight, offline): in pause, ESC with holds SWEEP_HOLDS, one ESC per hold. READ in
+the exe (main-loop switch on `ui_state`, `0x0045D1AC` via table `0x0045E487`): in pause (case 1, `0x0045D459`) a
+newly pressed P (action `0x13`, DIK `0x19`) or ESC (action `0xE`, DIK `0x01`) stores `ui_state` 0 at `0x0045D508`.
+The poll `0x00483212` turns each key into a per-poll rising-edge flag at `0x005D5850 + 2*action`, so the code read
+predicts no hold-length role past one poll; that is a read, not an observation, and the sweep is what tests it.
+P in pause also leaves pause, so the sweep sends P only at `ui_state` 0 and records a skip at 1. ESC at
+`ui_state` 0 is never sent: it stores `ui_state` 2 (`0x0045D40A`) and calls `0x486F60` with `0x1F` (`0x0045D432`).
+A `ui_state` outside {0, 1}, a counter change or a non-empty screen list after any ESC raises and ends the run.
+Level to map is NOT scripted: the read path is ESC in a level -> `ui_state` 2 + dialog screen `0x1F`, then a dialog
+button flag (`0x004CBFAA`, set at `0x00486583`) -> `ui_state` 3 + screen `0x23` (`0x0045D606`, `0x0045D6AF`); the
+button's input (key or click) is unread, so the script stops short of it.
 """
 from __future__ import annotations
 
@@ -98,6 +110,7 @@ def observe(read, tries=3):
 
 # Scripted steps. kind: observe | highlight0 | key | node_click. `expect_counter` is recorded beside
 # the observation, never asserted: the construction counter is exactly what is being measured.
+SWEEP_HOLDS = (2, 5, 10, 25, 40)   # frames; 25 repeats the b2e sample
 PLAN = (
     dict(name="baseline", kind="observe", expect_counter=3),
     dict(name="menu-highlight-0", kind="highlight0"),
@@ -105,9 +118,19 @@ PLAN = (
     dict(name="confirm-RETURN", kind="key", key="RETURN", hold=20, expect_counter=5),
     dict(name="map-node-click", kind="node_click"),
     dict(name="pause-P", kind="key", key="P", hold=20, expect_ui_state=1),
-    dict(name="pause-short-ESC", kind="key", key="ESCAPE", hold=25, needs_esc=True, expect_ui_state=1),
-    dict(name="pause-long-ESC", kind="key", key="ESCAPE", hold=40, needs_esc=True),
+    dict(name="pause-ESC-sweep", kind="esc_sweep", holds=SWEEP_HOLDS, needs_esc=True),
 )
+
+
+def check_key(io, step):
+    """Fail-closed guards shared by every key step."""
+    key = step["key"]
+    if key in ("P", "ESCAPE") and io.ui_state() not in (0, 1):
+        raise CaptureError(f"refusing {key}: ui_state {io.ui_state()} is not a level (0) or pause (1)")
+    if key == "ESCAPE" and io.ui_state() != 1:
+        raise CaptureError(f"refusing ESCAPE: ui_state {io.ui_state()} is not pause (1)")
+    if step.get("needs_highlight0") and io.highlight() != 0:
+        raise CaptureError(f"refusing RETURN: highlight is {io.highlight()!r}, not 0")
 
 
 def run_plan(read, io, allow_esc=False, log=None, on_step=None):
@@ -145,14 +168,30 @@ def run_plan(read, io, allow_esc=False, log=None, on_step=None):
             io.drive_highlight_to_zero()
             rec(step, highlight=io.highlight())
         elif kind == "key":
-            if step["key"] in ("P", "ESCAPE") and io.ui_state() not in (0, 1):
-                raise CaptureError(f"refusing {step['key']}: ui_state {io.ui_state()} is not a level (0) or pause (1)")
-            if step["key"] == "ESCAPE" and io.ui_state() != 1:
-                raise CaptureError(f"refusing ESCAPE: ui_state {io.ui_state()} is not pause (1)")
-            if step.get("needs_highlight0") and io.highlight() != 0:
-                raise CaptureError(f"refusing RETURN: highlight is {io.highlight()!r}, not 0")
+            check_key(io, step)
             io.key(step["key"], step["hold"])
             rec(step)
+        elif kind == "esc_sweep":
+            base = observe(read)
+            for hold in step["holds"]:
+                if io.ui_state() == 0:   # a refused ESC leaves pause held; P there would resume
+                    pstep = dict(name=f"sweep-P-before-{hold}", key="P", hold=20, expect_ui_state=1)
+                    check_key(io, pstep)
+                    io.key("P", 20)
+                    rec(pstep)
+                    if io.ui_state() != 1:
+                        raise CaptureError(f"P did not pause before hold {hold}: ui_state {io.ui_state()}")
+                else:
+                    out.append(dict(step=f"sweep-P-before-{hold}", skipped=f"already paused (ui_state {io.ui_state()})"))
+                estep = dict(name=f"sweep-ESC-{hold}", key="ESCAPE", hold=hold)
+                check_key(io, estep)
+                io.key("ESCAPE", hold)
+                rec(estep, hold=hold)
+                after, r = io.ui_state(), out[-1]
+                if after not in (0, 1):
+                    raise CaptureError(f"hold {hold} left the level: ui_state {after}")
+                if r["counter"] != base["counter"] or r["nodes"]:
+                    raise CaptureError(f"hold {hold} changed the screen list: counter {r['counter']}, nodes {len(r['nodes'])}")
         elif kind == "node_click":
             io.click_node()
             rec(step, loaded_path=io.loaded_path())
@@ -314,15 +353,18 @@ def selftest():
     class FakeIO:
         """Fake original: counter 3 -> 4 -> 5 on RETURN, highlight starts at 2."""
 
-        def __init__(self, mem, hl=2, stuck=False):
+        def __init__(self, mem, hl=2, stuck=False, esc_min_hold=1, esc_to=0, esc_to_only=None):
             self.mem, self.hl, self.stuck, self.keys, self.ui = mem, hl, stuck, [], 3
+            self.esc_min_hold, self.esc_to, self.esc_to_only = esc_min_hold, esc_to, esc_to_only
 
         def key(self, name, hold):
             self.keys.append((name, hold))
             if name == "RETURN":
                 self.mem.words[COUNTER] += 1
-            if name == "P":
-                self.ui = 1
+            if name == "P" and self.ui in (0, 1):
+                self.ui = 1 - self.ui
+            if name == "ESCAPE" and self.ui == 1 and hold >= self.esc_min_hold:
+                self.ui = self.esc_to if self.esc_to_only in (None, hold) else 0
 
         def drive_highlight_to_zero(self):
             self.hl = 2 if self.stuck else 0
@@ -332,6 +374,7 @@ def selftest():
 
         def click_node(self):
             self.ui = 0
+            self.mem.words[LIST_HEAD] = 0   # inside a level the list is empty (b2e)
 
         def ui_state(self):
             return self.ui
@@ -345,10 +388,36 @@ def selftest():
     check("plan: counters 3,3,4,5,5,5", counters == [3, 3, 4, 5, 5, 5])
     check("plan: two RETURN taps, no ESC without opt-in",
           [k for k, _ in io.keys].count("RETURN") == 2 and "ESCAPE" not in [k for k, _ in io.keys])
-    check("plan: ESC steps skipped", sum("skipped" in s for s in steps) == 2)
+    check("plan: ESC sweep skipped", sum("skipped" in s for s in steps) == 1)
     io2 = FakeIO(synth())
-    run_plan(io2.mem, io2, allow_esc=True)
-    check("plan: --allow-esc sends short 25 then long 40", [x for x in io2.keys if x[0] == "ESCAPE"] == [("ESCAPE", 25), ("ESCAPE", 40)])
+    st2 = run_plan(io2.mem, io2, allow_esc=True)
+    check("sweep: sends exactly the listed holds in order",
+          [h for k, h in io2.keys if k == "ESCAPE"] == list(SWEEP_HOLDS) == [2, 5, 10, 25, 40])
+    seq = [k for k, _ in io2.keys][2:]   # after the two RETURNs
+    check("sweep: P before every ESC (the plan's pause-P, then re-enter after each leave)",
+          seq == ["P", "ESCAPE"] * 5)
+    sw = [s for s in st2 if s["step"].startswith("sweep-ESC-")]
+    check("sweep: ui_state recorded after each ESC", [s["ui_state"] for s in sw] == [0] * 5 and [s["hold"] for s in sw] == [2, 5, 10, 25, 40])
+    io2b = FakeIO(synth(), esc_min_hold=25)   # short holds refused (the preserved quirk shape)
+    st2b = run_plan(io2b.mem, io2b, allow_esc=True)
+    sw2 = [s["ui_state"] for s in st2b if s["step"].startswith("sweep-ESC-")]
+    check("sweep: short holds that stay paused record 1, then 0 from hold 25", sw2 == [1, 1, 1, 0, 0])
+    check("sweep: no P while still paused (it would resume)",
+          [k for k, _ in io2b.keys][2:] == ["P", "ESCAPE", "ESCAPE", "ESCAPE", "ESCAPE", "P", "ESCAPE"])
+    io2c = FakeIO(synth(), esc_to=2)   # a hold leaves the level for ui_state 2
+    check("sweep: a hold that leaves the level fails closed after that ESC",
+          raises(lambda: run_plan(io2c.mem, io2c, allow_esc=True)) and [k for k, _ in io2c.keys].count("ESCAPE") == 1)
+    io2e = FakeIO(synth(), esc_to=2, esc_to_only=40)   # only the last hold leaves; no later P to catch it
+    check("sweep: the last hold leaving the level fails closed",
+          raises(lambda: run_plan(io2e.mem, io2e, allow_esc=True)) and io2e.keys[-1] == ("ESCAPE", 40))
+    io2d = FakeIO(synth())
+    orig_key = io2d.key
+    def key_adds_node(name, hold):
+        orig_key(name, hold)
+        if name == "ESCAPE":
+            io2d.mem.words[LIST_HEAD] = 0x01000100   # a screen appears after ESC
+    io2d.key = key_adds_node
+    check("sweep: a screen node after ESC fails closed", raises(lambda: run_plan(io2d.mem, io2d, allow_esc=True)))
     io3 = FakeIO(synth(), stuck=True)
     check("plan: RETURN refused when highlight != 0", raises(lambda: run_plan(io3.mem, io3)) and not io3.keys)
     io5 = FakeIO(synth())
@@ -359,6 +428,12 @@ def selftest():
     io6.key = lambda name, hold: io6.keys.append((name, hold))   # P never pauses: ui_state stays 0
     check("plan: ESC refused when ui_state is not pause", raises(lambda: run_plan(io6.mem, io6, allow_esc=True))
           and not [k for k, _ in io6.keys if k == "ESCAPE"])
+    io7 = FakeIO(synth())
+    orig7 = io7.key
+    io7.key = lambda name, hold: (orig7(name, hold), setattr(io7, "ui", 0) if name == "ESCAPE" else None)
+    io7.ui = 0
+    pstep = dict(name="t", key="ESCAPE", hold=2)
+    check("check_key: ESC refused at ui_state 0", raises(lambda: check_key(io7, pstep)))
     bad = synth(); bad.words[0x01000200 + 4] = 0x01000100
     io4 = FakeIO(bad)
     check("plan: bad chain stops before any key", raises(lambda: run_plan(io4.mem, io4)) and not io4.keys)

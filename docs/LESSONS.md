@@ -916,6 +916,14 @@ One stock start under `trace_font_source.py --launch` (`starti`, one hardware ex
 a load before the breakpoint was live, a debug register that missed the loading thread, or a condition that did
 not match. `starti` itself works on the stock exe. Evidence: `docs/scratch/phase-b1t-font-live-read.md`.
 
+## Pause exit keys (B2g, 2026-10-23, READ only)
+
+In pause (`0x45D459`) a newly pressed P (action `0x13`) **or** ESC (action `0xE`) stores `ui_state` 0 at
+`0x45D508`; the key poll `0x483212` sets a per-action flag only on a new press, so the code has no hold-length
+test. This agrees with B2e's one hold-25 sample and does not support the preserved short-ESC quirk, but the quirk
+is neither confirmed nor dropped until the live sweep. ESC in a level stores `ui_state` 2 and builds screen `0x1F`
+(not the map). Evidence: `docs/scratch/phase-b2g-esc-sweep-preflight.md`.
+
 ## B2 menu object chain (B2a-B2c, 2026-10-23, READ only)
 
 `[0x5D59E4]` is the screen-list head (`0x487FA0` writes it; `0x487CC0` stores `[obj+4]`). The

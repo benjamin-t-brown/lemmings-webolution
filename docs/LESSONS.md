@@ -902,6 +902,13 @@ focus store `[container+0x10]` at `0x48F80C`. Candidate highlight
 `rows.index([[menu+0x10]+0x10])` is a shape, not an accessor: no file-backed chain to the
 `0x4B2528` menu and no key-to-event edge. The worker exceeded its body cap (about 17 of 12).
 
+## Texture loader order (B1r, 2026-10-23, READ only)
+
+Startup `0x450696` calls the archive registrar `0x47E23B` at `0x450771` before `0x486F60(.,7)`
+at `0x450A46`, whose chain pushes `^Font` at `0x4403B5`. The registrar body is skipped when
+`[0x5D5610]==0`; the setter is unread, as are the loose-file helpers and the working directory.
+`^Font` -> `lemmings.box` BMP+ALF stays conditional. Evidence: `docs/scratch/phase-b1r-load-order.md`.
+
 ## B2 menu object chain (B2a-B2c, 2026-10-23, READ only)
 
 `[0x5D59E4]` is the screen-list head (`0x487FA0` writes it; `0x487CC0` stores `[obj+4]`). The

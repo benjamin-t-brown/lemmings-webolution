@@ -1476,6 +1476,12 @@ Short, and explicitly parked rather than cancelled. **The gadget backlog is gone
 gadget at all. See the gadget table in `docs/LESSONS.md` before assuming anything here is
 open.
 
+- **Generic texture loader / B1 render** (Q1 parked 2026-10-23 at the three-round cap: B1p, B1q,
+  B1r). `^Font` converges on `lemmings.box` `TEXTURES\^FONT.BMP` + `.ALF` only if the registrar
+  gate `[0x5D5610]` is nonzero (setter unread, manager ctor `0x47DB02`/`0x47DB23`), a loose probe
+  misses (`0x47E89B`, `0x49DD81`, `0x47E105`, `0x47EF48`, `0x47EF92`, cwd `0x450600`/`0x4A8EF4`
+  unread) and the `0x414B90` -> `0x45019E` link is the path. Q2 (render) not started; never
+  choose a sheet by score. See `docs/scratch/phase-b1r-load-order.md`.
 - **B2 screen state machine** (parked 2026-10-23 at the three-round cap; B2a preflight failed
   closed, B2b read the key-poll flag `[0x5D5970]` and the focus-store shape, B2c read the
   file-backed chain `[0x5D59E4]` -> `+4` -> node with vtable `0x4B2528`). **Zero stock starts

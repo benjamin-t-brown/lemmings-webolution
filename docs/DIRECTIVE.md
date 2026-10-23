@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-23, stop point reached: Q1 and Q3 parked at their round caps, Q2 not started)
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the B1 sheet-identity directive, closed 2026-10-23 (B1n ambiguous, B1o
 preflight failed before launch, B1 parked).

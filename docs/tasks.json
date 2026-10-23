@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b1r-load-order",
       "title": "Archive registration before the ^Font load; loose-route reachability",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b1r-load-order-brief.md",
       "worker_output": "build/tmp/b1r-load-order/round-note.md",
       "worker_tier": "targeted",
@@ -26,11 +28,17 @@
       "stock_starts_consumed": 0,
       "standing_run": "b1-loader-b2-sequence",
       "investigation_budget_minutes": 35,
-      "body_cap": 12
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "body_cap": 12,
+      "disposition": "partial: registration precedes ^Font request on the one chain read (0x450771 before 0x450A46); gate [0x5D5610], 0x414B90->0x45019E link and loose route unread; Q1 conditional, parked at cap; Q2 not started; 36 min vs 35, no canonical REA bundle, no mutation test",
+      "landed_in": "docs/scratch/phase-b1r-load-order.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-23: re-read 0x4403A7/0x4403B5 (^Font at 0x4BFF68), 0x47E23B gate, 0x47F230, call at 0x450771; own call scan: 0x4403A7<-0x486C4E, 0x486BD8<-0x486F88, 0x47E23B<-3 callers, 0x486F60<-7 callers incl 0x450A46 push 7; exe and dinput.dll hashes equal startup; no game process. Not verified: branch-free path 0x450771->0x450A46, gate setter, 0x414B90 link, loose-route helpers.",
+      "remaining_blockers": [
+        "[0x5D5610] gate setter (manager ctor 0x47DB02/0x47DB23) unread.",
+        "0x414B90 -> 0x445830/0x45015A -> 0x45019E link unread.",
+        "Loose route helpers 0x47E89B, 0x49DD81, 0x47E105, 0x47EF48, 0x47EF92 and working directory unread."
+      ]
+    },
     {
       "id": "b2c-menu-chain",
       "title": "B2 path to the menu object and key-to-event edge",
@@ -3098,7 +3106,7 @@
     "id": "b1-loader-b2-sequence",
     "goal": "Resolve generic texture loader; render B1 only on unique read source; capture and implement B2 sequence under active directive.",
     "milestones": ["B1 frontend assets and text", "B2 screen state machine"],
-    "current": "B2 parked at its round cap (b2c landed). Q1 at round 2 of 3; Q1 round 3 on registration-before-load is the only remaining ranked work; Q2 render only on exactly one source.",
+    "current": "All three questions landed or parked: Q1 parked at cap (b1r landed, conditional ^Font source), Q2 not started, Q3 (B2) parked at cap. Stop point reached.",
     "authorized": "docs/DIRECTIVE.md active issued2026-10-23 superseding prior sheet directive: Q1 generic-loader new question cap3; Q2 offline B1 renderer cap2 only if unique source; Q3 B2 cap3 exactly one stock start after byte-based preflight, no retry after Popen. No B3 or Phase C advance.",
     "grants": {
       "stock_starts": "Q1/Q2 zero; Q3 exactly one only after complete offline preflight, no retry after Popen",
@@ -3107,13 +3115,13 @@
     },
     "workers": "OpenCode mapping docs/ROLES.md: disasm-agent for native reads, round-agent for capture-only/render/implementation rounds; no model override.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 invocation. Took over from OpenCode facilitator ses_e96a3d099ffeQpsc1kgKEdfDBJ at the user's /facilitator-ssh start: no task was `running` (both dispatched rounds were ready-for-verify, packets finished 09:44/09:34), so the start is the handoff per ORCHESTRATION#standing-run. opencode.exe processes exist on mouv and were not attributed to a session; the prior session was not contacted.",
-    "rounds_run": 5,
+    "rounds_run": 6,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
-    "handoff": "2026-10-23 B1p, B2a, B2b, B1q, B2c landed as bounded negatives/partials. B2 PARKED in PLAN Phase E at round 3 (file-backed menu chain read; key-to-event edge and route unread). Zero stock starts used. Next: Q1 round 3 (registration before the font load at 0x45019E: callers 0x450771, 0x45BEA7, gate 0x47F230, 0x47E105); Q2 render only if exactly one source; then stop per directive. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
+    "handoff": "2026-10-23 B1p, B1q, B1r (Q1) and B2a, B2b, B2c (Q3) landed as bounded negatives/partials. Q1 parked at round 3 (^Font -> lemmings.box BMP+ALF conditional on gate [0x5D5610], loose route unread); Q2 not started; B2 parked. Zero stock starts used. Stop point reached; DIRECTIVE.md to be set done.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null,
+    "stopped": {"date": "2026-10-23", "reason": "Directive stop point: Q1 parked at round cap (B1p, B1q, B1r; ^Font -> lemmings.box BMP+ALF conditional on gate [0x5D5610], loose route unread, no unique source), Q2 not started (needs exactly one source), Q3 B2 parked at round cap (B2a, B2b, B2c; key-to-event edge unread). No gate scored, no stock start used.", "last_commit": "PENDING", "current_gate": "B1 highlight0 full-frame <=0.02 unchanged and unscored/unaccepted", "rounds_run": 6, "stock_starts_used": 0, "no_further_dispatch": true},
     "previous": [{
     "id": "b1-table-source-render",
     "goal": "Identify ^Font from read-table constraints, render and score B1; conditional preflighted live fallback only on ambiguity/negative.",

@@ -14,6 +14,11 @@ Then read [the overlord directive](DIRECTIVE.md). If it is `Status: active`, it 
 user's authorization for the next standing run when the queue's run is stopped or absent;
 follow its scope and stop point.
 
+Time every pass (user, overlord review 2026-10-23). Record the wall-clock start when the
+invocation begins and the end when you stop, and finish the final report with the total
+elapsed time, plus the time each round took from dispatch to landing. Use real clock
+readings (`date`), not estimates.
+
 If `standing_run` is set in the queue and `stopped` is null, follow
 [the standing run](ORCHESTRATION.md#standing-run): read its `handoff`, take ownership as that
 section describes, and loop round after round and milestone after milestone. Stop only on its

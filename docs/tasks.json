@@ -26,11 +26,14 @@
       "stock_starts_consumed": 0,
       "standing_run": "b1-loader-b2-sequence",
       "investigation_budget_minutes": 35
-    },
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b2b-highlight-keypath",
       "title": "B2 semantic highlight accessor and native key path",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b2b-highlight-keypath-brief.md",
       "worker_output": "build/tmp/b2b-highlight-keypath/round-note.md",
       "worker_tier": "targeted",
@@ -49,11 +52,17 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "b1-loader-b2-sequence",
-      "investigation_budget_minutes": 40
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "investigation_budget_minutes": 40,
+      "disposition": "partial: key-poll flag and focus-store shape read; no module-address chain to the menu; bodies exceeded cap (~17 vs 12)",
+      "landed_in": "docs/scratch/phase-b2b-highlight-keypath.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-23: re-read 0x48F7A1 stores (0x48F7EE, 0x48F80C) and [0x5D5970] writers (0x483222, 0x4832B5) from the exe; 22 pins equal exe; 8 controls OK and removing the focus-in-rows check alone fails the suite; --preflight exit 2; install hashes equal startup. Not re-read: 0x483212 internals, 0x48896A routing, wrappers, 0x489580.",
+      "remaining_blockers": [
+        "No path from a file-backed global to the 0x4B2528 menu; [menu+0x10] writer unfound.",
+        "No read edge from the key flags to the 0x48896A event argument; RETURN-at-highlight-0 unexplained.",
+        "Confirm/map/level/pause/back route unread."
+      ]
+    },
     {
       "id": "b1p-texture-loader",
       "title": "Resolve generic texture-loader branches and ^Font archive source",
@@ -3030,11 +3039,11 @@
     },
     "workers": "OpenCode mapping docs/ROLES.md: disasm-agent for native reads, round-agent for capture-only/render/implementation rounds; no model override.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 invocation. Took over from OpenCode facilitator ses_e96a3d099ffeQpsc1kgKEdfDBJ at the user's /facilitator-ssh start: no task was `running` (both dispatched rounds were ready-for-verify, packets finished 09:44/09:34), so the start is the handoff per ORCHESTRATION#standing-run. opencode.exe processes exist on mouv and were not attributed to a session; the prior session was not contacted.",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
-    "handoff": "2026-10-23 B1p and B2a landed (fc22c4a) as bounded negatives. Dispatched on Claude Code round-agent, no model arg, both offline, zero stock starts: b1q-archive-open (Q1 round 2, archive registration/open route for ^Font) and b2b-highlight-keypath (Q3 round 2, highlight accessor and key path). Await packets; verify and land one at a time. Q2 render only if b1q yields exactly one source. B2 live start stays unused until a later round has a complete route preflight. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
+    "handoff": "2026-10-23 B1p, B2a, B2b landed as bounded negatives/partial (B2b: key-poll flag and focus-store shape read; menu-object chain and key-to-event edge unread). b1q-archive-open (Q1 round 2) still running offline. B2 is at round 2 of 3; round 3 is the last before parking: dispatch b2c on the two missing edges. Zero stock starts used; the one B2 start needs a complete route preflight first. Q2 render only if b1q yields exactly one source.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [{

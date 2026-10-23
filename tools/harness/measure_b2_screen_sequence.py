@@ -63,6 +63,39 @@ def identity_snapshot(read, expected_vtable):
                 active_vtable=vtable, active_own_id=own_id)
 
 
+# B2b CANDIDATE chain (READ, not proved). Rows: menu+0x40+4*i (0x48ECFE..0x488B19).
+# Focus setter 0x48F7A1 writes [container+0x10] and calls vcall +0x24 on the old
+# and +0x20 on the new focus. Unproved edges, both injected below so nothing here
+# claims them: (1) how to reach the 0x4B2528 menu from a file-backed global -
+# [0x5D59EC] is the active/chrome object (vtable 0x4B1E88), NOT shown to be the
+# menu; (2) that the container (dispatch arg 0x0C of 0x48896A) is [menu+0x10] as
+# 0x489580 returns it in 0x48ED14. Nothing here is called by preflight().
+MENU_VTABLE = 0x4B2528
+MENU_ROWS = 0x40
+FOCUS_PTR = 0x10
+ROW_COUNT = 5
+
+
+def candidate_highlight(read, menu_of, container_of):
+    """Offline-only. menu_of(read) -> menu pointer, container_of(read, menu) ->
+    container pointer; neither is proved, so the caller supplies both.
+    Returns the row index of [container+0x10], or raises PreflightError."""
+    menu = object_pointer(menu_of(read))
+    vtable = exact_u32(read, menu)
+    if vtable != MENU_VTABLE:
+        raise PreflightError(f"unexpected vtable {vtable:#x}")
+    container = object_pointer(container_of(read, menu))
+    focus = exact_u32(read, container + FOCUS_PTR)
+    rows = [exact_u32(read, menu + MENU_ROWS + 4 * i) for i in range(ROW_COUNT)]
+    if 0 in rows or len(set(rows)) != ROW_COUNT:
+        raise PreflightError("row array not five distinct pointers")
+    if focus not in rows:
+        raise PreflightError(f"focus {focus:#x} is not one of the five rows")
+    if object_pointer(menu_of(read)) != menu:
+        raise PreflightError("identity changed while sampled")
+    return rows.index(focus)
+
+
 def require_highlight(value, expected):
     """Control-only predicate; there is intentionally no real highlight reader."""
     if type(value) is not int or value not in range(5) or value != expected:

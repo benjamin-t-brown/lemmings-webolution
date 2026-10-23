@@ -13,7 +13,7 @@
       "harness": "Claude Code",
       "requested_model": "session model (no pin, per ROLES)",
       "worker_agent": "round-agent",
-      "dispatch_id": null,
+      "dispatch_id": "ab2h-live-esc-sweep-93d04b32544b5b4e",
       "owns_live_game": true,
       "live_owner": "b2h-live-esc-sweep",
       "depends_on": [
@@ -3352,7 +3352,7 @@
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 b1t landed (Q1 parked), b2g landed. Next: dispatch b2h (live ESC sweep, game free), then b2i (Frontend offline). Q2 will not run.",
+    "handoff": "2026-10-23 b1t, b2g landed. b2h (Q3 live ESC sweep, owns the live game, the second and last start) dispatched at ed9d999. Next: verify/land b2h, then dispatch b2i (Frontend offline update, Q3 round 3). Q2 will not run.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

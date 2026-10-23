@@ -3390,7 +3390,11 @@
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
     "handoff": "2026-10-23 stopped: b1t, b2g, b2h, b2i landed; both stock starts spent. Q1 parked (no ^Font hit), Q2 not run, Q3 solved on short-ESC (retracted) with level-to-map and +8 unobserved. DIRECTIVE.md Status: done.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null,
+    "stopped": {
+      "date": "2026-10-23",
+      "reason": "Directive questions landed or parked: Q1 parked (one start, no ^Font hit), Q2 not run (no single source), Q3 landed (b2g/b2h/b2i; short-ESC quirk retracted; level-to-map and +8 unobserved). Both stock starts spent.",
+      "last_commit": "6982054"
+    },
     "previous": [
       {
         "id": "b1-live-b2-capture",

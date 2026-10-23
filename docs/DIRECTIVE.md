@@ -7,58 +7,52 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done**
-Issued: 2026-10-22 (user, overlord review 2026-10-22)
-Closed: 2026-10-22. Question 1 reached its three-round cap without a B1
-gate score. Question 2 is landed. The horizontal word `[0x58CB40]` and the
-`^Font` texture have no file store.
-Supersedes: the font-charmap / C1-live directive, closed 2026-10-22
-(`font-charmap-c1-live`, both questions landed).
+Status: **active**
+Issued: 2026-10-23 (user, overlord review 2026-10-23)
+Supersedes: the B1 main-menu render directive, closed 2026-10-22 (`b1-menu-render`,
+question 1 at its cap, question 2 landed).
 
 ## Scope
 
-B1i read the original's text-draw path from bytes (`FUN_004404fa`; 256 `{X, Y, width}`
-records, proportional advance, one `lineHeight` per font). The five fitting rounds failed
-because they assumed a fixed grid. This pass uses the read to attempt the B1 gate. Two
-questions:
+B1j-B1l read everything static about the main-menu text: labels are the table at
+`0x4C4214` (UK 125, 126, 120, 3, 43), measured with `^Font` (table `0x4BF968`,
+`lineHeight` 29), Y = 320 + 29 x row. Two values exist only at runtime and are the last
+unknowns for the B1 gate. Two questions, in order:
 
-1. **B1 main-menu render (offline, up to three rounds).** Which of `FUN_004404fa`'s twelve
-   callers draws the main menu, with which font object, sheet and label placement; then
-   wire the read charmap into our renderer and score the main menu at highlight 0 full-frame
-   against the B1 gate and the retained B1b reference. The main risk is the frontend sheet's
-   identity: B1i found no `_FONTFE`, `^FONTH` or `^FONTP` name string, so which sheet backs
-   the menu font must be read, not assumed. Reuse B1e's exports and B1b's reference capture.
-2. **Paused caption and timer read (offline, `disassembly read`, in parallel).** Verify B1i's
-   unverified lead: `0x44CD06` fills `H+0x758`/`H+0x77C` through `FUN_004404fa` and draws the
-   MM:SS timer at `H+0x224` (560, 430). Read and record what is drawn, with which font and
-   where. C2 groundwork only: no render, no C2 gate attempt. Owned paths must be disjoint
-   from question 1.
+1. **B1 runtime read (live, one stock start).** On the main menu at highlight 0, read
+   the word at `[0x58CB40]` (X is its signed half) and the texture `^Font` resolves to
+   through manager `0x58CB48` (`0x474519`): which sheet, its source and dimensions. If
+   cheap in the same start, confirm one label's drawn Y against 320 + 29 x row. Cap three
+   rounds. Gate relevance: these are the only inputs the B1 score still lacks.
+2. **B1 render and score (offline, up to two rounds, after question 1 lands).** Wire the
+   read charmap, label table, Y rule and read X into our frontend renderer, draw with the
+   read sheet, and score the main menu at highlight 0 full-frame against the B1b reference
+   capture and the B1 gate. Use `UK.LTX` (the original asks for `Language\Uk.ltx`, C2b);
+   B1a's `GERMAN.LTX` test is not the reference.
 
 ## Budget
 
 The grants of `d-playable-3`: per-round commits, up to three concurrent offline rounds.
-**No stock starts** on this directive: both questions are offline. Three rounds per
-question. Disassembly-read rounds use the `disasm-agent` tier per
-[ROLES.md](ROLES.md#disassembly-reads-use-a-stronger-worker).
+**One stock start** for question 1; no retry after Popen. Question 2 is offline.
 
 ## Decisions already made (do not re-ask)
 
-- **Read, do not fit.** Glyph placement comes from the read table and the read caller, not
-  from pixel or scalar optimisation. The B1f/B1h fitting methods stay parked; the Quit-row
-  0.0202 scalar is not a score.
-- B1i's charmap, advance and `lineHeight` rule is settled (facilitator re-read from raw PE
-  bytes). Do not re-derive it. `&` in `^Font` is a zero-width entry: preserve it.
-- **C1 is held.** `FUN_00457868` draws one widget per frame (C1f, live); the base-icon source
-  is a new live question and is not in this pass.
+- **Read, do not fit.** Placement and sheet come from reads, not from pixel or scalar
+  optimisation. B1f/B1h fitting stays parked; the Quit-row 0.0202 scalar is not a score.
+- Settled and not to be re-derived: B1i's charmap and advance rule; B1k's label table,
+  `^Font` binding and Y rule; B1l's file-negatives (no static store to `[0x58CB40]`, no
+  BMP name for `^Font` in the exe); C2a/C2b's Out, Saved and timer reads.
+- **Restoration:** C1f's `probe.py` cleanup did not restore `dgVoodoo.conf` by itself (it
+  was fixed by hand). Question 1's brief must restore and hash-check every install file
+  explicitly, in the same process that swapped it.
 - English menus are the reference; do not reset the install language.
-- Live-harness note for any future live round: C1f's `probe.py` cleanup did not restore
-  `dgVoodoo.conf` on its own (fixed by hand, hashes match). Not in scope here.
+- C1 stays held; its base-icon live read is the overlord's likely next pass, not this one.
 
 ## Stop point
 
-Stop and report when the B1 gate passes on your own independent re-score, or when question
-1 reaches its round cap, and question 2 is landed or parked. Also stop on any stop
-condition in ORCHESTRATION. Do not advance to B2, C1, C2 or C3 on this directive.
+Stop and report when the B1 gate passes on your own independent re-score, or when either
+question reaches its cap. Also stop on any stop condition in ORCHESTRATION. Do not advance
+to B2, C1, C2 or C3 on this directive.
 
 ## Sync
 

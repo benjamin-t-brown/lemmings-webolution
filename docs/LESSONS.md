@@ -1336,3 +1336,10 @@ The plan is now about what you can see — `PLAN.md`.
 **Note on paths**: the 42 round notes moved to `old/docs/scratch/`. Comments in
 `src/sim/World.h` and elsewhere still cite them as `docs/scratch/phase3-*.md`; read that as
 `old/docs/scratch/`.
+
+## Live `^Font` source (B1v, 2026-10-23, OBSERVED)
+
+One stock start with both arms armed from a one-shot entry-point stop (the exe tolerated the int3): two hits on the
+archive arm `0x47E4AD`, `Textures\^Font.bmp` (77 bytes at 44312738) and `.alf` (61440 at 44251298), gate `[0x5D5610]`=1,
+zero loose `^Font`. Matches `lemmings.box` ordinals 633 / 632 read independently. Exactly one source up to the second hit;
+a later third source, TLS callbacks and the archive-only route are not excluded. Evidence: `docs/scratch/phase-b1v-font-live-read.md`.

@@ -6,6 +6,41 @@
   "queue": [],
   "recently_landed": [
     {
+      "id": "b1v-font-live-read",
+      "title": "Final ^Font live read: both arms, soft entry stop, one stock start",
+      "status": "landed",
+      "brief": "build/tmp/b1v-font-live-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live capture",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab1v-font-live-read",
+      "dispatched_at": "2026-10-23 16:35:29 MDT",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "b1u-font-both-arms-preflight"
+      ],
+      "gate_served": "B1 frontend assets and text; directive Q1 round 2 of 2",
+      "question_round_count": 2,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "standing_run": "b1-final-read-b2-level-map",
+      "investigation_budget_minutes": 60,
+      "body_cap": 0,
+      "worker_output": "build/tmp/b1v-font-live-read/round-note.md",
+      "landed_in": "docs/scratch/phase-b1v-font-live-read.md",
+      "landed_at": "2026-10-23 16:41:04 MDT",
+      "disposition": "build/tmp/b1v-font-live-read/round-note.md",
+      "facilitator_verified": "2026-10-23: both FONT_HIT lines and FONT_COUNTS in raw gdb-mi.log; archive offsets/sizes match independent tools/proto/box.py read (ordinals 633/632, patch.box none); entry, arm and liveness bytes re-read; selftest 81 PASS on mouv; install hashes re-hashed; no game/gdb/LemWeb task; script hash unchanged",
+      "remaining_blockers": [
+        "stopped at hit 2: later third source not excluded",
+        "TLS callbacks unread",
+        "archive-only route 0x47E598 not taken"
+      ]
+    },
+    {
       "id": "b1u-font-both-arms-preflight",
       "title": "Preflight: arm both ^Font arms, prove breakpoints live, read hit counts",
       "status": "landed",
@@ -3468,28 +3503,12 @@
       "concurrency": "up to 3 offline rounds, at most one live owner"
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
-    "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 3,
-    "stock_starts_used": 0,
-    "pending_questions": [
-      {
-        "id": "q1-entry-int3",
-        "question": "Q1 live read needs the hardware breakpoints armed in the main thread. B1u shows breakpoints set at the starti stop never fire in the main thread (throwaway exe), so B1t was probably blind. The fix is a one-shot GDB software int3 at the exe entry point 0x49D518, removed by GDB when it reports the stop. Directive Q1 says two hardware breakpoints and no other debugger probe. May the Q1 start use that one int3?",
-        "evidence": [
-          "docs/scratch/phase-b1u-font-both-arms-preflight.md",
-          "docs/scratch/phase-b1t-font-live-read.md",
-          "docs/DIRECTIVE.md"
-        ],
-        "options": [
-          "Authorize the entry-point int3 for the one Q1 start (soft mode, liveness proven before the arms)",
-          "Run the start with --entry-stop starti, known blind in the main thread on the throwaway",
-          "Park Q1 for good under the directive"
-        ],
-        "recommendation": "Authorize the int3: it is one probe, GDB-managed and removed on report, and without it the start repeats B1t. Residual: the stock exe may not tolerate it, TLS callbacks before 0x49D518 are unread, and the archive-only route (jne 0x47E598) executes neither arm, so a miss would still not prove no request was made."
-      }
-    ],
+    "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 16:31 MDT /facilitator invocation; directive amended (q1-entry-int3 authorized), prior run stopped, no task running, so this start is the handoff.",
+    "rounds_run": 4,
+    "stock_starts_used": 1,
+    "pending_questions": [],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 2026-10-23 15:35:31 MDT: b1u, b2j, b2k landed. Q3 parked (no named path). Q1 start (b1v) waits on pending question q1-entry-int3; Q2 follows only on exactly one observed source. Both stock starts unspent.",
+    "handoff": "2026-10-23 16:41:04 MDT: b1v landed, Q1 observed exactly one ^Font source (LEMMINGS.BOX, TEXTURES\\^FONT.BMP + .ALF). Next: Q2 offline B1 render and score (cap two). Q3 parked. One stock start spent, one left (Q3, parked).",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4052,10 +4071,13 @@
         ]
       }
     ],
-    "stopped": {
-      "date": "2026-10-23",
-      "reason": "Every remaining ranked question waits on pending_questions or is parked: Q1 start needs the entry-point int3 authorized (q1-entry-int3), Q2 depends on Q1, Q3 parked with no named path.",
-      "last_commit": "3a3b65e"
-    }
+    "stopped": null,
+    "resolved_questions": [
+      {
+        "id": "q1-entry-int3",
+        "answer": "authorized (user, overlord review 2026-10-23, docs/DIRECTIVE.md amendment): one GDB one-shot software int3 at 0x49D518 (--entry-stop soft) for the one Q1 start; a stock exe that does not tolerate it is a stop condition, not a retry"
+      }
+    ],
+    "facilitator_started_epoch": 1792794664
   }
 }

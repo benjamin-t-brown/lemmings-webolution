@@ -2,12 +2,15 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1e-panel-icon-dispatch-index",
-      "title": "C1e: find the all-ten dispatch loop (if any) and the per-widget icon-index writer (round 4, cap exception)",
-      "status": "queued",
+      "title": "C1e: both cap-exception sub-questions clean negatives; question parked in Phase E (round 4)",
+      "status": "landed",
       "brief": "build/tmp/c1e-panel-icon-dispatch-index-brief.md",
+      "worker_output": "build/tmp/c1e-panel-icon-dispatch-index/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
       "harness": "Claude Code",
@@ -23,11 +26,10 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "c1-skill-panel",
-      "dispatch_id": "claude-code background round-agent afb769f1e34e2c682, no model override"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_id": "claude-code background round-agent afb769f1e34e2c682, no model override",
+      "landed_in": "PLAN.md Phase C (C1e) and Phase E (C1 skill-panel icon-draw mechanism, parked); docs/scratch/phase-c1-panel-icon-render.md; docs/LESSONS.md 'Useful strings the engine keeps'",
+      "facilitator_verified": "2026-10-22: independent REA session (SHA-256 matches authority) re-ran search_bytes for the dword 0x238 (38 02 00 00) across .text: exactly the same 7 addresses (0x430564,0x465b4e,0x465ff6,0x46605f,0x466ac2,0x468e27,0x4a2765), matching exactly. Spot-checked three of the ten +8-offset literal scans independently: 0xb90 and 0x1470 both zero hits (matching); 0x958 exactly 4 hits, all in the same already-identified-unrelated function FUN_00468e22 (matching exactly). Independently re-decompiled FUN_004680f0 (the per-widget constructor's own callee): confirmed every field index it touches is non-negative relative to its own param_1, never reaching back to widget+8. No live process found running before or after. git status showed only docs/tasks.json's permitted fields. Round accepted as reported; nothing narrowed. Both cap-exception sub-questions are genuine, well-evidenced negatives, independently reproduced. Per the round's own 'no fifth round regardless of outcome' instruction, the question is parked in PLAN.md Phase E with a resume brief (a live memory read, not more static analysis, is the next step). C1's render gate now depends on two parked items (this icon-draw mechanism, and B1's already-parked digit-font question) and cannot progress further under this standing run without new authorization on either -- per the overlord directive's own stop point ('C1 is parked at its round cap'), this standing run stops here."
+    },
     {
       "id": "c1d-panel-icon-widget-trace",
       "title": "C1d: ten-widget array and real icon draw located; full dispatch and icon-index writer still open (round 3 of 3)",
@@ -2607,11 +2609,21 @@
     },
     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
     "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running under a prior owner; the only active item (b1h) was blocked on an explicit user stop predating this directive and is closed out below, not resumed.",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the C1 gate passes on the facilitator's own independent re-score, or when C1 is parked at its round cap, or on any ORCHESTRATION stop condition. Do not advance to C2 or B2 on this directive.",
-    "handoff": "2026-10-22: landed c1d-panel-icon-widget-trace (round 3 of 3, the cap) -- the strongest C1 result yet. levelScreen's constructor builds exactly ten identical sub-objects at stride 0x238 (matching the panel's physical button count exactly), each with a shared vtable whose slot+4 is a confirmed real icon draw (resource lookup by the widget's own index, UV rect from its own pixel rect, drawn via FUN_00414920). levelScreen+0x3c is fixed to widget 0 at construction; the one resolved dispatch reaches only that one widget per frame. No resolved caller reaches the other nine, and no writer of any widget's own +8 resource index was found. Independently re-verified byte-for-byte (constructor, per-widget ctor, vtable bytes, slot+4 body, three procedure_callers checks all exact). This is not a residual -- it's the gate's literal missing piece, now narrowed to two concrete bounded sub-questions. Recorded a round-cap exception in PLAN.md per ORCHESTRATION's own exception clause (round 3 is the pre-authorized cap, but a fourth is explicitly justified in writing, not a silent reset). Wrote and linted build/tmp/c1e-panel-icon-dispatch-index-brief.md (round 4, cap exception; no fifth pre-authorized regardless of outcome): find any stride-0x238 dispatch loop (literal-operand search, since procedure_callers only sees resolved calls) and find the +8 index writer (a field-store search, not a call-graph search). Dispatching c1e now.",
+    "handoff": "2026-10-22 STOPPED: landed c1e-panel-icon-dispatch-index (round 4, the cap exception). Both of C1d's two named open threads came back as clean, well-evidenced negatives -- no stride-0x238 dispatch loop exists anywhere in .text (exhaustive search_bytes scan, 7 matches, all unrelated), and no writer of any widget's +8 icon index exists anywhere searched (full re-read of the five most-likely functions plus an exhaustive ten-offset literal scan). Both independently re-verified exactly. Per the round's own 'no fifth round regardless of outcome' instruction, parked the C1 icon-draw-mechanism question in PLAN.md Phase E with a resume brief (closing it needs a live memory read of a constructed widget's +8 field and/or whatever indirect dispatch reaches the other nine -- a different kind of round than the four static-only ones already run). C1's render gate depends on two parked items now: this icon-draw mechanism, and B1's already-parked digit-font question for the counts half of the same clause. Neither can progress further under this standing run's offline-first approach without new authorization. Per the overlord directive's own stop point ('C1 is parked at its round cap'), this standing run stops here.",
+    "stopped": {
+      "date": "2026-10-22",
+      "reason": "C1 is parked at its round cap (the overlord directive's own stop point). Four rounds on the icon-render question (C1b-C1e, including one recorded cap exception) located and fully confirmed a real ten-widget icon-draw mechanism matching the panel's physical button count exactly, but the dispatch reaching the other nine widgets and the per-widget icon-index writer are both clean negatives under exhaustive static search. C1's render gate also needs the separately-parked B1 digit-font work for its counts half. Neither parked item can be resolved by another offline round under this directive's scope.",
+      "last_commit": "9610c0d",
+      "current_gate": "C1 render clause (ten buttons + counts, <=0.02) remains open; indices identified (C1a), icon-draw mechanism located but not fully wired (C1b-C1e), counts blocked on B1's parked digit font",
+      "rounds_run": 4,
+      "stock_starts_used": 0,
+      "pending_questions": [],
+      "no_further_dispatch": true
+    },
     "previous": [
       {
         "id": "d-playable-3",

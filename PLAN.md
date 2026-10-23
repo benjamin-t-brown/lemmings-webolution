@@ -545,7 +545,7 @@ user 2026-10-22.**
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| C1 skill panel | indices identified; render pending | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
+| C1 skill panel | indices identified; icon-draw mechanism parked (Phase E) | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
 | C2 counters, cursor, pause caption | queued | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
 | C3 full frame | queued | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
@@ -617,6 +617,19 @@ this project's own prior rounds have used for other stride constants, e.g. `pane
 search, not a call-graph search — distinct from what C1b/C1c already looked for). A fourth
 round is authorized on this specific, narrow continuation; it is not a reset of the
 question's round count and no fifth round is pre-authorized.
+
+**C1e: both cap-exception sub-questions are clean negatives — question parked**
+([check](docs/scratch/phase-c1-panel-icon-render.md#c1e-both-cap-exception-sub-questions-are-clean-negatives--question-parked-round-4)):
+an exhaustive `search_bytes` scan for the `0x238` stride literal across all of `.text`
+found exactly 7 matches, none a dispatch loop and none near `levelScreen`'s constructor —
+no computed loop reaching the other nine widgets exists in statically-visible form. A
+second exhaustive scan, for all ten widgets' absolute `+8` offsets plus a full re-read of
+the five most-likely candidate functions, found no writer of any widget's icon-index
+field anywhere in `.text`. Both independently re-verified exactly. Per the round's own
+"no fifth round regardless of outcome" instruction, **this question is parked in Phase E**
+(see below). C1's rendering clause does not pass; it is blocked on two parked
+dependencies (this icon-draw mechanism, and B1's already-parked digit-font question for
+the counts half of the same gate clause).
 
 ## Phase D — reconnect the simulation
 
@@ -1306,6 +1319,33 @@ Short, and explicitly parked rather than cancelled. **The gadget backlog is gone
 gadget at all. See the gadget table in `docs/LESSONS.md` before assuming anything here is
 open.
 
+- **C1 skill-panel icon-draw mechanism** (parked 2026-10-22 after C1b-C1e, 4 rounds
+  including one recorded cap exception). `levelScreen`'s constructor (`0x452bc2`) builds
+  exactly ten identical sub-widgets at a constant `0x238`-byte stride (`+0x70, +0x2a8,
+  +0x4e0, +0x718, +0x950, +0xb88, +0xdc0, +0xff8, +0x1230, +0x1468`) — matching the
+  panel's known physical button count exactly — each via one shared constructor
+  (`FUN_004576b0`) and one shared vtable (`0x4b1774`) whose slot+4 (`FUN_00457868`) is a
+  confirmed real icon draw: resource lookup by the widget's own `+8` index, UV rect from
+  the widget's own pixel rect, drawn via `FUN_00414920`. `levelScreen+0x3c` (the field the
+  one resolved dispatch in `FUN_00454a85` reads) is fixed to widget 0 at construction;
+  no resolved caller reaches the other nine widgets, and no writer of any widget's `+8`
+  was found anywhere in `.text` by two independent exhaustive searches (a `0x238`-stride
+  literal scan and a ten-offset `+8` literal scan, plus a full re-read of every
+  most-likely candidate function). `GreyIcons`/`BlackIcons`/`AdditiveIcons`/`Bits`/
+  `LemmingsLO` are all independently ruled out as the icon sheet or draw path (C1b/C1c).
+  Closing this needs a **live** read (which widget's `+8` holds what value during an
+  actual authorized stock start, and whether an indirect/computed dispatch the static
+  tool cannot enumerate reaches the other nine) — a different kind of round than the four
+  static-only ones already run, needing a stock start this question's own budget did not
+  authorize. Resume only with that live read explicitly scoped, not another static
+  byte/literal search — the static search is exhaustive by two independent methods.
+  Evidence: [C1b](docs/scratch/phase-c1-panel-icon-render.md#result),
+  [C1c](docs/scratch/phase-c1-panel-icon-render.md#c1c-both-pre-registered-leads-also-falsified-one-concrete-unresolved-thread-found-round-2-of-3),
+  [C1d](docs/scratch/phase-c1-panel-icon-render.md#c1d-the-ten-widget-array-and-its-real-icon-draw-are-located-the-full-dispatch-to-all-ten-and-the-per-widget-icon-index-remain-open-round-3-of-3),
+  [C1e](docs/scratch/phase-c1-panel-icon-render.md#c1e-both-cap-exception-sub-questions-are-clean-negatives--question-parked-round-4).
+  C1's render gate also depends on the separately-parked B1 digit-font question for the
+  counts half of the same clause (see the B1f/B1h entries below) — both halves are parked,
+  so C1 cannot progress further without new authorization on either.
 - **B1f fixed-cell glyph-matching method** (parked after3 dispatches,2026-10-22).
   Unsupported16x16 ASCII32 source packing, independent target-component reuse and
   double resizing make the glyph/scale inference invalid. Diagnostic frame omits text;

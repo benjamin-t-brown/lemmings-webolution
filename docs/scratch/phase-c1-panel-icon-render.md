@@ -300,3 +300,61 @@ negative that leaves the gate's current state fully characterized; it is a
 strong partial positive with two concrete, bounded, nameable open threads
 (find the stride-`0x238` dispatch loop, if any; find the `+8` index writer).
 See PLAN.md for the facilitator's round-cap-exception decision.
+
+## C1e: both cap-exception sub-questions are clean negatives — question parked (round 4)
+
+Worker packet `build/tmp/c1e-panel-icon-dispatch-index/round-note.md`. Offline REA only,
+read-only, zero stock starts, no `src/**` change.
+
+### Result
+
+Both of C1d's two named open threads are now clean, well-evidenced negatives:
+
+1. **No stride-`0x238` dispatch loop exists anywhere in `.text`.** An exhaustive
+   `search_bytes` for the dword immediate `0x238` across every initialized segment found
+   exactly **7** matches, none inside or near `levelScreen`'s constructor, none a loop
+   induction variable, none combined with an indirect call. All 7 are either coincidental
+   `CALL rel32` displacements/stack-frame-size constants, or genuine but single-instance,
+   non-looped field accesses belonging to one unrelated CSize/path-interpolation class
+   (own vtable `0x4b18ac`). The constructor itself uses ten distinct absolute offsets, not
+   a repeated `0x238` literal.
+2. **No writer of any widget's `+8` resource index exists anywhere searched.** The five
+   most-likely candidate functions (`levelScreen`'s constructor, the shared per-widget
+   constructor, its own callee, the hover/selection chain, the main per-level loop) were
+   each re-read in full for a plain field *store* (not a call) to `+8` — none found,
+   confirmed down to the instruction level for the per-widget constructor's callee (every
+   field it touches is at or after its own `+0x10`, never backward to `+8`). A second,
+   independent method — a literal-immediate scan for all ten `levelScreen`-relative
+   absolute `+8` offsets (`0x78, 0x2b0, 0x4e8, 0x720, 0x958, 0xb90, 0xdc8, 0x1000, 0x1238,
+   0x1470`) across all of `.text` — found no function containing more than one of the ten,
+   and the two apparent hits on functions near the already-known constructor's address
+   space are both confirmed unrelated by full decompilation.
+
+Residual, explicitly not excluded by this round (reported honestly, not claimed as
+exhausted): a computed dispatch through some *other* stride (e.g. a separately built
+pointer array); a per-level screen-setup function assigning `+8` through a widget pointer
+directly rather than a `levelScreen`-relative literal; or `+8` simply never being written
+(left at its allocation-time value). None of these can be settled by static reading alone;
+the most direct next step is a live read of a constructed widget's `+8` field during an
+authorized stock start — out of this round's zero-stock-start scope.
+
+### Facilitator check
+
+Independent REA session (SHA-256 matches authority). Re-ran `search_bytes` for the dword
+`0x238` (`38 02 00 00`) across `.text`: **exactly the same 7 addresses**
+(`0x430564, 0x465b4e, 0x465ff6, 0x46605f, 0x466ac2, 0x468e27, 0x4a2765`), matching exactly.
+Spot-checked three of the ten `+8`-offset literal scans independently: `0xb90` and
+`0x1470` both return **zero** hits (matching); `0x958` returns **exactly 4** hits, all in
+the same already-identified-unrelated function `FUN_00468e22` (matching exactly).
+Independently re-decompiled `FUN_004680f0` (the per-widget constructor's own callee,
+operating on `widget+0x10`): confirmed every field index it touches is non-negative
+relative to its own `param_1` — it never reaches back to `widget+8`. No live process
+found running before or after. `git status --short` showed only `docs/tasks.json`'s
+permitted fields.
+
+Round accepted as reported; nothing narrowed. Both cap-exception sub-questions are
+genuine, well-evidenced negatives, independently reproduced. Per the brief's own
+instruction ("no fifth round is pre-authorized regardless of outcome"), **this question is
+now parked in Phase E** — see `PLAN.md`. The remaining residual (the other nine widgets'
+dispatch mechanism, and the `+8` index assignment) needs a live memory read, not more
+static analysis, and is recorded as the resume lead.

@@ -1143,6 +1143,14 @@ other nine, and no writer of any widget's `+8` was found. Do not re-derive any o
 resume only on the two named open threads (a stride-`0x238` literal search for a possible
 unresolved-indirect dispatch loop; a field-store search for `+8`).
 
+**C1e (round 4, cap exception): both threads are clean negatives — parked.** An
+exhaustive `search_bytes` scan for the `0x238` stride literal found exactly 7 matches in
+all of `.text`, none a dispatch loop and none near `levelScreen`'s constructor. A second
+exhaustive scan (all ten widgets' absolute `+8` offsets, plus a full re-read of the five
+most-likely candidate functions) found no writer of any widget's icon index anywhere.
+Both independently re-verified exactly. **Parked in PLAN.md Phase E** — closing this
+needs a live memory read (not more static analysis); do not repeat either search.
+
 ## Gadgets — all settled, rounds 9 and 13–31
 
 Implemented in `src/sim` and not to be re-investigated:

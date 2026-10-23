@@ -24,11 +24,15 @@
       "standing_run": "b1-live-b2-capture",
       "investigation_budget_minutes": 40,
       "body_cap": 12
-    },
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b2d-capture-preflight",
       "title": "Offline preflight and capture script for the B2 frontend sequence",
-      "status": "running",
+      "status": "landed",
+      "worker_output": "build/tmp/b2d-capture-preflight/round-note.md",
       "brief": "build/tmp/b2d-capture-preflight-brief.md",
       "worker_tier": "targeted",
       "work_kind": "capture-script preflight",
@@ -45,11 +49,15 @@
       "stock_starts_consumed": 0,
       "standing_run": "b1-live-b2-capture",
       "investigation_budget_minutes": 40,
-      "body_cap": 12
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "body_cap": 12,
+      "landed_in": "docs/scratch/phase-b2d-capture-preflight.md",
+      "disposition": "offline preflight: counter and vtables file-backed, chain head runtime-only, no relocs; key path covers menu/confirm/map/level entry/P-pause, uncovered: short and long ESC in pause, level-to-map, chain walk; capture script written and selftested, not run",
+      "facilitator_verified": "2026-10-23: own PE parse on mouv (hash, relocs 0, section map, 0x4C6000 boundary); rg for ESC and 0x5D59E4 readers; selftest 14/14; next-offset mutation 7/14 exit 1; RETURN-guard mutation alone 13/14; install hashes equal, no game process or LemWeb task. Not verified: live helpers, +8 prev, real chain.",
+      "remaining_blockers": [
+        "live helpers unexercised",
+        "ESC and level-to-map key paths unproven"
+      ]
+    },
     {
       "id": "b1r-load-order",
       "title": "Archive registration before the ^Font load; loose-route reachability",
@@ -3162,7 +3170,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "Q1 and Q3 offline preflights dispatched (b1s, b2d); no stock start used.",
+    "current": "b2d (Q3 preflight) landed; b1s (Q1 preflight) running; no stock start used.",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review): Q1 live read cap two rounds, one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 one stock start, cap three. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3171,11 +3179,11 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator invocation; directive active and prior run stopped, no task was running, so this start is the handoff.",
-    "rounds_run": 0,
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 new run. b1s (Q1 preflight) and b2d (Q3 preflight) dispatched offline in parallel, zero starts used. Next: verify each, then the Q1 live read round (one start, one HW breakpoint), then Q3 live capture; Q2 only if Q1 observes exactly one source.",
+    "handoff": "2026-10-23 new run. b2d landed (capture script written, selftested, unrun; ESC and level-to-map have no proven key path). b1s (Q1 preflight) still running offline. Next: verify b1s, then the Q1 live read (one start, one HW breakpoint), then the Q3 live capture; Q2 only if Q1 observes exactly one source.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

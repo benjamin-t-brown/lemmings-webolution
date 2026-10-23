@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-22",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c2b-pause-index-text",
       "title": "What characters indices 0x44 and 0x45 resolve to",
-      "status": "ready-for-verify",
+      "status": "landed",
       "brief": "build/tmp/c2b-pause-index-text-brief.md",
       "worker_output": "build/tmp/c2b-pause-index-text/round-note.md",
       "worker_tier": "targeted",
@@ -23,11 +25,10 @@
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "b1-menu-render",
-      "dispatch_id": null
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_id": "d7842adf-cfad-4f5a-8452-65a2d9d71aa0",
+      "landed_in": "PLAN.md Phase C (C2b); docs/scratch/phase-c2b-pause-index-text.md; docs/LESSONS.md Pause text at 0x44CD06",
+      "facilitator_verified": "2026-10-22: independent LEMBOX walk of lemmings.box entry 765 and patch.box entry 5. Both LANGUAGE\\\\UK.LTX payloads store Out at index 68 and Saved at index 69, and the five menu labels at 125, 126, 120, 3, 43. File bytes match language slot 2, Uk at 0x4C3470, and Language\\\\%s.ltx at 0x4C3484. These lists are the counters, not the word Paused. A later language-slot store was not followed. No src change. Suite already 30/30 on this tree. No Lemmings process. C2 gate not scored."
+    },
     {
       "id": "b1k-menu-label-draw",
       "title": "Which function draws the five main-menu labels, with which font, sheet and placement",
@@ -2791,11 +2792,11 @@
     },
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast, including disassembly reads. Do not escalate to Opus.",
     "owner": "Cursor facilitator session, this /facilitator invocation, 2026-10-22. No task was running or queued. The prior standing run font-charmap-c1-live has stopped.no_further_dispatch and is preserved under previous. This start is the handoff.",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the B1 gate passes on the facilitator independent re-score, or when question 1 reaches its three-round cap and question 2 is landed or parked. Also stop on any ORCHESTRATION stop condition. Do not advance to B2, C1, C2 or C3.",
-    "handoff": "2026-10-22: b1k landed in this commit. The five menu labels are the dwords at 0x4C4214, walked by 0x48AA5E. Horizontal pixel and ^Font texture remain unread. c2b-pause-index-text is ready-for-verify (Out/Saved, not yet landed). No stock starts. B1 gate not scored.",
+    "handoff": "2026-10-22: c2b landed in this commit. Indices 0x44 and 0x45 are Out and Saved in both UK.LTX copies. Question 2 is landed. Question 1 is round 2 of 3: labels found, horizontal word 0x58CB40 and the ^Font texture unread. B1 gate not scored. No stock starts.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

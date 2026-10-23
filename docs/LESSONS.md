@@ -851,8 +851,10 @@ and `H+0x224` with `[0x4CBAAC] / 60` at (560, 430). The below-10 format is
 `"%02d:0%d"`; otherwise `"%02d:%02d"`. The font pointer `[0x4CBF78]` is
 registered through `0x4403A7` as `"^Font"` / table `0x4BF968`. The index
 characters are a runtime lookup, not the file string `"Unknown String"`
-except on the out-of-range path. Do not call either list `Paused` from
-these bytes. The C2 gate was not attempted.
+except on the out-of-range path. The file language slot is 2 (`Uk`).
+[C2b](scratch/phase-c2b-pause-index-text.md): both `LANGUAGE\UK.LTX` copies
+store `Out` at index `0x44` and `Saved` at index `0x45`. These lists are the
+counters, not the word `Paused`. The C2 gate was not attempted.
 
 ## Hard-won rules of thumb
 

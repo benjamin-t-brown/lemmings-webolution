@@ -607,6 +607,15 @@ runtime lookup; the file fallback is `"Unknown String"`, and these bytes do
 not say the text is `Paused`. `[0x4E33C8] == 1` skips the timer submit and
 is not identified as pause state. No stock start.
 
+**C2b: indices `0x44` and `0x45` are `Out` and `Saved`**
+([check](docs/scratch/phase-c2b-pause-index-text.md)), 2026-10-22, round 2.
+The file language slot `[0x4C3434]` is 2, which selects `Uk` and
+`Language\Uk.ltx`. Both `LANGUAGE\UK.LTX` copies store `Out` at index `0x44`
+and `Saved` at index `0x45`. The exe fallback remains `"Unknown String"`.
+These two lists are the counters, not the word `Paused`. A later store can
+change the language slot; the file image selects English. The C2 gate was
+not attempted.
+
 **Milestones and exit gates, drafted 2026-10-21 (CEO review), signed off as drafted by the
 user 2026-10-22.**
 

@@ -2,34 +2,7 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "b2h-live-esc-sweep",
-      "title": "Live ESC hold sweep in pause plus ESC-in-level dialog observation (one stock start)",
-      "status": "running",
-      "brief": "build/tmp/b2h-live-esc-sweep-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "live capture",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "dispatch_id": "ab2h-live-esc-sweep-93d04b32544b5b4e",
-      "owns_live_game": true,
-      "live_owner": "b2h-live-esc-sweep",
-      "depends_on": [
-        "b2g-esc-sweep-preflight",
-        "b1t-font-live-read"
-      ],
-      "gate_served": "B2 screen-id sequence gate; directive Q3 second capture",
-      "question_round_count": 2,
-      "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
-      "standing_run": "b1-source-read-b2-esc",
-      "investigation_budget_minutes": 60,
-      "body_cap": 2,
-      "worker_output": null
-    }
-  ],
+  "active": [],
   "queue": [],
   "recently_landed": [
     {
@@ -3330,6 +3303,40 @@
         "level-to-map key and screen 0x23 identity unread",
         "+8 stack path none"
       ]
+    },
+    {
+      "id": "b2h-live-esc-sweep",
+      "title": "Live ESC hold sweep in pause plus ESC-in-level dialog observation (one stock start)",
+      "status": "landed",
+      "brief": "build/tmp/b2h-live-esc-sweep-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live capture",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab2h-live-esc-sweep-93d04b32544b5b4e",
+      "owns_live_game": true,
+      "live_owner": "b2h-live-esc-sweep",
+      "depends_on": [
+        "b2g-esc-sweep-preflight",
+        "b1t-font-live-read"
+      ],
+      "gate_served": "B2 screen-id sequence gate; directive Q3 second capture",
+      "question_round_count": 2,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "standing_run": "b1-source-read-b2-esc",
+      "investigation_budget_minutes": 60,
+      "body_cap": 2,
+      "worker_output": null,
+      "landed_in": "docs/scratch/phase-b2h-live-esc-sweep.md",
+      "disposition": "one stock start: ESC holds 2/5/10/25/40 in pause all left pause (ui_state 0, counter 5, list empty); ESC in level gave ui_state 2, counter 5->7, one head node vtable 0x4B26B0; O returned to pause; short-ESC quirk not reproduced and retracted; +8 and level-to-map unobserved",
+      "facilitator_verified": "2026-10-23: separate re-read of raw/00..17 equals report.json (counters, heads, node vtables, ui_state); install hashes equal before/after/startup and a separate Get-FileHash; no game/gdb/LemWeb left; selftest 35/35 on mouv; after-sweep ESC guard disabled alone fails exactly its check (34/35). Not verified: key delivery beyond ui_state readings, why counter steps by 2; three new guards redundant on the fake.",
+      "remaining_blockers": [
+        "+8 on a stacked node unobserved",
+        "level-to-map unobserved",
+        "counter +2 on level ESC unexplained"
+      ]
     }
   ],
   "standing_run": {
@@ -3339,7 +3346,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "b2h (Q3 round 2, live ESC sweep, the second and last stock start) dispatched.",
+    "current": "b1t, b2g, b2h landed; both stock starts spent. Next: b2i (Frontend offline update, Q3 round 3).",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, second directive of the day): Q1 live read one round and one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 three new rounds (preflight, capture, implement) and one stock start. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3348,11 +3355,11 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; directive active and prior run stopped with no task running, so this start is the handoff.",
-    "rounds_run": 2,
-    "stock_starts_used": 1,
+    "rounds_run": 3,
+    "stock_starts_used": 2,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 b1t, b2g landed. b2h (Q3 live ESC sweep, owns the live game, the second and last start) dispatched at ed9d999. Next: verify/land b2h, then dispatch b2i (Frontend offline update, Q3 round 3). Q2 will not run.",
+    "handoff": "2026-10-23 b1t (Q1 no hit, parked), b2g, b2h landed; short-ESC quirk retracted (6 samples leave pause). Both stock starts spent. Next: dispatch b2i, update src/shell/Frontend + its test to replay the b2e and b2h rows; unobserved behaviour stays labelled policy. Then stop (directive stop point).",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

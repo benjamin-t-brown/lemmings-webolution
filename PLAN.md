@@ -415,8 +415,8 @@ end in 3D is the next visible result. Its milestones and gates are under Phase D
 
 The original's own screens: backgrounds, buttons, fonts, `.LTX` localised text (English in the
 reference install), the screen state machine, level select and the map. Preserve the quirks —
-**RETURN only when the menu highlight is exactly 0**, and a short ESC that fails to leave
-pause. Frontend screen ids read as `0x004C416C`: 3 menu, 4 confirm, 5 map — **B1's own recon
+**RETURN only when the menu highlight is exactly 0**. (The "short ESC that fails to leave
+pause" quirk was retracted 2026-10-23: ESC at 2/5/10/25/40 frames all left pause, B2h.) Frontend screen ids read as `0x004C416C`: 3 menu, 4 confirm, 5 map — **B1's own recon
 corrected the reading of this global**: it is not a hand-picked enum, it is a monotonic
 object-creation counter shared by a common frontend-screen base class (ctor `0x004882c0`,
 independently re-read byte-for-byte), and each screen captures the pre-increment value as

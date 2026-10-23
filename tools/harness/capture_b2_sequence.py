@@ -51,6 +51,7 @@ EXE_SHA256 = "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
 GAME_DIR = Path(r"C:\progs\Lemmings Revolution")
 INSTALL_FILES = ("Lemmings Revolution.exe", "SavedGame.dat", "dgVoodoo.conf", "dinput.dll")
 NODE_PIXEL = (206, 204)   # first gold node, render pixels (goto_level.NODE)
+KEY_OVERRIDES = {"O": 0x18}   # action 0x14 = DIK 0x18 (b2g keytable read); lrinput.DIK has no O
 
 
 class CaptureError(RuntimeError):
@@ -119,6 +120,7 @@ PLAN = (
     dict(name="map-node-click", kind="node_click"),
     dict(name="pause-P", kind="key", key="P", hold=20, expect_ui_state=1),
     dict(name="pause-ESC-sweep", kind="esc_sweep", holds=SWEEP_HOLDS, needs_esc=True),
+    dict(name="level-ESC-dialog", kind="dialog", needs_esc=True, needs_dialog=True),
 )
 
 
@@ -127,16 +129,25 @@ def check_key(io, step):
     key = step["key"]
     if key in ("P", "ESCAPE") and io.ui_state() not in (0, 1):
         raise CaptureError(f"refusing {key}: ui_state {io.ui_state()} is not a level (0) or pause (1)")
-    if key == "ESCAPE" and io.ui_state() != 1:
+    if key == "ESCAPE" and step.get("level_esc"):
+        # the one ESC at ui_state 0: only after the sweep (run_plan sets after_sweep), once, never at 2 or beyond
+        if not step.get("after_sweep"):
+            raise CaptureError("refusing level ESCAPE: the sweep has not completed")
+        if io.ui_state() != 0:
+            raise CaptureError(f"refusing level ESCAPE: ui_state {io.ui_state()} is not a level (0)")
+    elif key == "ESCAPE" and io.ui_state() != 1:
         raise CaptureError(f"refusing ESCAPE: ui_state {io.ui_state()} is not pause (1)")
+    if key == "O" and io.ui_state() != 2:
+        raise CaptureError(f"refusing O: ui_state {io.ui_state()} is not the dialog (2)")
     if step.get("needs_highlight0") and io.highlight() != 0:
         raise CaptureError(f"refusing RETURN: highlight is {io.highlight()!r}, not 0")
 
 
-def run_plan(read, io, allow_esc=False, log=None, on_step=None):
+def run_plan(read, io, allow_esc=False, log=None, on_step=None, allow_dialog=False):
     """io: key(name, hold), highlight() -> int | None, drive_highlight_to_zero(), click_node(),
     ui_state() -> int, loaded_path() -> str. Returns the list of per-step records."""
     out = []
+    swept = False
 
     def rec(step, **extra):
         r = dict(step=step["name"], expect_counter=step.get("expect_counter"),
@@ -161,6 +172,9 @@ def run_plan(read, io, allow_esc=False, log=None, on_step=None):
         kind = step["kind"]
         if step.get("needs_esc") and not allow_esc:
             out.append(dict(step=step["name"], skipped="ESC is opt-in (--allow-esc)"))
+            continue
+        if step.get("needs_dialog") and not allow_dialog:
+            out.append(dict(step=step["name"], skipped="dialog step is opt-in (--allow-dialog)"))
             continue
         if kind == "observe":
             rec(step)
@@ -192,6 +206,34 @@ def run_plan(read, io, allow_esc=False, log=None, on_step=None):
                     raise CaptureError(f"hold {hold} left the level: ui_state {after}")
                 if r["counter"] != base["counter"] or r["nodes"]:
                     raise CaptureError(f"hold {hold} changed the screen list: counter {r['counter']}, nodes {len(r['nodes'])}")
+            swept = True
+        elif kind == "dialog":
+            # ESC once in the level, O in the dialog, P back to play. Anything else: record and stop.
+            if io.ui_state() == 1:   # a sweep that ended paused: P resumes, as the brief allows only at 1
+                rstep = dict(name="dialog-P-resume-first", key="P", hold=20)
+                check_key(io, rstep)
+                io.key("P", 20)
+                rec(rstep)
+                if io.ui_state() != 0:
+                    raise CaptureError(f"P did not resume before the dialog: ui_state {io.ui_state()}")
+            estep = dict(name="dialog-ESC-in-level", key="ESCAPE", hold=20, level_esc=True, after_sweep=swept)
+            check_key(io, estep)
+            io.key("ESCAPE", 20)
+            rec(estep)
+            if io.ui_state() != 2:
+                raise CaptureError(f"level ESC gave ui_state {io.ui_state()}, not 2; stopping before any further key")
+            ostep = dict(name="dialog-O", key="O", hold=20)
+            check_key(io, ostep)
+            io.key("O", 20)
+            rec(ostep)
+            if io.ui_state() != 1:
+                raise CaptureError(f"O in the dialog gave ui_state {io.ui_state()}, not 1; stopping")
+            pstep = dict(name="dialog-P-resume", key="P", hold=20)
+            check_key(io, pstep)
+            io.key("P", 20)
+            rec(pstep)
+            if io.ui_state() != 0:
+                raise CaptureError(f"P after the dialog gave ui_state {io.ui_state()}, not 0")
         elif kind == "node_click":
             io.click_node()
             rec(step, loaded_path=io.loaded_path())
@@ -245,7 +287,7 @@ def live(args):  # pragma: no cover - Windows, live game only
         rawlog.clear()
         done.append(r)
 
-    report = dict(pid=pid, install_before=before, allow_esc=args.allow_esc, writes_to_game=0, steps=[])
+    report = dict(pid=pid, install_before=before, allow_esc=args.allow_esc, allow_dialog=args.allow_dialog, writes_to_game=0, steps=[])
     with LRInput() as inp:
         class IO:
             sel = None
@@ -254,7 +296,7 @@ def live(args):  # pragma: no cover - Windows, live game only
                 report.setdefault("foreground", []).append(acquire(pid))
                 if foreground_pid() != pid:
                     raise CaptureError("game is not foreground; no input sent")
-                inp.tap(DIK[name], hold_frames=hold)
+                inp.tap(KEY_OVERRIDES.get(name) or DIK[name], hold_frames=hold)
                 time.sleep(1.5)
 
             def drive_highlight_to_zero(self):
@@ -290,7 +332,8 @@ def live(args):  # pragma: no cover - Windows, live game only
         inp.enable()
         try:
             report["steps"] = run_plan(read, IO(), args.allow_esc,
-                                       log=lambda r: print(json.dumps(r), flush=True), on_step=on_step)
+                                       log=lambda r: print(json.dumps(r), flush=True), on_step=on_step,
+                                       allow_dialog=args.allow_dialog)
         except Exception as exc:
             report["steps"] = done
             report["error"] = f"{type(exc).__name__}: {exc}"
@@ -353,8 +396,9 @@ def selftest():
     class FakeIO:
         """Fake original: counter 3 -> 4 -> 5 on RETURN, highlight starts at 2."""
 
-        def __init__(self, mem, hl=2, stuck=False, esc_min_hold=1, esc_to=0, esc_to_only=None):
+        def __init__(self, mem, hl=2, stuck=False, esc_min_hold=1, esc_to=0, esc_to_only=None, lvl_esc_to=2, o_to=1):
             self.mem, self.hl, self.stuck, self.keys, self.ui = mem, hl, stuck, [], 3
+            self.lvl_esc_to, self.o_to = lvl_esc_to, o_to
             self.esc_min_hold, self.esc_to, self.esc_to_only = esc_min_hold, esc_to, esc_to_only
 
         def key(self, name, hold):
@@ -365,6 +409,12 @@ def selftest():
                 self.ui = 1 - self.ui
             if name == "ESCAPE" and self.ui == 1 and hold >= self.esc_min_hold:
                 self.ui = self.esc_to if self.esc_to_only in (None, hold) else 0
+            elif name == "ESCAPE" and self.ui == 0:   # only the dialog step sends this
+                self.ui = self.lvl_esc_to
+                self.mem.words.update({LIST_HEAD: 0x01000300, 0x01000300: 0x004B2222, 0x01000304: 0, 0x01000308: 0})
+            elif name == "O" and self.ui == 2:
+                self.ui = self.o_to
+                self.mem.words[LIST_HEAD] = 0
 
         def drive_highlight_to_zero(self):
             self.hl = 2 if self.stuck else 0
@@ -388,7 +438,7 @@ def selftest():
     check("plan: counters 3,3,4,5,5,5", counters == [3, 3, 4, 5, 5, 5])
     check("plan: two RETURN taps, no ESC without opt-in",
           [k for k, _ in io.keys].count("RETURN") == 2 and "ESCAPE" not in [k for k, _ in io.keys])
-    check("plan: ESC sweep skipped", sum("skipped" in s for s in steps) == 1)
+    check("plan: ESC sweep and dialog skipped", sum("skipped" in s for s in steps) == 2)
     io2 = FakeIO(synth())
     st2 = run_plan(io2.mem, io2, allow_esc=True)
     check("sweep: sends exactly the listed holds in order",
@@ -418,6 +468,45 @@ def selftest():
             io2d.mem.words[LIST_HEAD] = 0x01000100   # a screen appears after ESC
     io2d.key = key_adds_node
     check("sweep: a screen node after ESC fails closed", raises(lambda: run_plan(io2d.mem, io2d, allow_esc=True)))
+    # dialog step (b2h)
+    nd = FakeIO(synth())
+    stn = run_plan(nd.mem, nd, allow_esc=True)
+    check("dialog: off without --allow-dialog (ESC sent only in the sweep)",
+          [k for k, _ in nd.keys].count("ESCAPE") == 5 and any("--allow-dialog" in s.get("skipped", "") for s in stn))
+    nd0 = FakeIO(synth())
+    run_plan(nd0.mem, nd0, allow_dialog=True)
+    check("dialog: needs --allow-esc too (no ESC, no O)", "ESCAPE" not in [k for k, _ in nd0.keys] and "O" not in [k for k, _ in nd0.keys])
+    d1 = FakeIO(synth())
+    sd = run_plan(d1.mem, d1, allow_esc=True, allow_dialog=True)
+    tail = [k for k, _ in d1.keys][2 + 10:]
+    check("dialog: after the sweep exactly ESC, O, P", tail == ["ESCAPE", "O", "P"])
+    dr = [s for s in sd if s["step"] in ("dialog-ESC-in-level", "dialog-O", "dialog-P-resume")]
+    check("dialog: ui_state 2, 1, 0 recorded", [s["ui_state"] for s in dr] == [2, 1, 0])
+    check("dialog: the dialog's node chain is recorded (head node, vtable, counter)",
+          dr[0]["nodes"] and dr[0]["vtables"] == ["0x4b2222"] and dr[0]["counter"] == 5 and not dr[1]["nodes"])
+    d2 = FakeIO(synth(), esc_min_hold=99)   # every sweep hold refused: sweep ends paused
+    run_plan(d2.mem, d2, allow_esc=True, allow_dialog=True)
+    check("dialog: sweep ended paused -> P first, then ESC, O, P", [k for k, _ in d2.keys][-4:] == ["P", "ESCAPE", "O", "P"])
+    d3 = FakeIO(synth(), lvl_esc_to=0)
+    check("dialog: level ESC that gives ui_state 0 stops before O",
+          raises(lambda: run_plan(d3.mem, d3, allow_esc=True, allow_dialog=True)) and "O" not in [k for k, _ in d3.keys])
+    d4 = FakeIO(synth(), lvl_esc_to=3)
+    check("dialog: level ESC that gives ui_state 3 stops, no O, no second ESC",
+          raises(lambda: run_plan(d4.mem, d4, allow_esc=True, allow_dialog=True))
+          and "O" not in [k for k, _ in d4.keys] and [k for k, _ in d4.keys].count("ESCAPE") == 6)
+    d5 = FakeIO(synth(), o_to=2)
+    check("dialog: O that leaves ui_state 2 stops, no P, no more ESC",
+          raises(lambda: run_plan(d5.mem, d5, allow_esc=True, allow_dialog=True))
+          and [k for k, _ in d5.keys][-1] == "O" and [k for k, _ in d5.keys].count("ESCAPE") == 6)
+    d6 = FakeIO(synth())
+    check("check_key: O refused outside ui_state 2", raises(lambda: check_key(d6, dict(name="t", key="O", hold=20))))
+    d6.ui = 0
+    check("check_key: level ESC refused before the sweep, allowed after at ui_state 0",
+          raises(lambda: check_key(d6, dict(name="t", key="ESCAPE", hold=20, level_esc=True)))
+          and check_key(d6, dict(name="t", key="ESCAPE", hold=20, level_esc=True, after_sweep=True)) is None)
+    d6.ui = 2
+    check("check_key: level ESC refused at ui_state 2",
+          raises(lambda: check_key(d6, dict(name="t", key="ESCAPE", hold=20, level_esc=True, after_sweep=True))))
     io3 = FakeIO(synth(), stuck=True)
     check("plan: RETURN refused when highlight != 0", raises(lambda: run_plan(io3.mem, io3)) and not io3.keys)
     io5 = FakeIO(synth())
@@ -449,6 +538,8 @@ def main():
     ap.add_argument("--run", action="store_true", help="LIVE capture; not run in the preflight round")
     ap.add_argument("--live-owner", action="store_true")
     ap.add_argument("--allow-esc", action="store_true")
+    ap.add_argument("--allow-dialog", action="store_true",
+                    help="after the sweep: ESC once in the level, O in the dialog, P back (needs --allow-esc)")
     ap.add_argument("--mutate-next-off", action="store_true",
                     help="selftest control: set the list next offset to 8; the selftest must then FAIL")
     ap.add_argument("--out")

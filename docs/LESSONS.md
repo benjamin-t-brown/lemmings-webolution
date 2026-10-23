@@ -924,6 +924,13 @@ test. This agrees with B2e's one hold-25 sample and does not support the preserv
 is neither confirmed nor dropped until the live sweep. ESC in a level stores `ui_state` 2 and builds screen `0x1F`
 (not the map). Evidence: `docs/scratch/phase-b2g-esc-sweep-preflight.md`.
 
+## Live ESC sweep (B2h, 2026-10-23, OBSERVED)
+
+ESC held 2, 5, 10, 25 and 40 frames in pause: `ui_state` 0 every time, counter 5, list empty. The short-ESC quirk
+did not reproduce and is retracted. ESC in a level: `ui_state` 2, counter 5 to 7, one head node with vtable
+`0x4B26B0`; O returns to pause. `+8` on a stacked node and level-to-map remain unobserved. Evidence:
+`docs/scratch/phase-b2h-live-esc-sweep.md`.
+
 ## B2 menu object chain (B2a-B2c, 2026-10-23, READ only)
 
 `[0x5D59E4]` is the screen-list head (`0x487FA0` writes it; `0x487CC0` stores `[obj+4]`). The
@@ -1001,7 +1008,7 @@ do not revive the waived initial-write audit or call passing arithmetic full qua
    proves only that *something* was tested.
 7. **A clean negative is a result.** So is "this does not appear in any reachable level".
 8. **Preserve quirks.** RETURN only when the menu highlight is exactly 0, a
-   short ESC that fails to leave pause, the drawn crosshair disagreeing with the tested
+   short ESC that fails to leave pause (retracted 2026-10-23, B2h), the drawn crosshair disagreeing with the tested
    cursor. All real. Do not smooth them out. Menu language is not a quirk: the German
    menus were an early harness side effect (user, 2026-10-22); the English install is fine.
 

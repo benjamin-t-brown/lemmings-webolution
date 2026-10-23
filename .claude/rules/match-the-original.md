@@ -124,7 +124,9 @@ A claim about the original needs an address and what was read there, a code refe
 
 ## Preserve quirks
 
-Keep behavior that looks wrong when the original does it. RETURN only when the highlight is exactly 0, a short ESC that fails to leave pause, and the drawn crosshair disagreeing with the tested cursor are all real. Do not smooth them out.
+Keep behavior that looks wrong when the original does it. RETURN only when the highlight is exactly 0 and the drawn crosshair disagreeing with the tested cursor are real. Do not smooth them out.
+
+**Retracted 2026-10-23: "a short ESC that fails to leave pause".** It did not reproduce: ESC at holds of 2, 5, 10, 25 and 40 frames in pause all left pause (b2e hold 25, b2h the other four; `docs/scratch/phase-b2h-live-esc-sweep.md`), and the exe stores `ui_state` 0 on a new press of P or ESC with no hold test (`0x45D508`). Reopen it only if a run shows it.
 
 **Menu language is not a quirk** (user, 2026-10-22). German menus came from an early harness round that
 changed the language setting; the install's English `SavedGame.dat` is fine. Match whichever language the

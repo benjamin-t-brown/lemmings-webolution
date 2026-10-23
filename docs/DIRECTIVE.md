@@ -43,12 +43,17 @@ order); 2 is offline and conditional on 1.
 The grants of `d-playable-3`: per-round commits, up to three concurrent offline rounds, at
 most one live owner. **Two stock starts: one for question 1, one for question 3**, no retry
 after Popen, not transferable. Question 2 uses none. Question 1 may use the two hardware
-breakpoints above and no other debugger probe.
+breakpoints above, plus one GDB one-shot software int3 at the exe entry point `0x49D518`
+(`--entry-stop soft`, removed by GDB on report) for its one start, and no other debugger
+probe (amended, user, overlord review 2026-10-23, answering `q1-entry-int3` after B1u).
 
 ## Decisions already made (do not re-ask)
 
 - Authorized as scoped above (user, overlord review 2026-10-23). B1 parks for good if
   question 1 misses.
+- **`q1-entry-int3` answered: authorize the entry-point int3** (user, overlord review
+  2026-10-23). If the stock exe does not tolerate it, that is a stop condition, not a
+  retry. Q3 is parked (B2j, B2k: no named path); do not reopen it on this directive.
 - **B2 gate row amended** (same review): the short-ESC clause is dropped, retracted after
   B2h. RETURN only at highlight 0 stays.
 - **Time the pass** (same review, standing): see [FACILITATOR.md](FACILITATOR.md). The final

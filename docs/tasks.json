@@ -2,7 +2,32 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "b2e-live-capture",
+      "title": "One live capture of the frontend screen sequence (counter and list chain per step)",
+      "status": "running",
+      "brief": "build/tmp/b2e-live-capture-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live capture",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab2e-live-capture-c1577c63b57acc44",
+      "owns_live_game": true,
+      "live_owner": "b2e-live-capture",
+      "depends_on": [
+        "b2d-capture-preflight"
+      ],
+      "gate_served": "B2 screen-id sequence gate; directive Q3 live capture",
+      "question_round_count": 2,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-live-b2-capture",
+      "investigation_budget_minutes": 45,
+      "body_cap": 0
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -3180,7 +3205,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "b2d and b1s landed; Q1 live read waits on a cap question; Q3 live capture next.",
+    "current": "b2e (Q3 live capture, round 2 of 3) running: one stock start authorized.",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review): Q1 live read cap two rounds, one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 one stock start, cap three. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3208,7 +3233,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 new run. b2d (Q3 preflight) and b1s (Q1 preflight plus repair) landed. Q1 is at its two-round cap, so the live ^Font read waits in pending_questions q1-live-read-round-cap. Next: Q3 live capture (round 2 of 3, one stock start, session 1, menu/confirm/map/level entry/P-pause only; ESC and level-to-map have no proven key path). Q2 only if Q1 observes exactly one source.",
+    "handoff": "2026-10-23 b2d and b1s landed. Q1 live read parked in pending_questions q1-live-read-round-cap. b2e (Q3 live capture, one stock start, session 1) dispatched and owns the live game. Next: verify b2e (raw reads, install hashes, no stray process/task), then Q3 round 3 (offline state machine) if the capture is usable.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

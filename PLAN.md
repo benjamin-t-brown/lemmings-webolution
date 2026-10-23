@@ -621,8 +621,13 @@ loader is read ([B1p](docs/scratch/phase-b1p-texture-loader.md)): `^Font` conver
 the base-archive BMP+ALF pair only under a two-archive, no-override premise, so no
 unique source and no B1 render yet. B2 preflight
 ([B2a](docs/scratch/phase-b2a-sequence-preflight.md)) failed closed at its body cap with
-zero stock starts. Neither moves a gate. Next: Q1 round 2 on the unread open/registration
-edges, Q3 round 2 on highlight, key path and route.
+zero stock starts. Neither moves a gate.
+
+**B1q / B2b (round 2 each):** archive order is PATCH, LEMMINGS, CDPath LEMMINGS
+([B1q](docs/scratch/phase-b1q-archive-open.md)); `^Font` still converges on the base pair
+but registration-before-load is unread. B2b
+([check](docs/scratch/phase-b2b-highlight-keypath.md)) read the key-poll flag and the focus
+store, not a menu chain. Gates unmoved. B2 round 3 (`b2c-menu-chain`) is running.
 
 ## Phase C — the in-level HUD
 

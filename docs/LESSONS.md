@@ -889,6 +889,19 @@ registered match. Source is a BMP and an ALF companion. Not a unique-source clai
 the 12-body cap, zero starts. No byte-proved highlight accessor, native key producer
 or safe confirm/map/level/pause/back route; `0x004C416C` stays a construction counter.
 
+**B1q ([check](scratch/phase-b1q-archive-open.md)):** `0x47E23B` registers `PATCH.BOX`,
+then `LEMMINGS.BOX`, then `LEMMINGS.BOX` from registry `CDPath` (`0x4C2A54` / `0x4C2A60` /
+`0x4C2A70`); `0x47DD54` registers nothing; `[0x5D5604]` has no exact writer. `patch.box`
+has no `^Font` member and the `CDPath` copy of `lemmings.box` is byte-identical, so B1p's
+convergence survives. Not shown: that registration ran before the font load at `0x45019E`
+(callers `0x450771`, `0x45BEA7` unread). Still no unique-source claim.
+
+**B2b ([check](scratch/phase-b2b-highlight-keypath.md)):** `0x483212` sets `[0x5D5970]`
+to "any key newly pressed" (a flag, not a key identity); `0x48896A` events 2..5 end in the
+focus store `[container+0x10]` at `0x48F80C`. Candidate highlight
+`rows.index([[menu+0x10]+0x10])` is a shape, not an accessor: no file-backed chain to the
+`0x4B2528` menu and no key-to-event edge. The worker exceeded its body cap (about 17 of 12).
+
 ## Pause text at 0x44CD06
 
 [C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with

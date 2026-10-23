@@ -4,30 +4,6 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "b1q-archive-open",
-      "title": "Archive registration order and open route for Textures\\^Font",
-      "status": "running",
-      "brief": "build/tmp/b1q-archive-open-brief.md",
-      "worker_output": "build/tmp/b1q-archive-open/round-note.md",
-      "worker_tier": "targeted",
-      "work_kind": "disassembly read",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "dispatch_id": "ab1q-archive-open-308f48a795171fad",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [
-        "b1p-texture-loader"
-      ],
-      "gate_served": "B1 unchanged highlight0 full-frame <=0.02; unique read source prerequisite only",
-      "question_round_count": 2,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "b1-loader-b2-sequence",
-      "investigation_budget_minutes": 35
-    },
-    {
       "id": "b2c-menu-chain",
       "title": "B2 path to the menu object and key-to-event edge",
       "status": "running",
@@ -55,6 +31,39 @@
   ],
   "queue": [],
   "recently_landed": [
+    {
+      "id": "b1q-archive-open",
+      "title": "Archive registration order and open route for Textures\\^Font",
+      "status": "landed",
+      "brief": "build/tmp/b1q-archive-open-brief.md",
+      "worker_output": "build/tmp/b1q-archive-open/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab1q-archive-open-308f48a795171fad",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b1p-texture-loader"
+      ],
+      "gate_served": "B1 unchanged highlight0 full-frame <=0.02; unique read source prerequisite only",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-loader-b2-sequence",
+      "investigation_budget_minutes": 35,
+      "disposition": "partial: registration order read (patch, lemmings, CDPath lemmings); ^Font still converges on the base pair but boot ordering before the font load is unread; no unique-source claim, Q2 not started; 11 bodies vs cap 10, no REA bundle",
+      "landed_in": "docs/scratch/phase-b1q-archive-open.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-23: re-read 0x47E23B (three string pushes in order, each then 0x47E069); [0x5D5604] operands only 0x47E3A6/0x47E435; callers of 0x47E23B are 0x450771/0x45BEA7/0x47E576; lemmings.box SHA256 equal to the CDPath copy on mouv; 5 packet pins equal exe; install hashes equal startup; no game process. Not re-read: 0x47DD54 list handling, 0x47E40D internals, 0x4805B8.",
+      "remaining_blockers": [
+        "Not shown that 0x47E23B ran before the font load at 0x45019E (callers 0x450771, 0x45BEA7 unread).",
+        "Unread: 0x47F230, 0x47E105, 0x47E30C, 0x47EF48, 0x47EF92, 0x49DD81, runtime cwd.",
+        "No canonical REA bundle."
+      ]
+    },
     {
       "id": "b2b-highlight-keypath",
       "title": "B2 semantic highlight accessor and native key path",
@@ -3064,11 +3073,11 @@
     },
     "workers": "OpenCode mapping docs/ROLES.md: disasm-agent for native reads, round-agent for capture-only/render/implementation rounds; no model override.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 invocation. Took over from OpenCode facilitator ses_e96a3d099ffeQpsc1kgKEdfDBJ at the user's /facilitator-ssh start: no task was `running` (both dispatched rounds were ready-for-verify, packets finished 09:44/09:34), so the start is the handoff per ORCHESTRATION#standing-run. opencode.exe processes exist on mouv and were not attributed to a session; the prior session was not contacted.",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
-    "handoff": "2026-10-23 B1p, B2a, B2b landed (bounded negatives / partial); head 9d09ba8. Running offline, zero stock starts: b1q-archive-open (Q1 round 2) and b2c-menu-chain (Q3 round 3, last under the directive; hard 12-body cap, prediction.md must predate reads). On b2c return: verify and land; if both edges are not closed, park B2 in PLAN Phase E with a resume brief. Q2 render only if b1q yields exactly one source. The one B2 stock start stays unused until a complete route preflight exists. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
+    "handoff": "2026-10-23 B1p, B2a, B2b, B1q landed as bounded negatives/partials. B1q: archive order is PATCH, LEMMINGS, CDPath LEMMINGS; ^Font still converges on the base pair, but whether registration ran before the font load is unread (callers 0x450771, 0x45BEA7). Q1 is at round 2 of 3. Running offline: b2c-menu-chain (Q3 round 3, last; hard 12-body cap). Next: after b2c, either a Q1 round 3 on the registration-before-load edge or park; Q2 render only on exactly one source. Zero stock starts used. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [{

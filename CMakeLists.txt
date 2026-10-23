@@ -181,6 +181,12 @@ add_executable(test_progress src/__test__/test_progress.cpp)
 target_link_libraries(test_progress PRIVATE webolution_objects)
 add_test(NAME progress COMMAND test_progress)
 
+# B2f: frontend screen sequence replayed from the b2e capture. Frontend.cpp is built
+# into the test directly (as test_skillpanel does) so the shared source list stays put.
+add_executable(test_frontend_sequence src/__test__/test_frontend_sequence.cpp src/shell/Frontend.cpp)
+target_link_libraries(test_frontend_sequence PRIVATE webolution_objects)
+add_test(NAME frontend_sequence COMMAND test_frontend_sequence)
+
 
 add_executable(test_levelindex src/__test__/test_levelindex.cpp)
 target_link_libraries(test_levelindex PRIVATE webolution_objects)

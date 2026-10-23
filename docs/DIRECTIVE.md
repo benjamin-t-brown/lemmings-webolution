@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the texture-loader / B2 directive, done 2026-10-23 (Q1 parked at cap after B1p,
 B1q, B1r; B2 parked at cap after B2a, B2b, B2c; zero stock starts used).

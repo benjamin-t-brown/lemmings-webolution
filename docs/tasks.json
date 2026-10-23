@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b2f-frontend-state-machine",
       "title": "Offline frontend screen state machine matching the b2e capture",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b2f-frontend-state-machine-brief.md",
       "worker_tier": "targeted",
       "work_kind": "offline implementation",
@@ -25,11 +27,16 @@
       "stock_starts_consumed": 0,
       "standing_run": "b1-live-b2-capture",
       "investigation_budget_minutes": 40,
-      "body_cap": 2
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "body_cap": 2,
+      "worker_output": "build/tmp/b2f-frontend-state-machine/round-note.md",
+      "landed_in": "docs/scratch/phase-b2f-frontend-state-machine.md",
+      "disposition": "Frontend state machine replays all seven b2e rows (43 checks); short ESC default Refuse (quirk) with LeavePause for the b2e row, level-to-map and long ESC unobserved policy; counter start 2 is hypothesis",
+      "facilitator_verified": "2026-10-23: read source; ctest frontend_sequence and full suite 31/31 on mouv; counter increment mutation alone fails after a real rebuild (first no-rebuild attempt discarded); restored blob hash equals Mac; Mac/mouv blobs identical, LF; no game/gdb process or LemWeb task. Not verified: behaviour beyond the seven observed rows.",
+      "remaining_blockers": [
+        "short ESC, long ESC, level-to-map, +8 link unobserved",
+        "Frontend.cpp not in cmake/webolution_sources.cmake"
+      ]
+    },
     {
       "id": "b2e-live-capture",
       "title": "One live capture of the frontend screen sequence (counter and list chain per step)",
@@ -3239,7 +3246,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "b2f (Q3 round 3 of 3, offline state machine) running; Q1 live read parked on pending_questions q1-live-read-round-cap.",
+    "current": "Stop point reached: Q3 landed at its three-round cap (b2d, b2e, b2f), Q1 live read parked on pending_questions q1-live-read-round-cap, Q2 not started (needs exactly one observed source).",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review): Q1 live read cap two rounds, one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 one stock start, cap three. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3248,7 +3255,7 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator invocation; directive active and prior run stopped, no task was running, so this start is the handoff.",
-    "rounds_run": 4,
+    "rounds_run": 5,
     "stock_starts_used": 1,
     "pending_questions": [
       {
@@ -3267,9 +3274,17 @@
       }
     ],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 b2e landed: counter 3/4/5, single-node screens, short ESC left pause once, long ESC and +8 unobserved. stock_starts_used 1 of 2 (second reserved for Q1, parked). Next: dispatch Q3 round 3 (offline), report pending question q1-live-read-round-cap.",
+    "handoff": "2026-10-23 stopped. Awaiting user decision q1-live-read-round-cap (recommend authorize: one stock start remains, offline work done). Q2 follows only if Q1 observes exactly one source. B2 gate unmet: short ESC, long ESC, level-to-map, +8 unobserved.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null,
+    "stopped": {
+      "date": "2026-10-23",
+      "reason": "Directive stop point: Q3 landed at cap (B2d, B2e, B2f; counter 3/4/5 observed and replayed, ESC/level-to-map/+8 unobserved); Q1 parked on user decision q1-live-read-round-cap after b1s and repair; Q2 not started. No gate scored.",
+      "last_commit": "10dbb2f",
+      "current_gate": "B1 highlight0 full-frame <=0.02 unscored; B2 sequence gate unmet (observed rows replayed only)",
+      "rounds_run": 5,
+      "stock_starts_used": 1,
+      "no_further_dispatch": true
+    },
     "previous": [
       {
         "id": "b1-loader-b2-sequence",

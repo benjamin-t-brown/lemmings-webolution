@@ -2871,12 +2871,12 @@
       }
     ],
     "stop_point": "B1 gate passes on independent re-score, either question reaches cap (runtime 3, render 2), or any ORCHESTRATION stop condition; no milestone advance.",
-    "handoff": "2026-10-23 STOPPED after B1m plus offline repair1 (2 dispatches,1/1 starts PID45172). Independently verified X640=>320 without highlight memory bracket; font+8 index36; wrong manager dereference captured .rdata and first missing runtime bytes are0x58CB84..88. Source/dimensions unknown. Negative landed with evidence, no B1 render/score. All install hashes restored; no process/task,30/30 CTest. Active/queue empty. Only next action is user/overlord authorization decision for offline-preflighted reacquisition; no live retry or other milestone on this closed directive. Round commit/sync status to be recorded after landing.",
+    "handoff": "2026-10-23 STOPPED after B1m plus offline repair1 (2 dispatches,1/1 starts PID45172). Independently verified X640=>320 without highlight memory bracket; font+8 index36; wrong manager dereference captured .rdata and first missing runtime bytes are0x58CB84..88. Source/dimensions unknown. Negative landed with evidence, no B1 render/score. All install hashes restored; no process/task,30/30 CTest. Active/queue empty. Only next action is user/overlord authorization decision for offline-preflighted reacquisition; no live retry or other milestone on this closed directive. Round commit0965330 successfully pushed origin/decompile; this checkpoint records that verified-round hash.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": {
       "date": "2026-10-23",
       "reason": "Every remaining authorized ranked action depends on pending authorization: sole live start consumed without source binding; offline repair proved first missing runtime edge. Render question2 depends on binding; other milestones excluded. No retry after Popen. Stop is not the round cap (question1 at2/3) or a gate amendment.",
-      "last_commit": null,
+      "last_commit": "0965330",
       "current_gate": "B1 main-menu highlight0 full-frame <=0.02 remains unscored/unaccepted; no changed thresholds/masks/exclusions.",
       "rounds_run": 2,
       "stock_starts_used": 1,

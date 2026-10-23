@@ -7,69 +7,70 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done**
+Status: **active**
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
-Supersedes: the B1 main-menu render directive, closed 2026-10-22 (`b1-menu-render`,
-question 1 at its cap, question 2 landed).
+Supersedes: the B1 runtime-read directive, closed 2026-10-23 (`b1-runtime-render`, B1m
+spent its one start without the sheet binding).
 
 ## Scope
 
-B1j-B1l read everything static about the main-menu text: labels are the table at
-`0x4C4214` (UK 125, 126, 120, 3, 43), measured with `^Font` (table `0x4BF968`,
-`lineHeight` 29), Y = 320 + 29 x row. Two values exist only at runtime and are the last
-unknowns for the B1 gate. Two questions, in order:
+The B1 gate still lacks one input: which sheet backs `^Font`. B1m read X = 320 (word 640
+at `0x58CB40`, without a highlight bracket) and mapped the runtime chain to the sheet
+(pool base `[0x58CB84]`, record index*0x88 + pool+0x0C, descriptor +0x14/+0x18), but
+captured none of its values. Three questions, in order:
 
-1. **B1 runtime read (live, one stock start).** On the main menu at highlight 0, read
-   the word at `[0x58CB40]` (X is its signed half) and the texture `^Font` resolves to
-   through manager `0x58CB48` (`0x474519`): which sheet, its source and dimensions. If
-   cheap in the same start, confirm one label's drawn Y against 320 + 29 x row. Cap three
-   rounds. Gate relevance: these are the only inputs the B1 score still lacks.
-2. **B1 render and score (offline, up to two rounds, after question 1 lands).** Wire the
-   read charmap, label table, Y rule and read X into our frontend renderer, draw with the
-   read sheet, and score the main menu at highlight 0 full-frame against the B1b reference
-   capture and the B1 gate. Use `UK.LTX` (the original asks for `Language\Uk.ltx`, C2b);
-   B1a's `GERMAN.LTX` test is not the reference.
+1. **Sheet identity from the read glyph tables (offline; round 3 of 3 on the B1 runtime
+   question).** Test B1i's `^Font` table (`0x4BF968`, `lineHeight` 29) and `_FontSmall`
+   table (`0x4BFC10`, `lineHeight` 14) against every retail font sheet in the archives.
+   Each cell's `{X, Y, width} x lineHeight` rectangle must lie inside the sheet; ink
+   cells (`Q`, `M`, digits) must hold ink; zero-width and blank cells (`&`, space) must
+   fall where the read table predicts. Accept a sheet only if exactly one is consistent
+   with every cell, by a re-runnable script. Record it as an **inference from read
+   tables**, not a runtime read. This is the semantic glyph discriminator B1h's resume
+   brief asks for. It is not fitting: no optimiser, no scalar score, no free parameters.
+2. **B1 render and score (offline, up to two rounds; only if question 1 accepts one
+   sheet).** Draw the main menu at highlight 0 from the read charmap, the label table at
+   `0x4C4214`, Y = 320 + 29 x row, X from B1m (320, signed half of 640) and the accepted
+   sheet, with `UK.LTX`. Score full-frame against the B1b reference and the B1 gate. A pass
+   is also the check on B1m's unbracketed X.
+3. **Live fallback (pre-authorized by the user; only if question 1 is ambiguous or
+   negative).** One stock start, recorded as a cap exception (round 4 on the runtime
+   question). Before Popen, an offline preflight must prove, from bytes, the
+   current-process highlight accessor and the full pointer chain from `[0x58CB84]` to the
+   record, wrapper, descriptor dimensions and the source name or data. Do not reuse
+   B1m's heap addresses or index 36. If the preflight cannot close, park instead of
+   launching. Then return to question 2 with the read sheet.
 
 ## Budget
 
 The grants of `d-playable-3`: per-round commits, up to three concurrent offline rounds.
-**One stock start** for question 1; no retry after Popen. Question 2 is offline.
+Questions 1 and 2 use **no** stock starts. Question 3 gets **one**, only on its
+condition, no retry after Popen.
 
 ## Decisions already made (do not re-ask)
 
-- **Read, do not fit.** Placement and sheet come from reads, not from pixel or scalar
-  optimisation. B1f/B1h fitting stays parked; the Quit-row 0.0202 scalar is not a score.
+- **Read, do not fit.** Placement and sheet come from reads or from the table test in
+  question 1, never from pixel or scalar optimisation. B1f/B1h fitting stays parked; the
+  Quit-row 0.0202 scalar is not a score.
 - Settled and not to be re-derived: B1i's charmap and advance rule; B1k's label table,
-  `^Font` binding and Y rule; B1l's file-negatives (no static store to `[0x58CB40]`, no
-  BMP name for `^Font` in the exe); C2a/C2b's Out, Saved and timer reads.
-- **Restoration:** C1f's `probe.py` cleanup did not restore `dgVoodoo.conf` by itself (it
-  was fixed by hand). Question 1's brief must restore and hash-check every install file
-  explicitly, in the same process that swapped it.
+  `^Font` binding and Y rule; B1l's file-negatives; B1m's X word and pointer chain
+  (offsets only); C2a/C2b's Out, Saved and timer reads.
+- **Live preflight is mandatory.** B1m spent its start on an unchecked pointer reading.
+  Any live round validates every address it will read, offline, before launch.
+- **Restoration:** restore and hash-check every install file in the same process that
+  changed it.
 - English menus are the reference; do not reset the install language.
-- C1 stays held; its base-icon live read is the overlord's likely next pass, not this one.
+- C1 stays held.
 
 ## Stop point
 
-Stop and report when the B1 gate passes on your own independent re-score, or when either
-question reaches its cap. Also stop on any stop condition in ORCHESTRATION. Do not advance
-to B2, C1, C2 or C3 on this directive.
+Stop and report when the B1 gate passes on your own independent re-score, or when B1 is
+parked (a question at its cap, question 3's preflight failing, or its start spent without
+the binding). Also stop on any stop condition in ORCHESTRATION. Do not advance to B2, C1,
+C2 or C3 on this directive.
 
 ## Sync
 
 Pull before selecting work and push after each round commit, per
 [ROLES.md](ROLES.md#opencode-on-the-mac-clone). If a push from mouv fails on credentials,
 leave the commits local and say so in the handoff; the overlord carries them to GitHub.
-
-## Outcome — 2026-10-23
-
-Stopped with question 1 incomplete after B1m and one offline repair (two rounds,
-one of one stock starts). X640→320 read; highlight bracket and resource binding
-capture failed. Independently verified diagnosis: embedded manager was mistaken
-for a pointer; first missing pool bytes are 0x58CB84..0x58CB88. Source sheet and
-dimensions remain unknown. No B1 render/score or milestone advance. Install
-hashes restored, no live process/task, 30/30 CTest.
-
-All remaining authorized work depends on the missing binding, and another live
-attempt is expressly ungranted. Queue pending question requests a separately
-authorized acquisition with offline pointer/source/highlight preflight first;
-no automatic retry. [Evidence](scratch/phase-b1m-runtime-font-read.md).

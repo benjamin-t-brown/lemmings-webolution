@@ -13,7 +13,7 @@
       "harness": "Claude Code",
       "requested_model": "session model (no pin, per ROLES)",
       "worker_agent": "round-agent",
-      "dispatch_id": null,
+      "dispatch_id": "ab1t-font-live-read-b66d90dba67e6189",
       "owns_live_game": true,
       "live_owner": "b1t-font-live-read",
       "depends_on": [
@@ -38,7 +38,7 @@
       "harness": "Claude Code",
       "requested_model": "session model (no pin, per ROLES)",
       "worker_agent": "round-agent",
-      "dispatch_id": null,
+      "dispatch_id": "ab2g-esc-sweep-preflight-4ef5b01540463db8",
       "owns_live_game": false,
       "live_owner": null,
       "depends_on": [

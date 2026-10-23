@@ -550,6 +550,16 @@ the Paused-caption receiver `H`, and its body shows `H+0x758`/`H+0x77C`/`H+0x224
 filled through this same glyph-builder — offered to whoever next picks up that Phase C
 thread, not claimed as resolved here.
 
+**B1j: none of `FUN_004404fa`'s callers draws the five main-menu labels**
+([check](docs/scratch/phase-b1j-menu-callers.md)), 2026-10-22, round 1 of the
+B1 render question. A raw-`.text` scan finds 17 direct `E8` calls to
+`0x4404FA`, in 12 procedures. None passes UK indices 125, 126, 120, 3, or 43.
+`push 126` does not occur in `.text`. The only `push 120` (`0x487511`) calls
+allocator `0x49C1A8`. The call-site font operand is `[0x4CBF78]` or
+`[0x4CBF7C]`, and constructor `0x440330` stores vtable `0x4B15C8` and
+`+8 = -1`, not a glyph table. The label draw itself is unread. The full-frame
+gate is unchanged. No stock start.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -1423,9 +1433,10 @@ open.
   not glyph evidence; [independent check](docs/scratch/phase-b1h-interrupted-quit-registration.md).
   Resume only under new explicit authorization after reviewing source identity/target
   boundaries and a semantic glyph discriminator, not scalar-only optimizer fits.
-  No continuation/repair is currently authorized or queued. **B1i (above) answers what
-  this fitting approach was trying to infer, from bytes instead** — a resume should wire
-  B1i's charmap into a renderer and score pixels, not resume glyph fitting.
+  No continuation/repair is currently authorized or queued. **B1i (above) answers the
+  glyph rule from bytes. B1j found that none of `FUN_004404fa`'s callers draws the five
+  menu labels, so a resume looks for that label draw.** Do not revive glyph fitting, and
+  do not wire those 17 calls as the menu.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

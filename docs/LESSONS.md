@@ -826,6 +826,14 @@ seven-candidate identity search. This is not a traced draw routine, semantic pro
 the list's role, or a B1 pixel-gate pass. The saved poll cannot distinguish an unreadable
 terminal next pointer from null; one observed node does not prove list cardinality.
 
+## Menu text is not a FUN_004404fa caller
+
+[B1j](scratch/phase-b1j-menu-callers.md): 17 direct `E8` calls to `0x4404FA`,
+in 12 procedures. None passes UK indices 125, 126, 120, 3, or 43. `push 126`
+does not occur in `.text`. The only `push 120` (`0x487511`) calls allocator
+`0x49C1A8`. The five labels' draw function is still unread. Do not repeat this
+caller scan, and do not treat those calls as the main menu.
+
 ## Hard-won rules of thumb
 
 **A6f failed acquisition** ([check](scratch/phase-a6-fresh-pause-gate-failed.md)):

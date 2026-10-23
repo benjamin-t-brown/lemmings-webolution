@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b2e-live-capture",
       "title": "One live capture of the frontend screen sequence (counter and list chain per step)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b2e-live-capture-brief.md",
       "worker_tier": "targeted",
       "work_kind": "live capture",
@@ -15,21 +17,28 @@
       "worker_agent": "round-agent",
       "dispatch_id": "ab2e-live-capture-c1577c63b57acc44",
       "owns_live_game": true,
-      "live_owner": "b2e-live-capture",
+      "live_owner": null,
       "depends_on": [
         "b2d-capture-preflight"
       ],
       "gate_served": "B2 screen-id sequence gate; directive Q3 live capture",
       "question_round_count": 2,
       "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
+      "stock_starts_consumed": 1,
       "standing_run": "b1-live-b2-capture",
       "investigation_budget_minutes": 45,
-      "body_cap": 0
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "body_cap": 0,
+      "worker_output": "build/tmp/b2e-live-capture/round-note.md",
+      "landed_in": "docs/scratch/phase-b2e-live-capture.md",
+      "disposition": "one stock start: counter 3/4/5 at menu/confirm/map observed, single-node list replaced per screen, empty head in level; short ESC (hold 25) LEFT pause (quirk not reproduced, one sample); long ESC refused by guard; +8 prev unsettled",
+      "facilitator_verified": "2026-10-23: separate re-read of raw/*.json equals report.json (counters, vtables, path); install hashes equal before/after and to startup record; no game process or LemWeb task on mouv; selftest 15/15; ESC-guard mutation alone breaks selftest; Mac and mouv script identical. Not verified: live key delivery, cause of short-ESC result.",
+      "remaining_blockers": [
+        "long ESC untested",
+        "short ESC result is one sample",
+        "+8 prev never checked on a real pair",
+        "level-to-map unobserved"
+      ]
+    },
     {
       "id": "b1s-font-live-preflight",
       "title": "Offline preflight for the live ^Font source read (one hardware breakpoint)",
@@ -3205,7 +3214,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "b2e (Q3 live capture, round 2 of 3) running: one stock start authorized.",
+    "current": "b2e landed (Q3 round 2 of 3, start spent). Next: Q3 round 3 offline implementation of the 3/4/5 sequence; Q1 live read parked on pending_questions q1-live-read-round-cap.",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review): Q1 live read cap two rounds, one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 one stock start, cap three. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3214,8 +3223,8 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator invocation; directive active and prior run stopped, no task was running, so this start is the handoff.",
-    "rounds_run": 3,
-    "stock_starts_used": 0,
+    "rounds_run": 4,
+    "stock_starts_used": 1,
     "pending_questions": [
       {
         "id": "q1-live-read-round-cap",
@@ -3233,7 +3242,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 b2d and b1s landed. Q1 live read parked in pending_questions q1-live-read-round-cap. b2e (Q3 live capture, one stock start, session 1) dispatched and owns the live game. Next: verify b2e (raw reads, install hashes, no stray process/task), then Q3 round 3 (offline state machine) if the capture is usable.",
+    "handoff": "2026-10-23 b2e landed: counter 3/4/5, single-node screens, short ESC left pause once, long ESC and +8 unobserved. stock_starts_used 1 of 2 (second reserved for Q1, parked). Next: dispatch Q3 round 3 (offline), report pending question q1-live-read-round-cap.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

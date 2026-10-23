@@ -110,7 +110,7 @@ PLAN = (
 )
 
 
-def run_plan(read, io, allow_esc=False, log=None):
+def run_plan(read, io, allow_esc=False, log=None, on_step=None):
     """io: key(name, hold), highlight() -> int | None, drive_highlight_to_zero(), click_node(),
     ui_state() -> int, loaded_path() -> str. Returns the list of per-step records."""
     out = []
@@ -118,10 +118,21 @@ def run_plan(read, io, allow_esc=False, log=None):
     def rec(step, **extra):
         r = dict(step=step["name"], expect_counter=step.get("expect_counter"),
                  expect_ui_state=step.get("expect_ui_state"), ui_state=io.ui_state(), **extra)
-        r.update(observe(read))
+        try:
+            r.update(observe(read))
+        except CaptureError as exc:
+            r["chain_error"] = str(exc)
+            out.append(r)
+            if log:
+                log(r)
+            if on_step:
+                on_step(r)
+            raise
         out.append(r)
         if log:
             log(r)
+        if on_step:
+            on_step(r)
 
     for step in PLAN:
         kind = step["kind"]
@@ -136,6 +147,8 @@ def run_plan(read, io, allow_esc=False, log=None):
         elif kind == "key":
             if step["key"] in ("P", "ESCAPE") and io.ui_state() not in (0, 1):
                 raise CaptureError(f"refusing {step['key']}: ui_state {io.ui_state()} is not a level (0) or pause (1)")
+            if step["key"] == "ESCAPE" and io.ui_state() != 1:
+                raise CaptureError(f"refusing ESCAPE: ui_state {io.ui_state()} is not pause (1)")
             if step.get("needs_highlight0") and io.highlight() != 0:
                 raise CaptureError(f"refusing RETURN: highlight is {io.highlight()!r}, not 0")
             io.key(step["key"], step["hold"])
@@ -171,7 +184,28 @@ def live(args):  # pragma: no cover - Windows, live game only
     h, pid = attach()
     if not h:
         raise CaptureError("the stock game is not running")
-    read = lambda a, n: read_mem(h, a, n)  # noqa: E731
+    rawlog = []
+
+    def read(a, n):
+        d = read_mem(h, a, n)
+        rawlog.append(dict(addr=hex(a), size=n, hex=d.hex() if isinstance(d, bytes) else None))
+        return d
+
+    dump_dir = Path(args.dump_dir) if args.dump_dir else None
+    if dump_dir:
+        dump_dir.mkdir(parents=True, exist_ok=True)
+    done = []
+
+    def on_step(r):
+        # raw reads behind this record, then the first 0x40 bytes of every node (after the bracket)
+        for n in r.get("nodes", []):
+            read(n["addr"], 0x40)
+        if dump_dir:
+            name = f"{len(done):02d}-{r['step']}.json"
+            (dump_dir / name).write_text(json.dumps(dict(step=r["step"], reads=rawlog), indent=1) + "\n", encoding="utf-8")
+        rawlog.clear()
+        done.append(r)
+
     report = dict(pid=pid, install_before=before, allow_esc=args.allow_esc, writes_to_game=0, steps=[])
     with LRInput() as inp:
         class IO:
@@ -216,13 +250,18 @@ def live(args):  # pragma: no cover - Windows, live game only
 
         inp.enable()
         try:
-            report["steps"] = run_plan(read, IO(), args.allow_esc, log=lambda r: print(json.dumps(r), flush=True))
+            report["steps"] = run_plan(read, IO(), args.allow_esc,
+                                       log=lambda r: print(json.dumps(r), flush=True), on_step=on_step)
+        except Exception as exc:
+            report["steps"] = done
+            report["error"] = f"{type(exc).__name__}: {exc}"
+            raise
         finally:
             inp.release()
             k32.CloseHandle(h)
-    report["install_after"] = install_hashes()
-    report["install_unchanged"] = report["install_after"] == before
-    Path(args.out).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            report["install_after"] = install_hashes()
+            report["install_unchanged"] = report["install_after"] == before
+            Path(args.out).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return 0
 
 
@@ -282,6 +321,8 @@ def selftest():
             self.keys.append((name, hold))
             if name == "RETURN":
                 self.mem.words[COUNTER] += 1
+            if name == "P":
+                self.ui = 1
 
         def drive_highlight_to_zero(self):
             self.hl = 2 if self.stuck else 0
@@ -314,6 +355,10 @@ def selftest():
     io5.click_node = lambda: None   # click never entered a level: ui_state stays 3
     check("plan: P/ESC refused outside a level", raises(lambda: run_plan(io5.mem, io5, allow_esc=True))
           and not [k for k, _ in io5.keys if k in ("P", "ESCAPE")])
+    io6 = FakeIO(synth())
+    io6.key = lambda name, hold: io6.keys.append((name, hold))   # P never pauses: ui_state stays 0
+    check("plan: ESC refused when ui_state is not pause", raises(lambda: run_plan(io6.mem, io6, allow_esc=True))
+          and not [k for k, _ in io6.keys if k == "ESCAPE"])
     bad = synth(); bad.words[0x01000200 + 4] = 0x01000100
     io4 = FakeIO(bad)
     check("plan: bad chain stops before any key", raises(lambda: run_plan(io4.mem, io4)) and not io4.keys)
@@ -332,6 +377,7 @@ def main():
     ap.add_argument("--mutate-next-off", action="store_true",
                     help="selftest control: set the list next offset to 8; the selftest must then FAIL")
     ap.add_argument("--out")
+    ap.add_argument("--dump-dir", help="write the raw reads behind each step here")
     args = ap.parse_args()
     if args.selftest:
         if args.mutate_next_off:

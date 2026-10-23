@@ -2962,7 +2962,7 @@
     "stopped": {
       "date": "2026-10-22",
       "reason": "Both of docs/DIRECTIVE.md's questions are answered (landed, independently verified) -- the directive's own stop condition. Question 1 closed cleanly (charmap/advance read and checked against a retail string). Question 2 spent its one authorized stock start and recorded the read, but redirects C1's open question rather than closing it (the real base-icon source and the +0x3c writer are still unidentified). Per the directive, do not advance to B2, C2 or C3, and do not re-attempt the B1 or C1 gate until the overlord ranks the next pass.",
-      "last_commit": "PENDING",
+      "last_commit": "eaf2d78",
       "current_gate": "B1 full-frame <=0.02 still open (charmap now read, not yet wired into a renderer); C1 render clause (buttons+counts <=0.02) still open, redirected to a new base-icon-source question plus the unwired B1 charmap",
       "rounds_run": 2,
       "stock_starts_used": 1,

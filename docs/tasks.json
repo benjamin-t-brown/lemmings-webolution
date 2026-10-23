@@ -4055,7 +4055,7 @@
     "stopped": {
       "date": "2026-10-23",
       "reason": "Every remaining ranked question waits on pending_questions or is parked: Q1 start needs the entry-point int3 authorized (q1-entry-int3), Q2 depends on Q1, Q3 parked with no named path.",
-      "last_commit": "pending"
+      "last_commit": "3a3b65e"
     }
   }
 }

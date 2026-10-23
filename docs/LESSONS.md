@@ -931,6 +931,15 @@ did not reproduce and is retracted. ESC in a level: `ui_state` 2, counter 5 to 7
 `0x4B26B0`; O returns to pause. `+8` on a stacked node and level-to-map remain unobserved. Evidence:
 `docs/scratch/phase-b2h-live-esc-sweep.md`.
 
+## Level to map, handler to store (B2j, 2026-10-23, READ only)
+
+Screen 0x20's handler `0x486510` (vtable `0x4B1CB0` slot 11) calls slot 3 `0x4886E4` with selector 0x23 when the
+event id equals `[screen+0x48]` (`0x486599`); the factory builds ctor `0x49AA90`, vtable `0x4B3EB8`, which is the head
+node B2h saw after the map-node click (so 0x23 = map is an inference). The 0x1F dialog builds 9 / 0x19, never 0x23;
+`[level+0x55A2]` has no setter. The input that produces the event id and the trigger that builds screen 0x20 are
+unread; no key or click path is named. Stacking candidate: `0x4886E4` skips the `0x4884F4` call on the old head, but
+whether the old node survives is unread. Evidence: `docs/scratch/phase-b2j-level-to-map-preflight.md`.
+
 ## B2 menu object chain (B2a-B2c, 2026-10-23, READ only)
 
 `[0x5D59E4]` is the screen-list head (`0x487FA0` writes it; `0x487CC0` stores `[obj+4]`). The

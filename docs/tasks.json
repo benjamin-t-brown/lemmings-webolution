@@ -2,11 +2,14 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b1s-font-live-preflight",
       "title": "Offline preflight for the live ^Font source read (one hardware breakpoint)",
-      "status": "running",
+      "status": "landed",
+      "worker_output": "build/tmp/b1s-font-live-preflight/repair1-note.md",
       "brief": "build/tmp/b1s-font-live-preflight-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -18,16 +21,23 @@
       "live_owner": null,
       "depends_on": [],
       "gate_served": "B1 unchanged highlight0 full-frame <=0.02; directive Q1 offline preflight",
-      "question_round_count": 1,
+      "question_round_count": 2,
       "stock_starts_authorized": 0,
       "stock_starts_consumed": 0,
       "standing_run": "b1-live-b2-capture",
-      "investigation_budget_minutes": 40,
-      "body_cap": 12
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "investigation_budget_minutes": 25,
+      "body_cap": 8,
+      "repair_brief": "build/tmp/b1s-font-live-preflight-repair1-brief.md",
+      "repair_reason": "Probe attaches after the startup-chain ^Font load (paused-level guard); arm-before-load method unproven. Breakpoint address and expressions verified.",
+      "original_worker_output": "build/tmp/b1s-font-live-preflight/round-note.md",
+      "landed_in": "docs/scratch/phase-b1s-font-live-preflight.md",
+      "disposition": "breakpoint 0x47E4AD exposes request name, entry and archive at one stop; --launch mode written to arm before the startup load, unproven on the stock game; question 1 now at its two-round cap",
+      "facilitator_verified": "2026-10-23: re-read gate, load site, 0x47E4A0/0x47E6A0 arms, 0x47F210/0x47F0B0/0x406500; own call scan of 0x486F60/0x486BD8/0x4403A7; selftest; first_start guard mutation alone fails; BP-address mutation alone does not; starti plus hw breakpoint checked on a throwaway exe only; hashes equal, no game/gdb/LemWeb. Not verified: launch-mode GDB strings, starti on stock exe, stop-after 4 vs two hits.",
+      "remaining_blockers": [
+        "launch mode unrun on the stock game",
+        "stop-after default 4 and timeout drops hits from the report"
+      ]
+    },
     {
       "id": "b2d-capture-preflight",
       "title": "Offline preflight and capture script for the B2 frontend sequence",
@@ -3170,7 +3180,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "b2d (Q3 preflight) landed; b1s (Q1 preflight) running; no stock start used.",
+    "current": "b2d and b1s landed; Q1 live read waits on a cap question; Q3 live capture next.",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review): Q1 live read cap two rounds, one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 one stock start, cap three. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3179,11 +3189,26 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator invocation; directive active and prior run stopped, no task was running, so this start is the handoff.",
-    "rounds_run": 1,
+    "rounds_run": 3,
     "stock_starts_used": 0,
-    "pending_questions": [],
+    "pending_questions": [
+      {
+        "id": "q1-live-read-round-cap",
+        "question": "Directive Q1 caps the B1 source question at two rounds. The offline preflight (b1s) plus its one repair used both. May the live read (one stock start, one hardware breakpoint) run as a third round?",
+        "evidence": [
+          "docs/scratch/phase-b1s-font-live-preflight.md",
+          "docs/DIRECTIVE.md",
+          "docs/ORCHESTRATION.md#milestones-gates-and-round-caps (repairs count)"
+        ],
+        "options": [
+          "Authorize the live read as round 3 of Q1, with --stop-after set from the expected two hits and --launch armed at the first instruction",
+          "Park Q1 (B1 stays unscored) and spend the effort on Q3 only"
+        ],
+        "recommendation": "Authorize round 3: it is the one start the directive grants for Q1, and everything offline is done. Residual families still failing the B1 gate: source sheet (conditional, archive path only if gate [0x5D5610] is nonzero), highlight accessor (0 byte-proved), B1 full-frame render (0 scores). Risks: --launch is untested on the stock game and the load may be missed if the exe resists a debugger."
+      }
+    ],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 new run. b2d landed (capture script written, selftested, unrun; ESC and level-to-map have no proven key path). b1s (Q1 preflight) still running offline. Next: verify b1s, then the Q1 live read (one start, one HW breakpoint), then the Q3 live capture; Q2 only if Q1 observes exactly one source.",
+    "handoff": "2026-10-23 new run. b2d (Q3 preflight) and b1s (Q1 preflight plus repair) landed. Q1 is at its two-round cap, so the live ^Font read waits in pending_questions q1-live-read-round-cap. Next: Q3 live capture (round 2 of 3, one stock start, session 1, menu/confirm/map/level entry/P-pause only; ESC and level-to-map have no proven key path). Q2 only if Q1 observes exactly one source.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

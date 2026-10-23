@@ -7,9 +7,15 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
 Issued: 2026-10-22 (user, overlord review 2026-10-22)
 Supersedes: the C1 directive, closed 2026-10-22 (`c1-skill-panel`, parked at its round cap).
+Closed: 2026-10-22, facilitator session (standing run `font-charmap-c1-live`, stop commit
+`eaf2d78`). Both questions answered and independently verified: question 1 (font charmap)
+landed cleanly; question 2 (C1 live read) spent its one authorized stock start and recorded
+the read, redirecting rather than closing C1's open question. B1 and C1 remain not
+accepted. See `docs/tasks.json` → `standing_run.previous[0]` for the full handoff once a
+new standing run is opened, and `PLAN.md` Phase B/Phase C/Phase E for the landed findings.
 
 ## Scope
 

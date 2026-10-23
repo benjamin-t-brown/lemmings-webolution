@@ -558,7 +558,7 @@ B1 render question. A raw-`.text` scan finds 17 direct `E8` calls to
 `push 126` does not occur in `.text`. The only `push 120` (`0x487511`) calls
 allocator `0x49C1A8`. The call-site font operand is `[0x4CBF78]` or
 `[0x4CBF7C]`, and constructor `0x440330` stores vtable `0x4B15C8` and
-`+8 = -1`, not a glyph table. The label draw itself is unread. The full-frame
+`+8 = -1`, not a glyph table. B1k, below, names the draw. The full-frame
 gate is unchanged. No stock start.
 
 **B1k: the five labels are the dwords at `0x4C4214`**
@@ -572,6 +572,13 @@ placement is a signed half of the BSS word `[0x58CB40]`; the `sub eax, edx`
 before the shift is the `cdq` sign mask, not a second coordinate. The pixel
 X and the texture behind the name `"^Font"` are unread. No BMP filename is
 on the path. The gate was not scored.
+
+**B1l: the horizontal word and the `^Font` filename are file-negatives**
+([check](docs/scratch/phase-b1l-menu-x-and-sheet.md)), 2026-10-22, round 3 of 3.
+The immediate `40 CB 58 00` occurs 63 times in `.text` and none of those
+instructions writes the word. `^FONT.BMP` is not in the exe. `0x474519`
+looks the short name up on `0x58CB48` and does not take a BMP operand.
+The B1 full-frame gate was not scored. This question is at its cap.
 
 ## Phase C — the in-level HUD
 
@@ -1471,8 +1478,11 @@ open.
   glyph rule from bytes. B1j found that none of `FUN_004404fa`'s direct callers draws
   the five menu labels. B1k found the labels themselves: the dwords at `0x4C4214`,
   walked by `FUN_0048aa5e`.** Do not revive glyph fitting, and do not wire those 17
-  direct calls as the menu. The unread pieces are the horizontal word `[0x58CB40]`
-  and the texture the name `"^Font"` selects.
+  direct calls as the menu. B1l found no file store of the horizontal word
+  `[0x58CB40]` (63 immediates, all reads or address-takes) and no `^FONT.BMP`
+  string. A resume is a live read of that word on the English menu, plus the
+  resource manager behind `0x58CB48`, not another scan of the same immediate
+  and not a fitted X.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

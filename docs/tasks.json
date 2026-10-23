@@ -6,6 +6,30 @@
   "queue": [],
   "recently_landed": [
     {
+      "id": "b1l-menu-x-and-sheet",
+      "title": "What value is written to the menu label X word, and which texture ^Font names",
+      "status": "landed",
+      "brief": "build/tmp/b1l-menu-x-and-sheet-brief.md",
+      "worker_output": "build/tmp/b1l-menu-x-and-sheet/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "PLAN B1 main menu highlight 0 full-frame <=0.02 (operands only; no score)",
+      "question_round_count": 3,
+      "prior_question_dispatches": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-menu-render",
+      "dispatch_id": "6793b9ae-f5f1-447e-b243-e30b94464d8d",
+      "landed_in": "PLAN.md Phase B (B1l) and Phase E; docs/scratch/phase-b1l-menu-x-and-sheet.md; docs/LESSONS.md Main-menu labels are the table at 0x4C4214; docs/DIRECTIVE.md Status done",
+      "facilitator_verified": "2026-10-22: independent .text scan found 63 immediates 40 CB 58 00 and no mov-to-that-address. Opcodes are 34 address loads into ecx, 20 A1 reads, 3 pushes, one 66 A1 word read, one 8B 0D, one 8B 15, three fild. read_steppers re-read 0x474519: ecx=0x58CB48, call 0x449B30, then 0x45FE10 or 0x4607D0, store the dword. Case-insensitive search: ^Font twice, ^FONT.BMP and font.bmp zero times. Callees not re-opened; they cannot embed an absent filename. No src change. Prior ctest on this tree was 30/30. No stock start. B1 gate not scored. Question 1 is at its cap."
+    },
+    {
       "id": "c2b-pause-index-text",
       "title": "What characters indices 0x44 and 0x45 resolve to",
       "status": "landed",
@@ -2792,11 +2816,11 @@
     },
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast, including disassembly reads. Do not escalate to Opus.",
     "owner": "Cursor facilitator session, this /facilitator invocation, 2026-10-22. No task was running or queued. The prior standing run font-charmap-c1-live has stopped.no_further_dispatch and is preserved under previous. This start is the handoff.",
-    "rounds_run": 4,
+    "rounds_run": 5,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Stop and report when the B1 gate passes on the facilitator independent re-score, or when question 1 reaches its three-round cap and question 2 is landed or parked. Also stop on any ORCHESTRATION stop condition. Do not advance to B2, C1, C2 or C3.",
-    "handoff": "2026-10-22: c2b landed in this commit. Indices 0x44 and 0x45 are Out and Saved in both UK.LTX copies. Question 2 is landed. Question 1 is round 2 of 3: labels found, horizontal word 0x58CB40 and the ^Font texture unread. B1 gate not scored. No stock starts.",
+    "handoff": "2026-10-22 STOPPED. Question 1 used three rounds (b1j, b1k, b1l) and did not score the B1 gate. The labels are the table at 0x4C4214, Y starts at 320, X is a signed half of [0x58CB40], and that word has no file store. ^Font does not name a BMP in the exe. Question 2 landed: 0x44CD06 draws Out, Saved, and a MM:SS timer. No stock starts. Do not dispatch another round on this directive.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -3088,6 +3112,16 @@
           "no_further_dispatch": true
         }
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-22",
+      "reason": "Question 1 reached its three-round cap without a B1 gate score, and question 2 is landed. The horizontal word and the ^Font texture are file-negatives, so a score would require a guessed X or a guessed sheet. That is the directive stop, not a gate change.",
+      "last_commit": null,
+      "current_gate": "B1 full-frame highlight 0 <=0.02 was not scored. C2 was groundwork only and was not scored.",
+      "rounds_run": 5,
+      "stock_starts_used": 0,
+      "pending_questions": [],
+      "no_further_dispatch": true
+    }
   }
 }

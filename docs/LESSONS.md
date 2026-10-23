@@ -842,6 +842,10 @@ walks the strings through `0x4404CF` on the `"^Font"` object at `[0x4CBF78]`.
 The first row is 320. Horizontal placement is a signed half of the word at
 `[0x58CB40]`, and that word's value is not in the file. No BMP filename is
 on this path. Do not repeat the 17-call scan.
+[B1l](scratch/phase-b1l-menu-x-and-sheet.md): the address immediate occurs
+63 times and none writes the word. `^FONT.BMP` is not in the exe.
+`0x474519` looks `"^Font"` up on `0x58CB48`. Do not scan those 63 sites
+again, and do not invent the horizontal pixel.
 
 ## Pause text at 0x44CD06
 

@@ -7,8 +7,11 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
 Issued: 2026-10-22 (user, overlord review 2026-10-22)
+Closed: 2026-10-22. Question 1 reached its three-round cap without a B1
+gate score. Question 2 is landed. The horizontal word `[0x58CB40]` and the
+`^Font` texture have no file store.
 Supersedes: the font-charmap / C1-live directive, closed 2026-10-22
 (`font-charmap-c1-live`, both questions landed).
 

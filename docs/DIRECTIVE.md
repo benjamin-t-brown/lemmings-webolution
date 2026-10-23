@@ -7,58 +7,58 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done**
+Status: **active**
 Issued: 2026-10-22 (user, overlord review 2026-10-22)
-Supersedes: the C1 directive, closed 2026-10-22 (`c1-skill-panel`, parked at its round cap).
-Closed: 2026-10-22, facilitator session (standing run `font-charmap-c1-live`, stop commit
-`eaf2d78`). Both questions answered and independently verified: question 1 (font charmap)
-landed cleanly; question 2 (C1 live read) spent its one authorized stock start and recorded
-the read, redirecting rather than closing C1's open question. B1 and C1 remain not
-accepted. See `docs/tasks.json` → `standing_run.previous[0]` for the full handoff once a
-new standing run is opened, and `PLAN.md` Phase B/Phase C/Phase E for the landed findings.
+Supersedes: the font-charmap / C1-live directive, closed 2026-10-22
+(`font-charmap-c1-live`, both questions landed).
 
 ## Scope
 
-Text is the critical path: B1, the C1 counts, C2, C3 and B3 all draw it, and five pixel-fit
-rounds failed to get a glyph layout. This directive changes the approach from fitting to
-reading. Two questions, in this order:
+B1i read the original's text-draw path from bytes (`FUN_004404fa`; 256 `{X, Y, width}`
+records, proportional advance, one `lineHeight` per font). The five fitting rounds failed
+because they assumed a fixed grid. This pass uses the read to attempt the B1 gate. Two
+questions:
 
-1. **Font charmap read (offline, `disassembly read`).** How the original maps a character
-   code to a glyph cell in `_FONT.BMP` / `_FONTFE.BMP`, and how it advances and places each
-   glyph, read from the original's text-draw code. Gate relevance: it unblocks the B1
-   full-frame score and the C1 counts half. Stop when the charmap and advance rule are read
-   from bytes and checked against one string drawn from retail text, or park it.
-   Before dispatch, search `docs/LESSONS.md`, `PLAN.md` Phase E and `docs/scratch/phase-b1*`
-   for text-draw reads already made; reuse them, do not re-derive.
-2. **C1 live read (one stock start).** Use the resume brief in `PLAN.md` Phase E ("C1
-   skill-panel icon-draw mechanism"): which widget `+8` icon index holds what value during an
-   authorized stock start, and whether an indirect dispatch reaches the other nine widgets.
-   Scope it as a live read, not another static byte or literal search. Stop when the read is
-   recorded or the start budget is spent.
-
-Question 1 may run alongside question 2 (offline and live, disjoint paths). Only one live
-owner at a time.
+1. **B1 main-menu render (offline, up to three rounds).** Which of `FUN_004404fa`'s twelve
+   callers draws the main menu, with which font object, sheet and label placement; then
+   wire the read charmap into our renderer and score the main menu at highlight 0 full-frame
+   against the B1 gate and the retained B1b reference. The main risk is the frontend sheet's
+   identity: B1i found no `_FONTFE`, `^FONTH` or `^FONTP` name string, so which sheet backs
+   the menu font must be read, not assumed. Reuse B1e's exports and B1b's reference capture.
+2. **Paused caption and timer read (offline, `disassembly read`, in parallel).** Verify B1i's
+   unverified lead: `0x44CD06` fills `H+0x758`/`H+0x77C` through `FUN_004404fa` and draws the
+   MM:SS timer at `H+0x224` (560, 430). Read and record what is drawn, with which font and
+   where. C2 groundwork only: no render, no C2 gate attempt. Owned paths must be disjoint
+   from question 1.
 
 ## Budget
 
-The grants of `d-playable-3`: per-round commits, up to three concurrent offline rounds,
-stock starts within each brief's own budget. Three rounds per question. The C1 live read
-gets **one** stock start. Disassembly-read rounds use the `disasm-agent` tier per
+The grants of `d-playable-3`: per-round commits, up to three concurrent offline rounds.
+**No stock starts** on this directive: both questions are offline. Three rounds per
+question. Disassembly-read rounds use the `disasm-agent` tier per
 [ROLES.md](ROLES.md#disassembly-reads-use-a-stronger-worker).
 
 ## Decisions already made (do not re-ask)
 
-- **B1 glyph fitting is parked in Phase E** (user, overlord review 2026-10-22). Five rounds
-  against a cap of three. Do not resume pixel or scalar fitting, a menu-vtable trace, or
-  the B1h matcher. The Quit-row 0.0202 scalar is not a score.
-- **C1's icon-draw static search is exhausted** by two independent methods. Do not run
-  another static literal scan for the widget `+8` writer.
-- B1 and C1 stay **not accepted**; their gates are unchanged.
+- **Read, do not fit.** Glyph placement comes from the read table and the read caller, not
+  from pixel or scalar optimisation. The B1f/B1h fitting methods stay parked; the Quit-row
+  0.0202 scalar is not a score.
+- B1i's charmap, advance and `lineHeight` rule is settled (facilitator re-read from raw PE
+  bytes). Do not re-derive it. `&` in `^Font` is a zero-width entry: preserve it.
+- **C1 is held.** `FUN_00457868` draws one widget per frame (C1f, live); the base-icon source
+  is a new live question and is not in this pass.
 - English menus are the reference; do not reset the install language.
+- Live-harness note for any future live round: C1f's `probe.py` cleanup did not restore
+  `dgVoodoo.conf` on its own (fixed by hand, hashes match). Not in scope here.
 
 ## Stop point
 
-Stop and report when both questions are answered (landed, or parked at their cap), or on
-any stop condition in ORCHESTRATION. Do not advance to B2, C2 or C3 on this directive, and
-do not re-attempt the B1 or C1 gate until the overlord ranks it. A passing gate on your own
-independent re-score also stops the run.
+Stop and report when the B1 gate passes on your own independent re-score, or when question
+1 reaches its round cap, and question 2 is landed or parked. Also stop on any stop
+condition in ORCHESTRATION. Do not advance to B2, C1, C2 or C3 on this directive.
+
+## Sync
+
+Pull before selecting work and push after each round commit, per
+[ROLES.md](ROLES.md#opencode-on-the-mac-clone). If a push from mouv fails on credentials,
+leave the commits local and say so in the handoff; the overlord carries them to GitHub.

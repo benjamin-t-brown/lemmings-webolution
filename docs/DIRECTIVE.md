@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the B1 main-menu render directive, closed 2026-10-22 (`b1-menu-render`,
 question 1 at its cap, question 2 landed).
@@ -59,3 +59,17 @@ to B2, C1, C2 or C3 on this directive.
 Pull before selecting work and push after each round commit, per
 [ROLES.md](ROLES.md#opencode-on-the-mac-clone). If a push from mouv fails on credentials,
 leave the commits local and say so in the handoff; the overlord carries them to GitHub.
+
+## Outcome — 2026-10-23
+
+Stopped with question 1 incomplete after B1m and one offline repair (two rounds,
+one of one stock starts). X640→320 read; highlight bracket and resource binding
+capture failed. Independently verified diagnosis: embedded manager was mistaken
+for a pointer; first missing pool bytes are 0x58CB84..0x58CB88. Source sheet and
+dimensions remain unknown. No B1 render/score or milestone advance. Install
+hashes restored, no live process/task, 30/30 CTest.
+
+All remaining authorized work depends on the missing binding, and another live
+attempt is expressly ungranted. Queue pending question requests a separately
+authorized acquisition with offline pointer/source/highlight preflight first;
+no automatic retry. [Evidence](scratch/phase-b1m-runtime-font-read.md).

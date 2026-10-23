@@ -580,6 +580,18 @@ instructions writes the word. `^FONT.BMP` is not in the exe. `0x474519`
 looks the short name up on `0x58CB48` and does not take a BMP operand.
 The B1 full-frame gate was not scored. This question is at its cap.
 
+**B1m: runtime acquisition incomplete; offline diagnosis verified**
+([check](docs/scratch/phase-b1m-runtime-font-read.md)), 2026-10-23. One stock
+start read word 640 (X320), but copied B1b's stale heap highlight address and
+mistook the embedded manager at 0x58CB48 for a pointer slot. The resulting
+snapshot is executable `.rdata`, not the runtime resource pool. Offline repair
+establishes font+8 as a manager-local index 36 and the first missing pointer at
+0x58CB84; no source sheet or dimensions can be recovered from this packet's
+recorded chain. Two dispatches including repair, sole start spent, no retry.
+All install hashes restored and 30/30 CTest pass. B1 remains unaccepted and
+unscored; question 2 render is blocked. Run stops pending a separately authorized,
+offline-preflighted acquisition, not another fitted sheet or guessed placement.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -1483,6 +1495,12 @@ open.
   string. A resume is a live read of that word on the English menu, plus the
   resource manager behind `0x58CB48`, not another scan of the same immediate
   and not a fitted X.
+  **B1m runtime resume (2026-10-23):** X640→320 was observed without a valid
+  highlight memory bracket; manager capture failed. Its offline repair identifies
+  missing `[0x58CB84]`, selected record/wrapper/descriptor and source storage.
+  [Evidence and resume boundary](docs/scratch/phase-b1m-runtime-font-read.md).
+  One-start grant exhausted; no automatic retry. A new authorization should require
+  offline pointer/name/highlight preflight before spending another start.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

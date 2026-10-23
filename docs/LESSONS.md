@@ -847,6 +847,15 @@ on this path. Do not repeat the 17-call scan.
 `0x474519` looks `"^Font"` up on `0x58CB48`. Do not scan those 63 sites
 again, and do not invent the horizontal pixel.
 
+[B1m](scratch/phase-b1m-runtime-font-read.md), one stock start plus an offline
+repair: saved word `80 02` at `0x58CB40` is 640 (X320), but the highlight memory
+bracket failed: B1b's heap address is not portable to another process. Font+8
+is a manager-local index (36 in this ended process), not an archive ordinal.
+**0x58CB48 is the embedded manager, not a pointer slot.** Dereferencing it
+captures the vtable's `.rdata`, not the manager pool. The first missing sample
+is pool base `[0x58CB84]`; source sheet/dimensions remain unknown. The one-start
+allowance is spent; no live retry or B1 render/score accepted.
+
 ## Pause text at 0x44CD06
 
 [C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with

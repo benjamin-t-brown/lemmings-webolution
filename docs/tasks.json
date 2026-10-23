@@ -2,7 +2,56 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "b1q-archive-open",
+      "title": "Archive registration order and open route for Textures\\^Font",
+      "status": "running",
+      "brief": "build/tmp/b1q-archive-open-brief.md",
+      "worker_output": "build/tmp/b1q-archive-open/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab1q-archive-open-308f48a795171fad",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b1p-texture-loader"
+      ],
+      "gate_served": "B1 unchanged highlight0 full-frame <=0.02; unique read source prerequisite only",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-loader-b2-sequence",
+      "investigation_budget_minutes": 35
+    },
+    {
+      "id": "b2b-highlight-keypath",
+      "title": "B2 semantic highlight accessor and native key path",
+      "status": "running",
+      "brief": "build/tmp/b2b-highlight-keypath-brief.md",
+      "worker_output": "build/tmp/b2b-highlight-keypath/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab2b-highlight-keypath-334ca69ff82b90e7",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b2a-screen-sequence"
+      ],
+      "gate_served": "B2 fixed scripted key sequence/construction-order matching; offline prerequisite only",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-loader-b2-sequence",
+      "investigation_budget_minutes": 40
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -2985,7 +3034,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
-    "handoff": "2026-10-23 B1p (b1p-texture-loader) and B2a (b2a-screen-sequence) verified and landed as bounded negatives, no gate score, zero stock starts, 2 rounds run. B1p: ^Font BMP+ALF converge on lemmings.box ordinal 633/632 only if two-archive/no-loose premise holds; actual open path (0x47DD54, [0x5D5604], 0x47E89B, manager 0x5D5608) unread. B2a: FAIL_DO_NOT_START, highlight/key/route edges unread. Next: continuation briefs for Q1 round 2 and Q3 round 2 (offline), Q2 render only if exactly one source. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
+    "handoff": "2026-10-23 B1p and B2a landed (fc22c4a) as bounded negatives. Dispatched on Claude Code round-agent, no model arg, both offline, zero stock starts: b1q-archive-open (Q1 round 2, archive registration/open route for ^Font) and b2b-highlight-keypath (Q3 round 2, highlight accessor and key path). Await packets; verify and land one at a time. Q2 render only if b1q yields exactly one source. B2 live start stays unused until a later round has a complete route preflight. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [{

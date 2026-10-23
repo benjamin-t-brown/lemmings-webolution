@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b1w-menu-render",
       "title": "B1 main-menu highlight-0 render and full-frame score from the observed ^Font source",
-      "status": "ready-for-verify",
+      "status": "landed",
       "brief": "build/tmp/b1w-menu-render-brief.md",
       "worker_tier": "targeted",
       "work_kind": "implementation + score",
@@ -27,11 +29,19 @@
       "standing_run": "b1-final-read-b2-level-map",
       "investigation_budget_minutes": 90,
       "body_cap": 8,
-      "worker_output": "build/tmp/b1w-menu-render/round-note.md"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "worker_output": "build/tmp/b1w-menu-render/round-note.md",
+      "landed_in": "docs/scratch/phase-b1w-menu-render.md",
+      "landed_at": "2026-10-23 17:23:52 MDT",
+      "disposition": "build/tmp/b1w-menu-render/round-note.md",
+      "facilitator_verified": "2026-10-23: independent raw-byte scorer on mouv reproduces numerator 1232493 / 185447 px (0.005244); regenerated render byte-identical; 95 glyph records parsed from source equal exe bytes at 0xBF968; 0x48A747 anchor and 0x489890 re-read; X-word, row-step and sheet mutations match the worker; own anchor mutation 0.024455 and fails 2 assertions, restored by hash; ctest 32/32; owned files hash-equal Mac/mouv",
+      "remaining_blockers": [
+        "panel rects and colours are measured from the scored reference, not read",
+        "black text colour partly read",
+        "glyph blend, crosshair and backdrop dim unresolved",
+        "highlights 1-4 and other languages untested",
+        "worker read ~21 bodies against a cap of 8"
+      ]
+    },
     {
       "id": "b1v-font-live-read",
       "title": "Final ^Font live read: both arms, soft entry stop, one stock start",
@@ -3522,7 +3532,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "B1 frontend assets and text",
+    "current": "B2 screen state machine",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, third directive of the day): Q1 preflight + one start, two hardware breakpoints {0x47E4AD,0x47E463}; Q2 offline cap two, only on exactly one observed source; Q3 preflight, one start, implement. Two stock starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3531,11 +3541,11 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 16:31 MDT /facilitator invocation; directive amended (q1-entry-int3 authorized), prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 4,
+    "rounds_run": 5,
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 16:43:01 MDT: b1v landed (01dcee4). b1w (Q2 round 1, offline render and score) dispatched. Q3 parked. One stock start spent, one left (Q3, parked).",
+    "handoff": "2026-10-23 17:23:52 MDT stopped: b1v and b1w landed; B1 gate 0.005244 (panels measured from reference). Q3 parked; one stock start left, unused. No B3/C1/C2/C3 on this directive.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4099,7 +4109,9 @@
       }
     ],
     "stopped": {
-      "last_commit": "1b2db11"
+      "date": "2026-10-23",
+      "reason": "Directive stop point reached: Q1 landed (b1v, one ^Font source), Q2 landed (b1w, B1 gate passes on own re-score), Q3 parked (no named level-to-map path). DIRECTIVE.md Status: done.",
+      "last_commit": "d05bc73"
     },
     "resolved_questions": [
       {

@@ -81,6 +81,10 @@ target_link_libraries(lrcheck PRIVATE webolution_objects)
 add_executable(FrontendAssetDump src/tools/FrontendAssetDump.cpp)
 target_link_libraries(FrontendAssetDump PRIVATE webolution_objects)
 
+# B1w: highlight-0 main menu render from the read/observed inputs (offline).
+add_executable(MenuRenderDump src/tools/MenuRenderDump.cpp src/shell/MenuRender.cpp)
+target_link_libraries(MenuRenderDump PRIVATE webolution_objects)
+
 add_executable(actorfixture src/tools/actorfixture.cpp src/app/ActorSprite.cpp src/app/Camera.cpp)
 target_link_libraries(actorfixture PRIVATE webolution_objects)
 
@@ -180,6 +184,11 @@ add_test(NAME skillpanel COMMAND test_skillpanel)
 add_executable(test_progress src/__test__/test_progress.cpp)
 target_link_libraries(test_progress PRIVATE webolution_objects)
 add_test(NAME progress COMMAND test_progress)
+
+# B1w: the menu renderer's rules plus the real-archive check of the glyph table.
+add_executable(test_menurender src/__test__/test_menurender.cpp src/shell/MenuRender.cpp)
+target_link_libraries(test_menurender PRIVATE webolution_objects)
+add_test(NAME menurender COMMAND test_menurender)
 
 # B2f: frontend screen sequence replayed from the b2e capture. Frontend.cpp is built
 # into the test directly (as test_skillpanel does) so the shared source list stays put.

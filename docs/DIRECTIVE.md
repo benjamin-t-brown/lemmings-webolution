@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-23: Q1 landed by b1v, one source observed; Q2 landed by b1w, B1 gate 0.005244 on the facilitator's re-score; Q3 parked, no named level-to-map path; one of two stock starts spent)
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the B1 source / second B2 capture directive, done 2026-10-23 (B1t no hit, Q1
 parked; B2g/B2h/B2i landed, short-ESC quirk retracted; both starts spent).

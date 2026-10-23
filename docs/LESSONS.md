@@ -1343,3 +1343,11 @@ One stock start with both arms armed from a one-shot entry-point stop (the exe t
 archive arm `0x47E4AD`, `Textures\^Font.bmp` (77 bytes at 44312738) and `.alf` (61440 at 44251298), gate `[0x5D5610]`=1,
 zero loose `^Font`. Matches `lemmings.box` ordinals 633 / 632 read independently. Exactly one source up to the second hit;
 a later third source, TLS callbacks and the archive-only route are not excluded. Evidence: `docs/scratch/phase-b1v-font-live-read.md`.
+
+## Main-menu render (B1w, 2026-10-23, OBSERVED + READ)
+
+Highlight-0 main menu from the observed `^Font` sheet and the read charmap scores 0.005244 full-frame against the B1b
+reference (gate 0.02; own independent re-score). Labels are **centre-anchored**: `0x48A720` tests flag `0x40` at `0x48A747`
+and offsets by half the width, so the brief's left-edge guess was wrong. Panels are measured from the reference, not read;
+the backdrop is up to 7 levels lighter than the reference (cause unmeasured). Evidence: `docs/scratch/phase-b1w-menu-render.md`.
+

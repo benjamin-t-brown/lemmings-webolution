@@ -431,7 +431,7 @@ threshold is 0.02, the same as A1/A2/A7.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| B1 frontend assets and text | **in progress** | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
+| B1 frontend assets and text | **done** (B1w, own re-score 0.005244; panels measured from the reference, see below) | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
 | B2 screen state machine | queued | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
 | B3 level select and map | queued | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
@@ -1488,6 +1488,7 @@ open.
   read the gate setter and loose helpers offline first. See `docs/scratch/phase-b1t-font-live-read.md`.
 - **B1 source, both arms** (b1u landed 2026-10-23): script arms `{0x47E4AD, 0x47E463}`, proves liveness, reads hit counts; hardware breakpoints at the `starti` stop do not reach the main thread (throwaway), so the start used a one-shot entry-point int3 (authorized by the user). See `docs/scratch/phase-b1u-font-both-arms-preflight.md`.
   **Live read (B1v, 2026-10-23, one stock start): `^Font` source observed, exactly one:** `LEMMINGS.BOX` archive, `TEXTURES\^FONT.BMP` (77 bytes) and `.ALF` (61440), zero loose, gate `[0x5D5610]`=1; stopped at hit 2, so a later third source is not excluded. Q2 (render and score) may proceed. See `docs/scratch/phase-b1v-font-live-read.md`.
+  **Render and score (B1w, 2026-10-23): full-frame 0.005244 <= 0.02, gate passes on the facilitator's independent re-score** (numerator 1232493, 185447 changed pixels). Centre anchor read at `0x48A747`; glyph table, Y rule, labels read; sheet and X word observed. **The five panel rectangles and colours are measured from the scored reference, not read** (18.3% of the numerator); black text is a partly read default; crosshair, glyph blend and a backdrop dim of up to 7 levels are unresolved. One screen, UK, highlight 0. See `docs/scratch/phase-b1w-menu-render.md`.
 - **B2 level-to-map** (parked 2026-10-23, directive Q3: B2j and B2k named **no** key or click path, so the
   start was skipped and `Frontend` has nothing new to replay). Read: screen 0x20 handler `0x486510` -> `0x4886E4`
   (selector 0x23, map by inference from B2h's node `0x4B3EB8`) -> factory; producer `0x48FCDD`; screen 0x20 built when

@@ -875,6 +875,20 @@ accessor is established. Partial decoder tests do not close either gap.
 B1 is parked under the directive; no fifth round or automatic use of the
 unused conditional start. Own byte/bundle/mock checks and30/30CTest pass.
 
+**B1p ([check](scratch/phase-b1p-texture-loader.md)):** the generic loader is read,
+the actual `^Font` source is not closed. `0x47244B` tests for `INN_`/`OUT_`; `^Font`
+matches neither, so `[0x5CD5F2]==0` tries `^FontLo` and nonzero tries `^Font`
+(`^FontHi` is unreachable). Neither archive has a `Lo`/`Hi` member, and `lemmings.box`
+alone holds `TEXTURES\^FONT.BMP` / `.ALF` (ordinals 633 / 632), so both cases converge
+there **if** only the two archives are registered and nothing loose overrides. That
+premise is unproved: `0x47E40D`'s non-archive route, `[0x5D5604]`, `0x47E89B`, manager
+`[0x5D5608]` order and `0x4805B8` are unread, and `0x47F759` takes the first
+registered match. Source is a BMP and an ALF companion. Not a unique-source claim.
+
+**B2a ([check](scratch/phase-b2a-sequence-preflight.md)):** preflight failed closed at
+the 12-body cap, zero starts. No byte-proved highlight accessor, native key producer
+or safe confirm/map/level/pause/back route; `0x004C416C` stays a construction counter.
+
 ## Pause text at 0x44CD06
 
 [C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with

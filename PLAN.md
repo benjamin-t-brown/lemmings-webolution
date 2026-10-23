@@ -616,6 +616,14 @@ checks, canonical14record authentication, isolated offset mutation and
 Resume requires new authorization for the exact unresolved native edges,
 not a guessed sheet, pixel fit or automatic use of the unused start.
 
+**B1p / B2a (2026-10-23, directive questions 1 and 3, round 1 each):** the generic
+loader is read ([B1p](docs/scratch/phase-b1p-texture-loader.md)): `^Font` converges on
+the base-archive BMP+ALF pair only under a two-archive, no-override premise, so no
+unique source and no B1 render yet. B2 preflight
+([B2a](docs/scratch/phase-b2a-sequence-preflight.md)) failed closed at its body cap with
+zero stock starts. Neither moves a gate. Next: Q1 round 2 on the unread open/registration
+edges, Q3 round 2 on highlight, key path and route.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,

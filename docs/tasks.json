@@ -4,7 +4,81 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
-  "recently_landed": [{
+  "recently_landed": [
+    {
+      "id": "b1p-texture-loader",
+      "title": "Resolve generic texture-loader branches and ^Font archive source",
+      "status": "landed",
+      "worker_output": "build/tmp/b1p-texture-loader/round-note.md",
+      "dispatch_id": "ses_e96a09b66ffejimhaGyBdNUKHZ",
+      "brief": "build/tmp/b1p-texture-loader-brief.md",
+      "worker_tier": "hard",
+      "work_kind": "disassembly read",
+      "escalation_reason": "Mapped stronger original-code reader required for native branch/data-flow interpretation.",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6.1-sol (high)",
+      "worker_agent": "disasm-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b1o-font-binding-fallback"
+      ],
+      "gate_served": "B1 unchanged highlight0 full-frame <=0.02; unique read source prerequisite only",
+      "question_round_count": 1,
+      "prior_question_dispatches": 0,
+      "question_lineage_note": "Directive explicitly authorizes new generic texture-loader question shared by every texture, not fifth B1 runtime-binding round; reuse B1o reads, only unresolved loader callees and quality-byte provenance.",
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-loader-b2-sequence",
+      "investigation_budget_minutes": 35,
+      "disposition": "loader read landed as bounded conditional convergence; actual stock source not closed; no unique-source claim, Q2 render not started",
+      "landed_in": "docs/scratch/phase-b1p-texture-loader.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-23: replayed read_texture_loader_b1p.py from the Mac against the mounted install, raw-audit.json equal field for field; own regex over lemmings.box/patch.box finds TEXTURES\\^FONT.ALF/.BMP only in lemmings.box (no Lo/Hi, patch has ^FONTP/^FONTH); re-read 0x47244B, 0x49CE20, 0x472210 and literals 0x4C24E8/0x4C2548/0x4C2550 from the exe; isolated Lo->Hi mutation fails helper controls, unmutated 5/5; install hashes equal startup; 30/30 CTest. Not re-read: 0x47E40D, 0x45015A, 0x47F759, 0x4432C1, 0x443789.",
+      "remaining_blockers": [
+        "Actual stock source of ^Font unproved: 0x47DD54, byte [0x5D5604], 0x47E89B, manager [0x5D5608] population/order, 0x4805B8 table parser, patch-wins order.",
+        "Quality byte [0x5CD5F2] stock value untraced (0x4432C1 inputs 0x47099B(0x58CD80)); alone it does not split the logical name.",
+        "B1 render (directive Q2) not started; needs exactly one source."
+      ]
+    },
+    {
+      "id": "b2a-screen-sequence",
+      "title": "Byte-proved B2 sequence preflight and conditional sole-start capture",
+      "status": "landed",
+      "dispatch_id": "ses_e96a09b65ffeDqJVWqIu5p0dkp",
+      "brief": "build/tmp/b2a-screen-sequence-brief.md",
+      "worker_tier": "hard",
+      "work_kind": "disassembly read",
+      "escalation_reason": "Byte-proof of current-process identity/highlight/input paths is load-bearing before atomic conditional capture; mapped stronger reader.",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6.1-sol (high)",
+      "worker_agent": "disasm-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "b1-frontend-recon",
+        "b1d-menu-vtable-live-read",
+        "b1o-font-binding-fallback"
+      ],
+      "gate_served": "B2 fixed scripted key sequence/construction-order matching including RETURN/short-ESC quirks; capture prerequisite only",
+      "question_round_count": 1,
+      "prior_question_dispatches": 0,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "stock_start_condition": "Complete offline byte-proof and integrated preflight for every live read and scripted route; no retry after Popen",
+      "standing_run": "b1-loader-b2-sequence",
+      "investigation_budget_minutes": 40,
+      "worker_output": "build/tmp/b2a-screen-sequence/round-note.md",
+      "disposition": "FAIL_DO_NOT_START at 12-body cap; zero stock starts; conditional start unused",
+      "landed_in": "docs/scratch/phase-b2a-sequence-preflight.md",
+      "commit_hint": null,
+      "facilitator_verified": "2026-10-23: ran helper --preflight on the Mac (capstone venv): exit 2 FAIL_DO_NOT_START, runtime_reads [], stock_starts 0, input_events []; compared all 24 packet .bin pins to the exe, 0 mismatches; exe hash equals manifest; no game process or LemWeb task on mouv; install hashes equal startup. Worker unit tests not re-run (helper untracked, Mac-only).",
+      "remaining_blockers": [
+        "No byte-proved semantic highlight accessor or native key producer/dispatch; confirm/map/level-entry/pause/back route and loaded-path proof unread.",
+        "No screen-id sequence recorded; B2 gate unscored."
+      ]
+    },
+    {
     "id": "b1o-font-binding-fallback",
     "dispatch_id": "ses_e96b4d8e8ffeaiM4x71ks4wnD5",
     "title": "Byte-proved font binding/highlight preflight, conditional one-start read",
@@ -2895,6 +2969,26 @@
     }
   ],
   "standing_run": {
+    "id": "b1-loader-b2-sequence",
+    "goal": "Resolve generic texture loader; render B1 only on unique read source; capture and implement B2 sequence under active directive.",
+    "milestones": ["B1 frontend assets and text", "B2 screen state machine"],
+    "current": "Q1 round 2 (unread loader source edges) and Q3 round 2 (B2 preflight continuation) independent; Q2 render still conditional on exactly one source.",
+    "authorized": "docs/DIRECTIVE.md active issued2026-10-23 superseding prior sheet directive: Q1 generic-loader new question cap3; Q2 offline B1 renderer cap2 only if unique source; Q3 B2 cap3 exactly one stock start after byte-based preflight, no retry after Popen. No B3 or Phase C advance.",
+    "grants": {
+      "stock_starts": "Q1/Q2 zero; Q3 exactly one only after complete offline preflight, no retry after Popen",
+      "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and explicit handoff; no force-push/checkout/reset/stash",
+      "concurrency": "up to3 independent offline rounds, at most one live owner; Q1/Q3 disjoint and independent"
+    },
+    "workers": "OpenCode mapping docs/ROLES.md: disasm-agent for native reads, round-agent for capture-only/render/implementation rounds; no model override.",
+    "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 invocation. Took over from OpenCode facilitator ses_e96a3d099ffeQpsc1kgKEdfDBJ at the user's /facilitator-ssh start: no task was `running` (both dispatched rounds were ready-for-verify, packets finished 09:44/09:34), so the start is the handoff per ORCHESTRATION#standing-run. opencode.exe processes exist on mouv and were not attributed to a session; the prior session was not contacted.",
+    "rounds_run": 2,
+    "stock_starts_used": 0,
+    "pending_questions": [],
+    "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
+    "handoff": "2026-10-23 B1p (b1p-texture-loader) and B2a (b2a-screen-sequence) verified and landed as bounded negatives, no gate score, zero stock starts, 2 rounds run. B1p: ^Font BMP+ALF converge on lemmings.box ordinal 633/632 only if two-archive/no-loose premise holds; actual open path (0x47DD54, [0x5D5604], 0x47E89B, manager 0x5D5608) unread. B2a: FAIL_DO_NOT_START, highlight/key/route edges unread. Next: continuation briefs for Q1 round 2 and Q3 round 2 (offline), Q2 render only if exactly one source. Startup install hashes build/tmp/b1-b2-facilitator-start.json.",
+    "rules": "docs/ORCHESTRATION.md#standing-run",
+    "stopped": null,
+    "previous": [{
     "id": "b1-table-source-render",
     "goal": "Identify ^Font from read-table constraints, render and score B1; conditional preflighted live fallback only on ambiguity/negative.",
     "milestones": ["B1 frontend assets and text"],
@@ -3301,6 +3395,7 @@
         }
       }
     ]
+  }]
   }]
   }
 }

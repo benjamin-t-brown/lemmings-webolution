@@ -13,7 +13,7 @@
       "harness": "Claude Code",
       "requested_model": "session model (no pin, per ROLES)",
       "worker_agent": "round-agent",
-      "dispatch_id": null,
+      "dispatch_id": "ab2i-frontend-measured-05403c674bd12a4e",
       "owns_live_game": false,
       "live_owner": null,
       "depends_on": [
@@ -3386,7 +3386,7 @@
     "stock_starts_used": 2,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 b1t (Q1 no hit, parked), b2g, b2h landed; short-ESC quirk retracted (6 samples leave pause). Both stock starts spent. Next: dispatch b2i, update src/shell/Frontend + its test to replay the b2e and b2h rows; unobserved behaviour stays labelled policy. Then stop (directive stop point).",
+    "handoff": "2026-10-23 b1t, b2g, b2h landed; both stock starts spent; short-ESC quirk retracted. b2i (Frontend offline update, Q3 round 3) dispatched at 1a3eb99. Next: verify/land b2i, set DIRECTIVE.md Status: done, write standing_run.stopped, stop. No B3/C1/C2/C3.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

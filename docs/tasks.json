@@ -4098,7 +4098,9 @@
         ]
       }
     ],
-    "stopped": null,
+    "stopped": {
+      "last_commit": "1b2db11"
+    },
     "resolved_questions": [
       {
         "id": "q1-entry-int3",

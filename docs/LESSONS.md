@@ -856,6 +856,16 @@ captures the vtable's `.rdata`, not the manager pool. The first missing sample
 is pool base `[0x58CB84]`; source sheet/dimensions remain unknown. The one-start
 allowance is spent; no live retry or B1 render/score accepted.
 
+**B1n ([check](scratch/phase-b1n-font-sheet-discriminator.md)):** the checked
+`^Font` table prefix is consistent with five exported font sheets, so
+bounds/ink/blank predicates do not identify the source. No renderer or B1
+score. B1i's blanket256-record extent is unestablished: its772-byte window
+overlaps `_FontSmall`'s known header by92bytes. The menu ASCII cells and
+Quit replay stand. B1n's `_FontSmall` negative reads an unproved range and
+is not a resource rejection; both-archive completeness was not proved.
+Next is the directive's conditional offline live-acquisition preflight,
+not a guessed font or another glyph fit.
+
 ## Pause text at 0x44CD06
 
 [C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with

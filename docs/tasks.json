@@ -6,6 +6,33 @@
   "queue": [],
   "recently_landed": [
     {
+      "id": "b1n-font-sheet-discriminator",
+      "dispatch_id": "ses_e96bc9053ffetntmeuLa41UhST",
+      "title": "Test retail font sheets against read glyph-table bounds and ink constraints",
+      "status": "landed",
+      "brief": "build/tmp/b1n-font-sheet-discriminator-brief.md",
+      "worker_output": "build/tmp/b1n-font-sheet-discriminator/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline table/texture discrimination",
+      "harness": "OpenCode",
+      "requested_model": "openai/gpt-6-luna (high)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": ["b1i-font-charmap-read", "b1e-menu-image-layout", "b1m-runtime-font-read"],
+      "gate_served": "B1 main-menu highlight0 full-frame <=0.02; infer missing source sheet without fitting",
+      "question_round_count": 3,
+      "prior_question_dispatches": 2,
+      "question_lineage_note": "New 2026-10-23 active directive question1 explicitly makes this round3 of the B1 runtime-binding question, after B1m and its offline repair. No reset of prior cap.",
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-table-source-render",
+      "investigation_budget_minutes": 25,
+      "landed_in": "docs/scratch/phase-b1n-font-sheet-discriminator.md; PLAN.md B1; docs/LESSONS.md",
+      "disposition": "Diagnostic ambiguity retained, no identity inference. Corrected six passing to five; full archive inventory and actual table extents not proved, _FontSmall negative not a resource rejection. Conditional directive Q3 fallback preflight next.",
+      "facilitator_verified": "Independent no-worker-import raw PE/Pillow checker reproduces every cell and all12 declared table/sheet rows, five ^Font passes. Both raw772-byte windows/hashes authenticated, known table-header overlap92bytes exposes unsupported blanket256-record interpretation. Own original byte reads4403A7/4403E5 pin firstChar/table operands. Isolated ink->False source mutation fails one test; restored source SHAfd34e3f1 exact,3/3tests pass; separate actual Q.x=255 input fails bounds/restores hash. No independent LRZ decode/archive completeness claim. Full wrapper build+CTest30/30, install exe/config/save hashes match own startup, no process/task. Gate unscored, no production change or live start. Evidence build/tmp/b1n-independent*."
+    },
+    {
       "id": "b1m-runtime-font-read",
       "title": "Read main-menu runtime X and ^Font resource binding",
       "status": "landed",
@@ -2840,6 +2867,26 @@
     }
   ],
   "standing_run": {
+    "id": "b1-table-source-render",
+    "goal": "Identify ^Font from read-table constraints, render and score B1; conditional preflighted live fallback only on ambiguity/negative.",
+    "milestones": ["B1 frontend assets and text"],
+    "current": "Question1 diagnostic ambiguous, no source accepted; next conditional Q3 fallback byte-based preflight before any launch.",
+    "authorized": "docs/DIRECTIVE.md active issued2026-10-23 supersedes stopped b1-runtime-render: Q1 table/source test offline round3; Q2 render/score offline up to2 rounds only after unique sheet; Q3 one conditional live start as explicit round4 cap exception after complete byte-based pointer/highlight/source preflight. C1 held; no B2/C2/C3 advance.",
+    "grants": {
+      "stock_starts": "Q1/Q2 zero; Q3 exactly one only if Q1 ambiguous/negative AND offline preflight closes, no retry after Popen",
+      "commits": "each independently verified round on decompile, push origin decompile per ROLES sync; no force push, checkout, reset or stash",
+      "concurrency": "up to3 independent offline rounds; current dependent questions run sequentially"
+    },
+    "workers": "OpenCode mapping docs/ROLES.md: configured round-agent for offline data/render/capture; disasm-agent for separately scoped original-machine-code reading.",
+    "owner": "OpenCode facilitator ses_e96bf0745ffevVtM6zz6vK5hed, 2026-10-23 invocation handoff. Prior run stopped; active/queue empty; decompile clean and git pull --ff-only already up to date.",
+    "rounds_run": 1,
+    "stock_starts_used": 0,
+    "pending_questions": [],
+    "stop_point": "B1 gate passes independently, B1 parked (cap, conditional Q3 preflight failure or start spent without binding), or ORCHESTRATION stop. Q1 ambiguity routes to explicitly authorized Q3 preflight, not automatic render or live launch.",
+    "handoff": "2026-10-23 B1n verified diagnostic ambiguity landed: five exported ^Font candidates, no source selection, unsupported full table extent and missing physical archive inventory narrowed explicitly. No render/B1 score,30/30 CTest, install hashes match and no process/task. One round/zero starts this run. Next directive Q3 is explicit runtime-question round4 cap exception: byte-based current-process highlight plus complete pool/wrapper/descriptor/source preflight; park without launch if it cannot close. No independent in-scope parallel work.",
+    "rules": "docs/ORCHESTRATION.md#standing-run",
+    "stopped": null,
+    "previous": [{
     "id": "b1-runtime-render",
     "goal": "Read main-menu runtime X and ^Font resource, then render and score B1; do not advance to B2 or Phase C.",
     "milestones": [
@@ -3207,5 +3254,6 @@
         }
       }
     ]
+  }]
   }
 }

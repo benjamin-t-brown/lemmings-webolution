@@ -592,6 +592,18 @@ All install hashes restored and 30/30 CTest pass. B1 remains unaccepted and
 unscored; question 2 render is blocked. Run stops pending a separately authorized,
 offline-preflighted acquisition, not another fitted sheet or guessed placement.
 
+**B1n: offline predicates remain ambiguous**
+([check](docs/scratch/phase-b1n-font-sheet-discriminator.md)), 2026-10-23,
+runtime-question round3. Five existing font exports pass the checked
+`^Font` prefix predicates, not six as the candidate reported. No sheet is
+accepted; B1 remains unscored. Physical both-archive inventory was not
+proved. B1i's blanket256-record extent is narrowed: its asserted `^Font`
+window overlaps `_FontSmall` by92 bytes; the known menu ASCII cells remain
+valid. `_FontSmall`'s overlong-window negative is not a resource rejection.
+Own cell/byte checks, isolated ink mutation and30/30CTest pass. The active
+directive now permits the conditional fourth-round fallback, with full
+offline pointer/source/highlight preflight before any stock launch.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,

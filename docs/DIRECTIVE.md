@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the B1 runtime-read directive, closed 2026-10-23 (`b1-runtime-render`, B1m
 spent its one start without the sheet binding).
@@ -74,3 +74,18 @@ C2 or C3 on this directive.
 Pull before selecting work and push after each round commit, per
 [ROLES.md](ROLES.md#opencode-on-the-mac-clone). If a push from mouv fails on credentials,
 leave the commits local and say so in the handoff; the overlord carries them to GitHub.
+
+## Outcome — 2026-10-23
+
+B1 parked at the specified preflight-failure stop. B1n (runtime question
+round3) retained bounded diagnostic ambiguity: five exported `^Font`
+candidates pass the checked predicates; no sheet identity accepted. Full
+archive coverage and actual table extents were not established. B1o
+(explicit round4 fallback) reached its eight-body cap without proving the
+current-process highlight accessor or complete actual-source path, so it
+did **not launch**. Two dispatches, zero stock starts on this directive.
+No renderer or B1 gate score; no gate/mask/exclusion changes. Full CTest
+30/30; install hashes unchanged, no process/task. Evidence and exact
+resume boundaries: `docs/scratch/phase-b1n-font-sheet-discriminator.md`
+and `docs/scratch/phase-b1o-font-binding-preflight.md`. No fifth round,
+automatic use of the unused conditional start, or milestone advance.

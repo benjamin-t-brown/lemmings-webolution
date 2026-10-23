@@ -604,6 +604,18 @@ Own cell/byte checks, isolated ink mutation and30/30CTest pass. The active
 directive now permits the conditional fourth-round fallback, with full
 offline pointer/source/highlight preflight before any stock launch.
 
+**B1o: conditional fallback preflight failed; B1 parked**
+([check](docs/scratch/phase-b1o-font-binding-preflight.md)), 2026-10-23,
+runtime-question round4 explicit exception. At the eight-body cap neither
+current-process highlight nor full actual-source attribution was proved.
+The loader has Lo/Hi and original-name BMP fallback paths; dimensions and
+the short name alone do not select the source. Partial mocks are not full
+preflight. No stock start spent, no render/score. Own41pin/eight-range
+checks, canonical14record authentication, isolated offset mutation and
+30/30CTest pass. Per directive stop, no fifth round or milestone advance.
+Resume requires new authorization for the exact unresolved native edges,
+not a guessed sheet, pixel fit or automatic use of the unused start.
+
 ## Phase C — the in-level HUD
 
 The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
@@ -1513,6 +1525,13 @@ open.
   [Evidence and resume boundary](docs/scratch/phase-b1m-runtime-font-read.md).
   One-start grant exhausted; no automatic retry. A new authorization should require
   offline pointer/name/highlight preflight before spending another start.
+  **B1n/B1o new directive outcome (2026-10-23):** round3 table test did not
+  identify a source (five candidates pass its bounded predicates; full inventory
+  and table extents unproved). Explicit round4 fallback reached eight bodies
+  without proving highlight or actual-source path, so did not launch. B1 is
+  re-parked with zero starts this run, no renderer/B1 score. Resume only on new
+  authorization at [the exact native boundaries](docs/scratch/phase-b1o-font-binding-preflight.md#park-and-resume-boundary);
+  no fifth dispatch or automatic carryover of its unused conditional start.
 - **D2(b) digger bite-timing** (parked 2026-10-22 after D2i repair 1). Climber, blocker
   and floater are all full 50/50 matches on D2 part (b)'s live-vs-sim comparison;
   digger matches only 16/50. The native stepper (`0x0041B077`, shared byte-identically

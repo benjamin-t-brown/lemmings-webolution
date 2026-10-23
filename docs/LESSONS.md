@@ -866,6 +866,15 @@ is not a resource rejection; both-archive completeness was not proved.
 Next is the directive's conditional offline live-acquisition preflight,
 not a guessed font or another glyph fit.
 
+**B1o ([check](scratch/phase-b1o-font-binding-preflight.md)):** the fallback
+preflight failed at its eight-body cap, **before launch**. `0x403720` and
+`0x406500` return their input record address, not a string pointer field.
+The loader at `0x47218A` has conditional Lo/Hi, BMP existence/fallback and
+ALF paths, with key descendants unexamined. No actual source or highlight
+accessor is established. Partial decoder tests do not close either gap.
+B1 is parked under the directive; no fifth round or automatic use of the
+unused conditional start. Own byte/bundle/mock checks and30/30CTest pass.
+
 ## Pause text at 0x44CD06
 
 [C2a](scratch/phase-c2a-pause-timer.md): `0x44CD06` fills `H+0x758` with

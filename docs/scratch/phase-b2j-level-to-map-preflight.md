@@ -6,8 +6,8 @@ against a cap of 12 (surplus was small leaf stubs).
 
 ## Result (READ, not observed execution)
 
-- **Path A, handler to construction:** screen 0x20's handler `0x486510` (vtable `0x4B1CB0` slot 11) compares the
-  event id with `[screen+0x48]` (`0x486599`), zeroes `[0x5D59E0]` (`0x48659E`) and calls vtable slot 3 `0x4886E4` with
+- **Path A, handler to construction:** screen 0x20's handler `0x486510` (vtable `0x4B1CB0` slot 11) compares a
+  widget pointer with `[screen+0x48]` (`0x486599`; corrected by B2k, it first read as an event id), zeroes `[0x5D59E0]` (`0x48659E`) and calls vtable slot 3 `0x4886E4` with
   selector 0x23 (`0x4865AC..0x4865BA`). `0x4886E4` calls the factory `0x48726F`; selector 0x23 is case `0x4878E8`,
   ctor `0x49AA90`, vtable `0x4B3EB8`.
 - **0x23 is the map** only by inference: `0x4B3EB8` is the head node B2h observed after the map-node click. No label
@@ -18,7 +18,7 @@ against a cap of 12 (surplus was small leaf stubs).
 - **Stacking candidate S (READ only):** `0x4886E4` calls the factory without the `0x4884F4` call on the old head that
   `0x486F60` makes; the factory tail links the new node onto the old one. Whether the old node survives
   (`0x487B4B`, `0x44521B`, `0x488378`) is unread.
-- **Unread:** the ctor `0x4862F0` control ids, the producer of the event id (`0x48896A`), and the condition that builds
+- **Unread:** the control table (B2k: built by `0x486335`, not the ctor), the producer of the widget call (B2k: `0x48FCDD`), and the condition that builds
   screen 0x20 (only builder `0x45E0A9`, trigger at `0x45E086`, unread; level end is a guess).
 - By the brief's rule neither A nor S is a named key or click path, so the b2k live start was **not** recommended.
 

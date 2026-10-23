@@ -940,6 +940,14 @@ node B2h saw after the map-node click (so 0x23 = map is an inference). The 0x1F 
 unread; no key or click path is named. Stacking candidate: `0x4886E4` skips the `0x4884F4` call on the old head, but
 whether the old node survives is unread. Evidence: `docs/scratch/phase-b2j-level-to-map-preflight.md`.
 
+## Level to map, input end (B2k, 2026-10-23, READ only)
+
+The `[screen0x20+0x48]` value is a button object pointer stored by the builder `0x486335` (table `0x4C3414`) through
+`0x488A92`, not a control id from the ctor. Producer: button vtable `0x4B1E30` slot 1 `0x48FCDD`, calling parent slot 11
+with the widget, fed by the key-state table `0x483212`. Screen 0x20 is built when the main-loop mode word `[0x4C6A08]`
+is 4 (`0x45DF5C` -> `0x45E086`); its writer is unread (no direct immediate store in `.text`). The old head node
+survives `0x4886E4`. No key or click path is named; no start. Evidence: `docs/scratch/phase-b2k-level-to-map-input-end.md`.
+
 ## B2 menu object chain (B2a-B2c, 2026-10-23, READ only)
 
 `[0x5D59E4]` is the screen-list head (`0x487FA0` writes it; `0x487CC0` stores `[obj+4]`). The

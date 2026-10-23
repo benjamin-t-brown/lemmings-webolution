@@ -1486,6 +1486,14 @@ open.
   loose route, a late breakpoint, a missed thread and a non-matching condition are not separable. Q2
   still not started. Resume brief: arm `{0x47E4AD, 0x47E463}` together (needs a fresh start grant), or
   read the gate setter and loose helpers offline first. See `docs/scratch/phase-b1t-font-live-read.md`.
+- **B2 level-to-map** (parked 2026-10-23, directive Q3: B2j and B2k named **no** key or click path, so the
+  start was skipped and `Frontend` has nothing new to replay). Read: screen 0x20 handler `0x486510` -> `0x4886E4`
+  (selector 0x23, map by inference from B2h's node `0x4B3EB8`) -> factory; producer `0x48FCDD`; screen 0x20 built when
+  the mode word `[0x4C6A08]` is 4 (`0x45DF5C`). Unread: the writer of that word, the caller and widget choice of
+  `0x48FCDD`, the mouse hit-test, whether the old head node is later removed. The 0x1F dialog never builds the map.
+  Resume brief: read the writers of `[0x4C6A08+0]` through the 50-plus `ecx=0x4C6A08` members, then the per-frame
+  caller of `0x48FCDD`; a start needs a driven level end. B2 gate row stays unmet. See
+  `docs/scratch/phase-b2j-level-to-map-preflight.md` and `docs/scratch/phase-b2k-level-to-map-input-end.md`.
 - **B2 screen state machine** (parked 2026-10-23 at the three-round cap; B2a preflight failed
   closed, B2b read the key-poll flag `[0x5D5970]` and the focus-store shape, B2c read the
   file-backed chain `[0x5D59E4]` -> `+4` -> node with vtable `0x4B2528`). **Zero stock starts

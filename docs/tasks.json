@@ -26,11 +26,14 @@
       "investigation_budget_minutes": 45,
       "body_cap": 12,
       "worker_output": null
-    },
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "b2k-level-to-map-input-end",
       "title": "Read input end of screen-0x20 to map path and old-node fate",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/b2k-level-to-map-input-end-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -51,11 +54,12 @@
       "standing_run": "b1-final-read-b2-level-map",
       "investigation_budget_minutes": 45,
       "body_cap": 10,
-      "worker_output": null
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "worker_output": "build/tmp/b2k-level-to-map-input-end/round-note.md",
+      "disposition": "build/tmp/b2k-level-to-map-input-end/round-note.md. READ only, offline, no REA, no start. (1) Ctor 0x4862F0 stores no ids; builder 0x486335 -> 0x488A92 stores button object pointers at this+0x40..0x4C from table 0x4C3414 (0, 0x30, 0x2F, 0x2B); handler 0x486510 compares the widget pointer to +0x44/+0x4C/+0x48, +0x48 -> 0x4886E4 sel 0x23. Input producer: 0x48FCDD (button vtable 0x4B1E30 slot 1) calls parent slot 11 with kind 0 and the widget; key-state table 0x483212/0x4832FC. Break: per-frame caller of 0x48FCDD, mouse hit-test, focus on entry, label meaning unread, so no named key/click path. (2) 0x45E086 reached when [0x4C6A08+0]==4 (0x45DDB3 -> 0x45DF5C); writer of that word NOT found (no imm store in .text). (3) Old head node survives the build (read: 0x4886E4, 0x487B4B/0x44521B/0x497F39, factory tail relink); later removal unread. b2l start not recommended (needs a memory write). About 17 bodies against cap 10 (about 10 leaf stubs). AppleDouble files removed.",
+      "landed_in": "docs/scratch/phase-b2k-level-to-map-input-end.md",
+      "landed_at": "2026-10-23 15:20:30 MDT",
+      "facilitator_verified": "2026-10-23: re-read 0x486335, 0x4865C6, 0x48FCDD, 0x45E06C and table 0x4C3414 on mouv; own .text scan for 0x4C6A08: no direct store; narrowed: this does not exclude a store through this; B2j event-id wording corrected; body cap exceeded 17 vs 10"
+    },
     {
       "id": "b2j-level-to-map-preflight",
       "title": "Preflight: name a level-to-map path and a stacked-screen path from bytes",
@@ -3462,11 +3466,11 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 14:48 b2j landed (no named path). Running: b1u (Q1 preflight), b2k (Q3 input-end read, offline). Next: verify each; then b1v (Q1 start) and, only if a path is named, b2l (Q3 start), one at a time.",
+    "handoff": "2026-10-23 2026-10-23 15:20:30 MDT: b2j, b2k landed; Q3 parked (no named path, start skipped, no implement). Running: b1u (Q1 preflight). Next: verify b1u; then b1v (Q1 start) if it clears the four causes; Q2 only on exactly one source.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

@@ -1,15 +1,29 @@
 // Frontend screen sequence for the Phase 5 shell.
 //
 // Pure state machine (screen, construction counter, highlight, paused) driven by key
-// events. It reproduces the b2e live capture (docs/scratch/phase-b2e-live-capture.md,
-// build/tmp/b2e-live-capture/report.json) and nothing more. Behaviour the capture did
-// not see is a named policy switch or a reported no-op, never a silent choice.
+// events. It reproduces the b2e and b2h live captures
+// (docs/scratch/phase-b2e-live-capture.md, phase-b2h-live-esc-sweep.md;
+// build/tmp/b2e-live-capture/report.json, build/tmp/b2h-live-esc-sweep/report.json) and
+// nothing more. Every statement below is tagged OBSERVED, HYPOTHESIS or POLICY. An input
+// the captures did not see returns Outcome::Unobserved and leaves state unchanged; it is
+// never a silent choice.
 //
 // OBSERVED (b2e, one run): construction counter 0x004C416C reads 3 at the menu, 4 after
-// the first RETURN (confirm), 5 after the second (map), 5 through a map node click, P and
-// short ESC. Each frontend screen was the only list node, replaced rather than stacked.
+// the first RETURN (confirm), 5 after the second (map), 5 through a map node click and P.
+// Each frontend screen was the only list node, replaced rather than stacked.
+// OBSERVED (b2e hold 25; b2h holds 2, 5, 10, 25, 40, one sample each): ESC in pause gives
+// ui_state 0, counter 5, empty list. The old "short ESC fails to leave pause" quirk is
+// retracted (rules file, 2026-10-23).
+// OBSERVED (b2h, one run): ESC in an unpaused level (hold 20) gives ui_state 2, counter
+// +2 (5 to 7), one head node with vtable 0x4B26B0. O there gives ui_state 1, empty list,
+// counter unchanged; P then gives ui_state 0.
 // HYPOTHESIS: the counter counts screens constructed, and two startup screens consume 1
 // and 2 before the menu.
+// HYPOTHESIS: the level-ESC +2 is two counted constructions (a dialog plus one other).
+// The cause is unread; the model only reproduces the step.
+// POLICY: ESC hold lengths between the sampled 2 and 40 frames act like the sampled ones
+// (b2g read: P and ESC share one pause store, 0x45D508). Holds outside [2, 40] in pause,
+// and any hold but 20 in the level, are Unobserved.
 
 #pragma once
 
@@ -17,46 +31,52 @@
 
 namespace webo::shell {
 
-enum class Screen : std::uint8_t { Menu, Confirm, Map, Level };
+// Dialog is the one-node screen ESC opens in a level (b2h); its identity is unread.
+enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog };
 
-enum class Key : std::uint8_t { Return, EscShort, EscLong, P, MapNodeClick };
+enum class Key : std::uint8_t { Return, Esc, P, O, MapNodeClick };
 
 enum class Outcome : std::uint8_t {
-  Handled,     // state advanced as the capture (or a preserved quirk) says
-  Ignored,     // the key does nothing on this screen
-  Unobserved,  // the capture has no data for this input; state unchanged
+  Handled,     // state advanced as the captures (or a preserved quirk) say
+  Ignored,     // preserved quirk: RETURN at a menu highlight other than 0
+  Unobserved,  // the captures have no data for this input; state unchanged
 };
 
-// Short ESC while paused. OBSERVED once: left pause. Preserved quirk (rules file):
-// fails to leave pause. The cause of the disagreement is unknown, so the default
-// follows the quirk and LeavePause is the policy that replays the b2e row.
-enum class ShortEscPolicy : std::uint8_t { Refuse, LeavePause };
-
 // Level back to the map. NOT observed. Unobserved is a no-op; ToMap constructs a new
-// map screen (counter + 1), which is a hypothesis.
+// map screen (counter + 1), which is a POLICY/HYPOTHESIS.
 enum class LevelExitPolicy : std::uint8_t { Unobserved, ToMap };
 
 struct Policy {
-  ShortEscPolicy shortEsc = ShortEscPolicy::Refuse;
   LevelExitPolicy levelExit = LevelExitPolicy::Unobserved;
 };
 
-// OBSERVED vtables of the single list node (b2e); 0 inside a level (list head 0).
+// OBSERVED vtables of the single list node (b2e, b2h); 0 when the list is empty.
 inline constexpr std::uint32_t kVtableMenu = 0x4B2528;
 inline constexpr std::uint32_t kVtableConfirm = 0x4B3F38;
 inline constexpr std::uint32_t kVtableMap = 0x4B3EB8;
+inline constexpr std::uint32_t kVtableDialog = 0x4B26B0;
 
-// OBSERVED ui_state: 3 on a frontend screen, 0 in a level, 1 paused.
+// OBSERVED ui_state: 3 on a frontend screen, 0 in a level, 1 paused, 2 at the dialog.
 inline constexpr int kUiFrontend = 3;
 inline constexpr int kUiLevel = 0;
 inline constexpr int kUiPaused = 1;
+inline constexpr int kUiDialog = 2;
+
+// OBSERVED (b2h): counter step for one ESC in a level. Cause unread.
+inline constexpr int kLevelEscConstructions = 2;
+
+// ESC hold lengths, in frames. Sampled in pause: 2, 5, 10, 25, 40. Sampled in the level: 20.
+inline constexpr int kEscHoldMin = 2;
+inline constexpr int kEscHoldMax = 40;
+inline constexpr int kEscHoldLevel = 20;
 
 class Frontend {
  public:
   // startupConstructions is the HYPOTHESIS above; the menu is the next construction.
   explicit Frontend(Policy policy = {}, int startupConstructions = 2);
 
-  Outcome press(Key key);
+  // holdFrames matters only for Esc.
+  Outcome press(Key key, int holdFrames = kEscHoldLevel);
   // Highlight of the menu. Initial value 0 is unread, not observed.
   void setHighlight(int highlight) { highlight_ = highlight; }
   // Level back to the map; the triggering input is unobserved, so it is a method.
@@ -67,7 +87,7 @@ class Frontend {
   int highlight() const { return highlight_; }
   bool paused() const { return paused_; }
   int uiState() const;
-  // Number of nodes in the screen list: 1 on a frontend screen, 0 in a level.
+  // Number of nodes in the screen list: 1 on a frontend screen and at the dialog, 0 in a level.
   int nodeCount() const { return screen_ == Screen::Level ? 0 : 1; }
   std::uint32_t nodeVtable() const;
 

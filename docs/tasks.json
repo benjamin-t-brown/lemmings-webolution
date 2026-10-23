@@ -2,34 +2,7 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "b2i-frontend-measured",
-      "title": "Update Frontend and its test to the b2e and b2h measurements",
-      "status": "running",
-      "brief": "build/tmp/b2i-frontend-measured-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "implementation",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "dispatch_id": "ab2i-frontend-measured-05403c674bd12a4e",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [
-        "b2f-frontend-state-machine",
-        "b2h-live-esc-sweep"
-      ],
-      "gate_served": "B2 screen state machine; directive Q3 implementation",
-      "question_round_count": 3,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "b1-source-read-b2-esc",
-      "investigation_budget_minutes": 45,
-      "body_cap": 0,
-      "worker_output": null
-    }
-  ],
+  "active": [],
   "queue": [],
   "recently_landed": [
     {
@@ -3364,6 +3337,35 @@
         "level-to-map unobserved",
         "counter +2 on level ESC unexplained"
       ]
+    },
+    {
+      "id": "b2i-frontend-measured",
+      "title": "Update Frontend and its test to the b2e and b2h measurements",
+      "status": "landed",
+      "brief": "build/tmp/b2i-frontend-measured-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "implementation",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab2i-frontend-measured-05403c674bd12a4e",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b2f-frontend-state-machine",
+        "b2h-live-esc-sweep"
+      ],
+      "gate_served": "B2 screen state machine; directive Q3 implementation",
+      "question_round_count": 3,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-source-read-b2-esc",
+      "investigation_budget_minutes": 45,
+      "body_cap": 0,
+      "worker_output": "build/tmp/b2i-frontend-measured/round-note.md",
+      "landed_in": "docs/scratch/phase-b2i-frontend-measured.md",
+      "disposition": "Frontend replays b2e and b2h: pause ESC holds 2..40 leave pause, level ESC hold 20 opens Dialog (+2, vtable 0x4B26B0), O returns; ShortEscPolicy removed; level-to-map, +8, ESC beyond 40 unobserved and labelled",
+      "facilitator_verified": "2026-10-23: read files; ctest frontend_sequence 109 checks, full suite 31/31; single-constant mutations kLevelEscConstructions, kEscHoldMax, kEscHoldMin each fail; kEscHoldLevel mutation passes (symbolic in test); restored by hash; LF; no leftovers"
     }
   ],
   "standing_run": {
@@ -3373,7 +3375,7 @@
       "B1 frontend assets and text",
       "B2 screen state machine"
     ],
-    "current": "b2i (Q3 round 3, offline Frontend update) dispatched; last directive round.",
+    "current": "done",
     "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, second directive of the day): Q1 live read one round and one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 three new rounds (preflight, capture, implement) and one stock start. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
     "grants": {
       "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
@@ -3382,11 +3384,11 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; directive active and prior run stopped with no task running, so this start is the handoff.",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 2,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 b1t, b2g, b2h landed; both stock starts spent; short-ESC quirk retracted. b2i (Frontend offline update, Q3 round 3) dispatched at 1a3eb99. Next: verify/land b2i, set DIRECTIVE.md Status: done, write standing_run.stopped, stop. No B3/C1/C2/C3.",
+    "handoff": "2026-10-23 stopped: b1t, b2g, b2h, b2i landed; both stock starts spent. Q1 parked (no ^Font hit), Q2 not run, Q3 solved on short-ESC (retracted) with level-to-map and +8 unobserved. DIRECTIVE.md Status: done.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

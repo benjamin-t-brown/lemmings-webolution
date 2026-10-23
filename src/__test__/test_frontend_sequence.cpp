@@ -1,9 +1,10 @@
-// Frontend screen sequence replay against the b2e live capture.
+// Frontend screen sequence replay against the b2e and b2h live captures.
 
 #include "shell/Frontend.h"
 
 #include <array>
 #include <iostream>
+#include <string>
 #include <string_view>
 
 using namespace webo::shell;
@@ -37,8 +38,24 @@ constexpr std::array<Row, 7> kB2e = {{
     {"confirm-RETURN", 5, 3, 1, 0x4B3EB8},
     {"map-node-click", 5, 0, 0, 0},
     {"pause-P", 5, 1, 0, 0},
-    {"pause-short-ESC", 5, 0, 0, 0},
+    {"pause-ESC-hold-25", 5, 0, 0, 0},
 }};
+
+// Source: build/tmp/b2h-live-esc-sweep/report.json (OBSERVED, one run). ESC in pause at
+// each hold left pause: ui_state 0, counter 5, empty list.
+constexpr std::array<int, 5> kB2hHolds = {2, 5, 10, 25, 40};
+// ESC in the level (hold 20), then O, then P.
+constexpr Row kB2hDialog = {"level-ESC-dialog", 7, 2, 1, 0x4B26B0};
+constexpr Row kB2hO = {"dialog-O", 7, 1, 0, 0};
+constexpr Row kB2hP = {"dialog-O-then-P", 7, 0, 0, 0};
+
+Frontend toPause() {
+  Frontend f;
+  f.press(Key::Return);
+  f.press(Key::Return);
+  f.press(Key::MapNodeClick);
+  return f;
+}
 
 void checkRow(const Frontend& f, const Row& r) {
   check(f.counter() == r.counter, std::string(r.step) + ": counter");
@@ -52,8 +69,7 @@ void checkRow(const Frontend& f, const Row& r) {
 int main() {
   std::cout << "frontend sequence: b2e replay\n";
   {
-    // LeavePause is the policy that matches the one observed short-ESC sample.
-    Frontend f({ShortEscPolicy::LeavePause, LevelExitPolicy::Unobserved});
+    Frontend f;
     checkRow(f, kB2e[0]);
     f.setHighlight(0);
     checkRow(f, kB2e[1]);
@@ -65,27 +81,72 @@ int main() {
     checkRow(f, kB2e[4]);
     check(f.press(Key::P) == Outcome::Handled, "P handled");
     checkRow(f, kB2e[5]);
-    check(f.press(Key::EscShort) == Outcome::Handled, "short ESC handled (LeavePause)");
+    check(f.press(Key::Esc, 25) == Outcome::Handled, "ESC hold 25 handled by default");
     checkRow(f, kB2e[6]);
   }
 
-  std::cout << "frontend sequence: policy and quirks\n";
-  {
-    // Default follows the preserved quirk; this row is a policy, not a measurement.
-    Frontend f;
-    f.press(Key::Return);
-    f.press(Key::Return);
-    f.press(Key::MapNodeClick);
+  std::cout << "frontend sequence: b2h ESC sweep in pause\n";
+  for (int hold : kB2hHolds) {
+    Frontend f = toPause();
     f.press(Key::P);
-    check(f.press(Key::EscShort) == Outcome::Ignored, "default: short ESC refused");
-    check(f.paused() && f.uiState() == kUiPaused, "default: still paused");
-    check(f.press(Key::EscLong) == Outcome::Unobserved, "long ESC unobserved");
-    check(f.paused() && f.counter() == 5, "long ESC leaves state unchanged");
-    check(f.leaveLevel() == Outcome::Unobserved && f.screen() == Screen::Level,
-          "default: level exit is a reported no-op");
+    const std::string tag = "hold " + std::to_string(hold);
+    check(f.uiState() == kUiPaused, tag + ": paused before ESC");
+    check(f.press(Key::Esc, hold) == Outcome::Handled, tag + ": ESC handled");
+    check(!f.paused(), tag + ": left pause");
+    checkRow(f, {"pause-ESC", 5, 0, 0, 0});
+  }
+
+  std::cout << "frontend sequence: b2h level ESC dialog\n";
+  {
+    Frontend f = toPause();
+    check(f.press(Key::Esc, kEscHoldLevel) == Outcome::Handled, "level ESC handled");
+    check(f.screen() == Screen::Dialog, "level ESC opens the dialog");
+    checkRow(f, kB2hDialog);
+    check(f.counter() == 5 + kLevelEscConstructions, "counter steps by kLevelEscConstructions");
+    check(f.press(Key::O) == Outcome::Handled, "O at dialog handled");
+    checkRow(f, kB2hO);
+    check(f.screen() == Screen::Level && f.paused(), "O returns to pause");
+    check(f.press(Key::P) == Outcome::Handled, "P handled after O");
+    checkRow(f, kB2hP);
+  }
+
+  std::cout << "frontend sequence: unobserved inputs and policy\n";
+  {
+    // Each of these is a reported no-op: state must not move.
+    auto stays = [](Frontend& f, Outcome got, std::string_view what) {
+      const Screen s = f.screen();
+      const int c = f.counter();
+      const bool p = f.paused();
+      check(got == Outcome::Unobserved, std::string(what) + ": reported Unobserved");
+      check(f.screen() == s && f.counter() == c && f.paused() == p,
+            std::string(what) + ": state unchanged");
+    };
+    {
+      Frontend f = toPause();
+      f.press(Key::P);
+      stays(f, f.press(Key::Esc, 41), "pause ESC hold 41");
+      stays(f, f.press(Key::Esc, 1), "pause ESC hold 1");
+    }
+    {
+      Frontend f = toPause();
+      stays(f, f.press(Key::Esc, 5), "level ESC hold 5");
+      stays(f, f.press(Key::O), "O in level");
+    }
+    {
+      Frontend f = toPause();
+      f.press(Key::Esc, kEscHoldLevel);
+      stays(f, f.press(Key::Esc, kEscHoldLevel), "ESC at dialog");
+      stays(f, f.press(Key::P), "P at dialog");
+      stays(f, f.press(Key::Return), "RETURN at dialog");
+      stays(f, f.leaveLevel(), "leaveLevel at dialog");
+    }
+    {
+      Frontend f = toPause();
+      stays(f, f.leaveLevel(), "default: level exit");
+    }
   }
   {
-    Frontend f({ShortEscPolicy::Refuse, LevelExitPolicy::ToMap});
+    Frontend f({LevelExitPolicy::ToMap});
     f.press(Key::Return);
     f.press(Key::Return);
     f.press(Key::MapNodeClick);

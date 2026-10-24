@@ -1,32 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T16:39:44-06:00",
+  "updated": "2026-10-24T16:44:27-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1aa-alf-alpha",
-      "title": "Read how ^tab .alf bytes become texture alpha (round 1 of 3)",
-      "status": "ready-for-verify",
-      "brief": "build/tmp/c1aa-alf-alpha-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "disassembly read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C1 skill panel; plate alpha rule from 0x47E40D",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-skill-panel-gate",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 16:27 MDT",
-      "worker_output": "build/tmp/c1aa-alf-alpha/round-note.md",
-      "dispatch_id": "5497ec2c-4de7-4528-a2b3-a826d834a276"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-skill-panel-gate",
@@ -44,11 +20,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 16:21:48 -06:00",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 16:39 MDT: C1 skill panel. c1ab landed: sample at 0x414944, before the stores; live values unread. c1aa is ready-for-verify. Stock starts 0 of 3. Next offline-unblocked question is the one Frida start, not yet dispatched. Pass started 16:21:48.",
+    "handoff": "2026-10-24 16:44 MDT: C1 skill panel. c1aa landed: sar/shl by the device mask; [ebp-0x128] writer unread. c1ab landed: sample at 0x414944. Stock starts 0 of 3. Next: the mask writer, then the one Frida start. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [
@@ -57,6 +33,12 @@
           "dispatched": "2026-10-24 16:27 MDT",
           "landed": "2026-10-24 16:39 MDT",
           "elapsed": "12m 44s"
+        },
+        {
+          "id": "c1aa-alf-alpha",
+          "dispatched": "2026-10-24 16:27 MDT",
+          "landed": "2026-10-24 16:44 MDT",
+          "elapsed": "17m 27s"
         }
       ]
     },

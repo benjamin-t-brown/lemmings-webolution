@@ -211,3 +211,15 @@ flags match, after the texture bind at `0x472653`. The live values are unread.
 The facilitator re-disassembled both ranges, re-ran the dry check, and a
 one-address change of the descriptor attach made the check fail. `ctest` 34/34.
 No stock start.
+
+**C1aa: `^tab` `.alf` bytes are shifted into a 16-bit pixel**
+([check](../scratch/phase-c1aa-alf-alpha.md)), 2026-10-24, round 1 of 3,
+offline. `0x47388F` loads one byte, `0x473897` is `sar eax, cl`, `0x47389F` is
+`shl eax, cl`, and `0x473943` stores the 16-bit word. The sar count is
+`8 - [ebp-8]`. The shl count is the trailing-zero count of `[ebp-0x128]`.
+A zero mask at `0x4736B6` skips the `sar`. The popcount callback is
+`0x473B1E`, passed with `lea [ebp-0x14]` to `[vtable+0x20]`. `^tab_selected`
+uses the same `0x45FE10` registration; its BMP is 72 by 32 with nonzero
+colour, and its `.alf` max is 248. The writer of `[ebp-0x128]` was not found.
+The facilitator re-disassembled the shifts and the callback, re-ran the rule
+command, and a one-byte change of the `sar` check made it fail. No stock start.

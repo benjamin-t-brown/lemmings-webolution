@@ -4,31 +4,6 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "c2e-caption-preflight",
-      "title": "C2 Paused caption preflight: fields the top edge needs, read-only live script (no start)",
-      "status": "ready-for-verify",
-      "brief": "build/tmp/c2e-caption-preflight-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "offline preflight + script",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "dispatch_id": "ac2e-caption-preflight-d9a97806a8d6c82e",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C2 gate; directive Q3",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "b1-panel-c2-counters-caption",
-      "investigation_budget_minutes": 60,
-      "body_cap": 12,
-      "worker_output": "build/tmp/c2e-caption-preflight/round-note.md",
-      "landed_in": null,
-      "disposition": null
-    },
-    {
       "id": "b1y-panel-fields-colour",
       "title": "B1 panel: object fields +0x34..+0x48, colour path, highlight setter (Q1 round 2 of 2)",
       "status": "running",
@@ -3658,6 +3633,32 @@
       "landed_in": "docs/scratch/phase-c2d-counters-open-reads.md",
       "disposition": "Digits replace the words (0x4404FA zeroes list count); Out = sum of words at this+0x5070+idx*2 over list this+0x1FB0 (0x444ABC); 0x4CBAB0 no direct writer; colour object stored 255/63/63 or 255x3, R,G,B naming and default colour unread",
       "facilitator_verified": "2026-10-23: re-read 0x4404FA, 0x440940, 0x4145A0, 0x4017F0, 0x44E060, 0x44D39F..0x44D3CC on the exe; own .text scan: 0x4CBAB0 one hit, 0x444ABC callers identical. 0x444ABC loop bytes not re-read. 12 bodies at cap."
+    },
+    {
+      "id": "c2e-caption-preflight",
+      "title": "C2 Paused caption preflight: fields the top edge needs, read-only live script (no start)",
+      "status": "landed",
+      "brief": "build/tmp/c2e-caption-preflight-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline preflight + script",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2e-caption-preflight-d9a97806a8d6c82e",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C2 gate; directive Q3",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 12,
+      "worker_output": "build/tmp/c2e-caption-preflight/round-note.md",
+      "landed_in": "docs/scratch/phase-c2e-caption-preflight.md",
+      "disposition": "G is static 0x4C6A08 (not the level screen); inputs named; 0x47AD8C rect predicted off after 14 s unpaused ([G+0x26024] gate); caption edge likely from G+0x25C68 (0x47ACF9/0x47AC50 unread); read-only script written, selftest 21/21, not run against a process; start not yet justified",
+      "facilitator_verified": "2026-10-23: re-read 0x450A48, 0x45E0E0, 0x45CE80 on the exe; reran --selftest on mouv (OK); read live()/cleanup() in the script. Script never run against a process; 9 of 10 bodies."
     }
   ],
   "standing_run": {
@@ -3676,9 +3677,25 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 18:17 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
-    "pending_questions": [],
+    "pending_questions": [
+      {
+        "id": "q3-caption-round-cap",
+        "question": "Directive Q3 caps the caption question at three rounds: preflight, one start, render. The preflight (c2e) shows a live read now could save only list pointers (heap addresses die with the process), so a second offline round (c2f: decode G+0x25C68 layout, update the script) is needed before the start. That makes the start round 3 and the render round 4. May the render be a fourth round?",
+        "evidence": [
+          "docs/scratch/phase-c2e-caption-preflight.md",
+          "docs/DIRECTIVE.md Q3",
+          "docs/ORCHESTRATION.md#milestones-gates-and-round-caps"
+        ],
+        "options": [
+          "Authorize the render as round 4 (recommended: c2f settles what the one start must read, so the start is not wasted)",
+          "Skip the start, park the caption in Phase E with a resume brief",
+          "Spend the start now on the existing script and decode offline from the saved blocks"
+        ],
+        "recommendation": "Authorize round 4. The alternative of starting now risks spending the only start on pointers."
+      }
+    ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
     "handoff": "2026-10-23 18:50 MDT: c2c (edf222e) and b1x (a199ce5) landed. In flight: c2e (Q3 preflight), c2d (Q2 round 2), b1y (Q1 round 2, final). Next: verify each as it returns, land separately; Q2 round 3 is the render/score. No stock start used.",
     "rules": "docs/ORCHESTRATION.md#standing-run",

@@ -1373,3 +1373,10 @@ the renderer's panel values stay measured. Evidence: `docs/scratch/phase-b1x-pan
 words at `this+0x5070 + idx*2` over the list at `this+0x1FB0` (`0x444ABC`); `0x4CBAB0` has no absolute-address writer. The Saved colour
 object holds 255, 63, 63 (at or above target) or 255, 255, 255 in memory order; R,G,B naming and the default glyph colour are
 unread. Evidence: `docs/scratch/phase-c2d-counters-open-reads.md`.
+
+## Pause caption inputs (C2e, 2026-10-23, READ only; corrects G)
+
+`G` in the A7 chain is the static `0x4C6A08`; the level screen `0x4CBFB0` is the pointer at `G+0x55A8`. The `0x47AD8C` rect is
+gated by `[G+0x26024]`, which is cleared once `[G+0x25FF8]`, decremented only while `ui_state == 0`, drops below -1.0 (about 2.5 s),
+so after a 14 s walk the rect is predicted off in the paused frame and A7k's 1020 was an intro value. The caption edge probably comes
+from `G+0x25C68` (placement via `0x47ACF9` / `0x47AC50`, unread). Evidence: `docs/scratch/phase-c2e-caption-preflight.md`.

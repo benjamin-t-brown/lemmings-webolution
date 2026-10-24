@@ -246,3 +246,12 @@ receives the record after the zero test and before the shift load, so the
 shift is not shown to count the copied mask. The facilitator re-ran the
 command, re-listed the five reads, and a one-byte change of the `movsd` check
 made it fail. No stock start.
+
+**C1ae: the shift-count hook is dry-checked at `0x473897`**
+([check](../scratch/phase-c1ae-shift-count-hook.md)), 2026-10-24, round 3 of 3,
+offline. `onEnter` at `0x473897` is before `sar eax, cl`. `0x473891` has just
+reloaded the sar count into `ecx`. The shl count is still in `[ebp-0xad8]`,
+and the mask dword is still `[ebp-0x128]`. The span has no `call` and no store
+of the mask. The numeric counts were not read. The facilitator re-ran the dry
+check, re-read the five instructions, and a one-address change made the check
+fail. No stock start.

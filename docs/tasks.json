@@ -5094,7 +5094,7 @@
     "stopped": {
       "date": "2026-10-24 01:39 MDT",
       "reason": "Directive stop point: Q1 landed at 2 of 2 rounds (c1g, c1h); Q2 spent the one start and the menu entry failed again (c1i), parked; Q3 not triggered (placement inputs and count font UNREAD).",
-      "last_commit": "pending"
+      "last_commit": "8dcf7ca"
     }
   }
 }

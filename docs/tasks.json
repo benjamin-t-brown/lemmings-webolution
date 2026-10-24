@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T13:45:00-06:00",
+  "updated": "2026-10-24T13:56:00-06:00",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
@@ -4631,14 +4631,19 @@
       "concurrency": "up to 2 concurrent rounds (part 1 offline + part 2 live); at most one live owner"
     },
     "workers": "Codex targeted gpt-6-luna per docs/ROLES.md",
-    "owner": "Cursor facilitator, 2026-10-24 13:36 MDT /facilitator on mouv. Codex session 01a16f55 and worker 01a16f5d both task_complete with usage_limit_exceeded at 13:32:23. This start is the handoff.",
+    "owner": "Cursor facilitator, 2026-10-24 13:54 MDT /facilitator on mouv. No task running. Prior 13:36 session landed c1t in af62928 and wrote the handoff as stopped without a stopped object. This start closes that stop.",
     "started_at": "2026-10-24 12:47:56 MDT",
     "rounds_run": 3,
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Render scored (pass or fail), part 1 or 2 ends without the input the render needs, an ORCHESTRATION stop, or a start that crashes or leaves the install unrestored. Do not advance to C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 13:45 MDT: stopped. c1t landed as a gate fail. No round running. The next directive comes from the overlord.",
+    "handoff": "2026-10-24 13:56 MDT: stopped. c1t landed as a gate fail in af62928. No round running. The next directive comes from the overlord. Do not start part 3 round 2 or advance to C3, the C2 cursor clause, B2 or B3.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
+    "stopped": {
+      "date": "2026-10-24 13:56 MDT",
+      "reason": "Directive stop point: part 3 scored and failed. skill_mae initial 0.10767973856209151 (15157/140760) and MM_DIG_000 0.0554187566499468 (3646/65790), both above 0.02 and equal to the pre-panel scores. Drawn pixels x 26..76 do not meet the scorer mask x 86..89 (0 overlap). Full-band vs original-0.png is 0.29204980255991286. Button plates, colour key 0x47218A and blend 0x46D5F3 unread. Part 3 round 2 not spent. DIRECTIVE.md Status done. Do not advance.",
+      "last_commit": "af62928"
+    },
     "previous": [
       {
         "id": "c1-observable-entry",

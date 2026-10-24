@@ -198,3 +198,16 @@ or the flags match their caches. The hook samples the flag cache after `0x47261F
 returns, so that sample does not say whether the stage writes ran. The live
 selector is unread. The facilitator re-disassembled the four ranges and re-ran the
 dry check. The Frida start was not spent.
+
+**C1ab: the plate hook samples the stage caches before the stores**
+([check](../scratch/phase-c1ab-prestage-hook.md)), 2026-10-24, round 1 of 3,
+offline. `0x414944` is `call 0x47261F`. Its `onEnter` reads the descriptor,
+the flags, and the caches `[0x5CD5F4]` and `[0x4C24E4]` before that call.
+`0x41494F` still reads the blend selector before `call 0x414D80`. The bytes
+from `0x414920` to `0x414944` are straight-line; the first branch is
+`0x41496E`. The callee can skip the stores: `0x47262E` jumps to `0x472975`
+when the descriptor matches the cache, and `0x472665` jumps there when the
+flags match, after the texture bind at `0x472653`. The live values are unread.
+The facilitator re-disassembled both ranges, re-ran the dry check, and a
+one-address change of the descriptor attach made the check fail. `ctest` 34/34.
+No stock start.

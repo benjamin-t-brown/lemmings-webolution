@@ -29,7 +29,7 @@
     "stopped": {
       "date": "2026-10-24 15:25 MDT",
       "reason": "Directive stop: part 1 ended at its cap without a plate image. ^tab colour bytes are 0. The ALF consumer 0x47E40D is unread. ^tab_selected was not decoded. The one Frida start was not spent. Part 2 and part 3 were not started.",
-      "last_commit": null
+      "last_commit": "7ccf4b1"
     }
   }
 }

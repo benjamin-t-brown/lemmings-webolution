@@ -946,6 +946,36 @@
   ],
   "landed": [
     {
+      "id": "c1ah-shift-count-armed",
+      "title": "Read the shift counts with the hook armed first (round 6)",
+      "status": "landed",
+      "brief": "build/tmp/c1ah-shift-count-armed-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live shift-count read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "c1ag-arm-before-click"
+      ],
+      "gate_served": "C1 skill panel; plate alpha needs the live shift counts",
+      "question_round_count": 6,
+      "sixth_round_reason": "C1af attached after the click and logged 0 hits. C1ag dry-checked the wait that arms the hook first. The counts are not in the exe, and this is the last start in the pool.",
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 17:27 MDT",
+      "worker_output": "build/tmp/c1ah-shift-count-armed/round-note.md",
+      "dispatch_id": "9674eeba-b0a3-4ce2-8696-c6bc1267ad98",
+      "landed_at": "2026-10-24 17:36 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1ah-shift-count-armed.md; docs/LESSONS.md C1ah; docs/plan-history/phase-c.md; docs/DIRECTIVE.md Status done",
+      "disposition": "Last start. Hook armed at 17:33:38, click at 17:33:39, C1AE_HOOK hits 0. 0x473897 did not run in that window. select_level was before the arm. Hashes restored. Counts unread. Start pool spent.",
+      "facilitator_verified": "2026-10-24: hook-live.json hits 0. run.log one Popen; arm wait 17:33:10 before click 17:33:39. Re-hashed exe, SavedGame.dat, dgVoodoo.conf. No Lemming process."
+    },
+    {
       "id": "c1ag-arm-before-click",
       "title": "Arm the shift hook before the level click (round 5, offline)",
       "status": "landed",

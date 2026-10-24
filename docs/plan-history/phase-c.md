@@ -271,3 +271,11 @@ offline. After `select_level` and before `aim_at`, the copy waits for
 after `enter_level()` returns. The attach stays `0x473897`. The facilitator
 re-ran the dry check and, with that one `raise` removed, the check failed.
 No stock start. The 6000 ms report still starts when the script loads.
+
+**C1ah: the armed click did not call the shift**
+([check](../scratch/phase-c1ah-shift-count-armed.md)), 2026-10-24, round 6,
+the last stock start. `Popen` 17:32:40, pid 42720. The arm wait is 17:33:10
+and the click is 17:33:39. `C1AE_HOOK` is `hits` 0. `0x473897` did not run
+while the hook was installed. `select_level` at 17:33:10 is before the arm
+wait. Install hashes match. The facilitator re-read the hook JSON and
+re-hashed the three install files. The counts stay unread. Start 3 of 3.

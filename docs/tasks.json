@@ -1,35 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T17:27:51-06:00",
+  "updated": "2026-10-24T17:36:27-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1ah-shift-count-armed",
-      "title": "Read the shift counts with the hook armed first (round 6)",
-      "status": "running",
-      "brief": "build/tmp/c1ah-shift-count-armed-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "live shift-count read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": true,
-      "live_owner": "9674eeba-b0a3-4ce2-8696-c6bc1267ad98",
-      "depends_on": [
-        "c1ag-arm-before-click"
-      ],
-      "gate_served": "C1 skill panel; plate alpha needs the live shift counts",
-      "question_round_count": 6,
-      "sixth_round_reason": "C1af attached after the click and logged 0 hits. C1ag dry-checked the wait that arms the hook first. The counts are not in the exe, and this is the last start in the pool.",
-      "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-skill-panel-gate",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 17:27 MDT",
-      "worker_output": null,
-      "dispatch_id": "9674eeba-b0a3-4ce2-8696-c6bc1267ad98"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-skill-panel-gate",
@@ -47,11 +20,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 16:21:48 -06:00",
-    "rounds_run": 7,
-    "stock_starts_used": 2,
+    "rounds_run": 8,
+    "stock_starts_used": 3,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 17:27 MDT: C1 skill panel. Dispatched c1ah, the last stock start, with the hook armed before the click. Stock starts 2 of 3 until it reports. Pass started 16:21:48.",
+    "handoff": "2026-10-24 17:36 MDT: stopped. C1 gate not scored. c1ah logged 0 hits with the hook armed before the click. Stock starts 3 of 3. The shift counts are unread. Another count read needs a start. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [
@@ -96,10 +69,20 @@
           "dispatched": "2026-10-24 17:19 MDT",
           "landed": "2026-10-24 17:27 MDT",
           "elapsed": "8m 40s"
+        },
+        {
+          "id": "c1ah-shift-count-armed",
+          "dispatched": "2026-10-24 17:27 MDT",
+          "landed": "2026-10-24 17:36 MDT",
+          "elapsed": "9m 27s"
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null
+    "stopped": {
+      "date": "2026-10-24 17:36 MDT",
+      "reason": "Start pool spent, 3 of 3. The hook at 0x473897 logged 0 hits while paused and 0 hits when armed before the level click. The shift counts are unread. The next count read needs a start. C1 gate not scored.",
+      "last_commit": null
+    }
   }
 }

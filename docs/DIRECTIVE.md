@@ -8,7 +8,8 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
+Stopped: 2026-10-24 17:35 MDT. The start pool is spent, 3 of 3. The shift counts at `0x473897` were not read: a paused attach and an attach armed before the level click both logged 0 hits. The C1 gate is not scored. Another count read needs a start.
 Issued: 2026-10-24 (user, overlord review 2026-10-24: "good i approve", option A of the
 c1-tab-blend-render evaluation with the milestone-scoped budget below)
 Supersedes: the tab-blend directive, done 2026-10-24 15:25 MDT (c1y: `^tab` is a 72×32 BMP

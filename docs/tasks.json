@@ -32,8 +32,8 @@
       "worker_output": "build/tmp/c2g-counters-timer-render/round-note.md",
       "landed_in": "docs/scratch/phase-c2g-counters-timer-render.md",
       "disposition": "build/tmp/c2g-counters-timer-render/round-note.md",
-      "landed_at": "2026-10-23 19:22 MDT",
-      "dispatched_at": "2026-10-23 18:55:29 MDT",
+      "landed_at": "2026-10-23 19:21 MDT",
+      "dispatched_at": "2026-10-23 18:55:27 MDT",
       "facilitator_verified": "2026-10-23: own gate scorer re-renders all ten views, numerators and N equal to the worker, PNGs byte-identical; 0x44D22C bytes and format strings re-read; timer-y mutation alone fails hudtext, restored by hash; ctest 33/33; Mac/mouv hashes equal",
       "remaining_blockers": [
         "right end vs centre, Out definition, Saved target word 0x4CBAB0, default glyph colour UNREAD",
@@ -66,7 +66,7 @@
       "worker_output": "build/tmp/b1y-panel-fields-colour/round-note.md",
       "landed_in": "docs/scratch/phase-b1y-panel-fields-colour.md",
       "disposition": "build/tmp/b1y-panel-fields-colour/round-note.md",
-      "landed_at": "2026-10-23 19:10 MDT",
+      "landed_at": "2026-10-23 19:09 MDT",
       "dispatched_at": "2026-10-23 18:48:59 MDT",
       "facilitator_verified": "2026-10-23: raw bytes re-read at 0x489B05, 0x48A22E, 0x489A18, 0x489A84; own PIL-diff checker on a fresh render gives 1232493 / 235008000, 185447 px; panelNormal G mutation alone fails menurender, restored by hash 43bb7c68; ctest 32/32; Mac/mouv hashes equal",
       "remaining_blockers": [
@@ -3739,7 +3739,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 19:22 MDT: c2c, b1x, c2d, c2e, b1y, c2g landed (Q1 and Q2 done at their caps). Q3 pending the user's decision q3-caption-round-cap; no stock start used. Nothing running.",
+    "handoff": "2026-10-23 19:21 MDT: c2c, b1x, c2d, c2e, b1y, c2g landed (Q1 and Q2 done at their caps). Q3 pending the user's decision q3-caption-round-cap; no stock start used. Nothing running.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4340,7 +4340,7 @@
       }
     ],
     "stopped": {
-      "date": "2026-10-23 19:27 MDT",
+      "date": "2026-10-23 19:22 MDT",
       "reason": "Q1 and Q2 landed at their caps; the only remaining directive question (Q3 caption) waits on pending_questions q3-caption-round-cap",
       "last_commit": "4f62654 (plus the stop commit)"
     }

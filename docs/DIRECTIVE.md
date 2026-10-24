@@ -7,77 +7,83 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done** (2026-10-23, Q1 and Q2 parked at their caps: C3b/C3d/C3e, C3c/C3f)
+Status: **active**
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
-Supersedes: the C2 caption text / C3 breakdown directive, done 2026-10-23 (Paused text drawn,
-A7 without the caption exclusion passes 9 of 10, `MM_DIG_000` fails by 2,660; `0x46D460`
-packs a D3D diffuse dword, render state unread, caption parked at its cap; C3 full frame
-0.2098 with `rest` 84.7% and skill boxes 11.3%).
+Supersedes: the C3 scenery directive, done 2026-10-23 (both questions parked at their caps,
+nothing rendered, no start spent; backdrop is an LVL-embedded model tree drawn at `0x441879`
+before the tube; `0x482210` composes node first, stack top second; the type-0 load puts the
+file f64[12] at `this+8`; Entrance `Top` projects within 1 px of the reference on three edges,
+Exit `Top` about 15 px wide against about 40).
 
-## Why this, not C1
+## Why this
 
-C3a's `rest` is 84.7% of the full-frame numerator, and 94.5% of it lies on pixels where our
-render is exactly black. Outside the tube the original draws sand, sky and grass, the green
-hose and base surround, the green and purple floor ring, the entrance hatch and the exit
-balloon; ours draws none of them. The A2 omitted-scene inventory
-(`docs/scratch/phase-a2-tube.md`) listed them, and A7's gate never measured them. That is
-roughly 0.178 of 0.2098. The skill boxes are about 0.0236, so C1 is also needed before C3
-can pass, but it is an eighth the size and comes after.
+C3b–C3f read most of the scene chain but not enough to draw it: the parent/child relation,
+the vertex convention and the kind-6 stride (all in the type-1 child load), and the stack
+bottom at `0x58D5A0` when the scene is drawn. The first three are offline; the last is live
+only. Each is named, so this pass reads exactly those and then renders. The scenery is still
+about 0.178 of C3's 0.2098; C1 still follows.
 
 ## Scope
 
-Two questions. Both start offline and may run together; at most one owns the live game.
+Three questions, in order. 1 and 2 may run together; 3 waits for both.
 
-1. **C3 backdrop scenery (cap three rounds).** Read how the level loads and draws its
-   non-tube scene: the background model or models the LVL names (`Models\bg_sand_medium\sand_1`,
-   `sky`, `hose`, per the A2 inventory), their transform, texture binding and draw order,
-   and the green and purple floor ring below the tube. Draw them in the production render.
-   Bound the floor ring as its own region from the read geometry, not from the reference.
-   Re-score C3 full frame on the A6 repair 4 pause with actors (A6d24 frame and scorer) and
-   report it split by the C3a regions plus the floor ring. Also re-score the amended A7 gate
-   (nine views + second level); it must still pass. Report whatever it is; do not tune.
-2. **C3 entrance and exit models (cap two rounds).** Read the placement of `Entrance.a3d`
-   and `Exit.a3d` (the balloon and basket) in the level and their draw, and draw both. The
-   exit model and its live boxes are settled (round 12); this is its render only. The
-   hatch's animated door and count are in scope only if the read reaches them; otherwise
-   draw the static model and record the animation as parked. Re-score as in question 1.
+1. **Child load (offline, cap two rounds).** Read the type-1 load (`0x168` object, ctor
+   `0x47af20`, vtable `0x4b1660`, its load vcall) and finish the factory loop
+   `0x46bb9f..0x46bc1e`. Settle: whether `sand7`, `base`, Entrance `Top` and Exit `Top` are
+   children of the root `thenull` (so whether its scale 10 reaches them), whether the u32
+   C3d called `a` is the child count, the vertex layout and convention at draw, the kind-6
+   record stride, and what `cube13` and `cyl2` are. Re-project with the read chain and report
+   whether the Exit width gap closes. Report the Entrance and Exit boxes against the
+   reference; do not fit.
+2. **Stack bottom (preflight, one start, memory read only).** At the A6 repair 4 pause, read
+   the stack count and the first `0x60` bytes of each live element of `0x58D5A0`, plus
+   `[0x58ce24]`. The preflight states what the bottom is expected to hold (from the readers
+   of `0x58D5A0` offline) and how the read will tell a stable bottom from a stale one. If a
+   memory read cannot show it, record that and park; do not escalate to a debugger.
+3. **Render (offline, cap two rounds), only if 1 and 2 leave the chain READ.** Draw the
+   backdrop tree, the Entrance and the Exit in the production render with the read
+   transforms, textures and draw order. Bound the floor ring from the read geometry. Re-score
+   C3 full frame on the A6 repair 4 pause with actors (A6d24 frame and scorer), split by the
+   C3a regions plus the floor ring, and re-score the amended A7 gate (nine views + second
+   level), which must still pass. Report `MM_DIG_000` without the caption exclusion too. Do
+   not tune. If any link is still UNREAD, the render does not run and the question parks.
 
 ## Budget
 
-Per-round commits, up to three concurrent offline rounds, at most one live owner. **Offline
-first. One stock start**, across both questions, and only if an offline read cannot settle a
-value the render needs: name the value and the address to read before asking for it, no
-retry after Popen. Memory reads only; no debugger probe. If neither question needs the start,
-it is not spent.
+Per-round commits, up to three concurrent offline rounds, at most one live owner. **One
+stock start, question 2 only**, no retry after Popen. Memory reads only; **no debugger**.
+**Function-body cap per round: up to ten** (C3d's cap was eight and C3f's six; both were
+exceeded on the path the question asked for). Thunks of five instructions or fewer do not
+count. A brief lists the bodies in order; a body off that list counts and is named.
 
 ## Decisions already made (do not re-ask)
 
-- Authorized as scoped above (user, overlord review 2026-10-23): scenery before C1, one
-  conditional start.
+- Authorized as scoped above (user, overlord review 2026-10-23): close the scene chain, then
+  render; one memory-only start; body cap ten.
 - **Read, do not fit, and do not choose by score.** A value taken from a scored capture is
   labelled measured-from-reference and named in the report. Sensitivity renders are reported,
-  never used to pick a value.
+  never used to pick a value. A projection that matches the reference is a check, not a read.
 - **Time the pass** (standing): total elapsed wall time and each round's dispatch-to-landing
   time, recorded in the queue when each round is dispatched and landed.
-- `MM_DIG_000`'s 2,660 shortfall without the caption exclusion stays parked; report its
-  re-score after the scenery lands, do not chase it.
-- Our HUD reading Out 5 / 04:46 against the original's 3 / 04:50 is a tick-count mismatch,
-  not a HUD defect; do not chase it here.
-- Do not reuse heap addresses from an earlier process. Use `acquire_game_foreground`, never
-  `goto_level.focus()`. Live steps run in session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md).
-  Close any game the round leaves running, after checking it. Restore and hash-check every
-  install file in the same process that changed it.
-- Settled and not to be re-derived: everything settled in the previous six directives,
-  plus C2j (Paused string and white ink measured from reference), C2k (`0x46D460` packs a
-  D3D diffuse dword; the blend is the device's; `Paused` is UK.LTX index `0x54`) and C3a
-  (region bounds and shares).
-- C1 stays held. B2 and B3 stay queued. Run CTest on mouv. Keep text files LF.
+- Do not reuse heap addresses from an earlier process (`0x58D5A0` and `0x58ce24` are static).
+  Use `acquire_game_foreground`, never `goto_level.focus()`. Live steps run in session 1 per
+  [MOUV_SSH.md](agents/MOUV_SSH.md). Close any game the round leaves running, after checking
+  it. Restore and hash-check every install file in the same process that changed it.
+- Settled and not to be re-derived: everything settled in the previous seven directives,
+  plus C3b (LVL-embedded tree, `0x441879` before `0x43a4ec`, root `thenull` values), C3c
+  (Entrance and Exit `Object 09` placements and textures), C3d (`0x47496d` push/pop,
+  factory `0x46bca4`), C3e (type 0 callee `0x46b6cc`, compose once, child loop at `this+0x68`)
+  and C3f (`0x482210` order, f64[12] at `this+8`).
+- The hatch's door and count animation, the caption blend, the `MM_DIG_000` shortfall and the
+  HUD tick mismatch stay parked. C1 stays held. B2 and B3 stay queued. Run CTest on mouv.
+  Keep text files LF.
 
 ## Stop point
 
-Stop and report when both questions are landed or parked, on any stop condition in
+Stop and report when all three questions are landed or parked, on any stop condition in
 ORCHESTRATION, or if the live start crashes or leaves the install unrestored. Do not advance
-to C1, the C2 cursor clause, the caption blend, B2 or B3 on this directive.
+to C1, the C2 cursor clause, the caption blend, the hatch animation, B2 or B3 on this
+directive.
 
 ## Sync
 

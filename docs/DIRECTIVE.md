@@ -7,58 +7,77 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done** (2026-10-23)
+Status: **active**
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
-Supersedes: the B1 panel / C2 counters / C2 caption directive, done 2026-10-23 (B1 panel colours
-and X pad read, score 0.005244; counters and timer drawn, amended A7 passes; caption quad read
-live and drawn, A7 without the caption exclusion fails 3 of 10; the one start spent).
+Supersedes: the C2 caption text / C3 breakdown directive, done 2026-10-23 (Paused text drawn,
+A7 without the caption exclusion passes 9 of 10, `MM_DIG_000` fails by 2,660; `0x46D460`
+packs a D3D diffuse dword, render state unread, caption parked at its cap; C3 full frame
+0.2098 with `rest` 84.7% and skill boxes 11.3%).
+
+## Why this, not C1
+
+C3a's `rest` is 84.7% of the full-frame numerator, and 94.5% of it lies on pixels where our
+render is exactly black. Outside the tube the original draws sand, sky and grass, the green
+hose and base surround, the green and purple floor ring, the entrance hatch and the exit
+balloon; ours draws none of them. The A2 omitted-scene inventory
+(`docs/scratch/phase-a2-tube.md`) listed them, and A7's gate never measured them. That is
+roughly 0.178 of 0.2098. The skill boxes are about 0.0236, so C1 is also needed before C3
+can pass, but it is an eighth the size and comes after.
 
 ## Scope
 
-Two questions, both offline. They may run together.
+Two questions. Both start offline and may run together; at most one owns the live game.
 
-1. **C2 caption text and blend (cap two rounds).** Draw the `Paused` text from `STR_PAUSED`
-   (key at `0x4C3C18`) through the `G+0x25C68` list, whose placement C2h read live as 285,422,
-   using the `^Font` path HudText uses. Read the consumer of the key and the text colour. Read
-   the blend and the panel's colour path (`0x46D460`, `0x44DBA0`, `0x4017F0`, and what 0.00225
-   at `0x44DCC0` sets) so that the c2i fill, alpha and blend stop being hypotheses. Re-score
-   the A7 nine views and the second level with the caption exclusion removed and only the
-   ten skill boxes excluded. Report it whatever it is; do not tune. Target: all ten views pass.
-2. **C3 residual breakdown (cap one round; measure only, no fixes).** On the A6 repair 4 pause
-   with actors (the A6d24 frame and scorer), with today's production render including the
-   C2 counters, timer and caption, re-score full-frame and split the numerator across named,
-   disjoint regions: the ten skill boxes, the counters and timer boxes, the caption box, the
-   floor ring, the actor boxes, the tube ROI and the rest. State how each region is bounded and
-   where the bounds come from. Report each region's share. This is input for the overlord's
-   ranking of C1 and C3, not a gate attempt.
+1. **C3 backdrop scenery (cap three rounds).** Read how the level loads and draws its
+   non-tube scene: the background model or models the LVL names (`Models\bg_sand_medium\sand_1`,
+   `sky`, `hose`, per the A2 inventory), their transform, texture binding and draw order,
+   and the green and purple floor ring below the tube. Draw them in the production render.
+   Bound the floor ring as its own region from the read geometry, not from the reference.
+   Re-score C3 full frame on the A6 repair 4 pause with actors (A6d24 frame and scorer) and
+   report it split by the C3a regions plus the floor ring. Also re-score the amended A7 gate
+   (nine views + second level); it must still pass. Report whatever it is; do not tune.
+2. **C3 entrance and exit models (cap two rounds).** Read the placement of `Entrance.a3d`
+   and `Exit.a3d` (the balloon and basket) in the level and their draw, and draw both. The
+   exit model and its live boxes are settled (round 12); this is its render only. The
+   hatch's animated door and count are in scope only if the read reaches them; otherwise
+   draw the static model and record the animation as parked. Re-score as in question 1.
 
 ## Budget
 
-Per-round commits, up to three concurrent offline rounds. **No stock start, no debugger, no
-live game.** If question 1 cannot settle a value without a live read, record it and park that
-value; do not ask for a start on this directive.
+Per-round commits, up to three concurrent offline rounds, at most one live owner. **Offline
+first. One stock start**, across both questions, and only if an offline read cannot settle a
+value the render needs: name the value and the address to read before asking for it, no
+retry after Popen. Memory reads only; no debugger probe. If neither question needs the start,
+it is not spent.
 
 ## Decisions already made (do not re-ask)
 
-- Authorized as scoped above (user, overlord review 2026-10-23).
-- `q3-caption-round-cap` was answered and is closed; clear it from `pending_questions`.
+- Authorized as scoped above (user, overlord review 2026-10-23): scenery before C1, one
+  conditional start.
 - **Read, do not fit, and do not choose by score.** A value taken from a scored capture is
   labelled measured-from-reference and named in the report. Sensitivity renders are reported,
   never used to pick a value.
 - **Time the pass** (standing): total elapsed wall time and each round's dispatch-to-landing
   time, recorded in the queue when each round is dispatched and landed.
-- Settled and not to be re-derived: everything settled in the previous five directives, plus
-  C2c/C2d/C2g (counter positions absolute, digits replace the words, Saved colour, right end
-  620, y 15 / 50, timer at 560,430), C2f (caption quad at `G+0x25C90`, formula at
-  `0x45D2A8..0x45D340`, `0x44E150` is the generic cell-list draw) and C2h (quad 277,422,363,454;
-  `[0x58CB40]` 640, `[0x58CB44]` 480; text placement 285,422; all live).
+- `MM_DIG_000`'s 2,660 shortfall without the caption exclusion stays parked; report its
+  re-score after the scenery lands, do not chase it.
+- Our HUD reading Out 5 / 04:46 against the original's 3 / 04:50 is a tick-count mismatch,
+  not a HUD defect; do not chase it here.
+- Do not reuse heap addresses from an earlier process. Use `acquire_game_foreground`, never
+  `goto_level.focus()`. Live steps run in session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md).
+  Close any game the round leaves running, after checking it. Restore and hash-check every
+  install file in the same process that changed it.
+- Settled and not to be re-derived: everything settled in the previous six directives,
+  plus C2j (Paused string and white ink measured from reference), C2k (`0x46D460` packs a
+  D3D diffuse dword; the blend is the device's; `Paused` is UK.LTX index `0x54`) and C3a
+  (region bounds and shares).
 - C1 stays held. B2 and B3 stay queued. Run CTest on mouv. Keep text files LF.
 
 ## Stop point
 
-Stop and report when both questions are landed or parked, or on any stop condition in
-ORCHESTRATION. Do not advance to C1, C3 fixes, the C2 cursor clause, B2 or B3 on this
-directive.
+Stop and report when both questions are landed or parked, on any stop condition in
+ORCHESTRATION, or if the live start crashes or leaves the install unrestored. Do not advance
+to C1, the C2 cursor clause, the caption blend, B2 or B3 on this directive.
 
 ## Sync
 

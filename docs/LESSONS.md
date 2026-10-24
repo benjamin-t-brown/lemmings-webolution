@@ -1380,3 +1380,10 @@ unread. Evidence: `docs/scratch/phase-c2d-counters-open-reads.md`.
 gated by `[G+0x26024]`, which is cleared once `[G+0x25FF8]`, decremented only while `ui_state == 0`, drops below -1.0 (about 2.5 s),
 so after a 14 s walk the rect is predicted off in the paused frame and A7k's 1020 was an intro value. The caption edge probably comes
 from `G+0x25C68` (placement via `0x47ACF9` / `0x47AC50`, unread). Evidence: `docs/scratch/phase-c2e-caption-preflight.md`.
+
+## Menu panel colours and X pad (B1y, 2026-10-23, READ, partial)
+
+The panel fill colours are constants in the setter `0x489ADC`: (0xE0, 0x80, 0) when the flag byte `[+0x358]` is non-zero, (0xE0, 0x0A, 0)
+otherwise, through `0x489A84` (0..255 channel values, no tint on the path); the border is 64.0 x3. The X pad is 0x14 minus the border
+inset of 1 (derived). `panelTop` 1 and `panelHeight` 27 stay measured. Score unchanged at 0.005244. Evidence:
+`docs/scratch/phase-b1y-panel-fields-colour.md`.

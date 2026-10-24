@@ -7,10 +7,12 @@
 #include "assets/GameData.h"
 #include "shell/MenuRender.h"
 
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <initializer_list>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -67,6 +69,22 @@ void testRules() {
   check(px(left - 1 - p.panelPadX, 321 + 5) == 128, "pixel left of the panel is backdrop");
   check(px(left - 5, 321) == 64, "panel border is grey");
   check(px(left - p.panelPadX + 3, 321 + 5) == 224, "row 0 fill is the highlight colour");
+
+  // B1y READ values, every channel. Row 0 is the highlight, row 1 the normal fill.
+  auto rgb = [&](int x, int y) {
+    const std::size_t o = (static_cast<std::size_t>(y) * 640 + x) * 4;
+    return std::array<std::uint8_t, 3>{out.rgba[o], out.rgba[o + 1], out.rgba[o + 2]};
+  };
+  const int mid0 = 320 + p.panelTop + 5, mid1 = 349 + p.panelTop + 5;
+  check(rgb(left - 5, mid0) == std::array<std::uint8_t, 3>{0xE0, 0x80, 0}, "highlight fill is 224,128,0");
+  check(rgb(left - 5, mid1) == std::array<std::uint8_t, 3>{0xE0, 0x0A, 0}, "normal fill is 224,10,0");
+  check(rgb(left - p.panelPadX, mid0) == std::array<std::uint8_t, 3>{64, 64, 64}, "border is 64,64,64");
+  check(kPanelOuterPad == 0x14 && kPanelBorderInset == 1 && kPanelFillInset == 1,
+        "panel pad 0x14, border inset 1, fill inset 1 (READ 0x48A232, 0x489B39)");
+  check(p.panelPadX == 19, "border left edge is 19 left of the text (0x14 - 1)");
+  // The fill starts one pixel inside the border: border at left-19, fill from left-18.
+  check(rgb(left - p.panelPadX + 1, mid0) == std::array<std::uint8_t, 3>{0xE0, 0x80, 0},
+        "fill starts one pixel inside the border");
 }
 
 std::vector<std::uint8_t> slurp(const fs::path& p) {
@@ -99,6 +117,22 @@ void testRealData() {
     }
     check(same, "transcribed cells equal the exe records for 0x20..0x7E");
   }
+
+  // B1y: the panel values the renderer uses, re-read from the exe (text: file offset = VA - 0x400000).
+  auto at = [&](std::size_t va) { return exe.size() > va - 0x400000 + 8 ? &exe[va - 0x400000] : nullptr; };
+  auto bytesAre = [&](std::size_t va, std::initializer_list<int> want) {
+    const std::uint8_t* b = at(va);
+    if (!b) return false;
+    std::size_t i = 0;
+    for (int w : want) if (b[i++] != w) return false;
+    return true;
+  };
+  check(bytesAre(0x48A232, {0x8d, 0x54, 0x08, 0xec}), "0x48A232 is lea edx,[eax+ecx-0x14]");
+  check(bytesAre(0x489B08, {0x6a, 0, 0x6a, 0, 0x68, 0x80, 0, 0, 0, 0x68, 0xe0}),
+        "highlight setter pushes 0, 0, 0x80, 0xE0 (0x489B08)");
+  check(bytesAre(0x489B20, {0x6a, 0, 0x6a, 0, 0x6a, 0x0a, 0x68, 0xe0}),
+        "normal setter pushes 0, 0, 0x0A, 0xE0 (0x489B20)");
+  check(bytesAre(0x489A1C, {0x68, 0, 0, 0x50, 0x40}), "border arg is the double 64.0 (0x489A1C)");
 
   auto lib = webo::AssetLibrary::open(game / "lemmings.box", game / "patch.box");
   if (!lib) {

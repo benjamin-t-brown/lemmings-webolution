@@ -84,13 +84,14 @@ webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet
     const int left = labelLeft(text, cells, params.xWord);
     const int width = textWidth(text, cells);
 
-    // panel: border then fill (MEASURED-FROM-REFERENCE geometry and colours)
+    // panel: border then fill (X pad, insets and colours READ in B1y; top/height MEASURED)
     const int px0 = left - params.panelPadX, px1 = left + width + params.panelPadX;
     const int py0 = textY + params.panelTop, py1 = py0 + params.panelHeight;
     const auto& fill = static_cast<int>(row) == params.highlight ? params.panelHighlight
                                                                  : params.panelNormal;
     fillRect(out, px0, py0, px1, py1, params.panelBorder);
-    fillRect(out, px0 + 1, py0 + 1, px1 - 1, py1 - 1, fill);
+    fillRect(out, px0 + kPanelFillInset, py0 + kPanelFillInset, px1 - kPanelFillInset,
+             py1 - kPanelFillInset, fill);
 
     // glyphs: quad [x, x+w) x [textY, textY+lineHeight) from the cell, 1:1, alpha only
     int x = left;

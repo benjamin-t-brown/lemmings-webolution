@@ -37,6 +37,12 @@ inline constexpr int kLineHeight = 29;   // READ: [table+0] at 0x4BF968, via 0x4
 const std::array<GlyphCell, kGlyphCount>& fontCells();
 inline constexpr std::uint32_t kFontTableVa = 0x4BF968;
 
+// READ (B1y): 0x48A232 `lea edx,[eax+ecx-0x14]`; 0x489B39 puts the border one pixel inside that
+// edge and the fill one pixel inside the border.
+inline constexpr int kPanelOuterPad = 0x14;
+inline constexpr int kPanelBorderInset = 1;
+inline constexpr int kPanelFillInset = 1;
+
 struct MenuParams {
   // OBSERVED live (B1m): word [0x58CB40] = 640. READ: 0x455F10 loads it, 0x488AF2..0x488AF8
   // halve it (signed). The halved value is the label anchor X.
@@ -46,26 +52,35 @@ struct MenuParams {
   // READ: 0x488554 adds (row) * lineHeight. Nothing else steps rows.
   int rowStep = kLineHeight;
 
-  // MEASURED-FROM-REFERENCE (five panels, rows 0..4): the panel is the text width plus this
-  // much each side, with its top one pixel below the text row and 27 pixels tall.
-  // B1x PARTLY READ (build/tmp/b1x-panel-draw-read/round-note.md): the panel object (vtable
-  // 0x4B1E28, ctor 0x489999) holds two quads. 0x48A190 passes 0x489B39 the rect
-  // X = [+0x44]+[+0x34]-0x14, Y = [+0x48]+[+0x38], W = [+0x3C]+0x28, H = [+0x40]; 0x489B39 puts
-  // the FILL quad at [X+2, X+W-2] x [Y+2, Y+H-2] and the BORDER quad (+0x1B0) one pixel larger,
-  // [X+1, X+W-1] x [Y+1, Y+H-1]. The terms +0x34..+0x48 are not read, so 19 / 1 / 27 stay
-  // MEASURED and are not claimed equal to the rule above.
-  int panelPadX = 19;
+  // B1y, panel geometry. READ (0x48A190, 0x489B39; round-note build/tmp/b1y-panel-fields-colour):
+  // the rect handed to 0x489B39 starts at X = [+0x44] + [+0x34] - 0x14 (0x48A232) and is
+  // W = [+0x3C] + 0x28 wide; the BORDER quad is [X+1, X+W-1] and the FILL quad [X+2, X+W-2]. The
+  // fields are written by the layout function around 0x48AC38..0x48AE62 (one loop over the label
+  // lines): +0x34 = min(0, line X offset), +0x38 = min(0, line Y), +0x3C = max(0, line right edge)
+  // minus +0x34, +0x40 = max (line Y + 0x489850(0x489760())) minus +0x38. With the B1w line X
+  // offset -(width/2) that makes the border's left edge anchor - halve(width) - 19 = left - 19
+  // and its right edge left + width + 19, so the X pad is READ by derivation. It still rests on [+0x44]
+  // (setter 0x489DF4/0x489E40, callers unread) equalling the label anchor halve(xWord).
+  int panelPadX = kPanelOuterPad - kPanelBorderInset;
+  // MEASURED-FROM-REFERENCE, still: top 1 and height 27. The border's top is Y+1 and its height
+  // H-2 (READ), but Y = [+0x48]+[+0x38] needs the anchor [+0x48] (unread) and the line Y out of
+  // 0x48A720 (unread), and H needs 0x489850 (unread; 29 only if it is the ^Font lineHeight).
   int panelTop = 1;
   int panelHeight = 27;
-  // MEASURED-FROM-REFERENCE colours. Highlight 0 is the orange row. The ctor 0x489999 calls
-  // 0x44DBC0 on the fill quad (+8) with doubles 255.0, 0.0, 0.0 and on the border quad (+0x1B0)
-  // with 64.0, 64.0, 64.0 (READ args). 0x44DBC0 builds a 3-double record via 0x4017F0 and copies
-  // it into four slots (+0x40/+0xA8/+0x110/+0x178); whether that record is colour or something
-  // else is UNREAD, and 255,0,0 is not the measured 224,10,0 / 224,128,0, so a later setter
-  // (unread) must change the fills. The border's 64 does equal the measured 64.
+  // Colours. READ: the fill (quad +8) is set by 0x489ADC (flag byte [+0x358], marks [+0x359]):
+  // flag != 0 -> 0x489A84(0xE0, 0x80, 0) (pushes 0x489B08..0x489B11), flag == 0 ->
+  // 0x489A84(0xE0, 0x0A, 0) (0x489B20..0x489B2B). 0x489A84 masks each with 0xFF, converts with
+  // fild to doubles and calls 0x44DBC0, which hands the three doubles to 0x4017F0 (a plain
+  // 6-dword store, no scaling) and copies the record into the quad's four vertex slots
+  // (+0x178/+0x110/+0xA8/+0x40). The ctor 0x489999 only sets the 255.0,0,0 default (overwritten by
+  // the setter) and the border (quad +0x1B0) to 64.0 x3 (0x489A1C..0x489A2A). So the doubles are
+  // the 0..255 channel values and equal the reference measurement exactly; no tint or
+  // multiplier is needed to get them. UNREAD: the draw that turns the double into the framebuffer
+  // byte (identity assumed from the exact agreement), the callers 0x489F22/4C/90 that choose the
+  // flag per row, and any border recolour (none found in the setter).
   std::array<std::uint8_t, 3> panelBorder{64, 64, 64};
-  std::array<std::uint8_t, 3> panelHighlight{224, 128, 0};
-  std::array<std::uint8_t, 3> panelNormal{224, 10, 0};
+  std::array<std::uint8_t, 3> panelHighlight{0xE0, 0x80, 0};
+  std::array<std::uint8_t, 3> panelNormal{0xE0, 0x0A, 0};
   int highlight = 0;
 
   // READ: the label object's colour bytes (+0x14..0x16) are zeroed by its init 0x489890. Setters

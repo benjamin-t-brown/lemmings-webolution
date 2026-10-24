@@ -7,82 +7,69 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done** (2026-10-24 stop point: c1j, c1k landed, the one start c1l landed)
-Issued: 2026-10-24 (user, overlord review 2026-10-24; "i approve all commit")
-Supersedes: the C1 base icon draw directive, done 2026-10-24 (c1g: base icons drawn by panel
-object `0x4C91D8` via `0x45B639` / `0x47A75D`; c1h: scale mode `S`, `Lo`/`Hi` budget loop
-READ; c1i: the one start failed at `no menu highlight`, nothing read, install restored).
+Status: **active**
+Issued: 2026-10-24 (user, overlord review 2026-10-24; "i approve 1": Frida through the REA CLI
+over ssh)
+Supersedes: the observable-entry directive, done 2026-10-24 (c1j: `[[0x4CBFB0]+0x10]` feed,
+SpriteFrame loader, `_FontSmall` load, Grey/Black/Additive stores READ; c1k: entry teed to
+`run.log`; c1l: the start entered, `[levelScreen+0x10]` = 0, sheet handles, ten frame records and
+count font objects read live; hook not run, the worker had no Frida tool).
 
 ## Why this
 
-C1 and C3 both wait on live-only inputs: `[[0x4CBFB0]+0x10]`, the sheet frame values `F`,
-the count text and font, the `0x4E33xx` copy. The last two live starts (c3j, c1i) died in the
-same shared entry code, `find_menu_index`, and the c3m patch did not fix it. Its per-press
-output went to stdout, which the scheduled task does not capture, so the one diagnostic the
-start could have produced was lost. Both authorized starts are spent with zero reads. A plain
-retry would likely spend a third the same way. This pass makes the entry observable and
-reads everything still readable offline, then spends one start.
+C1l left four render inputs UNREAD: the sheet file behind handle 6 (and its `Hi`/`Lo` suffix),
+the count font file and colour behind handles 37 / 36, the count text behind the `+0xC`
+pointers, and the on-screen x, y. The first two have named offline bodies. The gate has not
+moved because nothing has been drawn. This pass closes what is readable offline, renders and
+scores, and proves the Frida path so that any later hook read is not lost to a tool gap again.
 
 ## Scope
 
-Two parts, in order.
+Three parts. 1 and 2 may run together; 3 waits for 1.
 
-1. **Offline (up to two concurrent rounds, cap two rounds each).**
-   a. **Remaining named writers.** Read the store to `[[0x4CBFB0]+0x10]` (and what feeds
-      it), the sheet frame-table loader behind `0x47ABC0` (the `F` values), the writer of
-      `obj+8` for `[0x4CBF7C]` and the file its font comes from, and the `0x4E33xx` copy.
-      Anything that becomes READ shrinks the live read list; say which items remain
-      live-only.
-   b. **Make the entry observable.** Route `find_menu_index`'s per-press output and the
-      menu-state snapshot into `run.log` (tee, not stdout-only); have the probe call
-      `save_state()` so `entry_focus` is recorded; add a no-input 15 s snapshot of screen id
-      and `ui_state` after launch, before any key. Decide the dirty `goto_level.py` on mouv
-      (sha256 `c28335b5…31c8`, the c3m retry/logging patch): land it with these changes or
-      revert it, and leave mouv's tree clean either way. No game start in this part.
-2. **One stock start**, only after part 1b is landed and its probe runs a dry check offline.
-   Run the c1i probe unchanged in what it reads (`[levelScreen+0x10]`, icon fields at
-   `0x4C91D8 + 0x1150 + i*0x208`, `0x4E335C..`, `[0x4CBF7C]` / `[0x4CBF78]` and the count
-   text, at most one Frida entry hook on `0x47A75D`), minus anything part 1a made READ. State
-   the prediction and falsifier before the start. If the entry fails again, the new log must
-   name why; record that and park. No retry after Popen. No debugger.
-
-Do not run Q3 (render) on this directive. If the start reads everything the render needs,
-say so and stop; the render is the next directive.
+1. **Offline reads (up to two concurrent rounds, cap two rounds each).**
+   a. Handle to sheet file: registrar `0x446040` -> `0x449170`, which file handle 6 names and
+      how `Hi` / `Lo` is chosen at 640x480.
+   b. Count font: `0x474519` -> `0x449B30` / `0x45FE10` / `0x4607D0`, the file behind handles
+      37 / 36 and the colour. Read the count text source too if it falls out of the same chain.
+2. **Frida preflight (no stock start).** Prove `rea instrument-with-frida attach` from a worker
+   on the Mac clone, over ssh to mouv: attach to a harmless session-1 process, hook a known
+   export, detach, and check the process survives. If session 0 cannot attach to session 1,
+   run the same call from a session-1 scheduled task. Record the working recipe in
+   [MOUV_SSH.md](agents/MOUV_SSH.md) (REA bundles Frida; Python `frida` is not needed).
+3. **Q3 render (offline, cap two rounds)**, only if 1a and 1b leave the sheet file and font
+   READ. Draw the ten buttons and counts from the c1l readings and score against the A7p / A7q
+   captures with the A7 panel exclusion removed. If placement cannot be settled without the
+   hook's x, y, say so and stop; do not fit it.
 
 ## Budget
 
-Per-round commits, up to two concurrent offline rounds, at most one live owner. **One stock
-start, part 2 only.** Memory reads plus at most one Frida entry hook, as C1f and c1i. **No
-debugger.** Round time limit 30 minutes from dispatch; a round at its limit lands what it
-has read, names the next body and stops.
+Per-round commits, up to two concurrent offline rounds. **No stock start** and no live game.
+No debugger. Round time limit 30 minutes from dispatch; a round at its limit lands what it has
+read, names the next body and stops.
 
 ## Decisions already made (do not re-ask)
 
-- Authorized as scoped above (user, overlord review 2026-10-24): a third live start, once,
-  after the entry is observable. If it fails, C1 live work stops and the run parks; do not
-  request a fourth.
+- Frida for workers goes through the REA CLI on mouv over ssh (user, overlord review
+  2026-10-24). Do not change `~/.claude.json` on the Mac.
 - Commits and pushes per round are authorized (user, 2026-10-24).
 - **Read, do not fit, and do not choose by score.** A value taken from a scored capture is
   labelled measured-from-reference and named in the report.
 - **Time the pass** (standing): total elapsed wall time and each round's dispatch-to-landing
   time, recorded in the queue when each round is dispatched and landed.
-- Do not reuse heap addresses from an earlier process; `levelScreen` is `u32(0x4CBFB0)` per
-  process. Use `acquire_game_foreground`, never `goto_level.focus()`. Live steps run in
-  session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md). Close any game the round leaves running,
-  after checking it. Restore and hash-check every install file in the same process that
-  changed it.
-- Settled and not to be re-derived: everything settled in the previous ten directives, plus
-  c1g, c1h, c1i and c3m (the entry failure is intermittent in the logs, cause not named;
-  precedent d2b pid 47392).
+- Settled and not to be re-derived: everything settled in the previous eleven directives, plus
+  c1j, c1k and c1l. The menu-entry cause stays unnamed; do not chase it on this directive.
 - Parked and not to be chased: C3 scenery, the caption blend, the hatch animation, the
   `MM_DIG_000` shortfall, the HUD tick mismatch, the selection highlight and `+0x3c` writer,
   and the C2 cursor clause. B2 and B3 stay queued. Run CTest on mouv. Keep text files LF.
+- Fix the stale C1 Phase E entry in `PLAN.md` (it still lists c1l's reads as UNREAD).
 
 ## Stop point
 
-Stop and report after the start (landed or parked), on any stop condition in ORCHESTRATION,
-or if the start crashes or leaves the install unrestored. Do not advance to Q3, C3, the C2
-cursor clause, B2 or B3 on this directive.
+Stop and report when the render is scored (gate pass or fail), when part 1 reaches its cap
+without a READ sheet file and font, or on any stop condition in ORCHESTRATION. If the render
+needs the hook's x, y, stop and name it; a live start is the next directive's decision. Do not
+advance to C3, the C2 cursor clause, B2 or B3.
 
 ## Sync
 

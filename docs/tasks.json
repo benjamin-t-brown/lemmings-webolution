@@ -1,8 +1,34 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 02:36:20 MDT",
+  "updated": "2026-10-24 02:37:31 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1l-icon-live-read",
+      "title": "C1 live read of skill-panel icon inputs with an observable entry (directive part 2, the one stock start)",
+      "status": "running",
+      "brief": "build/tmp/c1l-icon-live-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": null,
+      "owns_live_game": true,
+      "live_owner": "c1l-icon-live-read worker",
+      "depends_on": [
+        "c1j-named-writers-read",
+        "c1k-observable-entry"
+      ],
+      "gate_served": "C1 skill panel (directive 2026-10-24, part 2)",
+      "question_round_count": 1,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-observable-entry",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 02:37:31 MDT"
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -4389,7 +4415,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "After the one start (landed or parked), an ORCHESTRATION stop condition, or a start that crashes or leaves the install unrestored. Do not advance to Q3, C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 02:36:20 MDT: part 1 done (c1j, c1k landed). Next: part 2, the one stock start with build/tmp/c1k-observable-entry/probe.py (OUT build/tmp/c1l-icon-live-read) and the c1i hook.js; read list minus c1j-READ items; prediction.md first; session-1 scheduled task; no retry after Popen.",
+    "handoff": "2026-10-24 02:37:31 MDT: part 1 landed (c1j, c1k). c1l dispatched: the one stock start, live owner c1l worker, probe from c1k, hook from c1i. On return: verify, land as landed or parked, restoration proof, set directive Status done, stop.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

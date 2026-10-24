@@ -946,6 +946,36 @@
   ],
   "landed": [
     {
+      "id": "c1af-shift-count-live",
+      "title": "Read the live alpha shift counts (round 4, gate counts)",
+      "status": "landed",
+      "brief": "build/tmp/c1af-shift-count-live-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live shift-count read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "c1ae-shift-count-hook"
+      ],
+      "gate_served": "C1 skill panel; plate alpha needs the live shift counts",
+      "question_round_count": 4,
+      "fourth_round_reason": "The counts are not in the exe. C1ac left them behind a COM call. The plate render cannot be scored without the live values.",
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 17:07 MDT",
+      "worker_output": "build/tmp/c1af-shift-count-live/round-note.md",
+      "dispatch_id": "fb422a87-05cd-40db-8d86-7d396433c98e",
+      "landed_at": "2026-10-24 17:19 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1af-shift-count-live.md; docs/LESSONS.md C1af; docs/plan-history/phase-c.md",
+      "disposition": "One start. The hook at 0x473897 logged 0 hits after ready.json. The click and ready.json share 17:16:16, so the upload at the click was not observed. Hashes restored. Counts unread.",
+      "facilitator_verified": "2026-10-24: hook-live.json hits 0, distinct 0. run.log one Popen. Click, pause, and ready.json are 17:16:16. Re-hashed exe, SavedGame.dat, dgVoodoo.conf; they match cleanup-report.json. No Lemming process."
+    },
+    {
       "id": "c1ae-shift-count-hook",
       "title": "Dry-check a hook for the two alpha shift counts (round 3 of 3)",
       "status": "landed",

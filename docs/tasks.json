@@ -1,35 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T17:07:42-06:00",
+  "updated": "2026-10-24T17:19:26-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1af-shift-count-live",
-      "title": "Read the live alpha shift counts (round 4, gate counts)",
-      "status": "running",
-      "brief": "build/tmp/c1af-shift-count-live-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "live shift-count read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": true,
-      "live_owner": "fb422a87-05cd-40db-8d86-7d396433c98e",
-      "depends_on": [
-        "c1ae-shift-count-hook"
-      ],
-      "gate_served": "C1 skill panel; plate alpha needs the live shift counts",
-      "question_round_count": 4,
-      "fourth_round_reason": "The counts are not in the exe. C1ac left them behind a COM call. The plate render cannot be scored without the live values.",
-      "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-skill-panel-gate",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 17:07 MDT",
-      "worker_output": null,
-      "dispatch_id": "fb422a87-05cd-40db-8d86-7d396433c98e"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-skill-panel-gate",
@@ -47,11 +20,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 16:21:48 -06:00",
-    "rounds_run": 5,
-    "stock_starts_used": 1,
+    "rounds_run": 6,
+    "stock_starts_used": 2,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 17:07 MDT: C1 skill panel. Dispatched c1af, round 4, one stock start for the shift counts at 0x473897. Stock starts 1 of 3 until it reports. Pass started 16:21:48.",
+    "handoff": "2026-10-24 17:19 MDT: C1 skill panel. c1af landed: 0 hits after ready.json. Stock starts 2 of 3. Next is an offline repair that arms the hook before the level click. Do not start the game until that repair is dry-checked. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [
@@ -84,6 +57,12 @@
           "dispatched": "2026-10-24 16:59 MDT",
           "landed": "2026-10-24 17:07 MDT",
           "elapsed": "8m 32s"
+        },
+        {
+          "id": "c1af-shift-count-live",
+          "dispatched": "2026-10-24 17:07 MDT",
+          "landed": "2026-10-24 17:19 MDT",
+          "elapsed": "12m 26s"
         }
       ]
     },

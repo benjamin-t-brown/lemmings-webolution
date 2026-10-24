@@ -255,3 +255,11 @@ and the mask dword is still `[ebp-0x128]`. The span has no `call` and no store
 of the mask. The numeric counts were not read. The facilitator re-ran the dry
 check, re-read the five instructions, and a one-address change made the check
 fail. No stock start.
+
+**C1af: the paused attach saw no shift**
+([check](../scratch/phase-c1af-shift-count-live.md)), 2026-10-24, round 4,
+one stock start. `Popen` 17:15:44, pid 32972. The click, the pause, and
+`ready.json` are the same second, 17:16:16. The hook then logged `hits` 0.
+The `sar` did not run in the six seconds it was installed. The upload at the
+click was not observed. Install hashes match. The facilitator re-read the
+hook JSON and re-hashed the three install files. The counts stay unread.

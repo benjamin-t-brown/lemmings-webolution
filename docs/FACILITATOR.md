@@ -8,7 +8,10 @@ For project facilitation, read in order: [lessons](LESSONS.md), [plan](../PLAN.m
 [queue](tasks.json), [orchestration](ORCHESTRATION.md), [model mapping](ROLES.md),
 [guardrails](AGENT_SAFETY.md), and the full canonical
 [evidence rules](../.claude/rules/match-the-original.md).
-Read build/REA instructions when the task uses those tools.
+Read build/REA instructions when the task uses those tools. The original, Windows builds and
+Windows-only harness scripts run on `mouv`: from either clone, read
+[running the original on mouv](agents/MOUV_SSH.md) before any such step and pass it to every
+worker that touches Windows. Its session-0 and shared-tree rules are mandatory.
 
 Then read [the overlord directive](DIRECTIVE.md). If it is `Status: active`, it is the
 user's authorization for the next standing run when the queue's run is stopped or absent;

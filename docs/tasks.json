@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 11:54:00 MDT",
+  "updated": "2026-10-24 12:15:00 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
@@ -24,11 +24,14 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 11:54:00 MDT",
       "worker_output": null
-    },
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1q-font-bitmap-read",
       "title": "C1 _FontSmall bitmap and count colour (directive 1b, round 2 of 2)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/c1q-font-bitmap-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "offline disassembly read",
@@ -45,11 +48,12 @@
       "standing_run": "c1-sheet-font-render",
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 11:54:00 MDT",
-      "worker_output": null
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "worker_output": "build/tmp/c1q-font-bitmap-read/round-note.md",
+      "landed_at": "2026-10-24 12:15:00 MDT",
+      "landed_in": "docs/scratch/phase-c1q-font-bitmap-read.md",
+      "disposition": "_FontSmall bitmap READ by emulating decoder 0x467DE8: 64x16, 4 bpp, white (index 1) digits on black, cells 6 wide at x=0..54, matches 0x4BFC10. No tint on the path read (vertex colour defaults 255.0 -> 0xFFFFFFFF, derived); white digits if nothing later writes it (inference). UNREAD: later quad-colour writers, colour key at 0x47218A, blend state at 0x46D5F3, the 656-vs-657 choice.",
+      "facilitator_verified": "2026-10-24: parsed fontsmall_656.dec with a fresh script (630 B, 64x16, 4 bpp, palette 0 black / 1 white, 864/160 index counts, ink rows and columns, per-cell counts); re-decoded the head of 0x440C50. Not re-derived: the unicorn run of 0x467DE8, 0x440A10, 0x46D460, the rest of 0x440C50. No code change. No game process, no LemWeb task."
+    },
     {
       "id": "c1n-count-font-read",
       "title": "C1 count font file, colour and count text source, offline (directive 1b, round 1 of 2)",
@@ -4538,11 +4542,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac clone, session model, Sonnet 5.5), 2026-10-24 11:28:43 MDT /facilitator invocation; directive active, prior run c1-observable-entry stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 11:28:43 MDT",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Render scored (gate pass or fail), part 1 at its cap without a READ sheet file and font, or an ORCHESTRATION stop. If the render needs the hook's x, y, stop and name it. Do not advance to C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 11:54:00 MDT: c1m, c1n, c1o landed (68b9659, 55877ed). Dispatched round 2 (the cap): c1p (.spr parse, frame table, sheet bytes) and c1q (_FontSmall bitmap and colour). Next: verify and land them; Q3 render only if the sheet file and font are then READ, and stop if it needs the hook's x, y.",
+    "handoff": "2026-10-24 12:15 MDT: c1m, c1n, c1o, c1q landed. c1p (.spr parse, frame table, sheet bytes) still running (limit 12:24). Next: verify and land c1p; Q3 render only if the sheet file is then READ (font bitmap is now READ; colour is white by inference, tint writers unread), and stop if it needs the hook x, y.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

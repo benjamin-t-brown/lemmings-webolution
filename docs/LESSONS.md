@@ -1434,3 +1434,5 @@ panel are the remainder. Evidence: `docs/scratch/phase-c2i-caption-render.md`.
 
 **C1o (directive part 2, tooling, [recipe](agents/MOUV_SSH.md)): `rea instrument-with-frida attach` works from an ssh worker against a session-1 process.** MEASURED on a throwaway `pythonw` target hooking `kernel32!Sleep`: hits reported, clean detach, target alive; the facilitator re-ran it. Not tried on the game, so no hook read of the game has been made.
 
+**C1q (directive 1b round 2, offline, [note](scratch/phase-c1q-font-bitmap-read.md)): the count font bitmap is 64 x 16, 4 bpp, white digits on black.** The exe's decoder `0x467DE8`, run in an emulator on archive ordinal 656, yields a 630-byte BMP with palette index 1 = white and cells 6 wide at x = 0, 6 ... 54, matching table `0x4BFC10`. Vertex colour defaults to 255.0 (`0x440A10`), packed to `0xFFFFFFFF` by `0x46D460`, so the digits are white unless a later writer changes the quad colour: an inference, with those writers, the colour key (`0x47218A`) and the blend state UNREAD. The facilitator re-parsed the decoded BMP; the emulation of the decoder itself was not independently run.
+

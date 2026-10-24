@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 01:51:34 MDT",
+  "updated": "2026-10-24 02:34:23 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
       "id": "c1j-named-writers-read",
       "title": "C1 remaining named writers: [[0x4CBFB0]+0x10], frame table F, [0x4CBF7C] font, 0x4E33xx copy (part 1a, offline, round 1 of 2)",
-      "status": "running",
+      "status": "ready-for-verify",
       "brief": "build/tmp/c1j-named-writers-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "offline disassembly read",
@@ -26,13 +26,18 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-observable-entry",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 01:51:34 MDT"
-    },
+      "dispatched_at": "2026-10-24 01:51:34 MDT",
+      "worker_output": "build/tmp/c1j-named-writers-read/round-note.md"
+    }
+  ],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1k-observable-entry",
       "title": "Make find_menu_index observable: tee to run.log, 15 s no-input snapshot, decide goto_level.py (part 1b, offline, round 1 of 2)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/c1k-observable-entry-brief.md",
+      "worker_output": "build/tmp/c1k-observable-entry/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "offline harness change + dry check",
       "harness": "Claude Code",
@@ -51,11 +56,12 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-observable-entry",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 01:51:34 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-24 01:51:34 MDT",
+      "landed_at": "2026-10-24 02:34:23 MDT",
+      "landed_in": "docs/scratch/phase-c1k-observable-entry.md",
+      "facilitator_verified": true,
+      "disposition": "landed; find_menu_index/snapshot_idle tee to a caller log, c3m patch landed with it; cause of entry failure still not named; stub dry check only"
+    },
     {
       "id": "c1i-icon-live-read",
       "title": "C1 live read of skill-panel icon inputs (Q2, one stock start)",
@@ -4376,11 +4382,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator facilitator-c1-entry (Mac clone, session model, Sonnet 5.5), 2026-10-24 01:50 MDT /facilitator invocation via team-lead; directive active, prior run c1-base-icon-draw stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 01:48:09 MDT",
-    "rounds_run": 0,
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "After the one start (landed or parked), an ORCHESTRATION stop condition, or a start that crashes or leaves the install unrestored. Do not advance to Q3, C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 01:51:34 MDT: c1j (1a named writers) and c1k (1b observable entry) dispatched concurrently, offline. Part 2 (the one start) waits for c1k landed and its dry check re-run. mouv tree carries the uncommitted c3m patch in goto_level.py (sha256 c28335b5...31c8); c1k decides it.",
+    "handoff": "2026-10-24 02:34:23 MDT: c1k landed (observable entry; goto_level.py landed with c3m patch). c1j (1a named writers) ready-for-verify, being verified. Part 2 (the one start) waits for c1j landing so its READ items are dropped from the probe read list, then prediction.md in build/tmp/c1l-icon-live-read, then one Popen.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

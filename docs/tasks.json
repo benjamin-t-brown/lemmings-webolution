@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T14:16:00-06:00",
+  "updated": "2026-10-24T14:18:00-06:00",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1v-plate-draw-read",
       "title": "C1 button-plate draw call, sheet, frame and position (directive part 2, round 1 of 2)",
-      "status": "ready-for-verify",
+      "status": "landed",
       "brief": "build/tmp/c1v-plate-draw-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -24,11 +26,12 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 14:02 MDT",
       "worker_output": "build/tmp/c1v-plate-draw-read/round-note.md",
-      "dispatch_id": "6cf60802-9d20-4df4-8381-7b2e1bbe83f1"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatch_id": "6cf60802-9d20-4df4-8381-7b2e1bbe83f1",
+      "landed_at": "2026-10-24 14:18 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1v-plate-draw-read.md; docs/LESSONS.md C1v",
+      "disposition": "Plate draw READ: 0x45B66A call 0x414920, ten boxes x [18,90] y [12+40*i, 12+40*i+32], sheet name ^tab. Zero count skips 0x44E150. ^tab pixels, colour key and blend UNREAD. Bytes do not say the texels are an oval.",
+      "facilitator_verified": "2026-10-24: re-read 0x45B639..0x45B70B, 0x45A6B2..0x45A842, 0x45E8F7 and bytes 5E 74 61 62 00 at 0x4C0E00. Not re-derived: G chain, 0x45FE10, UV pairs, 0x414920 vertex bases. No source change. No game process. ctest 34/34 on the unchanged tree before this landing."
+    },
     {
       "id": "c1u-footprint-mask",
       "title": "C1 footprint from read geometry, score saved renders before any new drawing (directive part 1)",
@@ -4684,7 +4687,7 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md",
     "owner": "Cursor facilitator, 2026-10-24 14:02 MDT /facilitator on mouv. Prior run stopped, no task was running, so this start is the handoff.",
     "started_at": "2026-10-24 14:02 MDT",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [
       {
@@ -4700,7 +4703,7 @@
       }
     ],
     "stop_point": "Part 3 scored (pass or fail), part 2 ends without an input the render needs, or an ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 14:16 MDT: c1u landed. Footprint is icons and glyphs; plates empty. initial MAEs 0.22416530739836685 and 0.3317052673397432. MM_DIG_000 reference-unnamed. c1v is ready-for-verify. Part 3 waits.",
+    "handoff": "2026-10-24 14:18 MDT: c1u and c1v landed. Next: add the ten plate boxes to the footprint and rescore, and read colour key 0x47218A and blend 0x46D5F3. Part 3 waits. MM_DIG_000 reference still unnamed.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

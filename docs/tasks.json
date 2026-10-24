@@ -1,14 +1,16 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 01:31:26 MDT",
+  "updated": "2026-10-24 01:39:30 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1i-icon-live-read",
       "title": "C1 live read of skill-panel icon inputs (Q2, one stock start)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/c1i-icon-live-read-brief.md",
-      "worker_output": null,
+      "worker_output": "build/tmp/c1i-icon-live-read/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "live read",
       "harness": "Claude Code",
@@ -16,7 +18,7 @@
       "worker_agent": "round-agent",
       "dispatch_id": null,
       "owns_live_game": true,
-      "live_owner": "c1i-icon-live-read",
+      "live_owner": null,
       "depends_on": [
         "c1g-base-icon-draw-read",
         "c1h-icon-placement-count-read",
@@ -25,14 +27,16 @@
       "gate_served": "C1 skill panel (directive 2026-10-24)",
       "question_round_count": 1,
       "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
+      "stock_starts_consumed": 1,
       "standing_run": "c1-base-icon-draw",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 01:31:26 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-24 01:31:26 MDT",
+      "blocked_reason": "entry failed after the one stock start: find_menu_index returned None after the patched 3x3 DOWN scan (run.log 01:35:47); patch diagnostics went to stdout and were lost; no icon item read",
+      "landed_at": "2026-10-24 01:39 MDT",
+      "landed_in": "docs/scratch/phase-c1i-icon-live-read.md",
+      "facilitator_verified": true,
+      "disposition": "landed as parked: entry failed after the one start, nothing read; install restored; goto_level.py patch left uncommitted on mouv"
+    },
     {
       "id": "c1h-icon-placement-count-read",
       "title": "C1 icon placement, sheet variant, count font/colour (Q1 round 2 of 2)",
@@ -4321,11 +4325,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-24 00:34:54 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 00:34:54 MDT",
-    "rounds_run": 2,
-    "stock_starts_used": 0,
+    "rounds_run": 3,
+    "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-24 01:31:26 MDT: Q1 landed (c1g, c1h; cap). Q2 condition met; c1i running (the one stock start, mouv at c484db9, c3m fix.patch applied by the worker first, no retry after Popen). Next: verify (hash checks, process, prediction mtime before Popen); then Q3 render only if every link is READ or measured-from-reference.",
+    "handoff": "2026-10-24 01:39 MDT: stopped at the directive stop point. Next directive: understand the menu-entry failure offline first (tee find_menu_index to run.log), then one start with build/tmp/c1i-icon-live-read/probe.py and hook.js. mouv tree carries the uncommitted c3m patch in tools/harness/goto_level.py.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -5086,6 +5090,11 @@
           "last_commit": "ee35c38"
         }
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-24 01:39 MDT",
+      "reason": "Directive stop point: Q1 landed at 2 of 2 rounds (c1g, c1h); Q2 spent the one start and the menu entry failed again (c1i), parked; Q3 not triggered (placement inputs and count font UNREAD).",
+      "last_commit": "pending"
+    }
   }
 }

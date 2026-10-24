@@ -2,7 +2,33 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c3e-scene-callee-read",
+      "title": "C3 scene walk callee and matrix stack: root type, 0x46b6cc, 0x43be80, scale propagation (Q1 round 3 of 3)",
+      "status": "running",
+      "brief": "build/tmp/c3e-scene-callee-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac3e-scene-callee-read-ab48cf1ae0f482f9",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c3d-scene-transform-read"
+      ],
+      "gate_served": "C3 full frame (directive ac03584)",
+      "question_round_count": 3,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c3-scenery-entrance-exit",
+      "investigation_budget_minutes": 90,
+      "body_cap": 8,
+      "dispatched_at": "2026-10-23 22:05:55 MDT"
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -3995,7 +4021,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Both directive questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 22:05 MDT: c3b, c3c, c3d landed. Q1 has 1 round left (3 of 3), Q2 has 1 (2 of 2). Next: c3e = read 0x46b6cc/0x43be80 and root stream type, render backdrop only if the chain is fully READ. Q2 round 2 waits on c3e (shares the node module). Stock start unspent.",
+    "handoff": "2026-10-23 22:05:55 MDT: c3e dispatched (Q1 round 3 of 3, last on the question): root factory type, 0x46b6cc, 0x43be80, scale propagation. Q2 round 2 waits on it.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

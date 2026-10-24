@@ -14,7 +14,7 @@
       "requested_model": "grok-4.7-high-fast",
       "worker_agent": "round-agent",
       "owns_live_game": true,
-      "live_owner": "c1af-shift-count-live",
+      "live_owner": "fb422a87-05cd-40db-8d86-7d396433c98e",
       "depends_on": [
         "c1ae-shift-count-hook"
       ],
@@ -27,7 +27,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 17:07 MDT",
       "worker_output": null,
-      "dispatch_id": null
+      "dispatch_id": "fb422a87-05cd-40db-8d86-7d396433c98e"
     }
   ],
   "queue": [],

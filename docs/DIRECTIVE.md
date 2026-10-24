@@ -7,83 +7,102 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done** (2026-10-23 23:36 MDT: Q1 parked at 2 of 2 rounds, Q2 start consumed with no read, Q3 not run; see standing_run.stopped)
+Status: **active**
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
-Supersedes: the C3 scenery directive, done 2026-10-23 (both questions parked at their caps,
-nothing rendered, no start spent; backdrop is an LVL-embedded model tree drawn at `0x441879`
-before the tube; `0x482210` composes node first, stack top second; the type-0 load puts the
-file f64[12] at `this+8`; Entrance `Top` projects within 1 px of the reference on three edges,
-Exit `Top` about 15 px wide against about 40).
+Supersedes: the C3 scene chain directive, done 2026-10-23 (C3g type-1 load and node trees
+read, kind-6 record 116 B, Entrance/Exit `Top` are their own roots, Exit `cyl2` projects wider
+than the reference; C3h stack element 0 is the per-frame push of `[0x58D3D8]` at `0x45DD7B`;
+C3i type-1 draw skeleton `0x46c55d` read; C3j's one start failed in A7p `enter_level` with
+`no menu highlight` before any read; nothing rendered).
 
 ## Why this
 
-C3b–C3f read most of the scene chain but not enough to draw it: the parent/child relation,
-the vertex convention and the kind-6 stride (all in the type-1 child load), and the stack
-bottom at `0x58D5A0` when the scene is drawn. The first three are offline; the last is live
-only. Each is named, so this pass reads exactly those and then renders. The scenery is still
-about 0.178 of C3's 0.2098; C1 still follows.
+C3 scenery has taken nine rounds with nothing drawn. Two of the links C3j was to settle may
+already be settled: element 0 of `0x58D5A0` is a push of `[0x58D3D8]`, the A1 camera
+composition, which A1 and A4f captured live (`build/tmp/a1-camera/`,
+`build/tmp/a4f-actor-billboard/live-*`, `tools/harness/fixtures/camera_a1/`) and which our
+camera already reproduces; and `0x40eb50`'s first terms were read in C3f and are used by
+`tools/harness/measure_d2_pick.py`. What still blocks the render is offline: the per-kind
+draws, the kind 5/7 readers and the type-2 load. This pass closes those, spends a start only
+if the offline route cannot settle the stack bottom, and is the last C3 scenery pass before
+C1.
 
 ## Scope
 
-Three questions, in order. 1 and 2 may run together; 3 waits for both.
+Four questions. 1 and 2 are offline and may run together; 3 waits for both; 4 waits for 1
+(and 3 if it ran).
 
-1. **Child load (offline, cap two rounds).** Read the type-1 load (`0x168` object, ctor
-   `0x47af20`, vtable `0x4b1660`, its load vcall) and finish the factory loop
-   `0x46bb9f..0x46bc1e`. Settle: whether `sand7`, `base`, Entrance `Top` and Exit `Top` are
-   children of the root `thenull` (so whether its scale 10 reaches them), whether the u32
-   C3d called `a` is the child count, the vertex layout and convention at draw, the kind-6
-   record stride, and what `cube13` and `cyl2` are. Re-project with the read chain and report
-   whether the Exit width gap closes. Report the Entrance and Exit boxes against the
-   reference; do not fit.
-2. **Stack bottom (preflight, one start, memory read only).** At the A6 repair 4 pause, read
-   the stack count and the first `0x60` bytes of each live element of `0x58D5A0`, plus
-   `[0x58ce24]`. The preflight states what the bottom is expected to hold (from the readers
-   of `0x58D5A0` offline) and how the read will tell a stable bottom from a stale one. If a
-   memory read cannot show it, record that and park; do not escalate to a debugger.
-3. **Render (offline, cap two rounds), only if 1 and 2 leave the chain READ.** Draw the
-   backdrop tree, the Entrance and the Exit in the production render with the read
-   transforms, textures and draw order. Bound the floor ring from the read geometry. Re-score
-   C3 full frame on the A6 repair 4 pause with actors (A6d24 frame and scorer), split by the
-   C3a regions plus the floor ring, and re-score the amended A7 gate (nine views + second
-   level), which must still pass. Report `MM_DIG_000` without the caption exclusion too. Do
-   not tune. If any link is still UNREAD, the render does not run and the question parks.
+1. **Close the chain offline (cap two rounds).**
+   - **Stack bottom:** read whether anything writes `[0x58D3D8]` between the push at
+     `0x45DD7B` and the scene call at `0x441879` (and whether the scene call runs in the
+     paused frame). If nothing does, element 0 at draw is `[0x58D3D8]`, and the existing live
+     captures and our A1 camera give its value; state which capture and how it maps to the
+     A6 repair 4 pause.
+   - **`0x40eb50` convention:** reconcile C3f's reading (`mat[0]*vec[0] + mat[3]*vec[1] +
+     mat[6]*vec[2]`), C3i's use at `0x40eae0`, `measure_d2_pick.py` and LESSONS A6d15. Read
+     only what is missing to make it READ.
+   - **Remaining reads:** the per-kind draws from `0x46a280` (with the `0x43bd80` texture
+     bind), the kind 5 and 7 readers `0x46af80` / `0x46b3d0`, and the type-2 load `0x47b320`,
+     so the scenery parse goes past `0x967a2`. Also `[this+0x100]` and the object at
+     `0x58d498` used in the cull.
+2. **Menu entry failure (offline, cap one round).** Find why `find_menu_index`
+   (`tools/harness/goto_level.py:200`) returned `None` at screen id 3 / ui_state 3 in C3j
+   when the same A7p entry worked in A7p and C2h. Name the cause from the run's log, the
+   script diff against A7p and the screen state; do not run the game. If the cause is not
+   named, say so.
+3. **Stack bottom live read (one start, memory only), only if** question 1 cannot settle the
+   stack bottom offline **and** question 2 named the entry failure and fixed it. Run C3h's
+   reader unchanged with that fix. Otherwise it is not spent.
+4. **Render (offline, cap two rounds), only if every link is READ** (stack bottom from 1 or 3,
+   the projection convention, the per-kind draws, the strides and the type-2 load). Draw the
+   backdrop tree, the Entrance and the Exit with the read transforms, textures and order, and
+   bound the floor ring from the read geometry. Re-score C3 full frame on the A6 repair 4
+   pause with actors (A6d24 frame and scorer), by the C3a regions plus the floor ring, and the
+   amended A7 gate (nine views + second level), which must still pass. Report `MM_DIG_000`
+   without the caption exclusion. Do not tune. If a link is still UNREAD, park.
 
 ## Budget
 
 Per-round commits, up to three concurrent offline rounds, at most one live owner. **One
-stock start, question 2 only**, no retry after Popen. Memory reads only; **no debugger**.
-**Function-body cap per round: up to ten** (C3d's cap was eight and C3f's six; both were
-exceeded on the path the question asked for). Thunks of five instructions or fewer do not
-count. A brief lists the bodies in order; a body off that list counts and is named.
+stock start, question 3 only, on its two conditions**, no retry after Popen. Memory reads
+only; **no debugger**. **Function-body cap ten per round, hard:** a round that needs an
+eleventh body stops, lands what it read and names the next body; it does not continue past
+the cap. Thunks of five instructions or fewer do not count.
 
 ## Decisions already made (do not re-ask)
 
-- Authorized as scoped above (user, overlord review 2026-10-23): close the scene chain, then
-  render; one memory-only start; body cap ten.
+- Authorized as scoped above (user, overlord review 2026-10-23). This answers
+  `q2-second-start`: neither the facilitator's option 1 nor 2 as written; an offline
+  settlement first, a start only on question 3's conditions. Clear it from
+  `pending_questions`.
+- **Last C3 scenery pass:** if question 4 does not render, C3 scenery parks in Phase E and the
+  next directive goes to C1.
 - **Read, do not fit, and do not choose by score.** A value taken from a scored capture is
-  labelled measured-from-reference and named in the report. Sensitivity renders are reported,
-  never used to pick a value. A projection that matches the reference is a check, not a read.
+  labelled measured-from-reference and named in the report. A projection that matches the
+  reference is a check, not a read. An earlier live capture is evidence only for the state it
+  captured; say which.
 - **Time the pass** (standing): total elapsed wall time and each round's dispatch-to-landing
   time, recorded in the queue when each round is dispatched and landed.
-- Do not reuse heap addresses from an earlier process (`0x58D5A0` and `0x58ce24` are static).
-  Use `acquire_game_foreground`, never `goto_level.focus()`. Live steps run in session 1 per
-  [MOUV_SSH.md](agents/MOUV_SSH.md). Close any game the round leaves running, after checking
-  it. Restore and hash-check every install file in the same process that changed it.
-- Settled and not to be re-derived: everything settled in the previous seven directives,
-  plus C3b (LVL-embedded tree, `0x441879` before `0x43a4ec`, root `thenull` values), C3c
-  (Entrance and Exit `Object 09` placements and textures), C3d (`0x47496d` push/pop,
-  factory `0x46bca4`), C3e (type 0 callee `0x46b6cc`, compose once, child loop at `this+0x68`)
-  and C3f (`0x482210` order, f64[12] at `this+8`).
+- Do not reuse heap addresses from an earlier process. Use `acquire_game_foreground`, never
+  `goto_level.focus()`. Live steps run in session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md).
+  Close any game the round leaves running, after checking it. Restore and hash-check every
+  install file in the same process that changed it.
+- C3h's correction of `docs/scratch/phase-a4-pre-actor-subcalls-static.md:78` (the pop copies
+  nothing) may be applied there with a pointer to C3h.
+- Settled and not to be re-derived: everything settled in the previous eight directives,
+  plus C3g (factory jump table, type-1 load layout, node trees, kind-6 116 B, Entrance/Exit
+  roots), C3h (stack layout, pushes at `0x45DD7B` / `0x474979`, pop copies nothing,
+  `[0x58CE24]` is a this-pointer) and C3i (draw skeleton `0x46c55d`).
 - The hatch's door and count animation, the caption blend, the `MM_DIG_000` shortfall and the
   HUD tick mismatch stay parked. C1 stays held. B2 and B3 stay queued. Run CTest on mouv.
   Keep text files LF.
 
 ## Stop point
 
-Stop and report when all three questions are landed or parked, on any stop condition in
-ORCHESTRATION, or if the live start crashes or leaves the install unrestored. Do not advance
-to C1, the C2 cursor clause, the caption blend, the hatch animation, B2 or B3 on this
-directive.
+Stop and report when every question is landed, parked or not triggered, on any stop
+condition in ORCHESTRATION, or if a live start crashes or leaves the install unrestored. Do
+not advance to C1, the C2 cursor clause, the caption blend, the hatch animation, B2 or B3 on
+this directive.
 
 ## Sync
 

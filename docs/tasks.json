@@ -54,6 +54,33 @@
       "worker_output": null,
       "landed_in": null,
       "disposition": null
+    },
+    {
+      "id": "c2d-counters-open-reads",
+      "title": "C2 counters: settle replace/append, Out source, colour order, default colour (read only)",
+      "status": "running",
+      "brief": "build/tmp/c2d-counters-open-reads-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2d-counters-open-reads-8dde8f8b363cb081",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c2c-counters-timer-read"
+      ],
+      "gate_served": "C2 gate; directive Q2",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 12,
+      "worker_output": null,
+      "landed_in": null,
+      "disposition": null
     }
   ],
   "queue": [],
@@ -3624,7 +3651,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 18:21 MDT: b1x (Q1), c2c (Q2), c2e (Q3 preflight) dispatched offline; no start used. Next: verify each, land, commit separately.",
+    "handoff": "2026-10-23 18:45 MDT: c2c landed (edf222e). In flight: b1x (Q1), c2e (Q3 preflight), c2d (Q2 round 2, open reads). Next: verify each as it returns, land separately; Q2 round 3 is the render/score. No stock start used.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

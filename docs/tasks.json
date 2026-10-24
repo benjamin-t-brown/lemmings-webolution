@@ -2,32 +2,7 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c2k-caption-blend-read",
-      "title": "C2 caption blend 0x46D460 and text lookup 0x486847: read, apply only what is read, re-score (Q1 round 2 of 2)",
-      "status": "running",
-      "brief": "build/tmp/c2k-caption-blend-read-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "offline disassembly read + render",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "dispatch_id": "ac2k-caption-blend-read-3fbec56b63a4beba",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C2 gate; directive Q1",
-      "question_round_count": 2,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c2-caption-text-c3-breakdown",
-      "investigation_budget_minutes": 90,
-      "worker_output": "build/tmp/c2k-caption-blend-read/round-note.md",
-      "dispatched_at": "2026-10-23 20:52:15 MDT",
-      "landed_at": null
-    }
-  ],
+  "active": null,
   "queue": [],
   "recently_landed": [
     {
@@ -3879,6 +3854,33 @@
       "landed_in": "docs/scratch/phase-c2j-caption-text-blend.md",
       "disposition": "Text drawn; A7 without caption exclusion passes 9/10, MM_DIG_000 fails by 2660 (2686464 vs 2683804); blend 0x46D460 and lookup 0x486847 unread; region residual down 10/10",
       "facilitator_verified": "2026-10-23: own loop reproduced all ten numerators and region residuals; re-read 0x44DD20, 0x44DBC0, 0x45D262, 0x45D37C-0x45D3AA, 0x44FF28-0x44FF71; textY mutation fails 3 checks, restored by sha1; ctest 34/34 on mouv; worker used git stash (recorded)"
+    },
+    {
+      "id": "c2k-caption-blend-read",
+      "title": "C2 caption blend 0x46D460 and text lookup 0x486847: read, apply only what is read, re-score (Q1 round 2 of 2)",
+      "status": "landed",
+      "brief": "build/tmp/c2k-caption-blend-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline disassembly read + render",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2k-caption-blend-read-3fbec56b63a4beba",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C2 gate; directive Q1",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c2-caption-text-c3-breakdown",
+      "investigation_budget_minutes": 90,
+      "worker_output": "build/tmp/c2k-caption-blend-read/round-note.md",
+      "dispatched_at": "2026-10-23 20:52:15 MDT",
+      "landed_at": "2026-10-23 21:04:44 MDT",
+      "landed_in": "docs/scratch/phase-c2k-caption-blend-read.md",
+      "disposition": "0x46D460 packs a D3D diffuse dword and makes one device call: blend is the device's, render state UNREAD; LTX index 0x54 = Paused READ; render unchanged, MM_DIG_000 still fails by 2660; Q1 parked at the two-round cap",
+      "facilitator_verified": "2026-10-23: re-read 0x46D52E-0x46D58B, 0x46D5DE-0x46D5F3, 0x49C5AC, 0x486847, [0x4C3434]=2, LTX extracts; renders byte-equal to c2j; diffuse shift mutation fails 3 checks, restored by sha1; ctest 34/34 on mouv; worker had a stray git checkout (no effect)"
     }
   ],
   "standing_run": {
@@ -3897,11 +3899,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 20:29 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 20:29:55 MDT",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Both directive questions landed or parked, or an ORCHESTRATION stop.",
-    "handoff": "2026-10-23 20:52:15 MDT: c3a landed (fbc23fa), c2j landed (b1060a8; A7 without caption exclusion 9/10, MM_DIG_000 fails by 2660). c2k (Q1 round 2 of 2, blend 0x46D460 read) running. Q2 done. Nothing live.",
+    "handoff": "2026-10-23 21:04:44 MDT: directive done. c3a (fbc23fa), c2j (b1060a8), c2k landed. A7 without caption exclusion 9/10, MM_DIG_000 fails by 2660; C3 residual: rest 84.7%, skill boxes 11.3%. Nothing running. Next directive needed from the overlord.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4530,6 +4532,11 @@
           "last_commit": "dbfb08d"
         }
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-23",
+      "reason": "Both directive questions landed or parked: Q1 caption text and blend parked at the two-round cap (9 of 10 views pass, MM_DIG_000 fails by 2660; render state unread); Q2 C3 residual breakdown landed. No stock start used.",
+      "last_commit": "pending"
+    }
   }
 }

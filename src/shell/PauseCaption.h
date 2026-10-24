@@ -28,6 +28,28 @@
 //              which is the derived W (70 or 71).
 //   MEASURED-FROM-REFERENCE  the display string "Paused" and white ink: the A7 baseline crop
 //              shows them; the exe holds only the key, so neither is read from it.
+//   READ       C2k, 0x46D460: not a software blender. Per vertex it stores floats x,y,z,rhw (0x46D4F9..
+//              0x46D528), packs diffuse = (int(d[+0x50]) << 24) | (int(c[0]) << 16) | (int(c[1]) << 8) |
+//              int(c[2]) (0x46D52E..0x46D586; int() is 0x49C5AC, fnstcw/or ah,0xC/fistp = truncation),
+//              adds [0x58D2A0/A8] to u,v, then makes ONE device call, vtable +0x70, args (6, 0x1C4, verts,
+//              count) (0x46D5DE..0x46D5F3). The 0x1C4 FVF is x,y,z,rhw + diffuse + tex1; 6 is
+//              triangle-fan or list (not checked). So alpha is the top byte of the packed diffuse and the
+//              per-pixel blend is the device's. The alpha double is vertex+0x50 and the colour block
+//              vertex+0x38; with the vertex base at quad+8 (0.00225 is vertex+0x10 = quad+0x18, C2i) these
+//              are quad+0x58 and quad+0x40, exactly where 0x44DD20 stores 128.0 and 0x44DBC0 stores the
+//              colour. So the packed alpha byte is 0x80 and the colour bytes 0 (arithmetic on C2j/C2i
+//              reads; the vertex pointer lookup 0x414A40 was not read). The 0..255 scale is therefore the
+//              D3D diffuse byte scale: READ as a byte, no longer only INFERRED from sibling calls.
+//   UNREAD     the device's render state for this quad (alpha-blend enable, src/dest blend factors,
+//              texture stage), so the blend formula, rounding and 8-bit vs float stay UNREAD and the
+//              render keeps OURS. 0x472860..0x472975 sets D3D render states (0xF, 0x18, 0x19 ...) for some
+//              other path; it was not tied to this quad and is not evidence for it.
+//   READ       C2k, 0x486847(0x54): tail-calls 0x486819(idx, [0x4C3434]); idx >= table[lang][0] gives
+//              0x4C3450 "Unknown String", else the relocated pointer at table[lang][idx + 1]. The tables are
+//              built by 0x486670 from "Language\%s.ltx" with Uk/German/... names; the file dword [0x4C3434]
+//              is 2 (Uk). Index 0x54 in both LANGUAGE\UK.LTX copies (lemmings.box, patch.box) is "Paused"
+//              (offsets 1548 and 1956 in the extracts under build/tmp/c2b-pause-index-text/). The text colour
+//              is not in that lookup; it stays MEASURED-FROM-REFERENCE.
 
 #pragma once
 
@@ -59,6 +81,10 @@ struct CaptionParams {
   int textX = 285, textY = 422;           // MEASURED live (C2h), G+0x25C68 +0x14/+0x18
   std::array<std::uint8_t, 3> textColour{255, 255, 255};  // MEASURED-FROM-REFERENCE; exe colour UNREAD
 };
+
+// The diffuse dword 0x46D460 builds per vertex (0x46D52E..0x46D586): (int(a) << 24) | (int(r) << 16) |
+// (int(g) << 8) | int(b), each int() truncating (0x49C5AC). READ. The blend that consumes it is UNREAD.
+std::uint32_t captionDiffuse(const CaptionParams& p = {});
 
 // Blend `fill` over the rect: px = (px * (scale - alpha) + fill * alpha + scale / 2) / scale.
 void drawCaptionPanel(webo::Image& target, const CaptionParams& p = {});

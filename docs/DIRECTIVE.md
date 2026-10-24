@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-23)
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the B1 panel / C2 counters / C2 caption directive, done 2026-10-23 (B1 panel colours
 and X pad read, score 0.005244; counters and timer drawn, amended A7 passes; caption quad read

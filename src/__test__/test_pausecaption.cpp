@@ -48,6 +48,18 @@ void testRect() {
   check(!(captionRectFromInputs(640, 480, 35, 30) == want), "H 30 misses");
 }
 
+void testDiffuse() {
+  std::cout << "caption diffuse\n";
+  const CaptionParams p;
+  check(captionDiffuse(p) == 0x80000000u, "alpha 128 in the top byte, black fill: 0x80000000 (0x46D52E..0x46D586)");
+  CaptionParams q = p;
+  q.alpha = 127;
+  check(captionDiffuse(q) == 0x7F000000u, "alpha alone moves byte 3");
+  q = p;
+  q.fill = {1, 2, 3};
+  check(captionDiffuse(q) == 0x80010203u, "fill r,g,b land in bytes 2,1,0");
+}
+
 void testDraw() {
   std::cout << "caption draw\n";
   const CaptionParams p;
@@ -158,6 +170,7 @@ void testText() {
 
 int main() {
   testRect();
+  testDiffuse();
   testDraw();
   testText();
   if (g_failures) {

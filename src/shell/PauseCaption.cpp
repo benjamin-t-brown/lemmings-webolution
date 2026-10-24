@@ -25,6 +25,11 @@ void drawCaptionPanel(webo::Image& target, const CaptionParams& p) {
   }
 }
 
+std::uint32_t captionDiffuse(const CaptionParams& p) {
+  return (static_cast<std::uint32_t>(p.alpha) << 24) | (static_cast<std::uint32_t>(p.fill[0]) << 16) |
+         (static_cast<std::uint32_t>(p.fill[1]) << 8) | static_cast<std::uint32_t>(p.fill[2]);
+}
+
 HudLine captionLine(const CaptionParams& p) { return {p.text, p.textX, p.textY, p.textColour}; }
 
 void drawCaption(webo::Image& target, const webo::Image& sheet, std::span<const GlyphCell> cells,

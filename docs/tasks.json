@@ -1,35 +1,82 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T15:25:00-06:00",
+  "updated": "2026-10-24T16:26:56-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1aa-alf-alpha",
+      "title": "Read how ^tab .alf bytes become texture alpha (round 1 of 3)",
+      "status": "queued",
+      "brief": "build/tmp/c1aa-alf-alpha-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; plate alpha rule from 0x47E40D",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": null,
+      "worker_output": null,
+      "dispatch_id": null
+    },
+    {
+      "id": "c1ab-prestage-hook",
+      "title": "Sample plate stage caches before 0x47261F stores them (round 1 of 3)",
+      "status": "queued",
+      "brief": "build/tmp/c1ab-prestage-hook-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline hook dry-check",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; pre-stage sample for the live blend read",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": null,
+      "worker_output": null,
+      "dispatch_id": null
+    }
+  ],
   "queue": [],
   "standing_run": {
-    "id": "c1-tab-blend-render",
-    "goal": "Directive 2026-10-24 (^tab pixels, blend hook, render). Part 1a offline cap 1: decode ^tab (handle [0x4E3348], store 0x45E909) and ^tab_selected if the same path. Part 1b offline cap 1: name the device blend and texture-stage hook for the 0x45B66A plate quads, write the hook, dry-check it. Part 2 cap 1: one Frida start at a paused MM_CLIMB_002, after 1b. Part 3 offline cap 2: draw plates with the read pixels and blend and the zero-count rule; score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+    "id": "c1-skill-panel-gate",
+    "goal": "Directive 2026-10-24 (C1 to its gate). Rank by gate error. First questions: read 0x47E40D (0-128 .alf bytes to texture alpha; decode ^tab_selected only if the same path) and move the plate hook sample before 0x47261F. Then one dry-checked Frida start for the live blend, then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
     "milestones": [
       "C1 skill panel"
     ],
     "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24; option A, one Frida start). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. One stock start, part 2 only. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24; milestone-scoped C1). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. Stock-start pool 3, each dry-checked first, no retry after a failed launch. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
     "grants": {
-      "stock_starts": "one total, part 2 only, after 1b; read-only Frida in one attach; no retry after Popen",
+      "stock_starts": "pool of 3 for the run; each needs an offline dry check first; read-only Frida, one attach; no retry after a failed launch; a later start needs an offline repair first",
       "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
-      "concurrency": "up to 2 concurrent offline rounds; at most one live owner"
+      "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
     },
-    "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md",
-    "owner": "Cursor facilitator, 2026-10-24 15:06 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff.",
-    "started_at": "2026-10-24 15:06:32 MDT",
-    "rounds_run": 2,
+    "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
+    "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
+    "started_at": "2026-10-24 16:21:48 -06:00",
+    "rounds_run": 0,
     "stock_starts_used": 0,
     "pending_questions": [],
-    "stop_point": "Part 3 scored (pass or fail), part 1 or 2 ends without an input the render needs, an ORCHESTRATION stop, or a start that crashes or leaves the install unrestored. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 15:25 MDT: stopped. c1y and c1z landed. ^tab colour bytes are zero. ALF consumer and ^tab_selected unread. Frida start unspent. Part 2 and part 3 not started.",
+    "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
+    "handoff": "2026-10-24 16:26 MDT: C1 skill panel. c1y and c1z are in the phase history. Queued, not yet dispatched: c1aa (0x47E40D alpha rule, round 1 of 3) and c1ab (pre-stage hook sample, round 1 of 3). Both offline. Stock starts 0 of 3. Pass started 16:21:48.",
+    "pass_clock": {
+      "started": "2026-10-24 16:21:48 -06:00",
+      "rounds": []
+    },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-24 15:25 MDT",
-      "reason": "Directive stop: part 1 ended at its cap without a plate image. ^tab colour bytes are 0. The ALF consumer 0x47E40D is unread. ^tab_selected was not decoded. The one Frida start was not spent. Part 2 and part 3 were not started.",
-      "last_commit": "7ccf4b1"
-    }
+    "stopped": null
   }
 }

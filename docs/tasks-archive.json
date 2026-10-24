@@ -3,6 +3,34 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-tab-blend-render",
+      "goal": "Directive 2026-10-24 (^tab pixels, blend hook, render). Part 1a offline cap 1: decode ^tab (handle [0x4E3348], store 0x45E909) and ^tab_selected if the same path. Part 1b offline cap 1: name the device blend and texture-stage hook for the 0x45B66A plate quads, write the hook, dry-check it. Part 2 cap 1: one Frida start at a paused MM_CLIMB_002, after 1b. Part 3 offline cap 2: draw plates with the read pixels and blend and the zero-count rule; score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+      "milestones": [
+        "C1 skill panel"
+      ],
+      "current": "C1 skill panel",
+      "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24; option A, one Frida start). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. One stock start, part 2 only. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+      "grants": {
+        "stock_starts": "one total, part 2 only, after 1b; read-only Frida in one attach; no retry after Popen",
+        "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+        "concurrency": "up to 2 concurrent offline rounds; at most one live owner"
+      },
+      "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md",
+      "owner": "Cursor facilitator, 2026-10-24 15:06 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff.",
+      "started_at": "2026-10-24 15:06:32 MDT",
+      "rounds_run": 2,
+      "stock_starts_used": 0,
+      "pending_questions": [],
+      "stop_point": "Part 3 scored (pass or fail), part 1 or 2 ends without an input the render needs, an ORCHESTRATION stop, or a start that crashes or leaves the install unrestored. Do not advance to C3, the C2 cursor clause, B2 or B3.",
+      "handoff": "2026-10-24 15:25 MDT: stopped. c1y and c1z landed. ^tab colour bytes are zero. ALF consumer and ^tab_selected unread. Frida start unspent. Part 2 and part 3 not started.",
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-24 15:25 MDT",
+        "reason": "Directive stop: part 1 ended at its cap without a plate image. ^tab colour bytes are 0. The ALF consumer 0x47E40D is unread. ^tab_selected was not decoded. The one Frida start was not spent. Part 2 and part 3 were not started.",
+        "last_commit": "7ccf4b1"
+      }
+    },
+    {
       "id": "c1-footprint-plate-score",
       "goal": "Directive 2026-10-24 (footprint, plate, score). Part 1 offline cap 1: icon and glyph footprint from read geometry, score the saved c1t renders before any new drawing; plate rectangles join before part 3. Part 2 offline cap 2: plate draw, then the zero-count rule, colour key 0x47218A and blend 0x46D5F3. Part 3 offline cap 2 waits for both: draw the plates and the read count rule, score the committed footprint. No stock start.",
       "milestones": [

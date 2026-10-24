@@ -175,3 +175,26 @@ unidentified. C1's rendering clause still does not pass; both halves (this redir
 icon-source question, and B1's digit-font question — now substantially de-blocked by B1i,
 above, though not yet wired into a renderer) stay in Phase E pending the overlord's next
 ranking, per the directive's stop point.
+
+**C1y: `^tab` decodes to a 72 by 32 BMP whose colour bytes are zero**
+([check](../scratch/phase-c1y-tab-pixels-decode.md)), 2026-10-24, directive part 1a,
+one offline round. `0x45E8F7` pushes `0x4C0E00` (`^tab`) and `0x45E909` stores the
+slot. A leading `5E` sets flag 8 (`0x474471`), and `0x47236B` pushes
+`Textures\%s.alf`. `TEXTURES\^TAB.BMP` is 6966 decoded bytes, SHA-256
+`d38db65196988c5b3d018a5a5f6386ba6333c5590e64ad4bfe67a55bac1403ed`, and all 6912
+colour bytes are `0x00`. `TEXTURES\^TAB.ALF` is 2304 bytes, values 0 through 128,
+2129 nonzero. The consumer `0x47E40D` and `^tab_selected` (`0x45E90F`) were unread.
+The one Frida start was not spent. The facilitator re-ran the decode and re-read
+the registration, the flag-8 test and the `.alf` format.
+
+**C1z: plate blend is `0x414D80`, stage state is `0x47261F`, and the hook is `0x41494F`**
+([check](../scratch/phase-c1z-plate-blend-hook.md)), 2026-10-24, directive part 1b,
+one offline round. `0x45B66A` calls `0x414920` with no branch before `0x41494F`
+(`call 0x414D80`). Slot `+0x58` there is blend enable `0x1B`, source `0x13` and
+destination `0x14`, skipped when the selector equals `[0x4C227C]`. `0x414944`
+calls `0x47261F`, which binds a texture through `+0x98` and writes stage-0 colour
+and alpha through `+0xA0`, plus alpha test through `+0x58`, unless the descriptor
+or the flags match their caches. The hook samples the flag cache after `0x47261F`
+returns, so that sample does not say whether the stage writes ran. The live
+selector is unread. The facilitator re-disassembled the four ranges and re-ran the
+dry check. The Frida start was not spent.

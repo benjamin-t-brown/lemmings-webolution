@@ -40,7 +40,7 @@
       "harness": "Claude Code",
       "requested_model": "session model (no pin, per ROLES)",
       "worker_agent": "round-agent",
-      "dispatch_id": null,
+      "dispatch_id": "ac2g-counters-timer-render-fa1bc459ef9546ea",
       "owns_live_game": false,
       "live_owner": null,
       "depends_on": [

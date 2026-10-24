@@ -1,7 +1,7 @@
 # C1l: live read of the skill-panel icon inputs, the entry worked, items 1-4 read, hook not run (directive part 2, the one stock start)
 
 Queue `c1l-icon-live-read`. Worker packet `build/tmp/c1l-icon-live-read/round-note.md`, `prediction.md`, `run.log`, `readings.json`,
-`raw-bytes.json`, `cleanup-report.json`. Dispatched 02:37:31 MDT, packet 02:41, landed 02:47 MDT. Stock starts used: **1** (Popen 02:38:56,
+`raw-bytes.json`, `cleanup-report.json`. Dispatched 02:37:31 MDT, packet 02:41, landed 02:45 MDT. Stock starts used: **1** (Popen 02:38:56,
 pid 36828, session-1 task `LemWeb-c1l-1`, no retry). No debugger, no Frida: the worker had no REA / Frida tool, so the hook did not run.
 
 ## Entry (MEASURED)

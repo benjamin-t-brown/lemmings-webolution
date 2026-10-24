@@ -24,7 +24,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 14:20 MDT",
       "worker_output": null,
-      "dispatch_id": null
+      "dispatch_id": "3092565d-db9b-46da-bcfd-0997859714b6"
     },
     {
       "id": "c1x-colour-blend-read",
@@ -47,7 +47,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 14:20 MDT",
       "worker_output": null,
-      "dispatch_id": null
+      "dispatch_id": "29fdd4af-8a0e-454a-a176-1568fe09f87a"
     }
   ],
   "queue": [],

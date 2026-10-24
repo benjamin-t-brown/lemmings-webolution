@@ -23,6 +23,27 @@
       "standing_run": "c3-scene-chain-render",
       "investigation_budget_minutes": 75,
       "dispatched_at": "2026-10-23 22:39:55 MDT"
+    },
+    {
+      "id": "c3i-node-draw-read",
+      "title": "C3 scene nodes: type-1 draw 0x46c55d, kind 5/7 readers, type-2 load, re-project (Q1 round 2 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c3i-node-draw-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C3 full frame; directive Q1",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c3-scene-chain-render",
+      "investigation_budget_minutes": 90,
+      "dispatched_at": "2026-10-23 23:19:31 MDT"
     }
   ],
   "queue": [],
@@ -4107,7 +4128,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 23:19:08 MDT: c3g landed (Q1 round 1 of 2). c3h running. Next: Q1 round 2 (draw 0x46c55d, kinds 5/7, type-2 load).",
+    "handoff": "2026-10-23 23:19:31 MDT: c3g landed. c3h (Q2 preflight) running; c3i dispatched (Q1 round 2 of 2).",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

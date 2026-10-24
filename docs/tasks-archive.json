@@ -946,6 +946,36 @@
   ],
   "landed": [
     {
+      "id": "c1ag-arm-before-click",
+      "title": "Arm the shift hook before the level click (round 5, offline)",
+      "status": "landed",
+      "brief": "build/tmp/c1ag-arm-before-click-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline probe reorder",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1af-shift-count-live"
+      ],
+      "gate_served": "C1 skill panel; the next start must see the upload",
+      "question_round_count": 5,
+      "fifth_round_reason": "Round 4 attached at ready.json, the same second as the click, and logged 0 hits. The paused redraw does not call 0x473897. The hook has to be armed before the click. This round does not start the game.",
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 17:19 MDT",
+      "worker_output": "build/tmp/c1ag-arm-before-click/round-note.md",
+      "dispatch_id": "0342974a-ff8b-458d-8043-3647af9a37ae",
+      "landed_at": "2026-10-24 17:27 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1ag-arm-before-click.md; docs/LESSONS.md C1ag; docs/plan-history/phase-c.md",
+      "disposition": "The probe waits for hook-armed.flag and raises before the level click. ready.json is written after enter_level returns. Dry check passed. The 6000 ms report still starts at script load. Counts unread.",
+      "facilitator_verified": "2026-10-24: dry_check.py exit 0. Read the wait before aim_at and the ready.json write after enter_level(). Removing the refuse raise made the check exit 1, then restored. No game process."
+    },
+    {
       "id": "c1af-shift-count-live",
       "title": "Read the live alpha shift counts (round 4, gate counts)",
       "status": "landed",

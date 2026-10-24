@@ -263,3 +263,11 @@ one stock start. `Popen` 17:15:44, pid 32972. The click, the pause, and
 The `sar` did not run in the six seconds it was installed. The upload at the
 click was not observed. Install hashes match. The facilitator re-read the
 hook JSON and re-hashed the three install files. The counts stay unread.
+
+**C1ag: the probe waits for the hook before it clicks**
+([check](../scratch/phase-c1ag-arm-before-click.md)), 2026-10-24, round 5,
+offline. After `select_level` and before `aim_at`, the copy waits for
+`hook-armed.flag` and raises if it is absent. `ready.json` is written only
+after `enter_level()` returns. The attach stays `0x473897`. The facilitator
+re-ran the dry check and, with that one `raise` removed, the check failed.
+No stock start. The 6000 ms report still starts when the script loads.

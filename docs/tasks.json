@@ -1,35 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T17:19:41-06:00",
+  "updated": "2026-10-24T17:27:40-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1ag-arm-before-click",
-      "title": "Arm the shift hook before the level click (round 5, offline)",
-      "status": "running",
-      "brief": "build/tmp/c1ag-arm-before-click-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "offline probe reorder",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [
-        "c1af-shift-count-live"
-      ],
-      "gate_served": "C1 skill panel; the next start must see the upload",
-      "question_round_count": 5,
-      "fifth_round_reason": "Round 4 attached at ready.json, the same second as the click, and logged 0 hits. The paused redraw does not call 0x473897. The hook has to be armed before the click. This round does not start the game.",
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-skill-panel-gate",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 17:19 MDT",
-      "worker_output": null,
-      "dispatch_id": "0342974a-ff8b-458d-8043-3647af9a37ae"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-skill-panel-gate",
@@ -47,11 +20,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 16:21:48 -06:00",
-    "rounds_run": 6,
+    "rounds_run": 7,
     "stock_starts_used": 2,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 17:19 MDT: C1 skill panel. c1af landed with 0 hits. Dispatched c1ag, offline, to arm the hook before the level click. Stock starts 2 of 3. Do not start the game in this round. Pass started 16:21:48.",
+    "handoff": "2026-10-24 17:27 MDT: C1 skill panel. c1ag landed: arm wait is before the click. Stock starts 2 of 3. Next is the last start, with the flag written while the attach is running. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [
@@ -90,6 +63,12 @@
           "dispatched": "2026-10-24 17:07 MDT",
           "landed": "2026-10-24 17:19 MDT",
           "elapsed": "12m 26s"
+        },
+        {
+          "id": "c1ag-arm-before-click",
+          "dispatched": "2026-10-24 17:19 MDT",
+          "landed": "2026-10-24 17:27 MDT",
+          "elapsed": "8m 40s"
         }
       ]
     },

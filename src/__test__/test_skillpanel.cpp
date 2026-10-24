@@ -28,6 +28,8 @@
 namespace fs = std::filesystem;
 using webo::Image;
 using webo::app::compositeIconRegion;
+using webo::app::drawSkillPanelCounts;
+using webo::app::skillPanelRect;
 using webo::app::SkillIconPlacement;
 
 namespace {
@@ -140,6 +142,30 @@ void testEmptyInputsAreNoOps() {
   check(compositeIconRegion(realDest, emptySource, {0, 0, 0, 0, 2, 2}) == 0, "empty source: no-op");
 }
 
+void testNativePanelPlacementAndDigit() {
+  // READ/C1l geometry with the measured placement and byte-read scale branch.
+  webo::SpriteFrame f;
+  f.unknown0 = 8; f.unknown1 = 7; f.width = 23; f.height = 30;
+  const auto half = skillPanelRect(f, 39, 40, -1);
+  check(half.left == 35 && half.top == 18 && half.right == 46.5 && half.bottom == 33,
+        "generic icon placement: dx and extent halve while dy stays full");
+  f.unknown0 = 9; f.unknown1 = 0; f.width = 18; f.height = 25;
+  const auto native = skillPanelRect(f, 38, 121, 0);
+  check(native.left == 29 && native.top == 96 && native.right == 47 && native.bottom == 121,
+        "special icon placement: native extents and offsets");
+
+  Image dest = makeSolid(90, 400, 0, 0, 0, 255);
+  Image font = makeSolid(64, 16, 0, 0, 0, 0);
+  // A distinct ink pixel only in the '0' cell makes reverting either ASCII
+  // digit fail without depending on the archived font's full pixel pattern.
+  font.rgba[0] = 255;
+  font.rgba[3] = 255;
+  std::array<int, 9> counts{}; counts[0] = 20;
+  drawSkillPanelCounts(dest, font, counts);
+  check(dest.rgba[(20 * 90 + 66) * 4] == 0, "count text: twenty renders the tens digit '2'");
+  check(dest.rgba[(20 * 90 + 72) * 4] == 255, "count text: twenty renders the ones digit '0'");
+}
+
 // The real-archive negative finding. Gated like test_frontend.cpp.
 void testSkillPanelIconSheetsAreNotTheTenIcons() {
   const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
@@ -212,6 +238,7 @@ int main() {
   testClipsDestinationEdge();
   testClipsSourceEdge();
   testEmptyInputsAreNoOps();
+  testNativePanelPlacementAndDigit();
   testSkillPanelIconSheetsAreNotTheTenIcons();
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);

@@ -26,7 +26,9 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 A7P = ROOT / "build/tmp/a7p-unpause-then-masks"
 A7Q = ROOT / "build/tmp/a7q-second-level-mask"
-OUT = ROOT / "build/tmp/c1b-panel-icon-render"
+RESTORE_C1B_PRE_PANEL = "--restore-c1b" in sys.argv
+OUT = ROOT / ("build/tmp/c1b-panel-icon-render" if RESTORE_C1B_PRE_PANEL
+              else "build/tmp/c1t-q3-panel-render")
 INVOKE_UCRT64 = ROOT / "scripts" / "Invoke-Ucrt64.ps1"
 
 
@@ -70,6 +72,7 @@ def render(view: dict) -> tuple[Path, int, str]:
         "--camera", view["camera"],
         "--geom", "route",
         *view["extra_args"],
+        *([] if RESTORE_C1B_PRE_PANEL else ["--skill-panel"]),
         "--shot", str(shot.relative_to(ROOT).as_posix()),
     ]
     command = " ".join(command_parts)
@@ -100,12 +103,32 @@ def main() -> int:
         scored = verify.wider(baseline, suppressed, rendered)
         skill_mae = (scored["skill_numerator"] / (scored["skill_pixels"] * 765)
                      if scored["skill_pixels"] else None)
+        b = baseline.convert("RGB")
+        s = suppressed.convert("RGB")
+        r = rendered.convert("RGB")
+        bp, sp, rp = b.load(), s.load(), r.load()
+        per_box = []
+        for i in range(10):
+            y0, y1 = 12 + 40 * i, 12 + 40 * i + 32
+            numerator = pixels = 0
+            for y in range(y0, min(y1, b.height)):
+                for x in range(18, min(90, b.width)):
+                    if bp[x, y] == sp[x, y]:
+                        continue
+                    pixels += 1
+                    numerator += sum(abs(a - z) for a, z in zip(bp[x, y], rp[x, y]))
+            per_box.append({
+                "box": i, "numerator": numerator, "pixels": pixels,
+                "denominator": pixels * 765,
+                "mae": numerator / (pixels * 765) if pixels else None,
+            })
         row.update({
             "skill_numerator": scored["skill_numerator"],
             "skill_pixels": scored["skill_pixels"],
             "skill_denominator": scored["skill_pixels"] * 765,
             "skill_mae": skill_mae,
             "skill_pass_le_0_02": (skill_mae is not None and skill_mae <= 0.02),
+            "per_box": per_box,
             "wider_numerator": scored["numerator"],
             "wider_denominator": scored["denominator"],
             "wider_mae": scored["mae"],

@@ -1,6 +1,13 @@
 #include "app/SkillPanel.h"
 
+#include "assets/Box.h"
+#include "assets/LevelObjects.h"
+
 #include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <format>
+#include <optional>
 
 namespace webo::app {
 
@@ -73,6 +80,114 @@ std::size_t compositeIconRegion(Image& dest, const Image& source, const SkillIco
     }
   }
   return written;
+}
+
+SkillPanelRect skillPanelRect(const webo::SpriteFrame& f, double x, double y, int scaleDelta) {
+  const double scale = scaleDelta == 0 ? 1.0 : scaleDelta < 0 ? 0.5 : 2.0;
+  const double left = x - f.unknown0 * scale;
+  // READ: unmirrored code preserves full dy subtraction; only the source
+  // frame's vertical extent is scaled (0x47AA59..AA86).
+  const double top = y - f.unknown1 - f.height * scale;
+  return {left, top, left + f.width * scale, top + f.height * scale};
+}
+
+void drawSkillPanelIcon(Image& dest, const Image& sheet, const webo::SpriteFrame& f,
+                        double x, double y, int scaleDelta) {
+  if (dest.empty() || sheet.empty() || f.width == 0 || f.height == 0) return;
+  const auto r = skillPanelRect(f, x, y, scaleDelta);
+  const int x0 = std::max(0, static_cast<int>(std::ceil(r.left)));
+  const int x1 = std::min(dest.width, static_cast<int>(std::ceil(r.right)));
+  const int y0 = std::max(0, static_cast<int>(std::ceil(r.top)));
+  const int y1 = std::min(dest.height, static_cast<int>(std::ceil(r.bottom)));
+  for (int py = y0; py < y1; ++py) {
+    const double v = (py - r.top) / (r.bottom - r.top);
+    const int sy = std::clamp(static_cast<int>(std::floor((f.uTop + v * (f.uBottom - f.uTop)) * sheet.height)),
+                              static_cast<int>(f.top), static_cast<int>(f.bottom) - 1);
+    for (int px = x0; px < x1; ++px) {
+      const double u = (px - r.left) / (r.right - r.left);
+      const int sx = std::clamp(static_cast<int>(std::floor((f.uLeft + u * (f.uRight - f.uLeft)) * sheet.width)),
+                                static_cast<int>(f.left), static_cast<int>(f.right) - 1);
+      const auto* src = sheet.rgba.data() + (static_cast<std::size_t>(sy) * sheet.width + sx) * 4;
+      auto* dst = dest.rgba.data() + (static_cast<std::size_t>(py) * dest.width + px) * 4;
+      const int a = src[3];
+      // This is project AlphaMode compositing, not a claim about unread D3D blending.
+      for (int c = 0; c < 3; ++c)
+        dst[c] = static_cast<std::uint8_t>((dst[c] * (255 - a) + src[c] * a + 127) / 255);
+    }
+  }
+}
+
+void drawSkillPanelCounts(Image& dest, const Image& font, const std::array<int, 9>& counts) {
+  for (int i = 0; i < 9; ++i) {
+    const int count = counts[static_cast<std::size_t>(i)];
+    const char digits[2] = {static_cast<char>('0' + count / 10), static_cast<char>('0' + count % 10)};
+    for (int d = 0; d < 2; ++d) for (int y = 0; y < 14; ++y) for (int x = 0; x < 6; ++x) {
+      const int sx = (digits[d] - '0') * 6 + x, dx = 66 + d * 6 + x, dy = 20 + 40 * i + y;
+      if (sx < 0 || sx >= font.width || y >= font.height || dx < 0 || dx >= dest.width || dy < 0 || dy >= dest.height) continue;
+      const auto* src = font.rgba.data() + (static_cast<std::size_t>(y) * font.width + sx) * 4;
+      auto* dst = dest.rgba.data() + (static_cast<std::size_t>(dy) * dest.width + dx) * 4;
+      const int a = src[3];
+      for (int c = 0; c < 3; ++c) dst[c] = static_cast<std::uint8_t>((dst[c] * (255 - a) + 255 * a + 127) / 255);
+    }
+  }
+}
+
+std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLibrary& library,
+                                                       std::string_view levelId) {
+  auto lvl = library.read("COMPILED\\" + std::string(levelId) + ".LVL");
+  auto spriteBytes = library.read("SPRITES\\LEMMINGSHI.SPR");
+  auto font = loadTexture(library, "TEXTURES\\_FONTSMALL.BMP");
+  if (!lvl || !spriteBytes || !font)
+    return std::unexpected(!lvl ? lvl.error() : (!spriteBytes ? spriteBytes.error() : font.error()));
+  auto skills = findLevelSkills(*lvl);
+  auto spriteSheet = parseSpriteSheet(*spriteBytes);
+  if (!skills || !spriteSheet)
+    return std::unexpected(!skills ? skills.error() : spriteSheet.error());
+
+  // MEASURED, C1s: the ten 0x47A75D x/y arguments from four stable frames.
+  constexpr int drawX[10] = {39,37,38,39,40,39,41,37,38,38};
+  constexpr int drawY[10] = {40,92,121,158,197,238,279,317,364,410};
+  // READ, C1l: animation sub-entry (+1CC) and selected frame (+1B8).
+  constexpr int sub[10] = {4,0,0,0,15,0,21,1,0,6};
+  constexpr int frameNo[10] = {2,4,0,4,2,2,2,4,0,0};
+  // READ, C1g/C1l: skill action names and special sheet registrations.
+  constexpr const char* names[10] = {"climb","float","bomb","block","build","bash","mine","dig","questionmark","armageddon"};
+  constexpr const char* specialSpr[3] = {"SPRITES\\GREYICONS.SPR","SPRITES\\BLACKICONS.SPR","SPRITES\\ADDITIVEICONS.SPR"};
+
+  std::array<int, 9> counts{};
+  for (std::size_t i = 0; i < skills->counts.size(); ++i)
+    counts[i] = static_cast<int>(skills->counts[i]); // READ: level .LVL trailer, findLevelSkills.
+  counts[8] = 0; // UNREAD on MM_DIG_000; C1l MEASURED zero for this slot on MM_CLIMB_002.
+  drawSkillPanelCounts(dest, *font, counts); // READ, C1g: count quads precede icon quads.
+
+  for (int i = 0; i < 10; ++i) {
+    const Sprite* sprite = nullptr;
+    const SpriteSheet* selectedSheet = &*spriteSheet;
+    std::optional<SpriteSheet> special;
+    if (i == 2 || i == 8 || i == 9) {
+      auto raw = library.read(specialSpr[i == 2 ? 0 : i == 8 ? 1 : 2]);
+      if (!raw) return std::unexpected(raw.error());
+      auto parsed = parseSpriteSheet(*raw);
+      if (!parsed) return std::unexpected(parsed.error());
+      special.emplace(std::move(*parsed));
+      selectedSheet = &*special;
+    }
+    sprite = selectedSheet->find(names[i]);
+    if (!sprite || static_cast<std::size_t>(sub[i]) >= sprite->animations.size())
+      return std::unexpected(std::format("skill-panel sprite/animation missing {}/{}", names[i], sub[i]));
+    const auto& frames = sprite->animations[static_cast<std::size_t>(sub[i])].frames;
+    const auto fi = static_cast<std::size_t>(frameNo[i]);
+    if (fi >= frames.size())
+      return std::unexpected(std::format("skill-panel frame missing {}/{}", names[i], fi));
+    const auto& frame = frames[fi];
+    // READ: existing production texture loader plus Sprite.h sheet-name mapping.
+    auto texture = loadTexture(library, webo::sheetAssetName(frame.sheet));
+    if (!texture)
+      return std::unexpected(std::format("{}: {}", frame.sheet, texture.error()));
+    // DERIVED from byte reads: seven generic icons use mode S=-1; indices 2/8/9 use S=0.
+    drawSkillPanelIcon(dest, *texture, frame, drawX[i], drawY[i], (i == 2 || i == 8 || i == 9) ? 0 : -1);
+  }
+  return {};
 }
 
 }  // namespace webo::app

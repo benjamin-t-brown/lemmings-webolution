@@ -59,6 +59,7 @@
 #include "app/Pick.h"
 #include "app/Raster.h"
 #include "app/SimClock.h"
+#include "app/SkillPanel.h"
 #include "app/TubeScene.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
@@ -120,6 +121,7 @@ struct Args {
   std::string hudColour;
   int hudOut = -1;
   bool pauseCaption = false;
+  bool skillPanel = false;
   int captionAlpha = -1;
   std::string captionFill;
   bool captionNoText = false;
@@ -156,6 +158,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--hud-out") a.hudOut = std::atoi(next().c_str());
     else if (arg == "--hud-colour") a.hudColour = next();
     else if (arg == "--pause-caption") a.pauseCaption = true;
+    else if (arg == "--skill-panel") a.skillPanel = true;
     else if (arg == "--caption-alpha") a.captionAlpha = std::atoi(next().c_str());
     else if (arg == "--caption-fill") a.captionFill = next();
     else if (arg == "--caption-no-text") a.captionNoText = true;
@@ -433,6 +436,13 @@ int main(int argc, char** argv) {
 
   if (!args.shot.empty()) {
     Image image = toImage(raster.framebuffer());
+    if (args.skillPanel) {
+      // C1t opt-in headless render; all panel drawing lives in SkillPanel.cpp.
+      if (auto panel = app::drawRetailSkillPanel(image, *library, args.level); !panel) {
+        std::fprintf(stderr, "skill-panel: %s\n", panel.error().c_str());
+        return 1;
+      }
+    }
     if (args.hudTicks >= 0) {
       // C2g: HUD overlay from a separate World, so the scene above is untouched.
       auto setup = sim::loadRetailLevel(*library, args.level);

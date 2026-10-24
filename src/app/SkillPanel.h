@@ -13,19 +13,23 @@
 // REA addresses (string refs, the shared registrar FUN_0045e51f at
 // 0x45e51f-0x45ed80) and the full archive/PE-resource search this rules out.
 //
-// Because no sheet holding the ten base icons was found by reading bytes
-// within this round's budget, nothing calls this function from main.cpp or
-// TubeScene -- wiring it to an unconfirmed guess would misattribute a guess
-// as a read finding, which match-the-original.md forbids. This header exists
-// so the compositing primitive itself is written, tested and ready the
-// moment a later round identifies the correct sheet and its per-button
-// placement rule.
+// C1t adds an opt-in headless fixture path (`--skill-panel`) in main.cpp. It
+// uses the measured C1s draw points, C1l frame records and C1r sheet pixels.
+// It does not draw in windowed mode or claim all-level fidelity; unread blend
+// and tint behavior remain explicit in the code and round note.
 
 #pragma once
 
 #include "assets/Bitmap.h"
+#include "assets/Sprite.h"
 
+#include <array>
 #include <cstddef>
+#include <expected>
+#include <string>
+#include <string_view>
+
+namespace webo { class AssetLibrary; }
 
 namespace webo::app {
 
@@ -67,5 +71,22 @@ struct SkillIconPlacement {
 // (after clipping), 0 if the placement is entirely out of bounds or either
 // image is empty.
 std::size_t compositeIconRegion(Image& dest, const Image& source, const SkillIconPlacement& placement);
+
+struct SkillPanelRect { double left = 0, top = 0, right = 0, bottom = 0; };
+// READ from 0x47A75D: mirror=0 uses x-dx*scale; y-dy-height*scale,
+// where scale=1 (mode S=0) or 0.5 (mode S=-1); C1h inputs and 0x47AA12/59.
+SkillPanelRect skillPanelRect(const webo::SpriteFrame& frame, double x, double y, int scaleDelta);
+// READ frame geometry/UV + MEASURED x/y (C1s); tex alpha resolution follows
+// the project AlphaMode convention in Bitmap.cpp. Blend state/tint stay UNREAD.
+void drawSkillPanelIcon(webo::Image& dest, const webo::Image& sheet,
+                        const webo::SpriteFrame& frame, double x, double y, int scaleDelta);
+// READ C1n/C1q: fixed two ASCII digits, glyphs 6x14, white vertex colour.
+void drawSkillPanelCounts(webo::Image& dest, const webo::Image& font,
+                          const std::array<int, 9>& counts);
+// Opt-in, headless C1 fixture renderer. All game data is read from the supplied
+// archive and level trailer; the caller only wires this into --shot.
+std::expected<void, std::string> drawRetailSkillPanel(webo::Image& dest,
+                                                      const webo::AssetLibrary& library,
+                                                      std::string_view levelId);
 
 }  // namespace webo::app

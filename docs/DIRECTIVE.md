@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-24 13:43 MDT: part 3 scored and failed. `initial` skill_mae 0.10767973856209151, `MM_DIG_000` 0.0554187566499468, both above 0.02. No further round on this directive.)
 Issued: 2026-10-24 (user, overlord review 2026-10-24; "yes please write the recommended
 directive", after the Frida explanation)
 Supersedes: the sheet-and-font directive, done 2026-10-24 12:26 MDT (c1m: handle 6 names

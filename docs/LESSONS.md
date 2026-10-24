@@ -1351,3 +1351,11 @@ reference (gate 0.02; own independent re-score). Labels are **centre-anchored**:
 and offsets by half the width, so the brief's left-edge guess was wrong. Panels are measured from the reference, not read;
 the backdrop is up to 7 levels lighter than the reference (cause unmeasured). Evidence: `docs/scratch/phase-b1w-menu-render.md`.
 
+
+## HUD counters and timer (C2c, 2026-10-23, READ only)
+
+Positions 520,15 / 520,45 / 560,430 are absolute pixels (`0x44DF40`). The count text (`%d` at `0x4C01F4` / `0x4C01F8`, Saved
+from word `0x4CBAA4`) goes into the same lists as the labels (`0x44D316`, caller `0x444B98`); `0x44D22C` (caller `0x44318D`)
+re-places them with right end near x 620, Out at y 15, Saved at y 50. Saved is white below word `0x4CBAB0` and (255,63,63) at
+or above (R,G,B order unread). Open: replace versus append, the Out source, default glyph colour. Evidence:
+`docs/scratch/phase-c2c-counters-timer-read.md`.

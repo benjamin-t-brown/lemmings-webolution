@@ -1,10 +1,59 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 12:26:30 MDT",
+  "updated": "2026-10-24 12:55:30 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1s-frida-icon-hook",
+      "title": "C1 the one stock start: Frida hook on 0x47A75D + count-quad reads (directive part 2)",
+      "status": "ready-for-verify",
+      "brief": "build/tmp/c1s-frida-icon-hook-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive 2026-10-24 (sheet pixels + hook)",
+      "question_round_count": 1,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-sheet-pixels-hook-render",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 12:50:05 MDT",
+      "worker_output": "build/tmp/c1s-frida-icon-hook/round-note.md"
+    }
+  ],
   "queue": [],
   "recently_landed": [
+    {
+      "id": "c1r-sheet-pixels-decode",
+      "title": "C1 sheet BMP pixels: decode $LEMSHEETHI*.BMP members (directive part 1, round 1 of 2)",
+      "status": "landed",
+      "brief": "build/tmp/c1r-sheet-pixels-decode-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive 2026-10-24 (sheet pixels + hook)",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-sheet-pixels-hook-render",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 12:50:05 MDT",
+      "worker_output": "build/tmp/c1r-sheet-pixels-decode/round-note.md",
+      "landed_at": "2026-10-24 12:55:30 MDT",
+      "landed_in": "docs/scratch/phase-c1r-sheet-pixels-decode.md",
+      "disposition": "Sheet member byte 0 is a chunk count (not a method tag); chunks (u16 len, u16 outsize, u8 type) go through 0x467DE8 (caller 0x450270..0x450449, call 0x4503FD); 115/115 $LEMSHEET* members decode to a BMP of the declared size. Seven generic icons: frame rect x[f8,fc) y[f4,f0), UV = rect/size, crops hold art. Icons 2/8/9 use GREYICONS/BLACKICONS/ADDITIVEICONS (24/24/4 bpp), PARTLY READ. UNREAD: colour key 0x47218A, blend 0x46D5F3, tint writers, draw x,y (c1s), texture-id assignment, Hi/Lo value, row flip.",
+      "facilitator_verified": "2026-10-24: fresh box scan (115 members, chunk lengths sum to member size, types {4}); re-read call 0x4503FD and cmp 0x450405; independent crop counter from saved BMPs + c1l live UV doubles equals the worker 7/7 (679/690 ... 689/690). Not re-derived: unicorn run of 0x467DE8 (115/115 sweep), type-3 branch, icons 2/8/9 decode, row orientation. No code change. No game process."
+    },
     {
       "id": "c1p-spr-sheet-read",
       "title": "C1 Lemmings sheet: archive open, .spr parse, frame table (directive 1a, round 2 of 2)",
@@ -4530,32 +4579,27 @@
     }
   ],
   "standing_run": {
-    "id": "c1-sheet-font-render",
-    "goal": "Part 1 offline (cap 2 rounds each): 1a handle 6 to sheet file and Hi/Lo (0x446040 -> 0x449170), 1b count font file, colour and count text (0x474519 chain). Part 2 Frida preflight via REA CLI on mouv, no stock start. Part 3 Q3 render and score against A7p/A7q with the A7 panel exclusion removed, only if 1a and 1b leave the sheet file and font READ.",
+    "id": "c1-sheet-pixels-hook-render",
+    "goal": "Directive 2026-10-24 (sheet pixels + hook). Part 1 offline (cap 2 rounds): decode the $LEMSHEETHI*.BMP box members for the seven generic icons (+ icons 2,8,9 textures if same path). Part 2 (cap 1 round, ONE stock start): Frida hook on 0x47A75D via REA CLI over ssh at a paused MM_CLIMB_002 level start, plus memory reads of count-quad colour fields, packed [vertex+0x10], [0x58CE4C], icon 9 text pointer. Part 3 (cap 2 rounds, offline): Q3 render of the ten buttons and counts, scored against A7p/A7q with the A7 panel exclusion removed (gate x [18,90) <= 0.02); report pass or fail, do not tune.",
     "milestones": [
       "C1 skill panel"
     ],
     "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md active, issued 2026-10-24 (user, overlord review 2026-10-24; 'i approve 1': Frida through the REA CLI over ssh). No stock start; no debugger; 30-minute round limit; no C3, C2 cursor clause, B2, B3.",
+    "authorized": "docs/DIRECTIVE.md active, issued 2026-10-24 (user, overlord review 2026-10-24; \"yes please write the recommended directive\"), including the first Frida attach to the stock game via the REA CLI on mouv over ssh. One stock start, part 2 only; no debugger; no other hook; no write to game memory beyond the restored level-table slot; 30-minute round limit; no C3, C2 cursor clause, B2, B3.",
     "grants": {
-      "stock_starts": "none; the Frida preflight attaches only to a throwaway process the worker starts, never the game",
+      "stock_starts": "one total, part 2 only; memory reads plus one Frida hook on 0x47A75D; no retry after Popen; if attach or game fails record, restore and park",
       "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
-      "concurrency": "up to 2 offline rounds (1a, 1b) plus the part-2 preflight; at most one live owner (none expected)"
+      "concurrency": "up to 2 concurrent rounds (part 1 offline + part 2 live); at most one live owner"
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
-    "owner": "Claude Code facilitator (Mac clone, session model, Sonnet 5.5), 2026-10-24 11:28:43 MDT /facilitator invocation; directive active, prior run c1-observable-entry stopped, no task running, so this start is the handoff.",
-    "started_at": "2026-10-24 11:28:43 MDT",
-    "rounds_run": 5,
+    "owner": "Claude Code facilitator (Mac clone, session model, Sonnet 5.5), 2026-10-24 12:47:56 MDT /facilitator invocation; directive active, prior run c1-sheet-font-render stopped, no task running, so this start is the handoff.",
+    "started_at": "2026-10-24 12:47:56 MDT",
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
-    "stop_point": "Render scored (gate pass or fail), part 1 at its cap without a READ sheet file and font, or an ORCHESTRATION stop. If the render needs the hook's x, y, stop and name it. Do not advance to C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 12:26:30 MDT: stopped at the directive stop point. Next directive: decode the $LEMSHEETHI*.BMP box members (leading tag 02; the font record uses tag 01 via 0x467DE8), then a start with a Frida hook on 0x47A75D (recipe in MOUV_SSH.md) to read icon x, y, then Q3 render.",
+    "stop_point": "Render scored (pass or fail), part 1 or 2 ends without the input the render needs, an ORCHESTRATION stop, or a start that crashes or leaves the install unrestored. Do not advance to C3, C2 cursor clause, B2 or B3.",
+    "handoff": "2026-10-24 12:55 MDT: c1r landed (sheet pixels READ for the seven generic icons). c1s (the one start, Frida hook on 0x47A75D) is running; Q3 render (c1t) waits for it. Nothing else in flight.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-24 12:26:00 MDT",
-      "reason": "Directive stop point: part 1 at its cap (c1m+c1p, c1n+c1q) with the sheet's .spr table and the font bitmap READ but the sheet BMP pixels, the icon draw x, y (hook) and the tint writers UNREAD, so the Q3 render was not run; part 2 (Frida preflight) landed.",
-      "last_commit": "33f1d73"
-    },
     "previous": [
       {
         "id": "c1-observable-entry",
@@ -5369,6 +5413,34 @@
           "date": "2026-10-24 00:28:02 MDT",
           "reason": "Directive stop point: Q1 landed at 2 of 2 rounds (c3k, c3l), Q2 landed (cause not named, patch unapplied), Q3 not triggered (stack bottom settled offline; entry failure not fixed), Q4 not run (per-kind draw links 0x43bd80, 0x418350, 0x46d372, type-2 draw 0x47d0c0 and 0x58d498 still UNREAD). C3 scenery parked in Phase E.",
           "last_commit": "ee35c38"
+        }
+      },
+      {
+        "id": "c1-sheet-font-render",
+        "goal": "Part 1 offline (cap 2 rounds each): 1a handle 6 to sheet file and Hi/Lo (0x446040 -> 0x449170), 1b count font file, colour and count text (0x474519 chain). Part 2 Frida preflight via REA CLI on mouv, no stock start. Part 3 Q3 render and score against A7p/A7q with the A7 panel exclusion removed, only if 1a and 1b leave the sheet file and font READ.",
+        "milestones": [
+          "C1 skill panel"
+        ],
+        "current": "C1 skill panel",
+        "authorized": "docs/DIRECTIVE.md active, issued 2026-10-24 (user, overlord review 2026-10-24; 'i approve 1': Frida through the REA CLI over ssh). No stock start; no debugger; 30-minute round limit; no C3, C2 cursor clause, B2, B3.",
+        "grants": {
+          "stock_starts": "none; the Frida preflight attaches only to a throwaway process the worker starts, never the game",
+          "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+          "concurrency": "up to 2 offline rounds (1a, 1b) plus the part-2 preflight; at most one live owner (none expected)"
+        },
+        "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
+        "owner": "Claude Code facilitator (Mac clone, session model, Sonnet 5.5), 2026-10-24 11:28:43 MDT /facilitator invocation; directive active, prior run c1-observable-entry stopped, no task running, so this start is the handoff.",
+        "started_at": "2026-10-24 11:28:43 MDT",
+        "rounds_run": 5,
+        "stock_starts_used": 0,
+        "pending_questions": [],
+        "stop_point": "Render scored (gate pass or fail), part 1 at its cap without a READ sheet file and font, or an ORCHESTRATION stop. If the render needs the hook's x, y, stop and name it. Do not advance to C3, C2 cursor clause, B2 or B3.",
+        "handoff": "2026-10-24 12:26:30 MDT: stopped at the directive stop point. Next directive: decode the $LEMSHEETHI*.BMP box members (leading tag 02; the font record uses tag 01 via 0x467DE8), then a start with a Frida hook on 0x47A75D (recipe in MOUV_SSH.md) to read icon x, y, then Q3 render.",
+        "rules": "docs/ORCHESTRATION.md#standing-run",
+        "stopped": {
+          "date": "2026-10-24 12:26:00 MDT",
+          "reason": "Directive stop point: part 1 at its cap (c1m+c1p, c1n+c1q) with the sheet's .spr table and the font bitmap READ but the sheet BMP pixels, the icon draw x, y (hook) and the tint writers UNREAD, so the Q3 render was not run; part 2 (Frida preflight) landed.",
+          "last_commit": "33f1d73"
         }
       }
     ]

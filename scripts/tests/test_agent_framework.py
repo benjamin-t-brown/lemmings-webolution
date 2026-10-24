@@ -41,6 +41,22 @@ class FrameworkChecks(unittest.TestCase):
         self.assertTrue(any("broken link" in e for e in errors))
         self.assertTrue(any("missing heading anchor" in e for e in errors))
 
+    def test_plan_size_limit(self):
+        with (self.root / "PLAN.md").open("a", encoding="utf-8") as stream:
+            stream.write("x" * framework.PLAN_MAX_BYTES)
+        self.assertTrue(any("PLAN.md: over" in e for e in framework.validate(self.root)))
+
+    def test_plan_history_links_checked(self):
+        with (self.root / "docs/plan-history/phase-e.md").open("a", encoding="utf-8") as stream:
+            stream.write("\n[missing](../scratch/absent.md)\n")
+        errors = framework.validate(self.root)
+        self.assertTrue(any("phase-e.md: broken link" in e for e in errors))
+
+    def test_live_queue_rejects_archive_material(self):
+        self.write("docs/tasks.json", json.dumps({"schema_version": 1, "active": None, "queue": [],
+                                                  "standing_run": {"previous": []}}))
+        self.assertTrue(any("tasks-archive.json" in e for e in framework.validate(self.root)))
+
     def test_missing_contract_and_inherited_pin(self):
         self.write(".cursor/agents/round-agent.md", "---\nmodel: inherit\n---\n")
         errors = framework.validate(self.root)

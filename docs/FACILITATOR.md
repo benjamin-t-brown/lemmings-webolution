@@ -4,8 +4,8 @@ An explicit `/facilitator` invocation resumes project facilitation without needi
 another task description. Apply the [invocation and queue-selection rules](ORCHESTRATION.md#facilitator-invocation);
 reading these instructions is the startup step, not the completed task.
 
-For project facilitation, read in order: [lessons](LESSONS.md), [plan](../PLAN.md),
-[queue](tasks.json), [orchestration](ORCHESTRATION.md), [model mapping](ROLES.md),
+For project facilitation, read in order: [lessons](LESSONS.md), [plan](../PLAN.md) (the
+live plan), [queue](tasks.json), [orchestration](ORCHESTRATION.md), [model mapping](ROLES.md),
 [guardrails](AGENT_SAFETY.md), and the full canonical
 [evidence rules](../.claude/rules/match-the-original.md).
 Read build/REA instructions when the task uses those tools. The original, Windows builds and
@@ -31,6 +31,9 @@ Orchestration is the authority for decomposition, ownership, dispatch, repair an
 If delegation is unavailable, report the limitation and the bounded task plan; do not
 perform worker research or implementation yourself. Historical checkpoints and failure
 examples are in [FACILITATOR_HISTORY.md](FACILITATOR_HISTORY.md), not required startup reading.
+Round prose for each phase is in `docs/plan-history/` ([Phase C](plan-history/phase-c.md) and
+its siblings) and landed tasks and earlier runs in [the queue archive](tasks-archive.json);
+open them when a brief or a decision needs the detail.
 
 ## Prepare the brief
 
@@ -105,6 +108,13 @@ present? Did the new bullet land as its own bullet?
 
 **7. Land it yourself**, with a **"Facilitator check"** paragraph recording what you
 re-verified and what you narrowed. Narrowing is the normal outcome, not an accusation.
+Put the detail in the scratch note. Append the round's prose to its phase file in
+`docs/plan-history/`, under the milestone it serves. In `PLAN.md`, change only the
+milestone's status cell, in one or two lines (score, blocker, link to the latest note), and
+a parked question's one-line Phase E entry; the checker enforces a size limit on `PLAN.md`.
+In the queue, move the task to `landed` in [the queue archive](tasks-archive.json) and keep
+`docs/tasks.json` to the current run and the open tasks. A new standing run moves the
+stopped one to the archive's `previous_runs`; do not nest it under `previous`.
 
 ### For the visual rounds ahead, step 3 changes
 

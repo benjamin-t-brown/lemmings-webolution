@@ -10,10 +10,13 @@ authorize dispatching rounds.
 ## Read first
 
 Read the [queue](tasks.json) (`standing_run`, `active`, `handoff` and `stopped`), the
-[plan](../PLAN.md) milestone table and exit gates, [orchestration](ORCHESTRATION.md),
+[plan](../PLAN.md) milestone tables, exit gates and user decisions, [orchestration](ORCHESTRATION.md),
 [model mapping](ROLES.md) and [guardrails](AGENT_SAFETY.md). Read the
 [lessons](LESSONS.md) and evidence notes a decision depends on, not the whole history.
-Check `git log` for what landed since the last pass.
+Check `git log` for what landed since the last pass. `PLAN.md` is the live plan; round prose
+is in [plan history](plan-history/phase-c.md) (one file per phase) and landed tasks and
+earlier runs are in [the queue archive](tasks-archive.json). Open those only when a decision
+needs the detail.
 
 ## Owns
 
@@ -45,7 +48,8 @@ Check `git log` for what landed since the last pass.
 - **Sign off gates.** The user signs off gates, milestones and standing runs. The overlord
   drafts them. Record a user decision in `PLAN.md` labelled `(user, overlord review
   <date>)`, as the earlier `(CEO review)` entries were, and commit it only when the user
-  asks.
+  asks. Gate text goes in the milestone row; the decision goes in that phase's
+  "User decisions" list, short, with the evidence in a scratch note or plan history.
 
 ## Steering a facilitator
 

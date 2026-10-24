@@ -26,6 +26,7 @@ Keep framework changes isolated while a project session is running; activate bet
 | --- | --- |
 | Current work and owner | [Task queue](docs/tasks.json) |
 | Goals | [Plan](PLAN.md) |
+| Round history | [Plan history](docs/plan-history/phase-c.md) (one file per phase) and [queue archive](docs/tasks-archive.json) |
 | Established facts | [Lessons](docs/LESSONS.md) and linked evidence |
 | Mandatory project guardrails | [Agent safety](docs/AGENT_SAFETY.md) |
 | Client model pins and launch wiring | [Roles](docs/ROLES.md) |

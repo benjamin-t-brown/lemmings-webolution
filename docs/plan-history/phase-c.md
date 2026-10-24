@@ -1,0 +1,177 @@
+# Plan history — Phase C
+
+Moved verbatim from `PLAN.md` on 2026-10-24 (user, overlord review 2026-10-24). Only link
+paths were rebased. The live milestone table, exit gates, status cells and user decisions
+are in [the plan](../../PLAN.md#phase-c--the-in-level-hud). New round notes are appended
+under the milestone they serve, newest last.
+
+## Phase C — the in-level HUD
+
+The skill panel art and counts, and the counters the engine names itself: `^saved`, `^out`,
+`^time`, the icon sets `GreyIcons` / `BlackIcons` / `AdditiveIcons`, and the cursor set
+(`_curLem`, `_curNoLem`, `_curEnt`, `_curExit`, and the left/right variants). C1a identifies
+all physical panel indices: 0 climber, 1 floater, 2 bomber, 3 blocker, 4 builder,
+5 basher, 6 miner, 7 digger, 8 fast-forward, 9 Armageddon (READ, not new live assignments).
+
+The ten skill-panel buttons (x `[18,90)`, objects at `0x4C9208`) are excluded from the A7
+gate for the same reason and are drawn here.
+
+The **Paused** caption panel (`[277,422,363,454)` on the 640x480 frame) belongs here. A7c–A7l
+traced it without finding its draw owner, parked 2026-10-21: `STR_PAUSED` key at `0x4C3C18`;
+`G+0x25C68` list drawn by `0x44E150` only while pause state is 1; rectangle
+`G+0x26000` via `0x47AD8C`, whose top edge scales with `[G+0x25FF8]` and
+`[G+0x25C64] / 1000.0`, the latter a tick delta or a conditional `100`. Resume from a
+live read of `[G+0x25C64]` at pause, in Phase C. Evidence:
+[A7c](../scratch/phase-a7-pause-caption-native.md) through
+[A7l](../scratch/phase-a7-25c64-writers.md).
+
+**C2a: `0x44CD06` fills two indexed lists and a separate timer**
+([check](../scratch/phase-c2a-pause-timer.md)), 2026-10-22, round 1 of the
+pause-caption question. This is groundwork. The C2 gate was not attempted.
+All three lists use `ecx = [0x4CBF78]`. `H+0x758` gets string index `0x44`
+at horizontal 520, vertical 15. `H+0x77C` gets index `0x45` at horizontal
+520, vertical 45. `H+0x224` formats `[0x4CBAAC] / 60` as `"%02d:0%d"` when
+the remainder is below 10, otherwise `"%02d:%02d"`, at horizontal 560,
+vertical 430. The second divide reloads the same dword. The binder at
+`0x486C4E` registers that font object with table `0x4BF968` and the name
+`"^Font"`. The in-range characters for indices `0x44` and `0x45` are a
+runtime lookup; the file fallback is `"Unknown String"`, and these bytes do
+not say the text is `Paused`. `[0x4E33C8] == 1` skips the timer submit and
+is not identified as pause state. No stock start.
+
+**C2b: indices `0x44` and `0x45` are `Out` and `Saved`**
+([check](../scratch/phase-c2b-pause-index-text.md)), 2026-10-22, round 2.
+The file language slot `[0x4C3434]` is 2, which selects `Uk` and
+`Language\Uk.ltx`. Both `LANGUAGE\UK.LTX` copies store `Out` at index `0x44`
+and `Saved` at index `0x45`. The exe fallback remains `"Unknown String"`.
+These two lists are the counters, not the word `Paused`. A later store can
+change the language slot; the file image selects English. The C2 gate was
+not attempted.
+
+**Milestones and exit gates, drafted 2026-10-21 (CEO review), signed off as drafted by the
+user 2026-10-22.**
+
+| Milestone | Status | Exit gate |
+| --- | --- | --- |
+| C1 skill panel | indices identified; icon-draw mechanism live-read, redirected, parked (Phase E); C1g (2026-10-24) READ the base icon draw: skill-panel object `0x4C91D8`, `0x45B639` -> `0x47A75D`, cell by animation name, not `widget_index+8` ([note](../scratch/phase-c1g-base-icon-draw-read.md)); C1h READ the scale mode (`S = [0x58D53C] - [0x58CB38]`) and the `Lo`/`Hi` budget loop ([note](../scratch/phase-c1h-icon-placement-count-read.md)); `[[0x4CBFB0]+0x10]`, the sheet frame values and the count font and colour UNREAD. C1i spent a start and the menu entry failed before any read ([note](../scratch/phase-c1i-icon-live-read.md)); C1k made the entry observable and C1l (2026-10-24) read `[levelScreen+0x10]` = 0, the `0x4E335C` / `+0x1FC` handles, all ten frame records and the count font objects live ([note](../scratch/phase-c1l-icon-live-read.md)); C1m (2026-10-24) READ handle 6 = `Lemmings` + `Hi` or `Lo` (`Sprites\\LemmingsHi.spr` / `...Lo.spr`; the choice is a video-memory query, value UNREAD; [note](../scratch/phase-c1m-sheet-file-read.md)); C1n READ the two-digit count text and that the font is `_FontSmall` (archive ordinal 656; pixels and tint UNREAD; [note](../scratch/phase-c1n-count-font-read.md)); C1o proved Frida attach through the REA CLI; C1p (2026-10-24) parsed `LemmingsHi.spr` offline and matched c1l's live frame records 7/7 (Hi, not Lo; [note](../scratch/phase-c1p-spr-sheet-read.md)); C1q decoded the `_FontSmall` bitmap (64 x 16, 4 bpp, white digits; tint writers unread; [note](../scratch/phase-c1q-font-bitmap-read.md)). C1r (2026-10-24) decoded the sheet members through `0x467DE8` ([note](../scratch/phase-c1r-sheet-pixels-decode.md)); C1s measured the ten draw positions and white count quads ([note](../scratch/phase-c1s-frida-icon-hook.md)); C1t drew the icons and two-digit counts and the gate fails ([note](../scratch/phase-c1t-q3-panel-render.md)): scorer `skill_mae` 0.10767973856209151 (`initial`, 15157/140760) and 0.0554187566499468 (`MM_DIG_000`, 3646/65790), both above 0.02 and equal to the pre-panel figures. Blend, colour key and the button plates stay unread. C1u (2026-10-24) committed the icon and glyph footprint and scored the saved C1t renders ([note](../scratch/phase-c1u-footprint-mask.md)): `initial` render 0.22416530739836685 (880240/3926745) and no-panel 0.3317052673397432, both above 0.02. Plates are empty. `MM_DIG_000` has no named stock frame. C1v (2026-10-24) READ the ten plate quads ([note](../scratch/phase-c1v-plate-draw-read.md)): `0x45B66A call 0x414920` on `0x4C9208+i*0x1B0`, box x `[18, 90]` y `[12+40*i, 12+40*i+32]`, sheet name `^tab`. A zero `[this+i*4]` skips the text submit. The `^tab` pixels, colour key and blend stay unread. C1w (2026-10-24) added the ten plate boxes to the footprint and rescored the saved renders ([note](../scratch/phase-c1w-plate-footprint.md)): `initial` render 0.29181384257636983 (5171522/17721990) and no-panel 0.315641979258537, both above 0.02. Icon and glyph edges are unchanged. C1x (2026-10-24) read the two named sites ([note](../scratch/phase-c1x-colour-blend-read.md)): `0x47218A` is the texture-loader entry, not a colour-key test, and `0x46D5F3` is `call [ecx+0x70]`, not a blend-mode write. The `^tab` pixels stay unread. Part 2 is at its cap, so the render was not started. The milestone is not accepted | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed. **Measured over the panel footprint** (user, overlord review 2026-10-24): the union of the ten button plates, icon rectangles and count-glyph rectangles at their read positions, fixed and committed before any render it scores. Not the C1b `baseline != no-cell-routes` mask, which meets the panel in 0 pixels (C1t). **Gated views** (user, overlord review 2026-10-24, second amendment): A7p `zoom1`, `elev_up` and `elev_down`, each ≤ 0.02, rendered with their A7p camera params; `initial`, the other A7p views and `MM_DIG_000` are scored and reported, not gated, until C3 draws the backdrop behind the panel |
+| C2 counters, cursor, pause caption | **in progress**: counters and timer drawn (C2g; amended gate passes on all ten views, region residual down 27/27; anchor, Out definition and default colour UNREAD); caption panel read (C2e/C2f), measured live (C2h) and drawn (C2i), text drawn (C2j) and `0x46D460` read (C2k: packs a D3D diffuse dword, the blend is the device's; render state unread); with the caption exclusion removed the gate passes on 9 of 10 views, `MM_DIG_000` fails by 2,660; parked in Phase E; cursor not started | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
+| C3 full frame | queued; residual breakdown measured (C3a, 2026-10-23): full frame 0.2098, `rest` 84.7%, skill boxes 11.3%, HUD and caption 2.5%, tube ROI 1.4%, floor ring unbounded, no cause attributed ([note](../scratch/phase-c3a-residual-breakdown.md)). Next: backdrop scenery, entrance and exit models before C1 (user, overlord review 2026-10-23). C3b read the backdrop ([note](../scratch/phase-c3b-backdrop-read.md)): model-driven, LVL-embedded node tree (root `thenull` 933 vertices, sand/sky/hose slots), dispatched before the tube; root world transform, node walk and floor ring UNREAD/UNBOUNDED. C3e read the draw-time callee ([note](../scratch/phase-c3e-scene-callee-read.md)): node matrix composed with the stack top once and nested through children, operand order, child/sibling relation and stack bottom UNREAD; the backdrop question is parked in Phase E. C3d read the call skeleton of the scene walk ([note](../scratch/phase-c3d-scene-transform-read.md)): `0x47496d` pushes `0x58D5A0` and calls `[[this+4]+4]`; the callee and whether root scale 10 reaches children are UNREAD. C3h named the stack bottom ([note](../scratch/phase-c3h-stack-bottom-preflight.md)): element 0 is a per-frame push of `[0x58D3D8]` at `0x45DD7B`, not identity; read-only live script ready, not yet run. C3i read the type-1 draw skeleton ([note](../scratch/phase-c3i-node-draw-read.md)): visibility byte, compose onto the stack top, vertex loop in file order READ; `0x40eb50` convention, per-kind draws, kinds 5/7 and the type-2 load UNREAD, so no render. C3g read the type-1 child load ([note](../scratch/phase-c3g-node-geometry-load.md)): c3d's "thenull 933 vertices" was `sand7`'s mesh; the root scale 10 does not reach Entrance/Exit `Top`; kind-6 record 116 B READ; Exit `cyl2` projects wider than the reference (width gap does not close); draw `0x46c55d`, vertex convention and stack bottom UNREAD. C3j spent the directive's one start on the stack-bottom read and it failed in A7p `enter_level` (`no menu highlight`) before any read ([note](../scratch/phase-c3j-stack-bottom-live.md)); P1-P8 untested, install restored, so the render gate still fails. C3c read Entrance/Exit placement ([note](../scratch/phase-c3c-entrance-exit-read.md)): Entrance `Top` projects within 1 px of the reference on three edges, Exit width disagrees (~15 px projected against ~40), draw order and door state UNREAD C3k settled the stack bottom offline ([note](../scratch/phase-c3k-stack-bottom-offline.md)): nothing writes `[0x58D3D8]` between the push and the scene call, value MEASURED-FROM-REFERENCE from the A1 camera; `0x40eb50` is a row vector times a row-major 3x3. C3l read kinds 5/7 (160/212 B) and the type-2 load ([note](../scratch/phase-c3l-scene-reads.md)) and the scenery record now parses past `0x967a2`; `0x43bd80`, `0x418350`, `0x46d372` and the type-2 draw `0x47d0c0` are UNREAD, so the render did not run. C3m did not name the c3j entry failure ([note](../scratch/phase-c3m-menu-entry-diagnosis.md)). | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
+
+**C1 gate measurement amended (user, overlord review 2026-10-24).** C1t showed the scorer could not see the panel: its mask inside the skill bands is x 86..89, the drawn icons x 26..76, overlap 0, so `skill_mae` stayed at the pre-panel 0.1077 / 0.0554. The threshold (0.02), region and captures are unchanged; the pixels scored become the panel's own footprint, built from read geometry (plates, c1s icon positions with the c1p/c1r frame sizes, count glyphs at the c1s text-object positions) and committed before the render. Pixels where a plate is translucent still include whatever the stock frame shows behind it; that share is reported, not masked out.
+
+**C1u footprint baseline (2026-10-24).** The icon and glyph rectangles are committed in `tools/harness/fixtures/c1-footprint/footprint.json` ([check](../scratch/phase-c1u-footprint-mask.md)). Against `original-0.png` the saved C1t panel scores 0.22416530739836685 and the no-panel image scores 0.3317052673397432 (5133 pixels). Plate rectangles are not in the fixture yet. `MM_DIG_000` is reference-unnamed. The milestone is not accepted.
+
+**C1v plate boxes (2026-10-24).** The ten plates are the quads at `0x4C9208+i*0x1B0`, drawn by `0x45B66A call 0x414920` ([check](../scratch/phase-c1v-plate-draw-read.md)). Each box is x `[18, 90]`, y `[12+40*i, 12+40*i+32]`. The sheet name is `^tab` (`0x4C0E00`); its pixels are unread, and the bytes do not say the texels are an oval. A zero count skips `0x44E150`. Colour key `0x47218A` and blend `0x46D5F3` stay unread.
+
+**C1w with-plates baseline (2026-10-24).** The ten C1v boxes are in the footprint ([check](../scratch/phase-c1w-plate-footprint.md)). Against `original-0.png` the saved C1t panel scores 0.29181384257636983 and the no-panel image scores 0.315641979258537 (23166 pixels). Both are above 0.02. Icon and glyph edges are the C1u rectangles. `MM_DIG_000` stays reference-unnamed. The milestone is not accepted.
+
+**C1x colour key and blend (2026-10-24).** `0x47218A` is `push ebp`, the texture-loader entry, and the plate draw does not call it ([check](../scratch/phase-c1x-colour-blend-read.md)). `0x46D5F3` is `call dword ptr [ecx+0x70]` with `ecx = [[0x58CDB8]]`; the method and the blend mode are unread. The plate reaches that call only when four `eax` checks in `0x46D3C1` are nonzero, and those values are unread. Part 2 is at its cap. The `^tab` pixels are still unread, so part 3 was not started. The milestone is not accepted.
+
+**C1 gated views amended (user, overlord review 2026-10-24, second amendment).** The plates are translucent: all 18033 plate-only footprint pixels differ between the eight A7p stock views, and they carry 83% of c1w's 0.2918. On the 4536 scenery-only pixels between the plates, our render differs from the stock frame by 0.48–0.52 on `initial`, `left`, `right`, `elev0_neg` and `canonical` (sand, sky, balloon: parked C3 scenery) and by 0.0183 / 0.0209 / 0.0174 on `zoom1` / `elev_up` / `elev_down` (the tube wall we draw). So the gate is taken on those three views; the threshold, footprint and region are unchanged. The scenery error alone is near 0.02 there, so a pass is not assured. Overlord scripts `build/tmp/overlord-2026-10-24/split.py`, `constancy.py`, `gaps.py`, `views.py` (measured from the saved A7p PNGs; evaluation, not a new capture).
+
+**C1a: physical panel mapping read** ([check](../scratch/phase-c1-panel-indices.md)):
+the ten-entry table at `0x45A4DD` is eligibility, distinct from the nine-entry skill
+factory table `0x45B570`. Physical index8 bypasses selection and requests a seven-pass
+simulation-budget loop; index9 requests Armageddon, not an ordinary per-lemming skill.
+Both native paths and the 0..7 factory/constructor mapping were independently re-read
+from raw bytes; REA evidence canonically validated. Exact input/stock/timing behavior
+and all panel rendering remain unmeasured here. C1's gate is not yet accepted.
+
+**C1b: the ten base icons' sheet was not located (clean negative), round 1 of 3**
+([check](../scratch/phase-c1-panel-icon-render.md)): the three sprite-sheet names
+LESSONS.md already flagged as unchased — `GreyIcons`/`BlackIcons`/`AdditiveIcons` — each
+decode (two independent decoders) to exactly **one** sprite (`bomb` 18x25, `questionmark`
+16x20x19, `armageddon` 13x15x18), not ten 72x32 panel-index-ordered icons; the shared
+registrar `FUN_0045e51f` only loads handles, with no draw call, corroborating round 23's
+`Axe` finding rather than contradicting it. Every other `.SPR`, every `TEXTURES\SHEETS\*`
+and bare `TEXTURES\*` entry, and the exe's PE resource table were searched with no
+ten-icon candidate found. The actual draw call sits behind an untraced per-skill vtable.
+A tested, additive compositing primitive (`src/app/SkillPanel.h`/`.cpp`) is built but not
+wired to any guess. The skill-only MAE (reusing A7p's own `verify.py` isolate) fails on
+both fixtures: `initial` 0.10767973856209151, `a7q` 0.0554187566499468 — both independently
+reproduced and the `a7q` figures (86 pixels, 3646 error units) match
+[A7q's own already-landed numbers](../scratch/phase-a7-second-level-mask.md) exactly.
+30/30 CTest; a mutate-one-alone swap of the one blend-formula line fails exactly one check
+and restores byte-identically. Two rounds remain before parking per the round cap.
+
+**C1c: both pre-registered leads also falsified; one concrete thread found, round 2 of 3**
+([check](../scratch/phase-c1-panel-icon-render.md#c1c-both-pre-registered-leads-also-falsified-one-concrete-unresolved-thread-found-round-2-of-3)):
+all ~50 virtual-method bodies across all nine skill-constructor vtables (C1a) read; none
+draws — they are simulation physics/eligibility/cell-flag code or the lemming's own
+in-level pose-name selection, explaining C1b's `LemmingsLO` name coincidence without
+confirming it as the panel's source. `LemmingsLO`'s string does not exist anywhere in the
+exe, so that lead is unconfirmable, not merely untraced. A new per-frame candidate,
+`FUN_0045cff9` (confirmed sole caller of the main loop), contains one confirmed real draw
+call (`FUN_00414920`, independently corroborating A4r/A4t) but for exactly one overlay
+quad/text label, never ten. `panel_boxes` has exactly 9 xrefs, all inside the already-read
+hit-test function — no second draw-side reader exists. One concrete unresolved lead
+remains: an indirect virtual dispatch on `levelScreen+0x3c`, reported unresolved by REA
+itself. One round remains before parking per the round cap; dispatched to trace that
+object.
+
+**C1d: the ten-widget array and its real icon draw are located; full dispatch and the
+per-widget icon index remain open, round 3 of 3**
+([check](../scratch/phase-c1-panel-icon-render.md#c1d-the-ten-widget-array-and-its-real-icon-draw-are-located-the-full-dispatch-to-all-ten-and-the-per-widget-icon-index-remain-open-round-3-of-3)):
+the level-screen constructor (`0x452bc2`) builds exactly **ten** identical sub-objects at
+a constant `0x238`-byte stride — exactly the panel's physical button count (C1a) — each
+sharing one constructor (`FUN_004576b0`, used nowhere else) and one six-slot vtable
+(`0x4b1774`). `levelScreen+0x3c` (the field `FUN_00454a85`'s dispatch reads) is set
+unconditionally to the first widget at construction; no other writer exists. The vtable's
+slot+4 (`FUN_00457868`) is a genuine, confirmed real icon draw — resource lookup by the
+widget's own index, UV rect from the widget's own pixel rect divided by the resource's
+width/height, drawn via `FUN_00414920` (A4r/A4t/C1c's confirmed primitive) — exactly the
+shape a per-button icon draw needs. But the dispatch actually reaches only **one** of the
+ten per frame; no resolved caller reaches the other nine or the `+8` resource-index
+writer. Independently re-verified byte-for-byte (constructor, per-widget ctor, vtable
+bytes, slot+4 body, three `procedure_callers` checks all exact matches).
+
+**Round-cap exception, recorded per `docs/ORCHESTRATION.md#milestones-gates-and-round-caps`**
+("record in the next brief why a fourth round is expected to move the gate"): this is not
+a residual that leaves the gate passing, nor an open-ended fishing expedition — it is the
+literal missing piece of C1's gate, now narrowed from "where is the draw call" (open) to
+two concrete, bounded, nameable questions: (1) is there a stride-`0x238` dispatch loop
+elsewhere in `.text` that REA's resolved-call analysis cannot see because it is computed/
+indirect (a literal-operand search for the constant `0x238`/`568`, the same technique
+this project's own prior rounds have used for other stride constants, e.g. `panel_boxes`'s
+`0x1b0`); and (2) where each widget's own `+8` resource index is written (a field-store
+search, not a call-graph search — distinct from what C1b/C1c already looked for). A fourth
+round is authorized on this specific, narrow continuation; it is not a reset of the
+question's round count and no fifth round is pre-authorized.
+
+**C1e: both cap-exception sub-questions are clean negatives — question parked**
+([check](../scratch/phase-c1-panel-icon-render.md#c1e-both-cap-exception-sub-questions-are-clean-negatives--question-parked-round-4)):
+an exhaustive `search_bytes` scan for the `0x238` stride literal across all of `.text`
+found exactly 7 matches, none a dispatch loop and none near `levelScreen`'s constructor —
+no computed loop reaching the other nine widgets exists in statically-visible form. A
+second exhaustive scan, for all ten widgets' absolute `+8` offsets plus a full re-read of
+the five most-likely candidate functions, found no writer of any widget's icon-index
+field anywhere in `.text`. Both independently re-verified exactly. Per the round's own
+"no fifth round regardless of outcome" instruction, **this question is parked in Phase E**
+(see below). C1's rendering clause does not pass; it is blocked on two parked
+dependencies (this icon-draw mechanism, and B1's already-parked digit-font question for
+the counts half of the same gate clause).
+
+**C1f: the live-read resume — two static-era assumptions overturned; the real base-icon
+source still unidentified** ([check](../scratch/phase-c1-panel-icon-render.md#c1f-live-read-falsifies-two-static-era-assumptions-fun_00457868-is-not-the-per-button-renderer-round-1-of-a-new-live-read-question-one-stock-start)),
+2026-10-22, authorized by `docs/DIRECTIVE.md` question 2, exactly one stock start. Live
+reads (no debugger/breakpoint) **MEASURED** all ten widgets' `+8` field as the consecutive
+sequence **8–17** (`widget_index + 8`, not `0–9` as predicted) — C1e's "maybe `+8` is
+simply never written" residual is refuted. `levelScreen+0x3C` is **not** permanently fixed
+to widget 0: it held widget 0's address at level entry, then moved to widget 6's address
+after one unpause/pause cycle with no explicit skill click sent — overturning C1d/C1e's
+"no writer exists" as a true report of what static resolved-call analysis can see, not of
+the live system; the actual writer is still unidentified (candidate, unverified: cursor
+hover/hit-test against `panel_boxes` at `0x4C9208`). A Frida hook on `FUN_00457868`'s
+entry (461 hits in 3.2 s, matching the independently measured 144 Hz poll rate) found
+`distinct_ecx_count == 1`: every hit's `this` equalled the one widget `levelScreen+0x3C`
+named at that moment — it fires once per frame, for exactly one widget, never more. A
+screenshot taken *before* any unpause input (while `+0x3C` still named widget 0) already
+shows roughly nine distinct icon images on the panel simultaneously, independently
+confirmed by the facilitator opening the saved PNG. **This redirects C1's open question
+rather than closing it**: `FUN_00457868`/vtable slot+4 looks like a single-target draw
+(selection highlight?), not the base per-button icon renderer C1b–C1e were chasing: the
+real source of the other icons' base artwork, and the `+0x3C` writer, remain
+unidentified. C1's rendering clause still does not pass; both halves (this redirected
+icon-source question, and B1's digit-font question — now substantially de-blocked by B1i,
+above, though not yet wired into a renderer) stay in Phase E pending the overlord's next
+ranking, per the directive's stop point.

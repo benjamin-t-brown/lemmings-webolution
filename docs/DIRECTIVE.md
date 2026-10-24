@@ -18,7 +18,7 @@ the footprint, `initial` 0.2918; c1x: `0x47218A` is the texture-loader entry and
 ## Why this
 
 The plates are translucent, and on `initial` the scenery behind them is parked C3 backdrop
-(evidence and the second gate amendment in `PLAN.md`, note above C1a). The user moved the C1
+(evidence and the second gate amendment in `PLAN.md`, Phase C user decisions). The user moved the C1
 gate to the three A7p views where the tube wall fills the panel's background: `zoom1`,
 `elev_up`, `elev_down`. Two inputs remain: the `^tab` plate pixels and the blend state the
 device uses when it draws the plates.

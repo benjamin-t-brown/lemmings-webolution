@@ -79,7 +79,9 @@ It does not authorize taking over project work or changing task state.
 
 **File:** [`docs/tasks.json`](tasks.json) — facilitator-owned, tracked, one source of truth
 for “what is in flight”. It is **not** a second plan. Goals and settled facts stay in
-`PLAN.md` and `LESSONS.md`.
+`PLAN.md` and `LESSONS.md`. It holds only the current `standing_run` and the active,
+queued and blocked tasks; landed tasks (`landed`, newest first) and stopped runs
+(`previous_runs`, newest first) go to [`docs/tasks-archive.json`](tasks-archive.json).
 
 | `status` | Meaning |
 | --- | --- |
@@ -170,7 +172,8 @@ alpha state that was mostly pixel-invisible, and seven on one zoom 1 residual.
 - **Rank by gate error.** The next question is the one expected to remove the most error
   against the current gate, not the most interesting open residual.
 - **Three rounds per question.** Count repairs and continuations. After three, park the
-  question in `PLAN.md` Phase E with its evidence links and a resume brief, or record in the
+  question with a one-line `PLAN.md` Phase E entry linking to its evidence and resume brief in
+  [Phase E history](plan-history/phase-e.md), or record in the
   next brief why a fourth round is expected to move the gate.
 - **Park residuals under the gate.** A residual that leaves the gate passing, or a
   correction that is pixel-invisible on every fixture, gets a unit test if it is cheap and

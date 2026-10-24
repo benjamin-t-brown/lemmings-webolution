@@ -27,6 +27,9 @@ HEADINGS = [
 ]
 STATUSES = {"queued", "running", "blocked", "ready-for-verify", "landed"}
 MAX_ACTIVE = 3
+# PLAN.md is the live plan; round prose goes to docs/plan-history/ (user, 2026-10-24).
+PLAN_MAX_BYTES = 30000
+PLAN_HISTORY = [f"docs/plan-history/phase-{p}.md" for p in "abcde"]
 
 
 def read(root, path, errors):
@@ -179,6 +182,12 @@ def validate(root, brief=None):
     for path in CORE:
         text = read(root, path, errors)
         links(root, path, text, errors)
+    plan = read(root, "PLAN.md", errors)
+    links(root, "PLAN.md", plan, errors)
+    if len(plan.encode("utf-8")) > PLAN_MAX_BYTES:
+        errors.append(f"PLAN.md: over {PLAN_MAX_BYTES} bytes; move round prose to docs/plan-history/")
+    for path in PLAN_HISTORY:
+        links(root, path, read(root, path, errors), errors)
     roles = read(root, "docs/ROLES.md", errors)
     for client, folder in CLIENTS:
         for role, contract in [("round-agent", "ROUND"), ("explore-agent", "EXPLORE")]:
@@ -226,6 +235,10 @@ def validate(root, brief=None):
     for key in ("active", "queue"):
         if key not in queue:
             errors.append(f"docs/tasks.json: missing {key}")
+    # Landed tasks and stopped runs live in docs/tasks-archive.json, not the live queue.
+    run = queue.get("standing_run")
+    if "recently_landed" in queue or (isinstance(run, dict) and "previous" in run):
+        errors.append("docs/tasks.json: move landed tasks and earlier runs to docs/tasks-archive.json")
     pending = queue.get("queue", [])
     if not isinstance(pending, list):
         errors.append("docs/tasks.json: queue must be a list")

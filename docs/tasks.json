@@ -1,30 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 00:19:27 MDT",
+  "updated": "2026-10-24 00:28:02 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c3k-stack-bottom-offline",
-      "title": "C3 stack bottom [0x58D3D8] writers and 0x40eb50 convention, offline (Q1 round 1 of 2)",
-      "status": "running",
-      "brief": "build/tmp/c3k-stack-bottom-offline-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "offline disassembly read",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C3 full frame; directive Q1",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c3-chain-offline-render",
-      "investigation_budget_minutes": 75,
-      "dispatched_at": "2026-10-23 23:49:57 MDT"
-    }
-  ],
+  "active": [],
   "queue": [],
   "recently_landed": [
     {
@@ -4215,6 +4193,32 @@
       "landed_in": "docs/scratch/phase-c3l-scene-reads.md",
       "disposition": "Kind 5 (160 B) and kind 7 (212 B) READ via shared 52 B element 0x47a130; type-2 load 0x47b44c READ (two-way branch on +0x338); scenery record 2 parses past 0x967a2 to 0x98d41; kind-1 draw order = record order; 0x43bd80, 0x418350, 0x46d372, type-2 draw, 0x58d498 UNREAD; 16259 B block UNREAD. Body cap breached (~17 vs hard cap 10).",
       "facilitator_verified": "2026-10-24: re-read 0x47b44c and 0x47a130 on mouv; independent LVL tag/string scan agrees; reads.py rerun byte-identical; mutate kind-7 and kind-5 element counts alone each drop parsed records (4 -> 1, 4 -> 2); kind-1/5 draws and +0x338==1 branch not re-read"
+    },
+    {
+      "id": "c3k-stack-bottom-offline",
+      "title": "C3 stack bottom [0x58D3D8] writers and 0x40eb50 convention, offline (Q1 round 1 of 2)",
+      "status": "landed",
+      "brief": "build/tmp/c3k-stack-bottom-offline-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C3 full frame; directive Q1",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c3-chain-offline-render",
+      "investigation_budget_minutes": 75,
+      "dispatched_at": "2026-10-23 23:49:57 MDT",
+      "worker_output": "build/tmp/c3k-stack-bottom-offline/stackbottom.md (+ round-note.md, prediction.md, c3k_check.py/.out). (a) READ: only store to [0x58D3D8] (=0x58CB40+0x898) is camera builder 0x468e22 (add edi,0x898 @0x469113 + rep movsd), sole caller 0x45da5f, which precedes push 0x45dd7b on every CFG path; nothing writes it in push..scene call 0x45e0e6 (window = 0x45fd90 chain, copies INTO the stack heap). Value MEASURED-FROM-REFERENCE (camera_a1 reference-state; camera block 7e6e1a8a = A6f repair 4 pause). Scene call in pause only DECODED (needs [0x4C6A08]==2 and [game+0x5139]!=0, unread in pause; tube drawn in pause implies it). (b) READ: 0x40eb50 out[j]=mat[j]*vec0+mat[3+j]*vec1+mat[6+j]*vec2 (row vector x row-major 3x3), matches c3f/c3i/A6d15; measure_d2_pick.py:149-156 swaps roles (0x45635f..0x456377 pass 0x58D3D8 as the MATRIX), not edited. Prediction: confirmed except d2-comment guess (mismatch). Bodies 12 incl. partials vs cap 10 (named). Live read not required for the window; if wanted: [0x4C6A08], [game+0x5139], first 0x60 B of [[0x58D5A0]+0xC] while paused. Game process: none.",
+      "landed_at": "2026-10-24 00:28:02 MDT",
+      "landed_in": "docs/scratch/phase-c3k-stack-bottom-offline.md",
+      "disposition": "Nothing writes [0x58D3D8] between the push 0x45dd7b and the scene call; sole store into camera+0x898 is 0x469113 in builder 0x468e22 (one caller 0x45da5f) earlier in the same frame; value MEASURED-FROM-REFERENCE from camera_a1; pause-frame scene call DECODED only. 0x40eb50 = row vector x row-major 3x3, READ; measure_d2_pick.py:149-156 swaps the matrix/vector roles. Body cap breached (~12 vs 10).",
+      "facilitator_verified": "2026-10-24: re-read 0x40eb50, 0x469103..0x46911e, 0x45da5a/5f, 0x45dd70, 0x456357..0x456377 on mouv; independent .text sweep finds 17 push sites and the single add reg,0x898 at 0x469113; c3k_check.py rerun byte-identical; no code change so no mutation; CFG walk and gate bytes not re-derived"
     }
   ],
   "standing_run": {
@@ -4233,11 +4237,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 23:49:57 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 23:49:57 MDT",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-24 00:19:27 MDT: c3m, c3l landed (c3l body cap breached ~17/10). c3k (stack bottom) still running; Q3 needs Q2 named+fixed (not met). Render needs 0x43bd80, type-2 draw, 0x418350, 0x46d372 and stack bottom.",
+    "handoff": "2026-10-24 00:28:02 MDT: stopped at the directive stop point; c3k, c3l, c3m landed; C3 scenery parked; no round running; next directive goes to C1.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4968,6 +4972,11 @@
           "last_commit": "9e8d963"
         }
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-24 00:28:02 MDT",
+      "reason": "Directive stop point: Q1 landed at 2 of 2 rounds (c3k, c3l), Q2 landed (cause not named, patch unapplied), Q3 not triggered (stack bottom settled offline; entry failure not fixed), Q4 not run (per-kind draw links 0x43bd80, 0x418350, 0x46d372, type-2 draw 0x47d0c0 and 0x58d498 still UNREAD). C3 scenery parked in Phase E.",
+      "last_commit": "pending"
+    }
   }
 }

@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-24: Q1 landed c3k, c3l; Q2 landed c3m, cause not named; Q3 not triggered; Q4 not run, C3 scenery parked in Phase E)
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the C3 scene chain directive, done 2026-10-23 (C3g type-1 load and node trees
 read, kind-6 record 116 B, Entrance/Exit `Top` are their own roots, Exit `cyl2` projects wider

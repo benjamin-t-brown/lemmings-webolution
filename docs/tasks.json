@@ -4138,7 +4138,7 @@
       "investigation_budget_minutes": 60,
       "dispatched_at": "2026-10-23 23:31:32 MDT",
       "landed_in": "docs/scratch/phase-c3j-stack-bottom-live.md",
-      "landed_at": "2026-10-23 23:36 MDT",
+      "landed_at": "2026-10-23 23:35 MDT",
       "disposition": "BLOCKED at the one start: A7p enter_level raised \"no menu highlight\" (capture.py:678) 20 s after launch; zero reads of 0x58D5A0/0x58D3D8/0x58CE24; P1-P8 untested; hashes restored, no process or task left; cause UNREAD; Q2 parked, needs a new start grant",
       "facilitator_verified": "2026-10-23: run.log and stack-bottom.json re-read (traceback, empty polls/judge); separate ssh: no game process, no LemWeb task; recorded hashes equal the cleanup hashes; not re-hashed independently"
     }
@@ -4868,7 +4868,7 @@
     "stopped": {
       "date": "2026-10-23 23:36 MDT",
       "reason": "Directive stop point: Q1 parked at 2 of 2 rounds, Q2's one start consumed with no read (entry failure, install restored), Q3 gated on Q1+Q2 and not run",
-      "last_commit": "filled at commit"
+      "last_commit": "9e8d963"
     }
   }
 }

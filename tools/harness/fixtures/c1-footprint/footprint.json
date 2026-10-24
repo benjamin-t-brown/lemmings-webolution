@@ -1,6 +1,87 @@
 {
-  "pixel_rule": "A pixel (x, y) is inside [left, right) x [top, bottom) when the pixel square [x, x+1) x [y, y+1) intersects that rectangle. A pixel in two rectangles counts once. Plates are empty.",
-  "plates": [],
+  "pixel_rule": "A pixel (x, y) is inside [left, right) x [top, bottom) when the pixel square [x, x+1) x [y, y+1) intersects that rectangle. A pixel in two rectangles counts once. Plates are the ten C1v boxes.",
+  "plates": [
+    {
+      "id": "plate-0",
+      "left": 18.0,
+      "top": 12.0,
+      "right": 90.0,
+      "bottom": 44.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*0 = 12, bottom top+0x20 = 44. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-1",
+      "left": 18.0,
+      "top": 52.0,
+      "right": 90.0,
+      "bottom": 84.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*1 = 52, bottom top+0x20 = 84. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-2",
+      "left": 18.0,
+      "top": 92.0,
+      "right": 90.0,
+      "bottom": 124.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*2 = 92, bottom top+0x20 = 124. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-3",
+      "left": 18.0,
+      "top": 132.0,
+      "right": 90.0,
+      "bottom": 164.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*3 = 132, bottom top+0x20 = 164. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-4",
+      "left": 18.0,
+      "top": 172.0,
+      "right": 90.0,
+      "bottom": 204.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*4 = 172, bottom top+0x20 = 204. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-5",
+      "left": 18.0,
+      "top": 212.0,
+      "right": 90.0,
+      "bottom": 244.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*5 = 212, bottom top+0x20 = 244. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-6",
+      "left": 18.0,
+      "top": 252.0,
+      "right": 90.0,
+      "bottom": 284.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*6 = 252, bottom top+0x20 = 284. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-7",
+      "left": 18.0,
+      "top": 292.0,
+      "right": 90.0,
+      "bottom": 324.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*7 = 292, bottom top+0x20 = 324. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-8",
+      "left": 18.0,
+      "top": 332.0,
+      "right": 90.0,
+      "bottom": 364.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*8 = 332, bottom top+0x20 = 364. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    },
+    {
+      "id": "plate-9",
+      "left": 18.0,
+      "top": 372.0,
+      "right": 90.0,
+      "bottom": 404.0,
+      "source": "C1v read box written at 0x45A795 call 0x414870 and drawn by 0x45B66A call 0x414920. left 0x12 (18), right 0x5A (90), top 12+40*9 = 372, bottom top+0x20 = 404. Axis-aligned box. The bytes do not say the texels are an oval. ^tab pixels are unread."
+    }
+  ],
   "icons": [
     {
       "id": "icon-0",

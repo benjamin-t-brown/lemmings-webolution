@@ -1,31 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T14:17:00-06:00",
+  "updated": "2026-10-24T14:24:00-06:00",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
-    {
-      "id": "c1w-plate-footprint",
-      "title": "Add the ten read plate boxes to the C1 footprint and rescore the saved renders",
-      "status": "running",
-      "brief": "build/tmp/c1w-plate-footprint-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "offline scoring",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C1 skill panel; directive part 1 plate join",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-footprint-plate-score",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 14:17 MDT",
-      "worker_output": null,
-      "dispatch_id": "3092565d-db9b-46da-bcfd-0997859714b6"
-    },
     {
       "id": "c1x-colour-blend-read",
       "title": "Colour key 0x47218A and blend 0x46D5F3 (directive part 2, round 2 of 2)",
@@ -52,6 +29,33 @@
   ],
   "queue": [],
   "recently_landed": [
+    {
+      "id": "c1w-plate-footprint",
+      "title": "Add the ten read plate boxes to the C1 footprint and rescore the saved renders",
+      "status": "landed",
+      "brief": "build/tmp/c1w-plate-footprint-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline scoring",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive part 1 plate join",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-footprint-plate-score",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 14:17 MDT",
+      "worker_output": "build/tmp/c1w-plate-footprint/round-note.md",
+      "dispatch_id": "3092565d-db9b-46da-bcfd-0997859714b6",
+      "landed_at": "2026-10-24 14:24 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1w-plate-footprint.md; docs/LESSONS.md C1w",
+      "disposition": "Ten plate boxes joined. initial render MAE 0.29181384257636983 (5171522/17721990), no-panel 0.315641979258537, both above 0.02. Icon and glyph edges unchanged. MM_DIG_000 reference-unnamed.",
+      "facilitator_verified": "2026-10-24: icons and glyphs equal the C1u fixture. Ten plates match 18, 12+40*i, 90, 12+40*i+32. Overlap loop reproduced 23166/5171522/5593804. plate-0 right 90 to 80 moved render MAE to 0.29001710229161554; fixture restored SHA-256 e96840e02c3046705c5d1dd19e947a47d7ea4aa65edbe34e31cccafd44b76892. ctest 34/34. No game process."
+    },
     {
       "id": "c1v-plate-draw-read",
       "title": "C1 button-plate draw call, sheet, frame and position (directive part 2, round 1 of 2)",
@@ -4734,7 +4738,7 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md",
     "owner": "Cursor facilitator, 2026-10-24 14:02 MDT /facilitator on mouv. Prior run stopped, no task was running, so this start is the handoff.",
     "started_at": "2026-10-24 14:02 MDT",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
     "pending_questions": [
       {
@@ -4750,7 +4754,7 @@
       }
     ],
     "stop_point": "Part 3 scored (pass or fail), part 2 ends without an input the render needs, or an ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 14:17 MDT: c1w plate-box join and c1x colour-key/blend read dispatched. Part 3 waits. MM_DIG_000 reference unnamed.",
+    "handoff": "2026-10-24 14:24 MDT: c1w landed. With-plates initial MAEs 0.29181384257636983 and 0.315641979258537. c1x colour-key/blend still running. Part 3 waits for c1x. MM_DIG_000 reference unnamed.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

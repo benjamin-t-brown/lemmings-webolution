@@ -4,6 +4,9 @@ Offline. Does not render, does not start the stock game, and does not modify
 the fixture. MAE is the sum of absolute RGB channel differences divided by
 pixels * 765, the same definition as tools/harness/score_c1_panel.py.
 
+An empty plates list does not score. Exactly ten plates write
+build/tmp/c1w-plate-footprint/score-table.json. The C1u table is not written.
+
 Usage:
     python tools/harness/score_c1_footprint.py
 """
@@ -17,7 +20,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tools/harness/fixtures/c1-footprint/footprint.json"
-OUT = ROOT / "build/tmp/c1u-footprint-mask/score-table.json"
+OUT = ROOT / "build/tmp/c1w-plate-footprint/score-table.json"
 INITIAL_REFERENCE = ROOT / "tools/harness/fixtures/camera_a1/original-0.png"
 C1T = ROOT / "build/tmp/c1t-q3-panel-render"
 
@@ -80,8 +83,11 @@ def unnamed(pixels: int) -> dict:
 
 def main() -> int:
     fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
-    if fixture.get("plates") != []:
-        raise SystemExit("this round's fixture must leave plates empty")
+    plates = fixture.get("plates")
+    if not isinstance(plates, list) or len(plates) == 0:
+        raise SystemExit("plates is empty; an empty list does not score")
+    if len(plates) != 10:
+        raise SystemExit(f"expected the ten C1v plates, found {len(plates)}")
     table: dict = {
         "fixture": FIXTURE.relative_to(ROOT).as_posix(),
         "mae_definition": "sum of absolute RGB channel differences / (pixels * 765)",

@@ -431,7 +431,7 @@ threshold is 0.02, the same as A1/A2/A7.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| B1 frontend assets and text | **done** (B1w, own re-score 0.005244; panels measured from the reference, see below) | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
+| B1 frontend assets and text | **done** (B1w, own re-score 0.005244; panels measured from the reference, see below). Accepted on condition (user, overlord review 2026-10-23): the panel draw is read and re-scored; a failing re-score reopens B1 | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
 | B2 screen state machine | queued | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
 | B3 level select and map | queued | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 

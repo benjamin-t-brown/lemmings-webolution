@@ -678,7 +678,7 @@ user 2026-10-22.**
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
 | C1 skill panel | indices identified; icon-draw mechanism live-read, redirected, parked (Phase E) | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
-| C2 counters, cursor, pause caption | **in progress**: counters and timer drawn (C2g; amended gate passes on all ten views, region residual down 27/27; anchor, Out definition and default colour UNREAD); caption panel read (C2e/C2f), measured live (C2h) and drawn without text (C2i; region residual down 10/10, but with the caption exclusion removed the gate fails on initial, canonical and MM_DIG_000; text and blend unread, parked in Phase E); cursor not started | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
+| C2 counters, cursor, pause caption | **in progress**: counters and timer drawn (C2g; amended gate passes on all ten views, region residual down 27/27; anchor, Out definition and default colour UNREAD); caption panel read (C2e/C2f), measured live (C2h) and drawn (C2i), text drawn (C2j; with the caption exclusion removed the gate passes on 9 of 10 views, MM_DIG_000 fails by 2,660; blend `0x46D460` unread); cursor not started | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
 | C3 full frame | queued; residual breakdown measured (C3a, 2026-10-23): full frame 0.2098, `rest` 84.7%, skill boxes 11.3%, HUD and caption 2.5%, tube ROI 1.4%, floor ring unbounded, no cause attributed ([note](docs/scratch/phase-c3a-residual-breakdown.md)) | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
 **C1a: physical panel mapping read** ([check](docs/scratch/phase-c1-panel-indices.md)):
@@ -1489,13 +1489,11 @@ open.
 - **B1 source, both arms** (b1u landed 2026-10-23): script arms `{0x47E4AD, 0x47E463}`, proves liveness, reads hit counts; hardware breakpoints at the `starti` stop do not reach the main thread (throwaway), so the start used a one-shot entry-point int3 (authorized by the user). See `docs/scratch/phase-b1u-font-both-arms-preflight.md`.
   **Live read (B1v, 2026-10-23, one stock start): `^Font` source observed, exactly one:** `LEMMINGS.BOX` archive, `TEXTURES\^FONT.BMP` (77 bytes) and `.ALF` (61440), zero loose, gate `[0x5D5610]`=1; stopped at hit 2, so a later third source is not excluded. Q2 (render and score) may proceed. See `docs/scratch/phase-b1v-font-live-read.md`.
   **Render and score (B1w, 2026-10-23): full-frame 0.005244 <= 0.02, gate passes on the facilitator's independent re-score** (numerator 1232493, 185447 changed pixels). Centre anchor read at `0x48A747`; glyph table, Y rule, labels read; sheet and X word observed. **The five panel rectangles and colours are measured from the scored reference, not read** (18.3% of the numerator); black text is a partly read default; crosshair, glyph blend and a backdrop dim of up to 7 levels are unresolved. One screen, UK, highlight 0. See `docs/scratch/phase-b1w-menu-render.md`.
-- **C2 Paused caption text and blend** (parked 2026-10-23 at the four-round cap: C2e, C2f, C2h, C2i). The panel
-  rectangle is MEASURED (`[277,422,363,454)` at `G+0x25C90`, formula READ at `0x45D2A8..0x45D35A`) and drawn; with the caption
-  exclusion removed the A7 gate fails on initial (2879334 vs 2742219), canonical and MM_DIG_000. Unread: the "Paused" glyph text (key
-  `STR_PAUSED` at `0x4C3C18`, string-table consumer), the colour/alpha path (`0x4017f0`, `0x44DBA0`, blend in `0x46D460`, meaning of
-  0.00225), whether the quad doubles are final pixels, and the tube rows under the panel. Resume brief: read the string-table consumer
-  for `0x4C35E4` and the `G+0x25C68` cell fill offline, then the `0x46D460` blend; no start is needed for the first. See
-  `docs/scratch/phase-c2i-caption-render.md`.
+- **C2 Paused caption text and blend** (c2i panel; c2j text, 2026-10-23). The panel `[277,422,363,454)` is MEASURED/READ and the "Paused" text is drawn
+  (key slot 84 of `0x4C3494`, width 70 READ, string and white ink MEASURED-FROM-REFERENCE). With the caption exclusion removed and the ten skill boxes excluded, the A7
+  score passes on **9 of 10 views**; `MM_DIG_000` fails by 2,660 (2686464 vs 2683804). Unread: the blend in `0x46D460`, the lookup `0x486847`, 0.00225, the `1` at
+  `0x44DBA0`, the exe's text colour. Fill black and alpha 128 are read immediates on an inferred 0..255 scale. See `docs/scratch/phase-c2i-caption-render.md` and
+  `docs/scratch/phase-c2j-caption-text-blend.md`.
 - **B2 level-to-map** (parked 2026-10-23, directive Q3: B2j and B2k named **no** key or click path, so the
   start was skipped and `Frontend` has nothing new to replay). Read: screen 0x20 handler `0x486510` -> `0x4886E4`
   (selector 0x23, map by inference from B2h's node `0x4B3EB8`) -> factory; producer `0x48FCDD`; screen 0x20 built when

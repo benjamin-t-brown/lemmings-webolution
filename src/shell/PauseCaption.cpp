@@ -25,4 +25,13 @@ void drawCaptionPanel(webo::Image& target, const CaptionParams& p) {
   }
 }
 
+HudLine captionLine(const CaptionParams& p) { return {p.text, p.textX, p.textY, p.textColour}; }
+
+void drawCaption(webo::Image& target, const webo::Image& sheet, std::span<const GlyphCell> cells,
+                 const CaptionParams& p) {
+  drawCaptionPanel(target, p);
+  const HudLine line = captionLine(p);
+  drawHud(target, sheet, std::span<const HudLine>(&line, 1), cells);
+}
+
 }  // namespace webo::shell

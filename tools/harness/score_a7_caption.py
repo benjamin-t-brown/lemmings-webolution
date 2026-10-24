@@ -1,7 +1,9 @@
-"""C2i: score the pause caption panel on A7 with the caption exclusion removed.
+"""C2i/C2j: score the pause caption (panel, then C2j text) on A7 with the caption exclusion removed.
 
 Offline. Does not launch the game. For each of the nine MM_CLIMB_002 views and MM_DIG_000 it
-renders the route with the C2g HUD (`--hud-ticks`), without and with `--pause-caption`, then prints
+renders the route with the C2g HUD (`--hud-ticks`) three ways: `before` = the C2i render (panel only,
+`--pause-caption --caption-no-text`), `after` = panel plus the C2j "Paused" text (`--pause-caption`), and
+`nocaption` = neither (reported for reference). Then prints
 
   * the amended A7 gate with the CAPTION EXCLUSION REMOVED and the ten skill-panel bands still
     excluded. This is build/tmp/a7p-facilitator/verify.py `wider()` itself (imported, not
@@ -13,8 +15,8 @@ renders the route with the C2g HUD (`--hud-ticks`), without and with `--pause-ca
   * sensitivity rows (alpha 0 / 255, white fill), reported, never used to choose.
 
 Run from the repo root with the normal Python (PIL needed), on the machine that has the build:
-    python tools/harness/score_a7_caption.py --exe build/c2i/webolution.exe \
-        --out build/tmp/c2i-caption-render --json build/tmp/c2i-caption-render/score.json
+    python tools/harness/score_a7_caption.py --exe build/c2j/webolution \
+        --out build/tmp/c2j-caption-text-blend/render --json build/tmp/c2j-caption-text-blend/score.json
 """
 
 import argparse
@@ -78,13 +80,14 @@ def amended(g: dict) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--exe", type=Path, default=ROOT / "build/c2i/webolution.exe")
-    ap.add_argument("--out", type=Path, default=ROOT / "build/tmp/c2i-caption-render")
+    ap.add_argument("--exe", type=Path, default=ROOT / "build/c2j/webolution")
+    ap.add_argument("--out", type=Path, default=ROOT / "build/tmp/c2j-caption-text-blend/render")
     ap.add_argument("--ticks", type=int, default=70)
     ap.add_argument("--json", type=Path, default=None)
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
-    variants = [("before", []), ("after", ["--pause-caption"])] + [
+    variants = [("nocaption", []), ("before", ["--pause-caption", "--caption-no-text"]),
+                ("after", ["--pause-caption"])] + [
         (n, ["--pause-caption", *x]) for n, x in SENSITIVITY]
 
     rows = []
@@ -102,7 +105,8 @@ def main() -> None:
                           "region_gate": region(base, supp, img, True)}
         rows.append(row)
 
-    print("amended gate, caption exclusion REMOVED, skill panel excluded: numerator before -> after / denominator")
+    print("amended gate, caption exclusion REMOVED, only the ten skill boxes excluded:")
+    print("numerator before (C2i panel only) -> after (panel + text) / denominator; pass iff numerator*50 <= denominator")
     for r in rows:
         b, a = r["before"]["gate"], r["after"]["gate"]
         print(f"{r['view']:<11} {b['numerator']:>8} -> {a['numerator']:>8} / {a['denominator']}  N={a['N']}"

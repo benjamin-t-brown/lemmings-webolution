@@ -40,7 +40,8 @@
 //   --hud-colour R,G,B  with --hud-ticks: the Out / timer glyph colour (UNREAD default
 //                     255,255,255; exists only for the sensitivity run).
 //   --pause-caption   headless only (with --shot): overlay the paused-frame caption panel
-//                     (shell/PauseCaption.h, C2i). Panel only; the text is UNREAD.
+//                     (shell/PauseCaption.h, C2i panel, C2j text via the ^Font path).
+//   --caption-no-text  with --pause-caption: the C2i panel only (the "before" render).
 //   --caption-alpha N  with --pause-caption: panel alpha (HYPOTHESIS 128 of 255; sensitivity only)
 //   --caption-fill R,G,B  with --pause-caption: panel colour (HYPOTHESIS 0,0,0; sensitivity only)
 //   Debug stand-in, windowed --sim only (not the original skill panel):
@@ -121,6 +122,7 @@ struct Args {
   bool pauseCaption = false;
   int captionAlpha = -1;
   std::string captionFill;
+  bool captionNoText = false;
 };
 
 Args parseArgs(int argc, char** argv) {
@@ -156,6 +158,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--pause-caption") a.pauseCaption = true;
     else if (arg == "--caption-alpha") a.captionAlpha = std::atoi(next().c_str());
     else if (arg == "--caption-fill") a.captionFill = next();
+    else if (arg == "--caption-no-text") a.captionNoText = true;
     else if (arg == "--game-dir") a.gameDir = next();
   }
   if (a.gameDir.empty()) {
@@ -484,7 +487,16 @@ int main(int argc, char** argv) {
         caption.fill = {static_cast<std::uint8_t>(r), static_cast<std::uint8_t>(g),
                         static_cast<std::uint8_t>(b)};
       }
-      shell::drawCaptionPanel(image, caption);
+      if (args.captionNoText) {
+        shell::drawCaptionPanel(image, caption);
+      } else {
+        auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");
+        if (!font) {
+          std::fprintf(stderr, "caption: %s\n", font.error().c_str());
+          return 1;
+        }
+        shell::drawCaption(image, *font, shell::fontCells(), caption);
+      }
       std::fprintf(stderr, "caption: rect %d %d %d %d alpha %d/%d fill %d,%d,%d\n", caption.rect.x0,
                    caption.rect.y0, caption.rect.x1, caption.rect.y1, caption.alpha,
                    caption.alphaScale, caption.fill[0], caption.fill[1], caption.fill[2]);

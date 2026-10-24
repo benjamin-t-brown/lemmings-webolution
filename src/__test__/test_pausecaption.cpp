@@ -1,8 +1,14 @@
-// C2i: the pause caption panel (shell/PauseCaption.h). Each assertion pins one input
-// (rectangle edge, fill colour, alpha) so a change to that input alone fails it.
+// C2i/C2j: the pause caption panel and text (shell/PauseCaption.h). Each assertion pins one input
+// (rectangle edge, fill colour, alpha, text origin, text string) so a change to that input alone fails it.
 
 #include "assets/Bitmap.h"
 #include "shell/PauseCaption.h"
+
+// The test target's CMake line lists only PauseCaption.cpp, and CMake files are outside this
+// round's owned paths. drawCaption uses HudText's drawHud (and MenuRender's glyph table), so the
+// two translation units are pulled in here. The clean fix is adding them to the add_executable line.
+#include "shell/HudText.cpp"
+#include "shell/MenuRender.cpp"
 
 #include <cstdint>
 #include <iostream>
@@ -85,11 +91,75 @@ void testDraw() {
   check(at(g, 300, 430) == 200, "alpha 0 leaves the frame");
 }
 
+// A ^Font stand-in: alpha 255 only inside one glyph cell, 0 elsewhere. With the real glyph
+// table (0x4BF968) the cell of 'P' is {78, 60, 14}, so only a leading 'P' inks.
+webo::Image sheetWithOnly(char ch) {
+  webo::Image sheet = solid(256, 256, 255);
+  const GlyphCell& g = fontCells()[static_cast<unsigned char>(ch) - kFirstChar];
+  for (int y = 0; y < 256; ++y)
+    for (int x = 0; x < 256; ++x) {
+      const bool in = x >= g.x && x < g.x + g.width && y >= g.y && y < g.y + kLineHeight;
+      sheet.rgba[(static_cast<std::size_t>(y) * 256 + x) * 4 + 3] = in ? 255 : 0;
+    }
+  return sheet;
+}
+
+void testText() {
+  std::cout << "caption text\n";
+  const CaptionParams p;
+  check(p.text == "Paused", "text is Paused (display text MEASURED-FROM-REFERENCE)");
+  check(p.textX == 285 && p.textY == 422, "text origin 285,422 (C2h)");
+  check(textWidth(p.text, fontCells()) == 70, "Paused is 70 wide in the exe glyph table (READ 0x4BF968)");
+
+  // Full-alpha sheet: every glyph pixel inks, so the text box is [285,355) x [422,451).
+  webo::Image full = solid(256, 256, 255);
+  webo::Image f = solid(640, 480, 255);
+  drawCaption(f, full, fontCells(), p);
+  check(at(f, 285, 422) == 255 && at(f, 354, 450) == 255, "white ink at the text box corners");
+  check(at(f, 284, 430) == 127, "left of the text origin stays panel");
+  check(at(f, 355, 430) == 127, "right of the 70 px run stays panel");
+  check(at(f, 300, 421) == 255, "row above the panel is untouched");
+  check(at(f, 300, 451) == 127, "row below the 29 px line stays panel");
+
+  // Only 'P' inks: the string decides which cell is drawn.
+  webo::Image g = solid(640, 480, 255);
+  drawCaption(g, sheetWithOnly('P'), fontCells(), p);
+  check(at(g, 290, 430) == 255 && at(g, 298, 450) == 255, "P cell inks at the origin (14 wide: 285..298)");
+  check(at(g, 299, 430) == 127, "the next glyph (a) does not ink on a P-only sheet");
+  CaptionParams q = p;
+  q.text = "Xaused";
+  g = solid(640, 480, 255);
+  drawCaption(g, sheetWithOnly('P'), fontCells(), q);
+  check(at(g, 290, 430) == 127, "a different first letter changes the ink");
+
+  q = p;
+  q.textX = 286;
+  g = solid(640, 480, 255);
+  drawCaption(g, sheetWithOnly('P'), fontCells(), q);
+  check(at(g, 285, 430) == 127 && at(g, 299, 430) == 255, "text x moves the ink");
+  q = p;
+  q.textY = 423;
+  g = solid(640, 480, 255);
+  drawCaption(g, sheetWithOnly('P'), fontCells(), q);
+  check(at(g, 290, 422) == 127 && at(g, 290, 451) == 255, "text y moves the ink");
+  q = p;
+  q.textColour = {0, 0, 0};
+  g = solid(640, 480, 255);
+  drawCaption(g, sheetWithOnly('P'), fontCells(), q);
+  check(at(g, 290, 430) == 0, "text colour is its own input (black over 255 -> 0)");
+
+  // The panel is drawn first: ink is not dimmed by it.
+  webo::Image h = solid(640, 480, 0);
+  drawCaption(h, sheetWithOnly('P'), fontCells(), p);
+  check(at(h, 290, 430) == 255 && at(h, 310, 430) == 0, "ink over the panel, panel under it");
+}
+
 }  // namespace
 
 int main() {
   testRect();
   testDraw();
+  testText();
   if (g_failures) {
     std::cerr << g_failures << " check(s) failed\n";
     return 1;

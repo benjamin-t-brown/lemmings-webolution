@@ -1,14 +1,16 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 01:00:48 MDT",
+  "updated": "2026-10-24 01:28:30 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1h-icon-placement-count-read",
       "title": "C1 icon placement, sheet variant, count font/colour (Q1 round 2 of 2)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/c1h-icon-placement-count-read-brief.md",
-      "worker_output": null,
+      "worker_output": "build/tmp/c1h-icon-placement-count-read/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
       "harness": "Claude Code",
@@ -26,11 +28,12 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-base-icon-draw",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 01:00:48 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-24 01:00:48 MDT",
+      "landed_at": "2026-10-24 01:28 MDT",
+      "landed_in": "docs/scratch/phase-c1h-icon-placement-count-read.md",
+      "facilitator_verified": true,
+      "disposition": "landed; scale mode and Lo/Hi budget loop READ; [[0x4CBFB0]+0x10], sheet frame values, count font/colour UNREAD"
+    },
     {
       "id": "c1g-base-icon-draw-read",
       "title": "C1 base icon draw read (Q1 round 1 of 2)",
@@ -4290,11 +4293,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-24 00:34:54 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 00:34:54 MDT",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-24 01:00:48 MDT: c1g landed; c1h (Q1 round 2 of 2) running, 30-minute limit. Then Q2/Q3 per directive.",
+    "handoff": "2026-10-24 01:28 MDT: c1g, c1h landed (Q1 at cap). Q2 condition met: single call 0x47A75D; unread values are runtime (icon+0x1F8/0x1FC, [[0x4CBFB0]+0x10], 0x4E335C.., [0x4CBF7C]+8, frame record F). Next: write Q2 brief (prediction + falsifier first, apply c3m fix.patch to the entry first), then one stock start on mouv.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

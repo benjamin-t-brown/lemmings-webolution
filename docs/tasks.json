@@ -1,8 +1,31 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 12:56:42 MDT",
+  "updated": "2026-10-24 12:59:10 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1t-q3-panel-render",
+      "title": "C1 Q3 render: ten skill buttons icons and counts, scored (directive part 3, round 1 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c1t-q3-panel-render-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "implementation and scoring (offline)",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive part 3",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-sheet-pixels-hook-render",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 12:59:10 MDT",
+      "worker_output": "build/tmp/c1t-q3-panel-render/round-note.md"
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -4601,7 +4624,7 @@
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Render scored (pass or fail), part 1 or 2 ends without the input the render needs, an ORCHESTRATION stop, or a start that crashes or leaves the install unrestored. Do not advance to C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 12:56:42: c1r (sheet pixels) and c1s (the one start, 0x47A75D hook) landed; the directive start is spent. Next: Q3 render (c1t, offline, cap 2 rounds) scored against A7p/A7q with the A7 panel exclusion removed; nothing in flight.",
+    "handoff": "2026-10-24 12:59:10: c1t (Q3 render, offline) dispatched; c1r and c1s landed, directive start spent. After c1t: verify, re-score independently, then either round 2 (cap 2) or stop with the scored result.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

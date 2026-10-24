@@ -3682,18 +3682,18 @@
     "pending_questions": [
       {
         "id": "q3-caption-round-cap",
-        "question": "Directive Q3 caps the caption question at three rounds: preflight, one start, render. The preflight (c2e) shows a live read now could save only list pointers (heap addresses die with the process), so a second offline round (c2f: decode G+0x25C68 layout, update the script) is needed before the start. That makes the start round 3 and the render round 4. May the render be a fourth round?",
+        "question": "Directive Q3 caps the caption question at three rounds: preflight, one start, render. The preflight (c2e) names every input of the 0x47AD8C rect but predicts that rect is off in the paused frame, and the caption edge probably comes from G+0x25C68, whose placement bodies (0x47ACF9, 0x47AC50, 0x44E150) are unread. The worker's script dumps that block, but how to decode it is unknown, and whether the dump would be usable is unverified. Should an offline round (c2f) read those bodies before the one start, making the start round 3 and the render round 4?",
         "evidence": [
           "docs/scratch/phase-c2e-caption-preflight.md",
           "docs/DIRECTIVE.md Q3",
           "docs/ORCHESTRATION.md#milestones-gates-and-round-caps"
         ],
         "options": [
-          "Authorize the render as round 4 (recommended: c2f settles what the one start must read, so the start is not wasted)",
+          "Authorize c2f offline, then the start as round 3 and the render as round 4 (recommended: the worker advised it, and it keeps the only start from being spent on a block nobody can decode)",
           "Skip the start, park the caption in Phase E with a resume brief",
-          "Spend the start now on the existing script and decode offline from the saved blocks"
+          "Spend the start now on the existing script and decode the saved blocks offline"
         ],
-        "recommendation": "Authorize round 4. The alternative of starting now risks spending the only start on pointers."
+        "recommendation": "Authorize c2f and a fourth round."
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",

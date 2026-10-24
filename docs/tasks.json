@@ -2,7 +2,31 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "c2i-caption-render",
+    "title": "C2 Paused caption: render the panel and re-score A7 with the caption exclusion removed (Q3 round 4 of 4)",
+    "status": "running",
+    "brief": "build/tmp/c2i-caption-render-brief.md",
+    "worker_tier": "targeted",
+    "work_kind": "render edit + score",
+    "harness": "Claude Code",
+    "requested_model": "session model (no pin, per ROLES)",
+    "worker_agent": "round-agent",
+    "dispatch_id": "pending",
+    "owns_live_game": false,
+    "live_owner": null,
+    "depends_on": [
+      "c2h-caption-live-read"
+    ],
+    "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
+    "question_round_count": 4,
+    "stock_starts_authorized": 0,
+    "stock_starts_consumed": 0,
+    "standing_run": "b1-panel-c2-counters-caption",
+    "investigation_budget_minutes": 90,
+    "body_cap": 4,
+    "dispatched_at": "2026-10-23 20:05:35 MDT"
+  },
   "queue": [],
   "recently_landed": [
     {

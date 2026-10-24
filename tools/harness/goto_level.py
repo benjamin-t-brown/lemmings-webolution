@@ -197,7 +197,47 @@ def poll_rate(inp: LRInput, seconds: float = 0.5) -> float:
     return (inp.mouse_frame - f0) / seconds
 
 
-def find_menu_index(h, inp, verbose: bool = True) -> int | None:
+def foreground_pid() -> int:
+    """Pid that owns the foreground window, or -1 when it cannot be asked.
+
+    Safe off Windows (no `user32`) and when the call fails, so diagnostics
+    never turn into the failure they are meant to explain.
+    """
+    try:
+        import ctypes
+        import ctypes.wintypes as wt
+
+        user32 = ctypes.WinDLL("user32")
+        owner = wt.DWORD()
+        user32.GetWindowThreadProcessId(user32.GetForegroundWindow(), ctypes.byref(owner))
+        return int(owner.value)
+    except Exception:
+        return -1
+
+
+def _tee(log, verbose: bool = True):
+    """A one-argument writer: stdout when `verbose`, and always `log` if given.
+
+    `log` is a callable taking the line, or a file-like with `write`. The
+    scheduled task that runs the probes does not capture stdout, so anything
+    that matters for a failed entry has to reach a caller-supplied log.
+    """
+    def emit(line: str) -> None:
+        if verbose:
+            print(line, flush=True)
+        if log is None:
+            return
+        if callable(log):
+            log(line)
+        else:
+            log.write(line + "\n")
+            if hasattr(log, "flush"):
+                log.flush()
+    return emit
+
+
+def find_menu_index(h, inp, verbose: bool = True, attempts: int = 3,
+                    log=None) -> int | None:
     """Locate the main menu's highlight index, live, by diffing on DOWN.
 
     It is a heap variable, so its address changes every run and cannot be
@@ -205,23 +245,70 @@ def find_menu_index(h, inp, verbose: bool = True) -> int | None:
     five items and the last is "Beenden", so a blind RETURN closed the game
     outright during this work. Finding the index first makes entry
     deterministic.
+
+    `log` (callable or file-like) receives every diagnostic line as well as
+    stdout; see `_tee`. `attempts` bounds the retry of an empty scan.
     """
     from diffscan import changed, snap
 
+    emit = _tee(log, verbose)
+    # A scan that finds nothing is retried: the extra DOWN taps only move the
+    # highlight, and the (v + 1) % 5 test does not care where it starts. Each
+    # press logs how many keyboard polls the game consumed and who held the
+    # foreground, so a failed scan says whether DOWN reached the game at all.
     keep = None
-    for _ in range(3):
-        a = snap(h)
-        inp.tap(DIK["DOWN"], hold_frames=20)
-        time.sleep(0.6)
-        b = snap(h)
-        c = {k: v for k, v in changed(a, b, lo=0, hi=4).items()
-             if v[1] == (v[0] + 1) % 5}
-        keep = c if keep is None else {k: v for k, v in c.items() if k in keep}
-    if verbose:
-        print(f"  menu-index candidates: {len(keep or {})}")
+    for attempt in range(attempts):
+        keep = None
+        for press in range(3):
+            fg_before = foreground_pid()
+            a = snap(h)
+            k0 = inp.key_frame
+            inp.tap(DIK["DOWN"], hold_frames=20)
+            polls = inp.key_frame - k0
+            time.sleep(0.6)
+            b = snap(h)
+            c = {k: v for k, v in changed(a, b, lo=0, hi=4).items()
+                 if v[1] == (v[0] + 1) % 5}
+            keep = c if keep is None else {k: v for k, v in c.items() if k in keep}
+            emit(f"  menu scan {attempt + 1}.{press + 1}: key polls {polls}, "
+                 f"foreground {fg_before}->{foreground_pid()}, "
+                 f"mod-5 {len(c)}, kept {len(keep)}")
+        if keep:
+            break
+    emit(f"  menu-index candidates: {len(keep or {})}")
     if not keep:
         return None
     return sorted(keep)[0]
+
+
+def snapshot_idle(h, inp=None, seconds: float = 15.0, interval: float = 1.0,
+                  log=None, verbose: bool = True, sleep=time.sleep,
+                  now=time.monotonic) -> list[dict]:
+    """Sample the frontend with NO input for `seconds`, one line per sample.
+
+    Reads `SCREEN_ID` and `ui_state` (and the shim's keyboard poll counter and
+    the foreground pid when available) about every `interval` s. Sends no key
+    and writes nothing. It separates "the menu is not interactive yet / the
+    game is not polling" from "keys were sent and lost": if screen and poll
+    counter are live here and a later DOWN scan still finds nothing, the keys
+    are what failed. Returns the samples; `sleep`/`now` are injectable.
+    """
+    emit = _tee(log, verbose)
+    out: list[dict] = []
+    t0 = now()
+    emit(f"  idle snapshot: {seconds:g}s, every {interval:g}s, no input")
+    while True:
+        t = now() - t0
+        row = {"t": round(t, 2), "screen": i32(h, SCREEN_ID), "ui_state": ui_state(h),
+               "key_frame": inp.key_frame if inp is not None else None,
+               "foreground": foreground_pid()}
+        out.append(row)
+        emit(f"  idle t={row['t']:.1f}s screen {row['screen']} ui_state {row['ui_state']} "
+             f"key_frame {row['key_frame']} foreground {row['foreground']}")
+        if t + interval > seconds:
+            break
+        sleep(interval)
+    return out
 
 
 def write_mem(h, addr: int, data: bytes) -> bool:

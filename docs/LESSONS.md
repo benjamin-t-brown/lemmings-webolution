@@ -1366,3 +1366,10 @@ or above (R,G,B order unread). Open: replace versus append, the Out source, defa
 (`obj+8`) and a border quad (`obj+0x1B0`); `0x489B39` insets the fill by 2 and the border by 1 from the rect `0x48A190` builds from
 fields `+0x34..+0x48`. Those fields, the colour meaning of the ctor's 255.0 / 64.0 doubles and the highlight setter are unread, so
 the renderer's panel values stay measured. Evidence: `docs/scratch/phase-b1x-panel-draw-read.md`.
+
+## HUD counter digits replace the words (C2d, 2026-10-23, READ only)
+
+`0x4404FA` zeroes the list count before it builds, so `0x44D316` leaves only digits in the Out and Saved lists. Out is the sum of
+words at `this+0x5070 + idx*2` over the list at `this+0x1FB0` (`0x444ABC`); `0x4CBAB0` has no absolute-address writer. The Saved colour
+object holds 255, 63, 63 (at or above target) or 255, 255, 255 in memory order; R,G,B naming and the default glyph colour are
+unread. Evidence: `docs/scratch/phase-c2d-counters-open-reads.md`.

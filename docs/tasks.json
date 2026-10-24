@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T14:20:00-06:00",
+  "updated": "2026-10-24T14:17:00-06:00",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
@@ -22,7 +22,7 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-footprint-plate-score",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 14:20 MDT",
+      "dispatched_at": "2026-10-24 14:17 MDT",
       "worker_output": null,
       "dispatch_id": "3092565d-db9b-46da-bcfd-0997859714b6"
     },
@@ -45,7 +45,7 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-footprint-plate-score",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 14:20 MDT",
+      "dispatched_at": "2026-10-24 14:17 MDT",
       "worker_output": null,
       "dispatch_id": "29fdd4af-8a0e-454a-a176-1568fe09f87a"
     }
@@ -4750,7 +4750,7 @@
       }
     ],
     "stop_point": "Part 3 scored (pass or fail), part 2 ends without an input the render needs, or an ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 14:20 MDT: c1w plate-box join and c1x colour-key/blend read dispatched. Part 3 waits. MM_DIG_000 reference unnamed.",
+    "handoff": "2026-10-24 14:17 MDT: c1w plate-box join and c1x colour-key/blend read dispatched. Part 3 waits. MM_DIG_000 reference unnamed.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

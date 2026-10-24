@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T16:26:56-06:00",
+  "updated": "2026-10-24T16:27:29-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
       "id": "c1aa-alf-alpha",
       "title": "Read how ^tab .alf bytes become texture alpha (round 1 of 3)",
-      "status": "queued",
+      "status": "running",
       "brief": "build/tmp/c1aa-alf-alpha-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -22,14 +22,14 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-skill-panel-gate",
       "investigation_budget_minutes": 30,
-      "dispatched_at": null,
+      "dispatched_at": "2026-10-24 16:27 MDT",
       "worker_output": null,
       "dispatch_id": null
     },
     {
       "id": "c1ab-prestage-hook",
       "title": "Sample plate stage caches before 0x47261F stores them (round 1 of 3)",
-      "status": "queued",
+      "status": "running",
       "brief": "build/tmp/c1ab-prestage-hook-brief.md",
       "worker_tier": "targeted",
       "work_kind": "offline hook dry-check",
@@ -45,7 +45,7 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-skill-panel-gate",
       "investigation_budget_minutes": 30,
-      "dispatched_at": null,
+      "dispatched_at": "2026-10-24 16:27 MDT",
       "worker_output": null,
       "dispatch_id": null
     }
@@ -71,7 +71,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 16:26 MDT: C1 skill panel. c1y and c1z are in the phase history. Queued, not yet dispatched: c1aa (0x47E40D alpha rule, round 1 of 3) and c1ab (pre-stage hook sample, round 1 of 3). Both offline. Stock starts 0 of 3. Pass started 16:21:48.",
+    "handoff": "2026-10-24 16:27 MDT: C1 skill panel. Dispatched c1aa (0x47E40D alpha rule, round 1 of 3) and c1ab (pre-stage hook sample, round 1 of 3). Both offline, no live owner. Stock starts 0 of 3. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": []

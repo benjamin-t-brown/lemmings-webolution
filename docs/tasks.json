@@ -2,11 +2,15 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c3d-scene-transform-read",
       "title": "C3 scene node placement chain: node-local transform, parent relation, scene-root matrix at draw (Q1 round 2 of 3; also unblocks Q2)",
-      "status": "running",
+      "status": "landed",
+      "blocked_reason": "body cap reached before the draw-time callee: vtable +4 callee of 0x47496d (likely 0x46b6cc via vtable 0x4b19a0, type of root stream unread) and matrix-stack push 0x43be80 UNREAD, so no draw-time placement chain; file-side chain decoded",
+      "worker_output": "build/tmp/c3d-scene-transform-read/round-note.md - READ call skeleton 0x437ba3 -> 0x47496d (push 0x58D5A0, [0x58ce24] repointed to holder+0x34, call [[this+4]+4]); node tail layout: no second matrix after vertices, next node matrix starts 4 B before parser end; chain thenull(diag 10) -> sand7 -> base DECODED; Exit Top matrix has no scale; draw-time terms and root scale 10 propagation UNREAD; about 10 bodies incl. thunks (cap 8 exceeded by thunk reads), REA not used, no game process",
       "brief": "build/tmp/c3d-scene-transform-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -27,11 +31,12 @@
       "standing_run": "c3-scenery-entrance-exit",
       "investigation_budget_minutes": 90,
       "body_cap": 8,
-      "dispatched_at": "2026-10-23 21:58:20 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-23 21:58:20 MDT",
+      "landed_at": "2026-10-23 22:05 MDT",
+      "landed_in": "docs/scratch/phase-c3d-scene-transform-read.md",
+      "disposition": "partial: call skeleton 0x437ba3 -> 0x47496d READ; draw-time callee 0x46b6cc / matrix push 0x43be80 and root scale propagation UNREAD; body cap exceeded by thunks",
+      "facilitator_verified": "2026-10-23: 0x47496d..0x4749a7, vtable 0x4b19a0 and 0x45fdb0 re-read on mouv; script rerun same except saved-file truncation; no game process; no src diff"
+    },
     {
       "id": "c3b-backdrop-read",
       "title": "C3 backdrop scenery: read model, transform, texture binding, draw order, floor ring (Q1 round 1 of 3)",
@@ -3986,11 +3991,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 21:24:54 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 21:24:54 MDT",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Both directive questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 21:58:20 MDT: c3d dispatched (Q1 round 2 of 3), offline read of the node placement chain; unblocks the backdrop and Entrance/Exit renders. Next: verify, land, then render rounds.",
+    "handoff": "2026-10-23 22:05 MDT: c3b, c3c, c3d landed. Q1 has 1 round left (3 of 3), Q2 has 1 (2 of 2). Next: c3e = read 0x46b6cc/0x43be80 and root stream type, render backdrop only if the chain is fully READ. Q2 round 2 waits on c3e (shares the node module). Stock start unspent.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

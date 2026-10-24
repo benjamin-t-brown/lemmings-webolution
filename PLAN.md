@@ -679,7 +679,7 @@ user 2026-10-22.**
 | --- | --- | --- |
 | C1 skill panel | indices identified; icon-draw mechanism live-read, redirected, parked (Phase E) | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
 | C2 counters, cursor, pause caption | **in progress**: counters and timer drawn (C2g; amended gate passes on all ten views, region residual down 27/27; anchor, Out definition and default colour UNREAD); caption panel read (C2e/C2f), measured live (C2h) and drawn without text (C2i; region residual down 10/10, but with the caption exclusion removed the gate fails on initial, canonical and MM_DIG_000; text and blend unread, parked in Phase E); cursor not started | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
-| C3 full frame | queued | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
+| C3 full frame | queued; residual breakdown measured (C3a, 2026-10-23): full frame 0.2098, `rest` 84.7%, skill boxes 11.3%, HUD and caption 2.5%, tube ROI 1.4%, floor ring unbounded, no cause attributed ([note](docs/scratch/phase-c3a-residual-breakdown.md)) | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
 **C1a: physical panel mapping read** ([check](docs/scratch/phase-c1-panel-indices.md)):
 the ten-entry table at `0x45A4DD` is eligibility, distinct from the nine-entry skill

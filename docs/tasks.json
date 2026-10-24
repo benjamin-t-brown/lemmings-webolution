@@ -12,7 +12,7 @@
     "harness": "Claude Code",
     "requested_model": "session model (no pin, per ROLES)",
     "worker_agent": "round-agent",
-    "dispatch_id": "pending",
+    "dispatch_id": "ac2i-caption-render-7b9f2c9ddafa5f5f",
     "owns_live_game": false,
     "live_owner": null,
     "depends_on": [

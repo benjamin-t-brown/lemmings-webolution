@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 02:34:23 MDT",
+  "updated": "2026-10-24 02:36:20 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1j-named-writers-read",
       "title": "C1 remaining named writers: [[0x4CBFB0]+0x10], frame table F, [0x4CBF7C] font, 0x4E33xx copy (part 1a, offline, round 1 of 2)",
-      "status": "ready-for-verify",
+      "status": "landed",
       "brief": "build/tmp/c1j-named-writers-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "offline disassembly read",
@@ -27,11 +29,12 @@
       "standing_run": "c1-observable-entry",
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 01:51:34 MDT",
-      "worker_output": "build/tmp/c1j-named-writers-read/round-note.md"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "worker_output": "build/tmp/c1j-named-writers-read/round-note.md",
+      "landed_at": "2026-10-24 02:36:20 MDT",
+      "landed_in": "docs/scratch/phase-c1j-named-writers-read.md",
+      "facilitator_verified": true,
+      "disposition": "landed; items 2 and 4 READ, 1 and 3 partly; C1h count-font claim corrected; live list shortened; worker ran about 39 min vs 30 limit"
+    },
     {
       "id": "c1k-observable-entry",
       "title": "Make find_menu_index observable: tee to run.log, 15 s no-input snapshot, decide goto_level.py (part 1b, offline, round 1 of 2)",
@@ -4382,11 +4385,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator facilitator-c1-entry (Mac clone, session model, Sonnet 5.5), 2026-10-24 01:50 MDT /facilitator invocation via team-lead; directive active, prior run c1-base-icon-draw stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 01:48:09 MDT",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "After the one start (landed or parked), an ORCHESTRATION stop condition, or a start that crashes or leaves the install unrestored. Do not advance to Q3, C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 02:34:23 MDT: c1k landed (observable entry; goto_level.py landed with c3m patch). c1j (1a named writers) ready-for-verify, being verified. Part 2 (the one start) waits for c1j landing so its READ items are dropped from the probe read list, then prediction.md in build/tmp/c1l-icon-live-read, then one Popen.",
+    "handoff": "2026-10-24 02:36:20 MDT: part 1 done (c1j, c1k landed). Next: part 2, the one stock start with build/tmp/c1k-observable-entry/probe.py (OUT build/tmp/c1l-icon-live-read) and the c1i hook.js; read list minus c1j-READ items; prediction.md first; session-1 scheduled task; no retry after Popen.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null,
     "previous": [

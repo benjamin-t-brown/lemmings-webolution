@@ -234,3 +234,15 @@ plate 0 of each frame. `[0x4C24E0]` is `0xA0`. The blend-cache compare does
 not skip the enable arm. The flag-cache compare skips the later stage writes,
 so the alpha-ref dword was not shown to be stored. Install hashes match.
 The facilitator re-parsed the hook log and re-hashed the three install files.
+
+**C1ac: the mask slot is filled by a 32-byte copy**
+([check](../scratch/phase-c1ac-alpha-mask-writer.md)), 2026-10-24, round 2 of 3,
+offline. The upload never stores `[ebp-0x128]`. That slot is
+`[ebp-0x144+0x1c]`. `0x473C95` calls `0x49D010` with count `0x20`, and
+`0x49D043` / `0x49D1C4` are `rep movsd` into that destination. The popcount
+reads the source dword; the shift reads the copy. Which `rep movsd` runs
+depends on a method that is not in the exe. `call [edx+0x64]` at `0x4736F9`
+receives the record after the zero test and before the shift load, so the
+shift is not shown to count the copied mask. The facilitator re-ran the
+command, re-listed the five reads, and a one-byte change of the `movsd` check
+made it fail. No stock start.

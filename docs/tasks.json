@@ -1,34 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T16:55:10-06:00",
+  "updated": "2026-10-24T16:59:23-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1ac-alpha-mask-writer",
-      "title": "Name the writer of the alpha-mask dword (round 2 of 3)",
-      "status": "running",
-      "brief": "build/tmp/c1ac-alpha-mask-writer-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "disassembly read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [
-        "c1aa-alf-alpha"
-      ],
-      "gate_served": "C1 skill panel; numeric alpha needs the mask dword",
-      "question_round_count": 2,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-skill-panel-gate",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 16:44 MDT",
-      "worker_output": null,
-      "dispatch_id": "f28aa15c-58f4-450b-92d2-3e3964c3954b"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-skill-panel-gate",
@@ -46,11 +20,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 16:21:48 -06:00",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 16:55 MDT: C1 skill panel. c1ad landed: selector 1, flags 8, blend cache 0x10620C1F; stage writes past the flag compare were not shown. c1ac is running. Stock starts 1 of 3. Plate render waits on the mask writer. Pass started 16:21:48.",
+    "handoff": "2026-10-24 16:59 MDT: C1 skill panel. c1ac landed: rep movsd fills [ebp-0x128]; the shift is not shown to count that copy. c1ad landed: selector 1. Stock starts 1 of 3. Next is a dry check of a shift-count hook, no start. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [
@@ -71,6 +45,12 @@
           "dispatched": "2026-10-24 16:44 MDT",
           "landed": "2026-10-24 16:55 MDT",
           "elapsed": "11m 10s"
+        },
+        {
+          "id": "c1ac-alpha-mask-writer",
+          "dispatched": "2026-10-24 16:44 MDT",
+          "landed": "2026-10-24 16:59 MDT",
+          "elapsed": "15m 23s"
         }
       ]
     },

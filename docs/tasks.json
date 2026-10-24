@@ -1,14 +1,16 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 00:34:54 MDT",
+  "updated": "2026-10-24 01:08:00 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1g-base-icon-draw-read",
       "title": "C1 base icon draw read (Q1 round 1 of 2)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/c1g-base-icon-draw-read-brief.md",
-      "worker_output": null,
+      "worker_output": "build/tmp/c1g-base-icon-draw-read/round-note.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
       "harness": "Claude Code",
@@ -24,11 +26,12 @@
       "stock_starts_consumed": 0,
       "standing_run": "c1-base-icon-draw",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 00:34:54 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-24 00:34:54 MDT",
+      "landed_at": "2026-10-24 01:08 MDT",
+      "landed_in": "docs/scratch/phase-c1g-base-icon-draw-read.md",
+      "facilitator_verified": true,
+      "disposition": "landed; LemmingsLO narrowed to unproven; 0x47A75D middle, variant, count font/colour UNREAD"
+    },
     {
       "id": "c3f-entrance-exit-chain",
       "title": "C3 Entrance/Exit: finish the node placement chain, draw only where READ (Q2 round 2 of 2)",
@@ -4261,11 +4264,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-24 00:34:54 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 00:34:54 MDT",
-    "rounds_run": 0,
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-24 00:35 MDT: C1 run started; c1g (Q1 round 1 of 2) running, dispatched 00:34:54, 30-minute limit. Next: verify, then c1h or Q2/Q3 per directive.",
+    "handoff": "2026-10-24 01:08 MDT: c1g landed (Q1 round 1 of 2): base icons drawn by skill-panel object 0x4C91D8 via 0x45B639 -> 0x47A75D; unread: 0x47A75D middle (x adjust, UV), sheet variant, count font/colour. Next: c1h (Q1 round 2) on those bodies; then Q2/Q3 per directive.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

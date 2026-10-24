@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T15:09:57-06:00",
+  "updated": "2026-10-24T15:23:09-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
       "id": "c1y-tab-pixels-decode",
       "title": "Decode ^tab plate pixels (directive part 1a, round 1 of 1)",
-      "status": "running",
+      "status": "ready-for-verify",
       "brief": "build/tmp/c1y-tab-pixels-decode-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -23,31 +23,8 @@
       "standing_run": "c1-tab-blend-render",
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 15:09 MDT",
-      "worker_output": null,
+      "worker_output": "build/tmp/c1y-tab-pixels-decode/round-note.md",
       "dispatch_id": "e3efaa94-c60d-4705-bbf5-7b8e26c9f60d"
-    },
-    {
-      "id": "c1z-plate-blend-hook",
-      "title": "Name the plate blend hook site and dry-check it (directive part 1b, round 1 of 1)",
-      "status": "running",
-      "brief": "build/tmp/c1z-plate-blend-hook-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "disassembly read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C1 skill panel; directive part 1b blend hook site",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-tab-blend-render",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 15:09 MDT",
-      "worker_output": null,
-      "dispatch_id": "e33d1221-bff8-43a9-b39d-b5bc04581b5c"
     }
   ],
   "queue": [],
@@ -67,11 +44,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md",
     "owner": "Cursor facilitator, 2026-10-24 15:06 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff.",
     "started_at": "2026-10-24 15:06:32 MDT",
-    "rounds_run": 0,
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Part 3 scored (pass or fail), part 1 or 2 ends without an input the render needs, an ORCHESTRATION stop, or a start that crashes or leaves the install unrestored. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 15:09 MDT: parts 1a (c1y) and 1b (c1z) running. Part 2 waits for 1b. Part 3 waits for both. mm-dig-stock-frame closed by the directive as option 1.",
+    "handoff": "2026-10-24 15:23 MDT: c1z landed (hook 0x41494F). Live selector and flags unread. c1y still running. Part 2 is next. ^tab pixels still unread. mm-dig-stock-frame closed.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null
   }

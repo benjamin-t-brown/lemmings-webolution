@@ -1,8 +1,59 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T16:44:27-06:00",
+  "updated": "2026-10-24T16:44:46-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1ac-alpha-mask-writer",
+      "title": "Name the writer of the alpha-mask dword (round 2 of 3)",
+      "status": "running",
+      "brief": "build/tmp/c1ac-alpha-mask-writer-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1aa-alf-alpha"
+      ],
+      "gate_served": "C1 skill panel; numeric alpha needs the mask dword",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 16:44 MDT",
+      "worker_output": null,
+      "dispatch_id": null
+    },
+    {
+      "id": "c1ad-plate-blend-live",
+      "title": "Log the plate blend at paused MM_CLIMB_002 (round 1 of 3)",
+      "status": "running",
+      "brief": "build/tmp/c1ad-plate-blend-live-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live blend read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": "c1ad-plate-blend-live",
+      "depends_on": [
+        "c1ab-prestage-hook"
+      ],
+      "gate_served": "C1 skill panel; live blend selector and stage caches",
+      "question_round_count": 1,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 16:44 MDT",
+      "worker_output": null,
+      "dispatch_id": null
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "c1-skill-panel-gate",
@@ -24,7 +75,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 16:44 MDT: C1 skill panel. c1aa landed: sar/shl by the device mask; [ebp-0x128] writer unread. c1ab landed: sample at 0x414944. Stock starts 0 of 3. Next: the mask writer, then the one Frida start. Pass started 16:21:48.",
+    "handoff": "2026-10-24 16:44 MDT: C1 skill panel. c1aa and c1ab landed. Dispatched c1ac (writer of [ebp-0x128], round 2 of 3, offline) and c1ad (one Frida start, round 1 of 3, live owner). Stock starts 0 of 3 until c1ad reports. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [

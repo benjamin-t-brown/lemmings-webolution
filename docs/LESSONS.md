@@ -1387,3 +1387,10 @@ The panel fill colours are constants in the setter `0x489ADC`: (0xE0, 0x80, 0) w
 otherwise, through `0x489A84` (0..255 channel values, no tint on the path); the border is 64.0 x3. The X pad is 0x14 minus the border
 inset of 1 (derived). `panelTop` 1 and `panelHeight` 27 stay measured. Score unchanged at 0.005244. Evidence:
 `docs/scratch/phase-b1y-panel-fields-colour.md`.
+
+## HUD counters and timer drawn (C2g, 2026-10-23, render; reads partial)
+
+Out, Saved and the timer are drawn from the C2c/C2d reads: digits replace the words, right end at 620 (`0x44D288`), Out y 15, Saved y 50, timer
+`MM:SS` at 560,430. The amended A7 gate still passes on all ten views (numerator lower on three, equal on seven, since the HUD boxes hold no
+gate-mask pixels there); the region residual drops in 27 of 27 cells. Right end versus centre, the Out definition, the Saved target word and the
+default glyph colour stay UNREAD. Evidence: `docs/scratch/phase-c2g-counters-timer-render.md`.

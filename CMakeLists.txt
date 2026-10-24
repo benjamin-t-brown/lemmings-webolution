@@ -190,6 +190,11 @@ add_executable(test_menurender src/__test__/test_menurender.cpp src/shell/MenuRe
 target_link_libraries(test_menurender PRIVATE webolution_objects)
 add_test(NAME menurender COMMAND test_menurender)
 
+# C2g: HUD counters and timer layout (font table and widths from MenuRender, read-only).
+add_executable(test_hudtext src/__test__/test_hudtext.cpp src/shell/HudText.cpp src/shell/MenuRender.cpp)
+target_link_libraries(test_hudtext PRIVATE webolution_objects)
+add_test(NAME hudtext COMMAND test_hudtext)
+
 # B2f: frontend screen sequence replayed from the b2e capture. Frontend.cpp is built
 # into the test directly (as test_skillpanel does) so the shared source list stays put.
 add_executable(test_frontend_sequence src/__test__/test_frontend_sequence.cpp src/shell/Frontend.cpp)

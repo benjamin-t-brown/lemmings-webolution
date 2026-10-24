@@ -63,6 +63,10 @@ set(WEBOLUTION_GFX_SOURCES
   # budget). Listed here so it is ready to use the moment a later round
   # identifies the correct sheet and placement rule.
   src/app/SkillPanel.cpp
+  # C2g: HUD counters and timer. MenuRender.cpp (font table, textWidth) is not in the shared
+  # object library, so it is compiled into each executable that uses it.
+  src/shell/HudText.cpp
+  src/shell/MenuRender.cpp
   src/app/main.cpp
 )
 list(TRANSFORM WEBOLUTION_GFX_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")

@@ -31,6 +31,14 @@
 //                     N times before rendering, independent of frame count.
 //                     Implies --sim. Prints the tick, lemming count and every
 //                     live lemming's cell to stderr.
+//   --hud-ticks <N>  headless only (with --shot): after the frame, tick a separate
+//                     sim::World N times and overlay the Out / Saved counters and the
+//                     timer (shell/HudText.h, C2g). Does not change the scene or the
+//                     walkers. Off by default.
+//   --hud-out N       with --hud-ticks: replace the sim's Out count (diagnostic only; used to
+//                     show the layout against a reference that reads a different number).
+//   --hud-colour R,G,B  with --hud-ticks: the Out / timer glyph colour (UNREAD default
+//                     255,255,255; exists only for the sensitivity run).
 //   Debug stand-in, windowed --sim only (not the original skill panel):
 //                     keys 1-8 select Climber, Floater, Bomber, Blocker,
 //                     Builder, Basher, Miner, Digger in that enum order, and
@@ -53,6 +61,7 @@
 #include "assets/LevelIndex.h"
 #include "assets/Png.h"
 #include "sim/RetailLevel.h"
+#include "shell/HudText.h"
 #include "sim/World.h"
 
 #include <cstdint>
@@ -101,6 +110,9 @@ struct Args {
   std::string walkers;
   bool sim = false;
   int simTicks = 0;
+  int hudTicks = -1;
+  std::string hudColour;
+  int hudOut = -1;
 };
 
 Args parseArgs(int argc, char** argv) {
@@ -130,6 +142,9 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--walkers") a.walkers = next();
     else if (arg == "--sim") a.sim = true;
     else if (arg == "--sim-ticks") { a.sim = true; a.simTicks = std::atoi(next().c_str()); }
+    else if (arg == "--hud-ticks") a.hudTicks = std::atoi(next().c_str());
+    else if (arg == "--hud-out") a.hudOut = std::atoi(next().c_str());
+    else if (arg == "--hud-colour") a.hudColour = next();
     else if (arg == "--game-dir") a.gameDir = next();
   }
   if (a.gameDir.empty()) {
@@ -403,7 +418,47 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "tile: %s\n", missing.c_str());
 
   if (!args.shot.empty()) {
-    const Image image = toImage(raster.framebuffer());
+    Image image = toImage(raster.framebuffer());
+    if (args.hudTicks >= 0) {
+      // C2g: HUD overlay from a separate World, so the scene above is untouched.
+      auto setup = sim::loadRetailLevel(*library, args.level);
+      auto sheet = loadTexture(*library, "TEXTURES\\^FONT.BMP");
+      if (!setup || !sheet) {
+        std::fprintf(stderr, "hud: %s\n", (!setup ? setup.error() : sheet.error()).c_str());
+        return 1;
+      }
+      sim::World hudWorld(*setup);
+      for (int i = 0; i < args.hudTicks; ++i)
+        hudWorld.tick();
+      shell::HudValues values;
+      values.out = hudWorld.spawned() - hudWorld.saved() - hudWorld.dead();
+      if (args.hudOut >= 0)
+        values.out = args.hudOut;
+      values.saved = hudWorld.saved();
+      values.saveTarget = setup->saveTarget;
+      values.secondsRemaining =
+          static_cast<int>(hudWorld.timeRemainingTicks() / hudWorld.rules().ticksPerSecond);
+      shell::HudParams hudParams;
+      if (!args.hudColour.empty()) {
+        int r = 0, g = 0, b = 0;
+        if (std::sscanf(args.hudColour.c_str(), "%d,%d,%d", &r, &g, &b) != 3) {
+          std::fprintf(stderr, "hud: --hud-colour wants R,G,B\n");
+          return 1;
+        }
+        hudParams.white = {static_cast<std::uint8_t>(r), static_cast<std::uint8_t>(g),
+                           static_cast<std::uint8_t>(b)};
+      }
+      const auto lines = shell::layoutHud(values, hudParams, shell::fontCells());
+      shell::drawHud(image, *sheet, lines, shell::fontCells());
+      std::fprintf(stderr, "hud: tick=%d out=%d saved=%d target=%d seconds=%d\n", args.hudTicks,
+                   values.out, values.saved, values.saveTarget, values.secondsRemaining);
+      static const char* const names[] = {"out", "saved", "timer"};
+      for (std::size_t i = 0; i < lines.size(); ++i) {
+        const auto box = shell::lineBox(lines[i], shell::fontCells());
+        std::fprintf(stderr, "hud-box: %s %d %d %d %d \"%s\"\n", names[i], box.x0, box.y0, box.x1,
+                     box.y1, lines[i].text.c_str());
+      }
+    }
     if (auto written = writePng(args.shot, image); !written) {
       std::fprintf(stderr, "screenshot: %s\n", written.error().c_str());
       return 1;

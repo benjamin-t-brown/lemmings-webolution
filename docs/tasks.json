@@ -2,11 +2,13 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c2g-counters-timer-render",
       "title": "C2 counters and timer: render Out/Saved/timer and score A7 (Q2 round 3 of 3)",
-      "status": "running",
+      "status": "landed",
       "brief": "build/tmp/c2g-counters-timer-render-brief.md",
       "worker_tier": "targeted",
       "work_kind": "render edit + score",
@@ -27,13 +29,17 @@
       "standing_run": "b1-panel-c2-counters-caption",
       "investigation_budget_minutes": 90,
       "body_cap": 12,
-      "worker_output": null,
-      "landed_in": null,
-      "disposition": null
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "worker_output": "build/tmp/c2g-counters-timer-render/round-note.md",
+      "landed_in": "docs/scratch/phase-c2g-counters-timer-render.md",
+      "disposition": "build/tmp/c2g-counters-timer-render/round-note.md",
+      "landed_at": "2026-10-23 19:22 MDT",
+      "dispatched_at": "2026-10-23 18:55:29 MDT",
+      "facilitator_verified": "2026-10-23: own gate scorer re-renders all ten views, numerators and N equal to the worker, PNGs byte-identical; 0x44D22C bytes and format strings re-read; timer-y mutation alone fails hudtext, restored by hash; ctest 33/33; Mac/mouv hashes equal",
+      "remaining_blockers": [
+        "right end vs centre, Out definition, Saved target word 0x4CBAB0, default glyph colour UNREAD",
+        "gate cannot pass on this directive (skill-panel exclusion stays)"
+      ]
+    },
     {
       "id": "b1y-panel-fields-colour",
       "title": "B1 panel: object fields +0x34..+0x48, colour path, highlight setter (Q1 round 2 of 2)",
@@ -3713,7 +3719,7 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 18:17 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 5,
+    "rounds_run": 6,
     "stock_starts_used": 0,
     "pending_questions": [
       {
@@ -3733,7 +3739,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 19:10 MDT: c2c, b1x, c2d, c2e, b1y landed (Q1 done at cap). In flight: c2g (Q2 round 3, render/score counters and timer). Pending: q3-caption-round-cap. No stock start used.",
+    "handoff": "2026-10-23 19:22 MDT: c2c, b1x, c2d, c2e, b1y, c2g landed (Q1 and Q2 done at their caps). Q3 pending the user's decision q3-caption-round-cap; no stock start used. Nothing running.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

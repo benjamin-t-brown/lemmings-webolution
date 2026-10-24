@@ -4442,7 +4442,7 @@
     "stopped": {
       "date": "2026-10-23 20:17 MDT",
       "reason": "Directive stop point: Q1 and Q2 landed at their caps; Q3 landed at the amended four-round cap (C2e, C2f, C2h, C2i); the caption gate fails on 3 of 10 views and the text and blend are parked in Phase E. No fifth round per the directive.",
-      "last_commit": "see git log"
+      "last_commit": "dbfb08d"
     }
   }
 }

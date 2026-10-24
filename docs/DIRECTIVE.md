@@ -36,6 +36,12 @@ Three questions. 1 and 2 are offline and may run together; 3 owns the live game.
    preflight shows the top edge needs. Then render the caption `[277,422,363,454)` and
    re-score A7 with the caption exclusion removed. If the preflight cannot name what to read,
    skip the start and park.
+   **Amended (user, overlord review 2026-10-23, answering `q3-caption-round-cap` after C2e):
+   cap raised to four rounds.** Round 2 is an offline read (c2f) of the `G+0x25C68` placement
+   bodies `0x47ACF9`, `0x47AC50`, `0x44E150`; round 3 is the one start; round 4 the render. The
+   start runs only if c2f names the live values to read **and** how to decode them into the
+   caption rectangle. If it does not, skip the start and park the caption in Phase E for
+   good. No fifth round.
 
 ## Budget
 
@@ -45,6 +51,10 @@ debugger probe: question 3 reads memory only, as A7m and C1f did.
 
 ## Decisions already made (do not re-ask)
 
+- **`q3-caption-round-cap` answered: authorize c2f and a fourth round**, conditional as in
+  question 3 (user, overlord review 2026-10-23). Q1 and Q2 are landed at their caps; do not
+  reopen them. Fill in the missing `dispatched_at` / `landed_at` for b1x, c2c, c2d and c2e from
+  the commit log, so the pass timing is complete.
 - **B1 accepted on condition** (user, overlord review 2026-10-23): B1w's pass stands; question
   1 replaces the measured panel values with read ones and re-scores. A failing re-score
   reopens B1.

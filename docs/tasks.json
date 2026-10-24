@@ -2,7 +2,32 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": null,
+  "active": {
+    "id": "c2h-caption-live-read",
+    "title": "C2 Paused caption: one live memory read of the G+0x25C90 quad (Q3 round 3 of 4, the one stock start)",
+    "status": "running",
+    "brief": "build/tmp/c2h-caption-live-read-brief.md",
+    "worker_tier": "targeted",
+    "work_kind": "live capture",
+    "harness": "Claude Code",
+    "requested_model": "session model (no pin, per ROLES)",
+    "worker_agent": "round-agent",
+    "dispatch_id": "pending",
+    "owns_live_game": true,
+    "live_owner": "c2h-caption-live-read",
+    "depends_on": [
+      "c2e-caption-preflight",
+      "c2f-caption-placement-read"
+    ],
+    "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
+    "question_round_count": 3,
+    "stock_starts_authorized": 1,
+    "stock_starts_consumed": 0,
+    "standing_run": "b1-panel-c2-counters-caption",
+    "investigation_budget_minutes": 60,
+    "body_cap": 0,
+    "dispatched_at": "2026-10-23 20:00:13 MDT"
+  },
   "queue": [],
   "recently_landed": [
     {

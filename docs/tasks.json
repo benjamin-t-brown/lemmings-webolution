@@ -24,7 +24,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 16:27 MDT",
       "worker_output": null,
-      "dispatch_id": null
+      "dispatch_id": "5497ec2c-4de7-4528-a2b3-a826d834a276"
     },
     {
       "id": "c1ab-prestage-hook",
@@ -47,7 +47,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 16:27 MDT",
       "worker_output": null,
-      "dispatch_id": null
+      "dispatch_id": "a1241aef-628b-46ea-86a5-e56ba906e7b8"
     }
   ],
   "queue": [],
@@ -71,7 +71,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 16:27 MDT: C1 skill panel. Dispatched c1aa (0x47E40D alpha rule, round 1 of 3) and c1ab (pre-stage hook sample, round 1 of 3). Both offline, no live owner. Stock starts 0 of 3. Pass started 16:21:48.",
+    "handoff": "2026-10-24 16:27 MDT: C1 skill panel. Dispatched c1aa (0x47E40D alpha rule, round 1 of 3) and c1ab (pre-stage hook sample, round 1 of 3). Both offline, no live owner. Stock starts 0 of 3. Pass started 16:21:48. Dispatch ids recorded.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": []

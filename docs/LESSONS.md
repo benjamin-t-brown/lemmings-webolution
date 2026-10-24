@@ -1394,3 +1394,10 @@ Out, Saved and the timer are drawn from the C2c/C2d reads: digits replace the wo
 `MM:SS` at 560,430. The amended A7 gate still passes on all ten views (numerator lower on three, equal on seven, since the HUD boxes hold no
 gate-mask pixels there); the region residual drops in 27 of 27 cells. Right end versus centre, the Out definition, the Saved target word and the
 default glyph colour stay UNREAD. Evidence: `docs/scratch/phase-c2g-counters-timer-render.md`.
+
+## Pause caption panel formula (C2f, 2026-10-23, READ; corrects C2e)
+
+The caption panel is not placed by `G+0x25C68`: `0x44E150` is a generic cell-list draw and `+0x14/+0x18` place the glyph text. The panel is
+a quad at `G+0x25C90` written by `0x45D35A call 0x44DC50`: `[half(P40)-half(W)-8, P44-2H, half(P40)+half(W)+8, P44-H+3)` with `P40/P44 =
+[0x58CB40/44]` and W/H the returns of `0x47ACF9` / `0x47AC50`. P40 = 640, P44 = 480, H = 29, W 70..71 reproduce the A7 target; those values
+are measured-from-reference, not read. Evidence: `docs/scratch/phase-c2f-caption-placement-read.md`.

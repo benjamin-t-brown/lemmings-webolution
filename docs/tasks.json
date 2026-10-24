@@ -2,33 +2,39 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "c2f-caption-placement-read",
-    "title": "C2 Paused caption: read placement bodies 0x47ACF9/0x47AC50/0x44E150 and decode G+0x25C68 (Q3 round 2 of 4)",
-    "status": "running",
-    "brief": "build/tmp/c2f-caption-placement-read-brief.md",
-    "worker_tier": "targeted",
-    "work_kind": "disassembly read",
-    "harness": "Claude Code",
-    "requested_model": "session model (no pin, per ROLES)",
-    "worker_agent": "round-agent",
-    "dispatch_id": "ac2f-caption-placement-read-9a096676abde101e",
-    "owns_live_game": false,
-    "live_owner": null,
-    "depends_on": [
-      "c2e-caption-preflight"
-    ],
-    "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
-    "question_round_count": 2,
-    "stock_starts_authorized": 0,
-    "stock_starts_consumed": 0,
-    "standing_run": "b1-panel-c2-counters-caption",
-    "investigation_budget_minutes": 60,
-    "body_cap": 9,
-    "dispatched_at": "2026-10-23 19:30:03 MDT"
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "c2f-caption-placement-read",
+      "title": "C2 Paused caption: read placement bodies 0x47ACF9/0x47AC50/0x44E150 and decode G+0x25C68 (Q3 round 2 of 4)",
+      "status": "landed",
+      "brief": "build/tmp/c2f-caption-placement-read-brief.md",
+      "worker_output": "build/tmp/c2f-caption-placement-read/round-note.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2f-caption-placement-read-9a096676abde101e",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c2e-caption-preflight"
+      ],
+      "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 9,
+      "dispatched_at": "2026-10-23 19:30:03 MDT",
+      "landed_at": "2026-10-23 19:58 MDT",
+      "landed_in": "docs/scratch/phase-c2f-caption-placement-read.md",
+      "disposition": "decodable yes: panel is a quad at G+0x25C90 (0x44DC50 at 0x45D35A), formula READ, P40/P44/W/H unmeasured; one start justified for the live dump",
+      "facilitator_verified": "2026-10-23: re-read 0x45D2A8..0x45D340, 0x44DC50, 0x45E31C..0x45E342, 0x44E150 on the exe; own forward scan W70-72xH29-30; selftest 27/27 on mouv; +3->+4 mutation alone fails forward check, restored by hash"
+    },
     {
       "id": "c2g-counters-timer-render",
       "title": "C2 counters and timer: render Out/Saved/timer and score A7 (Q2 round 3 of 3)",
@@ -3751,7 +3757,7 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 19:28 MDT /facilitator invocation; directive amended 19:28 (c2f + fourth caption round authorized), prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 6,
+    "rounds_run": 7,
     "stock_starts_used": 0,
     "pending_questions": [
       {
@@ -3772,7 +3778,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 19:30 MDT: Q1/Q2 landed at caps; q3-caption-round-cap answered (authorize c2f + round 4). Dispatching c2f (offline read of 0x47ACF9, 0x47AC50, 0x44E150 placement). Start only if c2f names the live values and decode; else park caption in PLAN Phase E for good. No fifth round. stock_starts_used 0.",
+    "handoff": "2026-10-23 2026-10-23 19:58 MDT: c2f landed (decodable yes). Next: write and lint c2g-style brief for Q3 round 3 (one stock start, memory reads only, extended G+0x25C90 dump 0x170), then round 4 render. stock_starts_used 0.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

@@ -6,7 +6,7 @@
     {
       "id": "c2e-caption-preflight",
       "title": "C2 Paused caption preflight: fields the top edge needs, read-only live script (no start)",
-      "status": "running",
+      "status": "ready-for-verify",
       "brief": "build/tmp/c2e-caption-preflight-brief.md",
       "worker_tier": "targeted",
       "work_kind": "offline preflight + script",
@@ -24,7 +24,7 @@
       "standing_run": "b1-panel-c2-counters-caption",
       "investigation_budget_minutes": 60,
       "body_cap": 12,
-      "worker_output": null,
+      "worker_output": "build/tmp/c2e-caption-preflight/round-note.md",
       "landed_in": null,
       "disposition": null
     },
@@ -52,6 +52,33 @@
       "investigation_budget_minutes": 60,
       "body_cap": 12,
       "worker_output": "build/tmp/c2d-counters-open-reads/round-note.md",
+      "landed_in": null,
+      "disposition": null
+    },
+    {
+      "id": "b1y-panel-fields-colour",
+      "title": "B1 panel: object fields +0x34..+0x48, colour path, highlight setter (Q1 round 2 of 2)",
+      "status": "running",
+      "brief": "build/tmp/b1y-panel-fields-colour-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read + render edit",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab1y-panel-fields-colour-557b2e682d9b626b",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b1x-panel-draw-read"
+      ],
+      "gate_served": "B1 accepted-on-condition; directive Q1",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 12,
+      "worker_output": null,
       "landed_in": null,
       "disposition": null
     }
@@ -3652,7 +3679,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 18:45 MDT: c2c landed (edf222e). In flight: b1x (Q1), c2e (Q3 preflight), c2d (Q2 round 2, open reads). Next: verify each as it returns, land separately; Q2 round 3 is the render/score. No stock start used.",
+    "handoff": "2026-10-23 18:50 MDT: c2c (edf222e) and b1x (a199ce5) landed. In flight: c2e (Q3 preflight), c2d (Q2 round 2), b1y (Q1 round 2, final). Next: verify each as it returns, land separately; Q2 round 3 is the render/score. No stock start used.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

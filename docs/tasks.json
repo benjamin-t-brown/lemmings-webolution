@@ -1,8 +1,34 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 00:59:55 MDT",
+  "updated": "2026-10-24 01:00:48 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1h-icon-placement-count-read",
+      "title": "C1 icon placement, sheet variant, count font/colour (Q1 round 2 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c1h-icon-placement-count-read-brief.md",
+      "worker_output": null,
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": null,
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1g-base-icon-draw-read"
+      ],
+      "gate_served": "C1 skill panel (directive 2026-10-24)",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-base-icon-draw",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 01:00:48 MDT"
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -4268,7 +4294,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-24 00:59 MDT: c1g landed (Q1 round 1 of 2): base icons drawn by skill-panel object 0x4C91D8 via 0x45B639 -> 0x47A75D; unread: 0x47A75D middle (x adjust, UV), sheet variant, count font/colour. Next: c1h (Q1 round 2) on those bodies; then Q2/Q3 per directive.",
+    "handoff": "2026-10-24 01:00:48 MDT: c1g landed; c1h (Q1 round 2 of 2) running, 30-minute limit. Then Q2/Q3 per directive.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

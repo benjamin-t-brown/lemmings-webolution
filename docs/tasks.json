@@ -2,29 +2,7 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c3j-stack-bottom-live",
-      "title": "C3 scene matrix stack bottom 0x58D5A0: the one live memory read at the A6 repair 4 pause (Q2 round 2 of 2)",
-      "status": "running",
-      "brief": "build/tmp/c3j-stack-bottom-live-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "live memory read",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "owns_live_game": true,
-      "live_owner": "c3j",
-      "depends_on": [],
-      "gate_served": "C3 full frame; directive Q2",
-      "question_round_count": 2,
-      "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
-      "standing_run": "c3-scene-chain-render",
-      "investigation_budget_minutes": 60,
-      "dispatched_at": "2026-10-23 23:31:32 MDT"
-    }
-  ],
+  "active": [],
   "queue": [],
   "recently_landed": [
     {
@@ -4137,6 +4115,32 @@
       "landed_in": "docs/scratch/phase-c3h-stack-bottom-preflight.md",
       "disposition": "Stack bottom named from bytes: element 0 = per-frame push of [0x58D3D8] at 0x45DD7B (pop 0x45E347), element 1 at 0x474979; pop copies nothing; [0x58CE24] is a this pointer; read-only live script ready (selftest 40/40 mouv), not run; one start justified",
       "facilitator_verified": "2026-10-23: re-read push/pop sites, 0x43C326/0x43C45A pop-copies-nothing, paused-frame path 0x45E31C-0x45E347 on mouv; selftest 40/40; mutate data offset and base matrix address each fail one check on a /tmp copy, sha1 restored; A4 note line 78 flagged as superseded; worker ~14 bodies vs cap 10"
+    },
+    {
+      "id": "c3j-stack-bottom-live",
+      "title": "C3 scene matrix stack bottom 0x58D5A0: the one live memory read at the A6 repair 4 pause (Q2 round 2 of 2)",
+      "status": "landed",
+      "worker_output": "build/tmp/c3j-stack-bottom-live/round-note.md - BLOCKED: the one start (pid 40752) failed before any read: A7p enter_level raised 'no menu highlight' at 23:32:58; polls empty, no read of 0x58D5A0/0x58D3D8/0x58CE24, P1-P8 untested; hashes restored (exe/SavedGame/dgVoodoo equal recorded), no game process, no LemWeb task; cause unread; REA not used",
+      "brief": "build/tmp/c3j-stack-bottom-live-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live memory read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C3 full frame; directive Q2",
+      "question_round_count": 2,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "standing_run": "c3-scene-chain-render",
+      "investigation_budget_minutes": 60,
+      "dispatched_at": "2026-10-23 23:31:32 MDT",
+      "landed_in": "docs/scratch/phase-c3j-stack-bottom-live.md",
+      "landed_at": "2026-10-23 23:36 MDT",
+      "disposition": "BLOCKED at the one start: A7p enter_level raised \"no menu highlight\" (capture.py:678) 20 s after launch; zero reads of 0x58D5A0/0x58D3D8/0x58CE24; P1-P8 untested; hashes restored, no process or task left; cause UNREAD; Q2 parked, needs a new start grant",
+      "facilitator_verified": "2026-10-23: run.log and stack-bottom.json re-read (traceback, empty polls/judge); separate ssh: no game process, no LemWeb task; recorded hashes equal the cleanup hashes; not re-hashed independently"
     }
   ],
   "standing_run": {
@@ -4155,11 +4159,23 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 22:39:01 MDT /facilitator invocation; directive 943cd7e active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 22:39:01 MDT",
-    "rounds_run": 3,
-    "stock_starts_used": 0,
-    "pending_questions": [],
+    "rounds_run": 4,
+    "stock_starts_used": 1,
+    "pending_questions": [
+      {
+        "id": "q2-second-start",
+        "question": "Q2 (stack bottom 0x58D5A0) is unanswered: the directive's one start failed in A7p enter_level before any read. May a second memory-only start be spent?",
+        "options": [
+          "Offline diagnosis of the menu-highlight failure first, then one start with the unchanged reader",
+          "One more start now with the unchanged entry (risk: same failure)",
+          "Park Q2 and C3 render until the entry is understood"
+        ],
+        "recommendation": "Option 1: an offline round on find_menu_index (goto_level.py:200) and the 15 s post-launch menu state, then one grant. The failure is in shared entry code, not the reader.",
+        "evidence": "docs/scratch/phase-c3j-stack-bottom-live.md"
+      }
+    ],
     "stop_point": "All three questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 23:31:32 MDT: c3j dispatched (Q2 round 2, the one memory-only start, owns live game).",
+    "handoff": "2026-10-23 23:36 MDT: stopped at the directive stop point; C3 render not started. See pending_questions q2-second-start.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4848,6 +4864,11 @@
           "last_commit": "see git log (c3f landing)"
         }
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-23 23:36 MDT",
+      "reason": "Directive stop point: Q1 parked at 2 of 2 rounds, Q2's one start consumed with no read (entry failure, install restored), Q3 gated on Q1+Q2 and not run",
+      "last_commit": "filled at commit"
+    }
   }
 }

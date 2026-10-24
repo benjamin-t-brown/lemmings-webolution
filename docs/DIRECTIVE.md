@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-23 23:37 MDT: Q1 parked at 2 of 2 rounds, Q2 start consumed with no read, Q3 not run; see standing_run.stopped)
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the C3 scenery directive, done 2026-10-23 (both questions parked at their caps,
 nothing rendered, no start spent; backdrop is an LVL-embedded model tree drawn at `0x441879`

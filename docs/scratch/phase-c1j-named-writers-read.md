@@ -1,7 +1,7 @@
 # C1j: remaining named writers for the C1 live-read list (directive part 1a, offline, round 1 of 2)
 
 Queue `c1j-named-writers-read`. Worker packet `build/tmp/c1j-named-writers-read/round-note.md`, `prediction.md`, `verify.py` /
-`verify.log`. Dispatched 01:51:34 MDT, packet 02:30, landed 02:41 MDT (worker ran about 39 min against the 30-minute limit,
+`verify.log`. Dispatched 01:51:34 MDT, packet 02:30, landed 02:36 MDT (worker ran about 39 min against the 30-minute limit,
 the overrun spent re-decoding its citations). Capstone only, REA not used, no game, no debugger, no `src/**` or `tools/**` edit.
 `G = 0x4C6A08`.
 

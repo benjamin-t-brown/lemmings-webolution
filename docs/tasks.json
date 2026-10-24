@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-23 23:57:12 MDT",
+  "updated": "2026-10-24 00:19:27 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
@@ -22,27 +22,6 @@
       "stock_starts_consumed": 0,
       "standing_run": "c3-chain-offline-render",
       "investigation_budget_minutes": 75,
-      "dispatched_at": "2026-10-23 23:49:57 MDT"
-    },
-    {
-      "id": "c3l-scene-reads",
-      "title": "C3 per-kind draws, kind 5/7 readers, type-2 load, cull inputs (Q1 round 2 of 2)",
-      "status": "running",
-      "brief": "build/tmp/c3l-scene-reads-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "offline disassembly read",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C3 full frame; directive Q1",
-      "question_round_count": 2,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c3-chain-offline-render",
-      "investigation_budget_minutes": 90,
       "dispatched_at": "2026-10-23 23:49:57 MDT"
     }
   ],
@@ -4210,6 +4189,32 @@
       "landed_in": "docs/scratch/phase-c3m-menu-entry-diagnosis.md",
       "disposition": "Cause of c3j \"no menu highlight\" NOT NAMED: script, launcher, session, conf, hashes equal c2h/a7p; c3j scan took 15 s vs 11-12 s for a whole entered entry; c3j kept no state.json or stdout; d2b pid 47392 is a prior 0-candidate precedent. fix.patch (retry x3 + per-press key-poll/foreground logging) proposed, not applied, untested live. Q3 second condition (named and fixed) not met.",
       "facilitator_verified": "2026-10-23: re-read c3j and five entered runs timestamps, d2b line, LRInput.key_frame, git apply --check; launcher diff and d2b run.log not re-derived"
+    },
+    {
+      "id": "c3l-scene-reads",
+      "title": "C3 per-kind draws, kind 5/7 readers, type-2 load, cull inputs (Q1 round 2 of 2)",
+      "status": "landed",
+      "worker_output": "build/tmp/c3l-scene-reads/round-note.md - READ: kind 5 = 160 B (u32 + 3 x 52 B element, 0x46b0d0/0x46b100->0x479fad/0x47a130, table 0x4c21f0[5]=0x469b49->0x46a140) and kind 7 = 212 B (u32 + 4 x 52, 0x46b3d0->0x46b420->0x47a077, [7]=0x469b8d->0x46a1e0) now READ; brief's 0x46af80 is a different (kind 0) reader. Type-2 load = vtable 0x4b1ad8+0xc 0x47b44c: f64x3, u8, u8, branch on [+0x338] (0: string+f64x4; 1: 0x468bf2 u32x4+string), u32, node head 0x46bb73; reads.py parses the scenery record past 0x967a2 (17 type-2, ends 0x98d41, 29-child thenull) plus Entrance/Exit; 16259 B block after 0x98d41 is UNREAD. Kind-1 draw 0x46a280->0x46a810 emits 3 vertices per record by record index into [0x58ce24] (copies 16/24/8 B fields); field names, 0x43bd80 bind, 0x58d498 object NOT read. Prediction miss: type-2 is not 'f64 header + head'. BODY CAP EXCEEDED (~17 vs 10; listed in note). REA not used. Game process: none.",
+      "brief": "build/tmp/c3l-scene-reads-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C3 full frame; directive Q1",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c3-chain-offline-render",
+      "investigation_budget_minutes": 90,
+      "dispatched_at": "2026-10-23 23:49:57 MDT",
+      "landed_at": "2026-10-24 00:19:27 MDT",
+      "landed_in": "docs/scratch/phase-c3l-scene-reads.md",
+      "disposition": "Kind 5 (160 B) and kind 7 (212 B) READ via shared 52 B element 0x47a130; type-2 load 0x47b44c READ (two-way branch on +0x338); scenery record 2 parses past 0x967a2 to 0x98d41; kind-1 draw order = record order; 0x43bd80, 0x418350, 0x46d372, type-2 draw, 0x58d498 UNREAD; 16259 B block UNREAD. Body cap breached (~17 vs hard cap 10).",
+      "facilitator_verified": "2026-10-24: re-read 0x47b44c and 0x47a130 on mouv; independent LVL tag/string scan agrees; reads.py rerun byte-identical; mutate kind-7 and kind-5 element counts alone each drop parsed records (4 -> 1, 4 -> 2); kind-1/5 draws and +0x338==1 branch not re-read"
     }
   ],
   "standing_run": {
@@ -4228,11 +4233,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 23:49:57 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 23:49:57 MDT",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 23:57:12 MDT: c3m landed (cause not named, fix.patch unapplied; Q3 not triggered). c3k and c3l running.",
+    "handoff": "2026-10-24 00:19:27 MDT: c3m, c3l landed (c3l body cap breached ~17/10). c3k (stack bottom) still running; Q3 needs Q2 named+fixed (not met). Render needs 0x43bd80, type-2 draw, 0x418350, 0x46d372 and stack bottom.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

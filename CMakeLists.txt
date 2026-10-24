@@ -195,6 +195,11 @@ add_executable(test_hudtext src/__test__/test_hudtext.cpp src/shell/HudText.cpp 
 target_link_libraries(test_hudtext PRIVATE webolution_objects)
 add_test(NAME hudtext COMMAND test_hudtext)
 
+# C2i: pause caption panel rectangle and fill.
+add_executable(test_pausecaption src/__test__/test_pausecaption.cpp src/shell/PauseCaption.cpp)
+target_link_libraries(test_pausecaption PRIVATE webolution_objects)
+add_test(NAME pausecaption COMMAND test_pausecaption)
+
 # B2f: frontend screen sequence replayed from the b2e capture. Frontend.cpp is built
 # into the test directly (as test_skillpanel does) so the shared source list stays put.
 add_executable(test_frontend_sequence src/__test__/test_frontend_sequence.cpp src/shell/Frontend.cpp)

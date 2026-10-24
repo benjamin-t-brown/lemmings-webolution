@@ -1408,3 +1408,10 @@ In the paused frame (`ui_state == 1`) the quad at `G+0x25C90` holds 277 / 422 / 
 `[0x58CB40]` 640, `[0x58CB44]` 480 and `G+0x25C68+0x14/+0x18` 285 / 422 (so `half(W)` 35 and `H` 29, derived). The C2f formula reproduces the
 A7 reference rect from read inputs. Whether the doubles are final pixels (no scale before raster) and the panel colour are unread. Evidence:
 `docs/scratch/phase-c2h-caption-live-read.md`.
+
+## Pause caption panel drawn, gate not met (C2i, 2026-10-23, render)
+
+The panel (rectangle MEASURED, fill black and alpha 128/255 HYPOTHESIS from the setter immediates, blend ours) lowers the caption-region
+residual on 10 of 10 A7 views, but with the caption exclusion removed the amended gate still fails on `initial`, `canonical` and `MM_DIG_000`
+(initial 2879334 against 2742219). The "Paused" glyphs (key `STR_PAUSED`, consumer unread), the blend in `0x46D460` and the tube rows under the
+panel are the remainder. Evidence: `docs/scratch/phase-c2i-caption-render.md`.

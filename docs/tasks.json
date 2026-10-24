@@ -2,33 +2,39 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "c2i-caption-render",
-    "title": "C2 Paused caption: render the panel and re-score A7 with the caption exclusion removed (Q3 round 4 of 4)",
-    "status": "running",
-    "brief": "build/tmp/c2i-caption-render-brief.md",
-    "worker_tier": "targeted",
-    "work_kind": "render edit + score",
-    "harness": "Claude Code",
-    "requested_model": "session model (no pin, per ROLES)",
-    "worker_agent": "round-agent",
-    "dispatch_id": "ac2i-caption-render-7b9f2c9ddafa5f5f",
-    "owns_live_game": false,
-    "live_owner": null,
-    "depends_on": [
-      "c2h-caption-live-read"
-    ],
-    "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
-    "question_round_count": 4,
-    "stock_starts_authorized": 0,
-    "stock_starts_consumed": 0,
-    "standing_run": "b1-panel-c2-counters-caption",
-    "investigation_budget_minutes": 90,
-    "body_cap": 4,
-    "dispatched_at": "2026-10-23 20:05:35 MDT"
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "c2i-caption-render",
+      "title": "C2 Paused caption: render the panel and re-score A7 with the caption exclusion removed (Q3 round 4 of 4)",
+      "status": "landed",
+      "worker_output": "build/tmp/c2i-caption-render/round-note.md",
+      "brief": "build/tmp/c2i-caption-render-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "render edit + score",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2i-caption-render-7b9f2c9ddafa5f5f",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c2h-caption-live-read"
+      ],
+      "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
+      "question_round_count": 4,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 90,
+      "body_cap": 4,
+      "dispatched_at": "2026-10-23 20:05:35 MDT",
+      "landed_at": "2026-10-23 20:17 MDT",
+      "landed_in": "docs/scratch/phase-c2i-caption-render.md",
+      "disposition": "panel drawn (rect MEASURED, fill/alpha HYPOTHESIS), no text; region residual down 10/10; gate with caption exclusion removed FAILS on initial, canonical, MM_DIG_000; parked in Phase E",
+      "facilitator_verified": "2026-10-23: own pixel loop on the saved PNGs equals the worker on all ten views; setters 0x44DBC0/0x44DCC0/0x44DD20 re-read; alpha 128->127 alone fails 3 pausecaption checks, restored by sha1; ctest 34/34 on mouv"
+    },
     {
       "id": "c2h-caption-live-read",
       "title": "C2 Paused caption: one live memory read of the G+0x25C90 quad (Q3 round 3 of 4, the one stock start)",
@@ -3812,7 +3818,7 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 19:28 MDT /facilitator invocation; directive amended 19:28 (c2f + fourth caption round authorized), prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 8,
+    "rounds_run": 9,
     "stock_starts_used": 1,
     "pending_questions": [
       {
@@ -3833,7 +3839,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 2026-10-23 20:04 MDT: c2h landed (the one start used, quad read live). Next: Q3 round 4, render the caption panel and re-score A7 with the caption exclusion removed. No further starts.",
+    "handoff": "2026-10-23 20:17 MDT: directive done. Q3 caption panel drawn, gate with the caption exclusion removed fails on initial, canonical, MM_DIG_000; text and blend parked in PLAN Phase E. stock_starts_used 1 of 1. Nothing running. Next directive needed from the overlord.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4433,6 +4439,10 @@
         "facilitator_started_epoch": 1792794664
       }
     ],
-    "stopped": null
+    "stopped": {
+      "date": "2026-10-23 20:17 MDT",
+      "reason": "Directive stop point: Q1 and Q2 landed at their caps; Q3 landed at the amended four-round cap (C2e, C2f, C2h, C2i); the caption gate fails on 3 of 10 views and the text and blend are parked in Phase E. No fifth round per the directive.",
+      "last_commit": "see git log"
+    }
   }
 }

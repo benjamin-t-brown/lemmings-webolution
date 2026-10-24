@@ -66,6 +66,8 @@ set(WEBOLUTION_GFX_SOURCES
   # C2g: HUD counters and timer. MenuRender.cpp (font table, textWidth) is not in the shared
   # object library, so it is compiled into each executable that uses it.
   src/shell/HudText.cpp
+  # C2i: pause caption panel.
+  src/shell/PauseCaption.cpp
   src/shell/MenuRender.cpp
   src/app/main.cpp
 )

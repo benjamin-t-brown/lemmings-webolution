@@ -39,6 +39,10 @@
 //                     show the layout against a reference that reads a different number).
 //   --hud-colour R,G,B  with --hud-ticks: the Out / timer glyph colour (UNREAD default
 //                     255,255,255; exists only for the sensitivity run).
+//   --pause-caption   headless only (with --shot): overlay the paused-frame caption panel
+//                     (shell/PauseCaption.h, C2i). Panel only; the text is UNREAD.
+//   --caption-alpha N  with --pause-caption: panel alpha (HYPOTHESIS 128 of 255; sensitivity only)
+//   --caption-fill R,G,B  with --pause-caption: panel colour (HYPOTHESIS 0,0,0; sensitivity only)
 //   Debug stand-in, windowed --sim only (not the original skill panel):
 //                     keys 1-8 select Climber, Floater, Bomber, Blocker,
 //                     Builder, Basher, Miner, Digger in that enum order, and
@@ -62,6 +66,7 @@
 #include "assets/Png.h"
 #include "sim/RetailLevel.h"
 #include "shell/HudText.h"
+#include "shell/PauseCaption.h"
 #include "sim/World.h"
 
 #include <cstdint>
@@ -113,6 +118,9 @@ struct Args {
   int hudTicks = -1;
   std::string hudColour;
   int hudOut = -1;
+  bool pauseCaption = false;
+  int captionAlpha = -1;
+  std::string captionFill;
 };
 
 Args parseArgs(int argc, char** argv) {
@@ -145,6 +153,9 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--hud-ticks") a.hudTicks = std::atoi(next().c_str());
     else if (arg == "--hud-out") a.hudOut = std::atoi(next().c_str());
     else if (arg == "--hud-colour") a.hudColour = next();
+    else if (arg == "--pause-caption") a.pauseCaption = true;
+    else if (arg == "--caption-alpha") a.captionAlpha = std::atoi(next().c_str());
+    else if (arg == "--caption-fill") a.captionFill = next();
     else if (arg == "--game-dir") a.gameDir = next();
   }
   if (a.gameDir.empty()) {
@@ -458,6 +469,25 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "hud-box: %s %d %d %d %d \"%s\"\n", names[i], box.x0, box.y0, box.x1,
                      box.y1, lines[i].text.c_str());
       }
+    }
+    if (args.pauseCaption) {
+      // C2i: paused frames only; the panel is drawn over the finished frame and HUD.
+      shell::CaptionParams caption;
+      if (args.captionAlpha >= 0)
+        caption.alpha = args.captionAlpha;
+      if (!args.captionFill.empty()) {
+        int r = 0, g = 0, b = 0;
+        if (std::sscanf(args.captionFill.c_str(), "%d,%d,%d", &r, &g, &b) != 3) {
+          std::fprintf(stderr, "caption: --caption-fill wants R,G,B\n");
+          return 1;
+        }
+        caption.fill = {static_cast<std::uint8_t>(r), static_cast<std::uint8_t>(g),
+                        static_cast<std::uint8_t>(b)};
+      }
+      shell::drawCaptionPanel(image, caption);
+      std::fprintf(stderr, "caption: rect %d %d %d %d alpha %d/%d fill %d,%d,%d\n", caption.rect.x0,
+                   caption.rect.y0, caption.rect.x1, caption.rect.y1, caption.alpha,
+                   caption.alphaScale, caption.fill[0], caption.fill[1], caption.fill[2]);
     }
     if (auto written = writePng(args.shot, image); !written) {
       std::fprintf(stderr, "screenshot: %s\n", written.error().c_str());

@@ -1,35 +1,12 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T14:02:00-06:00",
+  "updated": "2026-10-24T14:16:00-06:00",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "c1u-footprint-mask",
-      "title": "C1 footprint from read geometry, score saved renders before any new drawing (directive part 1)",
-      "status": "running",
-      "brief": "build/tmp/c1u-footprint-mask-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "offline scoring",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C1 skill panel; directive part 1 footprint",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-footprint-plate-score",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 14:02 MDT",
-      "worker_output": null,
-      "dispatch_id": "d937328a-0504-4e17-a2ac-9a212dced90c"
-    },
-    {
       "id": "c1v-plate-draw-read",
       "title": "C1 button-plate draw call, sheet, frame and position (directive part 2, round 1 of 2)",
-      "status": "running",
+      "status": "ready-for-verify",
       "brief": "build/tmp/c1v-plate-draw-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -46,12 +23,39 @@
       "standing_run": "c1-footprint-plate-score",
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 14:02 MDT",
-      "worker_output": null,
+      "worker_output": "build/tmp/c1v-plate-draw-read/round-note.md",
       "dispatch_id": "6cf60802-9d20-4df4-8381-7b2e1bbe83f1"
     }
   ],
   "queue": [],
   "recently_landed": [
+    {
+      "id": "c1u-footprint-mask",
+      "title": "C1 footprint from read geometry, score saved renders before any new drawing (directive part 1)",
+      "status": "landed",
+      "brief": "build/tmp/c1u-footprint-mask-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline scoring",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive part 1 footprint",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-footprint-plate-score",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 14:02 MDT",
+      "worker_output": "build/tmp/c1u-footprint-mask/round-note.md",
+      "dispatch_id": "d937328a-0504-4e17-a2ac-9a212dced90c",
+      "landed_at": "2026-10-24 14:16 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1u-footprint-mask.md; docs/LESSONS.md C1u",
+      "disposition": "Icon and glyph footprint committed. initial render MAE 0.22416530739836685 (880240/3926745), no-panel 0.3317052673397432, both above 0.02. Plates empty. MM_DIG_000 reference-unnamed. Not tuned.",
+      "facilitator_verified": "2026-10-24: overlap loop reproduced 5133/880240/1302522. Icon edges from c1l readings.json plus hook-output.txt, 0 mismatches. Glyph doubles from raw-bytes.json, both snapshots, 0 mismatches. Re-read 0x47A7BB and the -1 arm at 0x47AA53; S=0 path to 0x47AB2A not re-walked. Mutation of icon-0 right 46.5 to 40 moved render MAE to 0.22229241736471836; fixture restored SHA-256 ea9d5cff5377c2f39183b9ef1bc10597bffd3b7bd7123b217f78d5ea72de29a3. ctest 34/34. No game process."
+    },
     {
       "id": "c1t-q3-panel-render",
       "title": "C1 Q3 render: ten skill buttons icons and counts, scored (directive part 3, round 1 of 2)",
@@ -4680,11 +4684,23 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md",
     "owner": "Cursor facilitator, 2026-10-24 14:02 MDT /facilitator on mouv. Prior run stopped, no task was running, so this start is the handoff.",
     "started_at": "2026-10-24 14:02 MDT",
-    "rounds_run": 0,
+    "rounds_run": 1,
     "stock_starts_used": 0,
-    "pending_questions": [],
+    "pending_questions": [
+      {
+        "id": "mm-dig-stock-frame",
+        "question": "C1u left MM_DIG_000 reference-unnamed. May part 3 score that view against build/tmp/a7q-second-level-mask/no_camera_input/baseline.png?",
+        "options": [
+          "Use baseline.png only after an offline check shows it is the A7q live original, with no new stock start",
+          "Leave MM_DIG_000 unscored until a stock frame is named",
+          "Accept the C1 gate on initial alone"
+        ],
+        "recommendation": "Option 1. A7p checks baseline.png against original-0.png, so that name is the live original there. A7q has no second capture file. Confirm from the A7q capture note before scoring. Do not start the game.",
+        "evidence": "docs/scratch/phase-c1u-footprint-mask.md"
+      }
+    ],
     "stop_point": "Part 3 scored (pass or fail), part 2 ends without an input the render needs, or an ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 14:02 MDT: c1u footprint and c1v plate read dispatched, both offline. Part 3 waits. No live game.",
+    "handoff": "2026-10-24 14:16 MDT: c1u landed. Footprint is icons and glyphs; plates empty. initial MAEs 0.22416530739836685 and 0.3317052673397432. MM_DIG_000 reference-unnamed. c1v is ready-for-verify. Part 3 waits.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

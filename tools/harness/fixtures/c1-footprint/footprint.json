@@ -1,0 +1,232 @@
+{
+  "pixel_rule": "A pixel (x, y) is inside [left, right) x [top, bottom) when the pixel square [x, x+1) x [y, y+1) intersects that rectangle. A pixel in two rectangles counts once. Plates are empty.",
+  "plates": [],
+  "icons": [
+    {
+      "id": "icon-0",
+      "left": 35.0,
+      "top": 18.0,
+      "right": 46.5,
+      "bottom": 33.0,
+      "source": "C1s measured 0x47A75D arguments x=39, y=40. C1l frame F+0x30 dx=8, F+0x34 dy=7, F+0x38 width=23, F+0x3C height=30. C1p matched this generic frame to LemmingsHi.spr. Scale 0.5 (generic S=-1) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-1",
+      "left": 29.0,
+      "top": 45.5,
+      "right": 47.0,
+      "bottom": 81.0,
+      "source": "C1s measured 0x47A75D arguments x=37, y=92. C1l frame F+0x30 dx=16, F+0x34 dy=11, F+0x38 width=36, F+0x3C height=71. C1p matched this generic frame to LemmingsHi.spr. Scale 0.5 (generic S=-1) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-2",
+      "left": 29.0,
+      "top": 96.0,
+      "right": 47.0,
+      "bottom": 121.0,
+      "source": "C1s measured 0x47A75D arguments x=38, y=121. C1l frame F+0x30 dx=9, F+0x34 dy=0, F+0x38 width=18, F+0x3C height=25. C1l live F for Grey/Black/Additive (not a Hi frame). Scale 1.0 (special S=0) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-3",
+      "left": 31.0,
+      "top": 138.0,
+      "right": 48.5,
+      "bottom": 157.0,
+      "source": "C1s measured 0x47A75D arguments x=39, y=158. C1l frame F+0x30 dx=16, F+0x34 dy=1, F+0x38 width=35, F+0x3C height=38. C1p matched this generic frame to LemmingsHi.spr. Scale 0.5 (generic S=-1) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-4",
+      "left": 31.5,
+      "top": 177.5,
+      "right": 49.5,
+      "bottom": 196.0,
+      "source": "C1s measured 0x47A75D arguments x=40, y=197. C1l frame F+0x30 dx=17, F+0x34 dy=1, F+0x38 width=36, F+0x3C height=37. C1p matched this generic frame to LemmingsHi.spr. Scale 0.5 (generic S=-1) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-5",
+      "left": 31.0,
+      "top": 219.0,
+      "right": 46.0,
+      "bottom": 237.0,
+      "source": "C1s measured 0x47A75D arguments x=39, y=238. C1l frame F+0x30 dx=16, F+0x34 dy=1, F+0x38 width=30, F+0x3C height=36. C1p matched this generic frame to LemmingsHi.spr. Scale 0.5 (generic S=-1) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-6",
+      "left": 25.0,
+      "top": 252.5,
+      "right": 48.5,
+      "bottom": 277.0,
+      "source": "C1s measured 0x47A75D arguments x=41, y=279. C1l frame F+0x30 dx=32, F+0x34 dy=2, F+0x38 width=47, F+0x3C height=49. C1p matched this generic frame to LemmingsHi.spr. Scale 0.5 (generic S=-1) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-7",
+      "left": 32.5,
+      "top": 300.0,
+      "right": 44.0,
+      "bottom": 315.0,
+      "source": "C1s measured 0x47A75D arguments x=37, y=317. C1l frame F+0x30 dx=9, F+0x34 dy=2, F+0x38 width=23, F+0x3C height=30. C1p matched this generic frame to LemmingsHi.spr. Scale 0.5 (generic S=-1) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-8",
+      "left": 28.0,
+      "top": 339.0,
+      "right": 48.0,
+      "bottom": 355.0,
+      "source": "C1s measured 0x47A75D arguments x=38, y=364. C1l frame F+0x30 dx=10, F+0x34 dy=9, F+0x38 width=20, F+0x3C height=16. C1l live F for Grey/Black/Additive (not a Hi frame). Scale 1.0 (special S=0) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    },
+    {
+      "id": "icon-9",
+      "left": 29.0,
+      "top": 377.0,
+      "right": 44.0,
+      "bottom": 395.0,
+      "source": "C1s measured 0x47A75D arguments x=38, y=410. C1l frame F+0x30 dx=9, F+0x34 dy=15, F+0x38 width=15, F+0x3C height=18. C1l live F for Grey/Black/Additive (not a Hi frame). Scale 1.0 (special S=0) from C1h given C1l [levelScreen+0x10]=0. Edges from the C1t re-read of 0x47A7BB / 0x47AA53 / 0x47AB2A: left=x-dx*scale, top=y-dy-height*scale, right=left+width*scale, bottom=top+height*scale. dy is not scaled. Same three lines as skillPanelRect; the reads are the source."
+    }
+  ],
+  "glyphs": [
+    {
+      "id": "count-0-digit-0",
+      "left": 66.0,
+      "top": 20.0,
+      "right": 72.0,
+      "bottom": 34.0,
+      "source": "C1s raw quad bytes r1_paused.textobj0.quad0 (byte-identical to r2_after_hook.textobj0.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=20.0, x1=72.0, y1=34.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-0-digit-1",
+      "left": 72.0,
+      "top": 20.0,
+      "right": 78.0,
+      "bottom": 34.0,
+      "source": "C1s raw quad bytes r1_paused.textobj0.quad1 (byte-identical to r2_after_hook.textobj0.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=20.0, x1=78.0, y1=34.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-1-digit-0",
+      "left": 66.0,
+      "top": 60.0,
+      "right": 72.0,
+      "bottom": 74.0,
+      "source": "C1s raw quad bytes r1_paused.textobj1.quad0 (byte-identical to r2_after_hook.textobj1.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=60.0, x1=72.0, y1=74.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-1-digit-1",
+      "left": 72.0,
+      "top": 60.0,
+      "right": 78.0,
+      "bottom": 74.0,
+      "source": "C1s raw quad bytes r1_paused.textobj1.quad1 (byte-identical to r2_after_hook.textobj1.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=60.0, x1=78.0, y1=74.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-2-digit-0",
+      "left": 66.0,
+      "top": 100.0,
+      "right": 72.0,
+      "bottom": 114.0,
+      "source": "C1s raw quad bytes r1_paused.textobj2.quad0 (byte-identical to r2_after_hook.textobj2.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=100.0, x1=72.0, y1=114.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-2-digit-1",
+      "left": 72.0,
+      "top": 100.0,
+      "right": 78.0,
+      "bottom": 114.0,
+      "source": "C1s raw quad bytes r1_paused.textobj2.quad1 (byte-identical to r2_after_hook.textobj2.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=100.0, x1=78.0, y1=114.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-3-digit-0",
+      "left": 66.0,
+      "top": 140.0,
+      "right": 72.0,
+      "bottom": 154.0,
+      "source": "C1s raw quad bytes r1_paused.textobj3.quad0 (byte-identical to r2_after_hook.textobj3.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=140.0, x1=72.0, y1=154.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-3-digit-1",
+      "left": 72.0,
+      "top": 140.0,
+      "right": 78.0,
+      "bottom": 154.0,
+      "source": "C1s raw quad bytes r1_paused.textobj3.quad1 (byte-identical to r2_after_hook.textobj3.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=140.0, x1=78.0, y1=154.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-4-digit-0",
+      "left": 66.0,
+      "top": 180.0,
+      "right": 72.0,
+      "bottom": 194.0,
+      "source": "C1s raw quad bytes r1_paused.textobj4.quad0 (byte-identical to r2_after_hook.textobj4.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=180.0, x1=72.0, y1=194.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-4-digit-1",
+      "left": 72.0,
+      "top": 180.0,
+      "right": 78.0,
+      "bottom": 194.0,
+      "source": "C1s raw quad bytes r1_paused.textobj4.quad1 (byte-identical to r2_after_hook.textobj4.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=180.0, x1=78.0, y1=194.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-5-digit-0",
+      "left": 66.0,
+      "top": 220.0,
+      "right": 72.0,
+      "bottom": 234.0,
+      "source": "C1s raw quad bytes r1_paused.textobj5.quad0 (byte-identical to r2_after_hook.textobj5.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=220.0, x1=72.0, y1=234.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-5-digit-1",
+      "left": 72.0,
+      "top": 220.0,
+      "right": 78.0,
+      "bottom": 234.0,
+      "source": "C1s raw quad bytes r1_paused.textobj5.quad1 (byte-identical to r2_after_hook.textobj5.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=220.0, x1=78.0, y1=234.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-6-digit-0",
+      "left": 66.0,
+      "top": 260.0,
+      "right": 72.0,
+      "bottom": 274.0,
+      "source": "C1s raw quad bytes r1_paused.textobj6.quad0 (byte-identical to r2_after_hook.textobj6.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=260.0, x1=72.0, y1=274.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-6-digit-1",
+      "left": 72.0,
+      "top": 260.0,
+      "right": 78.0,
+      "bottom": 274.0,
+      "source": "C1s raw quad bytes r1_paused.textobj6.quad1 (byte-identical to r2_after_hook.textobj6.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=260.0, x1=78.0, y1=274.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-7-digit-0",
+      "left": 66.0,
+      "top": 300.0,
+      "right": 72.0,
+      "bottom": 314.0,
+      "source": "C1s raw quad bytes r1_paused.textobj7.quad0 (byte-identical to r2_after_hook.textobj7.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=300.0, x1=72.0, y1=314.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-7-digit-1",
+      "left": 72.0,
+      "top": 300.0,
+      "right": 78.0,
+      "bottom": 314.0,
+      "source": "C1s raw quad bytes r1_paused.textobj7.quad1 (byte-identical to r2_after_hook.textobj7.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=300.0, x1=78.0, y1=314.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-8-digit-0",
+      "left": 66.0,
+      "top": 340.0,
+      "right": 72.0,
+      "bottom": 354.0,
+      "source": "C1s raw quad bytes r1_paused.textobj8.quad0 (byte-identical to r2_after_hook.textobj8.quad0). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=66.0, y0=340.0, x1=72.0, y1=354.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    },
+    {
+      "id": "count-8-digit-1",
+      "left": 72.0,
+      "top": 340.0,
+      "right": 78.0,
+      "bottom": 354.0,
+      "source": "C1s raw quad bytes r1_paused.textobj8.quad1 (byte-identical to r2_after_hook.textobj8.quad1). readings.json stored colours and the texture handle only. Corner doubles at the C2f 0x44DC50 offsets, which C2h measured as the quad edges: x0=+0x20/+0x88, y0=+0x28/+0x160, x1=+0xF0/+0x158, y1=+0x90/+0xF8. Values x0=72.0, y0=340.0, x1=78.0, y1=354.0. The second digit's x is that stored double, not a pitch added to 66. Icon 9 has no quad."
+    }
+  ]
+}

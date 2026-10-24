@@ -26,7 +26,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 16:59 MDT",
       "worker_output": null,
-      "dispatch_id": null,
+      "dispatch_id": "ab133fcc-d9e9-4372-8fef-734982ac1ffe",
       "fourth_round_note": "A following start would be round 4. It is expected to move the gate because the shift counts are not in the exe and the plate render needs them."
     }
   ],

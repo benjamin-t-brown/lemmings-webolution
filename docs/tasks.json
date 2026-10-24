@@ -26,7 +26,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 16:44 MDT",
       "worker_output": null,
-      "dispatch_id": null
+      "dispatch_id": "f28aa15c-58f4-450b-92d2-3e3964c3954b"
     },
     {
       "id": "c1ad-plate-blend-live",
@@ -39,7 +39,7 @@
       "requested_model": "grok-4.7-high-fast",
       "worker_agent": "round-agent",
       "owns_live_game": true,
-      "live_owner": "c1ad-plate-blend-live",
+      "live_owner": "1497895c-cb69-443e-98eb-aec1c3fec31a",
       "depends_on": [
         "c1ab-prestage-hook"
       ],
@@ -51,7 +51,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 16:44 MDT",
       "worker_output": null,
-      "dispatch_id": null
+      "dispatch_id": "1497895c-cb69-443e-98eb-aec1c3fec31a"
     }
   ],
   "queue": [],

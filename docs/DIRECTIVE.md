@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-24 15:25 MDT: part 1 ended at its cap without a plate image. `^tab` colour bytes are zero. The `.alf` consumer `0x47E40D` is unread. `^tab_selected` was not decoded. The Frida start was not spent. Part 2 and part 3 were not started.)
 Issued: 2026-10-24 (user, overlord review 2026-10-24; "A i approve Frida, go ahead": option A
 of the c1-footprint-plate-score evaluation, with one Frida start for the blend read)
 Supersedes: the footprint directive, done 2026-10-24 14:26 MDT (c1u: icon and glyph footprint;

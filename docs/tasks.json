@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 12:55:30 MDT",
+  "updated": "2026-10-24 12:56:42 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1s-frida-icon-hook",
       "title": "C1 the one stock start: Frida hook on 0x47A75D + count-quad reads (directive part 2)",
-      "status": "ready-for-verify",
+      "status": "landed",
       "brief": "build/tmp/c1s-frida-icon-hook-brief.md",
       "worker_tier": "targeted",
       "work_kind": "live read",
@@ -19,15 +21,16 @@
       "gate_served": "C1 skill panel; directive 2026-10-24 (sheet pixels + hook)",
       "question_round_count": 1,
       "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
+      "stock_starts_consumed": 1,
       "standing_run": "c1-sheet-pixels-hook-render",
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 12:50:05 MDT",
-      "worker_output": "build/tmp/c1s-frida-icon-hook/round-note.md"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "worker_output": "build/tmp/c1s-frida-icon-hook/round-note.md",
+      "landed_at": "2026-10-24 12:56:42 MDT",
+      "landed_in": "docs/scratch/phase-c1s-frida-icon-hook.md",
+      "disposition": "One start (Popen 12:53:01, pid 19004): first Frida attach to the stock game worked (rea instrument-with-frida from ssh, cleanup_error null, game alive). 0x47A75D: 8660 hits/6 s, 4 frames of 10 icons, ECX=0x4C91D8+0x1150+i*0x208, x=39,37,38,39,40,39,41,37,38,38 y=40,92,121,158,197,238,279,317,364,410 = C1g READ args. 72/72 count-quad colour blocks rgb 255.0 alpha 255.0, tex handle 37; [0x58CE4C]=260118840 (Hi); icon 9 text ptr 0. UNREAD: [vertex+0x10], blend 0x46D5F3, later colour writers, colour key 0x47218A.",
+      "facilitator_verified": "2026-10-24: separate ssh after return: 0 Lemming procs, 0 LemWeb tasks, install hashes equal pre-launch; prediction.md mtime 12:51:55 < Popen 12:53:01; hook.js hooks only 0x47A75D; probe writes only the level-table slot (restored). Own script on saved hook-output.txt and readings.json: 4 frames ECX/x/y as stated, 72/72 colour blocks 255, tex handle {37}, free 260118840. Not re-derived: the live reads (one start), remaining 8620 hits. No code change."
+    },
     {
       "id": "c1r-sheet-pixels-decode",
       "title": "C1 sheet BMP pixels: decode $LEMSHEETHI*.BMP members (directive part 1, round 1 of 2)",
@@ -4594,11 +4597,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac clone, session model, Sonnet 5.5), 2026-10-24 12:47:56 MDT /facilitator invocation; directive active, prior run c1-sheet-font-render stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 12:47:56 MDT",
-    "rounds_run": 1,
-    "stock_starts_used": 0,
+    "rounds_run": 2,
+    "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Render scored (pass or fail), part 1 or 2 ends without the input the render needs, an ORCHESTRATION stop, or a start that crashes or leaves the install unrestored. Do not advance to C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 12:55 MDT: c1r landed (sheet pixels READ for the seven generic icons). c1s (the one start, Frida hook on 0x47A75D) is running; Q3 render (c1t) waits for it. Nothing else in flight.",
+    "handoff": "2026-10-24 12:56:42: c1r (sheet pixels) and c1s (the one start, 0x47A75D hook) landed; the directive start is spent. Next: Q3 render (c1t, offline, cap 2 rounds) scored against A7p/A7q with the A7 panel exclusion removed; nothing in flight.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

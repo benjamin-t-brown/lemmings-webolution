@@ -2,11 +2,14 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c3b-backdrop-read",
       "title": "C3 backdrop scenery: read model, transform, texture binding, draw order, floor ring (Q1 round 1 of 3)",
-      "status": "running",
+      "status": "landed",
+      "worker_output": "build/tmp/c3b-backdrop-read/round-note.md - scene is model-driven (LVL-embedded node tree, root thenull @0x59648 in MM_CLIMB_002; no .A3D in box), dispatched before the tube (0x441879 < 0x441884); floor ring UNBOUNDED (root world transform / load path 0x437d48 unread); 5 of 8 bodies, REA not used, no game process",
       "brief": "build/tmp/c3b-backdrop-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -26,11 +29,12 @@
       "standing_run": "c3-scenery-entrance-exit",
       "investigation_budget_minutes": 90,
       "body_cap": 8,
-      "dispatched_at": "2026-10-23 21:26:07 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-23 21:26:07 MDT",
+      "landed_at": "2026-10-23 21:57 MDT",
+      "landed_in": "docs/scratch/phase-c3b-backdrop-read.md",
+      "disposition": "backdrop is an LVL-embedded model tree dispatched before the tube; root world transform, node walk, Z state UNREAD; floor ring UNBOUNDED",
+      "facilitator_verified": "2026-10-23: call order at 0x441879/0x441884 re-read on mouv; script rerun identical; own LVL scan reproduces Object 09 offsets, root matrix and nv=933; census not reproducible, not used; no game process; no src diff"
+    },
     {
       "id": "c3c-entrance-exit-read",
       "title": "C3 entrance and exit models: read placement, mesh, draw order, animation state (Q2 round 1 of 2)",
@@ -3955,11 +3959,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 21:24:54 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 21:24:54 MDT",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Both directive questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 21:50 MDT: c3c landed (Q2 round 1 of 2). c3b still running. Next: c3d (Q2 round 2: resolve Exit width/node-local transform, draw Entrance/Exit where READ, re-score).",
+    "handoff": "2026-10-23 21:57 MDT: c3b and c3c landed. Next: c3d (Q2 round 2, last: Exit width cause, kind-6 stride, draw Entrance/Exit where READ, re-score) and c3e (Q1 round 2: root world transform and node walk, offline read). Conditional stock start unspent.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

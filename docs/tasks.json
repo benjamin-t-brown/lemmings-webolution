@@ -1,8 +1,36 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 01:28:30 MDT",
+  "updated": "2026-10-24 01:31:26 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1i-icon-live-read",
+      "title": "C1 live read of skill-panel icon inputs (Q2, one stock start)",
+      "status": "running",
+      "brief": "build/tmp/c1i-icon-live-read-brief.md",
+      "worker_output": null,
+      "worker_tier": "targeted",
+      "work_kind": "live read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": null,
+      "owns_live_game": true,
+      "live_owner": "c1i-icon-live-read",
+      "depends_on": [
+        "c1g-base-icon-draw-read",
+        "c1h-icon-placement-count-read",
+        "c3m-menu-entry-diagnosis"
+      ],
+      "gate_served": "C1 skill panel (directive 2026-10-24)",
+      "question_round_count": 1,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-base-icon-draw",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 01:31:26 MDT"
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -4297,7 +4325,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-24 01:28 MDT: c1g, c1h landed (Q1 at cap). Q2 condition met: single call 0x47A75D; unread values are runtime (icon+0x1F8/0x1FC, [[0x4CBFB0]+0x10], 0x4E335C.., [0x4CBF7C]+8, frame record F). Next: write Q2 brief (prediction + falsifier first, apply c3m fix.patch to the entry first), then one stock start on mouv.",
+    "handoff": "2026-10-24 01:31:26 MDT: Q1 landed (c1g, c1h; cap). Q2 condition met; c1i running (the one stock start, mouv at c484db9, c3m fix.patch applied by the worker first, no retry after Popen). Next: verify (hash checks, process, prediction mtime before Popen); then Q3 render only if every link is READ or measured-from-reference.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

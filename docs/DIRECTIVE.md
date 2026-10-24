@@ -55,6 +55,16 @@ from dispatch; a round at its limit lands what it has read, names the next body 
 
 - Authorized as scoped above (user, overlord review 2026-10-24), including the first Frida
   attach to the stock game. If it fails, do not request another start on this directive.
+- **The first c1t dispatch (12:59:10) does not count against part 3's two-round cap** (user,
+  overlord review 2026-10-24). Its facilitator (`claude -p`) exited at 13:09:19 and the worker
+  died with it, leaving only `crop_ref.py` / `ref_crop.png`: no prediction, code or score. Mark
+  it interrupted, take over the stale owner (process gone), and redispatch c1t as round 1 of 2.
+- **Termination confirmed (overlord, 2026-10-24 13:21 MDT): the `standing_run.owner` session
+  and the c1t worker are gone.** The Mac Claude Code facilitator was pid 8249; its launcher log
+  `build/tmp/overlord-2026-10-24/facilitator.started` records `exit 0` at 13:09:19; `ps` on the
+  Mac shows no pid 8249 and no `claude -p` process. c1t ran inside it, so no worker survives. The
+  queue's `running` status for `c1t-q3-panel-render` is stale. A `/facilitator` started on mouv
+  (or anywhere) is the handoff: record the new owner, set c1t interrupted, and continue.
 - Frida goes through the REA CLI on mouv over ssh (user, 2026-10-24). Do not change
   `~/.claude.json` on the Mac.
 - Commits and pushes per round are authorized (user, 2026-10-24).

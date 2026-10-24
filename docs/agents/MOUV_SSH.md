@@ -105,3 +105,25 @@ example, the debugger).
   hardware breakpoints, restored writes, the stock exe/`SavedGame.dat`/`dgVoodoo.conf`
   hashes the capture scripts record, and that no `LemWeb-*` scheduled task is left.
 - Delete the scratch scripts you wrote. Leave result files only where the report cites them.
+
+## Frida through the REA CLI (c1o, 2026-10-24)
+
+REA bundles Frida (`rea@6.5.0`, provider Frida); Python `frida` is not needed. **MEASURED:** `rea instrument-with-frida attach`
+run from an ssh (session 0) worker attached to a session-1 process, the hook reported hits, rea detached itself
+(`cleanup_error: null`) and the target stayed alive. The facilitator re-ran it on a fresh target (hook hits n=1..3, target
+`Responding True` after detach, no `LemWeb-*` task, no Lemming process). So no session-1 task is needed for the attach itself.
+Untested: elevation sensitivity, other integrity levels, spawn mode, and attaching to the stock game (never done).
+Worker note: `build/tmp/c1o-frida-preflight/round-note.md`.
+
+1. Preconditions: an `explorer` in session 1; no `LemWeb-*` task; no `*Lemming*` process.
+2. Start a harmless session-1 target with the one-shot task above (`pythonw.exe`, so no console window): a loop calling
+   `kernel32!Sleep(200)`, writing `pid session` to a file and exiting when a stop file exists.
+3. Hook script (`hook.js`): `Process.getModuleByName('kernel32.dll').getExportByName('Sleep')`, `Interceptor.attach` with
+   `onEnter` logging the first three hits, and a `HOOK-INSTALLED` line.
+4. Attach from ssh, with the script path relative to the `cd /d` directory:
+   `rea instrument-with-frida attach <PID> --script-file hook.js --duration-ms 3000 --format json`.
+   `console.log` lines print as plain text before the JSON envelope; require `cleanup_error: null`.
+5. From a separate ssh call, check `Get-Process -Id <PID>` is alive; then create the stop file and confirm the PID is gone.
+   Verify no `LemWeb-*` task and no Lemming process.
+
+A hook on the game is a different step: it needs its own brief, a start budget and the c1l restoration checks.

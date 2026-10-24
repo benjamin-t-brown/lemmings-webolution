@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T16:44:46-06:00",
+  "updated": "2026-10-24T16:55:10-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
@@ -27,31 +27,6 @@
       "dispatched_at": "2026-10-24 16:44 MDT",
       "worker_output": null,
       "dispatch_id": "f28aa15c-58f4-450b-92d2-3e3964c3954b"
-    },
-    {
-      "id": "c1ad-plate-blend-live",
-      "title": "Log the plate blend at paused MM_CLIMB_002 (round 1 of 3)",
-      "status": "running",
-      "brief": "build/tmp/c1ad-plate-blend-live-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "live blend read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": true,
-      "live_owner": "1497895c-cb69-443e-98eb-aec1c3fec31a",
-      "depends_on": [
-        "c1ab-prestage-hook"
-      ],
-      "gate_served": "C1 skill panel; live blend selector and stage caches",
-      "question_round_count": 1,
-      "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
-      "standing_run": "c1-skill-panel-gate",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 16:44 MDT",
-      "worker_output": null,
-      "dispatch_id": "1497895c-cb69-443e-98eb-aec1c3fec31a"
     }
   ],
   "queue": [],
@@ -71,11 +46,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 16:21:48 -06:00",
-    "rounds_run": 2,
-    "stock_starts_used": 0,
+    "rounds_run": 3,
+    "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 16:44 MDT: C1 skill panel. c1aa and c1ab landed. Dispatched c1ac (writer of [ebp-0x128], round 2 of 3, offline) and c1ad (one Frida start, round 1 of 3, live owner). Stock starts 0 of 3 until c1ad reports. Pass started 16:21:48.",
+    "handoff": "2026-10-24 16:55 MDT: C1 skill panel. c1ad landed: selector 1, flags 8, blend cache 0x10620C1F; stage writes past the flag compare were not shown. c1ac is running. Stock starts 1 of 3. Plate render waits on the mask writer. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [
@@ -90,6 +65,12 @@
           "dispatched": "2026-10-24 16:27 MDT",
           "landed": "2026-10-24 16:44 MDT",
           "elapsed": "17m 27s"
+        },
+        {
+          "id": "c1ad-plate-blend-live",
+          "dispatched": "2026-10-24 16:44 MDT",
+          "landed": "2026-10-24 16:55 MDT",
+          "elapsed": "11m 10s"
         }
       ]
     },

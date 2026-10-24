@@ -223,3 +223,14 @@ uses the same `0x45FE10` registration; its BMP is 72 by 32 with nonzero
 colour, and its `.alf` max is 248. The writer of `[ebp-0x128]` was not found.
 The facilitator re-disassembled the shifts and the callback, re-ran the rule
 command, and a one-byte change of the `sar` check made it fail. No stock start.
+
+**C1ad: the paused plate blend selector is 1**
+([check](../scratch/phase-c1ad-plate-blend-live.md)), 2026-10-24, round 1 of 3,
+one stock start. `Popen` 16:48:18, pid 3996, session 1, paused
+`MM_CLIMB_002`. The hook logged 8650 plate hits. All 40 stored records have
+selector 1, descriptor `0x2627270`, flags 8, and blend cache `0x10620C1F`.
+The flag cache matches on every record. The descriptor cache differs only on
+plate 0 of each frame. `[0x4C24E0]` is `0xA0`. The blend-cache compare does
+not skip the enable arm. The flag-cache compare skips the later stage writes,
+so the alpha-ref dword was not shown to be stored. Install hashes match.
+The facilitator re-parsed the hook log and re-hashed the three install files.

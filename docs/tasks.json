@@ -29,6 +29,34 @@
       "worker_output": null,
       "landed_in": null,
       "disposition": null
+    },
+    {
+      "id": "c2g-counters-timer-render",
+      "title": "C2 counters and timer: render Out/Saved/timer and score A7 (Q2 round 3 of 3)",
+      "status": "running",
+      "brief": "build/tmp/c2g-counters-timer-render-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "render edit + score",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": null,
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c2c-counters-timer-read",
+        "c2d-counters-open-reads"
+      ],
+      "gate_served": "C2 counters/timer (directive Q2); amended A7 gate must still pass",
+      "question_round_count": 3,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 90,
+      "body_cap": 12,
+      "worker_output": null,
+      "landed_in": null,
+      "disposition": null
     }
   ],
   "queue": [],

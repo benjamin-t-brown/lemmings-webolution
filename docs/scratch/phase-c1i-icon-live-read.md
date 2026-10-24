@@ -1,7 +1,7 @@
 # C1i: live read of the skill-panel icon inputs, entry failed, parked (Q2, the one stock start)
 
 Queue `c1i-icon-live-read`. Worker packet `build/tmp/c1i-icon-live-read/round-note.md`, `prediction.md`, `run.log`,
-`cleanup-report.json`, `patch-applied.md`. Dispatched 2026-10-24 01:31:26 MDT, blocked at 01:36:44, landed as parked 01:39 MDT.
+`cleanup-report.json`, `patch-applied.md`. Dispatched 2026-10-24 01:31:26 MDT, blocked at 01:36:44, landed as parked 01:38 MDT.
 
 ## Result (MEASURED, negative)
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 01:39:30 MDT",
+  "updated": "2026-10-24 01:38:30 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
@@ -32,7 +32,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 01:31:26 MDT",
       "blocked_reason": "entry failed after the one stock start: find_menu_index returned None after the patched 3x3 DOWN scan (run.log 01:35:47); patch diagnostics went to stdout and were lost; no icon item read",
-      "landed_at": "2026-10-24 01:39 MDT",
+      "landed_at": "2026-10-24 01:38 MDT",
       "landed_in": "docs/scratch/phase-c1i-icon-live-read.md",
       "facilitator_verified": true,
       "disposition": "landed as parked: entry failed after the one start, nothing read; install restored; goto_level.py patch left uncommitted on mouv"
@@ -4329,7 +4329,7 @@
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "Every directive question landed, parked or not triggered, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-24 01:39 MDT: stopped at the directive stop point. Next directive: understand the menu-entry failure offline first (tee find_menu_index to run.log), then one start with build/tmp/c1i-icon-live-read/probe.py and hook.js. mouv tree carries the uncommitted c3m patch in tools/harness/goto_level.py.",
+    "handoff": "2026-10-24 01:38 MDT: stopped at the directive stop point. Next directive: understand the menu-entry failure offline first (tee find_menu_index to run.log), then one start with build/tmp/c1i-icon-live-read/probe.py and hook.js. mouv tree carries the uncommitted c3m patch in tools/harness/goto_level.py.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -5092,7 +5092,7 @@
       }
     ],
     "stopped": {
-      "date": "2026-10-24 01:39 MDT",
+      "date": "2026-10-24 01:38 MDT",
       "reason": "Directive stop point: Q1 landed at 2 of 2 rounds (c1g, c1h); Q2 spent the one start and the menu entry failed again (c1i), parked; Q3 not triggered (placement inputs and count font UNREAD).",
       "last_commit": "8dcf7ca"
     }

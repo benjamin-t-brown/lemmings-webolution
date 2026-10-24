@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done** (2026-10-24 01:39 MDT: Q1 landed c1g, c1h; Q2 c1i entry failed, parked; Q3 not triggered)
+Status: **done** (2026-10-24 01:38 MDT: Q1 landed c1g, c1h; Q2 c1i entry failed, parked; Q3 not triggered)
 Issued: 2026-10-24 (user, overlord review 2026-10-24)
 Supersedes: the C3 chain offline directive, done 2026-10-24 (C3k: stack bottom is the
 per-frame camera block `[0x58D3D8]`, `0x40eb50` READ as row vector times row-major 3x3; C3l:

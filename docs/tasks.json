@@ -4976,7 +4976,7 @@
     "stopped": {
       "date": "2026-10-24 00:28:02 MDT",
       "reason": "Directive stop point: Q1 landed at 2 of 2 rounds (c3k, c3l), Q2 landed (cause not named, patch unapplied), Q3 not triggered (stack bottom settled offline; entry failure not fixed), Q4 not run (per-kind draw links 0x43bd80, 0x418350, 0x46d372, type-2 draw 0x47d0c0 and 0x58d498 still UNREAD). C3 scenery parked in Phase E.",
-      "last_commit": "pending"
+      "last_commit": "ee35c38"
     }
   }
 }

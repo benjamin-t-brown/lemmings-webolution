@@ -3,6 +3,46 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-footprint-plate-score",
+      "goal": "Directive 2026-10-24 (footprint, plate, score). Part 1 offline cap 1: icon and glyph footprint from read geometry, score the saved c1t renders before any new drawing; plate rectangles join before part 3. Part 2 offline cap 2: plate draw, then the zero-count rule, colour key 0x47218A and blend 0x46D5F3. Part 3 offline cap 2 waits for both: draw the plates and the read count rule, score the committed footprint. No stock start.",
+      "milestones": [
+        "C1 skill panel"
+      ],
+      "current": "C1 skill panel",
+      "authorized": "docs/DIRECTIVE.md active, commit 1a0abe5 (user, overlord review 2026-10-24, option A). PLAN.md gate measurement amended: 0.02 over the panel footprint, not the C1b mask. No stock start, no debugger, no Frida. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+      "grants": {
+        "stock_starts": "none",
+        "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+        "concurrency": "up to 2 concurrent offline rounds; no live owner"
+      },
+      "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md",
+      "owner": "Cursor facilitator, 2026-10-24 14:02 MDT /facilitator on mouv. Prior run stopped, no task was running, so this start is the handoff.",
+      "started_at": "2026-10-24 14:02 MDT",
+      "rounds_run": 4,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "id": "mm-dig-stock-frame",
+          "question": "C1u left MM_DIG_000 reference-unnamed. May part 3 score that view against build/tmp/a7q-second-level-mask/no_camera_input/baseline.png?",
+          "options": [
+            "Use baseline.png only after an offline check shows it is the A7q live original, with no new stock start",
+            "Leave MM_DIG_000 unscored until a stock frame is named",
+            "Accept the C1 gate on initial alone"
+          ],
+          "recommendation": "Option 1. A7p checks baseline.png against original-0.png, so that name is the live original there. A7q has no second capture file. Confirm from the A7q capture note before scoring. Do not start the game.",
+          "evidence": "docs/scratch/phase-c1u-footprint-mask.md"
+        }
+      ],
+      "stop_point": "Part 3 scored (pass or fail), part 2 ends without an input the render needs, or an ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
+      "handoff": "2026-10-24 14:26 MDT: stopped. c1x landed. Part 2 cap reached without ^tab pixels, a colour-key test, or a blend mode. Part 3 not started. Next directive from the overlord.",
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-24 14:26 MDT",
+        "reason": "Directive stop: part 2 ended at its cap without an input the render needs. 0x47218A is the texture-loader entry. 0x46D5F3 is call [ecx+0x70]; blend mode unread. ^tab pixels unread. Part 3 not started. No stock start requested.",
+        "last_commit": "8b25611"
+      }
+    },
+    {
       "id": "c1-sheet-pixels-hook-render",
       "goal": "Directive 2026-10-24 (sheet pixels + hook). Part 1 offline (cap 2 rounds): decode the $LEMSHEETHI*.BMP box members for the seven generic icons (+ icons 2,8,9 textures if same path). Part 2 (cap 1 round, ONE stock start): Frida hook on 0x47A75D via REA CLI over ssh at a paused MM_CLIMB_002 level start, plus memory reads of count-quad colour fields, packed [vertex+0x10], [0x58CE4C], icon 9 text pointer. Part 3 (cap 2 rounds, offline): Q3 render of the ten buttons and counts, scored against A7p/A7q with the A7 panel exclusion removed (gate x [18,90) <= 0.02); report pass or fail, do not tune.",
       "milestones": [

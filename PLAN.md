@@ -678,7 +678,7 @@ user 2026-10-22.**
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
 | C1 skill panel | indices identified; icon-draw mechanism live-read, redirected, parked (Phase E) | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed |
-| C2 counters, cursor, pause caption | queued | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
+| C2 counters, cursor, pause caption | **in progress**: counters and timer drawn (C2g; amended gate passes on all ten views, region residual down 27/27; anchor, Out definition and default colour UNREAD); caption preflight done (C2e), render waits on the Q3 decision; cursor not started | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
 | C3 full frame | queued | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
 **C1a: physical panel mapping read** ([check](docs/scratch/phase-c1-panel-indices.md)):

@@ -4338,6 +4338,11 @@
         ],
         "facilitator_started_epoch": 1792794664
       }
-    ]
+    ],
+    "stopped": {
+      "date": "2026-10-23 19:27 MDT",
+      "reason": "Q1 and Q2 landed at their caps; the only remaining directive question (Q3 caption) waits on pending_questions q3-caption-round-cap",
+      "last_commit": "4f62654 (plus the stop commit)"
+    }
   }
 }

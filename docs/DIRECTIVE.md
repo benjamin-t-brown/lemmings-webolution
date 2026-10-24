@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-23, Q1 and Q2 parked at their caps: C3b/C3d/C3e, C3c/C3f)
 Issued: 2026-10-23 (user, overlord review 2026-10-23)
 Supersedes: the C2 caption text / C3 breakdown directive, done 2026-10-23 (Paused text drawn,
 A7 without the caption exclusion passes 9 of 10, `MM_DIG_000` fails by 2,660; `0x46D460`

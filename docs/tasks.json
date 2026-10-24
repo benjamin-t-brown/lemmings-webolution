@@ -2,11 +2,14 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c3f-entrance-exit-chain",
       "title": "C3 Entrance/Exit: finish the node placement chain, draw only where READ (Q2 round 2 of 2)",
-      "status": "running",
+      "status": "landed",
+      "worker_output": "build/tmp/c3f-entrance-exit-chain/round-note.md - READ: 0x482210 = node x stack top (0x4128e0 R=R_node*R_top row-major; 0x40eb50 t_node.R_top; 0x402680 + top.t; node applied first); type-0 load vtable+0xc 0x46bef0 -> 0x46bb73 reads the file f64[12] to this+8 (0x482118 9 doubles, 0x480bb0 3), name, 2 doubles to +0x100/+0x108, u32 n sizing child list this+0x68, n factory children; DECODED n = c3d 'a' (Entrance/Exit Top 3/1), child relation, type-1 load (0x47af20) and kind-6 stride UNREAD; stack bottom UNREAD; render gate FAILED, no src change; 6-body cap exceeded (about 10 incl. readers), REA not used, no game process",
       "brief": "build/tmp/c3f-entrance-exit-chain-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read + conditional render edit",
@@ -28,11 +31,13 @@
       "standing_run": "c3-scenery-entrance-exit",
       "investigation_budget_minutes": 90,
       "body_cap": 6,
-      "dispatched_at": "2026-10-23 22:11:51 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-23 22:11:51 MDT",
+      "blocked_reason": "render gate failed: stack bottom 0x58D5A0 element 0, child relation (type-1 load 0x47af20), vertex convention at draw and kind-6 stride UNREAD; Exit width gap unexplained; body cap 6 exceeded (about 10)",
+      "landed_at": "2026-10-23 22:21 MDT",
+      "landed_in": "docs/scratch/phase-c3f-entrance-exit-chain.md",
+      "disposition": "0x482210 operand order READ (node first, stack top second; 0x4128e0 R_node x R_top, 0x40eb50 t_node.R_top, 0x402680 + top.t); file f64[12] READ at this+8 via 0x46bef0 -> 0x46bb73, then name, 2 doubles, u32 n and n factory children; no src change; Q2 parked in Phase E at the two-round cap",
+      "facilitator_verified": "2026-10-23: 0x482210, 0x4128e0, 0x40eb50, 0x402680, 0x46bb73..0x46bc1e re-read on mouv; chain.py rerun identical; hypothesis bounds match independent port; no src/cmake diff; no game process"
+    },
     {
       "id": "c3e-scene-callee-read",
       "title": "C3 scene walk callee and matrix stack: root type, 0x46b6cc, 0x43be80, scale propagation (Q1 round 3 of 3)",
@@ -4050,11 +4055,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 21:24:54 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 21:24:54 MDT",
-    "rounds_run": 4,
+    "rounds_run": 5,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Both directive questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 22:11:51 MDT: c3f dispatched (Q2 round 2 of 2, last on the question): 0x482210, ctor 0x46b590, load vcall +0xc, kind-6 stride; render gated on a fully READ chain. Q1 parked.",
+    "handoff": "2026-10-23 22:21 MDT: stopped; Q1 parked (C3b, C3d, C3e), Q2 parked (C3c, C3f). No round running.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4713,6 +4718,11 @@
           "last_commit": "1a62f20"
         }
       }
-    ]
+    ],
+    "stopped": {
+      "at": "2026-10-23 22:21 MDT",
+      "reason": "both directive questions parked at their round caps (Q1 3 of 3, Q2 2 of 2); stock start unspent (0 of 1); no src change",
+      "last_commit": "see git log (c3f landing)"
+    }
   }
 }

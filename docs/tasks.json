@@ -2,7 +2,29 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c3j-stack-bottom-live",
+      "title": "C3 scene matrix stack bottom 0x58D5A0: the one live memory read at the A6 repair 4 pause (Q2 round 2 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c3j-stack-bottom-live-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live memory read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": true,
+      "live_owner": "c3j",
+      "depends_on": [],
+      "gate_served": "C3 full frame; directive Q2",
+      "question_round_count": 2,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 0,
+      "standing_run": "c3-scene-chain-render",
+      "investigation_budget_minutes": 60,
+      "dispatched_at": "2026-10-23 23:31:32 MDT"
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -4137,7 +4159,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "All three questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 23:30:54 MDT: c3g, c3i (Q1 2 of 2, parked), c3h landed. Next: c3j = the one memory-only start (Q2 round 2), run_live.ps1.",
+    "handoff": "2026-10-23 23:31:32 MDT: c3j dispatched (Q2 round 2, the one memory-only start, owns live game).",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

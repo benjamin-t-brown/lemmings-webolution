@@ -2,34 +2,40 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": {
-    "id": "c2h-caption-live-read",
-    "title": "C2 Paused caption: one live memory read of the G+0x25C90 quad (Q3 round 3 of 4, the one stock start)",
-    "status": "running",
-    "brief": "build/tmp/c2h-caption-live-read-brief.md",
-    "worker_tier": "targeted",
-    "work_kind": "live capture",
-    "harness": "Claude Code",
-    "requested_model": "session model (no pin, per ROLES)",
-    "worker_agent": "round-agent",
-    "dispatch_id": "ac2h-caption-live-read-86853b21e56d0798",
-    "owns_live_game": true,
-    "live_owner": "c2h-caption-live-read",
-    "depends_on": [
-      "c2e-caption-preflight",
-      "c2f-caption-placement-read"
-    ],
-    "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
-    "question_round_count": 3,
-    "stock_starts_authorized": 1,
-    "stock_starts_consumed": 0,
-    "standing_run": "b1-panel-c2-counters-caption",
-    "investigation_budget_minutes": 60,
-    "body_cap": 0,
-    "dispatched_at": "2026-10-23 20:00:13 MDT"
-  },
+  "active": null,
   "queue": [],
   "recently_landed": [
+    {
+      "id": "c2h-caption-live-read",
+      "title": "C2 Paused caption: one live memory read of the G+0x25C90 quad (Q3 round 3 of 4, the one stock start)",
+      "status": "landed",
+      "brief": "build/tmp/c2h-caption-live-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "live capture",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2h-caption-live-read-86853b21e56d0798",
+      "owns_live_game": true,
+      "live_owner": null,
+      "depends_on": [
+        "c2e-caption-preflight",
+        "c2f-caption-placement-read"
+      ],
+      "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
+      "question_round_count": 3,
+      "stock_starts_authorized": 1,
+      "stock_starts_consumed": 1,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 0,
+      "dispatched_at": "2026-10-23 20:00:13 MDT",
+      "worker_output": "build/tmp/c2h-caption-live-read/round-note.md",
+      "landed_at": "2026-10-23 20:04 MDT",
+      "landed_in": "docs/scratch/phase-c2h-caption-live-read.md",
+      "disposition": "quad at G+0x25C90 = 277,422,363,454 in 5 paused snapshots; P40 640 P44 480; no falsifier; raster step and colour unread",
+      "facilitator_verified": "2026-10-23: own decode of the raw dumps (quad, P40/P44, placement); offset swap breaks the match; hashes equal AUTHORITY/SAVE_SHA/CONF_SHA, 0 game processes, 0 LemWeb tasks from a separate call"
+    },
     {
       "id": "c2f-caption-placement-read",
       "title": "C2 Paused caption: read placement bodies 0x47ACF9/0x47AC50/0x44E150 and decode G+0x25C68 (Q3 round 2 of 4)",
@@ -3782,8 +3788,8 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 19:28 MDT /facilitator invocation; directive amended 19:28 (c2f + fourth caption round authorized), prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 7,
-    "stock_starts_used": 0,
+    "rounds_run": 8,
+    "stock_starts_used": 1,
     "pending_questions": [
       {
         "id": "q3-caption-round-cap",
@@ -3803,7 +3809,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 2026-10-23 19:58 MDT: c2f landed (decodable yes). Next: write and lint c2g-style brief for Q3 round 3 (one stock start, memory reads only, extended G+0x25C90 dump 0x170), then round 4 render. stock_starts_used 0.",
+    "handoff": "2026-10-23 2026-10-23 20:04 MDT: c2h landed (the one start used, quad read live). Next: Q3 round 4, render the caption panel and re-score A7 with the caption exclusion removed. No further starts.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

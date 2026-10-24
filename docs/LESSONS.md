@@ -1401,3 +1401,10 @@ The caption panel is not placed by `G+0x25C68`: `0x44E150` is a generic cell-lis
 a quad at `G+0x25C90` written by `0x45D35A call 0x44DC50`: `[half(P40)-half(W)-8, P44-2H, half(P40)+half(W)+8, P44-H+3)` with `P40/P44 =
 [0x58CB40/44]` and W/H the returns of `0x47ACF9` / `0x47AC50`. P40 = 640, P44 = 480, H = 29, W 70..71 reproduce the A7 target; those values
 are measured-from-reference, not read. Evidence: `docs/scratch/phase-c2f-caption-placement-read.md`.
+
+## Pause caption panel read live (C2h, 2026-10-23, MEASURED)
+
+In the paused frame (`ui_state == 1`) the quad at `G+0x25C90` holds 277 / 422 / 363 / 454 as exact integers in all five snapshots, with
+`[0x58CB40]` 640, `[0x58CB44]` 480 and `G+0x25C68+0x14/+0x18` 285 / 422 (so `half(W)` 35 and `H` 29, derived). The C2f formula reproduces the
+A7 reference rect from read inputs. Whether the doubles are final pixels (no scale before raster) and the panel colour are unread. Evidence:
+`docs/scratch/phase-c2h-caption-live-read.md`.

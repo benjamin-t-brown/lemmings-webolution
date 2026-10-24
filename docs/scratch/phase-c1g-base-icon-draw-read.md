@@ -2,7 +2,7 @@
 
 Queue `c1g-base-icon-draw-read`. Worker packet `build/tmp/c1g-base-icon-draw-read/round-note.md` and
 `prediction.md`. Offline, capstone on the stock exe (REA unavailable to the worker), no game, no
-debugger, no `src/**` change. Dispatched 2026-10-24 00:34:54 MDT, ready 00:58, landed 01:08 MDT.
+debugger, no `src/**` change. Dispatched 2026-10-24 00:34:54 MDT, ready 00:58, landed 00:59 MDT.
 
 ## Result (all READ unless marked)
 

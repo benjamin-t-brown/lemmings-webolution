@@ -1,8 +1,35 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T16:59:23-06:00",
+  "updated": "2026-10-24T16:59:33-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1ae-shift-count-hook",
+      "title": "Dry-check a hook for the two alpha shift counts (round 3 of 3)",
+      "status": "running",
+      "brief": "build/tmp/c1ae-shift-count-hook-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline hook dry-check",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ac-alpha-mask-writer"
+      ],
+      "gate_served": "C1 skill panel; live shift counts need a dry-checked sample",
+      "question_round_count": 3,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-skill-panel-gate",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 16:59 MDT",
+      "worker_output": null,
+      "dispatch_id": null,
+      "fourth_round_note": "A following start would be round 4. It is expected to move the gate because the shift counts are not in the exe and the plate render needs them."
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "c1-skill-panel-gate",
@@ -24,7 +51,7 @@
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 16:59 MDT: C1 skill panel. c1ac landed: rep movsd fills [ebp-0x128]; the shift is not shown to count that copy. c1ad landed: selector 1. Stock starts 1 of 3. Next is a dry check of a shift-count hook, no start. Pass started 16:21:48.",
+    "handoff": "2026-10-24 16:59 MDT: C1 skill panel. c1ac landed. Dispatched c1ae, round 3 of 3, dry-check only, no stock start. A later start would be round 4 because the counts are live. Stock starts 1 of 3. Pass started 16:21:48.",
     "pass_clock": {
       "started": "2026-10-24 16:21:48 -06:00",
       "rounds": [

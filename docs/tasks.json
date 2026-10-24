@@ -2,11 +2,15 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c3e-scene-callee-read",
       "title": "C3 scene walk callee and matrix stack: root type, 0x46b6cc, 0x43be80, scale propagation (Q1 round 3 of 3)",
-      "status": "running",
+      "status": "landed",
+      "blocked_reason": "body cap reached: operand order inside compose 0x482210 (callees 0x4128e0, 0x40eb50, 0x402680), ctor 0x46b590 / per-type load vcall +0xc (where f64[12] sits, whether sand7/base/Top are children of the root), stack bottom at draw all UNREAD, so no READ end-to-end placement chain and root scale 10 propagation unsettled",
+      "worker_output": "build/tmp/c3e-scene-callee-read/round-note.md - READ: root u32 after Object 09 tag = 0 (all 4 tags) -> factory 0x46bca4 case 0 (new 0x118, vtable 0x4b19a0), callee 0x46b6cc = if [this+0x110]: 0x43bc10(this+8) composes node with stack top via 0x482210 and pushes (0x43be80), calls children [this+0x68] vcall +4, pops 0x43bbe0 (once per node, nested); UNREAD operand order and parent/child layout; DECODED bounds only as labelled hypotheses (H1 own matrix once: sand7 x396-437 y308-322, base x297-341 y368-387, Entrance/Exit Top = c3c; H2 root parent both orders); 8 substantive bodies at cap, REA not used, no game process",
       "brief": "build/tmp/c3e-scene-callee-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -26,11 +30,12 @@
       "standing_run": "c3-scenery-entrance-exit",
       "investigation_budget_minutes": 90,
       "body_cap": 8,
-      "dispatched_at": "2026-10-23 22:05:55 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-23 22:05:55 MDT",
+      "landed_at": "2026-10-23 22:10 MDT",
+      "landed_in": "docs/scratch/phase-c3e-scene-callee-read.md",
+      "disposition": "callee 0x46b6cc READ: node matrix composed with stack top once, nested through children; operand order, f64[12] location, child/sibling relation, stack bottom UNREAD; Q1 parked in Phase E at the three-round cap",
+      "facilitator_verified": "2026-10-23: 0x46b6cc and 0x43bc10..0x43bc50 re-read on mouv; script rerun identical; no game process; no src diff"
+    },
     {
       "id": "c3d-scene-transform-read",
       "title": "C3 scene node placement chain: node-local transform, parent relation, scene-root matrix at draw (Q1 round 2 of 3; also unblocks Q2)",
@@ -4017,11 +4022,11 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 21:24:54 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-23 21:24:54 MDT",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Both directive questions landed or parked, an ORCHESTRATION stop, or the live start crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 22:05:55 MDT: c3e dispatched (Q1 round 3 of 3, last on the question): root factory type, 0x46b6cc, 0x43be80, scale propagation. Q2 round 2 waits on it.",
+    "handoff": "2026-10-23 22:10 MDT: c3b, c3c, c3d, c3e landed; Q1 parked in Phase E at the three-round cap. Q2 has one round left (round 2 of 2): c3f = read 0482210/0x46b590/load vcall +0xc/kind-6 stride, draw Entrance/Exit only where the chain is READ, re-score. Stock start unspent.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

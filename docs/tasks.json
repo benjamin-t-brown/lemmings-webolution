@@ -3739,7 +3739,7 @@
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 19:21 MDT: c2c, b1x, c2d, c2e, b1y, c2g landed (Q1 and Q2 done at their caps). Q3 pending the user's decision q3-caption-round-cap; no stock start used. Nothing running.",
+    "handoff": "2026-10-23 19:21 MDT: c2c, b1x, c2d, c2e, b1y, c2g landed (Q1 and Q2 done at their caps). Q3 pending the user's decision q3-caption-round-cap; no stock start used. Nothing running. 2026-10-23 19:26 MDT: user answered the Q3 question with 'hold off'; Q3 stays pending, no c2f, no start, DIRECTIVE.md stays active.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

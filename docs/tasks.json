@@ -1,12 +1,15 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 02:37:31 MDT",
+  "updated": "2026-10-24 02:44:54 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
+  "active": [],
+  "queue": [],
+  "recently_landed": [
     {
       "id": "c1l-icon-live-read",
       "title": "C1 live read of skill-panel icon inputs with an observable entry (directive part 2, the one stock start)",
-      "status": "running",
+      "status": "landed",
+      "worker_output": "build/tmp/c1l-icon-live-read/round-note.md",
       "brief": "build/tmp/c1l-icon-live-read-brief.md",
       "worker_tier": "targeted",
       "work_kind": "live read",
@@ -15,7 +18,7 @@
       "worker_agent": "round-agent",
       "dispatch_id": null,
       "owns_live_game": true,
-      "live_owner": "c1l-icon-live-read worker",
+      "live_owner": null,
       "depends_on": [
         "c1j-named-writers-read",
         "c1k-observable-entry"
@@ -23,14 +26,15 @@
       "gate_served": "C1 skill panel (directive 2026-10-24, part 2)",
       "question_round_count": 1,
       "stock_starts_authorized": 1,
-      "stock_starts_consumed": 0,
+      "stock_starts_consumed": 1,
       "standing_run": "c1-observable-entry",
       "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 02:37:31 MDT"
-    }
-  ],
-  "queue": [],
-  "recently_landed": [
+      "dispatched_at": "2026-10-24 02:37:31 MDT",
+      "landed_at": "2026-10-24 02:44:54 MDT",
+      "landed_in": "docs/scratch/phase-c1l-icon-live-read.md",
+      "facilitator_verified": true,
+      "disposition": "landed; entry succeeded (cause of earlier failures not named); items 1-4 read live, hook not run (no Frida tool); install restored; PIL missing aborted the screenshot only"
+    },
     {
       "id": "c1j-named-writers-read",
       "title": "C1 remaining named writers: [[0x4CBFB0]+0x10], frame table F, [0x4CBF7C] font, 0x4E33xx copy (part 1a, offline, round 1 of 2)",
@@ -4411,13 +4415,17 @@
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator facilitator-c1-entry (Mac clone, session model, Sonnet 5.5), 2026-10-24 01:50 MDT /facilitator invocation via team-lead; directive active, prior run c1-base-icon-draw stopped, no task running, so this start is the handoff.",
     "started_at": "2026-10-24 01:48:09 MDT",
-    "rounds_run": 2,
-    "stock_starts_used": 0,
+    "rounds_run": 3,
+    "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "After the one start (landed or parked), an ORCHESTRATION stop condition, or a start that crashes or leaves the install unrestored. Do not advance to Q3, C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 02:37:31 MDT: part 1 landed (c1j, c1k). c1l dispatched: the one stock start, live owner c1l worker, probe from c1k, hook from c1i. On return: verify, land as landed or parked, restoration proof, set directive Status done, stop.",
+    "handoff": "2026-10-24 02:44:54 MDT: stopped at the directive stop point. Next directive: offline reads of 0x446040->0x449170 (handle to sheet file) and the _FontSmall file chain, then Q3 render if C1 inputs are READ; any hook read needs a worker with a Frida tool.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null,
+    "stopped": {
+      "date": "2026-10-24 02:44:54 MDT",
+      "reason": "Directive stop point: the one stock start landed (c1l). Part 1 (c1j, c1k) landed. Q3 render not run (sheet file for handle 6, count font file and colour, hook x/y UNREAD).",
+      "last_commit": "(this landing)"
+    },
     "previous": [
       {
         "id": "c1-base-icon-draw",

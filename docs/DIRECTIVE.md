@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-24 stop point: c1j, c1k landed, the one start c1l landed)
 Issued: 2026-10-24 (user, overlord review 2026-10-24; "i approve all commit")
 Supersedes: the C1 base icon draw directive, done 2026-10-24 (c1g: base icons drawn by panel
 object `0x4C91D8` via `0x45B639` / `0x47A75D`; c1h: scale mode `S`, `Lo`/`Hi` budget loop

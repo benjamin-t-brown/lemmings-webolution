@@ -1,8 +1,75 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 02:44:54 MDT",
+  "updated": "2026-10-24 11:31:30 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1m-sheet-file-read",
+      "title": "C1 handle 6 to sheet file and Hi/Lo choice, offline (directive 1a, round 1 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c1m-sheet-file-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive 1a",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-sheet-font-render",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 11:31:30 MDT",
+      "worker_output": null
+    },
+    {
+      "id": "c1n-count-font-read",
+      "title": "C1 count font file, colour and count text source, offline (directive 1b, round 1 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c1n-count-font-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive 1b",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-sheet-font-render",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 11:31:30 MDT",
+      "worker_output": null
+    },
+    {
+      "id": "c1o-frida-preflight",
+      "title": "Frida preflight through the REA CLI on mouv, no stock start (directive part 2, round 1 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c1o-frida-preflight-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "tooling preflight (throwaway session-1 process, not the game)",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive part 2",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-sheet-font-render",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 11:31:30 MDT",
+      "worker_output": null
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -2928,7 +2995,7 @@
     },
     {
       "id": "a4ag-zoom1-linear-a0-offline-replay",
-      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) \u2014 PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
+      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) — PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
       "landed_in": "PLAN.md",
       "commit_hint": null
     },
@@ -3032,7 +3099,7 @@
     },
     {
       "id": "a6d3-matched-state-bbox",
-      "title": "A6d3: matched pause \u2014 actors 0\u20131 improve; slope walker 0.101\u21920.112 (temporal 0)",
+      "title": "A6d3: matched pause — actors 0–1 improve; slope walker 0.101→0.112 (temporal 0)",
       "status": "landed",
       "brief": "build/tmp/a6d3-matched-state-bbox-brief.md",
       "harness": "Cursor",
@@ -3123,7 +3190,7 @@
       ],
       "landed_in": "docs/scratch/phase-a6-live-pose-pair.md",
       "commit_hint": null,
-      "facilitator_verified": "2026-10-20: independent test_actorpose 2.188e-6 / 6.776e-7 / 8.551e-7. Isolated modelY+1 fails a6d7 model[1] delta 1.0; ActorPose.cpp restored. 23/23 CTest. Rejected: A6d3 bbox is unpaired +0x08 \u2014 A6d3 captured screenshot and +0x08 together; this pause is a different 10 s walk. No game."
+      "facilitator_verified": "2026-10-20: independent test_actorpose 2.188e-6 / 6.776e-7 / 8.551e-7. Isolated modelY+1 fails a6d7 model[1] delta 1.0; ActorPose.cpp restored. 23/23 CTest. Rejected: A6d3 bbox is unpaired +0x08 — A6d3 captured screenshot and +0x08 together; this pause is a different 10 s walk. No game."
     },
     {
       "id": "a6d8-actor2-z-order",
@@ -4400,33 +4467,57 @@
     }
   ],
   "standing_run": {
-    "id": "c1-observable-entry",
-    "goal": "Part 1 offline (cap 2 rounds each): 1a remaining named writers for the C1 live-read list; 1b make the menu entry observable (tee find_menu_index to run.log, save_state, 15 s no-input snapshot, decide the dirty goto_level.py on mouv). Part 2 one stock start with the c1i probe minus anything 1a made READ, only after 1b landed and its dry check passed.",
+    "id": "c1-sheet-font-render",
+    "goal": "Part 1 offline (cap 2 rounds each): 1a handle 6 to sheet file and Hi/Lo (0x446040 -> 0x449170), 1b count font file, colour and count text (0x474519 chain). Part 2 Frida preflight via REA CLI on mouv, no stock start. Part 3 Q3 render and score against A7p/A7q with the A7 panel exclusion removed, only if 1a and 1b leave the sheet file and font READ.",
     "milestones": [
       "C1 skill panel"
     ],
     "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md active, issued 2026-10-24 (user, overlord review; commit 7cf0a3a on origin/decompile). Part 1 offline, up to two concurrent rounds; part 2 exactly one stock start; 30-minute round limit; no debugger; no Q3 render, C3, C2 cursor clause, B2, B3.",
+    "authorized": "docs/DIRECTIVE.md active, issued 2026-10-24 (user, overlord review 2026-10-24; 'i approve 1': Frida through the REA CLI over ssh). No stock start; no debugger; 30-minute round limit; no C3, C2 cursor clause, B2, B3.",
     "grants": {
-      "stock_starts": "one total, part 2 only, after 1b landed with a passing offline dry check; memory reads plus at most one Frida entry hook on 0x47A75D; no debugger; no retry after Popen",
+      "stock_starts": "none; the Frida preflight attaches only to a throwaway process the worker starts, never the game",
       "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
-      "concurrency": "up to 2 offline rounds, at most one live owner"
+      "concurrency": "up to 2 offline rounds (1a, 1b) plus the part-2 preflight; at most one live owner (none expected)"
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
-    "owner": "Claude Code facilitator facilitator-c1-entry (Mac clone, session model, Sonnet 5.5), 2026-10-24 01:50 MDT /facilitator invocation via team-lead; directive active, prior run c1-base-icon-draw stopped, no task running, so this start is the handoff.",
-    "started_at": "2026-10-24 01:48:09 MDT",
-    "rounds_run": 3,
-    "stock_starts_used": 1,
+    "owner": "Claude Code facilitator (Mac clone, session model, Sonnet 5.5), 2026-10-24 11:28:43 MDT /facilitator invocation; directive active, prior run c1-observable-entry stopped, no task running, so this start is the handoff.",
+    "started_at": "2026-10-24 11:28:43 MDT",
+    "rounds_run": 0,
+    "stock_starts_used": 0,
     "pending_questions": [],
-    "stop_point": "After the one start (landed or parked), an ORCHESTRATION stop condition, or a start that crashes or leaves the install unrestored. Do not advance to Q3, C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 02:44:54 MDT: stopped at the directive stop point. Next directive: offline reads of 0x446040->0x449170 (handle to sheet file) and the _FontSmall file chain, then Q3 render if C1 inputs are READ; any hook read needs a worker with a Frida tool.",
+    "stop_point": "Render scored (gate pass or fail), part 1 at its cap without a READ sheet file and font, or an ORCHESTRATION stop. If the render needs the hook's x, y, stop and name it. Do not advance to C3, C2 cursor clause, B2 or B3.",
+    "handoff": "2026-10-24 11:31:30 MDT: dispatched c1m (sheet file), c1n (count font), c1o (Frida preflight) concurrently, all running. Next: verify and land each, fix the stale C1 Phase E entry in PLAN.md, then Q3 render only if the sheet file and font are READ.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-24 02:44:54 MDT",
-      "reason": "Directive stop point: the one stock start landed (c1l). Part 1 (c1j, c1k) landed. Q3 render not run (sheet file for handle 6, count font file and colour, hook x/y UNREAD).",
-      "last_commit": "52082ef"
-    },
+    "stopped": null,
     "previous": [
+      {
+        "id": "c1-observable-entry",
+        "goal": "Part 1 offline (cap 2 rounds each): 1a remaining named writers for the C1 live-read list; 1b make the menu entry observable (tee find_menu_index to run.log, save_state, 15 s no-input snapshot, decide the dirty goto_level.py on mouv). Part 2 one stock start with the c1i probe minus anything 1a made READ, only after 1b landed and its dry check passed.",
+        "milestones": [
+          "C1 skill panel"
+        ],
+        "current": "C1 skill panel",
+        "authorized": "docs/DIRECTIVE.md active, issued 2026-10-24 (user, overlord review; commit 7cf0a3a on origin/decompile). Part 1 offline, up to two concurrent rounds; part 2 exactly one stock start; 30-minute round limit; no debugger; no Q3 render, C3, C2 cursor clause, B2, B3.",
+        "grants": {
+          "stock_starts": "one total, part 2 only, after 1b landed with a passing offline dry check; memory reads plus at most one Frida entry hook on 0x47A75D; no debugger; no retry after Popen",
+          "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+          "concurrency": "up to 2 offline rounds, at most one live owner"
+        },
+        "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
+        "owner": "Claude Code facilitator facilitator-c1-entry (Mac clone, session model, Sonnet 5.5), 2026-10-24 01:50 MDT /facilitator invocation via team-lead; directive active, prior run c1-base-icon-draw stopped, no task running, so this start is the handoff.",
+        "started_at": "2026-10-24 01:48:09 MDT",
+        "rounds_run": 3,
+        "stock_starts_used": 1,
+        "pending_questions": [],
+        "stop_point": "After the one start (landed or parked), an ORCHESTRATION stop condition, or a start that crashes or leaves the install unrestored. Do not advance to Q3, C3, C2 cursor clause, B2 or B3.",
+        "handoff": "2026-10-24 02:44:54 MDT: stopped at the directive stop point. Next directive: offline reads of 0x446040->0x449170 (handle to sheet file) and the _FontSmall file chain, then Q3 render if C1 inputs are READ; any hook read needs a worker with a Frida tool.",
+        "rules": "docs/ORCHESTRATION.md#standing-run",
+        "stopped": {
+          "date": "2026-10-24 02:44:54 MDT",
+          "reason": "Directive stop point: the one stock start landed (c1l). Part 1 (c1j, c1k) landed. Q3 render not run (sheet file for handle 6, count font file and colour, hook x/y UNREAD).",
+          "last_commit": "52082ef"
+        }
+      },
       {
         "id": "c1-base-icon-draw",
         "goal": "Q1 base icon draw read (offline, cap 2: c1g, c1h); Q2 live confirmation only if Q1 names a single call it cannot settle (one stock start, memory reads + at most one Frida entry hook, apply c3m fix.patch first); Q3 render only if icon source, cell selection, placement and count draw are READ.",
@@ -4937,7 +5028,7 @@
                                                                     "question": "B1b captured a valid, structurally-confirmed 640x480 main-menu reference screengrab (screen id 3, highlight 0, both live-read at capture time) -- but its text is English, not German. match-the-original.md documents \"German menus\" as a preserved quirk, and goto_level.py's own docstring assumed German is the frontends default. The installs persisted SavedGame.dat (created 2026-10-12, modified many times since across many live rounds over multiple days) has no backup or pristine copy anywhere to compare against, so there is no way to determine, from this installs own state, whether English is a residue of some earlier rounds navigation (undocumented, not necessarily a guardrail breach since every individual rounds own before/after restore check has passed on its own terms) or whether the game simply remembers the last-selected language as real stock behaviour and this install happened to have English selected before this project ever touched it. Should a follow-up round spend its one live stock start explicitly navigating into \"Language Selection\" and selecting German (a deliberate, not-undone persisted change to the shared installs save data, on the reasoning that German is the documented correct default and resetting to it is a restoration rather than a new deviation) before capturing the real B1 reference image, or should English be accepted as this installs now-real persisted state and the German-menus quirk note be narrowed to \"the retail games own default,\" with B1s reference image captured in whatever language the install actually produces?",
                                                                     "options": [
                                                                       "Reset the install to German via one more live round (explicit Language Selection + RETURN navigation, scope beyond any round's brief so far) before capturing B1's real reference image, on the reasoning that German is the documented default and resetting to it restores rather than further deviates",
-                                                                      "Accept English as this install's\u73b0actual persisted state, capture B1's reference image in English, and narrow match-the-original.md's \"German menus\" quirk note to describe the fresh-install default rather than a live invariant",
+                                                                      "Accept English as this install's现actual persisted state, capture B1's reference image in English, and narrow match-the-original.md's \"German menus\" quirk note to describe the fresh-install default rather than a live invariant",
                                                                       "Install a second, fresh copy of the game (or otherwise obtain a known-pristine SavedGame.dat) to settle definitively whether German is really the fresh-install default before deciding either way"
                                                                     ],
                                                                     "recommendation": "Option 1. match-the-original.md's \"German menus\" quirk is stated plainly, without a caveat about persisted language choice, and the project has never until now needed to reckon with SavedGame.dat drift -- resetting the shared install's language to German before capturing any pixel-comparison reference is the smallest, most defensible action that keeps every future B1/B2/B3 capture unambiguous, and costs only one more live round. Option 3 is the most certain but the most expensive and disruptive (a second install) for a question option 1 likely settles just as well. Option 2 risks quietly smoothing over exactly the kind of quirk this project's rules explicitly warn against doing.",

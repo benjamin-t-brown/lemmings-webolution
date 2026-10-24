@@ -2,7 +2,31 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": {
+    "id": "c2f-caption-placement-read",
+    "title": "C2 Paused caption: read placement bodies 0x47ACF9/0x47AC50/0x44E150 and decode G+0x25C68 (Q3 round 2 of 4)",
+    "status": "running",
+    "brief": "build/tmp/c2f-caption-placement-read-brief.md",
+    "worker_tier": "targeted",
+    "work_kind": "disassembly read",
+    "harness": "Claude Code",
+    "requested_model": "session model (no pin, per ROLES)",
+    "worker_agent": "round-agent",
+    "dispatch_id": "ac2f-caption-placement-read-pending",
+    "owns_live_game": false,
+    "live_owner": null,
+    "depends_on": [
+      "c2e-caption-preflight"
+    ],
+    "gate_served": "C2 gate; directive Q3 (amended, cap 4)",
+    "question_round_count": 2,
+    "stock_starts_authorized": 0,
+    "stock_starts_consumed": 0,
+    "standing_run": "b1-panel-c2-counters-caption",
+    "investigation_budget_minutes": 60,
+    "body_cap": 9,
+    "dispatched_at": "2026-10-23 19:30:03 MDT"
+  },
   "queue": [],
   "recently_landed": [
     {
@@ -3618,7 +3642,9 @@
       "worker_output": "build/tmp/c2c-counters-timer-read/round-note.md",
       "landed_in": "docs/scratch/phase-c2c-counters-timer-read.md",
       "disposition": "Positions are absolute px; count text goes into the same lists as the labels; counts re-placed by 0x44D22C at y 0x32 (not 45); Saved colour 255/255/255 below word[0x4CBAB0], 255/63/63 at or above (order unread); replace-vs-append, Out source, default colour open",
-      "facilitator_verified": "2026-10-23: re-read 0x44DF7F..0x44DFDD, 0x44D316..0x44D3FF, 0x44D22C..0x44D2E5 on the exe; decoded colour doubles 255.0/63.0; own caller scan identical (one caller each). Worker read ~16 bodies vs cap 12 (accessors), noted. No render value settled."
+      "facilitator_verified": "2026-10-23: re-read 0x44DF7F..0x44DFDD, 0x44D316..0x44D3FF, 0x44D22C..0x44D2E5 on the exe; decoded colour doubles 255.0/63.0; own caller scan identical (one caller each). Worker read ~16 bodies vs cap 12 (accessors), noted. No render value settled.",
+      "dispatched_at": "2026-10-23 18:20:14 MDT",
+      "landed_at": "2026-10-23 18:41:03 MDT"
     },
     {
       "id": "b1x-panel-draw-read",
@@ -3646,7 +3672,9 @@
       "worker_output": "build/tmp/b1x-panel-draw-read/round-note.md",
       "landed_in": "docs/scratch/phase-b1x-panel-draw-read.md",
       "disposition": "0x48B1C7 is a ctor tail; panel = fill+border quads (0x489B39 insets 2 / 1) from rect 0x48A190; ctor colour args 255.0 and 64.0 unread in meaning; fields +0x34..+0x48 and highlight setter unread; no renderer value replaced; score unchanged 0.005244",
-      "facilitator_verified": "2026-10-23: re-read 0x48B1C7, 0x489B39, 0x48A190, 0x489A00, 0x4897C0, 0x4897E0 on the exe; MenuRender.h diff comments only, Mac/mouv MD5 equal; full ctest 32/32 on mouv after rebuild. Worker 15 bodies vs cap 12 noted."
+      "facilitator_verified": "2026-10-23: re-read 0x48B1C7, 0x489B39, 0x48A190, 0x489A00, 0x4897C0, 0x4897E0 on the exe; MenuRender.h diff comments only, Mac/mouv MD5 equal; full ctest 32/32 on mouv after rebuild. Worker 15 bodies vs cap 12 noted.",
+      "dispatched_at": "2026-10-23 18:20:14 MDT",
+      "landed_at": "2026-10-23 18:47:35 MDT"
     },
     {
       "id": "c2d-counters-open-reads",
@@ -3674,7 +3702,9 @@
       "worker_output": "build/tmp/c2d-counters-open-reads/round-note.md",
       "landed_in": "docs/scratch/phase-c2d-counters-open-reads.md",
       "disposition": "Digits replace the words (0x4404FA zeroes list count); Out = sum of words at this+0x5070+idx*2 over list this+0x1FB0 (0x444ABC); 0x4CBAB0 no direct writer; colour object stored 255/63/63 or 255x3, R,G,B naming and default colour unread",
-      "facilitator_verified": "2026-10-23: re-read 0x4404FA, 0x440940, 0x4145A0, 0x4017F0, 0x44E060, 0x44D39F..0x44D3CC on the exe; own .text scan: 0x4CBAB0 one hit, 0x444ABC callers identical. 0x444ABC loop bytes not re-read. 12 bodies at cap."
+      "facilitator_verified": "2026-10-23: re-read 0x4404FA, 0x440940, 0x4145A0, 0x4017F0, 0x44E060, 0x44D39F..0x44D3CC on the exe; own .text scan: 0x4CBAB0 one hit, 0x444ABC callers identical. 0x444ABC loop bytes not re-read. 12 bodies at cap.",
+      "dispatched_at": "2026-10-23 18:42:01 MDT",
+      "landed_at": "2026-10-23 18:49:58 MDT"
     },
     {
       "id": "c2e-caption-preflight",
@@ -3700,12 +3730,14 @@
       "worker_output": "build/tmp/c2e-caption-preflight/round-note.md",
       "landed_in": "docs/scratch/phase-c2e-caption-preflight.md",
       "disposition": "G is static 0x4C6A08 (not the level screen); inputs named; 0x47AD8C rect predicted off after 14 s unpaused ([G+0x26024] gate); caption edge likely from G+0x25C68 (0x47ACF9/0x47AC50 unread); read-only script written, selftest 21/21, not run against a process; start not yet justified",
-      "facilitator_verified": "2026-10-23: re-read 0x450A48, 0x45E0E0, 0x45CE80 on the exe; reran --selftest on mouv (OK); read live()/cleanup() in the script. Script never run against a process; 9 of 10 bodies."
+      "facilitator_verified": "2026-10-23: re-read 0x450A48, 0x45E0E0, 0x45CE80 on the exe; reran --selftest on mouv (OK); read live()/cleanup() in the script. Script never run against a process; 9 of 10 bodies.",
+      "dispatched_at": "2026-10-23 18:20:14 MDT",
+      "landed_at": "2026-10-23 18:51:36 MDT"
     }
   ],
   "standing_run": {
     "id": "b1-panel-c2-counters-caption",
-    "goal": "Q1 B1 panel draw read and re-score (offline, cap 2); Q2 C2 counters and timer (offline, cap 3); Q3 C2 Paused caption (preflight, one start, render; cap 3).",
+    "goal": "Q1 B1 panel draw read and re-score (offline, cap 2); Q2 C2 counters and timer (offline, cap 3); Q3 C2 Paused caption (preflight, one start, render; cap 4 per amended directive: c2e done, c2f offline read, one start, render).",
     "milestones": [
       "B1 frontend assets and text",
       "C2 counters, cursor, pause caption"
@@ -3718,7 +3750,7 @@
       "concurrency": "up to 3 offline rounds, at most one live owner"
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
-    "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 18:17 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
+    "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 19:28 MDT /facilitator invocation; directive amended 19:28 (c2f + fourth caption round authorized), prior run stopped, no task running, so this start is the handoff.",
     "rounds_run": 6,
     "stock_starts_used": 0,
     "pending_questions": [
@@ -3735,11 +3767,12 @@
           "Skip the start, park the caption in Phase E with a resume brief",
           "Spend the start now on the existing script and decode the saved blocks offline"
         ],
-        "recommendation": "Authorize c2f and a fourth round."
+        "recommendation": "Authorize c2f and a fourth round.",
+        "answer": "Authorized: c2f offline, start as round 3, render as round 4 (user, overlord review 2026-10-23; docs/DIRECTIVE.md amended). Start only if c2f names the live values and the decode."
       }
     ],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 19:21 MDT: c2c, b1x, c2d, c2e, b1y, c2g landed (Q1 and Q2 done at their caps). Q3 pending the user's decision q3-caption-round-cap; no stock start used. Nothing running. 2026-10-23 19:26 MDT: user answered the Q3 question with 'hold off'; Q3 stays pending, no c2f, no start, DIRECTIVE.md stays active.",
+    "handoff": "2026-10-23 19:30 MDT: Q1/Q2 landed at caps; q3-caption-round-cap answered (authorize c2f + round 4). Dispatching c2f (offline read of 0x47ACF9, 0x47AC50, 0x44E150 placement). Start only if c2f names the live values and decode; else park caption in PLAN Phase E for good. No fifth round. stock_starts_used 0.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
@@ -4339,10 +4372,6 @@
         "facilitator_started_epoch": 1792794664
       }
     ],
-    "stopped": {
-      "date": "2026-10-23 19:22 MDT",
-      "reason": "Q1 and Q2 landed at their caps; the only remaining directive question (Q3 caption) waits on pending_questions q3-caption-round-cap",
-      "last_commit": "4f62654 (plus the stop commit)"
-    }
+    "stopped": null
   }
 }

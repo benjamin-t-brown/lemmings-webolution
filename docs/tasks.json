@@ -1,8 +1,55 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T14:18:00-06:00",
+  "updated": "2026-10-24T14:20:00-06:00",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1w-plate-footprint",
+      "title": "Add the ten read plate boxes to the C1 footprint and rescore the saved renders",
+      "status": "running",
+      "brief": "build/tmp/c1w-plate-footprint-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline scoring",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive part 1 plate join",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-footprint-plate-score",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 14:20 MDT",
+      "worker_output": null,
+      "dispatch_id": null
+    },
+    {
+      "id": "c1x-colour-blend-read",
+      "title": "Colour key 0x47218A and blend 0x46D5F3 (directive part 2, round 2 of 2)",
+      "status": "running",
+      "brief": "build/tmp/c1x-colour-blend-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; directive part 2 colour and blend",
+      "question_round_count": 2,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "c1-footprint-plate-score",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 14:20 MDT",
+      "worker_output": null,
+      "dispatch_id": null
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -4703,7 +4750,7 @@
       }
     ],
     "stop_point": "Part 3 scored (pass or fail), part 2 ends without an input the render needs, or an ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 14:18 MDT: c1u and c1v landed. Next: add the ten plate boxes to the footprint and rescore, and read colour key 0x47218A and blend 0x46D5F3. Part 3 waits. MM_DIG_000 reference still unnamed.",
+    "handoff": "2026-10-24 14:20 MDT: c1w plate-box join and c1x colour-key/blend read dispatched. Part 3 waits. MM_DIG_000 reference unnamed.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {

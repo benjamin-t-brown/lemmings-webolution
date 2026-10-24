@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24 12:30:00 MDT",
+  "updated": "2026-10-24 12:26:30 MDT",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
@@ -26,7 +26,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 11:54:00 MDT",
       "worker_output": "build/tmp/c1p-spr-sheet-read/round-note.md",
-      "landed_at": "2026-10-24 12:30:00 MDT",
+      "landed_at": "2026-10-24 12:26:00 MDT",
       "landed_in": "docs/scratch/phase-c1p-spr-sheet-read.md",
       "disposition": ".spr table READ (0x483EF0 chain): LemmingsHi.spr frame records equal c1l live F for all 7 generic icons (dx,dy,w,h + 4 UV doubles); Lo fails. So the c1l run used Hi (derived). Texture names Hi21/Hi5 etc. paired with live ids (measured). UNREAD: sheet BMP encoding/pixels, archive lookup 0x47E40D, 384-byte tail reader, id assignment.",
       "facilitator_verified": "2026-10-24: fresh parser written from the layout, run on the worker extracted files vs c1l readings.json: Hi 7/7, Lo 0/7; Hi file hash prefix equal; 392 bytes left = 384 + table B. Not re-derived: box member table, decode chain addresses, tail. No code change. No game process."
@@ -52,7 +52,7 @@
       "investigation_budget_minutes": 30,
       "dispatched_at": "2026-10-24 11:54:00 MDT",
       "worker_output": "build/tmp/c1q-font-bitmap-read/round-note.md",
-      "landed_at": "2026-10-24 12:15:00 MDT",
+      "landed_at": "2026-10-24 12:13:30 MDT",
       "landed_in": "docs/scratch/phase-c1q-font-bitmap-read.md",
       "disposition": "_FontSmall bitmap READ by emulating decoder 0x467DE8: 64x16, 4 bpp, white (index 1) digits on black, cells 6 wide at x=0..54, matches 0x4BFC10. No tint on the path read (vertex colour defaults 255.0 -> 0xFFFFFFFF, derived); white digits if nothing later writes it (inference). UNREAD: later quad-colour writers, colour key at 0x47218A, blend state at 0x46D5F3, the 656-vs-657 choice.",
       "facilitator_verified": "2026-10-24: parsed fontsmall_656.dec with a fresh script (630 B, 64x16, 4 bpp, palette 0 black / 1 white, 864/160 index counts, ink rows and columns, per-cell counts); re-decoded the head of 0x440C50. Not re-derived: the unicorn run of 0x467DE8, 0x440A10, 0x46D460, the rest of 0x440C50. No code change. No game process, no LemWeb task."
@@ -4549,12 +4549,12 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Render scored (gate pass or fail), part 1 at its cap without a READ sheet file and font, or an ORCHESTRATION stop. If the render needs the hook's x, y, stop and name it. Do not advance to C3, C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 12:30:00 MDT: stopped at the directive stop point. Next directive: decode the $LEMSHEETHI*.BMP box members (leading tag 02; the font record uses tag 01 via 0x467DE8), then a start with a Frida hook on 0x47A75D (recipe in MOUV_SSH.md) to read icon x, y, then Q3 render.",
+    "handoff": "2026-10-24 12:26:30 MDT: stopped at the directive stop point. Next directive: decode the $LEMSHEETHI*.BMP box members (leading tag 02; the font record uses tag 01 via 0x467DE8), then a start with a Frida hook on 0x47A75D (recipe in MOUV_SSH.md) to read icon x, y, then Q3 render.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": {
-      "date": "2026-10-24 12:30:00 MDT",
+      "date": "2026-10-24 12:26:00 MDT",
       "reason": "Directive stop point: part 1 at its cap (c1m+c1p, c1n+c1q) with the sheet's .spr table and the font bitmap READ but the sheet BMP pixels, the icon draw x, y (hook) and the tint writers UNREAD, so the Q3 render was not run; part 2 (Frida preflight) landed.",
-      "last_commit": "73309e2 (c1q); c1p commit follows"
+      "last_commit": "33f1d73"
     },
     "previous": [
       {

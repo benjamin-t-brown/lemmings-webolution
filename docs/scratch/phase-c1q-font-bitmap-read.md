@@ -1,7 +1,7 @@
 # C1q: the `_FontSmall` bitmap and count colour (offline, round 2 of 2)
 
 Queue `c1q-font-bitmap-read`. Worker packet `build/tmp/c1q-font-bitmap-read/round-note.md`, `prediction.md`. Capstone via `read_steppers.py --at` plus the worker's `disasm_at.py`; the exe's own decoder
-`0x467DE8` was run in unicorn. No game, no debugger, no Frida, no stock start. Dispatched 11:54 MDT, packet ~12:12, landed 12:15.
+`0x467DE8` was run in unicorn. No game, no debugger, no Frida, no stock start. Dispatched 11:54 MDT, packet ~12:12, landed 12:13.
 
 ## Result
 

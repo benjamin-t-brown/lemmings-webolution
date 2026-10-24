@@ -1,7 +1,7 @@
 # C1p: the Lemmings `.spr` sheet table, parsed offline and matched to c1l's live frame records (round 2 of 2)
 
 Queue `c1p-spr-sheet-read`. Worker packet `build/tmp/c1p-spr-sheet-read/round-note.md`, `prediction.md`, scripts and extracted `.SPR` files. Capstone via `read_steppers.py --at` on mouv (REA not used); no game, no
-debugger, no Frida, no stock start. Dispatched 11:54 MDT, packet ~12:24, landed 12:30.
+debugger, no Frida, no stock start. Dispatched 11:54 MDT, packet ~12:24, landed 12:26.
 
 ## Result
 

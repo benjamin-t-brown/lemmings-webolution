@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done** (2026-10-24 12:30 MDT: part 1 at cap, part 2 landed, Q3 render not run; see docs/tasks.json standing_run.stopped)
+Status: **done** (2026-10-24 12:26 MDT: part 1 at cap, part 2 landed, Q3 render not run; see docs/tasks.json standing_run.stopped)
 Issued: 2026-10-24 (user, overlord review 2026-10-24; "i approve 1": Frida through the REA CLI
 over ssh)
 Supersedes: the observable-entry directive, done 2026-10-24 (c1j: `[[0x4CBFB0]+0x10]` feed,

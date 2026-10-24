@@ -2,7 +2,85 @@
   "schema_version": 1,
   "updated": "2026-10-23",
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "b1x-panel-draw-read",
+      "title": "B1 main-menu panel draw read (0x48B1C7) and full-frame re-score",
+      "status": "running",
+      "brief": "build/tmp/b1x-panel-draw-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read + render edit",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab1x-panel-draw-read-aeebd7110967f7f1",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b1w-menu-render"
+      ],
+      "gate_served": "B1 accepted-on-condition; directive Q1",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 12,
+      "worker_output": null,
+      "landed_in": null,
+      "disposition": null
+    },
+    {
+      "id": "c2c-counters-timer-read",
+      "title": "C2 counters and timer: anchor, colour, count sources (read only)",
+      "status": "running",
+      "brief": "build/tmp/c2c-counters-timer-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2c-counters-timer-read-9642a8bb442639dc",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C2 gate; directive Q2",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 12,
+      "worker_output": null,
+      "landed_in": null,
+      "disposition": null
+    },
+    {
+      "id": "c2e-caption-preflight",
+      "title": "C2 Paused caption preflight: fields the top edge needs, read-only live script (no start)",
+      "status": "running",
+      "brief": "build/tmp/c2e-caption-preflight-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline preflight + script",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ac2e-caption-preflight-d9a97806a8d6c82e",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C2 gate; directive Q3",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 12,
+      "worker_output": null,
+      "landed_in": null,
+      "disposition": null
+    }
+  ],
   "queue": [],
   "recently_landed": [
     {
@@ -3526,576 +3604,601 @@
     }
   ],
   "standing_run": {
-    "id": "b1-final-read-b2-level-map",
-    "goal": "Q1 final B1 ^Font live read with both arms armed (cap two: preflight, one start); Q2 B1 render and score only if exactly one source observed; Q3 B2 level-to-map path named from bytes, one start, Frontend update.",
+    "id": "b1-panel-c2-counters-caption",
+    "goal": "Q1 B1 panel draw read and re-score (offline, cap 2); Q2 C2 counters and timer (offline, cap 3); Q3 C2 Paused caption (preflight, one start, render; cap 3).",
     "milestones": [
       "B1 frontend assets and text",
-      "B2 screen state machine"
+      "C2 counters, cursor, pause caption"
     ],
-    "current": "B2 screen state machine",
-    "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, third directive of the day): Q1 preflight + one start, two hardware breakpoints {0x47E4AD,0x47E463}; Q2 offline cap two, only on exactly one observed source; Q3 preflight, one start, implement. Two stock starts total, no retry after Popen. No B3/C1/C2/C3.",
+    "current": "C2 counters, cursor, pause caption",
+    "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, fourth directive of the day): Q1 and Q2 offline, Q3 one stock start for the caption only. C2 gate cannot pass here (skill-panel exclusion stays, C1 held; cursor clause out of scope). No B2/B3/C1/C3.",
     "grants": {
-      "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
+      "stock_starts": "one total, Q3 only, no retry after Popen; Q1 and Q2 none",
       "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
       "concurrency": "up to 3 offline rounds, at most one live owner"
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
-    "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 16:31 MDT /facilitator invocation; directive amended (q1-entry-int3 authorized), prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 5,
-    "stock_starts_used": 1,
+    "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 18:17 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
+    "rounds_run": 0,
+    "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-    "handoff": "2026-10-23 17:23:52 MDT stopped: b1v and b1w landed; B1 gate 0.005244 (panels measured from reference). Q3 parked; one stock start left, unused. No B3/C1/C2/C3 on this directive.",
+    "handoff": "2026-10-23 18:21 MDT: b1x (Q1), c2c (Q2), c2e (Q3 preflight) dispatched offline; no start used. Next: verify each, land, commit separately.",
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "previous": [
       {
-        "id": "b1-source-read-b2-esc",
-        "goal": "Read the B1 ^Font source live (Q1 round 3), render and score B1 only on exactly one observed source (Q2), second B2 capture with ESC hold sweep, level-to-map and +8 link, then update Frontend (Q3).",
+        "id": "b1-final-read-b2-level-map",
+        "goal": "Q1 final B1 ^Font live read with both arms armed (cap two: preflight, one start); Q2 B1 render and score only if exactly one source observed; Q3 B2 level-to-map path named from bytes, one start, Frontend update.",
         "milestones": [
           "B1 frontend assets and text",
           "B2 screen state machine"
         ],
-        "current": "done",
-        "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, second directive of the day): Q1 live read one round and one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 three new rounds (preflight, capture, implement) and one stock start. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
+        "current": "B2 screen state machine",
+        "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, third directive of the day): Q1 preflight + one start, two hardware breakpoints {0x47E4AD,0x47E463}; Q2 offline cap two, only on exactly one observed source; Q3 preflight, one start, implement. Two stock starts total, no retry after Popen. No B3/C1/C2/C3.",
         "grants": {
           "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
           "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
-          "concurrency": "up to 3 offline rounds, at most one live owner; Q1 live runs before Q3 live"
+          "concurrency": "up to 3 offline rounds, at most one live owner"
         },
         "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
-        "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; directive active and prior run stopped with no task running, so this start is the handoff.",
-        "rounds_run": 4,
-        "stock_starts_used": 2,
+        "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 16:31 MDT /facilitator invocation; directive amended (q1-entry-int3 authorized), prior run stopped, no task running, so this start is the handoff.",
+        "rounds_run": 5,
+        "stock_starts_used": 1,
         "pending_questions": [],
-        "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-        "handoff": "2026-10-23 stopped: b1t, b2g, b2h, b2i landed; both stock starts spent. Q1 parked (no ^Font hit), Q2 not run, Q3 solved on short-ESC (retracted) with level-to-map and +8 unobserved. DIRECTIVE.md Status: done.",
+        "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
+        "handoff": "2026-10-23 17:23:52 MDT stopped: b1v and b1w landed; B1 gate 0.005244 (panels measured from reference). Q3 parked; one stock start left, unused. No B3/C1/C2/C3 on this directive.",
         "rules": "docs/ORCHESTRATION.md#standing-run",
-        "stopped": {
-          "date": "2026-10-23",
-          "reason": "Directive questions landed or parked: Q1 parked (one start, no ^Font hit), Q2 not run (no single source), Q3 landed (b2g/b2h/b2i; short-ESC quirk retracted; level-to-map and +8 unobserved). Both stock starts spent.",
-          "last_commit": "6982054"
-        },
         "previous": [
           {
-            "id": "b1-live-b2-capture",
-            "goal": "Read the B1 ^Font source live (Q1), render and score B1 only on exactly one observed source (Q2), capture and implement the B2 sequence (Q3).",
+            "id": "b1-source-read-b2-esc",
+            "goal": "Read the B1 ^Font source live (Q1 round 3), render and score B1 only on exactly one observed source (Q2), second B2 capture with ESC hold sweep, level-to-map and +8 link, then update Frontend (Q3).",
             "milestones": [
               "B1 frontend assets and text",
               "B2 screen state machine"
             ],
-            "current": "Stop point reached: Q3 landed at its three-round cap (b2d, b2e, b2f), Q1 live read parked on pending_questions q1-live-read-round-cap, Q2 not started (needs exactly one observed source).",
-            "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review): Q1 live read cap two rounds, one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 one stock start, cap three. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
+            "current": "done",
+            "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review, second directive of the day): Q1 live read one round and one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 three new rounds (preflight, capture, implement) and one stock start. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
             "grants": {
               "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
               "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
               "concurrency": "up to 3 offline rounds, at most one live owner; Q1 live runs before Q3 live"
             },
             "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
-            "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator invocation; directive active and prior run stopped, no task was running, so this start is the handoff.",
-            "rounds_run": 5,
-            "stock_starts_used": 1,
-            "pending_questions": [
-              {
-                "id": "q1-live-read-round-cap",
-                "question": "Directive Q1 caps the B1 source question at two rounds. The offline preflight (b1s) plus its one repair used both. May the live read (one stock start, one hardware breakpoint) run as a third round?",
-                "evidence": [
-                  "docs/scratch/phase-b1s-font-live-preflight.md",
-                  "docs/DIRECTIVE.md",
-                  "docs/ORCHESTRATION.md#milestones-gates-and-round-caps (repairs count)"
-                ],
-                "options": [
-                  "Authorize the live read as round 3 of Q1, with --stop-after set from the expected two hits and --launch armed at the first instruction",
-                  "Park Q1 (B1 stays unscored) and spend the effort on Q3 only"
-                ],
-                "recommendation": "Authorize round 3: it is the one start the directive grants for Q1, and everything offline is done. Residual families still failing the B1 gate: source sheet (conditional, archive path only if gate [0x5D5610] is nonzero), highlight accessor (0 byte-proved), B1 full-frame render (0 scores). Risks: --launch is untested on the stock game and the load may be missed if the exe resists a debugger."
-              }
-            ],
+            "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator-ssh invocation; directive active and prior run stopped with no task running, so this start is the handoff.",
+            "rounds_run": 4,
+            "stock_starts_used": 2,
+            "pending_questions": [],
             "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
-            "handoff": "2026-10-23 stopped. Awaiting user decision q1-live-read-round-cap (recommend authorize: one stock start remains, offline work done). Q2 follows only if Q1 observes exactly one source. B2 gate unmet: short ESC, long ESC, level-to-map, +8 unobserved.",
+            "handoff": "2026-10-23 stopped: b1t, b2g, b2h, b2i landed; both stock starts spent. Q1 parked (no ^Font hit), Q2 not run, Q3 solved on short-ESC (retracted) with level-to-map and +8 unobserved. DIRECTIVE.md Status: done.",
             "rules": "docs/ORCHESTRATION.md#standing-run",
             "stopped": {
               "date": "2026-10-23",
-              "reason": "Directive stop point: Q3 landed at cap (B2d, B2e, B2f; counter 3/4/5 observed and replayed, ESC/level-to-map/+8 unobserved); Q1 parked on user decision q1-live-read-round-cap after b1s and repair; Q2 not started. No gate scored.",
-              "last_commit": "10dbb2f",
-              "current_gate": "B1 highlight0 full-frame <=0.02 unscored; B2 sequence gate unmet (observed rows replayed only)",
-              "rounds_run": 5,
-              "stock_starts_used": 1,
-              "no_further_dispatch": true
+              "reason": "Directive questions landed or parked: Q1 parked (one start, no ^Font hit), Q2 not run (no single source), Q3 landed (b2g/b2h/b2i; short-ESC quirk retracted; level-to-map and +8 unobserved). Both stock starts spent.",
+              "last_commit": "6982054"
             },
             "previous": [
               {
-                "id": "b1-loader-b2-sequence",
-                "goal": "Resolve generic texture loader; render B1 only on unique read source; capture and implement B2 sequence under active directive.",
+                "id": "b1-live-b2-capture",
+                "goal": "Read the B1 ^Font source live (Q1), render and score B1 only on exactly one observed source (Q2), capture and implement the B2 sequence (Q3).",
                 "milestones": [
                   "B1 frontend assets and text",
                   "B2 screen state machine"
                 ],
-                "current": "All three questions landed or parked: Q1 parked at cap (b1r landed, conditional ^Font source), Q2 not started, Q3 (B2) parked at cap. Stop point reached.",
-                "authorized": "docs/DIRECTIVE.md active issued2026-10-23 superseding prior sheet directive: Q1 generic-loader new question cap3; Q2 offline B1 renderer cap2 only if unique source; Q3 B2 cap3 exactly one stock start after byte-based preflight, no retry after Popen. No B3 or Phase C advance.",
+                "current": "Stop point reached: Q3 landed at its three-round cap (b2d, b2e, b2f), Q1 live read parked on pending_questions q1-live-read-round-cap, Q2 not started (needs exactly one observed source).",
+                "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23 (overlord review): Q1 live read cap two rounds, one stock start, one hardware breakpoint; Q2 offline render cap two, only on exactly one observed source; Q3 one stock start, cap three. Two starts total, no retry after Popen. No B3/C1/C2/C3.",
                 "grants": {
-                  "stock_starts": "Q1/Q2 zero; Q3 exactly one only after complete offline preflight, no retry after Popen",
-                  "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and explicit handoff; no force-push/checkout/reset/stash",
-                  "concurrency": "up to3 independent offline rounds, at most one live owner; Q1/Q3 disjoint and independent"
+                  "stock_starts": "two total: one Q1, one Q3, none transferable, no retry after Popen; Q2 none",
+                  "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+                  "concurrency": "up to 3 offline rounds, at most one live owner; Q1 live runs before Q3 live"
                 },
-                "workers": "OpenCode mapping docs/ROLES.md: disasm-agent for native reads, round-agent for capture-only/render/implementation rounds; no model override.",
-                "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 invocation. Took over from OpenCode facilitator ses_e96a3d099ffeQpsc1kgKEdfDBJ at the user's /facilitator-ssh start: no task was `running` (both dispatched rounds were ready-for-verify, packets finished 09:44/09:34), so the start is the handoff per ORCHESTRATION#standing-run. opencode.exe processes exist on mouv and were not attributed to a session; the prior session was not contacted.",
-                "rounds_run": 6,
-                "stock_starts_used": 0,
-                "pending_questions": [],
-                "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
-                "handoff": "2026-10-23 B1p, B1q, B1r (Q1) and B2a, B2b, B2c (Q3) landed as bounded negatives/partials. Q1 parked at round 3 (^Font -> lemmings.box BMP+ALF conditional on gate [0x5D5610], loose route unread); Q2 not started; B2 parked. Zero stock starts used. Stop point reached; DIRECTIVE.md to be set done.",
+                "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
+                "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 /facilitator invocation; directive active and prior run stopped, no task was running, so this start is the handoff.",
+                "rounds_run": 5,
+                "stock_starts_used": 1,
+                "pending_questions": [
+                  {
+                    "id": "q1-live-read-round-cap",
+                    "question": "Directive Q1 caps the B1 source question at two rounds. The offline preflight (b1s) plus its one repair used both. May the live read (one stock start, one hardware breakpoint) run as a third round?",
+                    "evidence": [
+                      "docs/scratch/phase-b1s-font-live-preflight.md",
+                      "docs/DIRECTIVE.md",
+                      "docs/ORCHESTRATION.md#milestones-gates-and-round-caps (repairs count)"
+                    ],
+                    "options": [
+                      "Authorize the live read as round 3 of Q1, with --stop-after set from the expected two hits and --launch armed at the first instruction",
+                      "Park Q1 (B1 stays unscored) and spend the effort on Q3 only"
+                    ],
+                    "recommendation": "Authorize round 3: it is the one start the directive grants for Q1, and everything offline is done. Residual families still failing the B1 gate: source sheet (conditional, archive path only if gate [0x5D5610] is nonzero), highlight accessor (0 byte-proved), B1 full-frame render (0 scores). Risks: --launch is untested on the stock game and the load may be missed if the exe resists a debugger."
+                  }
+                ],
+                "stop_point": "Every directive question landed or parked (B1 gate passing on own re-score counts), an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",
+                "handoff": "2026-10-23 stopped. Awaiting user decision q1-live-read-round-cap (recommend authorize: one stock start remains, offline work done). Q2 follows only if Q1 observes exactly one source. B2 gate unmet: short ESC, long ESC, level-to-map, +8 unobserved.",
                 "rules": "docs/ORCHESTRATION.md#standing-run",
                 "stopped": {
                   "date": "2026-10-23",
-                  "reason": "Directive stop point: Q1 parked at round cap (B1p, B1q, B1r; ^Font -> lemmings.box BMP+ALF conditional on gate [0x5D5610], loose route unread, no unique source), Q2 not started (needs exactly one source), Q3 B2 parked at round cap (B2a, B2b, B2c; key-to-event edge unread). No gate scored, no stock start used.",
-                  "last_commit": "f8b86be",
-                  "current_gate": "B1 highlight0 full-frame <=0.02 unchanged and unscored/unaccepted",
-                  "rounds_run": 6,
-                  "stock_starts_used": 0,
+                  "reason": "Directive stop point: Q3 landed at cap (B2d, B2e, B2f; counter 3/4/5 observed and replayed, ESC/level-to-map/+8 unobserved); Q1 parked on user decision q1-live-read-round-cap after b1s and repair; Q2 not started. No gate scored.",
+                  "last_commit": "10dbb2f",
+                  "current_gate": "B1 highlight0 full-frame <=0.02 unscored; B2 sequence gate unmet (observed rows replayed only)",
+                  "rounds_run": 5,
+                  "stock_starts_used": 1,
                   "no_further_dispatch": true
                 },
                 "previous": [
                   {
-                    "id": "b1-table-source-render",
-                    "goal": "Identify ^Font from read-table constraints, render and score B1; conditional preflighted live fallback only on ambiguity/negative.",
+                    "id": "b1-loader-b2-sequence",
+                    "goal": "Resolve generic texture loader; render B1 only on unique read source; capture and implement B2 sequence under active directive.",
                     "milestones": [
-                      "B1 frontend assets and text"
+                      "B1 frontend assets and text",
+                      "B2 screen state machine"
                     ],
-                    "current": "B1 parked after Q3 preflight failure; source binding/highlight unresolved, no render or gate score.",
-                    "authorized": "docs/DIRECTIVE.md active issued2026-10-23 supersedes stopped b1-runtime-render: Q1 table/source test offline round3; Q2 render/score offline up to2 rounds only after unique sheet; Q3 one conditional live start as explicit round4 cap exception after complete byte-based pointer/highlight/source preflight. C1 held; no B2/C2/C3 advance.",
+                    "current": "All three questions landed or parked: Q1 parked at cap (b1r landed, conditional ^Font source), Q2 not started, Q3 (B2) parked at cap. Stop point reached.",
+                    "authorized": "docs/DIRECTIVE.md active issued2026-10-23 superseding prior sheet directive: Q1 generic-loader new question cap3; Q2 offline B1 renderer cap2 only if unique source; Q3 B2 cap3 exactly one stock start after byte-based preflight, no retry after Popen. No B3 or Phase C advance.",
                     "grants": {
-                      "stock_starts": "Q1/Q2 zero; Q3 exactly one only if Q1 ambiguous/negative AND offline preflight closes, no retry after Popen",
-                      "commits": "each independently verified round on decompile, push origin decompile per ROLES sync; no force push, checkout, reset or stash",
-                      "concurrency": "up to3 independent offline rounds; current dependent questions run sequentially"
+                      "stock_starts": "Q1/Q2 zero; Q3 exactly one only after complete offline preflight, no retry after Popen",
+                      "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and explicit handoff; no force-push/checkout/reset/stash",
+                      "concurrency": "up to3 independent offline rounds, at most one live owner; Q1/Q3 disjoint and independent"
                     },
-                    "workers": "OpenCode mapping docs/ROLES.md: configured round-agent for offline data/render/capture; disasm-agent for separately scoped original-machine-code reading.",
-                    "owner": "OpenCode facilitator ses_e96bf0745ffevVtM6zz6vK5hed, 2026-10-23 invocation handoff. Prior run stopped; active/queue empty; decompile clean and git pull --ff-only already up to date.",
-                    "rounds_run": 2,
+                    "workers": "OpenCode mapping docs/ROLES.md: disasm-agent for native reads, round-agent for capture-only/render/implementation rounds; no model override.",
+                    "owner": "Claude Code facilitator (Mac, session model), 2026-10-23 invocation. Took over from OpenCode facilitator ses_e96a3d099ffeQpsc1kgKEdfDBJ at the user's /facilitator-ssh start: no task was `running` (both dispatched rounds were ready-for-verify, packets finished 09:44/09:34), so the start is the handoff per ORCHESTRATION#standing-run. opencode.exe processes exist on mouv and were not attributed to a session; the prior session was not contacted.",
+                    "rounds_run": 6,
                     "stock_starts_used": 0,
-                    "pending_questions": [
-                      {
-                        "id": "b1-after-preflight-park-direction",
-                        "question": "Authorize a newly bounded native-closure effort for the highlight/source gaps, or re-rank other work? This directive is done and B1 remains unscored.",
-                        "evidence": [
-                          "docs/scratch/phase-b1n-font-sheet-discriminator.md",
-                          "docs/scratch/phase-b1o-font-binding-preflight.md"
-                        ],
-                        "options": [
-                          "New explicit bounded native-source/highlight authorization before any later live grant",
-                          "Keep B1 parked and re-rank in a new directive"
-                        ],
-                        "recommendation": "Do not spend a stock start or fit a sheet. If B1 remains priority, scope exact unexamined suffix/open/load/source-retention edges and semantic highlight accessor, then independently verify complete preflight before a separately authorized capture. Do not repeat existing table predicates/scans.",
-                        "residual_families": [
-                          {
-                            "family": "source sheet",
-                            "count": "0 accepted identities; five candidates pass bounded predicates; actual load branch unproved"
-                          },
-                          {
-                            "family": "highlight accessor",
-                            "count": "0 byte-proved current-process accessors"
-                          },
-                          {
-                            "family": "B1 full-frame renderer/gate",
-                            "count": "0 renders/scores; blocked on source identity"
-                          }
-                        ]
-                      }
-                    ],
-                    "stop_point": "B1 gate passes independently, B1 parked (cap, conditional Q3 preflight failure or start spent without binding), or ORCHESTRATION stop. Q1 ambiguity routes to explicitly authorized Q3 preflight, not automatic render or live launch.",
-                    "handoff": "2026-10-23 STOPPED per directive Q3 preflight-failure condition. B1n ambiguity verified/committed/pushed b3afffe (five tested candidates, no identity, narrowed inventory/table ranges); B1o negative preflight verified/committed/pushed ce42232 at eight bodies (highlight and complete source unproved), no launch. Two dispatches/zero starts this run, runtime question4 total. B1 unscored/unaccepted, no renderer or milestone advance.30/30 CTest, all install hashes match own startup, no process/task. Active/queue empty. Next action user/overlord new authorization or re-ranking; no fifth dispatch or automatic use of unused conditional start.",
+                    "pending_questions": [],
+                    "stop_point": "All three directive questions landed or parked, or ORCHESTRATION stop; no B3/C1/C2/C3 advance, no choosing source by score.",
+                    "handoff": "2026-10-23 B1p, B1q, B1r (Q1) and B2a, B2b, B2c (Q3) landed as bounded negatives/partials. Q1 parked at round 3 (^Font -> lemmings.box BMP+ALF conditional on gate [0x5D5610], loose route unread); Q2 not started; B2 parked. Zero stock starts used. Stop point reached; DIRECTIVE.md to be set done.",
                     "rules": "docs/ORCHESTRATION.md#standing-run",
                     "stopped": {
                       "date": "2026-10-23",
-                      "reason": "Directive Q3 mandatory offline preflight failed at eight-body cap: byte-proved highlight accessor and complete actual-source attribution not established. Explicit stop and park; no stock launch, fifth runtime round, renderer with guessed source or milestone advance.",
-                      "last_commit": "ce42232",
+                      "reason": "Directive stop point: Q1 parked at round cap (B1p, B1q, B1r; ^Font -> lemmings.box BMP+ALF conditional on gate [0x5D5610], loose route unread, no unique source), Q2 not started (needs exactly one source), Q3 B2 parked at round cap (B2a, B2b, B2c; key-to-event edge unread). No gate scored, no stock start used.",
+                      "last_commit": "f8b86be",
                       "current_gate": "B1 highlight0 full-frame <=0.02 unchanged and unscored/unaccepted",
-                      "rounds_run": 2,
+                      "rounds_run": 6,
                       "stock_starts_used": 0,
                       "no_further_dispatch": true
                     },
                     "previous": [
                       {
-                        "id": "b1-runtime-render",
-                        "goal": "Read main-menu runtime X and ^Font resource, then render and score B1; do not advance to B2 or Phase C.",
+                        "id": "b1-table-source-render",
+                        "goal": "Identify ^Font from read-table constraints, render and score B1; conditional preflighted live fallback only on ambiguity/negative.",
                         "milestones": [
                           "B1 frontend assets and text"
                         ],
-                        "current": "B1 question 1 runtime read; question 2 offline renderer depends on verified question 1.",
-                        "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23: question 1 live runtime inputs up to three rounds but exactly one stock start and no retry after Popen; question 2 offline render and score up to two rounds after question 1 lands. Read, do not fit. Explicit same-process restoration and hashing of all install files. English remains reference. C1/C2/C3/B2 held.",
+                        "current": "B1 parked after Q3 preflight failure; source binding/highlight unresolved, no render or gate score.",
+                        "authorized": "docs/DIRECTIVE.md active issued2026-10-23 supersedes stopped b1-runtime-render: Q1 table/source test offline round3; Q2 render/score offline up to2 rounds only after unique sheet; Q3 one conditional live start as explicit round4 cap exception after complete byte-based pointer/highlight/source preflight. C1 held; no B2/C2/C3 advance.",
                         "grants": {
-                          "stock_starts": "exactly one for question 1, no retry after Popen; none for question 2",
-                          "commits": "each verified round on decompile; push origin decompile after each per ROLES sync. If credentials fail keep local and record. No force push, checkout, reset or stash.",
-                          "concurrency": "up to three independent offline tasks, at most one live owner; only sequential dependent questions currently authorized"
+                          "stock_starts": "Q1/Q2 zero; Q3 exactly one only if Q1 ambiguous/negative AND offline preflight closes, no retry after Popen",
+                          "commits": "each independently verified round on decompile, push origin decompile per ROLES sync; no force push, checkout, reset or stash",
+                          "concurrency": "up to3 independent offline rounds; current dependent questions run sequentially"
                         },
-                        "workers": "OpenCode client mapping in docs/ROLES.md; round-agent for runtime/capture/render, disasm-agent only for a separately scoped disassembly read.",
-                        "owner": "OpenCode facilitator ses_e96d9a2fcffeTypLcuYRbQWaZU, 2026-10-23. Empty active/queue, previous standing run stopped; this invocation takes the directive handoff. git pull --ff-only already up to date and decompile clean at 44792d9.",
+                        "workers": "OpenCode mapping docs/ROLES.md: configured round-agent for offline data/render/capture; disasm-agent for separately scoped original-machine-code reading.",
+                        "owner": "OpenCode facilitator ses_e96bf0745ffevVtM6zz6vK5hed, 2026-10-23 invocation handoff. Prior run stopped; active/queue empty; decompile clean and git pull --ff-only already up to date.",
                         "rounds_run": 2,
-                        "stock_starts_used": 1,
+                        "stock_starts_used": 0,
                         "pending_questions": [
                           {
-                            "id": "b1-runtime-reacquisition-authorization",
-                            "question": "Authorize a separately preflighted runtime acquisition, or leave B1 stopped? The one granted stock start is consumed and the font binding was not captured. Missing highlight bracket and pool pointer0x58CB84 prevent completing question1 and starting question2. No B1 gate score exists.",
+                            "id": "b1-after-preflight-park-direction",
+                            "question": "Authorize a newly bounded native-closure effort for the highlight/source gaps, or re-rank other work? This directive is done and B1 remains unscored.",
                             "evidence": [
-                              "docs/scratch/phase-b1m-runtime-font-read.md",
-                              "build/tmp/b1m-runtime-font-read/repair1/round-note.md",
-                              "build/tmp/b1m-facilitator-check/result.json"
+                              "docs/scratch/phase-b1n-font-sheet-discriminator.md",
+                              "docs/scratch/phase-b1o-font-binding-preflight.md"
                             ],
                             "options": [
-                              "Authorize offline pointer/source/highlight preflight then one new bounded stock start; preserve gate and no-fitting rule",
-                              "Keep B1 stopped and re-rank in a new directive"
+                              "New explicit bounded native-source/highlight authorization before any later live grant",
+                              "Keep B1 parked and re-rank in a new directive"
                             ],
-                            "recommendation": "First option only after preflight proves the current-process highlight accessor, embedded manager/pool chain and name/source-storage reads with offline mocks/bytes. Do not spend another start on guessed pointers or repeat B1j-l static scans. C1/C2/B2 remain excluded on this directive.",
+                            "recommendation": "Do not spend a stock start or fit a sheet. If B1 remains priority, scope exact unexamined suffix/open/load/source-retention edges and semantic highlight accessor, then independently verify complete preflight before a separately authorized capture. Do not repeat existing table predicates/scans.",
                             "residual_families": [
                               {
-                                "family": "highlight bracket",
-                                "count": "3/3 unreadable stale heap-address reads"
+                                "family": "source sheet",
+                                "count": "0 accepted identities; five candidates pass bounded predicates; actual load branch unproved"
                               },
                               {
-                                "family": "font resource binding",
-                                "count": "3/3 snapshots target .rdata rather than manager; pool pointer, selected record, wrapper, descriptor and source storage missing"
+                                "family": "highlight accessor",
+                                "count": "0 byte-proved current-process accessors"
                               },
                               {
-                                "family": "B1 full-frame render",
-                                "count": "0 production renders/scores; question2 depends on source binding"
+                                "family": "B1 full-frame renderer/gate",
+                                "count": "0 renders/scores; blocked on source identity"
                               }
                             ]
                           }
                         ],
-                        "stop_point": "B1 gate passes on independent re-score, either question reaches cap (runtime 3, render 2), or any ORCHESTRATION stop condition; no milestone advance.",
-                        "handoff": "2026-10-23 STOPPED after B1m plus offline repair1 (2 dispatches,1/1 starts PID45172). Independently verified X640=>320 without highlight memory bracket; font+8 index36; wrong manager dereference captured .rdata and first missing runtime bytes are0x58CB84..88. Source/dimensions unknown. Negative landed with evidence, no B1 render/score. All install hashes restored; no process/task,30/30 CTest. Active/queue empty. Only next action is user/overlord authorization decision for offline-preflighted reacquisition; no live retry or other milestone on this closed directive. Round commit0965330 successfully pushed origin/decompile; this checkpoint records that verified-round hash.",
+                        "stop_point": "B1 gate passes independently, B1 parked (cap, conditional Q3 preflight failure or start spent without binding), or ORCHESTRATION stop. Q1 ambiguity routes to explicitly authorized Q3 preflight, not automatic render or live launch.",
+                        "handoff": "2026-10-23 STOPPED per directive Q3 preflight-failure condition. B1n ambiguity verified/committed/pushed b3afffe (five tested candidates, no identity, narrowed inventory/table ranges); B1o negative preflight verified/committed/pushed ce42232 at eight bodies (highlight and complete source unproved), no launch. Two dispatches/zero starts this run, runtime question4 total. B1 unscored/unaccepted, no renderer or milestone advance.30/30 CTest, all install hashes match own startup, no process/task. Active/queue empty. Next action user/overlord new authorization or re-ranking; no fifth dispatch or automatic use of unused conditional start.",
                         "rules": "docs/ORCHESTRATION.md#standing-run",
                         "stopped": {
                           "date": "2026-10-23",
-                          "reason": "Every remaining authorized ranked action depends on pending authorization: sole live start consumed without source binding; offline repair proved first missing runtime edge. Render question2 depends on binding; other milestones excluded. No retry after Popen. Stop is not the round cap (question1 at2/3) or a gate amendment.",
-                          "last_commit": "0965330",
-                          "current_gate": "B1 main-menu highlight0 full-frame <=0.02 remains unscored/unaccepted; no changed thresholds/masks/exclusions.",
+                          "reason": "Directive Q3 mandatory offline preflight failed at eight-body cap: byte-proved highlight accessor and complete actual-source attribution not established. Explicit stop and park; no stock launch, fifth runtime round, renderer with guessed source or milestone advance.",
+                          "last_commit": "ce42232",
+                          "current_gate": "B1 highlight0 full-frame <=0.02 unchanged and unscored/unaccepted",
                           "rounds_run": 2,
-                          "stock_starts_used": 1,
+                          "stock_starts_used": 0,
                           "no_further_dispatch": true
                         },
                         "previous": [
                           {
-                            "id": "b1-menu-render",
-                            "goal": "Attempt the B1 main-menu full-frame gate from the read charmap, and in parallel read what 0x44CD06 draws for the pause caption and timer. Do not advance to B2, C1, C2 or C3.",
+                            "id": "b1-runtime-render",
+                            "goal": "Read main-menu runtime X and ^Font resource, then render and score B1; do not advance to B2 or Phase C.",
                             "milestones": [
                               "B1 frontend assets and text"
                             ],
-                            "current": "B1 frontend assets and text. Question 2 is C2 groundwork only and is not a C2 gate attempt.",
-                            "authorized": "Overlord directive docs/DIRECTIVE.md Status active, issued 2026-10-22, superseding font-charmap-c1-live (stopped, preserved under previous). Question 1: which of FUN_004404fa callers draws the main menu, with which font object, sheet and label placement, then wire the read charmap and score highlight 0 full-frame against the B1 gate. Up to three rounds. Question 2: offline disassembly read of the 0x44CD06 lead (H+0x758/H+0x77C and the MM:SS timer at H+0x224). No render and no C2 gate. Owned paths disjoint. No stock starts. Three rounds per question. Read, do not fit. B1f/B1h fitting stays parked. C1 is held. English menus stay; do not reset the install language.",
+                            "current": "B1 question 1 runtime read; question 2 offline renderer depends on verified question 1.",
+                            "authorized": "docs/DIRECTIVE.md active, issued 2026-10-23: question 1 live runtime inputs up to three rounds but exactly one stock start and no retry after Popen; question 2 offline render and score up to two rounds after question 1 lands. Read, do not fit. Explicit same-process restoration and hashing of all install files. English remains reference. C1/C2/C3/B2 held.",
                             "grants": {
-                              "stock_starts": "none on this directive",
-                              "commits": "each verified round on decompile, then git push origin decompile per ROLES Mac-clone sync; no force-push, checkout, reset or stash. If mouv push fails on credentials, leave the commit local and say so in the handoff.",
-                              "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
+                              "stock_starts": "exactly one for question 1, no retry after Popen; none for question 2",
+                              "commits": "each verified round on decompile; push origin decompile after each per ROLES sync. If credentials fail keep local and record. No force push, checkout, reset or stash.",
+                              "concurrency": "up to three independent offline tasks, at most one live owner; only sequential dependent questions currently authorized"
                             },
-                            "workers": "Cursor round-agent pinned to grok-4.7-high-fast, including disassembly reads. Do not escalate to Opus.",
-                            "owner": "Cursor facilitator session, this /facilitator invocation, 2026-10-22. No task was running or queued. The prior standing run font-charmap-c1-live has stopped.no_further_dispatch and is preserved under previous. This start is the handoff.",
-                            "rounds_run": 5,
-                            "stock_starts_used": 0,
-                            "pending_questions": [],
-                            "stop_point": "Stop and report when the B1 gate passes on the facilitator independent re-score, or when question 1 reaches its three-round cap and question 2 is landed or parked. Also stop on any ORCHESTRATION stop condition. Do not advance to B2, C1, C2 or C3.",
-                            "handoff": "2026-10-22 STOPPED. Question 1 used three rounds (b1j, b1k, b1l) and did not score the B1 gate. The labels are the table at 0x4C4214, Y starts at 320, X is a signed half of [0x58CB40], and that word has no file store. ^Font does not name a BMP in the exe. Question 2 landed: 0x44CD06 draws Out, Saved, and a MM:SS timer. No stock starts. Do not dispatch another round on this directive. Stop commit 0f91521.",
+                            "workers": "OpenCode client mapping in docs/ROLES.md; round-agent for runtime/capture/render, disasm-agent only for a separately scoped disassembly read.",
+                            "owner": "OpenCode facilitator ses_e96d9a2fcffeTypLcuYRbQWaZU, 2026-10-23. Empty active/queue, previous standing run stopped; this invocation takes the directive handoff. git pull --ff-only already up to date and decompile clean at 44792d9.",
+                            "rounds_run": 2,
+                            "stock_starts_used": 1,
+                            "pending_questions": [
+                              {
+                                "id": "b1-runtime-reacquisition-authorization",
+                                "question": "Authorize a separately preflighted runtime acquisition, or leave B1 stopped? The one granted stock start is consumed and the font binding was not captured. Missing highlight bracket and pool pointer0x58CB84 prevent completing question1 and starting question2. No B1 gate score exists.",
+                                "evidence": [
+                                  "docs/scratch/phase-b1m-runtime-font-read.md",
+                                  "build/tmp/b1m-runtime-font-read/repair1/round-note.md",
+                                  "build/tmp/b1m-facilitator-check/result.json"
+                                ],
+                                "options": [
+                                  "Authorize offline pointer/source/highlight preflight then one new bounded stock start; preserve gate and no-fitting rule",
+                                  "Keep B1 stopped and re-rank in a new directive"
+                                ],
+                                "recommendation": "First option only after preflight proves the current-process highlight accessor, embedded manager/pool chain and name/source-storage reads with offline mocks/bytes. Do not spend another start on guessed pointers or repeat B1j-l static scans. C1/C2/B2 remain excluded on this directive.",
+                                "residual_families": [
+                                  {
+                                    "family": "highlight bracket",
+                                    "count": "3/3 unreadable stale heap-address reads"
+                                  },
+                                  {
+                                    "family": "font resource binding",
+                                    "count": "3/3 snapshots target .rdata rather than manager; pool pointer, selected record, wrapper, descriptor and source storage missing"
+                                  },
+                                  {
+                                    "family": "B1 full-frame render",
+                                    "count": "0 production renders/scores; question2 depends on source binding"
+                                  }
+                                ]
+                              }
+                            ],
+                            "stop_point": "B1 gate passes on independent re-score, either question reaches cap (runtime 3, render 2), or any ORCHESTRATION stop condition; no milestone advance.",
+                            "handoff": "2026-10-23 STOPPED after B1m plus offline repair1 (2 dispatches,1/1 starts PID45172). Independently verified X640=>320 without highlight memory bracket; font+8 index36; wrong manager dereference captured .rdata and first missing runtime bytes are0x58CB84..88. Source/dimensions unknown. Negative landed with evidence, no B1 render/score. All install hashes restored; no process/task,30/30 CTest. Active/queue empty. Only next action is user/overlord authorization decision for offline-preflighted reacquisition; no live retry or other milestone on this closed directive. Round commit0965330 successfully pushed origin/decompile; this checkpoint records that verified-round hash.",
                             "rules": "docs/ORCHESTRATION.md#standing-run",
+                            "stopped": {
+                              "date": "2026-10-23",
+                              "reason": "Every remaining authorized ranked action depends on pending authorization: sole live start consumed without source binding; offline repair proved first missing runtime edge. Render question2 depends on binding; other milestones excluded. No retry after Popen. Stop is not the round cap (question1 at2/3) or a gate amendment.",
+                              "last_commit": "0965330",
+                              "current_gate": "B1 main-menu highlight0 full-frame <=0.02 remains unscored/unaccepted; no changed thresholds/masks/exclusions.",
+                              "rounds_run": 2,
+                              "stock_starts_used": 1,
+                              "no_further_dispatch": true
+                            },
                             "previous": [
                               {
-                                "id": "font-charmap-c1-live",
-                                "goal": "Answer docs/DIRECTIVE.md's two questions: (1) read the original's character-code-to-glyph-cell mapping and advance/placement rule from its text-draw code, unblocking B1's full-frame score and C1's counts clause; (2) one live stock-game read of the C1 skill-panel widgets' +8 icon index and whether a dispatch reaches widgets beyond widget 0.",
+                                "id": "b1-menu-render",
+                                "goal": "Attempt the B1 main-menu full-frame gate from the read charmap, and in parallel read what 0x44CD06 draws for the pause caption and timer. Do not advance to B2, C1, C2 or C3.",
                                 "milestones": [
-                                  "B1 frontend assets and text",
-                                  "C1 skill panel"
+                                  "B1 frontend assets and text"
                                 ],
-                                "current": "Two parallel directive questions (offline font charmap read; one live C1 widget read) -- not a sequential milestone walk. Do not advance to B2, C2 or C3 on this directive.",
-                                "authorized": "Overlord directive, docs/DIRECTIVE.md, Status: active, issued 2026-10-22 (user, overlord review 2026-10-22), superseding the c1-skill-panel directive (closed 2026-10-22, parked at its round cap; preserved below under previous). Changes the approach from pixel/scalar fitting to reading: (1) font charmap read (offline, disassembly read) -- how the original maps a character code to a glyph cell in _FONT.BMP/_FONTFE.BMP and advances/places each glyph, read from the original's text-draw code; stop when read and checked against one retail string, or park. (2) C1 live read (one stock start) -- which widget +8 icon index holds what value during an authorized stock start, and whether an indirect dispatch reaches the other nine widgets; scope as a live read only, not another static byte/literal search. Question 1 may run alongside question 2 (offline and live, disjoint paths); only one live owner at a time. Budget: reuse d-playable-3's grants (per-round commits, up to three concurrent offline rounds, stock starts within each brief's own budget); three rounds per question; the C1 live read gets exactly one stock start.",
+                                "current": "B1 frontend assets and text. Question 2 is C2 groundwork only and is not a C2 gate attempt.",
+                                "authorized": "Overlord directive docs/DIRECTIVE.md Status active, issued 2026-10-22, superseding font-charmap-c1-live (stopped, preserved under previous). Question 1: which of FUN_004404fa callers draws the main menu, with which font object, sheet and label placement, then wire the read charmap and score highlight 0 full-frame against the B1 gate. Up to three rounds. Question 2: offline disassembly read of the 0x44CD06 lead (H+0x758/H+0x77C and the MM:SS timer at H+0x224). No render and no C2 gate. Owned paths disjoint. No stock starts. Three rounds per question. Read, do not fit. B1f/B1h fitting stays parked. C1 is held. English menus stay; do not reset the install language.",
                                 "grants": {
-                                  "stock_starts": "C1 live read: exactly one stock start, no retry after Popen; font charmap read: none (offline only); at most one live owner at a time",
-                                  "commits": "each verified round on decompile, no push/checkout/reset/stash",
+                                  "stock_starts": "none on this directive",
+                                  "commits": "each verified round on decompile, then git push origin decompile per ROLES Mac-clone sync; no force-push, checkout, reset or stash. If mouv push fails on credentials, leave the commit local and say so in the handoff.",
                                   "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
                                 },
-                                "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-                                "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running or queued under a prior owner (active and queue were both empty); the prior standing run (c1-skill-panel) was already stopped and is preserved under previous, not resumed.",
-                                "rounds_run": 2,
-                                "stock_starts_used": 1,
+                                "workers": "Cursor round-agent pinned to grok-4.7-high-fast, including disassembly reads. Do not escalate to Opus.",
+                                "owner": "Cursor facilitator session, this /facilitator invocation, 2026-10-22. No task was running or queued. The prior standing run font-charmap-c1-live has stopped.no_further_dispatch and is preserved under previous. This start is the handoff.",
+                                "rounds_run": 5,
+                                "stock_starts_used": 0,
                                 "pending_questions": [],
-                                "stop_point": "Stop and report when both questions are answered (landed, or parked at their cap), or on any ORCHESTRATION stop condition. Do not advance to B2, C2 or C3 on this directive, and do not re-attempt the B1 or C1 gate until the overlord ranks it. A passing gate on the facilitator's own independent re-score also stops the run.",
-                                "handoff": "2026-10-22: both of docs/DIRECTIVE.md's questions are now answered and independently verified. Question 1 (b1i-font-charmap-read): landed -- the character-to-glyph-cell index rule, the per-glyph proportional advance rule and two real font instances were read from bytes and checked against a retail string ('Quit'), all independently re-derived by the facilitator from raw PE bytes. Question 2 (c1f-panel-icon-live-read): landed -- the one authorized stock start was spent and the live read was recorded; it overturned two of C1d/C1e's static-era conclusions (widget +8 IS written, to index+8; levelScreen+0x3c IS written at runtime, moving from widget 0 to widget 6) but did not close C1's gate -- it redirects the open question to 'what actually draws the other nine icons', since FUN_00457868 is now live-shown to be a single-target-per-frame draw, not the per-button renderer. Landed both into PLAN.md Phase B/Phase C/Phase E and docs/scratch/phase-b1i-font-charmap.md + phase-c1-panel-icon-render.md (C1f section). Per the directive's own stop point ('Stop and report when both questions are answered'), this standing run stops here. B1 and C1 remain not accepted; their gates are unchanged. Next facilitator action is the overlord's to rank, not a new round on this directive.",
+                                "stop_point": "Stop and report when the B1 gate passes on the facilitator independent re-score, or when question 1 reaches its three-round cap and question 2 is landed or parked. Also stop on any ORCHESTRATION stop condition. Do not advance to B2, C1, C2 or C3.",
+                                "handoff": "2026-10-22 STOPPED. Question 1 used three rounds (b1j, b1k, b1l) and did not score the B1 gate. The labels are the table at 0x4C4214, Y starts at 320, X is a signed half of [0x58CB40], and that word has no file store. ^Font does not name a BMP in the exe. Question 2 landed: 0x44CD06 draws Out, Saved, and a MM:SS timer. No stock starts. Do not dispatch another round on this directive. Stop commit 0f91521.",
+                                "rules": "docs/ORCHESTRATION.md#standing-run",
                                 "previous": [
                                   {
-                                    "id": "c1-skill-panel",
-                                    "goal": "C1 skill panel milestone (PLAN.md Phase C) passes its signed-off gate: the ten buttons and their counts render inside x[18,90) <=0.02 against the A7p/A7q captures, with the A7 panel exclusion removed.",
+                                    "id": "font-charmap-c1-live",
+                                    "goal": "Answer docs/DIRECTIVE.md's two questions: (1) read the original's character-code-to-glyph-cell mapping and advance/placement rule from its text-draw code, unblocking B1's full-frame score and C1's counts clause; (2) one live stock-game read of the C1 skill-panel widgets' +8 icon index and whether a dispatch reaches widgets beyond widget 0.",
                                     "milestones": [
+                                      "B1 frontend assets and text",
                                       "C1 skill panel"
                                     ],
-                                    "current": "C1 skill panel",
-                                    "authorized": "Overlord directive, docs/DIRECTIVE.md, Status: active, issued 2026-10-22 (user, overlord review 2026-10-22). Offline first; reuse C1a's physical indices; render the ten button sprites before counts; counts need digit glyphs, which is where B1 stalled -- if the font mapping is not already read from bytes, score the buttons alone, report that, and do not start glyph fitting. Budget: reuse d-playable-3's grants (stock starts within each brief's own budget, per-round commits, up to three offline concurrent rounds); three rounds per question. Decisions already made, do not re-ask: B1 glyph question parked in Phase E (closed out in this invocation, see recently_landed b1h-atlas-independent-match); B1 stays not accepted, its gate unchanged; English menus are the reference, do not reset the install language. Do not advance to C2 or B2 on this directive -- the overlord ranks the next pass.",
+                                    "current": "Two parallel directive questions (offline font charmap read; one live C1 widget read) -- not a sequential milestone walk. Do not advance to B2, C2 or C3 on this directive.",
+                                    "authorized": "Overlord directive, docs/DIRECTIVE.md, Status: active, issued 2026-10-22 (user, overlord review 2026-10-22), superseding the c1-skill-panel directive (closed 2026-10-22, parked at its round cap; preserved below under previous). Changes the approach from pixel/scalar fitting to reading: (1) font charmap read (offline, disassembly read) -- how the original maps a character code to a glyph cell in _FONT.BMP/_FONTFE.BMP and advances/places each glyph, read from the original's text-draw code; stop when read and checked against one retail string, or park. (2) C1 live read (one stock start) -- which widget +8 icon index holds what value during an authorized stock start, and whether an indirect dispatch reaches the other nine widgets; scope as a live read only, not another static byte/literal search. Question 1 may run alongside question 2 (offline and live, disjoint paths); only one live owner at a time. Budget: reuse d-playable-3's grants (per-round commits, up to three concurrent offline rounds, stock starts within each brief's own budget); three rounds per question; the C1 live read gets exactly one stock start.",
                                     "grants": {
-                                      "stock_starts": "within each brief's own budget, no retry after Popen; at most one live owner at a time",
+                                      "stock_starts": "C1 live read: exactly one stock start, no retry after Popen; font charmap read: none (offline only); at most one live owner at a time",
                                       "commits": "each verified round on decompile, no push/checkout/reset/stash",
                                       "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
                                     },
                                     "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-                                    "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running under a prior owner; the only active item (b1h) was blocked on an explicit user stop predating this directive and is closed out below, not resumed.",
-                                    "rounds_run": 4,
-                                    "stock_starts_used": 0,
+                                    "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running or queued under a prior owner (active and queue were both empty); the prior standing run (c1-skill-panel) was already stopped and is preserved under previous, not resumed.",
+                                    "rounds_run": 2,
+                                    "stock_starts_used": 1,
                                     "pending_questions": [],
-                                    "stop_point": "Stop and report when the C1 gate passes on the facilitator's own independent re-score, or when C1 is parked at its round cap, or on any ORCHESTRATION stop condition. Do not advance to C2 or B2 on this directive.",
-                                    "handoff": "2026-10-22 STOPPED: landed c1e-panel-icon-dispatch-index (round 4, the cap exception). Both of C1d's two named open threads came back as clean, well-evidenced negatives -- no stride-0x238 dispatch loop exists anywhere in .text (exhaustive search_bytes scan, 7 matches, all unrelated), and no writer of any widget's +8 icon index exists anywhere searched (full re-read of the five most-likely functions plus an exhaustive ten-offset literal scan). Both independently re-verified exactly. Per the round's own 'no fifth round regardless of outcome' instruction, parked the C1 icon-draw-mechanism question in PLAN.md Phase E with a resume brief (closing it needs a live memory read of a constructed widget's +8 field and/or whatever indirect dispatch reaches the other nine -- a different kind of round than the four static-only ones already run). C1's render gate depends on two parked items now: this icon-draw mechanism, and B1's already-parked digit-font question for the counts half of the same clause. Neither can progress further under this standing run's offline-first approach without new authorization. Per the overlord directive's own stop point ('C1 is parked at its round cap'), this standing run stops here.",
-                                    "stopped": {
-                                      "date": "2026-10-22",
-                                      "reason": "C1 is parked at its round cap (the overlord directive's own stop point). Four rounds on the icon-render question (C1b-C1e, including one recorded cap exception) located and fully confirmed a real ten-widget icon-draw mechanism matching the panel's physical button count exactly, but the dispatch reaching the other nine widgets and the per-widget icon-index writer are both clean negatives under exhaustive static search. C1's render gate also needs the separately-parked B1 digit-font work for its counts half. Neither parked item can be resolved by another offline round under this directive's scope.",
-                                      "last_commit": "5266a74",
-                                      "current_gate": "C1 render clause (ten buttons + counts, <=0.02) remains open; indices identified (C1a), icon-draw mechanism located but not fully wired (C1b-C1e), counts blocked on B1's parked digit font",
-                                      "rounds_run": 4,
-                                      "stock_starts_used": 0,
-                                      "pending_questions": [],
-                                      "no_further_dispatch": true
-                                    },
+                                    "stop_point": "Stop and report when both questions are answered (landed, or parked at their cap), or on any ORCHESTRATION stop condition. Do not advance to B2, C2 or C3 on this directive, and do not re-attempt the B1 or C1 gate until the overlord ranks it. A passing gate on the facilitator's own independent re-score also stops the run.",
+                                    "handoff": "2026-10-22: both of docs/DIRECTIVE.md's questions are now answered and independently verified. Question 1 (b1i-font-charmap-read): landed -- the character-to-glyph-cell index rule, the per-glyph proportional advance rule and two real font instances were read from bytes and checked against a retail string ('Quit'), all independently re-derived by the facilitator from raw PE bytes. Question 2 (c1f-panel-icon-live-read): landed -- the one authorized stock start was spent and the live read was recorded; it overturned two of C1d/C1e's static-era conclusions (widget +8 IS written, to index+8; levelScreen+0x3c IS written at runtime, moving from widget 0 to widget 6) but did not close C1's gate -- it redirects the open question to 'what actually draws the other nine icons', since FUN_00457868 is now live-shown to be a single-target-per-frame draw, not the per-button renderer. Landed both into PLAN.md Phase B/Phase C/Phase E and docs/scratch/phase-b1i-font-charmap.md + phase-c1-panel-icon-render.md (C1f section). Per the directive's own stop point ('Stop and report when both questions are answered'), this standing run stops here. B1 and C1 remain not accepted; their gates are unchanged. Next facilitator action is the overlord's to rank, not a new round on this directive.",
                                     "previous": [
                                       {
-                                        "id": "d-playable-3",
-                                        "goal": "Park D1 after one more live recheck (d1o); answer D3's end-time residual with a timed replay (d3f); then Phase B (frontend) and Phase C (in-level HUD) milestones B1-C3 pass their signed-off gates (PLAN.md Phase B / Phase C)",
+                                        "id": "c1-skill-panel",
+                                        "goal": "C1 skill panel milestone (PLAN.md Phase C) passes its signed-off gate: the ten buttons and their counts render inside x[18,90) <=0.02 against the A7p/A7q captures, with the A7 panel exclusion removed.",
                                         "milestones": [
-                                          "D1 release and walk-out (parking round)",
-                                          "D3 one retail level end to end",
-                                          "B1 frontend assets and text",
-                                          "B2 screen state machine",
-                                          "B3 level select and map",
-                                          "C1 skill panel",
-                                          "C2 counters, cursor, pause caption",
-                                          "C3 full frame"
+                                          "C1 skill panel"
                                         ],
-                                        "current": "B1 frontend assets and text",
-                                        "authorized": "User 2026-10-22 (CEO review): D1 -- option 4 (park) plus one live recheck (build/tmp/d1o-continuous-live-recheck-brief.md), then park D1 regardless of its result unless it passes the gate literally. D3 -- do not amend the gate and do not run a third click-model round; run build/tmp/d3f-timed-solution-brief.md instead. Phase B and Phase C gates signed off as drafted (PLAN.md Phase B / Phase C tables, drafted 2026-10-21). Add B1-C3 to a new standing run.",
+                                        "current": "C1 skill panel",
+                                        "authorized": "Overlord directive, docs/DIRECTIVE.md, Status: active, issued 2026-10-22 (user, overlord review 2026-10-22). Offline first; reuse C1a's physical indices; render the ten button sprites before counts; counts need digit glyphs, which is where B1 stalled -- if the font mapping is not already read from bytes, score the buttons alone, report that, and do not start glyph fitting. Budget: reuse d-playable-3's grants (stock starts within each brief's own budget, per-round commits, up to three offline concurrent rounds); three rounds per question. Decisions already made, do not re-ask: B1 glyph question parked in Phase E (closed out in this invocation, see recently_landed b1h-atlas-independent-match); B1 stays not accepted, its gate unchanged; English menus are the reference, do not reset the install language. Do not advance to C2 or B2 on this directive -- the overlord ranks the next pass.",
                                         "grants": {
-                                          "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
+                                          "stock_starts": "within each brief's own budget, no retry after Popen; at most one live owner at a time",
                                           "commits": "each verified round on decompile, no push/checkout/reset/stash",
                                           "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
                                         },
                                         "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-                                        "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22), same session resumed on Mac clone via user /facilitator-mac quota-recovery handoff. Mac llmgw/-mac workers only; old mouv OpenCode idle and read-only API confirms no active sessions. GitHub FF/push sync, shared scratch, SSH Windows execution per ROLES/MOUV_SSH.",
-                                        "rounds_run": 16,
-                                        "stock_starts_used": 4,
+                                        "owner": "Claude Code facilitator session (this invocation, 2026-10-22). No task was running under a prior owner; the only active item (b1h) was blocked on an explicit user stop predating this directive and is closed out below, not resumed.",
+                                        "rounds_run": 4,
+                                        "stock_starts_used": 0,
                                         "pending_questions": [],
-                                        "resolved_questions_ref": "see rooted copy below (unchanged, preserved for history)",
-                                        "resolved_questions": [
-                                          {
-                                            "question": "B1b captured a valid, structurally-confirmed 640x480 main-menu reference screengrab (screen id 3, highlight 0, both live-read at capture time) -- but its text is English, not German. match-the-original.md documents \"German menus\" as a preserved quirk, and goto_level.py's own docstring assumed German is the frontends default. The installs persisted SavedGame.dat (created 2026-10-12, modified many times since across many live rounds over multiple days) has no backup or pristine copy anywhere to compare against, so there is no way to determine, from this installs own state, whether English is a residue of some earlier rounds navigation (undocumented, not necessarily a guardrail breach since every individual rounds own before/after restore check has passed on its own terms) or whether the game simply remembers the last-selected language as real stock behaviour and this install happened to have English selected before this project ever touched it. Should a follow-up round spend its one live stock start explicitly navigating into \"Language Selection\" and selecting German (a deliberate, not-undone persisted change to the shared installs save data, on the reasoning that German is the documented correct default and resetting to it is a restoration rather than a new deviation) before capturing the real B1 reference image, or should English be accepted as this installs now-real persisted state and the German-menus quirk note be narrowed to \"the retail games own default,\" with B1s reference image captured in whatever language the install actually produces?",
-                                            "options": [
-                                              "Reset the install to German via one more live round (explicit Language Selection + RETURN navigation, scope beyond any round's brief so far) before capturing B1's real reference image, on the reasoning that German is the documented default and resetting to it restores rather than further deviates",
-                                              "Accept English as this install's现actual persisted state, capture B1's reference image in English, and narrow match-the-original.md's \"German menus\" quirk note to describe the fresh-install default rather than a live invariant",
-                                              "Install a second, fresh copy of the game (or otherwise obtain a known-pristine SavedGame.dat) to settle definitively whether German is really the fresh-install default before deciding either way"
-                                            ],
-                                            "recommendation": "Option 1. match-the-original.md's \"German menus\" quirk is stated plainly, without a caveat about persisted language choice, and the project has never until now needed to reckon with SavedGame.dat drift -- resetting the shared install's language to German before capturing any pixel-comparison reference is the smallest, most defensible action that keeps every future B1/B2/B3 capture unambiguous, and costs only one more live round. Option 3 is the most certain but the most expensive and disruptive (a second install) for a question option 1 likely settles just as well. Option 2 risks quietly smoothing over exactly the kind of quirk this project's rules explicitly warn against doing.",
-                                            "evidence": [
-                                              "docs/scratch/phase-b1-reference-screengrab.md",
-                                              "docs/scratch/phase-b1-frontend-recon.md"
-                                            ],
-                                            "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
-                                          }
-                                        ],
-                                        "handoff": "2026-10-22 STOPPED by user after B1h, no new dispatch/repair/phase/milestone advance. B1h returned incomplete/blocked: original quota interruption plus Mac continuation interrupted about16:17 after~65min versus35min budget, no final worker report. Independent saved-output checks authenticate/reconstruct10 retained runs; latest FONT/FONTFE Quit-row29712/1472625, blank80390, isolated placement36462/scale61322, restored pixels exact. Wrong letters/residual remain; no semantic glyph layout, all-five-label render or B1 production/fullframe pass. Six Python tests and authoritative29CTests pass; no process/task/changed install. Counts16 returned/completed dispatches in standing run,4 stock starts (B1h0), glyph question5. Evidence docs/scratch/phase-b1h-interrupted-quit-registration.md and shared scratch/facilitator-return-note.md. Next recommended action ONLY after new explicit authorization: review existing source identity/target boundaries and require one semantic glyph discriminator before more fitting; reuse exports/reference, preserve gate, do not auto-resume broad glyph or native menu-vtable search. No followup queued; B1 remains current. Mac/mouv GitHub sync after stop commit.",
+                                        "stop_point": "Stop and report when the C1 gate passes on the facilitator's own independent re-score, or when C1 is parked at its round cap, or on any ORCHESTRATION stop condition. Do not advance to C2 or B2 on this directive.",
+                                        "handoff": "2026-10-22 STOPPED: landed c1e-panel-icon-dispatch-index (round 4, the cap exception). Both of C1d's two named open threads came back as clean, well-evidenced negatives -- no stride-0x238 dispatch loop exists anywhere in .text (exhaustive search_bytes scan, 7 matches, all unrelated), and no writer of any widget's +8 icon index exists anywhere searched (full re-read of the five most-likely functions plus an exhaustive ten-offset literal scan). Both independently re-verified exactly. Per the round's own 'no fifth round regardless of outcome' instruction, parked the C1 icon-draw-mechanism question in PLAN.md Phase E with a resume brief (closing it needs a live memory read of a constructed widget's +8 field and/or whatever indirect dispatch reaches the other nine -- a different kind of round than the four static-only ones already run). C1's render gate depends on two parked items now: this icon-draw mechanism, and B1's already-parked digit-font question for the counts half of the same clause. Neither can progress further under this standing run's offline-first approach without new authorization. Per the overlord directive's own stop point ('C1 is parked at its round cap'), this standing run stops here.",
                                         "stopped": {
                                           "date": "2026-10-22",
-                                          "reason": "user: stop after B1h",
-                                          "last_commit": "3f5fb22",
-                                          "last_commit_note": "B1h final disposition/stop round commit; subsequent hash-record bookkeeping does not resume work.",
-                                          "current_gate": "B1 full-frame640x480<=0.02 remains open; no valid production score exists",
-                                          "rounds_run": 16,
-                                          "stock_starts_used": 4,
+                                          "reason": "C1 is parked at its round cap (the overlord directive's own stop point). Four rounds on the icon-render question (C1b-C1e, including one recorded cap exception) located and fully confirmed a real ten-widget icon-draw mechanism matching the panel's physical button count exactly, but the dispatch reaching the other nine widgets and the per-widget icon-index writer are both clean negatives under exhaustive static search. C1's render gate also needs the separately-parked B1 digit-font work for its counts half. Neither parked item can be resolved by another offline round under this directive's scope.",
+                                          "last_commit": "5266a74",
+                                          "current_gate": "C1 render clause (ten buttons + counts, <=0.02) remains open; indices identified (C1a), icon-draw mechanism located but not fully wired (C1b-C1e), counts blocked on B1's parked digit font",
+                                          "rounds_run": 4,
+                                          "stock_starts_used": 0,
                                           "pending_questions": [],
                                           "no_further_dispatch": true
                                         },
-                                        "rules": "docs/ORCHESTRATION.md#standing-run",
                                         "previous": [
                                           {
-                                            "id": "d-playable-2",
-                                            "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
+                                            "id": "d-playable-3",
+                                            "goal": "Park D1 after one more live recheck (d1o); answer D3's end-time residual with a timed replay (d3f); then Phase B (frontend) and Phase C (in-level HUD) milestones B1-C3 pass their signed-off gates (PLAN.md Phase B / Phase C)",
                                             "milestones": [
-                                              "D1 release and walk-out",
-                                              "D2 click-to-assign",
-                                              "D3 one retail level end to end"
+                                              "D1 release and walk-out (parking round)",
+                                              "D3 one retail level end to end",
+                                              "B1 frontend assets and text",
+                                              "B2 screen state machine",
+                                              "B3 level select and map",
+                                              "C1 skill panel",
+                                              "C2 counters, cursor, pause caption",
+                                              "C3 full frame"
                                             ],
-                                            "current": "D1 release and walk-out",
-                                            "authorized": "User 2026-10-21 (CEO review session): new standing run, same grants as d-playable, plus up to three concurrent offline rounds (ORCHESTRATION#concurrent-offline-rounds). D1 gate held as written pending D1m.",
+                                            "current": "B1 frontend assets and text",
+                                            "authorized": "User 2026-10-22 (CEO review): D1 -- option 4 (park) plus one live recheck (build/tmp/d1o-continuous-live-recheck-brief.md), then park D1 regardless of its result unless it passes the gate literally. D3 -- do not amend the gate and do not run a third click-model round; run build/tmp/d3f-timed-solution-brief.md instead. Phase B and Phase C gates signed off as drafted (PLAN.md Phase B / Phase C tables, drafted 2026-10-21). Add B1-C3 to a new standing run.",
                                             "grants": {
                                               "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
                                               "commits": "each verified round on decompile, no push/checkout/reset/stash",
                                               "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
                                             },
                                             "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-                                            "owner": "Claude Code facilitator session lemmings-webolution-a5 (handoff 2026-10-22): the Cursor facilitator session broke (user-reported); no Cursor process was running on this machine, no Lemmings/dgVoodoo process, no LemWeb-* task, and the dispatched Cursor worker (6a656cc6-4b11-4cd9-ae44-14d6a3507298) had left zero artifacts under build/tmp/d2e-rescore/. This session takes the queue and re-dispatches d2e-rescore's existing round-1 brief under Claude Code, not a new round.",
-                                            "rounds_run": 22,
-                                            "stock_starts_used": 11,
+                                            "owner": "OpenCode facilitator ses_e9ada117dffeQDlRia505glItA (2026-10-22), same session resumed on Mac clone via user /facilitator-mac quota-recovery handoff. Mac llmgw/-mac workers only; old mouv OpenCode idle and read-only API confirms no active sessions. GitHub FF/push sync, shared scratch, SSH Windows execution per ROLES/MOUV_SSH.",
+                                            "rounds_run": 16,
+                                            "stock_starts_used": 4,
                                             "pending_questions": [],
-                                            "handoff": "2026-10-22: landed d3e-sim-solution-run rounds 1-2. Round 1 (offline): ran D3d's scripted solution through our own sim::World -- saved 10/10 matches exactly, end time (102-103s) is roughly half the original's 208s, every lemming taking exactly 373 identical ticks under instant assignment. Round 2 (offline): swept two assignment-delay models to test the click-timing hypothesis; neither lands exactly on 208s (both are step functions, not linear), but a structured 'serial' click-pacing model gets within 5.8-6.8s and is mechanistically/numerically plausible, while a naive 'uniform' per-lemming delay is not. D1's per-event residuals remain ruled out as the cause. This is now a gate-amendment-shaped pending question (D3's literal 'same end time' requirement vs. a close-but-not-exact, structurally-explained result) -- recorded above with options and a recommendation, not decided unilaterally. D2 part (a) stays accepted; D2 part (b) stays accepted as 3-of-4 (digger parked in Phase E). D1's own gate-amendment question remains separately unresolved. All three Phase D milestones have now reached either an accepted state (D2) or a pending-decision state (D1, D3) -- per the standing run's own stop condition ('every remaining ranked question waits on pending_questions or is parked'), this session stops here and reports both open decisions to the user.",
-                                            "stopped": {
-                                              "date": "2026-10-22",
-                                              "reason": "All three Phase D milestones have reached either an accepted state or a state requiring a user decision: D1 (release and walk-out) has a fully-characterized discretization-floor residual with a pending gate-amendment decision already recorded (three successive re-askings, most recently after D1n); D2 (click-to-assign) is accepted (part (a) in full, part (b) as 3-of-4 skills, digger parked in Phase E with a resume brief needing a materially larger architectural change); D3 (one retail level end to end) now has its own gate-amendment-shaped pending question (saved count matches exactly, end time close but not exact, mechanism structurally understood). No ranked, undecided work remains that does not depend on one of these two user decisions.",
-                                              "last_commit": "bef0521"
-                                            },
-                                            "rules": "docs/ORCHESTRATION.md#standing-run"
-                                          },
-                                          {
-                                            "id": "d-playable",
-                                            "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
-                                            "milestones": [
-                                              "D1 release and walk-out",
-                                              "D2 click-to-assign",
-                                              "D3 one retail level end to end"
-                                            ],
-                                            "current": "D1 release and walk-out",
-                                            "authorized": "User 2026-10-21: Phase D gates signed off; same grants as a7-complete",
-                                            "grants": {
-                                              "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
-                                              "commits": "each verified round on decompile, no push/checkout/reset/stash"
-                                            },
-                                            "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
-                                            "owner": "Claude Code facilitator session lemmings-webolution-88, 2026-10-21 (handoff: no task was running under the prior owner, d1i was still queued)",
-                                            "rounds_run": 12,
-                                            "stock_starts_used": 6,
-                                            "pending_questions": [],
-                                            "handoff": "2026-10-21 (after d1l landed, standing run stopped): current milestone D1, not accepted. Last landed d1l. Both known harness biases (D1j's throttle lag, D1k's grid-alignment boundary) are fixed, independently verified, and hold on a fresh capture. d1l took the first full D1 gate measurement with neither bias present and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows is now named: the already-parked facing/turn-rounding family (Phase E, 14), spawn-tick-drift propagation (3/10 lemmings' share), and a newly-isolated landing-tick-drift propagation (6/10 lemmings' share -- the faller-to-walker transition drifts -1/-2 ticks for all 10 lemmings, including the 6 with zero spawn drift; not previously measured as its own quantity). Zero rows are unexplained by any of these. This is a gate-amendment-shaped decision (same kind as A7's HUD exclusion), recorded in deferred_questions below, not decided unilaterally -- the standing run stops here per its own gate-change stop condition. No task is running; no live owner. Ranked work not blocked by this decision (d2a-pick-rule, d3a-retail-level-setup -- both offline, file-disjoint from World.*) remains queued and could be picked up by a fresh /facilitator invocation while awaiting the user's decision, but this session is stopping rather than deciding to continue it unilaterally, since the project's prior practice (see history below) treated an equivalent gate-change situation as a full stop.",
-                                            "stopped": {
-                                              "date": "2026-10-21",
-                                              "reason": "D1l (the first full D1 gate measurement taken with both known harness biases fixed and independently verified) still does not pass the gate as literally written, and now every residual row is fully named: the already-parked facing/turn-rounding family (14 of 657), spawn-tick-drift propagation (3/10 lemmings), and a newly-isolated landing-tick-drift propagation (6/10 lemmings, previously folded unnamed into the spawn-tick story). Zero rows are unexplained. Per docs/ORCHESTRATION.md#standing-run, a gate needing to change is a stop condition, not a decision for the facilitator to make unilaterally -- see deferred_questions below for the updated, complete picture and recommendation.",
-                                              "last_commit": "d01c304"
-                                            },
-                                            "history": [
+                                            "resolved_questions_ref": "see rooted copy below (unchanged, preserved for history)",
+                                            "resolved_questions": [
                                               {
-                                                "date": "2026-10-21",
-                                                "stop": {
-                                                  "date": "2026-10-21",
-                                                  "reason": "D1's gate, as literally written, would need to change (or a tooling investment authorized) to accept D1 given the one remaining, fully-characterized residual (see pending_questions above). Per docs/ORCHESTRATION.md#standing-run this is a stop condition, not a decision for the facilitator to make unilaterally. Both named D1 blockers are fixed and independently verified across 8 rounds (D1a-h); no other ranked D1 question remains unparked.",
-                                                  "last_commit": "d70c292"
-                                                },
-                                                "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Resumed with d1i; d1i/d1j/d1k fixed and verified both known harness biases; d1l's fresh, bias-free full gate recheck is the re-check -- see this history entry's own stop above for the result."
+                                                "question": "B1b captured a valid, structurally-confirmed 640x480 main-menu reference screengrab (screen id 3, highlight 0, both live-read at capture time) -- but its text is English, not German. match-the-original.md documents \"German menus\" as a preserved quirk, and goto_level.py's own docstring assumed German is the frontends default. The installs persisted SavedGame.dat (created 2026-10-12, modified many times since across many live rounds over multiple days) has no backup or pristine copy anywhere to compare against, so there is no way to determine, from this installs own state, whether English is a residue of some earlier rounds navigation (undocumented, not necessarily a guardrail breach since every individual rounds own before/after restore check has passed on its own terms) or whether the game simply remembers the last-selected language as real stock behaviour and this install happened to have English selected before this project ever touched it. Should a follow-up round spend its one live stock start explicitly navigating into \"Language Selection\" and selecting German (a deliberate, not-undone persisted change to the shared installs save data, on the reasoning that German is the documented correct default and resetting to it is a restoration rather than a new deviation) before capturing the real B1 reference image, or should English be accepted as this installs now-real persisted state and the German-menus quirk note be narrowed to \"the retail games own default,\" with B1s reference image captured in whatever language the install actually produces?",
+                                                "options": [
+                                                  "Reset the install to German via one more live round (explicit Language Selection + RETURN navigation, scope beyond any round's brief so far) before capturing B1's real reference image, on the reasoning that German is the documented default and resetting to it restores rather than further deviates",
+                                                  "Accept English as this install's现actual persisted state, capture B1's reference image in English, and narrow match-the-original.md's \"German menus\" quirk note to describe the fresh-install default rather than a live invariant",
+                                                  "Install a second, fresh copy of the game (or otherwise obtain a known-pristine SavedGame.dat) to settle definitively whether German is really the fresh-install default before deciding either way"
+                                                ],
+                                                "recommendation": "Option 1. match-the-original.md's \"German menus\" quirk is stated plainly, without a caveat about persisted language choice, and the project has never until now needed to reckon with SavedGame.dat drift -- resetting the shared install's language to German before capturing any pixel-comparison reference is the smallest, most defensible action that keeps every future B1/B2/B3 capture unambiguous, and costs only one more live round. Option 3 is the most certain but the most expensive and disruptive (a second install) for a question option 1 likely settles just as well. Option 2 risks quietly smoothing over exactly the kind of quirk this project's rules explicitly warn against doing.",
+                                                "evidence": [
+                                                  "docs/scratch/phase-b1-reference-screengrab.md",
+                                                  "docs/scratch/phase-b1-frontend-recon.md"
+                                                ],
+                                                "resolution": "User 2026-10-22, this facilitator invocation: the German quirk was a mistake and does not need to be preserved. Existing user edits in PLAN.md, LESSONS.md and match-the-original.md already record that German came from an early harness language change; accept the English reference capture and keep the current install language unchanged. No language-reset round is authorized or needed."
                                               }
                                             ],
-                                            "rules": "docs/ORCHESTRATION.md#standing-run"
-                                          },
-                                          {
-                                            "id": "a7-complete",
-                                            "goal": "A7 amended gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) and ten skill-panel boxes x[18,90) excluded, <=0.02",
-                                            "rounds_run": 3,
-                                            "stock_starts_used": 3,
+                                            "handoff": "2026-10-22 STOPPED by user after B1h, no new dispatch/repair/phase/milestone advance. B1h returned incomplete/blocked: original quota interruption plus Mac continuation interrupted about16:17 after~65min versus35min budget, no final worker report. Independent saved-output checks authenticate/reconstruct10 retained runs; latest FONT/FONTFE Quit-row29712/1472625, blank80390, isolated placement36462/scale61322, restored pixels exact. Wrong letters/residual remain; no semantic glyph layout, all-five-label render or B1 production/fullframe pass. Six Python tests and authoritative29CTests pass; no process/task/changed install. Counts16 returned/completed dispatches in standing run,4 stock starts (B1h0), glyph question5. Evidence docs/scratch/phase-b1h-interrupted-quit-registration.md and shared scratch/facilitator-return-note.md. Next recommended action ONLY after new explicit authorization: review existing source identity/target boundaries and require one semantic glyph discriminator before more fitting; reuse exports/reference, preserve gate, do not auto-resume broad glyph or native menu-vtable search. No followup queued; B1 remains current. Mac/mouv GitHub sync after stop commit.",
                                             "stopped": {
-                                              "date": "2026-10-21",
-                                              "reason": "Milestone gate passes on the facilitator's own independent re-score (stop condition 1): A7q's second level (MM_DIG_000, no-camera-input) scores 2606399/132499530 = 0.019671005625453916, reproduced by independent checker build/tmp/a7-review/a7q/verify.py. Combined with A7p's nine MM_CLIMB_002 views (all <=0.02), the amended A7 gate -- nine views plus one second level, caption panel and ten skill-panel boxes excluded -- now passes in full. A7 is accepted in PLAN.md. No further A7 rounds are queued.",
-                                              "last_commit": "dc05351"
+                                              "date": "2026-10-22",
+                                              "reason": "user: stop after B1h",
+                                              "last_commit": "3f5fb22",
+                                              "last_commit_note": "B1h final disposition/stop round commit; subsequent hash-record bookkeeping does not resume work.",
+                                              "current_gate": "B1 full-frame640x480<=0.02 remains open; no valid production score exists",
+                                              "rounds_run": 16,
+                                              "stock_starts_used": 4,
+                                              "pending_questions": [],
+                                              "no_further_dispatch": true
                                             },
-                                            "history": [
+                                            "rules": "docs/ORCHESTRATION.md#standing-run",
+                                            "previous": [
                                               {
-                                                "date": "2026-10-21",
-                                                "stop": {
-                                                  "date": "2026-10-21",
-                                                  "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
-                                                  "last_commit": "e8f52e0"
+                                                "id": "d-playable-2",
+                                                "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
+                                                "milestones": [
+                                                  "D1 release and walk-out",
+                                                  "D2 click-to-assign",
+                                                  "D3 one retail level end to end"
+                                                ],
+                                                "current": "D1 release and walk-out",
+                                                "authorized": "User 2026-10-21 (CEO review session): new standing run, same grants as d-playable, plus up to three concurrent offline rounds (ORCHESTRATION#concurrent-offline-rounds). D1 gate held as written pending D1m.",
+                                                "grants": {
+                                                  "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen; at most one live owner at a time",
+                                                  "commits": "each verified round on decompile, no push/checkout/reset/stash",
+                                                  "concurrency": "up to three active tasks, at most one owning the live game, disjoint owned paths, no depends_on edge between them"
                                                 },
-                                                "resolution": "User excluded the ten skill-panel buttons (gate amended in PLAN A7). Facilitator re-score: nine views pass. Resumed with A7q."
+                                                "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
+                                                "owner": "Claude Code facilitator session lemmings-webolution-a5 (handoff 2026-10-22): the Cursor facilitator session broke (user-reported); no Cursor process was running on this machine, no Lemmings/dgVoodoo process, no LemWeb-* task, and the dispatched Cursor worker (6a656cc6-4b11-4cd9-ae44-14d6a3507298) had left zero artifacts under build/tmp/d2e-rescore/. This session takes the queue and re-dispatches d2e-rescore's existing round-1 brief under Claude Code, not a new round.",
+                                                "rounds_run": 22,
+                                                "stock_starts_used": 11,
+                                                "pending_questions": [],
+                                                "handoff": "2026-10-22: landed d3e-sim-solution-run rounds 1-2. Round 1 (offline): ran D3d's scripted solution through our own sim::World -- saved 10/10 matches exactly, end time (102-103s) is roughly half the original's 208s, every lemming taking exactly 373 identical ticks under instant assignment. Round 2 (offline): swept two assignment-delay models to test the click-timing hypothesis; neither lands exactly on 208s (both are step functions, not linear), but a structured 'serial' click-pacing model gets within 5.8-6.8s and is mechanistically/numerically plausible, while a naive 'uniform' per-lemming delay is not. D1's per-event residuals remain ruled out as the cause. This is now a gate-amendment-shaped pending question (D3's literal 'same end time' requirement vs. a close-but-not-exact, structurally-explained result) -- recorded above with options and a recommendation, not decided unilaterally. D2 part (a) stays accepted; D2 part (b) stays accepted as 3-of-4 (digger parked in Phase E). D1's own gate-amendment question remains separately unresolved. All three Phase D milestones have now reached either an accepted state (D2) or a pending-decision state (D1, D3) -- per the standing run's own stop condition ('every remaining ranked question waits on pending_questions or is parked'), this session stops here and reports both open decisions to the user.",
+                                                "stopped": {
+                                                  "date": "2026-10-22",
+                                                  "reason": "All three Phase D milestones have reached either an accepted state or a state requiring a user decision: D1 (release and walk-out) has a fully-characterized discretization-floor residual with a pending gate-amendment decision already recorded (three successive re-askings, most recently after D1n); D2 (click-to-assign) is accepted (part (a) in full, part (b) as 3-of-4 skills, digger parked in Phase E with a resume brief needing a materially larger architectural change); D3 (one retail level end to end) now has its own gate-amendment-shaped pending question (saved count matches exactly, end time close but not exact, mechanism structurally understood). No ranked, undecided work remains that does not depend on one of these two user decisions.",
+                                                  "last_commit": "bef0521"
+                                                },
+                                                "rules": "docs/ORCHESTRATION.md#standing-run"
+                                              },
+                                              {
+                                                "id": "d-playable",
+                                                "goal": "Phase D milestones D1, D2 and D3 pass their signed-off gates (PLAN Phase D) on the facilitator independent re-score against the original actor list",
+                                                "milestones": [
+                                                  "D1 release and walk-out",
+                                                  "D2 click-to-assign",
+                                                  "D3 one retail level end to end"
+                                                ],
+                                                "current": "D1 release and walk-out",
+                                                "authorized": "User 2026-10-21: Phase D gates signed off; same grants as a7-complete",
+                                                "grants": {
+                                                  "stock_starts": "unlimited in total; each round keeps its brief budget, no retry after Popen",
+                                                  "commits": "each verified round on decompile, no push/checkout/reset/stash"
+                                                },
+                                                "workers": "other sessions: Claude Code round-agent (session model, no model arg), Cursor grok-4.7-high-fast, OpenCode per ROLES; not Cursor Composer",
+                                                "owner": "Claude Code facilitator session lemmings-webolution-88, 2026-10-21 (handoff: no task was running under the prior owner, d1i was still queued)",
+                                                "rounds_run": 12,
+                                                "stock_starts_used": 6,
+                                                "pending_questions": [],
+                                                "handoff": "2026-10-21 (after d1l landed, standing run stopped): current milestone D1, not accepted. Last landed d1l. Both known harness biases (D1j's throttle lag, D1k's grid-alignment boundary) are fixed, independently verified, and hold on a fresh capture. d1l took the first full D1 gate measurement with neither bias present and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows is now named: the already-parked facing/turn-rounding family (Phase E, 14), spawn-tick-drift propagation (3/10 lemmings' share), and a newly-isolated landing-tick-drift propagation (6/10 lemmings' share -- the faller-to-walker transition drifts -1/-2 ticks for all 10 lemmings, including the 6 with zero spawn drift; not previously measured as its own quantity). Zero rows are unexplained by any of these. This is a gate-amendment-shaped decision (same kind as A7's HUD exclusion), recorded in deferred_questions below, not decided unilaterally -- the standing run stops here per its own gate-change stop condition. No task is running; no live owner. Ranked work not blocked by this decision (d2a-pick-rule, d3a-retail-level-setup -- both offline, file-disjoint from World.*) remains queued and could be picked up by a fresh /facilitator invocation while awaiting the user's decision, but this session is stopping rather than deciding to continue it unilaterally, since the project's prior practice (see history below) treated an equivalent gate-change situation as a full stop.",
+                                                "stopped": {
+                                                  "date": "2026-10-21",
+                                                  "reason": "D1l (the first full D1 gate measurement taken with both known harness biases fixed and independently verified) still does not pass the gate as literally written, and now every residual row is fully named: the already-parked facing/turn-rounding family (14 of 657), spawn-tick-drift propagation (3/10 lemmings), and a newly-isolated landing-tick-drift propagation (6/10 lemmings, previously folded unnamed into the spawn-tick story). Zero rows are unexplained. Per docs/ORCHESTRATION.md#standing-run, a gate needing to change is a stop condition, not a decision for the facilitator to make unilaterally -- see deferred_questions below for the updated, complete picture and recommendation.",
+                                                  "last_commit": "d01c304"
+                                                },
+                                                "history": [
+                                                  {
+                                                    "date": "2026-10-21",
+                                                    "stop": {
+                                                      "date": "2026-10-21",
+                                                      "reason": "D1's gate, as literally written, would need to change (or a tooling investment authorized) to accept D1 given the one remaining, fully-characterized residual (see pending_questions above). Per docs/ORCHESTRATION.md#standing-run this is a stop condition, not a decision for the facilitator to make unilaterally. Both named D1 blockers are fixed and independently verified across 8 rounds (D1a-h); no other ranked D1 question remains unparked.",
+                                                      "last_commit": "d70c292"
+                                                    },
+                                                    "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Resumed with d1i; d1i/d1j/d1k fixed and verified both known harness biases; d1l's fresh, bias-free full gate recheck is the re-check -- see this history entry's own stop above for the result."
+                                                  }
+                                                ],
+                                                "rules": "docs/ORCHESTRATION.md#standing-run"
+                                              },
+                                              {
+                                                "id": "a7-complete",
+                                                "goal": "A7 amended gate passes on the facilitator independent re-score: nine MM_CLIMB_002 views plus one second level, caption panel [277,422,363,454) and ten skill-panel boxes x[18,90) excluded, <=0.02",
+                                                "rounds_run": 3,
+                                                "stock_starts_used": 3,
+                                                "stopped": {
+                                                  "date": "2026-10-21",
+                                                  "reason": "Milestone gate passes on the facilitator's own independent re-score (stop condition 1): A7q's second level (MM_DIG_000, no-camera-input) scores 2606399/132499530 = 0.019671005625453916, reproduced by independent checker build/tmp/a7-review/a7q/verify.py. Combined with A7p's nine MM_CLIMB_002 views (all <=0.02), the amended A7 gate -- nine views plus one second level, caption panel and ten skill-panel boxes excluded -- now passes in full. A7 is accepted in PLAN.md. No further A7 rounds are queued.",
+                                                  "last_commit": "dc05351"
+                                                },
+                                                "history": [
+                                                  {
+                                                    "date": "2026-10-21",
+                                                    "stop": {
+                                                      "date": "2026-10-21",
+                                                      "reason": "zoom1 wider score 5473596/228864285 fails. The logged skill-panel rectangles hold 1738618 of that numerator; outside them the inequality holds. The gate says to report that intersection, not drop it. Passing zoom1 needs an exclusion change or Phase C HUD pixels. No second level was captured.",
+                                                      "last_commit": "e8f52e0"
+                                                    },
+                                                    "resolution": "User excluded the ten skill-panel buttons (gate amended in PLAN A7). Facilitator re-score: nine views pass. Resumed with A7q."
+                                                  }
+                                                ]
+                                              }
+                                            ],
+                                            "deferred_questions": [
+                                              {
+                                                "question": "D1's gate, as literally written, requires every lemming's cell X/Y, facing and state to match the original each tick. After 8 rounds (D1a-h), both named blockers (release timing, left-turn stall) are fixed and independently verified; one residual remains: a self-healing, single-tick facing-only label mismatch at turn instants (6 occurrences in a 150-tick/10-lemming capture), x exact on every surrounding tick. D1h traced every instance to the live-capture harness's one pooled global alignment phase differing from that lemming's own measured phase, not to a World defect -- 3 of 6 flip to an exact match when re-aligned per-lemming; the other 3 fail for bounded, understood reasons (zero residual, a 0.01s near-miss at the 0.02s raw-sample grid, a wrong-signed residual at the phase method's wraparound boundary). Does D1's gate need amending to exclude this harness-precision-bounded, x-unaffected label artifact (the same kind of amendment A7's gate received for HUD elements), or should work continue toward closing it outright (which would need sub-20ms live sampling or a per-lemming-aware harness -- a tooling investment, not a sim fix)?",
+                                                "options": [
+                                                  "Amend the gate to exclude a self-healing, single-tick facing-label mismatch where x matches exactly on the surrounding ticks, then re-score and accept D1 if nothing else is found",
+                                                  "Invest in a harness/tooling round (finer live sampling or per-lemming alignment) to try to close the residual outright before deciding on acceptance",
+                                                  "Leave the gate as written and record D1 as not accepted, parked at this residual, until a later round revisits it"
+                                                ],
+                                                "recommendation": "Option 1. All 6 instances now have a complete, individually-verified explanation (D1h); none is a reappearance of either fixed defect; x is exact throughout. This is the same shape of amendment already used for A7 (excluding a HUD element the gate was never meant to cover). Option 2 is a real tooling investment with an uncertain payoff (the 3 non-flipping cases are bounded by raw-sample spacing, not obviously fixable by precision alone) and option 3 leaves a fully-understood, cosmetic residual blocking an otherwise-solid milestone indefinitely.",
+                                                "evidence": [
+                                                  "docs/scratch/phase-d1-release-walkout-trace.md",
+                                                  "docs/scratch/phase-d1-release-trigger.md",
+                                                  "docs/scratch/phase-d1-door-open-duration.md",
+                                                  "docs/scratch/phase-d1-hatch-step-clock.md",
+                                                  "docs/scratch/phase-d1-release-timing-implementation.md",
+                                                  "docs/scratch/phase-d1-left-turn-fix.md",
+                                                  "docs/scratch/phase-d1-full-gate-recheck.md"
+                                                ],
+                                                "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Superseded by the entry below, which re-asks the same decision with the completed re-check's full evidence."
+                                              },
+                                              {
+                                                "question": "D1's gate requires every lemming's cell X/Y, facing and state to match the original each tick. The spawn drift has now been fixed and re-checked, as the prior resolution asked: D1i found the capture harness itself, not the game, produced the appearance of a ~1.02s release-to-actor-list gate; D1j fixed that throttle (zero detection lag, independently verified); D1k fixed a second harness bug (a tick-grid alignment boundary that could mislabel every tick by 200ms between two equivalent captures, independently verified). D1l then took the first full, bias-free live gate measurement and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows in a 150-tick/10-lemming capture is named, not just the facing-label question this was deferred for: (1) the already-parked single-tick facing-label mismatch at turn instants (Phase E, D1g/D1h, 14 occurrences this round, x exact throughout, same two wall columns as every prior capture); (2) spawn-tick drift, a <=1-tick discretization of the original's continuous release accumulator onto the 200ms sim tick (3/10 lemmings, magnitude exactly 1); (3) a newly-isolated landing-tick drift, a -1/-2-tick discretization of the original's continuous faller-to-walker transition onto the same grid, affecting all 10/10 lemmings including the 6 with zero spawn drift -- not previously measured as its own quantity, previously folded unnamed into 'the already-documented spawn-tick discretization drift.' Zero rows are unexplained by any of the three. All three are deterministic, bounded (<=1-2 ticks), and structurally the same shape: a continuous original-game event quantized onto our discrete 200ms tick, not an untraced sim bug. Does D1's gate need amending to exclude this now-fully-characterized, bounded discretization-floor class of residual (the same shape of amendment A7's gate received for HUD elements), should work continue toward closing it outright (which would need either sub-tick-precision live measurement of the original's release/landing timing, or changing the sim's own tick architecture away from a fixed 200ms discrete step -- a substantial redesign, not a bounded round), or should D1 be left parked at this residual?",
+                                                "options": [
+                                                  "Amend the gate to exclude single-tick (and, for the landing transition, up-to-two-tick) discretization-floor residuals of this fully-characterized shape, then accept D1 on the facilitator's re-score if nothing else is found",
+                                                  "Invest in closing the discretization floor outright -- either sub-tick live measurement of the original's release/landing timing, or a redesign of the sim's tick granularity -- before deciding on acceptance",
+                                                  "Leave the gate as written and record D1 as not accepted, parked at this now-fully-understood residual, revisited only if a later milestone's needs change the calculus"
+                                                ],
+                                                "recommendation": "Option 1. All three residual families are now completely named with addresses/mechanisms or precise measured characterizations (facing: D1g/D1h; spawn-tick drift: D1a/D1e/D1i/D1j; landing-tick drift: D1l), each is bounded and deterministic, and none is a reappearance of a fixed defect or an unknown mechanism -- 0 of 657 rows are unexplained. This is the same shape of amendment already granted to A7 (excluding HUD elements the gate was never meant to cover) and is consistent with the user's own 2026-10-21 direction to fix the spawn drift first and re-check, which is now done. Option 2's sub-tick measurement path has no established method in this project (D1c already flagged a related render-frame-vs-tick ambiguity as unresolved by static reading) and a tick-architecture redesign would touch far more than D1 alone (D2/D3 both build on the same 200ms World tick). Option 3 leaves an otherwise-solid, fully-understood milestone blocked indefinitely on residuals that are bounded and known rather than open.",
+                                                "evidence": [
+                                                  "docs/scratch/phase-d1-release-walkout-trace.md",
+                                                  "docs/scratch/phase-d1-release-trigger.md",
+                                                  "docs/scratch/phase-d1-door-open-duration.md",
+                                                  "docs/scratch/phase-d1-hatch-step-clock.md",
+                                                  "docs/scratch/phase-d1-release-timing-implementation.md",
+                                                  "docs/scratch/phase-d1-left-turn-fix.md",
+                                                  "docs/scratch/phase-d1-full-gate-recheck.md",
+                                                  "docs/scratch/phase-d1-release-to-actor.md",
+                                                  "docs/scratch/phase-d1-harness-throttle-fix.md",
+                                                  "docs/scratch/phase-d1-phase-nmin-fix.md",
+                                                  "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md"
+                                                ],
+                                                "resolution": "User 2026-10-21 (CEO review session): hold the gate as written; do not amend yet. Raw 50 Hz samples suggest the original moves lemmings continuously (X changes on 7224 of 7464 consecutive 20 ms samples; walk-out fits 32 + 5.0*(t - land) within -0.022..+0.115; the fall lands at release + 0.50 s for 10/10). The drift may be a model mismatch, not a discretization floor. Run D1m first, then re-ask with its answer."
+                                              },
+                                              {
+                                                "question": "As the prior resolution asked: D1m ran first (docs/scratch/phase-d1-stepper-clock.md). Verdict: the original's walk/fall motion is continuous (a structural disassembly read of the walk stepper's own time parameter, plus a zero-fitted-parameter continuous replay that collapsed the landing-tick-drift mismatch count 76-100% against three saved captures) -- this IS a model mismatch, not (only) a discretization floor, confirming the CEO review's own hypothesis. D1n then implemented it (docs/scratch/phase-d1-continuous-stepper-clock.md): an additive, opt-in continuous sub-tick clock for the fall/walk steppers. Result, honestly measured against all four saved captures: landing-tick drift shrinks substantially on 3 of 4 (D1g 10/10->5/10 lemmings nonzero, max drift 3->1; D1j 10/10->3/10, max 2->1; D1l 10/10->5/10, max 2->1) but does NOT close fully on any of them, and gets nominally worse on the fourth (D1a, explained by that capture predating the harness-throttle fix, not a sim defect). Spawn-tick drift does not close AT ALL, on any capture, for a now-understood structural reason: World::spawn() fixes which tick a lemming exists on before any continuous budget is even computed, so no fall-timing change can move it. So: the model-mismatch fix is real and measurably helps, but is NOT a complete fix -- D1 still does not pass even under the corrected continuous model, with a now-smaller but still nonzero residual of the same discretization-floor shape the gate-amendment question was originally about, plus an entirely unaddressed spawn-tick family. Does D1's gate need amending now (to accept the current, improved-but-incomplete state), should further rounds pursue either closing the remaining landing-tick residual (a smaller target than before) or the spawn-tick family (would need redesigning when/how World::spawn() fixes existence, not a bounded tweak), or should D1 be left parked at this new, better-understood-but-still-incomplete residual while other Phase D milestones (D2, D3) proceed in parallel (neither depends on D1's gate)?",
+                                                "options": [
+                                                  "Amend the gate now to accept the current continuous-clock state (landing-tick drift bounded to <=1 tick on the 3 reliable captures, spawn-tick drift a separately-named, still-open residual), and move D1 to Phase E alongside D2/D3 work",
+                                                  "Invest a second D1n-family round in the smaller remaining landing-tick-drift target (D1g's 5, D1j's 3, D1l's 5 still-nonzero lemmings) before deciding -- round 2 of the 3-round cap already opened on this question",
+                                                  "Invest in redesigning when World::spawn() fixes a lemming's existence tick (the structural blocker for spawn-tick drift) -- a larger change than D1n's additive one, not yet scoped",
+                                                  "Leave D1 parked as currently landed and proceed with D2/D3 (already unblocked, no depends_on edge to D1), revisiting D1 only if a later milestone's needs change the calculus"
+                                                ],
+                                                "recommendation": "Option 4, with option 2 as a cheap follow-up if the user wants to spend one more round before parking. D1's own milestone gate is not a dependency for D2 or D3 (checked: neither's queue entry lists a depends_on edge to any D1 task), so parking D1 here costs nothing for Phase D's visible-progress goal. The remaining landing-tick residual is now small (at most 5/10 lemmings, magnitude capped at 1) and the spawn-tick family has a clear, named, structural cause rather than an open mystery -- this is a materially better place to leave D1 than before D1m/D1n, even though it is not a pass. Amending the gate (option 1) is premature: two different residual families remain, one of which (spawn-tick) this round did not even attempt to address, so 'accept with an amendment' would be amending around an admittedly-incomplete fix rather than a fully-characterized one the way A7's HUD exclusion was.",
+                                                "evidence": [
+                                                  "docs/scratch/phase-d1-stepper-clock.md",
+                                                  "docs/scratch/phase-d1-continuous-stepper-clock.md",
+                                                  "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md",
+                                                  "docs/scratch/phase-d2h-skill-assign-floater.md"
+                                                ],
+                                                "resolution": "User 2026-10-22 (CEO review): option 4 -- leave D1 parked and proceed with the rest of Phase D and beyond. Before parking, run one more live round (d1o): D1n's improvement was only checked against saved captures, so take one fresh live, no-input capture of MM_CLIMB_002 and score both the flag-off and flag-on (--continuous-stepper-clock) sim against it. D1 is parked after that round regardless of its result, unless the result passes the gate literally; the round measures, it does not tune further.",
+                                                "update_2026_10_22": "D2h (investigating D2 part (b)'s floater skill, unrelated question) found and fixed a disassembly-confirmed move-then-check ordering bug in stepFaller, then re-checked it against D1a's/D1g's/D1j's/D1l's own saved captures per this question's own 'ruled out' spirit: all four regenerated traces are byte-for-byte identical to D1n's pre-fix baselines -- zero measurable effect on this question's landing-tick-drift family. The fix's trigger condition (gap-to-ground exactly fallSpeed+1 at a tick's start) does not occur for any of D1's own captured lemmings' drop heights. This rules out one specific, independently-motivated candidate explanation; it does not change D1n's own partial-improvement numbers above or supply a reason to revisit this pending decision -- recorded as additional evidence, not a resolution."
+                                              },
+                                              {
+                                                "question": "D3's gate reads: 'One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state.' D3d measured the original's own result for one scripted solution (climber to every lemming in arrival order) on MM_CLIMB_002: saved 10/10, end time 208 whole seconds, a confirmed level-end state. D3e ran the identical scripted solution through our own sim::World offline: saved 10/10 matches exactly; end time does not. Round 1 (instant assignment) finishes in 514 ticks (102-103s), about half the original. Round 2 swept two assignment-delay models to test whether the original's own non-instantaneous click-landing process explains the gap: a naive 'uniform' per-lemming delay can get numerically close (within 9-13s at its nearest integer value) but is mechanistically implausible (it would require even the first lemming to wait 100+ seconds, contradicted by the oracle's own log) and never hits 1040 ticks exactly (jumps 994->1106 ticks, i.e. 198.8s->221.2s, straight over 208s). A more structured 'serial' click-pacing model fits distinctly better -- plausible in shape, and its own needed pacing (14.2-15.6s/click) is the same order of magnitude as an independently-computed 111-second total assignment-loop duration read directly off the oracle's own clock -- but ALSO never lands on exactly 1040 ticks (closest: 1074 ticks/214.8s at CI=77-78, +6.8s over; or 1011 ticks/202.2s at CI=71, -5.8s under). Both models' failure mode is structural: the walk/turn/climb mechanic produces step-function finish times (a 1-tick delay change can shift the result by 112 ticks, a full extra lap), so no amount of further parameter tuning within either model's own shape can be expected to land exactly on 1040. Does D3's gate need amending to accept a close-but-not-exact end time (e.g. within one 'lap' cost, or within a stated percentage) given this is a click-timing-modeling question rather than any traced World/stepper defect, should a third, still-more-structured round be spent trying to land exactly on 1040 (the question's last pre-authorized round), or should D3 be left parked at this result, which is already far more informative than a plain pass/fail (saved count exact, end time understood and bounded within single-digit seconds, cause structurally explained even though not exactly reproduced)?",
+                                                "options": [
+                                                  "Amend the gate to accept a close-but-not-exact end time for this class of result (saved count exact, end time within a stated tolerance, e.g. a few percent or one 'lap' cost, with the mechanism named), and accept D3 on this basis",
+                                                  "Invest the question's third and final pre-authorized round in a still-more-structured click model (e.g. using the oracle's own per-click retry counts from run1.log, not just a uniform interval) to see if it can land exactly on 1040 ticks",
+                                                  "Leave D3 parked at this result -- saved count matches exactly, end time is understood and bounded (closest approaches 202-215s against the original's 208s) but not exactly reproduced, with a structurally-explained, not merely unexplained, residual -- and revisit only if a later need changes the calculus"
+                                                ],
+                                                "recommendation": "Option 1, with option 3 as the practical fallback if the user prefers not to amend a gate so soon after D3 first ran. This residual is categorically different from D1's own still-pending discretization-floor question: it is not a World/stepper correctness defect (every individual skill and stepper this depends on is already independently measured and correct; the saved count, which IS a pure World-correctness measure, matches exactly) -- it is a question of how precisely this project chooses to model the ORIGINAL HUMAN'S click-landing latency when reproducing a 'scripted solution,' which is an app/UI-timing modeling choice, not a simulation-engine question. A third round chasing an exact match forces an increasingly elaborate click-timing model (the step-function structure means even a well-fit model is unlikely to land on the exact integer) for a quantity (click latency) this project does not otherwise claim to reproduce byte-for-byte anywhere else in Phase D. Given D1's own precedent (A7's HUD exclusion, this same shape of amendment), I recommend accepting 'saved count exact + end time within a few seconds, mechanism understood' as meeting the gate's intent.",
+                                                "evidence": [
+                                                  "docs/scratch/phase-d3-solution-discovery.md",
+                                                  "docs/scratch/phase-d3-sim-solution-run.md"
+                                                ],
+                                                "resolution": "User 2026-10-22 (CEO review): neither listed option -- do not amend the gate, and do not spend the question's own third pre-authorized round on a still-more-structured click-pacing model. Instead run a new round (d3f) that replaces the modeled click pacing with recorded ground truth: capture exactly when each assignment landed in the live run, relative to that lemming's own release, then replay our World with precisely those recorded times rather than any fitted uniform/serial delay model."
                                               }
                                             ]
                                           }
-                                        ],
-                                        "deferred_questions": [
-                                          {
-                                            "question": "D1's gate, as literally written, requires every lemming's cell X/Y, facing and state to match the original each tick. After 8 rounds (D1a-h), both named blockers (release timing, left-turn stall) are fixed and independently verified; one residual remains: a self-healing, single-tick facing-only label mismatch at turn instants (6 occurrences in a 150-tick/10-lemming capture), x exact on every surrounding tick. D1h traced every instance to the live-capture harness's one pooled global alignment phase differing from that lemming's own measured phase, not to a World defect -- 3 of 6 flip to an exact match when re-aligned per-lemming; the other 3 fail for bounded, understood reasons (zero residual, a 0.01s near-miss at the 0.02s raw-sample grid, a wrong-signed residual at the phase method's wraparound boundary). Does D1's gate need amending to exclude this harness-precision-bounded, x-unaffected label artifact (the same kind of amendment A7's gate received for HUD elements), or should work continue toward closing it outright (which would need sub-20ms live sampling or a per-lemming-aware harness -- a tooling investment, not a sim fix)?",
-                                            "options": [
-                                              "Amend the gate to exclude a self-healing, single-tick facing-label mismatch where x matches exactly on the surrounding ticks, then re-score and accept D1 if nothing else is found",
-                                              "Invest in a harness/tooling round (finer live sampling or per-lemming alignment) to try to close the residual outright before deciding on acceptance",
-                                              "Leave the gate as written and record D1 as not accepted, parked at this residual, until a later round revisits it"
-                                            ],
-                                            "recommendation": "Option 1. All 6 instances now have a complete, individually-verified explanation (D1h); none is a reappearance of either fixed defect; x is exact throughout. This is the same shape of amendment already used for A7 (excluding a HUD element the gate was never meant to cover). Option 2 is a real tooling investment with an uncertain payoff (the 3 non-flipping cases are bounded by raw-sample spacing, not obviously fixable by precision alone) and option 3 leaves a fully-understood, cosmetic residual blocking an otherwise-solid milestone indefinitely.",
-                                            "evidence": [
-                                              "docs/scratch/phase-d1-release-walkout-trace.md",
-                                              "docs/scratch/phase-d1-release-trigger.md",
-                                              "docs/scratch/phase-d1-door-open-duration.md",
-                                              "docs/scratch/phase-d1-hatch-step-clock.md",
-                                              "docs/scratch/phase-d1-release-timing-implementation.md",
-                                              "docs/scratch/phase-d1-left-turn-fix.md",
-                                              "docs/scratch/phase-d1-full-gate-recheck.md"
-                                            ],
-                                            "resolution": "User 2026-10-21: keep the gate as written; fix the spawn drift first, then re-check before deciding the facing question. Superseded by the entry below, which re-asks the same decision with the completed re-check's full evidence."
-                                          },
-                                          {
-                                            "question": "D1's gate requires every lemming's cell X/Y, facing and state to match the original each tick. The spawn drift has now been fixed and re-checked, as the prior resolution asked: D1i found the capture harness itself, not the game, produced the appearance of a ~1.02s release-to-actor-list gate; D1j fixed that throttle (zero detection lag, independently verified); D1k fixed a second harness bug (a tick-grid alignment boundary that could mislabel every tick by 200ms between two equivalent captures, independently verified). D1l then took the first full, bias-free live gate measurement and found D1 still does not pass -- but, for the first time, every one of its 657 residual rows in a 150-tick/10-lemming capture is named, not just the facing-label question this was deferred for: (1) the already-parked single-tick facing-label mismatch at turn instants (Phase E, D1g/D1h, 14 occurrences this round, x exact throughout, same two wall columns as every prior capture); (2) spawn-tick drift, a <=1-tick discretization of the original's continuous release accumulator onto the 200ms sim tick (3/10 lemmings, magnitude exactly 1); (3) a newly-isolated landing-tick drift, a -1/-2-tick discretization of the original's continuous faller-to-walker transition onto the same grid, affecting all 10/10 lemmings including the 6 with zero spawn drift -- not previously measured as its own quantity, previously folded unnamed into 'the already-documented spawn-tick discretization drift.' Zero rows are unexplained by any of the three. All three are deterministic, bounded (<=1-2 ticks), and structurally the same shape: a continuous original-game event quantized onto our discrete 200ms tick, not an untraced sim bug. Does D1's gate need amending to exclude this now-fully-characterized, bounded discretization-floor class of residual (the same shape of amendment A7's gate received for HUD elements), should work continue toward closing it outright (which would need either sub-tick-precision live measurement of the original's release/landing timing, or changing the sim's own tick architecture away from a fixed 200ms discrete step -- a substantial redesign, not a bounded round), or should D1 be left parked at this residual?",
-                                            "options": [
-                                              "Amend the gate to exclude single-tick (and, for the landing transition, up-to-two-tick) discretization-floor residuals of this fully-characterized shape, then accept D1 on the facilitator's re-score if nothing else is found",
-                                              "Invest in closing the discretization floor outright -- either sub-tick live measurement of the original's release/landing timing, or a redesign of the sim's tick granularity -- before deciding on acceptance",
-                                              "Leave the gate as written and record D1 as not accepted, parked at this now-fully-understood residual, revisited only if a later milestone's needs change the calculus"
-                                            ],
-                                            "recommendation": "Option 1. All three residual families are now completely named with addresses/mechanisms or precise measured characterizations (facing: D1g/D1h; spawn-tick drift: D1a/D1e/D1i/D1j; landing-tick drift: D1l), each is bounded and deterministic, and none is a reappearance of a fixed defect or an unknown mechanism -- 0 of 657 rows are unexplained. This is the same shape of amendment already granted to A7 (excluding HUD elements the gate was never meant to cover) and is consistent with the user's own 2026-10-21 direction to fix the spawn drift first and re-check, which is now done. Option 2's sub-tick measurement path has no established method in this project (D1c already flagged a related render-frame-vs-tick ambiguity as unresolved by static reading) and a tick-architecture redesign would touch far more than D1 alone (D2/D3 both build on the same 200ms World tick). Option 3 leaves an otherwise-solid, fully-understood milestone blocked indefinitely on residuals that are bounded and known rather than open.",
-                                            "evidence": [
-                                              "docs/scratch/phase-d1-release-walkout-trace.md",
-                                              "docs/scratch/phase-d1-release-trigger.md",
-                                              "docs/scratch/phase-d1-door-open-duration.md",
-                                              "docs/scratch/phase-d1-hatch-step-clock.md",
-                                              "docs/scratch/phase-d1-release-timing-implementation.md",
-                                              "docs/scratch/phase-d1-left-turn-fix.md",
-                                              "docs/scratch/phase-d1-full-gate-recheck.md",
-                                              "docs/scratch/phase-d1-release-to-actor.md",
-                                              "docs/scratch/phase-d1-harness-throttle-fix.md",
-                                              "docs/scratch/phase-d1-phase-nmin-fix.md",
-                                              "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md"
-                                            ],
-                                            "resolution": "User 2026-10-21 (CEO review session): hold the gate as written; do not amend yet. Raw 50 Hz samples suggest the original moves lemmings continuously (X changes on 7224 of 7464 consecutive 20 ms samples; walk-out fits 32 + 5.0*(t - land) within -0.022..+0.115; the fall lands at release + 0.50 s for 10/10). The drift may be a model mismatch, not a discretization floor. Run D1m first, then re-ask with its answer."
-                                          },
-                                          {
-                                            "question": "As the prior resolution asked: D1m ran first (docs/scratch/phase-d1-stepper-clock.md). Verdict: the original's walk/fall motion is continuous (a structural disassembly read of the walk stepper's own time parameter, plus a zero-fitted-parameter continuous replay that collapsed the landing-tick-drift mismatch count 76-100% against three saved captures) -- this IS a model mismatch, not (only) a discretization floor, confirming the CEO review's own hypothesis. D1n then implemented it (docs/scratch/phase-d1-continuous-stepper-clock.md): an additive, opt-in continuous sub-tick clock for the fall/walk steppers. Result, honestly measured against all four saved captures: landing-tick drift shrinks substantially on 3 of 4 (D1g 10/10->5/10 lemmings nonzero, max drift 3->1; D1j 10/10->3/10, max 2->1; D1l 10/10->5/10, max 2->1) but does NOT close fully on any of them, and gets nominally worse on the fourth (D1a, explained by that capture predating the harness-throttle fix, not a sim defect). Spawn-tick drift does not close AT ALL, on any capture, for a now-understood structural reason: World::spawn() fixes which tick a lemming exists on before any continuous budget is even computed, so no fall-timing change can move it. So: the model-mismatch fix is real and measurably helps, but is NOT a complete fix -- D1 still does not pass even under the corrected continuous model, with a now-smaller but still nonzero residual of the same discretization-floor shape the gate-amendment question was originally about, plus an entirely unaddressed spawn-tick family. Does D1's gate need amending now (to accept the current, improved-but-incomplete state), should further rounds pursue either closing the remaining landing-tick residual (a smaller target than before) or the spawn-tick family (would need redesigning when/how World::spawn() fixes existence, not a bounded tweak), or should D1 be left parked at this new, better-understood-but-still-incomplete residual while other Phase D milestones (D2, D3) proceed in parallel (neither depends on D1's gate)?",
-                                            "options": [
-                                              "Amend the gate now to accept the current continuous-clock state (landing-tick drift bounded to <=1 tick on the 3 reliable captures, spawn-tick drift a separately-named, still-open residual), and move D1 to Phase E alongside D2/D3 work",
-                                              "Invest a second D1n-family round in the smaller remaining landing-tick-drift target (D1g's 5, D1j's 3, D1l's 5 still-nonzero lemmings) before deciding -- round 2 of the 3-round cap already opened on this question",
-                                              "Invest in redesigning when World::spawn() fixes a lemming's existence tick (the structural blocker for spawn-tick drift) -- a larger change than D1n's additive one, not yet scoped",
-                                              "Leave D1 parked as currently landed and proceed with D2/D3 (already unblocked, no depends_on edge to D1), revisiting D1 only if a later milestone's needs change the calculus"
-                                            ],
-                                            "recommendation": "Option 4, with option 2 as a cheap follow-up if the user wants to spend one more round before parking. D1's own milestone gate is not a dependency for D2 or D3 (checked: neither's queue entry lists a depends_on edge to any D1 task), so parking D1 here costs nothing for Phase D's visible-progress goal. The remaining landing-tick residual is now small (at most 5/10 lemmings, magnitude capped at 1) and the spawn-tick family has a clear, named, structural cause rather than an open mystery -- this is a materially better place to leave D1 than before D1m/D1n, even though it is not a pass. Amending the gate (option 1) is premature: two different residual families remain, one of which (spawn-tick) this round did not even attempt to address, so 'accept with an amendment' would be amending around an admittedly-incomplete fix rather than a fully-characterized one the way A7's HUD exclusion was.",
-                                            "evidence": [
-                                              "docs/scratch/phase-d1-stepper-clock.md",
-                                              "docs/scratch/phase-d1-continuous-stepper-clock.md",
-                                              "docs/scratch/phase-d1-full-gate-recheck-fixed-harness.md",
-                                              "docs/scratch/phase-d2h-skill-assign-floater.md"
-                                            ],
-                                            "resolution": "User 2026-10-22 (CEO review): option 4 -- leave D1 parked and proceed with the rest of Phase D and beyond. Before parking, run one more live round (d1o): D1n's improvement was only checked against saved captures, so take one fresh live, no-input capture of MM_CLIMB_002 and score both the flag-off and flag-on (--continuous-stepper-clock) sim against it. D1 is parked after that round regardless of its result, unless the result passes the gate literally; the round measures, it does not tune further.",
-                                            "update_2026_10_22": "D2h (investigating D2 part (b)'s floater skill, unrelated question) found and fixed a disassembly-confirmed move-then-check ordering bug in stepFaller, then re-checked it against D1a's/D1g's/D1j's/D1l's own saved captures per this question's own 'ruled out' spirit: all four regenerated traces are byte-for-byte identical to D1n's pre-fix baselines -- zero measurable effect on this question's landing-tick-drift family. The fix's trigger condition (gap-to-ground exactly fallSpeed+1 at a tick's start) does not occur for any of D1's own captured lemmings' drop heights. This rules out one specific, independently-motivated candidate explanation; it does not change D1n's own partial-improvement numbers above or supply a reason to revisit this pending decision -- recorded as additional evidence, not a resolution."
-                                          },
-                                          {
-                                            "question": "D3's gate reads: 'One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state.' D3d measured the original's own result for one scripted solution (climber to every lemming in arrival order) on MM_CLIMB_002: saved 10/10, end time 208 whole seconds, a confirmed level-end state. D3e ran the identical scripted solution through our own sim::World offline: saved 10/10 matches exactly; end time does not. Round 1 (instant assignment) finishes in 514 ticks (102-103s), about half the original. Round 2 swept two assignment-delay models to test whether the original's own non-instantaneous click-landing process explains the gap: a naive 'uniform' per-lemming delay can get numerically close (within 9-13s at its nearest integer value) but is mechanistically implausible (it would require even the first lemming to wait 100+ seconds, contradicted by the oracle's own log) and never hits 1040 ticks exactly (jumps 994->1106 ticks, i.e. 198.8s->221.2s, straight over 208s). A more structured 'serial' click-pacing model fits distinctly better -- plausible in shape, and its own needed pacing (14.2-15.6s/click) is the same order of magnitude as an independently-computed 111-second total assignment-loop duration read directly off the oracle's own clock -- but ALSO never lands on exactly 1040 ticks (closest: 1074 ticks/214.8s at CI=77-78, +6.8s over; or 1011 ticks/202.2s at CI=71, -5.8s under). Both models' failure mode is structural: the walk/turn/climb mechanic produces step-function finish times (a 1-tick delay change can shift the result by 112 ticks, a full extra lap), so no amount of further parameter tuning within either model's own shape can be expected to land exactly on 1040. Does D3's gate need amending to accept a close-but-not-exact end time (e.g. within one 'lap' cost, or within a stated percentage) given this is a click-timing-modeling question rather than any traced World/stepper defect, should a third, still-more-structured round be spent trying to land exactly on 1040 (the question's last pre-authorized round), or should D3 be left parked at this result, which is already far more informative than a plain pass/fail (saved count exact, end time understood and bounded within single-digit seconds, cause structurally explained even though not exactly reproduced)?",
-                                            "options": [
-                                              "Amend the gate to accept a close-but-not-exact end time for this class of result (saved count exact, end time within a stated tolerance, e.g. a few percent or one 'lap' cost, with the mechanism named), and accept D3 on this basis",
-                                              "Invest the question's third and final pre-authorized round in a still-more-structured click model (e.g. using the oracle's own per-click retry counts from run1.log, not just a uniform interval) to see if it can land exactly on 1040 ticks",
-                                              "Leave D3 parked at this result -- saved count matches exactly, end time is understood and bounded (closest approaches 202-215s against the original's 208s) but not exactly reproduced, with a structurally-explained, not merely unexplained, residual -- and revisit only if a later need changes the calculus"
-                                            ],
-                                            "recommendation": "Option 1, with option 3 as the practical fallback if the user prefers not to amend a gate so soon after D3 first ran. This residual is categorically different from D1's own still-pending discretization-floor question: it is not a World/stepper correctness defect (every individual skill and stepper this depends on is already independently measured and correct; the saved count, which IS a pure World-correctness measure, matches exactly) -- it is a question of how precisely this project chooses to model the ORIGINAL HUMAN'S click-landing latency when reproducing a 'scripted solution,' which is an app/UI-timing modeling choice, not a simulation-engine question. A third round chasing an exact match forces an increasingly elaborate click-timing model (the step-function structure means even a well-fit model is unlikely to land on the exact integer) for a quantity (click latency) this project does not otherwise claim to reproduce byte-for-byte anywhere else in Phase D. Given D1's own precedent (A7's HUD exclusion, this same shape of amendment), I recommend accepting 'saved count exact + end time within a few seconds, mechanism understood' as meeting the gate's intent.",
-                                            "evidence": [
-                                              "docs/scratch/phase-d3-solution-discovery.md",
-                                              "docs/scratch/phase-d3-sim-solution-run.md"
-                                            ],
-                                            "resolution": "User 2026-10-22 (CEO review): neither listed option -- do not amend the gate, and do not spend the question's own third pre-authorized round on a still-more-structured click-pacing model. Instead run a new round (d3f) that replaces the modeled click pacing with recorded ground truth: capture exactly when each assignment landed in the live run, relative to that lemming's own release, then replay our World with precisely those recorded times rather than any fitted uniform/serial delay model."
-                                          }
                                         ]
                                       }
-                                    ]
+                                    ],
+                                    "stopped": {
+                                      "date": "2026-10-22",
+                                      "reason": "Both of docs/DIRECTIVE.md's questions are answered (landed, independently verified) -- the directive's own stop condition. Question 1 closed cleanly (charmap/advance read and checked against a retail string). Question 2 spent its one authorized stock start and recorded the read, but redirects C1's open question rather than closing it (the real base-icon source and the +0x3c writer are still unidentified). Per the directive, do not advance to B2, C2 or C3, and do not re-attempt the B1 or C1 gate until the overlord ranks the next pass.",
+                                      "last_commit": "eaf2d78",
+                                      "current_gate": "B1 full-frame <=0.02 still open (charmap now read, not yet wired into a renderer); C1 render clause (buttons+counts <=0.02) still open, redirected to a new base-icon-source question plus the unwired B1 charmap",
+                                      "rounds_run": 2,
+                                      "stock_starts_used": 1,
+                                      "pending_questions": [],
+                                      "no_further_dispatch": true
+                                    }
                                   }
                                 ],
                                 "stopped": {
                                   "date": "2026-10-22",
-                                  "reason": "Both of docs/DIRECTIVE.md's questions are answered (landed, independently verified) -- the directive's own stop condition. Question 1 closed cleanly (charmap/advance read and checked against a retail string). Question 2 spent its one authorized stock start and recorded the read, but redirects C1's open question rather than closing it (the real base-icon source and the +0x3c writer are still unidentified). Per the directive, do not advance to B2, C2 or C3, and do not re-attempt the B1 or C1 gate until the overlord ranks the next pass.",
-                                  "last_commit": "eaf2d78",
-                                  "current_gate": "B1 full-frame <=0.02 still open (charmap now read, not yet wired into a renderer); C1 render clause (buttons+counts <=0.02) still open, redirected to a new base-icon-source question plus the unwired B1 charmap",
-                                  "rounds_run": 2,
-                                  "stock_starts_used": 1,
+                                  "reason": "Question 1 reached its three-round cap without a B1 gate score, and question 2 is landed. The horizontal word and the ^Font texture are file-negatives, so a score would require a guessed X or a guessed sheet. That is the directive stop, not a gate change.",
+                                  "last_commit": "0f91521",
+                                  "current_gate": "B1 full-frame highlight 0 <=0.02 was not scored. C2 was groundwork only and was not scored.",
+                                  "rounds_run": 5,
+                                  "stock_starts_used": 0,
                                   "pending_questions": [],
                                   "no_further_dispatch": true
                                 }
                               }
-                            ],
-                            "stopped": {
-                              "date": "2026-10-22",
-                              "reason": "Question 1 reached its three-round cap without a B1 gate score, and question 2 is landed. The horizontal word and the ^Font texture are file-negatives, so a score would require a guessed X or a guessed sheet. That is the directive stop, not a gate change.",
-                              "last_commit": "0f91521",
-                              "current_gate": "B1 full-frame highlight 0 <=0.02 was not scored. C2 was groundwork only and was not scored.",
-                              "rounds_run": 5,
-                              "stock_starts_used": 0,
-                              "pending_questions": [],
-                              "no_further_dispatch": true
-                            }
+                            ]
                           }
                         ]
                       }
@@ -4105,20 +4208,20 @@
               }
             ]
           }
-        ]
+        ],
+        "stopped": {
+          "date": "2026-10-23",
+          "reason": "Directive stop point reached: Q1 landed (b1v, one ^Font source), Q2 landed (b1w, B1 gate passes on own re-score), Q3 parked (no named level-to-map path). DIRECTIVE.md Status: done.",
+          "last_commit": "d05bc73"
+        },
+        "resolved_questions": [
+          {
+            "id": "q1-entry-int3",
+            "answer": "authorized (user, overlord review 2026-10-23, docs/DIRECTIVE.md amendment): one GDB one-shot software int3 at 0x49D518 (--entry-stop soft) for the one Q1 start; a stock exe that does not tolerate it is a stop condition, not a retry"
+          }
+        ],
+        "facilitator_started_epoch": 1792794664
       }
-    ],
-    "stopped": {
-      "date": "2026-10-23",
-      "reason": "Directive stop point reached: Q1 landed (b1v, one ^Font source), Q2 landed (b1w, B1 gate passes on own re-score), Q3 parked (no named level-to-map path). DIRECTIVE.md Status: done.",
-      "last_commit": "d05bc73"
-    },
-    "resolved_questions": [
-      {
-        "id": "q1-entry-int3",
-        "answer": "authorized (user, overlord review 2026-10-23, docs/DIRECTIVE.md amendment): one GDB one-shot software int3 at 0x49D518 (--entry-stop soft) for the one Q1 start; a stock exe that does not tolerate it is a stop condition, not a retry"
-      }
-    ],
-    "facilitator_started_epoch": 1792794664
+    ]
   }
 }

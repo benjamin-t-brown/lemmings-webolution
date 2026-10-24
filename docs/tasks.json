@@ -4,33 +4,6 @@
   "notes": "Thin queue only. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
-      "id": "b1x-panel-draw-read",
-      "title": "B1 main-menu panel draw read (0x48B1C7) and full-frame re-score",
-      "status": "running",
-      "brief": "build/tmp/b1x-panel-draw-read-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "disassembly read + render edit",
-      "harness": "Claude Code",
-      "requested_model": "session model (no pin, per ROLES)",
-      "worker_agent": "round-agent",
-      "dispatch_id": "ab1x-panel-draw-read-aeebd7110967f7f1",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [
-        "b1w-menu-render"
-      ],
-      "gate_served": "B1 accepted-on-condition; directive Q1",
-      "question_round_count": 1,
-      "stock_starts_authorized": 0,
-      "stock_starts_consumed": 0,
-      "standing_run": "b1-panel-c2-counters-caption",
-      "investigation_budget_minutes": 60,
-      "body_cap": 12,
-      "worker_output": null,
-      "landed_in": null,
-      "disposition": null
-    },
-    {
       "id": "c2e-caption-preflight",
       "title": "C2 Paused caption preflight: fields the top edge needs, read-only live script (no start)",
       "status": "running",
@@ -58,7 +31,7 @@
     {
       "id": "c2d-counters-open-reads",
       "title": "C2 counters: settle replace/append, Out source, colour order, default colour (read only)",
-      "status": "running",
+      "status": "ready-for-verify",
       "brief": "build/tmp/c2d-counters-open-reads-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -78,7 +51,7 @@
       "standing_run": "b1-panel-c2-counters-caption",
       "investigation_budget_minutes": 60,
       "body_cap": 12,
-      "worker_output": null,
+      "worker_output": "build/tmp/c2d-counters-open-reads/round-note.md",
       "landed_in": null,
       "disposition": null
     }
@@ -3629,6 +3602,34 @@
       "landed_in": "docs/scratch/phase-c2c-counters-timer-read.md",
       "disposition": "Positions are absolute px; count text goes into the same lists as the labels; counts re-placed by 0x44D22C at y 0x32 (not 45); Saved colour 255/255/255 below word[0x4CBAB0], 255/63/63 at or above (order unread); replace-vs-append, Out source, default colour open",
       "facilitator_verified": "2026-10-23: re-read 0x44DF7F..0x44DFDD, 0x44D316..0x44D3FF, 0x44D22C..0x44D2E5 on the exe; decoded colour doubles 255.0/63.0; own caller scan identical (one caller each). Worker read ~16 bodies vs cap 12 (accessors), noted. No render value settled."
+    },
+    {
+      "id": "b1x-panel-draw-read",
+      "title": "B1 main-menu panel draw read (0x48B1C7) and full-frame re-score",
+      "status": "landed",
+      "brief": "build/tmp/b1x-panel-draw-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read + render edit",
+      "harness": "Claude Code",
+      "requested_model": "session model (no pin, per ROLES)",
+      "worker_agent": "round-agent",
+      "dispatch_id": "ab1x-panel-draw-read-aeebd7110967f7f1",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b1w-menu-render"
+      ],
+      "gate_served": "B1 accepted-on-condition; directive Q1",
+      "question_round_count": 1,
+      "stock_starts_authorized": 0,
+      "stock_starts_consumed": 0,
+      "standing_run": "b1-panel-c2-counters-caption",
+      "investigation_budget_minutes": 60,
+      "body_cap": 12,
+      "worker_output": "build/tmp/b1x-panel-draw-read/round-note.md",
+      "landed_in": "docs/scratch/phase-b1x-panel-draw-read.md",
+      "disposition": "0x48B1C7 is a ctor tail; panel = fill+border quads (0x489B39 insets 2 / 1) from rect 0x48A190; ctor colour args 255.0 and 64.0 unread in meaning; fields +0x34..+0x48 and highlight setter unread; no renderer value replaced; score unchanged 0.005244",
+      "facilitator_verified": "2026-10-23: re-read 0x48B1C7, 0x489B39, 0x48A190, 0x489A00, 0x4897C0, 0x4897E0 on the exe; MenuRender.h diff comments only, Mac/mouv MD5 equal; full ctest 32/32 on mouv after rebuild. Worker 15 bodies vs cap 12 noted."
     }
   ],
   "standing_run": {
@@ -3647,7 +3648,7 @@
     },
     "workers": "Claude Code mapping docs/ROLES.md: round-agent on the session model, no model argument.",
     "owner": "Claude Code facilitator (Mac, session model, Sonnet 5.5), 2026-10-23 18:17 MDT /facilitator invocation; directive active, prior run stopped, no task running, so this start is the handoff.",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Every directive question landed or parked, an ORCHESTRATION stop, or a live start that crashes or leaves the install unrestored.",

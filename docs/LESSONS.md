@@ -1359,3 +1359,10 @@ from word `0x4CBAA4`) goes into the same lists as the labels (`0x44D316`, caller
 re-places them with right end near x 620, Out at y 15, Saved at y 50. Saved is white below word `0x4CBAB0` and (255,63,63) at
 or above (R,G,B order unread). Open: replace versus append, the Out source, default glyph colour. Evidence:
 `docs/scratch/phase-c2c-counters-timer-read.md`.
+
+## Menu panel geometry (B1x, 2026-10-23, READ, partial)
+
+`0x48B1C7` is a constructor tail, not the panel draw. The panel object (vtable `0x4B1E28`, ctor `0x489999`) holds a fill quad
+(`obj+8`) and a border quad (`obj+0x1B0`); `0x489B39` insets the fill by 2 and the border by 1 from the rect `0x48A190` builds from
+fields `+0x34..+0x48`. Those fields, the colour meaning of the ctor's 255.0 / 64.0 doubles and the highlight setter are unread, so
+the renderer's panel values stay measured. Evidence: `docs/scratch/phase-b1x-panel-draw-read.md`.

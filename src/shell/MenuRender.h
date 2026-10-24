@@ -47,12 +47,22 @@ struct MenuParams {
   int rowStep = kLineHeight;
 
   // MEASURED-FROM-REFERENCE (five panels, rows 0..4): the panel is the text width plus this
-  // much each side, with its top one pixel below the text row and 27 pixels tall. The panel
-  // draw (after 0x48B1C7) was not read; UNREAD.
+  // much each side, with its top one pixel below the text row and 27 pixels tall.
+  // B1x PARTLY READ (build/tmp/b1x-panel-draw-read/round-note.md): the panel object (vtable
+  // 0x4B1E28, ctor 0x489999) holds two quads. 0x48A190 passes 0x489B39 the rect
+  // X = [+0x44]+[+0x34]-0x14, Y = [+0x48]+[+0x38], W = [+0x3C]+0x28, H = [+0x40]; 0x489B39 puts
+  // the FILL quad at [X+2, X+W-2] x [Y+2, Y+H-2] and the BORDER quad (+0x1B0) one pixel larger,
+  // [X+1, X+W-1] x [Y+1, Y+H-1]. The terms +0x34..+0x48 are not read, so 19 / 1 / 27 stay
+  // MEASURED and are not claimed equal to the rule above.
   int panelPadX = 19;
   int panelTop = 1;
   int panelHeight = 27;
-  // MEASURED-FROM-REFERENCE colours. Highlight 0 is the orange row.
+  // MEASURED-FROM-REFERENCE colours. Highlight 0 is the orange row. The ctor 0x489999 calls
+  // 0x44DBC0 on the fill quad (+8) with doubles 255.0, 0.0, 0.0 and on the border quad (+0x1B0)
+  // with 64.0, 64.0, 64.0 (READ args). 0x44DBC0 builds a 3-double record via 0x4017F0 and copies
+  // it into four slots (+0x40/+0xA8/+0x110/+0x178); whether that record is colour or something
+  // else is UNREAD, and 255,0,0 is not the measured 224,10,0 / 224,128,0, so a later setter
+  // (unread) must change the fills. The border's 64 does equal the measured 64.
   std::array<std::uint8_t, 3> panelBorder{64, 64, 64};
   std::array<std::uint8_t, 3> panelHighlight{224, 128, 0};
   std::array<std::uint8_t, 3> panelNormal{224, 10, 0};

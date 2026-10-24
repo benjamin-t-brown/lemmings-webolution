@@ -7,7 +7,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-24 14:26 MDT: part 2 ended at its cap. `0x47218A` is the texture-loader entry, not a colour-key test. `0x46D5F3` is `call [ecx+0x70]`; the blend mode is unread. `^tab` pixels are unread. Part 3 was not started. No further round on this directive.)
 Issued: 2026-10-24 (user, overlord review 2026-10-24; "A approve commit and push", option A of
 the c1-sheet-pixels-hook-render evaluation)
 Supersedes: the sheet-pixels-and-hook directive, done 2026-10-24 13:43 MDT (c1r: sheet members

@@ -66,8 +66,9 @@ configured model takes effect when the command runs:
 **Facilitator tier** (user, 2026-10-25). On mouv, `/facilitator-astra` binds
 `.opencode/agent/facilitator-astra.md`, pinned to `openai/gpt-6-astra` at `high`; it is
 otherwise identical to `facilitator`. The overlord recommends a tier with each directive:
-Astra (`/facilitator-astra`) for hard passes, Sol (`/facilitator`) for standard, Luna for
-easy or targeted. Workers keep their own pins whichever facilitator dispatches them. The
+Astra (`/facilitator-astra`) only for the hardest passes, because it is expensive (user,
+2026-10-25): for example a question a Sol pass has already parked. Sol (`/facilitator`) is
+the default; Luna is for easy or targeted passes. Workers keep their own pins whichever facilitator dispatches them. The
 Mac's `llmgw` lists no Astra model (2026-10-25), so there is no `-mac` Astra variant.
 
 Both worker pins are explicit and independent of the facilitator session. If a pinned model

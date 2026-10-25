@@ -18,12 +18,12 @@
     "workers": "OpenCode ROLES.md: disasm-agent for native code reading; round-agent for implementation/render/scoring; configured high variant, no model override.",
     "owner": "OpenCode ses_e8c346bc4ffe01LaYRaXoqOAkl facilitator on mouv; explicit user resumption hands off from stopped c1-c2-b3, no running task.",
     "started_at": "2026-10-25T10:01:32-06:00",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
-    "handoff": "C1bb landed: installed patch bypasses native +6/keep, requests DERIVED A8R8G8B8. Conditional native A4R4G4B4 not this install route. Next: derive patch converter/resizer texel words, then draw plates and score unchanged footprint/views. Starts 0/3, rounds 1. No task or game in flight.",
-    "pass_clock": {"started":"2026-10-25T10:01:32-06:00","rounds":[{"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"}]},
+    "handoff": "C1bc landed conditional patch texel streams (128x32, full UV); own complete p53-nearest replay both assets. No original runtime state chosen by fit. Next: opt-in plate render and frozen C1 score under declared successful-layout/arithmetic conditions; sensitivity reported. No task/game in flight; starts 0/3, rounds 2.",
+    "pass_clock": {"started":"2026-10-25T10:01:32-06:00","rounds":[{"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"},{"id":"c1bc-patch-texels","dispatched":"2026-10-25T10:31:43-06:00","landed":"2026-10-25T10:51:48-06:00","elapsed":"20m05s"}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null
   }

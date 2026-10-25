@@ -486,3 +486,11 @@ and sends the exe to its epilogue before +6 and shifts. Own fresh bytes, import/
 export/branch/request decoding, full-list predicate, isolated immediate mutation
 and 34/34 CTest pass. No live observation or pixel score. Next: patch texel
 conversion and resize, then render over the unchanged frozen footprint.
+
+**C1bc: conditional patch plate words and full UV**
+([Facilitator check](../scratch/phase-c1bc-patch-texels.md)). Both assets derive
+128x32 uploaded streams from 72x32 via endpoint-aligned bilinear/truncated channels.
+Own complete p53-nearest replay, source bytes, 2,554 instruction-line rereads,
+row-flip mutation and 34/34 CTest pass. Actual PC/RC, completed GDI and returned
+layout stay conditional; no original upload or pixel pass measured. Next is a
+declared conditional render and unchanged C1 gate score, with sensitivity reported.

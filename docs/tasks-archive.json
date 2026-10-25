@@ -1329,6 +1329,12 @@
     }
   ],
   "landed": [
+    {"id":"c1bc-patch-texels","status":"landed","milestone":"C1 skill panel","question_key":"patch-plate-texel-words","question_round":1,
+     "brief":"build/tmp/c1bc-patch-texels-brief.md","worker_output":"build/tmp/c1bc-patch-texels/round-note.md",
+     "dispatch_id":"ses_e8c186840ffexpZFloFJer1PNq","requested_model":"openai/gpt-6.1-sol high, disasm-agent",
+     "dispatched_at":"2026-10-25T10:31:43-06:00","landed_at":"2026-10-25T10:51:48-06:00",
+     "evidence":"docs/scratch/phase-c1bc-patch-texels.md","stock_starts_used":0,
+     "result":"Conditional 128x32 full-UV patch texels, independent p53-nearest replay both assets; original PC/RC/GDI/layout unobserved. No pixel acceptance. 34/34 CTest."},
     {
       "id":"c1bb-derived-format", "status":"landed", "milestone":"C1 skill panel",
       "question_key":"derived-tab-format", "question_round":1,

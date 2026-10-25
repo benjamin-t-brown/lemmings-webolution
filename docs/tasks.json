@@ -1,8 +1,35 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T21:34:23-06:00",
+  "updated": "2026-10-24T21:37:00-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1an-frida-import",
+      "title": "Make the launch-hook probe able to import frida",
+      "status": "running",
+      "worker_output": null,
+      "brief": "build/tmp/c1an-frida-import-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline frida import",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1am-launch-hook-dry"
+      ],
+      "gate_served": "C1 skill panel; the launch-time read cannot start until import frida works",
+      "question": "alpha-count-launch",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3. Repair before the one start: c1am's probe imports frida and this python has no such module. A start now would fail before spawn. No stock start. The third round is that start.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-launch-attach",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": null,
+      "dispatched_at": "2026-10-24 21:37 MDT"
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "c1-launch-attach",
@@ -24,7 +51,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 21:34 MDT: c1am landed. Four hooks dry-check. python has no frida; rea attach is not spawn. Next: offline repair so import frida works, then one start. Stock starts 0 of 2. Gate not scored. Pass started 21:15:08.",
+    "handoff": "2026-10-24 21:37 MDT: c1am landed (4a2bc0d). Dispatching c1an-frida-import (offline, round 2 of 3). Stock starts 0 of 2. Gate not scored. Pass started 21:15:08.",
     "pass_clock": {
       "started": "2026-10-24 21:15:08 -06:00",
       "rounds": [

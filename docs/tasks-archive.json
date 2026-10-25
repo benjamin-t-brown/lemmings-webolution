@@ -3,6 +3,75 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-hook-repair",
+      "goal": "Directive 2026-10-24 (C1 alpha counts, hook repair). Offline: find why c1ao exited, move the count read outside the pixel loop, dry-check. Then one stock start at paused MM_CLIMB_002. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+      "milestones": [
+        "C1 skill panel"
+      ],
+      "current": "C1 skill panel",
+      "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24: yep all are good i approve; up to 3 more alpha-count rounds; start pool back to 2; keep frida). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. No start until this run dry check passes. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+      "grants": {
+        "stock_starts": "pool of 2; no start until this run dry check passes; read-only Frida, one attach; launch-time attach allowed; no retry after a failed launch; the second start needs an offline repair first",
+        "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+        "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
+      },
+      "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
+      "owner": "Cursor facilitator, 2026-10-24 22:59 MDT /facilitator on mouv. Prior run c1-launch-attach stopped, directive active, so this start is the handoff. This session is Grok 4.7; the user said try again.",
+      "started_at": "2026-10-24 22:59:52 -06:00",
+      "rounds_run": 4,
+      "stock_starts_used": 2,
+      "pending_questions": [
+        {
+          "id": "startup-access-violation",
+          "question": "Pid 44772 exited with 0xC0000005 before MM_CLIMB_002. skip_input was 1 eight times and 2 once, and each value AND 0x18 is 0, so 0x47383C was skipped. The fault address is unread. The start pool is spent. What should a later run do?",
+          "options": [
+            "An offline round on the instructions after the 0x4737E6 skip, then a new start only under a new directive",
+            "Spend another start on the same probe",
+            "Leave the paused-level shift counts unread"
+          ],
+          "recommendation": "Do not relaunch this probe. The pool is spent and the process exited 0xC0000005. An offline round can read what runs after the skip. A new start needs a new directive.",
+          "evidence": "docs/scratch/phase-c1as-launch-read.md"
+        }
+      ],
+      "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
+      "handoff": "2026-10-24 23:41 MDT: stopped. c1as pid 44772 exit 0xC0000005. skip_input AND 0x18 is 0. Starts 2 of 2. Rounds 4. Gate not scored. Pass started 22:59:52.",
+      "pass_clock": {
+        "started": "2026-10-24 22:59:52 -06:00",
+        "rounds": [
+          {
+            "id": "c1ap-hook-repair",
+            "dispatched": "2026-10-24 23:03 MDT",
+            "landed": "2026-10-24 23:17 MDT",
+            "elapsed": "14m 37s"
+          },
+          {
+            "id": "c1aq-launch-read",
+            "dispatched": "2026-10-24 23:18 MDT",
+            "landed": "2026-10-24 23:24 MDT",
+            "elapsed": "6m 12s"
+          },
+          {
+            "id": "c1ar-exit-capture",
+            "dispatched": "2026-10-24 23:24 MDT",
+            "landed": "2026-10-24 23:36 MDT",
+            "elapsed": "12m 45s"
+          },
+          {
+            "id": "c1as-launch-read",
+            "dispatched": "2026-10-24 23:36 MDT",
+            "landed": "2026-10-24 23:41 MDT",
+            "elapsed": "5m 48s"
+          }
+        ]
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-24 23:41 MDT",
+        "reason": "Start 2 of 2. Pid 44772 exited with 0xC0000005 before MM_CLIMB_002. skip_input AND 0x18 was 0, so the count site was skipped. Install hashes match. Gate not scored. The fault address is unread. The same probe is not relaunched.",
+        "last_commit": "ca7ea9a"
+      }
+    },
+    {
       "id": "c1-launch-attach",
       "goal": "Directive 2026-10-24 (C1 alpha counts, launch attach). Offline: dry-check one read-only Frida script for the four hooks, a continuous log, and a launch-time attach. Then one stock start at paused MM_CLIMB_002. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
       "milestones": [

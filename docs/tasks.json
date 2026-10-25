@@ -1,76 +1,71 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T23:41:48-06:00",
+  "updated": "2026-10-25T00:16:00-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1at-descriptor-link",
+      "status": "running",
+      "brief": "build/tmp/c1at-descriptor-link-brief.md",
+      "owns_live_game": false,
+      "disassembly_read": true,
+      "tier": "targeted",
+      "requested_model": "grok-4.7-high-fast",
+      "session_id": "unavailable",
+      "milestone": "C1 skill panel",
+      "question_rounds": "alpha-count offline 1 of 3"
+    },
+    {
+      "id": "c1au-context-keep",
+      "status": "running",
+      "brief": "build/tmp/c1au-context-keep-brief.md",
+      "owns_live_game": false,
+      "disassembly_read": true,
+      "tier": "targeted",
+      "requested_model": "grok-4.7-high-fast",
+      "session_id": "unavailable",
+      "milestone": "C1 skill panel",
+      "question_rounds": "alpha-count offline 2 of 3"
+    },
+    {
+      "id": "c1av-skip-write",
+      "status": "running",
+      "brief": "build/tmp/c1av-skip-write-brief.md",
+      "owns_live_game": false,
+      "disassembly_read": true,
+      "tier": "targeted",
+      "requested_model": "grok-4.7-high-fast",
+      "session_id": "unavailable",
+      "milestone": "C1 skill panel",
+      "question_rounds": "alpha-count offline 3 of 3"
+    }
+  ],
   "queue": [],
   "standing_run": {
-    "id": "c1-hook-repair",
-    "goal": "Directive 2026-10-24 (C1 alpha counts, hook repair). Offline: find why c1ao exited, move the count read outside the pixel loop, dry-check. Then one stock start at paused MM_CLIMB_002. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+    "id": "c1-alpha-offline",
+    "goal": "Directive 2026-10-25 (C1 alpha counts). Three offline rounds: descriptor identity, context bytes plus the keep rule on the c1as format list, and the skip-path stores. Then one menu-attach start only if a render input is still unread. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
     "milestones": [
       "C1 skill panel"
     ],
     "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24: yep all are good i approve; up to 3 more alpha-count rounds; start pool back to 2; keep frida). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. No start until this run dry check passes. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-25: yep all are good i approve). 3 offline rounds and 1 live round. Pool of 1 menu-attach start. frida.spawn retired. A crash is a hard stop. Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
     "grants": {
-      "stock_starts": "pool of 2; no start until this run dry check passes; read-only Frida, one attach; launch-time attach allowed; no retry after a failed launch; the second start needs an offline repair first",
+      "stock_starts": "pool of 1; menu-attach only (normal Popen, attach at the menu); no start until the offline rounds leave a render input unread and a dry check passes; frida.spawn retired; a crash is a hard stop with no repair start",
       "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
       "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
     },
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
-    "owner": "Cursor facilitator, 2026-10-24 22:59 MDT /facilitator on mouv. Prior run c1-launch-attach stopped, directive active, so this start is the handoff. This session is Grok 4.7; the user said try again.",
-    "started_at": "2026-10-24 22:59:52 -06:00",
-    "rounds_run": 4,
-    "stock_starts_used": 2,
-    "pending_questions": [
-      {
-        "id": "startup-access-violation",
-        "question": "Pid 44772 exited with 0xC0000005 before MM_CLIMB_002. skip_input was 1 eight times and 2 once, and each value AND 0x18 is 0, so 0x47383C was skipped. The fault address is unread. The start pool is spent. What should a later run do?",
-        "options": [
-          "An offline round on the instructions after the 0x4737E6 skip, then a new start only under a new directive",
-          "Spend another start on the same probe",
-          "Leave the paused-level shift counts unread"
-        ],
-        "recommendation": "Do not relaunch this probe. The pool is spent and the process exited 0xC0000005. An offline round can read what runs after the skip. A new start needs a new directive.",
-        "evidence": "docs/scratch/phase-c1as-launch-read.md"
-      }
-    ],
-    "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 23:41 MDT: stopped. c1as pid 44772 exit 0xC0000005. skip_input AND 0x18 is 0. Starts 2 of 2. Rounds 4. Gate not scored. Pass started 22:59:52.",
+    "owner": "Cursor facilitator, 2026-10-25 00:03 MDT /facilitator on mouv. Prior run c1-hook-repair stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
+    "started_at": "2026-10-25 00:03:19 -06:00",
+    "rounds_run": 0,
+    "stock_starts_used": 0,
+    "pending_questions": [],
+    "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; the alpha-count question uses its 3 offline and 1 live rounds without the counts or the rule the render needs; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; a start crashes or leaves the install unrestored (hard stop); about 4 hours or 12 rounds; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3. If the run stops without a gate score, do not choose between parking plate-alpha and amending the gate.",
+    "handoff": "2026-10-25 00:16 MDT: c1at, c1au and c1av running, offline, no live owner. No start. Pass started 00:03:19.",
     "pass_clock": {
-      "started": "2026-10-24 22:59:52 -06:00",
-      "rounds": [
-        {
-          "id": "c1ap-hook-repair",
-          "dispatched": "2026-10-24 23:03 MDT",
-          "landed": "2026-10-24 23:17 MDT",
-          "elapsed": "14m 37s"
-        },
-        {
-          "id": "c1aq-launch-read",
-          "dispatched": "2026-10-24 23:18 MDT",
-          "landed": "2026-10-24 23:24 MDT",
-          "elapsed": "6m 12s"
-        },
-        {
-          "id": "c1ar-exit-capture",
-          "dispatched": "2026-10-24 23:24 MDT",
-          "landed": "2026-10-24 23:36 MDT",
-          "elapsed": "12m 45s"
-        },
-        {
-          "id": "c1as-launch-read",
-          "dispatched": "2026-10-24 23:36 MDT",
-          "landed": "2026-10-24 23:41 MDT",
-          "elapsed": "5m 48s"
-        }
-      ]
+      "started": "2026-10-25 00:03:19 -06:00",
+      "rounds": []
     },
-    "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-24 23:41 MDT",
-      "reason": "Start 2 of 2. Pid 44772 exited with 0xC0000005 before MM_CLIMB_002. skip_input AND 0x18 was 0, so the count site was skipped. Install hashes match. Gate not scored. The fault address is unread. The same probe is not relaunched.",
-      "last_commit": "ca7ea9a"
-    }
+    "rules": "docs/ORCHESTRATION.md#standing-run"
   }
 }

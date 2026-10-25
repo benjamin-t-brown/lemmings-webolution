@@ -415,6 +415,14 @@ open.
 
 ### C3 draw-correlated observation
 
+**C3ad initial/repair1 disposition2026-10-25:**
+[dry checks only; live recipe rejected](../scratch/phase-c3ad-pause-values-live.md).
+No start spent. Stream isolation verified, but controller references a nonexistent
+entry-helper record-size export afterPopen; no approval. Resume after new run
+budget with exact controller lifecycle mocks and record-size fix, then independent
+drycheck before the already user-authorized single passive menu-attach attempt.
+Actual pause gates/S/native format/binding remain unknown; no getter/Lock granted.
+
 **Steering2026-10-25, commit884798a:** user approved one live round from the
 existing3start pool, dry-checked first, normalPopen/menuREA CLI/read-only hooks,
 including passive4732B2/B5 returned-format lead. This lifts the observation park

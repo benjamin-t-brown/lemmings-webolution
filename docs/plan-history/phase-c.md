@@ -694,3 +694,12 @@ native layout explicitly, preserving sourceOffset. Independent17node/340field
 comparison passes below1e-9; own-Y mutation fails/restores;443retail checks and
 38/38CTest pass. Preclip compatibility, not visibility/state/pixels. All three
 preparation components are ready for immediate app render/score under steering.
+
+**C3ad initial/repair1: pause-value dry checks, live recipe rejected (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ad-pause-values-live.md)). Independent
+129-bind fixture caught suppression of the requested pause snapshot. Stream
+isolation fixes that offline failure; ABI/anchor/HRESULT checks remain bounded.
+Controller then fails static export verification on `entry.RECORD_SIZE` after
+Popen. No live approval or start; no pause/device values obtained. Two attempts
+count toward the unchanged24-round run cap. This is a failed dry recipe, not a
+missing user authorization or a runtime absence result.

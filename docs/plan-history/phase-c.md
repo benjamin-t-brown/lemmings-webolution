@@ -411,3 +411,12 @@ Nothing in `0x472F99` writes `[ebp-0x140]`. If `+7` is 0, c1as line 29
 (mask `0x0000F000`) is the only record the popcount arm keeps; if `+7`
 is 1, none are. The facilitator re-disassembled the span and re-applied
 the rule. No stock start. The gate is not scored.
+
+**C1aw: the menu-attach start exited before `^tab`**
+([check](../scratch/phase-c1aw-menu-context.md)), 2026-10-25, the one
+live round. Pid 35216, one normal `Popen`, armed at the menu. Exit code
+3221225477 (`0xC0000005`) at the click, before the pause. `hits.log` has
+one line, `Sheets\$LemSheetHi8`, not `^tab`. The facilitator recounted
+it, re-hashed the three install files, and a one-address change of the
+dry check failed. The install files match. The `^tab` dword stays unread.
+The gate is not scored. The start was not repeated.

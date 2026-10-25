@@ -1228,6 +1228,36 @@
   ],
   "landed": [
     {
+      "id": "c1aw-menu-context",
+      "title": "Read ^tab context byte +7 at the menu",
+      "status": "landed",
+      "worker_output": "build/tmp/c1aw-menu-context/round-note.md",
+      "brief": "build/tmp/c1aw-menu-context-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "one menu-attach start",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1au-context-keep"
+      ],
+      "gate_served": "C1 skill panel; the unwritten +7 dword on a ^tab upload",
+      "question": "alpha-count-live",
+      "question_round_count": 1,
+      "cap_note": "The directive's one live round. The process exited 0xC0000005. No repair and no further start.",
+      "stock_starts_authorized": 1,
+      "standing_run": "c1-alpha-offline",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 00:36 MDT",
+      "dispatch_id": "635c6c8f-4682-4ab9-ab0f-53701ae71e2a",
+      "landed_at": "2026-10-25 00:54 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1aw-menu-context.md; docs/LESSONS.md C1aw; docs/plan-history/phase-c.md; docs/DIRECTIVE.md Status done",
+      "disposition": "Pid 35216 exited 0xC0000005 before the pause. ^tab did not reach 0x473146. One hits.log line is Sheets\\$LemSheetHi8. Install hashes match. Not relaunched. Gate not scored.",
+      "facilitator_verified": "2026-10-25 00:54 MDT: one Popen line, exit 3221225477, one hits.log line not ^tab. Re-hashed the three install files; they match the pre-launch copies. Dry check failed after the hook address changed to 0x473147, then passed. No Lemmings process."
+    },
+    {
       "id": "c1au-context-keep",
       "title": "Context bytes and which format record is kept",
       "status": "landed",

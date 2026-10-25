@@ -1,23 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T00:36:57-06:00",
+  "updated": "2026-10-25T00:54:10-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1aw-menu-context",
-      "status": "running",
-      "brief": "build/tmp/c1aw-menu-context-brief.md",
-      "owns_live_game": true,
-      "disassembly_read": false,
-      "tier": "targeted",
-      "requested_model": "grok-4.7-high-fast",
-      "session_id": "635c6c8f-4682-4ab9-ab0f-53701ae71e2a",
-      "milestone": "C1 skill panel",
-      "question_rounds": "alpha-count live 1 of 1",
-      "dispatched_at": "2026-10-25 00:36 MDT",
-      "live_owner": "635c6c8f-4682-4ab9-ab0f-53701ae71e2a"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-alpha-offline",
@@ -35,11 +20,22 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-25 00:03 MDT /facilitator on mouv. Prior run c1-hook-repair stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
     "started_at": "2026-10-25 00:03:19 -06:00",
-    "rounds_run": 3,
-    "stock_starts_used": 0,
-    "pending_questions": [],
+    "rounds_run": 4,
+    "stock_starts_used": 1,
+    "pending_questions": [
+      {
+        "id": "plate-alpha-after-crash",
+        "question": "This run stopped without a gate score. Park the plate-alpha question, or amend the C1 gate?",
+        "options": [
+          "Park the plate-alpha question",
+          "Amend the C1 gate"
+        ],
+        "recommendation": "Do not pick. The directive leaves the choice to the overlord and the user.",
+        "evidence": "docs/scratch/phase-c1aw-menu-context.md"
+      }
+    ],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; the alpha-count question uses its 3 offline and 1 live rounds without the counts or the rule the render needs; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; a start crashes or leaves the install unrestored (hard stop); about 4 hours or 12 rounds; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3. If the run stops without a gate score, do not choose between parking plate-alpha and amending the gate.",
-    "handoff": "2026-10-25 00:36 MDT: c1aw running (635c6c8f), the one menu-attach start. Dry check before Popen. Offline rounds landed. Gate not scored. Pass started 00:03:19.",
+    "handoff": "2026-10-25 00:54 MDT: stopped. c1aw pid 35216 exit 0xC0000005. ^tab did not reach 0x473146. Hashes match. Starts 1 of 1. Rounds 4. Gate not scored. Pass started 00:03:19.",
     "pass_clock": {
       "started": "2026-10-25 00:03:19 -06:00",
       "rounds": [
@@ -60,9 +56,20 @@
           "dispatched": "2026-10-25 00:15 MDT",
           "landed": "2026-10-25 00:34 MDT",
           "elapsed": "19m 9s"
+        },
+        {
+          "id": "c1aw-menu-context",
+          "dispatched": "2026-10-25 00:36 MDT",
+          "landed": "2026-10-25 00:54 MDT",
+          "elapsed": "17m 13s"
         }
       ]
     },
-    "rules": "docs/ORCHESTRATION.md#standing-run"
+    "rules": "docs/ORCHESTRATION.md#standing-run",
+    "stopped": {
+      "date": "2026-10-25 00:54 MDT",
+      "reason": "The one menu-attach start, pid 35216, exited 0xC0000005 before the pause. ^tab did not reach 0x473146. Install hashes match. The in-process level slot was not written back because the process was already gone. Not relaunched. Gate not scored.",
+      "last_commit": null
+    }
   }
 }

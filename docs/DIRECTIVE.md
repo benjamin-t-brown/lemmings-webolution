@@ -8,7 +8,8 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
+Stopped: 2026-10-25 00:52 MDT. c1aw pid 35216 exited `0xC0000005` before the pause. `^tab` did not reach `0x473146`. Install hashes match. Gate not scored. The overlord brings the choice between parking the plate-alpha question and amending the C1 gate. This stop does not pick either.
 Issued: 2026-10-25 (user, overlord review 2026-10-25: "yep all are good i approve": 3 offline
 rounds and 1 live round, a pool of 1 menu-attach start, a convergence check at the stop)
 Supersedes: the hook-repair directive, done 2026-10-24 23:42 MDT (c1ap: no branch into the

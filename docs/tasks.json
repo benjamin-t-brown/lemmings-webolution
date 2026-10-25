@@ -41,6 +41,6 @@
       {"id":"c1bd-plate-render-repair2","dispatched":"2026-10-25T11:07:28-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"8m02s","attempt_return_observed":"2026-10-25T11:12:31-06:00"}
     ]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {"date":"2026-10-25 13:05 MDT","reason":"C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior. Count tint and icon edges cannot close it. Passing the signed gate would need that scene or a footprint change. The gate was not changed. Starts 0 of 3. Rounds 11.","last_commit":""}
+    "stopped": {"date":"2026-10-25 13:05 MDT","reason":"C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior. Count tint and icon edges cannot close it. Passing the signed gate would need that scene or a footprint change. The gate was not changed. Starts 0 of 3. Rounds 11.","last_commit":"0eca6dc"}
   }
 }

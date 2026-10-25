@@ -381,3 +381,13 @@ is 1 eight times and 2 once, and each value AND `0x18` is 0. `0x47383C`
 has 0 lines. The facilitator recounted the log and re-hashed the install.
 The probe was not run again. The paused-level shift counts stay unread.
 The start pool is spent.
+
+**C1av: the skip path stores masked pixels**
+([check](../scratch/phase-c1av-skip-write.md)), 2026-10-25, alpha-count
+offline round 3 of 3, parallel with c1at and c1au. From `0x47395A`
+through `ret 4` at `0x473B1B`, bits 0, 1 and 2 of `[object+0x24]` store
+16-bit pixels through `[ebp-0xad4]`, ANDed with `[ebp-0xad0]` and ORed
+with the low word of `[ebp-0x128]`. The span does not enter the shift
+loop, so `0x473943` does not run. The facilitator re-disassembled the
+stores, and one wrong expected byte at `0x4739A6` failed the file check.
+No stock start. The numeric mask stays unread. The gate is not scored.

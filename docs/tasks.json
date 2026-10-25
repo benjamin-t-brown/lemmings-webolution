@@ -1,8 +1,12 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T15:52:36-06:00",
+  "updated": "2026-10-25T15:59:07-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [],
+  "active": [
+    {"id":"c3aa-scene-mesh-source","status":"running","brief":"build/tmp/c3aa-scene-mesh-source-brief.md","question":"Explicit-matrix mesh source-command adapter","milestone":"C3 full frame","question_round":1,"worker_type":"targeted production implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:57:12-06:00","dispatch_confirmed_at":"2026-10-25T15:59:07-06:00","session_id":"ses_e8aee4619ffeO6OqfuvLhC83AL","requested_model":"openai/gpt-6-luna#high"},
+    {"id":"c3ab-scene-raster","status":"running","brief":"build/tmp/c3ab-scene-raster-brief.md","question":"Separate explicit-input software scene raster component","milestone":"C3 full frame","question_round":1,"worker_type":"targeted production implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:57:12-06:00","dispatch_confirmed_at":"2026-10-25T15:59:07-06:00","session_id":"ses_e8aee248bffeBHIvP63dvZwMnD","requested_model":"openai/gpt-6-luna#high"},
+    {"id":"c3ac-billboard-source","status":"running","brief":"build/tmp/c3ac-billboard-source-brief.md","question":"Explicit-input preclip type2 billboard geometry","milestone":"C3 full frame","question_round":1,"worker_type":"targeted production implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:57:12-06:00","dispatch_confirmed_at":"2026-10-25T15:59:07-06:00","session_id":"ses_e8aedfcd4ffemsMq24b4Q94RX6","requested_model":"openai/gpt-6-luna#high"}
+  ],
   "queue": [],
   "standing_run": {
     "id": "c1-close-c3-scene",
@@ -23,7 +27,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "Xstrict reader5737a1f and Ysort13d34cf landed. Zstatic pointer/interface contracts verified46windows/headers/GUIDs and synthetic request-chain field mutation;35/35CTest. Observation PARKED after Vinitial+repair+Zthird round: actual producer/lifetime/class/cleanup/state/format still unknown;no live recipe,getter,Lock or launcher authorized. Resume boundary in Znote/PhaseE;fourth preflight needs explicit gate-moving cap reason. No workers/liveowner. NEXTqueue linted C3aa explicit-matrix meshsource adapter, then independent explicit-input raster/type2 prep where no unknown runtime selection. App still omits scene;baseline0.2050523>0.02.16completed attempts;starts0/3. Preserve all previous retractions/candidate clipping limitations;gate unchanged.",
+    "handoff": "Xstrict reader5737a1f,Ysecondarysort13d34cf,Zstaticcontracts+runtimeparkecbcefd all verified/pushed;35/35CTest. Xfull4tree fields/offsets byte-match, allocationrepair and exactSHArestoration;Y29sorted childslot4calls;Z46windows/staticCOMcontracts only. THREE new production workers RUNNING (15:57:12..15:59:07): AAexplicit meshsource,ABseparate explicit-input raster,ACpreclip billboard;sessions active,pins perroles. Newmodules/tests disjoint;all briefs permit ONE TEST TARGET and one source entry in sharedwiring—preserve siblings and STAGE/MERGE ONLY each round's own wiring hunks at landing. Continuation notes toall require named mutex Local\\LemWeb-C3-SharedBuild around shared builds/tests and entire temporarymutation->restore->rebuild;use same coordinator before facilitator shared builds/mutations. Do not poll/duplicate;awaitnotifications then independentverification. No app rendering/default selection in these tasks. Runtime observation PARKED at3roundcap;currentproducer/lifetime/class/cleanup/effectiveGPU/nativeformat/texels missing,no livequery/Lock/launcher;fourthpreflight needswritten gate-moving exception. Baseline48188934/235008000=0.2050523>0.02,appstillomits scene,floorvisibility open.16completed attempts+3running (budget24);starts0/3,noliveowner. Preserve V/C3oretractions/C3nclipcandidate limits.",
     "previous_passes": [{"started": "2026-10-25T13:29:10-06:00", "ended":"2026-10-25T14:01:52-06:00", "elapsed":"32m42s", "rounds": [{"id":"c3p-kind5-culling","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","worker_finished":"2026-10-25T13:54:46-06:00"}]}],
     "current_pass": {
       "started":"2026-10-25T14:07:15-06:00",
@@ -44,7 +48,7 @@
         {"id":"c3z-observation-provenance","dispatched":"2026-10-25T15:27:50-06:00","landed":"2026-10-25T15:52:36-06:00","elapsed":"24m46s","scope":"static contracts only;runtime observation parked at3round cap"}
       ]
     },
-    "latest_yield": {"date":"2026-10-25T15:28:38-06:00","pass_started":"2026-10-25T14:07:15-06:00","elapsed":"81m23s","reason":"Await Xrepair1, Yslot8 and Zprovenance notifications; standing run remains active"},
+    "latest_yield": {"date":"2026-10-25T15:59:07-06:00","pass_started":"2026-10-25T14:07:15-06:00","elapsed":"111m52s","reason":"Await AAmeshsource,ABraster,ACbillboard notifications;standing run active, runtime observation parked"},
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "sync_resolution": {"date":"2026-10-25T14:06:00-06:00","authorization":"User: the git thing is a small change from the overlord, we should be able to pull that in locally","method":"Non-rewriting merge of origin4889d3e; no conflicts; pending tasks.json SHA256 unchanged across merge. Prior sync stop14:01:52 resolved."},
     "stopped": null

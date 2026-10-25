@@ -70,7 +70,7 @@
     "stopped": {
       "date": "2026-10-24 18:54 MDT",
       "reason": "Alpha-count cap 3 of 3. c1ai placed registration at startup. c1ak found call 0x471746 and left its phase unnamed. c1al showed the constructor that keeps vtable 0x4B19E8 runs at startup and does not call 0x471720. The upload was not placed in time, so the start pool was not spent (0 of 2). C1 gate not scored.",
-      "last_commit": "pending"
+      "last_commit": "4d19eae"
     }
   }
 }

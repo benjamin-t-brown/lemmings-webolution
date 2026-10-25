@@ -512,3 +512,11 @@ gated views matches the worker PNGs. Scores 414292/784866/415022 over
 17721990, all above 0.02 and all below C1bd. Removing only the guard fails
 one destination test and returns zoom1 to 609151. Restored source and 34/34
 CTest. Next is the selected plate, then the filter only if the gate still fails.
+
+**C1bg: selected index 0 and enable 1, derived**
+([Facilitator check](../scratch/phase-c1bg-selected-index.md)). Normal init
+writes fallback 7, then keeps the first strictly positive count. This level's
+trailer is 10,0,0,0,0,0,0,0,0,1, so the result is index 0 and enable 1.
+The extra quad is rectangle 18,12,90,44 for that index, submitted after the
+ten base plates. Not a pause-memory read. The retained A7p script's primary
+clicks are the map node. Next/previous handlers were not re-opened. No score.

@@ -1329,6 +1329,12 @@
     }
   ],
   "landed": [
+    {"id":"c1bg-selected-index","status":"landed","milestone":"C1 skill panel","question_key":"selected-plate-index","question_round":1,
+     "brief":"build/tmp/c1bg-selected-index-brief.md","worker_output":"build/tmp/c1bg-selected-index/round-note.md",
+     "dispatch_id":"ses_e8be216bdffeXXRlTZUjopA05c","requested_model":"openai/gpt-6.1-sol high, disasm-agent",
+     "dispatched_at":"2026-10-25T11:30:58-06:00","landed_at":"2026-10-25T12:07:34-06:00",
+     "evidence":"docs/scratch/phase-c1bg-selected-index.md","stock_starts_used":0,
+     "result":"DERIVED index 0, enable 1, rectangle 18,12,90,44 for this level's trailer. Not a pause-memory read. Next/previous handlers not re-opened. No score."},
     {"id":"c1bf-zero-count","status":"landed","milestone":"C1 skill panel","question_key":"zero-count-draw-skip","question_round":1,
      "brief":"build/tmp/c1bf-zero-count-brief.md","worker_output":"build/tmp/c1bf-zero-count/round-note.md",
      "dispatch_id":"ses_e8be216d8ffe04fzmirQtZ5aGo","requested_model":"openai/gpt-6-luna high, round-agent",

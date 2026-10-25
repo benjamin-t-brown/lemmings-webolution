@@ -475,3 +475,14 @@ calls `0x414D20` unless `[object+0x1C9B1]` is nonzero. The facilitator
 found the displacement three times, and expecting opcode `0x89` failed.
 No stock start. The callees were not opened. The question is parked.
 The gate is not scored.
+
+### C1 skill panel — DERIVED value-framed run, 2026-10-25
+
+**C1bb: installed patch alpha upload bypasses native format enumeration**
+([Facilitator check](../scratch/phase-c1bb-derived-format.md)). The native +6=0 /
+A4R4G4B4 replay is conditional, not this install's successful `^tab` path.
+The imported patch returns its alpha hook, requests DERIVED A8R8G8B8, returns 4,
+and sends the exe to its epilogue before +6 and shifts. Own fresh bytes, import/
+export/branch/request decoding, full-list predicate, isolated immediate mutation
+and 34/34 CTest pass. No live observation or pixel score. Next: patch texel
+conversion and resize, then render over the unchanged frozen footprint.

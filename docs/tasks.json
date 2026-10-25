@@ -1,126 +1,30 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T03:29:54-06:00",
-  "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
+  "updated": "2026-10-25T10:30:51-06:00",
+  "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c1-c2-b3",
-    "goal": "Directive 2026-10-25 (long multi-milestone run). Re-read the c1au fill coverage of [ebp-0x140]. If +7 is settled, apply the keep rule and record the kept format. Draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02. Then the C2 cursor clause, then B3. C3 and B2 stay parked.",
-    "milestones": [
-      "C1 skill panel",
-      "C2 cursor clause",
-      "B3 level select and map"
-    ],
+    "id": "c1-derived-values",
+    "goal": "C1 only: derive +6 and kept format, derive ^tab upload texel words, render and independently score frozen footprint on zoom1/elev_up/elev_down; then rank residuals until fixed gate passes or authorized stop.",
+    "milestones": ["C1 skill panel"],
     "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-25: approve). About 8 hours or 24 rounds. 3 rounds per question, then park. Pool of 3 menu-attach starts through the REA CLI. A crash ends that question live arm; a second crash ends starts for the run. No debugger. 30-minute round limit.",
+    "authorized": "docs/DIRECTIVE.md active, user approve all 2026-10-25; PLAN Phase C DERIVED/value-framed decision.",
     "grants": {
-      "stock_starts": "pool of 3; each dry-checked offline first; normal Popen, attach at the menu through the REA CLI; Python frida.attach and frida.spawn retired; a crash ends live work on that question; a second crash ends all stock starts for the run",
-      "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
-      "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
+      "stock_starts": "3; only offline-unreachable values, dry-check first, normal Popen/menu REA CLI attach; no Python attach/spawn, no debugger; crash ends question live arm, second ends starts",
+      "commits": "each verified round on decompile and push origin decompile; credential failures leave local commit with handoff; no force-push/checkout/reset/stash",
+      "concurrency": "up to 3 independent offline tasks, disjoint owned paths; at most 1 live owner"
     },
-    "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
-    "owner": "Cursor facilitator, 2026-10-25 01:22 MDT /facilitator on mouv. Prior run c1-alpha-offline stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
-    "started_at": "2026-10-25 01:22:18 -06:00",
-    "rounds_run": 14,
+    "workers": "OpenCode ROLES.md: disasm-agent for native code reading; round-agent for implementation/render/scoring; configured high variant, no model override.",
+    "owner": "OpenCode ses_e8c346bc4ffe01LaYRaXoqOAkl facilitator on mouv; explicit user resumption hands off from stopped c1-c2-b3, no running task.",
+    "started_at": "2026-10-25T10:01:32-06:00",
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
-    "stop_point": "The last ranked milestone gate passes on an independent re-score; a gate, footprint, mask, views or exclusions would need to change; a guardrail breach; every remaining ranked question is parked or waits on pending_questions; about 8 hours or 24 rounds; delegation or the pinned model is unavailable, or another session is running a task. A crash parks that question live arm. A second crash ends starts. Caps park and the run continues. Do not choose a gate amendment.",
-    "handoff": "2026-10-25 03:29 MDT: stopped. b3g landed (4m 54s). Level-pick parked. Every ranked question is parked. C1, C2 cursor, and B3 gates not scored. Starts 0 of 3. Rounds 14. Pass 2h 7m 36s from 01:22:18.",
-    "pass_clock": {
-      "started": "2026-10-25 01:22:18 -06:00",
-      "rounds": [
-        {
-          "id": "c1ax-fill-coverage",
-          "dispatched": "2026-10-25 01:26 MDT",
-          "landed": "2026-10-25 01:42 MDT",
-          "elapsed": "16m 6s"
-        },
-        {
-          "id": "c1ay-kept-format",
-          "dispatched": "2026-10-25 01:43 MDT",
-          "landed": "2026-10-25 01:51 MDT",
-          "elapsed": "8m 11s"
-        },
-        {
-          "id": "c1az-dib-handle",
-          "dispatched": "2026-10-25 01:52 MDT",
-          "landed": "2026-10-25 02:03 MDT",
-          "elapsed": "10m 36s"
-        },
-        {
-          "id": "c1ba-bitcount-source",
-          "dispatched": "2026-10-25 02:04 MDT",
-          "landed": "2026-10-25 02:14 MDT",
-          "elapsed": "10m 52s"
-        },
-        {
-          "id": "c2l-cursor-exit",
-          "dispatched": "2026-10-25 02:15 MDT",
-          "landed": "2026-10-25 02:20 MDT",
-          "elapsed": "5m 31s"
-        },
-        {
-          "id": "c2m-cursor-slot",
-          "dispatched": "2026-10-25 02:21 MDT",
-          "landed": "2026-10-25 02:28 MDT",
-          "elapsed": "7m 32s"
-        },
-        {
-          "id": "c2n-cursor-read",
-          "dispatched": "2026-10-25 02:29 MDT",
-          "landed": "2026-10-25 02:39 MDT",
-          "elapsed": "10m 35s"
-        },
-        {
-          "id": "b3a-map-arm",
-          "dispatched": "2026-10-25 02:40 MDT",
-          "landed": "2026-10-25 02:48 MDT",
-          "elapsed": "7m 57s"
-        },
-        {
-          "id": "b3b-map-object",
-          "dispatched": "2026-10-25 02:48 MDT",
-          "landed": "2026-10-25 02:55 MDT",
-          "elapsed": "6m 57s"
-        },
-        {
-          "id": "b3c-map-index",
-          "dispatched": "2026-10-25 02:56 MDT",
-          "landed": "2026-10-25 03:00 MDT",
-          "elapsed": "4m 20s"
-        },
-        {
-          "id": "b3d-map-callers",
-          "dispatched": "2026-10-25 03:01 MDT",
-          "landed": "2026-10-25 03:07 MDT",
-          "elapsed": "6m 9s"
-        },
-        {
-          "id": "b3e-level-name",
-          "dispatched": "2026-10-25 03:08 MDT",
-          "landed": "2026-10-25 03:12 MDT",
-          "elapsed": "4m 0s"
-        },
-        {
-          "id": "b3f-box-ref",
-          "dispatched": "2026-10-25 03:12 MDT",
-          "landed": "2026-10-25 03:24 MDT",
-          "elapsed": "12m 12s"
-        },
-        {
-          "id": "b3g-box-call",
-          "dispatched": "2026-10-25 03:25 MDT",
-          "landed": "2026-10-25 03:29 MDT",
-          "elapsed": "4m 54s"
-        }
-      ]
-    },
+    "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
+    "handoff": "C1bb landed: installed patch bypasses native +6/keep, requests DERIVED A8R8G8B8. Conditional native A4R4G4B4 not this install route. Next: derive patch converter/resizer texel words, then draw plates and score unchanged footprint/views. Starts 0/3, rounds 1. No task or game in flight.",
+    "pass_clock": {"started":"2026-10-25T10:01:32-06:00","rounds":[{"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-25 03:29 MDT",
-      "reason": "Every ranked question is parked. C1 plate format, C2 cursor sprite, B3 map object, and B3 level pick. No gate was scored. Stock starts 0 of 3. Rounds 14.",
-      "last_commit": "61b39c2"
-    }
+    "stopped": null
   }
 }

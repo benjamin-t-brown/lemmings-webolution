@@ -10,6 +10,13 @@ This is a 1:1 reimplementation of Lemmings Revolution. The stock 640x480 executa
 
 Say which is which, in notes and in code. `Rules` in `src/sim/World.h` labels each field MEASURED or PROVISIONAL. Do not promote a guess because it is plausible or because classic Lemmings used it.
 
+**DERIVED** (user, directive 2026-10-25): a value may be derived when every link
+is read from this executable/install or is documented Win32/DirectX behaviour.
+Cite the documentation or SDK struct, field and offset for the documented link.
+Label the result DERIVED, never MEASURED or READ; preserve API-success and route
+conditions. A disagreeing live read replaces it. An import's symbol name alone
+does not identify its implementation: inspect its DLL and any intervening hook.
+
 - Measured: `climbSpeed` is **1** — one cell per 200 ms tick. Corrected 2026-10-16: this used to cite a
   billboard series of 34.190, 35.190, 36.190, and those absolute values are **withdrawn** — round 10 showed the
   quad that probe locks is not a lemming (`tools/harness/compare_tick.py` carries the retraction). The

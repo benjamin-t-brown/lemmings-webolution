@@ -415,6 +415,13 @@ open.
 
 ### C3 draw-correlated observation
 
+**Steering2026-10-25, commit884798a:** user approved one live round from the
+existing3start pool, dry-checked first, normalPopen/menuREA CLI/read-only hooks,
+including passive4732B2/B5 returned-format lead. This lifts the observation park
+for that round; no further permission request is needed. Historical evidence
+limits below remain, as do start/crash/restoration rules. Render/score from
+read/DERIVED values next; mark conditional inputs, no fitting or gate change.
+
 - **C3 effective state/format observation** (parked2026-10-25 at three rounds:
   C3v initial, repair1, C3z). [Verified static subset](../scratch/phase-c3z-observation-provenance.md):
   class7primary/mesh/block scopes, descriptor vsTexture2D+0 vsSurface4D+8,

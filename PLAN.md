@@ -238,7 +238,7 @@ One line per parked item; the evidence and the resume brief are under each link 
 - [B1 source, both arms](docs/plan-history/phase-e.md#b1-source-both-arms) — B1v observed one `^Font` source; B1w render passes.
 - [C3 backdrop scenery](docs/plan-history/phase-e.md#c3-backdrop-scenery) — re-parked 2026-10-24 after C3k–C3m; five bodies unread, then render.
 - [C3 entrance and exit models](docs/plan-history/phase-e.md#c3-entrance-and-exit-models) — re-parked 2026-10-24; Exit width gap open, no render.
-- [C3 draw-correlated observation](docs/plan-history/phase-e.md#c3-draw-correlated-observation) — parked after C3v initial/repair and C3z; static contracts verified, runtime producer/lifetime and cleanup unproved.
+- [C3 draw-correlated observation](docs/plan-history/phase-e.md#c3-draw-correlated-observation) — park lifted for one dry-checked live round (steering2026-10-25); static contracts verified, runtime evidence still pending.
 - [C2 Paused caption text and blend](docs/plan-history/phase-e.md#c2-paused-caption-text-and-blend) — parked 2026-10-23 (C2j, C2k); device render state unread.
 - [C2 cursor sprite](docs/plan-history/phase-e.md#c2-cursor-sprite) — parked 2026-10-25 at the cap (c2l–c2n); two loads pass the handle on, and the callees are unread.
 - [B2 level-to-map](docs/plan-history/phase-e.md#b2-level-to-map) — parked 2026-10-23; writer of `[0x4C6A08]` unread.

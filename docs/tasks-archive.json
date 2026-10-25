@@ -3,6 +3,87 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-skill-panel-gate",
+      "goal": "Directive 2026-10-24 (C1 to its gate). Rank by gate error. First questions: read 0x47E40D (0-128 .alf bytes to texture alpha; decode ^tab_selected only if the same path) and move the plate hook sample before 0x47261F. Then one dry-checked Frida start for the live blend, then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+      "milestones": [
+        "C1 skill panel"
+      ],
+      "current": "C1 skill panel",
+      "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24; milestone-scoped C1). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. Stock-start pool 3, each dry-checked first, no retry after a failed launch. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+      "grants": {
+        "stock_starts": "pool of 3 for the run; each needs an offline dry check first; read-only Frida, one attach; no retry after a failed launch; a later start needs an offline repair first",
+        "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+        "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
+      },
+      "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
+      "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
+      "started_at": "2026-10-24 16:21:48 -06:00",
+      "rounds_run": 8,
+      "stock_starts_used": 3,
+      "pending_questions": [],
+      "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
+      "handoff": "2026-10-24 17:36 MDT: stopped. C1 gate not scored. c1ah logged 0 hits with the hook armed before the click. Stock starts 3 of 3. The shift counts are unread. Another count read needs a start. Pass started 16:21:48.",
+      "pass_clock": {
+        "started": "2026-10-24 16:21:48 -06:00",
+        "rounds": [
+          {
+            "id": "c1ab-prestage-hook",
+            "dispatched": "2026-10-24 16:27 MDT",
+            "landed": "2026-10-24 16:39 MDT",
+            "elapsed": "12m 44s"
+          },
+          {
+            "id": "c1aa-alf-alpha",
+            "dispatched": "2026-10-24 16:27 MDT",
+            "landed": "2026-10-24 16:44 MDT",
+            "elapsed": "17m 27s"
+          },
+          {
+            "id": "c1ad-plate-blend-live",
+            "dispatched": "2026-10-24 16:44 MDT",
+            "landed": "2026-10-24 16:55 MDT",
+            "elapsed": "11m 10s"
+          },
+          {
+            "id": "c1ac-alpha-mask-writer",
+            "dispatched": "2026-10-24 16:44 MDT",
+            "landed": "2026-10-24 16:59 MDT",
+            "elapsed": "15m 23s"
+          },
+          {
+            "id": "c1ae-shift-count-hook",
+            "dispatched": "2026-10-24 16:59 MDT",
+            "landed": "2026-10-24 17:07 MDT",
+            "elapsed": "8m 32s"
+          },
+          {
+            "id": "c1af-shift-count-live",
+            "dispatched": "2026-10-24 17:07 MDT",
+            "landed": "2026-10-24 17:19 MDT",
+            "elapsed": "12m 26s"
+          },
+          {
+            "id": "c1ag-arm-before-click",
+            "dispatched": "2026-10-24 17:19 MDT",
+            "landed": "2026-10-24 17:27 MDT",
+            "elapsed": "8m 40s"
+          },
+          {
+            "id": "c1ah-shift-count-armed",
+            "dispatched": "2026-10-24 17:27 MDT",
+            "landed": "2026-10-24 17:36 MDT",
+            "elapsed": "9m 27s"
+          }
+        ]
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-24 17:36 MDT",
+        "reason": "Start pool spent, 3 of 3. The hook at 0x473897 logged 0 hits while paused and 0 hits when armed before the level click. The shift counts are unread. The next count read needs a start. C1 gate not scored.",
+        "last_commit": "ad93340"
+      }
+    },
+    {
       "id": "c1-tab-blend-render",
       "goal": "Directive 2026-10-24 (^tab pixels, blend hook, render). Part 1a offline cap 1: decode ^tab (handle [0x4E3348], store 0x45E909) and ^tab_selected if the same path. Part 1b offline cap 1: name the device blend and texture-stage hook for the 0x45B66A plate quads, write the hook, dry-check it. Part 2 cap 1: one Frida start at a paused MM_CLIMB_002, after 1b. Part 3 offline cap 2: draw plates with the read pixels and blend and the zero-count rule; score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
       "milestones": [

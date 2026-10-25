@@ -1,88 +1,82 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T17:36:27-06:00",
+  "updated": "2026-10-24T18:20:42-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1ai-upload-when",
+      "title": "When the ^tab upload at 0x472F99 runs",
+      "status": "running",
+      "brief": "build/tmp/c1ai-upload-when-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; the shift-count hook needs the upload phase before another start",
+      "question": "alpha-count",
+      "question_round_count": 1,
+      "cap_note": "Round 1 of 3 this run on the alpha-count question. Prior pass used 6 (c1aa, c1ac, c1ae, c1af, c1ag, c1ah). Dry-check and the start are the other two.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-upload-timing",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "9d876d5f-a943-42a1-85d8-9e91988b7ea5",
+      "dispatched_at": "2026-10-24 18:20 MDT"
+    },
+    {
+      "id": "c1aj-format-keep",
+      "title": "Which format 0x473B1E keeps",
+      "status": "running",
+      "brief": "build/tmp/c1aj-format-keep-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [],
+      "gate_served": "C1 skill panel; the next hook logs the format this callback keeps",
+      "question": "format-enumeration",
+      "question_round_count": 1,
+      "cap_note": "Round 1 of 3 on format enumeration. Not charged to the alpha-count cap of 3, which still has to hold the dry-check and the start.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-upload-timing",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "106b510e-f00f-470b-aeba-ede3e07576e0",
+      "dispatched_at": "2026-10-24 18:20 MDT"
+    }
+  ],
   "queue": [],
   "standing_run": {
-    "id": "c1-skill-panel-gate",
-    "goal": "Directive 2026-10-24 (C1 to its gate). Rank by gate error. First questions: read 0x47E40D (0-128 .alf bytes to texture alpha; decode ^tab_selected only if the same path) and move the plate hook sample before 0x47261F. Then one dry-checked Frida start for the live blend, then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+    "id": "c1-upload-timing",
+    "goal": "Directive 2026-10-24 (C1 alpha counts, second pool). Offline first: when the ^tab upload at 0x472F99 runs, and which format 0x473B1E keeps. Then dry-check a read-only hook before that upload. Then one stock start, launch-time attach allowed. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
     "milestones": [
       "C1 skill panel"
     ],
     "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24; milestone-scoped C1). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. Stock-start pool 3, each dry-checked first, no retry after a failed launch. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24; 2 starts, launch-time attach). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. Stock-start pool 2, no start until the upload is placed in time and the hook dry-check passes. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
     "grants": {
-      "stock_starts": "pool of 3 for the run; each needs an offline dry check first; read-only Frida, one attach; no retry after a failed launch; a later start needs an offline repair first",
+      "stock_starts": "pool of 2; no start until an offline round has placed the upload in time and the hook and entry have passed a dry check; read-only Frida, one attach; launch-time attach allowed (right after Popen, or spawn suspended and resume after attach); no retry after a failed launch; the second start needs an offline repair first",
       "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
       "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
     },
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
-    "owner": "Cursor facilitator, 2026-10-24 16:21 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
-    "started_at": "2026-10-24 16:21:48 -06:00",
-    "rounds_run": 8,
-    "stock_starts_used": 3,
+    "owner": "Cursor facilitator, 2026-10-24 18:16 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
+    "started_at": "2026-10-24 18:16:38 -06:00",
+    "rounds_run": 0,
+    "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 17:36 MDT: stopped. C1 gate not scored. c1ah logged 0 hits with the hook armed before the click. Stock starts 3 of 3. The shift counts are unread. Another count read needs a start. Pass started 16:21:48.",
+    "handoff": "2026-10-24 18:20 MDT: c1ai and c1aj are running, both offline. c1ai dispatch 9d876d5f-a943-42a1-85d8-9e91988b7ea5. c1aj dispatch 106b510e-f00f-470b-aeba-ede3e07576e0. Alpha-count cap this run is 3 including the start: c1ai is 1, then the dry-check, then the start. c1aj is format-enumeration round 1 of 3 and is not charged to that cap. Stock starts 0 of 2. Pass started 18:16:38. Next action is verify when each note lands.",
     "pass_clock": {
-      "started": "2026-10-24 16:21:48 -06:00",
-      "rounds": [
-        {
-          "id": "c1ab-prestage-hook",
-          "dispatched": "2026-10-24 16:27 MDT",
-          "landed": "2026-10-24 16:39 MDT",
-          "elapsed": "12m 44s"
-        },
-        {
-          "id": "c1aa-alf-alpha",
-          "dispatched": "2026-10-24 16:27 MDT",
-          "landed": "2026-10-24 16:44 MDT",
-          "elapsed": "17m 27s"
-        },
-        {
-          "id": "c1ad-plate-blend-live",
-          "dispatched": "2026-10-24 16:44 MDT",
-          "landed": "2026-10-24 16:55 MDT",
-          "elapsed": "11m 10s"
-        },
-        {
-          "id": "c1ac-alpha-mask-writer",
-          "dispatched": "2026-10-24 16:44 MDT",
-          "landed": "2026-10-24 16:59 MDT",
-          "elapsed": "15m 23s"
-        },
-        {
-          "id": "c1ae-shift-count-hook",
-          "dispatched": "2026-10-24 16:59 MDT",
-          "landed": "2026-10-24 17:07 MDT",
-          "elapsed": "8m 32s"
-        },
-        {
-          "id": "c1af-shift-count-live",
-          "dispatched": "2026-10-24 17:07 MDT",
-          "landed": "2026-10-24 17:19 MDT",
-          "elapsed": "12m 26s"
-        },
-        {
-          "id": "c1ag-arm-before-click",
-          "dispatched": "2026-10-24 17:19 MDT",
-          "landed": "2026-10-24 17:27 MDT",
-          "elapsed": "8m 40s"
-        },
-        {
-          "id": "c1ah-shift-count-armed",
-          "dispatched": "2026-10-24 17:27 MDT",
-          "landed": "2026-10-24 17:36 MDT",
-          "elapsed": "9m 27s"
-        }
-      ]
+      "started": "2026-10-24 18:16:38 -06:00",
+      "rounds": []
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-24 17:36 MDT",
-      "reason": "Start pool spent, 3 of 3. The hook at 0x473897 logged 0 hits while paused and 0 hits when armed before the level click. The shift counts are unread. The next count read needs a start. C1 gate not scored.",
-      "last_commit": "ad93340"
-    }
+    "stopped": null
   }
 }

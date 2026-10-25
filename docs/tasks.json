@@ -69,7 +69,7 @@
     "stopped": {
       "date": "2026-10-25 00:54 MDT",
       "reason": "The one menu-attach start, pid 35216, exited 0xC0000005 before the pause. ^tab did not reach 0x473146. Install hashes match. The in-process level slot was not written back because the process was already gone. Not relaunched. Gate not scored.",
-      "last_commit": null
+      "last_commit": "5552dd2"
     }
   }
 }

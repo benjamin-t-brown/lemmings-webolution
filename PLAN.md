@@ -152,6 +152,11 @@ user 2026-10-22.**
   continuously, with read-only hooks at the format callback, the upload entry, the mask zero
   test and the shift. The 2 unspent starts stand; the alpha-count question gets up to 3 more
   rounds.
+- **C1 alpha counts after the c1ao exit (user, overlord review 2026-10-24, "yep all are good
+  i approve").** c1ao's launch start exited during startup, after a 16-bit upload kept mask
+  `0x8000` and before any shift hit. Up to 3 more alpha-count rounds; the start pool is 2 again
+  (1 left plus 1). The `frida` 17.24.3 package c1an installed for mouv's Python stays; the
+  facilitator updates `docs/agents/MOUV_SSH.md` to say so.
 - **C1 gate measurement amended (user, overlord review 2026-10-24).** C1t showed the scorer could not see the panel: its mask inside the skill bands is x 86..89, the drawn icons x 26..76, overlap 0, so `skill_mae` stayed at the pre-panel 0.1077 / 0.0554. The threshold (0.02), region and captures are unchanged; the pixels scored become the panel's own footprint, built from read geometry (plates, c1s icon positions with the c1p/c1r frame sizes, count glyphs at the c1s text-object positions) and committed before the render. Pixels where a plate is translucent still include whatever the stock frame shows behind it; that share is reported, not masked out.
 - **C1 gated views amended (user, overlord review 2026-10-24, second amendment).** The plates are translucent: all 18033 plate-only footprint pixels differ between the eight A7p stock views, and they carry 83% of c1w's 0.2918. On the 4536 scenery-only pixels between the plates, our render differs from the stock frame by 0.48–0.52 on `initial`, `left`, `right`, `elev0_neg` and `canonical` (sand, sky, balloon: parked C3 scenery) and by 0.0183 / 0.0209 / 0.0174 on `zoom1` / `elev_up` / `elev_down` (the tube wall we draw). So the gate is taken on those three views; the threshold, footprint and region are unchanged. The scenery error alone is near 0.02 there, so a pass is not assured. Overlord scripts `build/tmp/overlord-2026-10-24/split.py`, `constancy.py`, `gaps.py`, `views.py` (measured from the saved A7p PNGs; evaluation, not a new capture).
 

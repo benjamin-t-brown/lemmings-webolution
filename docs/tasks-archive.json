@@ -3,6 +3,75 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-upload-timing",
+      "goal": "Directive 2026-10-24 (C1 alpha counts, second pool). Offline first: when the ^tab upload at 0x472F99 runs, and which format 0x473B1E keeps. Then dry-check a read-only hook before that upload. Then one stock start, launch-time attach allowed. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+      "milestones": [
+        "C1 skill panel"
+      ],
+      "current": "C1 skill panel",
+      "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-24; 2 starts, launch-time attach). Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. Stock-start pool 2, no start until the upload is placed in time and the hook dry-check passes. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+      "grants": {
+        "stock_starts": "pool of 2; no start until an offline round has placed the upload in time and the hook and entry have passed a dry check; read-only Frida, one attach; launch-time attach allowed (right after Popen, or spawn suspended and resume after attach); no retry after a failed launch; the second start needs an offline repair first",
+        "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+        "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
+      },
+      "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
+      "owner": "Cursor facilitator, 2026-10-24 18:16 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
+      "started_at": "2026-10-24 18:16:38 -06:00",
+      "rounds_run": 4,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "id": "upload-call-unplaced",
+          "question": "The alpha-count cap is spent and 0x471746 is still unnamed. The constructor that keeps vtable 0x4B19E8 runs at startup and does not call it. What should the next run do?",
+          "options": [
+            "One launch-time read-only attach at 0x471746, accepting that the call was not placed before the level click",
+            "One more offline round for other callers of slot +0x0C",
+            "Leave the shift counts unread"
+          ],
+          "recommendation": "One launch-time attach at 0x471746. Three static rounds found no direct caller. Another caller search is the same shape that just returned unnamed. The attach can record the triples if the call runs at any time after the entry walk.",
+          "evidence": "docs/scratch/phase-c1al-ctor-caller.md"
+        }
+      ],
+      "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
+      "handoff": "2026-10-24 18:54 MDT: stopped. c1al landed. The constructor of vtable 0x4B19E8 runs at startup and does not call 0x471720. Upload phase unnamed. Alpha-count cap 3 of 3. Stock starts 0 of 2. Gate not scored. Pending: launch-time attach at 0x471746, or one more offline caller round. Pass started 18:16:38.",
+      "pass_clock": {
+        "started": "2026-10-24 18:16:38 -06:00",
+        "rounds": [
+          {
+            "id": "c1aj-format-keep",
+            "dispatched": "2026-10-24 18:20 MDT",
+            "landed": "2026-10-24 18:30 MDT",
+            "elapsed": "9m 45s"
+          },
+          {
+            "id": "c1ai-upload-when",
+            "dispatched": "2026-10-24 18:20 MDT",
+            "landed": "2026-10-24 18:32 MDT",
+            "elapsed": "11m 57s"
+          },
+          {
+            "id": "c1ak-vtable-call",
+            "dispatched": "2026-10-24 18:33 MDT",
+            "landed": "2026-10-24 18:43 MDT",
+            "elapsed": "10m 25s"
+          },
+          {
+            "id": "c1al-ctor-caller",
+            "dispatched": "2026-10-24 18:44 MDT",
+            "landed": "2026-10-24 18:54 MDT",
+            "elapsed": "10m 48s"
+          }
+        ]
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-24 18:54 MDT",
+        "reason": "Alpha-count cap 3 of 3. c1ai placed registration at startup. c1ak found call 0x471746 and left its phase unnamed. c1al showed the constructor that keeps vtable 0x4B19E8 runs at startup and does not call 0x471720. The upload was not placed in time, so the start pool was not spent (0 of 2). C1 gate not scored.",
+        "last_commit": "4d19eae"
+      }
+    },
+    {
       "id": "c1-skill-panel-gate",
       "goal": "Directive 2026-10-24 (C1 to its gate). Rank by gate error. First questions: read 0x47E40D (0-128 .alf bytes to texture alpha; decode ^tab_selected only if the same path) and move the plate hook sample before 0x47261F. Then one dry-checked Frida start for the live blend, then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
       "milestones": [
@@ -1026,6 +1095,36 @@
     }
   ],
   "landed": [
+    {
+      "id": "c1am-launch-hook-dry",
+      "title": "Dry-check the launch-time alpha-count hooks",
+      "status": "landed",
+      "worker_output": "build/tmp/c1am-launch-hook-dry/round-note.md",
+      "brief": "build/tmp/c1am-launch-hook-dry-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline hook dry-check",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1al-ctor-caller"
+      ],
+      "gate_served": "C1 skill panel; dry-check the launch-time read before any start",
+      "question": "alpha-count-launch",
+      "question_round_count": 1,
+      "cap_note": "Round 1 of 3 granted by the 2026-10-24 launch-attach directive (dry check, start, one repair or second start). The previous run's upload-phase cap does not count here. No stock start.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-launch-attach",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "7d2306d3-207a-4081-9b59-e29e9cfea8ed",
+      "dispatched_at": "2026-10-24 21:20 MDT",
+      "landed_at": "2026-10-24 21:34 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1am-launch-hook-dry.md; docs/LESSONS.md C1am; docs/plan-history/phase-c.md",
+      "disposition": "Four read-only onEnter hooks append to hits.log. Probe source is frida.spawn, script.load, frida.resume, then the log after pause. Dry check passed. import frida is missing, so nothing was spawned. Shift counts unread. No stock start.",
+      "facilitator_verified": "2026-10-24 21:34 MDT: re-read 0x473B1E push ebp, 0x472F99 push ebp, 0x47241A call 0x472F99, 0x4736B6 cmp [ebp-0x128], 0 and the near je to 0x473B18, 0x473897 sar eax, cl. One attach changed to 0x473898 failed the dry check; restored. import frida missing. No Lemmings process."
+    },
     {
       "id": "c1al-ctor-caller",
       "title": "Who calls the constructor that keeps the upload vtable",

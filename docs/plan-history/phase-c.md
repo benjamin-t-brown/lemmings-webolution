@@ -322,3 +322,12 @@ The chain reaches `0x46F16F` `call 0x474380` on `this+8` and does not reach
 `0x471720`. The facilitator re-read the chain and the walker. A one-byte
 change of the expected entry call failed. No stock start. The shift counts
 stay unread. This question is at its cap.
+
+**C1am: the launch-time alpha hooks dry-check, and the frida module is absent**
+([check](../scratch/phase-c1am-launch-hook-dry.md)), 2026-10-24, launch-attach
+round 1 of 3, offline. The script appends from `onEnter` at `0x473B1E`,
+`0x472F99`, `0x4736B6` and `0x473897`. The probe source uses `frida.spawn`,
+then `script.load`, then `frida.resume`, and reads the log after the pause.
+The facilitator re-read the four sites. A one-address change of the `sar`
+attach failed the dry check. `import frida` is missing, so nothing was
+spawned. No stock start. The shift counts stay unread.

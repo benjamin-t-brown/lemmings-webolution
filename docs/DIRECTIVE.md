@@ -7,8 +7,10 @@ amended gate, then C3 backdrop scenery)
 Supersedes: the C1 DERIVED directive, done 2026-10-25 13:05 MDT (run `c1-derived-values`:
 11 rounds, 0 starts, stopped on `elev_up`; the gate was amended after the stop).
 
-Client: **OpenCode** (user, 2026-10-25). `/facilitator` on mouv (`openai/gpt-6.1-sol`) or
-`/facilitator-mac` on the Mac clone (`llmgw/gpt-6.1-sol`), per [ROLES.md](ROLES.md). The last
+Client: **OpenCode** (user, 2026-10-25). Recommended tier: **Astra**, `/facilitator-astra` on
+mouv (`openai/gpt-6-astra`), because the C3 reads were parked three times on long chains. Sol
+(`/facilitator` on mouv, `/facilitator-mac` on the Mac) runs this directive unchanged
+([ROLES.md](ROLES.md)). The last
 OpenCode pass, `ses_e8c346bc4ffe01LaYRaXoqOAkl`, failed at 11:45:02 after c1bg wrote its
 packet; check for a running OpenCode or Cursor session before claiming the run.
 

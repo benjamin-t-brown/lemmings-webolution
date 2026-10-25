@@ -648,3 +648,11 @@ verify17finite failure fixtures, exact32getter ABI/output calls, recursion/runti
 rejection and an actually executed slot mutant.35/35CTest. Draft remains disabled;
 scene correlation, concrete COM/surface identity and live cleanup unproved. No
 live use, format observation or pixel acceptance is authorized by this landing.
+
+**C3x repair1: strict source reader implemented (2026-10-25)**
+([Facilitator check](../scratch/phase-c3x-scene-node-reader.md)). New explicit-offset
+SceneNode reader preserves supported recursive types0/1/2 and mesh5/6/7 fields.
+Independent reencoding matches every field/offset across all4retained slices.
+Impossible-count eager allocation rejected in repair; guarded negatives and
+normalIndex-only mutation discriminate; exactSHArestore,35/35CTest. No app scene
+render or pixel improvement; unsupported variants fail closed.

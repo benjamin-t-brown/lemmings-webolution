@@ -23,6 +23,7 @@ set(WEBOLUTION_SOURCES
   src/assets/LevelObjects.cpp
   src/assets/LevelStats.cpp
   src/assets/PolyList.cpp
+  src/assets/SceneNode.cpp
   src/assets/Wav.cpp
 
   # gfx -- renderer-independent sprite orientation selection

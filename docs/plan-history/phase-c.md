@@ -401,3 +401,13 @@ leading `^` stores 8. The facilitator re-disassembled both stores, and
 one wrong immediate at `0x474471` failed the file check. No stock start.
 Whether that allocation is later inserted as the pool node is unread.
 The gate is not scored.
+
+**C1au: context bytes are read and the kept mask is conditional**
+([check](../scratch/phase-c1au-context-keep.md)), 2026-10-25, alpha-count
+offline round 2 of 3. `+4` follows `[object+0x24] & 0x18`, `+5` follows
+the low 3 bits, `+6` follows the word at `[ebp-0x192] <= 8`, and `+7`
+follows `[ebp-0x140] & 4`. A `^` name makes `+4` 1 and leaves `+5` at 0.
+Nothing in `0x472F99` writes `[ebp-0x140]`. If `+7` is 0, c1as line 29
+(mask `0x0000F000`) is the only record the popcount arm keeps; if `+7`
+is 1, none are. The facilitator re-disassembled the span and re-applied
+the rule. No stock start. The gate is not scored.

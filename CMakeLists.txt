@@ -228,6 +228,10 @@ add_executable(test_scenenode src/__test__/test_scenenode.cpp)
 target_link_libraries(test_scenenode PRIVATE webolution_objects)
 add_test(NAME scenenode COMMAND test_scenenode WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+add_executable(test_scenemeshsource src/__test__/test_scenemeshsource.cpp)
+target_link_libraries(test_scenemeshsource PRIVATE webolution_objects)
+add_test(NAME scenemeshsource COMMAND test_scenemeshsource)
+
 add_executable(test_wav src/__test__/test_wav.cpp)
 target_link_libraries(test_wav PRIVATE webolution_objects)
 add_test(NAME wav COMMAND test_wav)

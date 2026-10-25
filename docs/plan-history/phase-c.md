@@ -672,3 +672,11 @@ Texture2 producer outputs and class7 scope distinguish descriptor from texture/
 surface. Independent synthetic request tuple/isolated field mutation;35/35CTest.
 Actual producer/lifetime/class/runtime cleanup/effective state and texels remain
 unknown; observation parked atVinitial+repair+Zround3, no live recipe authorized.
+
+**C3aa: explicit-matrix mesh source preparation (2026-10-25)**
+([Facilitator check](../scratch/phase-c3aa-scene-mesh-source.md)). Independent
+1177record/4243corner table/raw-byte comparison protects source identity, normals,
+materials, per-record alias winners and transforms; maxerror2.84e-14. Reversed
+hierarchy-only mutant fails and restores;38/38CTest. In-flight preparation task
+completed under render-first steering; app integration/render+score is next, not
+additional readers. No GPU submission/state/visibility or pixel acceptance.

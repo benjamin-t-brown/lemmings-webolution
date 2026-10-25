@@ -14,6 +14,27 @@ in only if this run parks the C3 scene reads a fourth time ([ROLES.md](ROLES.md)
 OpenCode pass, `ses_e8c346bc4ffe01LaYRaXoqOAkl`, failed at 11:45:02 after c1bg wrote its
 packet; check for a running OpenCode or Cursor session before claiming the run.
 
+## Steering 2026-10-25 16:10 (user, overlord review 2026-10-25, "i approve 1 and 2")
+
+After 16 rounds (C3n–C3z) the app still omits the scene and the full frame is unchanged at
+0.2050523 against repair4. The remaining rounds are for rendering and getting values:
+
+1. **Render now.** Next, draw the scene in our renderer from the values already read or DERIVED
+   (C3n–C3y: the strict reader, mesh/type2 submission, state, textures). Mark every input that is
+   still conditional, and use no fitted value. Score the repair4 full frame with
+   `score_c3_regions.py --reference`, using the per-region table, then rank by region error. A
+   round that only adds a reader or a contract without changing the render needs a written
+   reason in its brief that it moves the gate.
+2. **Spend a start on the parked pause values.** The directive's pool of 3 covers
+   `[game+0]`, `[game+0x5139]`, `0x58d498` and the effective texture format/binding in the
+   pause. The C3z park is lifted for one live round, under the Budget rules: dry-check offline
+   first, normal `Popen`, menu attach through the REA CLI, read-only hooks, the C3z passive
+   lead at `0x4732B2`/`0x4732B5` (base+RVA). That live round needs no further authorization
+   from the user. A crash ends the live arm.
+
+The rest of this directive is unchanged, including the stop point and the 24-round /
+about-8-hour budget counted from 13:29.
+
 ## Why this
 
 The amended C1 gate (`zoom1`, `elev_down`) passes on C1bi's own scores, 0.01609 and 0.01612.

@@ -8,85 +8,85 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done**
-Stopped: 2026-10-24 17:35 MDT. The start pool is spent, 3 of 3. The shift counts at `0x473897` were not read: a paused attach and an attach armed before the level click both logged 0 hits. The C1 gate is not scored. Another count read needs a start.
-Issued: 2026-10-24 (user, overlord review 2026-10-24: "good i approve", option A of the
-c1-tab-blend-render evaluation with the milestone-scoped budget below)
-Supersedes: the tab-blend directive, done 2026-10-24 15:25 MDT (c1y: `^tab` is a 72×32 BMP
-with zero colour bytes plus a 2304-byte `.alf`, values 0–128, consumer `0x47E40D` unread;
-c1z: plate blend in `0x414D80`, stage state in `0x47261F`, hook `0x41494F`, live selector
-unread; the Frida start was not spent).
+Status: **active**
+Issued: 2026-10-24 (user, overlord review 2026-10-24: "ya sure, 2 yes, whatever gets this
+done more efficiently": a pool of 2 more starts, and a launch-time attach allowed)
+Supersedes: the C1-to-its-gate directive, done 2026-10-24 17:35 MDT (c1aa–c1ah: the `.alf`
+byte is `sar` by `8 − popcount(mask)` then `shl` by the mask's trailing zeros; the mask
+comes through a 32-byte copy from a COM method outside the exe; paused plates use blend
+selector 1; the hook at `0x473897` logged 0 hits both paused and armed before the level
+click; start pool 3 of 3 spent; gate not scored).
 
 ## Why this
 
-The plate image is in hand: a black colour plane and a rounded alpha mask. What the render
-still needs is how the `.alf` values become texture alpha, and which blend the plate draw uses
-live. Each of the last seven C1 directives stopped at the first unread input, one step from
-the next obvious read. This run is scoped to the milestone instead: take C1 to its gate.
+Everything the plate render needs is in hand except the two shift counts. Two starts went
+to guesses about *when* the upload runs, a question an offline read can answer. This run
+places the upload in time offline first, and only then spends a start.
 
 ## Scope
 
-**C1 skill panel, to its gate** (`PLAN.md` C1 row, amended twice). You pick, split and rank
-each next question by gate error, as the standing-run loop says. An unread input is not a
-stop: name it, queue the read and continue. The chain as the overlord sees it today, a
-starting ranking and not a script:
+**C1 skill panel, to its gate** (`PLAN.md` C1 row, amended twice). The standing-run loop
+applies: you rank and split; an unread input is queued, not a stop. A starting chain, not a
+script:
 
-1. **Offline:** read `0x47E40D`, how the 0–128 `.alf` bytes become texture alpha (kept,
-   doubled, clamped or other), and decode `^tab_selected` (`0x45E90F`) if it falls out of the
-   same path.
-2. **Offline:** move or add the read-only sample so the hook sees the descriptor and flag
-   caches *before* `0x47261F` (c1z's narrowing), then dry-check it.
-3. **One stock start, Frida:** at a paused `MM_CLIMB_002`, log the plate draw's blend
-   selector, blend cache, descriptor flags, alpha ref and stage states, read-only, one attach.
-4. **Offline:** draw the plates with the read texels, alpha rule and blend, and the read
-   zero-count rule. Score `zoom1`, `elev_up` and `elev_down` with their A7p camera params
-   (`build/tmp/a7p-unpause-then-masks/commands.txt`) against their A7p `baseline.png` over the
-   frozen footprint. Report `initial`, the other A7p views and `MM_DIG_000` beside them, and
-   the scenery-only error between the plates.
+1. **Offline:** find when the `^tab` upload at `0x472F99` runs: the callers of `0x45FE10`
+   and of the registration at `0x45E90F`, and whether the upload happens at startup, in the
+   frontend or on level entry. Read the format callback at `0x473B1E` too: which enumerated
+   format it keeps and when the enumeration stops.
+2. **Offline:** dry-check a read-only hook placed before that upload. If it runs before the
+   level click, the attach goes in at launch (see Budget). Log the callback's format masks
+   and the `(mask, sar, shl)` triples.
+3. **One stock start:** take that read.
+4. **Offline:** draw the plates with the read texels, alpha rule, counts and blend
+   (selector 1, c1ad). Score `zoom1`, `elev_up` and `elev_down` with their A7p camera
+   params against their A7p `baseline.png` over the frozen footprint. Report `initial`, the
+   other A7p views, `MM_DIG_000` and the scenery-only error beside them.
 
 If the gate fails after the plates are drawn, rank what is left inside the C1 footprint
 (count tint, plate selection state, icon edges) and keep going within the budget.
 
 ## Budget
 
-- **Rounds:** 3 per question (the ORCHESTRATION default), repairs and continuations
-  included. A fourth needs a written reason in its brief that it moves the gate.
+- **Rounds:** the alpha-count question ran 6 rounds last pass. It gets up to **3 more** in
+  this run, the start included. Each other question gets 3. A further round needs a written
+  reason in its brief that it moves the gate.
 - **Concurrency:** up to 3 offline rounds at once, at most one live owner.
-- **Stock starts:** a pool of **3** for the run. Each needs an offline dry check of its hook
-  and entry first. Read-only Frida, one attach, no write to game memory beyond the
-  harness's restored level-table slot. Use the c1s recipe. If the launch or attach fails,
-  record it, restore, and do not retry that start; a later start needs an offline repair
-  round first.
-- **Run:** up to about **4 hours wall time or 12 rounds**, whichever comes first. Round limit
-  30 minutes from dispatch; a round at its limit lands what it has read and names the next
-  body.
+- **Stock starts:** a pool of **2**. No start until an offline round has placed the upload
+  in time and its hook and entry have passed a dry check. Read-only Frida, one attach, no
+  write to game memory beyond the harness's restored level-table slot. **A launch-time
+  attach is allowed** (user, 2026-10-24): attach right after `Popen`, or spawn the game
+  suspended and resume it after the attach, before the frontend loads textures. If a launch
+  or attach fails, record it, restore, and do not retry that start; the second start needs
+  an offline repair round first.
+- **Run:** up to about **4 hours wall time or 12 rounds**. Round limit 30 minutes from
+  dispatch.
 - **No debugger.** Per-round commits and pushes.
 
 ## Decisions already made (do not re-ask)
 
-- Gate: the C1 row as amended twice (user, overlord review 2026-10-24). The footprint fixture
-  `tools/harness/fixtures/c1-footprint/footprint.json` (SHA-256 `e96840e0…`) is frozen; do
-  not edit it after a score. Gated views `zoom1`, `elev_up`, `elev_down`, each ≤ 0.02.
-- `MM_DIG_000`'s `baseline.png` is the stock frame (A7q `capture.py`, `capture_image`);
-  informational only.
-- **Read, do not fit, and do not choose by score.** The overlord's evaluation found that
-  darkening our render by `alf/255` drops plate-pixel error to about 0.025 on `zoom1` and
-  `elev_down`, and that stock-over-ours brightness inside the plates is 0.47 on every plate
-  (`build/tmp/overlord-2026-10-24/tabcheck.py`, `tabratio.py`). That is
-  measured-from-reference: a worker may cite it in a prediction or falsifier, never use it
-  as a render input. The alpha rule and blend come from `0x47E40D` and the live read.
-- **Time the pass** (standing): total elapsed wall time and each round's dispatch-to-landing
-  time, recorded in the queue.
-- **Landing** follows the 2026-10-24 restructure: detail in the scratch note, round prose
-  appended to `docs/plan-history/phase-c.md` (c1y and c1z were not; append them first),
-  a one- or two-line C1 status cell, and landed tasks in the queue archive.
-- Do not reuse heap addresses from an earlier process; `levelScreen` is `u32(0x4CBFB0)` per
-  process. Use `acquire_game_foreground`, never `goto_level.focus()`. Live steps run in
-  session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md). Close any game the round leaves running,
-  after checking it. Restore and hash-check every install file in the same process that
-  changed it.
-- Settled and not to be re-derived: everything settled in the previous fifteen directives,
-  plus c1y and c1z. The menu-entry cause stays unnamed; do not chase it.
+- Gate: the C1 row as amended twice. The footprint fixture
+  `tools/harness/fixtures/c1-footprint/footprint.json` (SHA-256 `e96840e0…`) is frozen.
+  Gated views `zoom1`, `elev_up`, `elev_down`, each ≤ 0.02.
+- **Read, do not fit, and do not choose by score.** Measured from the reference, not
+  evidence: stock-over-ours brightness inside the plates is 0.47 on every plate
+  (`build/tmp/overlord-2026-10-24/tabratio.py`). The overlord's reading, which is not
+  evidence either: `[format+0x1c]` sits where `DDPIXELFORMAT.dwRGBAlphaBitMask` sits, so the
+  counts may come from the 16-bit alpha format the device offers. A 4-bit alpha with
+  `.alf` 128 predicts 0.467, a 1-bit alpha predicts 0, `alf/255` predicts 0.50. A worker may
+  cite these as a prediction or falsifier, never as a render input. The counts come from
+  the live read.
+- If the read shows the counts depend on the wrapper's format list (dgVoodoo), not on the
+  exe, record that as the measured value for this install and say so in the note.
+- **Time the pass** (standing), total and per round, in the queue.
+- **Landing** per the 2026-10-24 restructure: detail in the scratch note, round prose in
+  `docs/plan-history/phase-c.md`, a one- or two-line C1 status cell, landed tasks in the
+  queue archive. The C1 status cell is about 1,500 bytes now; trim it to two lines.
+- `levelScreen` is `u32(0x4CBFB0)` per process. Use `acquire_game_foreground`, never
+  `goto_level.focus()`. Live steps run in session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md).
+  Close any game the round leaves running, after checking it. Restore and hash-check every
+  install file in the same process that changed it.
+- Settled and not to be re-derived: everything settled in the previous sixteen directives,
+  plus c1aa–c1ah. The menu-entry cause stays unnamed; do not chase it.
 - Parked and not to be chased: C3 scenery, the caption blend, the hatch animation, the
   `MM_DIG_000` shortfall, the HUD tick mismatch, the `+0x3c` writer, and the C2 cursor
   clause. B2 and B3 stay queued. Run CTest on mouv. Keep text files LF.

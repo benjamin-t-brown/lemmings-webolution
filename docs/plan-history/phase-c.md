@@ -452,3 +452,10 @@ round 3 of 3. The function compares the buffer with bytes `0x42` `0x4D`
 and has no store at offset `0x1C`. A match keeps the pointer from
 `0x49C1A8`. The facilitator walked 217 instructions, and expecting `0x41`
 failed. No stock start. The question is parked. The gate is not scored.
+
+**C2l: `_curExit` is a registrar push**
+([check](../scratch/phase-c2l-cursor-exit.md)), 2026-10-25, cursor clause
+round 1 of 3. The string is at `0x4C0DD0`. Its one reference is
+`push 0x4C0DD0` at `0x45E89B`, then `call 0x45FE10`. The facilitator
+found that dword once, and expecting `0x79` failed. No stock start.
+The hover rule was not read. The gate is not scored.

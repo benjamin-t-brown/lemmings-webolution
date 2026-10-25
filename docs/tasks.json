@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T17:24:36-06:00",
+  "updated": "2026-10-25T17:26:01-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
   ],
@@ -25,7 +25,7 @@
     "started_at": "2026-10-25T13:29:10-06:00",
     "rounds_run": 24,
     "stock_starts_used": 0,
-    "pending_questions": [],
+    "pending_questions": [{"id":"c3-run-budget-exhausted","question":"Authorize a new bounded run or keep C3 parked after24attempts? Existing specified one-shot start-method authorization is not the missing permission.","recommendation":"New bounded implementation-first run: correct known ancestor/S/predicate/dispatch/packing/state inputs from existing evidence, render and rank again; repair and fully mock the live controller before using the already authorized one-shot method. No gate change, extra reader campaign or format fit.","evidence":"docs/scratch/phase-c3ae-scene-render-score.md; docs/scratch/phase-c3ad-pause-values-live.md","gate":"21707403/235008000=.0923687832>0.02;all640x480pixels/floorincluded","all_residual_regions":{"rest_floor_included":19234589,"skill_boxes":1484307,"tube_roi":682387,"counters_timer":154713,"caption":136273,"historical_actor_boxes":15134},"limits":"Region numerators are measured; no unique floor-visible or unknownGPU-family separation is claimed. Known integration omissions must be fixed before attributing rest solely to native format."}],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
     "handoff": "24/24 attempts disposed,0/3starts. STOP for run-round budget after AE partial conditional scene landing; no more dispatch under this run. Own fresh repair4 score21707403/235008000=.0923687832>0.02; scene-off exactbaseline13b1bd...,on/restoredSHA b364b0f...;39/39CTest. C1 gated0.0160864/0.0161212pass; elev_up0.0250557reported. AE is partial integration/scoring, NOT complete nativefidelity or originalbrief acceptance: known ancestor/S/predicate inputs, Ysort/type1/clip/packing/state and AA/ACENV omissions explicitly in latestnote. Next fix known inputchain from existing evidence before more readers/formatfitting. AD streamrepair verified offline but launcherREJECTED on missing entry.RECORD_SIZE afterPopen;NOapproval or actualpausevalues. One-shot userpermission alreadyexists, but newrunbudget/controllerdrycheck required before use. No ownedgame/task/attach/writes. Preserve initialrejectedpackets and all retractions. Standing13:29:10/pass14:07:15; finalstop bookkeeping follows AE commit.",
     "steering_update": {
@@ -37,13 +37,13 @@
       "starts_spent_by_update": 0
     },
     "latest_packet_status": {
-      "at": "2026-10-25T16:35:10-06:00",
+      "at": "2026-10-25T17:26:01-06:00",
       "aa": "landed9cd840e",
       "ab": "landeddc4fdc5",
       "ac": "repaired/landedccc9c06",
-      "ad": "running drycheck-only; one live start reserved but NOT approved until independent drycheck",
-      "ae": "initialpartial rejected; repair1 running16:52:49",
-      "action": "Wait for notifications, independently verify AD drypacket before start; AE independently integrates and scores conditional candidate, no waiting for AD"
+      "ad": "disposed391fc95: offlinepartial only, controller rejected; no approval/start",
+      "ae": "partial conditional renderer/scoring landed4d54635; nativefidelity/completebrief notaccepted",
+      "action": "STOP24roundbudget; await newrunbudget, no tasks/resources owned"
     },
     "previous_passes": [
       {
@@ -63,6 +63,8 @@
     ],
     "current_pass": {
       "started": "2026-10-25T14:07:15-06:00",
+      "ended": "2026-10-25T17:26:01-06:00",
+      "elapsed": "3h18m46s",
       "last_yielded": "2026-10-25T14:18:27-06:00",
       "previous_elapsed_to_yield": "11m12s",
       "rounds": [
@@ -210,6 +212,6 @@
       "authorization": "User: the git thing is a small change from the overlord, we should be able to pull that in locally",
       "method": "Non-rewriting merge of origin4889d3e; no conflicts; pending tasks.json SHA256 unchanged across merge. Prior sync stop14:01:52 resolved."
     },
-    "stopped": null
+    "stopped": {"date":"2026-10-25T17:26:01-06:00","reason":"Unchanged24-round budget exhausted including repairs; C3 still FAIL0.0923687832, C1gated views pass. No further dispatch permitted under this run.","last_commit":"4d5463505920b939fd5bdcdee7758f65ffdc1f99","rounds_run":24,"stock_starts_used":0,"standing_elapsed":"3h56m51s","pass_elapsed":"3h18m46s","cleanup":"No Lemmings process/LemWeb task, no owned attach/write; AD approval marker/start ledger absent; stock authority hash unchanged. Repo clean at4d54635 before this stop bookkeeping."}
   }
 }

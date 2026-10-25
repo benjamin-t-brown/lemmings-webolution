@@ -63,6 +63,13 @@ this makes no model request. OpenCode's command guide says the selected agent's
 configured model takes effect when the command runs:
 [command execution](https://dev.opencode.ai/v2/docs/commands/#execution).
 
+**Facilitator tier** (user, 2026-10-25). On mouv, `/facilitator-astra` binds
+`.opencode/agent/facilitator-astra.md`, pinned to `openai/gpt-6-astra` at `high`; it is
+otherwise identical to `facilitator`. The overlord recommends a tier with each directive:
+Astra (`/facilitator-astra`) for hard passes, Sol (`/facilitator`) for standard, Luna for
+easy or targeted. Workers keep their own pins whichever facilitator dispatches them. The
+Mac's `llmgw` lists no Astra model (2026-10-25), so there is no `-mac` Astra variant.
+
 Both worker pins are explicit and independent of the facilitator session. If a pinned model
 is unavailable or rate-limited, record the blocker and report it; do not silently switch
 pins.

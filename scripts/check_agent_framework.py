@@ -78,8 +78,8 @@ def frontmatter_field(text, name):
     return field.group(1).strip() if field else None
 
 
-def check_opencode_facilitator(root, roles, errors):
-    path = ".opencode/agent/facilitator.md"
+def check_opencode_facilitator(root, roles, errors, name="facilitator"):
+    path = f".opencode/agent/{name}.md"
     text = read(root, path, errors)
     links(root, path, text, errors)
     if "../../docs/FACILITATOR.md" not in text:
@@ -93,10 +93,14 @@ def check_opencode_facilitator(root, roles, errors):
     if variant != "high":
         errors.append(f"{path}: facilitator variant must be high")
 
-    command_path = ".opencode/commands/facilitator.md"
+    command_path = f".opencode/commands/{name}.md"
     command = read(root, command_path, errors)
-    if frontmatter_field(command, "agent") != "facilitator":
-        errors.append(f"{command_path}: missing facilitator agent binding")
+    links(root, command_path, command, errors)
+    if frontmatter_field(command, "agent") != name:
+        errors.append(f"{command_path}: missing {name} agent binding")
+    for target in ["../../docs/FACILITATOR.md", "../../docs/ORCHESTRATION.md#facilitator-invocation"]:
+        if target not in command:
+            errors.append(f"{command_path}: missing pointer {target}")
     if frontmatter_field(command, "model") is not None:
         errors.append(f"{command_path}: omit model override and use the pinned facilitator agent")
     if frontmatter_field(command, "subtask") != "false":
@@ -221,6 +225,12 @@ def validate(root, brief=None):
         if "ORCHESTRATION.md#facilitator-invocation" in text:
             errors.append(f"{path}: overlord must not invoke facilitation")
     check_opencode_facilitator(root, roles, errors)
+    # The Astra tier mirrors facilitator.md except for its name, description and model.
+    check_opencode_facilitator(root, roles, errors, "facilitator-astra")
+    keep = ["name", "description", "model"]
+    if (frontmatter_without(read(root, ".opencode/agent/facilitator-astra.md", errors), keep)
+            != frontmatter_without(read(root, ".opencode/agent/facilitator.md", errors), keep)):
+        errors.append(".opencode/agent/facilitator-astra.md: mode, variant and permissions must match facilitator.md")
     check_opencode_mac(root, roles, errors)
     try:
         queue = json.loads(read(root, "docs/tasks.json", errors))

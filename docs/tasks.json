@@ -1,10 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T14:10:27-06:00",
+  "updated": "2026-10-25T14:15:57-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [
-    {"id":"c3n-mesh-submission","status":"ready-for-verify","brief":"build/tmp/c3n-mesh-submission-brief.md","question":"Mesh submission numerical fields, topology and bound texture","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T13:37:26-06:00","session_id":"ses_e8b6e52e0ffeAYFLjwz4FpDqnU","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3n-mesh-submission/round-note.md"}
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-close-c3-scene",
@@ -21,13 +19,13 @@
     "owner": "OpenCode facilitator Sol, resumed via /facilitator on mouv 2026-10-25T14:07:15-06:00; same conversation",
     "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
     "started_at": "2026-10-25T13:29:10-06:00",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "Sol resumed14:07:15. C3o repair accepted for conditional slot geometry/UV;20 vertices independently match, old own-Y fails5 streams,58 windows authenticated,34/34CTest. C3n ready-for-verify: own raw parser confirms1177 records/4243 corners and candidate packing, but semantic byte review unfinished; checker build/tmp/c3n-facilitator-check.py. No workers or live owner running. Next finish C3n then dispatch scene device/material state and scorer-reference repair. Correct repair4 baseline0.2050523; no scene render. Original C3o rejected packet preserved before-repair; old facilitator checker also rejected. C3m entry patch superseded by C1k. Starts0/3. Rounds_run counts C3p, C3o initial and repair.",
+    "handoff": "C3n and repaired C3o landed after independent source/packing/slot checks;34/34CTest each. C3n's2077 clip vertices remain candidate, not native draw acceptance. C3p landed earlier. Next dispatch three linted disjoint offline briefs: C3q device state, C3r texture values, C3s scorer explicit reference. Correct repair4 baseline0.2050523; no scene render. C3o original and first facilitator checker rejected; preserved before-repair. C3m patch superseded by C1k. No workers/live owner currently;starts0/3. Rounds_run4 includes C3o initial+repair.",
     "previous_passes": [{"started": "2026-10-25T13:29:10-06:00", "ended":"2026-10-25T14:01:52-06:00", "elapsed":"32m42s", "rounds": [{"id":"c3p-kind5-culling","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","worker_finished":"2026-10-25T13:54:46-06:00"}]}],
-    "current_pass": {"started":"2026-10-25T14:07:15-06:00","rounds":[{"id":"c3o-type2-draw","dispatched":"2026-10-25T13:37:26-06:00","repair_dispatched":"2026-10-25T13:56:13-06:00","landed":"2026-10-25T14:10:27-06:00","elapsed":"33m01s","repair_elapsed":"14m14s"}]},
+    "current_pass": {"started":"2026-10-25T14:07:15-06:00","rounds":[{"id":"c3o-type2-draw","dispatched":"2026-10-25T13:37:26-06:00","repair_dispatched":"2026-10-25T13:56:13-06:00","landed":"2026-10-25T14:10:27-06:00","elapsed":"33m01s","repair_elapsed":"14m14s"},{"id":"c3n-mesh-submission","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:15:57-06:00","elapsed":"38m31s","worker_finished":"2026-10-25T14:02:45-06:00"}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "sync_resolution": {"date":"2026-10-25T14:06:00-06:00","authorization":"User: the git thing is a small change from the overlord, we should be able to pull that in locally","method":"Non-rewriting merge of origin4889d3e; no conflicts; pending tasks.json SHA256 unchanged across merge. Prior sync stop14:01:52 resolved."},
     "stopped": null

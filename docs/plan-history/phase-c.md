@@ -581,3 +581,13 @@ Five conditional submissions/twelve clip-empty nodes remain, but all five old
 packed streams fail, as does the isolated own-Y mutation. 58 byte windows and
 install hashes authenticated; 34/34 CTest. No GPU-state, general clipping,
 original precision or pixel acceptance; no production edit or stock start.
+
+**C3n: source fields, binding and pack layout verified (2026-10-25)**
+([Facilitator check](../scratch/phase-c3n-mesh-submission.md)). Independent raw
+parser confirms1177 records/4243 corners in19 mesh nodes, kinds5/6/7;24 alias
+records preserve last-store attributes;304 records bind null. All source/texture
+fields and sequential transforms match. Final pack is RHW0.25/f32(z), not1/z;
+specular is unwritten. Known bytes for2077 candidate intermediates match a
+separate formula; alpha-only mutation changes every diffuse word and no other
+field.84 raw windows authenticated;34/34CTest. Candidate clipping count is not
+native draw acceptance. Device/texture upload values and integration remain.

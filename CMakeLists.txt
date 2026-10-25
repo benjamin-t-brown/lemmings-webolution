@@ -137,6 +137,12 @@ add_executable(test_actoranim src/__test__/test_actoranim.cpp src/app/ActorAnim.
 target_link_libraries(test_actoranim PRIVATE webolution_objects)
 add_test(NAME actoranim COMMAND test_actoranim WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+add_executable(test_scenebillboardsource
+  src/__test__/test_scenebillboardsource.cpp
+  src/app/SceneBillboardSource.cpp)
+target_link_libraries(test_scenebillboardsource PRIVATE webolution_objects)
+add_test(NAME scenebillboardsource COMMAND test_scenebillboardsource)
+
 add_executable(test_actorcompose
   src/__test__/test_actorcompose.cpp
   src/app/TubeScene.cpp

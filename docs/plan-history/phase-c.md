@@ -686,3 +686,11 @@ additional readers. No GPU submission/state/visibility or pixel acceptance.
 rational oracle passes5120cases/61440pixels over explicit state options; equality
 alpha mutant fails and restores exactly;38/38CTest. Declared software component,
 not native coverage/precision or runtime-state acceptance. App render still pending.
+
+**C3ac initial/repair1: native-compatible billboard source (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ac-billboard-source.md)). Initial native
+matrix reinterpretation and omitted retail comparison rejected. Repair converts
+native layout explicitly, preserving sourceOffset. Independent17node/340field
+comparison passes below1e-9; own-Y mutation fails/restores;443retail checks and
+38/38CTest pass. Preclip compatibility, not visibility/state/pixels. All three
+preparation components are ready for immediate app render/score under steering.

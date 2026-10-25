@@ -1096,6 +1096,36 @@
   ],
   "landed": [
     {
+      "id": "c1an-frida-import",
+      "title": "Make the launch-hook probe able to import frida",
+      "status": "landed",
+      "worker_output": "build/tmp/c1an-frida-import/round-note.md",
+      "brief": "build/tmp/c1an-frida-import-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline frida import",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1am-launch-hook-dry"
+      ],
+      "gate_served": "C1 skill panel; the launch-time read cannot start until import frida works",
+      "question": "alpha-count-launch",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3. Repair before the one start: c1am's probe imports frida and this python had no such module. No stock start. The third round is that start.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-launch-attach",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "3fa29f47-eabc-4aaa-85dd-278b495b0e80",
+      "dispatched_at": "2026-10-24 21:37 MDT",
+      "landed_at": "2026-10-24 21:40 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1an-frida-import.md; docs/LESSONS.md C1an; docs/plan-history/phase-c.md",
+      "disposition": "python imports frida 17.24.3. hook.js and probe.py unchanged. Nothing spawned. Shift counts unread.",
+      "facilitator_verified": "2026-10-24 21:40 MDT: import printed 17.24.3. Both dry checks exited 0. hook.js SHA-256 81bd44cf\u2026 and probe.py 9048db1e\u2026. spawn was not called. No Lemmings process. Session id 1."
+    },
+    {
       "id": "c1am-launch-hook-dry",
       "title": "Dry-check the launch-time alpha-count hooks",
       "status": "landed",

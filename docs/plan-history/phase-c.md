@@ -331,3 +331,10 @@ then `script.load`, then `frida.resume`, and reads the log after the pause.
 The facilitator re-read the four sites. A one-address change of the `sar`
 attach failed the dry check. `import frida` is missing, so nothing was
 spawned. No stock start. The shift counts stay unread.
+
+**C1an: this python imports frida 17.24.3**
+([check](../scratch/phase-c1an-frida-import.md)), 2026-10-24, launch-attach
+round 2 of 3, offline. `pip install frida` added only that package. The c1am
+hook and probe are unchanged. The facilitator imported `frida` 17.24.3 and
+re-ran both dry checks. Nothing was spawned. No stock start. The shift
+counts stay unread.

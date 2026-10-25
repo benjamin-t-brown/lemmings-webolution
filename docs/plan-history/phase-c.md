@@ -279,3 +279,15 @@ and the click is 17:33:39. `C1AE_HOOK` is `hits` 0. `0x473897` did not run
 while the hook was installed. `select_level` at 17:33:10 is before the arm
 wait. Install hashes match. The facilitator re-read the hook JSON and
 re-hashed the three install files. The counts stay unread. Start 3 of 3.
+
+**C1aj: the format callback copies 32 bytes and returns 1**
+([check](../scratch/phase-c1aj-format-keep.md)), 2026-10-24, format-enumeration
+round 1 of 3, offline. `0x473B1E` returns only at `0x473D97` `ret 8`. The keep
+that also stores the popcount is `0x473C95` `call 0x49D010` with count `0x20`.
+It requires `[format+4] & 0xE0000` clear, `[format+0xc] == 0x10`, bit 0 of
+`[format+4]` set, and the popcount of `[format+0x1c]` greater than 1. That arm
+and the reject both execute `mov eax, 1`. The only `eax` 0 is `0x473B85`, after
+the copy at `0x473B76`, and the upload does not read `eax` after either
+`call [eax+0x20]`. The stop is not in this function. The facilitator
+re-disassembled the body and re-read the keep and the `ret`. A one-byte change
+of the expected `ret` failed. No stock start. The shift counts stay unread.

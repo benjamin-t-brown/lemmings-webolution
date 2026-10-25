@@ -1,12 +1,13 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T18:20:42-06:00",
+  "updated": "2026-10-24T18:30:27-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
     {
       "id": "c1ai-upload-when",
       "title": "When the ^tab upload at 0x472F99 runs",
-      "status": "running",
+      "status": "ready-for-verify",
+      "worker_output": "build/tmp/c1ai-upload-when/round-note.md",
       "brief": "build/tmp/c1ai-upload-when-brief.md",
       "worker_tier": "targeted",
       "work_kind": "disassembly read",
@@ -24,29 +25,6 @@
       "standing_run": "c1-upload-timing",
       "investigation_budget_minutes": 30,
       "dispatch_id": "9d876d5f-a943-42a1-85d8-9e91988b7ea5",
-      "dispatched_at": "2026-10-24 18:20 MDT"
-    },
-    {
-      "id": "c1aj-format-keep",
-      "title": "Which format 0x473B1E keeps",
-      "status": "running",
-      "brief": "build/tmp/c1aj-format-keep-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "disassembly read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [],
-      "gate_served": "C1 skill panel; the next hook logs the format this callback keeps",
-      "question": "format-enumeration",
-      "question_round_count": 1,
-      "cap_note": "Round 1 of 3 on format enumeration. Not charged to the alpha-count cap of 3, which still has to hold the dry-check and the start.",
-      "stock_starts_authorized": 0,
-      "standing_run": "c1-upload-timing",
-      "investigation_budget_minutes": 30,
-      "dispatch_id": "106b510e-f00f-470b-aeba-ede3e07576e0",
       "dispatched_at": "2026-10-24 18:20 MDT"
     }
   ],
@@ -67,14 +45,21 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 18:16 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 18:16:38 -06:00",
-    "rounds_run": 0,
+    "rounds_run": 1,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 18:20 MDT: c1ai and c1aj are running, both offline. c1ai dispatch 9d876d5f-a943-42a1-85d8-9e91988b7ea5. c1aj dispatch 106b510e-f00f-470b-aeba-ede3e07576e0. Alpha-count cap this run is 3 including the start: c1ai is 1, then the dry-check, then the start. c1aj is format-enumeration round 1 of 3 and is not charged to that cap. Stock starts 0 of 2. Pass started 18:16:38. Next action is verify when each note lands.",
+    "handoff": "2026-10-24 18:30 MDT: c1aj landed. 0x473B1E copies 32 bytes and returns 1 on keep and reject; the stop is outside the exe. c1ai (upload phase) is ready-for-verify, dispatch 9d876d5f-a943-42a1-85d8-9e91988b7ea5. Alpha-count cap: c1ai is 1 of 3, then the dry-check, then the start. Format-enumeration offline question is answered in round 1. Stock starts 0 of 2. Next: verify c1ai, then dry-check the hook. Pass started 18:16:38.",
     "pass_clock": {
       "started": "2026-10-24 18:16:38 -06:00",
-      "rounds": []
+      "rounds": [
+        {
+          "id": "c1aj-format-keep",
+          "dispatched": "2026-10-24 18:20 MDT",
+          "landed": "2026-10-24 18:30 MDT",
+          "elapsed": "9m 45s"
+        }
+      ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null

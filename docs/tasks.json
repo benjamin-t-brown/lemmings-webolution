@@ -1,28 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T16:55:35-06:00",
+  "updated": "2026-10-25T17:24:36-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
-    {
-      "id": "c3ae-scene-render-score",
-      "status": "ready-for-verify",
-      "brief": "build/tmp/c3ae-scene-render-score-brief.md",
-      "question": "Integrate existing scene components into app, render and score explicit repair4",
-      "milestone": "C3 full frame",
-      "question_round": 2,
-      "repair_brief": "build/tmp/c3ae-scene-render-score-repair1.md",
-      "repair_dispatched_at": "2026-10-25T16:52:49-06:00",
-      "verification_failure": "Partial render bypasses SceneRaster and BillboardSource, dropsRGBA/state, mislabels304nullmaterials asmissingloads, breaksunsupportedlevel/scene-off beforeparse, lacksintegrationtest/ENV/C1report;wrongdefaultactors/no skillflag. Savedpartialscoreindependentlyreproducedbutnotacceptedmatchedrepair4.",
-      "worker_type": "targeted production integration/render",
-      "requested_agent": "round-agent",
-      "requested_model": "openai/gpt-6-luna#high",
-      "session_id": "ses_e8acc01e4ffehWsVZ2j18Us2Qf",
-      "dispatch_confirmed_at": "2026-10-25T16:35:10-06:00",
-      "owns_live_game": false,
-      "live_owner": null,
-      "worker_output": "build/tmp/c3ae-scene-render-score/round-note.md",
-      "dispatched_at": "2026-10-25T16:34:28-06:00"
-    }
   ],
   "queue": [],
   "standing_run": {
@@ -43,11 +23,11 @@
     "owner": "OpenCode facilitator Sol, resumed via /facilitator on mouv 2026-10-25T14:07:15-06:00; same conversation",
     "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
     "started_at": "2026-10-25T13:29:10-06:00",
-    "rounds_run": 22,
+    "rounds_run": 24,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "ADinitial+repair disposition: offline stream/ABI checks narrowed/verified but live controller REJECTED (entry.RECORD_SIZE missing after Popen); NO dryapproval,0starts/noresources.22 attempts disposed; AEinitial+repair FINAL2 underverification, thenSTOP at24roundbudget, no furtherdispatch. AE final conditional render independently rerendered SHA b364b0f...,score21707403/235008000=.0923687832; scene-off byte-identical priorcorrectbaseline13b1bd...;independentC1all10reportsmatchworker,zoom1/elev_downpass;ownyaw+1 worsens to23875747 andexact restoredPNGmatches;39/39CTestpassed17:19:21. AE still partial nativeintegration: noYsort/type1route/nativeclip/effectiveGPU, billboardparents/S candidate; knownmissingAA/ACENVwiring. Need explicit narrow facilitatornote and owncommit,not claimnativefidelity/completebrief. Initialrejectedpacketpreserved. AfterAElandrecord24roundstopandreport0.09237>0.02,largestrest19234589,skills1484307. Livevaluesremainunknownbecauseknownfailingcontrollerwouldwastestart,notmissingUSERpermission. Allsource/evidence/retractionsremain;noownedgame/task. Standing13:29:10/pass14:07:15.",
+    "handoff": "24/24 attempts disposed,0/3starts. STOP for run-round budget after AE partial conditional scene landing; no more dispatch under this run. Own fresh repair4 score21707403/235008000=.0923687832>0.02; scene-off exactbaseline13b1bd...,on/restoredSHA b364b0f...;39/39CTest. C1 gated0.0160864/0.0161212pass; elev_up0.0250557reported. AE is partial integration/scoring, NOT complete nativefidelity or originalbrief acceptance: known ancestor/S/predicate inputs, Ysort/type1/clip/packing/state and AA/ACENV omissions explicitly in latestnote. Next fix known inputchain from existing evidence before more readers/formatfitting. AD streamrepair verified offline but launcherREJECTED on missing entry.RECORD_SIZE afterPopen;NOapproval or actualpausevalues. One-shot userpermission alreadyexists, but newrunbudget/controllerdrycheck required before use. No ownedgame/task/attach/writes. Preserve initialrejectedpackets and all retractions. Standing13:29:10/pass14:07:15; finalstop bookkeeping follows AE commit.",
     "steering_update": {
       "commit": "884798a50892f9a7788ff5a19f9f42d868665315",
       "pulled_at": "2026-10-25T16:09:48-06:00",
@@ -206,6 +186,15 @@
           "elapsed":"45m23s",
           "repair_elapsed":"24m59s",
           "scope":"offline partial accepted; live recipe rejected,0starts"
+        },
+        {
+          "id":"c3ae-scene-render-score",
+          "dispatched":"2026-10-25T16:34:28-06:00",
+          "repair_dispatched":"2026-10-25T16:52:49-06:00",
+          "landed":"2026-10-25T17:22:12-06:00",
+          "elapsed":"47m44s",
+          "repair_elapsed":"29m23s",
+          "scope":"partial conditional app render/scoring; native gate FAIL"
         }
       ]
     },

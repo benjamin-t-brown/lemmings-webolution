@@ -703,3 +703,15 @@ Controller then fails static export verification on `entry.RECORD_SIZE` after
 Popen. No live approval or start; no pause/device values obtained. Two attempts
 count toward the unchanged24-round run cap. This is a failed dry recipe, not a
 missing user authorization or a runtime absence result.
+
+**C3ae initial/repair1: partial conditional app scene, gate still FAIL (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ae-scene-render-score.md)). Fresh matched
+repair4 render and independent histogram sum21707403/235008000=0.0923687832,
+versus scene-off exact baseline0.2050523131. Mesh/type2 adapters now feed pixels;
+single yaw mutation worsens error and restores;39/39CTest. C1zoom1/elev_down
+remain0.0160864/0.0161212; elev_up0.0250557 and allotherreports retained. Narrowed
+landing is software integration/scoring only: known ancestor/S/predicate inputs,
+sorted dispatch/type1/clip/packing/state and AA/ACENV omissions remain, not merely
+GPU precision. Largest error remains rest19234589,skills1484307,tube682387;
+floor included, exact visibility unresolved. Initial wrong-input packet rejected
+and preserved. Two attempts exhaust24-round run with AD; no further dispatch.

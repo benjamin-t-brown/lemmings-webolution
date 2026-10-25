@@ -238,6 +238,18 @@ add_executable(test_scenenode src/__test__/test_scenenode.cpp)
 target_link_libraries(test_scenenode PRIVATE webolution_objects)
 add_test(NAME scenenode COMMAND test_scenenode WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+# C3ae production scene integration, with optional retail-backed root/source/pixel checks.
+add_executable(test_backdropscene
+  src/__test__/test_backdropscene.cpp
+  src/app/BackdropScene.cpp
+  src/app/SceneBillboardSource.cpp
+  src/app/Camera.cpp
+  src/app/Raster.cpp
+  src/app/SceneRaster.cpp)
+target_link_libraries(test_backdropscene PRIVATE webolution_objects)
+target_include_directories(test_backdropscene PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME backdropscene COMMAND test_backdropscene WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 add_executable(test_scenemeshsource src/__test__/test_scenemeshsource.cpp)
 target_link_libraries(test_scenemeshsource PRIVATE webolution_objects)
 add_test(NAME scenemeshsource COMMAND test_scenemeshsource)
@@ -309,6 +321,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist scenenode world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist scenenode backdropscene world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

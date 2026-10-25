@@ -55,6 +55,7 @@
 // install named by WEBOLUTION_GAME_DIR (default C:/progs/Lemmings Revolution).
 
 #include "app/Camera.h"
+#include "app/BackdropScene.h"
 #include "app/CameraInput.h"
 #include "app/Pick.h"
 #include "app/Raster.h"
@@ -114,6 +115,7 @@ struct Args {
   int frames = 0;
   bool help = false;
   bool noInjectedWalkers = false;
+  bool sceneOff = false;
   std::string walkers;
   bool sim = false;
   int simTicks = 0;
@@ -151,6 +153,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--no-depth") a.noDepth = true;
     else if (arg == "--flat") a.flat = true;
     else if (arg == "--no-injected-walkers") a.noInjectedWalkers = true;
+    else if (arg == "--scene-off") a.sceneOff = true;
     else if (arg == "--walkers") a.walkers = next();
     else if (arg == "--sim") a.sim = true;
     else if (arg == "--sim-ticks") { a.sim = true; a.simTicks = std::atoi(next().c_str()); }
@@ -292,6 +295,12 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "scene: %s\n", scene.error().c_str());
     return 1;
   }
+  std::optional<app::BackdropScene> backdrop;
+  if (!args.sceneOff) {
+    auto built = app::BackdropScene::build(*library, *blob, args.level);
+    if (built) backdrop.emplace(std::move(*built));
+    else std::fprintf(stderr,"backdrop: unsupported/invalid scene: %s\n",built.error().c_str());
+  }
 
   app::CameraParams params;
   if (!args.camera.empty()) {
@@ -415,7 +424,10 @@ int main(int argc, char** argv) {
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {
     const auto frameCamera = app::buildCamera(frameParams);
     target.clear(0, 0, 0);
+    app::BackdropStats backdropStats;
+    if (backdrop) backdrop->render(target, frameCamera, *library, backdropStats);
     scene->render(target, frameCamera, options, &*library);
+    if (!args.sceneOff) std::fprintf(stderr,"backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu null-materials=%zu null-triangles=%zu predicate-rejected=%zu missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",backdrop.has_value(),backdropStats.roots,backdropStats.meshRecords,backdropStats.meshTriangles,backdropStats.billboards,backdropStats.nullMaterials,backdropStats.nullMaterialTriangles,backdropStats.predicateRejected,backdropStats.missingTextures,backdropStats.rejected,backdropStats.pixels);
     return frameCamera;
   };
   app::Raster raster(params.width, params.height);

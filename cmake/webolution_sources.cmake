@@ -59,6 +59,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/ActorTerrain.cpp
   src/app/ActorAnim.cpp
   src/app/TubeScene.cpp
+  src/app/BackdropScene.cpp
   src/app/SceneBillboardSource.cpp
   # C1b: compositing primitive for the ten skill-panel button icons. Not
   # called from main.cpp yet -- see src/app/SkillPanel.h's own header for why

@@ -591,3 +591,11 @@ specular is unwritten. Known bytes for2077 candidate intermediates match a
 separate formula; alpha-only mutation changes every diffuse word and no other
 field.84 raw windows authenticated;34/34CTest. Candidate clipping count is not
 native draw acceptance. Device/texture upload values and integration remain.
+
+**C3s: explicit reference scorer repaired (2026-10-25)**
+([Facilitator check](../scratch/phase-c3s-explicit-reference-scorer.md)). CLI now
+selects/reports --reference; historical A6d3 default remains labeled. Independent
+histogram/region checks reproduce current repair4 baseline48188934 and distinct
+old-candidate repair4/A6d3 totals49336286/49297573. A one-line reference bypass
+fails two permanent tests and restores byte-identically;3/3tests and34/34CTest.
+No gate/region/metric change, original-game read or scene-render improvement.

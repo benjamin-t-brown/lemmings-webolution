@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""C3a: split the A6 repair 4 full-frame RGB error across named, disjoint regions.
+"""C3a: split the full-frame RGB error across named, disjoint regions.
 
 Offline; never launches the stock game or any process. Reads two PNGs:
 
-  reference  build/tmp/a6d3-matched-state-bbox/original-live.png  (A6d3 live capture, A6d24 reference)
-  candidate  a webolution --shot render of MM_CLIMB_002 with the A6d3 camera, default injected walkers,
+  reference  --reference PNG (defaults to historical A6d3 capture for legacy reproduction)
+  candidate  a webolution --shot render of MM_CLIMB_002 with the matching camera, default injected walkers,
              --hud-ticks 70 --pause-caption (today's production render with the C2 counters, timer, caption)
 
 The metric is the A6d24 one: sum(|ref RGB - cand RGB|), no crop/mask/alignment, over 640x480, denominator
@@ -14,7 +14,7 @@ or if any two region rectangles intersect (the partition would then depend on pr
 
 Region bounds are fixed in REGIONS below and are not read from the scores. SOURCE says where each came from.
 
-    python tools/harness/score_c3_regions.py [--candidate PNG] [--control PNG] [--json OUT]
+    python tools/harness/score_c3_regions.py [--reference PNG] [--candidate PNG] [--control PNG] [--json OUT]
 """
 
 import argparse
@@ -29,6 +29,8 @@ ROOT = Path(__file__).resolve().parents[2]
 W, H = 640, 480
 DENOM = 255 * 3 * W * H
 GATE_NUM = 4_700_160  # numerator at 0.02 (A6d24)
+# Historical C3a default retained for exact legacy reproduction. The active C3 gate
+# uses the repair4 capture and must be selected explicitly with --reference.
 REF = ROOT / "build/tmp/a6d3-matched-state-bbox/original-live.png"
 CANDIDATE = ROOT / "build/tmp/c3a-residual-breakdown/render-hud70-caption.png"
 CONTROL = ROOT / "build/tmp/c3a-residual-breakdown/render-control-plain.png"
@@ -59,6 +61,15 @@ FLOOR_RING = ("floor ring", "UNBOUNDED",
 
 def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def path_label(path: Path) -> str:
+    """Repo-relative where possible, otherwise preserve an absolute external path."""
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        return str(resolved)
 
 
 def load(path: Path) -> bytes:
@@ -125,7 +136,7 @@ def score(ref: bytes, cand: bytes, owner: bytearray) -> dict:
 
 def print_table(title: str, path: Path, s: dict) -> None:
     fn = s["full_frame_numerator"]
-    print(f"\n== {title}: {path.relative_to(ROOT)}  sha256 {sha(path)}")
+    print(f"\n== {title}: {path_label(path)}  sha256 {sha(path)}")
     print(f"full-frame numerator {fn} / {DENOM} = {fn / DENOM:.10f}   (gate numerator <= {GATE_NUM}: "
           f"{'pass' if fn <= GATE_NUM else 'FAIL'})")
     print(f"{'region':<22}{'numerator':>12}{'pixels':>9}{'share of frame num':>20}{'num / (765*px)':>16}"
@@ -143,11 +154,17 @@ def print_table(title: str, path: Path, s: dict) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--reference", type=Path, default=REF,
+                    help="reference PNG (default: historical A6d3 capture for legacy reproduction)")
     ap.add_argument("--candidate", type=Path, default=CANDIDATE)
     ap.add_argument("--control", type=Path, default=CONTROL,
                     help="plain render (no --hud-ticks / --pause-caption); skipped if the file is absent")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
+
+    if not args.candidate.is_file():
+        print(f"candidate missing: {args.candidate}", file=sys.stderr)
+        return 2
 
     bad = check_rect_disjoint()
     print("region bounds (half-open xyxy), precedence order, source:")
@@ -160,10 +177,14 @@ def main() -> int:
     for b in bad:
         print("   ", b)
 
-    ref = load(REF)
-    print(f"\nreference {REF.relative_to(ROOT)} sha256 {sha(REF)}")
+    ref = load(args.reference)
+    reference_hash = sha(args.reference)
+    reference_kind = "historical A6d3 default" if args.reference.resolve() == REF.resolve() else "explicit"
+    print(f"\nreference ({reference_kind}) {path_label(args.reference)} sha256 {reference_hash}")
     owner = owner_map()
-    out = {"reference_sha256": sha(REF), "rect_violations": bad, "runs": {}}
+    out = {"reference": path_label(args.reference), "reference_kind": reference_kind,
+           "reference_sha256": reference_hash,
+           "rect_violations": bad, "runs": {}}
     ok = not bad
     for title, path in (("candidate (hud 70 ticks + caption)", args.candidate), ("control (plain render)", args.control)):
         if not path.exists():
@@ -171,7 +192,7 @@ def main() -> int:
             continue
         s = score(ref, load(path), owner)
         print_table(title, path, s)
-        out["runs"][title] = {"path": str(path.relative_to(ROOT)), "sha256": sha(path), **s}
+        out["runs"][title] = {"path": path_label(path), "sha256": sha(path), **s}
         ok = ok and s["partition_exact"]
     if args.json:
         args.json.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")

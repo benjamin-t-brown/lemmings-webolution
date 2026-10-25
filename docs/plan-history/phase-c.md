@@ -599,3 +599,12 @@ histogram/region checks reproduce current repair4 baseline48188934 and distinct
 old-candidate repair4/A6d3 totals49336286/49297573. A one-line reference bypass
 fails two permanent tests and restores byte-identically;3/3tests and34/34CTest.
 No gate/region/metric change, original-game read or scene-render improvement.
+
+**C3t: annular-family bound verified, floor identity remains partial (2026-10-25)**
+([Facilitator check](../scratch/phase-c3t-annular-family-bounds.md)).128 base/top
+records produce a conditional candidate bound[69,0,569,480). Independent raw-source
+and different polygon-square clipping check reproduces55571 diagnostic pixels;
+one projected-vertex mutation changes143 pixels and restores. Mask is unpacked
+0/1 bytes, not a packed LSB-first bitset despite candidate wording.34/34CTest.
+Native visibility/clipping and complete floor identity remain unaccepted; no
+scoring, gate/region changes, render implementation or stock start.

@@ -572,3 +572,12 @@ normal-only sign mutation flips exactly one record; original bytes unchanged.
 35 native windows authenticated, 34/34 CTest. Conditional predicate only, not
 final draw visibility or native precision. Correct repair4 baseline is 0.2050523;
 the old C3 scorer uses A6d3 and needs explicit reference selection. No render change.
+
+**C3o: repaired type-2 slot/UV pairing (2026-10-25)**
+([Facilitator check](../scratch/phase-c3o-type2-draw.md)). Original own-Y evaluator
+and first facilitator checker are rejected. Native Y stores cross generated point
+indices; repaired slots and all 20 known-field vertices independently match.
+Five conditional submissions/twelve clip-empty nodes remain, but all five old
+packed streams fail, as does the isolated own-Y mutation. 58 byte windows and
+install hashes authenticated; 34/34 CTest. No GPU-state, general clipping,
+original precision or pixel acceptance; no production edit or stock start.

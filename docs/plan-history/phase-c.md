@@ -632,3 +632,11 @@ PolyList and TubeScene paths are diagnostics, not a recursive scene reader or
 accepted mesh/material pipeline; Raster is not an explicit C3 device-state model.
 Checked source symbols and selected a separate strict asset-reader task first,
 before submission/raster/app wiring. No source edit or original measurement.
+
+**C3u: conditional scene gates/load associations (2026-10-25)**
+([Facilitator check](../scratch/phase-c3u-pause-scene-reachability.md)).32256 branch
+rows and46raw windows authenticated; enable-byte mutation discriminates/restores.
+Mode2/nonzero-enable admits primary slot4 before tube; nonzero second presence
+admits secondary slot8 after tube. Separate model holders serve Entrance/Exit.
+Historical repair4 values stay unknown; slot8 downstream is not equated to slot4
+rendering.35/35CTest; no original start, production change or score improvement.

@@ -1329,6 +1329,12 @@
     }
   ],
   "landed": [
+    {"id":"c1be-plate-filter-value","status":"landed","milestone":"C1 skill panel","question_key":"plate-numerical-filter","question_round":1,
+     "brief":"build/tmp/c1be-plate-filter-value-brief.md","worker_output":"build/tmp/c1be-plate-filter-value/round-note.md",
+     "dispatch_id":"6d55f838-6886-44a3-b714-6e4f83f29df9","requested_model":"grok-4.7-high-fast, round-agent",
+     "dispatched_at":"2026-10-25T12:22:58-06:00","landed_at":"2026-10-25T12:36:16-06:00",
+     "evidence":"docs/scratch/phase-c1be-plate-filter.md","stock_starts_used":0,
+     "result":"Setter requests 2 for both stage-0 mag and min when the argument and [this+0x3A1] are nonzero. Plates are before the argument-0 call. Indirect callees before the panel were not re-opened. No score."},
     {"id":"c1bh-selected-draw","status":"landed","milestone":"C1 skill panel","question_key":"selected-plate-draw","question_round":1,
      "brief":"build/tmp/c1bh-selected-draw-brief.md","worker_output":"build/tmp/c1bh-selected-draw/round-note.md",
      "dispatch_id":"19df188d-ef4c-478e-910d-879d7b3db6a5","requested_model":"grok-4.7-high-fast, round-agent",

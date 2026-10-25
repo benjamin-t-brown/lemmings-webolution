@@ -1,10 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T12:22:58-06:00",
+  "updated": "2026-10-25T12:36:16-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [
-    {"id":"c1be-plate-filter-value","question":"Which numerical MAG/MIN request applies at the base-plate draws?","question_key":"plate-numerical-filter","question_round":1,"milestone":"C1 skill panel","status":"running","dispatched_at":"2026-10-25T12:22:58-06:00","brief":"build/tmp/c1be-plate-filter-value-brief.md","tier":"hard","tier_reason":"Native filter-value chain. Cursor uses the round-agent disassembly pin, not a second model.","worker_type":"disassembly read","requested_model":"grok-4.7-high-fast (round-agent pin)","dispatch_id":"6d55f838-6886-44a3-b714-6e4f83f29df9","owns_live_game":false,"live_owner":null,"owned_paths":["build/tmp/c1be-plate-filter-value/**"],"depends_on":[],"stock_start_budget":0,"worker_output":null}
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-derived-values",
@@ -20,15 +18,16 @@
     "workers": "OpenCode ROLES.md: disasm-agent for native code reading; round-agent for implementation/render/scoring; configured high variant, no model override.",
     "owner": "Cursor facilitator, 2026-10-25 11:56 MDT /facilitator on mouv; Grok 4.7. Handoff after OpenCode ses_e8c346bc4ffe01LaYRaXoqOAkl failed 11:45:02.",
     "started_at": "2026-10-25T10:01:32-06:00",
-    "rounds_run": 8,
+    "rounds_run": 9,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
-    "handoff": "2026-10-25 12:23 MDT. C1bh landed. Gate 0.01617/0.03275/0.01622; only elev_up fails. C1be running (Cursor 6d55f838-6886-44a3-b714-6e4f83f29df9): numerical MAG/MIN at the base-plate draws. Starts 0/3.",
+    "handoff": "2026-10-25 12:36 MDT. C1be landed. Stage-0 mag/min request 2 when the argument and device byte are nonzero. Gate still 0.01617/0.03275/0.01622. Next: sample the plates with that request and rescore. Starts 0/3.",
     "current_pass": {"started":"2026-10-25T11:56:33-06:00","rounds":[
       {"id":"c1bf-zero-count","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:05:36-06:00","elapsed":"34m38s","worker_idle":"2026-10-25T11:35:49-06:00"},
       {"id":"c1bg-selected-index","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:07:34-06:00","elapsed":"36m36s","worker_idle":"2026-10-25T11:45:02-06:00","worker_outcome":"failed after the packet was written"},
-      {"id":"c1bh-selected-draw","dispatched":"2026-10-25T12:08:58-06:00","landed":"2026-10-25T12:22:18-06:00","elapsed":"13m20s"}
+      {"id":"c1bh-selected-draw","dispatched":"2026-10-25T12:08:58-06:00","landed":"2026-10-25T12:22:18-06:00","elapsed":"13m20s"},
+      {"id":"c1be-plate-filter-value","dispatched":"2026-10-25T12:22:58-06:00","landed":"2026-10-25T12:36:16-06:00","elapsed":"13m18s"}
     ]},
     "pass_clock": {"started":"2026-10-25T10:01:32-06:00","ended":"2026-10-25T11:17:59-06:00","elapsed":"1h16m27s","pause_reason":"context handoff; standing run not stopped","rounds":[
       {"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"},

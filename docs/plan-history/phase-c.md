@@ -528,3 +528,12 @@ plates. Own re-renders match the worker PNGs. Scores 286491/580420/287373
 over 17721990. zoom1 and elev_down pass 0.02; elev_up does not. Removing
 only that call returns zoom1 to 414292. Restored source and 34/34 CTest.
 The sampler stays a hypothesis. Next is the plate filter.
+
+**C1be: stage-0 mag and min share one local**
+([Facilitator check](../scratch/phase-c1be-plate-filter.md)). `0x470F29`
+requests 1 unless the argument and `[this+0x3A1]` are both nonzero, in
+which case both `0x10` and `0x11` get 2. The ten plate submits are before
+this function's argument-0 call. The init store writes 1 at
+`[0x58CD80+0x3A1]`. Header names: 16/17 are mag/min, 2 is LINEAR. Indirect
+callees before the panel call were not re-opened. No device read and no
+score. Next is sampling the plates with that request.

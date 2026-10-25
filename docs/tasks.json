@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T03:12:00-06:00",
+  "updated": "2026-10-25T03:24:35-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
@@ -22,11 +22,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-25 01:22 MDT /facilitator on mouv. Prior run c1-alpha-offline stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
     "started_at": "2026-10-25 01:22:18 -06:00",
-    "rounds_run": 12,
+    "rounds_run": 13,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "The last ranked milestone gate passes on an independent re-score; a gate, footprint, mask, views or exclusions would need to change; a guardrail breach; every remaining ranked question is parked or waits on pending_questions; about 8 hours or 24 rounds; delegation or the pinned model is unavailable, or another session is running a task. A crash parks that question live arm. A second crash ends starts. Caps park and the run continues. Do not choose a gate amendment.",
-    "handoff": "2026-10-25 03:12 MDT: b3e landed (4m 0s). MM_CLIMB_002 is only in lemmings.box. Next: round 2, which instruction references lemmings.box. Map-draw, C1 format, and C2 cursor stay parked. Pass started 01:22:18. b3d is 0c95725.",
+    "handoff": "2026-10-25 03:24 MDT: b3f landed (12m 12s). Three pushes of LEMMINGS.BOX. Next: round 3, the call after each push. If those calls do not select a level, park level-pick. Map-draw, C1 format, and C2 cursor stay parked. Pass started 01:22:18. b3e is 9c5338b.",
     "pass_clock": {
       "started": "2026-10-25 01:22:18 -06:00",
       "rounds": [
@@ -101,6 +101,12 @@
           "dispatched": "2026-10-25 03:08 MDT",
           "landed": "2026-10-25 03:12 MDT",
           "elapsed": "4m 0s"
+        },
+        {
+          "id": "b3f-box-ref",
+          "dispatched": "2026-10-25 03:12 MDT",
+          "landed": "2026-10-25 03:24 MDT",
+          "elapsed": "12m 12s"
         }
       ]
     },

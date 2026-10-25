@@ -257,3 +257,10 @@ round 1 of 3. The exe has no copy of the name and no `.LVL`. The
 facilitator read `lemmings.box` at `0x6F77` as
 `COMPILED\MM_CLIMB_002.LVL`, and expecting `0x4E` failed. No stock
 start. No code reference. The gate is not scored.
+
+**B3f: three pushes of `LEMMINGS.BOX`**
+([check](../scratch/phase-b3f-box-ref.md)), 2026-10-25, level-pick
+round 2 of 3. Lowercase `lemmings.box` is absent. The facilitator
+re-read the pushes at `0x47DF27`, `0x47E298`, and `0x47E2CC`, and
+expecting `0x4D` failed. No stock start. The calls after them stay
+unread. The gate is not scored.

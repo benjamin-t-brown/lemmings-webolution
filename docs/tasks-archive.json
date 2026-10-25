@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "b3f-box-ref",
+      "title": "Which instruction names lemmings.box",
+      "status": "landed",
+      "brief": "build/tmp/b3f-box-ref-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b3e-level-name"
+      ],
+      "gate_served": "B3 level select and map; the instruction that names lemmings.box",
+      "question": "level-pick",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3. Round 1 found the level name only in the archive. This round cites the filename references and stops.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 03:12 MDT",
+      "dispatch_id": "d3562828-7a82-46b3-81e2-92a1cb5513b2",
+      "worker_output": "build/tmp/b3f-box-ref/round-note.md",
+      "landed_at": "2026-10-25 03:24 MDT",
+      "landed_in": "PLAN.md Phase B (B3); docs/scratch/phase-b3f-box-ref.md; docs/LESSONS.md B3f; docs/plan-history/phase-b.md",
+      "disposition": "Three pushes of LEMMINGS.BOX at 0x47DF27, 0x47E298, and 0x47E2CC. Lowercase lemmings.box is absent. Not a level click. Gate not scored.",
+      "facilitator_verified": "2026-10-25 03:24 MDT: re-read the three pushes. check_box.py: each address dword once, strings are LEMMINGS.BOX, lowercase and UTF-16LE absent. First byte 0x4D failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "b3e-level-name",
       "title": "Where MM_CLIMB_002 is named",
       "status": "landed",

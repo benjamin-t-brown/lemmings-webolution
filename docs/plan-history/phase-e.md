@@ -385,6 +385,10 @@ open.
   on a sector boundary. Resume only if the A6 gate shows a view-index mismatch. Evidence:
   [A6a](../scratch/phase-a6-actor-pose.md).
 
+### C1 upload call
+
+- **C1 upload call** (parked 2026-10-24 at the alpha-count cap, c1ai, c1ak, c1al). `^tab` registers from the PE entry. The upload `0x472F99` is reached only from `0x4743DD`, called by `0x471746` (`call [edx+0x14]`) when the receiver's vtable is `0x4B19E8`. That function has no direct caller. The constructor `0x474380` leaves that vtable and runs at process startup: entry `0x49D5AB` walks `[0x4BF000, 0x4BF0DC)`, the dword at `0x4BF0B0` is `0x468D20`, and `0x46F16F` calls `0x474380`. That chain does not call `0x471720`. The shift counts are unread. Stock starts this run: 0 of 2, because a start required the upload to be placed in time. Resume: one launch-time read-only attach at `0x471746`, or one offline round on other callers of slot `+0x0C`. See [C1al](../scratch/phase-c1al-ctor-caller.md).
+
 ### Frida hook tooling
 
 - **Frida hook tooling for live render-state traces** (parked with the above). A4ab's live

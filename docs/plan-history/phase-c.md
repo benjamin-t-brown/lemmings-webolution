@@ -313,3 +313,12 @@ that vtable the call target is `0x4743DD`. The same instruction on vtable
 leaves `0x4B19E8` in place, and its only direct caller is `0x46F16F`. The
 facilitator re-read the call and re-scanned `.text`. A one-byte change of
 the expected call failed. No stock start. The shift counts stay unread.
+
+**C1al: the upload vtable is constructed at startup, and the upload is not called there**
+([check](../scratch/phase-c1al-ctor-caller.md)), 2026-10-24, alpha-count
+round 3 of 3 this run, offline. `0x49D5AB`, inside PE entry `0x49D518`, calls
+`0x49D345`. That walker calls the dword at `0x4BF0B0`, which is `0x468D20`.
+The chain reaches `0x46F16F` `call 0x474380` on `this+8` and does not reach
+`0x471720`. The facilitator re-read the chain and the walker. A one-byte
+change of the expected entry call failed. No stock start. The shift counts
+stay unread. This question is at its cap.

@@ -1,34 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T18:44:04-06:00",
+  "updated": "2026-10-24T18:54:52-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1al-ctor-caller",
-      "title": "Who calls the constructor that keeps the upload vtable",
-      "status": "running",
-      "brief": "build/tmp/c1al-ctor-caller-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "disassembly read",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": false,
-      "live_owner": null,
-      "depends_on": [
-        "c1ak-vtable-call"
-      ],
-      "gate_served": "C1 skill panel; the upload must be placed in time before a start",
-      "question": "alpha-count",
-      "question_round_count": 3,
-      "cap_note": "Round 3 of 3 this run, the last without a further written reason. C1ak left 0x471746 unnamed. This follows 0x46F16F. No stock start.",
-      "stock_starts_authorized": 0,
-      "standing_run": "c1-upload-timing",
-      "investigation_budget_minutes": 30,
-      "dispatch_id": "eef380ee-28fe-4452-aeff-96738a211c98",
-      "dispatched_at": "2026-10-24 18:44 MDT"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-upload-timing",
@@ -46,11 +20,23 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 18:16 MDT /facilitator on mouv. Prior run stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 18:16:38 -06:00",
-    "rounds_run": 3,
+    "rounds_run": 4,
     "stock_starts_used": 0,
-    "pending_questions": [],
+    "pending_questions": [
+      {
+        "id": "upload-call-unplaced",
+        "question": "The alpha-count cap is spent and 0x471746 is still unnamed. The constructor that keeps vtable 0x4B19E8 runs at startup and does not call it. What should the next run do?",
+        "options": [
+          "One launch-time read-only attach at 0x471746, accepting that the call was not placed before the level click",
+          "One more offline round for other callers of slot +0x0C",
+          "Leave the shift counts unread"
+        ],
+        "recommendation": "One launch-time attach at 0x471746. Three static rounds found no direct caller. Another caller search is the same shape that just returned unnamed. The attach can record the triples if the call runs at any time after the entry walk.",
+        "evidence": "docs/scratch/phase-c1al-ctor-caller.md"
+      }
+    ],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 18:44 MDT: c1ak landed. Upload call 0x471746 is unnamed. c1al is running, dispatch eef380ee-28fe-4452-aeff-96738a211c98, alpha-count round 3 of 3, offline, following 0x46F16F. Stock starts 0 of 2. No start until the upload is placed in time. Pass started 18:16:38. Next: verify c1al.",
+    "handoff": "2026-10-24 18:54 MDT: stopped. c1al landed. The constructor of vtable 0x4B19E8 runs at startup and does not call 0x471720. Upload phase unnamed. Alpha-count cap 3 of 3. Stock starts 0 of 2. Gate not scored. Pending: launch-time attach at 0x471746, or one more offline caller round. Pass started 18:16:38.",
     "pass_clock": {
       "started": "2026-10-24 18:16:38 -06:00",
       "rounds": [
@@ -71,10 +57,20 @@
           "dispatched": "2026-10-24 18:33 MDT",
           "landed": "2026-10-24 18:43 MDT",
           "elapsed": "10m 25s"
+        },
+        {
+          "id": "c1al-ctor-caller",
+          "dispatched": "2026-10-24 18:44 MDT",
+          "landed": "2026-10-24 18:54 MDT",
+          "elapsed": "10m 48s"
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null
+    "stopped": {
+      "date": "2026-10-24 18:54 MDT",
+      "reason": "Alpha-count cap 3 of 3. c1ai placed registration at startup. c1ak found call 0x471746 and left its phase unnamed. c1al showed the constructor that keeps vtable 0x4B19E8 runs at startup and does not call 0x471720. The upload was not placed in time, so the start pool was not spent (0 of 2). C1 gate not scored.",
+      "last_commit": "pending"
+    }
   }
 }

@@ -8,7 +8,8 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
+Stopped: 2026-10-24 18:53 MDT. Alpha-count cap 3 of 3 (c1ai, c1ak, c1al). The constructor that keeps vtable `0x4B19E8` runs at process startup and does not call `0x471746`. The upload phase is unnamed. Stock starts 0 of 2. The C1 gate is not scored.
 Issued: 2026-10-24 (user, overlord review 2026-10-24: "ya sure, 2 yes, whatever gets this
 done more efficiently": a pool of 2 more starts, and a launch-time attach allowed)
 Supersedes: the C1-to-its-gate directive, done 2026-10-24 17:35 MDT (c1aa–c1ah: the `.alf`

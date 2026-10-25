@@ -1027,6 +1027,36 @@
   ],
   "landed": [
     {
+      "id": "c1al-ctor-caller",
+      "title": "Who calls the constructor that keeps the upload vtable",
+      "status": "landed",
+      "worker_output": "build/tmp/c1al-ctor-caller/round-note.md",
+      "brief": "build/tmp/c1al-ctor-caller-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ak-vtable-call"
+      ],
+      "gate_served": "C1 skill panel; the upload must be placed in time before a start",
+      "question": "alpha-count",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3 this run, the last without a further written reason. C1ak left 0x471746 unnamed. This follows 0x46F16F. No stock start.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-upload-timing",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "eef380ee-28fe-4452-aeff-96738a211c98",
+      "dispatched_at": "2026-10-24 18:44 MDT",
+      "landed_at": "2026-10-24 18:54 MDT",
+      "landed_in": "PLAN.md Phase C (C1) and Phase E; docs/scratch/phase-c1al-ctor-caller.md; docs/LESSONS.md C1al; docs/plan-history/phase-c.md; docs/plan-history/phase-e.md; docs/DIRECTIVE.md Status done",
+      "disposition": "Constructor 0x474380 runs at startup via entry 0x49D5AB and the dword at 0x4BF0B0. That chain does not call 0x471720. Upload phase stays unnamed. Alpha-count cap 3 of 3. No stock start.",
+      "facilitator_verified": "2026-10-24 18:54 MDT: re-read the chain through 0x49D5AB e8 95 fd ff ff and walker 0x49D44B. 0x4BF0B0 is 0x468D20. One E8 caller of 0x49D345 and of 0x474380; none of 0x468D20. Expecting a changed entry byte failed. No Lemmings process."
+    },
+    {
       "id": "c1ak-vtable-call",
       "title": "Who calls the upload method at vtable slot 0x4B19FC",
       "status": "landed",

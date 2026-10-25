@@ -1,46 +1,31 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T13:05:00-06:00",
+  "updated": "2026-10-25T13:29:10-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c1-derived-values",
-    "goal": "C1 only: derive +6 and kept format, derive ^tab upload texel words, render and independently score frozen footprint on zoom1/elev_up/elev_down; then rank residuals until fixed gate passes or authorized stop.",
-    "milestones": ["C1 skill panel"],
-    "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md active, user approve all 2026-10-25; PLAN Phase C DERIVED/value-framed decision.",
+    "id": "c1-close-c3-scene",
+    "goal": "Close C1 under third amendment by independent rescore, then derive scene-node draw values and render/score C3 full frame on A6 repair4 pause.",
+    "milestones": ["C1 skill panel", "C3 full frame"],
+    "current": "C3 full frame",
+    "authorized": "docs/DIRECTIVE.md active 2026-10-25; user yes i approve 2; PLAN Phase C close C1 then C3 decision.",
     "grants": {
-      "stock_starts": "3; only offline-unreachable values, dry-check first, normal Popen/menu REA CLI attach; no Python attach/spawn, no debugger; crash ends question live arm, second ends starts",
-      "commits": "each verified round on decompile and push origin decompile; credential failures leave local commit with handoff; no force-push/checkout/reset/stash",
-      "concurrency": "up to 3 independent offline tasks, disjoint owned paths; at most 1 live owner"
+      "stock_starts": "3; offline-unreachable values only, dry-check first, normal Popen/menu REA CLI attach. No Python attach/spawn/suspended launch/debugger. Crash ends question live arm; second ends starts.",
+      "commits": "per-round decompile commits and pushes; no force-push/checkout/reset/stash; credential failure retained locally",
+      "concurrency": "up to 3 independent offline tasks with disjoint paths; one live owner"
     },
-    "workers": "OpenCode ROLES.md: disasm-agent for native code reading; round-agent for implementation/render/scoring; configured high variant, no model override.",
-    "owner": "Cursor facilitator, 2026-10-25 11:56 MDT /facilitator on mouv; Grok 4.7. Handoff after OpenCode ses_e8c346bc4ffe01LaYRaXoqOAkl failed 11:45:02.",
-    "started_at": "2026-10-25T10:01:32-06:00",
-    "rounds_run": 11,
+    "workers": "OpenCode disasm-agent for disassembly reads, round-agent for implementation/render; configured pins per ROLES.md, no override.",
+    "owner": "OpenCode facilitator-astra ses_e8b764c13ffefBwXA7lw03nkkc on mouv",
+    "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
+    "started_at": "2026-10-25T13:29:10-06:00",
+    "rounds_run": 0,
     "stock_starts_used": 0,
-    "pending_questions": [
-      {"question":"The elev_up miss that remains is the scene showing through the plate interior (384401 of 466081 plate-only; 1589553 with the plates omitted). Icon and glyph error is 114891, which cannot bring 580972 under 354440. Should the next run draw that scene, or should the gate change?","recommendation":"Do not change the gate in this run. The scene behind the panel is outside the C1-only directive. Ask before excluding plate pixels or starting that scene."}
-    ],
-    "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
-    "handoff": "2026-10-25 13:05 MDT. Stopped. C1bj landed. Gate 0.01609/0.03278/0.01612. elev_up remainder is the scene through the plate interior. Icon and glyph error cannot pass the gate. Starts 0/3. Rounds 11.",
-    "current_pass": {"started":"2026-10-25T11:56:33-06:00","rounds":[
-      {"id":"c1bf-zero-count","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:05:36-06:00","elapsed":"34m38s","worker_idle":"2026-10-25T11:35:49-06:00"},
-      {"id":"c1bg-selected-index","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:07:34-06:00","elapsed":"36m36s","worker_idle":"2026-10-25T11:45:02-06:00","worker_outcome":"failed after the packet was written"},
-      {"id":"c1bh-selected-draw","dispatched":"2026-10-25T12:08:58-06:00","landed":"2026-10-25T12:22:18-06:00","elapsed":"13m20s"},
-      {"id":"c1be-plate-filter-value","dispatched":"2026-10-25T12:22:58-06:00","landed":"2026-10-25T12:36:16-06:00","elapsed":"13m18s"},
-      {"id":"c1bi-linear-plate","dispatched":"2026-10-25T12:36:37-06:00","landed":"2026-10-25T12:50:02-06:00","elapsed":"13m25s"},
-      {"id":"c1bj-plate-over-stock","dispatched":"2026-10-25T12:51:00-06:00","landed":"2026-10-25T13:05:00-06:00","elapsed":"14m00s"}
-    ],"ended":"2026-10-25T13:05:00-06:00","elapsed":"1h08m27s"},
-    "pass_clock": {"started":"2026-10-25T10:01:32-06:00","ended":"2026-10-25T11:17:59-06:00","elapsed":"1h16m27s","pause_reason":"context handoff; standing run not stopped","rounds":[
-      {"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"},
-      {"id":"c1bc-patch-texels","dispatched":"2026-10-25T10:31:43-06:00","landed":"2026-10-25T10:51:48-06:00","elapsed":"20m05s"},
-      {"id":"c1bd-plate-render","dispatched":"2026-10-25T10:54:15-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"21m15s","attempt_return_observed":"2026-10-25T10:58:32-06:00"},
-      {"id":"c1bd-plate-render-repair1","dispatched":"2026-10-25T10:59:11-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"16m19s","attempt_return_observed":"2026-10-25T11:06:33-06:00"},
-      {"id":"c1bd-plate-render-repair2","dispatched":"2026-10-25T11:07:28-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"8m02s","attempt_return_observed":"2026-10-25T11:12:31-06:00"}
-    ]},
+    "pending_questions": [],
+    "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
+    "handoff": "C1 closed under third amendment: own fresh zoom1/elev_down 285083/17721990 and 285700/17721990 pass. All ten views reported in phase-c1-close-amended-gate.md; 34/34 CTest. Next split C3 unresolved node values into three offline rounds, using C3k/C3l settled reads. No worker/live game in flight; starts 0/3.",
+    "current_pass": {"started": "2026-10-25T13:29:10-06:00", "rounds": []},
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {"date":"2026-10-25 13:05 MDT","reason":"C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior. Count tint and icon edges cannot close it. Passing the signed gate would need that scene or a footprint change. The gate was not changed. Starts 0 of 3. Rounds 11.","last_commit":"0eca6dc"}
+    "stopped": null
   }
 }

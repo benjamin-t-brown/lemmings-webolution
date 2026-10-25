@@ -554,3 +554,11 @@ plate-only numbers are higher than plates over our frame. The elev_up
 interior is 384401, against 1589553 with the plates omitted. Opaque alpha
 raises elev_up plate-only to 2519199. Icon and glyph error, 114891, cannot
 bring 580972 under 354440. The C1-only run stops here.
+
+**C1 closed under the third amendment (2026-10-25)**
+([Facilitator check](../scratch/phase-c1-close-amended-gate.md)). Fresh independent
+renders/rescore give zoom1 285083/17721990 and elev_down 285700/17721990, both
+below 0.02. elev_up 580972 and seven other diagnostics are reported in the note;
+none is declared passing. Frozen footprint and source hashes match the directive;
+34/34 CTest pass. A single image shift fails the gate. No panel implementation
+round or stock start. New run `c1-close-c3-scene` advances to C3 full frame.

@@ -3,6 +3,45 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-derived-values",
+      "goal": "C1 only: derive +6 and kept format, derive ^tab upload texel words, render and independently score frozen footprint on zoom1/elev_up/elev_down; then rank residuals until fixed gate passes or authorized stop.",
+      "milestones": ["C1 skill panel"],
+      "current": "C1 skill panel",
+      "authorized": "docs/DIRECTIVE.md active, user approve all 2026-10-25; PLAN Phase C DERIVED/value-framed decision.",
+      "grants": {
+        "stock_starts": "3; only offline-unreachable values, dry-check first, normal Popen/menu REA CLI attach; no Python attach/spawn, no debugger; crash ends question live arm, second ends starts",
+        "commits": "each verified round on decompile and push origin decompile; credential failures leave local commit with handoff; no force-push/checkout/reset/stash",
+        "concurrency": "up to 3 independent offline tasks, disjoint owned paths; at most 1 live owner"
+      },
+      "workers": "OpenCode ROLES.md: disasm-agent for native code reading; round-agent for implementation/render/scoring; configured high variant, no model override.",
+      "owner": "Cursor facilitator, 2026-10-25 11:56 MDT /facilitator on mouv; Grok 4.7. Handoff after OpenCode ses_e8c346bc4ffe01LaYRaXoqOAkl failed 11:45:02.",
+      "started_at": "2026-10-25T10:01:32-06:00",
+      "rounds_run": 11,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {"question":"The elev_up miss that remains is the scene showing through the plate interior (384401 of 466081 plate-only; 1589553 with the plates omitted). Icon and glyph error is 114891, which cannot bring 580972 under 354440. Should the next run draw that scene, or should the gate change?","recommendation":"Do not change the gate in this run. The scene behind the panel is outside the C1-only directive. Ask before excluding plate pixels or starting that scene."}
+      ],
+      "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
+      "handoff": "2026-10-25 13:05 MDT. Stopped. C1bj landed. Gate 0.01609/0.03278/0.01612. elev_up remainder is the scene through the plate interior. Starts 0/3. Rounds 11.",
+      "current_pass": {"started":"2026-10-25T11:56:33-06:00","rounds":[
+        {"id":"c1bf-zero-count","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:05:36-06:00","elapsed":"34m38s","worker_idle":"2026-10-25T11:35:49-06:00"},
+        {"id":"c1bg-selected-index","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:07:34-06:00","elapsed":"36m36s","worker_idle":"2026-10-25T11:45:02-06:00","worker_outcome":"failed after the packet was written"},
+        {"id":"c1bh-selected-draw","dispatched":"2026-10-25T12:08:58-06:00","landed":"2026-10-25T12:22:18-06:00","elapsed":"13m20s"},
+        {"id":"c1be-plate-filter-value","dispatched":"2026-10-25T12:22:58-06:00","landed":"2026-10-25T12:36:16-06:00","elapsed":"13m18s"},
+        {"id":"c1bi-linear-plate","dispatched":"2026-10-25T12:36:37-06:00","landed":"2026-10-25T12:50:02-06:00","elapsed":"13m25s"},
+        {"id":"c1bj-plate-over-stock","dispatched":"2026-10-25T12:51:00-06:00","landed":"2026-10-25T13:05:00-06:00","elapsed":"14m00s"}
+      ],"ended":"2026-10-25T13:05:00-06:00","elapsed":"1h08m27s"},
+      "pass_clock": {"started":"2026-10-25T10:01:32-06:00","ended":"2026-10-25T11:17:59-06:00","elapsed":"1h16m27s","pause_reason":"context handoff; standing run not stopped","rounds":[
+        {"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"},
+        {"id":"c1bc-patch-texels","dispatched":"2026-10-25T10:31:43-06:00","landed":"2026-10-25T10:51:48-06:00","elapsed":"20m05s"},
+        {"id":"c1bd-plate-render","dispatched":"2026-10-25T10:54:15-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"21m15s","attempt_return_observed":"2026-10-25T10:58:32-06:00"},
+        {"id":"c1bd-plate-render-repair1","dispatched":"2026-10-25T10:59:11-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"16m19s","attempt_return_observed":"2026-10-25T11:06:33-06:00"},
+        {"id":"c1bd-plate-render-repair2","dispatched":"2026-10-25T11:07:28-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"8m02s","attempt_return_observed":"2026-10-25T11:12:31-06:00"}
+      ]},
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {"date":"2026-10-25 13:05 MDT","reason":"C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior. Count tint and icon edges cannot close it. Passing the signed gate would need that scene or a footprint change. The gate was not changed. Starts 0 of 3. Rounds 11.","last_commit":"0eca6dc"}
+    },
+    {
       "id": "c1-c2-b3",
       "goal": "Directive 2026-10-25 long multi-milestone run: C1 fill/format/render, C2 cursor, B3; C3 and B2 parked.",
       "milestones": ["C1 skill panel", "C2 cursor clause", "B3 level select and map"],

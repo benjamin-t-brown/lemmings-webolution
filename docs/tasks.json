@@ -1,8 +1,10 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T12:07:34-06:00",
+  "updated": "2026-10-25T12:08:58-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [],
+  "active": [
+    {"id":"c1bh-selected-draw","question":"What is the C1 score after drawing the derived selected quad?","question_key":"selected-plate-draw","question_round":1,"milestone":"C1 skill panel","status":"running","dispatched_at":"2026-10-25T12:08:58-06:00","brief":"build/tmp/c1bh-selected-draw-brief.md","tier":"targeted","requested_model":"grok-4.7-high-fast (round-agent pin)","dispatch_id":null,"owns_live_game":false,"live_owner":null,"owned_paths":["src/app/SkillPanel.cpp","src/__test__/test_skillpanel.cpp","build/tmp/c1bh-selected-draw/**"],"depends_on":[],"stock_start_budget":0,"worker_output":null}
+  ],
   "queue": [{"id":"c1be-plate-filter-value","question":"Which numerical MAG/MIN request applies at the base-plate draws?","question_key":"plate-numerical-filter","question_round":1,"milestone":"C1 skill panel","status":"queued",
     "brief":"build/tmp/c1be-plate-filter-value-brief.md","deferred_by":"Active directive Ranking after C1bd: zero-count skip then selected plate; dispatch filter only if gate still fails afterwards.","tier":"hard","tier_reason":"Native state-flow reading uses disasm-agent per ROLES.md.","worker_type":"disassembly read","requested_model":"openai/gpt-6.1-sol high (disasm-agent pin)","dispatch_id":null,
     "owns_live_game":false,"live_owner":null,"owned_paths":["build/tmp/c1be-plate-filter-value/**"],"depends_on":[],"stock_start_budget":0,"worker_output":null}],
@@ -24,7 +26,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
-    "handoff": "2026-10-25 12:07 MDT. C1bf and C1bg landed. Gate still 0.02338/0.04429/0.02342. Derived selected index 0, enable 1, not drawn. Next: draw that extra quad and rescore. Filter stays queued until that score. Starts 0/3.",
+    "handoff": "2026-10-25 12:08 MDT. C1bf and C1bg landed. Gate still 0.02338/0.04429/0.02342. C1bh running: draw derived selected quad index 0 enable 1 and rescore. Filter stays queued. Starts 0/3.",
     "current_pass": {"started":"2026-10-25T11:56:33-06:00","rounds":[
       {"id":"c1bf-zero-count","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:05:36-06:00","elapsed":"34m38s","worker_idle":"2026-10-25T11:35:49-06:00"},
       {"id":"c1bg-selected-index","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:07:34-06:00","elapsed":"36m36s","worker_idle":"2026-10-25T11:45:02-06:00","worker_outcome":"failed after the packet was written"}

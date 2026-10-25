@@ -1,111 +1,84 @@
 # Overlord directive
 
 Written by the [overlord](OVERLORD.md); the user signs off what it authorizes. `/facilitator`
-reads this file at startup, in any client. A directive with `Status: active` is the user's
-authorization for the next standing run. Record it in `docs/tasks.json` yourself (new
-`standing_run`, owner and date; move the stopped run to `previous_runs` in
-[the queue archive](tasks-archive.json)), then follow
-[the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
-`Status: done` here and stop.
+reads this file at startup, in any client. A directive with `Status: **active**
+Issued: 2026-10-25 (user, overlord review 2026-10-25, "yes i approve 2": close C1 under the
+amended gate, then C3 backdrop scenery)
+Supersedes: the C1 DERIVED directive, done 2026-10-25 13:05 MDT (run `c1-derived-values`:
+11 rounds, 0 starts, stopped on `elev_up`; the gate was amended after the stop).
 
-Status: **done** (2026-10-25 13:05 MDT). C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior, and this directive excludes that scene. The gate was not changed.
-Issued: 2026-10-25 (user, overlord review 2026-10-25: "approve all": DERIVED values from
-documented Win32 behaviour, value-framed questions, C1 only)
-Supersedes: the long multi-milestone directive, done 2026-10-25 03:29 MDT (run `c1-c2-b3`:
-14 rounds, 0 starts, every ranked question parked, no gate scored).
+Start in Cursor on **Claude Opus 5.5** ([ROLES.md](ROLES.md)); the last two Cursor passes ran
+their facilitator on Grok 4.7.
 
 ## Why this
 
-The last run read one step back per round and parked each question at "the number is
-unread". This run frames each question by the value it needs, and allows one new evidence
-class so the C1 chain can close offline.
-
-The overlord's reading, not evidence. Landed: c1ba (`0x45015A` tests the buffer for `BM`),
-c1ba and c1au (the name is `Textures\%s.bmp` with `^tab`), c1ay (`+6` compares word `+0x12`
-of a `0x18`-byte `GetObjectA` buffer), c1az (the handle is `CreateDIBSection`'s return,
-stored at `[object+4]`), C1y (`^TAB.BMP` is 24 bpp). Documented: a `0x18`-byte `GetObjectA`
-on a DIB-section `HBITMAP` fills a `BITMAP` whose `bmBitsPixel` is the word at `+0x12`. So
-`+6` = (24 <= 8) = 0. With `+4` = 1, `+5` = 0 and `+7` = 0 (c1ax), the c1aj popcount arm keeps
-exactly one record of the c1as list: line 29, A4R4G4B4 (A `0xF000`)
-(`build/tmp/overlord-2026-10-25/keepcheck.py` re-applies the arm to the 20 `$LemBits0`
-records; the A1R5G5B5 record (n=11) fails the popcount test).
-Verify this chain; do not take this paragraph as the verification.
-
-## New evidence class: DERIVED (user, overlord review 2026-10-25)
-
-A value may be **DERIVED** when every link is either read from this exe or the install, or is
-documented Win32 / DirectX behaviour (cite the struct, field and offset from the Microsoft
-documentation or SDK header). Label it DERIVED in code and notes, never MEASURED or READ,
-and name the documented link. A later live read that disagrees replaces it. Add this class
-to `.claude/rules/match-the-original.md` (facilitator-owned) in the first landing round.
+The amended C1 gate (`zoom1`, `elev_down`) passes on C1bi's own scores, 0.01609 and 0.01612.
+What remains on `elev_up` is the scene through the plate interior (C1bj), and the same scene is
+most of the full frame: C3a puts `rest` at 84.7% of 0.2098, 94.5% of it on pixels we draw
+black. The scene reads were parked three times (C3b–C3e, C3g–C3j, C3k–C3m) at body caps with
+five bodies unread. This run applies the DERIVED class and value-framed questions to them.
 
 ## Scope
 
-**C1 skill panel, to its gate** (`PLAN.md` C1 row as amended twice). Questions are framed by
-the value needed. A round follows the chain until it has the value or reaches its time
-limit; "the next link is unread" ends a round only when the limit is hit, not by choice.
+Milestones in order: **C1 skill panel** (close only), then **C3 full frame**.
 
-1. **What is `+6` for `^tab`, and which format record is kept?** Close the c1az and c1ba
-   narrowings: that the buffer copied onto `0x58D5B8` is `^TAB.BMP`'s, and that `[object+4]`
-   is still the `CreateDIBSection` handle when `0x473040` runs (the `0x472FAD` import and
-   `0x472FB2` `call eax` sit between). Record `+6` and the kept record as DERIVED, and as the
-   value for this install's format list (dgVoodoo).
-2. **What 16-bit word does the upload store for each `^tab` texel?** The shift path
-   (`0x473866`..`0x473955`) with the kept masks: the alpha shifts and how each colour
-   channel is reduced. Read it, do not assume.
-3. **Render and score.** Draw the plates (C1y texels, item 2's words, blend selector 1 from
-   c1ad, counts and icons as landed). Score `zoom1`, `elev_up`, `elev_down` against their A7p
-   `baseline.png` over the frozen footprint. Report `initial`, the other A7p views,
-   `MM_DIG_000` and the scenery-only error beside them.
-4. If the gate fails, rank what is left inside the footprint (count tint, selection state,
-   icon edges) by error and keep going.
+0. **Close C1.** Re-score `zoom1` and `elev_down` yourself on the landed render (`SkillPanel.cpp`
+   SHA-256 `3cb8c08e…`) over the frozen footprint. If both are ≤ 0.02, mark C1 done in
+   `PLAN.md`; report `elev_up`, `initial`, the other A7p views and `MM_DIG_000` beside them.
+   If either fails, stop and report. No panel rounds.
+1. **What does the original draw for each scene node in the A6 repair 4 pause frame?** The
+   values needed per node: composed matrix, vertex positions and the per-vertex fields, the
+   bound texture, the draw kind and whether it is culled or skipped. Unread in the chain (Phase E
+   C3 backdrop scenery): the `0x43bd80` bind, `0x418350` (kind-5 skip), `0x46d372` (vertex
+   field consumer), the type-2 draw `0x47d0c0`, kinds 2/3/4, the object at `0x58d498`, and the
+   pause-frame values of `[game+0]` and `[game+0x5139]`. Read bodies are listed there; do not
+   re-read them. These bodies are separable: split them across concurrent offline rounds.
+2. **What device state does each scene draw run under?** Blend, Z and filter state set on the
+   path to each kind's draw. Device enums may be DERIVED from the SDK headers.
+3. **Render and score.** Draw the scene in our renderer with the read values. Score the A6d24
+   full frame on the A6 repair 4 pause with `score_c3_regions.py` (per-region table as C3a),
+   and re-score C1 `elev_up` and the other A7p views as reported. Bound the floor ring
+   (UNBOUNDED in C3a) from read geometry before it is scored.
+4. If the gate fails, rank what is left by region error: entrance and exit models (Phase E,
+   Exit width gap), the 16259 B block after `0x98d41`, HUD residue. Keep going.
 
-**Ranking after C1bd (user, overlord review 2026-10-25, "yes"; budget unchanged).** The
-overlord's split of C1bd's saved PNGs (`build/tmp/overlord-2026-10-25/residual.py`;
-evaluation, not evidence) puts the zero-count glyphs at 0.0112–0.0113 of each gated score and
-plate 0 at 0.0136 / 0.0351 / 0.0141; the rest is 0.0090–0.0095. Stock draws no `00` text and
-a ring on plate 0. Rank in this order, each read before it is drawn:
-1. **Zero-count skip:** the landed C1v branch (a zero `[this+i*4]` skips the text submit).
-2. **Selected plate:** the `0x45B6B5` `^tab_selected` draw gated on `[this+0x2750]`, its
-   selected index at the A7p pause, with the C1bc selected stream. Read the index; do not pick
-   plate 0 because the stock frame shows a ring there.
-3. **Plate filter (c1be)** only if the gate still fails after 1 and 2.
+The C3 gate is unchanged: the A6d24 full-frame score ≤ 0.02 on the A6 repair 4 pause with
+actors, the floor ring included.
 
-**Gate amended after the stop (user, overlord review 2026-10-25, "i approve your
-recommendations").** Recorded after this run stopped at C1bj. `PLAN.md` C1 row: the gated
-views are now `zoom1` and `elev_down`. `elev_up` is reported, not gated, because its residual
-is the C3 scene behind the plate interior (`build/tmp/overlord-2026-10-25/plate0.py`, C1bj).
-The next directive acts on it.
-
-Not in scope: C2, C3, B2, B3. Do not advance to them if C1 passes; stop and report.
+Not in scope: C2, B2, B3. Do not advance to them; stop and report when C3 passes.
 
 ## Budget
 
-- **Run:** about **8 hours or 24 rounds**. Round limit 30 minutes from dispatch.
+- **Run:** about **8 hours or 24 rounds**. Round limit 30 minutes from dispatch. No body cap;
+  a round follows its chain until it has the value or reaches the limit, and states its count.
 - **Rounds:** 3 per question, then park it with a resume brief and rank the next. A further
   round needs a written reason in its brief that it moves the gate.
 - **Concurrency:** up to 3 offline rounds at once, at most one live owner.
 - **Stock starts:** a pool of **3**, each dry-checked offline first, only for a value the
-  offline chain cannot reach. Normal `Popen`, menu attach through the REA CLI
-  (`rea instrument-with-frida attach`, [MOUV_SSH.md](agents/MOUV_SSH.md)). Python
-  `frida.attach`, `frida.spawn` and suspended launches are retired for game starts.
-  Read-only hooks, one session, no game-memory write beyond the restored level-table slot.
-  A crash ends that question's live arm; a second crash ends starts for the run.
+  offline chain cannot reach (for example `[game+0x5139]` or `0x58d498` in the pause). Normal
+  `Popen`, menu attach through the REA CLI (`rea instrument-with-frida attach`,
+  [MOUV_SSH.md](agents/MOUV_SSH.md)). Python `frida.attach`, `frida.spawn` and suspended
+  launches are retired for game starts. Read-only hooks, one session, no game-memory write
+  beyond the restored level-table slot. Apply or reject C3m's unapplied `fix.patch` (menu-scan
+  retry and logging) offline before the first start. A crash ends that question's live arm; a
+  second crash ends starts for the run.
 - **No debugger.** Per-round commits and pushes.
 
 ## Decisions already made (do not re-ask)
 
-- `+7` = 0 is READ (c1ax). Do not re-derive it.
+- **C1 gated views** (user, overlord review 2026-10-25, third amendment): `zoom1` and
+  `elev_down` gated, `elev_up` reported until C3 draws the scene. Threshold, footprint
+  (`tools/harness/fixtures/c1-footprint/footprint.json`, SHA-256 `e96840e0…`) and region frozen.
+- **DERIVED** as in `.claude/rules/match-the-original.md`. Label it; a disagreeing live read
+  replaces it.
 - **Park by default.** A capped question is parked and the next ranked; a park-or-amend choice
   goes to `pending_questions` with a recommendation. Do not stop for it.
-- Gates as signed off in `PLAN.md`. The C1 footprint fixture
-  `tools/harness/fixtures/c1-footprint/footprint.json` (SHA-256 `e96840e0…`) is frozen.
-- **Do not choose by score.** The 0.47 plate brightness ratio
-  (`build/tmp/overlord-2026-10-24/tabratio.py`) is a falsifier only. A format comes from the
-  keep rule applied to the logged list, not from fit.
-- Do not reopen when the `^tab` upload runs, the startup crash's fault address or the
-  menu-entry cause.
-- `frida` 17.24.3 stays installed for mouv's Python (user, 2026-10-24).
+- **Do not choose by score.** A value comes from the read chain, not from fit. c3g's
+  identity-bottom Entrance/Exit boxes stay a hypothesis.
+- The stack bottom (element 0 of `0x58D5A0`) is the camera block from
+  `camera_a1/reference-state.json`, MEASURED-FROM-REFERENCE (C3k). Do not spend a start on it.
+- `tools/harness/measure_d2_pick.py:149-156` swaps the `0x40eae0` roles (C3k). Out of scope;
+  note it, do not fix it here.
 - **Time the pass** (standing), total and per round, in the queue.
 - **Landing** per the 2026-10-24 restructure: detail in the scratch note, round prose in
   `docs/plan-history/`, a one- or two-line status cell, landed tasks in the queue archive.
@@ -113,23 +86,27 @@ Not in scope: C2, C3, B2, B3. Do not advance to them if C1 passes; stop and repo
   `goto_level.focus()`. Live steps run in session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md).
   Close any game the round leaves running, after checking it. Restore and hash-check every
   install file in the same process that changed it.
-- Settled: everything in earlier directives and c1ap–c1ba. Parked: C3 scenery, the caption
-  blend, the hatch animation, the `MM_DIG_000` shortfall, the HUD tick mismatch, the `+0x3c`
-  writer, C2 cursor (c2l–c2n), B3 map and level pick (b3a–b3g). Run CTest on mouv. LF only.
+- `frida` 17.24.3 stays installed for mouv's Python (user, 2026-10-24).
+- Settled: everything in earlier directives, c1ap–c1bj and C3a–C3m. Parked and out of scope:
+  the caption blend, the hatch animation, the `MM_DIG_000` shortfall, the HUD tick mismatch,
+  the `+0x3c` writer, C2 cursor (c2l–c2n), B3 map and level pick (b3a–b3g). Run CTest on mouv.
+  LF only.
 
 ## Stop point
 
 Stop and report only when:
-- the C1 gate passes on your own independent re-score;
+- the C3 gate passes on your own independent re-score;
+- C1 fails its re-score in step 0;
 - a gate, its footprint, views or exclusions would need to change;
 - a guardrail breach: install hashes not restored, an unattributed process, a write left
   unrestored, or a worker exceeding its start budget or using a retired method;
-- every remaining C1 question is parked or waits on `pending_questions`;
+- every remaining C3 question is parked or waits on `pending_questions`;
 - the run reaches about 8 hours or 24 rounds;
 - delegation or the pinned model is unavailable, or another session is running a task.
 
-Running low on context is not a stop: leave the queue resumable, write
-`standing_run.handoff`, and say the user should run `/facilitator` again.
+A landed render that still fails the gate is not a stop; rank and continue. Running low on
+context is not a stop: leave the queue resumable, write `standing_run.handoff`, and say the
+user should run `/facilitator` again.
 
 ## Sync
 

@@ -445,3 +445,10 @@ round 2 of 3. `0x47255B` stores the `CreateDIBSection` return at
 is at `0x58D5D4`, past the `.data` raw end, copied from the buffer
 `0x45015A` returns. The facilitator re-read the store, and expecting
 `0x88` failed. No stock start. `+6` stays unread. The gate is not scored.
+
+**C1ba: 0x45015A does not write the bit-count word**
+([check](../scratch/phase-c1ba-bitcount-source.md)), 2026-10-25, kept-format
+round 3 of 3. The function compares the buffer with bytes `0x42` `0x4D`
+and has no store at offset `0x1C`. A match keeps the pointer from
+`0x49C1A8`. The facilitator walked 217 instructions, and expecting `0x41`
+failed. No stock start. The question is parked. The gate is not scored.

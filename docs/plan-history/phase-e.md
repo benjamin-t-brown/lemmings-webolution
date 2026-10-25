@@ -400,3 +400,7 @@ open.
   offline only, never re-run live. Evidence: [A4ab](../scratch/phase-a4-zoom1-filter-trace-failed.md),
   [A4ac](../scratch/phase-a4-actor-binder-offline.md),
   [A4ad](../scratch/phase-a4-hook-stack-announce-offline.md).
+
+### C1 plate alpha format
+
+- **C1 plate alpha format** (parked 2026-10-25 at the three-round cap, c1ay, c1az, c1ba). `+7` is 0 on every path that reaches `0x473146`. `+6` compares the word `GetObjectA` writes at buffer `+0x12`, and that number is not in the image. `0x47255B` stores the `CreateDIBSection` return at `[object+4]`, which the upload later pushes. The bit-count word is at `0x58D5D4`, past the `.data` raw end `0x4C6000`. `0x45015A` does not write offset `0x1C`: it compares the buffer's first two bytes with `0x42` `0x4D`, keeps the pointer from `0x49C1A8` on a match, and on a mismatch calls `0x49D010` at `0x4503B3` and `0x467DE8` at `0x4503FD`. `0x4C2500` is `Textures\%s.bmp`. The name pushed at `0x4722D4` was not read. `0x472FA8` pushes the object before `DirectDrawEnumerateA`, so the creation handle is not shown to survive until `GetObjectA`. The keep rule was not applied. Resume: open `0x43B5B0` and `0x49C1A8` far enough to say whether offset `0x1C` of a `42 4D` buffer is a file `biBitCount`, and only then apply the c1aj rule. Do not pick a format from the 0.47 brightness ratio. See [C1ba](../scratch/phase-c1ba-bitcount-source.md).

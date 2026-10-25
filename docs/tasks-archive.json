@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "c1ba-bitcount-source",
+      "title": "What word is copied into the bit count",
+      "status": "landed",
+      "brief": "build/tmp/c1ba-bitcount-source-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1az-dib-handle"
+      ],
+      "gate_served": "C1 skill panel; the word copied to 0x58D5D4",
+      "question": "kept-format",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3. C1az named 0x45015A as the producer and did not open it. If this round does not name the word, park the question. The keep rule waits.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 02:04 MDT",
+      "dispatch_id": "b11db5cc-2ae0-408f-8e3f-0ac0f7bb933b",
+      "worker_output": "build/tmp/c1ba-bitcount-source/round-note.md",
+      "landed_at": "2026-10-25 02:14 MDT",
+      "landed_in": "PLAN.md Phase C and Phase E; docs/scratch/phase-c1ba-bitcount-source.md; docs/LESSONS.md C1ba; docs/plan-history/phase-c.md; docs/plan-history/phase-e.md",
+      "disposition": "0x45015A does not write offset 0x1C. A 42 4D match keeps the pointer from 0x49C1A8. The number is unread. Question parked at round 3 of 3. Gate not scored.",
+      "facilitator_verified": "2026-10-25 02:14 MDT: re-read the BM compares, the success jump, 0x4503B3, 0x4503FD, 0x450478, and 0x4C2500. check_bitcount.py: 217 insns, no displacement 0x1C. Compare byte 0x41 failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "c1az-dib-handle",
       "title": "Where the GetObjectA handle gets its bit count",
       "status": "landed",

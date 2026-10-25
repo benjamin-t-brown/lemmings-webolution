@@ -229,3 +229,10 @@ of 3. `0x488359` loads `0x4C416C`, stores it at `[eax+0x2c]`, adds 1, and
 writes it back. `0x488377` returns with no call. The facilitator found
 the address three times, and expecting add immediate `2` failed. No
 stock start. The draw call stays unread. The gate is not scored.
+
+**B3b: the screen creations are not in one order**
+([check](../scratch/phase-b3b-map-object.md)), 2026-10-25, map-draw
+round 2 of 3. `0x4872B8` jumps through a table indexed from
+`[ebp-0xb4]`. The facilitator counted 20 direct calls of `0x4882C0`,
+and expecting the bound `0x25` failed. No stock start. The object
+stamped 5 stays unread. The gate is not scored.

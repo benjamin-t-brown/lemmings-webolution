@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "b3b-map-object",
+      "title": "Which creation receives screen id 5",
+      "status": "landed",
+      "brief": "build/tmp/b3b-map-object-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b3a-map-arm"
+      ],
+      "gate_served": "B3 level select and map; the object stamped with screen id 5",
+      "question": "map-draw",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3. Round 1 found a creation counter and no compare with 5. This round names the call that stamps 5.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 02:48 MDT",
+      "dispatch_id": "eddd7231-4826-4fb5-8940-b51288844dd9",
+      "worker_output": "build/tmp/b3b-map-object/round-note.md",
+      "landed_at": "2026-10-25 02:55 MDT",
+      "landed_in": "PLAN.md Phase B (B3); docs/scratch/phase-b3b-map-object.md; docs/LESSONS.md B3b; docs/plan-history/phase-b.md",
+      "disposition": "0x4872B8 is a jump table. 20 direct calls of 0x4882C0 are not one straight-line order. The object stamped 5 is unread. Gate not scored.",
+      "facilitator_verified": "2026-10-25 02:55 MDT: re-read 0x48729D through the indirect jump. check_table.py: 20 E8 targets, first slot 0x4872BF. Bound 0x25 failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "b3a-map-arm",
       "title": "Which call draws screen id 5",
       "status": "landed",

@@ -467,3 +467,11 @@ round 2 of 3. `0x45E8AD` stores the registration return at
 direct caller, and expecting displacement byte `0x35` failed. No stock
 start. The slot is past the file image. The hover rule was not read.
 The gate is not scored.
+
+**C2n: two instructions load the `_curExit` slot**
+([check](../scratch/phase-c2n-cursor-read.md)), 2026-10-25, cursor clause
+round 3 of 3. `0x45ECBF` calls `0x414B90` with the slot, and `0x45EE3A`
+calls `0x414D20` unless `[object+0x1C9B1]` is nonzero. The facilitator
+found the displacement three times, and expecting opcode `0x89` failed.
+No stock start. The callees were not opened. The question is parked.
+The gate is not scored.

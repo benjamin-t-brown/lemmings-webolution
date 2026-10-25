@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "c2n-cursor-read",
+      "title": "Which instruction reads the _curExit slot",
+      "status": "landed",
+      "brief": "build/tmp/c2n-cursor-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c2m-cursor-slot"
+      ],
+      "gate_served": "C2 cursor clause; a reader of the _curExit slot",
+      "question": "cursor-sprite",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3. Rounds 1 and 2 found the registrar and the slot. If this round finds no reader, park the question.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 02:29 MDT",
+      "dispatch_id": "da642337-beab-4c72-8a05-e19f69c0844a",
+      "worker_output": "build/tmp/c2n-cursor-read/round-note.md",
+      "landed_at": "2026-10-25 02:39 MDT",
+      "landed_in": "PLAN.md Phase C (C2) and Phase E; docs/scratch/phase-c2n-cursor-read.md; docs/LESSONS.md C2n; docs/plan-history/phase-c.md; docs/plan-history/phase-e.md",
+      "disposition": "Displacement 0x1C934 has two loads, 0x45ECBF calling 0x414B90 and 0x45EE3A calling 0x414D20. The callees were not opened. Cursor question parked at round 3. Gate not scored.",
+      "facilitator_verified": "2026-10-25 02:39 MDT: re-read both loads, the skip at 0x45ED95, and the caller at 0x450A74. check_reads.py: three displacement hits; calls resolve to 0x414B90 and 0x414D20. Opcode 0x89 failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "c2m-cursor-slot",
       "title": "Where the _curExit registration is stored",
       "status": "landed",

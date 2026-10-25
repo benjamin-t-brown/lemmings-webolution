@@ -617,3 +617,11 @@ streams and28 illustrative native GDI/formula variants match; alpha-only and
 one-blue-byte mutations discriminate/restore.58anchors/five raw windows and
 install hashes authenticated;34/34CTest. Actual native format/wrapper conversion
 and returned layouts remain unresolved; no pixel-fit choice or scene render.
+
+**C3q: conditional material/blend/filter/shade state machine verified (2026-10-25)**
+([Facilitator check](../scratch/phase-c3q-scene-device-state.md)).32 native windows
+authenticated and key setter/wrapper order re-read; separate expectations reproduce
+600 full state rows. Ordered cache tests protect latched alpha reference and null
+selector4 blend preservation; input/branch mutations discriminate and restore.
+34/34CTest. Effective pause Z/cull/fog/API/prestate remains typed input, not SDK
+defaults or measured device state. No production render or gate improvement.

@@ -545,3 +545,12 @@ Scores 285083/580972/285700 over 17721990. zoom1 and elev_down pass;
 elev_up is worse than C1bh by 552. Plate-only elev_up error is 466081 of
 that numerator. Omitting the plates makes elev_up worse, 2055954. Restoring
 nearest returns zoom1 to 286491. 34/34 CTest. The weights stay a hypothesis.
+
+**C1bj: plates over the stock frame raise the error; run stopped**
+([Facilitator check](../scratch/phase-c1bj-plate-over-stock.md)). The stock
+baseline already contains its plates. Drawing ours on top scores full
+1123813/1145908/1114207 and plate-only 669750/691289/666306. All three
+plate-only numbers are higher than plates over our frame. The elev_up
+interior is 384401, against 1589553 with the plates omitted. Opaque alpha
+raises elev_up plate-only to 2519199. Icon and glyph error, 114891, cannot
+bring 580972 under 354440. The C1-only run stops here.

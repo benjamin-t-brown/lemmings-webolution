@@ -1329,6 +1329,12 @@
     }
   ],
   "landed": [
+    {"id":"c1bj-plate-over-stock","status":"landed","milestone":"C1 skill panel","question_key":"plate-over-stock","question_round":1,
+     "brief":"build/tmp/c1bj-plate-over-stock-brief.md","worker_output":"build/tmp/c1bj-plate-over-stock/round-note.md",
+     "dispatch_id":"3ba69d52-2c22-4d9f-95d4-182efddb77a4","requested_model":"grok-4.7-high-fast, round-agent",
+     "dispatched_at":"2026-10-25T12:51:00-06:00","landed_at":"2026-10-25T13:05:00-06:00",
+     "evidence":"docs/scratch/phase-c1bj-plate-over-stock.md","stock_starts_used":0,
+     "result":"Plates over the stock frame: full 1123813/1145908/1114207, plate-only 669750/691289/666306. Higher than plates over our frame. Source unchanged. Run stopped on the elev_up under-layer."},
     {"id":"c1bi-linear-plate","status":"landed","milestone":"C1 skill panel","question_key":"plate-linear-sample","question_round":1,
      "brief":"build/tmp/c1bi-linear-plate-brief.md","worker_output":"build/tmp/c1bi-linear-plate/round-note.md",
      "dispatch_id":"24bb055f-b48f-4b6f-a219-3f442b0f37e2","requested_model":"grok-4.7-high-fast, round-agent",

@@ -8,7 +8,7 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done** (2026-10-25 13:05 MDT). C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior, and this directive excludes that scene. The gate was not changed.
 Issued: 2026-10-25 (user, overlord review 2026-10-25: "approve all": DERIVED values from
 documented Win32 behaviour, value-framed questions, C1 only)
 Supersedes: the long multi-milestone directive, done 2026-10-25 03:29 MDT (run `c1-c2-b3`:

@@ -1,9 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T15:21:16-06:00",
+  "updated": "2026-10-25T15:22:34-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
-    {"id":"c3v-state-format-preflight","status":"ready-for-verify","brief":"build/tmp/c3v-state-format-preflight-brief.md","question":"Offline preflight for correlated scene state/format observation","milestone":"C3 full frame","question_round":2,"worker_type":"targeted harness implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","dispatch_confirmed_at":"2026-10-25T14:54:54-06:00","session_id":"ses_e8b2827c0ffe51W8GkPMPulYsO","requested_model":"openai/gpt-6-luna#high","worker_output":"build/tmp/c3v-state-format-preflight/round-note.md","repair_brief":"build/tmp/c3v-state-format-preflight-repair1.md","repair_dispatched_at":"2026-10-25T15:05:07-06:00","verification_failure":"Mutation never executes mutant (assert22!=21 only). Independent throwing-getter fixture gives3calls/3errors/0samples despite maxSamples1. Missing fail-closed range/runtime checks. Original partial packet not accepted or live-authorized."},
     {"id":"c3x-scene-node-reader","status":"ready-for-verify","brief":"build/tmp/c3x-scene-node-reader-brief.md","question":"Strict source-preserving recursive scene-node reader","milestone":"C3 full frame","question_round":1,"worker_type":"targeted production implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:00:21-06:00","dispatch_confirmed_at":"2026-10-25T15:00:53-06:00","session_id":"ses_e8b227f29ffee6jkDaULphPKC0","requested_model":"openai/gpt-6-luna#high","worker_output":"build/tmp/c3x-scene-node-reader/round-note.md"}
   ],
   "queue": [],
@@ -22,11 +21,11 @@
     "owner": "OpenCode facilitator Sol, resumed via /facilitator on mouv 2026-10-25T14:07:15-06:00; same conversation",
     "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
     "started_at": "2026-10-25T13:29:10-06:00",
-    "rounds_run": 10,
+    "rounds_run": 12,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "C3u conditional gates/load associations verified;32256rows,46raw windows and gate-only mutation;35/35CTest. Historical repair4 gates/holders UNKNOWN. Primary slot4 before tube, secondary slot8 after;slot8 downstream effect still needs bounded follow-up, NOT equivalent render. Vrepair1 READY: independent17failure mocks/actual slot mutant pass;not yet landed;no live recipe/COM-surface/source-class proof. X READY: new SceneNode/tests/build wiring uncommitted, remains separately unaccepted. No running workers/live owner;starts0/3. Finish V narrow safety landing then X parser independent fields/error/regression check before source integration. Baseline0.2050523>0.02;no scene render. Preserve old Vpacket before-repair and C3o retractions.10landed attempts;V initial/repair and X outstanding.",
+    "handoff": "Uconditional gates landed8d26daa; historical repair4 gates/holders UNKNOWN;secondary slot8 effect not equated to slot4. Vrepair1 partial mock-bounds accepted:17independent failure fixtures/actual executed mutant, disabled default;original packet rejected/preserved. NO live recipe: class/frame correlation, COM/surface identity and cleanup remain open. XREADY new SceneNode/tests/wiring uncommitted: independently read code, need complete field/error comparison and isolated regression before landing. Potential child reserve amplification/remaining-byte allocation checks merit bounded malformed-input check. Full build35/35CTest passes including Xbut is not Xacceptance. No running workers/live owner;starts0/3. Next verify Xthen dispatch slot8 effect and provenance gaps independently; explicit-input submission/raster next, no app defaults/format fit. Baseline0.2050523>0.02,scene omitted.12completed attempts incl initial Vrejection+repair.",
     "previous_passes": [{"started": "2026-10-25T13:29:10-06:00", "ended":"2026-10-25T14:01:52-06:00", "elapsed":"32m42s", "rounds": [{"id":"c3p-kind5-culling","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","worker_finished":"2026-10-25T13:54:46-06:00"}]}],
     "current_pass": {
       "started":"2026-10-25T14:07:15-06:00",
@@ -40,7 +39,8 @@
         {"id":"c3r-scene-texture-values","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:44:54-06:00","elapsed":"28m01s"},
         {"id":"c3q-scene-device-state","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:48:32-06:00","elapsed":"31m39s","worker_elapsed":"21m26s"},
         {"id":"c3w-scene-integration-map","dispatched":"2026-10-25T14:53:56-06:00","landed":"2026-10-25T14:59:05-06:00","elapsed":"5m09s","scope":"source-only map"},
-        {"id":"c3u-pause-scene-reachability","dispatched":"2026-10-25T14:53:56-06:00","landed":"2026-10-25T15:21:16-06:00","elapsed":"27m20s","scope":"conditional gates and load associations only"}
+        {"id":"c3u-pause-scene-reachability","dispatched":"2026-10-25T14:53:56-06:00","landed":"2026-10-25T15:21:16-06:00","elapsed":"27m20s","scope":"conditional gates and load associations only"},
+        {"id":"c3v-state-format-preflight","dispatched":"2026-10-25T14:53:56-06:00","repair_dispatched":"2026-10-25T15:05:07-06:00","landed":"2026-10-25T15:22:34-06:00","elapsed":"28m38s","repair_elapsed":"17m27s","scope":"partial mock bounds only, no live authorization"}
       ]
     },
     "latest_yield": {"date":"2026-10-25T15:05:58-06:00","pass_started":"2026-10-25T14:07:15-06:00","elapsed":"58m43s","reason":"Await reachability, parser and C3v repair1 notifications; standing run remains active"},

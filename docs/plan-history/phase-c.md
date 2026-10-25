@@ -640,3 +640,11 @@ Mode2/nonzero-enable admits primary slot4 before tube; nonzero second presence
 admits secondary slot8 after tube. Separate model holders serve Entrance/Exit.
 Historical repair4 values stay unknown; slot8 downstream is not equated to slot4
 rendering.35/35CTest; no original start, production change or score improvement.
+
+**C3v repair1: draft mock failure bounds, not live preflight (2026-10-25)**
+([Facilitator check](../scratch/phase-c3v-repaired-mock-bounds.md)). Original
+unexecuted mutation/error-retry claims rejected and preserved. Separate VM checks
+verify17finite failure fixtures, exact32getter ABI/output calls, recursion/runtime
+rejection and an actually executed slot mutant.35/35CTest. Draft remains disabled;
+scene correlation, concrete COM/surface identity and live cleanup unproved. No
+live use, format observation or pixel acceptance is authorized by this landing.

@@ -625,3 +625,10 @@ authenticated and key setter/wrapper order re-read; separate expectations reprod
 selector4 blend preservation; input/branch mutations discriminate and restore.
 34/34CTest. Effective pause Z/cull/fog/API/prestate remains typed input, not SDK
 defaults or measured device state. No production render or gate improvement.
+
+**C3w: source integration map verified (2026-10-25)**
+([Facilitator check](../scratch/phase-c3w-source-integration-map.md)). Existing
+PolyList and TubeScene paths are diagnostics, not a recursive scene reader or
+accepted mesh/material pipeline; Raster is not an explicit C3 device-state model.
+Checked source symbols and selected a separate strict asset-reader task first,
+before submission/raster/app wiring. No source edit or original measurement.

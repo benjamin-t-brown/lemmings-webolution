@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T14:54:54-06:00",
+  "updated": "2026-10-25T14:59:05-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
     {"id":"c3u-pause-scene-reachability","status":"running","brief":"build/tmp/c3u-pause-scene-reachability-brief.md","question":"Pause-frame scene-root reachability and gate inputs","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","dispatch_confirmed_at":"2026-10-25T14:54:54-06:00","session_id":"ses_e8b282815ffex9ELFkOq6HhhiO","requested_model":"openai/gpt-6.1-sol#high"},
-    {"id":"c3v-state-format-preflight","status":"running","brief":"build/tmp/c3v-state-format-preflight-brief.md","question":"Offline preflight for correlated scene state/format observation","milestone":"C3 full frame","question_round":1,"worker_type":"targeted harness implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","dispatch_confirmed_at":"2026-10-25T14:54:54-06:00","session_id":"ses_e8b2827c0ffe51W8GkPMPulYsO","requested_model":"openai/gpt-6-luna#high"},
-    {"id":"c3w-scene-integration-map","status":"running","brief":"build/tmp/c3w-scene-integration-map-brief.md","question":"Read-only map for small scene implementation tasks","milestone":"C3 full frame","question_round":1,"worker_type":"read-only source map","requested_agent":"explore-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","dispatch_confirmed_at":"2026-10-25T14:54:54-06:00","session_id":"ses_e8b2826f1ffe8I8cN3jIaEnvjB","requested_model":"openai/gpt-6-luna#high"}
+    {"id":"c3v-state-format-preflight","status":"ready-for-verify","brief":"build/tmp/c3v-state-format-preflight-brief.md","question":"Offline preflight for correlated scene state/format observation","milestone":"C3 full frame","question_round":1,"worker_type":"targeted harness implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","dispatch_confirmed_at":"2026-10-25T14:54:54-06:00","session_id":"ses_e8b2827c0ffe51W8GkPMPulYsO","requested_model":"openai/gpt-6-luna#high","worker_output":"build/tmp/c3v-state-format-preflight/round-note.md"},
+    {"id":"c3x-scene-node-reader","status":"queued","brief":"build/tmp/c3x-scene-node-reader-brief.md","question":"Strict source-preserving recursive scene-node reader","milestone":"C3 full frame","question_round":1,"worker_type":"targeted production implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null}
   ],
   "queue": [],
   "standing_run": {
@@ -23,11 +23,11 @@
     "owner": "OpenCode facilitator Sol, resumed via /facilitator on mouv 2026-10-25T14:07:15-06:00; same conversation",
     "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
     "started_at": "2026-10-25T13:29:10-06:00",
-    "rounds_run": 8,
+    "rounds_run": 9,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "C3t partial annular diagnostic e384631;C3r constructor/source/conditional uploads58e49ad;C3q conditional state/cache machine52f2fb1 all verified/pushed,34/34CTest each. Exact floor identity/native clipping, effective pause Z/cull/fog/API/prestate and native actual opaque format/wrapper conversion remain OPEN;no choosing by score/default. THREE new offline workers running (dispatch window14:53:56..14:54:54): C3u gate/root reachability disasm, C3v JS+mock state/format observation preflight targeted, C3w read-only source integration map explore. Sessions in active;await notifications/no polling or duplication. V has ZERO starts and no target calls;surface Lock disabled pending explicit review. Map returns chat only;facilitator saves/statuses it. Then rank production small-task integration and a separately briefed, dry-checked observation if still needed. Baseline48188934/235008000=0.2050523 vs0.02;scene still omitted;scorer --reference repair4 fixed.8completed attempts plus3in-flight;starts0/3;no live owner. C3m patch superseded by C1k;C3o original/checker rejected and preserved.",
+    "handoff": "C3w source map verified: no complete scene reader; legacy PolyList/Raster paths diagnostic, not C3. Saved map build/tmp/c3w-scene-integration-map.md and docs scratch note. NEXT dispatch linted C3x strict asset SceneNode reader, no app/render change; queued in free slot. C3u reachability and C3v state/format observation preflight STILL RUNNING;await notifications/no polling or duplicate. V ZERO starts/target calls;surface Lock disabled pending review. Q/R conditional results landed52f2fb1/58e49ad, Tpartialfloor e384631;effective pause state/native actual format/wrapper/floor identity open. Baseline0.2050523 vs0.02, scene still omitted;scorer explicit repair4 fixed.9completed attempts including map/repair;starts0/3;no live owner. New production reader may change own sources/test wiring only; other workers scratch only.",
     "previous_passes": [{"started": "2026-10-25T13:29:10-06:00", "ended":"2026-10-25T14:01:52-06:00", "elapsed":"32m42s", "rounds": [{"id":"c3p-kind5-culling","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","worker_finished":"2026-10-25T13:54:46-06:00"}]}],
     "current_pass": {
       "started":"2026-10-25T14:07:15-06:00",
@@ -39,7 +39,8 @@
         {"id":"c3s-explicit-reference-scorer","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:24:12-06:00","elapsed":"7m19s","worker_finished":"2026-10-25T14:20:43-06:00"},
         {"id":"c3t-floor-ring-bounds","dispatched":"2026-10-25T14:26:41-06:00","landed":"2026-10-25T14:38:14-06:00","elapsed":"11m33s","result":"partial source-family diagnostic only"},
         {"id":"c3r-scene-texture-values","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:44:54-06:00","elapsed":"28m01s"},
-        {"id":"c3q-scene-device-state","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:48:32-06:00","elapsed":"31m39s","worker_elapsed":"21m26s"}
+        {"id":"c3q-scene-device-state","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:48:32-06:00","elapsed":"31m39s","worker_elapsed":"21m26s"},
+        {"id":"c3w-scene-integration-map","dispatched":"2026-10-25T14:53:56-06:00","landed":"2026-10-25T14:59:05-06:00","elapsed":"5m09s","scope":"source-only map"}
       ]
     },
     "latest_yield": {"date":"2026-10-25T14:54:54-06:00","pass_started":"2026-10-25T14:07:15-06:00","elapsed":"47m39s","reason":"Await three offline worker notifications; standing run remains active"},

@@ -459,3 +459,11 @@ round 1 of 3. The string is at `0x4C0DD0`. Its one reference is
 `push 0x4C0DD0` at `0x45E89B`, then `call 0x45FE10`. The facilitator
 found that dword once, and expecting `0x79` failed. No stock start.
 The hover rule was not read. The gate is not scored.
+
+**C2m: `_curExit` is stored at `0x4E333C`**
+([check](../scratch/phase-c2m-cursor-slot.md)), 2026-10-25, cursor clause
+round 2 of 3. `0x45E8AD` stores the registration return at
+`[0x4C6A08+0x1C934]`. The facilitator re-read the store and the one
+direct caller, and expecting displacement byte `0x35` failed. No stock
+start. The slot is past the file image. The hover rule was not read.
+The gate is not scored.

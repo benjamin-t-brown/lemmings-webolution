@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "c2m-cursor-slot",
+      "title": "Where the _curExit registration is stored",
+      "status": "landed",
+      "brief": "build/tmp/c2m-cursor-slot-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c2l-cursor-exit"
+      ],
+      "gate_served": "C2 cursor clause; the slot filled for _curExit",
+      "question": "cursor-sprite",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3. Round 1 found only the registrar push. This round reads the slot that call writes.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 02:21 MDT",
+      "dispatch_id": "a4525208-4a9d-4f2d-99d8-c8aae20721c8",
+      "worker_output": "build/tmp/c2m-cursor-slot/round-note.md",
+      "landed_at": "2026-10-25 02:28 MDT",
+      "landed_in": "PLAN.md Phase C (C2); docs/scratch/phase-c2m-cursor-slot.md; docs/LESSONS.md C2m; docs/plan-history/phase-c.md",
+      "disposition": "0x45E8AD stores the _curExit registration at [0x4C6A08+0x1C934] = 0x4E333C. The address is past the file image. No reader opened. Gate not scored.",
+      "facilitator_verified": "2026-10-25 02:28 MDT: re-read 0x45E8AD, 0x45E525, 0x450890, and 0x45FF45. check_slot.py: one E8 to 0x45E51F, one [ebp-8] write, slot past 0x4C6000. Displacement byte 0x35 failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "c2l-cursor-exit",
       "title": "Which instruction references _curExit",
       "status": "landed",

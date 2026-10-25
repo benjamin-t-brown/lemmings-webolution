@@ -1159,6 +1159,36 @@
   ],
   "landed": [
     {
+      "id": "c1as-launch-read",
+      "title": "One launch of the exit-code probe",
+      "status": "landed",
+      "worker_output": "build/tmp/c1as-launch-read/round-note.md",
+      "brief": "build/tmp/c1as-launch-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "one stock start",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ar-exit-capture"
+      ],
+      "gate_served": "C1 skill panel; the launch-time alpha read the plate render needs",
+      "question": "alpha-count-launch",
+      "question_round_count": 4,
+      "cap_note": "Round 4. The cap of 3 was c1ap, c1aq and c1ar. This start moves the gate because the (mask, sar, shl) triples are still unread and the plate score needs them. No further start if this one fails.",
+      "stock_starts_authorized": 1,
+      "standing_run": "c1-hook-repair",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 23:36 MDT",
+      "dispatch_id": "23bfa9be-4181-4f87-b04b-8dafb7248176",
+      "landed_at": "2026-10-24 23:41 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1as-launch-read.md; docs/LESSONS.md C1as; docs/plan-history/phase-c.md; docs/plan-history/phase-e.md; docs/DIRECTIVE.md Status done",
+      "disposition": "Pid 44772 exited with 0xC0000005 before MM_CLIMB_002. skip_input AND 0x18 was 0. Count site 0. Hashes match. Not retried. Gate not scored.",
+      "facilitator_verified": "2026-10-24 23:41 MDT: recounted 46 lines, skip_input 1 x8 then 2, all AND 0x18 are 0. exit_code 3221225477. Re-hashed the install. No Lemmings process."
+    },
+    {
       "id": "c1ar-exit-capture",
       "title": "Capture the exit code from the detach callback",
       "status": "landed",

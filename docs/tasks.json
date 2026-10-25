@@ -1,34 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T23:36:54-06:00",
+  "updated": "2026-10-24T23:41:48-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1as-launch-read",
-      "title": "One launch of the exit-code probe",
-      "status": "running",
-      "worker_output": null,
-      "brief": "build/tmp/c1as-launch-read-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "one stock start",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": true,
-      "live_owner": "c1as-launch-read",
-      "depends_on": [
-        "c1ar-exit-capture"
-      ],
-      "gate_served": "C1 skill panel; the launch-time alpha read the plate render needs",
-      "question": "alpha-count-launch",
-      "question_round_count": 4,
-      "cap_note": "Round 4. The cap of 3 was c1ap, c1aq and c1ar. This start moves the gate because the (mask, sar, shl) triples are still unread and the plate score needs them. No further start if this one fails.",
-      "stock_starts_authorized": 1,
-      "standing_run": "c1-hook-repair",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 23:36 MDT"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-hook-repair",
@@ -46,11 +20,23 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 22:59 MDT /facilitator on mouv. Prior run c1-launch-attach stopped, directive active, so this start is the handoff. This session is Grok 4.7; the user said try again.",
     "started_at": "2026-10-24 22:59:52 -06:00",
-    "rounds_run": 3,
-    "stock_starts_used": 1,
-    "pending_questions": [],
+    "rounds_run": 4,
+    "stock_starts_used": 2,
+    "pending_questions": [
+      {
+        "id": "startup-access-violation",
+        "question": "Pid 44772 exited with 0xC0000005 before MM_CLIMB_002. skip_input was 1 eight times and 2 once, and each value AND 0x18 is 0, so 0x47383C was skipped. The fault address is unread. The start pool is spent. What should a later run do?",
+        "options": [
+          "An offline round on the instructions after the 0x4737E6 skip, then a new start only under a new directive",
+          "Spend another start on the same probe",
+          "Leave the paused-level shift counts unread"
+        ],
+        "recommendation": "Do not relaunch this probe. The pool is spent and the process exited 0xC0000005. An offline round can read what runs after the skip. A new start needs a new directive.",
+        "evidence": "docs/scratch/phase-c1as-launch-read.md"
+      }
+    ],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 23:36 MDT: c1as running, the remaining stock start of the c1ar probe. Starts 1 of 2 until it returns. Round 4 because the triples are still unread. Gate not scored.",
+    "handoff": "2026-10-24 23:41 MDT: stopped. c1as pid 44772 exit 0xC0000005. skip_input AND 0x18 is 0. Starts 2 of 2. Rounds 4. Gate not scored. Pass started 22:59:52.",
     "pass_clock": {
       "started": "2026-10-24 22:59:52 -06:00",
       "rounds": [
@@ -71,10 +57,20 @@
           "dispatched": "2026-10-24 23:24 MDT",
           "landed": "2026-10-24 23:36 MDT",
           "elapsed": "12m 45s"
+        },
+        {
+          "id": "c1as-launch-read",
+          "dispatched": "2026-10-24 23:36 MDT",
+          "landed": "2026-10-24 23:41 MDT",
+          "elapsed": "5m 48s"
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null
+    "stopped": {
+      "date": "2026-10-24 23:41 MDT",
+      "reason": "Start 2 of 2. Pid 44772 exited with 0xC0000005 before MM_CLIMB_002. skip_input AND 0x18 was 0, so the count site was skipped. Install hashes match. Gate not scored. The fault address is unread. The same probe is not relaunched.",
+      "last_commit": null
+    }
   }
 }

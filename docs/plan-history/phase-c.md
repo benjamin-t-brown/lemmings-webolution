@@ -372,3 +372,12 @@ returns. The mask hook logs `[[ebp+8]+0x24]`, the dword `0x4737E6` tests
 with AND `0x18`. The facilitator re-disassembled that span and a removal
 of the callback read failed the dry check. No stock start. The paused-level
 shift counts stay unread.
+
+**C1as: the remaining start exited with `0xC0000005`**
+([check](../scratch/phase-c1as-launch-read.md)), 2026-10-24, hook-repair
+round 4, one stock start. Pid 44772 resumed at 23:38:48 and was gone at
+23:38:50, before `MM_CLIMB_002`. `exit_code` is 3221225477. `skip_input`
+is 1 eight times and 2 once, and each value AND `0x18` is 0. `0x47383C`
+has 0 lines. The facilitator recounted the log and re-hashed the install.
+The probe was not run again. The paused-level shift counts stay unread.
+The start pool is spent.

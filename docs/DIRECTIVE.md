@@ -8,7 +8,8 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
+Done: 2026-10-24 23:42 MDT. c1as pid 44772 exited with `0xC0000005` before `MM_CLIMB_002`. `skip_input` AND `0x18` was 0 on all nine mask lines, so `0x47383C` was skipped. Install hashes match. Starts 2 of 2. Rounds 4. Gate not scored. The fault address is unread.
 Issued: 2026-10-24 (user, overlord review 2026-10-24: "yep all are good i approve": up to 3
 more alpha-count rounds, the start pool back to 2, keep mouv's `frida` package)
 Supersedes: the launch-attach directive, done 2026-10-24 21:48 MDT (c1am dry-checked four

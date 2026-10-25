@@ -413,6 +413,24 @@ open.
 
 - **B3 map screen object** (parked 2026-10-25 after b3a–b3d; the fourth round did not pass the creation counter). `0x4C416C` starts at 1. `0x4882C0` stores that dword at `[object+0x2c]` and adds 1, then returns with no call. No instruction compares the address with 5. The 20 direct calls are selected by the jump table at `0x4872B8`, indexed by `[ebp+8]`. Both direct callers, `0x486FF7` and `0x488713`, push their own `[ebp+0xC]` as that argument. The second call is skipped when the dword is 3. The object that receives stamp 5 is whichever constructor runs fifth at runtime, and that order is not in these bytes. Resume only if a later directive reads the runtime order of the 20 calls, or the dword that fills those two `[ebp+0xC]` slots. Do not draw the map from a guessed vtable. See [B3d](../scratch/phase-b3d-map-callers.md).
 
+### C3 draw-correlated observation
+
+- **C3 effective state/format observation** (parked2026-10-25 at three rounds:
+  C3v initial, repair1, C3z). [Verified static subset](../scratch/phase-c3z-observation-provenance.md):
+  class7primary/mesh/block scopes, descriptor vsTexture2D+0 vsSurface4D+8,
+  producer QI/CreateDevice/CreateSurface output contracts. Actual successful
+  current-pointer production/lifetime, frame/source correlation, accepted binding,
+  effective Z/cull/fog, returned format/texels and real Frida cleanup remain unknown.
+  Resume only with retained positive producer/lifetime events or reviewed concrete
+  implementation proof, then a tested source-scoped passive observer lifecycle;
+  menu-late attach cannot manufacture missed device creation. No getter/Lock/live
+  launcher authorized. Exact typed gaps/resume requirements:
+  `build/tmp/c3z-observation-provenance/typed-gaps.json`; original brief
+  `build/tmp/c3z-observation-provenance-brief.md`. A fourth preflight needs an
+  explicit cap exception/gate-moving reason, not generic mocks or guessed pointers.
+  Continue independently testable source/raster implementation meanwhile; no
+  default/format selection by score and no gate amendment.
+
 ### B3 level pick
 
 - **B3 level pick** (parked 2026-10-25 at the three-round cap, b3e, b3f, b3g). `MM_CLIMB_002` is not in the executable. `lemmings.box` at `0x6F77` is the path `COMPILED\MM_CLIMB_002.LVL`. Lowercase `lemmings.box` is absent. Three `LEMMINGS.BOX` strings, at `0x4C292C`, `0x4C2A60`, and `0x4C2A70`, are pushed at `0x47DF27`, `0x47E298`, and `0x47E2CC`. Each push is followed by a stack-buffer pointer and `call 0x49C760`, then `add esp, 8`. The other argument is `[ebp-0x110]` or `[ebp-0x104]`. No level name and no level index are in those bytes. The body of `0x49C760` was not entered. Resume: open `0x49C760` far enough to say whether it copies the filename or opens the archive, and only then look for the caller that runs on a level choice. Do not treat the archive path as a click handler. See [B3g](../scratch/phase-b3g-box-call.md).

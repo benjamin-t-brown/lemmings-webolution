@@ -664,3 +664,11 @@ descending/nonstable insertion order, then29childslot4calls (12mesh/17type2).
 Independent source ranks and isolated bias mutation match/restore;35/35CTest.
 No root own draw or slot8=slot4 equivalence; inherited mesh clipping counts,
 runtime visibility/gates/effective state and pixels remain conditional.
+
+**C3z: conditional observation contracts; runtime arm parked (2026-10-25)**
+([Facilitator check](../scratch/phase-c3z-observation-provenance.md)).46windows,
+fourSDKinterfaces/threeGUIDs authenticated; original DD4/D3D3/Device3/Surface4/
+Texture2 producer outputs and class7 scope distinguish descriptor from texture/
+surface. Independent synthetic request tuple/isolated field mutation;35/35CTest.
+Actual producer/lifetime/class/runtime cleanup/effective state and texels remain
+unknown; observation parked atVinitial+repair+Zround3, no live recipe authorized.

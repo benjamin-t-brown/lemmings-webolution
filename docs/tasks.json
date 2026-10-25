@@ -1,10 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T15:47:59-06:00",
+  "updated": "2026-10-25T15:52:36-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [
-    {"id":"c3z-observation-provenance","status":"ready-for-verify","brief":"build/tmp/c3z-observation-provenance-brief.md","question":"Scene-class and concrete COM/surface observation provenance","milestone":"C3 full frame","question_round":3,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"cap_scope":"Observation preflight continuation after C3v initial+repair; third round, no silent reset","dispatched_at":"2026-10-25T15:27:50-06:00","dispatch_confirmed_at":"2026-10-25T15:28:38-06:00","session_id":"ses_e8b08f93affeXbhUgI5BtLsrkI","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3z-observation-provenance/round-note.md"}
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-close-c3-scene",
@@ -21,11 +19,11 @@
     "owner": "OpenCode facilitator Sol, resumed via /facilitator on mouv 2026-10-25T14:07:15-06:00; same conversation",
     "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
     "started_at": "2026-10-25T13:29:10-06:00",
-    "rounds_run": 15,
+    "rounds_run": 16,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "Xstrict reader landed5737a1f;Ysecondary-slot8 sorted child dispatch verified:24raw windows,29ranks independently recomputed and one+108sourcefield mutation rank25->0/restored;35/35CTest. No own root draw;12mesh/17type2slot4calls after sorting, effective state not equivalent. NEXTverify ZREADY static pointer/class/COMprovenance packet, round3observation cap then park remaining runtime evidence;no live recipe authorized. No workersrunning/liveowner. C3aa explicit-matrix meshsource adapter brief linted, ready to queue/dispatch after Zverification. Baseline0.2050523>0.02;app still omits scene;actualpause/nativeformat/effectiveGPU/floorvisibility unresolved.15completed attempts,1ready;starts0/3. Preserve Vrejected originals/C3olimits and Xallocation retraction.",
+    "handoff": "Xstrict reader5737a1f and Ysort13d34cf landed. Zstatic pointer/interface contracts verified46windows/headers/GUIDs and synthetic request-chain field mutation;35/35CTest. Observation PARKED after Vinitial+repair+Zthird round: actual producer/lifetime/class/cleanup/state/format still unknown;no live recipe,getter,Lock or launcher authorized. Resume boundary in Znote/PhaseE;fourth preflight needs explicit gate-moving cap reason. No workers/liveowner. NEXTqueue linted C3aa explicit-matrix meshsource adapter, then independent explicit-input raster/type2 prep where no unknown runtime selection. App still omits scene;baseline0.2050523>0.02.16completed attempts;starts0/3. Preserve all previous retractions/candidate clipping limitations;gate unchanged.",
     "previous_passes": [{"started": "2026-10-25T13:29:10-06:00", "ended":"2026-10-25T14:01:52-06:00", "elapsed":"32m42s", "rounds": [{"id":"c3p-kind5-culling","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","worker_finished":"2026-10-25T13:54:46-06:00"}]}],
     "current_pass": {
       "started":"2026-10-25T14:07:15-06:00",
@@ -42,7 +40,8 @@
         {"id":"c3u-pause-scene-reachability","dispatched":"2026-10-25T14:53:56-06:00","landed":"2026-10-25T15:21:16-06:00","elapsed":"27m20s","scope":"conditional gates and load associations only"},
         {"id":"c3v-state-format-preflight","dispatched":"2026-10-25T14:53:56-06:00","repair_dispatched":"2026-10-25T15:05:07-06:00","landed":"2026-10-25T15:22:34-06:00","elapsed":"28m38s","repair_elapsed":"17m27s","scope":"partial mock bounds only, no live authorization"},
         {"id":"c3x-scene-node-reader","dispatched":"2026-10-25T15:00:21-06:00","repair_dispatched":"2026-10-25T15:25:42-06:00","landed":"2026-10-25T15:43:48-06:00","elapsed":"43m27s","repair_elapsed":"18m06s","scope":"strict source reader only, no app rendering"},
-        {"id":"c3y-secondary-slot8","dispatched":"2026-10-25T15:27:50-06:00","landed":"2026-10-25T15:47:59-06:00","elapsed":"20m09s","scope":"sorted child slot4 dispatch only"}
+        {"id":"c3y-secondary-slot8","dispatched":"2026-10-25T15:27:50-06:00","landed":"2026-10-25T15:47:59-06:00","elapsed":"20m09s","scope":"sorted child slot4 dispatch only"},
+        {"id":"c3z-observation-provenance","dispatched":"2026-10-25T15:27:50-06:00","landed":"2026-10-25T15:52:36-06:00","elapsed":"24m46s","scope":"static contracts only;runtime observation parked at3round cap"}
       ]
     },
     "latest_yield": {"date":"2026-10-25T15:28:38-06:00","pass_started":"2026-10-25T14:07:15-06:00","elapsed":"81m23s","reason":"Await Xrepair1, Yslot8 and Zprovenance notifications; standing run remains active"},

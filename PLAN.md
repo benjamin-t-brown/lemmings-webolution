@@ -97,7 +97,7 @@ threshold is 0.02, the same as A1/A2/A7.
 | --- | --- | --- |
 | B1 frontend assets and text | **done** (B1w, own re-score 0.005244; the five panels are measured from the reference, not read). Accepted on condition (user, overlord review 2026-10-23): the panel draw is read and re-scored; a failing re-score reopens B1 ([note](docs/scratch/phase-b1w-menu-render.md)) | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
 | B2 screen state machine | queued; parked at the three-round cap (B2a–c) and level-to-map (B2j/B2k, no key or click path named) ([Phase E](docs/plan-history/phase-e.md#b2-screen-state-machine)) | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
-| B3 level select and map | **in progress**. The creation jump table is indexed by `[ebp+8]`, not by `0x4C416C` ([B3c](docs/scratch/phase-b3c-map-index.md)). The object stamped 5 is unread. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
+| B3 level select and map | **in progress**. Map object parked at the cap ([B3d](docs/scratch/phase-b3d-map-callers.md), [Phase E](docs/plan-history/phase-e.md#b3-map-screen-object)). Level-select not started. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
 **User decisions, Phase B.** Full text in [Phase B history](docs/plan-history/phase-b.md).
 - **English reference accepted (user, 2026-10-22):** the German-menu quirk was a harness
@@ -222,6 +222,7 @@ One line per parked item; the evidence and the resume brief are under each link 
 - [C1 upload call](docs/plan-history/phase-e.md#c1-upload-call) — parked 2026-10-24 at the cap (c1ai, c1ak, c1al). Constructor runs at startup; `0x471746` is not on that chain.
 - [C1 launch-time alpha read](docs/plan-history/phase-e.md#c1-launch-time-alpha-read) — parked 2026-10-24 at the cap (c1am–c1ao). The start exited before the level; the shift site logged 0. One start remains and waits on an offline repair.
 - [C1 plate alpha format](docs/plan-history/phase-e.md#c1-plate-alpha-format) — parked 2026-10-25 at the cap (c1ay–c1ba); the bit-count word is not in the image.
+- [B3 map screen object](docs/plan-history/phase-e.md#b3-map-screen-object) — parked 2026-10-25 after b3a–b3d; the jump index is another argument, not the creation counter.
 - [B1f glyph matching](docs/plan-history/phase-e.md#b1f-glyph-matching) — parked 2026-10-22; do not revive the fitting method.
 - [B1h Quit registration](docs/plan-history/phase-e.md#b1h-quit-registration) — parked 2026-10-22; superseded by B1i–B1w.
 - [D2(b) digger bite timing](docs/plan-history/phase-e.md#d2b-digger-bite-timing) — parked 2026-10-22; architectural, multi-round.

@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "b3d-map-callers",
+      "title": "What the callers pass as the screen index",
+      "status": "landed",
+      "brief": "build/tmp/b3d-map-callers-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b3c-map-index"
+      ],
+      "gate_served": "B3 level select and map; the argument that indexes the creation jump table",
+      "question": "map-draw",
+      "question_round_count": 4,
+      "cap_note": "Round 4. Rounds 1-3 found no compare, a jump table, and an index that is [ebp+8]. The two direct callers are the image source of that argument. If neither passes the creation counter, park the question.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 03:01 MDT",
+      "dispatch_id": "6f33b250-0e69-44f5-8fee-6f6a1065f23a",
+      "worker_output": "build/tmp/b3d-map-callers/round-note.md",
+      "landed_at": "2026-10-25 03:07 MDT",
+      "landed_in": "PLAN.md Phase B (B3) and Phase E; docs/scratch/phase-b3d-map-callers.md; docs/LESSONS.md B3d; docs/plan-history/phase-b.md; docs/plan-history/phase-e.md",
+      "disposition": "Both callers of 0x48726F push [ebp+0xC], not 0x4C416C. Map-draw parked. The object stamped 5 is unread. Gate not scored.",
+      "facilitator_verified": "2026-10-25 03:07 MDT: re-read 0x486FE9 and 0x4886EB through the calls. check_callers.py: E8 targets are 0x486FF7 and 0x488713. Displacement 0x08 failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "b3c-map-index",
       "title": "What index feeds the screen jump table",
       "status": "landed",

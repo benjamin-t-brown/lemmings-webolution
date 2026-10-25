@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T03:00:20-06:00",
+  "updated": "2026-10-25T03:07:09-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
@@ -22,11 +22,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-25 01:22 MDT /facilitator on mouv. Prior run c1-alpha-offline stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
     "started_at": "2026-10-25 01:22:18 -06:00",
-    "rounds_run": 10,
+    "rounds_run": 11,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "The last ranked milestone gate passes on an independent re-score; a gate, footprint, mask, views or exclusions would need to change; a guardrail breach; every remaining ranked question is parked or waits on pending_questions; about 8 hours or 24 rounds; delegation or the pinned model is unavailable, or another session is running a task. A crash parks that question live arm. A second crash ends starts. Caps park and the run continues. Do not choose a gate amendment.",
-    "handoff": "2026-10-25 03:00 MDT: b3c landed (4m 20s). Jump index is [ebp+8], not 0x4C416C. Fourth round reads the two direct callers because that argument is the remaining image source of the table index. C1 format and C2 cursor stay parked. Pass started 01:22:18. b3b is 155e99e.",
+    "handoff": "2026-10-25 03:07 MDT: b3d landed (6m 9s). Map-draw parked. Callers pass [ebp+0xC], not the counter. Next: B3 level-select, the reference to MM_CLIMB_002. C1 format and C2 cursor stay parked. Pass started 01:22:18. b3c is e5ed4e4.",
     "pass_clock": {
       "started": "2026-10-25 01:22:18 -06:00",
       "rounds": [
@@ -89,6 +89,12 @@
           "dispatched": "2026-10-25 02:56 MDT",
           "landed": "2026-10-25 03:00 MDT",
           "elapsed": "4m 20s"
+        },
+        {
+          "id": "b3d-map-callers",
+          "dispatched": "2026-10-25 03:01 MDT",
+          "landed": "2026-10-25 03:07 MDT",
+          "elapsed": "6m 9s"
         }
       ]
     },

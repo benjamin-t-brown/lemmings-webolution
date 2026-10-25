@@ -243,3 +243,10 @@ round 3 of 3. `0x487294` loads `[ebp+8]` and `0x487297` stores it at
 `[ebp-0xb4]`. The facilitator re-read that pair, and expecting
 displacement `0x0C` failed. No stock start. The argument is not
 `0x4C416C`. The gate is not scored.
+
+**B3d: both callers pass their own argument**
+([check](../scratch/phase-b3d-map-callers.md)), 2026-10-25, map-draw
+round 4. `0x486FF7` and `0x488713` push `[ebp+0xC]`, not the creation
+counter. The facilitator re-read both calls, and expecting displacement
+`0x08` failed. No stock start. The question is parked. The gate is not
+scored.

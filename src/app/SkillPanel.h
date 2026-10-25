@@ -87,7 +87,8 @@ void drawSkillPanelCounts(webo::Image& dest, const webo::Image& font,
 // with p53-nearest arithmetic; not an observed or selected original FPU state.
 // Endpoint bilinear 72x32 -> 128x32, full texture UV.
 webo::Image resizeSkillPlatePatch(const webo::Image& source);
-// HYPOTHESIS: unselected plate state and pixel-center nearest full-UV raster.
+// HYPOTHESIS: linear sample of s = x * 128 / 72 (C1bi). Request 2 is the
+// DERIVED LINEAR name. The nearest index is not the sample position.
 void drawSkillPanelPlates(webo::Image& dest, const webo::Image& plate);
 // Opt-in, headless C1 fixture renderer. All game data is read from the supplied
 // archive and level trailer; the caller only wires this into --shot.

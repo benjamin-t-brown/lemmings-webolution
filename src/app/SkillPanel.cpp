@@ -155,16 +155,30 @@ Image resizeSkillPlatePatch(const Image& source) {
 
 namespace {
 
-// HYPOTHESIS: destination pixel-center nearest across complete [0,1] UV,
-// straight alpha. Shared by the ten base plates and the one selected quad.
+// HYPOTHESIS: one linear sample of the coordinate the nearest pick uses.
+// s = x * 128 / 72, texel centers at integers. Nearest is
+// min(127, (x * 128 + 36) / 72) = min(127, floor(s + 1/2)); that formula
+// is unchanged and is not itself the sample position. Request 2 is DERIVED
+// LINEAR (C1be, MinGW d3dtypes.h). These weights are not a measured D3D
+// kernel. Y stays the integer source row. Straight alpha is unchanged.
+// Shared by the ten base plates and the one selected quad.
 void drawSkillPanelPlateQuad(Image& dest, const Image& plate, int index) {
   const int py = 12 + 40 * index;
   for (int y = 0; y < 32 && py + y < dest.height; ++y) for (int x = 0; x < 72 && 18 + x < dest.width; ++x) {
-    const int sx = std::min(127, (x * 128 + 36) / 72);
-    const auto* s = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx) * 4;
+    const int numer = x * 128;
+    const int sx0 = std::min(127, numer / 72);
+    const int sx1 = std::min(127, sx0 + 1);
+    const int rem = numer % 72;
+    const int w0 = 72 - rem;
+    const auto* t0 = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx0) * 4;
+    const auto* t1 = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx1) * 4;
+    unsigned sample[4];
+    for (int c = 0; c < 4; ++c)
+      sample[c] = static_cast<unsigned>((t0[c] * w0 + t1[c] * rem) / 72);
     auto* d = dest.rgba.data() + (static_cast<std::size_t>(py + y) * dest.width + 18 + x) * 4;
-    const unsigned a = s[3];
-    for (int c = 0; c < 3; ++c) d[c] = static_cast<std::uint8_t>((s[c] * a + d[c] * (255 - a)) / 255);
+    const unsigned a = sample[3];
+    for (int c = 0; c < 3; ++c)
+      d[c] = static_cast<std::uint8_t>((sample[c] * a + d[c] * (255 - a)) / 255);
   }
 }
 

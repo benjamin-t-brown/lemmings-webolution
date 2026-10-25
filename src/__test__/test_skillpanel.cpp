@@ -319,6 +319,42 @@ void testSelectedQuadDestination() {
   check(matched > 0, "retail panel includes the selected quad inside 18,12,90,44");
 }
 
+void testLinearPlateSampleDiffersFromNearest() {
+  std::cout << "linear plate sample\n";
+  // Two texels on one row. x=0 lands on s=0, so linear equals that texel.
+  // x=1 has s=128/72, weights 16 and 56. Truncating blend of 0 and 255 is
+  // 198. Nearest min(127,(128+36)/72) is texel 2 and would write 255.
+  Image plate = makeSolid(128, 32, 0, 0, 0, 0);
+  plate.rgba[0] = 10;
+  plate.rgba[1] = 20;
+  plate.rgba[2] = 30;
+  plate.rgba[3] = 255;
+  plate.rgba[4] = 0;
+  plate.rgba[5] = 0;
+  plate.rgba[6] = 0;
+  plate.rgba[7] = 255;
+  plate.rgba[8] = 255;
+  plate.rgba[9] = 0;
+  plate.rgba[10] = 0;
+  plate.rgba[11] = 255;
+
+  auto expect = [](const Image& dest, const char* path) {
+    const auto p0 = (12u * dest.width + 18u) * 4;
+    check(dest.rgba[p0] == 10 && dest.rgba[p0 + 1] == 20 && dest.rgba[p0 + 2] == 30,
+          std::format("{} keeps the unrounded coordinate at x=0", path));
+    const auto p1 = (12u * dest.width + 19u) * 4;
+    check(dest.rgba[p1] == 198 && dest.rgba[p1 + 1] == 0 && dest.rgba[p1 + 2] == 0,
+          std::format("{} linear sample at x=1 is 198, not nearest 255 (got {})", path, dest.rgba[p1]));
+  };
+
+  Image base = makeSolid(640, 480, 0, 0, 0, 255);
+  drawSkillPanelPlates(base, plate);
+  expect(base, "base plates");
+  Image selected = makeSolid(640, 480, 0, 0, 0, 255);
+  webo::app::drawSkillPanelSelectedPlate(selected, plate);
+  expect(selected, "selected quad");
+}
+
 void testPatchPlateFullWordsAgainstC1bc() {
   if (!std::getenv("WEBOLUTION_C1BC_STREAM_TEST")) {
     std::cout << "C1bc scratch stream comparison: SKIPPED (set WEBOLUTION_C1BC_STREAM_TEST=1 to opt in)\n";
@@ -421,6 +457,7 @@ int main() {
   testZeroCountSkipsTextAtDestination();
   testPatchPlateResizeRowAsymmetricAlpha();
   testSelectedQuadDestination();
+  testLinearPlateSampleDiffersFromNearest();
   testPatchPlateFullWordsAgainstC1bc();
   testSkillPanelIconSheetsAreNotTheTenIcons();
 

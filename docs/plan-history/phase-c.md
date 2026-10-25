@@ -537,3 +537,11 @@ this function's argument-0 call. The init store writes 1 at
 `[0x58CD80+0x3A1]`. Header names: 16/17 are mag/min, 2 is LINEAR. Indirect
 callees before the panel call were not re-opened. No device read and no
 score. Next is sampling the plates with that request.
+
+**C1bi: linear plate sample, elev_up still fails**
+([Facilitator check](../scratch/phase-c1bi-linear-plate.md)). The sample
+blends the two texels around `s = x * 128 / 72`. Own re-renders match.
+Scores 285083/580972/285700 over 17721990. zoom1 and elev_down pass;
+elev_up is worse than C1bh by 552. Plate-only elev_up error is 466081 of
+that numerator. Omitting the plates makes elev_up worse, 2055954. Restoring
+nearest returns zoom1 to 286491. 34/34 CTest. The weights stay a hypothesis.

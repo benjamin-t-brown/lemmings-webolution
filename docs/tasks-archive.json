@@ -1159,6 +1159,36 @@
   ],
   "landed": [
     {
+      "id": "c1aq-launch-read",
+      "title": "One launch of the repaired alpha-count probe",
+      "status": "landed",
+      "worker_output": "build/tmp/c1aq-launch-read/round-note.md",
+      "brief": "build/tmp/c1aq-launch-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "one stock start",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ap-hook-repair"
+      ],
+      "gate_served": "C1 skill panel; the launch-time alpha read the plate render needs",
+      "question": "alpha-count-launch",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3. The one start of the repaired probe. Not retried if it fails.",
+      "stock_starts_authorized": 1,
+      "standing_run": "c1-hook-repair",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 23:18 MDT",
+      "dispatch_id": "49561111-d92c-4f30-9879-eb0ce22f4d4f",
+      "landed_at": "2026-10-24 23:24 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1aq-launch-read.md; docs/LESSONS.md C1aq; docs/plan-history/phase-c.md; docs/plan-history/phase-e.md",
+      "disposition": "Pid 25964 exited before MM_CLIMB_002. Count site 0. Last mask 32768. OpenProcess error 87. Hashes match. Not retried. Gate not scored.",
+      "facilitator_verified": "2026-10-24 23:24 MDT: recounted 46 lines, masks 0 x8 then 32768, count site 0. Re-hashed exe, SavedGame.dat, dgVoodoo.conf. hook.js hash matches c1ap. No Lemmings process."
+    },
+    {
       "id": "c1ap-hook-repair",
       "title": "Move the alpha-count hook off the shift",
       "status": "landed",

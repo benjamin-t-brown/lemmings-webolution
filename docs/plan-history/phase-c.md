@@ -355,3 +355,12 @@ round 1 of 3, offline. No branch target falls inside `0x473898`..`0x47389E`.
 The facilitator re-disassembled that span, re-scanned `.text` branches, and
 a one-address change of the new attach failed the dry check. No stock start.
 The early exit stays unnamed. The paused-level shift counts stay unread.
+
+**C1aq: the repaired probe exited before the level**
+([check](../scratch/phase-c1aq-launch-read.md)), 2026-10-24, hook-repair
+round 2 of 3, one stock start. Pid 25964 resumed at 23:20:21 and Frida
+reported `process-terminated` at 23:20:23, before `MM_CLIMB_002`. The log
+has 9 uploads, 28 format records and masks 0, 0, 0, 0, 0, 0, 0, 0, 32768.
+`0x47383C` has 0 lines. The facilitator recounted the log and re-hashed the
+install. `OpenProcess` failed with 87, so the exit code is unread. The
+probe was not run again. The paused-level shift counts stay unread.

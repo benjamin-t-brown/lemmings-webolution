@@ -1,34 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T23:18:33-06:00",
+  "updated": "2026-10-24T23:24:12-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1aq-launch-read",
-      "title": "One launch of the repaired alpha-count probe",
-      "status": "running",
-      "worker_output": null,
-      "brief": "build/tmp/c1aq-launch-read-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "one stock start",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": true,
-      "live_owner": "c1aq-launch-read",
-      "depends_on": [
-        "c1ap-hook-repair"
-      ],
-      "gate_served": "C1 skill panel; the launch-time alpha read the plate render needs",
-      "question": "alpha-count-launch",
-      "question_round_count": 2,
-      "cap_note": "Round 2 of 3. The one start of the repaired probe. Not retried if it fails.",
-      "stock_starts_authorized": 1,
-      "standing_run": "c1-hook-repair",
-      "investigation_budget_minutes": 30,
-      "dispatched_at": "2026-10-24 23:18 MDT"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-hook-repair",
@@ -46,11 +20,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 22:59 MDT /facilitator on mouv. Prior run c1-launch-attach stopped, directive active, so this start is the handoff. This session is Grok 4.7; the user said try again.",
     "started_at": "2026-10-24 22:59:52 -06:00",
-    "rounds_run": 1,
-    "stock_starts_used": 0,
+    "rounds_run": 2,
+    "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 23:18 MDT: c1aq running, one stock start of the c1ap probe. Starts authorized 1, used 0 until it returns. Gate not scored.",
+    "handoff": "2026-10-24 23:24 MDT: c1aq landed. Pid 25964 exited before the level. Count site 0. OpenProcess 87. Starts 1 of 2. Next is an offline exit-code repair, no start. Gate not scored.",
     "pass_clock": {
       "started": "2026-10-24 22:59:52 -06:00",
       "rounds": [
@@ -59,6 +33,12 @@
           "dispatched": "2026-10-24 23:03 MDT",
           "landed": "2026-10-24 23:17 MDT",
           "elapsed": "14m 37s"
+        },
+        {
+          "id": "c1aq-launch-read",
+          "dispatched": "2026-10-24 23:18 MDT",
+          "landed": "2026-10-24 23:24 MDT",
+          "elapsed": "6m 12s"
         }
       ]
     },

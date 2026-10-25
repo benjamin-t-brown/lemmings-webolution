@@ -1,9 +1,11 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T10:30:51-06:00",
+  "updated": "2026-10-25T11:15:30-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [],
-  "queue": [],
+  "queue": [{"id":"c1be-plate-filter-value","question":"Which numerical MAG/MIN request applies at the base-plate draws?","question_key":"plate-numerical-filter","question_round":1,"milestone":"C1 skill panel","status":"queued",
+    "brief":"build/tmp/c1be-plate-filter-value-brief.md","tier":"hard","tier_reason":"Native state-flow reading uses disasm-agent per ROLES.md.","worker_type":"disassembly read","requested_model":"openai/gpt-6.1-sol high (disasm-agent pin)","dispatch_id":null,
+    "owns_live_game":false,"live_owner":null,"owned_paths":["build/tmp/c1be-plate-filter-value/**"],"depends_on":[],"stock_start_budget":0,"worker_output":null}],
   "standing_run": {
     "id": "c1-derived-values",
     "goal": "C1 only: derive +6 and kept format, derive ^tab upload texel words, render and independently score frozen footprint on zoom1/elev_up/elev_down; then rank residuals until fixed gate passes or authorized stop.",
@@ -18,12 +20,18 @@
     "workers": "OpenCode ROLES.md: disasm-agent for native code reading; round-agent for implementation/render/scoring; configured high variant, no model override.",
     "owner": "OpenCode ses_e8c346bc4ffe01LaYRaXoqOAkl facilitator on mouv; explicit user resumption hands off from stopped c1-c2-b3, no running task.",
     "started_at": "2026-10-25T10:01:32-06:00",
-    "rounds_run": 2,
+    "rounds_run": 5,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
-    "handoff": "C1bc landed conditional patch texel streams (128x32, full UV); own complete p53-nearest replay both assets. No original runtime state chosen by fit. Next: opt-in plate render and frozen C1 score under declared successful-layout/arithmetic conditions; sensitivity reported. No task/game in flight; starts 0/3, rounds 2.",
-    "pass_clock": {"started":"2026-10-25T10:01:32-06:00","rounds":[{"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"},{"id":"c1bc-patch-texels","dispatched":"2026-10-25T10:31:43-06:00","landed":"2026-10-25T10:51:48-06:00","elapsed":"20m05s"}]},
+    "handoff": "C1bd landed, including2repairs (3dispatches): opt-in conditional plates; all3gate scores fail0.02 at0.03437/0.05537/0.03446. Own freshPNG/re-score/alpha-only mutation/restore,34/34CTest. Plate-exclusive errors325738/669975/323854 rank above icon/glyph. Next numerical plate filter/alpha state, then known zero-count text skip. State/raster remains hypothesis; no fit. No task/game in flight; starts0/3, dispatches5. Context handoff is not a standing-run stop; directive remains active. Resume /facilitator.",
+    "pass_clock": {"started":"2026-10-25T10:01:32-06:00","rounds":[
+      {"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"},
+      {"id":"c1bc-patch-texels","dispatched":"2026-10-25T10:31:43-06:00","landed":"2026-10-25T10:51:48-06:00","elapsed":"20m05s"},
+      {"id":"c1bd-plate-render","dispatched":"2026-10-25T10:54:15-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"21m15s","attempt_return_observed":"2026-10-25T10:58:32-06:00"},
+      {"id":"c1bd-plate-render-repair1","dispatched":"2026-10-25T10:59:11-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"16m19s","attempt_return_observed":"2026-10-25T11:06:33-06:00"},
+      {"id":"c1bd-plate-render-repair2","dispatched":"2026-10-25T11:07:28-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"8m02s","attempt_return_observed":"2026-10-25T11:12:31-06:00"}
+    ]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null
   }

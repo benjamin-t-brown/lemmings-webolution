@@ -16,11 +16,13 @@
 #include "app/SkillPanel.h"
 #include "assets/Box.h"
 #include "assets/Sprite.h"
+#include "assets/Bitmap.h"
 
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <format>
 #include <iostream>
 #include <string>
@@ -29,6 +31,8 @@ namespace fs = std::filesystem;
 using webo::Image;
 using webo::app::compositeIconRegion;
 using webo::app::drawSkillPanelCounts;
+using webo::app::resizeSkillPlatePatch;
+using webo::app::drawSkillPanelPlates;
 using webo::app::skillPanelRect;
 using webo::app::SkillIconPlacement;
 
@@ -166,6 +170,56 @@ void testNativePanelPlacementAndDigit() {
   check(dest.rgba[(20 * 90 + 72) * 4] == 255, "count text: twenty renders the ones digit '0'");
 }
 
+void testPatchPlateResizeRowAsymmetricAlpha() {
+  Image src = makeSolid(72, 32, 0, 0, 0, 0);
+  src.rgba[(0 * 72 + 0) * 4] = 11; src.rgba[(0 * 72 + 0) * 4 + 3] = 3;
+  src.rgba[(31 * 72 + 0) * 4] = 77; src.rgba[(31 * 72 + 0) * 4 + 3] = 201;
+  const auto out = resizeSkillPlatePatch(src);
+  check(out.width == 128 && out.height == 32, "plate patch grows to 128x32");
+  check(out.rgba[3] == 3, "top row alpha remains top row");
+  check(out.rgba[(31u * 128u) * 4 + 3] == 201, "bottom row alpha remains bottom row");
+  check(out.rgba[(31u * 128u) * 4] == 77, "bottom row RGB remains bottom row");
+  Image dest = makeSolid(640,480,0,0,0,255); Image patch = makeSolid(128,32,200,0,0,128);
+  drawSkillPanelPlates(dest,patch);
+  check(dest.rgba[(12u*640u+18u)*4] == 100, "plate alpha composites into destination pixel");
+  check(dest.rgba[(11u*640u+18u)*4] == 0, "plate compositor leaves pixel outside box untouched");
+
+  // Source-derived C1bc discriminator: selected asset row 24 has ALF x6=170,
+  // x7=43; at output x11 C1bc p53-nearest is 151 (p24-nearest is 150).
+  Image discriminator = makeSolid(72,32,255,255,255,0);
+  discriminator.rgba[(24u*72u+6u)*4+3] = 170;
+  discriminator.rgba[(24u*72u+7u)*4+3] = 43;
+  const auto interp = resizeSkillPlatePatch(discriminator);
+  const auto got = interp.rgba[(24u*128u+11u)*4+3];
+  check(got == 151, std::format("source-derived p53 interpolation x11,y24 is 151 (p24 is 150), got {}",got));
+}
+
+void testPatchPlateFullWordsAgainstC1bc() {
+  if (!std::getenv("WEBOLUTION_C1BC_STREAM_TEST")) {
+    std::cout << "C1bc scratch stream comparison: SKIPPED (set WEBOLUTION_C1BC_STREAM_TEST=1 to opt in)\n";
+    return;
+  }
+  const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
+  if (!dir || !*dir) { std::cout << "C1bc full stream: SKIPPED (WEBOLUTION_GAME_DIR unset)\n"; return; }
+  auto lib=webo::AssetLibrary::open(fs::path(dir)/"lemmings.box",fs::path(dir)/"patch.box");
+  check(bool(lib), "open archive for C1bc word comparison"); if(!lib)return;
+  auto src=webo::loadTexture(*lib,"TEXTURES\\^TAB.BMP");
+  check(bool(src), "load original ^tab source"); if(!src)return;
+  auto actual=resizeSkillPlatePatch(*src);
+  auto expectedPath=fs::current_path()/"../../../build/tmp/c1bc-patch-texels/tab-p53-nearest.bgra";
+  if(!fs::exists(expectedPath)) expectedPath=fs::current_path()/"build/tmp/c1bc-patch-texels/tab-p53-nearest.bgra";
+  std::ifstream in(expectedPath,std::ios::binary);
+  std::vector<std::uint8_t> expected((std::istreambuf_iterator<char>(in)),{});
+  check(expected.size()==16384, "read complete C1bc expected stream");
+  if(expected.size()!=16384)return;
+  std::size_t differences=0;
+  for(std::size_t i=0;i<4096;++i) for(int c=0;c<4;++c) {
+    const auto streamChannel=expected[i*4+(c==0?2:c==2?0:c)];
+    differences += actual.rgba[i*4+c] != streamChannel;
+  }
+  check(differences==0,std::format("all 16384 channels equal C1bc p53-nearest, mismatches={}",differences));
+}
+
 // The real-archive negative finding. Gated like test_frontend.cpp.
 void testSkillPanelIconSheetsAreNotTheTenIcons() {
   const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
@@ -239,6 +293,8 @@ int main() {
   testClipsSourceEdge();
   testEmptyInputsAreNoOps();
   testNativePanelPlacementAndDigit();
+  testPatchPlateResizeRowAsymmetricAlpha();
+  testPatchPlateFullWordsAgainstC1bc();
   testSkillPanelIconSheetsAreNotTheTenIcons();
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);

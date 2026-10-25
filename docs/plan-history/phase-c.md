@@ -494,3 +494,13 @@ Own complete p53-nearest replay, source bytes, 2,554 instruction-line rereads,
 row-flip mutation and 34/34 CTest pass. Actual PC/RC, completed GDI and returned
 layout stay conditional; no original upload or pixel pass measured. Next is a
 declared conditional render and unchanged C1 gate score, with sensitivity reported.
+
+**C1bd: conditional plate render, all three fixed gates fail**
+([Facilitator check](../scratch/phase-c1bd-plate-render.md)). Initial attempt plus
+two bounded repairs add the opt-in asset-derived plates, portable interpolated
+alpha test and exact nine-view footprint scores. Own re-render/re-score:
+zoom1/elev_up/elev_down0.0343726071/0.0553698541/0.0344632854 >0.02.
+An isolated alpha-only mutation worsens zoom1 and fails the pixel test; exact
+restore and34/34CTest pass. No original runtime state or raster assumption is
+accepted by these numbers. Plate-exclusive region ranks first; next is its
+numerical filter/alpha state, not a fourth integration dispatch or gate change.

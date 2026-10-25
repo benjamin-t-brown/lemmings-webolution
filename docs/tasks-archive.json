@@ -1329,6 +1329,12 @@
     }
   ],
   "landed": [
+    {"id":"c1bd-plate-render","status":"landed","milestone":"C1 skill panel","question_key":"derived-plate-render","question_round":3,
+     "brief":"build/tmp/c1bd-plate-render-brief.md","repair_briefs":["build/tmp/c1bd-plate-render-repair1.md","build/tmp/c1bd-plate-render-repair2.md"],
+     "worker_output":"build/tmp/c1bd-plate-render/round-note.md","dispatch_id":"ses_e8c03dd03ffeAvoHiaT87CcTxw","requested_model":"openai/gpt-6-luna high, round-agent",
+     "dispatched_at":"2026-10-25T10:54:15-06:00","repair_dispatches":["2026-10-25T10:59:11-06:00","2026-10-25T11:07:28-06:00"],"landed_at":"2026-10-25T11:15:30-06:00",
+     "evidence":"docs/scratch/phase-c1bd-plate-render.md","stock_starts_used":0,
+     "result":"Opt-in conditional plates drawn. Frozen gate fails: zoom1 609151, elev_up981264, elev_down610758 /17721990. Independent scores/fresh PNGs/isolated alpha regression/restore; 34/34CTest. Hypothesis state/raster, no C1 acceptance."},
     {"id":"c1bc-patch-texels","status":"landed","milestone":"C1 skill panel","question_key":"patch-plate-texel-words","question_round":1,
      "brief":"build/tmp/c1bc-patch-texels-brief.md","worker_output":"build/tmp/c1bc-patch-texels/round-note.md",
      "dispatch_id":"ses_e8c186840ffexpZFloFJer1PNq","requested_model":"openai/gpt-6.1-sol high, disasm-agent",

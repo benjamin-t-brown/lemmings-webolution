@@ -83,6 +83,12 @@ void drawSkillPanelIcon(webo::Image& dest, const webo::Image& sheet,
 // READ C1n/C1q: fixed two ASCII digits, glyphs 6x14, white vertex colour.
 void drawSkillPanelCounts(webo::Image& dest, const webo::Image& font,
                           const std::array<int, 9>& counts);
+// HYPOTHESIS: conditionally models C1bc successful normal-layout ^tab upload
+// with p53-nearest arithmetic; not an observed or selected original FPU state.
+// Endpoint bilinear 72x32 -> 128x32, full texture UV.
+webo::Image resizeSkillPlatePatch(const webo::Image& source);
+// HYPOTHESIS: unselected plate state and pixel-center nearest full-UV raster.
+void drawSkillPanelPlates(webo::Image& dest, const webo::Image& plate);
 // Opt-in, headless C1 fixture renderer. All game data is read from the supplied
 // archive and level trailer; the caller only wires this into --shot.
 std::expected<void, std::string> drawRetailSkillPanel(webo::Image& dest,

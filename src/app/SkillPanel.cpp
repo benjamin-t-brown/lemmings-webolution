@@ -132,13 +132,48 @@ void drawSkillPanelCounts(Image& dest, const Image& font, const std::array<int, 
   }
 }
 
+Image resizeSkillPlatePatch(const Image& source) {
+  if (source.width != 72 || source.height != 32 || source.rgba.size() != 72u * 32u * 4u) return {};
+  Image out; out.width = 128; out.height = 32; out.alpha = source.alpha;
+  out.rgba.resize(128u * 32u * 4u);
+  for (int y = 0; y < 32; ++y) for (int x = 0; x < 128; ++x) {
+    // HYPOTHESIS, conditional C1bc p53-nearest successful stream: x87 p53
+    // arithmetic, then binary32 store. Original entry FPU state is unobserved.
+    const float fx = static_cast<float>(static_cast<double>(x) / 127.0 * 71.0);
+    const int x0 = static_cast<int>(fx), x1 = std::min(x0 + 1, 71);
+    const float tx = static_cast<float>(static_cast<double>(fx) - x0);
+    const float gx = static_cast<float>(1.0 - static_cast<double>(tx));
+    for (int c = 0; c < 4; ++c) {
+      const auto at = [&](int xx) { return source.rgba[(static_cast<std::size_t>(y) * 72 + xx) * 4 + c]; };
+      const double value = static_cast<double>(at(x0)) * gx + static_cast<double>(at(x1)) * tx;
+      out.rgba[(static_cast<std::size_t>(y) * 128 + x) * 4 + c] = static_cast<std::uint8_t>(value);
+    }
+  }
+  return out;
+}
+
+void drawSkillPanelPlates(Image& dest, const Image& plate) {
+  for (int i = 0; i < 10; ++i) {
+    const int py = 12 + 40 * i;
+    for (int y = 0; y < 32 && py + y < dest.height; ++y) for (int x = 0; x < 72 && 18 + x < dest.width; ++x) {
+      // HYPOTHESIS: destination pixel-center nearest across complete [0,1] UV.
+      const int sx = std::min(127, (x * 128 + 36) / 72);
+      const auto* s = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx) * 4;
+      auto* d = dest.rgba.data() + (static_cast<std::size_t>(py + y) * dest.width + 18 + x) * 4;
+      const unsigned a = s[3];
+      for (int c = 0; c < 3; ++c) d[c] = static_cast<std::uint8_t>((s[c] * a + d[c] * (255 - a)) / 255);
+    }
+  }
+}
+
 std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLibrary& library,
                                                        std::string_view levelId) {
   auto lvl = library.read("COMPILED\\" + std::string(levelId) + ".LVL");
   auto spriteBytes = library.read("SPRITES\\LEMMINGSHI.SPR");
   auto font = loadTexture(library, "TEXTURES\\_FONTSMALL.BMP");
-  if (!lvl || !spriteBytes || !font)
-    return std::unexpected(!lvl ? lvl.error() : (!spriteBytes ? spriteBytes.error() : font.error()));
+  auto plateSource = loadTexture(library, "TEXTURES\\^TAB.BMP");
+  if (!lvl || !spriteBytes || !font || !plateSource)
+    return std::unexpected(!lvl ? lvl.error() : (!spriteBytes ? spriteBytes.error() : (!font ? font.error() : plateSource.error())));
   auto skills = findLevelSkills(*lvl);
   auto spriteSheet = parseSpriteSheet(*spriteBytes);
   if (!skills || !spriteSheet)
@@ -158,6 +193,11 @@ std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLi
   for (std::size_t i = 0; i < skills->counts.size(); ++i)
     counts[i] = static_cast<int>(skills->counts[i]); // READ: level .LVL trailer, findLevelSkills.
   counts[8] = 0; // UNREAD on MM_DIG_000; C1l MEASURED zero for this slot on MM_CLIMB_002.
+  // HYPOTHESIS: ten unselected ^tab textures. Selection is not established;
+  // C1bc stream is conditional, and no score-based state selection is made.
+  const Image plate = resizeSkillPlatePatch(*plateSource);
+  if (plate.empty()) return std::unexpected("skill-panel plate must be 72x32");
+  drawSkillPanelPlates(dest, plate);
   drawSkillPanelCounts(dest, *font, counts); // READ, C1g: count quads precede icon quads.
 
   for (int i = 0; i < 10; ++i) {

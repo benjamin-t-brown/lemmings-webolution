@@ -3,6 +3,74 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-alpha-offline",
+      "goal": "Directive 2026-10-25 (C1 alpha counts). Three offline rounds: descriptor identity, context bytes plus the keep rule on the c1as format list, and the skip-path stores. Then one menu-attach start only if a render input is still unread. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+      "milestones": [
+        "C1 skill panel"
+      ],
+      "current": "C1 skill panel",
+      "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-25: yep all are good i approve). 3 offline rounds and 1 live round. Pool of 1 menu-attach start. frida.spawn retired. A crash is a hard stop. Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+      "grants": {
+        "stock_starts": "pool of 1; menu-attach only (normal Popen, attach at the menu); no start until the offline rounds leave a render input unread and a dry check passes; frida.spawn retired; a crash is a hard stop with no repair start",
+        "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
+        "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
+      },
+      "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
+      "owner": "Cursor facilitator, 2026-10-25 00:03 MDT /facilitator on mouv. Prior run c1-hook-repair stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
+      "started_at": "2026-10-25 00:03:19 -06:00",
+      "rounds_run": 4,
+      "stock_starts_used": 1,
+      "pending_questions": [
+        {
+          "id": "plate-alpha-after-crash",
+          "question": "This run stopped without a gate score. Park the plate-alpha question, or amend the C1 gate?",
+          "options": [
+            "Park the plate-alpha question",
+            "Amend the C1 gate"
+          ],
+          "recommendation": "Do not pick. The directive leaves the choice to the overlord and the user.",
+          "evidence": "docs/scratch/phase-c1aw-menu-context.md"
+        }
+      ],
+      "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; the alpha-count question uses its 3 offline and 1 live rounds without the counts or the rule the render needs; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; a start crashes or leaves the install unrestored (hard stop); about 4 hours or 12 rounds; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3. If the run stops without a gate score, do not choose between parking plate-alpha and amending the gate.",
+      "handoff": "2026-10-25 00:54 MDT: stopped. c1aw pid 35216 exit 0xC0000005. ^tab did not reach 0x473146. Hashes match. Starts 1 of 1. Rounds 4. Gate not scored. Pass started 00:03:19.",
+      "pass_clock": {
+        "started": "2026-10-25 00:03:19 -06:00",
+        "rounds": [
+          {
+            "id": "c1av-skip-write",
+            "dispatched": "2026-10-25 00:15 MDT",
+            "landed": "2026-10-25 00:28 MDT",
+            "elapsed": "12m 48s"
+          },
+          {
+            "id": "c1at-descriptor-link",
+            "dispatched": "2026-10-25 00:15 MDT",
+            "landed": "2026-10-25 00:30 MDT",
+            "elapsed": "14m 48s"
+          },
+          {
+            "id": "c1au-context-keep",
+            "dispatched": "2026-10-25 00:15 MDT",
+            "landed": "2026-10-25 00:34 MDT",
+            "elapsed": "19m 9s"
+          },
+          {
+            "id": "c1aw-menu-context",
+            "dispatched": "2026-10-25 00:36 MDT",
+            "landed": "2026-10-25 00:54 MDT",
+            "elapsed": "17m 13s"
+          }
+        ]
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-25 00:54 MDT",
+        "reason": "The one menu-attach start, pid 35216, exited 0xC0000005 before the pause. ^tab did not reach 0x473146. Install hashes match. The in-process level slot was not written back because the process was already gone. Not relaunched. Gate not scored.",
+        "last_commit": "5552dd2"
+      }
+    },
+    {
       "id": "c1-hook-repair",
       "goal": "Directive 2026-10-24 (C1 alpha counts, hook repair). Offline: find why c1ao exited, move the count read outside the pixel loop, dry-check. Then one stock start at paused MM_CLIMB_002. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
       "milestones": [
@@ -918,7 +986,7 @@
                                                                       "question": "B1b captured a valid, structurally-confirmed 640x480 main-menu reference screengrab (screen id 3, highlight 0, both live-read at capture time) -- but its text is English, not German. match-the-original.md documents \"German menus\" as a preserved quirk, and goto_level.py's own docstring assumed German is the frontends default. The installs persisted SavedGame.dat (created 2026-10-12, modified many times since across many live rounds over multiple days) has no backup or pristine copy anywhere to compare against, so there is no way to determine, from this installs own state, whether English is a residue of some earlier rounds navigation (undocumented, not necessarily a guardrail breach since every individual rounds own before/after restore check has passed on its own terms) or whether the game simply remembers the last-selected language as real stock behaviour and this install happened to have English selected before this project ever touched it. Should a follow-up round spend its one live stock start explicitly navigating into \"Language Selection\" and selecting German (a deliberate, not-undone persisted change to the shared installs save data, on the reasoning that German is the documented correct default and resetting to it is a restoration rather than a new deviation) before capturing the real B1 reference image, or should English be accepted as this installs now-real persisted state and the German-menus quirk note be narrowed to \"the retail games own default,\" with B1s reference image captured in whatever language the install actually produces?",
                                                                       "options": [
                                                                         "Reset the install to German via one more live round (explicit Language Selection + RETURN navigation, scope beyond any round's brief so far) before capturing B1's real reference image, on the reasoning that German is the documented default and resetting to it restores rather than further deviates",
-                                                                        "Accept English as this install's现actual persisted state, capture B1's reference image in English, and narrow match-the-original.md's \"German menus\" quirk note to describe the fresh-install default rather than a live invariant",
+                                                                        "Accept English as this install's\u73b0actual persisted state, capture B1's reference image in English, and narrow match-the-original.md's \"German menus\" quirk note to describe the fresh-install default rather than a live invariant",
                                                                         "Install a second, fresh copy of the game (or otherwise obtain a known-pristine SavedGame.dat) to settle definitively whether German is really the fresh-install default before deciding either way"
                                                                       ],
                                                                       "recommendation": "Option 1. match-the-original.md's \"German menus\" quirk is stated plainly, without a caveat about persisted language choice, and the project has never until now needed to reckon with SavedGame.dat drift -- resetting the shared install's language to German before capturing any pixel-comparison reference is the smallest, most defensible action that keeps every future B1/B2/B3 capture unambiguous, and costs only one more live round. Option 3 is the most certain but the most expensive and disruptive (a second install) for a question option 1 likely settles just as well. Option 2 risks quietly smoothing over exactly the kind of quirk this project's rules explicitly warn against doing.",
@@ -1227,6 +1295,36 @@
     }
   ],
   "landed": [
+    {
+      "id": "c1ax-fill-coverage",
+      "title": "Does the fill write the +7 dword",
+      "status": "landed",
+      "brief": "build/tmp/c1ax-fill-coverage-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1au-context-keep"
+      ],
+      "gate_served": "C1 skill panel; whether the fill covers [ebp-0x140] before 0x473146",
+      "question": "fill-covers-0x140",
+      "question_round_count": 1,
+      "cap_note": "Round 1 of 3. The 2026-10-25 directive requires this re-read before the keep rule or a plate draw. Not a fourth alpha-count round.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 01:26 MDT",
+      "dispatch_id": "f74225c9-cfb8-4b72-8d87-043f33b04373",
+      "worker_output": "build/tmp/c1ax-fill-coverage/round-note.md",
+      "landed_at": "2026-10-25 01:42 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1ax-fill-coverage.md; docs/LESSONS.md C1ax; docs/plan-history/phase-c.md; docs/scratch/phase-c1au-context-keep.md correction",
+      "disposition": "The fill at 0x473051 writes 0x7c zero bytes at [ebp-0x18c]. [ebp-0x140] is inside that interval. No store before 0x473146 overlaps it, and the read is unreachable without the call. +7 is 0. ^tab reaching the function stays unread. Gate not scored.",
+      "facilitator_verified": "2026-10-25 01:42 MDT: re-read 0x473046, 0x49D760, 0x473146, 0x473157, 0x473059 and 0x473063. check_fill.py: 712 insns, read unreachable without 0x473051, 44 insns and 0 calls before the read, one displacement hit at 0x473148. Count 0x7b failed and the checker was restored. No Lemmings process."
+    },
     {
       "id": "c1aw-menu-context",
       "title": "Read ^tab context byte +7 at the menu",
@@ -5202,7 +5300,7 @@
     },
     {
       "id": "a4ag-zoom1-linear-a0-offline-replay",
-      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) — PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
+      "title": "A4ag: offline replay of retained A4z zoom1 fixture under 0x470F29(1) (LINEAR + > 0xA0) \u2014 PARKED, not run (2026-10-20 milestone restructure; Phase E zoom 1 debt)",
       "landed_in": "PLAN.md",
       "commit_hint": null
     },
@@ -5306,7 +5404,7 @@
     },
     {
       "id": "a6d3-matched-state-bbox",
-      "title": "A6d3: matched pause — actors 0–1 improve; slope walker 0.101→0.112 (temporal 0)",
+      "title": "A6d3: matched pause \u2014 actors 0\u20131 improve; slope walker 0.101\u21920.112 (temporal 0)",
       "status": "landed",
       "brief": "build/tmp/a6d3-matched-state-bbox-brief.md",
       "harness": "Cursor",
@@ -5397,7 +5495,7 @@
       ],
       "landed_in": "docs/scratch/phase-a6-live-pose-pair.md",
       "commit_hint": null,
-      "facilitator_verified": "2026-10-20: independent test_actorpose 2.188e-6 / 6.776e-7 / 8.551e-7. Isolated modelY+1 fails a6d7 model[1] delta 1.0; ActorPose.cpp restored. 23/23 CTest. Rejected: A6d3 bbox is unpaired +0x08 — A6d3 captured screenshot and +0x08 together; this pause is a different 10 s walk. No game."
+      "facilitator_verified": "2026-10-20: independent test_actorpose 2.188e-6 / 6.776e-7 / 8.551e-7. Isolated modelY+1 fails a6d7 model[1] delta 1.0; ActorPose.cpp restored. 23/23 CTest. Rejected: A6d3 bbox is unpaired +0x08 \u2014 A6d3 captured screenshot and +0x08 together; this pause is a different 10 s walk. No game."
     },
     {
       "id": "a6d8-actor2-z-order",

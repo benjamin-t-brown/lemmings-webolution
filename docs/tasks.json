@@ -1,75 +1,44 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T00:54:10-06:00",
+  "updated": "2026-10-25T01:42:10-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c1-alpha-offline",
-    "goal": "Directive 2026-10-25 (C1 alpha counts). Three offline rounds: descriptor identity, context bytes plus the keep rule on the c1as format list, and the skip-path stores. Then one menu-attach start only if a render input is still unread. Then draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02.",
+    "id": "c1-c2-b3",
+    "goal": "Directive 2026-10-25 (long multi-milestone run). Re-read the c1au fill coverage of [ebp-0x140]. If +7 is settled, apply the keep rule and record the kept format. Draw the plates and score zoom1, elev_up, elev_down over the frozen footprint, each <= 0.02. Then the C2 cursor clause, then B3. C3 and B2 stay parked.",
     "milestones": [
-      "C1 skill panel"
+      "C1 skill panel",
+      "C2 cursor clause",
+      "B3 level select and map"
     ],
     "current": "C1 skill panel",
-    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-25: yep all are good i approve). 3 offline rounds and 1 live round. Pool of 1 menu-attach start. frida.spawn retired. A crash is a hard stop. Gate: A7p zoom1, elev_up, elev_down each <= 0.02 over the frozen footprint. No debugger. 30-minute round limit. No C3, C2 cursor clause, B2, B3.",
+    "authorized": "docs/DIRECTIVE.md Status active (user, overlord review 2026-10-25: approve). About 8 hours or 24 rounds. 3 rounds per question, then park. Pool of 3 menu-attach starts through the REA CLI. A crash ends that question live arm; a second crash ends starts for the run. No debugger. 30-minute round limit.",
     "grants": {
-      "stock_starts": "pool of 1; menu-attach only (normal Popen, attach at the menu); no start until the offline rounds leave a render input unread and a dry check passes; frida.spawn retired; a crash is a hard stop with no repair start",
+      "stock_starts": "pool of 3; each dry-checked offline first; normal Popen, attach at the menu through the REA CLI; Python frida.attach and frida.spawn retired; a crash ends live work on that question; a second crash ends all stock starts for the run",
       "commits": "each verified round on decompile, push origin decompile; credential failure leaves local commits and a handoff note; no force-push/checkout/reset/stash",
       "concurrency": "up to 3 concurrent offline rounds; at most one live owner"
     },
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
-    "owner": "Cursor facilitator, 2026-10-25 00:03 MDT /facilitator on mouv. Prior run c1-hook-repair stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
-    "started_at": "2026-10-25 00:03:19 -06:00",
-    "rounds_run": 4,
-    "stock_starts_used": 1,
-    "pending_questions": [
-      {
-        "id": "plate-alpha-after-crash",
-        "question": "This run stopped without a gate score. Park the plate-alpha question, or amend the C1 gate?",
-        "options": [
-          "Park the plate-alpha question",
-          "Amend the C1 gate"
-        ],
-        "recommendation": "Do not pick. The directive leaves the choice to the overlord and the user.",
-        "evidence": "docs/scratch/phase-c1aw-menu-context.md"
-      }
-    ],
-    "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; the alpha-count question uses its 3 offline and 1 live rounds without the counts or the rule the render needs; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; a start crashes or leaves the install unrestored (hard stop); about 4 hours or 12 rounds; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3. If the run stops without a gate score, do not choose between parking plate-alpha and amending the gate.",
-    "handoff": "2026-10-25 00:54 MDT: stopped. c1aw pid 35216 exit 0xC0000005. ^tab did not reach 0x473146. Hashes match. Starts 1 of 1. Rounds 4. Gate not scored. Pass started 00:03:19.",
+    "owner": "Cursor facilitator, 2026-10-25 01:22 MDT /facilitator on mouv. Prior run c1-alpha-offline stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
+    "started_at": "2026-10-25 01:22:18 -06:00",
+    "rounds_run": 1,
+    "stock_starts_used": 0,
+    "pending_questions": [],
+    "stop_point": "The last ranked milestone gate passes on an independent re-score; a gate, footprint, mask, views or exclusions would need to change; a guardrail breach; every remaining ranked question is parked or waits on pending_questions; about 8 hours or 24 rounds; delegation or the pinned model is unavailable, or another session is running a task. A crash parks that question live arm. A second crash ends starts. Caps park and the run continues. Do not choose a gate amendment.",
+    "handoff": "2026-10-25 01:42 MDT: c1ax landed (16m 6s). +7 is 0 on paths that reach 0x473146. Milestone C1. Next: apply the c1aj keep rule to the c1as list with +7 = 0. Gate not scored. Pass started 01:22:18.",
     "pass_clock": {
-      "started": "2026-10-25 00:03:19 -06:00",
+      "started": "2026-10-25 01:22:18 -06:00",
       "rounds": [
         {
-          "id": "c1av-skip-write",
-          "dispatched": "2026-10-25 00:15 MDT",
-          "landed": "2026-10-25 00:28 MDT",
-          "elapsed": "12m 48s"
-        },
-        {
-          "id": "c1at-descriptor-link",
-          "dispatched": "2026-10-25 00:15 MDT",
-          "landed": "2026-10-25 00:30 MDT",
-          "elapsed": "14m 48s"
-        },
-        {
-          "id": "c1au-context-keep",
-          "dispatched": "2026-10-25 00:15 MDT",
-          "landed": "2026-10-25 00:34 MDT",
-          "elapsed": "19m 9s"
-        },
-        {
-          "id": "c1aw-menu-context",
-          "dispatched": "2026-10-25 00:36 MDT",
-          "landed": "2026-10-25 00:54 MDT",
-          "elapsed": "17m 13s"
+          "id": "c1ax-fill-coverage",
+          "dispatched": "2026-10-25 01:26 MDT",
+          "landed": "2026-10-25 01:42 MDT",
+          "elapsed": "16m 6s"
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-25 00:54 MDT",
-      "reason": "The one menu-attach start, pid 35216, exited 0xC0000005 before the pause. ^tab did not reach 0x473146. Install hashes match. The in-process level slot was not written back because the process was already gone. Not relaunched. Gate not scored.",
-      "last_commit": "5552dd2"
-    }
+    "stopped": null
   }
 }

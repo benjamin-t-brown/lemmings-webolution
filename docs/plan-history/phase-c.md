@@ -420,3 +420,12 @@ one line, `Sheets\$LemSheetHi8`, not `^tab`. The facilitator recounted
 it, re-hashed the three install files, and a one-address change of the
 dry check failed. The install files match. The `^tab` dword stays unread.
 The gate is not scored. The start was not repeated.
+
+**C1ax: the fill writes the +7 dword as 0**
+([check](../scratch/phase-c1ax-fill-coverage.md)), 2026-10-25, fill-coverage
+round 1 of 3. `0x473051` calls `0x49D760` with count `0x7c` and value 0
+at `[ebp-0x18c]`. `[ebp-0x140]` is inside that interval, and nothing
+before the read stores it. The `sete` at `0x473157` stores 0. The
+facilitator walked the function, and a count of `0x7b` failed the check.
+No stock start. The c1au coverage sentence is rejected. The gate is not
+scored.

@@ -21,3 +21,7 @@ Narrowing: `+6` compares the word at GetObjectA buffer `+0x12` with 8. The BMP b
 ## Stop
 
 Offline round 2 of the alpha-count question. The formula is read. The kept mask is not. The gate is not scored.
+
+## Correction
+
+C1ax rejects the coverage sentence in the result above. The fill does write `[ebp-0x140]`, and the dword at the read is 0. The withdrawal of "always 0" stands in this note as what c1au concluded. The corrected read is [C1ax](phase-c1ax-fill-coverage.md).

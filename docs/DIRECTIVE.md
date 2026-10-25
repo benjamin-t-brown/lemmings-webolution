@@ -60,6 +60,17 @@ limit; "the next link is unread" ends a round only when the limit is hit, not by
 4. If the gate fails, rank what is left inside the footprint (count tint, selection state,
    icon edges) by error and keep going.
 
+**Ranking after C1bd (user, overlord review 2026-10-25, "yes"; budget unchanged).** The
+overlord's split of C1bd's saved PNGs (`build/tmp/overlord-2026-10-25/residual.py`;
+evaluation, not evidence) puts the zero-count glyphs at 0.0112–0.0113 of each gated score and
+plate 0 at 0.0136 / 0.0351 / 0.0141; the rest is 0.0090–0.0095. Stock draws no `00` text and
+a ring on plate 0. Rank in this order, each read before it is drawn:
+1. **Zero-count skip:** the landed C1v branch (a zero `[this+i*4]` skips the text submit).
+2. **Selected plate:** the `0x45B6B5` `^tab_selected` draw gated on `[this+0x2750]`, its
+   selected index at the A7p pause, with the C1bc selected stream. Read the index; do not pick
+   plate 0 because the stock frame shows a ring there.
+3. **Plate filter (c1be)** only if the gate still fails after 1 and 2.
+
 Not in scope: C2, C3, B2, B3. Do not advance to them if C1 passes; stop and report.
 
 ## Budget

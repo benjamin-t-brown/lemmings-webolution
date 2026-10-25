@@ -1,22 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T00:28:38-06:00",
+  "updated": "2026-10-25T00:30:38-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [
-    {
-      "id": "c1at-descriptor-link",
-      "status": "ready-for-verify",
-      "brief": "build/tmp/c1at-descriptor-link-brief.md",
-      "owns_live_game": false,
-      "disassembly_read": true,
-      "tier": "targeted",
-      "requested_model": "grok-4.7-high-fast",
-      "session_id": "1afb5306-7fca-4c84-99f8-0ff628dec533",
-      "milestone": "C1 skill panel",
-      "question_rounds": "alpha-count offline 1 of 3",
-      "dispatched_at": "2026-10-25 00:15 MDT",
-      "worker_output": "build/tmp/c1at-descriptor-link/round-note.md"
-    },
     {
       "id": "c1au-context-keep",
       "status": "running",
@@ -48,11 +34,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-25 00:03 MDT /facilitator on mouv. Prior run c1-hook-repair stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
     "started_at": "2026-10-25 00:03:19 -06:00",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; the alpha-count question uses its 3 offline and 1 live rounds without the counts or the rule the render needs; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; a start crashes or leaves the install unrestored (hard stop); about 4 hours or 12 rounds; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3. If the run stops without a gate score, do not choose between parking plate-alpha and amending the gate.",
-    "handoff": "2026-10-25 00:28 MDT: c1av landed. Skip path stores masked pixels; shifted sample is not on it. Gate not scored. Still open: c1at-descriptor-link ready-for-verify, c1au-context-keep running. No start. Pass started 00:03:19.",
+    "handoff": "2026-10-25 00:30 MDT: c1at and c1av landed. Plate and upload pointers are different loads; the pool insert is unread. Skip path stores masked pixels. Gate not scored. Still open: c1au-context-keep running. No start. Pass started 00:03:19.",
     "pass_clock": {
       "started": "2026-10-25 00:03:19 -06:00",
       "rounds": [
@@ -61,6 +47,12 @@
           "dispatched": "2026-10-25 00:15 MDT",
           "landed": "2026-10-25 00:28 MDT",
           "elapsed": "12m 48s"
+        },
+        {
+          "id": "c1at-descriptor-link",
+          "dispatched": "2026-10-25 00:15 MDT",
+          "landed": "2026-10-25 00:30 MDT",
+          "elapsed": "14m 48s"
         }
       ]
     },

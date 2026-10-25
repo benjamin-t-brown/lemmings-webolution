@@ -391,3 +391,13 @@ with the low word of `[ebp-0x128]`. The span does not enter the shift
 loop, so `0x473943` does not run. The facilitator re-disassembled the
 stores, and one wrong expected byte at `0x4739A6` failed the file check.
 No stock start. The numeric mask stays unread. The gate is not scored.
+
+**C1at: the plate pointer and the upload object are different loads**
+([check](../scratch/phase-c1at-descriptor-link.md)), 2026-10-25, alpha-count
+offline round 1 of 3, parallel with c1au and c1av. `[ebp-4]` at
+`0x414944` is the return of `0x414A10`. The object `0x472F99` receives
+is a `0x28`-byte allocation whose `+0x24` is the name-prefix flag; a
+leading `^` stores 8. The facilitator re-disassembled both stores, and
+one wrong immediate at `0x474471` failed the file check. No stock start.
+Whether that allocation is later inserted as the pool node is unread.
+The gate is not scored.

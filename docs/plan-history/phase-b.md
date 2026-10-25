@@ -250,3 +250,10 @@ round 4. `0x486FF7` and `0x488713` push `[ebp+0xC]`, not the creation
 counter. The facilitator re-read both calls, and expecting displacement
 `0x08` failed. No stock start. The question is parked. The gate is not
 scored.
+
+**B3e: `MM_CLIMB_002` is not in the executable**
+([check](../scratch/phase-b3e-level-name.md)), 2026-10-25, level-pick
+round 1 of 3. The exe has no copy of the name and no `.LVL`. The
+facilitator read `lemmings.box` at `0x6F77` as
+`COMPILED\MM_CLIMB_002.LVL`, and expecting `0x4E` failed. No stock
+start. No code reference. The gate is not scored.

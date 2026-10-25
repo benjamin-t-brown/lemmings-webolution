@@ -3,7 +3,7 @@
   "updated": "2026-10-25T12:36:37-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
-    {"id":"c1bi-linear-plate","question":"What is the C1 score after the plate sampler uses request 2?","question_key":"plate-linear-sample","question_round":1,"milestone":"C1 skill panel","status":"running","dispatched_at":"2026-10-25T12:36:37-06:00","brief":"build/tmp/c1bi-linear-plate-brief.md","tier":"targeted","requested_model":"grok-4.7-high-fast (round-agent pin)","dispatch_id":null,"owns_live_game":false,"live_owner":null,"owned_paths":["src/app/SkillPanel.cpp","src/__test__/test_skillpanel.cpp","build/tmp/c1bi-linear-plate/**"],"depends_on":[],"stock_start_budget":0,"worker_output":null}
+    {"id":"c1bi-linear-plate","question":"What is the C1 score after the plate sampler uses request 2?","question_key":"plate-linear-sample","question_round":1,"milestone":"C1 skill panel","status":"running","dispatched_at":"2026-10-25T12:36:37-06:00","brief":"build/tmp/c1bi-linear-plate-brief.md","tier":"targeted","requested_model":"grok-4.7-high-fast (round-agent pin)","dispatch_id":"24bb055f-b48f-4b6f-a219-3f442b0f37e2","owns_live_game":false,"live_owner":null,"owned_paths":["src/app/SkillPanel.cpp","src/__test__/test_skillpanel.cpp","build/tmp/c1bi-linear-plate/**"],"depends_on":[],"stock_start_budget":0,"worker_output":null}
   ],
   "queue": [],
   "standing_run": {
@@ -24,7 +24,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
-    "handoff": "2026-10-25 12:36 MDT. C1be landed. Stage-0 mag/min request 2 when the argument and device byte are nonzero. Gate still 0.01617/0.03275/0.01622. C1bi running: sample the plates with that request and rescore. Starts 0/3.",
+    "handoff": "2026-10-25 12:37 MDT. C1be landed. Stage-0 mag/min request 2 when the argument and device byte are nonzero. Gate still 0.01617/0.03275/0.01622. C1bi running (Cursor 24bb055f-b48f-4b6f-a219-3f442b0f37e2): sample the plates with that request and rescore. Starts 0/3.",
     "current_pass": {"started":"2026-10-25T11:56:33-06:00","rounds":[
       {"id":"c1bf-zero-count","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:05:36-06:00","elapsed":"34m38s","worker_idle":"2026-10-25T11:35:49-06:00"},
       {"id":"c1bg-selected-index","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:07:34-06:00","elapsed":"36m36s","worker_idle":"2026-10-25T11:45:02-06:00","worker_outcome":"failed after the packet was written"},

@@ -391,7 +391,7 @@ open.
 
 ### C1 launch-time alpha read
 
-- **C1 launch-time alpha read** (parked 2026-10-24 at the cap, c1am–c1ao; reopened the same day by the hook-repair directive). The four hooks append on entry, and `python` imports `frida` 17.24.3. Pid 20612 exited within five seconds of `frida.resume`, before `MM_CLIMB_002`. The startup log has eight mask values of 0 and one of 32768. `0x473897` logged nothing. c1ap found no branch target inside that patch and moved the count read to `0x47383C`. c1aq spent one start of the new pool: pid 25964 exited before the level, `0x47383C` logged 0, and `OpenProcess` failed with 87 so the exit code is unread. The same probe is not relaunched. Resume is an offline repair of that exit-code read, then the remaining start. See [C1aq](../scratch/phase-c1aq-launch-read.md).
+- **C1 launch-time alpha read** (parked 2026-10-24 at the cap, c1am–c1ao; reopened the same day by the hook-repair directive). The four hooks append on entry, and `python` imports `frida` 17.24.3. Pid 20612 exited within five seconds of `frida.resume`, before `MM_CLIMB_002`. The startup log has eight mask values of 0 and one of 32768. `0x473897` logged nothing. c1ap found no branch target inside that patch and moved the count read to `0x47383C`. c1aq pid 25964 exited before the level and `0x47383C` logged 0. c1ar reads the exit code inside the detach callback, and the mask hook logs `[[ebp+8]+0x24]`. Resume is the remaining start of that probe. See [C1ar](../scratch/phase-c1ar-exit-capture.md).
 
 ### Frida hook tooling
 

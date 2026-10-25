@@ -1159,6 +1159,36 @@
   ],
   "landed": [
     {
+      "id": "c1ar-exit-capture",
+      "title": "Capture the exit code from the detach callback",
+      "status": "landed",
+      "worker_output": "build/tmp/c1ar-exit-capture/round-note.md",
+      "brief": "build/tmp/c1ar-exit-capture-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline repair",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1aq-launch-read"
+      ],
+      "gate_served": "C1 skill panel; exit code and skip input before the remaining start",
+      "question": "alpha-count-launch",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3. Offline. The remaining start is not in this round; a fourth round needs a written reason that it moves the gate.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-hook-repair",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 23:24 MDT",
+      "dispatch_id": "be109f46-d4a4-46db-a956-3394e41498d9",
+      "landed_at": "2026-10-24 23:36 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1ar-exit-capture.md; docs/LESSONS.md C1ar; docs/plan-history/phase-c.md; docs/plan-history/phase-e.md",
+      "disposition": "Exit code is read inside on_detached. Mask hook logs [[ebp+8]+0x24]. Dry check passed. No stock start. Gate not scored.",
+      "facilitator_verified": "2026-10-24 23:36 MDT: re-disassembled 0x472F99-0x4737E6. Removed the callback read; dry check exited 1; restored hash b79882a5. No Lemmings process."
+    },
+    {
       "id": "c1aq-launch-read",
       "title": "One launch of the repaired alpha-count probe",
       "status": "landed",

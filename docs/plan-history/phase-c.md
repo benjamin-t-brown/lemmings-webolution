@@ -364,3 +364,11 @@ has 9 uploads, 28 format records and masks 0, 0, 0, 0, 0, 0, 0, 0, 32768.
 `0x47383C` has 0 lines. The facilitator recounted the log and re-hashed the
 install. `OpenProcess` failed with 87, so the exit code is unread. The
 probe was not run again. The paused-level shift counts stay unread.
+
+**C1ar: the exit code moves into the detach callback**
+([check](../scratch/phase-c1ar-exit-capture.md)), 2026-10-24, hook-repair
+round 3 of 3, offline. `on_detached` calls `read_exit_code` before it
+returns. The mask hook logs `[[ebp+8]+0x24]`, the dword `0x4737E6` tests
+with AND `0x18`. The facilitator re-disassembled that span and a removal
+of the callback read failed the dry check. No stock start. The paused-level
+shift counts stay unread.

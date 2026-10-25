@@ -346,3 +346,12 @@ at 21:43:58, before `MM_CLIMB_002`. The log has 9 uploads, 28 format
 records and masks 0, 0, 0, 0, 0, 0, 0, 0, 32768. The shift site has 0 lines.
 The facilitator recounted the log and re-hashed the install. The probe was
 not run again. The paused-level shift counts stay unread.
+
+**C1ap: the count hook moves to `0x47383C`**
+([check](../scratch/phase-c1ap-hook-repair.md)), 2026-10-24, hook-repair
+round 1 of 3, offline. No branch target falls inside `0x473898`..`0x47389E`.
+`[ebp-0xae8]` is stored at `0x4737F4` and `[ebp-0xad8]` at `0x473806`, and
+`0x47381B` reaches `0x47383C` before the per-pixel loop at `0x473866`.
+The facilitator re-disassembled that span, re-scanned `.text` branches, and
+a one-address change of the new attach failed the dry check. No stock start.
+The early exit stays unnamed. The paused-level shift counts stay unread.

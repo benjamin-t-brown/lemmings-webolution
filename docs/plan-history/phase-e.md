@@ -391,7 +391,7 @@ open.
 
 ### C1 launch-time alpha read
 
-- **C1 launch-time alpha read** (parked 2026-10-24 at the cap, c1am–c1ao). The four hooks append on entry, and `python` imports `frida` 17.24.3. The one start, pid 20612, exited within five seconds of `frida.resume`, before `MM_CLIMB_002`. The startup log has eight mask values of 0 and one of 32768. `0x473897` logged nothing. Install hashes match. One start remains in the pool and is not authorized until an offline repair names why that process exited, without relaunching this probe. See [C1ao](../scratch/phase-c1ao-launch-read.md).
+- **C1 launch-time alpha read** (parked 2026-10-24 at the cap, c1am–c1ao; reopened the same day by the hook-repair directive). The four hooks append on entry, and `python` imports `frida` 17.24.3. Pid 20612 exited within five seconds of `frida.resume`, before `MM_CLIMB_002`. The startup log has eight mask values of 0 and one of 32768. `0x473897` logged nothing. c1ap found no branch target inside that patch and moved the count read to `0x47383C`. The exit stays unnamed. Resume is that directive's stock start of the repaired probe, not another run of the old hook. See [C1ao](../scratch/phase-c1ao-launch-read.md) and [C1ap](../scratch/phase-c1ap-hook-repair.md).
 
 ### Frida hook tooling
 

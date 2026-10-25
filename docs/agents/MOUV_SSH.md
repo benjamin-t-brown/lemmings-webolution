@@ -15,7 +15,7 @@ there. Facts below were checked on 2026-10-19; re-check anything that fails.
 | Repo checkout | `C:\progs\lemmings-webolution`; on the Mac this same tree is `~/mouv-progs/lemmings-webolution` (sshfs) |
 | Stock game | `C:\progs\Lemmings Revolution\Lemmings Revolution.exe` (the path harness scripts hard-code; shim `dinput.dll` is installed beside it) |
 | Scratch | `C:\progs\lemmings-webolution\build\tmp` (gitignored) |
-| Python | `python` = 3.13, has `capstone` 5.0.7; **no `frida`** |
+| Python | `python` = 3.13, has `capstone` 5.0.7 and `frida` 17.24.3 (user site-packages, c1an; the 2026-10-24 directive keeps it) |
 | MSYS2 | `C:\progs\msys2` (`ucrt64` for the project, `mingw32` for `tools/dinput-shim`) |
 | REA | `rea` on PATH (npm global); Ghidra 12.1.4 under `C:\progs\ghidra` |
 
@@ -108,7 +108,7 @@ example, the debugger).
 
 ## Frida through the REA CLI (c1o, 2026-10-24)
 
-REA bundles Frida (`rea@6.5.0`, provider Frida); Python `frida` is not needed. **MEASURED:** `rea instrument-with-frida attach`
+REA bundles Frida (`rea@6.5.0`, provider Frida). This recipe does not need Python `frida`. **Updated 2026-10-24:** mouv's `python` imports `frida` 17.24.3 from the user site-packages (c1an). Launch-attach probes use that module. Do not uninstall it. **MEASURED:** `rea instrument-with-frida attach`
 run from an ssh (session 0) worker attached to a session-1 process, the hook reported hits, rea detached itself
 (`cleanup_error: null`) and the target stayed alive. The facilitator re-ran it on a fresh target (hook hits n=1..3, target
 `Responding True` after detach, no `LemWeb-*` task, no Lemming process). So no session-1 task is needed for the attach itself.

@@ -1,16 +1,61 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T16:35:10-06:00",
+  "updated": "2026-10-25T16:55:35-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
-    {"id":"c3ad-pause-values-live","status":"running","brief":"build/tmp/c3ad-pause-values-live-brief.md","question":"One authorized passive pause-value observation, dry-check first","milestone":"C3 full frame","question_round":4,"cap_exception":"Steering884798a explicitly lifts C3z observation park for one live round from existing3start pool; drycheck first.","worker_type":"targeted runtime observation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8acc020effeO58FyZU3M389AT","dispatch_confirmed_at":"2026-10-25T16:35:10-06:00","owns_live_game":true,"live_owner":"c3ad worker, reservation; NOstart before facilitator dryapproval","phase":"dry-check-only","dispatched_at":"2026-10-25T16:34:28-06:00","stock_start_budget":1,"stock_starts_used":0},
-    {"id":"c3ae-scene-render-score","status":"running","brief":"build/tmp/c3ae-scene-render-score-brief.md","question":"Integrate existing scene components into app, render and score explicit repair4","milestone":"C3 full frame","question_round":1,"worker_type":"targeted production integration/render","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8acc01e4ffehWsVZ2j18Us2Qf","dispatch_confirmed_at":"2026-10-25T16:35:10-06:00","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T16:34:28-06:00"}
+    {
+      "id": "c3ad-pause-values-live",
+      "status": "running",
+      "brief": "build/tmp/c3ad-pause-values-live-brief.md",
+      "question": "One authorized passive pause-value observation, dry-check first",
+      "milestone": "C3 full frame",
+      "question_round": 5,
+      "repair_brief": "build/tmp/c3ad-pause-values-live-repair1.md",
+      "repair_dispatched_at": "2026-10-25T16:54:52-06:00",
+      "verification_failure": "Independent129prepausebindtraffic fixture globallystopslogging; requestedvalidpauseS/gatesrecordlost. Fiveanchorsauthenticated. No liveapproval; repair streamisolation and actualreusedcontroller before oneauthorizedstart.",
+      "cap_exception": "Steering884798a explicitly lifts C3z observation park for one live round from existing3start pool; drycheck first.",
+      "worker_type": "targeted runtime observation",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8acc020effeO58FyZU3M389AT",
+      "dispatch_confirmed_at": "2026-10-25T16:35:10-06:00",
+      "owns_live_game": true,
+      "live_owner": "c3ad repair worker reservation, NOstart until facilitator approval",
+      "phase": "repair-dry-check-only",
+      "worker_output": "build/tmp/c3ad-pause-values-live/round-note.md",
+      "dispatched_at": "2026-10-25T16:34:28-06:00",
+      "stock_start_budget": 1,
+      "stock_starts_used": 0
+    },
+    {
+      "id": "c3ae-scene-render-score",
+      "status": "running",
+      "brief": "build/tmp/c3ae-scene-render-score-brief.md",
+      "question": "Integrate existing scene components into app, render and score explicit repair4",
+      "milestone": "C3 full frame",
+      "question_round": 2,
+      "repair_brief": "build/tmp/c3ae-scene-render-score-repair1.md",
+      "repair_dispatched_at": "2026-10-25T16:52:49-06:00",
+      "verification_failure": "Partial render bypasses SceneRaster and BillboardSource, dropsRGBA/state, mislabels304nullmaterials asmissingloads, breaksunsupportedlevel/scene-off beforeparse, lacksintegrationtest/ENV/C1report;wrongdefaultactors/no skillflag. Savedpartialscoreindependentlyreproducedbutnotacceptedmatchedrepair4.",
+      "worker_type": "targeted production integration/render",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8acc01e4ffehWsVZ2j18Us2Qf",
+      "dispatch_confirmed_at": "2026-10-25T16:35:10-06:00",
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/c3ae-scene-render-score/round-note.md",
+      "dispatched_at": "2026-10-25T16:34:28-06:00"
+    }
   ],
   "queue": [],
   "standing_run": {
     "id": "c1-close-c3-scene",
     "goal": "Close C1 under third amendment by independent rescore, then derive scene-node draw values and render/score C3 full frame on A6 repair4 pause.",
-    "milestones": ["C1 skill panel", "C3 full frame"],
+    "milestones": [
+      "C1 skill panel",
+      "C3 full frame"
+    ],
     "current": "C3 full frame",
     "authorized": "docs/DIRECTIVE.md active 2026-10-25; initial yes i approve 2; steering884798a user i approve 1 and 2: render/score next and lift C3z park for one live round from existing pool, dry-check/menu REA CLI attach/passive hooks; no further user authorization needed for that round.",
     "grants": {
@@ -26,35 +71,171 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "AA mesh source, AB software raster(dc4fdc5), AC repaired billboard now independently verified; 38/38 CTest plus explicit AC retail443 checks pass. AB rational5120cases/61440pixels; AC all17/340fields maxerror9.1e-13 and own-Y-only private mutant fails/restores. Initial AC rejection preserved, repair fixes native matrix conversion and omitted retail fixture. 20 attempts landed including repairs; four of24 remain, starts0/3. NEXT dispatch AD authorized one-start passive pause values (dry packet and facilitator approval BEFORE Popen) and AE production scene integration/render+explicit repair4score. Briefs prepared in build/tmp; AD no dependency on AE, disjoint ownership. No more reader rounds without gate reason. Baseline0.2050523 unchanged until render. All conditional state/format/clip limits and retractions preserved. Shared mutex Local\\LemWeb-C3-SharedBuild covers shared builds/tests/mutations; AE adds retail ENV wiring. No live owner/process. Standing clock13:29:10/pass14:07:15, about8h/24round budget unchanged.",
-    "steering_update": {"commit":"884798a50892f9a7788ff5a19f9f42d868665315","pulled_at":"2026-10-25T16:09:48-06:00","authorization":"User asked pull/review; directive records i approve 1 and 2","priority":"Render and explicit repair4/perregion score next; existing component workers finish unchanged, no added reader rounds without gate reason","live_round":"One dry-checked normalPopen/menuREA CLI read-only observation round from existing pool; C3z park lifted for pause values and passive native returned-format lead; crash ends arm","starts_spent_by_update":0},
-    "latest_packet_status": {"at":"2026-10-25T16:35:10-06:00","aa":"landed9cd840e","ab":"landeddc4fdc5","ac":"repaired/landedccc9c06","ad":"running drycheck-only; one live start reserved but NOT approved until independent drycheck","ae":"running app render/score","action":"Wait for notifications, independently verify AD drypacket before start; AE independently integrates and scores conditional candidate, no waiting for AD"},
-    "previous_passes": [{"started": "2026-10-25T13:29:10-06:00", "ended":"2026-10-25T14:01:52-06:00", "elapsed":"32m42s", "rounds": [{"id":"c3p-kind5-culling","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","worker_finished":"2026-10-25T13:54:46-06:00"}]}],
+    "handoff": "20 attempts landed; ADinitial+repair and AEinitial+repair are the FINAL FOUR reserved attempts (24/24 including current); NO more dispatch after these. AEpartial rejected after independent image score23405545/235008000=.09959467 matched savedPNG but wrongdefaultactors/no skillflag and bypassesSceneRaster/BillboardSource/nullmaterial/state/tests/ENV/otherlevelsupport. AErepair1running16:52:49(same ses_e8acc01e4ffehWsVZ2j18Us2Qf), acceptance missingitems/C1cameraexistingpaths supplied; preserveinitialcandidate asdiagnostic. ADdrypacket rejected: independently authenticated5anchors but129prepausebindcallbacks globallystoplogging,losingrequestedpauseS/gates. ADrepair1running16:54:52(same ses_e8acc020effeO58FyZU3M389AT), mustisolatecore/perstreamcaps+returnactualreusedcontroller anddrypacket BEFORE FACILITATORapproval. StillZEROstarts;oneUSERauthorizedPopen/menuREA CLI/passiveattempt remains, noadditionalUSERpermissionneeded. DO NOT approve knownfailedpayload or selfapprove;crashendsarm. Worker-ownedfiles disjoint, sharedbuildmutex mandatory. Awaitnotifications/no polling; independentlyverify/landeachfinalrepair then STOP at24roundbudget,reportremaininggatefailures/conditions. Correctbaseline48188934 and independenthistogramchecker retained. Fullsource/texture/nativeprecision limits/retractions preserved. Standing13:29:10/pass14:07:15.",
+    "steering_update": {
+      "commit": "884798a50892f9a7788ff5a19f9f42d868665315",
+      "pulled_at": "2026-10-25T16:09:48-06:00",
+      "authorization": "User asked pull/review; directive records i approve 1 and 2",
+      "priority": "Render and explicit repair4/perregion score next; existing component workers finish unchanged, no added reader rounds without gate reason",
+      "live_round": "One dry-checked normalPopen/menuREA CLI read-only observation round from existing pool; C3z park lifted for pause values and passive native returned-format lead; crash ends arm",
+      "starts_spent_by_update": 0
+    },
+    "latest_packet_status": {
+      "at": "2026-10-25T16:35:10-06:00",
+      "aa": "landed9cd840e",
+      "ab": "landeddc4fdc5",
+      "ac": "repaired/landedccc9c06",
+      "ad": "running drycheck-only; one live start reserved but NOT approved until independent drycheck",
+      "ae": "initialpartial rejected; repair1 running16:52:49",
+      "action": "Wait for notifications, independently verify AD drypacket before start; AE independently integrates and scores conditional candidate, no waiting for AD"
+    },
+    "previous_passes": [
+      {
+        "started": "2026-10-25T13:29:10-06:00",
+        "ended": "2026-10-25T14:01:52-06:00",
+        "elapsed": "32m42s",
+        "rounds": [
+          {
+            "id": "c3p-kind5-culling",
+            "dispatched": "2026-10-25T13:37:26-06:00",
+            "landed": "2026-10-25T14:00:25-06:00",
+            "elapsed": "22m59s",
+            "worker_finished": "2026-10-25T13:54:46-06:00"
+          }
+        ]
+      }
+    ],
     "current_pass": {
-      "started":"2026-10-25T14:07:15-06:00",
-      "last_yielded":"2026-10-25T14:18:27-06:00",
-      "previous_elapsed_to_yield":"11m12s",
-      "rounds":[
-        {"id":"c3o-type2-draw","dispatched":"2026-10-25T13:37:26-06:00","repair_dispatched":"2026-10-25T13:56:13-06:00","landed":"2026-10-25T14:10:27-06:00","elapsed":"33m01s","repair_elapsed":"14m14s"},
-        {"id":"c3n-mesh-submission","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:15:57-06:00","elapsed":"38m31s","worker_finished":"2026-10-25T14:02:45-06:00"},
-        {"id":"c3s-explicit-reference-scorer","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:24:12-06:00","elapsed":"7m19s","worker_finished":"2026-10-25T14:20:43-06:00"},
-        {"id":"c3t-floor-ring-bounds","dispatched":"2026-10-25T14:26:41-06:00","landed":"2026-10-25T14:38:14-06:00","elapsed":"11m33s","result":"partial source-family diagnostic only"},
-        {"id":"c3r-scene-texture-values","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:44:54-06:00","elapsed":"28m01s"},
-        {"id":"c3q-scene-device-state","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:48:32-06:00","elapsed":"31m39s","worker_elapsed":"21m26s"},
-        {"id":"c3w-scene-integration-map","dispatched":"2026-10-25T14:53:56-06:00","landed":"2026-10-25T14:59:05-06:00","elapsed":"5m09s","scope":"source-only map"},
-        {"id":"c3u-pause-scene-reachability","dispatched":"2026-10-25T14:53:56-06:00","landed":"2026-10-25T15:21:16-06:00","elapsed":"27m20s","scope":"conditional gates and load associations only"},
-        {"id":"c3v-state-format-preflight","dispatched":"2026-10-25T14:53:56-06:00","repair_dispatched":"2026-10-25T15:05:07-06:00","landed":"2026-10-25T15:22:34-06:00","elapsed":"28m38s","repair_elapsed":"17m27s","scope":"partial mock bounds only, no live authorization"},
-        {"id":"c3x-scene-node-reader","dispatched":"2026-10-25T15:00:21-06:00","repair_dispatched":"2026-10-25T15:25:42-06:00","landed":"2026-10-25T15:43:48-06:00","elapsed":"43m27s","repair_elapsed":"18m06s","scope":"strict source reader only, no app rendering"},
-        {"id":"c3y-secondary-slot8","dispatched":"2026-10-25T15:27:50-06:00","landed":"2026-10-25T15:47:59-06:00","elapsed":"20m09s","scope":"sorted child slot4 dispatch only"},
-        {"id":"c3z-observation-provenance","dispatched":"2026-10-25T15:27:50-06:00","landed":"2026-10-25T15:52:36-06:00","elapsed":"24m46s","scope":"static contracts only;runtime observation parked at3round cap, latersteeringliftedone live round"},
-        {"id":"c3aa-scene-mesh-source","dispatched":"2026-10-25T15:57:12-06:00","landed":"2026-10-25T16:20:46-06:00","elapsed":"23m34s","scope":"explicit-matrix source preparation"},
-        {"id":"c3ab-scene-raster","dispatched":"2026-10-25T15:57:12-06:00","landed":"2026-10-25T16:29:24-06:00","elapsed":"32m12s","worker_finished":"2026-10-25T16:13:15-06:00","scope":"declared software arithmetic only"},
-        {"id":"c3ac-billboard-source","dispatched":"2026-10-25T15:57:12-06:00","repair_dispatched":"2026-10-25T16:14:58-06:00","landed":"2026-10-25T16:33:26-06:00","elapsed":"36m14s","repair_elapsed":"18m28s","scope":"native-compatible preclip source only"}
+      "started": "2026-10-25T14:07:15-06:00",
+      "last_yielded": "2026-10-25T14:18:27-06:00",
+      "previous_elapsed_to_yield": "11m12s",
+      "rounds": [
+        {
+          "id": "c3o-type2-draw",
+          "dispatched": "2026-10-25T13:37:26-06:00",
+          "repair_dispatched": "2026-10-25T13:56:13-06:00",
+          "landed": "2026-10-25T14:10:27-06:00",
+          "elapsed": "33m01s",
+          "repair_elapsed": "14m14s"
+        },
+        {
+          "id": "c3n-mesh-submission",
+          "dispatched": "2026-10-25T13:37:26-06:00",
+          "landed": "2026-10-25T14:15:57-06:00",
+          "elapsed": "38m31s",
+          "worker_finished": "2026-10-25T14:02:45-06:00"
+        },
+        {
+          "id": "c3s-explicit-reference-scorer",
+          "dispatched": "2026-10-25T14:16:53-06:00",
+          "landed": "2026-10-25T14:24:12-06:00",
+          "elapsed": "7m19s",
+          "worker_finished": "2026-10-25T14:20:43-06:00"
+        },
+        {
+          "id": "c3t-floor-ring-bounds",
+          "dispatched": "2026-10-25T14:26:41-06:00",
+          "landed": "2026-10-25T14:38:14-06:00",
+          "elapsed": "11m33s",
+          "result": "partial source-family diagnostic only"
+        },
+        {
+          "id": "c3r-scene-texture-values",
+          "dispatched": "2026-10-25T14:16:53-06:00",
+          "landed": "2026-10-25T14:44:54-06:00",
+          "elapsed": "28m01s"
+        },
+        {
+          "id": "c3q-scene-device-state",
+          "dispatched": "2026-10-25T14:16:53-06:00",
+          "landed": "2026-10-25T14:48:32-06:00",
+          "elapsed": "31m39s",
+          "worker_elapsed": "21m26s"
+        },
+        {
+          "id": "c3w-scene-integration-map",
+          "dispatched": "2026-10-25T14:53:56-06:00",
+          "landed": "2026-10-25T14:59:05-06:00",
+          "elapsed": "5m09s",
+          "scope": "source-only map"
+        },
+        {
+          "id": "c3u-pause-scene-reachability",
+          "dispatched": "2026-10-25T14:53:56-06:00",
+          "landed": "2026-10-25T15:21:16-06:00",
+          "elapsed": "27m20s",
+          "scope": "conditional gates and load associations only"
+        },
+        {
+          "id": "c3v-state-format-preflight",
+          "dispatched": "2026-10-25T14:53:56-06:00",
+          "repair_dispatched": "2026-10-25T15:05:07-06:00",
+          "landed": "2026-10-25T15:22:34-06:00",
+          "elapsed": "28m38s",
+          "repair_elapsed": "17m27s",
+          "scope": "partial mock bounds only, no live authorization"
+        },
+        {
+          "id": "c3x-scene-node-reader",
+          "dispatched": "2026-10-25T15:00:21-06:00",
+          "repair_dispatched": "2026-10-25T15:25:42-06:00",
+          "landed": "2026-10-25T15:43:48-06:00",
+          "elapsed": "43m27s",
+          "repair_elapsed": "18m06s",
+          "scope": "strict source reader only, no app rendering"
+        },
+        {
+          "id": "c3y-secondary-slot8",
+          "dispatched": "2026-10-25T15:27:50-06:00",
+          "landed": "2026-10-25T15:47:59-06:00",
+          "elapsed": "20m09s",
+          "scope": "sorted child slot4 dispatch only"
+        },
+        {
+          "id": "c3z-observation-provenance",
+          "dispatched": "2026-10-25T15:27:50-06:00",
+          "landed": "2026-10-25T15:52:36-06:00",
+          "elapsed": "24m46s",
+          "scope": "static contracts only;runtime observation parked at3round cap, latersteeringliftedone live round"
+        },
+        {
+          "id": "c3aa-scene-mesh-source",
+          "dispatched": "2026-10-25T15:57:12-06:00",
+          "landed": "2026-10-25T16:20:46-06:00",
+          "elapsed": "23m34s",
+          "scope": "explicit-matrix source preparation"
+        },
+        {
+          "id": "c3ab-scene-raster",
+          "dispatched": "2026-10-25T15:57:12-06:00",
+          "landed": "2026-10-25T16:29:24-06:00",
+          "elapsed": "32m12s",
+          "worker_finished": "2026-10-25T16:13:15-06:00",
+          "scope": "declared software arithmetic only"
+        },
+        {
+          "id": "c3ac-billboard-source",
+          "dispatched": "2026-10-25T15:57:12-06:00",
+          "repair_dispatched": "2026-10-25T16:14:58-06:00",
+          "landed": "2026-10-25T16:33:26-06:00",
+          "elapsed": "36m14s",
+          "repair_elapsed": "18m28s",
+          "scope": "native-compatible preclip source only"
+        }
       ]
     },
-    "latest_yield": {"date":"2026-10-25T15:59:07-06:00","pass_started":"2026-10-25T14:07:15-06:00","elapsed":"111m52s","reason":"Await AAmeshsource,ABraster,ACbillboard notifications;standing run active, runtime observation parked"},
+    "latest_yield": {
+      "date": "2026-10-25T15:59:07-06:00",
+      "pass_started": "2026-10-25T14:07:15-06:00",
+      "elapsed": "111m52s",
+      "reason": "Await AAmeshsource,ABraster,ACbillboard notifications;standing run active, runtime observation parked"
+    },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "sync_resolution": {"date":"2026-10-25T14:06:00-06:00","authorization":"User: the git thing is a small change from the overlord, we should be able to pull that in locally","method":"Non-rewriting merge of origin4889d3e; no conflicts; pending tasks.json SHA256 unchanged across merge. Prior sync stop14:01:52 resolved."},
+    "sync_resolution": {
+      "date": "2026-10-25T14:06:00-06:00",
+      "authorization": "User: the git thing is a small change from the overlord, we should be able to pull that in locally",
+      "method": "Non-rewriting merge of origin4889d3e; no conflicts; pending tasks.json SHA256 unchanged across merge. Prior sync stop14:01:52 resolved."
+    },
     "stopped": null
   }
 }

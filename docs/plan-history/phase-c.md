@@ -437,3 +437,11 @@ round 1 of 3. `0x473040` calls `GetObjectA` on a `0x18`-byte buffer.
 the word with 8. The facilitator re-read the call and the name, and
 expecting `GetObjectB` failed. No stock start. The number, and the
 kept record, stay unread. The gate is not scored.
+
+**C1az: the bit-count word is not in the file**
+([check](../scratch/phase-c1az-dib-handle.md)), 2026-10-25, kept-format
+round 2 of 3. `0x47255B` stores the `CreateDIBSection` return at
+`[object+4]`, the field `GetObjectA` later pushes. The bit-count word
+is at `0x58D5D4`, past the `.data` raw end, copied from the buffer
+`0x45015A` returns. The facilitator re-read the store, and expecting
+`0x88` failed. No stock start. `+6` stays unread. The gate is not scored.

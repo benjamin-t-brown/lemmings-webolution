@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T01:51:43-06:00",
+  "updated": "2026-10-25T02:03:09-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
@@ -22,11 +22,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-25 01:22 MDT /facilitator on mouv. Prior run c1-alpha-offline stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
     "started_at": "2026-10-25 01:22:18 -06:00",
-    "rounds_run": 2,
+    "rounds_run": 3,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "The last ranked milestone gate passes on an independent re-score; a gate, footprint, mask, views or exclusions would need to change; a guardrail breach; every remaining ranked question is parked or waits on pending_questions; about 8 hours or 24 rounds; delegation or the pinned model is unavailable, or another session is running a task. A crash parks that question live arm. A second crash ends starts. Caps park and the run continues. Do not choose a gate amendment.",
-    "handoff": "2026-10-25 01:51 MDT: c1ay landed (8m 11s). +6 is the GetObjectA word at buffer +0x12; the number is unread. Milestone C1. Next: where the handle at 0x47303C comes from and what bit count that bitmap was created with. Gate not scored. Pass started 01:22:18. c1ax is d525ff2.",
+    "handoff": "2026-10-25 02:03 MDT: c1az landed (10m 36s) in the working tree. Bit-count word 0x58D5D4 is copied from 0x45015A and is not in the file. +6 unread. Next: round 3 of 3, what 0x45015A places at source offset 0x1C. Gate not scored. Pass started 01:22:18. c1ay is 4115dde.",
     "pass_clock": {
       "started": "2026-10-25 01:22:18 -06:00",
       "rounds": [
@@ -41,6 +41,12 @@
           "dispatched": "2026-10-25 01:43 MDT",
           "landed": "2026-10-25 01:51 MDT",
           "elapsed": "8m 11s"
+        },
+        {
+          "id": "c1az-dib-handle",
+          "dispatched": "2026-10-25 01:52 MDT",
+          "landed": "2026-10-25 02:03 MDT",
+          "elapsed": "10m 36s"
         }
       ]
     },

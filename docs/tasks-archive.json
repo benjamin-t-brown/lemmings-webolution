@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "c1az-dib-handle",
+      "title": "Where the GetObjectA handle gets its bit count",
+      "status": "landed",
+      "brief": "build/tmp/c1az-dib-handle-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ay-kept-format"
+      ],
+      "gate_served": "C1 skill panel; the bit count of the handle GetObjectA queries",
+      "question": "kept-format",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3. Round 1 showed +6 reads a GetObjectA word. This round reads the handle source and the creation bit count. The keep rule waits.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 01:52 MDT",
+      "dispatch_id": "5ba8d88c-80ce-43fc-a832-8a29f283be56",
+      "worker_output": "build/tmp/c1az-dib-handle/round-note.md",
+      "landed_at": "2026-10-25 02:03 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1az-dib-handle.md; docs/LESSONS.md C1az; docs/plan-history/phase-c.md",
+      "disposition": "0x47255B stores CreateDIBSection return at [object+4], the field GetObjectA pushes. The bit-count word is at 0x58D5D4, past the .data raw end, copied from the buffer 0x45015A returns. +6 unread. Gate not scored.",
+      "facilitator_verified": "2026-10-25 02:03 MDT: re-read the ecx chain, 0x47255B, CreateDIBSection, the copy, and 0x472518. check_handle.py: word past 0x4C6000. Store byte 0x88 failed and the checker was restored. DirectDrawEnumerateA name read. No Lemmings process."
+    },
+    {
       "id": "c1ay-kept-format",
       "title": "Which format record the keep rule keeps",
       "status": "landed",

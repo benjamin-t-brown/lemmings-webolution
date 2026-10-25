@@ -264,3 +264,10 @@ round 2 of 3. Lowercase `lemmings.box` is absent. The facilitator
 re-read the pushes at `0x47DF27`, `0x47E298`, and `0x47E2CC`, and
 expecting `0x4D` failed. No stock start. The calls after them stay
 unread. The gate is not scored.
+
+**B3g: the filename pushes call `0x49C760`**
+([check](../scratch/phase-b3g-box-call.md)), 2026-10-25, level-pick
+round 3 of 3. Each push is followed by a stack-buffer pointer and
+`call 0x49C760`. The facilitator re-read the three calls, and expecting
+relative byte `0x29` failed. No stock start. No level name is in those
+bytes. The question is parked. The gate is not scored.

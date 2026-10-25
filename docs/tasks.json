@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T03:24:35-06:00",
+  "updated": "2026-10-25T03:29:54-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
   "active": [],
   "queue": [],
@@ -22,11 +22,11 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-25 01:22 MDT /facilitator on mouv. Prior run c1-alpha-offline stopped, directive active, no task running, so this start is the handoff. This session is Grok 4.7.",
     "started_at": "2026-10-25 01:22:18 -06:00",
-    "rounds_run": 13,
+    "rounds_run": 14,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "The last ranked milestone gate passes on an independent re-score; a gate, footprint, mask, views or exclusions would need to change; a guardrail breach; every remaining ranked question is parked or waits on pending_questions; about 8 hours or 24 rounds; delegation or the pinned model is unavailable, or another session is running a task. A crash parks that question live arm. A second crash ends starts. Caps park and the run continues. Do not choose a gate amendment.",
-    "handoff": "2026-10-25 03:24 MDT: b3f landed (12m 12s). Three pushes of LEMMINGS.BOX. Next: round 3, the call after each push. If those calls do not select a level, park level-pick. Map-draw, C1 format, and C2 cursor stay parked. Pass started 01:22:18. b3e is 9c5338b.",
+    "handoff": "2026-10-25 03:29 MDT: stopped. b3g landed (4m 54s). Level-pick parked. Every ranked question is parked. C1, C2 cursor, and B3 gates not scored. Starts 0 of 3. Rounds 14. Pass 2h 7m 36s from 01:22:18.",
     "pass_clock": {
       "started": "2026-10-25 01:22:18 -06:00",
       "rounds": [
@@ -107,10 +107,20 @@
           "dispatched": "2026-10-25 03:12 MDT",
           "landed": "2026-10-25 03:24 MDT",
           "elapsed": "12m 12s"
+        },
+        {
+          "id": "b3g-box-call",
+          "dispatched": "2026-10-25 03:25 MDT",
+          "landed": "2026-10-25 03:29 MDT",
+          "elapsed": "4m 54s"
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null
+    "stopped": {
+      "date": "2026-10-25 03:29 MDT",
+      "reason": "Every ranked question is parked. C1 plate format, C2 cursor sprite, B3 map object, and B3 level pick. No gate was scored. Stock starts 0 of 3. Rounds 14.",
+      "last_commit": ""
+    }
   }
 }

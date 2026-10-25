@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "b3g-box-call",
+      "title": "What call follows each LEMMINGS.BOX push",
+      "status": "landed",
+      "brief": "build/tmp/b3g-box-call-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b3f-box-ref"
+      ],
+      "gate_served": "B3 level select and map; the call after each LEMMINGS.BOX push",
+      "question": "level-pick",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3. Round 2 found three filename pushes. If the following calls do not select a level, park the question.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 03:25 MDT",
+      "dispatch_id": "c352f73d-9f82-4814-8886-9800e9183823",
+      "worker_output": "build/tmp/b3g-box-call/round-note.md",
+      "landed_at": "2026-10-25 03:29 MDT",
+      "landed_in": "PLAN.md Phase B (B3) and Phase E; docs/scratch/phase-b3g-box-call.md; docs/LESSONS.md B3g; docs/plan-history/phase-b.md; docs/plan-history/phase-e.md; docs/DIRECTIVE.md Status done",
+      "disposition": "Each LEMMINGS.BOX push calls 0x49C760 with a stack buffer. No level name. Level-pick parked. Gate not scored. Run stopped: every ranked question is parked.",
+      "facilitator_verified": "2026-10-25 03:29 MDT: re-read 0x47DF27, 0x47E298, and 0x47E2CC. check_calls.py: three relative calls target 0x49C760 and each is followed by add esp, 8. Relative byte 0x29 failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "b3f-box-ref",
       "title": "Which instruction names lemmings.box",
       "status": "landed",

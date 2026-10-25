@@ -8,7 +8,8 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
+Done: 2026-10-25 03:29 MDT. Every ranked question is parked. C1 plate format (c1ax–c1ba), C2 cursor sprite (c2l–c2n), B3 map object (b3a–b3d), and B3 level pick (b3e–b3g). No gate was scored. Stock starts 0 of 3. The run is `c1-c2-b3`, stopped in `docs/tasks.json`.
 Issued: 2026-10-25 (user, overlord review 2026-10-25: "approve": a long multi-milestone run,
 caps park instead of stopping, a pool of 3 starts, about 8 hours or 24 rounds)
 Supersedes: the C1 alpha-offline directive, done 2026-10-25 00:52 MDT (c1at, c1au, c1av

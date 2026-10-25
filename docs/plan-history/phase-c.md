@@ -656,3 +656,11 @@ Independent reencoding matches every field/offset across all4retained slices.
 Impossible-count eager allocation rejected in repair; guarded negatives and
 normalIndex-only mutation discriminate; exactSHArestore,35/35CTest. No app scene
 render or pixel improvement; unsupported variants fail closed.
+
+**C3y: secondary slot8 sorts, then invokes child slot4 (2026-10-25)**
+([Facilitator check](../scratch/phase-c3y-secondary-slot8.md)). Full46B73Fbody
+and24windows authenticated: root computes translation-rotation-Z+child108 keys,
+descending/nonstable insertion order, then29childslot4calls (12mesh/17type2).
+Independent source ranks and isolated bias mutation match/restore;35/35CTest.
+No root own draw or slot8=slot4 equivalence; inherited mesh clipping counts,
+runtime visibility/gates/effective state and pixels remain conditional.

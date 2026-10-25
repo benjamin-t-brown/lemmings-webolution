@@ -1329,6 +1329,12 @@
     }
   ],
   "landed": [
+    {"id":"c1bh-selected-draw","status":"landed","milestone":"C1 skill panel","question_key":"selected-plate-draw","question_round":1,
+     "brief":"build/tmp/c1bh-selected-draw-brief.md","worker_output":"build/tmp/c1bh-selected-draw/round-note.md",
+     "dispatch_id":"19df188d-ef4c-478e-910d-879d7b3db6a5","requested_model":"grok-4.7-high-fast, round-agent",
+     "dispatched_at":"2026-10-25T12:08:58-06:00","landed_at":"2026-10-25T12:22:18-06:00",
+     "evidence":"docs/scratch/phase-c1bh-selected-draw.md","stock_starts_used":0,
+     "result":"Selected quad drawn. Gate: zoom1 286491 and elev_down 287373 pass; elev_up 580420 fails; all /17721990. Own PNG match, removing the call returns zoom1 to 414292, 34/34 CTest."},
     {"id":"c1bg-selected-index","status":"landed","milestone":"C1 skill panel","question_key":"selected-plate-index","question_round":1,
      "brief":"build/tmp/c1bg-selected-index-brief.md","worker_output":"build/tmp/c1bg-selected-index/round-note.md",
      "dispatch_id":"ses_e8be216bdffeXXRlTZUjopA05c","requested_model":"openai/gpt-6.1-sol high, disasm-agent",

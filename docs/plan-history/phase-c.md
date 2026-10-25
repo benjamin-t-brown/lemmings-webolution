@@ -520,3 +520,11 @@ trailer is 10,0,0,0,0,0,0,0,0,1, so the result is index 0 and enable 1.
 The extra quad is rectangle 18,12,90,44 for that index, submitted after the
 ten base plates. Not a pause-memory read. The retained A7p script's primary
 clicks are the map node. Next/previous handlers were not re-opened. No score.
+
+**C1bh: selected quad drawn, elev_up still fails**
+([Facilitator check](../scratch/phase-c1bh-selected-draw.md)). The extra
+`^tab_selected` quad is index 0, rectangle 18,12,90,44, after the ten base
+plates. Own re-renders match the worker PNGs. Scores 286491/580420/287373
+over 17721990. zoom1 and elev_down pass 0.02; elev_up does not. Removing
+only that call returns zoom1 to 414292. Restored source and 34/34 CTest.
+The sampler stays a hypothesis. Next is the plate filter.

@@ -153,18 +153,32 @@ Image resizeSkillPlatePatch(const Image& source) {
   return out;
 }
 
-void drawSkillPanelPlates(Image& dest, const Image& plate) {
-  for (int i = 0; i < 10; ++i) {
-    const int py = 12 + 40 * i;
-    for (int y = 0; y < 32 && py + y < dest.height; ++y) for (int x = 0; x < 72 && 18 + x < dest.width; ++x) {
-      // HYPOTHESIS: destination pixel-center nearest across complete [0,1] UV.
-      const int sx = std::min(127, (x * 128 + 36) / 72);
-      const auto* s = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx) * 4;
-      auto* d = dest.rgba.data() + (static_cast<std::size_t>(py + y) * dest.width + 18 + x) * 4;
-      const unsigned a = s[3];
-      for (int c = 0; c < 3; ++c) d[c] = static_cast<std::uint8_t>((s[c] * a + d[c] * (255 - a)) / 255);
-    }
+namespace {
+
+// HYPOTHESIS: destination pixel-center nearest across complete [0,1] UV,
+// straight alpha. Shared by the ten base plates and the one selected quad.
+void drawSkillPanelPlateQuad(Image& dest, const Image& plate, int index) {
+  const int py = 12 + 40 * index;
+  for (int y = 0; y < 32 && py + y < dest.height; ++y) for (int x = 0; x < 72 && 18 + x < dest.width; ++x) {
+    const int sx = std::min(127, (x * 128 + 36) / 72);
+    const auto* s = plate.rgba.data() + (static_cast<std::size_t>(y) * 128 + sx) * 4;
+    auto* d = dest.rgba.data() + (static_cast<std::size_t>(py + y) * dest.width + 18 + x) * 4;
+    const unsigned a = s[3];
+    for (int c = 0; c < 3; ++c) d[c] = static_cast<std::uint8_t>((s[c] * a + d[c] * (255 - a)) / 255);
   }
+}
+
+}  // namespace
+
+void drawSkillPanelPlates(Image& dest, const Image& plate) {
+  for (int i = 0; i < 10; ++i)
+    drawSkillPanelPlateQuad(dest, plate, i);
+}
+
+// DERIVED, C1bg: this fixture's normal init selects index 0 with enable 1.
+// Rectangle 18,12,90,44. Not a selection state machine.
+void drawSkillPanelSelectedPlate(Image& dest, const Image& plate) {
+  drawSkillPanelPlateQuad(dest, plate, 0);
 }
 
 std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLibrary& library,
@@ -173,8 +187,9 @@ std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLi
   auto spriteBytes = library.read("SPRITES\\LEMMINGSHI.SPR");
   auto font = loadTexture(library, "TEXTURES\\_FONTSMALL.BMP");
   auto plateSource = loadTexture(library, "TEXTURES\\^TAB.BMP");
-  if (!lvl || !spriteBytes || !font || !plateSource)
-    return std::unexpected(!lvl ? lvl.error() : (!spriteBytes ? spriteBytes.error() : (!font ? font.error() : plateSource.error())));
+  auto selectedSource = loadTexture(library, "TEXTURES\\^TAB_SELECTED.BMP");
+  if (!lvl || !spriteBytes || !font || !plateSource || !selectedSource)
+    return std::unexpected(!lvl ? lvl.error() : (!spriteBytes ? spriteBytes.error() : (!font ? font.error() : (!plateSource ? plateSource.error() : selectedSource.error()))));
   auto skills = findLevelSkills(*lvl);
   auto spriteSheet = parseSpriteSheet(*spriteBytes);
   if (!skills || !spriteSheet)
@@ -194,11 +209,15 @@ std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLi
   for (std::size_t i = 0; i < skills->counts.size(); ++i)
     counts[i] = static_cast<int>(skills->counts[i]); // READ: level .LVL trailer, findLevelSkills.
   counts[8] = 0; // UNREAD on MM_DIG_000; C1l MEASURED zero for this slot on MM_CLIMB_002.
-  // HYPOTHESIS: ten unselected ^tab textures. Selection is not established;
-  // C1bc stream is conditional, and no score-based state selection is made.
+  // HYPOTHESIS: base plates stay the unselected ^tab stream. The extra quad
+  // reuses that resizer and plate sampler; both remain hypotheses.
+  // DERIVED, C1bg: index 0, enable 1. Not chosen from the stock ring.
   const Image plate = resizeSkillPlatePatch(*plateSource);
   if (plate.empty()) return std::unexpected("skill-panel plate must be 72x32");
+  const Image selected = resizeSkillPlatePatch(*selectedSource);
+  if (selected.empty()) return std::unexpected("skill-panel selected plate must be 72x32");
   drawSkillPanelPlates(dest, plate);
+  drawSkillPanelSelectedPlate(dest, selected); // after the ten base plates, before count text.
   drawSkillPanelCounts(dest, *font, counts); // READ, C1g: count quads precede icon quads.
 
   for (int i = 0; i < 10; ++i) {

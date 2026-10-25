@@ -33,7 +33,12 @@ using webo::app::compositeIconRegion;
 using webo::app::drawSkillPanelCounts;
 using webo::app::resizeSkillPlatePatch;
 using webo::app::drawSkillPanelPlates;
+using webo::app::drawRetailSkillPanel;
 using webo::app::skillPanelRect;
+
+namespace webo::app {
+void drawSkillPanelSelectedPlate(webo::Image& dest, const webo::Image& plate);
+}
 using webo::app::SkillIconPlacement;
 
 namespace {
@@ -222,6 +227,98 @@ void testPatchPlateResizeRowAsymmetricAlpha() {
   check(got == 151, std::format("source-derived p53 interpolation x11,y24 is 151 (p24 is 150), got {}",got));
 }
 
+bool sameRgb(const Image& a, const Image& b, int x, int y) {
+  const auto pa = (static_cast<std::size_t>(y) * a.width + x) * 4;
+  const auto pb = (static_cast<std::size_t>(y) * b.width + x) * 4;
+  return a.rgba[pa] == b.rgba[pb] && a.rgba[pa + 1] == b.rgba[pb + 1] && a.rgba[pa + 2] == b.rgba[pb + 2];
+}
+
+bool isBackground(const Image& img, int x, int y, std::uint8_t r, std::uint8_t g, std::uint8_t b) {
+  const auto p = (static_cast<std::size_t>(y) * img.width + x) * 4;
+  return img.rgba[p] == r && img.rgba[p + 1] == g && img.rgba[p + 2] == b;
+}
+
+void testSelectedQuadDestination() {
+  std::cout << "selected plate quad\n";
+  constexpr std::uint8_t br = 17, bg = 29, bb = 41;
+  Image omitted = makeSolid(640, 480, br, bg, bb, 255);
+  Image drawn = omitted;
+  Image patch = makeSolid(128, 32, 200, 10, 30, 128);
+  webo::app::drawSkillPanelSelectedPlate(drawn, patch);
+
+  bool insideChanged = false;
+  bool omittedUnchanged = true;
+  for (int y = 12; y < 44; ++y)
+    for (int x = 18; x < 90; ++x) {
+      insideChanged = insideChanged || !isBackground(drawn, x, y, br, bg, bb);
+      omittedUnchanged = omittedUnchanged && isBackground(omitted, x, y, br, bg, bb);
+    }
+  check(insideChanged, "selected quad changes pixels inside 18,12,90,44");
+  check(omittedUnchanged, "omitting the selected quad leaves 18,12,90,44 unchanged");
+
+  bool outsideUnchanged = isBackground(drawn, 17, 12, br, bg, bb) &&
+                          isBackground(drawn, 90, 12, br, bg, bb) &&
+                          isBackground(drawn, 18, 11, br, bg, bb) &&
+                          isBackground(drawn, 18, 44, br, bg, bb) &&
+                          isBackground(drawn, 18, 52, br, bg, bb);
+  check(outsideUnchanged, "selected quad leaves pixels outside 18,12,90,44 unchanged");
+
+  Image plates = omitted;
+  drawSkillPanelPlates(plates, patch);
+  bool index0Matches = true;
+  bool index1Differs = false;
+  for (int y = 12; y < 44; ++y)
+    for (int x = 18; x < 90; ++x)
+      index0Matches = index0Matches && sameRgb(drawn, plates, x, y);
+  for (int y = 52; y < 84; ++y)
+    for (int x = 18; x < 90; ++x)
+      index1Differs = index1Differs || !sameRgb(drawn, plates, x, y);
+  check(index0Matches, "selected quad matches the base-plate sampler at index 0");
+  check(index1Differs, "selected quad does not draw the other nine plates");
+
+  const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
+  if (!dir || !*dir) {
+    std::cout << "selected retail destination: SKIPPED (WEBOLUTION_GAME_DIR unset)\n";
+    return;
+  }
+  auto lib = webo::AssetLibrary::open(fs::path(dir) / "lemmings.box", fs::path(dir) / "patch.box");
+  check(bool(lib), "open archive for selected-plate destination");
+  if (!lib) return;
+  auto baseSrc = webo::loadTexture(*lib, "TEXTURES\\^TAB.BMP");
+  auto selSrc = webo::loadTexture(*lib, "TEXTURES\\^TAB_SELECTED.BMP");
+  check(bool(baseSrc) && bool(selSrc), "load ^tab and ^tab_selected");
+  if (!baseSrc || !selSrc) return;
+  const Image base = resizeSkillPlatePatch(*baseSrc);
+  const Image selected = resizeSkillPlatePatch(*selSrc);
+  check(!base.empty() && !selected.empty(), "resize both plate sources");
+  if (base.empty() || selected.empty()) return;
+
+  Image platesOnly = makeSolid(640, 480, 0, 0, 0, 255);
+  drawSkillPanelPlates(platesOnly, base);
+  Image withSelected = platesOnly;
+  webo::app::drawSkillPanelSelectedPlate(withSelected, selected);
+  int differ = 0;
+  for (int y = 12; y < 44; ++y)
+    for (int x = 18; x < 90; ++x)
+      differ += !sameRgb(platesOnly, withSelected, x, y) ? 1 : 0;
+  check(differ > 0, "archived selected quad changes pixels inside 18,12,90,44");
+
+  Image retail = makeSolid(640, 480, 0, 0, 0, 255);
+  auto panel = drawRetailSkillPanel(retail, *lib, "MM_CLIMB_002");
+  if (!panel) {
+    check(false, panel.error());
+    return;
+  }
+  check(true, "retail panel draw");
+  int matched = 0;
+  for (int y = 12; y < 44; ++y)
+    for (int x = 18; x < 90; ++x)
+      if (!sameRgb(platesOnly, withSelected, x, y) && sameRgb(retail, withSelected, x, y))
+        ++matched;
+  std::cout << std::format("    selected-vs-base pixels {}, retail matches {}\n", differ, matched);
+  check(matched > 0, "retail panel includes the selected quad inside 18,12,90,44");
+}
+
 void testPatchPlateFullWordsAgainstC1bc() {
   if (!std::getenv("WEBOLUTION_C1BC_STREAM_TEST")) {
     std::cout << "C1bc scratch stream comparison: SKIPPED (set WEBOLUTION_C1BC_STREAM_TEST=1 to opt in)\n";
@@ -323,6 +420,7 @@ int main() {
   testNativePanelPlacementAndDigit();
   testZeroCountSkipsTextAtDestination();
   testPatchPlateResizeRowAsymmetricAlpha();
+  testSelectedQuadDestination();
   testPatchPlateFullWordsAgainstC1bc();
   testSkillPanelIconSheetsAreNotTheTenIcons();
 

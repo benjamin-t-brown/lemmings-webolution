@@ -236,3 +236,10 @@ round 2 of 3. `0x4872B8` jumps through a table indexed from
 `[ebp-0xb4]`. The facilitator counted 20 direct calls of `0x4882C0`,
 and expecting the bound `0x25` failed. No stock start. The object
 stamped 5 stays unread. The gate is not scored.
+
+**B3c: the jump index is a stack argument**
+([check](../scratch/phase-b3c-map-index.md)), 2026-10-25, map-draw
+round 3 of 3. `0x487294` loads `[ebp+8]` and `0x487297` stores it at
+`[ebp-0xb4]`. The facilitator re-read that pair, and expecting
+displacement `0x0C` failed. No stock start. The argument is not
+`0x4C416C`. The gate is not scored.

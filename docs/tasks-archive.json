@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "b3c-map-index",
+      "title": "What index feeds the screen jump table",
+      "status": "landed",
+      "brief": "build/tmp/b3c-map-index-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "b3b-map-object"
+      ],
+      "gate_served": "B3 level select and map; the value compared before the creation jump table",
+      "question": "map-draw",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3. Round 2 found a jump table and no straight-line stamp of 5. If the index is not the creation counter, park the question.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 02:56 MDT",
+      "dispatch_id": "a549f4a8-0dcd-43c7-b684-fabab660bd35",
+      "worker_output": "build/tmp/b3c-map-index/round-note.md",
+      "landed_at": "2026-10-25 03:00 MDT",
+      "landed_in": "PLAN.md Phase B (B3); docs/scratch/phase-b3c-map-index.md; docs/LESSONS.md B3c; docs/plan-history/phase-b.md",
+      "disposition": "0x487297 stores [ebp+8] into the jump index. It is not a load of 0x4C416C. The object stamped 5 stays unread. Gate not scored.",
+      "facilitator_verified": "2026-10-25 03:00 MDT: re-read 0x48726F through the compare. check_index.py: store is 8b 45 08 / 89 85 4c ff ff ff, no counter operand. Argument displacement 0x0C failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "b3b-map-object",
       "title": "Which creation receives screen id 5",
       "status": "landed",

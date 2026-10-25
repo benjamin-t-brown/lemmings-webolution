@@ -1,10 +1,9 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T14:38:14-06:00",
+  "updated": "2026-10-25T14:44:54-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
-    {"id":"c3q-scene-device-state","status":"ready-for-verify","brief":"build/tmp/c3q-scene-device-state-brief.md","question":"Scene mesh/type2 device state at submission","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:16:53-06:00","dispatch_confirmed_at":"2026-10-25T14:17:34-06:00","session_id":"ses_e8b4a1df5ffe3GPZhp8QYbefFQ","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3q-scene-device-state/round-note.md"},
-    {"id":"c3r-scene-texture-values","status":"ready-for-verify","brief":"build/tmp/c3r-scene-texture-values-brief.md","question":"Scene texture-object flags and upload texel values","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:16:53-06:00","dispatch_confirmed_at":"2026-10-25T14:17:34-06:00","session_id":"ses_e8b4a1da0ffeZqH4WHhN1s3V4g","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3r-scene-texture-values/round-note.md"}
+    {"id":"c3q-scene-device-state","status":"ready-for-verify","brief":"build/tmp/c3q-scene-device-state-brief.md","question":"Scene mesh/type2 device state at submission","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:16:53-06:00","dispatch_confirmed_at":"2026-10-25T14:17:34-06:00","session_id":"ses_e8b4a1df5ffe3GPZhp8QYbefFQ","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3q-scene-device-state/round-note.md"}
   ],
   "queue": [],
   "standing_run": {
@@ -22,13 +21,24 @@
     "owner": "OpenCode facilitator Sol, resumed via /facilitator on mouv 2026-10-25T14:07:15-06:00; same conversation",
     "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
     "started_at": "2026-10-25T13:29:10-06:00",
-    "rounds_run": 6,
+    "rounds_run": 7,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
-    "handoff": "C3t landed as PARTIAL annular base/top family diagnostic: bound[69,0,569,480),55571 pixels independently reproduced by different polygon-square clip algorithm;floor identity/native visibility not complete;mask307200 unpacked0/1bytes, not bitpacked.34/34CTest. Next VERIFY C3r returned texture packet; C3q STILL RUNNING, no polling/duplication. C3u pause-scene reachability brief linted but NOT queued/dispatched while C3r ready. Baseline0.2050523; scorer explicit --reference repair4 fixed7fd3332. Scene renderer still absent. C3n2077clip count candidate, old C3o evaluator/checker rejected. No live owner;starts0/3;6completed attempts including C3o repair.",
+    "handoff": "C3r landed constructor flags/source pixels/conditional upload streams;actual native opaque format/wrapper conversion remains unresolved.33resources/52members/19patch streams independently checked;34/34CTest. C3t earlier partial annular diagnostic only, not complete floor identity. NEXT finish verification of C3q ready packet: independent checker build/tmp/c3q-facilitator-check.py PASSES600matrix rows plus ordered cache/mutations and32raw window authentication;semantic review of fresh assembly still needed, then full build/CTest and narrow landing. No workers/live owner running. C3u reachability brief linted NOT queued/dispatched. After Q choose offline/live preflight for exact state/format inputs or independent scene gates;don't invent GPU defaults or choose format by score. Baseline0.2050523, scene renderer absent;starts0/3;7completed attempts including C3o repair.",
     "previous_passes": [{"started": "2026-10-25T13:29:10-06:00", "ended":"2026-10-25T14:01:52-06:00", "elapsed":"32m42s", "rounds": [{"id":"c3p-kind5-culling","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","worker_finished":"2026-10-25T13:54:46-06:00"}]}],
-    "current_pass": {"started":"2026-10-25T14:07:15-06:00","last_yielded":"2026-10-25T14:18:27-06:00","previous_elapsed_to_yield":"11m12s","rounds":[{"id":"c3o-type2-draw","dispatched":"2026-10-25T13:37:26-06:00","repair_dispatched":"2026-10-25T13:56:13-06:00","landed":"2026-10-25T14:10:27-06:00","elapsed":"33m01s","repair_elapsed":"14m14s"},{"id":"c3n-mesh-submission","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:15:57-06:00","elapsed":"38m31s","worker_finished":"2026-10-25T14:02:45-06:00"},{"id":"c3s-explicit-reference-scorer","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:24:12-06:00","elapsed":"7m19s","worker_finished":"2026-10-25T14:20:43-06:00"},{"id":"c3t-floor-ring-bounds","dispatched":"2026-10-25T14:26:41-06:00","landed":"2026-10-25T14:38:14-06:00","elapsed":"11m33s","result":"partial source-family diagnostic only"}]},
+    "current_pass": {
+      "started":"2026-10-25T14:07:15-06:00",
+      "last_yielded":"2026-10-25T14:18:27-06:00",
+      "previous_elapsed_to_yield":"11m12s",
+      "rounds":[
+        {"id":"c3o-type2-draw","dispatched":"2026-10-25T13:37:26-06:00","repair_dispatched":"2026-10-25T13:56:13-06:00","landed":"2026-10-25T14:10:27-06:00","elapsed":"33m01s","repair_elapsed":"14m14s"},
+        {"id":"c3n-mesh-submission","dispatched":"2026-10-25T13:37:26-06:00","landed":"2026-10-25T14:15:57-06:00","elapsed":"38m31s","worker_finished":"2026-10-25T14:02:45-06:00"},
+        {"id":"c3s-explicit-reference-scorer","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:24:12-06:00","elapsed":"7m19s","worker_finished":"2026-10-25T14:20:43-06:00"},
+        {"id":"c3t-floor-ring-bounds","dispatched":"2026-10-25T14:26:41-06:00","landed":"2026-10-25T14:38:14-06:00","elapsed":"11m33s","result":"partial source-family diagnostic only"},
+        {"id":"c3r-scene-texture-values","dispatched":"2026-10-25T14:16:53-06:00","landed":"2026-10-25T14:44:54-06:00","elapsed":"28m01s"}
+      ]
+    },
     "latest_yield": {"date":"2026-10-25T14:27:12-06:00","pass_started":"2026-10-25T14:07:15-06:00","elapsed":"19m57s","reason":"Await three offline worker notifications; standing run remains active"},
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "sync_resolution": {"date":"2026-10-25T14:06:00-06:00","authorization":"User: the git thing is a small change from the overlord, we should be able to pull that in locally","method":"Non-rewriting merge of origin4889d3e; no conflicts; pending tasks.json SHA256 unchanged across merge. Prior sync stop14:01:52 resolved."},

@@ -608,3 +608,12 @@ one projected-vertex mutation changes143 pixels and restores. Mask is unpacked
 0/1 bytes, not a packed LSB-first bitset despite candidate wording.34/34CTest.
 Native visibility/clipping and complete floor identity remain unaccepted; no
 scoring, gate/region changes, render implementation or stock start.
+
+**C3r: scene constructor flags and conditional texture streams verified (2026-10-25)**
+([Facilitator check](../scratch/phase-c3r-scene-texture-values.md)).33 resources,
+52 member slices and192512 source pixels independently reproduced. Normal
+constructor flags:13 resources0,19 caret resources8,Water4.19 conditional patch
+streams and28 illustrative native GDI/formula variants match; alpha-only and
+one-blue-byte mutations discriminate/restore.58anchors/five raw windows and
+install hashes authenticated;34/34CTest. Actual native format/wrapper conversion
+and returned layouts remain unresolved; no pixel-fit choice or scene render.

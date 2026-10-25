@@ -1,8 +1,34 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T23:24:12-06:00",
+  "updated": "2026-10-24T23:24:37-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1ar-exit-capture",
+      "title": "Capture the exit code from the detach callback",
+      "status": "running",
+      "worker_output": null,
+      "brief": "build/tmp/c1ar-exit-capture-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "offline repair",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1aq-launch-read"
+      ],
+      "gate_served": "C1 skill panel; exit code and skip input before the remaining start",
+      "question": "alpha-count-launch",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3. Offline. The remaining start is not in this round; a fourth round needs a written reason that it moves the gate.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-hook-repair",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-24 23:24 MDT"
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "c1-hook-repair",
@@ -24,7 +50,7 @@
     "stock_starts_used": 1,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 23:24 MDT: c1aq landed. Pid 25964 exited before the level. Count site 0. OpenProcess 87. Starts 1 of 2. Next is an offline exit-code repair, no start. Gate not scored.",
+    "handoff": "2026-10-24 23:24 MDT: c1ar running, offline exit-code repair. Starts 1 of 2. No start this round. Gate not scored.",
     "pass_clock": {
       "started": "2026-10-24 22:59:52 -06:00",
       "rounds": [

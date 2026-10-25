@@ -1,8 +1,34 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T18:32:39-06:00",
+  "updated": "2026-10-24T18:33:24-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [],
+  "active": [
+    {
+      "id": "c1ak-vtable-call",
+      "title": "Who calls the upload method at vtable slot 0x4B19FC",
+      "status": "running",
+      "brief": "build/tmp/c1ak-vtable-call-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ai-upload-when"
+      ],
+      "gate_served": "C1 skill panel; the upload must be placed in time before a start",
+      "question": "alpha-count",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3 this run. C1ai placed the registration at startup and left 0x472F99 unnamed. No start until this call is placed in time.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-upload-timing",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "cc938003-86a4-48a9-9162-f797659769d7",
+      "dispatched_at": "2026-10-24 18:33 MDT"
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "c1-upload-timing",
@@ -24,7 +50,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 18:32 MDT: c1aj and c1ai landed. ^tab registers at startup. The upload phase is unnamed: 0x472F99 is reached only through vtable slot 0x4B19FC. Alpha-count cap: c1ai was 1 of 3. Next is who calls that slot, round 2, still offline. Format-enumeration offline question is answered. Stock starts 0 of 2. No start until the upload is placed in time. Pass started 18:16:38.",
+    "handoff": "2026-10-24 18:33 MDT: c1aj and c1ai landed. ^tab registers at startup. Upload phase unnamed (vtable slot 0x4B19FC). c1ak is running, dispatch cc938003-86a4-48a9-9162-f797659769d7, alpha-count round 2 of 3, offline. Stock starts 0 of 2. No start until the upload is placed in time. Pass started 18:16:38. Next: verify c1ak.",
     "pass_clock": {
       "started": "2026-10-24 18:16:38 -06:00",
       "rounds": [

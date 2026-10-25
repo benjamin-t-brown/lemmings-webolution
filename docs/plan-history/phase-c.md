@@ -302,3 +302,14 @@ run from the PE entry `0x49D518` through `0x49D5E1` and `0x450895`.
 calls `0x4743DD`. Its address sits at vtable slot `0x4B19FC`. The facilitator
 re-scanned `.text` and re-read the chain. A one-byte change of the expected
 `0x45E901` call failed. No stock start. The shift counts stay unread.
+
+**C1ak: the upload slot is called at `0x471746`, and that phase is unnamed**
+([check](../scratch/phase-c1ak-vtable-call.md)), 2026-10-24, alpha-count
+round 2 of 3 this run, offline. `0x471746` is `call dword ptr [edx+0x14]`
+inside `0x471720`. That function is vtable `0x4B19E8` slot `+0x0C`, and on
+that vtable the call target is `0x4743DD`. The same instruction on vtable
+`0x4B1A00` calls `0x49C134`. There is no direct caller of `0x471720`.
+`0x471230` replaces `0x4B19E8` with `0x4B1A00` before it returns. `0x474380`
+leaves `0x4B19E8` in place, and its only direct caller is `0x46F16F`. The
+facilitator re-read the call and re-scanned `.text`. A one-byte change of
+the expected call failed. No stock start. The shift counts stay unread.

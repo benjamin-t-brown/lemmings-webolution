@@ -1027,6 +1027,36 @@
   ],
   "landed": [
     {
+      "id": "c1ak-vtable-call",
+      "title": "Who calls the upload method at vtable slot 0x4B19FC",
+      "status": "landed",
+      "worker_output": "build/tmp/c1ak-vtable-call/round-note.md",
+      "brief": "build/tmp/c1ak-vtable-call-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ai-upload-when"
+      ],
+      "gate_served": "C1 skill panel; the upload must be placed in time before a start",
+      "question": "alpha-count",
+      "question_round_count": 2,
+      "cap_note": "Round 2 of 3 this run. C1ai placed the registration at startup and left 0x472F99 unnamed. No start until this call is placed in time.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-upload-timing",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "cc938003-86a4-48a9-9162-f797659769d7",
+      "dispatched_at": "2026-10-24 18:33 MDT",
+      "landed_at": "2026-10-24 18:43 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1ak-vtable-call.md; docs/LESSONS.md C1ak; docs/plan-history/phase-c.md",
+      "disposition": "0x471746 is call [edx+0x14] inside 0x471720. On vtable 0x4B19E8 the target is 0x4743DD. No direct caller. 0x471230 overwrites that vtable with 0x4B1A00. 0x474380 leaves 0x4B19E8 and is called from 0x46F16F. Phase unnamed. No stock start.",
+      "facilitator_verified": "2026-10-24 18:43 MDT: re-read 0x471746 ff 52 14, vtable dwords, 0x47141F overwrite. No E8 to 0x471720 or 0x4743DD. Expecting ff 52 15 failed. No Lemmings process."
+    },
+    {
       "id": "c1ai-upload-when",
       "title": "When the ^tab upload at 0x472F99 runs",
       "status": "landed",

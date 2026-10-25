@@ -71,6 +71,12 @@ a ring on plate 0. Rank in this order, each read before it is drawn:
    plate 0 because the stock frame shows a ring there.
 3. **Plate filter (c1be)** only if the gate still fails after 1 and 2.
 
+**Gate amended after the stop (user, overlord review 2026-10-25, "i approve your
+recommendations").** Recorded after this run stopped at C1bj. `PLAN.md` C1 row: the gated
+views are now `zoom1` and `elev_down`. `elev_up` is reported, not gated, because its residual
+is the C3 scene behind the plate interior (`build/tmp/overlord-2026-10-25/plate0.py`, C1bj).
+The next directive acts on it.
+
 Not in scope: C2, C3, B2, B3. Do not advance to them if C1 passes; stop and report.
 
 ## Budget

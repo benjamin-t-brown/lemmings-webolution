@@ -291,3 +291,14 @@ the copy at `0x473B76`, and the upload does not read `eax` after either
 `call [eax+0x20]`. The stop is not in this function. The facilitator
 re-disassembled the body and re-read the keep and the `ret`. A one-byte change
 of the expected `ret` failed. No stock start. The shift counts stay unread.
+
+**C1ai: `^tab` is registered at startup, and the upload's phase is unnamed**
+([check](../scratch/phase-c1ai-upload-when.md)), 2026-10-24, alpha-count
+round 1 of 3 this run, offline. Seventeen direct calls reach `0x45FE10`.
+Sixteen, including `^tab` at `0x45E901` and `^tab_selected` at `0x45E919`,
+run from the PE entry `0x49D518` through `0x49D5E1` and `0x450895`.
+`0x45FE10` does not call `0x472F99`. The only direct call of the upload is
+`0x47241A`, reached from `0x4744B1` inside `0x4743DD`, and nothing in `.text`
+calls `0x4743DD`. Its address sits at vtable slot `0x4B19FC`. The facilitator
+re-scanned `.text` and re-read the chain. A one-byte change of the expected
+`0x45E901` call failed. No stock start. The shift counts stay unread.

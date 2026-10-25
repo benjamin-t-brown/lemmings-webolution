@@ -8,77 +8,86 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **done**
-Done: 2026-10-25 03:29 MDT. Every ranked question is parked. C1 plate format (c1ax–c1ba), C2 cursor sprite (c2l–c2n), B3 map object (b3a–b3d), and B3 level pick (b3e–b3g). No gate was scored. Stock starts 0 of 3. The run is `c1-c2-b3`, stopped in `docs/tasks.json`.
-Issued: 2026-10-25 (user, overlord review 2026-10-25: "approve": a long multi-milestone run,
-caps park instead of stopping, a pool of 3 starts, about 8 hours or 24 rounds)
-Supersedes: the C1 alpha-offline directive, done 2026-10-25 00:52 MDT (c1at, c1au, c1av
-offline; c1aw's one menu-attach start exited `0xC0000005` before `^tab` reached `0x473146`;
-gate not scored). Its pending question `plate-alpha-after-crash` is answered by this
-directive: neither park nor amend yet. Correct the c1au reading first (below).
+Status: **active**
+Issued: 2026-10-25 (user, overlord review 2026-10-25: "approve all": DERIVED values from
+documented Win32 behaviour, value-framed questions, C1 only)
+Supersedes: the long multi-milestone directive, done 2026-10-25 03:29 MDT (run `c1-c2-b3`:
+14 rounds, 0 starts, every ranked question parked, no gate scored).
 
 ## Why this
 
-Passes have run 30–60 minutes because recent directives stopped on the first crash, rationed
-starts one at a time and scoped one milestone. This run follows the
-[standing-run loop](ORCHESTRATION.md#standing-run) as written: a capped question is parked
-and the next one ranked; a user-only decision goes to `pending_questions` while other work
-continues. Rounds stay small (task sizing is unchanged); the run chains more of them.
+The last run read one step back per round and parked each question at "the number is
+unread". This run frames each question by the value it needs, and allows one new evidence
+class so the C1 chain can close offline.
 
-The overlord's reading, not evidence, for C1: c1au's landing says the `0x7c`-byte fill at
-`[ebp-0x18c]` ends at `[ebp-0x110]` and does not cover `[ebp-0x140]`. `-0x140` lies inside
-`[-0x18c, -0x110)` (`build/tmp/overlord-2026-10-25/fillcheck.py`, arithmetic only). c1aw's
-one live hit at `0x473146` read that dword as 0 (on `$LemSheetHi8`). If `+7` is 0 for `^tab`,
-the landed c1au conditional keeps c1as line 29 (R `0x0F00`, G `0x00F0`, B `0x000F`, A `0xF000`).
-Re-read it; do not take this paragraph as the read.
+The overlord's reading, not evidence. Landed: c1ba (`0x45015A` tests the buffer for `BM`),
+c1ba and c1au (the name is `Textures\%s.bmp` with `^tab`), c1ay (`+6` compares word `+0x12`
+of a `0x18`-byte `GetObjectA` buffer), c1az (the handle is `CreateDIBSection`'s return,
+stored at `[object+4]`), C1y (`^TAB.BMP` is 24 bpp). Documented: a `0x18`-byte `GetObjectA`
+on a DIB-section `HBITMAP` fills a `BITMAP` whose `bmBitsPixel` is the word at `+0x12`. So
+`+6` = (24 <= 8) = 0. With `+4` = 1, `+5` = 0 and `+7` = 0 (c1ax), the c1aj popcount arm keeps
+exactly one record of the c1as list: line 29, A4R4G4B4 (A `0xF000`)
+(`build/tmp/overlord-2026-10-25/keepcheck.py` re-applies the arm to the 20 `$LemBits0`
+records; the A1R5G5B5 record (n=11) fails the popcount test).
+Verify this chain; do not take this paragraph as the verification.
 
-## Scope, in rank order
+## New evidence class: DERIVED (user, overlord review 2026-10-25)
 
-Rank by gate error and the round caps within this order. Work on a later milestone may run
-concurrently when it does not depend on an earlier one.
+A value may be **DERIVED** when every link is either read from this exe or the install, or is
+documented Win32 / DirectX behaviour (cite the struct, field and offset from the Microsoft
+documentation or SDK header). Label it DERIVED in code and notes, never MEASURED or READ,
+and name the documented link. A later live read that disagrees replaces it. Add this class
+to `.claude/rules/match-the-original.md` (facilitator-owned) in the first landing round.
 
-1. **C1 skill panel, to its gate** (`PLAN.md` C1 row as amended twice). Start offline:
-   re-read whether the fill covers `[ebp-0x140]` and whether any instruction or call between
-   the fill and `0x473146` can write it. Correct `docs/LESSONS.md` and the c1au note if the
-   withdrawal was wrong. If `+7` is settled, apply the keep rule to the c1as list and record
-   the kept format as the measured value for this install (dgVoodoo). Then draw the plates
-   (texels, alpha rule, counts, blend selector 1 from c1ad) and score `zoom1`, `elev_up`,
-   `elev_down`. Report `initial`, the other A7p views, `MM_DIG_000` and the scenery-only error
-   beside them. If the gate still fails, rank what is left inside the footprint.
-2. **C2 cursor clause** (`PLAN.md` C2 row): cursor sprite set on hover, no-hover and exit.
-   Not started. The caption blend stays parked.
-3. **B3 level select and map** (`PLAN.md` B3 row). Not started.
-4. **C3 full frame and B2 screen state machine:** parked. Reopen one only with a written
-   reason in the brief that it moves its gate.
+## Scope
+
+**C1 skill panel, to its gate** (`PLAN.md` C1 row as amended twice). Questions are framed by
+the value needed. A round follows the chain until it has the value or reaches its time
+limit; "the next link is unread" ends a round only when the limit is hit, not by choice.
+
+1. **What is `+6` for `^tab`, and which format record is kept?** Close the c1az and c1ba
+   narrowings: that the buffer copied onto `0x58D5B8` is `^TAB.BMP`'s, and that `[object+4]`
+   is still the `CreateDIBSection` handle when `0x473040` runs (the `0x472FAD` import and
+   `0x472FB2` `call eax` sit between). Record `+6` and the kept record as DERIVED, and as the
+   value for this install's format list (dgVoodoo).
+2. **What 16-bit word does the upload store for each `^tab` texel?** The shift path
+   (`0x473866`..`0x473955`) with the kept masks: the alpha shifts and how each colour
+   channel is reduced. Read it, do not assume.
+3. **Render and score.** Draw the plates (C1y texels, item 2's words, blend selector 1 from
+   c1ad, counts and icons as landed). Score `zoom1`, `elev_up`, `elev_down` against their A7p
+   `baseline.png` over the frozen footprint. Report `initial`, the other A7p views,
+   `MM_DIG_000` and the scenery-only error beside them.
+4. If the gate fails, rank what is left inside the footprint (count tint, selection state,
+   icon edges) by error and keep going.
+
+Not in scope: C2, C3, B2, B3. Do not advance to them if C1 passes; stop and report.
 
 ## Budget
 
-- **Run:** about **8 hours wall time or 24 rounds**. Round limit 30 minutes from dispatch.
-- **Rounds:** 3 per question, then park it in Phase E with a resume brief and rank the next.
-  A further round needs a written reason in its brief that it moves the gate.
+- **Run:** about **8 hours or 24 rounds**. Round limit 30 minutes from dispatch.
+- **Rounds:** 3 per question, then park it with a resume brief and rank the next. A further
+  round needs a written reason in its brief that it moves the gate.
 - **Concurrency:** up to 3 offline rounds at once, at most one live owner.
-- **Stock starts:** a pool of **3** for the run, each dry-checked offline first. Normal
-  `Popen`, attach at the menu **through the REA CLI** (`rea instrument-with-frida attach`,
-  the c1s/c1ad/c1ah recipe in [MOUV_SSH.md](agents/MOUV_SSH.md)). Python `frida.attach` and
-  `frida.spawn` or any suspended launch are retired for game starts. Read-only hooks, one
-  session, no write to game memory beyond the harness's restored level-table slot.
-- **A crash** (a start exits abnormally) ends live work on that question: record it, park the
-  live arm, continue offline work and other milestones. **A second crash in the run ends all
-  stock starts for the run.**
+- **Stock starts:** a pool of **3**, each dry-checked offline first, only for a value the
+  offline chain cannot reach. Normal `Popen`, menu attach through the REA CLI
+  (`rea instrument-with-frida attach`, [MOUV_SSH.md](agents/MOUV_SSH.md)). Python
+  `frida.attach`, `frida.spawn` and suspended launches are retired for game starts.
+  Read-only hooks, one session, no game-memory write beyond the restored level-table slot.
+  A crash ends that question's live arm; a second crash ends starts for the run.
 - **No debugger.** Per-round commits and pushes.
 
 ## Decisions already made (do not re-ask)
 
-- **Park by default.** When a question stalls at its cap or a run of work ends without a gate
-  score, park it, add any park-or-amend choice to `pending_questions` with options, evidence
-  and a recommendation, and continue with other ranked work. Do not stop for it.
+- `+7` = 0 is READ (c1ax). Do not re-derive it.
+- **Park by default.** A capped question is parked and the next ranked; a park-or-amend choice
+  goes to `pending_questions` with a recommendation. Do not stop for it.
 - Gates as signed off in `PLAN.md`. The C1 footprint fixture
   `tools/harness/fixtures/c1-footprint/footprint.json` (SHA-256 `e96840e0…`) is frozen.
-- **Read, do not fit, and do not choose by score.** The 0.47 stock-over-ours plate
-  brightness ratio (`build/tmp/overlord-2026-10-24/tabratio.py`) is a prediction or falsifier
-  only, never a render input. A format comes from the read keep rule applied to a logged list.
-- Do not reopen when the `^tab` upload runs, and do not chase the startup crash's fault
-  address or the menu-entry cause.
+- **Do not choose by score.** The 0.47 plate brightness ratio
+  (`build/tmp/overlord-2026-10-24/tabratio.py`) is a falsifier only. A format comes from the
+  keep rule applied to the logged list, not from fit.
+- Do not reopen when the `^tab` upload runs, the startup crash's fault address or the
+  menu-entry cause.
 - `frida` 17.24.3 stays installed for mouv's Python (user, 2026-10-24).
 - **Time the pass** (standing), total and per round, in the queue.
 - **Landing** per the 2026-10-24 restructure: detail in the scratch note, round prose in
@@ -87,19 +96,18 @@ concurrently when it does not depend on an earlier one.
   `goto_level.focus()`. Live steps run in session 1 per [MOUV_SSH.md](agents/MOUV_SSH.md).
   Close any game the round leaves running, after checking it. Restore and hash-check every
   install file in the same process that changed it.
-- Settled and not to be re-derived: everything settled in earlier directives and c1ap–c1aw.
-- Parked and not to be chased: C3 scenery, the caption blend, the hatch animation, the
-  `MM_DIG_000` shortfall, the HUD tick mismatch, the `+0x3c` writer. Run CTest on mouv. Keep
-  text files LF.
+- Settled: everything in earlier directives and c1ap–c1ba. Parked: C3 scenery, the caption
+  blend, the hatch animation, the `MM_DIG_000` shortfall, the HUD tick mismatch, the `+0x3c`
+  writer, C2 cursor (c2l–c2n), B3 map and level pick (b3a–b3g). Run CTest on mouv. LF only.
 
 ## Stop point
 
 Stop and report only when:
-- the last ranked milestone's gate passes on your own independent re-score;
-- a gate, its footprint, mask, views or exclusions would need to change;
-- a guardrail breach: install hashes not restored, a process you cannot attribute, a write
-  left unrestored, or a worker exceeding its start budget or using a retired method;
-- every remaining ranked question is parked or waits on `pending_questions`;
+- the C1 gate passes on your own independent re-score;
+- a gate, its footprint, views or exclusions would need to change;
+- a guardrail breach: install hashes not restored, an unattributed process, a write left
+  unrestored, or a worker exceeding its start budget or using a retired method;
+- every remaining C1 question is parked or waits on `pending_questions`;
 - the run reaches about 8 hours or 24 rounds;
 - delegation or the pinned model is unavailable, or another session is running a task.
 

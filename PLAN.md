@@ -170,6 +170,13 @@ user 2026-10-22.**
   a written gate reason. Caps park and the run continues; park-or-amend goes to
   `pending_questions`. About 8 hours or 24 rounds; a pool of 3 starts, menu attach through
   the REA CLI; a crash ends that question's live arm, a second ends starts for the run.
+- **DERIVED values, value-framed questions, C1 only (user, overlord review 2026-10-25,
+  "approve all").** After run `c1-c2-b3` parked every question with no gate scored. A value
+  may be DERIVED when each link is read from the exe or install or is documented Win32 /
+  DirectX behaviour (struct, field, offset cited); labelled DERIVED, never MEASURED, and a
+  disagreeing live read replaces it. Questions name the value needed and a round follows the
+  chain to it. Next run: C1 only (`+6` and kept format, the `^tab` texel word, render and
+  score); same budget as the previous run.
 - **C1 gate measurement amended (user, overlord review 2026-10-24).** C1t showed the scorer could not see the panel: its mask inside the skill bands is x 86..89, the drawn icons x 26..76, overlap 0, so `skill_mae` stayed at the pre-panel 0.1077 / 0.0554. The threshold (0.02), region and captures are unchanged; the pixels scored become the panel's own footprint, built from read geometry (plates, c1s icon positions with the c1p/c1r frame sizes, count glyphs at the c1s text-object positions) and committed before the render. Pixels where a plate is translucent still include whatever the stock frame shows behind it; that share is reported, not masked out.
 - **C1 gated views amended (user, overlord review 2026-10-24, second amendment).** The plates are translucent: all 18033 plate-only footprint pixels differ between the eight A7p stock views, and they carry 83% of c1w's 0.2918. On the 4536 scenery-only pixels between the plates, our render differs from the stock frame by 0.48–0.52 on `initial`, `left`, `right`, `elev0_neg` and `canonical` (sand, sky, balloon: parked C3 scenery) and by 0.0183 / 0.0209 / 0.0174 on `zoom1` / `elev_up` / `elev_down` (the tube wall we draw). So the gate is taken on those three views; the threshold, footprint and region are unchanged. The scenery error alone is near 0.02 there, so a pass is not assured. Overlord scripts `build/tmp/overlord-2026-10-24/split.py`, `constancy.py`, `gaps.py`, `views.py` (measured from the saved A7p PNGs; evaluation, not a new capture).
 

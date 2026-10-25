@@ -22,7 +22,7 @@
         {"question":"The elev_up miss that remains is the scene showing through the plate interior (384401 of 466081 plate-only; 1589553 with the plates omitted). Icon and glyph error is 114891, which cannot bring 580972 under 354440. Should the next run draw that scene, or should the gate change?","recommendation":"Do not change the gate in this run. The scene behind the panel is outside the C1-only directive. Ask before excluding plate pixels or starting that scene."}
       ],
       "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
-      "handoff": "2026-10-25 13:05 MDT. Stopped. C1bj landed. Gate 0.01609/0.03278/0.01612. elev_up remainder is the scene through the plate interior. Starts 0/3. Rounds 11.",
+      "handoff": "2026-10-25 13:05 MDT. Stopped. C1bj landed. Gate 0.01609/0.03278/0.01612. elev_up remainder is the scene through the plate interior. Icon and glyph error cannot pass the gate. Starts 0/3. Rounds 11.",
       "current_pass": {"started":"2026-10-25T11:56:33-06:00","rounds":[
         {"id":"c1bf-zero-count","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:05:36-06:00","elapsed":"34m38s","worker_idle":"2026-10-25T11:35:49-06:00"},
         {"id":"c1bg-selected-index","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:07:34-06:00","elapsed":"36m36s","worker_idle":"2026-10-25T11:45:02-06:00","worker_outcome":"failed after the packet was written"},
@@ -1368,6 +1368,7 @@
     }
   ],
   "landed": [
+    {"id":"c3p-kind5-culling","status":"landed","brief":"build/tmp/c3p-kind5-culling-brief.md","question":"Kind5 scalar predicate and retained pass/skip table","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T13:37:26-06:00","session_id":"ses_e8b6e52ddffe7LIUtRyDQtJMjA","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3p-kind5-culling/round-note.md","landed_at":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","facilitator_note":"docs/scratch/phase-c3p-kind5-culling.md","result":"Conditional predicate 306 pass/159 skip independently reproduced across465; raw bytes and isolated normal mutation checked; no final draw/precision claim;34/34CTest;starts0."},
     {"id":"c1bj-plate-over-stock","status":"landed","milestone":"C1 skill panel","question_key":"plate-over-stock","question_round":1,
      "brief":"build/tmp/c1bj-plate-over-stock-brief.md","worker_output":"build/tmp/c1bj-plate-over-stock/round-note.md",
      "dispatch_id":"3ba69d52-2c22-4d9f-95d4-182efddb77a4","requested_model":"grok-4.7-high-fast, round-agent",

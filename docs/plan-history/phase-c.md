@@ -562,3 +562,13 @@ below 0.02. elev_up 580972 and seven other diagnostics are reported in the note;
 none is declared passing. Frozen footprint and source hashes match the directive;
 34/34 CTest pass. A single image shift fails the gate. No panel implementation
 round or stock start. New run `c1-close-c3-scene` advances to C3 full frame.
+
+**C3p: kind-5 scalar predicate derived (2026-10-25)**
+([Facilitator check](../scratch/phase-c3p-kind5-culling.md)). The scalar is
+`dot(E-first_vertex, selected_vector)`, passing only above zero; E comes from
+the inverse composed rotation and negated translation. Independent raw-level
+parse/Gaussian solve reproduces 306 pass/159 skip across 465 records. One
+normal-only sign mutation flips exactly one record; original bytes unchanged.
+35 native windows authenticated, 34/34 CTest. Conditional predicate only, not
+final draw visibility or native precision. Correct repair4 baseline is 0.2050523;
+the old C3 scorer uses A6d3 and needs explicit reference selection. No render change.

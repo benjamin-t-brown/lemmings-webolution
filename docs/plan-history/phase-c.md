@@ -504,3 +504,11 @@ An isolated alpha-only mutation worsens zoom1 and fails the pixel test; exact
 restore and34/34CTest pass. No original runtime state or raster assumption is
 accepted by these numbers. Plate-exclusive region ranks first; next is its
 numerical filter/alpha state, not a fourth integration dispatch or gate change.
+
+**C1bf: zero-count text skipped, gate still fails**
+([Facilitator check](../scratch/phase-c1bf-zero-count.md)). The native
+`0x45B6E4` compare skips only the text submit. Own re-render of the three
+gated views matches the worker PNGs. Scores 414292/784866/415022 over
+17721990, all above 0.02 and all below C1bd. Removing only the guard fails
+one destination test and returns zoom1 to 609151. Restored source and 34/34
+CTest. Next is the selected plate, then the filter only if the gate still fails.

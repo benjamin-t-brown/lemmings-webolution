@@ -120,6 +120,7 @@ void drawSkillPanelIcon(Image& dest, const Image& sheet, const webo::SpriteFrame
 void drawSkillPanelCounts(Image& dest, const Image& font, const std::array<int, 9>& counts) {
   for (int i = 0; i < 9; ++i) {
     const int count = counts[static_cast<std::size_t>(i)];
+    if (count == 0) continue; // READ, C1v: native branch skips the text submit.
     const char digits[2] = {static_cast<char>('0' + count / 10), static_cast<char>('0' + count % 10)};
     for (int d = 0; d < 2; ++d) for (int y = 0; y < 14; ++y) for (int x = 0; x < 6; ++x) {
       const int sx = (digits[d] - '0') * 6 + x, dx = 66 + d * 6 + x, dy = 20 + 40 * i + y;

@@ -170,6 +170,34 @@ void testNativePanelPlacementAndDigit() {
   check(dest.rgba[(20 * 90 + 72) * 4] == 255, "count text: twenty renders the ones digit '0'");
 }
 
+void testZeroCountSkipsTextAtDestination() {
+  std::cout << "zero-count text draw guard\n";
+  Image font = makeSolid(60, 14, 255, 255, 255, 255);
+  Image zeroDest = makeSolid(90, 400, 17, 29, 41, 255);
+  std::array<int, 9> counts{};
+  counts[0] = 0;
+  drawSkillPanelCounts(zeroDest, font, counts);
+  bool unchanged = true;
+  for (int y = 20; y < 34; ++y)
+    for (int x = 66; x < 78; ++x) {
+      const auto p = (static_cast<std::size_t>(y) * zeroDest.width + x) * 4;
+      unchanged &= zeroDest.rgba[p] == 17 && zeroDest.rgba[p + 1] == 29 &&
+                   zeroDest.rgba[p + 2] == 41;
+    }
+  check(unchanged, "count zero leaves ink-capable destination pixels unchanged");
+
+  for (const int count : {1, 10}) {
+    Image dest = makeSolid(90, 400, 17, 29, 41, 255);
+    counts.fill(0);
+    counts[0] = count;
+    drawSkillPanelCounts(dest, font, counts);
+    const auto p = (20u * dest.width + 66u) * 4;
+    const auto ones = (20u * dest.width + 72u) * 4;
+    check(dest.rgba[p] == 255, std::format("count {} draws tens-cell ink", count));
+    check(dest.rgba[ones] == 255, std::format("count {} draws ones-cell ink", count));
+  }
+}
+
 void testPatchPlateResizeRowAsymmetricAlpha() {
   Image src = makeSolid(72, 32, 0, 0, 0, 0);
   src.rgba[(0 * 72 + 0) * 4] = 11; src.rgba[(0 * 72 + 0) * 4 + 3] = 3;
@@ -293,6 +321,7 @@ int main() {
   testClipsSourceEdge();
   testEmptyInputsAreNoOps();
   testNativePanelPlacementAndDigit();
+  testZeroCountSkipsTextAtDestination();
   testPatchPlateResizeRowAsymmetricAlpha();
   testPatchPlateFullWordsAgainstC1bc();
   testSkillPanelIconSheetsAreNotTheTenIcons();

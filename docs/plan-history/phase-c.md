@@ -429,3 +429,11 @@ before the read stores it. The `sete` at `0x473157` stores 0. The
 facilitator walked the function, and a count of `0x7b` failed the check.
 No stock start. The c1au coverage sentence is rejected. The gate is not
 scored.
+
+**C1ay: +6 reads a GetObjectA word**
+([check](../scratch/phase-c1ay-kept-format.md)), 2026-10-25, kept-format
+round 1 of 3. `0x473040` calls `GetObjectA` on a `0x18`-byte buffer.
+`[ebp-0x192]` is byte `+0x12` of that buffer, and `0x473179` compares
+the word with 8. The facilitator re-read the call and the name, and
+expecting `GetObjectB` failed. No stock start. The number, and the
+kept record, stay unread. The gate is not scored.

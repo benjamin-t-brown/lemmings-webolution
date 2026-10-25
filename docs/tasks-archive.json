@@ -1296,6 +1296,36 @@
   ],
   "landed": [
     {
+      "id": "c1ay-kept-format",
+      "title": "Which format record the keep rule keeps",
+      "status": "landed",
+      "brief": "build/tmp/c1ay-kept-format-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "disassembly read",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1ax-fill-coverage"
+      ],
+      "gate_served": "C1 skill panel; the format record kept when +7 is 0",
+      "question": "kept-format",
+      "question_round_count": 1,
+      "cap_note": "Round 1 of 3. C1ax settled +7 as 0. The directive next applies the keep rule to the c1as list.",
+      "stock_starts_authorized": 0,
+      "standing_run": "c1-c2-b3",
+      "investigation_budget_minutes": 30,
+      "dispatched_at": "2026-10-25 01:43 MDT",
+      "dispatch_id": "de50f1fd-f708-439e-99ca-81176414cb9e",
+      "worker_output": "build/tmp/c1ay-kept-format/round-note.md",
+      "landed_at": "2026-10-25 01:51 MDT",
+      "landed_in": "PLAN.md Phase C (C1); docs/scratch/phase-c1ay-kept-format.md; docs/LESSONS.md C1ay; docs/plan-history/phase-c.md",
+      "disposition": "0x473040 calls GetObjectA into an 0x18-byte buffer at [ebp-0x1a4]. [ebp-0x192] is byte +0x12. 0x473179 compares that word with 8. The number is unread, so no c1as record was kept. Gate not scored.",
+      "facilitator_verified": "2026-10-25 01:51 MDT: re-read 0x47302D, 0x473179, 0x472513, and the GetObjectA name at 0x4BD720. check_plus6.py: one displacement hit at 0x47317B. GetObjectB failed and the checker was restored. No Lemmings process."
+    },
+    {
       "id": "c1ax-fill-coverage",
       "title": "Does the fill write the +7 dword",
       "status": "landed",

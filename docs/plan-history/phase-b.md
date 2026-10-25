@@ -222,3 +222,10 @@ zero stock starts. Neither moves a gate.
 but registration-before-load is unread. B2b
 ([check](../scratch/phase-b2b-highlight-keypath.md)) read the key-poll flag and the focus
 store, not a menu chain. Gates unmoved. B2 round 3 (`b2c-menu-chain`) is running.
+
+**B3a: no instruction selects screen id 5**
+([check](../scratch/phase-b3a-map-arm.md)), 2026-10-25, map-draw round 1
+of 3. `0x488359` loads `0x4C416C`, stores it at `[eax+0x2c]`, adds 1, and
+writes it back. `0x488377` returns with no call. The facilitator found
+the address three times, and expecting add immediate `2` failed. No
+stock start. The draw call stays unread. The gate is not scored.

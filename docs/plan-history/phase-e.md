@@ -389,6 +389,10 @@ open.
 
 - **C1 upload call** (parked 2026-10-24 at the alpha-count cap, c1ai, c1ak, c1al). `^tab` registers from the PE entry. The upload `0x472F99` is reached only from `0x4743DD`, called by `0x471746` (`call [edx+0x14]`) when the receiver's vtable is `0x4B19E8`. That function has no direct caller. The constructor `0x474380` leaves that vtable and runs at process startup: entry `0x49D5AB` walks `[0x4BF000, 0x4BF0DC)`, the dword at `0x4BF0B0` is `0x468D20`, and `0x46F16F` calls `0x474380`. That chain does not call `0x471720`. The shift counts are unread. Stock starts this run: 0 of 2, because a start required the upload to be placed in time. Resume: one launch-time read-only attach at `0x471746`, or one offline round on other callers of slot `+0x0C`. See [C1al](../scratch/phase-c1al-ctor-caller.md).
 
+### C1 launch-time alpha read
+
+- **C1 launch-time alpha read** (parked 2026-10-24 at the cap, c1am–c1ao). The four hooks append on entry, and `python` imports `frida` 17.24.3. The one start, pid 20612, exited within five seconds of `frida.resume`, before `MM_CLIMB_002`. The startup log has eight mask values of 0 and one of 32768. `0x473897` logged nothing. Install hashes match. One start remains in the pool and is not authorized until an offline repair names why that process exited, without relaunching this probe. See [C1ao](../scratch/phase-c1ao-launch-read.md).
+
 ### Frida hook tooling
 
 - **Frida hook tooling for live render-state traces** (parked with the above). A4ab's live

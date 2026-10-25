@@ -338,3 +338,11 @@ round 2 of 3, offline. `pip install frida` added only that package. The c1am
 hook and probe are unchanged. The facilitator imported `frida` 17.24.3 and
 re-ran both dry checks. Nothing was spawned. No stock start. The shift
 counts stay unread.
+
+**C1ao: the launch-time start exited before the level**
+([check](../scratch/phase-c1ao-launch-read.md)), 2026-10-24, launch-attach
+round 3 of 3, one stock start. Pid 20612 resumed at 21:43:53 and was gone
+at 21:43:58, before `MM_CLIMB_002`. The log has 9 uploads, 28 format
+records and masks 0, 0, 0, 0, 0, 0, 0, 0, 32768. The shift site has 0 lines.
+The facilitator recounted the log and re-hashed the install. The probe was
+not run again. The paused-level shift counts stay unread.

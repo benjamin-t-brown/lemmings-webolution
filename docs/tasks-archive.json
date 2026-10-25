@@ -1096,6 +1096,36 @@
   ],
   "landed": [
     {
+      "id": "c1ao-launch-read",
+      "title": "One launch-time read of the alpha counts",
+      "status": "landed",
+      "worker_output": "build/tmp/c1ao-launch-read/round-note.md",
+      "brief": "build/tmp/c1ao-launch-read-brief.md",
+      "worker_tier": "targeted",
+      "work_kind": "one stock start",
+      "harness": "Cursor",
+      "requested_model": "grok-4.7-high-fast",
+      "worker_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "depends_on": [
+        "c1an-frida-import"
+      ],
+      "gate_served": "C1 skill panel; the launch-time alpha read the plate render needs",
+      "question": "alpha-count-launch",
+      "question_round_count": 3,
+      "cap_note": "Round 3 of 3. The one start. The process exited before the level. Not retried.",
+      "stock_starts_authorized": 1,
+      "standing_run": "c1-launch-attach",
+      "investigation_budget_minutes": 30,
+      "dispatch_id": "2170e4fe-5f23-4593-87b7-8f977c8ce2aa",
+      "dispatched_at": "2026-10-24 21:43 MDT",
+      "landed_at": "2026-10-24 21:48 MDT",
+      "landed_in": "PLAN.md Phase C (C1) and Phase E; docs/scratch/phase-c1ao-launch-read.md; docs/LESSONS.md C1ao; docs/plan-history/phase-c.md; docs/plan-history/phase-e.md; docs/DIRECTIVE.md Status done",
+      "disposition": "Pid 20612 exited before MM_CLIMB_002. Startup log: 9 uploads, 28 format records, masks eight 0s then 32768, shift site 0. Hashes match. Not retried. Gate not scored.",
+      "facilitator_verified": "2026-10-24 21:48 MDT: recounted 46 log lines and masks 0 x8 then 32768. Re-hashed exe, SavedGame.dat and dgVoodoo.conf; all match the cleanup report. No Lemmings process."
+    },
+    {
       "id": "c1an-frida-import",
       "title": "Make the launch-hook probe able to import frida",
       "status": "landed",

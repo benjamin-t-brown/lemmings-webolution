@@ -1,35 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-24T21:43:00-06:00",
+  "updated": "2026-10-24T21:48:25-06:00",
   "notes": "Thin queue only: the current standing_run, active, queued and blocked tasks, pending questions. Landed tasks and earlier runs move to docs/tasks-archive.json. Goals live in PLAN.md; facts in LESSONS.md. Facilitator owns this file. See docs/ORCHESTRATION.md.",
-  "active": [
-    {
-      "id": "c1ao-launch-read",
-      "title": "One launch-time read of the alpha counts",
-      "status": "running",
-      "worker_output": null,
-      "brief": "build/tmp/c1ao-launch-read-brief.md",
-      "worker_tier": "targeted",
-      "work_kind": "one stock start",
-      "harness": "Cursor",
-      "requested_model": "grok-4.7-high-fast",
-      "worker_agent": "round-agent",
-      "owns_live_game": true,
-      "live_owner": "c1ao-launch-read",
-      "depends_on": [
-        "c1an-frida-import"
-      ],
-      "gate_served": "C1 skill panel; the launch-time alpha read the plate render needs",
-      "question": "alpha-count-launch",
-      "question_round_count": 3,
-      "cap_note": "Round 3 of 3. The one authorized start. c1am dry-checked the hooks and c1an made import frida work. If this launch or attach fails, do not retry. A fourth round is not authorized.",
-      "stock_starts_authorized": 1,
-      "standing_run": "c1-launch-attach",
-      "investigation_budget_minutes": 30,
-      "dispatch_id": null,
-      "dispatched_at": "2026-10-24 21:43 MDT"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c1-launch-attach",
@@ -47,11 +20,23 @@
     "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md. Disassembly reads stay on that pin.",
     "owner": "Cursor facilitator, 2026-10-24 21:15 MDT /facilitator on mouv. Prior run c1-upload-timing stopped, no task running, directive active, so this start is the handoff. This session is Grok 4.7; the user invoked /facilitator here.",
     "started_at": "2026-10-24 21:15:08 -06:00",
-    "rounds_run": 2,
-    "stock_starts_used": 0,
-    "pending_questions": [],
+    "rounds_run": 3,
+    "stock_starts_used": 1,
+    "pending_questions": [
+      {
+        "id": "spawn-exited-before-level",
+        "question": "Pid 20612 exited within five seconds of frida.resume, before MM_CLIMB_002. The startup log's last mask is 32768 and 0x473897 never ran. One start remains. What should the next run do?",
+        "options": [
+          "One offline round on why that process exited, then the remaining start only if the repair keeps the process up",
+          "Spend the remaining start on the same probe",
+          "Leave the shift counts unread"
+        ],
+        "recommendation": "One offline round first. The same probe already exited before the level, and the directive says a failed launch is not retried until an offline repair. Do not spend the remaining start on an unchanged spawn.",
+        "evidence": "docs/scratch/phase-c1ao-launch-read.md"
+      }
+    ],
     "stop_point": "C1 gate passes on an independent re-score; the gate, footprint or views would need to change; a question hits its cap with no written reason for another round; the start pool is spent and the next question needs a start; about 4 hours or 12 rounds; a start crashes or leaves the install unrestored; any other ORCHESTRATION stop. Do not advance to C3, the C2 cursor clause, B2 or B3.",
-    "handoff": "2026-10-24 21:43 MDT: c1an landed (da15856). Dispatching c1ao-launch-read, the one stock start. Stock starts 0 of 2 until it returns. Gate not scored. Pass started 21:15:08.",
+    "handoff": "2026-10-24 21:48 MDT: stopped. c1ao pid 20612 exited before the level. Masks 0 x8 then 32768. Shift site 0. Hashes match. Rounds 3 of 3. Stock starts 1 of 2. Gate not scored. Pass started 21:15:08.",
     "pass_clock": {
       "started": "2026-10-24 21:15:08 -06:00",
       "rounds": [
@@ -66,10 +51,20 @@
           "dispatched": "2026-10-24 21:37 MDT",
           "landed": "2026-10-24 21:40 MDT",
           "elapsed": "3m 54s"
+        },
+        {
+          "id": "c1ao-launch-read",
+          "dispatched": "2026-10-24 21:43 MDT",
+          "landed": "2026-10-24 21:48 MDT",
+          "elapsed": "5m 25s"
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": null
+    "stopped": {
+      "date": "2026-10-24 21:48 MDT",
+      "reason": "Alpha-count rounds 3 of 3. The one start, pid 20612, exited within five seconds of frida.resume, before MM_CLIMB_002. Startup masks were 0 eight times and 32768 once. The shift site logged 0. Install hashes match. Gate not scored. The remaining start needs an offline repair and a new authorization.",
+      "last_commit": null
+    }
   }
 }

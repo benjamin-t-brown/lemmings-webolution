@@ -8,7 +8,8 @@ authorization for the next standing run. Record it in `docs/tasks.json` yourself
 [the standing run](ORCHESTRATION.md#standing-run). When its stop point is reached, set
 `Status: done` here and stop.
 
-Status: **active**
+Status: **done**
+Done: 2026-10-24 21:48 MDT. c1ao pid 20612 exited within five seconds of `frida.resume`, before `MM_CLIMB_002`. Install hashes match. Rounds 3 of 3. Shift counts at the pause unread. Gate not scored. The remaining start waits on a later directive.
 Issued: 2026-10-24 (user, overlord review 2026-10-24: "i approve": attach at launch without
 placing the upload first; the 2 unspent starts stand; up to 3 more alpha-count rounds)
 Supersedes: the upload-timing directive, done 2026-10-24 18:53 MDT (c1ai–c1al: `^tab`

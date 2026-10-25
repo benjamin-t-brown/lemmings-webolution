@@ -680,3 +680,9 @@ materials, per-record alias winners and transforms; maxerror2.84e-14. Reversed
 hierarchy-only mutant fails and restores;38/38CTest. In-flight preparation task
 completed under render-first steering; app integration/render+score is next, not
 additional readers. No GPU submission/state/visibility or pixel acceptance.
+
+**C3ab: explicit-input software scene raster (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ab-scene-raster.md)). Independent exact
+rational oracle passes5120cases/61440pixels over explicit state options; equality
+alpha mutant fails and restores exactly;38/38CTest. Declared software component,
+not native coverage/precision or runtime-state acceptance. App render still pending.

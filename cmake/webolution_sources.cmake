@@ -53,6 +53,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/SimClock.cpp
   src/app/Pick.cpp
   src/app/Raster.cpp
+  src/app/SceneRaster.cpp
   src/app/ActorSprite.cpp
   src/app/ActorPose.cpp
   src/app/ActorTerrain.cpp

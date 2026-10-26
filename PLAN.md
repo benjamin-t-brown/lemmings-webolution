@@ -202,6 +202,17 @@ user 2026-10-22.**
   evidence, one per brief with a concrete check, re-scoring after each; repair and fully mock
   the controller, then one start for the pause values. About 6 hours or 16 rounds, pool of 3
   starts. Round limit becomes **45 minutes, repairs included**. Gate unchanged.
+- **C3 reference re-capture, scene pose and tube ends (user, overlord review 2026-10-25,
+  "approved").** Run `c3-known-gaps-pause-values` stopped 16/16 at 0.0635482 with 0 starts:
+  the one-shot was rejected before Popen on a numeric ScheduledTask state. The user saw the
+  original's fourth walker and out-count 4 missing from ours (5), a possibly mis-posed scene,
+  and missing cylinder ends. The overlord confirmed the walker cause: `capture_matched_pause.py`
+  persists only `actors[:3]`. Next Sol run: host-test the controller, then spend one start to
+  read the pause values and re-capture repair4 with the cursor clear of the hatch, the full
+  actor list and HUD counters. **Reference swap authorized** if the new capture matches repair4
+  outside the cursor/hatch, fourth-walker and counter boxes; threshold, metric, partition and
+  floor rule unchanged; repair4 reported alongside. Then the scene pose, the tube ends, and the
+  rest of the known gaps. About 6 hours or 16 rounds, pool of 3 starts.
 - **C1 gate measurement amended (user, overlord review 2026-10-24).** C1t showed the scorer could not see the panel: its mask inside the skill bands is x 86..89, the drawn icons x 26..76, overlap 0, so `skill_mae` stayed at the pre-panel 0.1077 / 0.0554. The threshold (0.02), region and captures are unchanged; the pixels scored become the panel's own footprint, built from read geometry (plates, c1s icon positions with the c1p/c1r frame sizes, count glyphs at the c1s text-object positions) and committed before the render. Pixels where a plate is translucent still include whatever the stock frame shows behind it; that share is reported, not masked out.
 - **C1 gated views amended (user, overlord review 2026-10-24, second amendment).** The plates are translucent: all 18033 plate-only footprint pixels differ between the eight A7p stock views, and they carry 83% of c1w's 0.2918. On the 4536 scenery-only pixels between the plates, our render differs from the stock frame by 0.48–0.52 on `initial`, `left`, `right`, `elev0_neg` and `canonical` (sand, sky, balloon: parked C3 scenery) and by 0.0183 / 0.0209 / 0.0174 on `zoom1` / `elev_up` / `elev_down` (the tube wall we draw). So the gate is taken on those three views; the threshold, footprint and region are unchanged. The scenery error alone is near 0.02 there, so a pass is not assured. Overlord scripts `build/tmp/overlord-2026-10-24/split.py`, `constancy.py`, `gaps.py`, `views.py` (measured from the saved A7p PNGs; evaluation, not a new capture).
 

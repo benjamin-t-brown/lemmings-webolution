@@ -1,27 +1,28 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T23:20:43-06:00",
-  "notes": "Thin live queue; archive holds landed tasks and stopped runs. Facilitator owns dispatch and landing.",
-  "active": [],
+  "updated": "2026-10-25T23:40:58-06:00",
+  "notes": "Thin live queue; facilitator alone records this pass's queue changes. Archive holds stopped runs and landed tasks.",
+  "active": [
+    {"id":"c3ax-controller-preflight","status":"ready-for-verify","brief":"build/tmp/c3ax-controller-preflight-brief.md","repair_brief":"build/tmp/c3ax-controller-repair1-brief.md","worker_output":"build/tmp/c3ax-controller-preflight/repair1-round-note.md","repair_reason":"Standalone prerequisite checker did not execute actual controller main prelaunch integration; exact main barrier, runtime helper binding and PID/cleanup proof required.","repair_dispatched":"2026-10-25T23:40:58-06:00","worker":"round-agent","session_id":"ses_e894c67d0ffeS4RXtZsU78cyEg","dispatched":"2026-10-25T23:33:51-06:00","tier":"targeted","requested_model":"OpenCode configured round-agent Luna high; no override","owned_paths":["build/tmp/c3ax-controller-preflight/**","owned unique LemWeb-c3ax-* dry-run tasks"],"owns_live_game":false,"live_owner":null,"depends_on":[],"milestone":"C3 full frame","attempt":2}
+  ],
   "queue": [],
   "standing_run": {
-    "id": "c3-offline-render-feasibility",
-    "goal": "C3 only: established frame map, comparison boundary assessment, thin offline path and bounded later capture proposal. No rendering behavior changes.",
+    "id": "c3-offline-capture-preflight",
+    "goal": "C3 only: static scene-fan site/ABI/attribution packet and real-session1 prelaunch controller barrier; return bounded native-observation proposal or blocker. No native execution or rendering changes.",
     "milestones": ["C3 full frame"],
     "current": "C3 full frame",
-    "authorized": "docs/DIRECTIVE.md rendering pivot active2026-10-25; explicit user facilitator invocation resumes this new offline scope, not the superseded old briefs.",
-    "grants": {"stock_starts": 0, "rounds": 6, "hours": 3, "round_minutes": 45, "commits": "per-round decompile commits/pushes; preserve unrelated changes", "concurrency": "up to3 disjoint independent offline tasks"},
-    "workers": "OpenCode round-agent Luna high; disasm-agent Sol high only for disassembly reads; configured pins/no overrides per ROLES.md",
-    "owner": "ses_e897a9939ffet5M0uZyGsgYbss OpenCode facilitator Sol on mouv",
-    "ownership_check": "Prior facilitator API succeeded/idle; AQ and AR interrupted/idle; AS succeeded/idle. No Lemmings or LemWeb task at startup. New directive supersedes old live permission. Old queue and unrelated dirty-tree snapshot preserved build/tmp/c3-offline-pivot-startup/. Configured pins confirmed using opencode debug agents (V2 plural command).",
-    "started_at": "2026-10-25T22:43:43-06:00",
-    "rounds_run": 6,
+    "authorized": "Active docs/DIRECTIVE.md: user approved offline preflight only, explicit facilitator invocation transfers idle queue ownership.",
+    "grants": {"stock_starts":0,"rounds":3,"hours":1.5,"round_minutes":45,"commits":"per-round decompile commits and normal GitHub sync, preserve unrelated changes","concurrency":"two disjoint offline tasks; only AX owns non-game host dry-run tasks"},
+    "owner": "ses_e895028d3ffeohEWWBBAB4E9oQ OpenCode facilitator Sol on mouv",
+    "ownership_check": "API: prior facilitator ses_e897a9939ffet5M0uZyGsgYbss succeeded/idle, active API only current facilitator. PowerShell: explorer PID3812 session1; no Lemmings process or LemWeb task. git pull --ff-only up to date; decompile. Worker pins confirmed opencode debug agents; no overrides. Unrelated framework/plan/history dirty changes preserved.",
+    "started_at": "2026-10-25T23:30:05-06:00",
+    "rounds_run": 3,
     "stock_starts_used": 0,
-    "pending_questions": [{"question":"After overlord review, approve a separate bounded capture preflight and then decide native-observation permissions? This is not a gate amendment.","options":["Offline preflight only; decide native method/start after its evidence","Preflight plus conditional one-start route observation; non-interference separately approved","Defer native capture"],"recommendation":"First option: prove site/ABI/attribution/controller prerequisites offline before granting one observation. No automatic live continuation, reference swap or full-frame logger.","evidence":"docs/RENDER_CAPTURE_PROPOSAL.md; docs/RENDER_FRAME_MAP.md; docs/scratch/phase-c3av-thin-comparison.md"}],
-    "stop_point": "Map, boundary assessment and thin-path result independently checked; or3h/6attempts; concrete feasibility blocker, ownership conflict, unavailable pin/delegation, gate change or guardrail breach. No automatic live/full-frame follow-on.",
-    "handoff": "BOUNDED OFFLINE PASS COMPLETE AND PUSHED: AU e8d67ec conditional boundary, AT fef4f2c partial8family/native-spine map, AV8506940 synthetic comparator+capture proposal. AV initial4false-equal cases and repair1known-specular normalization defect repaired/preserved; own9valid/9failclosed controls, one-X-only source bypass failure and exact hash restore,12/12Python and44/44CTest. Fresh C3.0635481771FAIL,C1zoom1/elev_down.0160864/.0161212PASS unchanged.6attempts,0starts; no task/worker/game resource remains. Next needs overlord review/fresh user approval under docs/RENDER_CAPTURE_PROPOSAL.md; do not repeat completed offline directive or resume old AQ/AR/AS. Unrelated initial framework/plan/history changes preserved unstaged. Pass2220seconds; AU320,AT1359,AV1496dispatch-to-landing including repairs.",
-    "current_pass": {"started":"2026-10-25T22:43:43-06:00","ended":"2026-10-25T23:20:43-06:00","elapsed_seconds":2220,"rounds":[{"id":"c3at-frame-map","dispatched":"2026-10-25T22:46:59-06:00","repair_dispatched":"2026-10-25T22:54:16-06:00","landed":"2026-10-25T23:09:38-06:00","elapsed_seconds":1359,"repair_elapsed_seconds":922},{"id":"c3au-boundary-assessment","dispatched":"2026-10-25T22:46:59-06:00","landed":"2026-10-25T22:52:19-06:00","elapsed_seconds":320},{"id":"c3av-thin-comparator","dispatched":"2026-10-25T22:54:16-06:00","repair_dispatched":"2026-10-25T23:00:11-06:00","repair2_dispatched":"2026-10-25T23:11:57-06:00","landed":"2026-10-25T23:19:12-06:00","elapsed_seconds":1496,"repair_elapsed_seconds":1141,"repair2_elapsed_seconds":435}]},
+    "pending_questions": [],
+    "stop_point": "Both prerequisite packets independently checked, or90minutes/3attempts, concrete blocker/ownership/pin/gate/safety condition. No automatic native observation.",
+    "handoff": "AW static packet independently verified and landing now. AX repair1 returned; own5main controls and real session1 copied-main replay passed (PID26112 exited/task absent); state-guard mutation failed and restored exact. AX still needs narrowed landing: main was reconstructed, original operational source unchanged, no deployed observer or launch-ready claim.3/3attempts used,0starts; no further dispatch. Full rebuild44/44CTest and37/37framework+comparator tests pass. Preserve initial dirty changes; no native methods.",
+    "current_pass": {"started":"2026-10-25T23:30:05-06:00","rounds":[{"id":"c3aw-site-preflight","dispatched":"2026-10-25T23:33:51-06:00"},{"id":"c3ax-controller-preflight","dispatched":"2026-10-25T23:33:51-06:00","repair_dispatched":"2026-10-25T23:40:58-06:00"}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {"date":"2026-10-25T23:20:43-06:00","reason":"Authorized offline map/boundary/thin-path/proposal independently checked and pushed;6/6attempts used. No automatic live/full-frame work; fresh review/approval required.","last_commit":"8506940","elapsed_seconds":2220}
+    "stopped": null
   }
 }

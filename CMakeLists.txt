@@ -55,7 +55,7 @@ endif()
 # and presents through SDL2 when a window is requested; without a display the
 # binary still renders and writes a PNG from file data (--shot).
 
-add_executable(webolution ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDepth.cpp)
+add_executable(webolution ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp)
 target_link_libraries(webolution PRIVATE webolution_objects)
 
 if(WEBOLUTION_HAVE_SDL2)
@@ -248,6 +248,7 @@ add_executable(test_backdropscene
   src/app/BackdropScene.cpp
   src/app/SceneBillboardSource.cpp
   src/app/SceneDepth.cpp
+  src/app/SceneDiffuse.cpp
   src/app/Camera.cpp
   src/app/Raster.cpp
   src/app/SceneRaster.cpp)
@@ -263,9 +264,17 @@ add_test(NAME scenematerialflags COMMAND test_scenematerialflags)
 
 add_executable(test_scenevertexpack
   src/__test__/test_scenevertexpack.cpp
+  src/app/SceneDiffuse.cpp
   src/app/SceneVertexPack.cpp)
 target_include_directories(test_scenevertexpack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME scenevertexpack COMMAND test_scenevertexpack)
+
+add_executable(test_scenediffuse
+  src/__test__/test_scenediffuse.cpp
+  src/app/SceneDiffuse.cpp
+  src/app/SceneRaster.cpp)
+target_include_directories(test_scenediffuse PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME scenediffuse COMMAND test_scenediffuse)
 
 add_executable(test_scenemeshsource src/__test__/test_scenemeshsource.cpp)
 target_link_libraries(test_scenemeshsource PRIVATE webolution_objects)

@@ -1,4 +1,5 @@
 #include "app/SceneVertexPack.h"
+#include "app/SceneDiffuse.h"
 
 #include <bit>
 #include <cmath>
@@ -24,14 +25,6 @@ void putF32(std::span<std::byte, 32> dst, std::size_t offset, float value) {
   putU32(dst, offset, std::bit_cast<std::uint32_t>(value));
 }
 
-bool asTruncatedI32(double value, std::int32_t& out) {
-  if (!std::isfinite(value) || value < static_cast<double>(INT32_MIN) ||
-      value >= -static_cast<double>(INT32_MIN))
-    return false;
-  out = static_cast<std::int32_t>(value);  // truncation toward zero
-  return true;
-}
-
 }  // namespace
 
 std::expected<void, std::string> packSceneVertex(
@@ -43,22 +36,14 @@ std::expected<void, std::string> packSceneVertex(
     return std::unexpected("vertex coordinate/UV outside finite binary32 domain");
   const float rhw = 0.25f / z;  // divide using the reloaded binary32 Z
   if (!std::isfinite(rhw)) return std::unexpected("RHW outside finite binary32 domain");
-  std::array<std::int32_t, 4> channel{};
-  for (std::size_t i = 0; i < channel.size(); ++i)
-    if (!asTruncatedI32(in.diffuse[i], channel[i]))
-      return std::unexpected("diffuse channel outside finite signed-32 domain");
-
-  const std::uint32_t diffuse =
-      (static_cast<std::uint32_t>(channel[3]) << 24) |
-      (static_cast<std::uint32_t>(channel[0]) << 16) |
-      (static_cast<std::uint32_t>(channel[1]) << 8) |
-      static_cast<std::uint32_t>(channel[2]);
+  auto packedDiffuse = packSceneDiffuseWord(in.diffuse);
+  if (!packedDiffuse) return std::unexpected(packedDiffuse.error());
 
   putF32(dst, 0x00, x);
   putF32(dst, 0x04, y);
   putF32(dst, 0x08, z);
   putF32(dst, 0x0c, rhw);
-  putU32(dst, 0x10, diffuse);
+  putU32(dst, 0x10, *packedDiffuse);
   // +0x14 specular deliberately retains the caller's arbitrary bytes.
   putF32(dst, 0x18, u);
   putF32(dst, 0x1c, v);

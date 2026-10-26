@@ -780,3 +780,12 @@ oracle passes; raw-slot-only mutant fails and worsens score1911602; exact restor
 42/42CTest and17/340source replay pass. Fresh fixed score0.0631006774 still
 fails; C1 gates pass. Worker scratch-report overwrite disclosed and excluded from
 acceptance; fresh independent reports retained. No effective native Z claim/start.
+
+**C3an initial/repair1: actual raw diffuse adoption (2026-10-25)**
+([Facilitator check](../scratch/phase-c3an-raw-diffuse.md)). Shared raw truncate/
+shiftOR word feeds actual mesh adapter and existing packer. Initial rescale-only
+mutant survived; repaired adapter/destinationRGBA test now rejects it alone.
+Own6561word/adapter/pixel cases,2077+2077known-byte fixtures and43/43CTest pass
+after exact restore. Fresh fixed score0.0631364464 worsens8406; rescale improves
+the screenshot, so no native pixel-protection claim or value selection by score.
+C1gatespass,sceneoff exact,0starts. Secondary dispatch/clip/f32/state remain.

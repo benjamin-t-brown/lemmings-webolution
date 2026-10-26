@@ -4,6 +4,7 @@
 #include "app/SceneMeshSource.h"
 #include "app/SceneMaterialFlags.h"
 #include "app/SceneDepth.h"
+#include "app/SceneDiffuse.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
 #include <algorithm>
@@ -29,7 +30,6 @@ Matrix predicateContext(const CameraBasis& camera){const auto chain=buildBillboa
 void collectEyes(const SceneNode& n,const Matrix& parent,const Matrix& context,std::map<std::size_t,std::array<double,3>>& out){auto m=compose(n.matrix,parent);out[n.sourceOffset]=eyeLocal(compose(m,context));for(auto&c:n.children)collectEyes(c,m,context,out);}
 bool passesKind5(const SceneMeshRecordSource& rec,const std::map<std::size_t,std::array<double,3>>& eyes){if(rec.kind!=5||rec.corners.empty())return true;const auto it=eyes.find(rec.nodeSourceOffset);if(it==eyes.end())return false;const auto&e=it->second;const auto&v=rec.corners.front().localPosition;const auto&n=rec.corners.front().localNormal;const double facing=(e[0]-v[0])*n[0]+(e[1]-v[1])*n[1]+(e[2]-v[2])*n[2];return facing>0;}
 SceneRasterOptions options(bool alpha,bool blend,bool depthWrite=true){return {SceneFilter::Linear,SceneAddress::Wrap,alpha?SceneAlphaFunction::StrictGreater:SceneAlphaFunction::Disabled,0xef,blend,SceneBlendFactor::SrcAlpha,SceneBlendFactor::InvSrcAlpha,SceneDepthFunction::Less,depthWrite,SceneShade::Gouraud,SceneRgbOperation::Modulate,SceneAlphaOperation::Modulate,0.5,0.5};}
-SceneRasterVertex vertex(double x,double y,double z,double rhw,double u,double v,std::array<double,4> color){return {x,y,z,rhw,color,u,v};}
 SceneRgbaImage rgba(const Image& im){return {im.width,im.height,im.rgba};}
 }
 std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary&,std::span<const std::byte> bytes,std::string_view levelId){
@@ -63,9 +63,8 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
    const auto state=options(false,rec.blendSelector==1);
    for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
-     // Source channels are passed without clamping; modulo conversion models the declared byte packing candidate.
-     std::array<double,4> d{};for(int q=0;q<4;++q){double x=a[q+2];if(x>=0&&x<=1)x*=255;d[q]=static_cast<unsigned char>(static_cast<long long>(x));}
-     v[j]=vertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],0.25/p[2],a[0],a[1],d);
+      auto adapted=adaptSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],0.25/p[2],a[0],a[1],{a[2],a[3],a[4],a[5]});
+      if(!adapted){valid=false;break;}v[j]=*adapted;
     }
     if(valid){auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else ++stats.rejected;}else ++stats.rejected;
   }

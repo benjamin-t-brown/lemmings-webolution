@@ -1,9 +1,22 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T20:17:49-06:00",
+  "updated": "2026-10-25T20:42:58-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [],
-  "queue": [],
+  "queue": [
+    {
+      "id": "c3ao-secondary-order",
+      "status": "queued",
+      "brief": "build/tmp/c3ao-secondary-order-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "owns_live_game": false,
+      "depends_on": [
+        "c3an-raw-diffuse"
+      ],
+      "question_round": 1
+    }
+  ],
   "standing_run": {
     "id": "c3-known-gaps-pause-values",
     "goal": "C3 only: fix accepted integration omissions one per brief, score after each landing, fully mock controller then collect authorized pause values; unchanged repair4 full-frame gate.",
@@ -21,15 +34,15 @@
     "owner": "ses_e8a901515ffeeoMSISfD3UL0Hr OpenCode facilitator Sol on mouv",
     "ownership_check": "User invocation transfers idle stopped run; no active/queued task, prior handoff explicitly no resource owned. Clean decompile tree and git pull ff-only already up to date17:41:11; separate process check no Lemmings. Resolved round-agent pin checked via opencode debug agents.",
     "started_at": "2026-10-25T17:40:39-06:00",
-    "rounds_run": 11,
+    "rounds_run": 13,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Last landed c3am-shared-depth: Own192asymmetriccorner+2pixeloracle;rawslotmutantfails,worsens1911602,exactrestore;42/42CTest;17/340oldsourcefields. Correct offset derivation; scratch overwrite disclosed/excluded. FreshC3 .0631006774FAIL,C1gatespass,0starts. Conditional software depth only.. Run11/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
+    "handoff": "Last landed c3an-raw-diffuse: Own6561word/adapter/pixelRGBAcases; rescale-only survived initialtest,repaired then fails both adapter/destination;exactrestore,43/43CTest,2077+2077knownbytes,17/340sourcefields. FreshC3.0631364464FAIL,worsens8406;mutant improves screenshot so sourceprotection not nativepixelprotection.C1gatespass,sceneoffexact,0starts.. Run13/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
-      "last_yielded": "2026-10-25T18:34:37-06:00",
-      "elapsed_to_yield_seconds": 3238,
+      "last_yielded": "2026-10-25T20:33:30-06:00",
+      "elapsed_to_yield_seconds": 10371,
       "rounds": [
         {
           "id": "c3af-billboard-chain",
@@ -82,14 +95,20 @@
           "dispatched": "2026-10-25T19:34:53-06:00",
           "landed": "2026-10-25T20:17:49-06:00",
           "elapsed_seconds": 2576
+        },
+        {
+          "id": "c3an-raw-diffuse",
+          "dispatched": "2026-10-25T20:20:03-06:00",
+          "landed": "2026-10-25T20:42:58-06:00",
+          "elapsed_seconds": 1375
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "latest_yield": {
-      "date": "2026-10-25T18:34:37-06:00",
-      "elapsed_seconds": 3238,
-      "reason": "Await owned AI/AK background workers; context handoff, standing run remains active. Resume same facilitator on notifications; /facilitator if needed only respecting current worker ownership."
+      "date": "2026-10-25T20:33:30-06:00",
+      "elapsed_seconds": 10371,
+      "reason": "Await owned AN repair background notification; standing run remains active. No polling or concurrent source owner."
     },
     "stopped": null
   }

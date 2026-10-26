@@ -840,3 +840,14 @@ and44/44CTest. [Check](../scratch/phase-c3av-thin-comparison.md),
 [later capture proposal](../RENDER_CAPTURE_PROPOSAL.md). Final gates unchanged:
 C3.0635481771FAIL,C1gatedPASS. Six-attempt offline pass complete,0stockstarts;
 native ABI/attribution/history/non-interference still require preflight/approval.
+
+### C3 bounded offline capture preflight, 2026-10-25
+
+**C3aw static site/ABI/attribution:** independently authenticate31PE windows and
+read877instruction lines; proposed PRE46D5EC/POST46D5F6 do not overlap, unlike
+the rejected direct-call pair. Conditional stack and kind5/7 source discriminator
+checked, not runtime interface/reachability or durable asset identity. Own fresh
+2positive/16negative controls, single payload-copy mutation failure/exact restore,
+worker52synthetic controls and packet manifest pass. [Check](../scratch/phase-c3aw-site-preflight.md).
+No native observer deployed; retained C3FAIL/C1PASS unchanged,44/44CTest,
+37/37Python. AX host prerequisite remains separate; no start or attach authorized.

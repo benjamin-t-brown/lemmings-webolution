@@ -21,7 +21,7 @@
     "pending_questions": [],
     "stop_point": "Both prerequisite packets independently checked, or90minutes/3attempts, concrete blocker/ownership/pin/gate/safety condition. No automatic native observation.",
     "handoff": "AW static packet independently verified and landing now. AX repair1 returned; own5main controls and real session1 copied-main replay passed (PID26112 exited/task absent); state-guard mutation failed and restored exact. AX still needs narrowed landing: main was reconstructed, original operational source unchanged, no deployed observer or launch-ready claim.3/3attempts used,0starts; no further dispatch. Full rebuild44/44CTest and37/37framework+comparator tests pass. Preserve initial dirty changes; no native methods.",
-    "current_pass": {"started":"2026-10-25T23:30:05-06:00","rounds":[{"id":"c3aw-site-preflight","dispatched":"2026-10-25T23:33:51-06:00"},{"id":"c3ax-controller-preflight","dispatched":"2026-10-25T23:33:51-06:00","repair_dispatched":"2026-10-25T23:40:58-06:00"}]},
+    "current_pass": {"started":"2026-10-25T23:30:05-06:00","rounds":[{"id":"c3aw-site-preflight","dispatched":"2026-10-25T23:33:51-06:00","landed":"2026-10-26T00:00:41-06:00","elapsed_seconds":1610,"commit":"0e482a6"},{"id":"c3ax-controller-preflight","dispatched":"2026-10-25T23:33:51-06:00","repair_dispatched":"2026-10-25T23:40:58-06:00"}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null
   }

@@ -1,33 +1,66 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26T13:09:45-06:00",
-  "notes": "Bounded C3 residual-attribution pass stopped after two attempts. Only partial stage sensitivity accepted; no causal diagnosis/correction. Initial sixteen dirty files preserved under build/tmp/c3-residual-pass/initial; own doc deltas isolated for commit.",
+  "updated": "2026-10-26T13:56:00-06:00",
+  "notes": "Final primary source-to-write-to-influence attribution attempt3/3; one dispatch only. Unrelated dirty changes snapshotted under build/tmp/c3-primary-pass/initial.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-residual-attribution",
-    "goal": "Independently checked dominant C3 software contribution diagnosis and one ranked next correction or precise missing observation, without implementing a correction.",
-    "milestones": ["C3 full frame"],
+    "id": "c3-primary-final-attribution",
+    "goal": "Close primary source-record to accepted writes and final influence join, then compare retained native evidence or report exact unavailable counterpart. No correction implementation.",
+    "milestones": [
+      "C3 full frame"
+    ],
     "current": "C3 full frame",
-    "authorized": "docs/DIRECTIVE.md active bounded residual attribution; user yes i approve 2026-10-26; explicit fresh invocation.",
-    "directive_sha256": "167354449d3c08e9bfc9a6a10bfd979f02eed45eba7dc4d8bfcc6c7b68504672",
-    "grants": {"stock_starts": 0, "rounds": 2, "hours": 2, "round_minutes": 45, "final_review_minutes": 30, "commits": "per-round decompile commits/sync preserving unrelated dirty changes"},
-    "owner": "ses_e86807307ffehrviiQo7R4Xp5C OpenCode facilitator Sol on mouv",
-    "ownership_check": "No active task, previous run explicitly stopped. Fresh invocation transferred idle ownership; git pull --ff-only current at be91f56. Sixteen initial dirty files preserved.",
-    "started_at": "2026-10-26T12:36:12-06:00",
-    "rounds_run": 2,
+    "authorized": "User approve, you may launch 2026-10-26; delegated launch, docs/DIRECTIVE.md",
+    "directive_sha256": "ae3d1bdfc798c73136449c13750634d110ab64a21aef2d059b00bb73537372e3",
+    "owner": "ses_e8643d734ffeJWFqzTjDJKEoqS",
+    "parent_session": "ses_e8646168dffeJ0x2Dtz2oTI7yv",
+    "ownership_check": "Read-only API confirms previous owner/worker succeeded idle. Only same-project active sessions are this child and parent overlord; other active session belongs to ed-ascii. git pull --ff-only current at08966fd.",
+    "started_at": "2026-10-26T13:42:16-06:00",
+    "grants": {
+      "stock_starts": 0,
+      "rounds": 1,
+      "cumulative_question_cap": 3,
+      "round_minutes_including_verification": 45,
+      "final_review_minutes": 30,
+      "overall_minutes": 75,
+      "commits": "per-round named paths and sync, unrelated dirty files preserved"
+    },
+    "rounds_run": 1,
+    "cumulative_attempts": 3,
     "stock_starts_used": 0,
-    "pending_questions": [{
-      "question": "Which separately approved bounded comparison should resolve the primary-sensitive residual before selecting a correction?",
-      "evidence": "docs/scratch/phase-c3be-residual-attribution.md",
-      "recommendation": "Prioritize primary source-record accepted-raster/depth/color-write to final-influence join on saved supports; compare implicated intermediate against retained independent evidence or name exact native counterpart. Do not rank Tube by removal penalty or automatically reopen observer.",
-      "remaining_blockers": "No per-source raster/final-influence attribution within primary; no matched native admission/cache/clipping/effective-state comparison. Stage suppression is counterfactual, not causal/native ownership. Two-attempt directive budget exhausted.",
-      "gate_baseline": "C3 14934330/235008000 FAIL; C1 zoom1 285083/elev_down285700 over17721990 PASS; all11fresh PNGs exact retained images."
-    }],
-    "stop_point": "Independently checked diagnosis or evidence limit, max2 attempts/2h/45min per task including verification. No implementation/observer/native follow-on.",
-    "handoff": "STOPPED after C3be initial/repair1 committed/pushed436fc8b,2/2attempts,0starts. Initial spatial-only packet rejected; repair stage suppressions independently verified. Primary-sensitive pixels contain82.933459% of existing rest error; tube only14.821820% despite larger removal penalty. Accept bounded non-additive SOURCE sensitivity, not full diagnosis/native identity/correction. Own primary-only guard/revert, exact source restoration44CTest/25framework,11fresh unchanged images;16fixed/install inputs exact and16initial dirty files preserved outside own docs deltas. No live resource. Substantive pass2013s; round1717s including repair1399s. Final admin timing also retained under build/tmp/c3-residual-pass/. No third task or implementation/observer/native follow-on without fresh approval.",
-    "current_pass": {"started": "2026-10-26T12:36:12-06:00", "rounds": [{"id": "c3be-residual-attribution", "dispatched": "2026-10-26T12:40:35-06:00", "repair_dispatched": "2026-10-26T12:45:53-06:00", "accepted": "2026-10-26T13:06:34-06:00", "landed": "2026-10-26T13:09:12-06:00", "commit": "436fc8b", "elapsed_seconds": 1717, "repair_elapsed_seconds": 1399}], "ended": "2026-10-26T13:09:45-06:00", "elapsed_seconds": 2013},
-    "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {"date": "2026-10-26T13:09:45-06:00", "reason": "Two-attempt budget reached with independently verified stage sensitivity but incomplete causal diagnosis; no correction justified. No automatic continuation under this directive.", "last_commit": "436fc8b", "elapsed_seconds": 2013}
+    "pending_questions": [
+      {
+        "question": "Whether to authorize any further C3 primary attribution work after3/3; no action automatic.",
+        "recommendation": "Keep parked. If resumed with fresh direction/cap exception, require actual bounded masked source-record accepted-write/final-influence diagnostic before choosing a correction or native method.",
+        "evidence": "docs/scratch/phase-c3bf-primary-final-attribution.md",
+        "remaining_blockers": "Software join not performed, not proved infeasible; native counterpart only conditionally specified, no implicated record or correction.",
+        "gate_baseline": "C3 .06354817708333334 FAIL; C1 .0160863988750699/.016121214378294987 PASS, fresh images byte-identical."
+      }
+    ],
+    "stop_point": "One independently checked result or evidence limit, no repair/continuation/next question; park at3/3 if incomplete.",
+    "handoff": "STOPPED: final authorized C3bf worker returned without implementing source-record accepted-write/final-influence diagnostic. Incomplete output discarded, not evidence of external blocker/infeasibility. Cumulative3/3,1dispatch this pass,0starts/attaches/injection/tasks/native research. Own source-boundary review,44CTest/32framework tests,3fresh exact gate PNGs; C3FAIL/C1PASS unchanged.21fixed/source/install inputs,113retained evidence files,9initial dirty paths preserved outside isolated own doc deltas. Worker succeeded/idle; no live resource. No correction or automatic fourth question/observer/implementation. Fresh direction/cap exception required.",
+    "stopped": {
+      "date": "2026-10-26T13:56:00-06:00",
+      "reason": "Single final attempt returned incomplete;3/3 cumulative cap exhausted. No repair/continuation permitted; park without cause/correction claim.",
+      "last_commit": "pending landing"
+    },
+    "dispatched_at": "2026-10-26T13:45:32-06:00",
+    "verified_at": "2026-10-26T13:54:04-06:00",
+    "current_pass": {
+      "started": "2026-10-26T13:42:16-06:00",
+      "rounds": [
+        {
+          "id": "c3bf-primary-final-attribution",
+          "dispatched": "2026-10-26T13:45:32-06:00",
+          "worker_completed": "2026-10-26T13:47:59-06:00",
+          "verified": "2026-10-26T13:54:04-06:00",
+          "landed": "2026-10-26T13:56:00-06:00",
+          "elapsed_seconds": 628
+        }
+      ],
+      "ended": "2026-10-26T13:56:00-06:00",
+      "elapsed_seconds": 824
+    }
   }
 }

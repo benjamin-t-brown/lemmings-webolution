@@ -6,6 +6,21 @@ it. The live milestone table, exit gates, status cells and user decisions are in
 plan](../../PLAN.md#phase-e--the-remaining-debts). New round notes are appended under the
 milestone they serve, newest last.
 
+### C3 primary residual attribution
+
+- **Parked 2026-10-26 at cumulative3/3** (C3be initial/repair1, C3bf final).
+  Primary-sensitive rest support contains82.933459% of baseline rest error,
+  not causal ownership. Final worker did not implement the authorized source-record
+  accepted-raster/depth/color-write to final-influence trace; lack of an existing
+  API event sink is not a proved external blocker or offline impossibility.
+  No correction supported; C3.0635481771FAIL/C1PASS unchanged. Resume only with
+  fresh direction and explicit cap exception: one masked source-tagged diagnostic,
+  ordinary-image invariance and independent raw-sample/support checks, then compare
+  any implicated intermediate to retained evidence or precisely justify its missing
+  matched native identity/admission/geometry/resource/effective-state counterpart.
+  No automatic native/observer campaign or implementation.
+  [C3bf check](../scratch/phase-c3bf-primary-final-attribution.md).
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

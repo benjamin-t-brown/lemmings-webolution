@@ -3,6 +3,64 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-residual-attribution",
+      "goal": "Independently checked dominant C3 software contribution diagnosis and one ranked next correction or precise missing observation, without implementing a correction.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "docs/DIRECTIVE.md active bounded residual attribution; user yes i approve 2026-10-26; explicit fresh invocation.",
+      "directive_sha256": "167354449d3c08e9bfc9a6a10bfd979f02eed45eba7dc4d8bfcc6c7b68504672",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 2,
+        "hours": 2,
+        "round_minutes": 45,
+        "final_review_minutes": 30,
+        "commits": "per-round decompile commits/sync preserving unrelated dirty changes"
+      },
+      "owner": "ses_e86807307ffehrviiQo7R4Xp5C OpenCode facilitator Sol on mouv",
+      "ownership_check": "No active task, previous run explicitly stopped. Fresh invocation transferred idle ownership; git pull --ff-only current at be91f56. Sixteen initial dirty files preserved.",
+      "started_at": "2026-10-26T12:36:12-06:00",
+      "rounds_run": 2,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Which separately approved bounded comparison should resolve the primary-sensitive residual before selecting a correction?",
+          "evidence": "docs/scratch/phase-c3be-residual-attribution.md",
+          "recommendation": "Prioritize primary source-record accepted-raster/depth/color-write to final-influence join on saved supports; compare implicated intermediate against retained independent evidence or name exact native counterpart. Do not rank Tube by removal penalty or automatically reopen observer.",
+          "remaining_blockers": "No per-source raster/final-influence attribution within primary; no matched native admission/cache/clipping/effective-state comparison. Stage suppression is counterfactual, not causal/native ownership. Two-attempt directive budget exhausted.",
+          "gate_baseline": "C3 14934330/235008000 FAIL; C1 zoom1 285083/elev_down285700 over17721990 PASS; all11fresh PNGs exact retained images."
+        }
+      ],
+      "stop_point": "Independently checked diagnosis or evidence limit, max2 attempts/2h/45min per task including verification. No implementation/observer/native follow-on.",
+      "handoff": "STOPPED after C3be initial/repair1 committed/pushed436fc8b,2/2attempts,0starts. Initial spatial-only packet rejected; repair stage suppressions independently verified. Primary-sensitive pixels contain82.933459% of existing rest error; tube only14.821820% despite larger removal penalty. Accept bounded non-additive SOURCE sensitivity, not full diagnosis/native identity/correction. Own primary-only guard/revert, exact source restoration44CTest/25framework,11fresh unchanged images;16fixed/install inputs exact and16initial dirty files preserved outside own docs deltas. No live resource. Substantive pass2013s; round1717s including repair1399s. Final admin timing also retained under build/tmp/c3-residual-pass/. No third task or implementation/observer/native follow-on without fresh approval.",
+      "current_pass": {
+        "started": "2026-10-26T12:36:12-06:00",
+        "rounds": [
+          {
+            "id": "c3be-residual-attribution",
+            "dispatched": "2026-10-26T12:40:35-06:00",
+            "repair_dispatched": "2026-10-26T12:45:53-06:00",
+            "accepted": "2026-10-26T13:06:34-06:00",
+            "landed": "2026-10-26T13:09:12-06:00",
+            "commit": "436fc8b",
+            "elapsed_seconds": 1717,
+            "repair_elapsed_seconds": 1399
+          }
+        ],
+        "ended": "2026-10-26T13:09:45-06:00",
+        "elapsed_seconds": 2013
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-26T13:09:45-06:00",
+        "reason": "Two-attempt budget reached with independently verified stage sensitivity but incomplete causal diagnosis; no correction justified. No automatic continuation under this directive.",
+        "last_commit": "436fc8b",
+        "elapsed_seconds": 2013
+      }
+    },
+    {
       "id": "c3-stage-order",
       "goal": "Correct the supported conditional primary/tube/secondary ordering, verify and report unchanged C3/C1 gates; observer stays parked.",
       "milestones": ["C3 full frame"],
@@ -1810,6 +1868,31 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bf-primary-final-attribution",
+      "brief": "build/tmp/c3-primary-final-attribution-brief.md",
+      "status": "landed",
+      "tier": "targeted",
+      "worker_agent": "round-agent",
+      "worker_model": "configured OpenCode round-agent pin per docs/ROLES.md, no override",
+      "dispatch_session": "ses_e8640a91cffeSbncI1DIgEknn6",
+      "started_at": "2026-10-26T13:45:32-06:00",
+      "live_owner": null,
+      "worker_output": "build/tmp/c3bf-primary-final-attribution/round-note.md",
+      "question_attempt": 3,
+      "dependencies": [
+        "c3be-residual-attribution"
+      ],
+      "worker_model_observed": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "disposition": "discarded incomplete worker deliverable; no causal attribution or demonstrated external blocker; parked at3/3",
+      "worker_completed_at": "2026-10-26T13:47:59-06:00",
+      "verified_at": "2026-10-26T13:54:04-06:00",
+      "landed_note": "docs/scratch/phase-c3bf-primary-final-attribution.md"
+    },
     {
       "id": "c3be-residual-attribution",
       "status": "landed",

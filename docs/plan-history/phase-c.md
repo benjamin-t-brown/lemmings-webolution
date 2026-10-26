@@ -958,3 +958,19 @@ C3.0635481771FAIL, C1zoom1/down.0160864/.0161212PASS. Two attempts spent,0starts
 stop without implementation or observer reopening. Initial16dirtyfiles preserved
 with own doc deltas staged separately;10install hashes match, no game/LemWeb task.
 Actual dispatch-to-landing and pass times are recorded in queue/archive.
+
+**C3bf, 2026-10-26 — final attribution attempt incomplete, parked at 3/3.**
+Approved delegated child verified directive identity and idle ownership, then
+dispatched one configured-pin worker. Worker returned without the authorized
+masked per-source accepted-write/final-influence trace. Facilitator rejects
+missing API instrumentation as an external blocker or proof of infeasibility;
+no smaller-sample impossibility or correction is supported. Source review
+confirms the untagged boundary, not new attribution. Conditional native comparison
+needs remain, but no record was implicated and no observer necessity is established.
+[Facilitator check](../scratch/phase-c3bf-primary-final-attribution.md).
+Own build44/44CTest,32framework tests and three fresh byte-identical gate images:
+C3.0635481771FAIL, C1zoom1/down.0160864/.0161212PASS. No production change,
+diagnostic variant, native research or live usage.21fixed/source/install inputs,
+113retained evidence files and9initial dirty paths preserved outside own doc deltas;
+worker complete/idle, no game/LemWeb task. Single attempt consumed; no repair or
+follow-on. Actual dispatch-to-landing and total times are recorded in queue/archive.

@@ -29,6 +29,12 @@ int main(){
   measured.projectionVector={2.2373132705688477,2.2373132705688477,.0015625000232830644};
   measured.inverseProjectionVector={.44696468114852905,.44696468114852905,640.0};
   const auto accepted=webo::app::buildBillboardCameraChain(measured);
+  // C3p's accepted retained-camera context; compare each production record in
+  // source order, not merely the aggregate skip count.
+  constexpr char decisions[]="111111111111010000000011111000111111111111111110001010111011011110101010111111111111111111111111111111111111111111100001111111100001111011111111111111111101111111011111001110010110001111001111111111111111111111111110011111000111111110000000011111111000000000000000011111111000000001111111111111111111111111111111110101010101010101100110000111100110000111100110000111100110000111100111100001100110011000011110011000011110011000011110011000011110000000000110011110011";
+  std::size_t predCount=0,predPass=0,lastOffset=0;bool predMatch=true;
+  scene->visitKind5Predicates(measured,[&](std::size_t offset,bool pass){std::cout<<"PRED,"<<std::hex<<offset<<std::dec<<","<<(pass?"pass":"skip")<<"\n";if(predCount>=sizeof(decisions)-1||pass!=(decisions[predCount]=='1')||(predCount&&offset<=lastOffset))predMatch=false;++predCount;predPass+=pass;lastOffset=offset;});
+  check(predCount==465&&predPass==306&&predMatch,"camera-composed production predicate matches every C3p source decision");
   webo::app::BillboardSourceInputs fixture;fixture.parentCamera.values=accepted.parentCamera;fixture.sourceTransform.values=accepted.sourceTransform;fixture.projectionTransform.values=accepted.projectionTransform;fixture.center={319,239};
   struct Expected{std::size_t offset;double x0,y0,z,x2,y2;};
   constexpr Expected expected[]={

@@ -19,7 +19,13 @@ using Matrix=std::array<double,12>;
 Matrix compose(const Matrix&a,const Matrix&b){Matrix o{};for(int i=0;i<3;++i){for(int j=0;j<3;++j)for(int k=0;k<3;++k)o[3*i+j]+=a[3*i+k]*b[3*k+j];o[9+i]=b[9+i];for(int k=0;k<3;++k)o[9+i]+=a[9+k]*b[3*k+i];}return o;}
 BillboardAffine3x4 multiply(const BillboardAffine3x4&a,const BillboardAffine3x4&b){BillboardAffine3x4 o;for(int r=0;r<3;++r){for(int c=0;c<3;++c)for(int k=0;k<3;++k)o.values[4*r+c]+=a.values[4*r+k]*b.values[4*k+c];o.values[4*r+3]=a.values[4*r+3];for(int k=0;k<3;++k)o.values[4*r+3]+=a.values[4*r+k]*b.values[4*k+3];}return o;}
 std::array<double,3> eyeLocal(const Matrix&m){double a=m[0],b=m[1],c=m[2],d=m[3],e=m[4],f=m[5],g=m[6],h=m[7],i=m[8];double det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);if(std::abs(det)<1e-15)return {NAN,NAN,NAN};double q=1/det;double inv[9]={(e*i-f*h)*q,(c*h-b*i)*q,(b*f-c*e)*q,(f*g-d*i)*q,(a*i-c*g)*q,(c*d-a*f)*q,(d*h-e*g)*q,(b*g-a*h)*q,(a*e-b*d)*q};std::array<double,3> out{};for(int j=0;j<3;++j)for(int k=0;k<3;++k)out[j]-=m[9+k]*inv[3*k+j];return out;}
-void collectEyes(const SceneNode& n,const Matrix& parent,std::map<std::size_t,std::array<double,3>>& out){auto m=compose(n.matrix,parent);out[n.sourceOffset]=eyeLocal(m);for(auto&c:n.children)collectEyes(c,m,out);}
+Matrix nativeAffine(const BillboardAffine3x4& a){return {a.values[0],a.values[4],a.values[8],a.values[1],a.values[5],a.values[9],a.values[2],a.values[6],a.values[10],a.values[3],a.values[7],a.values[11]};}
+// Reuse the accepted camera builder: its parent includes the camera/projection
+// chain and its source transform is S. Convert both affine matrices back to the
+// SceneNode row-vector layout before composing the predicate context.
+Matrix predicateContext(const CameraBasis& camera){const auto chain=buildBillboardCameraChain(camera);return compose(nativeAffine(BillboardAffine3x4{chain.parentCamera}),nativeAffine(BillboardAffine3x4{chain.sourceTransform}));}
+void collectEyes(const SceneNode& n,const Matrix& parent,const Matrix& context,std::map<std::size_t,std::array<double,3>>& out){auto m=compose(n.matrix,parent);out[n.sourceOffset]=eyeLocal(compose(m,context));for(auto&c:n.children)collectEyes(c,m,context,out);}
+bool passesKind5(const SceneMeshRecordSource& rec,const std::map<std::size_t,std::array<double,3>>& eyes){if(rec.kind!=5||rec.corners.empty())return true;const auto it=eyes.find(rec.nodeSourceOffset);if(it==eyes.end())return false;const auto&e=it->second;const auto&v=rec.corners.front().localPosition;const auto&n=rec.corners.front().localNormal;const double facing=(e[0]-v[0])*n[0]+(e[1]-v[1])*n[1]+(e[2]-v[2])*n[2];return facing>0;}
 SceneRasterOptions options(bool alpha,bool blend,bool depthWrite=true){return {SceneFilter::Linear,SceneAddress::Wrap,alpha?SceneAlphaFunction::StrictGreater:SceneAlphaFunction::Disabled,0xef,blend,SceneBlendFactor::SrcAlpha,SceneBlendFactor::InvSrcAlpha,SceneDepthFunction::Less,depthWrite,SceneShade::Gouraud,SceneRgbOperation::Modulate,SceneAlphaOperation::Modulate,0.5,0.5};}
 SceneRasterVertex vertex(double x,double y,double z,double rhw,double u,double v,std::array<double,4> color){return {x,y,z,rhw,color,u,v};}
 SceneRgbaImage rgba(const Image& im){return {im.width,im.height,im.rgba};}
@@ -47,10 +53,11 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
    return &textures.emplace(name,rgba(*img)).first->second;
  };
  const SceneRgbaImage white{1,1,{255,255,255,255}};
- std::map<std::size_t,std::array<double,3>> eyes;
- for(const auto& root:roots_){collectEyes(root,identity(),eyes);++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;
+ const auto context=predicateContext(camera);
+  std::map<std::size_t,std::array<double,3>> eyes;
+ for(const auto& root:roots_){collectEyes(root,identity(),context,eyes);++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;
   for(const auto& rec:*records){++stats.meshRecords;const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName);if(!tex)continue;
-   if(rec.kind==5&&!rec.corners.empty()) {auto e=eyes[rec.nodeSourceOffset],v=rec.corners.front().localPosition,n=rec.corners.front().localNormal;double facing=(e[0]-v[0])*n[0]+(e[1]-v[1])*n[1]+(e[2]-v[2])*n[2];if(!(facing>0)){++stats.predicateRejected;continue;}}
+   if(rec.kind==5&&!passesKind5(rec,eyes)){++stats.predicateRejected;continue;}
    const auto state=options(false,rec.blendSelector==1);
    for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
@@ -69,12 +76,17 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
   visitBillboards(chain,[&](const SceneBillboardSource& b){const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(!tex){++stats.nullMaterials;return;}++stats.billboards;const auto st=options(true,b.blendSelector==1);for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=vertex(q.x,q.y,q.z,0.25/q.z,static_cast<double>(q.u),static_cast<double>(q.v),{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}});
  for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
   for(std::size_t i=0;i<depth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
- }
-void BackdropScene::visitBillboards(const BillboardSourceInputs& chain,const std::function<void(const SceneBillboardSource&)>& visitor) const {
+}
+ void BackdropScene::visitBillboards(const BillboardSourceInputs& chain,const std::function<void(const SceneBillboardSource&)>& visitor) const {
  const auto walk=[&](const auto& self,const SceneNode& n,const Matrix& ancestors)->void{
   if(n.type==2){auto in=chain;in.parentCamera=multiply(chain.parentCamera,affine(ancestors));auto b=makeSceneBillboardSource(n,in);if(b)visitor(*b);}
   const Matrix next=compose(n.matrix,ancestors);for(const auto& child:n.children)self(self,child,next);
  };
  for(const auto& root:roots_)walk(walk,root,identity());
+ }
+void BackdropScene::visitKind5Predicates(const CameraBasis& camera,const std::function<void(std::size_t,bool)>& visitor) const {
+  const auto context=predicateContext(camera);std::map<std::size_t,std::array<double,3>> eyes;
+  for(const auto& root:roots_)collectEyes(root,identity(),context,eyes);
+  for(const auto& root:roots_){auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;for(const auto& rec:*records)if(rec.kind==5&&!rec.corners.empty())visitor(rec.recordSourceOffset,passesKind5(rec,eyes));}
 }
 }

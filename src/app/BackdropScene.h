@@ -23,6 +23,10 @@ class BackdropScene {
   // Runs the production parsed-tree traversal; explicit inputs are a fixture seam.
   void visitBillboards(const BillboardSourceInputs& cameraChain,
                        const std::function<void(const SceneBillboardSource&)>& visitor) const;
+  // Replays the production kind-5 predicate context for value checks. The visitor
+  // receives each source record offset and the branch result (true means pass).
+  void visitKind5Predicates(const CameraBasis& camera,
+      const std::function<void(std::size_t, bool)>& visitor) const;
   bool empty() const { return roots_.empty(); }
  private:
   std::vector<SceneNode> roots_;

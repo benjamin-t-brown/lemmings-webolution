@@ -755,3 +755,11 @@ reproduce2077retained plus2077synthetic known-field byte records and preserve
 specular; raw pack/ftol bytes re-read. Single RHW-numerator mutation fails,
 exact restore and40/40CTest. App source registered but Backdrop call site remains
 unwired; no packing-caused pixel improvement or native clipping claim.
+
+**C3ai: camera-composed kind5 source predicate (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ai-predicate-context.md)). Independent
+raw-LVL/35byte-window oracle and actual source-offset visitor agree465/465,
+306pass/159skip. Single predicate-context-return identity changes136decisions
+(not worker's465), worsens full-frame error5065521 and restores exactly;
+40/40CTest. Fresh fixed score0.0631375060 still fails; C1gatespass, floor included.
+Dispatch/clip/packing adoption/state remain open; no native visible-count claim.

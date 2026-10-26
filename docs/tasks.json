@@ -1,30 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T18:45:51-06:00",
+  "updated": "2026-10-25T18:57:03-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [
-    {
-      "id": "c3ai-predicate-context",
-      "status": "ready-for-verify",
-      "dispatched_at": "2026-10-25T18:31:17-06:00",
-      "dispatch_session_id": "ses_e8a615194ffeH6CYIdIsaOuFnt",
-      "brief": "build/tmp/c3ai-predicate-context-brief.md",
-      "tier": "targeted",
-      "worker": "round-agent",
-      "requested_model": "openai/gpt-6-luna#high (configured pin)",
-      "owns_live_game": false,
-      "owned_paths": [
-        "src/app/BackdropScene.cpp",
-        "src/app/BackdropScene.h",
-        "src/__test__/test_backdropscene.cpp",
-        "build/tmp/c3ai-predicate-context/"
-      ],
-      "depends_on": [],
-      "question_round": 2,
-      "worker_output": "build/tmp/c3ai-predicate-context/round-note.md",
-      "live_owner": null
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c3-known-gaps-pause-values",
@@ -47,7 +25,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Last landed c3ak-vertex-pack: Independent retained2077+synthetic2077 packed-byte cases/specular; singleRHWnumerator source mutant fails and exactrestore;40/40CTest. App adoption still absent; siblingAI.0631375 diagnostic not promoted,C1pass.0starts.. Run8/16 attempts,0/3starts as of this landing; active: c3ai-predicate-context:ready-for-verify. Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
+    "handoff": "Last landed c3ai-predicate-context: Independent465per-source decisions306pass159skip/35bytewindows; one context-return mutation changes136,worsenspixels5065521 and exactrestore;40/40CTest. FixedC3.063137506FAIL,C1gatespass,sceneoffexact.0starts.. Run8/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
       "last_yielded": "2026-10-25T18:34:37-06:00",
@@ -83,7 +61,9 @@
         },
         {
           "id": "c3ai-predicate-context",
-          "dispatched": "2026-10-25T18:31:17-06:00"
+          "dispatched": "2026-10-25T18:31:17-06:00",
+          "landed": "2026-10-25T18:57:03-06:00",
+          "elapsed_seconds": 1546
         },
         {
           "id": "c3ak-vertex-pack",

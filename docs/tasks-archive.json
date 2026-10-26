@@ -1604,6 +1604,31 @@
   ],
   "landed": [
     {
+      "id": "c3ai-predicate-context",
+      "status": "landed",
+      "dispatched_at": "2026-10-25T18:31:17-06:00",
+      "dispatch_session_id": "ses_e8a615194ffeH6CYIdIsaOuFnt",
+      "brief": "build/tmp/c3ai-predicate-context-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owns_live_game": false,
+      "owned_paths": [
+        "src/app/BackdropScene.cpp",
+        "src/app/BackdropScene.h",
+        "src/__test__/test_backdropscene.cpp",
+        "build/tmp/c3ai-predicate-context/"
+      ],
+      "depends_on": [],
+      "question_round": 2,
+      "worker_output": "build/tmp/c3ai-predicate-context/round-note.md",
+      "live_owner": null,
+      "landed_at": "2026-10-25T18:57:03-06:00",
+      "landed_note": "docs/scratch/phase-c3ai-predicate-context.md",
+      "facilitator_check": "Independent465per-source decisions306pass159skip/35bytewindows; one context-return mutation changes136,worsenspixels5065521 and exactrestore;40/40CTest. FixedC3.063137506FAIL,C1gatespass,sceneoffexact.0starts.",
+      "elapsed_dispatch_to_landing_seconds": 1546
+    },
+    {
       "id": "c3ak-vertex-pack",
       "status": "landed",
       "dispatched_at": "2026-10-25T18:31:17-06:00",

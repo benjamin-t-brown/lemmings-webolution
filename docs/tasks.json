@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26T10:32:30-06:00",
+  "updated": "2026-10-26T10:34:17-06:00",
   "notes": "Bounded offline verifier/integration directive, 2 attempts/2h, sequential; initial unrelated dirty files preserved in build/tmp/c3-offline-verifier-pass/initial. No native or host-task permission.",
   "active": [],
   "queue": [],
@@ -41,7 +41,7 @@
       }
     ],
     "stop_point": "Independently checked artifact-specific assessment, 2attempts/2h,45min per task, or identity/bounds/install-safety/delegation blocker; no native follow-on.",
-    "handoff": "STOPPED: C3bc initial/repair1 complete negative,2/2attempts,0starts. Source-supported Windows RWX installation-safety gap; independent remap-false predicate and FXSAVE/FXRSTOR positive source checked. Actual postinstall receipts deferred, not preimplementation prerequisites. No accepted verifier/integration; refusal unchanged. See BC note. No third/integration/live dispatch without fresh direction.44CTest/25framework pass;7install hashes/no game or LemWeb task;initial16dirty paths preserved outside own docs deltas.",
+    "handoff": "STOPPED: C3bc initial/repair1 complete negative,2/2attempts,0starts. Source-supported Windows RWX installation-safety gap; independent remap-false predicate and FXSAVE/FXRSTOR positive source checked. Actual postinstall receipts deferred, not preimplementation prerequisites. No accepted verifier/integration; refusal unchanged. See BC note. No third/integration/live dispatch without fresh direction.44CTest/25framework pass;7install hashes/no game or LemWeb task;initial16dirty paths preserved outside own docs deltas. Round9a26a3d committed/pushed. Final exact preservation check confirms all16initial dirty changes remain, accounting only for own two PLAN lines and phase-C append; archived old run equals original. Final7install hashes match. Pass1324s; round1020s including repair783s. Fresh direction required; no leftover work owns live resources.",
     "current_pass": {
       "started": "2026-10-26T10:12:13-06:00",
       "rounds": [
@@ -51,15 +51,19 @@
           "repair_dispatched": "2026-10-26T10:19:27-06:00",
           "landed": "2026-10-26T10:32:30-06:00",
           "elapsed_seconds": 1020,
-          "repair_elapsed_seconds": 783
+          "repair_elapsed_seconds": 783,
+          "commit": "9a26a3d"
         }
-      ]
+      ],
+      "ended": "2026-10-26T10:34:17-06:00",
+      "elapsed_seconds": 1324
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": {
-      "date": "2026-10-26T10:32:30-06:00",
+      "date": "2026-10-26T10:34:17-06:00",
       "reason": "Concrete prospective installation-safety blocker and2/2attempts spent; no verifier acceptance, so integration prohibited. No native permission.",
-      "last_commit": "recorded at final closeout"
+      "last_commit": "9a26a3d",
+      "elapsed_seconds": 1324
     }
   }
 }

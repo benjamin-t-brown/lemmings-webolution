@@ -1,6 +1,7 @@
 # Level-frame map — established paths and gaps
 
-C3at, 2026-10-25. [Facilitator check](scratch/phase-c3at-frame-map.md).
+C3at, 2026-10-25; production stage update C3bd, 2026-10-26.
+[Mapping check](scratch/phase-c3at-frame-map.md), [ordering check](scratch/phase-c3bd-stage-order.md).
 This consolidates accepted evidence; it is **not a native draw census**.
 READ/DERIVED/OBSERVED retain the linked notes' scope. SOURCE means current
 repository code only, not original execution. Unknown is not a device default.
@@ -31,16 +32,19 @@ that acceptance. Root slot+8 is not equivalent to root slot+4 rendering.
 
 ## Production spine (SOURCE)
 
-`main.cpp:424–429` clears, calls **all** of BackdropScene, then TubeScene.
-`BackdropScene.cpp:80–98` draws ordinary meshes, ordinary billboards and then
-the mixed secondary stream before returning. Headless image conversion is
+`main.cpp` clears once and uses `scheduleSceneFrame`: supported primary,
+legacy-unattributed model contributions, TubeScene (including actors), then
+supported mixed secondary. `BackdropScene::renderStage` partitions retained
+primary root59644 and secondary root91782; Entrance/Exit roots9ccd1/a0cdd retain
+their former pre-tube timing, explicitly **not primary**. Headless image conversion is
 followed by optional skill panel, HUD and caption (`main.cpp:449–525`). Those
 extras are not the general SDL-window HUD scheduling path.
 
-**Known integration mismatch:** software secondary scenery is before the tube;
-the established native conditional spine places it afterward. This does not
-identify a pixel-error cause or prove every pre-tube software object maps to the
-primary native holder. No ordering fix is authorized by this mapping pass.
+**Corrected in C3bd:** software secondary scenery now follows the tube, preserving
+the mixed-secondary dispatcher. Independent production-order mutation fails, but
+all fixed screenshots are unchanged. This is conditional SOURCE integration, not
+proof of historical runtime admission or an attributed pixel-error cause. Separate
+model-holder timing/admission remains unsupported, rather than classified by exclusion.
 
 ## Family/stage map
 
@@ -48,8 +52,8 @@ primary native holder. No ordering fix is authorized by this mapping pass.
 |---|---|---|
 | Tube route — `TubeScene::render`, `CellMesh`, `Raster` | LVL collision/grid-derived mesh0/mesh4/INN; [A4c](scratch/phase-a4-cell-mesh-rule.md), [A4d](scratch/phase-a4-cellmesh-route.md). Camera world→view→screen; INN→OUT-right→OUT-left→OUT-centre; HI tile convention within accepted views. | Exact per-frame record admission/resource/effective state is not joined to a native submission stream. Broader clipping/door branches/levels and depth relation remain open. |
 | Tube diagnostics — `TubeScene` wall/surface/PolyList/cellmesh and flat modes | Stored/reconstructed geometry through optional software paths; [C3w](scratch/phase-c3w-source-integration-map.md) is SOURCE navigation. | These are not interchangeable native route families. PolyList diagnostic lacks node/material context; fixed UV/tile binding is not C3 material fidelity. |
-| Scene meshes — `BackdropScene`, `SceneMeshSource`, `SceneRaster` | Guarded retained MM_CLIMB_002 roots; node/ancestor/view positions, indexed attributes/materials [C3n](scratch/phase-c3n-mesh-submission.md); conditional predicate [C3ai](scratch/phase-c3ai-predicate-context.md). | Whole-scene versus primary/secondary boundary association and actual admission/cache state. Known secondary-before-tube mismatch; clipping/type1 dispatch/precision remain incomplete. Raw diffuse is adopted [C3an](scratch/phase-c3an-raw-diffuse.md), **not** the complete f32 pack helper [C3ak](scratch/phase-c3ak-vertex-pack.md). |
-| Scene billboards — `SceneBillboardSource`, BackdropScene slot triangles | Retained node/ancestor/shared camera S/P chain [C3af](scratch/phase-c3af-billboard-chain.md). Conditional caret flags-8 policy [C3al](scratch/phase-c3al-caret-alpha.md); secondary mixed order [C3ao](scratch/phase-c3ao-secondary-order.md). | Same scene-boundary mismatch; runtime admission/clipping, resource version, effective states and exact precision remain unknown. Reference binary32 diagnostics are not runtime x87 proof. |
+| Scene meshes — `BackdropScene`, `SceneMeshSource`, `SceneRaster` | Guarded retained MM_CLIMB_002 roots; node/ancestor/view positions, indexed attributes/materials [C3n](scratch/phase-c3n-mesh-submission.md); conditional predicate [C3ai](scratch/phase-c3ai-predicate-context.md); supported root stages [C3bd](scratch/phase-c3bd-stage-order.md). | Actual admission/cache state and separate model-holder timing remain unknown; clipping/type1 dispatch/precision remain incomplete. Raw diffuse is adopted [C3an](scratch/phase-c3an-raw-diffuse.md), **not** the complete f32 pack helper [C3ak](scratch/phase-c3ak-vertex-pack.md). |
+| Scene billboards — `SceneBillboardSource`, BackdropScene slot triangles | Retained node/ancestor/shared camera S/P chain [C3af](scratch/phase-c3af-billboard-chain.md). Conditional caret flags-8 policy [C3al](scratch/phase-c3al-caret-alpha.md); secondary mixed order [C3ao](scratch/phase-c3ao-secondary-order.md), after tube [C3bd](scratch/phase-c3bd-stage-order.md). | Runtime admission/clipping, resource version, effective states and exact precision remain unknown. Reference binary32 diagnostics are not runtime x87 proof. |
 | Actors — `TubeScene.cpp` prepare/draw/composite helpers, `ActorPose`, sprite helpers | Native terrain sample→mesh pose, camera-relative view/frame→screen rectangle/light tint. [A3](scratch/phase-a3-sprite-view.md), [A6a](scratch/phase-a6-actor-pose.md), [A6c](scratch/phase-a6-actor-tube-composition.md): native actor list after tube passes, reverse list order. | Fixed/World/loaded injection is not a full matched native actor list; temporal input defaults to 0, not a universal animation clock. General runtime state/pose correspondence and actor/tube depth are unresolved. Zero-zoom POINT/EF is scoped [A4x](scratch/phase-a4-actor-filter-state.md), not all zooms. |
 | Skill panel — `drawRetailSkillPanel`, headless main | Plate/selected/count/icon image composition; positions/white glyphs [C1s](scratch/phase-c1s-frida-icon-hook.md), plate/cache sample [C1ad](scratch/phase-c1ad-plate-blend-live.md), zero-count skip [C1v](scratch/phase-c1v-plate-draw-read.md). | General runtime invocation and effective filter/material/cache behavior are not this optional compositor. C1 is [done in amended scope](scratch/phase-c1-close-amended-gate.md); historical C1t failure is not current status. |
 | HUD — `HudText`, headless `--hud-ticks` | Separate simulated World values, ^Font glyphs and counter/timer placement [C2g](scratch/phase-c2g-counters-timer-render.md). | Native value/object feed, runtime invocation and effective glyph/material state are not observed. Simulation-derived HUD values are not repair4 memory values. |

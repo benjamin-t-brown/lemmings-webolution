@@ -42,6 +42,11 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
  return s;
 }
 void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats) const {
+  renderStage(target,camera,lib,stats,Stage::Primary);
+  renderStage(target,camera,lib,stats,Stage::LegacyUnattributed);
+  renderStage(target,camera,lib,stats,Stage::Secondary);
+}
+void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage) const {
  // SceneRaster and legacy Raster share the same linear view-depth units here;
  // the choice is conditional software integration, not an effective-D3D claim.
  SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;fb.rgba.resize(target.framebuffer().rgb.size()/3*4);
@@ -58,13 +63,13 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
  const SceneRgbaImage white{1,1,{255,255,255,255}};
  const auto context=predicateContext(camera);
   std::map<std::size_t,std::array<double,3>> eyes;
-  std::map<std::size_t,std::vector<SceneMeshRecordSource>> secondaryMeshes;
-  std::vector<SceneMeshRecordSource> ordinaryMeshes;
+   std::map<std::size_t,std::vector<SceneMeshRecordSource>> secondaryMeshes;
+   std::vector<SceneMeshRecordSource> primaryMeshes, legacyMeshes;
   const auto secondaryRoot=std::find_if(roots_.begin(),roots_.end(),[](const auto& n){return n.sourceOffset==0x91782;});
   std::map<std::size_t,std::uint32_t> secondaryTypes;
   if(secondaryRoot!=roots_.end())for(const auto& n:secondaryRoot->children)secondaryTypes[n.sourceOffset]=n.type;
-  for(const auto& root:roots_){collectEyes(root,identity(),context,eyes);++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;
-   for(auto& rec:*records){++stats.meshRecords;if(secondaryTypes.contains(rec.nodeSourceOffset))secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));else ordinaryMeshes.push_back(std::move(rec));}
+   for(const auto& root:roots_){collectEyes(root,identity(),context,eyes);if(stage==Stage::Primary)++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;
+    for(auto& rec:*records){if(stage==Stage::Primary)++stats.meshRecords;if(root.sourceOffset==0x91782)secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));else if(root.sourceOffset==0x59644)primaryMeshes.push_back(std::move(rec));else legacyMeshes.push_back(std::move(rec));}
   }
   const auto drawMesh=[&](const SceneMeshRecordSource& rec){const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName);if(!tex)return;
    if(rec.kind==5&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}
@@ -77,22 +82,30 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
     if(valid){auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else ++stats.rejected;}else ++stats.rejected;
    }
   };
-  for(const auto& rec:ordinaryMeshes)drawMesh(rec);
+   const auto& meshes=stage==Stage::Primary?primaryMeshes:legacyMeshes;
+   if(stage==Stage::Primary)stats.stageMeshRecords+=primaryMeshes.size();
+   else if(stage==Stage::LegacyUnattributed)stats.stageMeshRecords+=legacyMeshes.size();
+   else for(const auto& [offset,items]:secondaryMeshes){(void)offset;stats.stageMeshRecords+=items.size();}
+   if(stage!=Stage::Secondary)for(const auto& rec:meshes)drawMesh(rec);
   const auto builtChain=buildBillboardCameraChain(camera);
   BillboardSourceInputs chain;chain.parentCamera.values=builtChain.parentCamera;
   chain.sourceTransform.values=builtChain.sourceTransform;
   chain.projectionTransform.values=builtChain.projectionTransform;chain.center={camera.cx,camera.cy};
-  std::map<std::size_t,SceneBillboardSource> secondaryBillboards;
-  std::vector<SceneBillboardSource> ordinaryBillboards;
-  visitBillboards(chain,[&](const SceneBillboardSource& b){if(secondaryTypes.contains(b.sourceOffset))secondaryBillboards.emplace(b.sourceOffset,b);else ordinaryBillboards.push_back(b);});
+   std::map<std::size_t,SceneBillboardSource> secondaryBillboards;
+   std::vector<SceneBillboardSource> primaryBillboards, legacyBillboards;
+   visitBillboards(chain,[&](const SceneBillboardSource& b){if(secondaryRoot!=roots_.end()&&secondaryTypes.contains(b.sourceOffset))secondaryBillboards.emplace(b.sourceOffset,b);else if(b.sourceOffset>=0x59644&&b.sourceOffset<0x9176e)primaryBillboards.push_back(b);else legacyBillboards.push_back(b);});
   const auto drawBillboard=[&](const SceneBillboardSource& b){const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(!tex){++stats.nullMaterials;return;}++stats.billboards;
     // C3r's accepted normal-constructor census identifies all 17 retained type-2
     // resources as caret leaves => flags 8. Apply that conditional row here;
     // this is not a claim about cache hits or effective native device state.
     const auto st=conditionalCaretFlags8Policy(options(true,b.blendSelector==1));
      for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}};
-  for(const auto& b:ordinaryBillboards)drawBillboard(b);
-  if(secondaryRoot!=roots_.end())dispatchSecondaryChildren(*secondaryRoot,nativeAffine(chain.parentCamera),nativeAffine(chain.sourceTransform),[&](const SecondaryDispatchItem& item){
+   const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;
+   if(stage==Stage::Primary)stats.stageBillboards+=primaryBillboards.size();
+   else if(stage==Stage::LegacyUnattributed)stats.stageBillboards+=legacyBillboards.size();
+   else stats.stageBillboards+=secondaryBillboards.size();
+   if(stage!=Stage::Secondary)for(const auto& b:billboards)drawBillboard(b);
+   if(stage==Stage::Secondary&&secondaryRoot!=roots_.end())dispatchSecondaryChildren(*secondaryRoot,nativeAffine(chain.parentCamera),nativeAffine(chain.sourceTransform),[&](const SecondaryDispatchItem& item){
     if(item.type==1){auto it=secondaryMeshes.find(item.nodeSourceOffset);if(it!=secondaryMeshes.end())for(const auto& rec:it->second)drawMesh(rec);}
     else if(item.type==2){auto it=secondaryBillboards.find(item.nodeSourceOffset);if(it!=secondaryBillboards.end())drawBillboard(it->second);}
   });

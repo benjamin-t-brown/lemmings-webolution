@@ -1,69 +1,27 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26T10:34:17-06:00",
-  "notes": "Bounded offline verifier/integration directive, 2 attempts/2h, sequential; initial unrelated dirty files preserved in build/tmp/c3-offline-verifier-pass/initial. No native or host-task permission.",
+  "updated": "2026-10-26T11:27:22-06:00",
+  "notes": "Active scene-stage ordering directive; offline only. Prior stopped run archived. Initial sixteen unrelated dirty files preserved under build/tmp/c3-stage-order-pass/initial.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-offline-verifier-integration",
-    "goal": "Assess source-bound two-site verifier and, only after independent acceptance, actual-controller offline integration; keep runtime refusal.",
-    "milestones": [
-      "C3 full frame"
-    ],
+    "id": "c3-stage-order",
+    "goal": "Correct the supported conditional primary/tube/secondary ordering, verify and report unchanged C3/C1 gates; observer stays parked.",
+    "milestones": ["C3 full frame"],
     "current": "C3 full frame",
-    "authorized": "docs/DIRECTIVE.md user i approve, 2026-10-26; supersedes completed Astra review.",
-    "grants": {
-      "stock_starts": 0,
-      "rounds": 2,
-      "hours": 2,
-      "round_minutes": 45,
-      "final_review_minutes": 30,
-      "commits": "per-round decompile commits/sync preserving unrelated dirty changes",
-      "concurrency": "sequential only"
-    },
-    "owner": "ses_e870469b8ffecuVSTcp5whxRgJ OpenCode facilitator Sol on mouv",
-    "ownership_check": "Idle queue, prior standing run explicitly stopped; git pull --ff-only current. Fresh invocation transfers idle ownership; no task running. Dirty snapshots retained.",
-    "started_at": "2026-10-26T10:12:13-06:00",
+    "authorized": "docs/DIRECTIVE.md active scene-stage ordering; user i approve 2026-10-26; explicit fresh facilitator invocation.",
+    "directive_sha256": "e191d7b7774e673fffc51b164c34d84124d12f7a03078a662df430e39c6d07ef",
+    "grants": {"stock_starts": 0, "rounds": 3, "hours": 3, "round_minutes": 45, "commits": "per-round decompile commits/sync preserving unrelated dirty changes"},
+    "owner": "ses_e86dd2ae4ffe01pOMjM7OFXKMl OpenCode facilitator Sol on mouv",
+    "ownership_check": "No running task; previous run explicitly stopped. git pull --ff-only up to date at aef6b90; new invocation transfers idle ownership.",
+    "started_at": "2026-10-26T10:55:00-06:00",
     "rounds_run": 2,
     "stock_starts_used": 0,
-    "pending_questions": [
-      {
-        "question": "What separately scoped direction should address the prospective installation-safety gap before any observer installation?",
-        "recommendation": "Retain refusal/park the route until a reviewed artifact-specific synchronization/install guarantee and supported source/layout binding are available. Do not waive the risk, change methods or spend a start implicitly.",
-        "options": [
-          "Retain refusal and park",
-          "Authorize a narrowly bounded alternate synchronization/safety investigation",
-          "Explicitly propose another method for separate review"
-        ],
-        "evidence": "docs/scratch/phase-c3bc-verifier-safety.md",
-        "remaining_blockers": "No preinstall concurrency guarantee for the reviewed Windows RWX path; incomplete supported agent/source/private-layout binding; no accepted decoder; actual AY/pause/slot/resource/unload<=8s/independent-restoration integration unfinished. Actual installed receipts are deferred runtime evidence, not demanded now.",
-        "gate_baseline": "C3 .06354817708333334 FAIL; C1 zoom1 .0160863988750699/elev_down .016121214378294987 PASS retained; no mask/reference/gate/renderer change."
-      }
-    ],
-    "stop_point": "Independently checked artifact-specific assessment, 2attempts/2h,45min per task, or identity/bounds/install-safety/delegation blocker; no native follow-on.",
-    "handoff": "STOPPED: C3bc initial/repair1 complete negative,2/2attempts,0starts. Source-supported Windows RWX installation-safety gap; independent remap-false predicate and FXSAVE/FXRSTOR positive source checked. Actual postinstall receipts deferred, not preimplementation prerequisites. No accepted verifier/integration; refusal unchanged. See BC note. No third/integration/live dispatch without fresh direction.44CTest/25framework pass;7install hashes/no game or LemWeb task;initial16dirty paths preserved outside own docs deltas. Round9a26a3d committed/pushed. Final exact preservation check confirms all16initial dirty changes remain, accounting only for own two PLAN lines and phase-C append; archived old run equals original. Final7install hashes match. Pass1324s; round1020s including repair783s. Fresh direction required; no leftover work owns live resources.",
-    "current_pass": {
-      "started": "2026-10-26T10:12:13-06:00",
-      "rounds": [
-        {
-          "id": "c3bc-verifier",
-          "dispatched": "2026-10-26T10:15:30-06:00",
-          "repair_dispatched": "2026-10-26T10:19:27-06:00",
-          "landed": "2026-10-26T10:32:30-06:00",
-          "elapsed_seconds": 1020,
-          "repair_elapsed_seconds": 783,
-          "commit": "9a26a3d"
-        }
-      ],
-      "ended": "2026-10-26T10:34:17-06:00",
-      "elapsed_seconds": 1324
-    },
+    "pending_questions": [],
+    "stop_point": "Verified ordering correction plus independent score/diagnostic report; max3 attempts/3h/45min per task including repairs; stop on missing attribution or safety/ownership/delegation blocker. No follow-on rendering/observer question.",
+    "handoff": "C3bd initial/repair1 verified and landed in docs, committing now. Supported primary/tube/secondary ordering corrected; Entrance/Exit explicitly legacy-unattributed. Own production-order-only mutant fails permanent+independent oracles, exact restore44CTest; fresh repair4/all10C1/scene-off unchanged. C3 .0635481771 FAIL, C1 .0160864/.0161212 PASS. Directive correction/report stop reached; no follow-on dispatch under this same authorization. Observer remains parked/refusal unchanged. Initial16dirtyfiles preserved with own PLANstatus/historyappend staged separately;7installhashes26fixedinputs exact;no game/LemWeb task.0starts,2attempts. No active worker or owned live resource.",
+    "current_pass": {"started": "2026-10-26T10:55:00-06:00", "rounds": [{"id": "c3bd-stage-order", "dispatched": "2026-10-26T10:59:27-06:00", "repair_dispatched": "2026-10-26T11:07:27-06:00", "landed": "2026-10-26T11:27:22-06:00", "elapsed_seconds": 1675, "repair_elapsed_seconds": 1195}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {
-      "date": "2026-10-26T10:34:17-06:00",
-      "reason": "Concrete prospective installation-safety blocker and2/2attempts spent; no verifier acceptance, so integration prohibited. No native permission.",
-      "last_commit": "9a26a3d",
-      "elapsed_seconds": 1324
-    }
+    "stopped": null
   }
 }

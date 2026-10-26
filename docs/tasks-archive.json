@@ -3,6 +3,25 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-offline-verifier-integration",
+      "goal": "Assess source-bound two-site verifier and, only after independent acceptance, actual-controller offline integration; keep runtime refusal.",
+      "milestones": ["C3 full frame"],
+      "current": "C3 full frame",
+      "authorized": "docs/DIRECTIVE.md user i approve, 2026-10-26; supersedes completed Astra review.",
+      "grants": {"stock_starts": 0, "rounds": 2, "hours": 2, "round_minutes": 45, "final_review_minutes": 30, "commits": "per-round decompile commits/sync preserving unrelated dirty changes", "concurrency": "sequential only"},
+      "owner": "ses_e870469b8ffecuVSTcp5whxRgJ OpenCode facilitator Sol on mouv",
+      "ownership_check": "Idle queue, prior standing run explicitly stopped; git pull --ff-only current. Fresh invocation transfers idle ownership; no task running. Dirty snapshots retained.",
+      "started_at": "2026-10-26T10:12:13-06:00",
+      "rounds_run": 2,
+      "stock_starts_used": 0,
+      "pending_questions": [{"question": "What separately scoped direction should address the prospective installation-safety gap before any observer installation?", "recommendation": "Retain refusal/park the route until a reviewed artifact-specific synchronization/install guarantee and supported source/layout binding are available. Do not waive the risk, change methods or spend a start implicitly.", "options": ["Retain refusal and park", "Authorize a narrowly bounded alternate synchronization/safety investigation", "Explicitly propose another method for separate review"], "evidence": "docs/scratch/phase-c3bc-verifier-safety.md", "remaining_blockers": "No preinstall concurrency guarantee for the reviewed Windows RWX path; incomplete supported agent/source/private-layout binding; no accepted decoder; actual AY/pause/slot/resource/unload<=8s/independent-restoration integration unfinished. Actual installed receipts are deferred runtime evidence, not demanded now.", "gate_baseline": "C3 .06354817708333334 FAIL; C1 zoom1 .0160863988750699/elev_down .016121214378294987 PASS retained; no mask/reference/gate/renderer change."}],
+      "stop_point": "Independently checked artifact-specific assessment, 2attempts/2h,45min per task, or identity/bounds/install-safety/delegation blocker; no native follow-on.",
+      "handoff": "STOPPED: C3bc initial/repair1 complete negative,2/2attempts,0starts. Source-supported Windows RWX installation-safety gap; independent remap-false predicate and FXSAVE/FXRSTOR positive source checked. Actual postinstall receipts deferred, not preimplementation prerequisites. No accepted verifier/integration; refusal unchanged. See BC note. No third/integration/live dispatch without fresh direction.44CTest/25framework pass;7install hashes/no game or LemWeb task;initial16dirty paths preserved outside own docs deltas. Round9a26a3d committed/pushed. Final exact preservation check confirms all16initial dirty changes remain, accounting only for own two PLAN lines and phase-C append; archived old run equals original. Final7install hashes match. Pass1324s; round1020s including repair783s. Fresh direction required; no leftover work owns live resources.",
+      "current_pass": {"started": "2026-10-26T10:12:13-06:00", "rounds": [{"id": "c3bc-verifier", "dispatched": "2026-10-26T10:15:30-06:00", "repair_dispatched": "2026-10-26T10:19:27-06:00", "landed": "2026-10-26T10:32:30-06:00", "elapsed_seconds": 1020, "repair_elapsed_seconds": 783, "commit": "9a26a3d"}], "ended": "2026-10-26T10:34:17-06:00", "elapsed_seconds": 1324},
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {"date": "2026-10-26T10:34:17-06:00", "reason": "Concrete prospective installation-safety blocker and2/2attempts spent; no verifier acceptance, so integration prohibited. No native permission.", "last_commit": "9a26a3d", "elapsed_seconds": 1324}
+    },
+    {
       "id": "c3-astra-readiness-review",
       "goal": "Independently checked requirement audit and concrete verifier feasibility recommendation for a later Sol pass; no implementation or native execution.",
       "milestones": [
@@ -1771,6 +1790,30 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bd-stage-order",
+      "status": "landed",
+      "milestone": "C3 full frame",
+      "brief": "build/tmp/c3bd-stage-order-brief.md",
+      "repair_brief": "build/tmp/c3bd-stage-order-repair1-brief.md",
+      "worker": "round-agent",
+      "tier": "targeted",
+      "requested_model": "openai/gpt-6-luna#high via configured round-agent; no override",
+      "dispatch_session": "ses_e86d8a0dbffeMpS2pnT3ZA3glL",
+      "dispatched_at": "2026-10-26T10:59:27-06:00",
+      "repair_dispatched_at": "2026-10-26T11:07:27-06:00",
+      "landed_at": "2026-10-26T11:27:22-06:00",
+      "elapsed_seconds": 1675,
+      "repair_elapsed_seconds": 1195,
+      "question_rounds": 2,
+      "worker_output": "build/tmp/c3bd-stage-order/round-note.md",
+      "evidence": "docs/scratch/phase-c3bd-stage-order.md",
+      "facilitator_check": "Independent native bytes/raw tree; actual stage-candidate census923/172/82+17billboards; real production-order mutation fails permanent and separate oracles, restores exact;44CTest/25framework pass; fresh repair4/all10C1/scene-off match prior pixels. No native admission/visible census claim. Initial packet rejected for missing mutation/render evidence.",
+      "result": "Supported primary/tube/secondary scheduling corrected; Entrance/Exit remain legacy-unattributed; source mixed order unchanged. C3 14934330/235008000 FAIL; C1 285083/285700 over17721990 PASS, no gate movement. All preselected diagnostics unchanged. Observer park/refusal unchanged.",
+      "stock_starts_used": 0,
+      "owns_live_game": false,
+      "live_owner": null
+    },
     {
       "id": "c3bc-verifier",
       "status": "landed",

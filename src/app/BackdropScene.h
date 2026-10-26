@@ -16,11 +16,13 @@ class AssetLibrary;
 namespace app {
 class Raster;
 class TubeScene;
-struct BackdropStats { std::size_t roots=0, meshRecords=0, meshTriangles=0, nullMaterials=0, nullMaterialTriangles=0, billboards=0, predicateRejected=0, missingTextures=0, rejected=0, pixels=0; };
+struct BackdropStats { std::size_t roots=0, meshRecords=0, stageMeshRecords=0, meshTriangles=0, nullMaterials=0, nullMaterialTriangles=0, billboards=0, stageBillboards=0, predicateRejected=0, missingTextures=0, rejected=0, pixels=0; };
 class BackdropScene {
  public:
+  enum class Stage { Primary, LegacyUnattributed, Secondary };
   static std::expected<BackdropScene,std::string> build(const AssetLibrary&, std::span<const std::byte> level, std::string_view levelId);
   void render(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&) const;
+  void renderStage(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&, Stage) const;
   // Runs the production parsed-tree traversal; explicit inputs are a fixture seam.
   void visitBillboards(const BillboardSourceInputs& cameraChain,
                        const std::function<void(const SceneBillboardSource&)>& visitor) const;

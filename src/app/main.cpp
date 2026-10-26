@@ -56,6 +56,7 @@
 
 #include "app/Camera.h"
 #include "app/BackdropScene.h"
+#include "app/SceneFrame.h"
 #include "app/CameraInput.h"
 #include "app/Pick.h"
 #include "app/Raster.h"
@@ -425,8 +426,11 @@ int main(int argc, char** argv) {
     const auto frameCamera = app::buildCamera(frameParams);
     target.clear(0, 0, 0);
     app::BackdropStats backdropStats;
-    if (backdrop) backdrop->render(target, frameCamera, *library, backdropStats);
-    scene->render(target, frameCamera, options, &*library);
+     app::scheduleSceneFrame(
+         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary); },
+         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
+         [&] { scene->render(target, frameCamera, options, &*library); },
+         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Secondary); });
     if (!args.sceneOff) std::fprintf(stderr,"backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu null-materials=%zu null-triangles=%zu predicate-rejected=%zu missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",backdrop.has_value(),backdropStats.roots,backdropStats.meshRecords,backdropStats.meshTriangles,backdropStats.billboards,backdropStats.nullMaterials,backdropStats.nullMaterialTriangles,backdropStats.predicateRejected,backdropStats.missingTextures,backdropStats.rejected,backdropStats.pixels);
     return frameCamera;
   };

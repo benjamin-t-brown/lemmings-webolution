@@ -917,3 +917,26 @@ initial dirty-file hashes match before landing.44/44CTest,25framework tests pass
 Two attempts spent,0starts/attaches/injection/host tasks; stop and park route for
 direction, not automatic integration/live follow-on. C3FAIL0.0635481771 and C1
 gatedPASS0.0160864/0.0161212 retained, no rendering/gate/reference change.
+
+### C3 scene-stage ordering, 2026-10-26
+
+User-approved bounded rendering directive, zero native operations; observer park
+retained. **C3bd initial/repair1** separates supported primary root59644 from
+secondary91782 and calls the latter after TubeScene through the shared production
+scheduler. Entrance/Exit remain legacy-unattributed at their former timing, not
+primary by exclusion. C3ao mixed-secondary order remains unchanged.
+Initial packet returned for missing fresh scores and real-source mutation.
+Facilitator re-reads conditional native order/slots, independently parses retained
+raw trees (923/82/16/156mesh records,17secondary billboards,29flat secondary children),
+reviews actual loops/callback bindings, and discriminates the isolated production
+order regression with permanent and separate oracles; exact restoration and44/44CTest.
+Stage counters are source candidates, not native visible submissions. Own fresh
+repair4/all10C1 images are unchanged: C3 **14934330/235008000 FAIL**, C1zoom1/down
+**285083/285700 over17721990 PASS**. Preselected initial,left,elev_up,MM_DIG_000
+diagnostics and scene-off also equal baselines; no pixel improvement/protection
+claimed. [Check and diagnostic table](../scratch/phase-c3bd-stage-order.md).
+Two attempts,0starts; directive's verified-correction/report stop reached, not C3
+acceptance. Admission/model-holder timing/clip/packing/effective-state gaps remain;
+no automatic next rendering/observer question. Initial unrelated edits preserved
+with own PLAN status/history append staged separately; seven install hashes match,
+no game/LemWeb task. Actual times and commit in queue/archive.

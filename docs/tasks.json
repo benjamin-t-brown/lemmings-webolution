@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T21:34:13-06:00",
+  "updated": "2026-10-25T21:34:57-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [],
   "queue": [],
@@ -25,7 +25,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Final c3-pause-one-shot landed boundednegative: actualhostTaskStateenum4 rejects exactAJstringguard BEFORE gamePopen;0starts/attach/write, no values. Ownnumeric4-vs-stringRunningactualmaincheck discriminates; realPowerShellserializationconfirmed. Install/artifacthashes/task/process/approvalcleanup exact,44/44CTest, savedAO .0635481771FAIL+C1gates authenticated.16/16attempts exhausted: STOP and recordstopped immediately after this landingcommit; no furtherdispatch/retry. Remainingprimary/type1/clip/f32/native-state/format gaps explicit; APpackingbrief preparedonly. Laterhostenumfix needsofflineactualboundarycoverage before any separatelyscopedexecution; no newmethodpermission needed.",
+    "handoff": "STOPPED on16/16attemptbudget after e838441 finalobservationalnegative; no active/queued worker or live resource. C3 .0635481771FAIL (14934330/235008000), C1zoom1/elev_down .0160864/.0161212PASS,44/44CTest.0/3stockstarts: exactAJcontroller session1task enumState4 failed stringonlypreflight beforePopen; no retry/value/attach/write. Independentactualmainboundary+realPowerShellserialization and install/artifact/task/process/approvalcleanup verified. Remaining primary-before-tube,type1radius/near,clipping,finalf32/RHW/native-state/format gaps explicit. Recommend next authorized scope begins small real-serialization offlinecontrollerfix, then one separatelyscoped execution; no newmethodpermission is missing. Prepared APpackingbrief notdispatched, retained for later ranking. All roundcommits pushed; archive holds timings/evidence.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
       "last_yielded": "2026-10-25T21:17:50-06:00",
@@ -107,14 +107,17 @@
           "landed": "2026-10-25T21:34:13-06:00",
           "elapsed_seconds": 1092
         }
-      ]
+      ],
+      "ended": "2026-10-25T21:34:57-06:00",
+      "elapsed_seconds": 14058
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "latest_yield": {
-      "date": "2026-10-25T21:17:50-06:00",
-      "elapsed_seconds": 13031,
-      "reason": "Await sole live-owner final one-shot worker notification.16/16attempts; no retries/furtherdispatch. Starts not yet independently checked; preserve worker ownership and do not inspect/control running game. Onreturn verify/land then stopbudget."
-    },
-    "stopped": null
+    "latest_yield": null,
+    "stopped": {
+      "date": "2026-10-25T21:34:57-06:00",
+      "reason": "16/16 attempt budget exhausted; C3 remains failing. Final one-shot rejected numeric task-state4 before stock Popen; no pause/format values,0/3 starts used; no retry/further dispatch. Clean release verified.",
+      "last_commit": "e838441d95dcf52607ad2e1d90bdd611ae6e06c4",
+      "elapsed_seconds": 14058
+    }
   }
 }

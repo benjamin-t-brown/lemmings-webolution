@@ -41,9 +41,16 @@ completed briefs are not linted as current contracts. An in-flight legacy brief 
 for existence; strict brief validation is opt-in before a new dispatch.
 
 Facilitator commands must link to the canonical invocation/queue-selection rule.
-The OpenCode check also requires a primary facilitator agent, its explicit
-model/variant, and matching command binding in the current session, so a command
+The OpenCode check also requires a dual-use (`mode: all`) facilitator agent, its explicit
+model/variant, and matching manual command binding in the current session, so a command
 cannot silently inherit an unrelated session model.
+OpenCode's overlord has a separate primary agent and current-session command, with
+no model override. The checker rejects facilitator routing, child-session execution
+or missing overlord contract pointers for that entry point.
+It also checks depth two and the delegation allowlists: overlord -> designated
+facilitator -> that location's workers, with no worker delegation. Facilitator
+frontmatter uses native V2 fields; worker legacy fields remain supported. Never mix
+native permission arrays with legacy fields in one agent file.
 
 For machine validation, write the brief's **Owned files/paths** as comma-separated
 repository-relative paths or globs in backticks, and **Owns live game** as `yes` or `no`.

@@ -79,12 +79,16 @@ class FrameworkChecks(unittest.TestCase):
         self.assertTrue(any("missing facilitator agent binding" in e for e in errors))
         self.assertFalse(any("omit model override" in e for e in errors))
 
-    def test_opencode_facilitator_cannot_be_a_subagent(self):
-        path = ".opencode/agent/facilitator.md"
-        self.write(path, (self.root / path).read_text(encoding="utf-8")
-                   .replace("mode: primary", "mode: subagent"))
-        errors = framework.validate(self.root)
-        self.assertTrue(any("must be a primary agent" in e for e in errors))
+    def test_opencode_facilitators_require_both_launch_modes(self):
+        for name in framework.FACILITATORS:
+            path = f".opencode/agent/{name}.md"
+            text = (self.root / path).read_text(encoding="utf-8")
+            for mode in ["primary", "subagent"]:
+                with self.subTest(name=name, mode=mode):
+                    self.write(path, text.replace("mode: all", f"mode: {mode}"))
+                    errors = framework.validate(self.root)
+                    self.assertTrue(any(path in e and "must use mode: all" in e for e in errors))
+            self.write(path, text)
 
     def test_opencode_facilitator_command_cannot_override_pinned_agent(self):
         path = ".opencode/commands/facilitator.md"
@@ -97,7 +101,7 @@ class FrameworkChecks(unittest.TestCase):
     def test_opencode_facilitator_variant_and_session_binding(self):
         path = ".opencode/agent/facilitator.md"
         self.write(path, (self.root / path).read_text(encoding="utf-8")
-                   .replace("variant: high", "variant: max"))
+                   .replace("#high", "#max"))
         path = ".opencode/commands/facilitator.md"
         self.write(path, (self.root / path).read_text(encoding="utf-8")
                    .replace("subtask: false", "subtask: true"))
@@ -140,8 +144,104 @@ class FrameworkChecks(unittest.TestCase):
         self.assertEqual(config["model"], {
             "providerID": "openai", "model": "gpt-6-luna", "variant": "max"})
         text = (self.root / ".opencode/agent/facilitator.md").read_text(encoding="utf-8")
-        self.assertEqual(framework.frontmatter_field(text, "model"), "openai/gpt-6.1-sol")
-        self.assertEqual(framework.frontmatter_field(text, "variant"), "high")
+        self.assertEqual(framework.frontmatter_field(text, "model"), "openai/gpt-6.1-sol#high")
+        self.assertIsNone(framework.frontmatter_field(text, "variant"))
+
+    def test_opencode_overlord_requires_primary_and_contract(self):
+        self.write(".opencode/agents/overlord.md", "---\nmode: subagent\n---\n")
+        errors = framework.validate(self.root)
+        self.assertTrue(any("overlord must be a primary agent" in e for e in errors))
+        self.assertTrue(any("overlord.md: missing overlord contract" in e for e in errors))
+
+    def test_opencode_overlord_cannot_route_to_facilitator_or_child(self):
+        path = ".opencode/commands/overlord.md"
+        text = (self.root / path).read_text(encoding="utf-8")
+        self.write(path, text.replace("agent: overlord", "agent: facilitator")
+                   .replace("subagent: false", "subagent: true")
+                   + "\nRead [contract](../../docs/FACILITATOR.md).\n")
+        errors = framework.validate(self.root)
+        self.assertTrue(any("missing overlord agent binding" in e for e in errors))
+        self.assertTrue(any("overlord must run in the current session" in e for e in errors))
+        self.assertTrue(any("overlord must not invoke facilitation" in e for e in errors))
+
+    def test_opencode_overlord_preserves_model_and_default_dispatch_denial(self):
+        for path in [".opencode/agents/overlord.md", ".opencode/commands/overlord.md"]:
+            text = (self.root / path).read_text(encoding="utf-8")
+            self.assertIsNone(framework.frontmatter_field(text, "model"))
+            self.write(path, text.replace("---\n", "---\nmodel: openai/other\n", 1))
+        errors = framework.validate(self.root)
+        self.assertEqual(sum("overlord retains the selected session model" in e for e in errors), 2)
+        text = (self.root / ".opencode/agents/overlord.md").read_text(encoding="utf-8")
+        self.assertIn('  - action: subagent\n    resource: "*"\n    effect: deny', text)
+
+    def test_opencode_nested_depth_must_be_exactly_two(self):
+        path = ".opencode/opencode.json"
+        config = json.loads((self.root / path).read_text(encoding="utf-8"))
+        for depth in [None, 1, 3, True, "2"]:
+            with self.subTest(depth=depth):
+                config["experimental"]["subagent_depth"] = depth
+                self.write(path, json.dumps(config))
+                self.assertTrue(any("subagent_depth must be 2" in e
+                                    for e in framework.validate(self.root)))
+
+    def test_opencode_overlord_rejects_worker_generic_and_wildcard_launches(self):
+        path = ".opencode/agents/overlord.md"
+        text = (self.root / path).read_text(encoding="utf-8")
+        for target in ["round-agent", "explore-agent", "general", "*"]:
+            with self.subTest(target=target):
+                extra = f"  - action: subagent\n    resource: '{target}'\n    effect: allow\n"
+                self.write(path, text.replace("\n---\n", "\n" + extra + "---\n"))
+                self.assertTrue(any("overlord.md: delegation permissions" in e
+                                    for e in framework.validate(self.root)))
+
+    def test_opencode_facilitators_reject_wrong_workers_and_recursion(self):
+        for name in framework.FACILITATORS:
+            path = f".opencode/agent/{name}.md"
+            text = (self.root / path).read_text(encoding="utf-8")
+            suffix = "-mac" if name.endswith("-mac") else ""
+            wrong_worker = "round-agent" if suffix else "round-agent-mac"
+            for target in [wrong_worker, "facilitator", "general", "*"]:
+                with self.subTest(name=name, target=target):
+                    self.write(path, text.replace(f"resource: round-agent{suffix}\n",
+                                                  f"resource: '{target}'\n"))
+                    self.assertTrue(any(path in e and "delegation permissions" in e
+                                        for e in framework.validate(self.root)))
+            self.write(path, text)
+
+    def test_opencode_allowlist_order_and_missing_worker_are_checked(self):
+        path = ".opencode/agent/facilitator.md"
+        text = (self.root / path).read_text(encoding="utf-8")
+        deny = '  - action: subagent\n    resource: "*"\n    effect: deny\n'
+        allow = '  - action: subagent\n    resource: round-agent\n    effect: allow\n'
+        for changed in [text.replace(deny + allow, allow + deny), text.replace(allow, "")]:
+            self.write(path, changed)
+            self.assertTrue(any("facilitator.md: delegation permissions" in e
+                                for e in framework.validate(self.root)))
+
+    def test_opencode_overlord_queue_protection_cannot_be_removed(self):
+        path = ".opencode/agents/overlord.md"
+        text = (self.root / path).read_text(encoding="utf-8")
+        self.write(path, text.replace('resource: "**/docs/tasks.json"\n    effect: deny',
+                                      'resource: "**/docs/tasks.json"\n    effect: allow'))
+        self.assertTrue(any("overlord.md: delegation permissions" in e
+                            for e in framework.validate(self.root)))
+
+    def test_opencode_workers_cannot_delegate_even_with_depth_two(self):
+        for worker in framework.WORKERS:
+            for suffix in ["", "-mac"]:
+                path = f".opencode/agent/{worker}{suffix}.md"
+                text = (self.root / path).read_text(encoding="utf-8")
+                self.write(path, text.replace("  task: deny", "  task: allow"))
+                self.assertTrue(any(path in e and "delegation denied" in e
+                                    for e in framework.validate(self.root)))
+                self.write(path, text)
+
+    def test_opencode_facilitator_rejects_mixed_frontmatter(self):
+        path = ".opencode/agent/facilitator.md"
+        text = (self.root / path).read_text(encoding="utf-8")
+        self.write(path, text.replace("mode: all", "mode: all\nvariant: high"))
+        self.assertTrue(any("mix native V2 permissions with legacy variant" in e
+                            for e in framework.validate(self.root)))
 
     def test_stale_opencode_deepseek_worker_pin_is_rejected(self):
         for role in ["round-agent", "explore-agent"]:

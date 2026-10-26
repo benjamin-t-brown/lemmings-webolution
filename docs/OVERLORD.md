@@ -7,6 +7,12 @@ and evaluates each pass against the plan's gates. It reports to the user.
 `/overlord` selects this role. It does not select project facilitation, and it does not
 authorize dispatching rounds.
 
+OpenCode: invoke `/overlord` to select the dedicated primary agent in the current
+session, retaining the selected model. This is an agent/command pair, not a skill;
+reading this contract alone does not change the UI's agent selection. Wiring is in
+[ROLES.md](ROLES.md#overlord). A user-authorized framework repair may add that wiring
+without taking queue ownership or resuming the stopped project run.
+
 ## Read first
 
 Read the [queue](tasks.json) (`standing_run`, `active`, `handoff` and `stopped`), the
@@ -88,17 +94,45 @@ Separate measured results from your own reading of them, as the
 
 ## Launching facilitators
 
-User decision 2026-10-22: the user starts facilitators by hand, in the harness they choose,
-by typing `/facilitator`. The overlord does not launch them and does not use
-`/facilitator-mac`. The overlord's output is [DIRECTIVE.md](DIRECTIVE.md): scope,
-approach, budget, settled decisions and stop point, with the user's sign-off recorded. It
-replaces a pasted steering prompt, because `/facilitator` reads it at startup. When a pass
-ends, set up the next one by rewriting the directive (`Status: active`) once the user has
-approved it. Keep it short, and keep worker-level instructions out of it.
+**User decision 2026-10-26:** allow the OpenCode overlord to launch a facilitator,
+which may launch its own workers. This supersedes the manual-only launch policy of
+2026-10-22; manual `/facilitator` launches remain supported. Framework maintenance
+authorization enables this wiring only: it does not resume a run, renew a consumed
+directive or authorize a game start.
+
+Before launching or resuming a project facilitator:
+
+1. Write [DIRECTIVE.md](DIRECTIVE.md) with the user's approval, scope, approach,
+   budget, selected client/tier, settled decisions and stop point. State delegated
+   or manual launch; preserve any explicit manual-only choice. An active status
+   alone is insufficient if that directive was already completed or exhausted.
+2. Read the current queue, owner, handoff and stop record. Check the owning session
+   and any in-flight worker before acting. Never start a second facilitator for
+   this queue, including another clone. If it is running, leave it alone; if its
+   state is uncertain, report the conflict. A stale timestamp is not a handoff.
+3. Resume the owning facilitator session for an authorized unfinished pass. Create
+   a new child only after confirmed completion/termination or explicit idle handoff.
+   The facilitator, not the overlord, records its own session as queue owner and
+   rechecks ownership before dispatch. A stopped/completed pass needs fresh approved
+   direction; restarting a session does not reset its budgets.
+4. Use only the matching profile in [ROLES.md](ROLES.md): the default facilitator,
+   the approved hard-pass facilitator, or the Mac profile when actually running in
+   the Mac clone. A child starts in the current location; its name does not move it
+   to another machine. Do not override the pinned model or fall back silently.
+5. Pass the directive path and its content hash, authorization, queue path, intended
+   scope/stop point and prior session ID if resuming. Keep worker-level instructions
+   out. On return, evaluate the pass above; do not dispatch workers or complete the
+   facilitator's unfinished work yourself. Further scope needs fresh approval.
+
+OpenCode uses a two-level chain: overlord -> facilitator -> worker. The overlord
+may launch only facilitator profiles, facilitators may launch only their designated
+workers, and workers cannot delegate. Manual commands stay in the user's current
+session. A foreground return or background completion notification is the evaluation
+boundary; do not poll or launch a replacement while a child is still running.
 
 The launcher scripts in [scripts/overlord/](../scripts/overlord/README.md) remain for
 a user who asks for them. Everything below applies when a session is launched or resumed
-that way.
+that way, subject to the same authorization and single-owner checks.
 
 - `opencode run` exits after one turn, so a facilitator that dispatched a worker must be
   woken again when the worker finishes. Watch the worker session, then resume the

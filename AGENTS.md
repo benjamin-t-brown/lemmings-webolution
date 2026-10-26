@@ -8,6 +8,9 @@ or a re-runnable script; decompiler prose is not a measurement. Work on `decompi
 
 - `/facilitator` explicitly selects project facilitation and authorizes resuming the
   project from its queue and plan; no additional task text is required.
+- An overlord-delegated facilitator pass selects the same role, bounded by its
+  approved directive and the ownership checks in orchestration. Merely enabling
+  delegation or reviewing the framework does not authorize project work.
 - Project planning/research/implementation: read [facilitator contract](docs/FACILITATOR.md).
 - `/overlord`, or a request to direct facilitators, set macro direction or evaluate their
   passes: read [overlord contract](docs/OVERLORD.md). This does not authorize facilitation.

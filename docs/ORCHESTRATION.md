@@ -125,6 +125,34 @@ a decision the project sources cannot resolve, and report the specific evidence.
 An explicit request to review or repair the framework remains framework maintenance;
 it does not invoke project facilitation.
 
+### Overlord-delegated passes
+
+User, 2026-10-26: an approved overlord launch may invoke a facilitator as a child
+session, without the user typing `/facilitator`. It selects the same facilitator
+contract and dispatch loop, constrained by the approved directive, not an open-ended
+request to resume the project. The launch checks are in
+[the overlord contract](OVERLORD.md#launching-facilitators).
+
+- Before writing queue state or dispatching, the child checks the directive's approval,
+  supplied hash, scope, remaining budgets and stop point against the current queue.
+  A changed, completed, exhausted or manual-only directive is not launch authority.
+- Confirm that no other facilitator or worker owns running work. On a confirmed idle
+  handoff, record the child session as `standing_run.owner`, with its parent session
+  and directive identity in the handoff/authorization record. The overlord never
+  owns or writes the queue. Resuming the same pass retains its cumulative budgets.
+- The child uses its own configured worker permissions and model pins. It remains
+  responsible for briefs, dispatch, independent verification, landing and cleanup.
+  It must not launch another facilitator. Workers cannot delegate further.
+- Return at the directive's stop point with commits, independent checks, gate scores,
+  budgets and resource/ownership state. A parent receiving a response must not assume
+  running workers have terminated. A context handoff resumes the owning child, not a
+  competing facilitator; unavailable delegation is a blocker, not permission to do
+  worker work in the parent.
+
+This adds a launch path, not a grant of project or live-game scope. Framework-only
+requests never resume a queue. Manual facilitator launches still follow the same
+single-owner rules. OpenCode depth and profile allowlists are defined in ROLES.
+
 ### Concurrent offline rounds
 
 Added 2026-10-21, user decision. `active` may be one task object, or a list of up to
@@ -244,6 +272,8 @@ recommendation.
 **Ownership.** Only the session named in `standing_run.owner` dispatches. When the user
 starts `/facilitator` in a new session and no task is `running` under another session, that
 start is the handoff: record the new owner and the date, then continue from `handoff`.
+An approved overlord-delegated launch may likewise perform a confirmed idle handoff
+under the delegated-pass checks above; it never preempts a running facilitator.
 If a task is `running`, check that worker first, as in the dispatch loop.
 
 **`handoff`** is one short paragraph kept current at every commit: the current milestone,

@@ -54,7 +54,7 @@ OpenCode has no separate hard-tier pin; an unusually hard round still uses the s
 pin, or the work is split instead.
 
 For OpenCode, invoke `/facilitator` as a command. Its frontmatter binds the primary
-`facilitator` agent; that agent pins `openai/gpt-6.1-sol` and `variant: high`,
+use of the `facilitator` agent; that agent pins `openai/gpt-6.1-sol#high`,
 overriding the model already selected in a session. The command
 has no separate model override, so OpenCode resolves the agent's provider/model ID
 and variant directly. Reading or attaching the Markdown file does not apply command
@@ -82,8 +82,8 @@ The facilitator remains on Sol. Use `opencode debug agent round-agent`,
 resolved models and variants; configuration resolution does not prove provider
 availability or a completed dispatch. Historical queue dispatch records are not
 rewritten by this framework change.
-Quit and restart OpenCode after changing agent configuration: an already-running
-session keeps its loaded settings.
+OpenCode V2 watches agent configuration; `/reload` forces a refresh if needed.
+Discovery does not change an existing session's selected agent; invoke its command.
 
 ### OpenCode on the Mac clone
 
@@ -122,7 +122,44 @@ build/mac`); CTest passes there, but `lrtool` does not compile under Apple clang
 
 ### Overlord
 
-Added 2026-10-22 at the user's request. The [overlord](OVERLORD.md) runs in Claude Code on
+OpenCode wiring added 2026-10-25 at the user's request: `/overlord` binds the primary
+agent in `.opencode/agents/overlord.md` through `.opencode/commands/overlord.md`.
+Neither pins a model: the command retains the user's selected session model. This
+is a role switch, not a skill, and never resumes facilitation. Worker dispatch is
+denied; the shared overlord contract still governs shell and tool use. The native V2
+plural `agents/` directory coexists with the existing `agent/` definitions.
+Use `/overlord` to switch an existing session; loading its text alone does not switch
+the UI agent.
+
+**Delegated facilitators (user, 2026-10-26).** After the user's directive approval and
+the [launch checks](OVERLORD.md#launching-facilitators), the overlord may launch:
+
+| Location / approved tier | Child profile | Child may launch |
+| --- | --- | --- |
+| mouv, default | `facilitator` | `round-agent`, `explore-agent`, `disasm-agent` |
+| mouv, approved hard pass | `facilitator-astra` | same three mouv workers |
+| Mac clone | `facilitator-mac` | `round-agent-mac`, `explore-agent-mac`, `disasm-agent-mac` |
+
+All three facilitator profiles use `mode: all`, preserving manual primary commands
+and allowing child sessions. Their frontmatter is native V2 (`model#high`, ordered
+`permissions`), with deny-by-default subagent rules and exact worker allowlists.
+The overlord allows only these three facilitator IDs, never workers or generic agents.
+Workers retain their independent pins and delegation denial (legacy `task: deny`
+normalizes to `subagent` in V2); no worker model is inherited from the facilitator.
+`.opencode/opencode.json` sets `experimental.subagent_depth: 2` so the child
+facilitator can dispatch its workers; V2's default depth of one would prevent it.
+The depth ceiling is not an authorization and does not weaken any role boundary.
+
+Use the configured child profile without a model override. A Mac profile runs in the
+current clone, not remotely merely because of its name. No second facilitator may
+own the queue. A completed/manual-only directive cannot be relaunched automatically;
+framework approval alone does not authorize a project pass. Manual launch remains
+available. Local configuration checks prove discovery/pins/permissions, not provider
+availability or successful nested execution; verify runtime behavior separately before
+claiming a live nested dispatch. See [V2 agents](https://opencode.ai/v2/docs/agents)
+and [depth setting](https://opencode.ai/v2/docs/config#subagent-depth).
+
+Historical launcher wiring (2026-10-22). The [overlord](OVERLORD.md) runs in Claude Code on
 the Mac, on the session model, through `/overlord` (`.claude/commands/overlord.md`; Cursor
 has the same command). It launches OpenCode facilitators: `/facilitator` on mouv and
 `/facilitator-mac` in the Mac clone, with the launchers in

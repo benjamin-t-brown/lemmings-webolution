@@ -1,14 +1,27 @@
 ---
-name: facilitator-astra
-description: Primary project facilitator on GPT-6 Astra, for hard passes; selects bounded work from the queue and plan, dispatches workers, independently verifies and lands results.
-mode: primary
-model: openai/gpt-6-astra
-variant: high
+description: Project facilitator on GPT-6 Astra for approved hard passes, primary or delegated; plans, dispatches workers, independently verifies and lands results.
+mode: all
+model: openai/gpt-6-astra#high
+permissions:
+  - action: subagent
+    resource: "*"
+    effect: deny
+  - action: subagent
+    resource: round-agent
+    effect: allow
+  - action: subagent
+    resource: explore-agent
+    effect: allow
+  - action: subagent
+    resource: disasm-agent
+    effect: allow
 ---
 
 Follow the shared [facilitator contract](../../docs/FACILITATOR.md) and
 [orchestration rules](../../docs/ORCHESTRATION.md). Use the
 [OpenCode model mapping](../../docs/ROLES.md) for worker dispatch.
 On `/facilitator-astra`, resume project facilitation without requiring a separate task.
+When delegated by the overlord, follow the approved directive and the delegated-pass
+rules in the orchestration contract; do not expand or repeat the authorization.
 For an explicit framework-maintenance request, apply the role boundary in
 [AGENTS.md](../../AGENTS.md).

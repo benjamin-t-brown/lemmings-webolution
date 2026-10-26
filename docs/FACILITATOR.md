@@ -3,6 +3,9 @@
 An explicit `/facilitator` invocation resumes project facilitation without needing
 another task description. Apply the [invocation and queue-selection rules](ORCHESTRATION.md#facilitator-invocation);
 reading these instructions is the startup step, not the completed task.
+An overlord-delegated launch also selects this role, but only for the approved pass:
+apply [delegated-pass checks](ORCHESTRATION.md#overlord-delegated-passes) before taking
+ownership or dispatching. Framework maintenance is not either kind of invocation.
 
 For project facilitation, read in order: [lessons](LESSONS.md), [plan](../PLAN.md) (the
 live plan), [queue](tasks.json), [orchestration](ORCHESTRATION.md), [model mapping](ROLES.md),
@@ -14,8 +17,11 @@ Windows-only harness scripts run on `mouv`: from either clone, read
 worker that touches Windows. Its session-0 and shared-tree rules are mandatory.
 
 Then read [the overlord directive](DIRECTIVE.md). If it is `Status: active`, it is the
-user's authorization for the next standing run when the queue's run is stopped or absent;
-follow its scope and stop point.
+user's authorization for the next standing run when the queue's run is stopped or absent,
+provided that authorization has not already been completed or exhausted. Check its
+identity against the stopped run; active text alone does not renew it. Follow its scope
+and stop point. A delegated launch additionally requires the supplied directive hash to
+match and a delegated (not manual-only) launch authorization.
 
 Time every pass (user, overlord review 2026-10-23). Record the wall-clock start when the
 invocation begins and the end when you stop, and finish the final report with the total

@@ -78,20 +78,63 @@ def frontmatter_field(text, name):
     return field.group(1).strip() if field else None
 
 
+def frontmatter_rules(text):
+    """Read our deliberately small V2 rule-list format, rejecting unsupported shapes.
+
+    This is a repository contract lint, not a general YAML parser or runtime evaluator.
+    Resolved OpenCode configuration must also be checked before relying on permissions.
+    """
+    front = re.match(r"\A---\n(.*?)\n---", text, re.S)
+    section = re.search(r"^permissions:\n(.*?)(?=^\S|\Z)",
+                        front.group(1), re.M | re.S) if front else None
+    if not section:
+        return None
+    blocks = re.split(r"^  - ", section.group(1), flags=re.M)
+    if blocks[0].strip():
+        return None
+    rules = []
+    for block in blocks[1:]:
+        match = re.fullmatch(r"action: ([\w*]+)\n    resource: ([^\n]+)\n"
+                             r"    effect: (allow|deny|ask)\s*", block)
+        if not match:
+            return None
+        action, resource, effect = match.groups()
+        rules.append((action, resource.strip('\"\''), effect))
+    return rules if rules else None
+
+
+FACILITATORS = ["facilitator", "facilitator-astra", "facilitator-mac"]
+WORKERS = ["round-agent", "explore-agent", "disasm-agent"]
+
+
+def check_dispatch_rules(path, text, allowed, errors, extra=()):
+    # Exact ordered lists reject broad allows and later overrides as well as missing denies.
+    expected = [("subagent", "*", "deny")]
+    expected += [("subagent", name, "allow") for name in allowed]
+    expected += list(extra)
+    if frontmatter_rules(text) != expected:
+        errors.append(f"{path}: delegation permissions must deny by default and allow only {allowed}")
+    front = re.match(r"\A---\n(.*?)\n---", text, re.S)
+    for legacy in ["name", "variant", "permission", "tools"]:
+        if front and re.search(r"^" + legacy + r":", front.group(1), re.M):
+            errors.append(f"{path}: do not mix native V2 permissions with legacy {legacy}")
+
+
 def check_opencode_facilitator(root, roles, errors, name="facilitator"):
     path = f".opencode/agent/{name}.md"
     text = read(root, path, errors)
     links(root, path, text, errors)
     if "../../docs/FACILITATOR.md" not in text:
         errors.append(f"{path}: missing facilitator contract pointer")
-    model = frontmatter_field(text, "model")
-    variant = frontmatter_field(text, "variant")
+    model, _, variant = (frontmatter_field(text, "model") or "").partition("#")
     if not model or model == "inherit" or f"`{model}`" not in roles:
         errors.append(f"{path}: explicit model missing or absent from ROLES.md")
-    if frontmatter_field(text, "mode") != "primary":
-        errors.append(f"{path}: facilitator must be a primary agent")
+    if frontmatter_field(text, "mode") != "all":
+        errors.append(f"{path}: facilitator must use mode: all for manual and delegated launches")
     if variant != "high":
         errors.append(f"{path}: facilitator variant must be high")
+    suffix = "-mac" if name.endswith("-mac") else ""
+    check_dispatch_rules(path, text, [w + suffix for w in WORKERS], errors)
 
     command_path = f".opencode/commands/{name}.md"
     command = read(root, command_path, errors)
@@ -110,6 +153,32 @@ def check_opencode_facilitator(root, roles, errors, name="facilitator"):
 MAC_AGENTS = ["facilitator", "round-agent", "explore-agent", "disasm-agent"]
 
 
+def check_opencode_overlord(root, errors):
+    path = ".opencode/agents/overlord.md"
+    text = read(root, path, errors)
+    links(root, path, text, errors)
+    if "../../docs/OVERLORD.md" not in text:
+        errors.append(f"{path}: missing overlord contract pointer")
+    if frontmatter_field(text, "mode") != "primary":
+        errors.append(f"{path}: overlord must be a primary agent")
+    check_dispatch_rules(path, text, FACILITATORS, errors, extra=[
+        ("edit", "**/docs/tasks.json", "deny"),
+        ("edit", "**/docs/tasks-archive.json", "deny"),
+    ])
+    command_path = ".opencode/commands/overlord.md"
+    command = read(root, command_path, errors)
+    if frontmatter_field(command, "agent") != "overlord":
+        errors.append(f"{command_path}: missing overlord agent binding")
+    if (frontmatter_field(command, "subagent") != "false"
+            or frontmatter_field(command, "subtask") is not None):
+        errors.append(f"{command_path}: overlord must run in the current session using subagent: false")
+    for name, content in [(path, text), (command_path, command)]:
+        if frontmatter_field(content, "model") is not None:
+            errors.append(f"{name}: overlord retains the selected session model; omit model")
+        if "../../docs/FACILITATOR.md" in content or "ORCHESTRATION.md#facilitator-invocation" in content:
+            errors.append(f"{name}: overlord must not invoke facilitation")
+
+
 def frontmatter_without(text, names):
     front = re.match(r"\A---\n(.*?)\n---", text, re.S)
     lines = front.group(1).splitlines() if front else []
@@ -122,14 +191,18 @@ def check_opencode_mac(root, roles, errors):
         path = f".opencode/agent/{role}-mac.md"
         text = read(root, path, errors)
         links(root, path, text, errors)
-        model = frontmatter_field(text, "model") or ""
+        model_ref = frontmatter_field(text, "model") or ""
+        model, _, native_variant = model_ref.partition("#")
         if not model.startswith("llmgw/") or f"`{model}`" not in roles:
             errors.append(f"{path}: Mac agents pin an llmgw model listed in ROLES.md")
-        if frontmatter_field(text, "variant") != "high":
+        if (native_variant or frontmatter_field(text, "variant")) != "high":
             errors.append(f"{path}: Mac agent variant must be high")
         base = read(root, f".opencode/agent/{role}.md", errors)
         keep = ["name", "description", "model"]
-        if frontmatter_without(text, keep) != frontmatter_without(base, keep):
+        # Mac facilitator uses the same policy, but only Mac worker IDs.
+        mirrored = re.sub(r"(    resource: (?:round|explore|disasm)-agent)-mac$",
+                          r"\1", text, flags=re.M) if role == "facilitator" else text
+        if frontmatter_without(mirrored, keep) != frontmatter_without(base, keep):
             errors.append(f"{path}: mode, variant and permissions must match {role}.md")
     command_path = ".opencode/commands/facilitator-mac.md"
     command = read(root, command_path, errors)
@@ -143,6 +216,28 @@ def check_opencode_mac(root, roles, errors):
     for target in ["../../docs/FACILITATOR.md", "../../docs/ORCHESTRATION.md#facilitator-invocation"]:
         if target not in command:
             errors.append(f"{command_path}: missing pointer {target}")
+
+
+def check_opencode_delegation(root, errors):
+    try:
+        config = json.loads(read(root, ".opencode/opencode.json", errors))
+        depth = config.get("experimental", {}).get("subagent_depth")
+    except (ValueError, AttributeError):
+        depth = None
+    if type(depth) is not int or depth != 2:
+        errors.append(".opencode/opencode.json: experimental.subagent_depth must be 2")
+    for worker in WORKERS:
+        for suffix in ["", "-mac"]:
+            path = f".opencode/agent/{worker}{suffix}.md"
+            text = read(root, path, errors)
+            front = re.match(r"\A---\n(.*?)\n---", text, re.S)
+            front = front.group(1) if front else ""
+            # Existing workers intentionally retain unmixed V1 frontmatter. V2
+            # normalizes task: deny to subagent: deny; prevent accidental delegation.
+            if (frontmatter_field(text, "mode") != "subagent"
+                    or re.findall(r"^  task:\s*([^\n]+)$", front, re.M) != ["deny"]
+                    or re.search(r"^(permissions|tools|system|request|disabled):", front, re.M)):
+                errors.append(f"{path}: worker must remain a subagent with delegation denied")
 
 
 def check_brief(root, path, errors):
@@ -216,7 +311,7 @@ def validate(root, brief=None):
         if "../../docs/ORCHESTRATION.md#facilitator-invocation" not in text:
             errors.append(f"{path}: missing facilitator invocation pointer")
     # The overlord directs facilitators; its command must not read as a facilitator invocation.
-    for client in [".claude", ".cursor"]:
+    for client in [".claude", ".cursor", ".opencode"]:
         path = f"{client}/commands/overlord.md"
         text = read(root, path, errors)
         links(root, path, text, errors)
@@ -225,6 +320,7 @@ def validate(root, brief=None):
         if "ORCHESTRATION.md#facilitator-invocation" in text:
             errors.append(f"{path}: overlord must not invoke facilitation")
     check_opencode_facilitator(root, roles, errors)
+    check_opencode_overlord(root, errors)
     # The Astra tier mirrors facilitator.md except for its name, description and model.
     check_opencode_facilitator(root, roles, errors, "facilitator-astra")
     keep = ["name", "description", "model"]
@@ -232,6 +328,8 @@ def validate(root, brief=None):
             != frontmatter_without(read(root, ".opencode/agent/facilitator.md", errors), keep)):
         errors.append(".opencode/agent/facilitator-astra.md: mode, variant and permissions must match facilitator.md")
     check_opencode_mac(root, roles, errors)
+    check_opencode_facilitator(root, roles, errors, "facilitator-mac")
+    check_opencode_delegation(root, errors)
     try:
         queue = json.loads(read(root, "docs/tasks.json", errors))
     except (ValueError, TypeError):

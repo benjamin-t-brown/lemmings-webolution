@@ -130,5 +130,32 @@ int main() {
     fb.rgba={1,2,3,4}; z[0]=9; draw(fb,z,one,p,o);
     check(fb.rgba==std::vector<std::uint8_t>({1,2,3,4}) && z[0]==9,"degenerate triangle is harmless no-op");
   }
+  {
+    auto o=options(); o.depthFunction=SceneDepthFunction::Less; o.depthWrite=true;
+    SceneRgbaFramebuffer fb{1,1,{7,8,9,10}}; std::vector<double> z{1};
+    const auto one=tex({90,80,70,255},1); const std::vector<std::uint8_t> mask{1};
+    std::vector<SceneRasterWriteEvent> events;
+    SceneRasterObserver obs{&mask,0x59644,0,[&](const auto& e){events.push_back(e);},{}};
+    auto r=rasterizeSceneTriangle(fb,z,one,triangle(.5),o,&obs);
+    check(bool(r)&&events.empty(),"depth rejection creates no accepted-write event");
+    o.depthFunction=SceneDepthFunction::Always; o.alphaFunction=SceneAlphaFunction::StrictGreater; o.alphaReference=255;
+    r=rasterizeSceneTriangle(fb,z,one,triangle(.5),o,&obs);
+    check(bool(r)&&events.empty(),"alpha rejection creates no accepted-write event");
+    o.alphaFunction=SceneAlphaFunction::Disabled; o.depthWrite=false;
+    r=rasterizeSceneTriangle(fb,z,one,triangle(.5),o,&obs);
+    check(bool(r)&&events.size()==1&&!events.back().depthAssigned&&events.back().depthBefore==1&&events.back().depthAfter==1,
+          "accepted color assignment is logged with depthWrite=false");
+    const auto unchanged=fb.rgba;
+    r=rasterizeSceneTriangle(fb,z,one,triangle(.5),o,&obs);
+    check(bool(r)&&events.size()==2&&events[0].pixel==events[1].pixel&&fb.rgba==unchanged,
+          "repeated unchanged assignment counts twice but has one unique pixel");
+    o.depthWrite=true;
+    r=rasterizeSceneTriangle(fb,z,one,triangle(.5),o,&obs);
+    check(bool(r)&&events.size()==3&&events.back().depthAssigned&&events.back().depthAfter==2,
+          "depthWrite=true logs actual depth assignment");
+    const std::vector<std::uint8_t> outside{0}; obs.mask=&outside;
+    r=rasterizeSceneTriangle(fb,z,one,triangle(.5),o,&obs);
+    check(bool(r)&&events.size()==3,"outside-mask accepted writes are not collected");
+  }
   std::cout << "SceneRaster explicit-state synthetic checks passed\n";
 }

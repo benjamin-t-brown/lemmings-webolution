@@ -80,6 +80,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <format>
 #include <iterator>
 #include <optional>
@@ -128,6 +129,7 @@ struct Args {
   int captionAlpha = -1;
   std::string captionFill;
   bool captionNoText = false;
+  std::string c3WriteMask, c3WriteEvents;
 };
 
 Args parseArgs(int argc, char** argv) {
@@ -167,6 +169,8 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--caption-fill") a.captionFill = next();
     else if (arg == "--caption-no-text") a.captionNoText = true;
     else if (arg == "--game-dir") a.gameDir = next();
+    else if (arg == "--c3-write-mask") a.c3WriteMask = next();
+    else if (arg == "--c3-write-events") a.c3WriteEvents = next();
   }
   if (a.gameDir.empty()) {
     const char* env = std::getenv("WEBOLUTION_GAME_DIR");
@@ -426,8 +430,25 @@ int main(int argc, char** argv) {
     const auto frameCamera = app::buildCamera(frameParams);
     target.clear(0, 0, 0);
     app::BackdropStats backdropStats;
+    app::SceneRasterObserver observer;
+    std::vector<std::uint8_t> c3Mask;
+    std::ofstream c3Out;
+    const bool c3Diagnostic=!args.c3WriteMask.empty()||!args.c3WriteEvents.empty();
+    if(c3Diagnostic){
+      if(args.c3WriteMask.empty()||args.c3WriteEvents.empty()||frameCamera.width!=640||frameCamera.height!=480){std::fprintf(stderr,"C3 diagnostic requires both paths and a 640x480 frame\n");std::exit(2);}
+      std::ifstream mf(args.c3WriteMask,std::ios::binary);c3Mask.assign(std::istreambuf_iterator<char>(mf),{});
+      if(!mf||c3Mask.size()!=640u*480u){std::fprintf(stderr,"C3 mask must be raw 640x480 bytes\n");std::exit(2);}
+      c3Out.open(args.c3WriteEvents,std::ios::binary);if(!c3Out){std::fprintf(stderr,"cannot open C3 event output\n");std::exit(2);}
+      c3Out<<"kind,source,node,block,triangleIndex,pixel,beforeR,beforeG,beforeB,beforeA,afterR,afterG,afterB,afterA,depthBefore,depthAfter,depthAssigned\n";
+      observer.mask=&c3Mask;
+      observer.candidate=[&](auto s,auto n,auto b,auto nt){c3Out<<"candidate,"<<s<<','<<n<<','<<b<<','<<nt<<",,,,,,\n";};
+      observer.accepted=[&](const app::SceneRasterWriteEvent& e){c3Out<<std::setprecision(17)<<"write,"<<e.source<<",,,"<<e.triangle<<','<<e.pixel;
+        for(auto v:e.colorBefore)c3Out<<','<<unsigned(v);
+        for(auto v:e.colorAfter)c3Out<<','<<unsigned(v);
+        c3Out<<','<<e.depthBefore<<','<<e.depthAfter<<','<<e.depthAssigned<<'\n';};
+    }
      app::scheduleSceneFrame(
-         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary); },
+          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary,c3Diagnostic?&observer:nullptr); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
          [&] { scene->render(target, frameCamera, options, &*library); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Secondary); });

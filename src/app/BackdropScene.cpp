@@ -46,7 +46,7 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
   renderStage(target,camera,lib,stats,Stage::LegacyUnattributed);
   renderStage(target,camera,lib,stats,Stage::Secondary);
 }
-void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage) const {
+void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer) const {
  // SceneRaster and legacy Raster share the same linear view-depth units here;
  // the choice is conditional software integration, not an effective-D3D claim.
  SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;fb.rgba.resize(target.framebuffer().rgb.size()/3*4);
@@ -71,15 +71,15 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    for(const auto& root:roots_){collectEyes(root,identity(),context,eyes);if(stage==Stage::Primary)++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;
     for(auto& rec:*records){if(stage==Stage::Primary)++stats.meshRecords;if(root.sourceOffset==0x91782)secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));else if(root.sourceOffset==0x59644)primaryMeshes.push_back(std::move(rec));else legacyMeshes.push_back(std::move(rec));}
   }
-  const auto drawMesh=[&](const SceneMeshRecordSource& rec){const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName);if(!tex)return;
-   if(rec.kind==5&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}
-   const auto state=options(false,rec.blendSelector==1);
-   for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
+   const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool primary=stage==Stage::Primary && observer;if(primary&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName);if(!tex)return;
+    if(rec.kind==5&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}
+    const auto state=options(false,rec.blendSelector==1);
+    for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
       auto adapted=adaptSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],0.25/p[2],a[0],a[1],{a[2],a[3],a[4],a[5]});
       if(!adapted){valid=false;break;}v[j]=*adapted;
     }
-    if(valid){auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else ++stats.rejected;}else ++stats.rejected;
+     if(valid){SceneRasterObserver tagged;if(primary){tagged=*observer;tagged.source=rec.recordSourceOffset;tagged.triangle=k-1;}auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state,primary?&tagged:nullptr);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else ++stats.rejected;}else ++stats.rejected;
    }
   };
    const auto& meshes=stage==Stage::Primary?primaryMeshes:legacyMeshes;
@@ -94,12 +94,13 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    std::map<std::size_t,SceneBillboardSource> secondaryBillboards;
    std::vector<SceneBillboardSource> primaryBillboards, legacyBillboards;
    visitBillboards(chain,[&](const SceneBillboardSource& b){if(secondaryRoot!=roots_.end()&&secondaryTypes.contains(b.sourceOffset))secondaryBillboards.emplace(b.sourceOffset,b);else if(b.sourceOffset>=0x59644&&b.sourceOffset<0x9176e)primaryBillboards.push_back(b);else legacyBillboards.push_back(b);});
-  const auto drawBillboard=[&](const SceneBillboardSource& b){const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(!tex){++stats.nullMaterials;return;}++stats.billboards;
+   if(stage==Stage::Primary&&observer&&observer->candidate)for(const auto& b:primaryBillboards)observer->candidate(b.sourceOffset,b.sourceOffset,UINT64_MAX,2);
+   const auto drawBillboard=[&](const SceneBillboardSource& b){const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(!tex){++stats.nullMaterials;return;}++stats.billboards;
     // C3r's accepted normal-constructor census identifies all 17 retained type-2
     // resources as caret leaves => flags 8. Apply that conditional row here;
     // this is not a claim about cache hits or effective native device state.
     const auto st=conditionalCaretFlags8Policy(options(true,b.blendSelector==1));
-     for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}};
+      std::uint64_t bi=0;for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){SceneRasterObserver tagged;if(stage==Stage::Primary&&observer){tagged=*observer;tagged.source=b.sourceOffset;tagged.triangle=bi;}auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st,(stage==Stage::Primary&&observer)?&tagged:nullptr);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;++bi;}};
    const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;
    if(stage==Stage::Primary)stats.stageBillboards+=primaryBillboards.size();
    else if(stage==Stage::LegacyUnattributed)stats.stageBillboards+=legacyBillboards.size();

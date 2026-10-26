@@ -85,10 +85,12 @@ bool depthPass(SceneDepthFunction f, double source, double destination) {
 std::expected<void, std::string> rasterizeSceneTriangle(
     SceneRgbaFramebuffer& target, std::vector<double>& depth,
     const SceneRgbaImage& texture, const std::array<SceneRasterVertex, 3>& p,
-    const SceneRasterOptions& o) {
+    const SceneRasterOptions& o, const SceneRasterObserver* observer) {
   if (!dimensionsValid(target.width, target.height, 4, target.rgba.size()) ||
       depth.size() != static_cast<std::size_t>(target.width) * target.height)
     return std::unexpected("invalid target image/depth dimensions or storage");
+  if (observer && (!observer->mask || observer->mask->size() != depth.size() || !observer->accepted))
+    return std::unexpected("invalid masked raster observer");
   if (!dimensionsValid(texture.width, texture.height, 4, texture.rgba.size()))
     return std::unexpected("invalid RGBA8 texture dimensions or storage");
   if ((o.filter != SceneFilter::Point && o.filter != SceneFilter::Linear) ||
@@ -149,6 +151,14 @@ std::expected<void, std::string> rasterizeSceneTriangle(
     for (int k=0;k<3;++k) src[k] = texel[k] * diffuse[k] / 255.0;
     src[3] = o.alphaOperation == SceneAlphaOperation::SelectTexture ? texel[3] : texel[3] * diffuse[3] / 255.0;
     if (o.alphaFunction == SceneAlphaFunction::StrictGreater && !(src[3] > o.alphaReference)) continue;
+    // Mask membership precedes all diagnostic event construction/storage.
+    const bool observe = observer && (*observer->mask)[pos] != 0;
+    SceneRasterWriteEvent event{};
+    if (observe) {
+      event.source=observer->source; event.triangle=observer->triangle; event.pixel=pos;
+      for (int k=0;k<4;++k) event.colorBefore[k]=target.rgba[pos*4+k];
+      event.depthBefore=depth[pos];
+    }
     const auto at = pos * 4;
     for (int k=0;k<4;++k) {
       const double out = o.blendEnabled
@@ -157,6 +167,11 @@ std::expected<void, std::string> rasterizeSceneTriangle(
       target.rgba[at+k] = unorm8(out);
     }
     if (o.depthWrite) depth[pos] = z;
+    if (observe) {
+      for (int k=0;k<4;++k) event.colorAfter[k]=target.rgba[at+k];
+      event.depthAfter=depth[pos]; event.depthAssigned=o.depthWrite;
+      observer->accepted(event);
+    }
   }
   return {};
 }

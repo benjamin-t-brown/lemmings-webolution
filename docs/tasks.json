@@ -1,70 +1,66 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26T13:56:57-06:00",
-  "notes": "Final primary source-to-write-to-influence attribution attempt3/3; one dispatch only. Unrelated dirty changes snapshotted under build/tmp/c3-primary-pass/initial.",
+  "updated": "2026-10-26T14:26:29-06:00",
+  "notes": "Recovery diagnostic accepted at cumulative attempt4; one dispatch, no repair. Directive consumed; no automatic follow-on. Nine unrelated initial dirty paths preserved outside isolated PLAN/history deltas.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-primary-final-attribution",
-    "goal": "Close primary source-record to accepted writes and final influence join, then compare retained native evidence or report exact unavailable counterpart. No correction implementation.",
+    "id": "c3-source-write-recovery",
+    "goal": "Build repeatable masked primary source-record to accepted depth/color-write diagnostic; stop before final influence/native comparison/correction.",
     "milestones": [
       "C3 full frame"
     ],
     "current": "C3 full frame",
-    "authorized": "User approve, you may launch 2026-10-26; delegated launch, docs/DIRECTIVE.md",
-    "directive_sha256": "ae3d1bdfc798c73136449c13750634d110ab64a21aef2d059b00bb73537372e3",
-    "owner": "ses_e8643d734ffeJWFqzTjDJKEoqS",
+    "authorized": "User approved explicit cap exception/narrow diagnostic/budget/delegated Sol launch 2026-10-26",
+    "directive_sha256": "de6f270670a1e85c5f312cf6fdd616ef77d3f318e5593319af0c9efb8e64a7e8",
+    "owner": "ses_e86338718ffeMx2kaUmDPplylo",
     "parent_session": "ses_e8646168dffeJ0x2Dtz2oTI7yv",
-    "ownership_check": "Read-only API confirms previous owner/worker succeeded idle. Only same-project active sessions are this child and parent overlord; other active session belongs to ed-ascii. git pull --ff-only current at08966fd.",
-    "started_at": "2026-10-26T13:42:16-06:00",
+    "ownership_check": "Read-only API confirms actual facilitator profile/parent and prior owner/worker succeeded idle. Initial newest50 listing showed no competitor; expanded project list contains old imported sessions lacking idle fields, NOT running proof. Actual /api/session/active confirms only parent overlord, this child and its worker in this project; fourth active identity is unrelated ed-ascii. Evidence build/tmp/c3-write-pass/active-ownership-check.json and other-active-session.json. Queue was empty/stopped; ff-only pull current1b1caff.",
+    "started_at": "2026-10-26T14:00:05-06:00",
     "grants": {
       "stock_starts": 0,
-      "rounds": 1,
-      "cumulative_question_cap": 3,
+      "rounds": 2,
+      "cumulative_question_cap": 5,
       "round_minutes_including_verification": 45,
-      "final_review_minutes": 30,
-      "overall_minutes": 75,
-      "commits": "per-round named paths and sync, unrelated dirty files preserved"
+      "overall_minutes": 120,
+      "repair_inclusive": true,
+      "commits": "per-round named paths and GitHub sync; preserve unrelated changes"
     },
     "rounds_run": 1,
-    "cumulative_attempts": 3,
+    "cumulative_attempts": 4,
     "stock_starts_used": 0,
     "pending_questions": [
       {
-        "question": "Whether to authorize any further C3 primary attribution work after3/3; no action automatic.",
-        "recommendation": "Keep parked. If resumed with fresh direction/cap exception, require actual bounded masked source-record accepted-write/final-influence diagnostic before choosing a correction or native method.",
-        "evidence": "docs/scratch/phase-c3bf-primary-final-attribution.md",
-        "remaining_blockers": "Software join not performed, not proved infeasible; native counterpart only conditionally specified, no implicated record or correction.",
+        "question": "Whether to authorize any further final-influence/native-comparison/correction work after accepted diagnostic; no action automatic.",
+        "recommendation": "Review accepted diagnostic before setting any new bounded objective/cumulative-cap authorization. Keep observer refusal and existing parks intact; do not rebuild this instrument or infer cause from write counts.",
+        "evidence": "docs/scratch/phase-c3bg-source-write-diagnostic.md",
         "gate_baseline": "C3 .06354817708333334 FAIL; C1 .0160863988750699/.016121214378294987 PASS, fresh images byte-identical."
       }
     ],
-    "stop_point": "One independently checked result or evidence limit, no repair/continuation/next question; park at3/3 if incomplete.",
-    "handoff": "STOPPED: final authorized C3bf worker returned without implementing source-record accepted-write/final-influence diagnostic. Incomplete output discarded, not evidence of external blocker/infeasibility. Cumulative3/3,1dispatch this pass,0starts/attaches/injection/tasks/native research. Own source-boundary review,44CTest/32framework tests,3fresh exact gate PNGs; C3FAIL/C1PASS unchanged.21fixed/source/install inputs,113retained evidence files,9initial dirty paths preserved outside isolated own doc deltas. Worker succeeded/idle; no live resource. No correction or automatic fourth question/observer/implementation. Fresh direction/cap exception required. Roundbef785b committed/pushed; dispatch-to-landing628s. Final timing in current_pass. Directive consumed despite active heading; never relaunch automatically.",
+    "stop_point": "Accepted source-to-write diagnostic or earliest budget/blocker; at most initial plus one repair; no next question.",
+    "handoff": "STOPPED at accepted source-to-write diagnostic: C3bg verified,923candidates/788zero,134518color and depth assignments/100172unique masked pixels. Own independent raw census/chains/totals/sample oracle and fresh exact event replay, mask-only mutation fails/restores,44CTest/32framework,3fresh exact gate PNGs. C3FAIL/C1PASS unchanged.1dispatch cumulativeattempt4,0repair/starts/attaches/injection/tasks/native research; worker succeeded idle, no live resource. All113prior evidence/16non-source fixed-install inputs and9initial dirty paths preserved outside isolated own docs. Final influence/native/correction/observer remain parked pending fresh scoped approval and cumulative-cap decision. Unused repair5 is NOT further authorization. Directive consumed despite active heading.",
     "stopped": {
-      "date": "2026-10-26T13:56:57-06:00",
-      "reason": "Single final attempt returned incomplete;3/3 cumulative cap exhausted. No repair/continuation permitted; park without cause/correction claim.",
-      "last_commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66"
+      "date": "2026-10-26T14:26:29-06:00",
+      "reason": "Accepted bounded source-to-accepted-write diagnostic; approved stop point reached. No repair needed or follow-on authorized.",
+      "last_commit": "1b1caff30eec6c2ba0202054ff6e3bfd8b674fa9",
+      "landing_pending": true
     },
-    "dispatched_at": "2026-10-26T13:45:32-06:00",
-    "verified_at": "2026-10-26T13:54:04-06:00",
+    "dispatched_at": "2026-10-26T14:03:54-06:00",
+    "verified_at": "2026-10-26T14:22:53-06:00",
     "current_pass": {
-      "started": "2026-10-26T13:42:16-06:00",
+      "started": "2026-10-26T14:00:05-06:00",
       "rounds": [
         {
-          "id": "c3bf-primary-final-attribution",
-          "dispatched": "2026-10-26T13:45:32-06:00",
-          "worker_completed": "2026-10-26T13:47:59-06:00",
-          "verified": "2026-10-26T13:54:04-06:00",
-          "landed": "2026-10-26T13:56:00-06:00",
-          "elapsed_seconds": 628,
-          "commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66"
+          "id": "c3bg-write-diagnostic",
+          "dispatched": "2026-10-26T14:03:54-06:00",
+          "worker_completed": "2026-10-26T14:16:07-06:00",
+          "verified": "2026-10-26T14:22:53-06:00",
+          "landing_prepared": "2026-10-26T14:26:29-06:00"
         }
-      ],
-      "ended": "2026-10-26T13:56:57-06:00",
-      "elapsed_seconds": 881
+      ]
     },
     "resource_state": {
-      "worker_session": "ses_e8640a91cffeSbncI1DIgEknn6",
+      "worker_session": "ses_e862fe1f9ffeZfIEBxetdX4F3G",
       "worker_outcome": "succeeded",
       "worker_idle_confirmed": true,
       "live_resources": null,
@@ -72,8 +68,9 @@
       "attaches": 0,
       "injections": 0,
       "scheduled_tasks": 0,
-      "temporary_source_edits": 0,
-      "native_research": 0
+      "native_research": 0,
+      "temporary_source_edits_restored": true,
+      "opt_in_diagnostic_retained": true
     }
   }
 }

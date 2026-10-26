@@ -22,7 +22,8 @@ class BackdropScene {
   enum class Stage { Primary, LegacyUnattributed, Secondary };
   static std::expected<BackdropScene,std::string> build(const AssetLibrary&, std::span<const std::byte> level, std::string_view levelId);
   void render(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&) const;
-  void renderStage(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&, Stage) const;
+  void renderStage(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&, Stage,
+                  SceneRasterObserver* observer = nullptr) const;
   // Runs the production parsed-tree traversal; explicit inputs are a fixture seam.
   void visitBillboards(const BillboardSourceInputs& cameraChain,
                        const std::function<void(const SceneBillboardSource&)>& visitor) const;

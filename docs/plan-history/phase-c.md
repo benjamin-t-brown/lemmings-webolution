@@ -974,3 +974,23 @@ diagnostic variant, native research or live usage.21fixed/source/install inputs,
 113retained evidence files and9initial dirty paths preserved outside own doc deltas;
 worker complete/idle, no game/LemWeb task. Single attempt consumed; no repair or
 follow-on. Actual dispatch-to-landing and total times are recorded in queue/archive.
+
+**C3bg, 2026-10-26 — narrower source-to-accepted-write diagnostic accepted.**
+Explicit recovery exception, cumulative attempt4; one configured-pin worker
+implements the opt-in masked software sink and repeat harness. Independent raw
+LVL census/CSV scan confirms923primary candidates (788zero accepted),134518color
+and134518depth assignments over100172unique masked pixels,34346repeat-pixel
+assignments and124unchanged-RGBA assignments. Every source/node/block/fan identity,
+mask membership and before-color/depth chain checks; own independently masked
+fresh run reproduces the entire CSV byte-exact. Separate literal-input payload
+oracle passes; mask-guard-only mutation fails the diagnostic regression and
+restores exact source hash. [Facilitator check](../scratch/phase-c3bg-source-write-diagnostic.md).
+Own restored44/44CTest,32framework tests and three fresh gate PNGs pass byte checks;
+repair4 diagnostic off/on/after-restoration images all byte-identical. C3.0635481771
+FAIL/C1.0160864/.0161212PASS unchanged. This closes executable diagnostic delivery
+only, not final influence/native ownership/cause/correction.16non-source fixed/install
+inputs,113prior evidence files and9initial dirty paths preserved outside isolated
+own doc deltas. Worker succeeded/idle, no live resource/game/LemWeb task,0starts/
+attaches/injections/tasks/native research. No repair5needed; stop and consume directive
+at accepted writes. Further final-influence/native/correction/observer work needs
+fresh scoped approval and cumulative-cap decision. Actual times/commits in queue.

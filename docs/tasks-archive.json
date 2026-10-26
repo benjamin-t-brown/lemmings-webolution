@@ -3,6 +3,78 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-primary-final-attribution",
+      "goal": "Close primary source-record to accepted writes and final influence join, then compare retained native evidence or report exact unavailable counterpart. No correction implementation.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "User approve, you may launch 2026-10-26; delegated launch, docs/DIRECTIVE.md",
+      "directive_sha256": "ae3d1bdfc798c73136449c13750634d110ab64a21aef2d059b00bb73537372e3",
+      "owner": "ses_e8643d734ffeJWFqzTjDJKEoqS",
+      "parent_session": "ses_e8646168dffeJ0x2Dtz2oTI7yv",
+      "ownership_check": "Read-only API confirms previous owner/worker succeeded idle. Only same-project active sessions are this child and parent overlord; other active session belongs to ed-ascii. git pull --ff-only current at08966fd.",
+      "started_at": "2026-10-26T13:42:16-06:00",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 1,
+        "cumulative_question_cap": 3,
+        "round_minutes_including_verification": 45,
+        "final_review_minutes": 30,
+        "overall_minutes": 75,
+        "commits": "per-round named paths and sync, unrelated dirty files preserved"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 3,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Whether to authorize any further C3 primary attribution work after3/3; no action automatic.",
+          "recommendation": "Keep parked. If resumed with fresh direction/cap exception, require actual bounded masked source-record accepted-write/final-influence diagnostic before choosing a correction or native method.",
+          "evidence": "docs/scratch/phase-c3bf-primary-final-attribution.md",
+          "remaining_blockers": "Software join not performed, not proved infeasible; native counterpart only conditionally specified, no implicated record or correction.",
+          "gate_baseline": "C3 .06354817708333334 FAIL; C1 .0160863988750699/.016121214378294987 PASS, fresh images byte-identical."
+        }
+      ],
+      "stop_point": "One independently checked result or evidence limit, no repair/continuation/next question; park at3/3 if incomplete.",
+      "handoff": "STOPPED: final authorized C3bf worker returned without implementing source-record accepted-write/final-influence diagnostic. Incomplete output discarded, not evidence of external blocker/infeasibility. Cumulative3/3,1dispatch this pass,0starts/attaches/injection/tasks/native research. Own source-boundary review,44CTest/32framework tests,3fresh exact gate PNGs; C3FAIL/C1PASS unchanged.21fixed/source/install inputs,113retained evidence files,9initial dirty paths preserved outside isolated own doc deltas. Worker succeeded/idle; no live resource. No correction or automatic fourth question/observer/implementation. Fresh direction/cap exception required. Roundbef785b committed/pushed; dispatch-to-landing628s. Final timing in current_pass. Directive consumed despite active heading; never relaunch automatically.",
+      "stopped": {
+        "date": "2026-10-26T13:56:57-06:00",
+        "reason": "Single final attempt returned incomplete;3/3 cumulative cap exhausted. No repair/continuation permitted; park without cause/correction claim.",
+        "last_commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66"
+      },
+      "dispatched_at": "2026-10-26T13:45:32-06:00",
+      "verified_at": "2026-10-26T13:54:04-06:00",
+      "current_pass": {
+        "started": "2026-10-26T13:42:16-06:00",
+        "rounds": [
+          {
+            "id": "c3bf-primary-final-attribution",
+            "dispatched": "2026-10-26T13:45:32-06:00",
+            "worker_completed": "2026-10-26T13:47:59-06:00",
+            "verified": "2026-10-26T13:54:04-06:00",
+            "landed": "2026-10-26T13:56:00-06:00",
+            "elapsed_seconds": 628,
+            "commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66"
+          }
+        ],
+        "ended": "2026-10-26T13:56:57-06:00",
+        "elapsed_seconds": 881
+      },
+      "resource_state": {
+        "worker_session": "ses_e8640a91cffeSbncI1DIgEknn6",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "live_resources": null,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_tasks": 0,
+        "temporary_source_edits": 0,
+        "native_research": 0
+      }
+    },
+    {
       "id": "c3-residual-attribution",
       "goal": "Independently checked dominant C3 software contribution diagnosis and one ranked next correction or precise missing observation, without implementing a correction.",
       "milestones": [
@@ -1868,6 +1940,35 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bg-write-diagnostic",
+      "status": "landed",
+      "brief": "build/tmp/c3bg-write-diagnostic-brief.md",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin, no override)",
+      "worker_session": "ses_e862fe1f9ffeZfIEBxetdX4F3G",
+      "owner": "ses_e86338718ffeMx2kaUmDPplylo",
+      "live_owner": null,
+      "owns_live_game": false,
+      "dispatched_at": "2026-10-26T14:03:54-06:00",
+      "cumulative_attempt": 4,
+      "repair_inclusive_deadline": "2026-10-26T14:48:54-06:00",
+      "worker_output": "build/tmp/c3bg-write-diagnostic/round-note.md",
+      "verified_at": "2026-10-26T14:22:53-06:00",
+      "landed_at": "2026-10-26T14:26:29-06:00",
+      "note": "docs/scratch/phase-c3bg-source-write-diagnostic.md",
+      "result": "Accepted bounded source-record to accepted masked software-write diagnostic ONLY; no final influence/native comparison/correction.",
+      "facilitator_checks": "Independent stored-LVL923record census, all raw CSV per-record totals/identities/mask/before-state chains, own fresh exact CSV+PNG reproduction with independent mask, separate literal sample oracle, single mask-guard mutation fails/restores exact hash,44CTest/32framework tests, three exact gate PNGs, preservation and host/worker cleanup.",
+      "attempts": 1,
+      "repair_attempts": 0,
+      "stock_starts_used": 0,
+      "worker_completed_at": "2026-10-26T14:16:07-06:00",
+      "actual_worker_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      }
+    },
     {
       "id": "c3bf-primary-final-attribution",
       "commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66",

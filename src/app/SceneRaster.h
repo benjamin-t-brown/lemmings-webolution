@@ -7,6 +7,7 @@
 #include <expected>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace webo::app {
 
@@ -53,6 +54,23 @@ struct SceneRasterOptions {
   double sampleOffsetY;
 };
 
+// Opt-in diagnostic only. The caller supplies a fixed, tightly-packed mask;
+// the raster checks it before creating any event. No observer means no extra work.
+struct SceneRasterWriteEvent {
+  std::uint64_t source = 0;
+  std::uint64_t triangle = 0;
+  std::size_t pixel = 0;
+  std::array<std::uint8_t,4> colorBefore{}, colorAfter{};
+  double depthBefore = 0, depthAfter = 0;
+  bool depthAssigned = false;
+};
+struct SceneRasterObserver {
+  const std::vector<std::uint8_t>* mask = nullptr;
+  std::uint64_t source = 0, triangle = 0;
+  std::function<void(const SceneRasterWriteEvent&)> accepted;
+  std::function<void(std::uint64_t,std::uint64_t,std::uint64_t,std::uint64_t)> candidate;
+};
+
 struct SceneRgbaFramebuffer {
   int width = 0;
   int height = 0;
@@ -74,6 +92,7 @@ std::expected<void, std::string> rasterizeSceneTriangle(
     SceneRgbaFramebuffer& target, std::vector<double>& depth,
     const SceneRgbaImage& texture,
     const std::array<SceneRasterVertex, 3>& vertices,
-    const SceneRasterOptions& options);
+    const SceneRasterOptions& options,
+    const SceneRasterObserver* observer = nullptr);
 
 }  // namespace webo::app

@@ -21,6 +21,17 @@ milestone they serve, newest last.
   No automatic native/observer campaign or implementation.
   [C3bf check](../scratch/phase-c3bf-primary-final-attribution.md).
 
+- **Recovery exception2026-10-26 completed at attempt4:**
+  [C3bg](../scratch/phase-c3bg-source-write-diagnostic.md) actually builds and
+  independently verifies the narrower source-to-accepted-write diagnostic:
+  923primary candidate records,134518color/depth assignments,100172unique masked
+  pixels; no final-influence or native attribution. Ordinary gate images remain
+  byte-identical, C3FAIL/C1PASS. One dispatch; repair5unused, not follow-on authority.
+  This closes only the missing executable diagnostic delivery. Keep final influence,
+  native comparison, correction and observer work parked. Resume only with fresh
+  scoped approval and an explicit cumulative-cap decision, reusing the preserved
+  executable/raw packet rather than rebuilding instrumentation or reranking stages.
+
 ## Phase E — the remaining debts
 
 Short, and explicitly parked rather than cancelled. **The gadget backlog is gone** — rounds

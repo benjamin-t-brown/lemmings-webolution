@@ -861,3 +861,14 @@ Narrowed again on diff: returned main is reconstructed with operational suffix
 removed; unchanged C3aj still has old serialization. Accept host bindings/barrier,
 not launch readiness. AW observer remains design-only. Pass3/3attempts,0starts;
 stop with offline integration/review blocker, no automatic native execution.
+
+### C3 integrated observer and conditional observation, 2026-10-26
+
+**C3ay initial/repair1 actual controller:** Facilitator independently reproduces
+four unsafe dry-run outcomes, returns repair, then verifies preserved operational
+main/suffix,15fresh actual-main outcomes,13worker tests and one isolated action-count
+guard mutation/exact restoration. Exact default main replayed in real session1,
+PID44240 gone/task absent, zero game starts/attaches/writes, install hashes equal.
+[Check](../scratch/phase-c3ay-actual-controller.md). Controller-only acceptance;
+observer binding/cleanup and integrated readiness remain pending, no launch marker.
+Fresh C3.0635481771FAIL/C1gatedPASS unchanged; initial packet preserved, no renderer change.

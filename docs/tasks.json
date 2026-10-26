@@ -1,26 +1,28 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26T00:06:10-06:00",
-  "notes": "Thin live queue; facilitator alone records this pass's queue changes. Archive holds stopped runs and landed tasks.",
-  "active": [],
+  "updated": "2026-10-26T01:18:19-06:00",
+  "notes": "Thin live queue; facilitator records all fields this pass. Unrelated dirty framework/plan/history changes preserved under build/tmp/c3-integrated-startup/.",
+  "active": [
+    {"id":"c3az-observer","status":"ready-for-verify","brief":"build/tmp/c3az-observer-brief.md","repair_brief":"build/tmp/c3az-observer-repair1-brief.md","repair_dispatched_at":"2026-10-26T00:52:58-06:00","tier":"targeted","worker":"round-agent","requested_model":"configured round-agent pin per docs/ROLES.md; no override","owns_live_game":false,"live_owner":null,"owned_paths":["build/tmp/c3az-observer/**"],"prior_attempts":"AW design complete; executable initial parser-only returned/incomplete; repair1 finite lifecycle returned with native gate always refusing, safety capability unresolved","dispatch_id":"ses_e89094ab3ffedoVPJAcTOQC2Ii","dispatched_at":"2026-10-26T00:47:06-06:00","worker_output":"build/tmp/c3az-observer/round-note.md"}
+  ],
   "queue": [],
   "standing_run": {
-    "id": "c3-offline-capture-preflight",
-    "goal": "C3 only: static scene-fan site/ABI/attribution packet and real-session1 prelaunch controller barrier; return bounded native-observation proposal or blocker. No native execution or rendering changes.",
-    "milestones": ["C3 full frame"],
-    "current": "C3 full frame",
-    "authorized": "Active docs/DIRECTIVE.md: user approved offline preflight only, explicit facilitator invocation transfers idle queue ownership.",
-    "grants": {"stock_starts":0,"rounds":3,"hours":1.5,"round_minutes":45,"commits":"per-round decompile commits and normal GitHub sync, preserve unrelated changes","concurrency":"two disjoint offline tasks; only AX owns non-game host dry-run tasks"},
-    "owner": "ses_e895028d3ffeohEWWBBAB4E9oQ OpenCode facilitator Sol on mouv",
-    "ownership_check": "API: prior facilitator ses_e897a9939ffet5M0uZyGsgYbss succeeded/idle, active API only current facilitator. PowerShell: explorer PID3812 session1; no Lemmings process or LemWeb task. git pull --ff-only up to date; decompile. Worker pins confirmed opencode debug agents; no overrides. Unrelated framework/plan/history dirty changes preserved.",
-    "started_at": "2026-10-25T23:30:05-06:00",
-    "rounds_run": 3,
-    "stock_starts_used": 0,
-    "pending_questions": [{"question":"Authorize a separate offline-only operational-controller/observer integration preflight before deciding native observation?","options":["Offline integration/review only, then separate native decision","Defer capture"],"recommendation":"Offline integration/review only: preserve actual controller path behind a terminal prelaunch barrier, repair serialization there and pin/review minimal observer implementation. No stock start yet.","evidence":"docs/scratch/phase-c3aw-site-preflight.md; docs/scratch/phase-c3ax-controller-preflight.md; docs/RENDER_CAPTURE_PROPOSAL.md","remaining_gate_failures":"C3 full-frame retained14934330/235008000=.0635481771FAIL; known primary/type1/clipping/f32/state/history/source-attribution debts not remeasured or attributed this pass. C1zoom1/elev_down retained285083/285700 over17721990PASS; other C1 reported views remain outside gated scope."}],
-    "stop_point": "Both prerequisite packets independently checked, or90minutes/3attempts, concrete blocker/ownership/pin/gate/safety condition. No automatic native observation.",
-    "handoff": "STOPPED: AW0e482a6 plus9176895history/timing; AX698fdd7 partial/narrowed host evidence.31raw windows, own2positive16negative and52synthetic controls; own5main outcomes and actual session1 replayPID26112/barrier/cleanup; isolated payload/State mutations fail and restore exact. AX reconstructed main is NOT unchanged operational path; executable AW observer absent. Recommend fresh offline integration/review authorization, not live continuation.3/3attempts,0starts;44/44CTest,37/37Python. Final00:06:10 no game/tasks/owned Python,7install hashes match,8initialAX files preserved. Independently reconstruct initial diff: all11dirty tracked files preserved except own C3status/history additions; original untracked framework files untouched. C3.0635481771FAIL/C1.0160864,.0161212PASS retained. Pass2165s; AW1610s,AX1895s incl repair1468s dispatch-to-landing. Do not repeat completed directive or resume old briefs.",
-    "current_pass": {"started":"2026-10-25T23:30:05-06:00","ended":"2026-10-26T00:06:10-06:00","elapsed_seconds":2165,"rounds":[{"id":"c3aw-site-preflight","dispatched":"2026-10-25T23:33:51-06:00","landed":"2026-10-26T00:00:41-06:00","elapsed_seconds":1610,"commit":"0e482a6"},{"id":"c3ax-controller-preflight","dispatched":"2026-10-25T23:33:51-06:00","repair_dispatched":"2026-10-25T23:40:58-06:00","landed":"2026-10-26T00:05:26-06:00","elapsed_seconds":1895,"repair_elapsed_seconds":1468,"commit":"698fdd7"}]},
-    "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {"date":"2026-10-26T00:06:10-06:00","reason":"3/3attempt budget reached. Static site design checked and narrowed host barrier replayed, but operational-controller integration and executable observer review remain concrete prerequisites; no launch-ready/native claim or automatic continuation.","last_commit":"698fdd7","elapsed_seconds":2165}
+    "id":"c3-integrated-one-observation",
+    "goal":"C3 actual operational controller and executable minimal AW observer; independently establish integrated readiness, then one conditional bounded native observation and stop.",
+    "milestones":["C3 full frame"],
+    "current":"C3 full frame",
+    "authorized":"docs/DIRECTIVE.md active2026-10-26, user integration plus one conditional observation; explicit facilitator invocation transfers idle queue ownership.",
+    "grants":{"stock_starts":1,"rounds":8,"hours":4,"round_minutes":45,"commits":"per-round decompile commits and normal GitHub sync, preserve unrelated changes","concurrency":"up to3 disjoint offline; serial integration; at most one live/host owner"},
+    "owner":"ses_e890eb754ffeehss1vwMcJtD2v OpenCode facilitator Sol on mouv",
+    "ownership_check":"Prior facilitator API succeeded/idle; only other active session is unrelated ed-ascii project. Explorer3812 session1, no Lemmings or LemWeb task. git pull --ff-only up-to-date, decompile. V2 debug agents confirms configured round-agent Luna/high, disasm-agent Sol/high; no overrides. Initial15dirty files snapshotted.",
+    "started_at":"2026-10-26T00:41:37-06:00",
+    "rounds_run":4,
+    "stock_starts_used":0,
+    "pending_questions":[],
+    "stop_point":"After one observation and verification/cleanup regardless outcome; or4h/8attempts; unresolved safety/ownership/delegation blocker, unapproved method, exhaustion justified paths. No start before independent integrated readiness; no retry.",
+    "handoff":"AY initial/repair1 controller-only verified/landed01:18:19: actual default main session1 PID44240 clean, own15outcomes/action-count mutation exact restore;13worker tests. AZ repair1 returned finite lifecycle behind mandatory native gate refusal; verify next, no readiness/launch artifact.4/8attempts,0starts.44/44CTest,37Python pass; fresh C3.06354817708333334FAIL/C1gatedPASS unchanged. Initial dirty framework/plan/history preserved; stage only own status/history delta.",
+    "current_pass":{"started":"2026-10-26T00:41:37-06:00","rounds":[{"id":"c3ay-controller","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:57:25-06:00","landed":"2026-10-26T01:18:19-06:00","elapsed_seconds":1873,"repair_elapsed_seconds":1254},{"id":"c3az-observer","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:52:58-06:00"}]},
+    "rules":"docs/ORCHESTRATION.md#standing-run",
+    "stopped":null
   }
 }

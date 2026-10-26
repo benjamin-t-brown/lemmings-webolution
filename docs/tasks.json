@@ -1,26 +1,27 @@
 {
-  "schema_version":1,
-  "updated":"2026-10-26T01:37:41-06:00",
-  "notes":"Thin live queue. Initial15dirty files and earlier queue history preserved; only own docs/status/history deltas staged. Both workers released; no native authorization artifact.",
-  "active":[],
-  "queue":[],
-  "standing_run":{
-    "id":"c3-integrated-one-observation",
-    "goal":"C3 actual operational controller and executable minimal AW observer; independently establish integrated readiness, then one conditional bounded native observation and stop.",
+  "schema_version": 1,
+  "updated": "2026-10-26T02:03:15-06:00",
+  "notes": "Astra offline readiness review only. Initial16dirty paths preserved in build/tmp/c3-readiness-review/initial; no live allowance carries over.",
+  "active": [
+    {"id":"c3bb-verifier-feasibility","status":"ready-for-verify","brief":"build/tmp/c3bb-verifier-feasibility-brief.md","worker":"round-agent","requested_model":"configured OpenCode targeted pin per docs/ROLES.md","dispatch_session_id":"ses_e88caeacfffeujQLlyjjYv4EeR","dispatched_at":"2026-10-26T01:55:14-06:00","owns_live_game":false,"live_owner":null,"worker_output":"build/tmp/c3bb-verifier-feasibility/round-note.md","question_round":1,"prior_context":"Review concrete verifier feasibility beyond AZ limited lookup, not a fourth implementation attempt.","owned_paths":["build/tmp/c3bb-verifier-feasibility/**"]}
+  ],
+  "queue": [],
+  "standing_run": {
+    "id":"c3-astra-readiness-review",
+    "goal":"Independently checked requirement audit and concrete verifier feasibility recommendation for a later Sol pass; no implementation or native execution.",
     "milestones":["C3 full frame"],
     "current":"C3 full frame",
-    "authorized":"docs/DIRECTIVE.md active2026-10-26, user integration plus one conditional observation; explicit facilitator invocation transfers idle queue ownership.",
-    "grants":{"stock_starts":1,"rounds":8,"hours":4,"round_minutes":45,"commits":"per-round decompile commits and normal GitHub sync, preserve unrelated changes","concurrency":"up to3 disjoint offline; serial integration; at most one live/host owner"},
-    "owner":"ses_e890eb754ffeehss1vwMcJtD2v OpenCode facilitator Sol on mouv",
-    "ownership_check":"Prior facilitator succeeded/idle; other active session unrelated ed-ascii. Explorer3812 session1; no Lemmings or LemWeb task. git pull ff-only current/decompile. Actual worker APIs confirm configured Luna/high; no override. Initial15dirty files snapshotted and exact unrelated bytes preserved.",
-    "started_at":"2026-10-26T00:41:37-06:00",
-    "rounds_run":5,
+    "authorized":"docs/DIRECTIVE.md active Astra review, user do it; explicit facilitator invocation transfers idle queue ownership.",
+    "grants":{"stock_starts":0,"rounds":3,"hours":2,"round_minutes":45,"commits":"per-round decompile commits/sync preserving unrelated dirty changes","concurrency":"two disjoint offline evidence tasks"},
+    "owner":"ses_e88cfead4ffeZOyYXbeDgo4Dza OpenCode facilitator Astra on mouv",
+    "ownership_check":"Prior run explicitly stopped at922e058, no active/queued workers; user invocation is idle handoff. git pull --ff-only current/decompile. Initial16dirty files saved. No live/host ownership taken.",
+    "started_at":"2026-10-26T01:50:13-06:00",
+    "rounds_run":3,
     "stock_starts_used":0,
-    "pending_questions":[{"question":"Resolve the minimal observer's mandatory actual engine-span/relocation/readback proof prerequisite before any native observation?","options":["Review a concrete bounded offline engine-verifier path under the same permitted method","Defer capture; keep current runtime refusal","Change evidence requirement or observation method only with explicit user approval"],"recommendation":"First establish a concrete verifier path, not another generic design/mock round; then justify the parked question's cap exception, bind actual controller/observer/host deadline and repeat independent integrated readiness. Do not bypass hardfalse or spend the conditional start now.","evidence":"docs/scratch/phase-c3ay-actual-controller.md; docs/scratch/phase-c3az-bounded-observer-blocked.md; docs/plan-history/phase-e.md#c3-minimal-observer-readiness","gate_baseline":"Fresh C3 14934330/235008000=.06354817708333334 FAIL; C1 zoom1/elev_down285083/285700 over17721990 PASS. Primary/type1/clipping/f32/state/source-attribution/history debts remain unmeasured/unattributed here; other C1 views remain reported outside gated scope. No gate change proposed."}],
-    "stop_point":"After one observation/cleanup or budget; unresolved safety/ownership/delegation blocker, unapproved method or exhausted justified path. No start before independent integrated readiness; no retry.",
-    "handoff":"STOPPED: AYd041a63 and AZ812a954 committed/pushed, controller-only acceptance plus synthetic observer/safety blocker. Actual default main host replayPID44240 clean; own15AY/22AZ controls, individual mutations restored exact,13/35worker tests. Runtime gate hardfalse: no reviewed actual engine-span/relocation/readback proof producer. Actual controller/observer binding and8s host unload unfinished, no integrated readiness or native artifact. ParkAZ3attempt question; do not automatically repeat this directive/old briefs or spend conditional start.5/8attempts,0/1starts, no attaches/hooks/slot/game writes. Final01:37:41 both worker APIs succeeded/idle; no game/LemWeb task/PID44240,7install hashes match, no approval/attempt ledger. All15initial dirty files and older queue history preserved except own status/park/history additions; framework changes remain unstaged.44/44CTest/37Python pass; fresh C3.06354817708333334FAIL/C1.0160863988750699/.016121214378294987PASS unchanged. Pass3364s. AY1873s/AZ2872s dispatch-to-land; AZ facilitator verification/docs over45min by172s, worker returned within45min. Pending question needs concrete verifier feasibility/cap exception before integration readiness, not another generic design pass.",
-    "current_pass":{"started":"2026-10-26T00:41:37-06:00","ended":"2026-10-26T01:37:41-06:00","elapsed_seconds":3364,"rounds":[{"id":"c3ay-controller","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:57:25-06:00","landed":"2026-10-26T01:18:19-06:00","elapsed_seconds":1873,"repair_elapsed_seconds":1254,"commit":"d041a63"},{"id":"c3az-observer","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:52:58-06:00","repair2_dispatched":"2026-10-26T01:23:36-06:00","worker_completed":"2026-10-26T01:29:21-06:00","landed":"2026-10-26T01:34:58-06:00","elapsed_seconds":2872,"repair_elapsed_seconds":2520,"repair2_elapsed_seconds":682,"round_overrun_seconds":172,"commit":"812a954"}]},
+    "pending_questions":[],
+    "stop_point":"After independently checked recommendation, or2h/3attempts/concrete blocker; no implementation dispatch or safety change follows.",
+    "handoff":"BA requirement audit verified/landed02:03:15 incl installation-hazard repair. BB returned ready-for-verify; independently inspect versioned source and claimed spans before promoting.3/3attempts used; no further dispatch. Preserve runtime refusal; synthesize supported recommendation and stop. C3/C1 retained scores unchanged.",
     "rules":"docs/ORCHESTRATION.md#standing-run",
-    "stopped":{"date":"2026-10-26T01:37:41-06:00","reason":"Unresolved mandatory native safety prerequisite: actual engine-span/relocation/readback verifier absent from reviewed implementation; RPC hard-disabled. Three-attempt observer question parked, actual integrated host lifecycle unfinished. No justified launch-ready path in this pass; zero start/attach spent, no automatic continuation. Disclosed AZ facilitator verification/documentation round overrun172seconds.","last_commit":"812a954","elapsed_seconds":3364}
+    "stopped":null
   }
 }

@@ -880,3 +880,14 @@ does not provide required engine-span proof producer; actual RPC remains hard-di
 [Check](../scratch/phase-c3az-bounded-observer-blocked.md). Accept synthetic tooling/blocker,
 not integrated/native readiness. Park at3attempts; stop run on unresolved safety prerequisite,
 0starts/attaches. C3/C1gates unchanged,44/44CTest/37Python pass; no renderer/reference change.
+
+### C3 Astra observer-readiness review, 2026-10-26
+
+**C3ba initial/repair1 requirement audit:** Facilitator separates preinstall safety,
+postinstall outcome and postdetach restoration; returns the missing constructor-proof
+ordering and unarmed-installation hazard for correction. AZ requires supplied exact
+proof before attach and has no postinstall verifier; unarmed is not uninstrumented.
+Own65-byte/21instruction site read,12source hashes and3RPC refusals checked; no native
+API accessed. [Check](../scratch/phase-c3ba-requirement-audit.md). No policy change or
+implementation accepted; C3bb assesses concrete feasibility.44/44CTest,25framework
+tests pass. Zero starts/attaches/host tasks; C3FAIL/C1PASS baselines unchanged.

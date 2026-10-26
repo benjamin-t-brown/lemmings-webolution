@@ -891,3 +891,14 @@ Own65-byte/21instruction site read,12source hashes and3RPC refusals checked; no 
 API accessed. [Check](../scratch/phase-c3ba-requirement-audit.md). No policy change or
 implementation accepted; C3bb assesses concrete feasibility.44/44CTest,25framework
 tests pass. Zero starts/attaches/host tasks; C3FAIL/C1PASS baselines unchanged.
+
+**C3bb pinned-tooling feasibility:** Facilitator authenticates source/artifact pins,
+rejects worker PRE7 prediction (default IA32 loop yields6/5), and narrows the claimed
+need for a custom getter: source stores a context pointer before entry trampoline,
+providing a concrete candidate read-only route, not a completed verifier. Missing
+getter does not prove inaccessible evidence. [Check and recommendation](../scratch/phase-c3bb-verifier-feasibility.md).
+Request explicit staged evidence-protocol approval and a narrow offline cap exception;
+keep runtime refusal. Build/source binding, private ABI, installation/context safety,
+actual decoder and controller/pause/ledger/host-readback integration remain blockers.
+No next brief/implementation/native action dispatched.3/3attempts,0starts; C3/C1gates
+unchanged,44/44CTest and25framework tests pass. Prior candidate errors retained.

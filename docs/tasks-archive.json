@@ -1604,6 +1604,39 @@
   ],
   "landed": [
     {
+      "id": "c3ao-secondary-order",
+      "status": "landed",
+      "brief": "build/tmp/c3ao-secondary-order-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "owns_live_game": false,
+      "depends_on": [
+        "c3an-raw-diffuse"
+      ],
+      "question_round": 2,
+      "dispatched_at": "2026-10-25T20:43:25-06:00",
+      "dispatch_session_id": "ses_e89e87d6fffeQt2gZu3SHgJtlY",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owned_paths": [
+        "src/app/BackdropScene.cpp",
+        "src/app/BackdropScene.h",
+        "src/app/SceneDispatch.h",
+        "src/app/SceneDispatch.cpp",
+        "src/__test__/test_scenedispatch.cpp",
+        "src/__test__/test_backdropscene.cpp",
+        "CMakeLists.txt one target/linkage",
+        "build/tmp/c3ao-secondary-order/"
+      ],
+      "worker_output": "build/tmp/c3ao-secondary-order/repair1/round-note.md",
+      "live_owner": null,
+      "repair_brief": "build/tmp/c3ao-secondary-order-repair1-brief.md",
+      "repair_dispatched_at": "2026-10-25T20:58:21-06:00",
+      "landed_at": "2026-10-25T21:15:04-06:00",
+      "landed_note": "docs/scratch/phase-c3ao-secondary-order.md",
+      "facilitator_check": "Ownraw-head/sequential29keys/order matches5.7e-14; actualmixedrenderer sharedseam;bias-onlysourceomissionfails/restores,44/44CTest,17/340sourcefields. SourceListoverreachrestored,initialmissingpacketpreserved. FreshC3.0635481771FAIL,worsens96760;mutantomissionimproves81848 => no nativepixelprotection.C1pass,sceneoffexact,0starts.FiniteDISTINCTonly.",
+      "elapsed_dispatch_to_landing_seconds": 1899
+    },
+    {
       "id": "c3an-raw-diffuse",
       "status": "landed",
       "dispatched_at": "2026-10-25T20:20:03-06:00",

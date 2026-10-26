@@ -5,6 +5,7 @@
 #include "app/SceneMaterialFlags.h"
 #include "app/SceneDepth.h"
 #include "app/SceneDiffuse.h"
+#include "app/SceneDispatch.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
 #include <algorithm>
@@ -57,9 +58,16 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
  const SceneRgbaImage white{1,1,{255,255,255,255}};
  const auto context=predicateContext(camera);
   std::map<std::size_t,std::array<double,3>> eyes;
- for(const auto& root:roots_){collectEyes(root,identity(),context,eyes);++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;
-  for(const auto& rec:*records){++stats.meshRecords;const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName);if(!tex)continue;
-   if(rec.kind==5&&!passesKind5(rec,eyes)){++stats.predicateRejected;continue;}
+  std::map<std::size_t,std::vector<SceneMeshRecordSource>> secondaryMeshes;
+  std::vector<SceneMeshRecordSource> ordinaryMeshes;
+  const auto secondaryRoot=std::find_if(roots_.begin(),roots_.end(),[](const auto& n){return n.sourceOffset==0x91782;});
+  std::map<std::size_t,std::uint32_t> secondaryTypes;
+  if(secondaryRoot!=roots_.end())for(const auto& n:secondaryRoot->children)secondaryTypes[n.sourceOffset]=n.type;
+  for(const auto& root:roots_){collectEyes(root,identity(),context,eyes);++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;
+   for(auto& rec:*records){++stats.meshRecords;if(secondaryTypes.contains(rec.nodeSourceOffset))secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));else ordinaryMeshes.push_back(std::move(rec));}
+  }
+  const auto drawMesh=[&](const SceneMeshRecordSource& rec){const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName);if(!tex)return;
+   if(rec.kind==5&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}
    const auto state=options(false,rec.blendSelector==1);
    for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
@@ -67,19 +75,27 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
       if(!adapted){valid=false;break;}v[j]=*adapted;
     }
     if(valid){auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else ++stats.rejected;}else ++stats.rejected;
-  }
-  }
-  } // Finish all root mesh passes before the one scene-wide billboard traversal.
+   }
+  };
+  for(const auto& rec:ordinaryMeshes)drawMesh(rec);
   const auto builtChain=buildBillboardCameraChain(camera);
   BillboardSourceInputs chain;chain.parentCamera.values=builtChain.parentCamera;
   chain.sourceTransform.values=builtChain.sourceTransform;
   chain.projectionTransform.values=builtChain.projectionTransform;chain.center={camera.cx,camera.cy};
-  visitBillboards(chain,[&](const SceneBillboardSource& b){const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(!tex){++stats.nullMaterials;return;}++stats.billboards;
+  std::map<std::size_t,SceneBillboardSource> secondaryBillboards;
+  std::vector<SceneBillboardSource> ordinaryBillboards;
+  visitBillboards(chain,[&](const SceneBillboardSource& b){if(secondaryTypes.contains(b.sourceOffset))secondaryBillboards.emplace(b.sourceOffset,b);else ordinaryBillboards.push_back(b);});
+  const auto drawBillboard=[&](const SceneBillboardSource& b){const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(!tex){++stats.nullMaterials;return;}++stats.billboards;
     // C3r's accepted normal-constructor census identifies all 17 retained type-2
     // resources as caret leaves => flags 8. Apply that conditional row here;
     // this is not a claim about cache hits or effective native device state.
     const auto st=conditionalCaretFlags8Policy(options(true,b.blendSelector==1));
-     for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}});
+     for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}};
+  for(const auto& b:ordinaryBillboards)drawBillboard(b);
+  if(secondaryRoot!=roots_.end())dispatchSecondaryChildren(*secondaryRoot,nativeAffine(chain.parentCamera),nativeAffine(chain.sourceTransform),[&](const SecondaryDispatchItem& item){
+    if(item.type==1){auto it=secondaryMeshes.find(item.nodeSourceOffset);if(it!=secondaryMeshes.end())for(const auto& rec:it->second)drawMesh(rec);}
+    else if(item.type==2){auto it=secondaryBillboards.find(item.nodeSourceOffset);if(it!=secondaryBillboards.end())drawBillboard(it->second);}
+  });
  for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
   for(std::size_t i=0;i<depth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
 }
@@ -94,5 +110,9 @@ void BackdropScene::visitKind5Predicates(const CameraBasis& camera,const std::fu
   const auto context=predicateContext(camera);std::map<std::size_t,std::array<double,3>> eyes;
   for(const auto& root:roots_)collectEyes(root,identity(),context,eyes);
   for(const auto& root:roots_){auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records)continue;for(const auto& rec:*records)if(rec.kind==5&&!rec.corners.empty())visitor(rec.recordSourceOffset,passesKind5(rec,eyes));}
+ }
+void BackdropScene::visitSecondaryDispatch(const CameraBasis& camera,const std::function<void(const SecondaryDispatchItem&)>& visitor) const {
+ const auto root=std::find_if(roots_.begin(),roots_.end(),[](const auto& n){return n.sourceOffset==0x91782;});if(root==roots_.end())return;
+ const auto chain=buildBillboardCameraChain(camera);dispatchSecondaryChildren(*root,nativeAffine(BillboardAffine3x4{chain.parentCamera}),nativeAffine(BillboardAffine3x4{chain.sourceTransform}),visitor);
 }
 }

@@ -789,3 +789,13 @@ Own6561word/adapter/pixel cases,2077+2077known-byte fixtures and43/43CTest pass
 after exact restore. Fresh fixed score0.0631364464 worsens8406; rescale improves
 the screenshot, so no native pixel-protection claim or value selection by score.
 C1gatespass,sceneoff exact,0starts. Secondary dispatch/clip/f32/state remain.
+
+**C3ao initial/repair1: mixed secondary-child dispatch (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ao-secondary-order.md)). Actual render and
+test share29child offset/key dispatcher; source geometry unchanged. Initial missing
+scores/source-onlymutation and out-of-allowlist source-list entry returned/repaired,
+preserved and disclosed. Own raw/sequential keys match29/29 within5.7e-14;
+bias-onlysource omission fails/restores,44/44CTest. Fresh fixed0.0635481771
+worsens96760; biasomission improves screenshot81848, so no native pixel-protection
+claim/score selection. C1gatespass,0starts. Finite distinct keys only; ties and
+primary/tube/type1/clip/f32/effectivestate remain open; final attempt observes pause.

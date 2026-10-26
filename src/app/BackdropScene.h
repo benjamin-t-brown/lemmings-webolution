@@ -3,6 +3,7 @@
 #include "app/Camera.h"
 #include "app/SceneBillboardSource.h"
 #include "app/SceneRaster.h"
+#include "app/SceneDispatch.h"
 #include "assets/SceneNode.h"
 
 #include <span>
@@ -25,8 +26,10 @@ class BackdropScene {
                        const std::function<void(const SceneBillboardSource&)>& visitor) const;
   // Replays the production kind-5 predicate context for value checks. The visitor
   // receives each source record offset and the branch result (true means pass).
-  void visitKind5Predicates(const CameraBasis& camera,
-      const std::function<void(std::size_t, bool)>& visitor) const;
+   void visitKind5Predicates(const CameraBasis& camera,
+       const std::function<void(std::size_t, bool)>& visitor) const;
+  void visitSecondaryDispatch(const CameraBasis& camera,
+       const std::function<void(const SecondaryDispatchItem&)>& visitor) const;
   bool empty() const { return roots_.empty(); }
  private:
   std::vector<SceneNode> roots_;

@@ -7,6 +7,9 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <cmath>
+#include <algorithm>
+#include <vector>
 
 int main(){
  int checks=0,fail=0;auto check=[&](bool ok,const char* s){++checks;if(!ok){++fail;std::cerr<<"FAIL "<<s<<"\n";}};
@@ -59,6 +62,17 @@ int main(){
   scene->visitBillboards(fixture,[&](const webo::app::SceneBillboardSource& b){++tuples;std::cout<<std::setprecision(17)<<"BILLBOARD,"<<std::hex<<b.sourceOffset<<std::dec;for(const auto& v:b.slots){for(double x:{v.x,v.y,v.z,v.u,v.v}){++fields;std::cout<<","<<x;} }std::cout<<"\n";for(const auto& e:expected)if(e.offset==b.sourceOffset){++matched;const double want[20]={e.x0,e.y0,e.z,0,0,e.x0,e.y2,e.z,0,1,e.x2,e.y2,e.z,1,1,e.x2,e.y0,e.z,1,0};int k=0;for(const auto& v:b.slots)for(double x:{v.x,v.y,v.z,v.u,v.v})maxError=std::max(maxError,std::abs(x-want[k++]));if(b.sourceOffset==0x967a2)first=true;}});
   check(tuples==17&&fields==340&&matched==17,"production tree walk emits all 17/340 C3o slot fields");check(first&&maxError<=1e-9,"production builder reproduces every retained C3o field within 1e-9");
   auto omitted=fixture;omitted.sourceTransform.values={1,0,0,0,0,1,0,0,0,0,1,0};bool mutationDiff=false;scene->visitBillboards(omitted,[&](const webo::app::SceneBillboardSource& b){if(b.sourceOffset==0x967a2)mutationDiff=std::abs(b.slots[0].x-127.37244539895102)>1e-9;});check(mutationDiff,"omitting S alone fails retained tuple regression");
-  auto noCamera=fixture;noCamera.parentCamera.values={1,0,0,0,0,1,0,0,0,0,1,0};bool ancestorDiff=false;scene->visitBillboards(noCamera,[&](const webo::app::SceneBillboardSource& b){if(b.sourceOffset==0x967a2)ancestorDiff=std::abs(b.slots[0].x-127.37244539895102)>1e-9;});check(ancestorDiff,"omitting camera/ancestor chain alone fails retained tuple regression");
+   auto noCamera=fixture;noCamera.parentCamera.values={1,0,0,0,0,1,0,0,0,0,1,0};bool ancestorDiff=false;scene->visitBillboards(noCamera,[&](const webo::app::SceneBillboardSource& b){if(b.sourceOffset==0x967a2)ancestorDiff=std::abs(b.slots[0].x-127.37244539895102)>1e-9;});check(ancestorDiff,"omitting camera/ancestor chain alone fails retained tuple regression");
+   constexpr std::size_t mixedExpected[]={0x923fa,0x91805,0x94650,0x92fbf,0x940ea,0x93b83,0x951e5,0x9574c,0x95cb3,0x96c4e,0x970f8,0x96980,0x96892,0x96b60,0x96f1a,0x96a70,0x967a2,0x9700a,0x971e6,0x96d3e,0x96e2c,0x9889b,0x98989,0x98334,0x98106,0x972d6,0x98a77,0x98b65,0x98c53};
+   constexpr double mixedKeys[]={25905.176536021387,22502.353192521823,22431.703384107284,21610.095133418126,5109.523792355868,5024.711206558943,4263.397375480879,3750.857037674893,1524.3676625630542,1034.208066614527,996.1580132619259,908.7054655425873,851.7530777021577,848.107989171042,831.044383423042,822.8937120264558,809.8353897824879,777.863130905595,730.1845463138582,717.1685971609725,675.928760883085,459.86776566749995,427.7705283118633,416.551120658287,392.89448818299644,392.89439406051355,373.3235802169622,319.3442697832317,221.07182469267002};
+   std::size_t dispatchCount=0;bool dispatchMatch=true;double prior=1e300;
+   scene->visitSecondaryDispatch(measured,[&](const webo::app::SecondaryDispatchItem& item){if(dispatchCount>=std::size(mixedExpected)||item.nodeSourceOffset!=mixedExpected[dispatchCount]||!(item.key<prior)||!std::isfinite(item.key)||(dispatchCount<std::size(mixedKeys)&&std::abs(item.key-mixedKeys[dispatchCount])>1e-5))dispatchMatch=false;prior=item.key;++dispatchCount;});
+   check(dispatchCount==std::size(mixedExpected)&&dispatchMatch,"actual retained secondary dispatch matches independent C3y source-offset sequence and every reference key");
+   auto parsedRoot=webo::readSceneNode(*bytes,0x91782);check(bool(parsedRoot),"parse secondary source tree for isolated bias mutation");
+   if(parsedRoot){auto row=[](const std::array<double,12>& a){return std::array<double,12>{a[0],a[4],a[8],a[1],a[5],a[9],a[2],a[6],a[10],a[3],a[7],a[11]};};const auto parent=row(accepted.parentCamera),rotation=row(accepted.sourceTransform);
+    std::vector<std::size_t> baseOrder,mutantOrder,restoredOrder;webo::app::dispatchSecondaryChildren(parsedRoot->root,parent,rotation,[&](const auto& x){baseOrder.push_back(x.nodeSourceOffset);});
+    auto changed=std::find_if(parsedRoot->root.children.begin(),parsedRoot->root.children.end(),[](const auto& n){return n.sourceOffset==0x972d6;});if(changed!=parsedRoot->root.children.end()){const double saved=changed->headDoubles[1];changed->headDoubles[1]=50000;webo::app::dispatchSecondaryChildren(parsedRoot->root,parent,rotation,[&](const auto& x){mutantOrder.push_back(x.nodeSourceOffset);});changed->headDoubles[1]=saved;webo::app::dispatchSecondaryChildren(parsedRoot->root,parent,rotation,[&](const auto& x){restoredOrder.push_back(x.nodeSourceOffset);});}
+    check(baseOrder.size()==29&&mutantOrder!=baseOrder&&restoredOrder==baseOrder,"isolated source +108 bias mutation changes shared production dispatch order and restores exactly");
+   }
  std::cout<<checks<<" checks, "<<fail<<" failures; records="<<stats.meshRecords<<" null="<<stats.nullMaterials<<" null-triangles="<<stats.nullMaterialTriangles<<" billboards="<<stats.billboards<<" changed="<<nonblack<<"\n";return fail?1:0;
 }

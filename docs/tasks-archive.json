@@ -1604,6 +1604,37 @@
   ],
   "landed": [
     {
+      "id": "c3am-shared-depth",
+      "status": "landed",
+      "repair_brief": "build/tmp/c3am-shared-depth-repair1-brief.md",
+      "repair_dispatched_at": "2026-10-25T19:53:10-06:00",
+      "dispatched_at": "2026-10-25T19:34:53-06:00",
+      "dispatch_session_id": "ses_e8a26c423ffe163B3qWJb1tKH1",
+      "brief": "build/tmp/c3am-shared-depth-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owns_live_game": false,
+      "owned_paths": [
+        "src/app/BackdropScene.cpp",
+        "src/app/BackdropScene.h",
+        "src/app/SceneDepth.h",
+        "src/app/SceneDepth.cpp",
+        "src/__test__/test_scenedepth.cpp",
+        "src/__test__/test_backdropscene.cpp",
+        "CMakeLists.txt helper registration and one test target",
+        "build/tmp/c3am-shared-depth/"
+      ],
+      "depends_on": [],
+      "question_round": 2,
+      "worker_output": "build/tmp/c3am-shared-depth/repair1-round-note.md",
+      "live_owner": null,
+      "landed_at": "2026-10-25T20:17:49-06:00",
+      "landed_note": "docs/scratch/phase-c3am-shared-depth.md",
+      "facilitator_check": "Own192asymmetriccorner+2pixeloracle;rawslotmutantfails,worsens1911602,exactrestore;42/42CTest;17/340oldsourcefields. Correct offset derivation; scratch overwrite disclosed/excluded. FreshC3 .0631006774FAIL,C1gatespass,0starts. Conditional software depth only.",
+      "elapsed_dispatch_to_landing_seconds": 2576
+    },
+    {
       "id": "c3al-caret-alpha",
       "status": "landed",
       "dispatched_at": "2026-10-25T19:01:22-06:00",

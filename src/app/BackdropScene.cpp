@@ -3,6 +3,7 @@
 #include "app/SceneBillboardSource.h"
 #include "app/SceneMeshSource.h"
 #include "app/SceneMaterialFlags.h"
+#include "app/SceneDepth.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
 #include <algorithm>
@@ -79,7 +80,7 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
     // resources as caret leaves => flags 8. Apply that conditional row here;
     // this is not a claim about cache hits or effective native device state.
     const auto st=conditionalCaretFlags8Policy(options(true,b.blendSelector==1));
-    for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=vertex(q.x,q.y,q.z,0.25/q.z,static_cast<double>(q.u),static_cast<double>(q.v),{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}});
+     for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}});
  for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
   for(std::size_t i=0;i<depth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
 }

@@ -771,3 +771,12 @@ Own768destinationRGBA cases pass; cutoff-only source mutant fails/restores;
 41/41CTest. Fixed score worsens to0.0712348771 (+1902947), C1 gates pass.
 No value selection by score or effective-native/pixel-protection claim. Common
 depth-unit consistency is the next explicit source-contract lead.
+
+**C3am initial/repair1: conditional shared comparison-depth units (2026-10-25)**
+([Facilitator check](../scratch/phase-c3am-shared-depth.md)). Corrected rejected
+generated-offset equation; actual source-to-submission asymmetric test protects
+19.5/19 projected to39/38 equivalent physical depths. Own192corner/two-pixel
+oracle passes; raw-slot-only mutant fails and worsens score1911602; exact restore,
+42/42CTest and17/340source replay pass. Fresh fixed score0.0631006774 still
+fails; C1 gates pass. Worker scratch-report overwrite disclosed and excluded from
+acceptance; fresh independent reports retained. No effective native Z claim/start.

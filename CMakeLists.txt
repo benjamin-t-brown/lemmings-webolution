@@ -55,7 +55,7 @@ endif()
 # and presents through SDL2 when a window is requested; without a display the
 # binary still renders and writes a PNG from file data (--shot).
 
-add_executable(webolution ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp)
+add_executable(webolution ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDepth.cpp)
 target_link_libraries(webolution PRIVATE webolution_objects)
 
 if(WEBOLUTION_HAVE_SDL2)
@@ -124,6 +124,10 @@ add_test(NAME actorsprite COMMAND test_actorsprite)
 add_executable(test_sceneraster src/__test__/test_sceneraster.cpp src/app/SceneRaster.cpp)
 target_include_directories(test_sceneraster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME sceneraster COMMAND test_sceneraster)
+
+add_executable(test_scenedepth src/__test__/test_scenedepth.cpp src/app/SceneDepth.cpp src/app/SceneRaster.cpp src/app/SceneBillboardSource.cpp)
+target_include_directories(test_scenedepth PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME scenedepth COMMAND test_scenedepth)
 
 add_executable(test_actorpose src/__test__/test_actorpose.cpp src/app/ActorPose.cpp)
 target_link_libraries(test_actorpose PRIVATE webolution_objects)
@@ -243,6 +247,7 @@ add_executable(test_backdropscene
   src/__test__/test_backdropscene.cpp
   src/app/BackdropScene.cpp
   src/app/SceneBillboardSource.cpp
+  src/app/SceneDepth.cpp
   src/app/Camera.cpp
   src/app/Raster.cpp
   src/app/SceneRaster.cpp)

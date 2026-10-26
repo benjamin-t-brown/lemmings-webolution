@@ -902,3 +902,18 @@ keep runtime refusal. Build/source binding, private ABI, installation/context sa
 actual decoder and controller/pause/ledger/host-readback integration remain blockers.
 No next brief/implementation/native action dispatched.3/3attempts,0starts; C3/C1gates
 unchanged,44/44CTest and25framework tests pass. Prior candidate errors retained.
+
+### C3 bounded offline verifier/integration pass, 2026-10-26
+
+**C3bc initial/repair1:** initial prerequisite summary returned for missing concrete
+source/artifact inspection and conflating deferred runtime receipts with offline
+implementation prerequisites. Facilitator independently checks transaction/RWX
+path, Windows's omitted remap-false predicate, full FXSAVE/FXRSTOR callback path,
+package/source hashes and executable guard. Source-supported prospective
+concurrency safety gap remains; no parser/verifier or controller integration
+accepted. [Facilitator check](../scratch/phase-c3bc-verifier-safety.md).
+Refusal still returns before native access; seven install hashes and sixteen
+initial dirty-file hashes match before landing.44/44CTest,25framework tests pass.
+Two attempts spent,0starts/attaches/injection/host tasks; stop and park route for
+direction, not automatic integration/live follow-on. C3FAIL0.0635481771 and C1
+gatedPASS0.0160864/0.0161212 retained, no rendering/gate/reference change.

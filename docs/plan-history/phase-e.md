@@ -477,6 +477,18 @@ is established. Proposed resume is a separately approved staged evidence protoco
 and bounded offline verifier/integration scope, with a justified cap exception.
 Keep refusal and this park; no live allowance or policy change follows the review.
 
+Offline exception2026-10-26: [C3bc initial/repair1](../scratch/phase-c3bc-verifier-safety.md)
+uses both approved attempts and re-parks the route. Reviewed Windows source's
+RWX patch path lacks an established other-thread quiescence guarantee; full
+callback source does save/restore FPU state. No verifier or controller integration
+accepted. Actual postinstall receipts remain deferred, not pre-parser demands.
+Resume only after a fresh scoped direction supplies an artifact-specific
+installation/synchronization safety case and source/layout binding without
+invented proof flags or silently changing method. Then bounded decoder/adversarial
+tests and independently accepted actual-controller integration remain to do.
+Native or host-task execution still needs separate explicit permission; no unused
+start carries over. C3/C1 retained scores unchanged;0starts/attaches.
+
 ### B3 level pick
 
 - **B3 level pick** (parked 2026-10-25 at the three-round cap, b3e, b3f, b3g). `MM_CLIMB_002` is not in the executable. `lemmings.box` at `0x6F77` is the path `COMPILED\MM_CLIMB_002.LVL`. Lowercase `lemmings.box` is absent. Three `LEMMINGS.BOX` strings, at `0x4C292C`, `0x4C2A60`, and `0x4C2A70`, are pushed at `0x47DF27`, `0x47E298`, and `0x47E2CC`. Each push is followed by a stack-buffer pointer and `call 0x49C760`, then `add esp, 8`. The other argument is `[ebp-0x110]` or `[ebp-0x104]`. No level name and no level index are in those bytes. The body of `0x49C760` was not entered. Resume: open `0x49C760` far enough to say whether it copies the filename or opens the archive, and only then look for the caller that runs on a level choice. Do not treat the archive path as a click handler. See [B3g](../scratch/phase-b3g-box-call.md).

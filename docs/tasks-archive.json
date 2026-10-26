@@ -3,6 +3,74 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-astra-readiness-review",
+      "goal": "Independently checked requirement audit and concrete verifier feasibility recommendation for a later Sol pass; no implementation or native execution.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "docs/DIRECTIVE.md active Astra review, user do it; explicit facilitator invocation transfers idle queue ownership.",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 3,
+        "hours": 2,
+        "round_minutes": 45,
+        "commits": "per-round decompile commits/sync preserving unrelated dirty changes",
+        "concurrency": "two disjoint offline evidence tasks"
+      },
+      "owner": "ses_e88cfead4ffeZOyYXbeDgo4Dza OpenCode facilitator Astra on mouv",
+      "ownership_check": "Prior run explicitly stopped at922e058, no active/queued workers; user invocation is idle handoff. git pull --ff-only current/decompile. Initial16dirty files saved. No live/host ownership taken.",
+      "started_at": "2026-10-26T01:50:13-06:00",
+      "rounds_run": 3,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Approve the staged observer-evidence protocol and a narrow offline Sol verifier/integration cap exception?",
+          "recommendation": "Approve only the bounded offline scope in docs/scratch/phase-c3bb-verifier-feasibility.md: prospective pinned-source installation safety before install, actual read-only engine/redirect/relocation evidence after install before collection, independent host restoration after detach. Preserve refusal until independent readiness; any host scheduled-task drycheck needs explicit fresh permission. No live start authorized by this review; a later fresh native decision is separate.",
+          "options": [
+            "Approve bounded offline verifier/protocol work",
+            "Defer and retain current refusal",
+            "Request a different specifically authorized method"
+          ],
+          "evidence": "docs/scratch/phase-c3ba-requirement-audit.md; docs/scratch/phase-c3bb-verifier-feasibility.md",
+          "remaining_blockers": "Build/source/loaded-agent identity; private-layout and writer-variant validation; preinstall concurrency/register/FPU safety case; real bounded read-only decoder; actual controller/pause/slot-ledger/8s host unload/independent readback integration; fresh approval. Source-predicted PRE6 conflicts with current proof7. No completed producer/native proof.",
+          "gate_baseline": "C3 .06354817708333334 FAIL against .02; C1 zoom1 .0160863988750699/elev_down .016121214378294987 PASS, retained not rerendered. Primary/type1/clip/f32/state/history/source-attribution debts unchanged/unattributed, other C1 views reported outside gate; no acceptance change requested."
+        }
+      ],
+      "stop_point": "After independently checked recommendation, or2h/3attempts/concrete blocker; no implementation dispatch or safety change follows.",
+      "handoff": "STOPPED, review directive completed; do not repeat or dispatch implementation without fresh approval. BA f28f301 and BB b5f61be committed/pushed. Worker7/5 rejected, source prediction6/5 independently verified; omitted context-before-entry field supplies conditional read-only candidate, NOT completed verifier/safe installation. Staged evidence protocol/cap exception awaits explicit approval, runtime refusal intact. Proposed bounded Sol scope in BB note; no implementation/native allowance carries forward.3/3attempts,0starts/attaches/injection/host tasks/install changes.44CTest/25framework pass; initial16dirty paths/history preserved. Final02:14:13 no game/LemWeb task,7install hashes match,actual RPC still refuses with zero native accesses. C3.0635481771FAIL/C1.0160864,.0161212PASS retained, no gate movement. Pass1440s; BA481s including repair225s,BB1045s dispatch-to-landing. Next action is user/overlord decision on documented recommendation, not automatic fourth AZ round.",
+      "current_pass": {
+        "started": "2026-10-26T01:50:13-06:00",
+        "ended": "2026-10-26T02:14:13-06:00",
+        "elapsed_seconds": 1440,
+        "rounds": [
+          {
+            "id": "c3ba-requirement-audit",
+            "dispatched": "2026-10-26T01:55:14-06:00",
+            "repair_dispatched": "2026-10-26T01:59:30-06:00",
+            "landed": "2026-10-26T02:03:15-06:00",
+            "elapsed_seconds": 481,
+            "repair_elapsed_seconds": 225,
+            "commit": "f28f301"
+          },
+          {
+            "id": "c3bb-verifier-feasibility",
+            "dispatched": "2026-10-26T01:55:14-06:00",
+            "landed": "2026-10-26T02:12:39-06:00",
+            "elapsed_seconds": 1045,
+            "commit": "b5f61be"
+          }
+        ]
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-26T02:14:13-06:00",
+        "reason": "Independently checked bounded review complete;3/3attempts spent. Revised evidence protocol/cap exception and real verifier/safety/integration work need fresh approval. No policy change or native execution follows.",
+        "last_commit": "b5f61be",
+        "elapsed_seconds": 1440
+      }
+    },
+    {
       "id":"c3-integrated-one-observation",
       "goal":"C3 actual operational controller and executable minimal AW observer; independently establish integrated readiness, then one conditional bounded native observation and stop.",
       "milestones":["C3 full frame"],
@@ -1703,6 +1771,32 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bc-verifier",
+      "status": "landed",
+      "dispatched_at": "2026-10-26T10:15:30-06:00",
+      "worker_session": "ses_e8700e212ffez2bbxLa13Xqo0D",
+      "repair_brief": "build/tmp/c3bc-verifier-repair1-brief.md",
+      "repair_dispatched_at": "2026-10-26T10:19:27-06:00",
+      "brief": "build/tmp/c3bc-verifier-brief.md",
+      "worker_tier": "targeted",
+      "owns_live_game": false,
+      "worker_output": "build/tmp/c3bc-verifier/repair1/addendum.md",
+      "requested_worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna at high, configured round-agent pin per docs/ROLES.md; no override supplied",
+      "live_owner": null,
+      "depends_on": [],
+      "milestone": "C3 full frame",
+      "question_round": 2,
+      "attempts": 2,
+      "cap_exception": "Active directive bounded AZ offline exception based on C3bb concrete read-only route; 2attempt pass ceiling.",
+      "landed_at": "2026-10-26T10:32:30-06:00",
+      "facilitator_note": "docs/scratch/phase-c3bc-verifier-safety.md",
+      "disposition": "Complete negative after repair: prospective source-conditional concurrency/install-safety gap; no verifier/integration accepted. Runtime refusal preserved.",
+      "independent_evidence": "build/tmp/c3-offline-verifier-pass/independent-bc.json; refusal.json; host-check.json; build-ctest.log; framework-tests.log",
+      "dispatch_to_landing_seconds": 1020,
+      "repair_dispatch_to_landing_seconds": 783
+    },
     {"id":"c3bb-verifier-feasibility","status":"landed","brief":"build/tmp/c3bb-verifier-feasibility-brief.md","worker":"round-agent","requested_model":"configured OpenCode targeted pin per docs/ROLES.md","dispatch_session_id":"ses_e88caeacfffeujQLlyjjYv4EeR","dispatched_at":"2026-10-26T01:55:14-06:00","landed_at":"2026-10-26T02:12:39-06:00","elapsed_seconds":1045,"owns_live_game":false,"live_owner":null,"worker_output":"build/tmp/c3bb-verifier-feasibility/round-note.md","question_round":1,"evidence":"docs/scratch/phase-c3bb-verifier-feasibility.md","result":"Versioned source/artifact inventory verified. Worker PRE7 prediction rejected by independent6/5 derivation. Custom-getter necessity narrowed: context-before-entry source provides conditional read-only path, not working verifier. Recommend approval-required staged evidence protocol and bounded offline Sol scope; refusal unchanged,0native actions,retained gates unchanged. No repair beyond3attempt pass budget."},
     {"id":"c3ba-requirement-audit","status":"landed","brief":"build/tmp/c3ba-requirement-audit-brief.md","repair_brief":"build/tmp/c3ba-requirement-audit-repair1-brief.md","worker":"round-agent","requested_model":"configured OpenCode targeted pin per docs/ROLES.md","dispatch_session_id":"ses_e88caeaedffegDwRUdGwoxxJc8","dispatched_at":"2026-10-26T01:55:14-06:00","repair_dispatched_at":"2026-10-26T01:59:30-06:00","worker_completed":"2026-10-26T02:00:01-06:00","landed_at":"2026-10-26T02:03:15-06:00","elapsed_seconds":481,"repair_elapsed_seconds":225,"owns_live_game":false,"live_owner":null,"worker_output":"build/tmp/c3ba-requirement-audit/repair1/addendum.md","question_round":2,"evidence":"docs/scratch/phase-c3ba-requirement-audit.md","result":"Requirement phases distinguished; current pre-attach supplied proof not actual verifier. Unarmed hook remains execution hazard. Independent site bytes/hash/refusal checks; no policy change/native action/gate movement."},
     {"id":"c3az-observer","status":"landed","brief":"build/tmp/c3az-observer-brief.md","repair_briefs":["build/tmp/c3az-observer-repair1-brief.md","build/tmp/c3az-observer-repair2-brief.md"],"worker":"round-agent","dispatch_id":"ses_e89094ab3ffedoVPJAcTOQC2Ii","requested_model":"configured round-agent Luna/high per docs/ROLES.md; API confirms pin","owns_live_game":false,"dispatched_at":"2026-10-26T00:47:06-06:00","repair_dispatched_at":"2026-10-26T00:52:58-06:00","repair2_dispatched_at":"2026-10-26T01:23:36-06:00","worker_completed_at":"2026-10-26T01:29:21-06:00","landed_at":"2026-10-26T01:34:58-06:00","elapsed_seconds":2872,"repair_elapsed_seconds":2520,"repair2_elapsed_seconds":682,"round_overrun_seconds":172,"attempts":3,"worker_output":"build/tmp/c3az-observer/round-note.md","facilitator_check":"docs/scratch/phase-c3az-bounded-observer-blocked.md","result":"Accept synthetic tooling plus safety blocker, not integrated/native readiness. Own22checks/35worker tests after stale-code/read-fault repairs; own primitive mutation fails/restores exact; scoped Frida/API check and preservation hashes pass. Runtime setup remains hardfalse; no engine proof producer, controller binding/8s host unload unfinished. Park3attempt question;0starts/attaches. Full44CTest/37Python pass; gates unchanged. Worker within45min; facilitator verification/documentation exceeded round wall-clock172s, explicitly recorded."},

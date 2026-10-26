@@ -54,6 +54,9 @@ struct CameraParams {
 
 struct CameraBasis {
   std::array<double, 12> worldToView{};  // 9 basis values, then translation
+  // A1 camera-context scale operands, before native context normalization.
+  std::array<double, 3> projectionVector{};
+  std::array<double, 3> inverseProjectionVector{};
   std::array<double, 3> eyeWorld{};
   double focalX = 0.0;
   double focalY = 0.0;
@@ -68,6 +71,12 @@ struct CameraBasis {
   double selectorTurns = 0.0;
 };
 
+struct BillboardCameraChain {
+  std::array<double, 12> parentCamera{};
+  std::array<double, 12> sourceTransform{};
+  std::array<double, 12> projectionTransform{};
+};
+
 // Reads the flat numeric keys of a camera params JSON. Returns false and an
 // error when the file cannot be read or a required key is missing.
 bool loadCameraParams(const std::filesystem::path& path, CameraParams& out, std::string& error);
@@ -77,5 +86,6 @@ bool loadCameraParams(const std::filesystem::path& path, CameraParams& out, std:
 double resolvedYawUnits(const CameraParams& p);
 
 CameraBasis buildCamera(const CameraParams& p);
+BillboardCameraChain buildBillboardCameraChain(const CameraBasis& camera);
 
 }  // namespace webo::app

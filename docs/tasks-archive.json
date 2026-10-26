@@ -1604,6 +1604,36 @@
   ],
   "landed": [
     {
+      "id": "c3af-billboard-chain",
+      "status": "landed",
+      "repair_brief": "build/tmp/c3af-billboard-chain-repair1-brief.md",
+      "repair_dispatched_at": "2026-10-25T18:01:00-06:00",
+      "rejection": "Initial app repeats full billboard traversal4times (changed17expectationto68); its focal S/reciprocal P cancels lens for positions. Fixture seam passes but actual render builder is unsupported. Fresh .0838931483 remains unaccepted candidate diagnostic.",
+      "dispatched_at": "2026-10-25T17:44:17-06:00",
+      "dispatch_session_id": "ses_e8a8c7357ffeqavRF0Z2WSFctM",
+      "owns_live_game": false,
+      "brief": "build/tmp/c3af-billboard-chain-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owned_paths": [
+        "src/app/BackdropScene.cpp",
+        "src/app/BackdropScene.h",
+        "src/app/Camera.cpp",
+        "src/app/Camera.h",
+        "src/__test__/test_backdropscene.cpp",
+        "build/tmp/c3af-billboard-chain/"
+      ],
+      "live_owner": null,
+      "depends_on": [],
+      "question_round": 2,
+      "worker_output": "build/tmp/c3af-billboard-chain/repair1/round-note.md",
+      "landed_at": "2026-10-25T18:28:54-06:00",
+      "landed_note": "docs/scratch/phase-c3af-billboard-chain.md",
+      "facilitator_check": "Conditional shared camera/ancestor/S/P integration17draws; independent340fields match; sourceSmutant fails/restores39/39CTest. FixedC3.0846921807FAIL,C1pass. Sidentitypixelerrorlower so no nativepixel protection; f32 diagnostic not runtimeREAD.",
+      "elapsed_dispatch_to_landing_seconds": 2677
+    },
+    {
       "id": "c3aj-deployed-controller",
       "status": "landed",
       "dispatched_at": "2026-10-25T18:10:06-06:00",

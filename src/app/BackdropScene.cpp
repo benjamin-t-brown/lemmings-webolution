@@ -17,6 +17,7 @@ std::array<double,12> identity(){return {1,0,0,0,1,0,0,0,1,0,0,0};}
 BillboardAffine3x4 affine(const std::array<double,12>& m){return {{{m[0],m[3],m[6],m[9],m[1],m[4],m[7],m[10],m[2],m[5],m[8],m[11]}}};}
 using Matrix=std::array<double,12>;
 Matrix compose(const Matrix&a,const Matrix&b){Matrix o{};for(int i=0;i<3;++i){for(int j=0;j<3;++j)for(int k=0;k<3;++k)o[3*i+j]+=a[3*i+k]*b[3*k+j];o[9+i]=b[9+i];for(int k=0;k<3;++k)o[9+i]+=a[9+k]*b[3*k+i];}return o;}
+BillboardAffine3x4 multiply(const BillboardAffine3x4&a,const BillboardAffine3x4&b){BillboardAffine3x4 o;for(int r=0;r<3;++r){for(int c=0;c<3;++c)for(int k=0;k<3;++k)o.values[4*r+c]+=a.values[4*r+k]*b.values[4*k+c];o.values[4*r+3]=a.values[4*r+3];for(int k=0;k<3;++k)o.values[4*r+3]+=a.values[4*r+k]*b.values[4*k+3];}return o;}
 std::array<double,3> eyeLocal(const Matrix&m){double a=m[0],b=m[1],c=m[2],d=m[3],e=m[4],f=m[5],g=m[6],h=m[7],i=m[8];double det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);if(std::abs(det)<1e-15)return {NAN,NAN,NAN};double q=1/det;double inv[9]={(e*i-f*h)*q,(c*h-b*i)*q,(b*f-c*e)*q,(f*g-d*i)*q,(a*i-c*g)*q,(c*d-a*f)*q,(d*h-e*g)*q,(b*g-a*h)*q,(a*e-b*d)*q};std::array<double,3> out{};for(int j=0;j<3;++j)for(int k=0;k<3;++k)out[j]-=m[9+k]*inv[3*k+j];return out;}
 void collectEyes(const SceneNode& n,const Matrix& parent,std::map<std::size_t,std::array<double,3>>& out){auto m=compose(n.matrix,parent);out[n.sourceOffset]=eyeLocal(m);for(auto&c:n.children)collectEyes(c,m,out);}
 SceneRasterOptions options(bool alpha,bool blend,bool depthWrite=true){return {SceneFilter::Linear,SceneAddress::Wrap,alpha?SceneAlphaFunction::StrictGreater:SceneAlphaFunction::Disabled,0xef,blend,SceneBlendFactor::SrcAlpha,SceneBlendFactor::InvSrcAlpha,SceneDepthFunction::Less,depthWrite,SceneShade::Gouraud,SceneRgbOperation::Modulate,SceneAlphaOperation::Modulate,0.5,0.5};}
@@ -58,17 +59,22 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
      v[j]=vertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],0.25/p[2],a[0],a[1],d);
     }
     if(valid){auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else ++stats.rejected;}else ++stats.rejected;
-   }
   }
- }
- const auto drawBillboards=[&](const auto& self,const SceneNode& n)->void{
-  if(n.type==2){BillboardSourceInputs in;in.parentCamera=affine(camera.worldToView);in.sourceTransform.values={1,0,0,0,0,1,0,0,0,0,1,0};in.projectionTransform.values={camera.focalX,0,0,0,0,camera.focalY,0,0,0,0,1,0};in.center={camera.cx,camera.cy};auto b=makeSceneBillboardSource(n,in);
-   if(b){const std::string name=b->textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(tex){++stats.billboards;const auto st=options(true,b->blendSelector==1);for(const auto& tri: {std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b->slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=vertex(q.x,q.y,q.z,0.25/q.z,static_cast<double>(q.u),static_cast<double>(q.v),{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}}else ++stats.nullMaterials;}else ++stats.rejected;
   }
-  for(const auto& c:n.children)self(self,c);
- };
- for(const auto& root:roots_)drawBillboards(drawBillboards,root);
+  } // Finish all root mesh passes before the one scene-wide billboard traversal.
+  const auto builtChain=buildBillboardCameraChain(camera);
+  BillboardSourceInputs chain;chain.parentCamera.values=builtChain.parentCamera;
+  chain.sourceTransform.values=builtChain.sourceTransform;
+  chain.projectionTransform.values=builtChain.projectionTransform;chain.center={camera.cx,camera.cy};
+  visitBillboards(chain,[&](const SceneBillboardSource& b){const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name);if(!tex){++stats.nullMaterials;return;}++stats.billboards;const auto st=options(true,b.blendSelector==1);for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=vertex(q.x,q.y,q.z,0.25/q.z,static_cast<double>(q.u),static_cast<double>(q.v),{255,255,255,255});}if(ok){auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st);if(r)++stats.meshTriangles;else ++stats.rejected;}else ++stats.rejected;}});
  for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
- for(std::size_t i=0;i<depth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
+  for(std::size_t i=0;i<depth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
+ }
+void BackdropScene::visitBillboards(const BillboardSourceInputs& chain,const std::function<void(const SceneBillboardSource&)>& visitor) const {
+ const auto walk=[&](const auto& self,const SceneNode& n,const Matrix& ancestors)->void{
+  if(n.type==2){auto in=chain;in.parentCamera=multiply(chain.parentCamera,affine(ancestors));auto b=makeSceneBillboardSource(n,in);if(b)visitor(*b);}
+  const Matrix next=compose(n.matrix,ancestors);for(const auto& child:n.children)self(self,child,next);
+ };
+ for(const auto& root:roots_)walk(walk,root,identity());
 }
 }

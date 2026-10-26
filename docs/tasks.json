@@ -1,35 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T18:24:00-06:00",
+  "updated": "2026-10-25T18:28:54-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [
-    {
-      "id": "c3af-billboard-chain",
-      "status": "ready-for-verify",
-      "repair_brief": "build/tmp/c3af-billboard-chain-repair1-brief.md",
-      "repair_dispatched_at": "2026-10-25T18:01:00-06:00",
-      "rejection": "Initial app repeats full billboard traversal4times (changed17expectationto68); its focal S/reciprocal P cancels lens for positions. Fixture seam passes but actual render builder is unsupported. Fresh .0838931483 remains unaccepted candidate diagnostic.",
-      "dispatched_at": "2026-10-25T17:44:17-06:00",
-      "dispatch_session_id": "ses_e8a8c7357ffeqavRF0Z2WSFctM",
-      "owns_live_game": false,
-      "brief": "build/tmp/c3af-billboard-chain-brief.md",
-      "tier": "targeted",
-      "worker": "round-agent",
-      "requested_model": "openai/gpt-6-luna#high (configured pin)",
-      "owned_paths": [
-        "src/app/BackdropScene.cpp",
-        "src/app/BackdropScene.h",
-        "src/app/Camera.cpp",
-        "src/app/Camera.h",
-        "src/__test__/test_backdropscene.cpp",
-        "build/tmp/c3af-billboard-chain/"
-      ],
-      "live_owner": null,
-      "depends_on": [],
-      "question_round": 2,
-      "worker_output": "build/tmp/c3af-billboard-chain/repair1/round-note.md"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c3-known-gaps-pause-values",
@@ -52,7 +25,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Last landed c3aj-deployed-controller: Exact unique defaults/payload authenticated; actualmain10tests+4independentfixtures, sizeguard-only mutant fails zeroPopen, source restored;39/39CTest; C1gatespass; AFdiag.0846922 not promoted.0starts/approval.. Run6/16 attempts,0/3starts as of this landing; active: c3af-billboard-chain:ready-for-verify. Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
+    "handoff": "Last landed c3af-billboard-chain: Conditional shared camera/ancestor/S/P integration17draws; independent340fields match; sourceSmutant fails/restores39/39CTest. FixedC3.0846921807FAIL,C1pass. Sidentitypixelerrorlower so no nativepixel protection; f32 diagnostic not runtimeREAD.. Run6/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
       "last_yielded": "2026-10-25T18:17:09-06:00",
@@ -61,7 +34,9 @@
         {
           "id": "c3af-billboard-chain",
           "dispatched": "2026-10-25T17:44:17-06:00",
-          "repair_dispatched": "2026-10-25T18:01:00-06:00"
+          "repair_dispatched": "2026-10-25T18:01:00-06:00",
+          "landed": "2026-10-25T18:28:54-06:00",
+          "elapsed_seconds": 2677
         },
         {
           "id": "c3ag-retail-env",

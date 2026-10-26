@@ -1,12 +1,14 @@
 #pragma once
 
 #include "app/Camera.h"
+#include "app/SceneBillboardSource.h"
 #include "app/SceneRaster.h"
 #include "assets/SceneNode.h"
 
 #include <span>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace webo {
 class AssetLibrary;
@@ -18,6 +20,9 @@ class BackdropScene {
  public:
   static std::expected<BackdropScene,std::string> build(const AssetLibrary&, std::span<const std::byte> level, std::string_view levelId);
   void render(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&) const;
+  // Runs the production parsed-tree traversal; explicit inputs are a fixture seam.
+  void visitBillboards(const BillboardSourceInputs& cameraChain,
+                       const std::function<void(const SceneBillboardSource&)>& visitor) const;
   bool empty() const { return roots_.empty(); }
  private:
   std::vector<SceneNode> roots_;

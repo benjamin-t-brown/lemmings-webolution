@@ -8,6 +8,20 @@
 namespace webo::app {
 namespace {
 
+double f32(double v) { return static_cast<double>(static_cast<float>(v)); }
+std::array<double, 3> vecmat32(const std::array<double,3>& v,const std::array<double,12>& m) {
+  std::array<double,3> out{};
+  for(int c=0;c<3;++c){double a=f32(v[0]*m[c]),b=f32(v[1]*m[3+c]),d=f32(v[2]*m[6+c]);out[c]=f32(f32(a+b)+d);}
+  return out;
+}
+std::array<double,12> compose32(const std::array<double,12>& a,const std::array<double,12>& b) {
+  std::array<double,12> o{};
+  for(int r=0;r<3;++r){std::array<double,3> row{a[3*r],a[3*r+1],a[3*r+2]};auto q=vecmat32(row,b);for(int c=0;c<3;++c)o[3*r+c]=q[c];}
+  std::array<double,3> t{a[9],a[10],a[11]};auto q=vecmat32(t,b);
+  for(int i=0;i<3;++i)o[9+i]=f32(q[i]+b[9+i]);
+  return o;
+}
+
 // Minimal scalar extractor for the camera params files: they are flat objects
 // of numbers and short arrays, so a full JSON parser would be more rope than
 // this needs. Every lookup is for an exact quoted key followed by ':'.
@@ -196,8 +210,32 @@ CameraBasis buildCamera(const CameraParams& p) {
   const double thetaTurns = p.angleDegrees / p.angleUnitsPerTurn;
   const double halfAngle = p.lensPi * thetaTurns;
   const double g = 1.0 / (2.0 * std::tan(halfAngle));
+  out.projectionVector={g/p.aspect,g*p.height/p.width,1.0/p.width};
+  out.inverseProjectionVector={1.0/out.projectionVector[0],1.0/out.projectionVector[1],static_cast<double>(p.width)};
   out.focalX = (g / p.aspect) / (1.0 / p.width);
   out.focalY = (g * p.height / p.width) / (1.0 / p.width);
+  return out;
+}
+
+BillboardCameraChain buildBillboardCameraChain(const CameraBasis& camera) {
+  // READ camera-builder scale literals: projection 0.3 at 0x468FC9/CE and
+  // inverse projection 10/3 at 0x46906E/73. The context stores float32 results
+  // promoted to double; each helper operation follows the accepted A1 audit's
+  // binary32 diagnostic model, not a claim about the runtime x87 control word.
+  constexpr double projectionScale=0.3;
+  constexpr double inverseProjectionScale=10.0/3.0;
+  BillboardCameraChain out{};
+  std::array<double,12> view{};for(int i=0;i<12;++i)view[i]=f32(camera.worldToView[i]);
+  std::array<double,12> projectionNative{};
+  for(int i=0;i<3;++i){
+    out.projectionTransform[5*i]=f32(camera.projectionVector[i]*projectionScale);
+    out.sourceTransform[5*i]=f32(camera.inverseProjectionVector[i]*inverseProjectionScale);
+    projectionNative[4*i]=out.projectionTransform[5*i];
+  }
+  const auto native=compose32(view,projectionNative);
+  out.parentCamera={native[0],native[3],native[6],native[9],
+                    native[1],native[4],native[7],native[10],
+                    native[2],native[5],native[8],native[11]};
   return out;
 }
 

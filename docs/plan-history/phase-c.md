@@ -739,3 +739,12 @@ and unique defaults authenticated; actual-main10tests plus four independent
 fixtures cover prelaunch size, stale/owned backups and fail-closed cleanup.
 Single size-guard removal fails/restores.39/39CTest; fresh in-flight AF diagnostic
 0.0846922 and C1 passing retained, no C3 promotion. No live marker/start/observation.
+
+**C3af initial/repair1: conditional actual billboard chain (2026-10-25)**
+([Facilitator check](../scratch/phase-c3af-billboard-chain.md)). Initial68draws
+and lens-cancelling guess rejected/preserved. Actual shared builder and ancestor
+walk reproduce17/340old C3o fields under raw reference operands; render17once.
+Source-only S mutation fails/restores;39/39CTest. Repaired fresh score0.0846922
+still fails. S identity's pixel error is lower, so source-value protection is not
+claimed as native pixel protection; no score selection. Binary32 context model
+is diagnostic, not READ runtime precision. C1 gates pass; known remaining gaps stand.

@@ -810,3 +810,14 @@ confirmed, exact artifacts/install hashes and independent process/task cleanup p
 C3.0635481771FAIL,C1gatespass. Run stops16/16attempts,0/3starts; host enum bridge
 requires bounded offline repair before any later execution. Remaining known
 primary/type1/clip/f32/native-state debts not closed and no method permission missing.
+
+### C3 rendering pivot â€” offline feasibility, 2026-10-25
+
+**C3au boundary assessment:** conditionally prefer one caller-scoped pre-wrapper
+scene-mesh submission over equating translated D3D11 work with original calls.
+Own SDK/endpoint-byte check supports the layout candidate, not runtime identity
+or capture compatibility. The next thin path is synthetic/no-forwarding; native
+reachability, history, attribution and matched non-interference remain blockers.
+[Check and contract](../scratch/phase-c3au-comparison-boundary.md). Fresh own
+C3 baseline14934330/235008000 FAIL; C1zoom1/elev_down285083/285700 over17721990
+PASS,44/44CTest. No production change, gate movement or stock start.

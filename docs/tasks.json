@@ -1,123 +1,42 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T21:34:57-06:00",
-  "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [],
+  "updated": "2026-10-25T22:52:19-06:00",
+  "notes": "Thin live queue; archive holds landed tasks and stopped runs. Facilitator owns dispatch and landing.",
+  "active": [
+    {
+      "id": "c3at-frame-map",
+      "dispatch_session_id": "ses_e89773ea9ffeRNa2lx5Zd39Ho0",
+      "status": "running",
+      "dispatched_at": "2026-10-25T22:46:59-06:00",
+      "owns_live_game": false,
+      "live_owner": null,
+      "brief": "build/tmp/c3at-frame-map-brief.md",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna high (configured pin; no override)",
+      "question": "Consolidate established level-frame paths and production consumers into an evidence-linked map, without new native research",
+      "question_round": 1,
+      "worker_output": null
+    }
+  ],
   "queue": [],
   "standing_run": {
-    "id": "c3-known-gaps-pause-values",
-    "goal": "C3 only: fix accepted integration omissions one per brief, score after each landing, fully mock controller then collect authorized pause values; unchanged repair4 full-frame gate.",
-    "milestones": [
-      "C3 full frame"
-    ],
+    "id": "c3-offline-render-feasibility",
+    "goal": "C3 only: established frame map, comparison boundary assessment, thin offline path and bounded later capture proposal. No rendering behavior changes.",
+    "milestones": ["C3 full frame"],
     "current": "C3 full frame",
-    "authorized": "docs/DIRECTIVE.md active 2026-10-25 user i approve go ahead; PLAN Phase C latest steering. New budget6h/16 rounds,45min each including repairs; C2/B2/B3 out.",
-    "grants": {
-      "stock_starts": "3; normal Popen/menu REA CLI attach/read-only hooks, dry-check first. No Python attach/spawn/suspended/debugger. Crash ends arm, second ends starts. Only restored level slot write allowed.",
-      "commits": "per-round decompile commits/pushes; no force-push/checkout/reset/stash; credential failure retained locally",
-      "concurrency": "up to3 disjoint offline rounds, one live owner"
-    },
-    "workers": "OpenCode round-agent configured openai/gpt-6-luna high for implementation; disasm-agent configured Sol for any separately justified disassembly read; no override",
-    "owner": "ses_e8a901515ffeeoMSISfD3UL0Hr OpenCode facilitator Sol on mouv",
-    "ownership_check": "User invocation transfers idle stopped run; no active/queued task, prior handoff explicitly no resource owned. Clean decompile tree and git pull ff-only already up to date17:41:11; separate process check no Lemmings. Resolved round-agent pin checked via opencode debug agents.",
-    "started_at": "2026-10-25T17:40:39-06:00",
-    "rounds_run": 16,
+    "authorized": "docs/DIRECTIVE.md rendering pivot active2026-10-25; explicit user facilitator invocation resumes this new offline scope, not the superseded old briefs.",
+    "grants": {"stock_starts": 0, "rounds": 6, "hours": 3, "round_minutes": 45, "commits": "per-round decompile commits/pushes; preserve unrelated changes", "concurrency": "up to3 disjoint independent offline tasks"},
+    "workers": "OpenCode round-agent Luna high; disasm-agent Sol high only for disassembly reads; configured pins/no overrides per ROLES.md",
+    "owner": "ses_e897a9939ffet5M0uZyGsgYbss OpenCode facilitator Sol on mouv",
+    "ownership_check": "Prior facilitator API succeeded/idle; AQ and AR interrupted/idle; AS succeeded/idle. No Lemmings or LemWeb task at startup. New directive supersedes old live permission. Old queue and unrelated dirty-tree snapshot preserved build/tmp/c3-offline-pivot-startup/. Configured pins confirmed using opencode debug agents (V2 plural command).",
+    "started_at": "2026-10-25T22:43:43-06:00",
+    "rounds_run": 2,
     "stock_starts_used": 0,
     "pending_questions": [],
-    "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "STOPPED on16/16attemptbudget after e838441 finalobservationalnegative; no active/queued worker or live resource. C3 .0635481771FAIL (14934330/235008000), C1zoom1/elev_down .0160864/.0161212PASS,44/44CTest.0/3stockstarts: exactAJcontroller session1task enumState4 failed stringonlypreflight beforePopen; no retry/value/attach/write. Independentactualmainboundary+realPowerShellserialization and install/artifact/task/process/approvalcleanup verified. Remaining primary-before-tube,type1radius/near,clipping,finalf32/RHW/native-state/format gaps explicit. Recommend next authorized scope begins small real-serialization offlinecontrollerfix, then one separatelyscoped execution; no newmethodpermission is missing. Prepared APpackingbrief notdispatched, retained for later ranking. All roundcommits pushed; archive holds timings/evidence.",
-    "current_pass": {
-      "started": "2026-10-25T17:40:39-06:00",
-      "last_yielded": "2026-10-25T21:17:50-06:00",
-      "elapsed_to_yield_seconds": 13031,
-      "rounds": [
-        {
-          "id": "c3af-billboard-chain",
-          "dispatched": "2026-10-25T17:44:17-06:00",
-          "repair_dispatched": "2026-10-25T18:01:00-06:00",
-          "landed": "2026-10-25T18:28:54-06:00",
-          "elapsed_seconds": 2677,
-          "repair_elapsed_seconds": 1674
-        },
-        {
-          "id": "c3ag-retail-env",
-          "dispatched": "2026-10-25T17:44:17-06:00",
-          "landed": "2026-10-25T18:02:15-06:00",
-          "elapsed_seconds": 1078
-        },
-        {
-          "id": "c3ah-controller-lifecycle",
-          "dispatched": "2026-10-25T17:44:17-06:00",
-          "landed": "2026-10-25T18:07:41-06:00",
-          "elapsed_seconds": 1404,
-          "repair_dispatched": "2026-10-25T17:50:16-06:00",
-          "repair_elapsed_seconds": 1045
-        },
-        {
-          "id": "c3aj-deployed-controller",
-          "dispatched": "2026-10-25T18:10:06-06:00",
-          "landed": "2026-10-25T18:24:00-06:00",
-          "elapsed_seconds": 834
-        },
-        {
-          "id": "c3ai-predicate-context",
-          "dispatched": "2026-10-25T18:31:17-06:00",
-          "landed": "2026-10-25T18:57:03-06:00",
-          "elapsed_seconds": 1546
-        },
-        {
-          "id": "c3ak-vertex-pack",
-          "dispatched": "2026-10-25T18:31:17-06:00",
-          "landed": "2026-10-25T18:45:51-06:00",
-          "elapsed_seconds": 874
-        },
-        {
-          "id": "c3al-caret-alpha",
-          "dispatched": "2026-10-25T19:01:22-06:00",
-          "landed": "2026-10-25T19:28:12-06:00",
-          "elapsed_seconds": 1610
-        },
-        {
-          "id": "c3am-shared-depth",
-          "dispatched": "2026-10-25T19:34:53-06:00",
-          "landed": "2026-10-25T20:17:49-06:00",
-          "elapsed_seconds": 2576,
-          "repair_dispatched": "2026-10-25T19:53:10-06:00",
-          "repair_elapsed_seconds": 1479
-        },
-        {
-          "id": "c3an-raw-diffuse",
-          "dispatched": "2026-10-25T20:20:03-06:00",
-          "landed": "2026-10-25T20:42:58-06:00",
-          "elapsed_seconds": 1375,
-          "repair_dispatched": "2026-10-25T20:32:42-06:00",
-          "repair_elapsed_seconds": 616
-        },
-        {
-          "id": "c3ao-secondary-order",
-          "dispatched": "2026-10-25T20:43:25-06:00",
-          "landed": "2026-10-25T21:15:04-06:00",
-          "elapsed_seconds": 1899,
-          "repair_dispatched": "2026-10-25T20:58:21-06:00",
-          "repair_elapsed_seconds": 1003
-        },
-        {
-          "id": "c3-pause-one-shot",
-          "dispatched": "2026-10-25T21:16:01-06:00",
-          "landed": "2026-10-25T21:34:13-06:00",
-          "elapsed_seconds": 1092
-        }
-      ],
-      "ended": "2026-10-25T21:34:57-06:00",
-      "elapsed_seconds": 14058
-    },
+    "stop_point": "Map, boundary assessment and thin-path result independently checked; or3h/6attempts; concrete feasibility blocker, ownership conflict, unavailable pin/delegation, gate change or guardrail breach. No automatic live/full-frame follow-on.",
+    "handoff": "AU independently checked/landed as conditional boundary/spec, no runtime compatibility claim. AT packet just returned; verify it next, then one dependent no-forwarding synthetic thin path. Fresh own C3 baseline14934330/235008000 FAIL,C1gated285083/285700 over17721990PASS,44/44CTest; production unchanged. Old AQ/AR/AS discarded incomplete, artifacts preserved, zero starts/live permissions.",
+    "current_pass": {"started":"2026-10-25T22:43:43-06:00","rounds":[{"id":"c3at-frame-map","dispatched":"2026-10-25T22:46:59-06:00"},{"id":"c3au-boundary-assessment","dispatched":"2026-10-25T22:46:59-06:00","landed":"2026-10-25T22:52:19-06:00","elapsed_seconds":320}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "latest_yield": null,
-    "stopped": {
-      "date": "2026-10-25T21:34:57-06:00",
-      "reason": "16/16 attempt budget exhausted; C3 remains failing. Final one-shot rejected numeric task-state4 before stock Popen; no pause/format values,0/3 starts used; no retry/further dispatch. Clean release verified.",
-      "last_commit": "e838441d95dcf52607ad2e1d90bdd611ae6e06c4",
-      "elapsed_seconds": 14058
-    }
+    "stopped": null
   }
 }

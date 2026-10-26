@@ -3,6 +3,48 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-host-reference-big-rocks",
+      "goal": "C3 host reference and big-errors-first; stopped by user, superseded by offline rendering pivot.",
+      "owner": "ses_e89972d8cffeNfhLI24zDuLM2Q OpenCode facilitator Sol on mouv",
+      "started_at": "2026-10-25T22:12:34-06:00",
+      "rounds_run": 3,
+      "stock_starts_used": 0,
+      "grants": {"stock_starts": 3, "rounds": 16, "hours": 6, "commits": "per-round decompile commits/pushes"},
+      "pending_questions": [],
+      "handoff": "User stop22:23:01; AQ/AR interruption confirmed; AS returned incomplete. No round landed or production edits; all partial artifacts preserved unverified. API idle statuses independently rechecked2026-10-25T22:45. New directive does not resume these briefs or carry over starts. Complete original queue snapshot build/tmp/c3-offline-pivot-startup/tasks-before.json.",
+      "stopped": {"date":"2026-10-25T22:23:56-06:00","reason":"User requested stop; both running workers cancelled, third incomplete; no game or scheduled task remains.","last_commit":"fcbb467","elapsed_seconds":682}
+    },
+    {
+      "id": "c3-known-gaps-pause-values",
+      "goal": "C3 only: known integration gaps then one-shot pause values, unchanged repair4 gate.",
+      "owner": "ses_e8a901515ffeeoMSISfD3UL0Hr OpenCode facilitator Sol on mouv",
+      "started_at": "2026-10-25T17:40:39-06:00",
+      "rounds_run": 16,
+      "stock_starts_used": 0,
+      "grants": {"stock_starts": 3, "rounds": 16, "hours": 6, "round_minutes": 45, "commits": "per-round decompile commits/pushes"},
+      "pending_questions": [],
+      "handoff": "Stopped16/16 after e838441 observational negative; no active/queued worker or resource. C3 14934330/235008000=.0635481771 FAIL; C1 gated passes;44/44CTest. Numeric ScheduledTask.State4 rejected string-only preflight before Popen. No pause values, attach or write. Next authorized run repairs host serialization and re-captures full actor/HUD reference, alongside big-error offline scene questions. Prepared AP packing brief not dispatched.",
+      "current_pass": {
+        "started": "2026-10-25T17:40:39-06:00",
+        "ended": "2026-10-25T21:34:57-06:00",
+        "elapsed_seconds": 14058,
+        "rounds": [
+          {"id":"c3af-billboard-chain","dispatched":"2026-10-25T17:44:17-06:00","repair_dispatched":"2026-10-25T18:01:00-06:00","landed":"2026-10-25T18:28:54-06:00","elapsed_seconds":2677,"repair_elapsed_seconds":1674},
+          {"id":"c3ag-retail-env","dispatched":"2026-10-25T17:44:17-06:00","landed":"2026-10-25T18:02:15-06:00","elapsed_seconds":1078},
+          {"id":"c3ah-controller-lifecycle","dispatched":"2026-10-25T17:44:17-06:00","repair_dispatched":"2026-10-25T17:50:16-06:00","landed":"2026-10-25T18:07:41-06:00","elapsed_seconds":1404,"repair_elapsed_seconds":1045},
+          {"id":"c3aj-deployed-controller","dispatched":"2026-10-25T18:10:06-06:00","landed":"2026-10-25T18:24:00-06:00","elapsed_seconds":834},
+          {"id":"c3ai-predicate-context","dispatched":"2026-10-25T18:31:17-06:00","landed":"2026-10-25T18:57:03-06:00","elapsed_seconds":1546},
+          {"id":"c3ak-vertex-pack","dispatched":"2026-10-25T18:31:17-06:00","landed":"2026-10-25T18:45:51-06:00","elapsed_seconds":874},
+          {"id":"c3al-caret-alpha","dispatched":"2026-10-25T19:01:22-06:00","landed":"2026-10-25T19:28:12-06:00","elapsed_seconds":1610},
+          {"id":"c3am-shared-depth","dispatched":"2026-10-25T19:34:53-06:00","repair_dispatched":"2026-10-25T19:53:10-06:00","landed":"2026-10-25T20:17:49-06:00","elapsed_seconds":2576,"repair_elapsed_seconds":1479},
+          {"id":"c3an-raw-diffuse","dispatched":"2026-10-25T20:20:03-06:00","repair_dispatched":"2026-10-25T20:32:42-06:00","landed":"2026-10-25T20:42:58-06:00","elapsed_seconds":1375,"repair_elapsed_seconds":616},
+          {"id":"c3ao-secondary-order","dispatched":"2026-10-25T20:43:25-06:00","repair_dispatched":"2026-10-25T20:58:21-06:00","landed":"2026-10-25T21:15:04-06:00","elapsed_seconds":1899,"repair_elapsed_seconds":1003},
+          {"id":"c3-pause-one-shot","dispatched":"2026-10-25T21:16:01-06:00","landed":"2026-10-25T21:34:13-06:00","elapsed_seconds":1092}
+        ]
+      },
+      "stopped": {"date":"2026-10-25T21:34:57-06:00","reason":"16/16 attempts exhausted; final preflight rejected before stock Popen,0/3starts; no resource remains.","last_commit":"e838441d95dcf52607ad2e1d90bdd611ae6e06c4","elapsed_seconds":14058}
+    },
+    {
       "id": "c1-close-c3-scene",
       "goal": "Close C1 under third amendment by independent rescore, then derive scene-node draw values and render/score C3 full frame on A6 repair4 pause.",
       "milestones": [
@@ -1603,6 +1645,10 @@
     }
   ],
   "landed": [
+    {"id":"c3au-boundary-assessment","status":"landed","kind":"offline design assessment","brief":"build/tmp/c3au-boundary-assessment-brief.md","worker_output":"build/tmp/c3au-boundary-assessment/round-note.md","dispatch_session_id":"ses_e89773ea8ffepWW52ZemtKfLlV","requested_model":"openai/gpt-6-luna high (configured pin; no override)","dispatched_at":"2026-10-25T22:46:59-06:00","landed":"2026-10-25T22:52:19-06:00","elapsed_seconds":320,"owns_live_game":false,"live_owner":null,"question_round":1,"result":"Conditional pre-wrapper comparison boundary and no-forwarding synthetic contract; own endpoint bytes/SDK check, baseline rerender and44/44CTest; no runtime observation, production change or gate movement.","note":"docs/scratch/phase-c3au-comparison-boundary.md"},
+    {"id":"c3aq-host-controller","status":"landed","outcome":"explicitly discarded incomplete at pivot startup; no claims promoted","landed":"2026-10-25T22:45:06-06:00","brief":"build/tmp/c3aq-host-controller-brief.md","dispatch_session_id":"ses_e8992a7d1ffexHm7iAi1G4dze5","worker_output":null,"evidence":"build/tmp/c3-offline-pivot-startup/aq-status.json; interrupted/idle; original queue snapshot preserves partial ownership","owns_live_game":false,"live_owner":null},
+    {"id":"c3ar-scene-handedness","status":"landed","outcome":"explicitly discarded incomplete at pivot startup; no claims promoted","landed":"2026-10-25T22:45:06-06:00","brief":"build/tmp/c3ar-scene-handedness-brief.md","dispatch_session_id":"ses_e8992a7c3ffeE8G9zyLenPf2I4","worker_output":null,"evidence":"build/tmp/c3-offline-pivot-startup/ar-status.json; interrupted/idle; original queue snapshot preserves partial ownership","owns_live_game":false,"live_owner":null},
+    {"id":"c3as-orange-discs","status":"landed","outcome":"explicitly discarded incomplete packet at pivot startup; not verified or promoted","landed":"2026-10-25T22:45:06-06:00","brief":"build/tmp/c3as-orange-discs-brief.md","dispatch_session_id":"ses_e8992a7c3ffdpvFPvPG9OOGyyy","worker_output":"build/tmp/c3as-orange-discs/round-note.md","evidence":"build/tmp/c3-offline-pivot-startup/as-status.json; succeeded/idle; suppression/support masks missing per original queue","owns_live_game":false,"live_owner":null},
     {
       "id": "c3-pause-one-shot",
       "status": "landed",

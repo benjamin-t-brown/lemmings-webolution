@@ -763,3 +763,11 @@ raw-LVL/35byte-window oracle and actual source-offset visitor agree465/465,
 (not worker's465), worsens full-frame error5065521 and restores exactly;
 40/40CTest. Fresh fixed score0.0631375060 still fails; C1gatespass, floor included.
 Dispatch/clip/packing adoption/state remain open; no native visible-count claim.
+
+**C3al: conditional caret8 alpha row, worse screenshot (2026-10-25)**
+([Facilitator check](../scratch/phase-c3al-caret-alpha.md)). Source/request row
+authenticated17/17names; actual caller uses disabled-test/texture-alpha policy.
+Own768destinationRGBA cases pass; cutoff-only source mutant fails/restores;
+41/41CTest. Fixed score worsens to0.0712348771 (+1902947), C1 gates pass.
+No value selection by score or effective-native/pixel-protection claim. Common
+depth-unit consistency is the next explicit source-contract lead.

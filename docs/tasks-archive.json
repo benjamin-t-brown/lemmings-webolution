@@ -1604,6 +1604,35 @@
   ],
   "landed": [
     {
+      "id": "c3al-caret-alpha",
+      "status": "landed",
+      "dispatched_at": "2026-10-25T19:01:22-06:00",
+      "dispatch_session_id": "ses_e8a4565b2ffe2AhRCvikQtzK69",
+      "brief": "build/tmp/c3al-caret-alpha-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owns_live_game": false,
+      "owned_paths": [
+        "src/app/BackdropScene.cpp",
+        "src/app/BackdropScene.h",
+        "src/app/SceneMaterialFlags.h",
+        "src/app/SceneMaterialFlags.cpp",
+        "src/__test__/test_scenematerialflags.cpp",
+        "src/__test__/test_backdropscene.cpp",
+        "CMakeLists.txt helper registration and one test target",
+        "build/tmp/c3al-caret-alpha/"
+      ],
+      "depends_on": [],
+      "question_round": 1,
+      "worker_output": "build/tmp/c3al-caret-alpha/round-note.md",
+      "live_owner": null,
+      "landed_at": "2026-10-25T19:28:12-06:00",
+      "landed_note": "docs/scratch/phase-c3al-caret-alpha.md",
+      "facilitator_check": "Conditional encodedcaret8row17/17;768independentdestinationRGBAcases, cutoff-only mutantfails/restores;41/41CTest. Fullframe.0712348771 worsens1902947,C1pass; no effectiveGPU/pixelprotectionclaim, no scoreselection.0starts.",
+      "elapsed_dispatch_to_landing_seconds": 1610
+    },
+    {
       "id": "c3ai-predicate-context",
       "status": "landed",
       "dispatched_at": "2026-10-25T18:31:17-06:00",

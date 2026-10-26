@@ -250,6 +250,12 @@ target_link_libraries(test_backdropscene PRIVATE webolution_objects)
 target_include_directories(test_backdropscene PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME backdropscene COMMAND test_backdropscene WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+add_executable(test_scenematerialflags
+  src/__test__/test_scenematerialflags.cpp
+  src/app/SceneRaster.cpp)
+target_include_directories(test_scenematerialflags PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME scenematerialflags COMMAND test_scenematerialflags)
+
 add_executable(test_scenevertexpack
   src/__test__/test_scenevertexpack.cpp
   src/app/SceneVertexPack.cpp)

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T18:57:03-06:00",
+  "updated": "2026-10-25T19:28:12-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [],
   "queue": [],
@@ -21,11 +21,11 @@
     "owner": "ses_e8a901515ffeeoMSISfD3UL0Hr OpenCode facilitator Sol on mouv",
     "ownership_check": "User invocation transfers idle stopped run; no active/queued task, prior handoff explicitly no resource owned. Clean decompile tree and git pull ff-only already up to date17:41:11; separate process check no Lemmings. Resolved round-agent pin checked via opencode debug agents.",
     "started_at": "2026-10-25T17:40:39-06:00",
-    "rounds_run": 8,
+    "rounds_run": 9,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Last landed c3ai-predicate-context: Independent465per-source decisions306pass159skip/35bytewindows; one context-return mutation changes136,worsenspixels5065521 and exactrestore;40/40CTest. FixedC3.063137506FAIL,C1gatespass,sceneoffexact.0starts.. Run8/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
+    "handoff": "Last landed c3al-caret-alpha: Conditional encodedcaret8row17/17;768independentdestinationRGBAcases, cutoff-only mutantfails/restores;41/41CTest. Fullframe.0712348771 worsens1902947,C1pass; no effectiveGPU/pixelprotectionclaim, no scoreselection.0starts.. Run9/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
       "last_yielded": "2026-10-25T18:34:37-06:00",
@@ -70,6 +70,12 @@
           "dispatched": "2026-10-25T18:31:17-06:00",
           "landed": "2026-10-25T18:45:51-06:00",
           "elapsed_seconds": 874
+        },
+        {
+          "id": "c3al-caret-alpha",
+          "dispatched": "2026-10-25T19:01:22-06:00",
+          "landed": "2026-10-25T19:28:12-06:00",
+          "elapsed_seconds": 1610
         }
       ]
     },

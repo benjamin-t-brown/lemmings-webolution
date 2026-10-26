@@ -3,6 +3,241 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c1-close-c3-scene",
+      "goal": "Close C1 under third amendment by independent rescore, then derive scene-node draw values and render/score C3 full frame on A6 repair4 pause.",
+      "milestones": [
+        "C1 skill panel",
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "docs/DIRECTIVE.md active 2026-10-25; initial yes i approve 2; steering884798a user i approve 1 and 2: render/score next and lift C3z park for one live round from existing pool, dry-check/menu REA CLI attach/passive hooks; no further user authorization needed for that round.",
+      "grants": {
+        "stock_starts": "3; offline-unreachable values only, dry-check first, normal Popen/menu REA CLI attach. No Python attach/spawn/suspended launch/debugger. Crash ends question live arm; second ends starts.",
+        "commits": "per-round decompile commits and pushes; no force-push/checkout/reset/stash; credential failure retained locally",
+        "concurrency": "up to 3 independent offline tasks with disjoint paths; one live owner"
+      },
+      "workers": "OpenCode disasm-agent for disassembly reads, round-agent for implementation/render; configured pins per ROLES.md, no override.",
+      "owner": "OpenCode facilitator Sol, resumed via /facilitator on mouv 2026-10-25T14:07:15-06:00; same conversation",
+      "ownership_check": "Queue empty and prior Cursor run explicitly stopped 13:05. OpenCode API confirms former ses_e8c346bc4ffe01LaYRaXoqOAkl failed; only active session is this facilitator. Cursor GUI remains open, not evidence of a running task. No Lemmings process. User invocation transfers ownership under ORCHESTRATION.",
+      "started_at": "2026-10-25T13:29:10-06:00",
+      "rounds_run": 24,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "id": "c3-run-budget-exhausted",
+          "question": "Authorize a new bounded run or keep C3 parked after24attempts? Existing specified one-shot start-method authorization is not the missing permission.",
+          "recommendation": "New bounded implementation-first run: correct known ancestor/S/predicate/dispatch/packing/state inputs from existing evidence, render and rank again; repair and fully mock the live controller before using the already authorized one-shot method. No gate change, extra reader campaign or format fit.",
+          "evidence": "docs/scratch/phase-c3ae-scene-render-score.md; docs/scratch/phase-c3ad-pause-values-live.md",
+          "gate": "21707403/235008000=.0923687832>0.02;all640x480pixels/floorincluded",
+          "all_residual_regions": {
+            "rest_floor_included": 19234589,
+            "skill_boxes": 1484307,
+            "tube_roi": 682387,
+            "counters_timer": 154713,
+            "caption": 136273,
+            "historical_actor_boxes": 15134
+          },
+          "limits": "Region numerators are measured; no unique floor-visible or unknownGPU-family separation is claimed. Known integration omissions must be fixed before attributing rest solely to native format."
+        }
+      ],
+      "stop_point": "C3 independently passes; C1 fails closure rescore; gate change needed; guardrail breach; all C3 questions parked/waiting; about 8h or 24 rounds; delegation/model unavailable or ownership conflict. No C2/B2/B3.",
+      "handoff": "24/24 attempts disposed,0/3starts. STOP for run-round budget after AE partial conditional scene landing; no more dispatch under this run. Own fresh repair4 score21707403/235008000=.0923687832>0.02; scene-off exactbaseline13b1bd...,on/restoredSHA b364b0f...;39/39CTest. C1 gated0.0160864/0.0161212pass; elev_up0.0250557reported. AE is partial integration/scoring, NOT complete nativefidelity or originalbrief acceptance: known ancestor/S/predicate inputs, Ysort/type1/clip/packing/state and AA/ACENV omissions explicitly in latestnote. Next fix known inputchain from existing evidence before more readers/formatfitting. AD streamrepair verified offline but launcherREJECTED on missing entry.RECORD_SIZE afterPopen;NOapproval or actualpausevalues. One-shot userpermission alreadyexists, but newrunbudget/controllerdrycheck required before use. No ownedgame/task/attach/writes. Preserve initialrejectedpackets and all retractions. Standing13:29:10/pass14:07:15; finalstop bookkeeping follows AE commit.",
+      "steering_update": {
+        "commit": "884798a50892f9a7788ff5a19f9f42d868665315",
+        "pulled_at": "2026-10-25T16:09:48-06:00",
+        "authorization": "User asked pull/review; directive records i approve 1 and 2",
+        "priority": "Render and explicit repair4/perregion score next; existing component workers finish unchanged, no added reader rounds without gate reason",
+        "live_round": "One dry-checked normalPopen/menuREA CLI read-only observation round from existing pool; C3z park lifted for pause values and passive native returned-format lead; crash ends arm",
+        "starts_spent_by_update": 0
+      },
+      "latest_packet_status": {
+        "at": "2026-10-25T17:26:01-06:00",
+        "aa": "landed9cd840e",
+        "ab": "landeddc4fdc5",
+        "ac": "repaired/landedccc9c06",
+        "ad": "disposed391fc95: offlinepartial only, controller rejected; no approval/start",
+        "ae": "partial conditional renderer/scoring landed4d54635; nativefidelity/completebrief notaccepted",
+        "action": "STOP24roundbudget; await newrunbudget, no tasks/resources owned"
+      },
+      "previous_passes": [
+        {
+          "started": "2026-10-25T13:29:10-06:00",
+          "ended": "2026-10-25T14:01:52-06:00",
+          "elapsed": "32m42s",
+          "rounds": [
+            {
+              "id": "c3p-kind5-culling",
+              "dispatched": "2026-10-25T13:37:26-06:00",
+              "landed": "2026-10-25T14:00:25-06:00",
+              "elapsed": "22m59s",
+              "worker_finished": "2026-10-25T13:54:46-06:00"
+            }
+          ]
+        }
+      ],
+      "current_pass": {
+        "started": "2026-10-25T14:07:15-06:00",
+        "ended": "2026-10-25T17:26:01-06:00",
+        "elapsed": "3h18m46s",
+        "last_yielded": "2026-10-25T14:18:27-06:00",
+        "previous_elapsed_to_yield": "11m12s",
+        "rounds": [
+          {
+            "id": "c3o-type2-draw",
+            "dispatched": "2026-10-25T13:37:26-06:00",
+            "repair_dispatched": "2026-10-25T13:56:13-06:00",
+            "landed": "2026-10-25T14:10:27-06:00",
+            "elapsed": "33m01s",
+            "repair_elapsed": "14m14s"
+          },
+          {
+            "id": "c3n-mesh-submission",
+            "dispatched": "2026-10-25T13:37:26-06:00",
+            "landed": "2026-10-25T14:15:57-06:00",
+            "elapsed": "38m31s",
+            "worker_finished": "2026-10-25T14:02:45-06:00"
+          },
+          {
+            "id": "c3s-explicit-reference-scorer",
+            "dispatched": "2026-10-25T14:16:53-06:00",
+            "landed": "2026-10-25T14:24:12-06:00",
+            "elapsed": "7m19s",
+            "worker_finished": "2026-10-25T14:20:43-06:00"
+          },
+          {
+            "id": "c3t-floor-ring-bounds",
+            "dispatched": "2026-10-25T14:26:41-06:00",
+            "landed": "2026-10-25T14:38:14-06:00",
+            "elapsed": "11m33s",
+            "result": "partial source-family diagnostic only"
+          },
+          {
+            "id": "c3r-scene-texture-values",
+            "dispatched": "2026-10-25T14:16:53-06:00",
+            "landed": "2026-10-25T14:44:54-06:00",
+            "elapsed": "28m01s"
+          },
+          {
+            "id": "c3q-scene-device-state",
+            "dispatched": "2026-10-25T14:16:53-06:00",
+            "landed": "2026-10-25T14:48:32-06:00",
+            "elapsed": "31m39s",
+            "worker_elapsed": "21m26s"
+          },
+          {
+            "id": "c3w-scene-integration-map",
+            "dispatched": "2026-10-25T14:53:56-06:00",
+            "landed": "2026-10-25T14:59:05-06:00",
+            "elapsed": "5m09s",
+            "scope": "source-only map"
+          },
+          {
+            "id": "c3u-pause-scene-reachability",
+            "dispatched": "2026-10-25T14:53:56-06:00",
+            "landed": "2026-10-25T15:21:16-06:00",
+            "elapsed": "27m20s",
+            "scope": "conditional gates and load associations only"
+          },
+          {
+            "id": "c3v-state-format-preflight",
+            "dispatched": "2026-10-25T14:53:56-06:00",
+            "repair_dispatched": "2026-10-25T15:05:07-06:00",
+            "landed": "2026-10-25T15:22:34-06:00",
+            "elapsed": "28m38s",
+            "repair_elapsed": "17m27s",
+            "scope": "partial mock bounds only, no live authorization"
+          },
+          {
+            "id": "c3x-scene-node-reader",
+            "dispatched": "2026-10-25T15:00:21-06:00",
+            "repair_dispatched": "2026-10-25T15:25:42-06:00",
+            "landed": "2026-10-25T15:43:48-06:00",
+            "elapsed": "43m27s",
+            "repair_elapsed": "18m06s",
+            "scope": "strict source reader only, no app rendering"
+          },
+          {
+            "id": "c3y-secondary-slot8",
+            "dispatched": "2026-10-25T15:27:50-06:00",
+            "landed": "2026-10-25T15:47:59-06:00",
+            "elapsed": "20m09s",
+            "scope": "sorted child slot4 dispatch only"
+          },
+          {
+            "id": "c3z-observation-provenance",
+            "dispatched": "2026-10-25T15:27:50-06:00",
+            "landed": "2026-10-25T15:52:36-06:00",
+            "elapsed": "24m46s",
+            "scope": "static contracts only;runtime observation parked at3round cap, latersteeringliftedone live round"
+          },
+          {
+            "id": "c3aa-scene-mesh-source",
+            "dispatched": "2026-10-25T15:57:12-06:00",
+            "landed": "2026-10-25T16:20:46-06:00",
+            "elapsed": "23m34s",
+            "scope": "explicit-matrix source preparation"
+          },
+          {
+            "id": "c3ab-scene-raster",
+            "dispatched": "2026-10-25T15:57:12-06:00",
+            "landed": "2026-10-25T16:29:24-06:00",
+            "elapsed": "32m12s",
+            "worker_finished": "2026-10-25T16:13:15-06:00",
+            "scope": "declared software arithmetic only"
+          },
+          {
+            "id": "c3ac-billboard-source",
+            "dispatched": "2026-10-25T15:57:12-06:00",
+            "repair_dispatched": "2026-10-25T16:14:58-06:00",
+            "landed": "2026-10-25T16:33:26-06:00",
+            "elapsed": "36m14s",
+            "repair_elapsed": "18m28s",
+            "scope": "native-compatible preclip source only"
+          },
+          {
+            "id": "c3ad-pause-values-live",
+            "dispatched": "2026-10-25T16:34:28-06:00",
+            "repair_dispatched": "2026-10-25T16:54:52-06:00",
+            "landed": "2026-10-25T17:19:51-06:00",
+            "elapsed": "45m23s",
+            "repair_elapsed": "24m59s",
+            "scope": "offline partial accepted; live recipe rejected,0starts"
+          },
+          {
+            "id": "c3ae-scene-render-score",
+            "dispatched": "2026-10-25T16:34:28-06:00",
+            "repair_dispatched": "2026-10-25T16:52:49-06:00",
+            "landed": "2026-10-25T17:22:12-06:00",
+            "elapsed": "47m44s",
+            "repair_elapsed": "29m23s",
+            "scope": "partial conditional app render/scoring; native gate FAIL"
+          }
+        ]
+      },
+      "latest_yield": {
+        "date": "2026-10-25T15:59:07-06:00",
+        "pass_started": "2026-10-25T14:07:15-06:00",
+        "elapsed": "111m52s",
+        "reason": "Await AAmeshsource,ABraster,ACbillboard notifications;standing run active, runtime observation parked"
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "sync_resolution": {
+        "date": "2026-10-25T14:06:00-06:00",
+        "authorization": "User: the git thing is a small change from the overlord, we should be able to pull that in locally",
+        "method": "Non-rewriting merge of origin4889d3e; no conflicts; pending tasks.json SHA256 unchanged across merge. Prior sync stop14:01:52 resolved."
+      },
+      "stopped": {
+        "date": "2026-10-25T17:26:01-06:00",
+        "reason": "Unchanged24-round budget exhausted including repairs; C3 still FAIL0.0923687832, C1gated views pass. No further dispatch permitted under this run.",
+        "last_commit": "4d5463505920b939fd5bdcdee7758f65ffdc1f99",
+        "rounds_run": 24,
+        "stock_starts_used": 0,
+        "standing_elapsed": "3h56m51s",
+        "pass_elapsed": "3h18m46s",
+        "cleanup": "No Lemmings process/LemWeb task, no owned attach/write; AD approval marker/start ledger absent; stock authority hash unchanged. Repo clean at4d54635 before this stop bookkeeping."
+      }
+    },
+    {
       "id": "c1-derived-values",
       "goal": "C1 only: derive +6 and kept format, derive ^tab upload texel words, render and independently score frozen footprint on zoom1/elev_up/elev_down; then rank residuals until fixed gate passes or authorized stop.",
       "milestones": ["C1 skill panel"],
@@ -1368,6 +1603,29 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3ag-retail-env",
+      "owns_live_game": false,
+      "status": "landed",
+      "dispatched_at": "2026-10-25T17:44:17-06:00",
+      "dispatch_session_id": "ses_e8a8c7333ffeQitHwMvSlnoofd",
+      "brief": "build/tmp/c3ag-retail-env-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owned_paths": [
+        "CMakeLists.txt ENV list only",
+        "build/tmp/c3ag-retail-env/"
+      ],
+      "live_owner": null,
+      "depends_on": [],
+      "question_round": 1,
+      "worker_output": "build/tmp/c3ag-retail-env/round-note.md",
+      "landed_at": "2026-10-25T18:02:15-06:00",
+      "landed_note": "docs/scratch/phase-c3ag-retail-env.md",
+      "facilitator_check": "Independent parent-env-unset443/31checks; single-ACENV removal skips onlyAC48, exactrestore; own39/39CTest. Fresh unaccepted-AF diagnostic.0838931 not promoted; acceptedC3.0923688, C1gatespass.",
+      "elapsed_dispatch_to_landing_seconds": 1078
+    },
     {"id":"c3ae-scene-render-score","status":"landed","disposition":"partial conditional software integration and independently verified score; complete brief/native fidelity NOT accepted","attempts_in_run":2,"question_round":2,"brief":"build/tmp/c3ae-scene-render-score-brief.md","repair_brief":"build/tmp/c3ae-scene-render-score-repair1.md","worker_type":"targeted production integration/render","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8acc01e4ffehWsVZ2j18Us2Qf","owns_live_game":false,"stock_starts_used":0,"dispatched_at":"2026-10-25T16:34:28-06:00","repair_dispatched_at":"2026-10-25T16:52:49-06:00","landed_at":"2026-10-25T17:22:12-06:00","elapsed":"47m44s","repair_elapsed":"29m23s","worker_output":"build/tmp/c3ae-scene-render-score/round-note.md","facilitator_note":"docs/scratch/phase-c3ae-scene-render-score.md","result":"Ownmatchedrerender/scoring21707403/235008000=.0923687832 FAIL;scene-off exactbaseline. IndependentC1all10reports reproduce gatedpasses. Yaw-onlymutant worsens+2168344 andrestoredPNGexact;39/39CTest. Knownancestor/S/predicate/dispatch/clip/packing/state/ENVomissions explicitly retained; source/floorvisibility notfullyaccepted. Initialwronginputpacketpreserved. Counts2attempts,run24/24,0starts."},
     {"id":"c3ad-pause-values-live","status":"landed","disposition":"partial offline acceptance; live recipe rejected, no approval/start","attempts_in_run":2,"question_round":5,"brief":"build/tmp/c3ad-pause-values-live-brief.md","repair_brief":"build/tmp/c3ad-pause-values-live-repair1.md","worker_type":"targeted runtime observation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8acc020effeO58FyZU3M389AT","owns_live_game":true,"live_owner":null,"stock_starts_used":0,"dispatched_at":"2026-10-25T16:34:28-06:00","repair_dispatched_at":"2026-10-25T16:54:52-06:00","landed_at":"2026-10-25T17:19:51-06:00","elapsed":"45m23s","repair_elapsed":"24m59s","worker_output":"build/tmp/c3ad-pause-values-live/repair1/round-note.md","facilitator_note":"docs/scratch/phase-c3ad-pause-values-live.md","result":"Independent initial129bind pause-loss failure fixed by isolatedstreams; anchors and success/failedHRESULT/one-fieldmutant checked. Launcher references nonexistent entry.RECORD_SIZE afterPopen; independent staticcheckfails, no dryapproval. No actualpausevalues or format;0starts. Finalrunbudget reserved, no more repair dispatched."},
     {"id":"c3ac-billboard-source","status":"landed","question_round":2,"brief":"build/tmp/c3ac-billboard-source-brief.md","repair_brief":"build/tmp/c3ac-billboard-source-repair1.md","worker_type":"targeted production implementation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8aedfcd4ffemsMq24b4Q94RX6","owns_live_game":false,"dispatched_at":"2026-10-25T15:57:12-06:00","repair_dispatched_at":"2026-10-25T16:14:58-06:00","landed_at":"2026-10-25T16:33:26-06:00","elapsed":"36m14s","repair_elapsed":"18m28s","worker_output":"build/tmp/c3ac-billboard-source/round-note.md","facilitator_note":"docs/scratch/phase-c3ac-billboard-source.md","result":"Initial layout/test omission rejected; repaired explicit native conversion/sourceOffset. Independent17nodes/340fields error9.1e-13; own-Y-only mutant fails75.36pixels andexactrestores. Retail443checks/full38CTest pass. Preclip only,0starts;counts2attempts."},

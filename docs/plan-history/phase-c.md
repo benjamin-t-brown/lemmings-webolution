@@ -715,3 +715,11 @@ sorted dispatch/type1/clip/packing/state and AA/ACENV omissions remain, not mere
 GPU precision. Largest error remains rest19234589,skills1484307,tube682387;
 floor included, exact visibility unresolved. Initial wrong-input packet rejected
 and preserved. Two attempts exhaust24-round run with AD; no further dispatch.
+
+**C3ag: configured AA/AC retail environment (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ag-retail-env.md)). Own parent-env-unset
+CTest runs443/31checks; removing only AC's ENV entry makes ACskip/48 while AA31
+persists; exact restore and39/39CTest pass. No production pixels change from this
+wiring. Required fresh score0.0838931 includes rejected/uncommitted initial AF,
+not an accepted C3 improvement; accepted baseline remains0.0923688. C1 gates pass.
+New directive run owns C3 only; initial AF and AH packets need bounded repairs.

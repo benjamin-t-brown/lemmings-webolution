@@ -321,6 +321,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist scenenode backdropscene world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist scenenode backdropscene world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign scenemeshsource scenebillboardsource PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

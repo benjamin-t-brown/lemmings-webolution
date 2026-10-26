@@ -1,8 +1,52 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T18:28:54-06:00",
+  "updated": "2026-10-25T18:34:37-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
-  "active": [],
+  "active": [
+    {
+      "id": "c3ai-predicate-context",
+      "status": "running",
+      "dispatched_at": "2026-10-25T18:31:17-06:00",
+      "dispatch_session_id": "ses_e8a615194ffeH6CYIdIsaOuFnt",
+      "brief": "build/tmp/c3ai-predicate-context-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owns_live_game": false,
+      "owned_paths": [
+        "src/app/BackdropScene.cpp",
+        "src/app/BackdropScene.h",
+        "src/__test__/test_backdropscene.cpp",
+        "build/tmp/c3ai-predicate-context/"
+      ],
+      "depends_on": [],
+      "question_round": 2,
+      "worker_output": null,
+      "live_owner": null
+    },
+    {
+      "id": "c3ak-vertex-pack",
+      "status": "running",
+      "dispatched_at": "2026-10-25T18:31:17-06:00",
+      "dispatch_session_id": "ses_e8a6150f7ffecpr0YQnMlQ1Fgh",
+      "brief": "build/tmp/c3ak-vertex-pack-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owns_live_game": false,
+      "owned_paths": [
+        "src/app/SceneVertexPack.h",
+        "src/app/SceneVertexPack.cpp",
+        "src/__test__/test_scenevertexpack.cpp",
+        "CMakeLists.txt one test target and app source entry",
+        "build/tmp/c3ak-vertex-pack/"
+      ],
+      "depends_on": [],
+      "question_round": 1,
+      "worker_output": null,
+      "live_owner": null
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "c3-known-gaps-pause-values",
@@ -21,22 +65,23 @@
     "owner": "ses_e8a901515ffeeoMSISfD3UL0Hr OpenCode facilitator Sol on mouv",
     "ownership_check": "User invocation transfers idle stopped run; no active/queued task, prior handoff explicitly no resource owned. Clean decompile tree and git pull ff-only already up to date17:41:11; separate process check no Lemmings. Resolved round-agent pin checked via opencode debug agents.",
     "started_at": "2026-10-25T17:40:39-06:00",
-    "rounds_run": 6,
+    "rounds_run": 8,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Last landed c3af-billboard-chain: Conditional shared camera/ancestor/S/P integration17draws; independent340fields match; sourceSmutant fails/restores39/39CTest. FixedC3.0846921807FAIL,C1pass. Sidentitypixelerrorlower so no nativepixel protection; f32 diagnostic not runtimeREAD.. Run6/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
+    "handoff": "Context/worker-notification yield, NOT a stop.8/16attempts dispatched,0/3starts. Landed/pushed AGb41b063(17m58),AH15491be(23m24;repair17m25),AJ163a8ac(13m54),AFce086f4(44m37;repair27m54, within45min). Own AF17/340C3o raw-reference replay exact1e-9, sourceS-only mutation fails/restores;39/39CTest; fresh repair4 score19903340/235008000=.0846921807FAIL, rest17433804,C1gates.0160864/.0161212pass. AFf32 is diagnostic, Sidentitypixelerrorimproves so NOT nativepixelprotected; preserve initial68draw/lenscancel rejection. AJexactdefaultbinding+10tests+4independentfixtures pass, deploycontroller ready for later owned livebrief but approval/ledger ABSENT; no starts or userpermission blocker. AIpredicate(worker ses_e8a615194ffeH6CYIdIsaOuFnt) and AKvertexpack(worker ses_e8a6150f7ffecpr0YQnMlQ1Fgh) RUNNING since18:31:17; deadline19:16:17 through verification. Disjoint Backdrop/test vs newSceneVertexPack/CMake. No other path-disjoint brief ready. Next await notifications, verify one at time, require fullsuite/fresh explicitrepair4+regions+all10C1 via c3-run-verify.py unique tags, then wire packing helper after AI releases Backdrop. Native predicate expected465decisions306pass159skip independently re-read35windows in c3-current-predicate-recheck. Remaining sorted/type1/clip/state and packing adoption before the directive one-shot live. Install3hashes unchanged18:32:43, no game/LemWebtask/attach/write. Do not take over or redispatch running owners. Draft/land docs percontracts; latest gate in AFnote/PLAN.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
-      "last_yielded": "2026-10-25T18:17:09-06:00",
-      "elapsed_to_yield_seconds": 2190,
+      "last_yielded": "2026-10-25T18:34:37-06:00",
+      "elapsed_to_yield_seconds": 3238,
       "rounds": [
         {
           "id": "c3af-billboard-chain",
           "dispatched": "2026-10-25T17:44:17-06:00",
           "repair_dispatched": "2026-10-25T18:01:00-06:00",
           "landed": "2026-10-25T18:28:54-06:00",
-          "elapsed_seconds": 2677
+          "elapsed_seconds": 2677,
+          "repair_elapsed_seconds": 1674
         },
         {
           "id": "c3ag-retail-env",
@@ -48,21 +93,31 @@
           "id": "c3ah-controller-lifecycle",
           "dispatched": "2026-10-25T17:44:17-06:00",
           "landed": "2026-10-25T18:07:41-06:00",
-          "elapsed_seconds": 1404
+          "elapsed_seconds": 1404,
+          "repair_dispatched": "2026-10-25T17:50:16-06:00",
+          "repair_elapsed_seconds": 1045
         },
         {
           "id": "c3aj-deployed-controller",
           "dispatched": "2026-10-25T18:10:06-06:00",
           "landed": "2026-10-25T18:24:00-06:00",
           "elapsed_seconds": 834
+        },
+        {
+          "id": "c3ai-predicate-context",
+          "dispatched": "2026-10-25T18:31:17-06:00"
+        },
+        {
+          "id": "c3ak-vertex-pack",
+          "dispatched": "2026-10-25T18:31:17-06:00"
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "latest_yield": {
-      "date": "2026-10-25T18:17:09-06:00",
-      "elapsed": "36m30s",
-      "reason": "Await AFrepair/AJ background completion; no further path-disjoint brief ready (remaining renderer corrections use AF-owned files). Run remains active, no stopped state."
+      "date": "2026-10-25T18:34:37-06:00",
+      "elapsed_seconds": 3238,
+      "reason": "Await owned AI/AK background workers; context handoff, standing run remains active. Resume same facilitator on notifications; /facilitator if needed only respecting current worker ownership."
     },
     "stopped": null
   }

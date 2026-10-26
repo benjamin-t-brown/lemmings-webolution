@@ -1,24 +1,9 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T21:15:04-06:00",
+  "updated": "2026-10-25T21:34:13-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [],
-  "queue": [
-    {
-      "id": "c3-pause-one-shot",
-      "status": "queued",
-      "brief": "build/tmp/c3-pause-one-shot-brief.md",
-      "tier": "targeted",
-      "worker": "round-agent",
-      "owns_live_game": true,
-      "depends_on": [
-        "c3ao-secondary-order"
-      ],
-      "question_round": 1,
-      "start_budget": 1,
-      "notes": "Final16th attempt after AO landing; explicit gate/budget rationale in brief. No retry/controller repair campaign; exactAJ artifacts. Remainingf32/type1/clip debts not falsely closed."
-    }
-  ],
+  "queue": [],
   "standing_run": {
     "id": "c3-known-gaps-pause-values",
     "goal": "C3 only: fix accepted integration omissions one per brief, score after each landing, fully mock controller then collect authorized pause values; unchanged repair4 full-frame gate.",
@@ -36,15 +21,15 @@
     "owner": "ses_e8a901515ffeeoMSISfD3UL0Hr OpenCode facilitator Sol on mouv",
     "ownership_check": "User invocation transfers idle stopped run; no active/queued task, prior handoff explicitly no resource owned. Clean decompile tree and git pull ff-only already up to date17:41:11; separate process check no Lemmings. Resolved round-agent pin checked via opencode debug agents.",
     "started_at": "2026-10-25T17:40:39-06:00",
-    "rounds_run": 15,
+    "rounds_run": 16,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Last landed c3ao-secondary-order: Ownraw-head/sequential29keys/order matches5.7e-14; actualmixedrenderer sharedseam;bias-onlysourceomissionfails/restores,44/44CTest,17/340sourcefields. SourceListoverreachrestored,initialmissingpacketpreserved. FreshC3.0635481771FAIL,worsens96760;mutantomissionimproves81848 => no nativepixelprotection.C1pass,sceneoffexact,0starts.FiniteDISTINCTonly.. Run15/16 attempts,0/3starts as of this landing; active: . Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
+    "handoff": "Final c3-pause-one-shot landed boundednegative: actualhostTaskStateenum4 rejects exactAJstringguard BEFORE gamePopen;0starts/attach/write, no values. Ownnumeric4-vs-stringRunningactualmaincheck discriminates; realPowerShellserializationconfirmed. Install/artifacthashes/task/process/approvalcleanup exact,44/44CTest, savedAO .0635481771FAIL+C1gates authenticated.16/16attempts exhausted: STOP and recordstopped immediately after this landingcommit; no furtherdispatch/retry. Remainingprimary/type1/clip/f32/native-state/format gaps explicit; APpackingbrief preparedonly. Laterhostenumfix needsofflineactualboundarycoverage before any separatelyscopedexecution; no newmethodpermission needed.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
-      "last_yielded": "2026-10-25T21:04:09-06:00",
-      "elapsed_to_yield_seconds": 12210,
+      "last_yielded": "2026-10-25T21:17:50-06:00",
+      "elapsed_to_yield_seconds": 13031,
       "rounds": [
         {
           "id": "c3af-billboard-chain",
@@ -115,14 +100,20 @@
           "elapsed_seconds": 1899,
           "repair_dispatched": "2026-10-25T20:58:21-06:00",
           "repair_elapsed_seconds": 1003
+        },
+        {
+          "id": "c3-pause-one-shot",
+          "dispatched": "2026-10-25T21:16:01-06:00",
+          "landed": "2026-10-25T21:34:13-06:00",
+          "elapsed_seconds": 1092
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "latest_yield": {
-      "date": "2026-10-25T21:04:09-06:00",
-      "elapsed_seconds": 12210,
-      "reason": "Await owned AO repair notification; final one-shotlive queued with dependency, not dispatched, no approval/start. Standing run active15/16."
+      "date": "2026-10-25T21:17:50-06:00",
+      "elapsed_seconds": 13031,
+      "reason": "Await sole live-owner final one-shot worker notification.16/16attempts; no retries/furtherdispatch. Starts not yet independently checked; preserve worker ownership and do not inspect/control running game. Onreturn verify/land then stopbudget."
     },
     "stopped": null
   }

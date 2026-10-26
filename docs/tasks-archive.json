@@ -1604,6 +1604,36 @@
   ],
   "landed": [
     {
+      "id": "c3-pause-one-shot",
+      "status": "landed",
+      "brief": "build/tmp/c3-pause-one-shot-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "owns_live_game": true,
+      "depends_on": [
+        "c3ao-secondary-order"
+      ],
+      "question_round": 1,
+      "start_budget": 1,
+      "notes": "Final16th attempt after AO landing; explicit gate/budget rationale in brief. No retry/controller repair campaign; exactAJ artifacts. Remainingf32/type1/clip debts not falsely closed.",
+      "dispatched_at": "2026-10-25T21:16:01-06:00",
+      "dispatch_session_id": "ses_e89ca3dd1ffeX4jGYW8o4m3mHx",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owned_paths": [
+        "build/tmp/c3-pause-one-shot/",
+        "build/tmp/c3aj-deployed-controller/FACILITATOR_APPROVAL.txt",
+        "build/tmp/c3aj-deployed-controller/live/"
+      ],
+      "worker_output": "build/tmp/c3-pause-one-shot/round-note.md",
+      "live_owner": null,
+      "investigation_deadline_minutes": 45,
+      "dispatch_to_landing_deadline": "2026-10-25T22:01:01-06:00",
+      "landed_at": "2026-10-25T21:34:13-06:00",
+      "landed_note": "docs/scratch/phase-c3-pause-one-shot.md",
+      "facilitator_check": "Boundednegative beforePopen: actualsession1taskStateEnum JSON4 rejected by stringguard. Ownactual-main4-vs-Runningfixture reproduces0Popen/CLI; realPowerShellenumserializationconfirmed. Exactdeployedartifacts/installhashes/process+task+approvalcleanupverified.0starts/attaches/writes,no values;44/44CTest,40source+10C1hashes,savedAO.0635481771FAILauthenticated. No retry;16attemptbudget stop.",
+      "elapsed_dispatch_to_landing_seconds": 1092
+    },
+    {
       "id": "c3ao-secondary-order",
       "status": "landed",
       "brief": "build/tmp/c3ao-secondary-order-brief.md",

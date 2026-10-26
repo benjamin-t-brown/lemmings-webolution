@@ -799,3 +799,14 @@ bias-onlysource omission fails/restores,44/44CTest. Fresh fixed0.0635481771
 worsens96760; biasomission improves screenshot81848, so no native pixel-protection
 claim/score selection. C1gatespass,0starts. Finite distinct keys only; ties and
 primary/tube/type1/clip/f32/effectivestate remain open; final attempt observes pause.
+
+**C3 final one-shot: host preflight rejects before stock Popen (2026-10-25)**
+([Facilitator check](../scratch/phase-c3-pause-one-shot.md)). Actual session1task
+state serialized numeric4, while exact AJcontroller expects Running/Absent strings;
+Popen0,starts0,attach0,writes0, no pause values. No retry. Own actual-main fixtures
+discriminate numeric4 versus stringRunning; real PowerShell enum serialization
+confirmed, exact artifacts/install hashes and independent process/task cleanup pass.
+44/44CTest;40source/10C1hashes and savedAOscore authenticated, no new render:
+C3.0635481771FAIL,C1gatespass. Run stops16/16attempts,0/3starts; host enum bridge
+requires bounded offline repair before any later execution. Remaining known
+primary/type1/clip/f32/native-state debts not closed and no method permission missing.

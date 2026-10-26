@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26T13:06:56-06:00",
+  "updated": "2026-10-26T13:09:45-06:00",
   "notes": "Bounded C3 residual-attribution pass stopped after two attempts. Only partial stage sensitivity accepted; no causal diagnosis/correction. Initial sixteen dirty files preserved under build/tmp/c3-residual-pass/initial; own doc deltas isolated for commit.",
   "active": [],
   "queue": [],
@@ -25,9 +25,9 @@
       "gate_baseline": "C3 14934330/235008000 FAIL; C1 zoom1 285083/elev_down285700 over17721990 PASS; all11fresh PNGs exact retained images."
     }],
     "stop_point": "Independently checked diagnosis or evidence limit, max2 attempts/2h/45min per task including verification. No implementation/observer/native follow-on.",
-    "handoff": "STOPPED after C3be initial/repair1,2/2attempts,0starts. Initial spatial-only packet rejected; repair stage suppressions independently verified. Primary-sensitive pixels contain82.933459% of existing rest error; tube only14.821820% despite larger removal penalty. Accept bounded non-additive SOURCE sensitivity, not full diagnosis/native identity/correction. Own primary-only guard/revert, exact source restoration44CTest/25framework,11fresh unchanged images;16fixed/install inputs exact and16initial dirty files preserved outside own docs deltas. No live resource. Commit/timing being finalized. No third task or implementation/observer/native follow-on without fresh approval.",
-    "current_pass": {"started": "2026-10-26T12:36:12-06:00", "rounds": [{"id": "c3be-residual-attribution", "dispatched": "2026-10-26T12:40:35-06:00", "repair_dispatched": "2026-10-26T12:45:53-06:00", "accepted": "2026-10-26T13:06:34-06:00"}]},
+    "handoff": "STOPPED after C3be initial/repair1 committed/pushed436fc8b,2/2attempts,0starts. Initial spatial-only packet rejected; repair stage suppressions independently verified. Primary-sensitive pixels contain82.933459% of existing rest error; tube only14.821820% despite larger removal penalty. Accept bounded non-additive SOURCE sensitivity, not full diagnosis/native identity/correction. Own primary-only guard/revert, exact source restoration44CTest/25framework,11fresh unchanged images;16fixed/install inputs exact and16initial dirty files preserved outside own docs deltas. No live resource. Substantive pass2013s; round1717s including repair1399s. Final admin timing also retained under build/tmp/c3-residual-pass/. No third task or implementation/observer/native follow-on without fresh approval.",
+    "current_pass": {"started": "2026-10-26T12:36:12-06:00", "rounds": [{"id": "c3be-residual-attribution", "dispatched": "2026-10-26T12:40:35-06:00", "repair_dispatched": "2026-10-26T12:45:53-06:00", "accepted": "2026-10-26T13:06:34-06:00", "landed": "2026-10-26T13:09:12-06:00", "commit": "436fc8b", "elapsed_seconds": 1717, "repair_elapsed_seconds": 1399}], "ended": "2026-10-26T13:09:45-06:00", "elapsed_seconds": 2013},
     "rules": "docs/ORCHESTRATION.md#standing-run",
-    "stopped": {"date": "2026-10-26T13:06:56-06:00", "reason": "Two-attempt budget reached with independently verified stage sensitivity but incomplete causal diagnosis; no correction justified. No automatic continuation under this directive."}
+    "stopped": {"date": "2026-10-26T13:09:45-06:00", "reason": "Two-attempt budget reached with independently verified stage sensitivity but incomplete causal diagnosis; no correction justified. No automatic continuation under this directive.", "last_commit": "436fc8b", "elapsed_seconds": 2013}
   }
 }

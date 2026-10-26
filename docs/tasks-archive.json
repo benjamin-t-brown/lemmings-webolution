@@ -1604,6 +1604,29 @@
   ],
   "landed": [
     {
+      "id": "c3aj-deployed-controller",
+      "status": "landed",
+      "dispatched_at": "2026-10-25T18:10:06-06:00",
+      "dispatch_session_id": "ses_e8a8c732fffefU3G3thBkGTLVN",
+      "brief": "build/tmp/c3aj-deployed-controller-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owns_live_game": false,
+      "owned_paths": [
+        "build/tmp/c3aj-deployed-controller/"
+      ],
+      "depends_on": [],
+      "question_round": 1,
+      "cap_exception": "Fifth controller attempt total: concrete unique binding/prelaunch size/current-owned backup/persistence defects remain after narrowed AH component landing; explicit bounded final deployed-contract test expected to unblock directive one-shot, no native reader expansion.",
+      "worker_output": "build/tmp/c3aj-deployed-controller/round-note.md",
+      "live_owner": null,
+      "landed_at": "2026-10-25T18:24:00-06:00",
+      "landed_note": "docs/scratch/phase-c3aj-deployed-controller.md",
+      "facilitator_check": "Exact unique defaults/payload authenticated; actualmain10tests+4independentfixtures, sizeguard-only mutant fails zeroPopen, source restored;39/39CTest; C1gatespass; AFdiag.0846922 not promoted.0starts/approval.",
+      "elapsed_dispatch_to_landing_seconds": 834
+    },
+    {
       "id": "c3ah-controller-lifecycle",
       "repair_brief": "build/tmp/c3ah-controller-lifecycle-repair1-brief.md",
       "repair_dispatched_at": "2026-10-25T17:50:16-06:00",

@@ -732,3 +732,10 @@ false-success correction. Helper import/0x118 contract independently checked.
 39/39CTest and fresh C1 reports pass; C3 score diagnostic still rejected AF,
 not accepted improvement. Actual launch paths/helper binding and remaining
 failure coverage require final deployed-script drycheck; no approval/start.
+
+**C3aj: exact deployed-controller contract drycheck (2026-10-25)**
+([Facilitator check](../scratch/phase-c3aj-deployed-controller.md)). Correct helper
+and unique defaults authenticated; actual-main10tests plus four independent
+fixtures cover prelaunch size, stale/owned backups and fail-closed cleanup.
+Single size-guard removal fails/restores.39/39CTest; fresh in-flight AF diagnostic
+0.0846922 and C1 passing retained, no C3 promotion. No live marker/start/observation.

@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T18:07:41-06:00",
+  "updated": "2026-10-25T18:24:00-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
     {
       "id": "c3af-billboard-chain",
-      "status": "running",
+      "status": "ready-for-verify",
       "repair_brief": "build/tmp/c3af-billboard-chain-repair1-brief.md",
       "repair_dispatched_at": "2026-10-25T18:01:00-06:00",
       "rejection": "Initial app repeats full billboard traversal4times (changed17expectationto68); its focal S/reciprocal P cancels lens for positions. Fixture seam passes but actual render builder is unsupported. Fresh .0838931483 remains unaccepted candidate diagnostic.",
@@ -26,8 +26,8 @@
       ],
       "live_owner": null,
       "depends_on": [],
-      "question_round": 1,
-      "worker_output": "build/tmp/c3af-billboard-chain/round-note.md"
+      "question_round": 2,
+      "worker_output": "build/tmp/c3af-billboard-chain/repair1/round-note.md"
     }
   ],
   "queue": [],
@@ -48,13 +48,15 @@
     "owner": "ses_e8a901515ffeeoMSISfD3UL0Hr OpenCode facilitator Sol on mouv",
     "ownership_check": "User invocation transfers idle stopped run; no active/queued task, prior handoff explicitly no resource owned. Clean decompile tree and git pull ff-only already up to date17:41:11; separate process check no Lemmings. Resolved round-agent pin checked via opencode debug agents.",
     "started_at": "2026-10-25T17:40:39-06:00",
-    "rounds_run": 5,
+    "rounds_run": 6,
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Last landed c3ah-controller-lifecycle: Narrowed offline actual-main component:8worker tests+3independent fixtures; isolated process-cleanup predicate fails. Original AD live recipe still rejected; unique deployed ENTRY/OUT/ledger and final drycheck pending.39/39CTest,C1pass; no starts.. Run5/16 attempts,0/3starts as of this landing; active: c3af-billboard-chain:running. Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
+    "handoff": "Last landed c3aj-deployed-controller: Exact unique defaults/payload authenticated; actualmain10tests+4independentfixtures, sizeguard-only mutant fails zeroPopen, source restored;39/39CTest; C1gatespass; AFdiag.0846922 not promoted.0starts/approval.. Run6/16 attempts,0/3starts as of this landing; active: c3af-billboard-chain:ready-for-verify. Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
+      "last_yielded": "2026-10-25T18:17:09-06:00",
+      "elapsed_to_yield_seconds": 2190,
       "rounds": [
         {
           "id": "c3af-billboard-chain",
@@ -72,10 +74,21 @@
           "dispatched": "2026-10-25T17:44:17-06:00",
           "landed": "2026-10-25T18:07:41-06:00",
           "elapsed_seconds": 1404
+        },
+        {
+          "id": "c3aj-deployed-controller",
+          "dispatched": "2026-10-25T18:10:06-06:00",
+          "landed": "2026-10-25T18:24:00-06:00",
+          "elapsed_seconds": 834
         }
       ]
     },
     "rules": "docs/ORCHESTRATION.md#standing-run",
+    "latest_yield": {
+      "date": "2026-10-25T18:17:09-06:00",
+      "elapsed": "36m30s",
+      "reason": "Await AFrepair/AJ background completion; no further path-disjoint brief ready (remaining renderer corrections use AF-owned files). Run remains active, no stopped state."
+    },
     "stopped": null
   }
 }

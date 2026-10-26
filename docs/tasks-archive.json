@@ -1870,6 +1870,9 @@
   "landed": [
     {
       "id": "c3bf-primary-final-attribution",
+      "commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66",
+      "landed_at": "2026-10-26T13:56:00-06:00",
+      "dispatch_to_landing_seconds": 628,
       "brief": "build/tmp/c3-primary-final-attribution-brief.md",
       "status": "landed",
       "tier": "targeted",

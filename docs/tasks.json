@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-26T13:56:00-06:00",
+  "updated": "2026-10-26T13:56:57-06:00",
   "notes": "Final primary source-to-write-to-influence attribution attempt3/3; one dispatch only. Unrelated dirty changes snapshotted under build/tmp/c3-primary-pass/initial.",
   "active": [],
   "queue": [],
@@ -39,11 +39,11 @@
       }
     ],
     "stop_point": "One independently checked result or evidence limit, no repair/continuation/next question; park at3/3 if incomplete.",
-    "handoff": "STOPPED: final authorized C3bf worker returned without implementing source-record accepted-write/final-influence diagnostic. Incomplete output discarded, not evidence of external blocker/infeasibility. Cumulative3/3,1dispatch this pass,0starts/attaches/injection/tasks/native research. Own source-boundary review,44CTest/32framework tests,3fresh exact gate PNGs; C3FAIL/C1PASS unchanged.21fixed/source/install inputs,113retained evidence files,9initial dirty paths preserved outside isolated own doc deltas. Worker succeeded/idle; no live resource. No correction or automatic fourth question/observer/implementation. Fresh direction/cap exception required.",
+    "handoff": "STOPPED: final authorized C3bf worker returned without implementing source-record accepted-write/final-influence diagnostic. Incomplete output discarded, not evidence of external blocker/infeasibility. Cumulative3/3,1dispatch this pass,0starts/attaches/injection/tasks/native research. Own source-boundary review,44CTest/32framework tests,3fresh exact gate PNGs; C3FAIL/C1PASS unchanged.21fixed/source/install inputs,113retained evidence files,9initial dirty paths preserved outside isolated own doc deltas. Worker succeeded/idle; no live resource. No correction or automatic fourth question/observer/implementation. Fresh direction/cap exception required. Roundbef785b committed/pushed; dispatch-to-landing628s. Final timing in current_pass. Directive consumed despite active heading; never relaunch automatically.",
     "stopped": {
-      "date": "2026-10-26T13:56:00-06:00",
+      "date": "2026-10-26T13:56:57-06:00",
       "reason": "Single final attempt returned incomplete;3/3 cumulative cap exhausted. No repair/continuation permitted; park without cause/correction claim.",
-      "last_commit": "pending landing"
+      "last_commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66"
     },
     "dispatched_at": "2026-10-26T13:45:32-06:00",
     "verified_at": "2026-10-26T13:54:04-06:00",
@@ -56,11 +56,24 @@
           "worker_completed": "2026-10-26T13:47:59-06:00",
           "verified": "2026-10-26T13:54:04-06:00",
           "landed": "2026-10-26T13:56:00-06:00",
-          "elapsed_seconds": 628
+          "elapsed_seconds": 628,
+          "commit": "bef785bf60d1b2872fde2f83c3d16e3274496d66"
         }
       ],
-      "ended": "2026-10-26T13:56:00-06:00",
-      "elapsed_seconds": 824
+      "ended": "2026-10-26T13:56:57-06:00",
+      "elapsed_seconds": 881
+    },
+    "resource_state": {
+      "worker_session": "ses_e8640a91cffeSbncI1DIgEknn6",
+      "worker_outcome": "succeeded",
+      "worker_idle_confirmed": true,
+      "live_resources": null,
+      "stock_starts": 0,
+      "attaches": 0,
+      "injections": 0,
+      "scheduled_tasks": 0,
+      "temporary_source_edits": 0,
+      "native_research": 0
     }
   }
 }

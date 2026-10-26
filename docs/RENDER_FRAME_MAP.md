@@ -59,7 +59,9 @@ primary native holder. No ordering fix is authorized by this mapping pass.
 
 Mesh packing/source reads end at a candidate Device3-layout TL fan call;
 [C3au](scratch/phase-c3au-comparison-boundary.md) selects that pre-wrapper boundary
-conditionally for a thin comparison. [C3q](scratch/phase-c3q-scene-device-state.md)
+conditionally for a thin comparison. [C3av](scratch/phase-c3av-thin-comparison.md)
+tests synthetic recording/comparison mechanics only; it is not a native observer.
+[C3q](scratch/phase-c3q-scene-device-state.md)
 records state/cache **requests**, not successful effective pause-device state.
 Complete resource create/update/version/lifetime and pre-frame state history,
 clears/viewport, effective depth/blend/fog/filter and omissions are not supplied
@@ -69,3 +71,4 @@ Detailed eight-row inventory, exact source ranges, cited address list and initia
 rejected map are retained in `build/tmp/c3at-frame-map/`; accepted corrected
 candidate is under `repair1/`. Keep future shared-mechanism work attached to its
 earliest unsupported/divergent edge here, with raw provenance and fixed gates.
+The [next capture proposal](RENDER_CAPTURE_PROPOSAL.md) requires fresh review and approval.

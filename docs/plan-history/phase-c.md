@@ -829,3 +829,14 @@ secondary-before-tube integration mismatch, without attributing pixels; full
 pack adoption, clipping, runtime gates and effective state remain open.
 [Map](../RENDER_FRAME_MAP.md), [check](../scratch/phase-c3at-frame-map.md).
 Same fresh frozen baseline/C1 passes and44/44CTest; no renderer change or start.
+
+**C3av initial/repair1/repair2 thin path:** no-forwarding synthetic JSONL
+recorder/comparator, explicitly limited to typed per-draw request/resource
+checkpoints. Own verification caught4incomplete false equalities, then a known
+attribute hidden by an unknown-only exclusion; repaired at attempt3/3. Own9valid
+single-field controls differ and9incomplete/out-of-scope controls fail closed;
+isolated normalized-X bypass fails permanent test, exact restore,12/12Python
+and44/44CTest. [Check](../scratch/phase-c3av-thin-comparison.md),
+[later capture proposal](../RENDER_CAPTURE_PROPOSAL.md). Final gates unchanged:
+C3.0635481771FAIL,C1gatedPASS. Six-attempt offline pass complete,0stockstarts;
+native ABI/attribution/history/non-interference still require preflight/approval.

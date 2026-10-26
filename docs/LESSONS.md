@@ -1576,3 +1576,13 @@ f32 pack adoption. Initial map omissions were repaired and independently checked
 ([C3at](scratch/phase-c3at-frame-map.md)). The chosen pre-wrapper comparison
 boundary is conditional, not observed runtime compatibility
 ([C3au](scratch/phase-c3au-comparison-boundary.md)). No gate movement or live start.
+
+**C3av ([check](scratch/phase-c3av-thin-comparison.md)): synthetic recording and
+comparison mechanics pass, not native capture feasibility.** Per-draw request/
+resource checkpoints are not lifecycle/effective-state history. Independent
+checks caught identical incomplete logs passing and a known attribute hidden
+by an unknown-only exclusion; both repaired. Nine valid field changes differ,
+nine incomplete/out-of-scope controls reject/indeterminate, isolated-X bypass
+fails/restores;12/12Python and44/44CTest. C3/C1 gates unchanged,0starts. Native
+identity/ABI/attribution/history/coverage/non-interference remain unproved; use
+the [separate proposal](RENDER_CAPTURE_PROPOSAL.md), not an automatic live follow-on.

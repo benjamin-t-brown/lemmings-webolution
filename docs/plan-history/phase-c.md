@@ -851,3 +851,13 @@ checked, not runtime interface/reachability or durable asset identity. Own fresh
 worker52synthetic controls and packet manifest pass. [Check](../scratch/phase-c3aw-site-preflight.md).
 No native observer deployed; retained C3FAIL/C1PASS unchanged,44/44CTest,
 37/37Python. AX host prerequisite remains separate; no start or attach authorized.
+
+**C3ax initial/repair1 controller preflight:** initial standalone guard returned
+for missing actual-main integration. Repair1 imports real helper; own five main
+outcomes and independent real-session1 replay pass, PID26112 exited/task absent;
+single-State-guard mutation reaches forbidden barrier, exact source restored,
+worker9/9tests pass. [Check](../scratch/phase-c3ax-controller-preflight.md).
+Narrowed again on diff: returned main is reconstructed with operational suffix
+removed; unchanged C3aj still has old serialization. Accept host bindings/barrier,
+not launch readiness. AW observer remains design-only. Pass3/3attempts,0starts;
+stop with offline integration/review blocker, no automatic native execution.

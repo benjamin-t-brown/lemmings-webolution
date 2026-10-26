@@ -1,10 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T23:40:58-06:00",
+  "updated": "2026-10-26T00:04:19-06:00",
   "notes": "Thin live queue; facilitator alone records this pass's queue changes. Archive holds stopped runs and landed tasks.",
-  "active": [
-    {"id":"c3ax-controller-preflight","status":"ready-for-verify","brief":"build/tmp/c3ax-controller-preflight-brief.md","repair_brief":"build/tmp/c3ax-controller-repair1-brief.md","worker_output":"build/tmp/c3ax-controller-preflight/repair1-round-note.md","repair_reason":"Standalone prerequisite checker did not execute actual controller main prelaunch integration; exact main barrier, runtime helper binding and PID/cleanup proof required.","repair_dispatched":"2026-10-25T23:40:58-06:00","worker":"round-agent","session_id":"ses_e894c67d0ffeS4RXtZsU78cyEg","dispatched":"2026-10-25T23:33:51-06:00","tier":"targeted","requested_model":"OpenCode configured round-agent Luna high; no override","owned_paths":["build/tmp/c3ax-controller-preflight/**","owned unique LemWeb-c3ax-* dry-run tasks"],"owns_live_game":false,"live_owner":null,"depends_on":[],"milestone":"C3 full frame","attempt":2}
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "c3-offline-capture-preflight",
@@ -18,9 +16,9 @@
     "started_at": "2026-10-25T23:30:05-06:00",
     "rounds_run": 3,
     "stock_starts_used": 0,
-    "pending_questions": [],
+    "pending_questions": [{"question":"Authorize a separate offline-only operational-controller/observer integration preflight before deciding native observation?","options":["Offline integration/review only, then separate native decision","Defer capture"],"recommendation":"Offline integration/review only: preserve actual controller path behind a terminal prelaunch barrier, repair serialization there and pin/review minimal observer implementation. No stock start yet.","evidence":"docs/scratch/phase-c3aw-site-preflight.md; docs/scratch/phase-c3ax-controller-preflight.md; docs/RENDER_CAPTURE_PROPOSAL.md","remaining_gate_failures":"C3 full-frame retained14934330/235008000=.0635481771FAIL; known primary/type1/clipping/f32/state/history/source-attribution debts not remeasured or attributed this pass. C1zoom1/elev_down retained285083/285700 over17721990PASS; other C1 reported views remain outside gated scope."}],
     "stop_point": "Both prerequisite packets independently checked, or90minutes/3attempts, concrete blocker/ownership/pin/gate/safety condition. No automatic native observation.",
-    "handoff": "AW static packet independently verified and landing now. AX repair1 returned; own5main controls and real session1 copied-main replay passed (PID26112 exited/task absent); state-guard mutation failed and restored exact. AX still needs narrowed landing: main was reconstructed, original operational source unchanged, no deployed observer or launch-ready claim.3/3attempts used,0starts; no further dispatch. Full rebuild44/44CTest and37/37framework+comparator tests pass. Preserve initial dirty changes; no native methods.",
+    "handoff": "AW landed0e482a6 plus9176895history/timing (selective-index encoding failure corrected without staging unrelated edits). AX partial/narrowed host evidence checked: own5main controls, actual session1 replayPID26112/barrier/cleanup, state-guard mutation failure/exact restore,9worker tests; reconstructed main is NOT unchanged operational path. AX landing with explicit offline integration blocker;3/3attempts,0starts. Fresh44/44CTest and37/37Python pass. No game/tasks/owned Python remain,7install hashes match, initial8AX files preserved. Next needs fresh approval, not old directive repetition, no native permission. C3FAIL/C1PASS retained; unrelated dirty edits preserved.",
     "current_pass": {"started":"2026-10-25T23:30:05-06:00","rounds":[{"id":"c3aw-site-preflight","dispatched":"2026-10-25T23:33:51-06:00","landed":"2026-10-26T00:00:41-06:00","elapsed_seconds":1610,"commit":"0e482a6"},{"id":"c3ax-controller-preflight","dispatched":"2026-10-25T23:33:51-06:00","repair_dispatched":"2026-10-25T23:40:58-06:00"}]},
     "rules": "docs/ORCHESTRATION.md#standing-run",
     "stopped": null

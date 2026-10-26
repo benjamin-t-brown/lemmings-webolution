@@ -83,3 +83,26 @@ does not promise native draw streams for every fixture; additional acquisitions
 need their own budget. No reference is replaced, no gate is added/amended and no
 parameter is chosen from these images. Costs above are proposed ceilings, not
 observed execution times or permission to continue automatically.
+
+## Offline preflight result, 2026-10-26 — not launch-ready
+
+[C3aw](scratch/phase-c3aw-site-preflight.md) checks proposed non-overlapping
+PRE0x46D5EC/POST0x46D5F6, conditional ABI and primary-kind5/7 invocation-local
+source discrimination. The observer remains a design, not executable or native-tested.
+[C3ax initial/repair1](scratch/phase-c3ax-controller-preflight.md) independently
+replays a host-only controller copy in real session1, with runtime helper binding,
+string task-state serialization and process/task cleanup. Its main was reconstructed;
+the unchanged old operational controller's prelaunch integration is not certified.
+
+Pass ceiling3/3attempts reached with0starts. Recommend another **offline-only**
+integration/review packet before deciding Step2 permission: retain and test the
+actual controller path behind a terminal prelaunch barrier and pin/review a minimal
+observer implementation. Do not spend a start from this proposal or the completed
+directive. If later approved, the smallest native observation remains one unqualified
+raw slot-call diagnostic, not semantic equality or full-frame acceptance. Temporary
+hook injection, entry input and any necessary level-slot write/restore need explicit
+permission; matched non-interference remains separate Step3.
+
+Identities and exact replay commands are in the two check notes and their packets.
+C3FAIL0.0635481771/C1PASS0.0160864,0.0161212 are retained baselines, not remeasured;
+gates/references/masks/floor inclusion and preselected fixtures are unchanged.

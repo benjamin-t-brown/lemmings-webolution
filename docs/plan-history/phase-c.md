@@ -994,3 +994,25 @@ own doc deltas. Worker succeeded/idle, no live resource/game/LemWeb task,0starts
 attaches/injections/tasks/native research. No repair5needed; stop and consume directive
 at accepted writes. Further final-influence/native/correction/observer work needs
 fresh scoped approval and cumulative-cap decision. Actual times/commits in queue.
+
+**C3bh, 2026-10-26 — bounded three-record final-image influence accepted.**
+Fresh approved continuation, cumulative attempt5 plus final repair6; first returned
+no implementation after100seconds, then the repair delivered nine masked channel
+interventions using C3bg's unchanged logger. Sample preselected by baseline error
+on accepted support: SOURCE records0x63877/0x6b72b/0x7047c, two sand_1 and one wood1;
+26,804pixel accepted union carries3,998,968existing error units, not ownership.
+Independent alternate assignment-inhibition implementation reproduces every worker
+variant PNG byte-exact. Final color-sensitive pixels5,826/14,146/5,328 and
+depth-sensitive3,779/651/3,982 are distinct non-additive sensitivities; baseline
+support error and counterfactual damage/reduction reported separately. Raw primary
+chains distinguish3,567/0/378 later opaque assignments;3wood color perturbations
+erase downstream but remain depth-sensitive. Wood's2,749depth-sensitive pixels
+with identical primary-end RGB/different depth establish a downstream depth path,
+not its consumer/native identity. [Facilitator check](../scratch/phase-c3bh-final-influence.md).
+One isolated delivered color-mode regression fails behavioral PNG equality and
+restores exactly. Restored44/44CTest,32framework, fresh exact C3/C1gate PNGs;
+C3.0635481771FAIL/C1.0160864/.0161212PASS unchanged.21fixed/source/install inputs,
+209prior evidence files and9initial dirty paths preserved outside isolated own doc
+deltas; worker succeeded/idle,0live/native usage/resources. No permanent source
+change, correction or expanded census. Directive consumed at this result; no
+third dispatch or automatic follow-on. Actual timings/commits in queue/archive.

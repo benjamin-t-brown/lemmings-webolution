@@ -3,6 +3,79 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-source-write-recovery",
+      "goal": "Build repeatable masked primary source-record to accepted depth/color-write diagnostic; stop before final influence/native comparison/correction.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "User approved explicit cap exception/narrow diagnostic/budget/delegated Sol launch 2026-10-26",
+      "directive_sha256": "de6f270670a1e85c5f312cf6fdd616ef77d3f318e5593319af0c9efb8e64a7e8",
+      "owner": "ses_e86338718ffeMx2kaUmDPplylo",
+      "parent_session": "ses_e8646168dffeJ0x2Dtz2oTI7yv",
+      "ownership_check": "Read-only API confirms actual facilitator profile/parent and prior owner/worker succeeded idle. Initial newest50 listing showed no competitor; expanded project list contains old imported sessions lacking idle fields, NOT running proof. Actual /api/session/active confirms only parent overlord, this child and its worker in this project; fourth active identity is unrelated ed-ascii. Evidence build/tmp/c3-write-pass/active-ownership-check.json and other-active-session.json. Queue was empty/stopped; ff-only pull current1b1caff.",
+      "started_at": "2026-10-26T14:00:05-06:00",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 2,
+        "cumulative_question_cap": 5,
+        "round_minutes_including_verification": 45,
+        "overall_minutes": 120,
+        "repair_inclusive": true,
+        "commits": "per-round named paths and GitHub sync; preserve unrelated changes"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 4,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Whether to authorize any further final-influence/native-comparison/correction work after accepted diagnostic; no action automatic.",
+          "recommendation": "Review accepted diagnostic before setting any new bounded objective/cumulative-cap authorization. Keep observer refusal and existing parks intact; do not rebuild this instrument or infer cause from write counts.",
+          "evidence": "docs/scratch/phase-c3bg-source-write-diagnostic.md",
+          "gate_baseline": "C3 .06354817708333334 FAIL; C1 .0160863988750699/.016121214378294987 PASS, fresh images byte-identical."
+        }
+      ],
+      "stop_point": "Accepted source-to-write diagnostic or earliest budget/blocker; at most initial plus one repair; no next question.",
+      "handoff": "STOPPED at accepted source-to-write diagnostic: C3bg verified,923candidates/788zero,134518color and depth assignments/100172unique masked pixels. Own independent raw census/chains/totals/sample oracle and fresh exact event replay, mask-only mutation fails/restores,44CTest/32framework,3fresh exact gate PNGs. C3FAIL/C1PASS unchanged.1dispatch cumulativeattempt4,0repair/starts/attaches/injection/tasks/native research; worker succeeded idle, no live resource. All113prior evidence/16non-source fixed-install inputs and9initial dirty paths preserved outside isolated own docs. Final influence/native/correction/observer remain parked pending fresh scoped approval and cumulative-cap decision. Unused repair5 is NOT further authorization. Directive consumed despite active heading. Round4ac4274 committed/pushed; dispatch-to-landing1436s. Final timing in current_pass.",
+      "stopped": {
+        "date": "2026-10-26T14:29:10-06:00",
+        "reason": "Accepted bounded source-to-accepted-write diagnostic; approved stop point reached. No repair needed or follow-on authorized.",
+        "last_commit": "4ac427414eae7a4846341eca1be8c8d775e2aff1"
+      },
+      "dispatched_at": "2026-10-26T14:03:54-06:00",
+      "verified_at": "2026-10-26T14:22:53-06:00",
+      "current_pass": {
+        "started": "2026-10-26T14:00:05-06:00",
+        "rounds": [
+          {
+            "id": "c3bg-write-diagnostic",
+            "dispatched": "2026-10-26T14:03:54-06:00",
+            "worker_completed": "2026-10-26T14:16:07-06:00",
+            "verified": "2026-10-26T14:22:53-06:00",
+            "landing_prepared": "2026-10-26T14:26:29-06:00",
+            "landed": "2026-10-26T14:27:50-06:00",
+            "elapsed_seconds": 1436,
+            "commit": "4ac427414eae7a4846341eca1be8c8d775e2aff1"
+          }
+        ],
+        "ended": "2026-10-26T14:29:10-06:00",
+        "elapsed_seconds": 1745
+      },
+      "resource_state": {
+        "worker_session": "ses_e862fe1f9ffeZfIEBxetdX4F3G",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "live_resources": null,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_tasks": 0,
+        "native_research": 0,
+        "temporary_source_edits_restored": true,
+        "opt_in_diagnostic_retained": true
+      }
+    },
+    {
       "id": "c3-primary-final-attribution",
       "goal": "Close primary source-record to accepted writes and final influence join, then compare retained native evidence or report exact unavailable counterpart. No correction implementation.",
       "milestones": [
@@ -1940,6 +2013,47 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bh-final-influence",
+      "status": "landed",
+      "brief": "build/tmp/c3-influence-pass/brief.md",
+      "kind": "offline software influence",
+      "tier": "targeted",
+      "why_tier": "Three preselected source records, existing diagnostic, bounded channel-separated sensitivities",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin, no override)",
+      "live_owner": null,
+      "dispatched_at": "2026-10-26T20:37:32.564+00:00",
+      "worker_output": "build/tmp/c3bh-final-influence/repair-note.md",
+      "owns_live_game": false,
+      "worker_session": "ses_e86113f2dffexNcllQEIQ2UlTd",
+      "repair_brief": "build/tmp/c3-influence-pass/repair-brief.md",
+      "repair_dispatched_at": "2026-10-26T20:40:52.945+00:00",
+      "attempt5_output": "build/tmp/c3bh-final-influence/round-note.md",
+      "owner": "ses_e86156bc2ffewXXG2clAuR4Z5o",
+      "actual_worker_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "cumulative_attempts": [
+        5,
+        6
+      ],
+      "attempts": 2,
+      "repair_attempts": 1,
+      "stock_starts_used": 0,
+      "note": "docs/scratch/phase-c3bh-final-influence.md",
+      "verified_at": "2026-10-26T20:52:33.228+00:00",
+      "landing_prepared_at": "2026-10-26T20:52:33.228+00:00",
+      "landed_at": null,
+      "commit": null,
+      "attempt5_completed_at": "2026-10-26T20:39:12.650+00:00",
+      "worker_completed_at": "2026-10-26T20:43:19.474+00:00",
+      "repair_inclusive_deadline": "2026-10-26T21:22:30+00:00",
+      "result": "Accepted bounded masked assignment final-color/depth sensitivity of three preselected SOURCE records only. No native identity/cause/correction or generalization.",
+      "facilitator_checks": "Independent raw ranking/source/chains, alternate actual-assignment inhibition reproduces nine variant PNG bytes, per-support baseline/variant error and overlap/non-additivity, re-admission and primary-end depth/RGB proof, one delivered color-mode guard mutation fails/restores exactly, full44CTest/32framework and three fresh exact gates, all21fixed/209prior evidence preserved, host0game/tasks, worker idle."
+    },
     {
       "id": "c3bg-write-diagnostic",
       "status": "landed",

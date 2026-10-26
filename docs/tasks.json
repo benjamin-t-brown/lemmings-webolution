@@ -1,12 +1,10 @@
 {
-  "schema_version": 1,
-  "updated": "2026-10-26T01:18:19-06:00",
-  "notes": "Thin live queue; facilitator records all fields this pass. Unrelated dirty framework/plan/history changes preserved under build/tmp/c3-integrated-startup/.",
-  "active": [
-    {"id":"c3az-observer","status":"ready-for-verify","brief":"build/tmp/c3az-observer-brief.md","repair_brief":"build/tmp/c3az-observer-repair1-brief.md","repair_dispatched_at":"2026-10-26T00:52:58-06:00","tier":"targeted","worker":"round-agent","requested_model":"configured round-agent pin per docs/ROLES.md; no override","owns_live_game":false,"live_owner":null,"owned_paths":["build/tmp/c3az-observer/**"],"prior_attempts":"AW design complete; executable initial parser-only returned/incomplete; repair1 finite lifecycle returned with native gate always refusing, safety capability unresolved","dispatch_id":"ses_e89094ab3ffedoVPJAcTOQC2Ii","dispatched_at":"2026-10-26T00:47:06-06:00","worker_output":"build/tmp/c3az-observer/round-note.md"}
-  ],
-  "queue": [],
-  "standing_run": {
+  "schema_version":1,
+  "updated":"2026-10-26T01:34:58-06:00",
+  "notes":"Thin live queue. Initial15dirty files and earlier queue history preserved; only own docs/status/history deltas staged. Both workers released; no native authorization artifact.",
+  "active":[],
+  "queue":[],
+  "standing_run":{
     "id":"c3-integrated-one-observation",
     "goal":"C3 actual operational controller and executable minimal AW observer; independently establish integrated readiness, then one conditional bounded native observation and stop.",
     "milestones":["C3 full frame"],
@@ -14,14 +12,14 @@
     "authorized":"docs/DIRECTIVE.md active2026-10-26, user integration plus one conditional observation; explicit facilitator invocation transfers idle queue ownership.",
     "grants":{"stock_starts":1,"rounds":8,"hours":4,"round_minutes":45,"commits":"per-round decompile commits and normal GitHub sync, preserve unrelated changes","concurrency":"up to3 disjoint offline; serial integration; at most one live/host owner"},
     "owner":"ses_e890eb754ffeehss1vwMcJtD2v OpenCode facilitator Sol on mouv",
-    "ownership_check":"Prior facilitator API succeeded/idle; only other active session is unrelated ed-ascii project. Explorer3812 session1, no Lemmings or LemWeb task. git pull --ff-only up-to-date, decompile. V2 debug agents confirms configured round-agent Luna/high, disasm-agent Sol/high; no overrides. Initial15dirty files snapshotted.",
+    "ownership_check":"Prior facilitator succeeded/idle; other active session unrelated ed-ascii. Explorer3812 session1; no Lemmings or LemWeb task. git pull ff-only current/decompile. Actual worker APIs confirm configured Luna/high; no override. Initial15dirty files snapshotted and exact unrelated bytes preserved.",
     "started_at":"2026-10-26T00:41:37-06:00",
-    "rounds_run":4,
+    "rounds_run":5,
     "stock_starts_used":0,
-    "pending_questions":[],
-    "stop_point":"After one observation and verification/cleanup regardless outcome; or4h/8attempts; unresolved safety/ownership/delegation blocker, unapproved method, exhaustion justified paths. No start before independent integrated readiness; no retry.",
-    "handoff":"AY initial/repair1 controller-only verified/landed01:18:19: actual default main session1 PID44240 clean, own15outcomes/action-count mutation exact restore;13worker tests. AZ repair1 returned finite lifecycle behind mandatory native gate refusal; verify next, no readiness/launch artifact.4/8attempts,0starts.44/44CTest,37Python pass; fresh C3.06354817708333334FAIL/C1gatedPASS unchanged. Initial dirty framework/plan/history preserved; stage only own status/history delta.",
-    "current_pass":{"started":"2026-10-26T00:41:37-06:00","rounds":[{"id":"c3ay-controller","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:57:25-06:00","landed":"2026-10-26T01:18:19-06:00","elapsed_seconds":1873,"repair_elapsed_seconds":1254},{"id":"c3az-observer","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:52:58-06:00"}]},
+    "pending_questions":[{"question":"Resolve the minimal observer's mandatory actual engine-span/relocation/readback proof prerequisite before any native observation?","options":["Review a concrete bounded offline engine-verifier path under the same permitted method","Defer capture; keep current runtime refusal","Change evidence requirement or observation method only with explicit user approval"],"recommendation":"First establish a concrete verifier path, not another generic design/mock round; then justify the parked question's cap exception, bind actual controller/observer/host deadline and repeat independent integrated readiness. Do not bypass hardfalse or spend the conditional start now.","evidence":"docs/scratch/phase-c3ay-actual-controller.md; docs/scratch/phase-c3az-bounded-observer-blocked.md; docs/plan-history/phase-e.md#c3-minimal-observer-readiness","gate_baseline":"Fresh C3 14934330/235008000=.06354817708333334 FAIL; C1 zoom1/elev_down285083/285700 over17721990 PASS. Primary/type1/clipping/f32/state/source-attribution/history debts remain unmeasured/unattributed here; other C1 views remain reported outside gated scope. No gate change proposed."}],
+    "stop_point":"After one observation/cleanup or budget; unresolved safety/ownership/delegation blocker, unapproved method or exhausted justified path. No start before independent integrated readiness; no retry.",
+    "handoff":"AY d041a63 controller-only committed/pushed: exact default main host replay PID44240 gone/task absent, own15controls/action-count mutation exact restore. AZ3attempts verified01:34:58 as synthetic collector/lifecycle+blocker: own22checks/35worker tests, primitive-only mutation exact restore; mandatory runtime gate hardfalse because no reviewed actual engine-span verifier. Controller/observer binding and8s host unload unfinished; no integrated readiness or native approval artifact. Stop on unresolved safety, not spent start.5/8attempts,0starts.44/44CTest,37Python; own fresh gates unchanged. AZ dispatch-to-land2872s exceeds45min by172s during facilitator verification/docs; worker complete01:29:21 within45min. No further dispatch. Initial dirty files/older queue history preserved. Final cleanup/timing/stop commit follows.",
+    "current_pass":{"started":"2026-10-26T00:41:37-06:00","rounds":[{"id":"c3ay-controller","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:57:25-06:00","landed":"2026-10-26T01:18:19-06:00","elapsed_seconds":1873,"repair_elapsed_seconds":1254,"commit":"d041a63"},{"id":"c3az-observer","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:52:58-06:00","repair2_dispatched":"2026-10-26T01:23:36-06:00","worker_completed":"2026-10-26T01:29:21-06:00","landed":"2026-10-26T01:34:58-06:00","elapsed_seconds":2872,"repair_elapsed_seconds":2520,"repair2_elapsed_seconds":682,"round_overrun_seconds":172}]},
     "rules":"docs/ORCHESTRATION.md#standing-run",
     "stopped":null
   }

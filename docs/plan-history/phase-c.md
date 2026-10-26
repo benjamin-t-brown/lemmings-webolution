@@ -872,3 +872,11 @@ PID44240 gone/task absent, zero game starts/attaches/writes, install hashes equa
 [Check](../scratch/phase-c3ay-actual-controller.md). Controller-only acceptance;
 observer binding/cleanup and integrated readiness remain pending, no launch marker.
 Fresh C3.0635481771FAIL/C1gatedPASS unchanged; initial packet preserved, no renderer change.
+
+**C3az initial/repair1/repair2 minimal observer:** Facilitator verifies22independent
+private-memory/lifecycle controls and35worker tests after returning stale-code/read-fault
+counterexamples; own primitive-only mutation fails and restores exactly. Scoped API check
+does not provide required engine-span proof producer; actual RPC remains hard-disabled.
+[Check](../scratch/phase-c3az-bounded-observer-blocked.md). Accept synthetic tooling/blocker,
+not integrated/native readiness. Park at3attempts; stop run on unresolved safety prerequisite,
+0starts/attaches. C3/C1gates unchanged,44/44CTest/37Python pass; no renderer/reference change.

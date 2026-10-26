@@ -456,6 +456,19 @@ read/DERIVED values next; mark conditional inputs, no fitting or gate change.
   Continue independently testable source/raster implementation meanwhile; no
   default/format selection by score and no gate amendment.
 
+### C3 minimal observer readiness
+
+Parked2026-10-26 after C3az initial/repair1/repair2, three attempts. Synthetic
+collector/lifecycle checked; actual RPC refuses before attach because no reviewed
+engine-span/relocation/readback proof producer exists. Controller-only C3ay
+prelaunch is verified, not integrated readiness. [Check](../scratch/phase-c3az-bounded-observer-blocked.md).
+Resume brief: establish a concrete inspectable verifier under the permitted
+REA-CLI method without custom patching or fabricated proof; then bind the actual
+controller/observer, pause handshake, slot ledger and <=8s host unload/readback.
+Independently repeat integrated readiness before any start. A fourth observer
+attempt needs a justified cap exception; changing the evidence requirement or
+method requires user approval. No automatic fourth round or stock attempt.
+
 ### B3 level pick
 
 - **B3 level pick** (parked 2026-10-25 at the three-round cap, b3e, b3f, b3g). `MM_CLIMB_002` is not in the executable. `lemmings.box` at `0x6F77` is the path `COMPILED\MM_CLIMB_002.LVL`. Lowercase `lemmings.box` is absent. Three `LEMMINGS.BOX` strings, at `0x4C292C`, `0x4C2A60`, and `0x4C2A70`, are pushed at `0x47DF27`, `0x47E298`, and `0x47E2CC`. Each push is followed by a stack-buffer pointer and `call 0x49C760`, then `add esp, 8`. The other argument is `[ebp-0x110]` or `[ebp-0x104]`. No level name and no level index are in those bytes. The body of `0x49C760` was not entered. Resume: open `0x49C760` far enough to say whether it copies the filename or opens the archive, and only then look for the caller that runs on a level choice. Do not treat the archive path as a click handler. See [B3g](../scratch/phase-b3g-box-call.md).

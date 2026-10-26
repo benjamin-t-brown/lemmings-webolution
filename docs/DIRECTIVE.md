@@ -59,7 +59,10 @@ the big rocks better before refining"). Overlord split of C3ao's 14.93M: right e
      counter values with the capture.
 2. **Scene pose** (offline, parallel to 1). Check the scene roots' pose and yaw against the
    read camera chain, using the checker patch, the balloon and the horizon as landmarks to test
-   against, not as targets to fit.
+   against, not as targets to fit. Test handedness explicitly: a mirrored axis or swapped
+   winding in the scene root or camera composition (user lead 2026-10-25: geometry and
+   textures look mismatched or mirrored). The bottom-right 200×200 at (440,280) still carries
+   1.997M in C3ao, with a raised sand ledge and blue patch where the original shows a slope.
 3. **Orange discs over the counters** (offline, parallel to 1). Which node, texture and blend
    draws them, and what the original draws there instead.
 4. **Tube ends.** Find what the original draws for the cylinder's top and bottom and in what

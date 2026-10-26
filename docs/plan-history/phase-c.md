@@ -723,3 +723,12 @@ persists; exact restore and39/39CTest pass. No production pixels change from thi
 wiring. Required fresh score0.0838931 includes rejected/uncommitted initial AF,
 not an accepted C3 improvement; accepted baseline remains0.0923688. C1 gates pass.
 New directive run owns C3 only; initial AF and AH packets need bounded repairs.
+
+**C3ah initial/repair1: actual controller mocked, deployment still pending (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ah-controller-lifecycle.md)). Initial
+abstract state machine rejected. Repaired actual-main suite8tests passes; own
+three independent boundary fixtures and one cleanup-source mutation protect
+false-success correction. Helper import/0x118 contract independently checked.
+39/39CTest and fresh C1 reports pass; C3 score diagnostic still rejected AF,
+not accepted improvement. Actual launch paths/helper binding and remaining
+failure coverage require final deployed-script drycheck; no approval/start.

@@ -1604,6 +1604,31 @@
   ],
   "landed": [
     {
+      "id": "c3ah-controller-lifecycle",
+      "repair_brief": "build/tmp/c3ah-controller-lifecycle-repair1-brief.md",
+      "repair_dispatched_at": "2026-10-25T17:50:16-06:00",
+      "cap_exception": "Fourth controller attempt including AD: initial AH replaced actual main with abstract io skeleton; minimal actual-controller copy and boundary mocks expected to close directive-required coverage, no new native work.",
+      "owns_live_game": false,
+      "status": "landed",
+      "dispatched_at": "2026-10-25T17:44:17-06:00",
+      "dispatch_session_id": "ses_e8a8c732fffefU3G3thBkGTLVN",
+      "brief": "build/tmp/c3ah-controller-lifecycle-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owned_paths": [
+        "build/tmp/c3ah-controller-lifecycle/"
+      ],
+      "live_owner": null,
+      "depends_on": [],
+      "question_round": 3,
+      "worker_output": "build/tmp/c3ah-controller-lifecycle/repair1/round-note.md",
+      "landed_at": "2026-10-25T18:07:41-06:00",
+      "landed_note": "docs/scratch/phase-c3ah-controller-lifecycle.md",
+      "facilitator_check": "Narrowed offline actual-main component:8worker tests+3independent fixtures; isolated process-cleanup predicate fails. Original AD live recipe still rejected; unique deployed ENTRY/OUT/ledger and final drycheck pending.39/39CTest,C1pass; no starts.",
+      "elapsed_dispatch_to_landing_seconds": 1404
+    },
+    {
       "id": "c3ag-retail-env",
       "owns_live_game": false,
       "status": "landed",

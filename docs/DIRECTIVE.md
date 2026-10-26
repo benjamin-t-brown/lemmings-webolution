@@ -42,7 +42,11 @@ These are observations and leads. Values still come from the read chain.
 
 ## Scope
 
-Milestone: **C3 full frame** only. In order of priority:
+Milestone: **C3 full frame** only. Big errors first (user, overlord review 2026-10-25: "get
+the big rocks better before refining"). Overlord split of C3ao's 14.93M: right edge x 560–640
+4.98M (orange discs 2.14M of it), left edge x 0–90 3.59M, middle 3.99M, tube top/bottom bands
+2.39M, hatch cursor 0.35M. The two edge strips hold 57% of the error. Run the offline items
+**alongside** the live arm, which needs only the live owner.
 
 1. **Live arm, tested on the host.** Repair the controller's ScheduledTask state handling
    (numeric enum, C3 one-shot note). Then dry-run the actual controller on mouv, in session 1,
@@ -53,15 +57,17 @@ Milestone: **C3 full frame** only. In order of priority:
    - **re-capture the repair4 pause** with the recipe that made it. Park the cursor over plain
      scenery, clear of actors, hatch and HUD. Persist the **full actor list** and the HUD
      counter values with the capture.
-2. **Scene pose.** Check the scene roots' pose and yaw against the read camera chain,
-   using the checker patch, the balloon and the horizon as landmarks to test against, not as
-   targets to fit.
-3. **Tube ends.** Find what the original draws for the cylinder's top and bottom and in what
+2. **Scene pose** (offline, parallel to 1). Check the scene roots' pose and yaw against the
+   read camera chain, using the checker patch, the balloon and the horizon as landmarks to test
+   against, not as targets to fit.
+3. **Orange discs over the counters** (offline, parallel to 1). Which node, texture and blend
+   draws them, and what the original draws there instead.
+4. **Tube ends.** Find what the original draws for the cylinder's top and bottom and in what
    order relative to the tube: the primary-before-tube debt.
-4. **Remaining known gaps**: the orange discs over the counters (which node, texture and
-   blend); type1 radius/near dispatch; clipping; wiring the C3ak packer into the app. One
-   defect per brief, each with a concrete value or pixel acceptance check. Re-score after
-   each landing and rank by region error.
+5. **Remaining known gaps**: type1 radius/near dispatch; clipping; wiring the C3ak packer into
+   the app. One defect per brief, each with a concrete value or pixel acceptance check.
+   Re-score after each landing and re-rank by region error; a later measurement outranks
+   this order.
 
 ### Reference change (user, overlord review 2026-10-25)
 

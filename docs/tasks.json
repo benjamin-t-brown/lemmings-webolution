@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-25T18:34:37-06:00",
+  "updated": "2026-10-25T18:45:51-06:00",
   "notes": "Thin queue only; landed tasks and stopped runs in docs/tasks-archive.json. Facilitator owns queue; ORCHESTRATION.md governs.",
   "active": [
     {
       "id": "c3ai-predicate-context",
-      "status": "running",
+      "status": "ready-for-verify",
       "dispatched_at": "2026-10-25T18:31:17-06:00",
       "dispatch_session_id": "ses_e8a615194ffeH6CYIdIsaOuFnt",
       "brief": "build/tmp/c3ai-predicate-context-brief.md",
@@ -21,29 +21,7 @@
       ],
       "depends_on": [],
       "question_round": 2,
-      "worker_output": null,
-      "live_owner": null
-    },
-    {
-      "id": "c3ak-vertex-pack",
-      "status": "running",
-      "dispatched_at": "2026-10-25T18:31:17-06:00",
-      "dispatch_session_id": "ses_e8a6150f7ffecpr0YQnMlQ1Fgh",
-      "brief": "build/tmp/c3ak-vertex-pack-brief.md",
-      "tier": "targeted",
-      "worker": "round-agent",
-      "requested_model": "openai/gpt-6-luna#high (configured pin)",
-      "owns_live_game": false,
-      "owned_paths": [
-        "src/app/SceneVertexPack.h",
-        "src/app/SceneVertexPack.cpp",
-        "src/__test__/test_scenevertexpack.cpp",
-        "CMakeLists.txt one test target and app source entry",
-        "build/tmp/c3ak-vertex-pack/"
-      ],
-      "depends_on": [],
-      "question_round": 1,
-      "worker_output": null,
+      "worker_output": "build/tmp/c3ai-predicate-context/round-note.md",
       "live_owner": null
     }
   ],
@@ -69,7 +47,7 @@
     "stock_starts_used": 0,
     "pending_questions": [],
     "stop_point": "C3 own gate pass; gate change; C1 gated regression; guardrail breach; all remaining parked/waiting;6h/16rounds; unavailable delegation/model or ownership conflict.",
-    "handoff": "Context/worker-notification yield, NOT a stop.8/16attempts dispatched,0/3starts. Landed/pushed AGb41b063(17m58),AH15491be(23m24;repair17m25),AJ163a8ac(13m54),AFce086f4(44m37;repair27m54, within45min). Own AF17/340C3o raw-reference replay exact1e-9, sourceS-only mutation fails/restores;39/39CTest; fresh repair4 score19903340/235008000=.0846921807FAIL, rest17433804,C1gates.0160864/.0161212pass. AFf32 is diagnostic, Sidentitypixelerrorimproves so NOT nativepixelprotected; preserve initial68draw/lenscancel rejection. AJexactdefaultbinding+10tests+4independentfixtures pass, deploycontroller ready for later owned livebrief but approval/ledger ABSENT; no starts or userpermission blocker. AIpredicate(worker ses_e8a615194ffeH6CYIdIsaOuFnt) and AKvertexpack(worker ses_e8a6150f7ffecpr0YQnMlQ1Fgh) RUNNING since18:31:17; deadline19:16:17 through verification. Disjoint Backdrop/test vs newSceneVertexPack/CMake. No other path-disjoint brief ready. Next await notifications, verify one at time, require fullsuite/fresh explicitrepair4+regions+all10C1 via c3-run-verify.py unique tags, then wire packing helper after AI releases Backdrop. Native predicate expected465decisions306pass159skip independently re-read35windows in c3-current-predicate-recheck. Remaining sorted/type1/clip/state and packing adoption before the directive one-shot live. Install3hashes unchanged18:32:43, no game/LemWebtask/attach/write. Do not take over or redispatch running owners. Draft/land docs percontracts; latest gate in AFnote/PLAN.",
+    "handoff": "Last landed c3ak-vertex-pack: Independent retained2077+synthetic2077 packed-byte cases/specular; singleRHWnumerator source mutant fails and exactrestore;40/40CTest. App adoption still absent; siblingAI.0631375 diagnostic not promoted,C1pass.0starts.. Run8/16 attempts,0/3starts as of this landing; active: c3ai-predicate-context:ready-for-verify. Continue known C3 gaps before live; no owned game/attach/write. C3/C1 gates unchanged unless latest note explicitly re-scores.",
     "current_pass": {
       "started": "2026-10-25T17:40:39-06:00",
       "last_yielded": "2026-10-25T18:34:37-06:00",
@@ -109,7 +87,9 @@
         },
         {
           "id": "c3ak-vertex-pack",
-          "dispatched": "2026-10-25T18:31:17-06:00"
+          "dispatched": "2026-10-25T18:31:17-06:00",
+          "landed": "2026-10-25T18:45:51-06:00",
+          "elapsed_seconds": 874
         }
       ]
     },

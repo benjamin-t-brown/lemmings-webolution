@@ -748,3 +748,10 @@ Source-only S mutation fails/restores;39/39CTest. Repaired fresh score0.0846922
 still fails. S identity's pixel error is lower, so source-value protection is not
 claimed as native pixel protection; no score selection. Binary32 context model
 is diagnostic, not READ runtime precision. C1 gates pass; known remaining gaps stand.
+
+**C3ak: explicit final packed-vertex component (2026-10-25)**
+([Facilitator check](../scratch/phase-c3ak-vertex-pack.md)). Separate formulas
+reproduce2077retained plus2077synthetic known-field byte records and preserve
+specular; raw pack/ftol bytes re-read. Single RHW-numerator mutation fails,
+exact restore and40/40CTest. App source registered but Backdrop call site remains
+unwired; no packing-caused pixel improvement or native clipping claim.

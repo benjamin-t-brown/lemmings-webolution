@@ -1604,6 +1604,32 @@
   ],
   "landed": [
     {
+      "id": "c3ak-vertex-pack",
+      "status": "landed",
+      "dispatched_at": "2026-10-25T18:31:17-06:00",
+      "dispatch_session_id": "ses_e8a6150f7ffecpr0YQnMlQ1Fgh",
+      "brief": "build/tmp/c3ak-vertex-pack-brief.md",
+      "tier": "targeted",
+      "worker": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high (configured pin)",
+      "owns_live_game": false,
+      "owned_paths": [
+        "src/app/SceneVertexPack.h",
+        "src/app/SceneVertexPack.cpp",
+        "src/__test__/test_scenevertexpack.cpp",
+        "CMakeLists.txt one test target and app source entry",
+        "build/tmp/c3ak-vertex-pack/"
+      ],
+      "depends_on": [],
+      "question_round": 1,
+      "worker_output": "build/tmp/c3ak-vertex-pack/round-note.md",
+      "live_owner": null,
+      "landed_at": "2026-10-25T18:45:51-06:00",
+      "landed_note": "docs/scratch/phase-c3ak-vertex-pack.md",
+      "facilitator_check": "Independent retained2077+synthetic2077 packed-byte cases/specular; singleRHWnumerator source mutant fails and exactrestore;40/40CTest. App adoption still absent; siblingAI.0631375 diagnostic not promoted,C1pass.0starts.",
+      "elapsed_dispatch_to_landing_seconds": 874
+    },
+    {
       "id": "c3af-billboard-chain",
       "status": "landed",
       "repair_brief": "build/tmp/c3af-billboard-chain-repair1-brief.md",

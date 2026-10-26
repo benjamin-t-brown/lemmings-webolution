@@ -55,7 +55,7 @@ endif()
 # and presents through SDL2 when a window is requested; without a display the
 # binary still renders and writes a PNG from file data (--shot).
 
-add_executable(webolution ${WEBOLUTION_GFX_SOURCES})
+add_executable(webolution ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp)
 target_link_libraries(webolution PRIVATE webolution_objects)
 
 if(WEBOLUTION_HAVE_SDL2)
@@ -249,6 +249,12 @@ add_executable(test_backdropscene
 target_link_libraries(test_backdropscene PRIVATE webolution_objects)
 target_include_directories(test_backdropscene PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME backdropscene COMMAND test_backdropscene WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+add_executable(test_scenevertexpack
+  src/__test__/test_scenevertexpack.cpp
+  src/app/SceneVertexPack.cpp)
+target_include_directories(test_scenevertexpack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME scenevertexpack COMMAND test_scenevertexpack)
 
 add_executable(test_scenemeshsource src/__test__/test_scenemeshsource.cpp)
 target_link_libraries(test_scenemeshsource PRIVATE webolution_objects)

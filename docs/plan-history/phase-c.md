@@ -811,7 +811,7 @@ C3.0635481771FAIL,C1gatespass. Run stops16/16attempts,0/3starts; host enum bridg
 requires bounded offline repair before any later execution. Remaining known
 primary/type1/clip/f32/native-state debts not closed and no method permission missing.
 
-### C3 rendering pivot â€” offline feasibility, 2026-10-25
+### C3 rendering pivot — offline feasibility, 2026-10-25
 
 **C3au boundary assessment:** conditionally prefer one caller-scoped pre-wrapper
 scene-mesh submission over equating translated D3D11 work with original calls.
@@ -821,3 +821,11 @@ reachability, history, attribution and matched non-interference remain blockers.
 [Check and contract](../scratch/phase-c3au-comparison-boundary.md). Fresh own
 C3 baseline14934330/235008000 FAIL; C1zoom1/elev_down285083/285700 over17721990
 PASS,44/44CTest. No production change, gate movement or stock start.
+
+**C3at initial/repair1 frame map:** consolidate eight production families and
+C3u's conditional primary-slot4→tube→secondary-slot8 spine. Initial missing
+spine/stale references returned for repair. Own source/byte checks expose
+secondary-before-tube integration mismatch, without attributing pixels; full
+pack adoption, clipping, runtime gates and effective state remain open.
+[Map](../RENDER_FRAME_MAP.md), [check](../scratch/phase-c3at-frame-map.md).
+Same fresh frozen baseline/C1 passes and44/44CTest; no renderer change or start.

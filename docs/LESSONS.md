@@ -1564,3 +1564,15 @@ panel are the remainder. Evidence: `docs/scratch/phase-c2i-caption-render.md`.
 **C3al (caret alpha, [check](scratch/phase-c3al-caret-alpha.md)): retained billboards use conditional normal-constructor flags8 alpha policy, not actor>239.** Own17/17name join and768RGBA cases verify disabled-test/texture-alpha semantics; source-cutoff mutant fails/restores,41/41CTest. Full frame worsens to0.0712348771, not pixel acceptance; C1 gates pass. No effective-device/cache claim or score selection. Source-contract lead: check normalized billboard Z against the shared buffer's declared physical-view units before fitting rendering state/format.
 
 **C3 final one-shot (host boundary, [check](scratch/phase-c3-pause-one-shot.md)): a fully mocked controller still needs the real host's value representation.** AJ's ten mocks all passed, but actual Task Scheduler StateEnum serialized as numeric4 for Running; the string-only preflight rejected before Popen. Own actual-main numeric4/stringRunning fixtures discriminate that single difference, and separate real PowerShell enumeration confirms numeric JSON versus explicit string. Zero stock starts/attaches/writes; cleanup exact. Do not retry under the exhausted16-attempt run or mistake this for missing method permission/native crash. Normalize/test the actual serialization bridge offline before later execution; pause values and effective format remain unknown.
+
+## Rendering frame map checkpoint (C3at/C3au, offline)
+
+[Frame map](RENDER_FRAME_MAP.md): under C3u's explicit mode/enable gates the
+native conditional spine is primary-slot4 → tube → secondary-slot8. Current
+main/BackdropScene emits its whole secondary stream before TubeScene: a known
+integration-order mismatch, not an attributed pixel cause. Actual repair4 gate
+values/admission/effective state remain unknown; raw diffuse adoption is not full
+f32 pack adoption. Initial map omissions were repaired and independently checked
+([C3at](scratch/phase-c3at-frame-map.md)). The chosen pre-wrapper comparison
+boundary is conditional, not observed runtime compatibility
+([C3au](scratch/phase-c3au-comparison-boundary.md)). No gate movement or live start.

@@ -2046,13 +2046,15 @@
       "note": "docs/scratch/phase-c3bh-final-influence.md",
       "verified_at": "2026-10-26T20:52:33.228+00:00",
       "landing_prepared_at": "2026-10-26T20:52:33.228+00:00",
-      "landed_at": null,
-      "commit": null,
+      "landed_at": "2026-10-26T20:53:42+00:00",
+      "commit": "02a68af8588fd49a7eb524e6902d548fe504d704",
       "attempt5_completed_at": "2026-10-26T20:39:12.650+00:00",
       "worker_completed_at": "2026-10-26T20:43:19.474+00:00",
       "repair_inclusive_deadline": "2026-10-26T21:22:30+00:00",
       "result": "Accepted bounded masked assignment final-color/depth sensitivity of three preselected SOURCE records only. No native identity/cause/correction or generalization.",
-      "facilitator_checks": "Independent raw ranking/source/chains, alternate actual-assignment inhibition reproduces nine variant PNG bytes, per-support baseline/variant error and overlap/non-additivity, re-admission and primary-end depth/RGB proof, one delivered color-mode guard mutation fails/restores exactly, full44CTest/32framework and three fresh exact gates, all21fixed/209prior evidence preserved, host0game/tasks, worker idle."
+      "facilitator_checks": "Independent raw ranking/source/chains, alternate actual-assignment inhibition reproduces nine variant PNG bytes, per-support baseline/variant error and overlap/non-additivity, re-admission and primary-end depth/RGB proof, one delivered color-mode guard mutation fails/restores exactly, full44CTest/32framework and three fresh exact gates, all21fixed/209prior evidence preserved, host0game/tasks, worker idle.",
+      "elapsed_seconds": 969.436,
+      "repair_elapsed_seconds": 769.055
     },
     {
       "id": "c3bg-write-diagnostic",

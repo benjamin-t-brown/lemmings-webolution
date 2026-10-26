@@ -940,3 +940,21 @@ acceptance. Admission/model-holder timing/clip/packing/effective-state gaps rema
 no automatic next rendering/observer question. Initial unrelated edits preserved
 with own PLAN status/history append staged separately; seven install hashes match,
 no game/LemWeb task. Actual times and commit in queue/archive.
+
+### C3 bounded residual attribution, 2026-10-26
+
+**C3be initial/repair1:** initial spatial-only packet returned for failing to
+measure our renderer. Final repair isolates four scheduler-stage suppressions;
+facilitator independently checks all masks/numerators and reproduces primary
+suppression with a separate one-callback guard, then discriminates its removal.
+Tube has largest removal penalty, **not** largest existing-error support:
+primary-sensitive rest pixels hold10364721/12497635 (82.933459%) versus tube14.821820%.
+Non-additive counterfactual support is not literal raster/native ownership.
+[Facilitator check](../scratch/phase-c3be-residual-attribution.md). No correction
+justified; full diagnosis incomplete. Per-source primary raster/final-influence
+join and matched native admission/state are missing; no native campaign inferred.
+Own restored build44/44CTest and11fresh images match retained baselines exactly:
+C3.0635481771FAIL, C1zoom1/down.0160864/.0161212PASS. Two attempts spent,0starts;
+stop without implementation or observer reopening. Initial16dirtyfiles preserved
+with own doc deltas staged separately;10install hashes match, no game/LemWeb task.
+Actual dispatch-to-landing and pass times are recorded in queue/archive.

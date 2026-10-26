@@ -3,6 +3,26 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-stage-order",
+      "goal": "Correct the supported conditional primary/tube/secondary ordering, verify and report unchanged C3/C1 gates; observer stays parked.",
+      "milestones": ["C3 full frame"],
+      "current": "C3 full frame",
+      "authorized": "docs/DIRECTIVE.md active scene-stage ordering; user i approve 2026-10-26; explicit fresh facilitator invocation.",
+      "directive_sha256": "e191d7b7774e673fffc51b164c34d84124d12f7a03078a662df430e39c6d07ef",
+      "grants": {"stock_starts": 0, "rounds": 3, "hours": 3, "round_minutes": 45, "commits": "per-round decompile commits/sync preserving unrelated dirty changes"},
+      "owner": "ses_e86dd2ae4ffe01pOMjM7OFXKMl OpenCode facilitator Sol on mouv",
+      "ownership_check": "No running task; previous run explicitly stopped. git pull --ff-only up to date at aef6b90; new invocation transfers idle ownership.",
+      "started_at": "2026-10-26T10:55:00-06:00",
+      "rounds_run": 2,
+      "stock_starts_used": 0,
+      "pending_questions": [],
+      "stop_point": "Verified ordering correction plus independent score/diagnostic report; max3 attempts/3h/45min per task including repairs; stop on missing attribution or safety/ownership/delegation blocker. No follow-on rendering/observer question.",
+      "handoff": "STOPPED at directive completion. C3bd initial/repair1 committed/pushed955e57d: supported primary/tube/secondary timing corrected; Entrance/Exit explicitly legacy-unattributed. Own production-order-only mutant fails permanent+independent oracles, exact restore44CTest; fresh repair4/all10C1/scene-off unchanged. C3 .0635481771 FAIL, C1 .0160864/.0161212 PASS; initial,left,elev_up,MM_DIG_000 diagnostics unchanged. No C3 acceptance or native admission/census claim. No follow-on dispatch/repeat under this same completed authorization. Observer remains parked/refusal unchanged. Initial16dirtyfiles preserved, own PLANstatus/historyappend staged separately;7installhashes26fixedinputs exact;no game/LemWeb task.0starts,2/3attempts,2187s pass; round1889s including repair1409s. No active worker/live resource. Future rendering question needs fresh direction, not observer reopening by default.",
+      "current_pass": {"started": "2026-10-26T10:55:00-06:00", "rounds": [{"id": "c3bd-stage-order", "dispatched": "2026-10-26T10:59:27-06:00", "repair_dispatched": "2026-10-26T11:07:27-06:00", "accepted": "2026-10-26T11:27:22-06:00", "landed": "2026-10-26T11:30:56-06:00", "commit": "955e57d", "elapsed_seconds": 1889, "repair_elapsed_seconds": 1409}], "ended": "2026-10-26T11:31:27-06:00", "elapsed_seconds": 2187},
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {"date": "2026-10-26T11:31:27-06:00", "reason": "Authorized verified scene-order correction and independent score report complete; directive stop reached, not C3 acceptance. No automatic follow-on rendering/observer/native permission.", "last_commit": "955e57d", "elapsed_seconds": 2187}
+    },
+    {
       "id": "c3-offline-verifier-integration",
       "goal": "Assess source-bound two-site verifier and, only after independent acceptance, actual-controller offline integration; keep runtime refusal.",
       "milestones": ["C3 full frame"],
@@ -1790,6 +1810,29 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3be-residual-attribution",
+      "status": "landed",
+      "milestone": "C3 full frame",
+      "brief": "build/tmp/c3be-residual-attribution-brief.md",
+      "repair_brief": "build/tmp/c3be-residual-attribution-repair1-brief.md",
+      "worker": "round-agent",
+      "tier": "targeted",
+      "requested_model": "configured OpenCode targeted-worker pin per docs/ROLES.md; no override",
+      "dispatch_session": "ses_e867bf79bffeSEm82SCopI82Ph",
+      "dispatched_at": "2026-10-26T12:40:35-06:00",
+      "repair_dispatched_at": "2026-10-26T12:45:53-06:00",
+      "accepted_at": "2026-10-26T13:06:34-06:00",
+      "question_rounds": 2,
+      "worker_output": "build/tmp/c3be-residual-attribution/repair1/round-note.md",
+      "initial_worker_output": "build/tmp/c3be-residual-attribution/round-note.md",
+      "evidence": "docs/scratch/phase-c3be-residual-attribution.md",
+      "facilitator_check": "Initial spatial-only packet rejected. Independent full/mask/support arithmetic and isolated primary-only guard reproduce worker image; guard removal breaks suppression expectation and returns baseline. Source restored exact; own44CTest,25framework tests,11fresh identical images,16fixed/install inputs and16initial dirty paths preserved before own doc deltas.",
+      "result": "Bounded SOURCE stage sensitivity accepted, full causal diagnosis incomplete. Primary-sensitive pixels carry10364721/12497635 rest error; tube carries1852377 despite larger removal penalty. No literal raster/native attribution or justified correction. Two-attempt stop; source-level accepted-write/final-influence join plus native admission/state comparison missing; no automatic Tube split or observer/native follow-on.",
+      "stock_starts_used": 0,
+      "owns_live_game": false,
+      "live_owner": null
+    },
     {
       "id": "c3bd-stage-order",
       "status": "landed",

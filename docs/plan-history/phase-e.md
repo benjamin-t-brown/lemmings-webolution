@@ -34,6 +34,17 @@ open.
 
 ### C3 backdrop scenery
 
+**C3be bounded diagnostic stop,2026-10-26:**
+[Latest check and resume boundary](../scratch/phase-c3be-residual-attribution.md).
+Two attempts including repair,0starts; restored C3.0635481771FAIL/C1PASS unchanged.
+Primary suppression changes pixels carrying82.933459% of baseline rest error;
+tube has a larger removal penalty but only14.821820% existing-error support.
+Non-additive software sensitivity, not raster/native ownership or a correction.
+Full causal diagnosis incomplete: primary per-source accepted-write/final-influence
+join and matched native admission/cache/clipping/effective-state comparison missing.
+If separately approved, resume with a bounded primary-source comparison on saved
+supports, not a Tube split by removal penalty, tuning or automatic observer work.
+
 **C3ae conditional render,2026-10-25:**
 [latest check and resume boundary](../scratch/phase-c3ae-scene-render-score.md).
 App now draws mesh/type2 source candidates; matched repair4 score0.0923687832

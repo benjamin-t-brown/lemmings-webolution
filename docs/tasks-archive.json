@@ -1955,7 +1955,7 @@
       "repair_inclusive_deadline": "2026-10-26T14:48:54-06:00",
       "worker_output": "build/tmp/c3bg-write-diagnostic/round-note.md",
       "verified_at": "2026-10-26T14:22:53-06:00",
-      "landed_at": "2026-10-26T14:26:29-06:00",
+      "landed_at": "2026-10-26T14:27:50-06:00",
       "note": "docs/scratch/phase-c3bg-source-write-diagnostic.md",
       "result": "Accepted bounded source-record to accepted masked software-write diagnostic ONLY; no final influence/native comparison/correction.",
       "facilitator_checks": "Independent stored-LVL923record census, all raw CSV per-record totals/identities/mask/before-state chains, own fresh exact CSV+PNG reproduction with independent mask, separate literal sample oracle, single mask-guard mutation fails/restores exact hash,44CTest/32framework tests, three exact gate PNGs, preservation and host/worker cleanup.",
@@ -1967,7 +1967,9 @@
         "id": "gpt-6-luna",
         "providerID": "openai",
         "variant": "high"
-      }
+      },
+      "commit": "4ac427414eae7a4846341eca1be8c8d775e2aff1",
+      "elapsed_seconds": 1436
     },
     {
       "id": "c3bf-primary-final-attribution",

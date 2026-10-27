@@ -1111,3 +1111,24 @@ fresh rescore of RETAINED PNGs C3.0635481771FAIL/C1.0160864/.0161212PASS,
 no new renders or gate movement.175fixed/source inputs,283prior evidence files,
 9unrelated dirty deltas preserved; worker succeeded/idle,0live resources.
 Sole dispatch, no repair, deadline unchanged; consumed directive and stop here.
+
+**C3bn, 2026-10-26 — pictured right bank software-linked; saved repair4 transform scoped negative.**
+Fresh check-only attempt13, previous12 and historical C3ar/C3bm retained (third
+orientation-related dispatch). Annotated actual pictured ROI560..639,180..318;
+record6b72b/node596c7,indices218/216/219 links10,198accepted writes to same final
+color-influence support via retained C3bg/BH artifacts. Not native pixel ownership.
+Own separate raw-index/rational H/V/lens check and fresh actual-C++ probe use
+SAVED REPAIR4 camera, not A1. All10,198pixel centers inside its projectedtriangle,
+depths match logs within3.41061e-13. No source-transform reversal on this record
+under matched saved inputs; native original correspondence still indeterminate.
+[Facilitator check](../scratch/phase-c3bn-terrain-image-link.md) rejects worker's
+near-center projection/location-discrepancy claim (omitted1/width denominator),
+wrong signed-depth matrix entry and positive=front label. Worker artifacts retained,
+no repair dispatch; own one-scalar projection control fails fixed actual corners
+and restores exact private JSON. Worker offline preregistration lapse recorded.
+No production correction, reflection tuning, new logger/sweep/native queries/live
+actions.12retained native windows authenticated;45/45CTest/lint pass. Fresh rescore
+RETAINED PNGs C3.0635481771FAIL/C1.0160864/.0161212PASS, no new render/gate movement.
+177fixed/source inputs,463prior evidence files and9dirty deltas preserved;
+worker succeeded/idle,0live resources. Directive consumed; no automatic correction,
+parent reserved preapproval not exercised. Deadline unchanged; stop here.

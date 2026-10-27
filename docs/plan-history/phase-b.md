@@ -1,5 +1,21 @@
 # Plan history — Phase B
 
+### B2m continuation — safety stop, 2026-10-27
+
+[Independent failure check](../scratch/phase-b2m-native-capture-safety-stop.md).
+Fresh approved pass attempts1/3 (initial missing implementation plus final repair)
+consume tooling2/2 under unchanged19:38:52.917dispatch/20:22round deadline.
+Two actual starts19:47:23/19:48:14 against ONE authorized predebit: pass stops,
+no fourth attempt/entry work. Required forced-exception test falsely passed on
+wronggeometry; stale frozen worker ignored test-only flag after failed refreeze.
+Raw second command includes-TestOnly, correcting worker's omitted-switch claim.
+First textual receipt recovered from actual tool history, first PNGs overwritten;
+second2560x1440raw desktop/client crop shows other apps, NOT game pixels/fidelity.
+No input/native state, no normal-exit claim. New helper rejected/preserved scratch,
+attributed NUL preserved then removed. Five install hashes match/owned native
+resources clear/worker terminal.49CTest68.19sPASS/four SOURCE mapframes/7badCLI and
+fixed C3FAIL/C1PASSscores+PNGhashes unchanged; all16gates preserved.
+
 ### B3k — final input question undelivered, 2026-10-27
 
 [Facilitator check](../scratch/phase-b3k-first-node-entry.md): attempts15/16,

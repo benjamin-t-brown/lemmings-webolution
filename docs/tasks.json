@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T00:37:55.420325+00:00",
+  "updated": "2026-10-27T00:40:28.083975+00:00",
   "notes": "C3bj independently verified; clipping rule gap established, no correction/native-frame diagnosis. One dispatch cumulativeattempt8; directive consumed, unused attempt9 is not authorization.",
   "active": [],
   "queue": [],
@@ -37,11 +37,11 @@
       }
     ],
     "stop_point": "Stop after independently verified clipping comparison and any justified correction, earlier budget/blocker. No follow-on scope.",
-    "handoff": "STOPPED after accepted C3bj attempt8. Native shared near/screen rule differs from production at explicit-input boundary; independent18cases and source depth3.25vs3 discriminate. Missing scale/bias/bounds/cache/precision/admission/effective-state inputs prevent safe adoption. No production edits; C3FAIL/C1PASS byte-identical. Worker succeeded/idle; REAclosed;0live actions/resources. Directive consumed; no automatic attempt9/follow-on.",
+    "handoff": "STOPPED after accepted C3bj attempt8. Native shared near/screen rule differs from production at explicit-input boundary; independent18cases and source depth3.25vs3 discriminate. Missing scale/bias/bounds/cache/precision/admission/effective-state inputs prevent safe adoption. No production edits; C3FAIL/C1PASS byte-identical. Worker succeeded/idle; REAclosed;0live actions/resources. Directive consumed; no automatic attempt9/follow-on. Roundab44b00 committed/pushed; dispatch-to-landing1345.704s. Actual pass end in current_pass; all preservation checks exact.",
     "stopped": {
-      "date": "2026-10-27T00:37:55.420325+00:00",
+      "date": "2026-10-27T00:40:28.083975+00:00",
       "reason": "Approved stop point: independently verified bounded clipping comparison; exact native-domain integration inputs missing, no justified correction selected.",
-      "last_commit": "bed4baba44e4071e6cfda597c72bf759b3f29221"
+      "last_commit": "ab44b00a31dd52cdb953683286bd4f40bdae23a9"
     },
     "current_pass": {
       "started": "2026-10-27T00:11:36.856Z",
@@ -51,9 +51,14 @@
           "attempt": 8,
           "dispatched": "2026-10-27T00:16:57.296128+00:00",
           "worker_completed": "2026-10-27T00:29:02.068382+00:00",
-          "verified": "2026-10-27T00:37:55.420325+00:00"
+          "verified": "2026-10-27T00:37:55.420325+00:00",
+          "landed": "2026-10-27T00:39:23+00:00",
+          "commit": "ab44b00a31dd52cdb953683286bd4f40bdae23a9",
+          "elapsed_seconds": 1345.703872
         }
-      ]
+      ],
+      "ended": "2026-10-27T00:40:28.083975+00:00",
+      "elapsed_seconds": 1731.227975
     },
     "verified_at": "2026-10-27T00:37:55.420325+00:00",
     "resource_state": {

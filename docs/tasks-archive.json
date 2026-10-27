@@ -2185,11 +2185,13 @@
       ],
       "dispatched_at": "2026-10-27T00:16:57.296128+00:00",
       "worker_output": "build/tmp/c3bj-clipping-contract/round-note.md",
-      "landed_at": "2026-10-27T00:37:55.420325+00:00",
+      "landed_at": "2026-10-27T00:39:23+00:00",
       "note": "docs/scratch/phase-c3bj-clipping-contract.md",
       "summary": "Shared finite near/screen clipping mismatch established; no correction without native scale/bias/bounds/cache inputs. Synthetic source depths3.25vs3 verified; no native-frame attribution. C3FAIL/C1PASS unchanged.",
       "facilitator_check": "30raw windows/26addresses; independent18rational cases/stages, separate actual-source raster driver, single weight mutation/restoration;44CTest/32framework; fresh gates byte-identical.",
-      "resources": "Worker succeeded/idle, static REA closed;0live operations/resources; source unchanged"
+      "resources": "Worker succeeded/idle, static REA closed;0live operations/resources; source unchanged",
+      "commit": "ab44b00a31dd52cdb953683286bd4f40bdae23a9",
+      "dispatch_to_landing_seconds": 1345.703872
     },
     {
       "id": "c3bi-depth-contract",

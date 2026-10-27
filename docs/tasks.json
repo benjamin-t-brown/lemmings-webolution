@@ -1,29 +1,76 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T19:14:31Z",
-  "notes": "STOPPED: worker attempt cap16of16 exhausted. Final B3k negative70e7ba7 landed/pushed before19:16deadline; no map-to-level transition delivered. All workers terminal/no live owner; unused time/starts do not renew this campaign.",
+  "updated": "2026-10-27T19:32:27Z",
+  "notes": "Fresh approved pass; prep charged from first ownership check. Prior complete campaign archived without renewal; B2m/B3k only reopened.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id":"integrated-retail-progress-2026-10-27",
-    "goal":"Faithful integrated retail-level production progress; unchanged signed gates, C3 then C2/B2/B3, tooling only for named fidelity decisions.",
-    "milestones":["C3 full frame","C2 counters, cursor, pause caption","B2 screen state machine","B3 level select and map"],
-    "current":"B3 level select and map",
-    "authorized":"User go ahead (user, overlord review 2026-10-27); approved delegated directive. Ordinary launch/input/screenshots/supported external reads only; no debugger/Frida/controller repair/injection/new capture engine/PhaseD or gate/reference changes.",
-    "directive":"docs/DIRECTIVE.md","directive_sha256":"0ecfdfc6a479db522e4963ab6412f2fba09b7e180a089db657e97bd0534cc40e",
-    "owner":"ses_e820ba1caffekErgamqlwBSKq0","parent_session":"ses_e821d9d54ffe76zZdbg3zhSJ1N",
-    "ownership_check":"Activation supplied hash/empty-stopped queue matched; authenticated V2 old owner+worker succeeded idle, old parent interrupted idle, self only active, selfSol/high and exact worker profiles. Confirmed handoff, ff-only58c853b. Later releases independently check terminal sessions and host resource inventory.",
-    "started_at":"2026-10-27T15:22:19Z","deadline":"2026-10-27T23:22:19Z",
-    "grants":{"overall_minutes":480,"worker_attempts":16,"round_minutes_including_repairs":45,"tooling_attempts":2,"tooling_minutes":90,"stock_starts":8,"commits":"isolated origin/decompile sync"},
-    "rounds_run":10,"attempts_used":16,"stock_starts_used":2,"stock_start_attempts_charged":2,"stock_start_budget_remaining":6,
-    "stock_start_debits":[{"task":"c2q-native-cursor","at":"2026-10-27T16:22:13Z","charged":1,"actual_attempts":1,"state":"Consumed repair1 ordinary launch16:40:00.325291Z; unsafe menu candidate refused, no retry/crash. Initial no-launch refusal retained, no refund or old-pool transfer."},{"task":"b2m-qualified-navigation","at":"2026-10-27T17:57:14Z","charged":1,"actual_attempts":1,"state":"Consumed Popen18:05:42Z, PID43744/creation134375979426036245; reported2560x1440 geometry refusal before input,0screenshots/state/nav; intentional owned termination exit1,4.946s, no retry/crash. Probe rejected for unexecuted record-pointer/stride bugs, native route parked; no refund."}],
-    "tooling_attempts_used":2,"tooling_seconds_used":1298.939,"tooling_clock_started":"2026-10-27T17:31:29.061Z","tooling_clock_ended_at":"2026-10-27T17:53:08Z","tooling_clock_note":"B2 source committed17:47:13Z(943.939s from dispatch); conservatively charge entire wall interval through actual clock/bookkeeping reconciliation17:53:08Z, including overlap with B3 verification. Tooling attempts2of2 exhausted, no further tooling-only work.","stock_crashes":0,"c3_reassess_by":"2026-10-27T17:22:19Z","c3_attempts_used":3,
-    "pending_questions":[{"question":"Next strategic campaign after exhausted attempt pool: native normal-entry/client geometry and input binding evidence.","recommendation":"Separately budget actual-host ordinary-entry/capture qualification with reliable failed-attempt screenshots and5hash brackets; then matched native map/level observations and physical-input binding. No blind retry, extra readiness/observer-core project, gate change or current-pool renewal.","evidence":"B2m reported geometry/no image and rejected probe; B3k exact binding gap; B3j SOURCE viewer only"},{"question":"Separate future PhaseD strategy: D1/D3/digger clock remain user-parked/unaccepted.","recommendation":"After practical C2/B2/B3 progress, separately authorize bounded continuous-budget/animation-clock architecture; do not reopen D or call optional sim faithful retail gameplay now.","evidence":"PLAN PhaseD; LESSONS D1m retraction; PhaseE D1/D2/D3 parks"}],
-    "gate_scores":{"verified_at":"2026-10-27T19:11:53Z","C3":{"numerator":14934333,"denominator":235008000,"score":0.06354818984885621,"pass":false},"C1_zoom1":{"numerator":285083,"denominator":17721990,"score":0.0160863988750699,"pass":true},"C1_elev_down":{"numerator":285700,"denominator":17721990,"score":0.016121214378294987,"pass":true},"C2":"runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted","B1":"conditional acceptance preserved","B2_B3":"unaccepted, no app map-to-level transition; gates unchanged"},
-    "handoff":"STOPPED exhausted16of16attempts; no worker/native/app ownership remains. Final B3k70e7ba7 actual19:14:29Z2383.267s dispatch-to-commit, before unchanged19:16deadline; requested first-node production entry absent. Accepted partial mask/currentbit reads only, not physical binding. Latest production954d685 SOURCE map viewer, no selection/native B3. Final independent49CTest65.36s and fresh3fixedscores+PNGhashes unchanged, C3FAIL.0635481898/C1PASS.0160864/.0161212. Allworkers independentlyterminal/REAclosed; host19:11:53Z clear/5hashes match.10landed rounds/16attempts/2actual=2charged starts/0crashes/tooling2of2 exhausted1298.939s.16signedgates/PLAN27257bytes/unrelateddirtytext preserved. Pending strategic native-entry/client/binding decision and separately parked PhaseD remain; no pool/deadline renewal or further task. Actual round clocks retained in archive and campaign-clock helper.",
-    "resource_verified_at":"2026-10-27T19:11:53Z",
-    "workers_terminal_verified_at":"2026-10-27T19:05:55Z",
-    "elapsed_seconds_at_stop":13932,
-    "stopped":{"date":"2026-10-27T19:14:31Z","reason":"Worker attempt budget16of16 exhausted; final first-node integration negative. All workers terminal, no active task/live owner; remaining native/tooling/C3/cursor/PhaseD arms parked. No further authorization implied by unused time/starts.","last_commit":"70e7ba7bb2ca2cd991ce3746752a69c93ef1fdad"}
+    "id": "native-capture-first-entry-2026-10-27",
+    "owner": "ses_e820ba1caffekErgamqlwBSKq0",
+    "parent_session": "ses_e821d9d54ffe76zZdbg3zhSJ1N",
+    "directive": "docs/DIRECTIVE.md",
+    "directive_sha256": "88c313b06b0e67dd8a161c343e7e2cb189905c4f14a4e5a689d9e3c14537d2c7",
+    "authorized": "User i approve, delegated same Sol/high owner; new 120min/4attempt/3start authority, only native capture/input and actual first-node entry. No model override/fallback.",
+    "started_at": "2026-10-27T19:32:27Z",
+    "deadline": "2026-10-27T21:32:27Z",
+    "grants": {
+      "overall_minutes": 120,
+      "worker_attempts": 4,
+      "round_minutes_including_repairs": 45,
+      "worker_return_minutes_max": 30,
+      "tooling_attempts": 2,
+      "tooling_minutes": 60,
+      "stock_starts": 3
+    },
+    "milestones": [
+      "B2 screen state machine",
+      "B3 level select and map"
+    ],
+    "current": "B2 native capture/input evidence",
+    "rounds_run": 0,
+    "attempts_used": 0,
+    "stock_starts_used": 0,
+    "stock_start_attempts_charged": 0,
+    "stock_start_budget_remaining": 3,
+    "stock_start_debits": [],
+    "tooling_attempts_used": 0,
+    "tooling_seconds_used": 0,
+    "stock_crashes": 0,
+    "historical_counts": {
+      "prior_campaign_attempts": 16,
+      "prior_campaign_starts": 2,
+      "prior_campaign_rounds": 10,
+      "B3_pick_continuations_through_B3k": 5,
+      "B3_production_entry_attempts": 2,
+      "B2_history": "B2a-k caps and B2l tooling attempts1/2 plus B2m attempt13 retained; see unchanged archive"
+    },
+    "ownership_check": "19:32:27Z hash/queue/branch/HEAD verified, only self active, prior worker succeeded/idle, exact self Sol/high parent confirmed.19:34:58Z self-only recheck, host inventory clear, ff-only unchanged a7e37e9.",
+    "gate_scores": {
+      "verified_at": "2026-10-27T19:11:53Z",
+      "C3": {
+        "numerator": 14934333,
+        "denominator": 235008000,
+        "score": 0.06354818984885621,
+        "pass": false
+      },
+      "C1_zoom1": {
+        "numerator": 285083,
+        "denominator": 17721990,
+        "score": 0.0160863988750699,
+        "pass": true
+      },
+      "C1_elev_down": {
+        "numerator": 285700,
+        "denominator": 17721990,
+        "score": 0.016121214378294987,
+        "pass": true
+      },
+      "C2": "runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted",
+      "B1": "conditional acceptance preserved",
+      "B2_B3": "unaccepted, no app map-to-level transition; gates unchanged"
+    },
+    "pending_questions": [],
+    "handoff": "Fresh activation once from19:32:27Z; deadline21:32:27Z includes prep. Archive complete stopped campaign; selectively stage approved authority/PLAN hunks only. Next disjoint live capture/navigation and offline binding briefs. B2m probe rejected; exercise failure retention before any predebited launch. No other focus owner. Current-state not edge; indexedmask notbbox. Preserve all failures/gates/5files/language/progress; stop on supported app entry or concrete blocker/cap.",
+    "stopped": null
   }
 }

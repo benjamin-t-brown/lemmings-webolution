@@ -18,8 +18,9 @@ and a link to the latest note.
 
 **Direction (user, overlord review 2026-10-27): one faithful, integrated retail-level
 experience.** Convert accepted research into production rendering, controls and HUD;
-prefer observable integration over standalone tooling. Approved campaign: C3 → C2 → B2 →
-B3, with convergence fallback and budgets in [the directive](docs/DIRECTIVE.md).
+prefer observable integration over standalone tooling. The C3 → C2 → B2 → B3
+[campaign](docs/DIRECTIVE-INTEGRATED-RETAIL-2026-10-27.md) stopped at its attempt cap.
+Next: native capture/input binding and first-level entry under [the directive](docs/DIRECTIVE.md).
 
 The reset's historical *simulation is correct* claim described 31 rounds of retained
 rules/gadget work, not current end-to-end acceptance. [D1m's later timing retraction](docs/LESSONS.md#the-simulation--measured-and-worth-keeping)
@@ -104,6 +105,10 @@ threshold is 0.02, the same as A1/A2/A7.
 | B3 level select and map | **Implemented:** conditional app base-map, no selection. **Verified (scope):** B3j SOURCE frames/window; [B3k input negative](docs/scratch/phase-b3k-first-node-entry.md), physical binding unknown. **Next deliverable:** parked for strategic native-entry/binding decision; gates unpassed. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
 **User decisions, Phase B.** Full text in [Phase B history](docs/plan-history/phase-b.md).
+- **Native capture and first-level entry (user, overlord review 2026-10-27, "i approve"):**
+  delegated default-tier pass, 2h/4 attempts/3 stock starts; actual-host failure
+  captures, supported input binding and first-node app entry. B2m/B3k questions
+  reopen with history retained; gates/Phase D/observer parks unchanged. [Directive](docs/DIRECTIVE.md).
 - **English reference accepted (user, 2026-10-22):** the German-menu quirk was a harness
   language change; leave the install's language unchanged.
 - **Approach steering (user, CEO review 2026-10-22):** measure the menu image by template
@@ -136,7 +141,7 @@ user 2026-10-22.**
 | C3 full frame | **Implemented:** [native-domain final pack connected](docs/scratch/phase-c3bv-production-pack.md), conditional SOURCE path. **Verified (scope):** FAIL .06354819 (+3 error); C1 PASS. **Next deliverable:** C2/B2/B3 integration; retain C3 gaps, no pixel polishing. | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
 **User decisions, Phase C.** Full text in [Phase C history](docs/plan-history/phase-c.md).
-- **Integrated retail progress (user, overlord review 2026-10-27, "go ahead"):** C3 → C2 → B2 → B3; 8h/16 attempts/8 starts, tooling ≤2 attempts/90min; C3 reassess at 3 attempts/2h. [Directive](docs/DIRECTIVE.md); no Phase D or gate reopening.
+- **Integrated retail progress (user, overlord review 2026-10-27, "go ahead"):** C3 → C2 → B2 → B3; 8h/16 attempts/8 starts, tooling ≤2 attempts/90min; C3 reassess at 3 attempts/2h. [Consumed directive](docs/DIRECTIVE-INTEGRATED-RETAIL-2026-10-27.md); no Phase D or gate reopening.
 - **Backdrop before C1** (user, overlord review 2026-10-23): backdrop scenery, entrance and
   exit models come before C1. Since parked in Phase E (C3 scenery, 2026-10-24).
 - **Standing runs and C1 alpha-count extensions (user, overlord review 2026-10-24/25):** milestone budgets, launch/menu-attach changes, failed-start renewals and convergence decisions retained in the [authorization history](docs/plan-history/phase-c-authorizations-2026-10-27.md); no old pool renewed here.

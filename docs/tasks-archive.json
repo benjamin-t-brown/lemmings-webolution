@@ -1,15 +1,141 @@
 {
   "schema_version": 1,
-  "b3h_commit_clock": {"commit":"a855e6e1e6d21e7aaf72eb72dff1d9590606e6f6","at":"2026-10-27T17:20:05Z","dispatched":"2026-10-27T16:36:24.965Z","dispatch_to_commit_seconds":2620.035,"predeclared_deadline":"2026-10-27T17:20:00Z","source_landing_overrun_seconds":5,"administrative_followup":"Prior landed field17:18:15Z was documentation preparation, not git landing. Actual source commit5seconds late; stale queue and clock corrected on context resumption after17:25:36Z. No new worker/native work or extended clock."},
-  "round_commit_clocks": {"c2p-runtime-hud":{"commit":"56295b9f1cc89788c22e1871201db6c7f97d4114","at":"2026-10-27T17:06:37Z","dispatch_to_commit_seconds":2534.765},"c2q-native-cursor":{"commit":"c0698294ac152c5b0b306cb31154e647d973c4c8","at":"2026-10-27T17:07:22Z","dispatch_to_commit_seconds":2579.760},"administrative_followup":"Both source/research commits and verification completed before17:08Z; PLAN/history/queue handoff bookkeeping followed beyond the predeclared round deadline. No additional worker research or native work; original clocks not extended."},
+  "b3h_commit_clock": {
+    "commit": "a855e6e1e6d21e7aaf72eb72dff1d9590606e6f6",
+    "at": "2026-10-27T17:20:05Z",
+    "dispatched": "2026-10-27T16:36:24.965Z",
+    "dispatch_to_commit_seconds": 2620.035,
+    "predeclared_deadline": "2026-10-27T17:20:00Z",
+    "source_landing_overrun_seconds": 5,
+    "administrative_followup": "Prior landed field17:18:15Z was documentation preparation, not git landing. Actual source commit5seconds late; stale queue and clock corrected on context resumption after17:25:36Z. No new worker/native work or extended clock."
+  },
+  "round_commit_clocks": {
+    "c2p-runtime-hud": {
+      "commit": "56295b9f1cc89788c22e1871201db6c7f97d4114",
+      "at": "2026-10-27T17:06:37Z",
+      "dispatch_to_commit_seconds": 2534.765
+    },
+    "c2q-native-cursor": {
+      "commit": "c0698294ac152c5b0b306cb31154e647d973c4c8",
+      "at": "2026-10-27T17:07:22Z",
+      "dispatch_to_commit_seconds": 2579.76
+    },
+    "administrative_followup": "Both source/research commits and verification completed before17:08Z; PLAN/history/queue handoff bookkeeping followed beyond the predeclared round deadline. No additional worker research or native work; original clocks not extended."
+  },
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
+    {
+      "id": "integrated-retail-progress-2026-10-27",
+      "goal": "Faithful integrated retail-level production progress; unchanged signed gates, C3 then C2/B2/B3, tooling only for named fidelity decisions.",
+      "milestones": [
+        "C3 full frame",
+        "C2 counters, cursor, pause caption",
+        "B2 screen state machine",
+        "B3 level select and map"
+      ],
+      "current": "B3 level select and map",
+      "authorized": "User go ahead (user, overlord review 2026-10-27); approved delegated directive. Ordinary launch/input/screenshots/supported external reads only; no debugger/Frida/controller repair/injection/new capture engine/PhaseD or gate/reference changes.",
+      "directive": "docs/DIRECTIVE.md",
+      "directive_sha256": "0ecfdfc6a479db522e4963ab6412f2fba09b7e180a089db657e97bd0534cc40e",
+      "owner": "ses_e820ba1caffekErgamqlwBSKq0",
+      "parent_session": "ses_e821d9d54ffe76zZdbg3zhSJ1N",
+      "ownership_check": "Activation supplied hash/empty-stopped queue matched; authenticated V2 old owner+worker succeeded idle, old parent interrupted idle, self only active, selfSol/high and exact worker profiles. Confirmed handoff, ff-only58c853b. Later releases independently check terminal sessions and host resource inventory.",
+      "started_at": "2026-10-27T15:22:19Z",
+      "deadline": "2026-10-27T23:22:19Z",
+      "grants": {
+        "overall_minutes": 480,
+        "worker_attempts": 16,
+        "round_minutes_including_repairs": 45,
+        "tooling_attempts": 2,
+        "tooling_minutes": 90,
+        "stock_starts": 8,
+        "commits": "isolated origin/decompile sync"
+      },
+      "rounds_run": 10,
+      "attempts_used": 16,
+      "stock_starts_used": 2,
+      "stock_start_attempts_charged": 2,
+      "stock_start_budget_remaining": 6,
+      "stock_start_debits": [
+        {
+          "task": "c2q-native-cursor",
+          "at": "2026-10-27T16:22:13Z",
+          "charged": 1,
+          "actual_attempts": 1,
+          "state": "Consumed repair1 ordinary launch16:40:00.325291Z; unsafe menu candidate refused, no retry/crash. Initial no-launch refusal retained, no refund or old-pool transfer."
+        },
+        {
+          "task": "b2m-qualified-navigation",
+          "at": "2026-10-27T17:57:14Z",
+          "charged": 1,
+          "actual_attempts": 1,
+          "state": "Consumed Popen18:05:42Z, PID43744/creation134375979426036245; reported2560x1440 geometry refusal before input,0screenshots/state/nav; intentional owned termination exit1,4.946s, no retry/crash. Probe rejected for unexecuted record-pointer/stride bugs, native route parked; no refund."
+        }
+      ],
+      "tooling_attempts_used": 2,
+      "tooling_seconds_used": 1298.939,
+      "tooling_clock_started": "2026-10-27T17:31:29.061Z",
+      "tooling_clock_ended_at": "2026-10-27T17:53:08Z",
+      "tooling_clock_note": "B2 source committed17:47:13Z(943.939s from dispatch); conservatively charge entire wall interval through actual clock/bookkeeping reconciliation17:53:08Z, including overlap with B3 verification. Tooling attempts2of2 exhausted, no further tooling-only work.",
+      "stock_crashes": 0,
+      "c3_reassess_by": "2026-10-27T17:22:19Z",
+      "c3_attempts_used": 3,
+      "pending_questions": [
+        {
+          "question": "Next strategic campaign after exhausted attempt pool: native normal-entry/client geometry and input binding evidence.",
+          "recommendation": "Separately budget actual-host ordinary-entry/capture qualification with reliable failed-attempt screenshots and5hash brackets; then matched native map/level observations and physical-input binding. No blind retry, extra readiness/observer-core project, gate change or current-pool renewal.",
+          "evidence": "B2m reported geometry/no image and rejected probe; B3k exact binding gap; B3j SOURCE viewer only"
+        },
+        {
+          "question": "Separate future PhaseD strategy: D1/D3/digger clock remain user-parked/unaccepted.",
+          "recommendation": "After practical C2/B2/B3 progress, separately authorize bounded continuous-budget/animation-clock architecture; do not reopen D or call optional sim faithful retail gameplay now.",
+          "evidence": "PLAN PhaseD; LESSONS D1m retraction; PhaseE D1/D2/D3 parks"
+        }
+      ],
+      "gate_scores": {
+        "verified_at": "2026-10-27T19:11:53Z",
+        "C3": {
+          "numerator": 14934333,
+          "denominator": 235008000,
+          "score": 0.06354818984885621,
+          "pass": false
+        },
+        "C1_zoom1": {
+          "numerator": 285083,
+          "denominator": 17721990,
+          "score": 0.0160863988750699,
+          "pass": true
+        },
+        "C1_elev_down": {
+          "numerator": 285700,
+          "denominator": 17721990,
+          "score": 0.016121214378294987,
+          "pass": true
+        },
+        "C2": "runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted",
+        "B1": "conditional acceptance preserved",
+        "B2_B3": "unaccepted, no app map-to-level transition; gates unchanged"
+      },
+      "handoff": "STOPPED exhausted16of16attempts; no worker/native/app ownership remains. Final B3k70e7ba7 actual19:14:29Z2383.267s dispatch-to-commit, before unchanged19:16deadline; requested first-node production entry absent. Accepted partial mask/currentbit reads only, not physical binding. Latest production954d685 SOURCE map viewer, no selection/native B3. Final independent49CTest65.36s and fresh3fixedscores+PNGhashes unchanged, C3FAIL.0635481898/C1PASS.0160864/.0161212. Allworkers independentlyterminal/REAclosed; host19:11:53Z clear/5hashes match.10landed rounds/16attempts/2actual=2charged starts/0crashes/tooling2of2 exhausted1298.939s.16signedgates/PLAN27257bytes/unrelateddirtytext preserved. Pending strategic native-entry/client/binding decision and separately parked PhaseD remain; no pool/deadline renewal or further task. Actual round clocks retained in archive and campaign-clock helper.",
+      "resource_verified_at": "2026-10-27T19:11:53Z",
+      "workers_terminal_verified_at": "2026-10-27T19:05:55Z",
+      "elapsed_seconds_at_stop": 13932,
+      "stopped": {
+        "date": "2026-10-27T19:14:31Z",
+        "reason": "Worker attempt budget16of16 exhausted; final first-node integration negative. All workers terminal, no active task/live owner; remaining native/tooling/C3/cursor/PhaseD arms parked. No further authorization implied by unused time/starts.",
+        "last_commit": "70e7ba7bb2ca2cd991ce3746752a69c93ef1fdad"
+      }
+    },
     {
       "id": "c3-controller-final-core",
       "owner": "ses_e854d421effeWpblsoJtCyVVFT",
       "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
       "directive_sha256": "dbc33a3d90cd6f0e096192f1f7c200502341b0c6ce906c7481090b1a7fe569a5",
-      "stopped": {"date": "2026-10-27T08:23:16.801802+00:00", "reason": "FINALnarrowcoreacceptance failed on documentedquotedautomaticg trailer; coreparkedforthisautomationwindow, no repeat/adapter/live route.", "last_commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55"},
+      "stopped": {
+        "date": "2026-10-27T08:23:16.801802+00:00",
+        "reason": "FINALnarrowcoreacceptance failed on documentedquotedautomaticg trailer; coreparkedforthisautomationwindow, no repeat/adapter/live route.",
+        "last_commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55"
+      },
       "rounds_run": 1,
       "cumulative_attempts": 20,
       "stock_starts_used": 0,
@@ -124,7 +250,7 @@
           "evidence": "docs/scratch/phase-c3bt-controller-core.md"
         }
       ],
-      "handoff": "STOPPED C3bt task19 FIRSTslotfullacceptanceFAIL14/18. Prior14/14BScontracts corrected; worker11/11pass. Remaining3mode/listingprobes acceptedwithout e1proof andknownargv/cwd missingdebit/terminalreceipts. Independentactualentryguardedtests/olddefectmutations andone-change modeverification discriminate; candidate3608e6aa342dfa8ff89d39d9c851abafc5d7fa753c32bab011a64f6cc9655cb6 unchanged. NOintegrationtask20dispatch: firstfailureendscurrentpass,secondslotnotretry. Governance docs/DIRECTIVE-AUTOMATION-2026-10-27.md d63e55a3838dcf4d267d20f52100cdf167a507448d883181f48098c2de8e9960 nowread/recordedasauthority,notretroactiveBSexpansion. Macro07:07:42–10:07:42,window1of4used/3remaining;1additionalsurrogate+1conditionalgamepool untouched. Standingboundedtest/nativepermission+specificsuccessorpreauthorization retained butnotactivatableonunacceptedcontroller; parentreviews/issuesnextdirective, no routineuserreapprovalinsidecaps. Runtimecontroller+safety/sourcebindingplan+separategamedirective stillrequired;C3bc refusal/park/gatesunchanged. BR/BSfailurepackets intact/mainmisscauseunknown.0sessions/starts/attach/processcontrol,workerdone/noliveresources. Reassess,notfurtherdispatchunderthisconsumedpass. Evidence8ad6098 committed/pushed; dispatch-to-landing1292.790s. Endpreservation373fixedinputs,2363prior evidence entries inclBR/BS/verificationpackets,currentcorecandidate,allhistory and10initialdirtypaths. Automationdirective readasgoverningauthorityandunchanged. WorkerAPIterminal; no native/processboundaryattempts/liveresources. Actualper-task/passclocksincurrent_pass. Window1used/3remaining,1surrogate+1conditionalgamepoolunused; no integrationdispatch. Parent reassesseswithinremainingauthority, notroutineuserapproval; no currentfollow-on.",
+      "handoff": "STOPPED C3bt task19 FIRSTslotfullacceptanceFAIL14/18. Prior14/14BScontracts corrected; worker11/11pass. Remaining3mode/listingprobes acceptedwithout e1proof andknownargv/cwd missingdebit/terminalreceipts. Independentactualentryguardedtests/olddefectmutations andone-change modeverification discriminate; candidate3608e6aa342dfa8ff89d39d9c851abafc5d7fa753c32bab011a64f6cc9655cb6 unchanged. NOintegrationtask20dispatch: firstfailureendscurrentpass,secondslotnotretry. Governance docs/DIRECTIVE-AUTOMATION-2026-10-27.md d63e55a3838dcf4d267d20f52100cdf167a507448d883181f48098c2de8e9960 nowread/recordedasauthority,notretroactiveBSexpansion. Macro07:07:42\u00e2\u20ac\u201c10:07:42,window1of4used/3remaining;1additionalsurrogate+1conditionalgamepool untouched. Standingboundedtest/nativepermission+specificsuccessorpreauthorization retained butnotactivatableonunacceptedcontroller; parentreviews/issuesnextdirective, no routineuserreapprovalinsidecaps. Runtimecontroller+safety/sourcebindingplan+separategamedirective stillrequired;C3bc refusal/park/gatesunchanged. BR/BSfailurepackets intact/mainmisscauseunknown.0sessions/starts/attach/processcontrol,workerdone/noliveresources. Reassess,notfurtherdispatchunderthisconsumedpass. Evidence8ad6098 committed/pushed; dispatch-to-landing1292.790s. Endpreservation373fixedinputs,2363prior evidence entries inclBR/BS/verificationpackets,currentcorecandidate,allhistory and10initialdirtypaths. Automationdirective readasgoverningauthorityandunchanged. WorkerAPIterminal; no native/processboundaryattempts/liveresources. Actualper-task/passclocksincurrent_pass. Window1used/3remaining,1surrogate+1conditionalgamepoolunused; no integrationdispatch. Parent reassesseswithinremainingauthority, notroutineuserapproval; no currentfollow-on.",
       "stopped": {
         "date": "2026-10-27T07:58:10.172143+00:00",
         "reason": "Firstcorecorrection fullacceptance failed; integration slot cannotrepairfailedfirst. Stopforparentreassessment,0livepools consumed.",
@@ -468,7 +594,7 @@
           "evidence": "docs/scratch/phase-c3bq-windbg-install.md"
         }
       ],
-      "handoff": "STOPPED C3bq install-only: Microsoft.WinDbg1.2610.1001.0_x64__8wekyb3d8bbwe StatusOk, actualsignedmain/enginehashes independentlyverified; exact managerlogauthenticated. WorkerExecutionPolicyBypass process-scope deviation and $PID wrapperfailure/loststdout-exitcode disclosed, no cleanprocedureclaim; no persistentpolicywrite byflag identified, beforebaselineabsent. SkipReputationCheck1 internalmanageroption retained withoutCLIhashbypass; publishedmanifest and ValidMicrosoftfile signatures distinct. OwnXML rejects worker noaliasclaim:15inclWinDbgXzero-byteAppExecLink→actualDbgX.Shell.exe. No declared/registered package dependency, no completehostdelta. OriginalinstallerPIDs absent/notpartial; intentionalpackage stays. No debugger/game/surrogateexecution, research/lifecycle/sourcebinding or follow-on. C3bc refusal/BPreadinessgaps remain, retainedgates unchanged. Freshinstalltask16 notexpiredBPslot16, observationhistory21 unchanged. Directiveconsumed. Installationevidencefdb08b2 committed/pushed; dispatch-to-landing1642.261s. End checks preserve368fixed/source/install inputs,2184prior evidence entries,allhistory and9dirty deltas, captureproposal exact/PhaseEoldtext intact. CurrentpackageStatusOk/notpartial and originalinstallerPIDs absent rechecked; worker APIterminal. No procedure-compliance/shell-exitcode/fulldependencydelta claim. Actual clocks in current_pass.",
+      "handoff": "STOPPED C3bq install-only: Microsoft.WinDbg1.2610.1001.0_x64__8wekyb3d8bbwe StatusOk, actualsignedmain/enginehashes independentlyverified; exact managerlogauthenticated. WorkerExecutionPolicyBypass process-scope deviation and $PID wrapperfailure/loststdout-exitcode disclosed, no cleanprocedureclaim; no persistentpolicywrite byflag identified, beforebaselineabsent. SkipReputationCheck1 internalmanageroption retained withoutCLIhashbypass; publishedmanifest and ValidMicrosoftfile signatures distinct. OwnXML rejects worker noaliasclaim:15inclWinDbgXzero-byteAppExecLink\u00e2\u2020\u2019actualDbgX.Shell.exe. No declared/registered package dependency, no completehostdelta. OriginalinstallerPIDs absent/notpartial; intentionalpackage stays. No debugger/game/surrogateexecution, research/lifecycle/sourcebinding or follow-on. C3bc refusal/BPreadinessgaps remain, retainedgates unchanged. Freshinstalltask16 notexpiredBPslot16, observationhistory21 unchanged. Directiveconsumed. Installationevidencefdb08b2 committed/pushed; dispatch-to-landing1642.261s. End checks preserve368fixed/source/install inputs,2184prior evidence entries,allhistory and9dirty deltas, captureproposal exact/PhaseEoldtext intact. CurrentpackageStatusOk/notpartial and originalinstallerPIDs absent rechecked; worker APIterminal. No procedure-compliance/shell-exitcode/fulldependencydelta claim. Actual clocks in current_pass.",
       "stopped": {
         "date": "2026-10-27T06:15:21.803352+00:00",
         "reason": "Installation-only stop: officialpackage installed/metadata verified; report process-scope security-policy deviation and incomplete shell/dependency receipts. No furtherinstall/research/use.",
@@ -557,7 +683,7 @@
         "current_actual_attempts": 1,
         "historical_total": 21
       },
-      "decomposition": "Task1 pin existing debugger and lifecycle. If decisiveNO-GO stop/park with secondslot unused. Only after verifiedpass dispatchTask2 designated disassembly worker for unique CALL/context→loadedasset→6b72b/596c7 binding; no concurrent unnecessarydispatch.",
+      "decomposition": "Task1 pin existing debugger and lifecycle. If decisiveNO-GO stop/park with secondslot unused. Only after verifiedpass dispatchTask2 designated disassembly worker for unique CALL/context\u00e2\u2020\u2019loadedasset\u00e2\u2020\u20196b72b/596c7 binding; no concurrent unnecessarydispatch.",
       "pending_questions": [
         {
           "question": "No supported available exact debugger/lifecycle is pinned; source binding also remains unestablished.",
@@ -565,7 +691,7 @@
           "evidence": "docs/scratch/phase-c3bp-debugger-no-go.md"
         }
       ],
-      "handoff": "STOPPED/PARKED C3bp attempt15 NO-GO. Independent bounded metadata check pins no supported available WinDbg/DbgEng artifact; standardroots missing/aliases+registrations no match, systemWindowsApps accessdenied UNKNOWN not globalabsence. No lifecycleartifact/version/mode can be supported, no liveplan. Sourcebinding task notdispatched afterdecisivefirstgate failure; AW invocationlocal→durableLVL binding remainsunestablished, notprovedimpossible. Prior B1uGDBblindspot/A1trapcleanup failures, BOcaveats/CALL6words, C3bcFXpositive/refusal retained. No implementation/execution/methodswitch/install/hostdryrun. Retained C3FAIL/C1PASS unchanged,no render/rescore. Prior14 andhistorical20throughBO retained, actualhistory21; only1of2attempts used, slot16 notcarryoverpermission. PhaseEpark recorded, directiveconsumed; no automatic feasibility/live continuation. Round6a44097 committed/pushed; dispatch-to-landing839.787s. End checks preserve368fixed/source/install inputs,2145prior evidence entries,all historicalarchive entries and9dirty deltas, captureproposal exact andPhaseEoldtext intact. Worker APIterminal/activeabsence rechecked;0native resources acquired/nohostprocess-taskinventory. Actual clocks in current_pass.",
+      "handoff": "STOPPED/PARKED C3bp attempt15 NO-GO. Independent bounded metadata check pins no supported available WinDbg/DbgEng artifact; standardroots missing/aliases+registrations no match, systemWindowsApps accessdenied UNKNOWN not globalabsence. No lifecycleartifact/version/mode can be supported, no liveplan. Sourcebinding task notdispatched afterdecisivefirstgate failure; AW invocationlocal\u00e2\u2020\u2019durableLVL binding remainsunestablished, notprovedimpossible. Prior B1uGDBblindspot/A1trapcleanup failures, BOcaveats/CALL6words, C3bcFXpositive/refusal retained. No implementation/execution/methodswitch/install/hostdryrun. Retained C3FAIL/C1PASS unchanged,no render/rescore. Prior14 andhistorical20throughBO retained, actualhistory21; only1of2attempts used, slot16 notcarryoverpermission. PhaseEpark recorded, directiveconsumed; no automatic feasibility/live continuation. Round6a44097 committed/pushed; dispatch-to-landing839.787s. End checks preserve368fixed/source/install inputs,2145prior evidence entries,all historicalarchive entries and9dirty deltas, captureproposal exact andPhaseEoldtext intact. Worker APIterminal/activeabsence rechecked;0native resources acquired/nohostprocess-taskinventory. Actual clocks in current_pass.",
       "stopped": {
         "date": "2026-10-27T05:37:48.192556+00:00",
         "reason": "Verified decisive NO-GO at debugger artifact/lifecycle gate; route parked. Sourcebinding secondtask/attempt16 deliberately unused, no automatic extension.",
@@ -928,7 +1054,7 @@
         }
       ],
       "stop_point": "Stop after verified implementation/re-score or unsupported production binding, blocker or budget. Retain verified component honestly; no broad discovery/follow-on.",
-      "handoff": "STOPPED after C3bl initial attempt10 rejected and repair11 bounded component verified. Fresh-cache explicit near→projection/bias→ordered screen helper only; BackdropScene/test unchanged. Missing native clip-globals→production bounds binding stops integration, no discovery. Independent18cases756fields and two isolated mutations pass/restored; CTest misses scaled epsilon, overflow-temporary claim narrowed.45CTest/32framework, fresh byte-identical C3FAIL/C1PASS gates. Worker succeeded/idle;0live resources/actions. Directive consumed, cumulative11; no automatic follow-on. Component round78a0d71 committed/pushed; original dispatch-to-landing2073.472s includes repair. End preservation/worker-terminal/zero-host-resource checks exact; actual end in current_pass.",
+      "handoff": "STOPPED after C3bl initial attempt10 rejected and repair11 bounded component verified. Fresh-cache explicit near\u00e2\u2020\u2019projection/bias\u00e2\u2020\u2019ordered screen helper only; BackdropScene/test unchanged. Missing native clip-globals\u00e2\u2020\u2019production bounds binding stops integration, no discovery. Independent18cases756fields and two isolated mutations pass/restored; CTest misses scaled epsilon, overflow-temporary claim narrowed.45CTest/32framework, fresh byte-identical C3FAIL/C1PASS gates. Worker succeeded/idle;0live resources/actions. Directive consumed, cumulative11; no automatic follow-on. Component round78a0d71 committed/pushed; original dispatch-to-landing2073.472s includes repair. End preservation/worker-terminal/zero-host-resource checks exact; actual end in current_pass.",
       "stopped": {
         "date": "2026-10-27T02:14:45.897902+00:00",
         "reason": "Approved stop: verified bounded component retained after one repair; production integration stopped at unsupported native bounds binding; attempts10-11 spent.",
@@ -1495,11 +1621,19 @@
     {
       "id": "c3-stage-order",
       "goal": "Correct the supported conditional primary/tube/secondary ordering, verify and report unchanged C3/C1 gates; observer stays parked.",
-      "milestones": ["C3 full frame"],
+      "milestones": [
+        "C3 full frame"
+      ],
       "current": "C3 full frame",
       "authorized": "docs/DIRECTIVE.md active scene-stage ordering; user i approve 2026-10-26; explicit fresh facilitator invocation.",
       "directive_sha256": "e191d7b7774e673fffc51b164c34d84124d12f7a03078a662df430e39c6d07ef",
-      "grants": {"stock_starts": 0, "rounds": 3, "hours": 3, "round_minutes": 45, "commits": "per-round decompile commits/sync preserving unrelated dirty changes"},
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 3,
+        "hours": 3,
+        "round_minutes": 45,
+        "commits": "per-round decompile commits/sync preserving unrelated dirty changes"
+      },
       "owner": "ses_e86dd2ae4ffe01pOMjM7OFXKMl OpenCode facilitator Sol on mouv",
       "ownership_check": "No running task; previous run explicitly stopped. git pull --ff-only up to date at aef6b90; new invocation transfers idle ownership.",
       "started_at": "2026-10-26T10:55:00-06:00",
@@ -1508,28 +1642,92 @@
       "pending_questions": [],
       "stop_point": "Verified ordering correction plus independent score/diagnostic report; max3 attempts/3h/45min per task including repairs; stop on missing attribution or safety/ownership/delegation blocker. No follow-on rendering/observer question.",
       "handoff": "STOPPED at directive completion. C3bd initial/repair1 committed/pushed955e57d: supported primary/tube/secondary timing corrected; Entrance/Exit explicitly legacy-unattributed. Own production-order-only mutant fails permanent+independent oracles, exact restore44CTest; fresh repair4/all10C1/scene-off unchanged. C3 .0635481771 FAIL, C1 .0160864/.0161212 PASS; initial,left,elev_up,MM_DIG_000 diagnostics unchanged. No C3 acceptance or native admission/census claim. No follow-on dispatch/repeat under this same completed authorization. Observer remains parked/refusal unchanged. Initial16dirtyfiles preserved, own PLANstatus/historyappend staged separately;7installhashes26fixedinputs exact;no game/LemWeb task.0starts,2/3attempts,2187s pass; round1889s including repair1409s. No active worker/live resource. Future rendering question needs fresh direction, not observer reopening by default.",
-      "current_pass": {"started": "2026-10-26T10:55:00-06:00", "rounds": [{"id": "c3bd-stage-order", "dispatched": "2026-10-26T10:59:27-06:00", "repair_dispatched": "2026-10-26T11:07:27-06:00", "accepted": "2026-10-26T11:27:22-06:00", "landed": "2026-10-26T11:30:56-06:00", "commit": "955e57d", "elapsed_seconds": 1889, "repair_elapsed_seconds": 1409}], "ended": "2026-10-26T11:31:27-06:00", "elapsed_seconds": 2187},
+      "current_pass": {
+        "started": "2026-10-26T10:55:00-06:00",
+        "rounds": [
+          {
+            "id": "c3bd-stage-order",
+            "dispatched": "2026-10-26T10:59:27-06:00",
+            "repair_dispatched": "2026-10-26T11:07:27-06:00",
+            "accepted": "2026-10-26T11:27:22-06:00",
+            "landed": "2026-10-26T11:30:56-06:00",
+            "commit": "955e57d",
+            "elapsed_seconds": 1889,
+            "repair_elapsed_seconds": 1409
+          }
+        ],
+        "ended": "2026-10-26T11:31:27-06:00",
+        "elapsed_seconds": 2187
+      },
       "rules": "docs/ORCHESTRATION.md#standing-run",
-      "stopped": {"date": "2026-10-26T11:31:27-06:00", "reason": "Authorized verified scene-order correction and independent score report complete; directive stop reached, not C3 acceptance. No automatic follow-on rendering/observer/native permission.", "last_commit": "955e57d", "elapsed_seconds": 2187}
+      "stopped": {
+        "date": "2026-10-26T11:31:27-06:00",
+        "reason": "Authorized verified scene-order correction and independent score report complete; directive stop reached, not C3 acceptance. No automatic follow-on rendering/observer/native permission.",
+        "last_commit": "955e57d",
+        "elapsed_seconds": 2187
+      }
     },
     {
       "id": "c3-offline-verifier-integration",
       "goal": "Assess source-bound two-site verifier and, only after independent acceptance, actual-controller offline integration; keep runtime refusal.",
-      "milestones": ["C3 full frame"],
+      "milestones": [
+        "C3 full frame"
+      ],
       "current": "C3 full frame",
       "authorized": "docs/DIRECTIVE.md user i approve, 2026-10-26; supersedes completed Astra review.",
-      "grants": {"stock_starts": 0, "rounds": 2, "hours": 2, "round_minutes": 45, "final_review_minutes": 30, "commits": "per-round decompile commits/sync preserving unrelated dirty changes", "concurrency": "sequential only"},
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 2,
+        "hours": 2,
+        "round_minutes": 45,
+        "final_review_minutes": 30,
+        "commits": "per-round decompile commits/sync preserving unrelated dirty changes",
+        "concurrency": "sequential only"
+      },
       "owner": "ses_e870469b8ffecuVSTcp5whxRgJ OpenCode facilitator Sol on mouv",
       "ownership_check": "Idle queue, prior standing run explicitly stopped; git pull --ff-only current. Fresh invocation transfers idle ownership; no task running. Dirty snapshots retained.",
       "started_at": "2026-10-26T10:12:13-06:00",
       "rounds_run": 2,
       "stock_starts_used": 0,
-      "pending_questions": [{"question": "What separately scoped direction should address the prospective installation-safety gap before any observer installation?", "recommendation": "Retain refusal/park the route until a reviewed artifact-specific synchronization/install guarantee and supported source/layout binding are available. Do not waive the risk, change methods or spend a start implicitly.", "options": ["Retain refusal and park", "Authorize a narrowly bounded alternate synchronization/safety investigation", "Explicitly propose another method for separate review"], "evidence": "docs/scratch/phase-c3bc-verifier-safety.md", "remaining_blockers": "No preinstall concurrency guarantee for the reviewed Windows RWX path; incomplete supported agent/source/private-layout binding; no accepted decoder; actual AY/pause/slot/resource/unload<=8s/independent-restoration integration unfinished. Actual installed receipts are deferred runtime evidence, not demanded now.", "gate_baseline": "C3 .06354817708333334 FAIL; C1 zoom1 .0160863988750699/elev_down .016121214378294987 PASS retained; no mask/reference/gate/renderer change."}],
+      "pending_questions": [
+        {
+          "question": "What separately scoped direction should address the prospective installation-safety gap before any observer installation?",
+          "recommendation": "Retain refusal/park the route until a reviewed artifact-specific synchronization/install guarantee and supported source/layout binding are available. Do not waive the risk, change methods or spend a start implicitly.",
+          "options": [
+            "Retain refusal and park",
+            "Authorize a narrowly bounded alternate synchronization/safety investigation",
+            "Explicitly propose another method for separate review"
+          ],
+          "evidence": "docs/scratch/phase-c3bc-verifier-safety.md",
+          "remaining_blockers": "No preinstall concurrency guarantee for the reviewed Windows RWX path; incomplete supported agent/source/private-layout binding; no accepted decoder; actual AY/pause/slot/resource/unload<=8s/independent-restoration integration unfinished. Actual installed receipts are deferred runtime evidence, not demanded now.",
+          "gate_baseline": "C3 .06354817708333334 FAIL; C1 zoom1 .0160863988750699/elev_down .016121214378294987 PASS retained; no mask/reference/gate/renderer change."
+        }
+      ],
       "stop_point": "Independently checked artifact-specific assessment, 2attempts/2h,45min per task, or identity/bounds/install-safety/delegation blocker; no native follow-on.",
       "handoff": "STOPPED: C3bc initial/repair1 complete negative,2/2attempts,0starts. Source-supported Windows RWX installation-safety gap; independent remap-false predicate and FXSAVE/FXRSTOR positive source checked. Actual postinstall receipts deferred, not preimplementation prerequisites. No accepted verifier/integration; refusal unchanged. See BC note. No third/integration/live dispatch without fresh direction.44CTest/25framework pass;7install hashes/no game or LemWeb task;initial16dirty paths preserved outside own docs deltas. Round9a26a3d committed/pushed. Final exact preservation check confirms all16initial dirty changes remain, accounting only for own two PLAN lines and phase-C append; archived old run equals original. Final7install hashes match. Pass1324s; round1020s including repair783s. Fresh direction required; no leftover work owns live resources.",
-      "current_pass": {"started": "2026-10-26T10:12:13-06:00", "rounds": [{"id": "c3bc-verifier", "dispatched": "2026-10-26T10:15:30-06:00", "repair_dispatched": "2026-10-26T10:19:27-06:00", "landed": "2026-10-26T10:32:30-06:00", "elapsed_seconds": 1020, "repair_elapsed_seconds": 783, "commit": "9a26a3d"}], "ended": "2026-10-26T10:34:17-06:00", "elapsed_seconds": 1324},
+      "current_pass": {
+        "started": "2026-10-26T10:12:13-06:00",
+        "rounds": [
+          {
+            "id": "c3bc-verifier",
+            "dispatched": "2026-10-26T10:15:30-06:00",
+            "repair_dispatched": "2026-10-26T10:19:27-06:00",
+            "landed": "2026-10-26T10:32:30-06:00",
+            "elapsed_seconds": 1020,
+            "repair_elapsed_seconds": 783,
+            "commit": "9a26a3d"
+          }
+        ],
+        "ended": "2026-10-26T10:34:17-06:00",
+        "elapsed_seconds": 1324
+      },
       "rules": "docs/ORCHESTRATION.md#standing-run",
-      "stopped": {"date": "2026-10-26T10:34:17-06:00", "reason": "Concrete prospective installation-safety blocker and2/2attempts spent; no verifier acceptance, so integration prohibited. No native permission.", "last_commit": "9a26a3d", "elapsed_seconds": 1324}
+      "stopped": {
+        "date": "2026-10-26T10:34:17-06:00",
+        "reason": "Concrete prospective installation-safety blocker and2/2attempts spent; no verifier acceptance, so integration prohibited. No native permission.",
+        "last_commit": "9a26a3d",
+        "elapsed_seconds": 1324
+      }
     },
     {
       "id": "c3-astra-readiness-review",
@@ -1600,62 +1798,218 @@
       }
     },
     {
-      "id":"c3-integrated-one-observation",
-      "goal":"C3 actual operational controller and executable minimal AW observer; independently establish integrated readiness, then one conditional bounded native observation and stop.",
-      "milestones":["C3 full frame"],
-      "current":"C3 full frame",
-      "authorized":"docs/DIRECTIVE.md active2026-10-26, user integration plus one conditional observation; explicit facilitator invocation transfers idle queue ownership.",
-      "grants":{"stock_starts":1,"rounds":8,"hours":4,"round_minutes":45,"commits":"per-round decompile commits and normal GitHub sync, preserve unrelated changes","concurrency":"up to3 disjoint offline; serial integration; at most one live/host owner"},
-      "owner":"ses_e890eb754ffeehss1vwMcJtD2v OpenCode facilitator Sol on mouv",
-      "ownership_check":"Prior facilitator succeeded/idle; other active session unrelated ed-ascii. Explorer3812 session1; no Lemmings or LemWeb task. git pull ff-only current/decompile. Actual worker APIs confirm configured Luna/high; no override. Initial15dirty files snapshotted and exact unrelated bytes preserved.",
-      "started_at":"2026-10-26T00:41:37-06:00",
-      "rounds_run":5,
-      "stock_starts_used":0,
-      "pending_questions":[{"question":"Resolve the minimal observer's mandatory actual engine-span/relocation/readback proof prerequisite before any native observation?","options":["Review a concrete bounded offline engine-verifier path under the same permitted method","Defer capture; keep current runtime refusal","Change evidence requirement or observation method only with explicit user approval"],"recommendation":"First establish a concrete verifier path, not another generic design/mock round; then justify the parked question's cap exception, bind actual controller/observer/host deadline and repeat independent integrated readiness. Do not bypass hardfalse or spend the conditional start now.","evidence":"docs/scratch/phase-c3ay-actual-controller.md; docs/scratch/phase-c3az-bounded-observer-blocked.md; docs/plan-history/phase-e.md#c3-minimal-observer-readiness","gate_baseline":"Fresh C3 14934330/235008000=.06354817708333334 FAIL; C1 zoom1/elev_down285083/285700 over17721990 PASS. Primary/type1/clipping/f32/state/source-attribution/history debts remain unmeasured/unattributed here; other C1 views remain reported outside gated scope. No gate change proposed."}],
-      "stop_point":"After one observation/cleanup or budget; unresolved safety/ownership/delegation blocker, unapproved method or exhausted justified path. No start before independent integrated readiness; no retry.",
-      "handoff":"STOPPED: AYd041a63 and AZ812a954 committed/pushed, controller-only acceptance plus synthetic observer/safety blocker. Actual default main host replayPID44240 clean; own15AY/22AZ controls, individual mutations restored exact,13/35worker tests. Runtime gate hardfalse: no reviewed actual engine-span/relocation/readback proof producer. Actual controller/observer binding and8s host unload unfinished, no integrated readiness or native artifact. ParkAZ3attempt question; do not automatically repeat this directive/old briefs or spend conditional start.5/8attempts,0/1starts, no attaches/hooks/slot/game writes. Final01:37:41 both worker APIs succeeded/idle; no game/LemWeb task/PID44240,7install hashes match, no approval/attempt ledger. All15initial dirty files and older queue history preserved except own status/park/history additions; framework changes remain unstaged.44/44CTest/37Python pass; fresh C3.06354817708333334FAIL/C1.0160863988750699/.016121214378294987PASS unchanged. Pass3364s. AY1873s/AZ2872s dispatch-to-land; AZ facilitator verification/docs over45min by172s, worker returned within45min. Pending question needs concrete verifier feasibility/cap exception before integration readiness, not another generic design pass.",
-      "current_pass":{"started":"2026-10-26T00:41:37-06:00","ended":"2026-10-26T01:37:41-06:00","elapsed_seconds":3364,"rounds":[{"id":"c3ay-controller","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:57:25-06:00","landed":"2026-10-26T01:18:19-06:00","elapsed_seconds":1873,"repair_elapsed_seconds":1254,"commit":"d041a63"},{"id":"c3az-observer","dispatched":"2026-10-26T00:47:06-06:00","repair_dispatched":"2026-10-26T00:52:58-06:00","repair2_dispatched":"2026-10-26T01:23:36-06:00","worker_completed":"2026-10-26T01:29:21-06:00","landed":"2026-10-26T01:34:58-06:00","elapsed_seconds":2872,"repair_elapsed_seconds":2520,"repair2_elapsed_seconds":682,"round_overrun_seconds":172,"commit":"812a954"}]},
-      "rules":"docs/ORCHESTRATION.md#standing-run",
-      "stopped":{"date":"2026-10-26T01:37:41-06:00","reason":"Unresolved mandatory native safety prerequisite: actual engine-span/relocation/readback verifier absent from reviewed implementation; RPC hard-disabled. Three-attempt observer question parked, actual integrated host lifecycle unfinished. No justified launch-ready path in this pass; zero start/attach spent, no automatic continuation. Disclosed AZ facilitator verification/documentation round overrun172seconds.","last_commit":"812a954","elapsed_seconds":3364}
+      "id": "c3-integrated-one-observation",
+      "goal": "C3 actual operational controller and executable minimal AW observer; independently establish integrated readiness, then one conditional bounded native observation and stop.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "docs/DIRECTIVE.md active2026-10-26, user integration plus one conditional observation; explicit facilitator invocation transfers idle queue ownership.",
+      "grants": {
+        "stock_starts": 1,
+        "rounds": 8,
+        "hours": 4,
+        "round_minutes": 45,
+        "commits": "per-round decompile commits and normal GitHub sync, preserve unrelated changes",
+        "concurrency": "up to3 disjoint offline; serial integration; at most one live/host owner"
+      },
+      "owner": "ses_e890eb754ffeehss1vwMcJtD2v OpenCode facilitator Sol on mouv",
+      "ownership_check": "Prior facilitator succeeded/idle; other active session unrelated ed-ascii. Explorer3812 session1; no Lemmings or LemWeb task. git pull ff-only current/decompile. Actual worker APIs confirm configured Luna/high; no override. Initial15dirty files snapshotted and exact unrelated bytes preserved.",
+      "started_at": "2026-10-26T00:41:37-06:00",
+      "rounds_run": 5,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Resolve the minimal observer's mandatory actual engine-span/relocation/readback proof prerequisite before any native observation?",
+          "options": [
+            "Review a concrete bounded offline engine-verifier path under the same permitted method",
+            "Defer capture; keep current runtime refusal",
+            "Change evidence requirement or observation method only with explicit user approval"
+          ],
+          "recommendation": "First establish a concrete verifier path, not another generic design/mock round; then justify the parked question's cap exception, bind actual controller/observer/host deadline and repeat independent integrated readiness. Do not bypass hardfalse or spend the conditional start now.",
+          "evidence": "docs/scratch/phase-c3ay-actual-controller.md; docs/scratch/phase-c3az-bounded-observer-blocked.md; docs/plan-history/phase-e.md#c3-minimal-observer-readiness",
+          "gate_baseline": "Fresh C3 14934330/235008000=.06354817708333334 FAIL; C1 zoom1/elev_down285083/285700 over17721990 PASS. Primary/type1/clipping/f32/state/source-attribution/history debts remain unmeasured/unattributed here; other C1 views remain reported outside gated scope. No gate change proposed."
+        }
+      ],
+      "stop_point": "After one observation/cleanup or budget; unresolved safety/ownership/delegation blocker, unapproved method or exhausted justified path. No start before independent integrated readiness; no retry.",
+      "handoff": "STOPPED: AYd041a63 and AZ812a954 committed/pushed, controller-only acceptance plus synthetic observer/safety blocker. Actual default main host replayPID44240 clean; own15AY/22AZ controls, individual mutations restored exact,13/35worker tests. Runtime gate hardfalse: no reviewed actual engine-span/relocation/readback proof producer. Actual controller/observer binding and8s host unload unfinished, no integrated readiness or native artifact. ParkAZ3attempt question; do not automatically repeat this directive/old briefs or spend conditional start.5/8attempts,0/1starts, no attaches/hooks/slot/game writes. Final01:37:41 both worker APIs succeeded/idle; no game/LemWeb task/PID44240,7install hashes match, no approval/attempt ledger. All15initial dirty files and older queue history preserved except own status/park/history additions; framework changes remain unstaged.44/44CTest/37Python pass; fresh C3.06354817708333334FAIL/C1.0160863988750699/.016121214378294987PASS unchanged. Pass3364s. AY1873s/AZ2872s dispatch-to-land; AZ facilitator verification/docs over45min by172s, worker returned within45min. Pending question needs concrete verifier feasibility/cap exception before integration readiness, not another generic design pass.",
+      "current_pass": {
+        "started": "2026-10-26T00:41:37-06:00",
+        "ended": "2026-10-26T01:37:41-06:00",
+        "elapsed_seconds": 3364,
+        "rounds": [
+          {
+            "id": "c3ay-controller",
+            "dispatched": "2026-10-26T00:47:06-06:00",
+            "repair_dispatched": "2026-10-26T00:57:25-06:00",
+            "landed": "2026-10-26T01:18:19-06:00",
+            "elapsed_seconds": 1873,
+            "repair_elapsed_seconds": 1254,
+            "commit": "d041a63"
+          },
+          {
+            "id": "c3az-observer",
+            "dispatched": "2026-10-26T00:47:06-06:00",
+            "repair_dispatched": "2026-10-26T00:52:58-06:00",
+            "repair2_dispatched": "2026-10-26T01:23:36-06:00",
+            "worker_completed": "2026-10-26T01:29:21-06:00",
+            "landed": "2026-10-26T01:34:58-06:00",
+            "elapsed_seconds": 2872,
+            "repair_elapsed_seconds": 2520,
+            "repair2_elapsed_seconds": 682,
+            "round_overrun_seconds": 172,
+            "commit": "812a954"
+          }
+        ]
+      },
+      "rules": "docs/ORCHESTRATION.md#standing-run",
+      "stopped": {
+        "date": "2026-10-26T01:37:41-06:00",
+        "reason": "Unresolved mandatory native safety prerequisite: actual engine-span/relocation/readback verifier absent from reviewed implementation; RPC hard-disabled. Three-attempt observer question parked, actual integrated host lifecycle unfinished. No justified launch-ready path in this pass; zero start/attach spent, no automatic continuation. Disclosed AZ facilitator verification/documentation round overrun172seconds.",
+        "last_commit": "812a954",
+        "elapsed_seconds": 3364
+      }
     },
     {
       "id": "c3-offline-capture-preflight",
       "goal": "C3 only: static scene-fan site/ABI/attribution packet and real-session1 prelaunch controller barrier; return bounded native-observation proposal or blocker. No native execution or rendering changes.",
-      "milestones": ["C3 full frame"],
+      "milestones": [
+        "C3 full frame"
+      ],
       "current": "C3 full frame",
       "authorized": "Active docs/DIRECTIVE.md: user approved offline preflight only, explicit facilitator invocation transfers idle queue ownership.",
-      "grants": {"stock_starts":0,"rounds":3,"hours":1.5,"round_minutes":45,"commits":"per-round decompile commits and normal GitHub sync, preserve unrelated changes","concurrency":"two disjoint offline tasks; only AX owns non-game host dry-run tasks"},
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 3,
+        "hours": 1.5,
+        "round_minutes": 45,
+        "commits": "per-round decompile commits and normal GitHub sync, preserve unrelated changes",
+        "concurrency": "two disjoint offline tasks; only AX owns non-game host dry-run tasks"
+      },
       "owner": "ses_e895028d3ffeohEWWBBAB4E9oQ OpenCode facilitator Sol on mouv",
       "ownership_check": "API: prior facilitator ses_e897a9939ffet5M0uZyGsgYbss succeeded/idle, active API only current facilitator. PowerShell: explorer PID3812 session1; no Lemmings process or LemWeb task. git pull --ff-only up to date; decompile. Worker pins confirmed opencode debug agents; no overrides. Unrelated framework/plan/history dirty changes preserved.",
       "started_at": "2026-10-25T23:30:05-06:00",
       "rounds_run": 3,
       "stock_starts_used": 0,
-      "pending_questions": [{"question":"Authorize a separate offline-only operational-controller/observer integration preflight before deciding native observation?","options":["Offline integration/review only, then separate native decision","Defer capture"],"recommendation":"Offline integration/review only: preserve actual controller path behind a terminal prelaunch barrier, repair serialization there and pin/review minimal observer implementation. No stock start yet.","evidence":"docs/scratch/phase-c3aw-site-preflight.md; docs/scratch/phase-c3ax-controller-preflight.md; docs/RENDER_CAPTURE_PROPOSAL.md","remaining_gate_failures":"C3 full-frame retained14934330/235008000=.0635481771FAIL; known primary/type1/clipping/f32/state/history/source-attribution debts not remeasured or attributed this pass. C1zoom1/elev_down retained285083/285700 over17721990PASS; other C1 reported views remain outside gated scope."}],
+      "pending_questions": [
+        {
+          "question": "Authorize a separate offline-only operational-controller/observer integration preflight before deciding native observation?",
+          "options": [
+            "Offline integration/review only, then separate native decision",
+            "Defer capture"
+          ],
+          "recommendation": "Offline integration/review only: preserve actual controller path behind a terminal prelaunch barrier, repair serialization there and pin/review minimal observer implementation. No stock start yet.",
+          "evidence": "docs/scratch/phase-c3aw-site-preflight.md; docs/scratch/phase-c3ax-controller-preflight.md; docs/RENDER_CAPTURE_PROPOSAL.md",
+          "remaining_gate_failures": "C3 full-frame retained14934330/235008000=.0635481771FAIL; known primary/type1/clipping/f32/state/history/source-attribution debts not remeasured or attributed this pass. C1zoom1/elev_down retained285083/285700 over17721990PASS; other C1 reported views remain outside gated scope."
+        }
+      ],
       "stop_point": "Both prerequisite packets independently checked, or90minutes/3attempts, concrete blocker/ownership/pin/gate/safety condition. No automatic native observation.",
       "handoff": "STOPPED: AW0e482a6 plus9176895history/timing; AX698fdd7 partial/narrowed host evidence.31raw windows, own2positive16negative and52synthetic controls; own5main outcomes and actual session1 replayPID26112/barrier/cleanup; isolated payload/State mutations fail and restore exact. AX reconstructed main is NOT unchanged operational path; executable AW observer absent. Recommend fresh offline integration/review authorization, not live continuation.3/3attempts,0starts;44/44CTest,37/37Python. Final00:06:10 no game/tasks/owned Python,7install hashes match,8initialAX files preserved. Independently reconstruct initial diff: all11dirty tracked files preserved except own C3status/history additions; original untracked framework files untouched. C3.0635481771FAIL/C1.0160864,.0161212PASS retained. Pass2165s; AW1610s,AX1895s incl repair1468s dispatch-to-landing. Do not repeat completed directive or resume old briefs.",
-      "current_pass": {"started":"2026-10-25T23:30:05-06:00","ended":"2026-10-26T00:06:10-06:00","elapsed_seconds":2165,"rounds":[{"id":"c3aw-site-preflight","dispatched":"2026-10-25T23:33:51-06:00","landed":"2026-10-26T00:00:41-06:00","elapsed_seconds":1610,"commit":"0e482a6"},{"id":"c3ax-controller-preflight","dispatched":"2026-10-25T23:33:51-06:00","repair_dispatched":"2026-10-25T23:40:58-06:00","landed":"2026-10-26T00:05:26-06:00","elapsed_seconds":1895,"repair_elapsed_seconds":1468,"commit":"698fdd7"}]},
+      "current_pass": {
+        "started": "2026-10-25T23:30:05-06:00",
+        "ended": "2026-10-26T00:06:10-06:00",
+        "elapsed_seconds": 2165,
+        "rounds": [
+          {
+            "id": "c3aw-site-preflight",
+            "dispatched": "2026-10-25T23:33:51-06:00",
+            "landed": "2026-10-26T00:00:41-06:00",
+            "elapsed_seconds": 1610,
+            "commit": "0e482a6"
+          },
+          {
+            "id": "c3ax-controller-preflight",
+            "dispatched": "2026-10-25T23:33:51-06:00",
+            "repair_dispatched": "2026-10-25T23:40:58-06:00",
+            "landed": "2026-10-26T00:05:26-06:00",
+            "elapsed_seconds": 1895,
+            "repair_elapsed_seconds": 1468,
+            "commit": "698fdd7"
+          }
+        ]
+      },
       "rules": "docs/ORCHESTRATION.md#standing-run",
-      "stopped": {"date":"2026-10-26T00:06:10-06:00","reason":"3/3attempt budget reached. Static site design checked and narrowed host barrier replayed, but operational-controller integration and executable observer review remain concrete prerequisites; no launch-ready/native claim or automatic continuation.","last_commit":"698fdd7","elapsed_seconds":2165}
+      "stopped": {
+        "date": "2026-10-26T00:06:10-06:00",
+        "reason": "3/3attempt budget reached. Static site design checked and narrowed host barrier replayed, but operational-controller integration and executable observer review remain concrete prerequisites; no launch-ready/native claim or automatic continuation.",
+        "last_commit": "698fdd7",
+        "elapsed_seconds": 2165
+      }
     },
     {
       "id": "c3-offline-render-feasibility",
       "goal": "C3 only: established frame map, comparison boundary assessment, thin offline path and bounded later capture proposal. No rendering behavior changes.",
-      "milestones": ["C3 full frame"],
+      "milestones": [
+        "C3 full frame"
+      ],
       "current": "C3 full frame",
       "authorized": "docs/DIRECTIVE.md rendering pivot active2026-10-25; explicit user facilitator invocation resumes this new offline scope, not the superseded old briefs.",
-      "grants": {"stock_starts": 0, "rounds": 6, "hours": 3, "round_minutes": 45, "commits": "per-round decompile commits/pushes; preserve unrelated changes", "concurrency": "up to3 disjoint independent offline tasks"},
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 6,
+        "hours": 3,
+        "round_minutes": 45,
+        "commits": "per-round decompile commits/pushes; preserve unrelated changes",
+        "concurrency": "up to3 disjoint independent offline tasks"
+      },
       "workers": "OpenCode round-agent Luna high; disasm-agent Sol high only for disassembly reads; configured pins/no overrides per ROLES.md",
       "owner": "ses_e897a9939ffet5M0uZyGsgYbss OpenCode facilitator Sol on mouv",
       "ownership_check": "Prior facilitator API succeeded/idle; AQ and AR interrupted/idle; AS succeeded/idle. No Lemmings or LemWeb task at startup. New directive supersedes old live permission. Old queue and unrelated dirty-tree snapshot preserved build/tmp/c3-offline-pivot-startup/. Configured pins confirmed using opencode debug agents (V2 plural command).",
       "started_at": "2026-10-25T22:43:43-06:00",
       "rounds_run": 6,
       "stock_starts_used": 0,
-      "pending_questions": [{"question":"After overlord review, approve a separate bounded capture preflight and then decide native-observation permissions? This is not a gate amendment.","options":["Offline preflight only; decide native method/start after its evidence","Preflight plus conditional one-start route observation; non-interference separately approved","Defer native capture"],"recommendation":"First option: prove site/ABI/attribution/controller prerequisites offline before granting one observation. No automatic live continuation, reference swap or full-frame logger.","evidence":"docs/RENDER_CAPTURE_PROPOSAL.md; docs/RENDER_FRAME_MAP.md; docs/scratch/phase-c3av-thin-comparison.md"}],
+      "pending_questions": [
+        {
+          "question": "After overlord review, approve a separate bounded capture preflight and then decide native-observation permissions? This is not a gate amendment.",
+          "options": [
+            "Offline preflight only; decide native method/start after its evidence",
+            "Preflight plus conditional one-start route observation; non-interference separately approved",
+            "Defer native capture"
+          ],
+          "recommendation": "First option: prove site/ABI/attribution/controller prerequisites offline before granting one observation. No automatic live continuation, reference swap or full-frame logger.",
+          "evidence": "docs/RENDER_CAPTURE_PROPOSAL.md; docs/RENDER_FRAME_MAP.md; docs/scratch/phase-c3av-thin-comparison.md"
+        }
+      ],
       "stop_point": "Map, boundary assessment and thin-path result independently checked; or3h/6attempts; concrete feasibility blocker, ownership conflict, unavailable pin/delegation, gate change or guardrail breach. No automatic live/full-frame follow-on.",
       "handoff": "BOUNDED OFFLINE PASS COMPLETE AND PUSHED: AU e8d67ec conditional boundary, AT fef4f2c partial8family/native-spine map, AV8506940 synthetic comparator+capture proposal. AV initial4false-equal cases and repair1known-specular normalization defect repaired/preserved; own9valid/9failclosed controls, one-X-only source bypass failure and exact hash restore,12/12Python and44/44CTest. Fresh C3.0635481771FAIL,C1zoom1/elev_down.0160864/.0161212PASS unchanged.6attempts,0starts; no task/worker/game resource remains. Next needs overlord review/fresh user approval under docs/RENDER_CAPTURE_PROPOSAL.md; do not repeat completed offline directive or resume old AQ/AR/AS. Unrelated initial framework/plan/history changes preserved unstaged. Pass2220seconds; AU320,AT1359,AV1496dispatch-to-landing including repairs.",
-      "current_pass": {"started":"2026-10-25T22:43:43-06:00","ended":"2026-10-25T23:20:43-06:00","elapsed_seconds":2220,"rounds":[{"id":"c3at-frame-map","dispatched":"2026-10-25T22:46:59-06:00","repair_dispatched":"2026-10-25T22:54:16-06:00","landed":"2026-10-25T23:09:38-06:00","elapsed_seconds":1359,"repair_elapsed_seconds":922},{"id":"c3au-boundary-assessment","dispatched":"2026-10-25T22:46:59-06:00","landed":"2026-10-25T22:52:19-06:00","elapsed_seconds":320},{"id":"c3av-thin-comparator","dispatched":"2026-10-25T22:54:16-06:00","repair_dispatched":"2026-10-25T23:00:11-06:00","repair2_dispatched":"2026-10-25T23:11:57-06:00","landed":"2026-10-25T23:19:12-06:00","elapsed_seconds":1496,"repair_elapsed_seconds":1141,"repair2_elapsed_seconds":435}]},
+      "current_pass": {
+        "started": "2026-10-25T22:43:43-06:00",
+        "ended": "2026-10-25T23:20:43-06:00",
+        "elapsed_seconds": 2220,
+        "rounds": [
+          {
+            "id": "c3at-frame-map",
+            "dispatched": "2026-10-25T22:46:59-06:00",
+            "repair_dispatched": "2026-10-25T22:54:16-06:00",
+            "landed": "2026-10-25T23:09:38-06:00",
+            "elapsed_seconds": 1359,
+            "repair_elapsed_seconds": 922
+          },
+          {
+            "id": "c3au-boundary-assessment",
+            "dispatched": "2026-10-25T22:46:59-06:00",
+            "landed": "2026-10-25T22:52:19-06:00",
+            "elapsed_seconds": 320
+          },
+          {
+            "id": "c3av-thin-comparator",
+            "dispatched": "2026-10-25T22:54:16-06:00",
+            "repair_dispatched": "2026-10-25T23:00:11-06:00",
+            "repair2_dispatched": "2026-10-25T23:11:57-06:00",
+            "landed": "2026-10-25T23:19:12-06:00",
+            "elapsed_seconds": 1496,
+            "repair_elapsed_seconds": 1141,
+            "repair2_elapsed_seconds": 435
+          }
+        ]
+      },
       "rules": "docs/ORCHESTRATION.md#standing-run",
-      "stopped": {"date":"2026-10-25T23:20:43-06:00","reason":"Authorized offline map/boundary/thin-path/proposal independently checked and pushed;6/6attempts used. No automatic live/full-frame work; fresh review/approval required.","last_commit":"8506940","elapsed_seconds":2220}
+      "stopped": {
+        "date": "2026-10-25T23:20:43-06:00",
+        "reason": "Authorized offline map/boundary/thin-path/proposal independently checked and pushed;6/6attempts used. No automatic live/full-frame work; fresh review/approval required.",
+        "last_commit": "8506940",
+        "elapsed_seconds": 2220
+      }
     },
     {
       "id": "c3-host-reference-big-rocks",
@@ -1664,10 +2018,20 @@
       "started_at": "2026-10-25T22:12:34-06:00",
       "rounds_run": 3,
       "stock_starts_used": 0,
-      "grants": {"stock_starts": 3, "rounds": 16, "hours": 6, "commits": "per-round decompile commits/pushes"},
+      "grants": {
+        "stock_starts": 3,
+        "rounds": 16,
+        "hours": 6,
+        "commits": "per-round decompile commits/pushes"
+      },
       "pending_questions": [],
       "handoff": "User stop22:23:01; AQ/AR interruption confirmed; AS returned incomplete. No round landed or production edits; all partial artifacts preserved unverified. API idle statuses independently rechecked2026-10-25T22:45. New directive does not resume these briefs or carry over starts. Complete original queue snapshot build/tmp/c3-offline-pivot-startup/tasks-before.json.",
-      "stopped": {"date":"2026-10-25T22:23:56-06:00","reason":"User requested stop; both running workers cancelled, third incomplete; no game or scheduled task remains.","last_commit":"fcbb467","elapsed_seconds":682}
+      "stopped": {
+        "date": "2026-10-25T22:23:56-06:00",
+        "reason": "User requested stop; both running workers cancelled, third incomplete; no game or scheduled task remains.",
+        "last_commit": "fcbb467",
+        "elapsed_seconds": 682
+      }
     },
     {
       "id": "c3-known-gaps-pause-values",
@@ -1676,7 +2040,13 @@
       "started_at": "2026-10-25T17:40:39-06:00",
       "rounds_run": 16,
       "stock_starts_used": 0,
-      "grants": {"stock_starts": 3, "rounds": 16, "hours": 6, "round_minutes": 45, "commits": "per-round decompile commits/pushes"},
+      "grants": {
+        "stock_starts": 3,
+        "rounds": 16,
+        "hours": 6,
+        "round_minutes": 45,
+        "commits": "per-round decompile commits/pushes"
+      },
       "pending_questions": [],
       "handoff": "Stopped16/16 after e838441 observational negative; no active/queued worker or resource. C3 14934330/235008000=.0635481771 FAIL; C1 gated passes;44/44CTest. Numeric ScheduledTask.State4 rejected string-only preflight before Popen. No pause values, attach or write. Next authorized run repairs host serialization and re-captures full actor/HUD reference, alongside big-error offline scene questions. Prepared AP packing brief not dispatched.",
       "current_pass": {
@@ -1684,20 +2054,90 @@
         "ended": "2026-10-25T21:34:57-06:00",
         "elapsed_seconds": 14058,
         "rounds": [
-          {"id":"c3af-billboard-chain","dispatched":"2026-10-25T17:44:17-06:00","repair_dispatched":"2026-10-25T18:01:00-06:00","landed":"2026-10-25T18:28:54-06:00","elapsed_seconds":2677,"repair_elapsed_seconds":1674},
-          {"id":"c3ag-retail-env","dispatched":"2026-10-25T17:44:17-06:00","landed":"2026-10-25T18:02:15-06:00","elapsed_seconds":1078},
-          {"id":"c3ah-controller-lifecycle","dispatched":"2026-10-25T17:44:17-06:00","repair_dispatched":"2026-10-25T17:50:16-06:00","landed":"2026-10-25T18:07:41-06:00","elapsed_seconds":1404,"repair_elapsed_seconds":1045},
-          {"id":"c3aj-deployed-controller","dispatched":"2026-10-25T18:10:06-06:00","landed":"2026-10-25T18:24:00-06:00","elapsed_seconds":834},
-          {"id":"c3ai-predicate-context","dispatched":"2026-10-25T18:31:17-06:00","landed":"2026-10-25T18:57:03-06:00","elapsed_seconds":1546},
-          {"id":"c3ak-vertex-pack","dispatched":"2026-10-25T18:31:17-06:00","landed":"2026-10-25T18:45:51-06:00","elapsed_seconds":874},
-          {"id":"c3al-caret-alpha","dispatched":"2026-10-25T19:01:22-06:00","landed":"2026-10-25T19:28:12-06:00","elapsed_seconds":1610},
-          {"id":"c3am-shared-depth","dispatched":"2026-10-25T19:34:53-06:00","repair_dispatched":"2026-10-25T19:53:10-06:00","landed":"2026-10-25T20:17:49-06:00","elapsed_seconds":2576,"repair_elapsed_seconds":1479},
-          {"id":"c3an-raw-diffuse","dispatched":"2026-10-25T20:20:03-06:00","repair_dispatched":"2026-10-25T20:32:42-06:00","landed":"2026-10-25T20:42:58-06:00","elapsed_seconds":1375,"repair_elapsed_seconds":616},
-          {"id":"c3ao-secondary-order","dispatched":"2026-10-25T20:43:25-06:00","repair_dispatched":"2026-10-25T20:58:21-06:00","landed":"2026-10-25T21:15:04-06:00","elapsed_seconds":1899,"repair_elapsed_seconds":1003},
-          {"id":"c3-pause-one-shot","dispatched":"2026-10-25T21:16:01-06:00","landed":"2026-10-25T21:34:13-06:00","elapsed_seconds":1092}
+          {
+            "id": "c3af-billboard-chain",
+            "dispatched": "2026-10-25T17:44:17-06:00",
+            "repair_dispatched": "2026-10-25T18:01:00-06:00",
+            "landed": "2026-10-25T18:28:54-06:00",
+            "elapsed_seconds": 2677,
+            "repair_elapsed_seconds": 1674
+          },
+          {
+            "id": "c3ag-retail-env",
+            "dispatched": "2026-10-25T17:44:17-06:00",
+            "landed": "2026-10-25T18:02:15-06:00",
+            "elapsed_seconds": 1078
+          },
+          {
+            "id": "c3ah-controller-lifecycle",
+            "dispatched": "2026-10-25T17:44:17-06:00",
+            "repair_dispatched": "2026-10-25T17:50:16-06:00",
+            "landed": "2026-10-25T18:07:41-06:00",
+            "elapsed_seconds": 1404,
+            "repair_elapsed_seconds": 1045
+          },
+          {
+            "id": "c3aj-deployed-controller",
+            "dispatched": "2026-10-25T18:10:06-06:00",
+            "landed": "2026-10-25T18:24:00-06:00",
+            "elapsed_seconds": 834
+          },
+          {
+            "id": "c3ai-predicate-context",
+            "dispatched": "2026-10-25T18:31:17-06:00",
+            "landed": "2026-10-25T18:57:03-06:00",
+            "elapsed_seconds": 1546
+          },
+          {
+            "id": "c3ak-vertex-pack",
+            "dispatched": "2026-10-25T18:31:17-06:00",
+            "landed": "2026-10-25T18:45:51-06:00",
+            "elapsed_seconds": 874
+          },
+          {
+            "id": "c3al-caret-alpha",
+            "dispatched": "2026-10-25T19:01:22-06:00",
+            "landed": "2026-10-25T19:28:12-06:00",
+            "elapsed_seconds": 1610
+          },
+          {
+            "id": "c3am-shared-depth",
+            "dispatched": "2026-10-25T19:34:53-06:00",
+            "repair_dispatched": "2026-10-25T19:53:10-06:00",
+            "landed": "2026-10-25T20:17:49-06:00",
+            "elapsed_seconds": 2576,
+            "repair_elapsed_seconds": 1479
+          },
+          {
+            "id": "c3an-raw-diffuse",
+            "dispatched": "2026-10-25T20:20:03-06:00",
+            "repair_dispatched": "2026-10-25T20:32:42-06:00",
+            "landed": "2026-10-25T20:42:58-06:00",
+            "elapsed_seconds": 1375,
+            "repair_elapsed_seconds": 616
+          },
+          {
+            "id": "c3ao-secondary-order",
+            "dispatched": "2026-10-25T20:43:25-06:00",
+            "repair_dispatched": "2026-10-25T20:58:21-06:00",
+            "landed": "2026-10-25T21:15:04-06:00",
+            "elapsed_seconds": 1899,
+            "repair_elapsed_seconds": 1003
+          },
+          {
+            "id": "c3-pause-one-shot",
+            "dispatched": "2026-10-25T21:16:01-06:00",
+            "landed": "2026-10-25T21:34:13-06:00",
+            "elapsed_seconds": 1092
+          }
         ]
       },
-      "stopped": {"date":"2026-10-25T21:34:57-06:00","reason":"16/16 attempts exhausted; final preflight rejected before stock Popen,0/3starts; no resource remains.","last_commit":"e838441d95dcf52607ad2e1d90bdd611ae6e06c4","elapsed_seconds":14058}
+      "stopped": {
+        "date": "2026-10-25T21:34:57-06:00",
+        "reason": "16/16 attempts exhausted; final preflight rejected before stock Popen,0/3starts; no resource remains.",
+        "last_commit": "e838441d95dcf52607ad2e1d90bdd611ae6e06c4",
+        "elapsed_seconds": 14058
+      }
     },
     {
       "id": "c1-close-c3-scene",
@@ -1937,7 +2377,9 @@
     {
       "id": "c1-derived-values",
       "goal": "C1 only: derive +6 and kept format, derive ^tab upload texel words, render and independently score frozen footprint on zoom1/elev_up/elev_down; then rank residuals until fixed gate passes or authorized stop.",
-      "milestones": ["C1 skill panel"],
+      "milestones": [
+        "C1 skill panel"
+      ],
       "current": "C1 skill panel",
       "authorized": "docs/DIRECTIVE.md active, user approve all 2026-10-25; PLAN Phase C DERIVED/value-framed decision.",
       "grants": {
@@ -1951,35 +2393,122 @@
       "rounds_run": 11,
       "stock_starts_used": 0,
       "pending_questions": [
-        {"question":"The elev_up miss that remains is the scene showing through the plate interior (384401 of 466081 plate-only; 1589553 with the plates omitted). Icon and glyph error is 114891, which cannot bring 580972 under 354440. Should the next run draw that scene, or should the gate change?","recommendation":"Do not change the gate in this run. The scene behind the panel is outside the C1-only directive. Ask before excluding plate pixels or starting that scene."}
+        {
+          "question": "The elev_up miss that remains is the scene showing through the plate interior (384401 of 466081 plate-only; 1589553 with the plates omitted). Icon and glyph error is 114891, which cannot bring 580972 under 354440. Should the next run draw that scene, or should the gate change?",
+          "recommendation": "Do not change the gate in this run. The scene behind the panel is outside the C1-only directive. Ask before excluding plate pixels or starting that scene."
+        }
       ],
       "stop_point": "Directive stop conditions: C1 gate independently passes; gate/footprint/views/exclusions need change; guardrail breach; all C1 questions parked/waiting; about 8 hours or 24 rounds; delegation/model unavailable or ownership conflict. No C2/C3/B2/B3.",
       "handoff": "2026-10-25 13:05 MDT. Stopped. C1bj landed. Gate 0.01609/0.03278/0.01612. elev_up remainder is the scene through the plate interior. Icon and glyph error cannot pass the gate. Starts 0/3. Rounds 11.",
-      "current_pass": {"started":"2026-10-25T11:56:33-06:00","rounds":[
-        {"id":"c1bf-zero-count","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:05:36-06:00","elapsed":"34m38s","worker_idle":"2026-10-25T11:35:49-06:00"},
-        {"id":"c1bg-selected-index","dispatched":"2026-10-25T11:30:58-06:00","landed":"2026-10-25T12:07:34-06:00","elapsed":"36m36s","worker_idle":"2026-10-25T11:45:02-06:00","worker_outcome":"failed after the packet was written"},
-        {"id":"c1bh-selected-draw","dispatched":"2026-10-25T12:08:58-06:00","landed":"2026-10-25T12:22:18-06:00","elapsed":"13m20s"},
-        {"id":"c1be-plate-filter-value","dispatched":"2026-10-25T12:22:58-06:00","landed":"2026-10-25T12:36:16-06:00","elapsed":"13m18s"},
-        {"id":"c1bi-linear-plate","dispatched":"2026-10-25T12:36:37-06:00","landed":"2026-10-25T12:50:02-06:00","elapsed":"13m25s"},
-        {"id":"c1bj-plate-over-stock","dispatched":"2026-10-25T12:51:00-06:00","landed":"2026-10-25T13:05:00-06:00","elapsed":"14m00s"}
-      ],"ended":"2026-10-25T13:05:00-06:00","elapsed":"1h08m27s"},
-      "pass_clock": {"started":"2026-10-25T10:01:32-06:00","ended":"2026-10-25T11:17:59-06:00","elapsed":"1h16m27s","pause_reason":"context handoff; standing run not stopped","rounds":[
-        {"id":"c1bb-derived-format","dispatched":"2026-10-25T10:04:03-06:00","landed":"2026-10-25T10:30:51-06:00","elapsed":"26m48s"},
-        {"id":"c1bc-patch-texels","dispatched":"2026-10-25T10:31:43-06:00","landed":"2026-10-25T10:51:48-06:00","elapsed":"20m05s"},
-        {"id":"c1bd-plate-render","dispatched":"2026-10-25T10:54:15-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"21m15s","attempt_return_observed":"2026-10-25T10:58:32-06:00"},
-        {"id":"c1bd-plate-render-repair1","dispatched":"2026-10-25T10:59:11-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"16m19s","attempt_return_observed":"2026-10-25T11:06:33-06:00"},
-        {"id":"c1bd-plate-render-repair2","dispatched":"2026-10-25T11:07:28-06:00","landed":"2026-10-25T11:15:30-06:00","elapsed":"8m02s","attempt_return_observed":"2026-10-25T11:12:31-06:00"}
-      ]},
+      "current_pass": {
+        "started": "2026-10-25T11:56:33-06:00",
+        "rounds": [
+          {
+            "id": "c1bf-zero-count",
+            "dispatched": "2026-10-25T11:30:58-06:00",
+            "landed": "2026-10-25T12:05:36-06:00",
+            "elapsed": "34m38s",
+            "worker_idle": "2026-10-25T11:35:49-06:00"
+          },
+          {
+            "id": "c1bg-selected-index",
+            "dispatched": "2026-10-25T11:30:58-06:00",
+            "landed": "2026-10-25T12:07:34-06:00",
+            "elapsed": "36m36s",
+            "worker_idle": "2026-10-25T11:45:02-06:00",
+            "worker_outcome": "failed after the packet was written"
+          },
+          {
+            "id": "c1bh-selected-draw",
+            "dispatched": "2026-10-25T12:08:58-06:00",
+            "landed": "2026-10-25T12:22:18-06:00",
+            "elapsed": "13m20s"
+          },
+          {
+            "id": "c1be-plate-filter-value",
+            "dispatched": "2026-10-25T12:22:58-06:00",
+            "landed": "2026-10-25T12:36:16-06:00",
+            "elapsed": "13m18s"
+          },
+          {
+            "id": "c1bi-linear-plate",
+            "dispatched": "2026-10-25T12:36:37-06:00",
+            "landed": "2026-10-25T12:50:02-06:00",
+            "elapsed": "13m25s"
+          },
+          {
+            "id": "c1bj-plate-over-stock",
+            "dispatched": "2026-10-25T12:51:00-06:00",
+            "landed": "2026-10-25T13:05:00-06:00",
+            "elapsed": "14m00s"
+          }
+        ],
+        "ended": "2026-10-25T13:05:00-06:00",
+        "elapsed": "1h08m27s"
+      },
+      "pass_clock": {
+        "started": "2026-10-25T10:01:32-06:00",
+        "ended": "2026-10-25T11:17:59-06:00",
+        "elapsed": "1h16m27s",
+        "pause_reason": "context handoff; standing run not stopped",
+        "rounds": [
+          {
+            "id": "c1bb-derived-format",
+            "dispatched": "2026-10-25T10:04:03-06:00",
+            "landed": "2026-10-25T10:30:51-06:00",
+            "elapsed": "26m48s"
+          },
+          {
+            "id": "c1bc-patch-texels",
+            "dispatched": "2026-10-25T10:31:43-06:00",
+            "landed": "2026-10-25T10:51:48-06:00",
+            "elapsed": "20m05s"
+          },
+          {
+            "id": "c1bd-plate-render",
+            "dispatched": "2026-10-25T10:54:15-06:00",
+            "landed": "2026-10-25T11:15:30-06:00",
+            "elapsed": "21m15s",
+            "attempt_return_observed": "2026-10-25T10:58:32-06:00"
+          },
+          {
+            "id": "c1bd-plate-render-repair1",
+            "dispatched": "2026-10-25T10:59:11-06:00",
+            "landed": "2026-10-25T11:15:30-06:00",
+            "elapsed": "16m19s",
+            "attempt_return_observed": "2026-10-25T11:06:33-06:00"
+          },
+          {
+            "id": "c1bd-plate-render-repair2",
+            "dispatched": "2026-10-25T11:07:28-06:00",
+            "landed": "2026-10-25T11:15:30-06:00",
+            "elapsed": "8m02s",
+            "attempt_return_observed": "2026-10-25T11:12:31-06:00"
+          }
+        ]
+      },
       "rules": "docs/ORCHESTRATION.md#standing-run",
-      "stopped": {"date":"2026-10-25 13:05 MDT","reason":"C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior. Count tint and icon edges cannot close it. Passing the signed gate would need that scene or a footprint change. The gate was not changed. Starts 0 of 3. Rounds 11.","last_commit":"0eca6dc"}
+      "stopped": {
+        "date": "2026-10-25 13:05 MDT",
+        "reason": "C1 gate still fails on elev_up. The remainder is the scene visible through the plate interior. Count tint and icon edges cannot close it. Passing the signed gate would need that scene or a footprint change. The gate was not changed. Starts 0 of 3. Rounds 11.",
+        "last_commit": "0eca6dc"
+      }
     },
     {
       "id": "c1-c2-b3",
       "goal": "Directive 2026-10-25 long multi-milestone run: C1 fill/format/render, C2 cursor, B3; C3 and B2 parked.",
-      "milestones": ["C1 skill panel", "C2 cursor clause", "B3 level select and map"],
+      "milestones": [
+        "C1 skill panel",
+        "C2 cursor clause",
+        "B3 level select and map"
+      ],
       "current": "C1 skill panel",
       "authorized": "docs/DIRECTIVE.md superseded long multi-milestone directive; user approve 2026-10-25. About 8 hours or 24 rounds, 3 rounds per question, 3 menu-attach REA CLI starts, no debugger, 30-minute rounds.",
-      "grants": {"stock_starts": "3; normal Popen and menu REA CLI attach, no Python frida.attach/spawn; crash ends question live arm, second ends starts", "commits": "per-round decompile commits and pushes; no force-push/checkout/reset/stash", "concurrency": "3 offline; 1 live owner"},
+      "grants": {
+        "stock_starts": "3; normal Popen and menu REA CLI attach, no Python frida.attach/spawn; crash ends question live arm, second ends starts",
+        "commits": "per-round decompile commits and pushes; no force-push/checkout/reset/stash",
+        "concurrency": "3 offline; 1 live owner"
+      },
       "workers": "Cursor round-agent pinned to grok-4.7-high-fast per docs/ROLES.md; disassembly stays that pin.",
       "owner": "Cursor facilitator, 2026-10-25 01:22 MDT /facilitator on mouv; Grok 4.7; handoff from c1-alpha-offline.",
       "started_at": "2026-10-25 01:22:18 -06:00",
@@ -1988,24 +2517,101 @@
       "pending_questions": [],
       "stop_point": "Last milestone gate passes; gate/footprint/views/exclusions need change; guardrail breach; all ranked questions parked/waiting; about 8 hours or 24 rounds; unavailable delegation/model or another owner. Crash parks question live arm, second ends starts.",
       "handoff": "2026-10-25 03:29 MDT: stopped. b3g landed (4m 54s). Level-pick parked. Every ranked question is parked. C1, C2 cursor, and B3 gates not scored. Starts 0 of 3. Rounds 14. Pass 2h 7m 36s from 01:22:18.",
-      "pass_clock": {"started": "2026-10-25 01:22:18 -06:00", "rounds": [
-        {"id":"c1ax-fill-coverage","dispatched":"2026-10-25 01:26 MDT","landed":"2026-10-25 01:42 MDT","elapsed":"16m 6s"},
-        {"id":"c1ay-kept-format","dispatched":"2026-10-25 01:43 MDT","landed":"2026-10-25 01:51 MDT","elapsed":"8m 11s"},
-        {"id":"c1az-dib-handle","dispatched":"2026-10-25 01:52 MDT","landed":"2026-10-25 02:03 MDT","elapsed":"10m 36s"},
-        {"id":"c1ba-bitcount-source","dispatched":"2026-10-25 02:04 MDT","landed":"2026-10-25 02:14 MDT","elapsed":"10m 52s"},
-        {"id":"c2l-cursor-exit","dispatched":"2026-10-25 02:15 MDT","landed":"2026-10-25 02:20 MDT","elapsed":"5m 31s"},
-        {"id":"c2m-cursor-slot","dispatched":"2026-10-25 02:21 MDT","landed":"2026-10-25 02:28 MDT","elapsed":"7m 32s"},
-        {"id":"c2n-cursor-read","dispatched":"2026-10-25 02:29 MDT","landed":"2026-10-25 02:39 MDT","elapsed":"10m 35s"},
-        {"id":"b3a-map-arm","dispatched":"2026-10-25 02:40 MDT","landed":"2026-10-25 02:48 MDT","elapsed":"7m 57s"},
-        {"id":"b3b-map-object","dispatched":"2026-10-25 02:48 MDT","landed":"2026-10-25 02:55 MDT","elapsed":"6m 57s"},
-        {"id":"b3c-map-index","dispatched":"2026-10-25 02:56 MDT","landed":"2026-10-25 03:00 MDT","elapsed":"4m 20s"},
-        {"id":"b3d-map-callers","dispatched":"2026-10-25 03:01 MDT","landed":"2026-10-25 03:07 MDT","elapsed":"6m 9s"},
-        {"id":"b3e-level-name","dispatched":"2026-10-25 03:08 MDT","landed":"2026-10-25 03:12 MDT","elapsed":"4m 0s"},
-        {"id":"b3f-box-ref","dispatched":"2026-10-25 03:12 MDT","landed":"2026-10-25 03:24 MDT","elapsed":"12m 12s"},
-        {"id":"b3g-box-call","dispatched":"2026-10-25 03:25 MDT","landed":"2026-10-25 03:29 MDT","elapsed":"4m 54s"}
-      ]},
+      "pass_clock": {
+        "started": "2026-10-25 01:22:18 -06:00",
+        "rounds": [
+          {
+            "id": "c1ax-fill-coverage",
+            "dispatched": "2026-10-25 01:26 MDT",
+            "landed": "2026-10-25 01:42 MDT",
+            "elapsed": "16m 6s"
+          },
+          {
+            "id": "c1ay-kept-format",
+            "dispatched": "2026-10-25 01:43 MDT",
+            "landed": "2026-10-25 01:51 MDT",
+            "elapsed": "8m 11s"
+          },
+          {
+            "id": "c1az-dib-handle",
+            "dispatched": "2026-10-25 01:52 MDT",
+            "landed": "2026-10-25 02:03 MDT",
+            "elapsed": "10m 36s"
+          },
+          {
+            "id": "c1ba-bitcount-source",
+            "dispatched": "2026-10-25 02:04 MDT",
+            "landed": "2026-10-25 02:14 MDT",
+            "elapsed": "10m 52s"
+          },
+          {
+            "id": "c2l-cursor-exit",
+            "dispatched": "2026-10-25 02:15 MDT",
+            "landed": "2026-10-25 02:20 MDT",
+            "elapsed": "5m 31s"
+          },
+          {
+            "id": "c2m-cursor-slot",
+            "dispatched": "2026-10-25 02:21 MDT",
+            "landed": "2026-10-25 02:28 MDT",
+            "elapsed": "7m 32s"
+          },
+          {
+            "id": "c2n-cursor-read",
+            "dispatched": "2026-10-25 02:29 MDT",
+            "landed": "2026-10-25 02:39 MDT",
+            "elapsed": "10m 35s"
+          },
+          {
+            "id": "b3a-map-arm",
+            "dispatched": "2026-10-25 02:40 MDT",
+            "landed": "2026-10-25 02:48 MDT",
+            "elapsed": "7m 57s"
+          },
+          {
+            "id": "b3b-map-object",
+            "dispatched": "2026-10-25 02:48 MDT",
+            "landed": "2026-10-25 02:55 MDT",
+            "elapsed": "6m 57s"
+          },
+          {
+            "id": "b3c-map-index",
+            "dispatched": "2026-10-25 02:56 MDT",
+            "landed": "2026-10-25 03:00 MDT",
+            "elapsed": "4m 20s"
+          },
+          {
+            "id": "b3d-map-callers",
+            "dispatched": "2026-10-25 03:01 MDT",
+            "landed": "2026-10-25 03:07 MDT",
+            "elapsed": "6m 9s"
+          },
+          {
+            "id": "b3e-level-name",
+            "dispatched": "2026-10-25 03:08 MDT",
+            "landed": "2026-10-25 03:12 MDT",
+            "elapsed": "4m 0s"
+          },
+          {
+            "id": "b3f-box-ref",
+            "dispatched": "2026-10-25 03:12 MDT",
+            "landed": "2026-10-25 03:24 MDT",
+            "elapsed": "12m 12s"
+          },
+          {
+            "id": "b3g-box-call",
+            "dispatched": "2026-10-25 03:25 MDT",
+            "landed": "2026-10-25 03:29 MDT",
+            "elapsed": "4m 54s"
+          }
+        ]
+      },
       "rules": "docs/ORCHESTRATION.md#standing-run",
-      "stopped": {"date":"2026-10-25 03:29 MDT","reason":"Every ranked question is parked. C1 plate format, C2 cursor sprite, B3 map object, and B3 level pick. No gate scored. Stock starts 0 of 3. Rounds 14.","last_commit":"61b39c2"}
+      "stopped": {
+        "date": "2026-10-25 03:29 MDT",
+        "reason": "Every ranked question is parked. C1 plate format, C2 cursor sprite, B3 map object, and B3 level pick. No gate scored. Stock starts 0 of 3. Rounds 14.",
+        "last_commit": "61b39c2"
+      }
     },
     {
       "id": "c1-alpha-offline",
@@ -3301,51 +3907,256 @@
   ],
   "landed": [
     {
-      "id":"b3k-first-node-entry","status":"landed","standing_run":"integrated-retail-progress-2026-10-27",
-      "brief":"build/tmp/b3k-first-node-entry-brief.md","repair_brief":"build/tmp/b3k-first-node-entry-repair1-brief.md",
-      "worker_outputs":["build/tmp/b3k-first-node-entry/round-note.md","build/tmp/b3k-first-node-entry/repair1/round-note.md"],
-      "note":"docs/scratch/phase-b3k-first-node-entry.md","worker_session":"ses_e815b4bddffentbqX2bUy59ctd",
-      "model":"configured disasm-agent openai/gpt-6.1-sol#high API confirmed, no override",
-      "campaign_attempts":[15,16],"historical_pick_attempts":[4,5],"production_entry_attempts":[1,2],
-      "dispatched":"2026-10-27T18:34:45.733Z","repair_dispatch_precheck_at":"2026-10-27T18:50:06Z",
-      "worker_idle":"2026-10-27T18:59:38.770Z","deadline":"2026-10-27T19:16:00Z","verified":"2026-10-27T19:11:53Z",
-      "landed":"2026-10-27T19:14:29Z","commit":"70e7ba7bb2ca2cd991ce3746752a69c93ef1fdad","dispatch_to_landing_seconds":2383.267,
-      "result":"Verified capped negative, requested actual map-to-level outcome absent; no production/helper/window/input change.10raw windows, separate complete indexed mask,42conditional cases/512current-vs-edge cases/format data and preserved40initialfiles/6sourcefiles checked. Map tests current sampled bit, not newpress; physical binding unclosed.49CTest65.36s/fresh C3+C1scores+PNGhashes unchanged. No unrelated mutation faked as actual entry proof.",
-      "stock_starts":0,"resources":"Worker terminal/REAclosed,0native/control/appwindow/task; headless children exited. Independent final hostclear/5hashes match, no restoration owed. Attempt pool16of16 exhausted, exact binding question re-parked, no more repair/task."
+      "id": "b3k-first-node-entry",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/b3k-first-node-entry-brief.md",
+      "repair_brief": "build/tmp/b3k-first-node-entry-repair1-brief.md",
+      "worker_outputs": [
+        "build/tmp/b3k-first-node-entry/round-note.md",
+        "build/tmp/b3k-first-node-entry/repair1/round-note.md"
+      ],
+      "note": "docs/scratch/phase-b3k-first-node-entry.md",
+      "worker_session": "ses_e815b4bddffentbqX2bUy59ctd",
+      "model": "configured disasm-agent openai/gpt-6.1-sol#high API confirmed, no override",
+      "campaign_attempts": [
+        15,
+        16
+      ],
+      "historical_pick_attempts": [
+        4,
+        5
+      ],
+      "production_entry_attempts": [
+        1,
+        2
+      ],
+      "dispatched": "2026-10-27T18:34:45.733Z",
+      "repair_dispatch_precheck_at": "2026-10-27T18:50:06Z",
+      "worker_idle": "2026-10-27T18:59:38.770Z",
+      "deadline": "2026-10-27T19:16:00Z",
+      "verified": "2026-10-27T19:11:53Z",
+      "landed": "2026-10-27T19:14:29Z",
+      "commit": "70e7ba7bb2ca2cd991ce3746752a69c93ef1fdad",
+      "dispatch_to_landing_seconds": 2383.267,
+      "result": "Verified capped negative, requested actual map-to-level outcome absent; no production/helper/window/input change.10raw windows, separate complete indexed mask,42conditional cases/512current-vs-edge cases/format data and preserved40initialfiles/6sourcefiles checked. Map tests current sampled bit, not newpress; physical binding unclosed.49CTest65.36s/fresh C3+C1scores+PNGhashes unchanged. No unrelated mutation faked as actual entry proof.",
+      "stock_starts": 0,
+      "resources": "Worker terminal/REAclosed,0native/control/appwindow/task; headless children exited. Independent final hostclear/5hashes match, no restoration owed. Attempt pool16of16 exhausted, exact binding question re-parked, no more repair/task."
     },
     {
-      "id":"b3j-app-base-map","status":"landed","standing_run":"integrated-retail-progress-2026-10-27",
-      "brief":"build/tmp/b3j-app-base-map-brief.md","worker_output":"build/tmp/b3j-app-base-map/round-note.md",
-      "note":"docs/scratch/phase-b3j-app-base-map.md","worker_session":"ses_e817c7766ffeRIvgJnldF2S5pD",
-      "model":"configured round-agent openai/gpt-6-luna#high API confirmed, no override",
-      "campaign_attempt":14,"question_attempt":1,
-      "dispatched":"2026-10-27T17:58:31.872Z","worker_idle":"2026-10-27T18:09:22.198Z",
-      "deadline":"2026-10-27T18:40:00Z","verified":"2026-10-27T18:29:35Z",
-      "landed":"2026-10-27T18:31:37Z","commit":"954d68574feb1c36885c41a427ea921dca5345bc","dispatch_to_landing_seconds":1985.128,
-      "result":"Actualapp conditional map display, not native B3: fulltables/107compiledstate vectors/4actualRGBA streams/7badCLI cases; actual main-call mutant fails/restores exact,49CTest65.44sPASS. Visible default strict compare retains100corner-channel mismatch; controlled own-HWND DWM square-corner request gives2exact fullclient frames/exit0. No native gate/reference/mask/threshold change. Fresh C3/C1scores+PNGhashes unchanged.",
-      "stock_starts":0,"resources":"Worker terminal, no native access; all own apps closed,0game/debugger/Frida/tasks and5protectedhashes unchanged. Selection/title/hover/save/native presentation remain open."
+      "id": "b3j-app-base-map",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/b3j-app-base-map-brief.md",
+      "worker_output": "build/tmp/b3j-app-base-map/round-note.md",
+      "note": "docs/scratch/phase-b3j-app-base-map.md",
+      "worker_session": "ses_e817c7766ffeRIvgJnldF2S5pD",
+      "model": "configured round-agent openai/gpt-6-luna#high API confirmed, no override",
+      "campaign_attempt": 14,
+      "question_attempt": 1,
+      "dispatched": "2026-10-27T17:58:31.872Z",
+      "worker_idle": "2026-10-27T18:09:22.198Z",
+      "deadline": "2026-10-27T18:40:00Z",
+      "verified": "2026-10-27T18:29:35Z",
+      "landed": "2026-10-27T18:31:37Z",
+      "commit": "954d68574feb1c36885c41a427ea921dca5345bc",
+      "dispatch_to_landing_seconds": 1985.128,
+      "result": "Actualapp conditional map display, not native B3: fulltables/107compiledstate vectors/4actualRGBA streams/7badCLI cases; actual main-call mutant fails/restores exact,49CTest65.44sPASS. Visible default strict compare retains100corner-channel mismatch; controlled own-HWND DWM square-corner request gives2exact fullclient frames/exit0. No native gate/reference/mask/threshold change. Fresh C3/C1scores+PNGhashes unchanged.",
+      "stock_starts": 0,
+      "resources": "Worker terminal, no native access; all own apps closed,0game/debugger/Frida/tasks and5protectedhashes unchanged. Selection/title/hover/save/native presentation remain open."
     },
-    {"id":"b2m-qualified-navigation","status":"landed","standing_run":"integrated-retail-progress-2026-10-27","brief":"build/tmp/b2m-qualified-navigation-brief.md","worker_output":"build/tmp/b2m-qualified-navigation/round-note.md","note":"docs/scratch/phase-b2m-qualified-navigation.md","worker_session":"ses_e817c7784ffeODOPsnURI2ARgX","model":"configured round-agent openai/gpt-6-luna#high API confirmed, no override","campaign_attempt":13,"dispatched":"2026-10-27T17:58:31.866Z","worker_idle":"2026-10-27T18:09:20.066Z","deadline":"2026-10-27T18:40:00Z","verified":"2026-10-27T18:15:53Z","landed":"2026-10-27T18:17:36Z","commit":"97f27ee42cbb52896ca944c1a80e776e8c646057","dispatch_to_landing_seconds":1144.134,"result":"Limited native negative: reported2560x1440 client refused before input;0screenshots/state/nav/admission, actual classifier untested. Exact pre-edit executed source/hash not retained. Unexecuted pointer/flag-stride bugs(101wrong addresses) reject probe as reusable tool; preserved unaccepted scratch only, no further tooling repair/retry. Own receipts/identity/four brackets+parent/current fifthhash/host cleanup checked;49CTest66.16s candidate map tree, no B2 gate movement.","stock_starts":1,"charged_starts":1,"native_crashes":0,"resources":"PID43744/path/creation134375979426036245 matched before owned termination exit1;4.946s. Independent0game/app/debugger/Frida/tasks and5hashes match. Both workers terminal; native desktop released for app verification."},
-    {"id":"b3i-map-preparation","status":"landed","standing_run":"integrated-retail-progress-2026-10-27","brief":"build/tmp/b3i-map-preparation-brief.md","worker_output":"build/tmp/b3i-map-preparation/round-note.md","note":"docs/scratch/phase-b3i-map-preparation.md","worker_session":"ses_e81953a6cffe6uSeVNV98Ux9kW","model":"configured disasm-agent openai/gpt-6.1-sol#high API confirmed, no override","campaign_attempt":11,"question_attempt":6,"dispatched":"2026-10-27T17:31:29.065Z","worker_idle":"2026-10-27T17:45:01.213Z","deadline":"2026-10-27T18:15:00Z","verified":"2026-10-27T17:53:08Z","landed":"2026-10-27T17:54:55Z","commit":"f3aa37402ff7860297648110b2307d8062ec0bba","dispatch_to_landing_seconds":1405.935,"result":"Whole49B647 state-only law; earlier named background/upload/getter bound conditionally. Own10byte windows/107synthetic fixtures/exact archive joins/separate1228800byte background decode/four per-pixel SOURCE compositions pass; model seed3to2 mutant fails/restores exact. No native flags/save equivalence/device pixels/final presentation/B3 acceptance; no production or gate movement,48CTest64.81sPASS.","stock_starts":0,"resources":"Worker succeeded/idle, staticREAclosed;0live/production edits/install writes/restoration owed. Prior mapobject5/pickcap3 retained; this changed boundary continuation historical6."},
-    {"id":"b2l-menu-image-qualification","status":"landed","standing_run":"integrated-retail-progress-2026-10-27","brief":"build/tmp/b2l-menu-image-qualification-brief.md","repair_brief":"build/tmp/b2l-menu-image-qualification-repair1-brief.md","worker_output":"build/tmp/b2l-menu-image-qualification/round-note.md","note":"docs/scratch/phase-b2l-menu-image-qualification.md","worker_session":"ses_e81953a94ffeQT1HdBEE37YefU","model":"configured round-agent openai/gpt-6-luna#high API confirmed, no override","campaign_attempts":[10,12],"classification":"tooling-only","dispatched":"2026-10-27T17:31:29.061Z","deadline":"2026-10-27T18:15:00Z","verified":"2026-10-27T17:45:57Z","landed":"2026-10-27T17:47:13Z","commit":"ff3d96230b809802d2bc04ee15f2f660931794ed","dispatch_to_landing_seconds":943.939,"result":"Initial5tests pass but actual same-size translations admitted RETURN; repair strict exterior-reference guard. Own32subsets/11translations/focus-identity-stability controls and isolated alignment-call mutation fail/restore exact; six Python tests, fresh48CTest64.81sPASS. Reference-specific SOURCE admission only, no native compatibility/entry/identity or gate acceptance.","stock_starts":0,"resources":"Worker terminal, no game/app/debugger/Frida/task; no install writes, gates unchanged. Tooling2of2 spent, no third repair."},
-    {"id":"b3h-map-production-inputs","status":"landed","standing_run":"integrated-retail-progress-2026-10-27","brief":"build/tmp/b3h-map-production-inputs-brief.md","worker_output":"build/tmp/b3h-map-production-inputs/round-note.md","note":"docs/scratch/phase-b3h-map-production-inputs.md","worker_session":"ses_e81c7a539ffeJH2OC3KwnkkeeY","model":"configured disasm-agent openai/gpt-6.1-sol#high API confirmed,no override","campaign_attempt":9,"question_attempt":5,"dispatched":"2026-10-27T16:36:24.965Z","worker_idle":"2026-10-27T16:50:22.435Z","deadline":"2026-10-27T17:20:00Z","verified":"2026-10-27T17:16:23Z","documentation_prepared_at_previously_labeled_landed":"2026-10-27T17:18:15Z","landed":"2026-10-27T17:20:05Z","commit":"a855e6e1e6d21e7aaf72eb72dff1d9590606e6f6","dispatch_to_landing_seconds":2620.035,"overrun_seconds":5,"result":"Conditional2D atlas-node prefix, not full map/unlock states. Own8byte windows/103rawrecords/102basebytes/7rects/510conditional tuples, independent archive joins/productionRGBA replay. Isolated mask-for-atlas changes866448bytes with same dimensions, fails/restores exact. First unresolved49B647/background-state+[map+3C], no guessed camera.48CTest/fixed gates unchanged.","stock_starts":0,"resources":"Worker succeeded/idle, staticREAclosed,0live/production edits/restoration owed; historical mapcount5 and separatepickcap3 retained."},
-    {"id":"c2p-runtime-hud","status":"landed","standing_run":"integrated-retail-progress-2026-10-27","brief":"build/tmp/c2p-runtime-hud-brief.md","repair_brief":"build/tmp/c2p-runtime-hud-repair1-brief.md","worker_outputs":["build/tmp/c2p-runtime-hud/round-note.md","build/tmp/c2p-runtime-hud/repair1/round-note.md"],"note":"docs/scratch/phase-c2p-runtime-hud.md","worker_session":"ses_e81d2ac61ffe7f27C2MhqnxTRn","model":"configured round-agent openai/gpt-6-luna#high API confirmed,no override","campaign_attempts":[5,8],"question_attempts":[1,2],"dispatched":"2026-10-27T16:24:22.235Z","worker_idle":"2026-10-27T16:43:24.787Z","deadline":"2026-10-27T17:08:00Z","verified":"2026-10-27T17:01:03Z","landed":"2026-10-27T17:06:37Z","commit":"56295b9f1cc89788c22e1871201db6c7f97d4114","dispatch_to_landing_seconds":2534.765,"stock_starts":0,"result":"Runtime WorldHUD/Ppause/pausedESC connected. Own independent20s World/HUD pause/no-catchup andRGB padding check; pause/caption source mutants separately fail/restore exact. Real owned SDLwindow9PNGs verifiesP/ESC delivery/frozen frames/resume/exit0;48CTest67.02s andC3/C1fixed gates exactunchanged. SOURCE fractional reset/counter/blend policies, notnative C2/PhaseDacceptance.","resources":"All own app processes/input closed, no native resources. Initial missingproof/link/test and independent focus/scancode/checker-method failures preserved. Administrative PLAN/queue clocks follow source commit; no new research beyond deadline."},
-    {"id":"c2q-native-cursor","status":"landed","standing_run":"integrated-retail-progress-2026-10-27","brief":"build/tmp/c2q-native-cursor-brief.md","repair_brief":"build/tmp/c2q-native-cursor-repair1-brief.md","worker_output":"build/tmp/c2q-native-cursor/round-note.md","repair_result":"build/tmp/c2q-native-cursor/repair1/result.json","note":"docs/scratch/phase-c2q-native-cursor.md","worker_session":"ses_e81d2ac56ffe35LkuJLJXnXBWG","model":"configured round-agent openai/gpt-6-luna#high API confirmed, no override","campaign_attempts":[6,7],"question_attempts":[5,6],"dispatched":"2026-10-27T16:24:22.240Z","worker_idle":"2026-10-27T16:42:02.646Z","deadline":"2026-10-27T17:08:00Z","verified":"2026-10-27T17:01:03Z","documentation_prepared_at_previously_labeled_landed":"2026-10-27T17:06:39Z","landed":"2026-10-27T17:07:22Z","commit":"c0698294ac152c5b0b306cb31154e647d973c4c8","dispatch_to_landing_seconds":2579.760,"stock_starts":1,"charged_starts":1,"native_crashes":0,"result":"Initial false prerequisite refused0starts; repair1same charged ordinary attempt acquired foreground but fresh unsafe menu candidate5 stopped beforeRETURN. No level/samples/screenshots/retry. Independent caller guard replay/relaxed guard control,48CTest/fixed gates unchanged. Cursor live arm parked atcount6.","resources":"PID55488/path/creation134375928003252909 matched before owned termination exit1(not crash),11.561s; independent0game/0task/five install hashes exact,input/read handles closed,worker terminal. No writes/restoration owed."},
+    {
+      "id": "b2m-qualified-navigation",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/b2m-qualified-navigation-brief.md",
+      "worker_output": "build/tmp/b2m-qualified-navigation/round-note.md",
+      "note": "docs/scratch/phase-b2m-qualified-navigation.md",
+      "worker_session": "ses_e817c7784ffeODOPsnURI2ARgX",
+      "model": "configured round-agent openai/gpt-6-luna#high API confirmed, no override",
+      "campaign_attempt": 13,
+      "dispatched": "2026-10-27T17:58:31.866Z",
+      "worker_idle": "2026-10-27T18:09:20.066Z",
+      "deadline": "2026-10-27T18:40:00Z",
+      "verified": "2026-10-27T18:15:53Z",
+      "landed": "2026-10-27T18:17:36Z",
+      "commit": "97f27ee42cbb52896ca944c1a80e776e8c646057",
+      "dispatch_to_landing_seconds": 1144.134,
+      "result": "Limited native negative: reported2560x1440 client refused before input;0screenshots/state/nav/admission, actual classifier untested. Exact pre-edit executed source/hash not retained. Unexecuted pointer/flag-stride bugs(101wrong addresses) reject probe as reusable tool; preserved unaccepted scratch only, no further tooling repair/retry. Own receipts/identity/four brackets+parent/current fifthhash/host cleanup checked;49CTest66.16s candidate map tree, no B2 gate movement.",
+      "stock_starts": 1,
+      "charged_starts": 1,
+      "native_crashes": 0,
+      "resources": "PID43744/path/creation134375979426036245 matched before owned termination exit1;4.946s. Independent0game/app/debugger/Frida/tasks and5hashes match. Both workers terminal; native desktop released for app verification."
+    },
+    {
+      "id": "b3i-map-preparation",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/b3i-map-preparation-brief.md",
+      "worker_output": "build/tmp/b3i-map-preparation/round-note.md",
+      "note": "docs/scratch/phase-b3i-map-preparation.md",
+      "worker_session": "ses_e81953a6cffe6uSeVNV98Ux9kW",
+      "model": "configured disasm-agent openai/gpt-6.1-sol#high API confirmed, no override",
+      "campaign_attempt": 11,
+      "question_attempt": 6,
+      "dispatched": "2026-10-27T17:31:29.065Z",
+      "worker_idle": "2026-10-27T17:45:01.213Z",
+      "deadline": "2026-10-27T18:15:00Z",
+      "verified": "2026-10-27T17:53:08Z",
+      "landed": "2026-10-27T17:54:55Z",
+      "commit": "f3aa37402ff7860297648110b2307d8062ec0bba",
+      "dispatch_to_landing_seconds": 1405.935,
+      "result": "Whole49B647 state-only law; earlier named background/upload/getter bound conditionally. Own10byte windows/107synthetic fixtures/exact archive joins/separate1228800byte background decode/four per-pixel SOURCE compositions pass; model seed3to2 mutant fails/restores exact. No native flags/save equivalence/device pixels/final presentation/B3 acceptance; no production or gate movement,48CTest64.81sPASS.",
+      "stock_starts": 0,
+      "resources": "Worker succeeded/idle, staticREAclosed;0live/production edits/install writes/restoration owed. Prior mapobject5/pickcap3 retained; this changed boundary continuation historical6."
+    },
+    {
+      "id": "b2l-menu-image-qualification",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/b2l-menu-image-qualification-brief.md",
+      "repair_brief": "build/tmp/b2l-menu-image-qualification-repair1-brief.md",
+      "worker_output": "build/tmp/b2l-menu-image-qualification/round-note.md",
+      "note": "docs/scratch/phase-b2l-menu-image-qualification.md",
+      "worker_session": "ses_e81953a94ffeQT1HdBEE37YefU",
+      "model": "configured round-agent openai/gpt-6-luna#high API confirmed, no override",
+      "campaign_attempts": [
+        10,
+        12
+      ],
+      "classification": "tooling-only",
+      "dispatched": "2026-10-27T17:31:29.061Z",
+      "deadline": "2026-10-27T18:15:00Z",
+      "verified": "2026-10-27T17:45:57Z",
+      "landed": "2026-10-27T17:47:13Z",
+      "commit": "ff3d96230b809802d2bc04ee15f2f660931794ed",
+      "dispatch_to_landing_seconds": 943.939,
+      "result": "Initial5tests pass but actual same-size translations admitted RETURN; repair strict exterior-reference guard. Own32subsets/11translations/focus-identity-stability controls and isolated alignment-call mutation fail/restore exact; six Python tests, fresh48CTest64.81sPASS. Reference-specific SOURCE admission only, no native compatibility/entry/identity or gate acceptance.",
+      "stock_starts": 0,
+      "resources": "Worker terminal, no game/app/debugger/Frida/task; no install writes, gates unchanged. Tooling2of2 spent, no third repair."
+    },
+    {
+      "id": "b3h-map-production-inputs",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/b3h-map-production-inputs-brief.md",
+      "worker_output": "build/tmp/b3h-map-production-inputs/round-note.md",
+      "note": "docs/scratch/phase-b3h-map-production-inputs.md",
+      "worker_session": "ses_e81c7a539ffeJH2OC3KwnkkeeY",
+      "model": "configured disasm-agent openai/gpt-6.1-sol#high API confirmed,no override",
+      "campaign_attempt": 9,
+      "question_attempt": 5,
+      "dispatched": "2026-10-27T16:36:24.965Z",
+      "worker_idle": "2026-10-27T16:50:22.435Z",
+      "deadline": "2026-10-27T17:20:00Z",
+      "verified": "2026-10-27T17:16:23Z",
+      "documentation_prepared_at_previously_labeled_landed": "2026-10-27T17:18:15Z",
+      "landed": "2026-10-27T17:20:05Z",
+      "commit": "a855e6e1e6d21e7aaf72eb72dff1d9590606e6f6",
+      "dispatch_to_landing_seconds": 2620.035,
+      "overrun_seconds": 5,
+      "result": "Conditional2D atlas-node prefix, not full map/unlock states. Own8byte windows/103rawrecords/102basebytes/7rects/510conditional tuples, independent archive joins/productionRGBA replay. Isolated mask-for-atlas changes866448bytes with same dimensions, fails/restores exact. First unresolved49B647/background-state+[map+3C], no guessed camera.48CTest/fixed gates unchanged.",
+      "stock_starts": 0,
+      "resources": "Worker succeeded/idle, staticREAclosed,0live/production edits/restoration owed; historical mapcount5 and separatepickcap3 retained."
+    },
+    {
+      "id": "c2p-runtime-hud",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/c2p-runtime-hud-brief.md",
+      "repair_brief": "build/tmp/c2p-runtime-hud-repair1-brief.md",
+      "worker_outputs": [
+        "build/tmp/c2p-runtime-hud/round-note.md",
+        "build/tmp/c2p-runtime-hud/repair1/round-note.md"
+      ],
+      "note": "docs/scratch/phase-c2p-runtime-hud.md",
+      "worker_session": "ses_e81d2ac61ffe7f27C2MhqnxTRn",
+      "model": "configured round-agent openai/gpt-6-luna#high API confirmed,no override",
+      "campaign_attempts": [
+        5,
+        8
+      ],
+      "question_attempts": [
+        1,
+        2
+      ],
+      "dispatched": "2026-10-27T16:24:22.235Z",
+      "worker_idle": "2026-10-27T16:43:24.787Z",
+      "deadline": "2026-10-27T17:08:00Z",
+      "verified": "2026-10-27T17:01:03Z",
+      "landed": "2026-10-27T17:06:37Z",
+      "commit": "56295b9f1cc89788c22e1871201db6c7f97d4114",
+      "dispatch_to_landing_seconds": 2534.765,
+      "stock_starts": 0,
+      "result": "Runtime WorldHUD/Ppause/pausedESC connected. Own independent20s World/HUD pause/no-catchup andRGB padding check; pause/caption source mutants separately fail/restore exact. Real owned SDLwindow9PNGs verifiesP/ESC delivery/frozen frames/resume/exit0;48CTest67.02s andC3/C1fixed gates exactunchanged. SOURCE fractional reset/counter/blend policies, notnative C2/PhaseDacceptance.",
+      "resources": "All own app processes/input closed, no native resources. Initial missingproof/link/test and independent focus/scancode/checker-method failures preserved. Administrative PLAN/queue clocks follow source commit; no new research beyond deadline."
+    },
+    {
+      "id": "c2q-native-cursor",
+      "status": "landed",
+      "standing_run": "integrated-retail-progress-2026-10-27",
+      "brief": "build/tmp/c2q-native-cursor-brief.md",
+      "repair_brief": "build/tmp/c2q-native-cursor-repair1-brief.md",
+      "worker_output": "build/tmp/c2q-native-cursor/round-note.md",
+      "repair_result": "build/tmp/c2q-native-cursor/repair1/result.json",
+      "note": "docs/scratch/phase-c2q-native-cursor.md",
+      "worker_session": "ses_e81d2ac56ffe35LkuJLJXnXBWG",
+      "model": "configured round-agent openai/gpt-6-luna#high API confirmed, no override",
+      "campaign_attempts": [
+        6,
+        7
+      ],
+      "question_attempts": [
+        5,
+        6
+      ],
+      "dispatched": "2026-10-27T16:24:22.240Z",
+      "worker_idle": "2026-10-27T16:42:02.646Z",
+      "deadline": "2026-10-27T17:08:00Z",
+      "verified": "2026-10-27T17:01:03Z",
+      "documentation_prepared_at_previously_labeled_landed": "2026-10-27T17:06:39Z",
+      "landed": "2026-10-27T17:07:22Z",
+      "commit": "c0698294ac152c5b0b306cb31154e647d973c4c8",
+      "dispatch_to_landing_seconds": 2579.76,
+      "stock_starts": 1,
+      "charged_starts": 1,
+      "native_crashes": 0,
+      "result": "Initial false prerequisite refused0starts; repair1same charged ordinary attempt acquired foreground but fresh unsafe menu candidate5 stopped beforeRETURN. No level/samples/screenshots/retry. Independent caller guard replay/relaxed guard control,48CTest/fixed gates unchanged. Cursor live arm parked atcount6.",
+      "resources": "PID55488/path/creation134375928003252909 matched before owned termination exit1(not crash),11.561s; independent0game/0task/five install hashes exact,input/read handles closed,worker terminal. No writes/restoration owed."
+    },
     {
       "id": "c3bv-production-pack",
       "status": "landed",
       "standing_run": "integrated-retail-progress-2026-10-27",
       "brief": "build/tmp/c3bv-production-pack-brief.md",
-      "repairs": ["build/tmp/c3bv-production-pack-repair1-brief.md", "build/tmp/c3bv-production-pack-repair2-brief.md"],
-      "worker_outputs": ["build/tmp/c3bv-production-pack/round-note.md", "build/tmp/c3bv-production-pack/repair1/round-note.md", "build/tmp/c3bv-production-pack/repair2/round-note.md"],
+      "repairs": [
+        "build/tmp/c3bv-production-pack-repair1-brief.md",
+        "build/tmp/c3bv-production-pack-repair2-brief.md"
+      ],
+      "worker_outputs": [
+        "build/tmp/c3bv-production-pack/round-note.md",
+        "build/tmp/c3bv-production-pack/repair1/round-note.md",
+        "build/tmp/c3bv-production-pack/repair2/round-note.md"
+      ],
       "note": "docs/scratch/phase-c3bv-production-pack.md",
       "worker_session": "ses_e81fe1a66ffeDzdrPKfpBSmDjv",
       "model": "configured round-agent openai/gpt-6-luna#high, API verified; no override",
-      "campaign_attempts": [1,3,4],
-      "question_attempts": [2,3,4],
+      "campaign_attempts": [
+        1,
+        3,
+        4
+      ],
+      "question_attempts": [
+        2,
+        3,
+        4
+      ],
       "cap_rationale": "C3ak component retained asattempt1. C3bi/bk since clarified scale law. Fourth exception only actual-production discriminator with documented installed fixture after initial/repair1 incomplete; no further repair.",
       "dispatched": "2026-10-27T15:36:56.024Z",
-      "repair_dispatches": ["2026-10-27T15:53:40Z", "2026-10-27T16:03:22Z"],
+      "repair_dispatches": [
+        "2026-10-27T15:53:40Z",
+        "2026-10-27T16:03:22Z"
+      ],
       "worker_idle": "2026-10-27T16:07:49.768Z",
       "deadline": "2026-10-27T16:21:30Z",
       "verified": "2026-10-27T16:12:23Z",
@@ -4092,18 +4903,230 @@
       "dispatch_to_landing_seconds": 1020,
       "repair_dispatch_to_landing_seconds": 783
     },
-    {"id":"c3bb-verifier-feasibility","status":"landed","brief":"build/tmp/c3bb-verifier-feasibility-brief.md","worker":"round-agent","requested_model":"configured OpenCode targeted pin per docs/ROLES.md","dispatch_session_id":"ses_e88caeacfffeujQLlyjjYv4EeR","dispatched_at":"2026-10-26T01:55:14-06:00","landed_at":"2026-10-26T02:12:39-06:00","elapsed_seconds":1045,"owns_live_game":false,"live_owner":null,"worker_output":"build/tmp/c3bb-verifier-feasibility/round-note.md","question_round":1,"evidence":"docs/scratch/phase-c3bb-verifier-feasibility.md","result":"Versioned source/artifact inventory verified. Worker PRE7 prediction rejected by independent6/5 derivation. Custom-getter necessity narrowed: context-before-entry source provides conditional read-only path, not working verifier. Recommend approval-required staged evidence protocol and bounded offline Sol scope; refusal unchanged,0native actions,retained gates unchanged. No repair beyond3attempt pass budget."},
-    {"id":"c3ba-requirement-audit","status":"landed","brief":"build/tmp/c3ba-requirement-audit-brief.md","repair_brief":"build/tmp/c3ba-requirement-audit-repair1-brief.md","worker":"round-agent","requested_model":"configured OpenCode targeted pin per docs/ROLES.md","dispatch_session_id":"ses_e88caeaedffegDwRUdGwoxxJc8","dispatched_at":"2026-10-26T01:55:14-06:00","repair_dispatched_at":"2026-10-26T01:59:30-06:00","worker_completed":"2026-10-26T02:00:01-06:00","landed_at":"2026-10-26T02:03:15-06:00","elapsed_seconds":481,"repair_elapsed_seconds":225,"owns_live_game":false,"live_owner":null,"worker_output":"build/tmp/c3ba-requirement-audit/repair1/addendum.md","question_round":2,"evidence":"docs/scratch/phase-c3ba-requirement-audit.md","result":"Requirement phases distinguished; current pre-attach supplied proof not actual verifier. Unarmed hook remains execution hazard. Independent site bytes/hash/refusal checks; no policy change/native action/gate movement."},
-    {"id":"c3az-observer","status":"landed","brief":"build/tmp/c3az-observer-brief.md","repair_briefs":["build/tmp/c3az-observer-repair1-brief.md","build/tmp/c3az-observer-repair2-brief.md"],"worker":"round-agent","dispatch_id":"ses_e89094ab3ffedoVPJAcTOQC2Ii","requested_model":"configured round-agent Luna/high per docs/ROLES.md; API confirms pin","owns_live_game":false,"dispatched_at":"2026-10-26T00:47:06-06:00","repair_dispatched_at":"2026-10-26T00:52:58-06:00","repair2_dispatched_at":"2026-10-26T01:23:36-06:00","worker_completed_at":"2026-10-26T01:29:21-06:00","landed_at":"2026-10-26T01:34:58-06:00","elapsed_seconds":2872,"repair_elapsed_seconds":2520,"repair2_elapsed_seconds":682,"round_overrun_seconds":172,"attempts":3,"worker_output":"build/tmp/c3az-observer/round-note.md","facilitator_check":"docs/scratch/phase-c3az-bounded-observer-blocked.md","result":"Accept synthetic tooling plus safety blocker, not integrated/native readiness. Own22checks/35worker tests after stale-code/read-fault repairs; own primitive mutation fails/restores exact; scoped Frida/API check and preservation hashes pass. Runtime setup remains hardfalse; no engine proof producer, controller binding/8s host unload unfinished. Park3attempt question;0starts/attaches. Full44CTest/37Python pass; gates unchanged. Worker within45min; facilitator verification/documentation exceeded round wall-clock172s, explicitly recorded."},
-    {"id":"c3ay-controller","status":"landed","brief":"build/tmp/c3ay-controller-brief.md","repair_brief":"build/tmp/c3ay-controller-repair1-brief.md","worker":"round-agent","dispatch_id":"ses_e89094aeaffe7aZ2ZZ7YvgDjlr","requested_model":"configured round-agent Luna/high per docs/ROLES.md; API confirms pin","owns_live_game":false,"dispatched_at":"2026-10-26T00:47:06-06:00","repair_dispatched_at":"2026-10-26T00:57:25-06:00","landed_at":"2026-10-26T01:18:19-06:00","elapsed_seconds":1873,"repair_elapsed_seconds":1254,"attempts":2,"worker_output":"build/tmp/c3ay-controller/repair1/round-note.md","facilitator_check":"docs/scratch/phase-c3ay-actual-controller.md","result":"Controller-only accepted: actual operational suffix retained; initial4unsafe outcomes repaired; own15actual-main outcomes and single action-count guard mutation/exact restore; exact no-arg main host replay PID44240 exited/task absent/install hashes match.13worker tests,44CTest,37Python pass. No starts/attaches/native writes; no integrated readiness/approval. Initial18files preserved and16manifest entries checked."},
-    {"id":"c3ax-controller-preflight","status":"landed","brief":"build/tmp/c3ax-controller-preflight-brief.md","repair_brief":"build/tmp/c3ax-controller-repair1-brief.md","worker":"round-agent","session_id":"ses_e894c67d0ffeS4RXtZsU78cyEg","requested_model":"configured OpenCode round-agent Luna high; no override","dispatched":"2026-10-25T23:33:51-06:00","repair_dispatched":"2026-10-25T23:40:58-06:00","verified_at":"2026-10-26T00:04:19-06:00","landed":"2026-10-26T00:05:26-06:00","elapsed_seconds":1895,"repair_elapsed_seconds":1468,"commit":"698fdd7","worker_output":"build/tmp/c3ax-controller-preflight/repair1-round-note.md","note":"docs/scratch/phase-c3ax-controller-preflight.md","attempts":2,"result":"Narrowed partial host preflight accepted, not launch-ready: own5main controls and real session1 replay prove returned copy helper binding/Running/barrier/cleanup; state-guard mutation fails, exact restore,9worker tests. Main reconstructed/operational suffix removed; original operational controller unchanged. Integrated original path and executable observer remain blocker;3/3pass attempts used.","stock_starts":0,"owns_live_game":false},
-    {"id":"c3aw-site-preflight","status":"landed","brief":"build/tmp/c3aw-site-preflight-brief.md","worker":"disasm-agent","session_id":"ses_e894c6843ffe9oNjXJ1Hqu5LFq","requested_model":"configured OpenCode disasm-agent Sol high; no override","task_type":"disassembly read","dispatched":"2026-10-25T23:33:51-06:00","verified_at":"2026-10-25T23:58:24-06:00","landed":"2026-10-26T00:00:41-06:00","elapsed_seconds":1610,"commit":"0e482a6","worker_output":"build/tmp/c3aw-site-preflight/round-note.md","note":"docs/scratch/phase-c3aw-site-preflight.md","result":"Static site/conditional ABI/source discriminator checked;31raw windows, own2positive16negative,52synthetic, one payload-copy mutation failure and exact restore. No native observer/compatibility/reachability/history/non-interference acceptance.","stock_starts":0,"owns_live_game":false},
-    {"id":"c3av-thin-comparator","status":"landed","kind":"synthetic offline mechanics, not native fidelity","brief":"build/tmp/c3av-thin-comparator-brief.md","repair_briefs":["build/tmp/c3av-thin-comparator-repair1-brief.md","build/tmp/c3av-thin-comparator-repair2-brief.md"],"worker_output":"build/tmp/c3av-thin-comparator/repair2/round-note.md","dispatch_session_id":"ses_e89706baaffe3oyY6xm507OgAd","requested_model":"openai/gpt-6-luna high (configured pin; no override)","dispatched_at":"2026-10-25T22:54:16-06:00","repair_dispatched":"2026-10-25T23:00:11-06:00","repair2_dispatched":"2026-10-25T23:11:57-06:00","landed":"2026-10-25T23:19:12-06:00","elapsed_seconds":1496,"repair_elapsed_seconds":1141,"repair2_elapsed_seconds":435,"attempts":3,"owns_live_game":false,"live_owner":null,"result":"No-forwarding synthetic request/resource checkpoint comparator; independent9valid changes differ/9failclosed controls, raw retention and key-order-only normalization; initial4false-equal cases and known-specular exclusion repaired, own X-only bypass fails and exact restore,12/12Python44/44CTest. Frozen C3/C1 unchanged,0starts. Not native capture/ABI/lifecycle/effective state proof.","note":"docs/scratch/phase-c3av-thin-comparison.md","proposal":"docs/RENDER_CAPTURE_PROPOSAL.md"},
-    {"id":"c3at-frame-map","status":"landed","kind":"established-evidence/source map","brief":"build/tmp/c3at-frame-map-brief.md","repair_brief":"build/tmp/c3at-frame-map-repair1-brief.md","worker_output":"build/tmp/c3at-frame-map/repair1/round-note.md","dispatch_session_id":"ses_e89773ea9ffeRNa2lx5Zd39Ho0","requested_model":"openai/gpt-6-luna high (configured pin; no override)","dispatched_at":"2026-10-25T22:46:59-06:00","repair_dispatched":"2026-10-25T22:54:16-06:00","landed":"2026-10-25T23:09:38-06:00","elapsed_seconds":1359,"repair_elapsed_seconds":922,"attempts":2,"owns_live_game":false,"live_owner":null,"result":"Eight-family map with conditional native frame spine and concrete source secondary-before-tube mismatch; initial omissions repaired, all60addresses re-read55raw/5BSS explicitly unread; source census omitted-family control, original hashes and44/44CTest checked. No production change, pixel cause or gate movement.","note":"docs/scratch/phase-c3at-frame-map.md","map":"docs/RENDER_FRAME_MAP.md"},
-    {"id":"c3au-boundary-assessment","status":"landed","kind":"offline design assessment","brief":"build/tmp/c3au-boundary-assessment-brief.md","worker_output":"build/tmp/c3au-boundary-assessment/round-note.md","dispatch_session_id":"ses_e89773ea8ffepWW52ZemtKfLlV","requested_model":"openai/gpt-6-luna high (configured pin; no override)","dispatched_at":"2026-10-25T22:46:59-06:00","landed":"2026-10-25T22:52:19-06:00","elapsed_seconds":320,"owns_live_game":false,"live_owner":null,"question_round":1,"result":"Conditional pre-wrapper comparison boundary and no-forwarding synthetic contract; own endpoint bytes/SDK check, baseline rerender and44/44CTest; no runtime observation, production change or gate movement.","note":"docs/scratch/phase-c3au-comparison-boundary.md"},
-    {"id":"c3aq-host-controller","status":"landed","outcome":"explicitly discarded incomplete at pivot startup; no claims promoted","landed":"2026-10-25T22:45:06-06:00","brief":"build/tmp/c3aq-host-controller-brief.md","dispatch_session_id":"ses_e8992a7d1ffexHm7iAi1G4dze5","worker_output":null,"evidence":"build/tmp/c3-offline-pivot-startup/aq-status.json; interrupted/idle; original queue snapshot preserves partial ownership","owns_live_game":false,"live_owner":null},
-    {"id":"c3ar-scene-handedness","status":"landed","outcome":"explicitly discarded incomplete at pivot startup; no claims promoted","landed":"2026-10-25T22:45:06-06:00","brief":"build/tmp/c3ar-scene-handedness-brief.md","dispatch_session_id":"ses_e8992a7c3ffeE8G9zyLenPf2I4","worker_output":null,"evidence":"build/tmp/c3-offline-pivot-startup/ar-status.json; interrupted/idle; original queue snapshot preserves partial ownership","owns_live_game":false,"live_owner":null},
-    {"id":"c3as-orange-discs","status":"landed","outcome":"explicitly discarded incomplete packet at pivot startup; not verified or promoted","landed":"2026-10-25T22:45:06-06:00","brief":"build/tmp/c3as-orange-discs-brief.md","dispatch_session_id":"ses_e8992a7c3ffdpvFPvPG9OOGyyy","worker_output":"build/tmp/c3as-orange-discs/round-note.md","evidence":"build/tmp/c3-offline-pivot-startup/as-status.json; succeeded/idle; suppression/support masks missing per original queue","owns_live_game":false,"live_owner":null},
+    {
+      "id": "c3bb-verifier-feasibility",
+      "status": "landed",
+      "brief": "build/tmp/c3bb-verifier-feasibility-brief.md",
+      "worker": "round-agent",
+      "requested_model": "configured OpenCode targeted pin per docs/ROLES.md",
+      "dispatch_session_id": "ses_e88caeacfffeujQLlyjjYv4EeR",
+      "dispatched_at": "2026-10-26T01:55:14-06:00",
+      "landed_at": "2026-10-26T02:12:39-06:00",
+      "elapsed_seconds": 1045,
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/c3bb-verifier-feasibility/round-note.md",
+      "question_round": 1,
+      "evidence": "docs/scratch/phase-c3bb-verifier-feasibility.md",
+      "result": "Versioned source/artifact inventory verified. Worker PRE7 prediction rejected by independent6/5 derivation. Custom-getter necessity narrowed: context-before-entry source provides conditional read-only path, not working verifier. Recommend approval-required staged evidence protocol and bounded offline Sol scope; refusal unchanged,0native actions,retained gates unchanged. No repair beyond3attempt pass budget."
+    },
+    {
+      "id": "c3ba-requirement-audit",
+      "status": "landed",
+      "brief": "build/tmp/c3ba-requirement-audit-brief.md",
+      "repair_brief": "build/tmp/c3ba-requirement-audit-repair1-brief.md",
+      "worker": "round-agent",
+      "requested_model": "configured OpenCode targeted pin per docs/ROLES.md",
+      "dispatch_session_id": "ses_e88caeaedffegDwRUdGwoxxJc8",
+      "dispatched_at": "2026-10-26T01:55:14-06:00",
+      "repair_dispatched_at": "2026-10-26T01:59:30-06:00",
+      "worker_completed": "2026-10-26T02:00:01-06:00",
+      "landed_at": "2026-10-26T02:03:15-06:00",
+      "elapsed_seconds": 481,
+      "repair_elapsed_seconds": 225,
+      "owns_live_game": false,
+      "live_owner": null,
+      "worker_output": "build/tmp/c3ba-requirement-audit/repair1/addendum.md",
+      "question_round": 2,
+      "evidence": "docs/scratch/phase-c3ba-requirement-audit.md",
+      "result": "Requirement phases distinguished; current pre-attach supplied proof not actual verifier. Unarmed hook remains execution hazard. Independent site bytes/hash/refusal checks; no policy change/native action/gate movement."
+    },
+    {
+      "id": "c3az-observer",
+      "status": "landed",
+      "brief": "build/tmp/c3az-observer-brief.md",
+      "repair_briefs": [
+        "build/tmp/c3az-observer-repair1-brief.md",
+        "build/tmp/c3az-observer-repair2-brief.md"
+      ],
+      "worker": "round-agent",
+      "dispatch_id": "ses_e89094ab3ffedoVPJAcTOQC2Ii",
+      "requested_model": "configured round-agent Luna/high per docs/ROLES.md; API confirms pin",
+      "owns_live_game": false,
+      "dispatched_at": "2026-10-26T00:47:06-06:00",
+      "repair_dispatched_at": "2026-10-26T00:52:58-06:00",
+      "repair2_dispatched_at": "2026-10-26T01:23:36-06:00",
+      "worker_completed_at": "2026-10-26T01:29:21-06:00",
+      "landed_at": "2026-10-26T01:34:58-06:00",
+      "elapsed_seconds": 2872,
+      "repair_elapsed_seconds": 2520,
+      "repair2_elapsed_seconds": 682,
+      "round_overrun_seconds": 172,
+      "attempts": 3,
+      "worker_output": "build/tmp/c3az-observer/round-note.md",
+      "facilitator_check": "docs/scratch/phase-c3az-bounded-observer-blocked.md",
+      "result": "Accept synthetic tooling plus safety blocker, not integrated/native readiness. Own22checks/35worker tests after stale-code/read-fault repairs; own primitive mutation fails/restores exact; scoped Frida/API check and preservation hashes pass. Runtime setup remains hardfalse; no engine proof producer, controller binding/8s host unload unfinished. Park3attempt question;0starts/attaches. Full44CTest/37Python pass; gates unchanged. Worker within45min; facilitator verification/documentation exceeded round wall-clock172s, explicitly recorded."
+    },
+    {
+      "id": "c3ay-controller",
+      "status": "landed",
+      "brief": "build/tmp/c3ay-controller-brief.md",
+      "repair_brief": "build/tmp/c3ay-controller-repair1-brief.md",
+      "worker": "round-agent",
+      "dispatch_id": "ses_e89094aeaffe7aZ2ZZ7YvgDjlr",
+      "requested_model": "configured round-agent Luna/high per docs/ROLES.md; API confirms pin",
+      "owns_live_game": false,
+      "dispatched_at": "2026-10-26T00:47:06-06:00",
+      "repair_dispatched_at": "2026-10-26T00:57:25-06:00",
+      "landed_at": "2026-10-26T01:18:19-06:00",
+      "elapsed_seconds": 1873,
+      "repair_elapsed_seconds": 1254,
+      "attempts": 2,
+      "worker_output": "build/tmp/c3ay-controller/repair1/round-note.md",
+      "facilitator_check": "docs/scratch/phase-c3ay-actual-controller.md",
+      "result": "Controller-only accepted: actual operational suffix retained; initial4unsafe outcomes repaired; own15actual-main outcomes and single action-count guard mutation/exact restore; exact no-arg main host replay PID44240 exited/task absent/install hashes match.13worker tests,44CTest,37Python pass. No starts/attaches/native writes; no integrated readiness/approval. Initial18files preserved and16manifest entries checked."
+    },
+    {
+      "id": "c3ax-controller-preflight",
+      "status": "landed",
+      "brief": "build/tmp/c3ax-controller-preflight-brief.md",
+      "repair_brief": "build/tmp/c3ax-controller-repair1-brief.md",
+      "worker": "round-agent",
+      "session_id": "ses_e894c67d0ffeS4RXtZsU78cyEg",
+      "requested_model": "configured OpenCode round-agent Luna high; no override",
+      "dispatched": "2026-10-25T23:33:51-06:00",
+      "repair_dispatched": "2026-10-25T23:40:58-06:00",
+      "verified_at": "2026-10-26T00:04:19-06:00",
+      "landed": "2026-10-26T00:05:26-06:00",
+      "elapsed_seconds": 1895,
+      "repair_elapsed_seconds": 1468,
+      "commit": "698fdd7",
+      "worker_output": "build/tmp/c3ax-controller-preflight/repair1-round-note.md",
+      "note": "docs/scratch/phase-c3ax-controller-preflight.md",
+      "attempts": 2,
+      "result": "Narrowed partial host preflight accepted, not launch-ready: own5main controls and real session1 replay prove returned copy helper binding/Running/barrier/cleanup; state-guard mutation fails, exact restore,9worker tests. Main reconstructed/operational suffix removed; original operational controller unchanged. Integrated original path and executable observer remain blocker;3/3pass attempts used.",
+      "stock_starts": 0,
+      "owns_live_game": false
+    },
+    {
+      "id": "c3aw-site-preflight",
+      "status": "landed",
+      "brief": "build/tmp/c3aw-site-preflight-brief.md",
+      "worker": "disasm-agent",
+      "session_id": "ses_e894c6843ffe9oNjXJ1Hqu5LFq",
+      "requested_model": "configured OpenCode disasm-agent Sol high; no override",
+      "task_type": "disassembly read",
+      "dispatched": "2026-10-25T23:33:51-06:00",
+      "verified_at": "2026-10-25T23:58:24-06:00",
+      "landed": "2026-10-26T00:00:41-06:00",
+      "elapsed_seconds": 1610,
+      "commit": "0e482a6",
+      "worker_output": "build/tmp/c3aw-site-preflight/round-note.md",
+      "note": "docs/scratch/phase-c3aw-site-preflight.md",
+      "result": "Static site/conditional ABI/source discriminator checked;31raw windows, own2positive16negative,52synthetic, one payload-copy mutation failure and exact restore. No native observer/compatibility/reachability/history/non-interference acceptance.",
+      "stock_starts": 0,
+      "owns_live_game": false
+    },
+    {
+      "id": "c3av-thin-comparator",
+      "status": "landed",
+      "kind": "synthetic offline mechanics, not native fidelity",
+      "brief": "build/tmp/c3av-thin-comparator-brief.md",
+      "repair_briefs": [
+        "build/tmp/c3av-thin-comparator-repair1-brief.md",
+        "build/tmp/c3av-thin-comparator-repair2-brief.md"
+      ],
+      "worker_output": "build/tmp/c3av-thin-comparator/repair2/round-note.md",
+      "dispatch_session_id": "ses_e89706baaffe3oyY6xm507OgAd",
+      "requested_model": "openai/gpt-6-luna high (configured pin; no override)",
+      "dispatched_at": "2026-10-25T22:54:16-06:00",
+      "repair_dispatched": "2026-10-25T23:00:11-06:00",
+      "repair2_dispatched": "2026-10-25T23:11:57-06:00",
+      "landed": "2026-10-25T23:19:12-06:00",
+      "elapsed_seconds": 1496,
+      "repair_elapsed_seconds": 1141,
+      "repair2_elapsed_seconds": 435,
+      "attempts": 3,
+      "owns_live_game": false,
+      "live_owner": null,
+      "result": "No-forwarding synthetic request/resource checkpoint comparator; independent9valid changes differ/9failclosed controls, raw retention and key-order-only normalization; initial4false-equal cases and known-specular exclusion repaired, own X-only bypass fails and exact restore,12/12Python44/44CTest. Frozen C3/C1 unchanged,0starts. Not native capture/ABI/lifecycle/effective state proof.",
+      "note": "docs/scratch/phase-c3av-thin-comparison.md",
+      "proposal": "docs/RENDER_CAPTURE_PROPOSAL.md"
+    },
+    {
+      "id": "c3at-frame-map",
+      "status": "landed",
+      "kind": "established-evidence/source map",
+      "brief": "build/tmp/c3at-frame-map-brief.md",
+      "repair_brief": "build/tmp/c3at-frame-map-repair1-brief.md",
+      "worker_output": "build/tmp/c3at-frame-map/repair1/round-note.md",
+      "dispatch_session_id": "ses_e89773ea9ffeRNa2lx5Zd39Ho0",
+      "requested_model": "openai/gpt-6-luna high (configured pin; no override)",
+      "dispatched_at": "2026-10-25T22:46:59-06:00",
+      "repair_dispatched": "2026-10-25T22:54:16-06:00",
+      "landed": "2026-10-25T23:09:38-06:00",
+      "elapsed_seconds": 1359,
+      "repair_elapsed_seconds": 922,
+      "attempts": 2,
+      "owns_live_game": false,
+      "live_owner": null,
+      "result": "Eight-family map with conditional native frame spine and concrete source secondary-before-tube mismatch; initial omissions repaired, all60addresses re-read55raw/5BSS explicitly unread; source census omitted-family control, original hashes and44/44CTest checked. No production change, pixel cause or gate movement.",
+      "note": "docs/scratch/phase-c3at-frame-map.md",
+      "map": "docs/RENDER_FRAME_MAP.md"
+    },
+    {
+      "id": "c3au-boundary-assessment",
+      "status": "landed",
+      "kind": "offline design assessment",
+      "brief": "build/tmp/c3au-boundary-assessment-brief.md",
+      "worker_output": "build/tmp/c3au-boundary-assessment/round-note.md",
+      "dispatch_session_id": "ses_e89773ea8ffepWW52ZemtKfLlV",
+      "requested_model": "openai/gpt-6-luna high (configured pin; no override)",
+      "dispatched_at": "2026-10-25T22:46:59-06:00",
+      "landed": "2026-10-25T22:52:19-06:00",
+      "elapsed_seconds": 320,
+      "owns_live_game": false,
+      "live_owner": null,
+      "question_round": 1,
+      "result": "Conditional pre-wrapper comparison boundary and no-forwarding synthetic contract; own endpoint bytes/SDK check, baseline rerender and44/44CTest; no runtime observation, production change or gate movement.",
+      "note": "docs/scratch/phase-c3au-comparison-boundary.md"
+    },
+    {
+      "id": "c3aq-host-controller",
+      "status": "landed",
+      "outcome": "explicitly discarded incomplete at pivot startup; no claims promoted",
+      "landed": "2026-10-25T22:45:06-06:00",
+      "brief": "build/tmp/c3aq-host-controller-brief.md",
+      "dispatch_session_id": "ses_e8992a7d1ffexHm7iAi1G4dze5",
+      "worker_output": null,
+      "evidence": "build/tmp/c3-offline-pivot-startup/aq-status.json; interrupted/idle; original queue snapshot preserves partial ownership",
+      "owns_live_game": false,
+      "live_owner": null
+    },
+    {
+      "id": "c3ar-scene-handedness",
+      "status": "landed",
+      "outcome": "explicitly discarded incomplete at pivot startup; no claims promoted",
+      "landed": "2026-10-25T22:45:06-06:00",
+      "brief": "build/tmp/c3ar-scene-handedness-brief.md",
+      "dispatch_session_id": "ses_e8992a7c3ffeE8G9zyLenPf2I4",
+      "worker_output": null,
+      "evidence": "build/tmp/c3-offline-pivot-startup/ar-status.json; interrupted/idle; original queue snapshot preserves partial ownership",
+      "owns_live_game": false,
+      "live_owner": null
+    },
+    {
+      "id": "c3as-orange-discs",
+      "status": "landed",
+      "outcome": "explicitly discarded incomplete packet at pivot startup; not verified or promoted",
+      "landed": "2026-10-25T22:45:06-06:00",
+      "brief": "build/tmp/c3as-orange-discs-brief.md",
+      "dispatch_session_id": "ses_e8992a7c3ffdpvFPvPG9OOGyyy",
+      "worker_output": "build/tmp/c3as-orange-discs/round-note.md",
+      "evidence": "build/tmp/c3-offline-pivot-startup/as-status.json; succeeded/idle; suppression/support masks missing per original queue",
+      "owns_live_game": false,
+      "live_owner": null
+    },
     {
       "id": "c3-pause-one-shot",
       "status": "landed",
@@ -4412,84 +5435,537 @@
       "facilitator_check": "Independent parent-env-unset443/31checks; single-ACENV removal skips onlyAC48, exactrestore; own39/39CTest. Fresh unaccepted-AF diagnostic.0838931 not promoted; acceptedC3.0923688, C1gatespass.",
       "elapsed_dispatch_to_landing_seconds": 1078
     },
-    {"id":"c3ae-scene-render-score","status":"landed","disposition":"partial conditional software integration and independently verified score; complete brief/native fidelity NOT accepted","attempts_in_run":2,"question_round":2,"brief":"build/tmp/c3ae-scene-render-score-brief.md","repair_brief":"build/tmp/c3ae-scene-render-score-repair1.md","worker_type":"targeted production integration/render","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8acc01e4ffehWsVZ2j18Us2Qf","owns_live_game":false,"stock_starts_used":0,"dispatched_at":"2026-10-25T16:34:28-06:00","repair_dispatched_at":"2026-10-25T16:52:49-06:00","landed_at":"2026-10-25T17:22:12-06:00","elapsed":"47m44s","repair_elapsed":"29m23s","worker_output":"build/tmp/c3ae-scene-render-score/round-note.md","facilitator_note":"docs/scratch/phase-c3ae-scene-render-score.md","result":"Ownmatchedrerender/scoring21707403/235008000=.0923687832 FAIL;scene-off exactbaseline. IndependentC1all10reports reproduce gatedpasses. Yaw-onlymutant worsens+2168344 andrestoredPNGexact;39/39CTest. Knownancestor/S/predicate/dispatch/clip/packing/state/ENVomissions explicitly retained; source/floorvisibility notfullyaccepted. Initialwronginputpacketpreserved. Counts2attempts,run24/24,0starts."},
-    {"id":"c3ad-pause-values-live","status":"landed","disposition":"partial offline acceptance; live recipe rejected, no approval/start","attempts_in_run":2,"question_round":5,"brief":"build/tmp/c3ad-pause-values-live-brief.md","repair_brief":"build/tmp/c3ad-pause-values-live-repair1.md","worker_type":"targeted runtime observation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8acc020effeO58FyZU3M389AT","owns_live_game":true,"live_owner":null,"stock_starts_used":0,"dispatched_at":"2026-10-25T16:34:28-06:00","repair_dispatched_at":"2026-10-25T16:54:52-06:00","landed_at":"2026-10-25T17:19:51-06:00","elapsed":"45m23s","repair_elapsed":"24m59s","worker_output":"build/tmp/c3ad-pause-values-live/repair1/round-note.md","facilitator_note":"docs/scratch/phase-c3ad-pause-values-live.md","result":"Independent initial129bind pause-loss failure fixed by isolatedstreams; anchors and success/failedHRESULT/one-fieldmutant checked. Launcher references nonexistent entry.RECORD_SIZE afterPopen; independent staticcheckfails, no dryapproval. No actualpausevalues or format;0starts. Finalrunbudget reserved, no more repair dispatched."},
-    {"id":"c3ac-billboard-source","status":"landed","question_round":2,"brief":"build/tmp/c3ac-billboard-source-brief.md","repair_brief":"build/tmp/c3ac-billboard-source-repair1.md","worker_type":"targeted production implementation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8aedfcd4ffemsMq24b4Q94RX6","owns_live_game":false,"dispatched_at":"2026-10-25T15:57:12-06:00","repair_dispatched_at":"2026-10-25T16:14:58-06:00","landed_at":"2026-10-25T16:33:26-06:00","elapsed":"36m14s","repair_elapsed":"18m28s","worker_output":"build/tmp/c3ac-billboard-source/round-note.md","facilitator_note":"docs/scratch/phase-c3ac-billboard-source.md","result":"Initial layout/test omission rejected; repaired explicit native conversion/sourceOffset. Independent17nodes/340fields error9.1e-13; own-Y-only mutant fails75.36pixels andexactrestores. Retail443checks/full38CTest pass. Preclip only,0starts;counts2attempts."},
-    {"id":"c3ab-scene-raster","status":"landed","question_round":1,"brief":"build/tmp/c3ab-scene-raster-brief.md","worker_type":"targeted production implementation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8aee248bffeBHIvP63dvZwMnD","owns_live_game":false,"dispatched_at":"2026-10-25T15:57:12-06:00","landed_at":"2026-10-25T16:29:24-06:00","elapsed":"32m12s","worker_output":"build/tmp/c3ab-scene-raster/round-note.md","facilitator_note":"docs/scratch/phase-c3ab-scene-raster.md","result":"Independent rational checker5120cases/61440pixels passes;strict-alpha-only private mutant fails equality fixture then exacthashrestores;38/38CTest. Explicit software component only, no native fidelity or app render claim;0starts."},
-    {"id":"c3aa-scene-mesh-source","status":"landed","question_round":1,"brief":"build/tmp/c3aa-scene-mesh-source-brief.md","question":"Explicit-matrix mesh source-command adapter","milestone":"C3 full frame","worker_type":"targeted production implementation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8aee4619ffeO6OqfuvLhC83AL","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:57:12-06:00","landed_at":"2026-10-25T16:20:46-06:00","elapsed":"23m34s","worker_output":"build/tmp/c3aa-scene-mesh-source/round-note.md","facilitator_note":"docs/scratch/phase-c3aa-scene-mesh-source.md","result":"Independentall1177records/4243corners/24aliases andrawsourceattribute/normals/materialmatch;maxtransformerror2.84e-14. Privatehierarchy-onlyregression fails730.667worlderror andrestores exacthash;38/38CTest. One ownwiringtarget/sourceentrystaged;no app/pixel change;0starts."},
-    {"id":"c3z-observation-provenance","status":"landed","question_round":3,"brief":"build/tmp/c3z-observation-provenance-brief.md","question":"Scene-class and concrete COM/surface observation provenance","milestone":"C3 full frame","worker_type":"disassembly read","requested_agent":"disasm-agent","requested_model":"openai/gpt-6.1-sol#high","session_id":"ses_e8b08f93affeXbhUgI5BtLsrkI","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:27:50-06:00","landed_at":"2026-10-25T15:52:36-06:00","elapsed":"24m46s","worker_output":"build/tmp/c3z-observation-provenance/round-note.md","facilitator_note":"docs/scratch/phase-c3z-observation-provenance.md","result":"46windows/fourSDKinterfaces/threeGUIDs independently authenticated;producer outputs distinguish D/D+0Texture2/D+8Surface4. Bounded byte interpreter request tuple and isolated field mutation restore;35/35CTest. Observation PARKED at3roundcap:actual current producer/lifetime/class/cleanup/state/format unproved;no live getter/Lock/launcher authorization."},
-    {"id":"c3y-secondary-slot8","status":"landed","question_round":1,"brief":"build/tmp/c3y-secondary-slot8-brief.md","question":"Concrete secondary-root slot8 numerical effects","milestone":"C3 full frame","worker_type":"disassembly read","requested_agent":"disasm-agent","requested_model":"openai/gpt-6.1-sol#high","session_id":"ses_e8b091990ffeLWUVCm2ysIH7Xn","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:27:50-06:00","landed_at":"2026-10-25T15:47:59-06:00","elapsed":"20m09s","worker_output":"build/tmp/c3y-secondary-slot8/round-note.md","facilitator_note":"docs/scratch/phase-c3y-secondary-slot8.md","result":"24raw windows/full929bytebody re-read;29sourcekeys/ranks independently match;12mesh17type2childslot4calls after sort, no root own draw. Isolated+108bias mutation changes rank25->0 and restores;35/35CTest;candidate mesh clipcounts and historical/effective state remain conditional;zero starts."},
-    {"id":"c3x-scene-node-reader","status":"landed","question_round":2,"brief":"build/tmp/c3x-scene-node-reader-brief.md","repair_brief":"build/tmp/c3x-scene-node-reader-repair1.md","question":"Strict source-preserving recursive scene-node reader","milestone":"C3 full frame","worker_type":"targeted production implementation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8b227f29ffee6jkDaULphPKC0","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T15:00:21-06:00","repair_dispatched_at":"2026-10-25T15:25:42-06:00","landed_at":"2026-10-25T15:43:48-06:00","elapsed":"43m27s","repair_elapsed":"18m06s","worker_output":"build/tmp/c3x-scene-node-reader/round-note.md","facilitator_note":"docs/scratch/phase-c3x-scene-node-reader.md","result":"Everyfield/offset independently reencoded and4complete retained slices byte-match;124byte/9999child allocation flaw repaired, permanent guarded negatives;isolated normalIndex mutation fails8assertions and exact sourceSHArestored;35/35CTest. Production parser only, app/render/score unchanged;zero starts."},
-    {"id":"c3v-state-format-preflight","status":"landed","question_round":2,"brief":"build/tmp/c3v-state-format-preflight-brief.md","repair_brief":"build/tmp/c3v-state-format-preflight-repair1.md","question":"Offline preflight for correlated scene state/format observation","milestone":"C3 full frame","worker_type":"targeted harness implementation","requested_agent":"round-agent","requested_model":"openai/gpt-6-luna#high","session_id":"ses_e8b2827c0ffe51W8GkPMPulYsO","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","repair_dispatched_at":"2026-10-25T15:05:07-06:00","landed_at":"2026-10-25T15:22:34-06:00","elapsed":"28m38s","repair_elapsed":"17m27s","worker_output":"build/tmp/c3v-state-format-preflight/round-note.md","facilitator_note":"docs/scratch/phase-c3v-repaired-mock-bounds.md","result":"PARTIAL mock bounds/ABI only;17independent failure fixtures and executed slot mutant pass;preserved original rejected packet;35/35CTest. NO live recipe/COM identity/scene correlation/surface provenance/cleanup acceptance;zero starts."},
-    {"id":"c3u-pause-scene-reachability","status":"landed","brief":"build/tmp/c3u-pause-scene-reachability-brief.md","question":"Pause-frame scene-root reachability and gate inputs","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","session_id":"ses_e8b282815ffex9ELFkOq6HhhiO","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3u-pause-scene-reachability/round-note.md","landed_at":"2026-10-25T15:21:16-06:00","elapsed":"27m20s","facilitator_note":"docs/scratch/phase-c3u-pause-scene-reachability.md","result":"32256 conditional rows/46windows and source load fields independently reproduced;enable-only mutation;35/35CTest. Historical pause values/visibility remain unknown;secondary slot8 downstream not accepted as slot4 rendering."},
-    {"id":"c3w-scene-integration-map","status":"landed","brief":"build/tmp/c3w-scene-integration-map-brief.md","question":"Read-only map for small scene implementation tasks","milestone":"C3 full frame","question_round":1,"worker_type":"read-only source map","requested_agent":"explore-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:53:56-06:00","dispatch_confirmed_at":"2026-10-25T14:54:54-06:00","session_id":"ses_e8b2826f1ffe8I8cN3jIaEnvjB","requested_model":"openai/gpt-6-luna#high","worker_output":"build/tmp/c3w-scene-integration-map.md (facilitator retained chat return)","landed_at":"2026-10-25T14:59:05-06:00","elapsed":"5m09s","facilitator_note":"docs/scratch/phase-c3w-source-integration-map.md","result":"Source-only map checked against PolyList/Raster/LevelObjects and app call sites; split strict asset reader first;no original measurement/code change/build/render."},
-    {"id":"c3q-scene-device-state","status":"landed","brief":"build/tmp/c3q-scene-device-state-brief.md","question":"Scene mesh/type2 device state at submission","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:16:53-06:00","dispatch_confirmed_at":"2026-10-25T14:17:34-06:00","session_id":"ses_e8b4a1df5ffe3GPZhp8QYbefFQ","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3q-scene-device-state/round-note.md","landed_at":"2026-10-25T14:48:32-06:00","elapsed":"31m39s","worker_elapsed":"21m26s","facilitator_note":"docs/scratch/phase-c3q-scene-device-state.md","result":"Conditional requests/cache ordering;600full vectors independently recomputed;32raw windows and key setter/wrapper reads;input+branch mutations restored;34/34CTest. Effective pause Z/cull/fog/API/prestate not accepted;starts0."},
-    {"id":"c3r-scene-texture-values","status":"landed","brief":"build/tmp/c3r-scene-texture-values-brief.md","question":"Scene texture-object flags and upload texel values","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:16:53-06:00","dispatch_confirmed_at":"2026-10-25T14:17:34-06:00","session_id":"ses_e8b4a1da0ffeZqH4WHhN1s3V4g","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3r-scene-texture-values/round-note.md","landed_at":"2026-10-25T14:44:54-06:00","elapsed":"28m01s","facilitator_note":"docs/scratch/phase-c3r-scene-texture-values.md","result":"33resources/52rawmembers/192512pixels independently decoded;constructor flags0/8/4;19conditional patch+28native GDI/formula variants match;isolated mutations;58anchors5raw windows;34/34CTest;starts0. Actual native format/wrapper conversion and returned surface remain unresolved."},
-    {"id":"c3t-floor-ring-bounds","status":"landed","brief":"build/tmp/c3t-floor-ring-bounds-brief.md","question":"Source-derived floor-ring geometry and diagnostic bounds","milestone":"C3 full frame","question_round":1,"worker_type":"targeted offline geometry","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:26:41-06:00","dispatch_confirmed_at":"2026-10-25T14:27:12-06:00","session_id":"ses_e8b4137bdffe9VIqVnZ7Q4Y3Ag","requested_model":"openai/gpt-6-luna#high","worker_output":"build/tmp/c3t-floor-ring-bounds/round-note.md","landed_at":"2026-10-25T14:38:14-06:00","elapsed":"11m33s","facilitator_note":"docs/scratch/phase-c3t-annular-family-bounds.md","result":"PARTIAL conditional128-record base/top bound[69,0,569,480);independent polygon-square algorithm reproduces55571pixels/mutation143pixels;34/34CTest. Mask unpacked0/1bytes, not bitpacked. Complete floor identity/native clipping/visibility NOT accepted;no gate/score change."},
-    {"id":"c3s-explicit-reference-scorer","status":"landed","brief":"build/tmp/c3s-explicit-reference-scorer-brief.md","question":"Explicit reference image in C3 scorer","milestone":"C3 full frame","question_round":1,"worker_type":"targeted implementation","requested_agent":"round-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T14:16:53-06:00","dispatch_confirmed_at":"2026-10-25T14:17:34-06:00","session_id":"ses_e8b4a1d55ffenkebYgHmWNrTnw","requested_model":"openai/gpt-6-luna#high","worker_output":"build/tmp/c3s-explicit-reference-scorer/round-note.md","landed_at":"2026-10-25T14:24:12-06:00","elapsed":"7m19s","facilitator_note":"docs/scratch/phase-c3s-explicit-reference-scorer.md","result":"Explicit reference path/hash; independent six-region and real PNG checks; isolated bypass fails2tests and exactSHA restored;3/3tests34/34CTest;current repair4 baseline48188934 unchanged;no gate/region change or stock start."},
-    {"id":"c3n-mesh-submission","status":"landed","brief":"build/tmp/c3n-mesh-submission-brief.md","question":"Mesh submission numerical fields, topology and bound texture","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T13:37:26-06:00","session_id":"ses_e8b6e52e0ffeAYFLjwz4FpDqnU","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3n-mesh-submission/round-note.md","landed_at":"2026-10-25T14:15:57-06:00","elapsed":"38m31s","facilitator_note":"docs/scratch/phase-c3n-mesh-submission.md","result":"Independent1177-record/4243-corner source and material parse;19nodes;84raw windows;pack formula and2077alpha-only mutation checks;34/34CTest;starts0.2077 is candidate clipping count only, not certified native draw stream."},
-    {"id":"c3o-type2-draw","status":"landed","brief":"build/tmp/c3o-type2-draw-brief.md","question":"Seventeen type2 scene-node final draw values","milestone":"C3 full frame","question_round":2,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T13:37:26-06:00","session_id":"ses_e8b6e52dfffeD0zgwppee28tqo","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3o-type2-draw/repair1-note.md","repair_brief":"build/tmp/c3o-type2-draw-repair1.md","repair_dispatched_at":"2026-10-25T13:56:13-06:00","verification_failure":"Original own-Y evaluator and first facilitator checker rejected; repaired native slot stores verified.","landed_at":"2026-10-25T14:10:27-06:00","elapsed":"33m01s","repair_elapsed":"14m14s","facilitator_note":"docs/scratch/phase-c3o-type2-draw.md","result":"17 slot tables/20 packed vertices independently match conditional reference;old own-Y mutation fails all5 submitted streams;58windows and install hashes;34/34CTest;starts0. Not device/pixel acceptance."},
-    {"id":"c3p-kind5-culling","status":"landed","brief":"build/tmp/c3p-kind5-culling-brief.md","question":"Kind5 scalar predicate and retained pass/skip table","milestone":"C3 full frame","question_round":1,"worker_type":"disassembly read","requested_agent":"disasm-agent","owns_live_game":false,"live_owner":null,"dispatched_at":"2026-10-25T13:37:26-06:00","session_id":"ses_e8b6e52ddffe7LIUtRyDQtJMjA","requested_model":"openai/gpt-6.1-sol#high","worker_output":"build/tmp/c3p-kind5-culling/round-note.md","landed_at":"2026-10-25T14:00:25-06:00","elapsed":"22m59s","facilitator_note":"docs/scratch/phase-c3p-kind5-culling.md","result":"Conditional predicate 306 pass/159 skip independently reproduced across465; raw bytes and isolated normal mutation checked; no final draw/precision claim;34/34CTest;starts0."},
-    {"id":"c1bj-plate-over-stock","status":"landed","milestone":"C1 skill panel","question_key":"plate-over-stock","question_round":1,
-     "brief":"build/tmp/c1bj-plate-over-stock-brief.md","worker_output":"build/tmp/c1bj-plate-over-stock/round-note.md",
-     "dispatch_id":"3ba69d52-2c22-4d9f-95d4-182efddb77a4","requested_model":"grok-4.7-high-fast, round-agent",
-     "dispatched_at":"2026-10-25T12:51:00-06:00","landed_at":"2026-10-25T13:05:00-06:00",
-     "evidence":"docs/scratch/phase-c1bj-plate-over-stock.md","stock_starts_used":0,
-     "result":"Plates over the stock frame: full 1123813/1145908/1114207, plate-only 669750/691289/666306. Higher than plates over our frame. Source unchanged. Run stopped on the elev_up under-layer."},
-    {"id":"c1bi-linear-plate","status":"landed","milestone":"C1 skill panel","question_key":"plate-linear-sample","question_round":1,
-     "brief":"build/tmp/c1bi-linear-plate-brief.md","worker_output":"build/tmp/c1bi-linear-plate/round-note.md",
-     "dispatch_id":"24bb055f-b48f-4b6f-a219-3f442b0f37e2","requested_model":"grok-4.7-high-fast, round-agent",
-     "dispatched_at":"2026-10-25T12:36:37-06:00","landed_at":"2026-10-25T12:50:02-06:00",
-     "evidence":"docs/scratch/phase-c1bi-linear-plate.md","stock_starts_used":0,
-     "result":"Linear sample scores 285083/580972/285700 over 17721990. elev_up still fails and is 552 worse than nearest. Plate-only elev_up error 466081. Nearest restore matches C1bh zoom1. 34/34 CTest."},
-    {"id":"c1be-plate-filter-value","status":"landed","milestone":"C1 skill panel","question_key":"plate-numerical-filter","question_round":1,
-     "brief":"build/tmp/c1be-plate-filter-value-brief.md","worker_output":"build/tmp/c1be-plate-filter-value/round-note.md",
-     "dispatch_id":"6d55f838-6886-44a3-b714-6e4f83f29df9","requested_model":"grok-4.7-high-fast, round-agent",
-     "dispatched_at":"2026-10-25T12:22:58-06:00","landed_at":"2026-10-25T12:36:16-06:00",
-     "evidence":"docs/scratch/phase-c1be-plate-filter.md","stock_starts_used":0,
-     "result":"Setter requests 2 for both stage-0 mag and min when the argument and [this+0x3A1] are nonzero. Plates are before the argument-0 call. Indirect callees before the panel were not re-opened. No score."},
-    {"id":"c1bh-selected-draw","status":"landed","milestone":"C1 skill panel","question_key":"selected-plate-draw","question_round":1,
-     "brief":"build/tmp/c1bh-selected-draw-brief.md","worker_output":"build/tmp/c1bh-selected-draw/round-note.md",
-     "dispatch_id":"19df188d-ef4c-478e-910d-879d7b3db6a5","requested_model":"grok-4.7-high-fast, round-agent",
-     "dispatched_at":"2026-10-25T12:08:58-06:00","landed_at":"2026-10-25T12:22:18-06:00",
-     "evidence":"docs/scratch/phase-c1bh-selected-draw.md","stock_starts_used":0,
-     "result":"Selected quad drawn. Gate: zoom1 286491 and elev_down 287373 pass; elev_up 580420 fails; all /17721990. Own PNG match, removing the call returns zoom1 to 414292, 34/34 CTest."},
-    {"id":"c1bg-selected-index","status":"landed","milestone":"C1 skill panel","question_key":"selected-plate-index","question_round":1,
-     "brief":"build/tmp/c1bg-selected-index-brief.md","worker_output":"build/tmp/c1bg-selected-index/round-note.md",
-     "dispatch_id":"ses_e8be216bdffeXXRlTZUjopA05c","requested_model":"openai/gpt-6.1-sol high, disasm-agent",
-     "dispatched_at":"2026-10-25T11:30:58-06:00","landed_at":"2026-10-25T12:07:34-06:00",
-     "evidence":"docs/scratch/phase-c1bg-selected-index.md","stock_starts_used":0,
-     "result":"DERIVED index 0, enable 1, rectangle 18,12,90,44 for this level's trailer. Not a pause-memory read. Next/previous handlers not re-opened. No score."},
-    {"id":"c1bf-zero-count","status":"landed","milestone":"C1 skill panel","question_key":"zero-count-draw-skip","question_round":1,
-     "brief":"build/tmp/c1bf-zero-count-brief.md","worker_output":"build/tmp/c1bf-zero-count/round-note.md",
-     "dispatch_id":"ses_e8be216d8ffe04fzmirQtZ5aGo","requested_model":"openai/gpt-6-luna high, round-agent",
-     "dispatched_at":"2026-10-25T11:30:58-06:00","landed_at":"2026-10-25T12:05:36-06:00",
-     "evidence":"docs/scratch/phase-c1bf-zero-count.md","stock_starts_used":0,
-     "result":"Zero count skips text. Gate still fails: zoom1 414292, elev_up 784866, elev_down 415022 /17721990. Own PNG match, isolated guard removal returns zoom1 to 609151, 34/34 CTest."},
-    {"id":"c1bd-plate-render","status":"landed","milestone":"C1 skill panel","question_key":"derived-plate-render","question_round":3,
-     "brief":"build/tmp/c1bd-plate-render-brief.md","repair_briefs":["build/tmp/c1bd-plate-render-repair1.md","build/tmp/c1bd-plate-render-repair2.md"],
-     "worker_output":"build/tmp/c1bd-plate-render/round-note.md","dispatch_id":"ses_e8c03dd03ffeAvoHiaT87CcTxw","requested_model":"openai/gpt-6-luna high, round-agent",
-     "dispatched_at":"2026-10-25T10:54:15-06:00","repair_dispatches":["2026-10-25T10:59:11-06:00","2026-10-25T11:07:28-06:00"],"landed_at":"2026-10-25T11:15:30-06:00",
-     "evidence":"docs/scratch/phase-c1bd-plate-render.md","stock_starts_used":0,
-     "result":"Opt-in conditional plates drawn. Frozen gate fails: zoom1 609151, elev_up981264, elev_down610758 /17721990. Independent scores/fresh PNGs/isolated alpha regression/restore; 34/34CTest. Hypothesis state/raster, no C1 acceptance."},
-    {"id":"c1bc-patch-texels","status":"landed","milestone":"C1 skill panel","question_key":"patch-plate-texel-words","question_round":1,
-     "brief":"build/tmp/c1bc-patch-texels-brief.md","worker_output":"build/tmp/c1bc-patch-texels/round-note.md",
-     "dispatch_id":"ses_e8c186840ffexpZFloFJer1PNq","requested_model":"openai/gpt-6.1-sol high, disasm-agent",
-     "dispatched_at":"2026-10-25T10:31:43-06:00","landed_at":"2026-10-25T10:51:48-06:00",
-     "evidence":"docs/scratch/phase-c1bc-patch-texels.md","stock_starts_used":0,
-     "result":"Conditional 128x32 full-UV patch texels, independent p53-nearest replay both assets; original PC/RC/GDI/layout unobserved. No pixel acceptance. 34/34 CTest."},
     {
-      "id":"c1bb-derived-format", "status":"landed", "milestone":"C1 skill panel",
-      "question_key":"derived-tab-format", "question_round":1,
-      "brief":"build/tmp/c1bb-derived-format-brief.md",
-      "worker_output":"build/tmp/c1bb-derived-format/round-note.md",
-      "dispatch_id":"ses_e8c31d3d1ffeSS4IPwDispD1up",
-      "requested_model":"openai/gpt-6.1-sol high, disasm-agent",
-      "dispatched_at":"2026-10-25T10:04:03-06:00",
-      "landed_at":"2026-10-25T10:30:51-06:00",
-      "evidence":"docs/scratch/phase-c1bb-derived-format.md",
-      "result":"Falsified install-native A4R4G4B4: installed patch alpha path requests DERIVED A8R8G8B8 and bypasses native context/enum/shift. Conditional native list replay stands. 34/34 CTest, no stock start.",
-      "stock_starts_used":0
+      "id": "c3ae-scene-render-score",
+      "status": "landed",
+      "disposition": "partial conditional software integration and independently verified score; complete brief/native fidelity NOT accepted",
+      "attempts_in_run": 2,
+      "question_round": 2,
+      "brief": "build/tmp/c3ae-scene-render-score-brief.md",
+      "repair_brief": "build/tmp/c3ae-scene-render-score-repair1.md",
+      "worker_type": "targeted production integration/render",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8acc01e4ffehWsVZ2j18Us2Qf",
+      "owns_live_game": false,
+      "stock_starts_used": 0,
+      "dispatched_at": "2026-10-25T16:34:28-06:00",
+      "repair_dispatched_at": "2026-10-25T16:52:49-06:00",
+      "landed_at": "2026-10-25T17:22:12-06:00",
+      "elapsed": "47m44s",
+      "repair_elapsed": "29m23s",
+      "worker_output": "build/tmp/c3ae-scene-render-score/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3ae-scene-render-score.md",
+      "result": "Ownmatchedrerender/scoring21707403/235008000=.0923687832 FAIL;scene-off exactbaseline. IndependentC1all10reports reproduce gatedpasses. Yaw-onlymutant worsens+2168344 andrestoredPNGexact;39/39CTest. Knownancestor/S/predicate/dispatch/clip/packing/state/ENVomissions explicitly retained; source/floorvisibility notfullyaccepted. Initialwronginputpacketpreserved. Counts2attempts,run24/24,0starts."
+    },
+    {
+      "id": "c3ad-pause-values-live",
+      "status": "landed",
+      "disposition": "partial offline acceptance; live recipe rejected, no approval/start",
+      "attempts_in_run": 2,
+      "question_round": 5,
+      "brief": "build/tmp/c3ad-pause-values-live-brief.md",
+      "repair_brief": "build/tmp/c3ad-pause-values-live-repair1.md",
+      "worker_type": "targeted runtime observation",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8acc020effeO58FyZU3M389AT",
+      "owns_live_game": true,
+      "live_owner": null,
+      "stock_starts_used": 0,
+      "dispatched_at": "2026-10-25T16:34:28-06:00",
+      "repair_dispatched_at": "2026-10-25T16:54:52-06:00",
+      "landed_at": "2026-10-25T17:19:51-06:00",
+      "elapsed": "45m23s",
+      "repair_elapsed": "24m59s",
+      "worker_output": "build/tmp/c3ad-pause-values-live/repair1/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3ad-pause-values-live.md",
+      "result": "Independent initial129bind pause-loss failure fixed by isolatedstreams; anchors and success/failedHRESULT/one-fieldmutant checked. Launcher references nonexistent entry.RECORD_SIZE afterPopen; independent staticcheckfails, no dryapproval. No actualpausevalues or format;0starts. Finalrunbudget reserved, no more repair dispatched."
+    },
+    {
+      "id": "c3ac-billboard-source",
+      "status": "landed",
+      "question_round": 2,
+      "brief": "build/tmp/c3ac-billboard-source-brief.md",
+      "repair_brief": "build/tmp/c3ac-billboard-source-repair1.md",
+      "worker_type": "targeted production implementation",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8aedfcd4ffemsMq24b4Q94RX6",
+      "owns_live_game": false,
+      "dispatched_at": "2026-10-25T15:57:12-06:00",
+      "repair_dispatched_at": "2026-10-25T16:14:58-06:00",
+      "landed_at": "2026-10-25T16:33:26-06:00",
+      "elapsed": "36m14s",
+      "repair_elapsed": "18m28s",
+      "worker_output": "build/tmp/c3ac-billboard-source/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3ac-billboard-source.md",
+      "result": "Initial layout/test omission rejected; repaired explicit native conversion/sourceOffset. Independent17nodes/340fields error9.1e-13; own-Y-only mutant fails75.36pixels andexactrestores. Retail443checks/full38CTest pass. Preclip only,0starts;counts2attempts."
+    },
+    {
+      "id": "c3ab-scene-raster",
+      "status": "landed",
+      "question_round": 1,
+      "brief": "build/tmp/c3ab-scene-raster-brief.md",
+      "worker_type": "targeted production implementation",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8aee248bffeBHIvP63dvZwMnD",
+      "owns_live_game": false,
+      "dispatched_at": "2026-10-25T15:57:12-06:00",
+      "landed_at": "2026-10-25T16:29:24-06:00",
+      "elapsed": "32m12s",
+      "worker_output": "build/tmp/c3ab-scene-raster/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3ab-scene-raster.md",
+      "result": "Independent rational checker5120cases/61440pixels passes;strict-alpha-only private mutant fails equality fixture then exacthashrestores;38/38CTest. Explicit software component only, no native fidelity or app render claim;0starts."
+    },
+    {
+      "id": "c3aa-scene-mesh-source",
+      "status": "landed",
+      "question_round": 1,
+      "brief": "build/tmp/c3aa-scene-mesh-source-brief.md",
+      "question": "Explicit-matrix mesh source-command adapter",
+      "milestone": "C3 full frame",
+      "worker_type": "targeted production implementation",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8aee4619ffeO6OqfuvLhC83AL",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T15:57:12-06:00",
+      "landed_at": "2026-10-25T16:20:46-06:00",
+      "elapsed": "23m34s",
+      "worker_output": "build/tmp/c3aa-scene-mesh-source/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3aa-scene-mesh-source.md",
+      "result": "Independentall1177records/4243corners/24aliases andrawsourceattribute/normals/materialmatch;maxtransformerror2.84e-14. Privatehierarchy-onlyregression fails730.667worlderror andrestores exacthash;38/38CTest. One ownwiringtarget/sourceentrystaged;no app/pixel change;0starts."
+    },
+    {
+      "id": "c3z-observation-provenance",
+      "status": "landed",
+      "question_round": 3,
+      "brief": "build/tmp/c3z-observation-provenance-brief.md",
+      "question": "Scene-class and concrete COM/surface observation provenance",
+      "milestone": "C3 full frame",
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "session_id": "ses_e8b08f93affeXbhUgI5BtLsrkI",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T15:27:50-06:00",
+      "landed_at": "2026-10-25T15:52:36-06:00",
+      "elapsed": "24m46s",
+      "worker_output": "build/tmp/c3z-observation-provenance/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3z-observation-provenance.md",
+      "result": "46windows/fourSDKinterfaces/threeGUIDs independently authenticated;producer outputs distinguish D/D+0Texture2/D+8Surface4. Bounded byte interpreter request tuple and isolated field mutation restore;35/35CTest. Observation PARKED at3roundcap:actual current producer/lifetime/class/cleanup/state/format unproved;no live getter/Lock/launcher authorization."
+    },
+    {
+      "id": "c3y-secondary-slot8",
+      "status": "landed",
+      "question_round": 1,
+      "brief": "build/tmp/c3y-secondary-slot8-brief.md",
+      "question": "Concrete secondary-root slot8 numerical effects",
+      "milestone": "C3 full frame",
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "session_id": "ses_e8b091990ffeLWUVCm2ysIH7Xn",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T15:27:50-06:00",
+      "landed_at": "2026-10-25T15:47:59-06:00",
+      "elapsed": "20m09s",
+      "worker_output": "build/tmp/c3y-secondary-slot8/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3y-secondary-slot8.md",
+      "result": "24raw windows/full929bytebody re-read;29sourcekeys/ranks independently match;12mesh17type2childslot4calls after sort, no root own draw. Isolated+108bias mutation changes rank25->0 and restores;35/35CTest;candidate mesh clipcounts and historical/effective state remain conditional;zero starts."
+    },
+    {
+      "id": "c3x-scene-node-reader",
+      "status": "landed",
+      "question_round": 2,
+      "brief": "build/tmp/c3x-scene-node-reader-brief.md",
+      "repair_brief": "build/tmp/c3x-scene-node-reader-repair1.md",
+      "question": "Strict source-preserving recursive scene-node reader",
+      "milestone": "C3 full frame",
+      "worker_type": "targeted production implementation",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8b227f29ffee6jkDaULphPKC0",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T15:00:21-06:00",
+      "repair_dispatched_at": "2026-10-25T15:25:42-06:00",
+      "landed_at": "2026-10-25T15:43:48-06:00",
+      "elapsed": "43m27s",
+      "repair_elapsed": "18m06s",
+      "worker_output": "build/tmp/c3x-scene-node-reader/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3x-scene-node-reader.md",
+      "result": "Everyfield/offset independently reencoded and4complete retained slices byte-match;124byte/9999child allocation flaw repaired, permanent guarded negatives;isolated normalIndex mutation fails8assertions and exact sourceSHArestored;35/35CTest. Production parser only, app/render/score unchanged;zero starts."
+    },
+    {
+      "id": "c3v-state-format-preflight",
+      "status": "landed",
+      "question_round": 2,
+      "brief": "build/tmp/c3v-state-format-preflight-brief.md",
+      "repair_brief": "build/tmp/c3v-state-format-preflight-repair1.md",
+      "question": "Offline preflight for correlated scene state/format observation",
+      "milestone": "C3 full frame",
+      "worker_type": "targeted harness implementation",
+      "requested_agent": "round-agent",
+      "requested_model": "openai/gpt-6-luna#high",
+      "session_id": "ses_e8b2827c0ffe51W8GkPMPulYsO",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T14:53:56-06:00",
+      "repair_dispatched_at": "2026-10-25T15:05:07-06:00",
+      "landed_at": "2026-10-25T15:22:34-06:00",
+      "elapsed": "28m38s",
+      "repair_elapsed": "17m27s",
+      "worker_output": "build/tmp/c3v-state-format-preflight/round-note.md",
+      "facilitator_note": "docs/scratch/phase-c3v-repaired-mock-bounds.md",
+      "result": "PARTIAL mock bounds/ABI only;17independent failure fixtures and executed slot mutant pass;preserved original rejected packet;35/35CTest. NO live recipe/COM identity/scene correlation/surface provenance/cleanup acceptance;zero starts."
+    },
+    {
+      "id": "c3u-pause-scene-reachability",
+      "status": "landed",
+      "brief": "build/tmp/c3u-pause-scene-reachability-brief.md",
+      "question": "Pause-frame scene-root reachability and gate inputs",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T14:53:56-06:00",
+      "session_id": "ses_e8b282815ffex9ELFkOq6HhhiO",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "worker_output": "build/tmp/c3u-pause-scene-reachability/round-note.md",
+      "landed_at": "2026-10-25T15:21:16-06:00",
+      "elapsed": "27m20s",
+      "facilitator_note": "docs/scratch/phase-c3u-pause-scene-reachability.md",
+      "result": "32256 conditional rows/46windows and source load fields independently reproduced;enable-only mutation;35/35CTest. Historical pause values/visibility remain unknown;secondary slot8 downstream not accepted as slot4 rendering."
+    },
+    {
+      "id": "c3w-scene-integration-map",
+      "status": "landed",
+      "brief": "build/tmp/c3w-scene-integration-map-brief.md",
+      "question": "Read-only map for small scene implementation tasks",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "read-only source map",
+      "requested_agent": "explore-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T14:53:56-06:00",
+      "dispatch_confirmed_at": "2026-10-25T14:54:54-06:00",
+      "session_id": "ses_e8b2826f1ffe8I8cN3jIaEnvjB",
+      "requested_model": "openai/gpt-6-luna#high",
+      "worker_output": "build/tmp/c3w-scene-integration-map.md (facilitator retained chat return)",
+      "landed_at": "2026-10-25T14:59:05-06:00",
+      "elapsed": "5m09s",
+      "facilitator_note": "docs/scratch/phase-c3w-source-integration-map.md",
+      "result": "Source-only map checked against PolyList/Raster/LevelObjects and app call sites; split strict asset reader first;no original measurement/code change/build/render."
+    },
+    {
+      "id": "c3q-scene-device-state",
+      "status": "landed",
+      "brief": "build/tmp/c3q-scene-device-state-brief.md",
+      "question": "Scene mesh/type2 device state at submission",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T14:16:53-06:00",
+      "dispatch_confirmed_at": "2026-10-25T14:17:34-06:00",
+      "session_id": "ses_e8b4a1df5ffe3GPZhp8QYbefFQ",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "worker_output": "build/tmp/c3q-scene-device-state/round-note.md",
+      "landed_at": "2026-10-25T14:48:32-06:00",
+      "elapsed": "31m39s",
+      "worker_elapsed": "21m26s",
+      "facilitator_note": "docs/scratch/phase-c3q-scene-device-state.md",
+      "result": "Conditional requests/cache ordering;600full vectors independently recomputed;32raw windows and key setter/wrapper reads;input+branch mutations restored;34/34CTest. Effective pause Z/cull/fog/API/prestate not accepted;starts0."
+    },
+    {
+      "id": "c3r-scene-texture-values",
+      "status": "landed",
+      "brief": "build/tmp/c3r-scene-texture-values-brief.md",
+      "question": "Scene texture-object flags and upload texel values",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T14:16:53-06:00",
+      "dispatch_confirmed_at": "2026-10-25T14:17:34-06:00",
+      "session_id": "ses_e8b4a1da0ffeZqH4WHhN1s3V4g",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "worker_output": "build/tmp/c3r-scene-texture-values/round-note.md",
+      "landed_at": "2026-10-25T14:44:54-06:00",
+      "elapsed": "28m01s",
+      "facilitator_note": "docs/scratch/phase-c3r-scene-texture-values.md",
+      "result": "33resources/52rawmembers/192512pixels independently decoded;constructor flags0/8/4;19conditional patch+28native GDI/formula variants match;isolated mutations;58anchors5raw windows;34/34CTest;starts0. Actual native format/wrapper conversion and returned surface remain unresolved."
+    },
+    {
+      "id": "c3t-floor-ring-bounds",
+      "status": "landed",
+      "brief": "build/tmp/c3t-floor-ring-bounds-brief.md",
+      "question": "Source-derived floor-ring geometry and diagnostic bounds",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "targeted offline geometry",
+      "requested_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T14:26:41-06:00",
+      "dispatch_confirmed_at": "2026-10-25T14:27:12-06:00",
+      "session_id": "ses_e8b4137bdffe9VIqVnZ7Q4Y3Ag",
+      "requested_model": "openai/gpt-6-luna#high",
+      "worker_output": "build/tmp/c3t-floor-ring-bounds/round-note.md",
+      "landed_at": "2026-10-25T14:38:14-06:00",
+      "elapsed": "11m33s",
+      "facilitator_note": "docs/scratch/phase-c3t-annular-family-bounds.md",
+      "result": "PARTIAL conditional128-record base/top bound[69,0,569,480);independent polygon-square algorithm reproduces55571pixels/mutation143pixels;34/34CTest. Mask unpacked0/1bytes, not bitpacked. Complete floor identity/native clipping/visibility NOT accepted;no gate/score change."
+    },
+    {
+      "id": "c3s-explicit-reference-scorer",
+      "status": "landed",
+      "brief": "build/tmp/c3s-explicit-reference-scorer-brief.md",
+      "question": "Explicit reference image in C3 scorer",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "targeted implementation",
+      "requested_agent": "round-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T14:16:53-06:00",
+      "dispatch_confirmed_at": "2026-10-25T14:17:34-06:00",
+      "session_id": "ses_e8b4a1d55ffenkebYgHmWNrTnw",
+      "requested_model": "openai/gpt-6-luna#high",
+      "worker_output": "build/tmp/c3s-explicit-reference-scorer/round-note.md",
+      "landed_at": "2026-10-25T14:24:12-06:00",
+      "elapsed": "7m19s",
+      "facilitator_note": "docs/scratch/phase-c3s-explicit-reference-scorer.md",
+      "result": "Explicit reference path/hash; independent six-region and real PNG checks; isolated bypass fails2tests and exactSHA restored;3/3tests34/34CTest;current repair4 baseline48188934 unchanged;no gate/region change or stock start."
+    },
+    {
+      "id": "c3n-mesh-submission",
+      "status": "landed",
+      "brief": "build/tmp/c3n-mesh-submission-brief.md",
+      "question": "Mesh submission numerical fields, topology and bound texture",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T13:37:26-06:00",
+      "session_id": "ses_e8b6e52e0ffeAYFLjwz4FpDqnU",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "worker_output": "build/tmp/c3n-mesh-submission/round-note.md",
+      "landed_at": "2026-10-25T14:15:57-06:00",
+      "elapsed": "38m31s",
+      "facilitator_note": "docs/scratch/phase-c3n-mesh-submission.md",
+      "result": "Independent1177-record/4243-corner source and material parse;19nodes;84raw windows;pack formula and2077alpha-only mutation checks;34/34CTest;starts0.2077 is candidate clipping count only, not certified native draw stream."
+    },
+    {
+      "id": "c3o-type2-draw",
+      "status": "landed",
+      "brief": "build/tmp/c3o-type2-draw-brief.md",
+      "question": "Seventeen type2 scene-node final draw values",
+      "milestone": "C3 full frame",
+      "question_round": 2,
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T13:37:26-06:00",
+      "session_id": "ses_e8b6e52dfffeD0zgwppee28tqo",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "worker_output": "build/tmp/c3o-type2-draw/repair1-note.md",
+      "repair_brief": "build/tmp/c3o-type2-draw-repair1.md",
+      "repair_dispatched_at": "2026-10-25T13:56:13-06:00",
+      "verification_failure": "Original own-Y evaluator and first facilitator checker rejected; repaired native slot stores verified.",
+      "landed_at": "2026-10-25T14:10:27-06:00",
+      "elapsed": "33m01s",
+      "repair_elapsed": "14m14s",
+      "facilitator_note": "docs/scratch/phase-c3o-type2-draw.md",
+      "result": "17 slot tables/20 packed vertices independently match conditional reference;old own-Y mutation fails all5 submitted streams;58windows and install hashes;34/34CTest;starts0. Not device/pixel acceptance."
+    },
+    {
+      "id": "c3p-kind5-culling",
+      "status": "landed",
+      "brief": "build/tmp/c3p-kind5-culling-brief.md",
+      "question": "Kind5 scalar predicate and retained pass/skip table",
+      "milestone": "C3 full frame",
+      "question_round": 1,
+      "worker_type": "disassembly read",
+      "requested_agent": "disasm-agent",
+      "owns_live_game": false,
+      "live_owner": null,
+      "dispatched_at": "2026-10-25T13:37:26-06:00",
+      "session_id": "ses_e8b6e52ddffe7LIUtRyDQtJMjA",
+      "requested_model": "openai/gpt-6.1-sol#high",
+      "worker_output": "build/tmp/c3p-kind5-culling/round-note.md",
+      "landed_at": "2026-10-25T14:00:25-06:00",
+      "elapsed": "22m59s",
+      "facilitator_note": "docs/scratch/phase-c3p-kind5-culling.md",
+      "result": "Conditional predicate 306 pass/159 skip independently reproduced across465; raw bytes and isolated normal mutation checked; no final draw/precision claim;34/34CTest;starts0."
+    },
+    {
+      "id": "c1bj-plate-over-stock",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "plate-over-stock",
+      "question_round": 1,
+      "brief": "build/tmp/c1bj-plate-over-stock-brief.md",
+      "worker_output": "build/tmp/c1bj-plate-over-stock/round-note.md",
+      "dispatch_id": "3ba69d52-2c22-4d9f-95d4-182efddb77a4",
+      "requested_model": "grok-4.7-high-fast, round-agent",
+      "dispatched_at": "2026-10-25T12:51:00-06:00",
+      "landed_at": "2026-10-25T13:05:00-06:00",
+      "evidence": "docs/scratch/phase-c1bj-plate-over-stock.md",
+      "stock_starts_used": 0,
+      "result": "Plates over the stock frame: full 1123813/1145908/1114207, plate-only 669750/691289/666306. Higher than plates over our frame. Source unchanged. Run stopped on the elev_up under-layer."
+    },
+    {
+      "id": "c1bi-linear-plate",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "plate-linear-sample",
+      "question_round": 1,
+      "brief": "build/tmp/c1bi-linear-plate-brief.md",
+      "worker_output": "build/tmp/c1bi-linear-plate/round-note.md",
+      "dispatch_id": "24bb055f-b48f-4b6f-a219-3f442b0f37e2",
+      "requested_model": "grok-4.7-high-fast, round-agent",
+      "dispatched_at": "2026-10-25T12:36:37-06:00",
+      "landed_at": "2026-10-25T12:50:02-06:00",
+      "evidence": "docs/scratch/phase-c1bi-linear-plate.md",
+      "stock_starts_used": 0,
+      "result": "Linear sample scores 285083/580972/285700 over 17721990. elev_up still fails and is 552 worse than nearest. Plate-only elev_up error 466081. Nearest restore matches C1bh zoom1. 34/34 CTest."
+    },
+    {
+      "id": "c1be-plate-filter-value",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "plate-numerical-filter",
+      "question_round": 1,
+      "brief": "build/tmp/c1be-plate-filter-value-brief.md",
+      "worker_output": "build/tmp/c1be-plate-filter-value/round-note.md",
+      "dispatch_id": "6d55f838-6886-44a3-b714-6e4f83f29df9",
+      "requested_model": "grok-4.7-high-fast, round-agent",
+      "dispatched_at": "2026-10-25T12:22:58-06:00",
+      "landed_at": "2026-10-25T12:36:16-06:00",
+      "evidence": "docs/scratch/phase-c1be-plate-filter.md",
+      "stock_starts_used": 0,
+      "result": "Setter requests 2 for both stage-0 mag and min when the argument and [this+0x3A1] are nonzero. Plates are before the argument-0 call. Indirect callees before the panel were not re-opened. No score."
+    },
+    {
+      "id": "c1bh-selected-draw",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "selected-plate-draw",
+      "question_round": 1,
+      "brief": "build/tmp/c1bh-selected-draw-brief.md",
+      "worker_output": "build/tmp/c1bh-selected-draw/round-note.md",
+      "dispatch_id": "19df188d-ef4c-478e-910d-879d7b3db6a5",
+      "requested_model": "grok-4.7-high-fast, round-agent",
+      "dispatched_at": "2026-10-25T12:08:58-06:00",
+      "landed_at": "2026-10-25T12:22:18-06:00",
+      "evidence": "docs/scratch/phase-c1bh-selected-draw.md",
+      "stock_starts_used": 0,
+      "result": "Selected quad drawn. Gate: zoom1 286491 and elev_down 287373 pass; elev_up 580420 fails; all /17721990. Own PNG match, removing the call returns zoom1 to 414292, 34/34 CTest."
+    },
+    {
+      "id": "c1bg-selected-index",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "selected-plate-index",
+      "question_round": 1,
+      "brief": "build/tmp/c1bg-selected-index-brief.md",
+      "worker_output": "build/tmp/c1bg-selected-index/round-note.md",
+      "dispatch_id": "ses_e8be216bdffeXXRlTZUjopA05c",
+      "requested_model": "openai/gpt-6.1-sol high, disasm-agent",
+      "dispatched_at": "2026-10-25T11:30:58-06:00",
+      "landed_at": "2026-10-25T12:07:34-06:00",
+      "evidence": "docs/scratch/phase-c1bg-selected-index.md",
+      "stock_starts_used": 0,
+      "result": "DERIVED index 0, enable 1, rectangle 18,12,90,44 for this level's trailer. Not a pause-memory read. Next/previous handlers not re-opened. No score."
+    },
+    {
+      "id": "c1bf-zero-count",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "zero-count-draw-skip",
+      "question_round": 1,
+      "brief": "build/tmp/c1bf-zero-count-brief.md",
+      "worker_output": "build/tmp/c1bf-zero-count/round-note.md",
+      "dispatch_id": "ses_e8be216d8ffe04fzmirQtZ5aGo",
+      "requested_model": "openai/gpt-6-luna high, round-agent",
+      "dispatched_at": "2026-10-25T11:30:58-06:00",
+      "landed_at": "2026-10-25T12:05:36-06:00",
+      "evidence": "docs/scratch/phase-c1bf-zero-count.md",
+      "stock_starts_used": 0,
+      "result": "Zero count skips text. Gate still fails: zoom1 414292, elev_up 784866, elev_down 415022 /17721990. Own PNG match, isolated guard removal returns zoom1 to 609151, 34/34 CTest."
+    },
+    {
+      "id": "c1bd-plate-render",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "derived-plate-render",
+      "question_round": 3,
+      "brief": "build/tmp/c1bd-plate-render-brief.md",
+      "repair_briefs": [
+        "build/tmp/c1bd-plate-render-repair1.md",
+        "build/tmp/c1bd-plate-render-repair2.md"
+      ],
+      "worker_output": "build/tmp/c1bd-plate-render/round-note.md",
+      "dispatch_id": "ses_e8c03dd03ffeAvoHiaT87CcTxw",
+      "requested_model": "openai/gpt-6-luna high, round-agent",
+      "dispatched_at": "2026-10-25T10:54:15-06:00",
+      "repair_dispatches": [
+        "2026-10-25T10:59:11-06:00",
+        "2026-10-25T11:07:28-06:00"
+      ],
+      "landed_at": "2026-10-25T11:15:30-06:00",
+      "evidence": "docs/scratch/phase-c1bd-plate-render.md",
+      "stock_starts_used": 0,
+      "result": "Opt-in conditional plates drawn. Frozen gate fails: zoom1 609151, elev_up981264, elev_down610758 /17721990. Independent scores/fresh PNGs/isolated alpha regression/restore; 34/34CTest. Hypothesis state/raster, no C1 acceptance."
+    },
+    {
+      "id": "c1bc-patch-texels",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "patch-plate-texel-words",
+      "question_round": 1,
+      "brief": "build/tmp/c1bc-patch-texels-brief.md",
+      "worker_output": "build/tmp/c1bc-patch-texels/round-note.md",
+      "dispatch_id": "ses_e8c186840ffexpZFloFJer1PNq",
+      "requested_model": "openai/gpt-6.1-sol high, disasm-agent",
+      "dispatched_at": "2026-10-25T10:31:43-06:00",
+      "landed_at": "2026-10-25T10:51:48-06:00",
+      "evidence": "docs/scratch/phase-c1bc-patch-texels.md",
+      "stock_starts_used": 0,
+      "result": "Conditional 128x32 full-UV patch texels, independent p53-nearest replay both assets; original PC/RC/GDI/layout unobserved. No pixel acceptance. 34/34 CTest."
+    },
+    {
+      "id": "c1bb-derived-format",
+      "status": "landed",
+      "milestone": "C1 skill panel",
+      "question_key": "derived-tab-format",
+      "question_round": 1,
+      "brief": "build/tmp/c1bb-derived-format-brief.md",
+      "worker_output": "build/tmp/c1bb-derived-format/round-note.md",
+      "dispatch_id": "ses_e8c31d3d1ffeSS4IPwDispD1up",
+      "requested_model": "openai/gpt-6.1-sol high, disasm-agent",
+      "dispatched_at": "2026-10-25T10:04:03-06:00",
+      "landed_at": "2026-10-25T10:30:51-06:00",
+      "evidence": "docs/scratch/phase-c1bb-derived-format.md",
+      "result": "Falsified install-native A4R4G4B4: installed patch alpha path requests DERIVED A8R8G8B8 and bypasses native context/enum/shift. Conditional native list replay stands. 34/34 CTest, no stock start.",
+      "stock_starts_used": 0
     },
     {
       "id": "b3g-box-call",

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T06:55:45.021047+00:00",
+  "updated": "2026-10-27T06:57:13.892507+00:00",
   "notes": "C3br actualsurrogate task17 failed validation, archived.1session/1surrogatestart,0stock. Priorhistory21 separate. No live-stoppeddisarm/exitcode proof, originalownedPIDs absent; no retry/follow-on.",
   "active": [],
   "queue": [],
@@ -53,11 +53,11 @@
         "evidence": "docs/scratch/phase-c3br-windbg-surrogate.md"
       }
     ],
-    "handoff": "STOPPED C3br task17 FAIL. One actual bundled x86CDB session + one IA32surrogate start consumed; prior observationhistory21 separate,0stock. Own rawsource/PE/hashes/hits/cleanup check confirms mainmarker0/3,later3/3,maincleanup1/1. No cause established for mainmisses, not universal mainthread debugger defect. Controller seventh-prompt assumption continued past actualcleanup fourthhardware stop; clear/list only after No runnable debuggees, unexpected-stop abort missing. No disarm-before-continue, normalexit/detach/actualexitcode proof. Exact ownedPIDs37312/46328 absent independently; no terminationcommand reported; workeridle. Adjacentengineauthenticated but actual loadedmodulepath not captured; gallery update permissions disclosed not installationproof. Package stays. No retry/repair/originalgame/sourcebinding/observer/renderer/frameworkwork. C3bc refusal/readinesspark andretainedgates unchanged. Directiveconsumed.",
+    "handoff": "STOPPED C3br task17 FAIL. One actual bundled x86CDB session + one IA32surrogate start consumed; prior observationhistory21 separate,0stock. Own rawsource/PE/hashes/hits/cleanup check confirms mainmarker0/3,later3/3,maincleanup1/1. No cause established for mainmisses, not universal mainthread debugger defect. Controller seventh-prompt assumption continued past actualcleanup fourthhardware stop; clear/list only after No runnable debuggees, unexpected-stop abort missing. No disarm-before-continue, normalexit/detach/actualexitcode proof. Exact ownedPIDs37312/46328 absent independently; no terminationcommand reported; workeridle. Adjacentengineauthenticated but actual loadedmodulepath not captured; gallery update permissions disclosed not installationproof. Package stays. No retry/repair/originalgame/sourcebinding/observer/renderer/frameworkwork. C3bc refusal/readinesspark andretainedgates unchanged. Directiveconsumed. Evidencee706780 committed/pushed; dispatch-to-landing1673.228s. End checks preserve373fixed/package/game/source inputs,2244prior evidence entries,currentworkerpacket,allhistory and9dirty deltas, captureproposal exact/PhaseEoldtext intact. Final exactoriginalownedPIDcheck absent; workerAPIterminal,installedfrontend/engine hashes stable. No secondsession/retry/repair/follow-on. Actual clocks in current_pass.",
     "stopped": {
-      "date": "2026-10-27T06:55:45.021047+00:00",
+      "date": "2026-10-27T06:57:13.892507+00:00",
       "reason": "Sole actual surrogate validation failed; acceptance not met, no retry/repair/follow-on. Resources absent, clean disarm/exit unverified.",
-      "last_commit": "a81f9c2254f425e83088f2158d555860c704e49b"
+      "last_commit": "e7067802ec3270f8d01c54c396a9534ae857a52d"
     },
     "current_pass": {
       "started": "2026-10-27T06:22:02Z",
@@ -71,9 +71,17 @@
           "launch": "2026-10-27T06:38:38.401032+00:00",
           "worker_end_state_check": "2026-10-27T06:40:31.847285Z",
           "independent_resource_check": "2026-10-27T06:48:54.8739167Z",
-          "verified": "2026-10-27T06:55:45.021047+00:00"
+          "verified": "2026-10-27T06:55:45.021047+00:00",
+          "worker_terminal_clock_source": "API time.idle",
+          "landed": "2026-10-27T06:56:10+00:00",
+          "commit": "e7067802ec3270f8d01c54c396a9534ae857a52d",
+          "dispatch_to_landing_seconds": 1673.227829,
+          "dispatch_to_worker_idle_seconds": 964.420829,
+          "final_resource_check": "2026-10-27T06:57:12.9732599Z"
         }
-      ]
+      ],
+      "ended": "2026-10-27T06:57:13.892507+00:00",
+      "elapsed_seconds": 2111.892507
     },
     "verified_at": "2026-10-27T06:55:45.021047+00:00",
     "resource_state": {
@@ -106,7 +114,8 @@
       "live_disarm_verified": false,
       "actual_exit_codes_available": false,
       "second_debugger_session": false,
-      "original_game_starts": 0
+      "original_game_starts": 0,
+      "final_exact_pid_absence_checked_at": "2026-10-27T06:57:12.9732599Z"
     }
   }
 }

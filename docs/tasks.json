@@ -1,8 +1,36 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T17:53:08Z",
-  "notes": "B2l repair ff3d962 and B3i verified/landed separately. Both workers independently terminal, no live resources. Next ordinary navigation and conditional map-display integration; no new stock debit yet.",
+  "updated": "2026-10-27T17:57:14Z",
+  "notes": "Same campaign/owner; accepted B2l/B3i landed. Next independent qualified native observation and app map-display integration. Stock debit2 reserved before dispatch, actual starts remain1 until new attempt. B3 worker may not steal desktop focus from native owner.",
   "active": [
+    {
+      "id":"b2m-qualified-navigation","status":"running",
+      "brief":"build/tmp/b2m-qualified-navigation-brief.md",
+      "worker":"round-agent","worker_session":"ses_e817c7784ffeODOPsnURI2ARgX",
+      "dispatched":"2026-10-27T17:58:31.866Z","worker_tier":"targeted",
+      "classification":"native navigation observation",
+      "requested_model":"configured round-agent openai/gpt-6-luna#high, API confirmed, no override",
+      "campaign_attempt":13,
+      "cap_rationale":"B2a-c cap3 and d/e/h partial/g/j/k parks retained; accepted image qualifier replaces unsafe heap discovery for concrete native menu-confirm-map-level/dialog packet. Cursor count6 remains parked; tooling2of2 exhausted, no extra certification repair.",
+      "owns_live_game":true,"live_owner":"ses_e817c7784ffeODOPsnURI2ARgX",
+      "stock_start_budget":1,"stock_start_debited":true,
+      "owned_paths":["tools/harness/observe_navigation_b2m.py","tools/harness/test_observe_navigation_b2m.py","build/tmp/b2m-qualified-navigation/**"],
+      "deadline":"2026-10-27T18:40:00Z","worker_stop":"2026-10-27T18:25:00Z"
+    },
+    {
+      "id":"b3j-app-base-map","status":"running",
+      "brief":"build/tmp/b3j-app-base-map-brief.md",
+      "worker":"round-agent","worker_session":"ses_e817c7766ffeRIvgJnldF2S5pD",
+      "dispatched":"2026-10-27T17:58:31.872Z","worker_tier":"targeted",
+      "classification":"production integration",
+      "requested_model":"configured round-agent openai/gpt-6-luna#high, API confirmed, no override",
+      "campaign_attempt":14,"question_attempt":1,
+      "cap_rationale":"First app base-map production connection from accepted B3h/i tuple; historical mapobject6/pickcap3 retained, no new native read arm.",
+      "owns_live_game":false,"live_owner":null,"stock_start_budget":0,
+      "owned_paths":["src/app/MapScene.h","src/app/MapScene.cpp","src/app/main.cpp map mode only","src/__test__/test_mapscene.cpp","CMakeLists.txt one test target","cmake/webolution_sources.cmake map wiring only","build/tmp/b3j-app-base-map/**"],
+      "deadline":"2026-10-27T18:40:00Z","worker_stop":"2026-10-27T18:25:00Z",
+      "desktop_restriction":"No real app window/focus/input while B2m live owner exists; dummy allowed. Facilitator supplies release or runs real window verification after native cleanup."
+    }
   ],
   "queue": [],
   "standing_run": {
@@ -16,12 +44,12 @@
     "ownership_check":"Activation supplied hash/empty-stopped queue matched; authenticated V2 old owner+worker succeeded idle, old parent interrupted idle, self only active, selfSol/high and exact worker profiles. Confirmed handoff, ff-only58c853b. Later releases independently check terminal sessions and host resource inventory.",
     "started_at":"2026-10-27T15:22:19Z","deadline":"2026-10-27T23:22:19Z",
     "grants":{"overall_minutes":480,"worker_attempts":16,"round_minutes_including_repairs":45,"tooling_attempts":2,"tooling_minutes":90,"stock_starts":8,"commits":"isolated origin/decompile sync"},
-    "rounds_run":7,"attempts_used":12,"stock_starts_used":1,"stock_start_attempts_charged":1,"stock_start_budget_remaining":7,
-    "stock_start_debits":[{"task":"c2q-native-cursor","at":"2026-10-27T16:22:13Z","charged":1,"actual_attempts":1,"state":"Consumed repair1 ordinary launch16:40:00.325291Z; unsafe menu candidate refused, no retry/crash. Initial no-launch refusal retained, no refund or old-pool transfer."}],
+    "rounds_run":7,"attempts_used":14,"stock_starts_used":1,"stock_start_attempts_charged":2,"stock_start_budget_remaining":6,
+    "stock_start_debits":[{"task":"c2q-native-cursor","at":"2026-10-27T16:22:13Z","charged":1,"actual_attempts":1,"state":"Consumed repair1 ordinary launch16:40:00.325291Z; unsafe menu candidate refused, no retry/crash. Initial no-launch refusal retained, no refund or old-pool transfer."},{"task":"b2m-qualified-navigation","at":"2026-10-27T17:57:14Z","charged":1,"actual_attempts":0,"state":"Reserved before dispatch, max1ordinary stock attempt, no retry; final packet will distinguish actual Popen from prelaunch refusal."}],
     "tooling_attempts_used":2,"tooling_seconds_used":1298.939,"tooling_clock_started":"2026-10-27T17:31:29.061Z","tooling_clock_ended_at":"2026-10-27T17:53:08Z","tooling_clock_note":"B2 source committed17:47:13Z(943.939s from dispatch); conservatively charge entire wall interval through actual clock/bookkeeping reconciliation17:53:08Z, including overlap with B3 verification. Tooling attempts2of2 exhausted, no further tooling-only work.","stock_crashes":0,"c3_reassess_by":"2026-10-27T17:22:19Z","c3_attempts_used":3,
     "pending_questions":[{"question":"Separate future PhaseD strategy: D1/D3/digger clock remain user-parked/unaccepted.","recommendation":"After practical C2/B2/B3 progress, separately authorize bounded continuous-budget/animation-clock architecture; do not reopen D or call optional sim faithful retail gameplay now.","evidence":"PLAN PhaseD; LESSONS D1m retraction; PhaseE D1/D2/D3 parks"}],
     "gate_scores":{"verified_at":"2026-10-27T17:01:03Z","C3":{"numerator":14934333,"denominator":235008000,"score":0.06354818984885621,"pass":false},"C1_zoom1":{"numerator":285083,"denominator":17721990,"score":0.0160863988750699,"pass":true},"C1_elev_down":{"numerator":285700,"denominator":17721990,"score":0.016121214378294987,"pass":true},"C2":"runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted","B1":"conditional acceptance preserved","B2_B3":"unaccepted, gates unchanged"},
-    "handoff":"Same campaign/owner/deadline23:22:19Z. B2l ff3d962 actual17:47:13Z(943.939s dispatch-to-commit), strict reference-specific source admission only; initial unsafe translations preserved. B3i independent107state fixtures/raw10bodies/exact archive joins/background decoder/four per-pixel compositions and one seed3to2 mutant fail/restore pass: conditional base-map tuple, no native flags/save mapping/final presentation. Fresh48CTest64.81sPASS,0gate movement. Both workers independently terminal/REAclosed, no game/app/debugger/Frida/tasks/install writes observed. 7landed rounds/12of16attempts/1actual=1charged stockstart/0crashes/tooling2of2 exhausted(1298.939s conservatively charged through bookkeeping). Next: one native qualified-navigation/map-table observation plus independent actual-app conditional map display/first-node entry integration, no more unused prerequisites. Draft b2m not live until queued/debited. Preserve cursor/PhaseD/capped parks, all failures and16signed gates/unrelated dirty text; original deadlines/overruns retained.",
+    "handoff":"Same owner/campaign/deadline23:22:19Z. B2l ff3d962 at17:47:13Z943.939s; B3i f3aa374 at17:54:55Z1405.935s, both before18:15rounddeadline. Own strict image admission and conditional background/state/node tuple verified;48CTest64.81sPASS/gates unchanged. 7landed rounds/14of16attempts including queued B2m13+B3j14;1actual stockstart/2charged (B2m max1 reserved)/6unallocated/0crashes;tooling2of2 exhausted1298.939s. New tasks disjoint: B2m owns native desktop/one ordinary attempt and stable state/screenshots; B3j connects conditional base-map to actualapp, no native starts and no real app window until B2m releases desktop. Both due18:40Z including verification/landing, worker return18:25Z. Priorworkers terminal/REAclosed, host clear/5hashes unchanged at17:57:14Z, only self active. Do not invent map hitshape/back keys/save adapter or claim SOURCE map native acceptance; selection remains open. Preserve cursorcount6/PhaseD/all cap parks, failures/gates/unrelated dirt. No new clocks/pools.",
     "stopped":null
   }
 }

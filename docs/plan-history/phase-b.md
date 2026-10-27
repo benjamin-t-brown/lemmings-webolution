@@ -1,5 +1,20 @@
 # Plan history — Phase B
 
+### Campaign convergence checkpoint — attempts10–12, 2026-10-27
+
+No milestone gate moved: retained C3 numerator14934333/235008000FAIL; C1
+zoom1/elev_down285083/285700 over17721990PASS. No fresh native screenshot/start
+in these three attempts. B2l's original same-size shifted-frame admission failed
+independent verification, then repaired under the final tooling attempt; own
+32subset/11translation comparisons protect only the declared reference contract.
+B3i's four full SOURCE base-map images (`build/tmp/b3i-map-preparation/composition-`
+`{none,first,all,mixed}.png`) independently reproduce decoded assets/state tuples,
+not original-game pixels. Fresh48CTest64.81s passes. Research is now sufficient
+for a conditional application map display, not full presentation/save equivalence.
+Next attempts13/14 explicitly spend this evidence on native navigation and actual
+app display respectively; no more tooling-only attempts or C3 polishing. Original
+deadline23:22:19Z/cumulative16attempt ceiling, all cap-parks/failures/gates retained.
+
 ### B3i — whole preparation and conditional base-map tuple, 2026-10-27
 
 [Facilitator check](../scratch/phase-b3i-map-preparation.md):49B647 is state-only,

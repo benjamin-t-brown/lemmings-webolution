@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T08:21:26.639586+00:00",
+  "updated": "2026-10-27T08:23:16.801802+00:00",
   "notes": "Task20/window2of4finalnarrowcoreFAIL33/35 despite18/18retained. Parkcoreforwindow/noadapterorliverepeat. 2macroattemptsremain/livepoolsunused;5hourwindowextension recordedwithoutrewritingpastdeadlines;gameexecutiondeferred.",
   "active": [],
   "queue": [],
@@ -67,7 +67,10 @@
           "dispatch": "2026-10-27T08:05:25.013844+00:00",
           "verified": "2026-10-27T08:21:26.639586+00:00",
           "outcome": "FinalcoreFAIL33/35,parkforwindow",
-          "note": "docs/scratch/phase-c3bu-controller-final-core.md"
+          "note": "docs/scratch/phase-c3bu-controller-final-core.md",
+          "landed": "2026-10-27T08:22:03+00:00",
+          "commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55",
+          "task_ended": "2026-10-27T08:23:16.801802+00:00"
         }
       ],
       "live_pools": {
@@ -137,11 +140,11 @@
         "evidence": "docs/scratch/phase-c3bu-controller-final-core.md"
       }
     ],
-    "handoff": "STOPPED C3bu task20/window2 FINALcoreFAIL33/35. BothlocalizedBTfixesverified/all18retainedpass; worker13/13. Own15/17additionalpredeclaredcoreprobes pass,butquotedautomatic g suffix onownedcleanup e1row acceptedatinitial/preclear. Coreparserrejectsliteralcommand=notdocumentedquotes. Oldmode/metadata+5priorolddefectobservationsdiscriminate; temporaryquoteverificationmutationfixes2caseswithouteditingcandidateef94d6859970a3e37fadecca0dd17a36d75b1cb5f4e8581d9df7c83e5578ccf5. COREPARKEDFORWINDOW,no furthercore repair,adapterorliveactivation. Governingmacro1756abb81232e6fd236d86e3c104fe1f83fe266aaf726b74fa38c319b9f6b14c records user5hour extension same07:07:42start\u219212:07:42,fiveTOTALnotadditional; pastdeadlines/oldauthorityarchivedintact. 2of4attemptsused/2remain, notrepurposeforcorerepeat. Pools1additionalsurrogate+1conditionalgameuntouched; gameexecutionDEFERREDbeyondwindow despite standingpermission. Parent reviews/newdirectives mandatory,no routineuserapprovalquestion. Noadapter/framing/discovery/realexitparser/runtimeproof.0sessions/starts/attach/control/nativeboundaryattempts,workerdone/noliveresources. BR/BS/BTpacketsintact,mainmisscauseunknown,C3bc/nativeprerequisites/gatesunchanged. Returnblocked.",
+    "handoff": "STOPPED C3bu task20/window2 FINALcoreFAIL33/35. BothlocalizedBTfixesverified/all18retainedpass; worker13/13. Own15/17additionalpredeclaredcoreprobes pass,butquotedautomatic g suffix onownedcleanup e1row acceptedatinitial/preclear. Coreparserrejectsliteralcommand=notdocumentedquotes. Oldmode/metadata+5priorolddefectobservationsdiscriminate; temporaryquoteverificationmutationfixes2caseswithouteditingcandidateef94d6859970a3e37fadecca0dd17a36d75b1cb5f4e8581d9df7c83e5578ccf5. COREPARKEDFORWINDOW,no furthercore repair,adapterorliveactivation. Governingmacro1756abb81232e6fd236d86e3c104fe1f83fe266aaf726b74fa38c319b9f6b14c records user5hour extension same07:07:42start\u219212:07:42,fiveTOTALnotadditional; pastdeadlines/oldauthorityarchivedintact. 2of4attemptsused/2remain, notrepurposeforcorerepeat. Pools1additionalsurrogate+1conditionalgameuntouched; gameexecutionDEFERREDbeyondwindow despite standingpermission. Parent reviews/newdirectives mandatory,no routineuserapprovalquestion. Noadapter/framing/discovery/realexitparser/runtimeproof.0sessions/starts/attach/control/nativeboundaryattempts,workerdone/noliveresources. BR/BS/BTpacketsintact,mainmisscauseunknown,C3bc/nativeprerequisites/gatesunchanged. Returnblocked. Evidencea2116af committed/pushed; dispatch-to-landing997.986s. Endpreservation373fixedinputs,2407prior evidence entries inclBR/BS/BT/verificationpackets,currentcandidate and10initialdirtypaths; olddeadlinesexact. WorkerAPIterminal/nativeboundaryattempts0/noliveresources. Window2used/2remaining,finalcorePARKED, nofurthercore/adapter/live. Five-total-hourmacroends12:07:42; bothlivepoolsunspent,originalgameDEFERREDbeyondwindow. Actualclocksincurrent_pass.",
     "stopped": {
-      "date": "2026-10-27T08:21:26.639586+00:00",
+      "date": "2026-10-27T08:23:16.801802+00:00",
       "reason": "FINALnarrowcoreacceptance failed on documentedquotedautomaticg trailer; coreparkedforthisautomationwindow, no repeat/adapter/live route.",
-      "last_commit": "e7f7517a96e3c737bc3d2b026aa07e2ccea17af6"
+      "last_commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55"
     },
     "current_pass": {
       "started": "2026-10-27T08:01:58Z",
@@ -155,9 +158,18 @@
           "deadline": "2026-10-27T08:31:58Z",
           "worker_completed": "2026-10-27T08:11:40.100000+00:00",
           "independent_checked": "2026-10-27T08:17:08.961080+00:00",
-          "verified": "2026-10-27T08:21:26.639586+00:00"
+          "verified": "2026-10-27T08:21:26.639586+00:00",
+          "worker_terminal_clock_source": "API time.idle",
+          "landed": "2026-10-27T08:22:03+00:00",
+          "commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55",
+          "dispatch_to_landing_seconds": 997.986156,
+          "dispatch_to_worker_idle_seconds": 375.086156,
+          "task_ended": "2026-10-27T08:23:16.801802+00:00",
+          "task_elapsed_seconds": 1278.801802
         }
-      ]
+      ],
+      "ended": "2026-10-27T08:23:16.801802+00:00",
+      "elapsed_seconds": 1278.801802
     },
     "verified_at": "2026-10-27T08:21:26.639586+00:00",
     "resource_state": {

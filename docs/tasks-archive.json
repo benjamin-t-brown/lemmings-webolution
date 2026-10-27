@@ -3311,7 +3311,7 @@
         "providerID": "openai",
         "variant": "high"
       },
-      "landed_at": "2026-10-27T08:21:26.639586+00:00",
+      "landed_at": "2026-10-27T08:22:03+00:00",
       "note": "docs/scratch/phase-c3bu-controller-final-core.md",
       "outcome": "FinalnarrowcoreNOTaccepted: all18retainedpass plus15/17additional;2initial/preclearquoted-g-autocommandcasesaccepted. Parkcoreforwindow,noadapter/retry/live.",
       "candidate": "build/tmp/c3bu-controller-final-core/controller.py",
@@ -3328,7 +3328,17 @@
         "Puremockcore only,noconcreteadapter/framing/TIDdiscovery/realexitparser/hosttiming/preemption/runtimecoverage/disarm/shutdownproof",
         "BRmainmisscause/actualexitunknown,savedBRstillFAIL"
       ],
-      "resources": "Configuredworkersucceeded/idle;0sessions/target/game/attach/processcontrol, no liveownedresources. AllBR/BS/BT/priorverification/candidateprotected. Noadapterorredispatch."
+      "resources": "Configuredworkersucceeded/idle;0sessions/target/game/attach/processcontrol, no liveownedresources. AllBR/BS/BT/priorverification/candidateprotected. Noadapterorredispatch.",
+      "commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55",
+      "dispatch_to_landing_seconds": 997.986156,
+      "worker_api_idle": "2026-10-27T08:11:40.100000+00:00",
+      "pass_ended": "2026-10-27T08:23:16.801802+00:00",
+      "pass_elapsed_seconds": 1278.801802,
+      "automation_window_attempts_used": 2,
+      "automation_window_attempts_remaining": 2,
+      "core_parked_for_window": true,
+      "live_pools_consumed": false,
+      "original_game_deferred_beyond_window": true
     },
     {
       "id": "c3bt-controller-core",

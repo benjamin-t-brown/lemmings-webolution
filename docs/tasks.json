@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T02:46:44.317681+00:00",
+  "updated": "2026-10-27T02:47:47.977497+00:00",
   "notes": "C3bm check-only attempt12 consumed, historical C3ar retained. Supported low-skirt conditional negative; broad visible question indeterminate. Production/gates unchanged; no follow-on.",
   "active": [],
   "queue": [],
@@ -44,11 +44,11 @@
         "evidence": "docs/scratch/phase-c3bm-terrain-orientation.md"
       }
     ],
-    "handoff": "STOPPED C3bm check-only:60vertex/72record low skirt conditional H-chain not reversed; actual visible sandy structure indeterminate. Own raw-byte/rational/actual-C++ checks and isolated terrain-only reversal/restoration verified. Both view arms A1 fixture, not repair4 runtime/camera replay; world chain conditional and camera-independent. Production untouched; fresh45CTest/lint. Fresh rescore RETAINED PNGs C3.0635481771FAIL/C1.0160864/.0161212PASS, no new render/gate movement. Historical C3ar interruption/discard retained, this is second orientation dispatch; cumulative12 counts previous11. Worker succeeded/idle,0live resources/actions. Directive consumed, no automatic follow-on.",
+    "handoff": "STOPPED C3bm check-only:60vertex/72record low skirt conditional H-chain not reversed; actual visible sandy structure indeterminate. Own raw-byte/rational/actual-C++ checks and isolated terrain-only reversal/restoration verified. Both view arms A1 fixture, not repair4 runtime/camera replay; world chain conditional and camera-independent. Production untouched; fresh45CTest/lint. Fresh rescore RETAINED PNGs C3.0635481771FAIL/C1.0160864/.0161212PASS, no new render/gate movement. Historical C3ar interruption/discard retained, this is second orientation dispatch; cumulative12 counts previous11. Worker succeeded/idle,0live resources/actions. Directive consumed, no automatic follow-on. Round2267200 committed/pushed; dispatch-to-landing1373.111s. End checks preserve175fixed/source inputs,283prior evidence files and9dirty deltas; worker terminal/host empty rechecked. Actual clocks in current_pass.",
     "stopped": {
-      "date": "2026-10-27T02:46:44.317681+00:00",
+      "date": "2026-10-27T02:47:47.977497+00:00",
       "reason": "Sole approved attempt12 completed: scoped source-pose negative, broad visible repair4 question indeterminate. No repair/correction/follow-on.",
-      "last_commit": "5f138cb56adf0b614da330ea6113ef51047c61fa"
+      "last_commit": "22672008e59670f827276c2631c924e51271e90e"
     },
     "current_pass": {
       "started": "2026-10-27T02:19:16Z",
@@ -59,9 +59,15 @@
           "dispatched": "2026-10-27T02:24:04.889438+00:00",
           "deadline": "2026-10-27T03:04:16Z",
           "worker_completed": "2026-10-27T02:38:11.888819Z",
-          "verified": "2026-10-27T02:46:44.317681+00:00"
+          "verified": "2026-10-27T02:46:44.317681+00:00",
+          "landed": "2026-10-27T02:46:58+00:00",
+          "commit": "22672008e59670f827276c2631c924e51271e90e",
+          "dispatch_to_landing_seconds": 1373.110562,
+          "dispatch_to_worker_release_seconds": 846.999381
         }
-      ]
+      ],
+      "ended": "2026-10-27T02:47:47.977497+00:00",
+      "elapsed_seconds": 1711.977497
     },
     "verified_at": "2026-10-27T02:46:44.317681+00:00",
     "resource_state": {

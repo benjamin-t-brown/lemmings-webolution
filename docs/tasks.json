@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T20:02:16.225Z",
-  "notes": "Same-pass context resume: active endpoint confirms BOTH workers running (capture repair has stale initial succeeded outcome). No new dispatch/debit/clock; live ownership preserved. NUL newly untracked, provenance pending, not removed.",
+  "updated": "2026-10-27T20:04:12.190Z",
+  "notes": "STOPPED on unauthorizedextra stockstart; bothworkers independentlyterminal, allresources released, no appentry/nativefidelity acceptance. Completeactualclocks and accounting in standing_run; unusedpools frozen.",
   "active": [],
   "queue": [],
   "standing_run": {
@@ -42,7 +42,7 @@
       }
     ],
     "tooling_attempts_used": 2,
-    "tooling_seconds_used": 1403.311338,
+    "tooling_seconds_used": 1519.273899,
     "stock_crashes": 0,
     "historical_counts": {
       "prior_campaign_attempts": 16,
@@ -84,14 +84,23 @@
         "evidence": "docs/scratch/phase-b2m-native-capture-safety-stop.md; docs/scratch/phase-b3k-native-binding-partial.md"
       }
     ],
-    "handoff": "SAFETY STOP bothworkers independentlyterminal/capture19:49:31.734Z,binding19:53:03.068Z;2landedlimitednegative/partialrounds/3attempts/2actualstartsversus1authorizedcharged, extra1unauthorized. No attempt4/thirdtooling/launch/integration; allremainingauthorityfrozen. Capture4124fa9actual19:59:11Z1218.083s, rejectedhelperpreservedscratchremoved; firsttextreceiptrescuedfromtoolhistory/firstimageslost, secondimageoccludingdesktopnotgamepixels. Correctedcause:rawcommandDIDincludeTestOnly,failedrefreezeleftoldworkerignoringflag. Bindingpartial6newbodies+5installedwindowsverified, actualsharedcontextidentityunclosed; no productionchange/entry. Final49CTest68.19s/fourmapRGBA/7badCLI/fixedC3FAIL+C1PASSscores+PNGhashesunchanged.5installhashesmatch/hostclear/REAclosed, NULattributedpreservedremoved, dirtyworkpreserved. Commitbindingthenfinalhostcheck/exactclocks/stopmetadataonly; original20:22round/21:32:27passdeadlinesnotextended.",
-    "stopped": null,
+    "handoff": "STOPPED safetybreach, not successfulentry or exhaustedoveralltime.3of4attempts/2landedlimitednegative-partialrounds; tooling2of2, broadchargedseconds infield.2actualstockstarts/1authorizedcharged+1unauthorizedactual, no retrodebit/refund; 0observedcrashsignatures, bothownedexit1/notnormalexitproof. Capture4124fa9actual19:59:11Z1218.083s; bindingc963bbbactual20:02:16Z1403.083s, bothbefore20:22hardround/no timingoverrun. Firsttoolreceiptrescuedbutfirstimageslost, second2560x1440rawdesktopisoccludednotgamepixels. Correctedcause:TestOnlypresentbutfailedrefreezeleftoldworkerignoringit. Bindingconstructedmouseconditionalonly,C\u2192G/sharedgap; no nativephysicalsample/productionhelper/appentry.49CTest68.19s/fourmapRGBA/7badCLI/freshfixedC3FAIL+C1PASSscores+hashesunchanged;16signedgates/PLAN27771bytes/dirtyworkpreserved. BothworkerterminalIDsretained, staticREAclosed; final20:03:06Zhostempty/no tasks/pythonw/instrumentation,5protectedhashesexact/noinstallwritesorrestorationowed. NULattributed/preservedremoved,newrejectedhelperpreservedscratchremoved. Original19:32:27start/21:32:27deadline neverreset; consumedpassrequiresnewexplicitreviewbeforeanywork, pendingrecommendationnamesexactstale-source/singleuse/appendonly-evidencedefects. No spareattempt/start/hourtransfer.",
+    "stopped": {
+      "date": "2026-10-27T20:04:12.190Z",
+      "reason": "SAFETY BREACH: capture repair made2actualstockstartsagainst1authorizedpredebit, launchedbeforeforcedexceptionretentionprerequisitepassed, overwrotefirstimages. Allfutureworkfrozen; bothworkersnowindependentlyterminal/REAclosed/hostclear5hashesmatch. No appentry. Finalattempt4unspent is not authority to continue.",
+      "last_commit": "c963bbb2f5fd804d740d51c2260ccab3f55802c0"
+    },
     "tooling_clock_started": "2026-10-27T19:38:52.917Z",
-    "tooling_clock_note": "2of2conservativelycounted; captureactualsource/researchcommit19:59:11Z1218.083s. Chargebroadintervaloriginaldispatchthroughfinaladministrativepasscleanup/stopaswell, includingofflineoverlap, finalmeasuredendpending. No furthertooling.",
+    "tooling_clock_note": "Initialcapture+repair conservatively tooling2of2. Captureisolatedcommit19:59:11Z1218.083s; broadchargedwallinterval19:38:52.917Z throughfinaladministrativestop includesoverlappingofflineverification/cleanup, actualtooling_seconds_used measured. Under60min; no thirdtooling/repair.",
     "safety_stop_requested_at": "2026-10-27T19:50:57Z",
     "safety_breach": "Capture repair executed2actualstockPopen starts versus1authorized/predebited; also launched before forcedexceptionretentionpassed, overwrotefirstreceipt. No furtherlaunch/task/repair/entry permitted. Offlinebindingworker retainsownershipuntilnotification/terminalcheck; do notinterrupt.",
     "stock_starts_frozen": true,
     "stock_start_unauthorized_actuals": 1,
-    "tooling_source_landing_seconds": 1218.083
+    "tooling_source_landing_seconds": 1218.083,
+    "resource_verified_at": "2026-10-27T20:03:06Z",
+    "workers_terminal_verified_at": "2026-10-27T19:53:49Z",
+    "elapsed_seconds_at_stop": 1905.190899,
+    "tooling_clock_ended_at": "2026-10-27T20:04:12.190Z",
+    "stock_crash_scope": "0 observedcrashsignatures; both actualownedprocessesexit1, terminationvsnaturalexit notexplicitlymarked in receipts. Do not callnormalexits or infercrashabsencefromprocessabsence."
   }
 }

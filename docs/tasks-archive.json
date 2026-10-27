@@ -3931,7 +3931,10 @@
       "note": "docs/scratch/phase-b3k-native-binding-partial.md",
       "worker_terminal": "2026-10-27T19:53:03.068Z",
       "result": "Limited partial conditional constructed-mousefirstavailablebutton derivation, actualC\u2192G/sharedidentityunclosed; no nativephysicalsample/entry/helper.6neworiginalwindows6901bytes+5installedwindows1360bytes independentlyauthenticated, actualinstructions/imports/exports/SDK/docsre-read,40initialfiles+6sourcehashesexact.0stockstarts/REAclosed. Capturebudgetbreachstopswholepass, finalattempt4notspent.",
-      "stock_starts": 0
+      "stock_starts": 0,
+      "commit": "c963bbb2f5fd804d740d51c2260ccab3f55802c0",
+      "landed": "2026-10-27T20:02:16Z",
+      "dispatch_to_landing_seconds": 1403.083
     },
     {
       "id": "b2m-native-capture-continuation",

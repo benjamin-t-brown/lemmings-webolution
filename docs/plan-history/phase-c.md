@@ -1229,3 +1229,21 @@ failedacceptanceblocks activation. Successor1session/1IA32start/45min/no retry,0
 native additionallyruntimevalidation+safety/sourcebindingplan+separatedirective.
 C3bc refusal/nativepark andC3FAIL/C1PASS unchanged; protectedinputs/evidence/dirty
 work preserved, no renderer/framework/production change orrender/rescore. Stopforparent.
+
+**C3bt, 2026-10-27 — prior14contracts corrected; hardware-mode/receipt acceptance still fails.**
+Fresh task19 under governingautomation, window1of4used/3remain; secondintegration
+slot20NOTdispatched becausefirstfullacceptancefailed. [Independent actualentry
+checks](../scratch/phase-c3bt-controller-core.md): worker11/11mockpass, ownprior14/14
+nowconforming, but4mandatorychecks fail(threewrong/missing HWexecute-size listing
+cases accepted; argv/cwd absent fromdurablereceipts despiteknownconfig). Full14/18,
+not an acceptedcore. Primarybl docs andretainedBRrows distinguishmode/size, notjust
+ID/address. In-memorysingle-change verificationdiscriminatesmodeguard; isolated
+olddefectmutants discriminate selectedthread/errors/exit/receipt. Candidateunchanged,
+nofacilitatorrepair. SavedBRstaysfailed/maincauseunknown, BS/priorevidence preserved.
+No liveadapter/integration/runtimecoverage/disarm/exitproof; typedexit+framingmetadata
+synthetic.0sessions/target/game/attach/control, workeridle/noownedliveresources.
+Automationauthoritynowrecorded(notretroactiveBSscope),07:07:42–10:07:42 hardwindow;
+standingtest/nativepermission andpreauthorization retained,1surrogate+1conditional
+gamepool unused. Parent reassesses/issuesnextdirective; no routineuserapproval
+neededwithincaps, no liveactivationhere. C3bc/nativeplanprerequisites andretained
+C3FAIL/C1PASS unchanged, no render/rescore/production/framework changes. Stop.

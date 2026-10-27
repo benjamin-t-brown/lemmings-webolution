@@ -3,6 +3,131 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-controller-offline",
+      "goal": "Repair actualC3brcontroller offline only; discriminating guardedmocktests and independentverification; stopbeforeparent-evaluatedsuccessor.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh offline-only oneattempt18,45minoverall.0session/start/attach/processcontrol. Conditionalnextpasspreauthorized onlyafterparentacceptance+newdirective.",
+      "standing_permission": {
+        "user_sequence": [
+          "approve repair/offline before nexttest",
+          "i authorise debugger sessions or program starts from now on",
+          "Tests and original game with boundedcaps/safety and conditional nativeplan",
+          "and i preauthorize the next pass"
+        ],
+        "standing": "Bounded test AND original-game debugger sessions/starts permitted in principle; not unlimited dispatch or immediate execution, no bypass of caps/safety/sourcebinding.",
+        "successor": {
+          "preauthorized": true,
+          "activation": "Parent accepts independently verifiedoffline repair, issues successor directive and rechecks idleowner/hash before resumption; no further userlaunch approval needed for this specific successor.",
+          "default_tier": "Sol",
+          "debugger_sessions": 1,
+          "disposable_ia32_starts": 1,
+          "overall_minutes": 45,
+          "retries": 0,
+          "extra_repair_dispatches": 0,
+          "stock_starts": 0,
+          "consumed": false,
+          "currently_blocked": true,
+          "blocker": "Current offline controller acceptance failed; parent cannot activate on this result."
+        },
+        "native": "Standingpermission not executable scope current/successor; requires runtimecontroller validation and supported safety/sourcebinding plan plus separatelyscoped directive."
+      },
+      "directive_sha256": "18d862a82f14abd42cf1499e0bd5d95b17d4f8a7bf4ce0c436ee6e15b2269d84",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh API active self+unrelateded-ascii only; selfSol/high, priorworker succeeded/idle. active/self/prior-worker/parent saved; ff-only pull7b7b192.",
+      "started_at": "2026-10-27T07:04:34Z",
+      "deadline": "2026-10-27T07:49:34Z",
+      "grants": {
+        "rounds": 1,
+        "cumulative_question_cap": 18,
+        "overall_minutes": 45,
+        "extra_repair_dispatches": 0,
+        "stock_starts": 0,
+        "surrogate_starts": 0,
+        "debugger_sessions": 0,
+        "attaches": 0,
+        "process_control": 0,
+        "injection": 0,
+        "installations": 0,
+        "commits": "isolated own paths normalorigin decompile sync"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 18,
+      "stock_starts_used": 0,
+      "surrogate_starts_used": 0,
+      "debugger_session_attempts": 0,
+      "historical_observation": {
+        "prior_observation_feasibility": 21,
+        "installation_tasks": 1,
+        "actual_surrogate_trials": 1,
+        "current_offline_repair_attempts": 1,
+        "current_stock_observations": 0,
+        "scope": "Keep historicalledgers separate; task18offline not an actualobservation. No capreset."
+      },
+      "pending_questions": [
+        {
+          "question": "Offline repair acceptance failed; parent evaluation required.",
+          "recommendation": "Do not activate preauthorized successor on this candidate. Report unresolved actual-path controller/adapter gaps; no further repair dispatch authorized in currentpass. Preserve standing boundedpermission and unconsumed conditionalpreauthorization.",
+          "evidence": "docs/scratch/phase-c3bs-controller-offline.md"
+        }
+      ],
+      "handoff": "STOPPED C3bs task18 offlineacceptanceFAIL. One worker attempt, worker10/10mockpass narrowed by ownactualpath14probes/7contractsmet: selectedthreadfirstrowbug; ignoredcontext/clear/list errors; inconsistentexitcode anduncorrelatedPIDline; swallowedfinalreceiptfailure. No concrete nativeadapter or boundedblockingI/O proof. Candidate b2904cf4acf97a3e2b5c658b56dfa822edc831d25a7dde62879ca41b85d6af46 unchanged, two independent in-memorydiagnosticmutations discriminate. SavedC3brremainsFAIL/unmodified; native mainmisscauseunexplained.0sessions/targets/stock/attaches/processcontrol. Prior21/install1/surrogatetrial1 retainedseparately. Standinguserpermission forboundedtestANDnative starts/sessions remains, but no executablegame scope. Specificsuccessorpreauthorized1session/1IA32start/45min/no retry/extra repair/0game only AFTERparentacceptsverifiedrepair+newdirective/ownerhashchecks; currentfailedacceptanceBLOCKSactivation, not consumed. Native needs runtimevalidation+safety/sourcebindingplan+separatedirective. C3bc/refusal/park/gates remain. Noextra repair orfollow-on; returnparent. Failureevidence02e6bae committed/pushed; dispatch-to-landing1229.560s. End checks preserve373fixedinputs,2317priorevidenceentries inclentireC3brfailedpacket,allhistory,currentcandidate and9initialdirtydeltas+1additionaluntrackedautomationdirective. Guardedactualcandidate nativeboundaryattempts0; no liveownedresources acquired, workerAPIterminal. Standingpermission/conditionalpreauthorization retained, BLOCKED/unconsumed. Actual clocks in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T07:29:01.186120+00:00",
+        "reason": "Offline repair candidate acceptance failed; no extra repairdispatch. Return blocker toparent, conditional successor not activated.",
+        "last_commit": "02e6baed6d89963ea6f65d7c95f8d8f6d3edaf28"
+      },
+      "current_pass": {
+        "started": "2026-10-27T07:04:34Z",
+        "rounds": [
+          {
+            "id": "c3bs-controller-offline",
+            "attempt": 18,
+            "dispatched": "2026-10-27T07:07:33.439923+00:00",
+            "deadline": "2026-10-27T07:49:34Z",
+            "worker_completed": "2026-10-27T07:18:56.110000+00:00",
+            "independent_checked": "2026-10-27T07:23:09.634160+00:00",
+            "verified": "2026-10-27T07:26:42.577180+00:00",
+            "worker_terminal_clock_source": "API time.idle",
+            "landed": "2026-10-27T07:28:03+00:00",
+            "commit": "02e6baed6d89963ea6f65d7c95f8d8f6d3edaf28",
+            "dispatch_to_landing_seconds": 1229.560077,
+            "dispatch_to_worker_idle_seconds": 682.670077
+          }
+        ],
+        "ended": "2026-10-27T07:29:01.186120+00:00",
+        "elapsed_seconds": 1467.18612
+      },
+      "verified_at": "2026-10-27T07:26:42.577180+00:00",
+      "resource_state": {
+        "worker_session": "ses_e83ce6b7effeOw5wcI6hTg8O0k",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "fixed": 373,
+        "evidence": 2317,
+        "initial_unrelated_dirty_preserved": 9,
+        "additional_unrelated_untracked_preserved": 1,
+        "historical_capture_proposal_byte_exact": true,
+        "production_renderer_framework_unchanged": true,
+        "all_historical_archive_entries_preserved": true,
+        "phase_e_old_text_preserved": true,
+        "current_worker_evidence_preserved": true,
+        "failed_C3br_packet_byte_exact": true,
+        "installed_debugger_retained": true,
+        "debugger_sessions": 0,
+        "surrogate_starts": 0,
+        "stock_starts": 0,
+        "attaches": 0,
+        "process_control": 0,
+        "guarded_native_boundary_attempts": 0,
+        "live_owned_resources_acquired": false,
+        "conditional_successor_consumed": false
+      }
+    },
+    {
       "id": "c3-windbg-surrogate",
       "goal": "ONE actual standard installedWinDbg-family session on ONE owned newlybuiltIA32 surrogate; initial/newthreadhardwarehits and verifieddisarm/selectedcleanup; no game.",
       "milestones": [
@@ -2990,6 +3115,54 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bt-controller-core",
+      "status": "landed",
+      "brief": "build/tmp/c3-controller-correction-pass/brief-core.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "kind": "concrete actualcontroller core corrections with guardedmocks",
+      "requested_model": "configured pin nooverride/fallback",
+      "attempt": 19,
+      "window_attempt": 1,
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bt-controller-core/**"
+      ],
+      "dispatched_at": "2026-10-27T07:35:40.210376+00:00",
+      "worker_output": "build/tmp/c3bt-controller-core/round-note.md",
+      "task_started_at": "2026-10-27T07:32:15Z",
+      "task_deadline": "2026-10-27T08:17:15Z",
+      "worker_session": "ses_e83b668c8ffe2SPYr4tMOcaemN",
+      "actual_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T07:55:54.952659+00:00",
+      "note": "docs/scratch/phase-c3bt-controller-core.md",
+      "outcome": "Prior14/14controlcontracts corrected, butfullacceptanceFAIL14/18:3HWmode/listing cases accepted andknownargv/cwd missingdurablereceipts. Stop,nointegration-slotrepair.",
+      "candidate": "build/tmp/c3bt-controller-core/controller.py",
+      "candidate_sha256": "3608e6aa342dfa8ff89d39d9c851abafc5d7fa753c32bab011a64f6cc9655cb6",
+      "worker_tests": 11,
+      "worker_tests_passed": 11,
+      "independent_prior_contracts_met": 14,
+      "independent_total_contracts": 18,
+      "independent_contracts_met": 14,
+      "remaining_defects": [
+        "Breakpointlisting reads onlyenabledID/address, not processor execute/size1; accepts omittedmode andread/write/write4fixtures atinitial/preclear",
+        "Knownlaunchargv/cwd absentfromattemptdebitandterminaldurablereceipt, regressionfromBS"
+      ],
+      "limits": [
+        "No concrete standardCDBadapter/integration/framing/runtimeproof",
+        "Typedexit events andresponseframingmetadata synthetic only",
+        "Returningoperationdeadlines notpreemption/blockingI/Oproof",
+        "BRmainmisscause unexplained,BRstillfailed"
+      ],
+      "facilitator_check": "Own guarded actualentry14oldcontracts pass;4additional mandatorycases fail. Five isolatedolddefectregression observations discriminate previousfixes; separateone-change in-memory e1listingmutation rejects3wrongmodecases while genuineHWpositive passes. Candidatebyteexact, nofacilitatorrepair.",
+      "resources": "Configuredworker succeeded/idle,0native/processboundaryattempts. Pythonmockrunnersonly,0sessions/target/game/attach/control, no liveownedresources. BR/BS/allhistoricalevidence preserved."
+    },
     {
       "id": "c3bs-controller-offline",
       "status": "landed",

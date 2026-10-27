@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T19:38:52.917Z",
-  "notes": "Fresh approved pass; prep charged from first ownership check. Prior complete campaign archived without renewal; B2m/B3k only reopened.",
+  "updated": "2026-10-27T19:46:47Z",
+  "notes": "Same-pass context resume: active endpoint confirms BOTH workers running (capture repair has stale initial succeeded outcome). No new dispatch/debit/clock; live ownership preserved. NUL newly untracked, provenance pending, not removed.",
   "active": [
     {
       "id": "b2m-native-capture-continuation",
@@ -125,7 +125,7 @@
       "B2_B3": "unaccepted, no app map-to-level transition; gates unchanged"
     },
     "pending_questions": [],
-    "handoff": "Initial capture worker terminal/no start, no actual capture or test; own missingretention implementation returned as final boundedrepair3, tooling2of2 conservatively charged from19:38:52.917Z. Same20:07return/20:22landing, single original debit remains unattempted. Offline bindingattempt2 running historicalpick6. Pass21:32:27 fixed, finalattempt4 reserved actualentry if supported. No more tooling/retry/clockrenewal.",
+    "handoff": "Same owner/pass/deadline21:32:27Z.19:46:47Z active endpoint self+both designated workers, no competitor. Capture repairattempt3 running ses_e81203b8dffefVKDT4Y5vOl825/liveowner; bindingattempt2 running ses_e81203b6effeBd0oaax89gu13Q/offline. Do NOT use capture historical initial succeeded/idle as repair termination. Wait notifications, no polling/duplicate/interruption; verify/land by20:22Z, workerreturn20:07Z unchanged.3of4attempts/tooling2of2 (charge originaldispatchthroughlanding),1charged/0actualstart last terminalinitialreport; repair may use ONLY originaldebit after actualfailureexercise+sourcefreeze. Finalattempt4 only supported productionentry, no thirdtooling. Own baseline49CTest69.29s/fourmapRGBA/7badCLI/fixedgates+hashes unchanged, not nativeevidence. UntrackedNUL absent atactivation, preserve pendingattribution. All gates/dirtyfiles/5hashconditions unchanged.",
     "stopped": null,
     "tooling_clock_started": "2026-10-27T19:38:52.917Z",
     "tooling_clock_note": "Initial capture worker did no live observation; count initial1 and repair2 as tooling-only conservatively, charge whole original dispatch-to-landing interval (max60min); no third tooling attempt. Original single debit remains charged/unattempted, repair may execute that exact start only after prerequisites."

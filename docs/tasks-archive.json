@@ -2604,12 +2604,17 @@
         "providerID": "openai",
         "variant": "high"
       },
-      "landed_at": "2026-10-27T05:10:21.598239+00:00",
+      "landed_at": "2026-10-27T05:11:08+00:00",
       "note": "docs/scratch/phase-c3bo-observation-feasibility.md",
       "outcome": "Conditional documentary candidate: established WinDbg processor execute breakpoint at46D5F3 avoids installing code redirect there. Not launch-ready; C3bc refusal unchanged.",
       "facilitator_check": "Independently fetched primaryMicrosoft docs and revisions: processor/codepatch distinction, explicit usermode/x86e1 contract, OSdebug events, context architecture. Added initial-breakpoint/softwaredefaults/kill-on-exit caveats. Fresh file-backed65bytecall and pinnedC3bc sourcechecks pass. No candidate/surrogate/tool execution or test.",
       "narrowing": "Exact debuggerartifact/WOW64/startup/threadcoverage/exitpolicy not verified; AW invocationlocal chain does NOT bind durableLVLidentity. CALL stack6words notPRE5. Single precall sample is attemptedrequest, not successful API/GPU/pixelownership. Prospective qualifiedsource mapping required, no fullframepromise.",
-      "resources": "Worker succeeded/idle configured Luna/high nooverride.0targetexecution/debugger/attach/injection/thread/task/install/surrogate operations; no live resources acquired, nohostinventory performed, no restoration owed."
+      "resources": "Worker succeeded/idle configured Luna/high nooverride.0targetexecution/debugger/attach/injection/thread/task/install/surrogate operations; no live resources acquired, nohostinventory performed, no restoration owed.",
+      "commit": "146895c2cdd28c35aea7af1cf4d22cccc4b1101e",
+      "dispatch_to_landing_seconds": 1012.573642,
+      "worker_api_idle": "2026-10-27T04:59:38.850000+00:00",
+      "pass_ended": "2026-10-27T05:12:10.347510+00:00",
+      "pass_elapsed_seconds": 1314.34751
     },
     {
       "id": "c3bn-terrain-image-link",

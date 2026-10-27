@@ -1247,3 +1247,20 @@ standingtest/nativepermission andpreauthorization retained,1surrogate+1condition
 gamepool unused. Parent reassesses/issuesnextdirective; no routineuserapproval
 neededwithincaps, no liveactivationhere. C3bc/nativeplanprerequisites andretained
 C3FAIL/C1PASS unchanged, no render/rescore/production/framework changes. Stop.
+
+**C3bu, 2026-10-27 — localized18/18 fixed; full core33/35, quoted-auto-command failure; park.**
+Final narrow task20/window2of4spent,2remain; [independent actualentry verification](../scratch/phase-c3bu-controller-final-core.md)
+confirms worker13/13, retained18/18 and15/17additionalcontracts. Exacte1mode and
+durableargv/cwdsnapshots nowpass, mixedBRsetup+mutableinputs/partiallaunch handled.
+But quoted`"g"`suffix onownedcleanuprow acceptedatsetup/preclear: parserchecks
+literalcommand=word andignoresdocumentedquotedcommandtrailer. Predispatchcoreboundary
+explicitlyexcludedunsafeautomaticcommands; no newacceptancebar/hostintegrationclaim.
+Oldmode/metadata andfivepreviousdefectobservations discriminate; temporaryquote
+guarddiagnostic changesbothfailures, deliveredcandidate unchanged/nofacilitatorrepair.
+FinalcoreFAILparksforwindow,noadapter/retry/liveactivation. BR/BS/BT/evidence intact,
+BRmisscause/exitunknown. Governingwindowextendedbyuser to07:07:42–12:07:42fiveTOTAL
+hours, caps4/livepoolsunchanged; historicaldeadlinesnotrewritten. Current30mincap
+unchanged. Remaining2slots reservedintegration+conditionalsurrogate nowblockedby
+park; originalgameDEFERREDbeyondwindow,standingpermission/preauthorizationretained.
+0sessions/targets/stock/attaches/processcontrol,workeridle/noliveresources; protected
+inputs/ten dirtypaths andgatesC3FAIL/C1PASS unchanged, no render/rescore. Stopforparent.

@@ -3,6 +3,177 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-controller-correction",
+      "goal": "Atmost2sequentialoffline tasks: correctBSconcreteacceptancefailures; onlyifaccepted integrateactualCDBboundaries offline. Stopbeforeparentreview/live.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Boundedautomation additional4attempts after18; currentpass atmost2offlineattempts19-20,90min overall/45minpertaskinclverificationlandingcleanup. Firstfailureends,nointegration-slotrepair.0session/start/control.",
+      "standing_permission": {
+        "user_sequence": [
+          "approve repair/offline before nexttest",
+          "i authorise debugger sessions or program starts from now on",
+          "Tests and original game with boundedcaps/safety and conditional nativeplan",
+          "and i preauthorize the next pass"
+        ],
+        "standing": "Bounded test AND original-game debugger sessions/starts permitted in principle; not unlimited dispatch or immediate execution, no bypass of caps/safety/sourcebinding.",
+        "successor": {
+          "preauthorized": true,
+          "activation": "Parent accepts independently verifiedoffline repair, issues successor directive and rechecks idleowner/hash before resumption; no further userlaunch approval needed for this specific successor.",
+          "default_tier": "Sol",
+          "debugger_sessions": 1,
+          "disposable_ia32_starts": 1,
+          "overall_minutes": 45,
+          "retries": 0,
+          "extra_repair_dispatches": 0,
+          "stock_starts": 0,
+          "consumed": false,
+          "currently_blocked": true,
+          "blocker": "C3bt fullcore acceptance failed, integration notdispatched; parentreassessment required."
+        },
+        "native": "Standingpermission not executable scope current/successor; requires runtimecontroller validation and supported safety/sourcebinding plan plus separatelyscoped directive."
+      },
+      "automation": {
+        "authority": "docs/DIRECTIVE-AUTOMATION-2026-10-27.md",
+        "sha256": "d63e55a3838dcf4d267d20f52100cdf167a507448d883181f48098c2de8e9960",
+        "user_request": "im jus ttrying to make this more automated, ive authorized most things youve said so i kinda want you to keep going for a while",
+        "started_at": "2026-10-27T07:07:42Z",
+        "deadline": "2026-10-27T10:07:42Z",
+        "additional_attempt_cap": 4,
+        "additional_attempts_used": 1,
+        "additional_attempts_remaining": 3,
+        "attempts": [
+          {
+            "id": "c3bt-controller-core",
+            "cumulative": 19,
+            "window_attempt": 1,
+            "dispatch": "2026-10-27T07:35:40.210376+00:00",
+            "verified": "2026-10-27T07:55:54.952659+00:00",
+            "outcome": "FullcoreacceptanceFAIL14/18, integration slotunused",
+            "note": "docs/scratch/phase-c3bt-controller-core.md",
+            "landed": "2026-10-27T07:57:13+00:00",
+            "commit": "8ad609898f63afb71f39094965f541b892326ebe",
+            "task_ended": "2026-10-27T07:58:10.172143+00:00"
+          }
+        ],
+        "live_pools": {
+          "additional_surrogate_sessions": 1,
+          "additional_surrogate_starts": 1,
+          "conditional_game_sessions": 1,
+          "conditional_game_starts": 1,
+          "surrogate_sessions_used": 0,
+          "surrogate_starts_used": 0,
+          "game_sessions_used": 0,
+          "game_starts_used": 0
+        },
+        "parent_evaluation_boundary": "Parent evaluates eachpass andissues eachsuccessordirective; no routine userapprovalneededwithinwindow. Failedlivetrialstopsroute,no retry. Notcurrentliveauthority.",
+        "native_prerequisites": "Runtimecontrollervalidation + supported safety/sourcebindingplan + parent scoped directive, C3bc refusal preserved."
+      },
+      "directive_sha256": "f345edcf71ccc8fec3327c3024a69c6cc7fb2415fa6e2e1d702aeddf3d70fbed",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "FreshAPI active self+unrelateded-ascii only,selfSol/high/priorworkeridle; active/self/prior-worker/parent saved. ff-onlypull0f8ba26.",
+      "started_at": "2026-10-27T07:32:15Z",
+      "deadline": "2026-10-27T09:02:15Z",
+      "grants": {
+        "rounds": 2,
+        "overall_minutes": 90,
+        "per_task_minutes": 45,
+        "cumulative_question_cap": 20,
+        "first_failure_stop": true,
+        "stock_starts": 0,
+        "surrogate_starts": 0,
+        "debugger_sessions": 0,
+        "attaches": 0,
+        "process_control": 0,
+        "installations": 0,
+        "commits": "normalisolatedround origin/decompile sync"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 19,
+      "stock_starts_used": 0,
+      "surrogate_starts_used": 0,
+      "debugger_session_attempts": 0,
+      "historical_observation": {
+        "prior_observation_feasibility": 21,
+        "installation_tasks": 1,
+        "actual_surrogate_trials": 1,
+        "offline_repair_task18": 1,
+        "current_offline_attempts": 1,
+        "current_stock_observations": 0
+      },
+      "pending_questions": [
+        {
+          "question": "First correction still fails hardware-mode/receipt acceptance after fixing prior14contracts; reassess before successor.",
+          "recommendation": "Do not use integration slot as repair or activate livepools. Parent evaluates within retainedautomation authority;3additionalwindowattempts remain but none authorizedforautomaticdispatch underconsumedcurrentpass.",
+          "evidence": "docs/scratch/phase-c3bt-controller-core.md"
+        }
+      ],
+      "handoff": "STOPPED C3bt task19 FIRSTslotfullacceptanceFAIL14/18. Prior14/14BScontracts corrected; worker11/11pass. Remaining3mode/listingprobes acceptedwithout e1proof andknownargv/cwd missingdebit/terminalreceipts. Independentactualentryguardedtests/olddefectmutations andone-change modeverification discriminate; candidate3608e6aa342dfa8ff89d39d9c851abafc5d7fa753c32bab011a64f6cc9655cb6 unchanged. NOintegrationtask20dispatch: firstfailureendscurrentpass,secondslotnotretry. Governance docs/DIRECTIVE-AUTOMATION-2026-10-27.md d63e55a3838dcf4d267d20f52100cdf167a507448d883181f48098c2de8e9960 nowread/recordedasauthority,notretroactiveBSexpansion. Macro07:07:42–10:07:42,window1of4used/3remaining;1additionalsurrogate+1conditionalgamepool untouched. Standingboundedtest/nativepermission+specificsuccessorpreauthorization retained butnotactivatableonunacceptedcontroller; parentreviews/issuesnextdirective, no routineuserreapprovalinsidecaps. Runtimecontroller+safety/sourcebindingplan+separategamedirective stillrequired;C3bc refusal/park/gatesunchanged. BR/BSfailurepackets intact/mainmisscauseunknown.0sessions/starts/attach/processcontrol,workerdone/noliveresources. Reassess,notfurtherdispatchunderthisconsumedpass. Evidence8ad6098 committed/pushed; dispatch-to-landing1292.790s. Endpreservation373fixedinputs,2363prior evidence entries inclBR/BS/verificationpackets,currentcorecandidate,allhistory and10initialdirtypaths. Automationdirective readasgoverningauthorityandunchanged. WorkerAPIterminal; no native/processboundaryattempts/liveresources. Actualper-task/passclocksincurrent_pass. Window1used/3remaining,1surrogate+1conditionalgamepoolunused; no integrationdispatch. Parent reassesseswithinremainingauthority, notroutineuserapproval; no currentfollow-on.",
+      "stopped": {
+        "date": "2026-10-27T07:58:10.172143+00:00",
+        "reason": "Firstcorecorrection fullacceptance failed; integration slot cannotrepairfailedfirst. Stopforparentreassessment,0livepools consumed.",
+        "last_commit": "8ad609898f63afb71f39094965f541b892326ebe"
+      },
+      "current_pass": {
+        "started": "2026-10-27T07:32:15Z",
+        "rounds": [
+          {
+            "id": "c3bt-controller-core",
+            "attempt": 19,
+            "window_attempt": 1,
+            "started": "2026-10-27T07:32:15Z",
+            "dispatched": "2026-10-27T07:35:40.210376+00:00",
+            "deadline": "2026-10-27T08:17:15Z",
+            "worker_completed": "2026-10-27T07:47:04.135000+00:00",
+            "independent_checked": "2026-10-27T07:50:46.464577+00:00",
+            "verified": "2026-10-27T07:55:54.952659+00:00",
+            "worker_terminal_clock_source": "API time.idle",
+            "landed": "2026-10-27T07:57:13+00:00",
+            "commit": "8ad609898f63afb71f39094965f541b892326ebe",
+            "dispatch_to_landing_seconds": 1292.789624,
+            "dispatch_to_worker_idle_seconds": 683.924624,
+            "task_ended": "2026-10-27T07:58:10.172143+00:00",
+            "task_elapsed_seconds": 1555.172143
+          }
+        ],
+        "ended": "2026-10-27T07:58:10.172143+00:00",
+        "elapsed_seconds": 1555.172143
+      },
+      "verified_at": "2026-10-27T07:55:54.952659+00:00",
+      "integration_slot": {
+        "dispatched": false,
+        "reason": "Firstcorrectionfailedfullacceptance; cannotuseintegrationasrepair",
+        "unused_cumulative_slot": 20
+      },
+      "resource_state": {
+        "worker_session": "ses_e83b668c8ffe2SPYr4tMOcaemN",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "fixed": 373,
+        "evidence": 2363,
+        "initial_dirty_paths_preserved": 10,
+        "automation_authority_read_recorded_and_byte_exact": true,
+        "historical_capture_proposal_byte_exact": true,
+        "production_renderer_framework_unchanged": true,
+        "all_historical_archive_entries_preserved": true,
+        "phase_e_old_text_preserved": true,
+        "current_core_candidate_preserved": true,
+        "failed_BR_BS_and_verification_packets_byte_exact": true,
+        "installed_debugger_retained": true,
+        "debugger_sessions": 0,
+        "surrogate_starts": 0,
+        "stock_starts": 0,
+        "attaches": 0,
+        "process_control": 0,
+        "guarded_native_boundary_attempts": 0,
+        "live_owned_resources_acquired": false,
+        "conditional_successor_consumed": false,
+        "integration_task_dispatched": false
+      }
+    },
+    {
       "id": "c3-controller-offline",
       "goal": "Repair actualC3brcontroller offline only; discriminating guardedmocktests and independentverification; stopbeforeparent-evaluatedsuccessor.",
       "milestones": [
@@ -3115,6 +3286,50 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bu-controller-final-core",
+      "status": "landed",
+      "brief": "build/tmp/c3-controller-final-core-pass/brief.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "kind": "finalnarrowoffline e1listing andknownlaunchreceipt correction",
+      "requested_model": "configured pin nooverride/fallback",
+      "attempt": 20,
+      "window_attempt": 2,
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bu-controller-final-core/**"
+      ],
+      "dispatched_at": "2026-10-27T08:05:25.013844+00:00",
+      "task_started_at": "2026-10-27T08:01:58Z",
+      "task_deadline": "2026-10-27T08:31:58Z",
+      "worker_output": "build/tmp/c3bu-controller-final-core/round-note.md",
+      "worker_session": "ses_e839b254cffeNJe9Di9QFeXPAF",
+      "actual_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T08:21:26.639586+00:00",
+      "note": "docs/scratch/phase-c3bu-controller-final-core.md",
+      "outcome": "FinalnarrowcoreNOTaccepted: all18retainedpass plus15/17additional;2initial/preclearquoted-g-autocommandcasesaccepted. Parkcoreforwindow,noadapter/retry/live.",
+      "candidate": "build/tmp/c3bu-controller-final-core/controller.py",
+      "candidate_sha256": "ef94d6859970a3e37fadecca0dd17a36d75b1cb5f4e8581d9df7c83e5578ccf5",
+      "worker_tests": 13,
+      "worker_tests_passed": 13,
+      "independent_retained_contracts_met": 18,
+      "independent_additional_contracts_met": 15,
+      "independent_total_contracts": 35,
+      "independent_contracts_met": 33,
+      "remaining_defect": "Documented quoted automatic g suffix onotherwiseowned e1breakpoint row ignored byparser atinitial/preclear, contrarytopredeclaredunsafe-autocommandcoreboundary.",
+      "facilitator_check": "Reusedfacilitator18actualentryprobes allconform;17independentadditionalcases includeexactmixedBRdiagnostics,mode/duplicate/extra/disabled/unresolved/wrongaddress/malformed/quotedg atinitial/preclear andinput/partiallaunchsnapshots;15conform. Oldmode/metadata and5priorolddefectobservationsdiscriminate. Temporaryinmemoryquote guarddiagnoses2failureswhilemixedpositivepasses. Candidatehashunchanged,0nativeboundaryattempts.",
+      "limits": [
+        "Puremockcore only,noconcreteadapter/framing/TIDdiscovery/realexitparser/hosttiming/preemption/runtimecoverage/disarm/shutdownproof",
+        "BRmainmisscause/actualexitunknown,savedBRstillFAIL"
+      ],
+      "resources": "Configuredworkersucceeded/idle;0sessions/target/game/attach/processcontrol, no liveownedresources. AllBR/BS/BT/priorverification/candidateprotected. Noadapterorredispatch."
+    },
     {
       "id": "c3bt-controller-core",
       "status": "landed",

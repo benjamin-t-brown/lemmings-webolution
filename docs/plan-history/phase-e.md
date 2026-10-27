@@ -566,6 +566,14 @@ standingpermission retainedasauthority, parentreview/newdirective beforelive;
 C3bc/sourcebinding/safetypark intact. Failedfirsttaskendscurrentofflinepass rather
 than retryingitunderintegrationslot; no automaticliveorremainingworkerdispatch.
 
+Final narrow core2026-10-27: [C3bu](../scratch/phase-c3bu-controller-final-core.md)
+passes retained18/18 butfull33/35fails quotedautomatic`g`onownedBProw atinitial/
+preclear. **Park core for this automation window**, no furtherrepair/adapter/live
+route. Windowextendedsame07:07:42start to12:07:42(fivetotalhours),4attemptcap stays;
+2used/2remain, livepoolsunused. Originalgame deferredbeyondwindow, standingpermission
+retainedbutnotreadiness; parentreviewsnewdirectives, C3bc/safety/sourcebindingpark
+unchanged. No retries or compressionofnativeprep/useintoreservedremainingslots.
+
 ### B3 level pick
 
 - **B3 level pick** (parked 2026-10-25 at the three-round cap, b3e, b3f, b3g). `MM_CLIMB_002` is not in the executable. `lemmings.box` at `0x6F77` is the path `COMPILED\MM_CLIMB_002.LVL`. Lowercase `lemmings.box` is absent. Three `LEMMINGS.BOX` strings, at `0x4C292C`, `0x4C2A60`, and `0x4C2A70`, are pushed at `0x47DF27`, `0x47E298`, and `0x47E2CC`. Each push is followed by a stack-buffer pointer and `call 0x49C760`, then `add esp, 8`. The other argument is `[ebp-0x110]` or `[ebp-0x104]`. No level name and no level index are in those bytes. The body of `0x49C760` was not entered. Resume: open `0x49C760` far enough to say whether it copies the filename or opens the archive, and only then look for the caller that runs on a level choice. Do not treat the archive path as a click handler. See [B3g](../scratch/phase-b3g-box-call.md).

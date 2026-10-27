@@ -1,5 +1,16 @@
 # Plan history — Phase B
 
+### B2l — reference-specific image admission, 2026-10-27
+
+[Facilitator check](../scratch/phase-b2l-menu-image-qualification.md): initial
+candidate's five tests passed while actual640x480 translations admitted RETURN.
+Final tooling repair adds strict reference-exterior equality; no color threshold
+relaxation. Own32highlight-subset/11translation and identity/focus/stability controls
+plus isolated alignment-call bypass fail/restore as expected. Six permanent Python
+tests pass; app/gates unchanged. No live start or entry accepted. Tooling attempts2of2
+spent; next use is one concrete native navigation/map-table packet, not more harness
+certification. Historical caps/cursor park/PhaseD parks retained.
+
 ### B3h — recovered node-atlas prefix, 2026-10-27
 
 [Facilitator check](../scratch/phase-b3h-map-production-inputs.md): campaign9/map-object5,

@@ -1,30 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T19:59:11.448Z",
+  "updated": "2026-10-27T20:02:16.225Z",
   "notes": "Same-pass context resume: active endpoint confirms BOTH workers running (capture repair has stale initial succeeded outcome). No new dispatch/debit/clock; live ownership preserved. NUL newly untracked, provenance pending, not removed.",
-  "active": [
-    {
-      "id": "b3k-native-binding-continuation",
-      "status": "ready-for-verify",
-      "worker": "disasm-agent",
-      "requested_model": "API-confirmed configured disasm-agent openai/gpt-6.1-sol#high, no override",
-      "brief": "build/tmp/native-capture-first-entry-2026-10-27/binding-brief.md",
-      "campaign_attempt": 2,
-      "question_attempt": 6,
-      "dispatched": "2026-10-27T19:38:52.917Z",
-      "deadline": "2026-10-27T20:22:00Z",
-      "worker_stop": "2026-10-27T20:07:00Z",
-      "owns_live_game": false,
-      "live_owner": null,
-      "stock_start_budget": 0,
-      "owned_paths": [
-        "build/tmp/native-capture-first-entry-2026-10-27/binding/**"
-      ],
-      "cap_rationale": "B3k pick1-5/10bodies retained; explicit new approval permits conditional DERIVED default binding via immediate shared-context/device init+SDK/installedroute,6new bodies maximum; no unrelated transitive architecture proof.",
-      "worker_session": "ses_e81203b6effeBd0oaax89gu13Q",
-      "worker_output": "build/tmp/native-capture-first-entry-2026-10-27/binding/round-note.md"
-    }
-  ],
+  "active": [],
   "queue": [],
   "standing_run": {
     "id": "native-capture-first-entry-2026-10-27",
@@ -49,7 +27,7 @@
       "B3 level select and map"
     ],
     "current": "B2 native capture/input evidence",
-    "rounds_run": 1,
+    "rounds_run": 2,
     "attempts_used": 3,
     "stock_starts_used": 2,
     "stock_start_attempts_charged": 1,
@@ -64,7 +42,7 @@
       }
     ],
     "tooling_attempts_used": 2,
-    "tooling_seconds_used": 1218.533761,
+    "tooling_seconds_used": 1403.311338,
     "stock_crashes": 0,
     "historical_counts": {
       "prior_campaign_attempts": 16,
@@ -76,7 +54,7 @@
     },
     "ownership_check": "19:32:27Z hash/queue/branch/HEAD verified, only self active, prior worker succeeded/idle, exact self Sol/high parent confirmed.19:34:58Z self-only recheck, host inventory clear, ff-only unchanged a7e37e9.",
     "gate_scores": {
-      "verified_at": "2026-10-27T19:11:53Z",
+      "verified_at": "2026-10-27T19:57:12Z",
       "C3": {
         "numerator": 14934333,
         "denominator": 235008000,
@@ -97,16 +75,23 @@
       },
       "C2": "runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted",
       "B1": "conditional acceptance preserved",
-      "B2_B3": "unaccepted, no app map-to-level transition; gates unchanged"
+      "B2_B3": "UNACCEPTED: capturestartbudgetbreach/unqualifieddesktopimages; constructedmouseconditionalbindingonly, sharedidentitygap, no appentry."
     },
-    "pending_questions": [],
-    "handoff": "SAFETY STOP: capturelimitednegativeverified/rejected,2actual/1authorizedchargedstart, falseexceptionpreflight andfirstimageoverwrite; no attempt4ornewwork. Captureterminal/hostclear5hashesmatch; bindingworker now independentlyterminal19:53:03.068Z and returnedpartialbindingpacket underverification, no nativeobservations/productionchange. Only verification/landing/cleanupofexistingresults permitted; finish beforeoriginal20:22round, pass21:32:27 unchanged. Final49CTest68.19s/fixedC3FAIL+C1PASSscores+hashes/mapfixtures unchanged. NULattributed/preservedremoved; newhelperrejected/preservedscratchremoved. Markstoppedafterbothisolatedlandings/exactclocks.",
+    "pending_questions": [
+      {
+        "question": "Safety/launch strategy after2actualstartsagainst1authorized; no current authority remains exercisable.",
+        "recommendation": "Require separate explicit review/approval before newwork. Any future narrow launcher repair must failclosedonstaleexecutedsource/testonly, durablesingleusestartlimit and appendonlyfailureevidence; no native retry now. Then resolve exactC\u2192G/sharedidentity and actualforegroundcapture, not observercore/generalinputarchitecture.",
+        "evidence": "docs/scratch/phase-b2m-native-capture-safety-stop.md; docs/scratch/phase-b3k-native-binding-partial.md"
+      }
+    ],
+    "handoff": "SAFETY STOP bothworkers independentlyterminal/capture19:49:31.734Z,binding19:53:03.068Z;2landedlimitednegative/partialrounds/3attempts/2actualstartsversus1authorizedcharged, extra1unauthorized. No attempt4/thirdtooling/launch/integration; allremainingauthorityfrozen. Capture4124fa9actual19:59:11Z1218.083s, rejectedhelperpreservedscratchremoved; firsttextreceiptrescuedfromtoolhistory/firstimageslost, secondimageoccludingdesktopnotgamepixels. Correctedcause:rawcommandDIDincludeTestOnly,failedrefreezeleftoldworkerignoringflag. Bindingpartial6newbodies+5installedwindowsverified, actualsharedcontextidentityunclosed; no productionchange/entry. Final49CTest68.19s/fourmapRGBA/7badCLI/fixedC3FAIL+C1PASSscores+PNGhashesunchanged.5installhashesmatch/hostclear/REAclosed, NULattributedpreservedremoved, dirtyworkpreserved. Commitbindingthenfinalhostcheck/exactclocks/stopmetadataonly; original20:22round/21:32:27passdeadlinesnotextended.",
     "stopped": null,
     "tooling_clock_started": "2026-10-27T19:38:52.917Z",
-    "tooling_clock_note": "2of2 exhausted; conservatively charge originaldispatchthroughactualcapturecommit, actualcommitclock to append; no thirdtooling.1charged/2actualstart breach, no retroauthorization.",
+    "tooling_clock_note": "2of2conservativelycounted; captureactualsource/researchcommit19:59:11Z1218.083s. Chargebroadintervaloriginaldispatchthroughfinaladministrativepasscleanup/stopaswell, includingofflineoverlap, finalmeasuredendpending. No furthertooling.",
     "safety_stop_requested_at": "2026-10-27T19:50:57Z",
     "safety_breach": "Capture repair executed2actualstockPopen starts versus1authorized/predebited; also launched before forcedexceptionretentionpassed, overwrotefirstreceipt. No furtherlaunch/task/repair/entry permitted. Offlinebindingworker retainsownershipuntilnotification/terminalcheck; do notinterrupt.",
     "stock_starts_frozen": true,
-    "stock_start_unauthorized_actuals": 1
+    "stock_start_unauthorized_actuals": 1,
+    "tooling_source_landing_seconds": 1218.083
   }
 }

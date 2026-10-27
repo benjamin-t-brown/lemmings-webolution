@@ -1,5 +1,18 @@
 # Plan history — Phase B
 
+### B3k continuation6 — partial conditional mouse binding, 2026-10-27
+
+[Independent check](../scratch/phase-b3k-native-binding-partial.md): six new
+original bodies/6901bytes (wrongwriter5262bytes charged), five installed-shim
+windows1360bytes. Constructed context's enumerated mouse/customformat supports
+first-available button conditionally; actual shared-context identity still needs
+constructor C→runtimeG(4CBFC0) storage. G→sharedS(5D59DC) setter read. Installed
+forwarding vs enabledsyntheticIPC route byte-backed, not runtime observed.
+Own wholewindowhash/import/export/SDK/docs re-read and old40files/6sourcehashes
+pass; no production/helper/native sample/entry. Worker terminal/REAclosed,
+49CTest68.19s/fixedscores+PNGhashes/mapfixtures unchanged. Capture breach stops
+pass; no finalattempt4 or additional research/launch, not an integration success.
+
 ### B2m continuation — safety stop, 2026-10-27
 
 [Independent failure check](../scratch/phase-b2m-native-capture-safety-stop.md).

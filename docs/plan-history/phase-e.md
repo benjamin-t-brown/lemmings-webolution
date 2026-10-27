@@ -1,5 +1,19 @@
 # Plan history — Phase E
 
+### Native capture / first-node entry safety re-park — 2026-10-27
+
+Approved fresh120min/4attempt/3start pass retains historical counts. Actual3attempts
+include initialcapture1/repair3(tooling2of2) and B3k continuation6/attempt2.
+[Capture safety breach](../scratch/phase-b2m-native-capture-safety-stop.md):2actual
+starts vs1authorized predebit, false prerequisite PASS and overwritten first images.
+Second raw desktop capture is NOT native game pixels. [Binding partial](../scratch/phase-b3k-native-binding-partial.md)
+supports constructed mouse conditionally but C→G/shared identity remains open;
+no native physical sample or actual app entry. Entire pass stops, finalattempt4
+unspent; unused time/starts are not reusable authority. Future explicit decision
+must address stale frozen worker/test-only/single-use/evidence-overwrite safety
+before any fresh launch, then smallest binding/hostcapture question. Gates,
+language/progress, prior evidence, C3/cursor/PhaseD/observer parks unchanged.
+
 ### B3 first-node entry re-park — 2026-10-27
 
 [B3k limited negative](../scratch/phase-b3k-first-node-entry.md), historical pick

@@ -3907,6 +3907,33 @@
   ],
   "landed": [
     {
+      "id": "b3k-native-binding-continuation",
+      "status": "landed",
+      "worker": "disasm-agent",
+      "requested_model": "API-confirmed configured disasm-agent openai/gpt-6.1-sol#high, no override",
+      "brief": "build/tmp/native-capture-first-entry-2026-10-27/binding-brief.md",
+      "campaign_attempt": 2,
+      "question_attempt": 6,
+      "dispatched": "2026-10-27T19:38:52.917Z",
+      "deadline": "2026-10-27T20:22:00Z",
+      "worker_stop": "2026-10-27T20:07:00Z",
+      "owns_live_game": false,
+      "live_owner": null,
+      "stock_start_budget": 0,
+      "owned_paths": [
+        "build/tmp/native-capture-first-entry-2026-10-27/binding/**"
+      ],
+      "cap_rationale": "B3k pick1-5/10bodies retained; explicit new approval permits conditional DERIVED default binding via immediate shared-context/device init+SDK/installedroute,6new bodies maximum; no unrelated transitive architecture proof.",
+      "worker_session": "ses_e81203b6effeBd0oaax89gu13Q",
+      "worker_output": "build/tmp/native-capture-first-entry-2026-10-27/binding/round-note.md",
+      "standing_run": "native-capture-first-entry-2026-10-27",
+      "verified": "2026-10-27T20:02:16.225Z",
+      "note": "docs/scratch/phase-b3k-native-binding-partial.md",
+      "worker_terminal": "2026-10-27T19:53:03.068Z",
+      "result": "Limited partial conditional constructed-mousefirstavailablebutton derivation, actualC\u2192G/sharedidentityunclosed; no nativephysicalsample/entry/helper.6neworiginalwindows6901bytes+5installedwindows1360bytes independentlyauthenticated, actualinstructions/imports/exports/SDK/docsre-read,40initialfiles+6sourcehashesexact.0stockstarts/REAclosed. Capturebudgetbreachstopswholepass, finalattempt4notspent.",
+      "stock_starts": 0
+    },
+    {
       "id": "b2m-native-capture-continuation",
       "status": "landed",
       "worker": "round-agent",
@@ -3940,7 +3967,10 @@
       "unauthorized_actual_starts": 1,
       "worker_terminal": "2026-10-27T19:49:31.734Z",
       "independent_check": "passprefix/capture-independent/result.json +cause-correction.json; recovered2toolreceiptPIDs+manifest+PNGcrop equality; firstimagesoverwritten/secondoccludingdesktop; forcedexceptiontestfalsePASS; helperrejectedpreservedscratch; NULattributedpreservedremoved",
-      "result": "No native state/input/entry/capture qualification. Rawsecondcommand included-TestOnly; failedcopy/refreeze left oldfrozenworker withouttestonlycheck/singleuseguard.5protectedhashesmatch/noinstallwrites; final49CTest68.19s/fourmapRGBA/7badCLI/fixedscores+PNGhashes unchanged."
+      "result": "No native state/input/entry/capture qualification. Rawsecondcommand included-TestOnly; failedcopy/refreeze left oldfrozenworker withouttestonlycheck/singleuseguard.5protectedhashesmatch/noinstallwrites; final49CTest68.19s/fourmapRGBA/7badCLI/fixedscores+PNGhashes unchanged.",
+      "commit": "4124fa9cee1af4c81705881d77b81bac7ed58895",
+      "landed": "2026-10-27T19:59:11Z",
+      "dispatch_to_landing_seconds": 1218.083
     },
     {
       "id": "b3k-first-node-entry",

@@ -218,6 +218,11 @@ add_executable(test_pausecaption src/__test__/test_pausecaption.cpp src/shell/Pa
 target_link_libraries(test_pausecaption PRIVATE webolution_objects)
 add_test(NAME pausecaption COMMAND test_pausecaption)
 
+# C2o: offline byte-supported cursor selection policy; no SDL or live target.
+add_executable(test_cursorpolicy src/__test__/test_cursorpolicy.cpp src/app/CursorPolicy.cpp)
+target_include_directories(test_cursorpolicy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME cursorpolicy COMMAND test_cursorpolicy)
+
 # B2f: frontend screen sequence replayed from the b2e capture. Frontend.cpp is built
 # into the test directly (as test_skillpanel does) so the shared source list stays put.
 add_executable(test_frontend_sequence src/__test__/test_frontend_sequence.cpp src/shell/Frontend.cpp)

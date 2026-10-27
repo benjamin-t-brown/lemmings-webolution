@@ -454,6 +454,13 @@ acceptance. AD's missing record-size export blocks live approval, not user permi
 
 ### C2 cursor sprite
 
+**2026-10-27 continuation, integrated-retail directive:** [C2o](../scratch/phase-c2o-cursor-policy.md),
+historicalattempt4, reads the whole selection/consumer and implements an explicit-input
+policy, not another resource-reader crawl. Prior cap/history below retained. Exit-marker
++1898's nonzero producer, backend/geometry/runtime composition and native hover remain
+open; do not simply infer exit state from an object hit. Next bounded approach is ordinary
+native input/read/screenshot correlation and runtime integration, not more slot tracing.
+
 - **C2 cursor sprite** (parked 2026-10-25 at the three-round cap, c2l, c2m, c2n). `_curExit` is at `0x4C0DD0`. Its only reference is `push 0x4C0DD0` at `0x45E89B`, then `call 0x45FE10`. `0x45E8AD` stores the return at `[0x4C6A08+0x1C934]` = `0x4E333C`, past the `.data` file end. Two loads read that displacement: `0x45ECBF` pushes the handle and calls `0x414B90`, and `0x45EE3A` does the same into `0x414D20` when the byte at `[object+0x1C9B1]` is zero (`0x45ED95` jumps to `ret` otherwise). The direct caller of the second function is `0x450A74`, which also sets `ecx` to `0x4C6A08`. Neither callee was opened. Hover, no-hover, and the exit sprite are unread. Resume: open `0x414B90` far enough to say what it does with the handle, then `0x414D20` only if the first call does not select a sprite. Do not draw a cursor from the name. See [C2n](../scratch/phase-c2n-cursor-read.md).
 
 ### B3 map screen object

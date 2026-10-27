@@ -52,6 +52,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/CameraInput.cpp
   src/app/SimClock.cpp
   src/app/Pick.cpp
+  src/app/CursorPolicy.cpp
   src/app/Raster.cpp
   src/app/SceneRaster.cpp
   src/app/SceneClip.cpp

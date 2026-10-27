@@ -1264,3 +1264,16 @@ unchanged. Remaining2slots reservedintegration+conditionalsurrogate nowblockedby
 park; originalgameDEFERREDbeyondwindow,standingpermission/preauthorizationretained.
 0sessions/targets/stock/attaches/processcontrol,workeridle/noliveresources; protected
 inputs/ten dirtypaths andgatesC3FAIL/C1PASS unchanged, no render/rescore. Stopforparent.
+
+### C2o — whole cursor decision and explicit-input policy, 2026-10-27
+
+[Facilitator check](../scratch/phase-c2o-cursor-policy.md): historicalattempt4/campaign2,
+authorized changed approach after C2l–n's cap. Whole selection/binder/consumer bytes
+give grab early-return, empty/entrance/retained-exit/direction and later-panel priorities;
+ten software resource mappings implemented with unresolved inputs explicit. Own PE reads,
+22048 independent compiled-policy cases, isolated wrong-resource mutation/restoration
+and full47/47CTest pass. Main is unchanged: no native hover/pixel acceptance or C2 gate
+movement. Retained+1898 producer/backend/geometry inputs still block complete cursor
+integration; incidental locator-window coverage variance is disclosed, not erased.
+Zero stock starts/live resources; worker idle/REA closed. Continue runtime HUD and ordinary
+native correlation under the same campaign budget, not a new cap/pool.

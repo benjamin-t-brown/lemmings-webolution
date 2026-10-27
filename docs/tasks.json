@@ -1,8 +1,32 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T15:23:35Z",
+  "updated": "2026-10-27T16:12:23Z",
   "notes": "Fresh approved integrated-retail campaign; prior consumed run preserved verbatim in queue-history and indexed in tasks-archive.previous_runs. No historical pools transferred.",
-  "active": [],
+  "active": [
+    {
+      "id": "c3bv-production-pack",
+      "owns_live_game": false,
+      "title": "Adopt accepted native-domain final pack in production mesh submission",
+      "status": "ready-for-verify",
+      "brief": "build/tmp/c3bv-production-pack-brief.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "requested_model": "configured round-agent: openai/gpt-6-luna#high; no override",
+      "question_attempt": 2,
+      "repair_question_attempt": 4,
+      "repair_brief": "build/tmp/c3bv-production-pack-repair2-brief.md",
+      "worker_session": "ses_e81fe1a66ffeDzdrPKfpBSmDjv",
+      "repair_campaign_attempt": 4,
+      "cap_rationale": "C3ak component only; C3bi/bk since clarified native/physical scale law. Fresh authorized production adoption, no reset of clip/observer counts.",
+      "campaign_attempt": 1,
+      "dispatched": "2026-10-27T15:36:30Z",
+      "deadline": "2026-10-27T16:21:30Z",
+      "live_owner": null,
+      "worker_output": "build/tmp/c3bv-production-pack/repair2/round-note.md",
+      "stock_start_budget": 0,
+      "owned_paths": ["src/app/BackdropScene.cpp", "src/app/SceneDepth.h", "src/app/SceneDepth.cpp", "src/__test__/test_scene_pack_adoption.cpp", "one test target in CMakeLists.txt", "one source entry in cmake/webolution_sources.cmake if required", "build/tmp/c3bv-production-pack/**"]
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "integrated-retail-progress-2026-10-27",
@@ -18,16 +42,16 @@
     "started_at": "2026-10-27T15:22:19Z",
     "deadline": "2026-10-27T23:22:19Z",
     "grants": {"overall_minutes": 480, "worker_attempts": 16, "round_minutes_including_repairs": 45, "tooling_attempts": 2, "tooling_minutes": 90, "stock_starts": 8, "commits": "isolated normal origin/decompile sync"},
-    "rounds_run": 0,
-    "attempts_used": 0,
+    "rounds_run": 1,
+    "attempts_used": 4,
     "stock_starts_used": 0,
     "tooling_attempts_used": 0,
     "tooling_seconds_used": 0,
     "stock_crashes": 0,
     "c3_reassess_by": "2026-10-27T17:22:19Z",
-    "c3_attempts_used": 0,
+    "c3_attempts_used": 3,
     "pending_questions": [],
-    "handoff": "Activated fresh authority after confirmed idle handoff. Initial deliverable: concise PLAN I/V/N statuses, README current inventory, historical simulation-timing clarification. Then select supported C3 production connection from C3ak/C3bl/frame map; reassess at 3 C3 attempts or 2h and continue C2/B2/B3 if stalled. No workers/live resources acquired. Clock includes preparation; no reset on continuation.",
+    "handoff": "C2o landed byte-supported policy: own22048cases/raw PE/result mutation/47CTest, no main wiring/native hover or pixel acceptance. C3bv ready after2repairs; own301/3010 numeric fields, actual BackdropScene one-call mutant failure/exact restore, full47CTest64.72s and fixed gates verified16:12:23Z. C3 full14934333/235008000=.06354818984885621 FAIL (old14934330; +3error); C1 two scores exact PASS unchanged. Land C3 separately now; then honor3-C3-attempt reassessment by moving to runtime C2/native correlation, not further C3 repairs.4of16attempts,0of8starts,0tooling. Deadline23:22:19Z unchanged; no worker/live resource remains running.",
     "stopped": null
   }
 }

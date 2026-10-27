@@ -1033,3 +1033,21 @@ inputs,250prior evidence files and9initial dirty paths preserved outside isolate
 own documentation deltas. No production edit, live operation or observer reopening.
 Worker succeeded/idle; one dispatch, no repairs; stop at verified comparison/exact
 unresolved inputs, directive consumed. Actual times/commits in queue/archive.
+
+**C3bj, 2026-10-26 — clipping rule mismatch established; integration blocked.**
+Approved delegated Sol pass, cumulativeattempt8; seven earlier attempts retained.
+Native near clipping retains positive portions before projection; production fans
+then rejects any triangle crossing Z0. Native ordered screen clipping generates
+depth/attributes using biased-Z perspective weights, not simple screen weights.
+Independent30byte-window authentication/semantic re-read and18rational cases/stages
+pass. Separate production-raster driver reproduces synthetic3.25versus3depth with
+equal color100; not a native repair4 draw, pixel cause or submission census.
+No correction selected: native scale/bias/bounds/cache/precision and actual admission/
+effective state remain unknown. [Facilitator check](../scratch/phase-c3bj-clipping-contract.md).
+Single weight-only comparison mutation fails/restores exactly;44/44CTest,
+32framework, fresh byte-identical gate PNGs. C3.0635481771FAIL,
+C1.0160864/.0161212PASS; no gate/reference/mask/floor change. Own21fixed inputs,
+264prior evidence files/worker217inventory and9unrelated dirty deltas preserved.
+Worker succeeded/idle; static REA closed;0live actions/resources and no production
+edits. Stop at independently verified comparison/exact integration inputs;
+directive consumed, unused attempt9 not automatic continuation. Times/commits in queue/archive.

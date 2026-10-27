@@ -3,6 +3,83 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-depth-contract",
+      "goal": "Compare selected C3bh records shared depth against established original rules; at most one justified correction.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "User yes i approve 2026-10-26; delegated Astra bounded depth comparison and conditional correction",
+      "directive_sha256": "da9fa952b300b28df1cbcf745e34a330d8d2e07b4bb7f198baa2eb5a8c312291",
+      "owner": "ses_e85700de8ffeh9NovTQmub70J5",
+      "parent_session": "ses_e8675c6f3ffeWYENquwRYs5xF4",
+      "ownership_check": "Own read-only actual-active API contains parent/this child and unrelated ed-ascii only. Prior owner and worker succeeded idle. Self profile facilitator-astra openai/gpt-6-astra#high matches parent. build/tmp/c3-depth-pass/{active-before,self,prior-owner,prior-worker}.json. ff-only pull current3f2e1ec.",
+      "started_at": "2026-10-26T23:33:36Z",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 3,
+        "cumulative_question_cap": 9,
+        "round_minutes_including_verification": 45,
+        "overall_minutes": 120,
+        "repair_inclusive": true,
+        "commits": "named own paths; preserve dirty changes; sync origin decompile"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 7,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Whether to authorize any further native-input/conditional-pack investigation; none automatic.",
+          "recommendation": "Review exact missing draw-time transform/bias/clip/precision/effective-state inputs before granting further scope. Do not fit precision/depth by scores or reopen observer implicitly.",
+          "evidence": "docs/scratch/phase-c3bi-depth-contract.md"
+        }
+      ],
+      "stop_point": "Independently verified bounded comparison and any one justified correction; earlier budget/blocker. No automatic follow-on.",
+      "handoff": "STOPPED at accepted C3bi bounded depth comparison attempt7:29248selected software depths reproduced exactly; common physical units coherent under conditional model. Known f32pack gap not a safe native correction without actual projection/bias/clip/precision/effective-state inputs. No production changes; C3FAIL/C1PASS PNGs exact;44CTest/32framework. Worker succeeded idle/REAclosed;0live resources/operations. Directive consumed; no automatic follow-on or attempts8/9. Round697342c committed/pushed; dispatch-to-landing1447.338s. Final cleanup/preservation complete; actual pass end in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T00:03:00.048827+00:00",
+        "reason": "Approved stop point: independently verified comparison with exact unresolved native inputs; no justified shared-depth correction selected.",
+        "last_commit": "697342c8f60e95edfd997ed60ae615e07678688d"
+      },
+      "verified_at": "2026-10-27T00:00:54.007983+00:00",
+      "resource_state": {
+        "worker_session": "ses_e856c2d78ffehzTGP8LcgRnFkF",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "live_resources": null,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_tasks": 0,
+        "production_changes": false,
+        "prior_diagnostic_preserved": true,
+        "static_rea_closed": true,
+        "fixed_files_preserved": 21,
+        "prior_files_preserved": 250,
+        "full_worker_preservation_files": 491,
+        "initial_dirty_paths_preserved": 9,
+        "game_processes": 0,
+        "lemweb_tasks": 0
+      },
+      "current_pass": {
+        "started": "2026-10-26T23:33:36Z",
+        "rounds": [
+          {
+            "id": "c3bi-depth-contract",
+            "attempt": 7,
+            "dispatched": "2026-10-26T23:37:39.661948+00:00",
+            "worker_completed": "2026-10-26T23:53:48Z",
+            "verified": "2026-10-27T00:00:54.007983+00:00",
+            "landed": "2026-10-27T00:01:47+00:00",
+            "commit": "697342c8f60e95edfd997ed60ae615e07678688d",
+            "elapsed_seconds": 1447.338052
+          }
+        ],
+        "ended": "2026-10-27T00:03:00.048827+00:00",
+        "elapsed_seconds": 1764.048827
+      }
+    },
+    {
       "id": "c3-final-influence",
       "goal": "Bounded software final-image influence of three preselected recorded primary contributions, not a correction.",
       "milestones": [
@@ -2090,6 +2167,30 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bj-clipping-contract",
+      "status": "landed",
+      "brief": "build/tmp/c3-clipping-pass/compare-brief.md",
+      "worker_tier": "hard",
+      "owns_live_game": false,
+      "kind": "disassembly read",
+      "escalation_reason": "Bounded native clipping rule recovery requires stronger disassembly read per ROLES; not renderer-wide exploration",
+      "worker": "disasm-agent",
+      "worker_session": "ses_e854837a5ffeF4t1ch6PTSaKGa",
+      "requested_model": "configured pin; no override",
+      "attempt": 8,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bj-clipping-contract/**"
+      ],
+      "dispatched_at": "2026-10-27T00:16:57.296128+00:00",
+      "worker_output": "build/tmp/c3bj-clipping-contract/round-note.md",
+      "landed_at": "2026-10-27T00:37:55.420325+00:00",
+      "note": "docs/scratch/phase-c3bj-clipping-contract.md",
+      "summary": "Shared finite near/screen clipping mismatch established; no correction without native scale/bias/bounds/cache inputs. Synthetic source depths3.25vs3 verified; no native-frame attribution. C3FAIL/C1PASS unchanged.",
+      "facilitator_check": "30raw windows/26addresses; independent18rational cases/stages, separate actual-source raster driver, single weight mutation/restoration;44CTest/32framework; fresh gates byte-identical.",
+      "resources": "Worker succeeded/idle, static REA closed;0live operations/resources; source unchanged"
+    },
     {
       "id": "c3bi-depth-contract",
       "status": "landed",

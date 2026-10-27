@@ -1,84 +1,78 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T00:03:00.048827+00:00",
-  "notes": "C3bi comparison accepted; one dispatch cumulativeattempt7, no corrections. Directive consumed; no further work authorized by active heading.",
+  "updated": "2026-10-27T00:37:55.420325+00:00",
+  "notes": "C3bj independently verified; clipping rule gap established, no correction/native-frame diagnosis. One dispatch cumulativeattempt8; directive consumed, unused attempt9 is not authorization.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-depth-contract",
-    "goal": "Compare selected C3bh records shared depth against established original rules; at most one justified correction.",
+    "id": "c3-clipping-contract",
+    "goal": "Bounded shared near/screen-clipping rule comparison before final packing; at most one justified correction.",
     "milestones": [
       "C3 full frame"
     ],
     "current": "C3 full frame",
-    "authorized": "User yes i approve 2026-10-26; delegated Astra bounded depth comparison and conditional correction",
-    "directive_sha256": "da9fa952b300b28df1cbcf745e34a330d8d2e07b4bb7f198baa2eb5a8c312291",
-    "owner": "ses_e85700de8ffeh9NovTQmub70J5",
-    "parent_session": "ses_e8675c6f3ffeWYENquwRYs5xF4",
-    "ownership_check": "Own read-only actual-active API contains parent/this child and unrelated ed-ascii only. Prior owner and worker succeeded idle. Self profile facilitator-astra openai/gpt-6-astra#high matches parent. build/tmp/c3-depth-pass/{active-before,self,prior-owner,prior-worker}.json. ff-only pull current3f2e1ec.",
-    "started_at": "2026-10-26T23:33:36Z",
+    "authorized": "User i approve the plan and you can delegate to sol as facilitator; 2026-10-26 bounded delegated clipping comparison",
+    "directive_sha256": "eb777498f9abad5b8c9ec11e686b778a32dd36077311cbac5f7700b3cc1842ec",
+    "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+    "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+    "ownership_check": "Fresh read-only actual API active set this child and unrelated ed-ascii only; prior facilitator and worker succeeded/idle; self facilitator Sol/high and parent match. build/tmp/c3-clipping-pass/{active-before,self,prior-owner,prior-worker}.json; ff-only pull current.",
+    "started_at": "2026-10-27T00:11:36.856Z",
     "grants": {
       "stock_starts": 0,
-      "rounds": 3,
+      "rounds": 2,
       "cumulative_question_cap": 9,
       "round_minutes_including_verification": 45,
-      "overall_minutes": 120,
+      "overall_minutes": 90,
       "repair_inclusive": true,
-      "commits": "named own paths; preserve dirty changes; sync origin decompile"
+      "commits": "own named paths only; preserve dirty work; normal sync origin decompile"
     },
     "rounds_run": 1,
-    "cumulative_attempts": 7,
+    "cumulative_attempts": 8,
     "stock_starts_used": 0,
     "pending_questions": [
       {
-        "question": "Whether to authorize any further native-input/conditional-pack investigation; none automatic.",
-        "recommendation": "Review exact missing draw-time transform/bias/clip/precision/effective-state inputs before granting further scope. Do not fit precision/depth by scores or reopen observer implicitly.",
-        "evidence": "docs/scratch/phase-c3bi-depth-contract.md"
+        "question": "Whether to authorize recovering missing native-domain clipping integration inputs; no automatic work.",
+        "recommendation": "Review native transform scale, draw bias, clip globals and cache evidence before choosing another pass; do not guess zero bias or physical epsilon, tune depth, or reopen observer implicitly.",
+        "evidence": "docs/scratch/phase-c3bj-clipping-contract.md"
       }
     ],
-    "stop_point": "Independently verified bounded comparison and any one justified correction; earlier budget/blocker. No automatic follow-on.",
-    "handoff": "STOPPED at accepted C3bi bounded depth comparison attempt7:29248selected software depths reproduced exactly; common physical units coherent under conditional model. Known f32pack gap not a safe native correction without actual projection/bias/clip/precision/effective-state inputs. No production changes; C3FAIL/C1PASS PNGs exact;44CTest/32framework. Worker succeeded idle/REAclosed;0live resources/operations. Directive consumed; no automatic follow-on or attempts8/9. Round697342c committed/pushed; dispatch-to-landing1447.338s. Final cleanup/preservation complete; actual pass end in current_pass.",
+    "stop_point": "Stop after independently verified clipping comparison and any justified correction, earlier budget/blocker. No follow-on scope.",
+    "handoff": "STOPPED after accepted C3bj attempt8. Native shared near/screen rule differs from production at explicit-input boundary; independent18cases and source depth3.25vs3 discriminate. Missing scale/bias/bounds/cache/precision/admission/effective-state inputs prevent safe adoption. No production edits; C3FAIL/C1PASS byte-identical. Worker succeeded/idle; REAclosed;0live actions/resources. Directive consumed; no automatic attempt9/follow-on.",
     "stopped": {
-      "date": "2026-10-27T00:03:00.048827+00:00",
-      "reason": "Approved stop point: independently verified comparison with exact unresolved native inputs; no justified shared-depth correction selected.",
-      "last_commit": "697342c8f60e95edfd997ed60ae615e07678688d"
+      "date": "2026-10-27T00:37:55.420325+00:00",
+      "reason": "Approved stop point: independently verified bounded clipping comparison; exact native-domain integration inputs missing, no justified correction selected.",
+      "last_commit": "bed4baba44e4071e6cfda597c72bf759b3f29221"
     },
-    "verified_at": "2026-10-27T00:00:54.007983+00:00",
+    "current_pass": {
+      "started": "2026-10-27T00:11:36.856Z",
+      "rounds": [
+        {
+          "id": "c3bj-clipping-contract",
+          "attempt": 8,
+          "dispatched": "2026-10-27T00:16:57.296128+00:00",
+          "worker_completed": "2026-10-27T00:29:02.068382+00:00",
+          "verified": "2026-10-27T00:37:55.420325+00:00"
+        }
+      ]
+    },
+    "verified_at": "2026-10-27T00:37:55.420325+00:00",
     "resource_state": {
-      "worker_session": "ses_e856c2d78ffehzTGP8LcgRnFkF",
+      "worker_session": "ses_e854837a5ffeF4t1ch6PTSaKGa",
       "worker_outcome": "succeeded",
       "worker_idle_confirmed": true,
+      "static_rea_closed": true,
       "live_resources": null,
       "stock_starts": 0,
       "attaches": 0,
       "injections": 0,
       "scheduled_tasks": 0,
       "production_changes": false,
-      "prior_diagnostic_preserved": true,
-      "static_rea_closed": true,
       "fixed_files_preserved": 21,
-      "prior_files_preserved": 250,
-      "full_worker_preservation_files": 491,
+      "prior_files_preserved": 264,
+      "worker_inventory_preserved": 217,
       "initial_dirty_paths_preserved": 9,
       "game_processes": 0,
       "lemweb_tasks": 0
-    },
-    "current_pass": {
-      "started": "2026-10-26T23:33:36Z",
-      "rounds": [
-        {
-          "id": "c3bi-depth-contract",
-          "attempt": 7,
-          "dispatched": "2026-10-26T23:37:39.661948+00:00",
-          "worker_completed": "2026-10-26T23:53:48Z",
-          "verified": "2026-10-27T00:00:54.007983+00:00",
-          "landed": "2026-10-27T00:01:47+00:00",
-          "commit": "697342c8f60e95edfd997ed60ae615e07678688d",
-          "elapsed_seconds": 1447.338052
-        }
-      ],
-      "ended": "2026-10-27T00:03:00.048827+00:00",
-      "elapsed_seconds": 1764.048827
     }
   }
 }

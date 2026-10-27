@@ -28,6 +28,12 @@ protected install hashes match the parent baseline. `patch.dll` was not directly
 bracketed by B2m; its match uses the parent's pre-run and current independent
 hashes. That narrower coverage is explicit, not a restoration breach.
 
+A new root `NUL` artifact from a failed SCHTASKS/QUERY command was also preserved
+as `rejected-schtasks-NUL-artifact.txt` and removed; its message shows MSYS path
+conversion of `/Query`. This is a retained command failure, not native state or
+a successful task-status check. The separate terminal/task inventory remains the
+cleanup authority.
+
 Static review finds two additional **unexecuted** map-reader defects: it reads
 record bytes at map+0x78 instead of dereferencing the pointer; and its flag formula
 uses0x7000/0x280 instead of original decimal7000/280, producing101wrong addresses

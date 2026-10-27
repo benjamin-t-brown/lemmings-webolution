@@ -180,6 +180,12 @@ add_executable(test_bitmap src/__test__/test_bitmap.cpp)
 target_link_libraries(test_bitmap PRIVATE webolution_objects)
 add_test(NAME bitmap COMMAND test_bitmap)
 
+# B3j: production conditional map compositor against accepted SOURCE images.
+add_executable(test_mapscene src/__test__/test_mapscene.cpp src/app/MapScene.cpp)
+target_link_libraries(test_mapscene PRIVATE webolution_objects)
+target_compile_definitions(test_mapscene PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME mapscene COMMAND test_mapscene WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 add_executable(test_gamedata src/__test__/test_gamedata.cpp)
 target_link_libraries(test_gamedata PRIVATE webolution_objects)
 add_test(NAME gamedata COMMAND test_gamedata)
@@ -370,6 +376,6 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # Tests that touch real game data need an installation to point at. Supply it
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist scenenode backdropscene world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign scenemeshsource scenebillboardsource PROPERTIES
+  set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist scenenode backdropscene world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign scenemeshsource scenebillboardsource mapscene PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

@@ -62,6 +62,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/ActorTerrain.cpp
   src/app/ActorAnim.cpp
   src/app/TubeScene.cpp
+  src/app/MapScene.cpp
   src/app/BackdropScene.cpp
   src/app/SceneBillboardSource.cpp
   # C1b: compositing primitive for the ten skill-panel button icons. Not

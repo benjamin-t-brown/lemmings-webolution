@@ -55,6 +55,7 @@
 // install named by WEBOLUTION_GAME_DIR (default C:/progs/Lemmings Revolution).
 
 #include "app/Camera.h"
+#include "app/MapScene.h"
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
 #include "app/CameraInput.h"
@@ -75,6 +76,7 @@
 #include "sim/World.h"
 
 #include <cstdint>
+#include <array>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
@@ -117,6 +119,9 @@ struct Args {
   std::string gameDir;
   int frames = 0;
   bool help = false;
+  bool map = false;
+  bool mapFlagsSpecified = false;
+  std::string mapFlags;
   bool noInjectedWalkers = false;
   bool sceneOff = false;
   std::string walkers;
@@ -139,7 +144,9 @@ Args parseArgs(int argc, char** argv) {
     const std::string arg = argv[i];
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
-    if (arg == "--level") a.level = next();
+    if (arg == "--map") a.map = true;
+    else if (arg == "--map-flags") { a.map = true; a.mapFlagsSpecified = true; a.mapFlags = next(); }
+    else if (arg == "--level") a.level = next();
     else if (arg == "--native") a.native = true;
     else if (arg == "--shot") a.shot = next();
     else if (arg == "--frames") a.frames = std::atoi(next().c_str());
@@ -185,7 +192,10 @@ void printHelp() {
             "Window: right mouse + NUMPAD4/6 revolves; mouse drag revolves/elevates;\n"
             "SPACE or CTRL zooms; BACKSPACE flips. Default geometry is route.\n"
             "--shot renders one headless frame; --frames N runs N window frames\n"
-            "(use SDL_VIDEODRIVER=dummy for a headless smoke run).");
+            "(use SDL_VIDEODRIVER=dummy for a headless smoke run).\n"
+            "--map [--map-flags FILE] [--shot PNG] renders the conditional 640x480 map base layer;\n"
+            "FILE is exactly 102 signed decimal int32 flags, whitespace-separated. Omitted flags are\n"
+            "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.");
 }
 
 Image toImage(const app::Framebuffer& fb) {
@@ -269,6 +279,58 @@ int main(int argc, char** argv) {
   if (!library) {
     std::fprintf(stderr, "assets: %s\n", library.error().c_str());
     return 1;
+  }
+
+  // B3j: explicit source-fixture map display. This early branch deliberately
+  // bypasses level/sim/3D setup; all old commands retain their prior path.
+  if (args.map) {
+    std::array<std::int32_t, 102> flags{};
+    if (args.mapFlagsSpecified && args.mapFlags.empty()) {
+      std::fprintf(stderr, "map flags: --map-flags requires a file path\n"); return 1;
+    }
+    if (!args.mapFlags.empty()) {
+      auto loaded = app::readMapFlags(args.mapFlags);
+      if (!loaded) { std::fprintf(stderr, "map flags: %s\n", loaded.error().c_str()); return 1; }
+      flags = *loaded;
+    }
+    auto map = app::MapScene::build(*library, flags);
+    if (!map) { std::fprintf(stderr, "map: %s\n", map.error().c_str()); return 1; }
+    if (!args.shot.empty()) {
+      if (auto written = writePng(args.shot, map->image()); !written) {
+        std::fprintf(stderr, "map screenshot: %s\n", written.error().c_str()); return 1;
+      }
+      std::printf("wrote %s (640x480 map SOURCE composition)\n", args.shot.c_str());
+      return 0;
+    }
+#if WEBOLUTION_HAVE_SDL2
+    SDL_SetMainReady();
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+      std::fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1;
+    }
+    SDL_Window* window = SDL_CreateWindow("Lemmings Webolution — conditional map base layer (SOURCE)",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
+    if (!window) { std::fprintf(stderr, "SDL window: %s\n", SDL_GetError()); SDL_Quit(); return 1; }
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+    if (!renderer) { std::fprintf(stderr, "SDL renderer: %s\n", SDL_GetError()); SDL_DestroyWindow(window); SDL_Quit(); return 1; }
+    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, 640, 480);
+    if (!texture || SDL_UpdateTexture(texture, nullptr, map->image().rgba.data(), 640*4) != 0) {
+      std::fprintf(stderr, "SDL map texture: %s\n", SDL_GetError());
+      if (texture) SDL_DestroyTexture(texture);
+      SDL_DestroyRenderer(renderer); SDL_DestroyWindow(window); SDL_Quit(); return 1;
+    }
+    bool running = true;
+    do {
+      SDL_Event event; while (SDL_PollEvent(&event)) if (event.type == SDL_QUIT ||
+          (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) running = false;
+      SDL_RenderClear(renderer); SDL_RenderCopy(renderer, texture, nullptr, nullptr); SDL_RenderPresent(renderer);
+      if (args.frames > 0) running = false;
+    } while (running);
+    SDL_DestroyTexture(texture); SDL_DestroyRenderer(renderer); SDL_DestroyWindow(window); SDL_Quit();
+    return 0;
+#else
+    std::fprintf(stderr, "SDL2 unavailable: map window mode is not built (use --shot for headless rendering)\n");
+    return 1;
+#endif
   }
 
   std::string levelPath;

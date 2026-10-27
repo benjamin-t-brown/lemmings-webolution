@@ -32,6 +32,7 @@ exists with limitations, and the Emscripten preset is not a verified port.
 build/cmake/dev-debug/webolution.exe --game-dir "C:/progs/Lemmings Revolution"
 build/cmake/dev-debug/webolution.exe --level MM_CLIMB_002 --sim
 build/cmake/dev-debug/webolution.exe --level MM_CLIMB_002 --shot build/tmp/frame.png
+build/cmake/dev-debug/webolution.exe --map
 ```
 
 - Default: SDL window, retail `MM_CLIMB_002`, 3D tube route and camera controls;
@@ -44,6 +45,10 @@ build/cmake/dev-debug/webolution.exe --level MM_CLIMB_002 --shot build/tmp/frame
   faithful cursor are not yet integrated into the window.
 - `--flat` is a debug view. The old OpenGL renderer, placeholder frontend,
   music/SFX shell and its old toggles are retired under `old/`, not the current app.
+- `--map`: conditional retail background/node display, also usable with `--shot`.
+  Optional `--map-flags FILE` takes exactly102signed decimal int32 values in native
+  node order; default all-zero flags are a SOURCE fixture, not installed progress.
+  No selection, title/hover/cursor or save adapter is implemented yet.
 
 Production wiring: [source inventory](cmake/webolution_sources.cmake),
 [entry point](src/app/main.cpp). Audio decoding/mixer and progress helpers exist,
@@ -54,7 +59,8 @@ but a complete menu/map/audio runtime is not integrated.
 - Asset readers, collision grids, tube mesh generation, camera and sprite
   orientation have retained byte/live/offline evidence in [lessons](docs/LESSONS.md).
 - A1–A7 pass their bounded/amended gates. B1's menu fixture is conditionally
-  accepted; runtime navigation/map remains unfinished.
+  accepted; runtime navigation remains unfinished. The optional map base layer is
+  [source-tuple verified](docs/scratch/phase-b3j-app-base-map.md), not B3 acceptance.
 - C1's two amended panel views pass. C2 runtime counters/pause are connected and
   tested in our SDL window; native full-HUD/hover fidelity remains unaccepted.
 - C3 full-frame remains **FAIL: 0.0635481898 vs 0.02** ([C3bv source render](docs/scratch/phase-c3bv-production-pack.md)).

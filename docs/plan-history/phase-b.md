@@ -1,5 +1,18 @@
 # Plan history — Phase B
 
+### B3j — actual-app conditional base-map display, 2026-10-27
+
+[Facilitator check](../scratch/phase-b3j-app-base-map.md): `--map` actual headless/
+window branch calls retail-backed MapScene with explicit102raw flags, no Progress
+cast/scratch dependency. Own full embedded-table comparison/107compiled state
+vectors/four actualapp RGBA streams/7bad CLI cases pass. Actual main-call bypass
+fails independent image oracle; exact restore/full49CTest65.44sPASS. Default
+visible-window strict compare fails100bottom-corner channels; retained failure,
+controlled owned-HWND DWM square-corner request then yields two exact full-client
+captures/exit0. No native pixel/gate acceptance or threshold/mask change. Fresh
+C3.06354819FAIL/C1.0160864/.0161212PASS and hashes unchanged;0stock starts/resources.
+Next bounded first-node input→existing level handoff, not another unused prerequisite.
+
 ### B2m — native geometry refusal, no navigation/image, 2026-10-27
 
 [Facilitator check](../scratch/phase-b2m-qualified-navigation.md): one stock start,

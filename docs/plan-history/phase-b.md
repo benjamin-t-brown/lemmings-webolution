@@ -1,5 +1,18 @@
 # Plan history — Phase B
 
+### B3k — final input question undelivered, 2026-10-27
+
+[Facilitator check](../scratch/phase-b3k-first-node-entry.md): attempts15/16,
+historical pick4/5; six initial plus four explicit repair bodies, same19:16deadline.
+Mask index/eligibility and current sampled-bit rule recovered; physical binding
+unproven, no production/test/helper/actual transition. Own10byte windows/separate
+complete raw-mask decode/42conditional cases/512current-vs-edge cases/format data
+verify the limited read. Initial40files and6production files remain exact. No
+invented SDL edge/radius or unrelated transition mutation.49CTest65.36sPASS and
+fresh3fixed scores/PNG hashes unchanged,0stock starts. Worker terminal/REAclosed;
+attempt pool16of16 exhausted. Park exact device/button binding and first-node
+handoff; ordinary native entry/tooling/cursor/C3/PhaseD parks remain.
+
 ### B3j — actual-app conditional base-map display, 2026-10-27
 
 [Facilitator check](../scratch/phase-b3j-app-base-map.md): `--map` actual headless/

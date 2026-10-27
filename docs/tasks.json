@@ -1,27 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T18:53:41Z",
-  "notes": "Final B3k repair16 running in same configured worker after18:50:06Z precheck; original19:16deadline unchanged. Facilitator independently authenticated initial6body/mask/42case packet; no physical-edge/transition acceptance yet. No attempts remain after this repair.",
-  "active": [
-    {
-      "id":"b3k-first-node-entry","status":"running",
-      "worker_output":"build/tmp/b3k-first-node-entry/round-note.md",
-      "brief":"build/tmp/b3k-first-node-entry-brief.md",
-      "repair_brief":"build/tmp/b3k-first-node-entry-repair1-brief.md",
-      "repair_dispatch_precheck_at":"2026-10-27T18:50:06Z",
-      "worker":"disasm-agent","worker_session":"ses_e815b4bddffentbqX2bUy59ctd","worker_tier":"hard","classification":"disassembly read + production integration",
-      "dispatched":"2026-10-27T18:34:45.733Z",
-      "requested_model":"configured disasm-agent openai/gpt-6.1-sol#high, API confirmed, no override",
-      "campaign_attempt":15,"question_attempt":4,"production_entry_attempt":1,
-      "repair_campaign_attempt":16,"repair_question_attempt":5,"repair_production_entry_attempt":2,
-      "cap_rationale":"Historical mapobject6/pickcap3 retained; accepted map renderer now exists. Read only exact native mask/input eligibility and connect actual first-node→existing retail-level path, not file-push/counter crawl or unused dossier.",
-      "owns_live_game":false,"live_owner":null,"stock_start_budget":0,
-      "owned_paths":["src/app/MapInput.h","src/app/MapInput.cpp","src/app/MapScene.h/.cpp input access only","src/app/main.cpp map input/handoff only","src/__test__/test_mapinput.cpp","src/__test__/test_mapscene.cpp entry tests only","CMakeLists.txt one test target","cmake/webolution_sources.cmake MapInput wiring only","build/tmp/b3k-first-node-entry/**"],
-      "deadline":"2026-10-27T19:16:00Z","worker_stop":"2026-10-27T19:04:00Z",
-      "remaining_repair_attempts_max":0,
-      "repair_rationale":"Original6body cap produced mask/eligibility but no outcome. Only exact remaining refresh48316B/object-binding486ABA(0), present directly in already-read update, now at most4additional bodies (10total, no reset) plus actual production handoff. If physical edge remains unread or implementation missing at cap/time, honest negative and stop; no invented SDL edge/shortcut or unused helper acceptance."
-    }
-  ],
+  "updated": "2026-10-27T19:11:53Z",
+  "notes": "Final B3k limited negative independently verified; no production input/handoff. All16attempts consumed, no active workers/resources. Landing negative then final stop metadata; no renewed authorization or pool.",
+  "active": [],
   "queue": [],
   "standing_run": {
     "id":"integrated-retail-progress-2026-10-27",
@@ -34,12 +15,12 @@
     "ownership_check":"Activation supplied hash/empty-stopped queue matched; authenticated V2 old owner+worker succeeded idle, old parent interrupted idle, self only active, selfSol/high and exact worker profiles. Confirmed handoff, ff-only58c853b. Later releases independently check terminal sessions and host resource inventory.",
     "started_at":"2026-10-27T15:22:19Z","deadline":"2026-10-27T23:22:19Z",
     "grants":{"overall_minutes":480,"worker_attempts":16,"round_minutes_including_repairs":45,"tooling_attempts":2,"tooling_minutes":90,"stock_starts":8,"commits":"isolated origin/decompile sync"},
-    "rounds_run":9,"attempts_used":16,"stock_starts_used":2,"stock_start_attempts_charged":2,"stock_start_budget_remaining":6,
+    "rounds_run":10,"attempts_used":16,"stock_starts_used":2,"stock_start_attempts_charged":2,"stock_start_budget_remaining":6,
     "stock_start_debits":[{"task":"c2q-native-cursor","at":"2026-10-27T16:22:13Z","charged":1,"actual_attempts":1,"state":"Consumed repair1 ordinary launch16:40:00.325291Z; unsafe menu candidate refused, no retry/crash. Initial no-launch refusal retained, no refund or old-pool transfer."},{"task":"b2m-qualified-navigation","at":"2026-10-27T17:57:14Z","charged":1,"actual_attempts":1,"state":"Consumed Popen18:05:42Z, PID43744/creation134375979426036245; reported2560x1440 geometry refusal before input,0screenshots/state/nav; intentional owned termination exit1,4.946s, no retry/crash. Probe rejected for unexecuted record-pointer/stride bugs, native route parked; no refund."}],
     "tooling_attempts_used":2,"tooling_seconds_used":1298.939,"tooling_clock_started":"2026-10-27T17:31:29.061Z","tooling_clock_ended_at":"2026-10-27T17:53:08Z","tooling_clock_note":"B2 source committed17:47:13Z(943.939s from dispatch); conservatively charge entire wall interval through actual clock/bookkeeping reconciliation17:53:08Z, including overlap with B3 verification. Tooling attempts2of2 exhausted, no further tooling-only work.","stock_crashes":0,"c3_reassess_by":"2026-10-27T17:22:19Z","c3_attempts_used":3,
-    "pending_questions":[{"question":"Separate future PhaseD strategy: D1/D3/digger clock remain user-parked/unaccepted.","recommendation":"After practical C2/B2/B3 progress, separately authorize bounded continuous-budget/animation-clock architecture; do not reopen D or call optional sim faithful retail gameplay now.","evidence":"PLAN PhaseD; LESSONS D1m retraction; PhaseE D1/D2/D3 parks"}],
-    "gate_scores":{"verified_at":"2026-10-27T17:01:03Z","C3":{"numerator":14934333,"denominator":235008000,"score":0.06354818984885621,"pass":false},"C1_zoom1":{"numerator":285083,"denominator":17721990,"score":0.0160863988750699,"pass":true},"C1_elev_down":{"numerator":285700,"denominator":17721990,"score":0.016121214378294987,"pass":true},"C2":"runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted","B1":"conditional acceptance preserved","B2_B3":"unaccepted, gates unchanged"},
-    "handoff":"Same owner/campaign/original23:22:19Z. FINAL B3k repair16 RUNNING same ses_e815b4bddffentbqX2bUy59ctd/Solhigh after18:50:06Z precheck. Initial attempt15 independently terminal/capped6body negative, no production/app change; own6completebytewindows, separate rawMaskBMP308278bytes,42conditionalcases,221node0pixels/68bboxfalsehits and wrong-flipcode2 verified under entry-check/, not physical-edge/transition acceptance. Repair only exact48316B/486ABA(0) edges, at most4additional bodies(10total), actualhandoff required or honestnegative; initial packet frozen/repair1 separate. SAME firstdispatch18:34:45.733Z/roundlanding19:16Z, repairreturn19:04Z; reserve12minverification/cleanup/docs. No further attempt/repair/task:16of16 debited,2actual=2charged stockstarts/0crashes/tooling2of2 exhausted1298.939s. Native/tooling/C3/cursor/PhaseD parks unchanged. B3j954d685 remains latest accepted source map display,49CTest65.44s/fixed C3FAIL+C1PASS unchanged. On completion independently verify physical edge+actualapp outcome/resources or narrow negative, land then STOP exhausted attempt pool; no new clock/pool, interrupt/poll/duplicate or takeover. Final-report-draft and actual-clock helper under campaign prefix retain earlier full accounting.",
+    "pending_questions":[{"question":"Next strategic campaign after exhausted attempt pool: native normal-entry/client geometry and input binding evidence.","recommendation":"Separately budget actual-host ordinary-entry/capture qualification with reliable failed-attempt screenshots and5hash brackets; then matched native map/level observations and physical-input binding. No blind retry, extra readiness/observer-core project, gate change or current-pool renewal.","evidence":"B2m reported geometry/no image and rejected probe; B3k exact binding gap; B3j SOURCE viewer only"},{"question":"Separate future PhaseD strategy: D1/D3/digger clock remain user-parked/unaccepted.","recommendation":"After practical C2/B2/B3 progress, separately authorize bounded continuous-budget/animation-clock architecture; do not reopen D or call optional sim faithful retail gameplay now.","evidence":"PLAN PhaseD; LESSONS D1m retraction; PhaseE D1/D2/D3 parks"}],
+    "gate_scores":{"verified_at":"2026-10-27T19:11:53Z","C3":{"numerator":14934333,"denominator":235008000,"score":0.06354818984885621,"pass":false},"C1_zoom1":{"numerator":285083,"denominator":17721990,"score":0.0160863988750699,"pass":true},"C1_elev_down":{"numerator":285700,"denominator":17721990,"score":0.016121214378294987,"pass":true},"C2":"runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted","B1":"conditional acceptance preserved","B2_B3":"unaccepted, no app map-to-level transition; gates unchanged"},
+    "handoff":"Final B3k limited negative verified:10original windows/raw mask/42conditional cases/512current-vs-edge cases/format parse, initial40files+6productionfiles exact; currentbit query not newpress, physicalbinding unclosed. NO production/input helper or actuallevel transition. Worker independently succeeded/idle18:59:38.770Z, bothREAclosed; own final49CTest65.36s/fresh3fixedscores+PNGhashes unchanged. Final hostcheck19:11:53Z no game/app/debugger/Frida/tasks,5installhashes match. Latest accepted production is B3j954d685 SOURCE map viewer; no selection/native acceptance.10landed rounds/16of16attempts/2actual=2charged stockstarts/0crashes/tooling2of2 exhausted1298.939s. Commit this negative then mark STOP exhausted budget; no more task/repair/renewal despite hours/starts unused. All parks/failures/16signedgates/unrelateddirtychanges preserved. Next strategic decision recorded in pending questions; actual finalcommit/clock to capture after landing.",
     "stopped":null
   }
 }

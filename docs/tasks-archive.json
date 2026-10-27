@@ -3301,6 +3301,18 @@
   ],
   "landed": [
     {
+      "id":"b3k-first-node-entry","status":"landed","standing_run":"integrated-retail-progress-2026-10-27",
+      "brief":"build/tmp/b3k-first-node-entry-brief.md","repair_brief":"build/tmp/b3k-first-node-entry-repair1-brief.md",
+      "worker_outputs":["build/tmp/b3k-first-node-entry/round-note.md","build/tmp/b3k-first-node-entry/repair1/round-note.md"],
+      "note":"docs/scratch/phase-b3k-first-node-entry.md","worker_session":"ses_e815b4bddffentbqX2bUy59ctd",
+      "model":"configured disasm-agent openai/gpt-6.1-sol#high API confirmed, no override",
+      "campaign_attempts":[15,16],"historical_pick_attempts":[4,5],"production_entry_attempts":[1,2],
+      "dispatched":"2026-10-27T18:34:45.733Z","repair_dispatch_precheck_at":"2026-10-27T18:50:06Z",
+      "worker_idle":"2026-10-27T18:59:38.770Z","deadline":"2026-10-27T19:16:00Z","verified":"2026-10-27T19:11:53Z",
+      "result":"Verified capped negative, requested actual map-to-level outcome absent; no production/helper/window/input change.10raw windows, separate complete indexed mask,42conditional cases/512current-vs-edge cases/format data and preserved40initialfiles/6sourcefiles checked. Map tests current sampled bit, not newpress; physical binding unclosed.49CTest65.36s/fresh C3+C1scores+PNGhashes unchanged. No unrelated mutation faked as actual entry proof.",
+      "stock_starts":0,"resources":"Worker terminal/REAclosed,0native/control/appwindow/task; headless children exited. Independent final hostclear/5hashes match, no restoration owed. Attempt pool16of16 exhausted, exact binding question re-parked, no more repair/task."
+    },
+    {
       "id":"b3j-app-base-map","status":"landed","standing_run":"integrated-retail-progress-2026-10-27",
       "brief":"build/tmp/b3j-app-base-map-brief.md","worker_output":"build/tmp/b3j-app-base-map/round-note.md",
       "note":"docs/scratch/phase-b3j-app-base-map.md","worker_session":"ses_e817c7766ffeRIvgJnldF2S5pD",

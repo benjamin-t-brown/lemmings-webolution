@@ -1,5 +1,16 @@
 # Plan history — Phase E
 
+### B3 first-node entry re-park — 2026-10-27
+
+[B3k limited negative](../scratch/phase-b3k-first-node-entry.md), historical pick
+continuations4/5 beyond B3e-g3 under the explicit changed map-consumer approach.
+Map mask/state eligibility and queried current-bit (not new-press) semantics are
+read; supplied-device/button binding through shared context remains unproven.
+No app input/handoff implemented. Ten total bodies, campaign16/16 consumed.
+Resume only under future scoped direction resolving that exact binding/actual-
+host entry evidence; do not repeat filename/counter scans, invent a radius/edge,
+renew unused starts/tooling or treat the B3j viewer as native map acceptance.
+
 ### B2 native entry re-park — 2026-10-27
 
 B2m's single ordinary start refused reported2560x1440client geometry before input;

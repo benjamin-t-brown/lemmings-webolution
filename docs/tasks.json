@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T07:26:42.577180+00:00",
+  "updated": "2026-10-27T07:29:01.186120+00:00",
   "notes": "Task18offlinecandidate notaccepted; archivedfailure,0sessions/starts/attaches/processcontrol. Prior21/install1/surrogatetrial1 separate. Standingpermission andconditionalsuccessorpreauthorization retained,blockednotconsumed.",
   "active": [],
   "queue": [],
@@ -76,11 +76,11 @@
         "evidence": "docs/scratch/phase-c3bs-controller-offline.md"
       }
     ],
-    "handoff": "STOPPED C3bs task18 offlineacceptanceFAIL. One worker attempt, worker10/10mockpass narrowed by ownactualpath14probes/7contractsmet: selectedthreadfirstrowbug; ignoredcontext/clear/list errors; inconsistentexitcode anduncorrelatedPIDline; swallowedfinalreceiptfailure. No concrete nativeadapter or boundedblockingI/O proof. Candidate b2904cf4acf97a3e2b5c658b56dfa822edc831d25a7dde62879ca41b85d6af46 unchanged, two independent in-memorydiagnosticmutations discriminate. SavedC3brremainsFAIL/unmodified; native mainmisscauseunexplained.0sessions/targets/stock/attaches/processcontrol. Prior21/install1/surrogatetrial1 retainedseparately. Standinguserpermission forboundedtestANDnative starts/sessions remains, but no executablegame scope. Specificsuccessorpreauthorized1session/1IA32start/45min/no retry/extra repair/0game only AFTERparentacceptsverifiedrepair+newdirective/ownerhashchecks; currentfailedacceptanceBLOCKSactivation, not consumed. Native needs runtimevalidation+safety/sourcebindingplan+separatedirective. C3bc/refusal/park/gates remain. Noextra repair orfollow-on; returnparent.",
+    "handoff": "STOPPED C3bs task18 offlineacceptanceFAIL. One worker attempt, worker10/10mockpass narrowed by ownactualpath14probes/7contractsmet: selectedthreadfirstrowbug; ignoredcontext/clear/list errors; inconsistentexitcode anduncorrelatedPIDline; swallowedfinalreceiptfailure. No concrete nativeadapter or boundedblockingI/O proof. Candidate b2904cf4acf97a3e2b5c658b56dfa822edc831d25a7dde62879ca41b85d6af46 unchanged, two independent in-memorydiagnosticmutations discriminate. SavedC3brremainsFAIL/unmodified; native mainmisscauseunexplained.0sessions/targets/stock/attaches/processcontrol. Prior21/install1/surrogatetrial1 retainedseparately. Standinguserpermission forboundedtestANDnative starts/sessions remains, but no executablegame scope. Specificsuccessorpreauthorized1session/1IA32start/45min/no retry/extra repair/0game only AFTERparentacceptsverifiedrepair+newdirective/ownerhashchecks; currentfailedacceptanceBLOCKSactivation, not consumed. Native needs runtimevalidation+safety/sourcebindingplan+separatedirective. C3bc/refusal/park/gates remain. Noextra repair orfollow-on; returnparent. Failureevidence02e6bae committed/pushed; dispatch-to-landing1229.560s. End checks preserve373fixedinputs,2317priorevidenceentries inclentireC3brfailedpacket,allhistory,currentcandidate and9initialdirtydeltas+1additionaluntrackedautomationdirective. Guardedactualcandidate nativeboundaryattempts0; no liveownedresources acquired, workerAPIterminal. Standingpermission/conditionalpreauthorization retained, BLOCKED/unconsumed. Actual clocks in current_pass.",
     "stopped": {
-      "date": "2026-10-27T07:26:42.577180+00:00",
+      "date": "2026-10-27T07:29:01.186120+00:00",
       "reason": "Offline repair candidate acceptance failed; no extra repairdispatch. Return blocker toparent, conditional successor not activated.",
-      "last_commit": "7b7b19242d14baa1fc7e29996b038b9442df6bfc"
+      "last_commit": "02e6baed6d89963ea6f65d7c95f8d8f6d3edaf28"
     },
     "current_pass": {
       "started": "2026-10-27T07:04:34Z",
@@ -92,9 +92,16 @@
           "deadline": "2026-10-27T07:49:34Z",
           "worker_completed": "2026-10-27T07:18:56.110000+00:00",
           "independent_checked": "2026-10-27T07:23:09.634160+00:00",
-          "verified": "2026-10-27T07:26:42.577180+00:00"
+          "verified": "2026-10-27T07:26:42.577180+00:00",
+          "worker_terminal_clock_source": "API time.idle",
+          "landed": "2026-10-27T07:28:03+00:00",
+          "commit": "02e6baed6d89963ea6f65d7c95f8d8f6d3edaf28",
+          "dispatch_to_landing_seconds": 1229.560077,
+          "dispatch_to_worker_idle_seconds": 682.670077
         }
-      ]
+      ],
+      "ended": "2026-10-27T07:29:01.186120+00:00",
+      "elapsed_seconds": 1467.18612
     },
     "verified_at": "2026-10-27T07:26:42.577180+00:00",
     "resource_state": {

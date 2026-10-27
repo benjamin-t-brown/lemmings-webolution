@@ -3013,7 +3013,7 @@
         "providerID": "openai",
         "variant": "high"
       },
-      "landed_at": "2026-10-27T07:26:42.577180+00:00",
+      "landed_at": "2026-10-27T07:28:03+00:00",
       "note": "docs/scratch/phase-c3bs-controller-offline.md",
       "outcome": "OFFLINE ACCEPTANCE FAIL: partialcandidate worker10/10mocks, independent7/14contracts. Stop/noextra repair/no live successor.",
       "candidate": "build/tmp/c3bs-controller-offline/controller.py",
@@ -3035,7 +3035,12 @@
         "Mocksuccess not actual threadcoverage/disarm/exit/nativecompatibility"
       ],
       "facilitator_check": "Own guarded actualcandidate run with independent transport/process/clock/receiptfakes:7/14contracts met. SavedC3br replay remainsFAILED withclear/noresume. Two separate in-memory single-change verificationmutations discriminate selected-dot andcommand-errorguard without source edits. Candidateandpriorpacketshashunchanged.",
-      "resources": "Configuredworker succeeded/idle; onlyofflinePythonmockrunners.0debugger/target/game/session/attach/processcontrol/nativeboundarycalls; no liveownedresources acquired. No cleanup controlneeded. Standingpermission/successorconditionalpreauthorization retained, notconsumed."
+      "resources": "Configuredworker succeeded/idle; onlyofflinePythonmockrunners.0debugger/target/game/session/attach/processcontrol/nativeboundarycalls; no liveownedresources acquired. No cleanup controlneeded. Standingpermission/successorconditionalpreauthorization retained, notconsumed.",
+      "commit": "02e6baed6d89963ea6f65d7c95f8d8f6d3edaf28",
+      "dispatch_to_landing_seconds": 1229.560077,
+      "worker_api_idle": "2026-10-27T07:18:56.110000+00:00",
+      "pass_ended": "2026-10-27T07:29:01.186120+00:00",
+      "pass_elapsed_seconds": 1467.18612
     },
     {
       "id": "c3br-windbg-surrogate",

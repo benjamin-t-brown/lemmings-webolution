@@ -50,7 +50,9 @@ Mapped scan25/ESC1 resolved that verification-method defect. No failed smoke is
 silently called a production regression or stock crash. Initial checker compile/
 stale-object link failures are retained alongside corrected current-graph replay.
 
-Full restored suite/fixed-gate results are recorded at landing. No original game,
+Own final full restored build/CTest **48/48 PASS** (67.02s). Fresh fixed C3
+.06354818984885621 FAIL and C1 .0160863988750699/.016121214378294987 PASS have
+the same PNG hashes as the preceding landing: zero gate movement. No original game,
 debugger/Frida/injection/install change or native memory mutation in this task;
 our app smokes do not consume stock starts. All owned apps/input are closed/released.
 C2 remains unaccepted until its original no-HUD-exclusion/hover gate passes. Next:

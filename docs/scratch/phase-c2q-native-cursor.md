@@ -45,6 +45,9 @@ zero cursor observations. Both worker invocations count. Same original17:08Z
 round deadline; no clock/pool reset. Worker confirmed succeeded/idle, no live
 owner remains. No render path changed; gate movement is zero for this round.
 
+Own full restored build/CTest48/48 PASS (67.02s); fixed C3/C1 scores and image
+hashes match the preceding landing. Concurrent HUD behavior is checked separately.
+
 **Park this cursor live arm at count6.** Resume only after an independently
 qualified normal entry route or fresh specific direction; do not repeat heap
 candidate scanning under a renamed cursor question. Continue B2/B3 practical

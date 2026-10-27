@@ -1291,3 +1291,18 @@ footprints exact unchanged PASS. Conditional SOURCE scale/bias/UV defaults are n
 native draw state; clipping/admission/precision gaps remain. At3C3attempts reassess:
 production mechanism connected, no material visual convergence, so continue C2/B2/B3
 now, no pixel polishing/controller repair. Zero stock starts/live resources.
+
+### C2p/C2q — runtime HUD connected; ordinary cursor entry negative, 2026-10-27
+
+[C2p](../scratch/phase-c2p-runtime-hud.md), campaign5/8: actual World counters and
+shared pause gate connected to window. Own20s state/no-catchup driver, independent
+pause/caption mutations with exact restore, real SDL scancodedP/pausedESC/P9PNGs
+and clean exit0 pass.48/48CTest and fixed C3/C1 hashes unchanged; native C2/PhaseD
+acceptance not implied. Fractional pause reset/default blend remain SOURCE policy.
+[C2q](../scratch/phase-c2q-native-cursor.md), campaign6/7/cursorcount5/6: initial false
+producer prerequisite returned; one ordinary attributed start then unsafe fresh
+menu candidate5 refused beforeRETURN. No level/sample/screenshot/retry/crash.
+Own guard replay and five exact install hashes/empty host verify the clean negative;
+park cursor arm, qualify B2 entry by a changed approach. Source landings56295b9/
+c069829 met17:08 deadline; administrative PLAN/queue handoff completed afterward,
+disclosed cleanup overrun with no further source research or live work in the round.

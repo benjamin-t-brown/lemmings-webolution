@@ -3308,6 +3308,7 @@
       "campaign_attempt":14,"question_attempt":1,
       "dispatched":"2026-10-27T17:58:31.872Z","worker_idle":"2026-10-27T18:09:22.198Z",
       "deadline":"2026-10-27T18:40:00Z","verified":"2026-10-27T18:29:35Z",
+      "landed":"2026-10-27T18:31:37Z","commit":"954d68574feb1c36885c41a427ea921dca5345bc","dispatch_to_landing_seconds":1985.128,
       "result":"Actualapp conditional map display, not native B3: fulltables/107compiledstate vectors/4actualRGBA streams/7badCLI cases; actual main-call mutant fails/restores exact,49CTest65.44sPASS. Visible default strict compare retains100corner-channel mismatch; controlled own-HWND DWM square-corner request gives2exact fullclient frames/exit0. No native gate/reference/mask/threshold change. Fresh C3/C1scores+PNGhashes unchanged.",
       "stock_starts":0,"resources":"Worker terminal, no native access; all own apps closed,0game/debugger/Frida/tasks and5protectedhashes unchanged. Selection/title/hover/save/native presentation remain open."
     },

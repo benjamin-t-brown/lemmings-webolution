@@ -1,5 +1,14 @@
 # Plan history — Phase E
 
+### B2 native entry re-park — 2026-10-27
+
+B2m's single ordinary start refused reported2560x1440client geometry before input;
+no target screenshot or state words retained. Probe's unexecuted map pointer and
+stride readers are rejected. [Full negative](../scratch/phase-b2m-qualified-navigation.md).
+Tooling2of2 exhausted, no automatic retry/relaxed classifier/heap scan. Resume only
+under future separately approved scope with actual client/host bindings and failed-
+attempt artifact retention; original B2 caps, cursor live park and signed gates stay.
+
 Moved verbatim from `PLAN.md` on 2026-10-24 (user, overlord review 2026-10-24). Only link
 paths were rebased, and a `###` heading was added above each entry so the plan can link to
 it. The live milestone table, exit gates, status cells and user decisions are in [the

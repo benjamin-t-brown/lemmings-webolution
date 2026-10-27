@@ -1,5 +1,16 @@
 # Plan history — Phase B
 
+### B2m — native geometry refusal, no navigation/image, 2026-10-27
+
+[Facilitator check](../scratch/phase-b2m-qualified-navigation.md): one stock start,
+reported2560x1440client versus640x480, no input/admission/navigation/screenshots;
+raw chain values not retained. Diagnostic source amended after run, not live proof.
+Independent receipts/owned identity/four direct hash brackets and parent/current
+fifth hash support cleanup; no crash/retry. Unexecuted probe has record-pointer
+and flag-stride errors (101of102addresses wrong); rejected as reusable harness,
+preserved only in scratch.49CTest66.16sPASS on candidate map tree; no B2 gate
+movement. Native entry re-parked, tooling exhausted, no further live/repair route.
+
 ### Campaign convergence checkpoint — attempts10–12, 2026-10-27
 
 No milestone gate moved: retained C3 numerator14934333/235008000FAIL; C1

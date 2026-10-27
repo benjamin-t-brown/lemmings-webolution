@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T02:12:41.077322+00:00",
+  "updated": "2026-10-27T02:14:45.897902+00:00",
   "notes": "C3bl component-only verified with narrowed limits after initial/repair attempts10-11. Production bounds binding unsupported; no gate movement; fresh directive consumed.",
   "active": [],
   "queue": [],
@@ -38,11 +38,11 @@
       }
     ],
     "stop_point": "Stop after verified implementation/re-score or unsupported production binding, blocker or budget. Retain verified component honestly; no broad discovery/follow-on.",
-    "handoff": "STOPPED after C3bl initial attempt10 rejected and repair11 bounded component verified. Fresh-cache explicit near\u2192projection/bias\u2192ordered screen helper only; BackdropScene/test unchanged. Missing native clip-globals\u2192production bounds binding stops integration, no discovery. Independent18cases756fields and two isolated mutations pass/restored; CTest misses scaled epsilon, overflow-temporary claim narrowed.45CTest/32framework, fresh byte-identical C3FAIL/C1PASS gates. Worker succeeded/idle;0live resources/actions. Directive consumed, cumulative11; no automatic follow-on.",
+    "handoff": "STOPPED after C3bl initial attempt10 rejected and repair11 bounded component verified. Fresh-cache explicit near\u2192projection/bias\u2192ordered screen helper only; BackdropScene/test unchanged. Missing native clip-globals\u2192production bounds binding stops integration, no discovery. Independent18cases756fields and two isolated mutations pass/restored; CTest misses scaled epsilon, overflow-temporary claim narrowed.45CTest/32framework, fresh byte-identical C3FAIL/C1PASS gates. Worker succeeded/idle;0live resources/actions. Directive consumed, cumulative11; no automatic follow-on. Component round78a0d71 committed/pushed; original dispatch-to-landing2073.472s includes repair. End preservation/worker-terminal/zero-host-resource checks exact; actual end in current_pass.",
     "stopped": {
-      "date": "2026-10-27T02:12:41.077322+00:00",
+      "date": "2026-10-27T02:14:45.897902+00:00",
       "reason": "Approved stop: verified bounded component retained after one repair; production integration stopped at unsupported native bounds binding; attempts10-11 spent.",
-      "last_commit": "c3807f8563132f996c83a5b788be8bd0a2b393df"
+      "last_commit": "78a0d71a01cba4a66bca825c255dca661967ca65"
     },
     "current_pass": {
       "started": "2026-10-27T01:35:10Z",
@@ -56,9 +56,17 @@
           "repair_dispatched": "2026-10-27T01:49:55.087400+00:00",
           "initial_worker_completed": "2026-10-27T01:46:11Z",
           "worker_completed": "2026-10-27T01:58:17Z",
-          "verified": "2026-10-27T02:12:41.077322+00:00"
+          "verified": "2026-10-27T02:12:41.077322+00:00",
+          "landed": "2026-10-27T02:13:15+00:00",
+          "commit": "78a0d71a01cba4a66bca825c255dca661967ca65",
+          "elapsed_seconds": 2073.472273,
+          "initial_worker_seconds": 449.472273,
+          "repair_worker_seconds": 501.9126,
+          "repair_dispatch_to_landing_seconds": 1399.9126
         }
-      ]
+      ],
+      "ended": "2026-10-27T02:14:45.897902+00:00",
+      "elapsed_seconds": 2375.897902
     },
     "verified_at": "2026-10-27T02:12:41.077322+00:00",
     "resource_state": {

@@ -3,6 +3,120 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-windbg-surrogate",
+      "goal": "ONE actual standard installedWinDbg-family session on ONE owned newlybuiltIA32 surrogate; initial/newthreadhardwarehits and verifieddisarm/selectedcleanup; no game.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh explicit i approve actualsurrogate only;1task17/1debuggersession/1surrogatestart,45minoverallinclprepverificationlandingcleanup. No retry/repair/SWfallback/policyoverride/game.",
+      "directive_sha256": "4ab7cff897bd14a5266efdb2102815fb6d75bfadd2050cd4cab3fc9b82b517d8",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh API active self+unrelateded-ascii only; selfSol/high, priorworker succeeded/idle. active/self/prior-worker/parent saved; ff-only pulla81f9c2.",
+      "started_at": "2026-10-27T06:22:02Z",
+      "deadline": "2026-10-27T07:07:02Z",
+      "grants": {
+        "rounds": 1,
+        "cumulative_question_cap": 17,
+        "overall_minutes": 45,
+        "repair_allowed": false,
+        "stock_starts": 0,
+        "surrogate_starts": 1,
+        "debugger_sessions": 1,
+        "attaches_existing_processes": 0,
+        "injection": 0,
+        "user_software_breakpoints": 0,
+        "installations": 0,
+        "cleanup": "identity-confirmed owned disposabletarget/debugger only; terminationifneededmustbedisclosed",
+        "commits": "isolated own paths, normal origin decompile sync"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 17,
+      "stock_starts_used": 0,
+      "surrogate_starts_used": 1,
+      "debugger_session_attempts": 1,
+      "historical_observation": {
+        "prior_observation_feasibility": 21,
+        "prior_installation_tasks": 1,
+        "current_stock_observations": 0,
+        "current_surrogate_validation_attempts": 1,
+        "related_history_including_this_surrogate": 22,
+        "scope": "Keep21earliercapture/feasibilityentries; actualsurrogatevalidationappendedseparately, nevercalledstockobservation"
+      },
+      "pending_questions": [
+        {
+          "question": "Failed surrogate validation does not authorize repair or original-game use.",
+          "recommendation": "Stop and report failed coverage/cleanup result; retain C3bc refusal and source-binding/readiness parking. No action pending under this directive.",
+          "evidence": "docs/scratch/phase-c3br-windbg-surrogate.md"
+        }
+      ],
+      "handoff": "STOPPED C3br task17 FAIL. One actual bundled x86CDB session + one IA32surrogate start consumed; prior observationhistory21 separate,0stock. Own rawsource/PE/hashes/hits/cleanup check confirms mainmarker0/3,later3/3,maincleanup1/1. No cause established for mainmisses, not universal mainthread debugger defect. Controller seventh-prompt assumption continued past actualcleanup fourthhardware stop; clear/list only after No runnable debuggees, unexpected-stop abort missing. No disarm-before-continue, normalexit/detach/actualexitcode proof. Exact ownedPIDs37312/46328 absent independently; no terminationcommand reported; workeridle. Adjacentengineauthenticated but actual loadedmodulepath not captured; gallery update permissions disclosed not installationproof. Package stays. No retry/repair/originalgame/sourcebinding/observer/renderer/frameworkwork. C3bc refusal/readinesspark andretainedgates unchanged. Directiveconsumed. Evidencee706780 committed/pushed; dispatch-to-landing1673.228s. End checks preserve373fixed/package/game/source inputs,2244prior evidence entries,currentworkerpacket,allhistory and9dirty deltas, captureproposal exact/PhaseEoldtext intact. Final exactoriginalownedPIDcheck absent; workerAPIterminal,installedfrontend/engine hashes stable. No secondsession/retry/repair/follow-on. Actual clocks in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T06:57:13.892507+00:00",
+        "reason": "Sole actual surrogate validation failed; acceptance not met, no retry/repair/follow-on. Resources absent, clean disarm/exit unverified.",
+        "last_commit": "e7067802ec3270f8d01c54c396a9534ae857a52d"
+      },
+      "current_pass": {
+        "started": "2026-10-27T06:22:02Z",
+        "rounds": [
+          {
+            "id": "c3br-windbg-surrogate",
+            "attempt": 17,
+            "dispatched": "2026-10-27T06:28:16.772171+00:00",
+            "deadline": "2026-10-27T07:07:02Z",
+            "worker_completed": "2026-10-27T06:44:21.193000+00:00",
+            "launch": "2026-10-27T06:38:38.401032+00:00",
+            "worker_end_state_check": "2026-10-27T06:40:31.847285Z",
+            "independent_resource_check": "2026-10-27T06:48:54.8739167Z",
+            "verified": "2026-10-27T06:55:45.021047+00:00",
+            "worker_terminal_clock_source": "API time.idle",
+            "landed": "2026-10-27T06:56:10+00:00",
+            "commit": "e7067802ec3270f8d01c54c396a9534ae857a52d",
+            "dispatch_to_landing_seconds": 1673.227829,
+            "dispatch_to_worker_idle_seconds": 964.420829,
+            "final_resource_check": "2026-10-27T06:57:12.9732599Z"
+          }
+        ],
+        "ended": "2026-10-27T06:57:13.892507+00:00",
+        "elapsed_seconds": 2111.892507
+      },
+      "verified_at": "2026-10-27T06:55:45.021047+00:00",
+      "resource_state": {
+        "worker_session": "ses_e83f405b9ffe7D6I10RuWjckn3",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "debugger_sessions": 1,
+        "surrogate_starts": 1,
+        "debugger_pid": 37312,
+        "surrogate_pid": 46328,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_task_operations": 0,
+        "termination_commands_reported": 0,
+        "cleanup_path_tested": "Disarm then normal exit intended, NOT established; detach untested",
+        "debugger_exit_code": null,
+        "surrogate_exit_code": null,
+        "fixed": 373,
+        "evidence": 2244,
+        "unrelated_dirty_preserved": 9,
+        "historical_capture_proposal_byte_exact": true,
+        "production_and_observer_unchanged": true,
+        "all_historical_archive_entries_preserved": true,
+        "phase_e_old_text_preserved": true,
+        "current_worker_evidence_preserved": true,
+        "installed_debugger_retained": true,
+        "remaining_original_owned_pids": 0,
+        "restoration_required": false,
+        "live_disarm_verified": false,
+        "actual_exit_codes_available": false,
+        "second_debugger_session": false,
+        "original_game_starts": 0,
+        "final_exact_pid_absence_checked_at": "2026-10-27T06:57:12.9732599Z"
+      }
+    },
+    {
       "id": "c3-windbg-install",
       "goal": "Install official Microsoft WinDbg only, verify package/filemetadata without launching debugger; stop.",
       "milestones": [
@@ -2876,6 +2990,53 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bs-controller-offline",
+      "status": "landed",
+      "brief": "build/tmp/c3-controller-offline-pass/brief.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "kind": "isolated actualcontroller offline repair and discriminating mocks",
+      "requested_model": "configured pin nooverride/fallback",
+      "attempt": 18,
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bs-controller-offline/**"
+      ],
+      "dispatched_at": "2026-10-27T07:07:33.439923+00:00",
+      "task_deadline": "2026-10-27T07:49:34Z",
+      "worker_output": "build/tmp/c3bs-controller-offline/round-note.md; candidate b2904cf4acf97a3e2b5c658b56dfa822edc831d25a7dde62879ca41b85d6af46, tests 3e1f42d225ba4847d7386ad938dd590a59d22aa250dba0909299de62c0ffc6c3; safe command `python build/tmp/c3bs-controller-offline/test_controller.py` = 10/10 OK. Mock guards deny subprocess/ctypes/WinAPI/process APIs before candidate import. Saved C3br early-cleanup/missing-main replay remains failure; five in-memory mutations discriminated. No real sessions/starts/process control. Limits and hashes in round note; live adapter absent, no native readiness claim.",
+      "worker_session": "ses_e83ce6b7effeOw5wcI6hTg8O0k",
+      "actual_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T07:26:42.577180+00:00",
+      "note": "docs/scratch/phase-c3bs-controller-offline.md",
+      "outcome": "OFFLINE ACCEPTANCE FAIL: partialcandidate worker10/10mocks, independent7/14contracts. Stop/noextra repair/no live successor.",
+      "candidate": "build/tmp/c3bs-controller-offline/controller.py",
+      "candidate_sha256": "b2904cf4acf97a3e2b5c658b56dfa822edc831d25a7dde62879ca41b85d6af46",
+      "worker_tests": 10,
+      "worker_tests_passed": 10,
+      "independent_contract_probes": 14,
+      "independent_contracts_met": 7,
+      "independent_defects": [
+        "selected TID parser matches first unmarkedrow",
+        "context/clearcommand/clearlisting errors ignored",
+        "inconsistent exit decimal/hex accepted",
+        "no target identity correlation for exitline",
+        "final receipt write failure silently swallowed"
+      ],
+      "additional_limits": [
+        "No concrete liveadapter: setup/framing/nativeTIDdiscovery/stdoutstderr/processcleanup not wired",
+        "Launch/poll/receipt blockingoperation deadlines unimplemented",
+        "Mocksuccess not actual threadcoverage/disarm/exit/nativecompatibility"
+      ],
+      "facilitator_check": "Own guarded actualcandidate run with independent transport/process/clock/receiptfakes:7/14contracts met. SavedC3br replay remainsFAILED withclear/noresume. Two separate in-memory single-change verificationmutations discriminate selected-dot andcommand-errorguard without source edits. Candidateandpriorpacketshashunchanged.",
+      "resources": "Configuredworker succeeded/idle; onlyofflinePythonmockrunners.0debugger/target/game/session/attach/processcontrol/nativeboundarycalls; no liveownedresources acquired. No cleanup controlneeded. Standingpermission/successorconditionalpreauthorization retained, notconsumed."
+    },
     {
       "id": "c3br-windbg-surrogate",
       "status": "landed",

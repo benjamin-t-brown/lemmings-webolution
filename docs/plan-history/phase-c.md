@@ -1211,3 +1211,21 @@ command reported. Extension-gallery update permissions logged, not actual update
 proof; no full per-user delta claimed. No retry/repair/game/sourcebinding/observer/
 renderer/framework work or render/rescore. Package/game/evidence/dirty work and
 retained C3FAIL/C1PASS unchanged. C3bc refusal and original readiness remain parked.
+
+**C3bs, 2026-10-27 — offline controller candidate not accepted; successor blocked.**
+Task18, one offline worker attempt,0sessions/targets/attaches/processcontrol.
+Historical21/install1/surrogatetrial1 separate; failedC3br packet preserved.
+[Independent actual-path probes](../scratch/phase-c3bs-controller-offline.md) narrow
+worker10/10mockpass: only7/14 owncontracts hold. Selectedthreadparser takesfirst
+unmarkedrow, rejects realistic validsequence; errors incontext/clear/list ignored;
+inconsistentexitdecimal/hex anduncorrelatedPID accepted; finalreceiptfailure swallowed.
+Independent one-change in-memory diagnosticmutations discriminate selected-dot
+andcommanderrorboundary; handedcandidate unchanged. No concrete liveadapter, startup/
+framing/discovery/cleanup integration orblockingboundary timeout proof. SavedC3br
+remainsFAILED, missingmaincauseunexplained. No extra repairdispatch/livevalidation.
+Standing boundedtest/native permission andoneconditionalsuccessorpreauthorization
+retained, NOTconsumed: parentacceptance+newdirective/ownerhashcheck required; current
+failedacceptanceblocks activation. Successor1session/1IA32start/45min/no retry,0game;
+native additionallyruntimevalidation+safety/sourcebindingplan+separatedirective.
+C3bc refusal/nativepark andC3FAIL/C1PASS unchanged; protectedinputs/evidence/dirty
+work preserved, no renderer/framework/production change orrender/rescore. Stopforparent.

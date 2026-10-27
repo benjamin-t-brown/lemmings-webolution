@@ -1,95 +1,101 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T04:08:48.566186+00:00",
-  "notes": "C3bn attempt13 consumed: pictured software target/source link established, saved-repair4 conditional orientation negative; native correspondence indeterminate. Worker projection/depth claims narrowed by independent verification; no production/gate change/follow-on.",
+  "updated": "2026-10-27T05:10:21.598239+00:00",
+  "notes": "C3bo attempt14 consumed at conditionaldocumentary proposal, not native readiness. All historical observationattempts retained, C3bc refusal and orientationparking intact.0execution/no follow-on.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-terrain-image-link",
-    "goal": "Connect pictured sandy target to software source contribution and compare orientation using saved repair4 camera only; no correction.",
+    "id": "c3-observation-feasibility",
+    "goal": "One offline proposal for concrete prospective native-observation safety mechanism relevant to sandy-terrain native correspondence, or supported negative. No implementation/execution.",
     "milestones": [
       "C3 full frame"
     ],
     "current": "C3 full frame",
-    "authorized": "Fresh user i approve; one delegated Sol check-only attempt13,45min overall incl verification/landing/cleanup,0live,no repair/follow-on",
-    "directive_sha256": "df27b2e8239ad9bb64b541b1f612788a0377849c00a917b1f4fe60d952a3e35d",
+    "authorized": "Fresh user yes to ONE Sol offline feasibility proposal,45min overall incl verification/landing/cleanup,0execution,no repair/follow-on; C3bc refusal intact",
+    "directive_sha256": "04043694a907e2afaa0e6560b203ffd741b99bb14be7664327494bb6f76d4125",
     "owner": "ses_e854d421effeWpblsoJtCyVVFT",
     "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
-    "ownership_check": "Fresh API active self+unrelated ed-ascii only, no project conflict; self Sol/high and prior worker succeeded/idle. Evidence active/self/prior-worker/parent in pass dir; ff-only pull9059bfb.",
-    "started_at": "2026-10-27T03:41:29Z",
-    "deadline": "2026-10-27T04:26:29Z",
+    "ownership_check": "Fresh API active self+unrelated ed-ascii only; selfSol/high, priorworker succeeded/idle; active/self/prior-worker/parent saved, ff-only pullcurrentc51fef6.",
+    "started_at": "2026-10-27T04:50:16Z",
+    "deadline": "2026-10-27T05:35:16Z",
     "grants": {
       "rounds": 1,
-      "cumulative_question_cap": 13,
+      "cumulative_question_cap": 14,
       "overall_minutes": 45,
       "repair_inclusive": true,
       "stock_starts": 0,
-      "commits": "isolated own paths, normal origin decompile sync"
+      "attaches": 0,
+      "injection": 0,
+      "installations": 0,
+      "commits": "isolated own proposal paths, normal origin decompile sync"
     },
     "rounds_run": 1,
-    "cumulative_attempts": 13,
+    "cumulative_attempts": 14,
     "stock_starts_used": 0,
-    "historical_orientation": {
-      "prior_dispatches": 2,
-      "dispatches": [
-        "c3ar-scene-handedness interrupted/discarded incomplete no claims",
-        "c3bm-terrain-orientation scoped low-skirt conditional negative, A1 views only"
-      ],
-      "this_dispatch_ordinal": 3
+    "historical_observation": {
+      "evidence": "build/tmp/c3-observation-feasibility-pass/historical-C3-runs.json; unchanged full archive",
+      "post_pivot_prior_attempts": 19,
+      "breakdown": {
+        "AT_initial_repair_AU_AV_initial_two_repairs": 6,
+        "AW_AX_initial_repair": 3,
+        "AY_initial_repair_AZ_initial_two_repairs": 5,
+        "BA_initial_repair_BB": 3,
+        "BC_initial_repair": 2
+      },
+      "older_history": "All precedingC3-known-gaps16/host-reference-big-rocks3 and older C3 observer/controller/preflight entries preserved, not claimed all observation-only or zeroed.",
+      "this_scope": "Fresh one-attempt exception for concrete safety-mechanism proposal; not rename/reset of prior parked observer question"
     },
     "pending_questions": [
       {
-        "question": "Why the original pictured sandy structure differs remains unresolved beyond this software-linked record and matched-input orientation check.",
-        "missing_evidence": "Native counterpart/visible submission identity and actual runtime inputs/state; software source influence and saved-input algebra cannot establish those.",
-        "recommendation": "Stop for parent evaluation; no automatic correction under reserved preapproval, no new observer/audit or follow-on.",
-        "evidence": "docs/scratch/phase-c3bn-terrain-image-link.md"
+        "question": "Whether to authorize any further artifact-specific prospective review of this conditional debugger proposal.",
+        "remaining": "Exact debugger/mode/startup/exit/threadcoverage policy and CALL/context/source-to-durableasset binding unresolved; no ready operational method, no old permission carried over.",
+        "recommendation": "Parent evaluation only. No implementation/live operation/hostdryrun without separate explicit approval; retain C3bc refusal.",
+        "evidence": "docs/scratch/phase-c3bo-observation-feasibility.md"
       }
     ],
-    "handoff": "STOPPED C3bn: annotated right-bank target x560..639,y180..318 linked to6b72b/node596c7 indices218/216/219 via10198retained accepted/final-color-influence pixels. Saved REPAIR4 inputs, not A1: own raw/rational/actual-C++ check projects triangle over target and matches all logged depths, no H/view orientation reversal under matched inputs. Worker projected-near-center discrepancy rejected: wrong lens normalization and signed-depth entry/label; own bounded verification supplies accepted table, worker files untouched. Native visible-terrain correspondence/runtime operands unknown. No correction/parent preapproval exercised.45CTest/lint, fresh rescore RETAINED PNGs C3FAIL/C1PASS unchanged, no new render. Prior12 and C3ar/C3bm historical dispatches retained; this third orientation dispatch is cumulative13, one attempt/no repair. Worker succeeded/idle,0live resources/actions; directive consumed/no automatic continuation. Roundd9f547c committed/pushed; dispatch-to-landing1366.569s. End checks preserve177fixed/source inputs,463prior evidence files and9dirty deltas; worker APIterminal/host empty rechecked. Actual clocks in current_pass, worker note handoff separated from APIidle.",
+    "handoff": "STOPPED C3bo proposal-only attempt14. Concrete conditional established-debugger hardwareexecuteBP at46D5F3 avoids firstredirect by no codepatch, primary platformcontracts checked. No exact debugger/WOW64/startup/threadcoverage/exitpolicy or durableasset source binding certified; precallrequest not drawsuccess. AW6wordCALL vs5wordPRE and initialBP/killonexit caveats explicit. C3bc operationalrefusal and FXSAVE/FXRSTOR positive/sourcebinding limits stand, postinstall receipts not prospectiveguarantees. Orientationparked. No implementation/testing/native/surrogate/task/install/targetprocess operations; no resources acquired/nohostinventory. Retained C3FAIL/C1PASS unchanged, no render/rescore. Previous13 and all historicalcapturefeasibility attempts retained incl BCinitial/repair; postpivot19prior+this20th distinct ledger. Directive consumed; no automatic implementation/live follow-on.",
     "stopped": {
-      "date": "2026-10-27T04:08:48.566186+00:00",
-      "reason": "Sole approved attempt13 completed: pictured software source link and scoped conditional negative under saved repair4; native correspondence remains indeterminate. No correction or follow-on.",
-      "last_commit": "d9f547cb7e0f62c888b9ffb367ca1f9c00a54e3e"
+      "date": "2026-10-27T05:10:21.598239+00:00",
+      "reason": "Approved proposal-only stop: concrete conditional no-code-redirect candidate documented, native readiness/source binding unresolved; no implementation/execution.",
+      "last_commit": "c51fef6916ca7cd949d45873346bb65cc0a465e4"
     },
     "current_pass": {
-      "started": "2026-10-27T03:41:29Z",
+      "started": "2026-10-27T04:50:16Z",
       "rounds": [
         {
-          "id": "c3bn-terrain-image-link",
-          "attempt": 13,
-          "dispatched": "2026-10-27T03:44:47.431499+00:00",
-          "deadline": "2026-10-27T04:26:29Z",
-          "worker_completed": "2026-10-27T03:56:36.862000+00:00",
-          "verified": "2026-10-27T04:07:06.878323+00:00",
-          "worker_reported_handoff": "2026-10-27T03:55:46Z",
-          "worker_terminal_clock_source": "API time.idle; reported note handoff kept separately",
-          "landed": "2026-10-27T04:07:34+00:00",
-          "commit": "d9f547cb7e0f62c888b9ffb367ca1f9c00a54e3e",
-          "dispatch_to_landing_seconds": 1366.568501,
-          "dispatch_to_worker_idle_seconds": 709.430501
+          "id": "c3bo-observation-feasibility",
+          "attempt": 14,
+          "dispatched": "2026-10-27T04:54:15.426358+00:00",
+          "deadline": "2026-10-27T05:35:16Z",
+          "worker_completed": "2026-10-27T04:59:38.850000+00:00",
+          "worker_reported_handoff": "2026-10-27T04:59:06Z",
+          "verified": "2026-10-27T05:10:21.598239+00:00"
         }
-      ],
-      "ended": "2026-10-27T04:08:48.566186+00:00",
-      "elapsed_seconds": 1639.566186
+      ]
     },
-    "verified_at": "2026-10-27T04:07:06.878323+00:00",
+    "verified_at": "2026-10-27T05:10:21.598239+00:00",
     "resource_state": {
-      "worker_session": "ses_e8489d148ffeAMmlarOJywR1Ag",
+      "worker_session": "ses_e844a2f61ffe3UrVDkTJXdTxnc",
       "worker_outcome": "succeeded",
       "worker_idle_confirmed": true,
       "stock_starts": 0,
       "attaches": 0,
       "injections": 0,
-      "scheduled_tasks": 0,
-      "native_sessions_acquired": 0,
-      "owned_live_resources": 0,
-      "game_processes": 0,
-      "lemweb_tasks": 0,
-      "fixed": 177,
-      "evidence": 463,
+      "debugger_sessions": 0,
+      "process_thread_manipulations": 0,
+      "scheduled_task_operations": 0,
+      "installations": 0,
+      "surrogate_executions": 0,
+      "fixed": 368,
+      "evidence": 2105,
       "unrelated_dirty_preserved": 9,
-      "production_unchanged": true,
-      "private_control_restored": true
+      "capture_proposal_byte_exact": true,
+      "production_and_observer_unchanged": true,
+      "all_historical_archive_entries_preserved": true,
+      "target_operations": 0,
+      "owned_native_resources": 0,
+      "restoration_required": false,
+      "host_inventory_performed": false
     }
   }
 }

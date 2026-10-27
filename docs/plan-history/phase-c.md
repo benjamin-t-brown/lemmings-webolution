@@ -1132,3 +1132,24 @@ RETAINED PNGs C3.0635481771FAIL/C1.0160864/.0161212PASS, no new render/gate move
 177fixed/source inputs,463prior evidence files and9dirty deltas preserved;
 worker succeeded/idle,0live resources. Directive consumed; no automatic correction,
 parent reserved preapproval not exercised. Deadline unchanged; stop here.
+
+**C3bo, 2026-10-26 — conditional hardware-execution observation proposal, not readiness.**
+One approved offline feasibility attempt14, prior13 and all capture history retained;
+post-pivot AT..BC19prior attempts including BC initial/repair, this historical20th,
+older mixed runs/archive unchanged. Microsoft primary documentation supports an
+established WinDbg processor execute breakpoint at46D5F3: debugregister rather than
+code redirect, debug-event all-thread stop. Specific firstredirect race avoided
+conditionally, not repaired/waived for Gum. [Separate proposal/facilitator check](../scratch/phase-c3bo-observation-feasibility.md).
+Own review adds initial-user-breakpoint/software-default caveat, OS CREATE_PROCESS
+stop premise, exact debugger/IA32/WOW64/thread/exit-policy conditions. Default
+debugger-thread exit can terminate target; no generic graceful-cleanup promise.
+Fresh source pins preserve BC RWX/remap-false safety gap and FXSAVE/FXRSTOR positive;
+file-backed call bytes match. Actual CALL stack has6words, old PRE5decoder not adopted.
+AW descriptor/node/ordinal does not bind durable LVL identity; native sandy-qualified
+sample still needs a unique source binding. Precall record proves attempted request,
+not successful draw/native pixels/state. No implementation, execution, installation,
+surrogate/test/build/mutation/render or host inventory; worker succeeded/idle.
+Retained C3.0635481771FAIL/C1.0160864/.0161212PASS, no gate movement;368fixed inputs,
+2105prior evidence files and9dirty deltas preserved, captureproposal untouched.
+Zero owned native resources; C3bc refusal/orientation parking unchanged. Directive
+consumed at proposal-only stop, no repair/automatic implementation/live follow-on.

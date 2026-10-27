@@ -3,6 +3,94 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-terrain-image-link",
+      "goal": "Connect pictured sandy target to software source contribution and compare orientation using saved repair4 camera only; no correction.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh user i approve; one delegated Sol check-only attempt13,45min overall incl verification/landing/cleanup,0live,no repair/follow-on",
+      "directive_sha256": "df27b2e8239ad9bb64b541b1f612788a0377849c00a917b1f4fe60d952a3e35d",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh API active self+unrelated ed-ascii only, no project conflict; self Sol/high and prior worker succeeded/idle. Evidence active/self/prior-worker/parent in pass dir; ff-only pull9059bfb.",
+      "started_at": "2026-10-27T03:41:29Z",
+      "deadline": "2026-10-27T04:26:29Z",
+      "grants": {
+        "rounds": 1,
+        "cumulative_question_cap": 13,
+        "overall_minutes": 45,
+        "repair_inclusive": true,
+        "stock_starts": 0,
+        "commits": "isolated own paths, normal origin decompile sync"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 13,
+      "stock_starts_used": 0,
+      "historical_orientation": {
+        "prior_dispatches": 2,
+        "dispatches": [
+          "c3ar-scene-handedness interrupted/discarded incomplete no claims",
+          "c3bm-terrain-orientation scoped low-skirt conditional negative, A1 views only"
+        ],
+        "this_dispatch_ordinal": 3
+      },
+      "pending_questions": [
+        {
+          "question": "Why the original pictured sandy structure differs remains unresolved beyond this software-linked record and matched-input orientation check.",
+          "missing_evidence": "Native counterpart/visible submission identity and actual runtime inputs/state; software source influence and saved-input algebra cannot establish those.",
+          "recommendation": "Stop for parent evaluation; no automatic correction under reserved preapproval, no new observer/audit or follow-on.",
+          "evidence": "docs/scratch/phase-c3bn-terrain-image-link.md"
+        }
+      ],
+      "handoff": "STOPPED C3bn: annotated right-bank target x560..639,y180..318 linked to6b72b/node596c7 indices218/216/219 via10198retained accepted/final-color-influence pixels. Saved REPAIR4 inputs, not A1: own raw/rational/actual-C++ check projects triangle over target and matches all logged depths, no H/view orientation reversal under matched inputs. Worker projected-near-center discrepancy rejected: wrong lens normalization and signed-depth entry/label; own bounded verification supplies accepted table, worker files untouched. Native visible-terrain correspondence/runtime operands unknown. No correction/parent preapproval exercised.45CTest/lint, fresh rescore RETAINED PNGs C3FAIL/C1PASS unchanged, no new render. Prior12 and C3ar/C3bm historical dispatches retained; this third orientation dispatch is cumulative13, one attempt/no repair. Worker succeeded/idle,0live resources/actions; directive consumed/no automatic continuation. Roundd9f547c committed/pushed; dispatch-to-landing1366.569s. End checks preserve177fixed/source inputs,463prior evidence files and9dirty deltas; worker APIterminal/host empty rechecked. Actual clocks in current_pass, worker note handoff separated from APIidle.",
+      "stopped": {
+        "date": "2026-10-27T04:08:48.566186+00:00",
+        "reason": "Sole approved attempt13 completed: pictured software source link and scoped conditional negative under saved repair4; native correspondence remains indeterminate. No correction or follow-on.",
+        "last_commit": "d9f547cb7e0f62c888b9ffb367ca1f9c00a54e3e"
+      },
+      "current_pass": {
+        "started": "2026-10-27T03:41:29Z",
+        "rounds": [
+          {
+            "id": "c3bn-terrain-image-link",
+            "attempt": 13,
+            "dispatched": "2026-10-27T03:44:47.431499+00:00",
+            "deadline": "2026-10-27T04:26:29Z",
+            "worker_completed": "2026-10-27T03:56:36.862000+00:00",
+            "verified": "2026-10-27T04:07:06.878323+00:00",
+            "worker_reported_handoff": "2026-10-27T03:55:46Z",
+            "worker_terminal_clock_source": "API time.idle; reported note handoff kept separately",
+            "landed": "2026-10-27T04:07:34+00:00",
+            "commit": "d9f547cb7e0f62c888b9ffb367ca1f9c00a54e3e",
+            "dispatch_to_landing_seconds": 1366.568501,
+            "dispatch_to_worker_idle_seconds": 709.430501
+          }
+        ],
+        "ended": "2026-10-27T04:08:48.566186+00:00",
+        "elapsed_seconds": 1639.566186
+      },
+      "verified_at": "2026-10-27T04:07:06.878323+00:00",
+      "resource_state": {
+        "worker_session": "ses_e8489d148ffeAMmlarOJywR1Ag",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_tasks": 0,
+        "native_sessions_acquired": 0,
+        "owned_live_resources": 0,
+        "game_processes": 0,
+        "lemweb_tasks": 0,
+        "fixed": 177,
+        "evidence": 463,
+        "unrelated_dirty_preserved": 9,
+        "production_unchanged": true,
+        "private_control_restored": true
+      }
+    },
+    {
       "id": "c3-terrain-orientation",
       "goal": "Check surrounding terrain front-to-back source orientation against supported original geometry/transform evidence; no correction.",
       "milestones": [
@@ -2493,6 +2581,36 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bo-observation-feasibility",
+      "status": "landed",
+      "brief": "build/tmp/c3-observation-feasibility-pass/brief.md",
+      "worker_output": "build/tmp/c3bo-observation-feasibility/round-note.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "kind": "read-only source/document feasibility proposal",
+      "requested_model": "configured pin no override/fallback",
+      "attempt": 14,
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bo-observation-feasibility/**"
+      ],
+      "dispatched_at": "2026-10-27T04:54:15.426358+00:00",
+      "task_deadline": "2026-10-27T05:35:16Z",
+      "worker_session": "ses_e844a2f61ffe3UrVDkTJXdTxnc",
+      "actual_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T05:10:21.598239+00:00",
+      "note": "docs/scratch/phase-c3bo-observation-feasibility.md",
+      "outcome": "Conditional documentary candidate: established WinDbg processor execute breakpoint at46D5F3 avoids installing code redirect there. Not launch-ready; C3bc refusal unchanged.",
+      "facilitator_check": "Independently fetched primaryMicrosoft docs and revisions: processor/codepatch distinction, explicit usermode/x86e1 contract, OSdebug events, context architecture. Added initial-breakpoint/softwaredefaults/kill-on-exit caveats. Fresh file-backed65bytecall and pinnedC3bc sourcechecks pass. No candidate/surrogate/tool execution or test.",
+      "narrowing": "Exact debuggerartifact/WOW64/startup/threadcoverage/exitpolicy not verified; AW invocationlocal chain does NOT bind durableLVLidentity. CALL stack6words notPRE5. Single precall sample is attemptedrequest, not successful API/GPU/pixelownership. Prospective qualifiedsource mapping required, no fullframepromise.",
+      "resources": "Worker succeeded/idle configured Luna/high nooverride.0targetexecution/debugger/attach/injection/thread/task/install/surrogate operations; no live resources acquired, nohostinventory performed, no restoration owed."
+    },
     {
       "id": "c3bn-terrain-image-link",
       "status": "landed",

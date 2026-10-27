@@ -22,7 +22,12 @@
         "tools/harness/test_native_entry_capture.py"
       ],
       "cap_rationale": "Explicit new authority reopens historical B2m only; raw capture precedes geometry abort, exact source prelaunch identity and failure-retention actual-path exercise replace rejected probe. One start, no retry.",
-      "worker_session": "ses_e81203b8dffefVKDT4Y5vOl825"
+      "worker_session": "ses_e81203b8dffefVKDT4Y5vOl825",
+      "blocked_reason": "Mandatory actual-path failure-retention exercise on an owned harmless session-1 window (wrong geometry and forced capture error) was not completed; no helper was frozen/hashed, so the one predebited stock start was refused rather than attempted. See build/tmp/native-capture-first-entry-2026-10-27/capture/round-note.md. This is not evidence capture is impossible; continuation requires the prerequisite tooling test and explicit handling of the already charged start.",
+      "worker_output": "build/tmp/native-capture-first-entry-2026-10-27/capture/round-note.md",
+      "repair_brief": "build/tmp/native-capture-first-entry-2026-10-27/capture-repair1-brief.md",
+      "repair_campaign_attempt": 3,
+      "repair_rationale": "Unattempted own implementation prerequisite is not an external blocker. Same worker authorized narrow existing-capture wrapper, actual harmless-window failure exercise/freeze then single original predebited launch; unchanged20:07return/20:22landing. No retries or new timepool."
     },
     {
       "id": "b3k-native-binding-continuation",
@@ -70,7 +75,7 @@
     ],
     "current": "B2 native capture/input evidence",
     "rounds_run": 0,
-    "attempts_used": 2,
+    "attempts_used": 3,
     "stock_starts_used": 0,
     "stock_start_attempts_charged": 1,
     "stock_start_budget_remaining": 2,
@@ -83,7 +88,7 @@
         "state": "Predebited single ordinary start; failure exercise/prelaunch identity before launch required, no retry/refund assumed."
       }
     ],
-    "tooling_attempts_used": 0,
+    "tooling_attempts_used": 2,
     "tooling_seconds_used": 0,
     "stock_crashes": 0,
     "historical_counts": {
@@ -120,7 +125,9 @@
       "B2_B3": "unaccepted, no app map-to-level transition; gates unchanged"
     },
     "pending_questions": [],
-    "handoff": "Attempts1/2of4 queued disjoint: live one-start raw hostcapture/normalentry, offline conditionalbinding6newbodies historicalpick6.20:07return/20:22hardround; pass21:32:27 fixed. One native start predebited;0actual so far. No other focus allowed while live owner. Preserve existing failures/gates5hashes; expected next productionentry after verified packets, no premature acceptance.",
-    "stopped": null
+    "handoff": "Initial capture worker terminal/no start, no actual capture or test; own missingretention implementation returned as final boundedrepair3, tooling2of2 conservatively charged from19:38:52.917Z. Same20:07return/20:22landing, single original debit remains unattempted. Offline bindingattempt2 running historicalpick6. Pass21:32:27 fixed, finalattempt4 reserved actualentry if supported. No more tooling/retry/clockrenewal.",
+    "stopped": null,
+    "tooling_clock_started": "2026-10-27T19:38:52.917Z",
+    "tooling_clock_note": "Initial capture worker did no live observation; count initial1 and repair2 as tooling-only conservatively, charge whole original dispatch-to-landing interval (max60min); no third tooling attempt. Original single debit remains charged/unattempted, repair may execute that exact start only after prerequisites."
   }
 }

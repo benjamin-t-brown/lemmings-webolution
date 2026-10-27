@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T07:55:54.952659+00:00",
+  "updated": "2026-10-27T07:58:10.172143+00:00",
   "notes": "C3bt task19fullcoreacceptance failed14/18, firstslotonly/window1of4used. Task20integrationNOTdispatched; remaining3macroattempts/livepools1surrogate+1conditionalgame untouched. Automationauthorityrecorded; stopforparentreassessment.",
   "active": [],
   "queue": [],
@@ -53,7 +53,10 @@
           "dispatch": "2026-10-27T07:35:40.210376+00:00",
           "verified": "2026-10-27T07:55:54.952659+00:00",
           "outcome": "FullcoreacceptanceFAIL14/18, integration slotunused",
-          "note": "docs/scratch/phase-c3bt-controller-core.md"
+          "note": "docs/scratch/phase-c3bt-controller-core.md",
+          "landed": "2026-10-27T07:57:13+00:00",
+          "commit": "8ad609898f63afb71f39094965f541b892326ebe",
+          "task_ended": "2026-10-27T07:58:10.172143+00:00"
         }
       ],
       "live_pools": {
@@ -109,11 +112,11 @@
         "evidence": "docs/scratch/phase-c3bt-controller-core.md"
       }
     ],
-    "handoff": "STOPPED C3bt task19 FIRSTslotfullacceptanceFAIL14/18. Prior14/14BScontracts corrected; worker11/11pass. Remaining3mode/listingprobes acceptedwithout e1proof andknownargv/cwd missingdebit/terminalreceipts. Independentactualentryguardedtests/olddefectmutations andone-change modeverification discriminate; candidate3608e6aa342dfa8ff89d39d9c851abafc5d7fa753c32bab011a64f6cc9655cb6 unchanged. NOintegrationtask20dispatch: firstfailureendscurrentpass,secondslotnotretry. Governance docs/DIRECTIVE-AUTOMATION-2026-10-27.md d63e55a3838dcf4d267d20f52100cdf167a507448d883181f48098c2de8e9960 nowread/recordedasauthority,notretroactiveBSexpansion. Macro07:07:42\u201310:07:42,window1of4used/3remaining;1additionalsurrogate+1conditionalgamepool untouched. Standingboundedtest/nativepermission+specificsuccessorpreauthorization retained butnotactivatableonunacceptedcontroller; parentreviews/issuesnextdirective, no routineuserreapprovalinsidecaps. Runtimecontroller+safety/sourcebindingplan+separategamedirective stillrequired;C3bc refusal/park/gatesunchanged. BR/BSfailurepackets intact/mainmisscauseunknown.0sessions/starts/attach/processcontrol,workerdone/noliveresources. Reassess,notfurtherdispatchunderthisconsumedpass.",
+    "handoff": "STOPPED C3bt task19 FIRSTslotfullacceptanceFAIL14/18. Prior14/14BScontracts corrected; worker11/11pass. Remaining3mode/listingprobes acceptedwithout e1proof andknownargv/cwd missingdebit/terminalreceipts. Independentactualentryguardedtests/olddefectmutations andone-change modeverification discriminate; candidate3608e6aa342dfa8ff89d39d9c851abafc5d7fa753c32bab011a64f6cc9655cb6 unchanged. NOintegrationtask20dispatch: firstfailureendscurrentpass,secondslotnotretry. Governance docs/DIRECTIVE-AUTOMATION-2026-10-27.md d63e55a3838dcf4d267d20f52100cdf167a507448d883181f48098c2de8e9960 nowread/recordedasauthority,notretroactiveBSexpansion. Macro07:07:42\u201310:07:42,window1of4used/3remaining;1additionalsurrogate+1conditionalgamepool untouched. Standingboundedtest/nativepermission+specificsuccessorpreauthorization retained butnotactivatableonunacceptedcontroller; parentreviews/issuesnextdirective, no routineuserreapprovalinsidecaps. Runtimecontroller+safety/sourcebindingplan+separategamedirective stillrequired;C3bc refusal/park/gatesunchanged. BR/BSfailurepackets intact/mainmisscauseunknown.0sessions/starts/attach/processcontrol,workerdone/noliveresources. Reassess,notfurtherdispatchunderthisconsumedpass. Evidence8ad6098 committed/pushed; dispatch-to-landing1292.790s. Endpreservation373fixedinputs,2363prior evidence entries inclBR/BS/verificationpackets,currentcorecandidate,allhistory and10initialdirtypaths. Automationdirective readasgoverningauthorityandunchanged. WorkerAPIterminal; no native/processboundaryattempts/liveresources. Actualper-task/passclocksincurrent_pass. Window1used/3remaining,1surrogate+1conditionalgamepoolunused; no integrationdispatch. Parent reassesseswithinremainingauthority, notroutineuserapproval; no currentfollow-on.",
     "stopped": {
-      "date": "2026-10-27T07:55:54.952659+00:00",
+      "date": "2026-10-27T07:58:10.172143+00:00",
       "reason": "Firstcorecorrection fullacceptance failed; integration slot cannotrepairfailedfirst. Stopforparentreassessment,0livepools consumed.",
-      "last_commit": "0f8ba2669d4ff172d97a2910917ac99afbe85f9a"
+      "last_commit": "8ad609898f63afb71f39094965f541b892326ebe"
     },
     "current_pass": {
       "started": "2026-10-27T07:32:15Z",
@@ -127,9 +130,18 @@
           "deadline": "2026-10-27T08:17:15Z",
           "worker_completed": "2026-10-27T07:47:04.135000+00:00",
           "independent_checked": "2026-10-27T07:50:46.464577+00:00",
-          "verified": "2026-10-27T07:55:54.952659+00:00"
+          "verified": "2026-10-27T07:55:54.952659+00:00",
+          "worker_terminal_clock_source": "API time.idle",
+          "landed": "2026-10-27T07:57:13+00:00",
+          "commit": "8ad609898f63afb71f39094965f541b892326ebe",
+          "dispatch_to_landing_seconds": 1292.789624,
+          "dispatch_to_worker_idle_seconds": 683.924624,
+          "task_ended": "2026-10-27T07:58:10.172143+00:00",
+          "task_elapsed_seconds": 1555.172143
         }
-      ]
+      ],
+      "ended": "2026-10-27T07:58:10.172143+00:00",
+      "elapsed_seconds": 1555.172143
     },
     "verified_at": "2026-10-27T07:55:54.952659+00:00",
     "integration_slot": {

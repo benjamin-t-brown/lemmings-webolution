@@ -3140,7 +3140,7 @@
         "providerID": "openai",
         "variant": "high"
       },
-      "landed_at": "2026-10-27T07:55:54.952659+00:00",
+      "landed_at": "2026-10-27T07:57:13+00:00",
       "note": "docs/scratch/phase-c3bt-controller-core.md",
       "outcome": "Prior14/14controlcontracts corrected, butfullacceptanceFAIL14/18:3HWmode/listing cases accepted andknownargv/cwd missingdurablereceipts. Stop,nointegration-slotrepair.",
       "candidate": "build/tmp/c3bt-controller-core/controller.py",
@@ -3161,7 +3161,17 @@
         "BRmainmisscause unexplained,BRstillfailed"
       ],
       "facilitator_check": "Own guarded actualentry14oldcontracts pass;4additional mandatorycases fail. Five isolatedolddefectregression observations discriminate previousfixes; separateone-change in-memory e1listingmutation rejects3wrongmodecases while genuineHWpositive passes. Candidatebyteexact, nofacilitatorrepair.",
-      "resources": "Configuredworker succeeded/idle,0native/processboundaryattempts. Pythonmockrunnersonly,0sessions/target/game/attach/control, no liveownedresources. BR/BS/allhistoricalevidence preserved."
+      "resources": "Configuredworker succeeded/idle,0native/processboundaryattempts. Pythonmockrunnersonly,0sessions/target/game/attach/control, no liveownedresources. BR/BS/allhistoricalevidence preserved.",
+      "commit": "8ad609898f63afb71f39094965f541b892326ebe",
+      "dispatch_to_landing_seconds": 1292.789624,
+      "worker_api_idle": "2026-10-27T07:47:04.135000+00:00",
+      "pass_ended": "2026-10-27T07:58:10.172143+00:00",
+      "pass_elapsed_seconds": 1555.172143,
+      "task_elapsed_seconds": 1555.172143,
+      "automation_window_attempts_used": 1,
+      "automation_window_attempts_remaining": 3,
+      "unused_integration_slot": true,
+      "live_pools_consumed": false
     },
     {
       "id": "c3bs-controller-offline",

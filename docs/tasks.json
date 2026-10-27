@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T05:35:59.740280+00:00",
+  "updated": "2026-10-27T05:37:48.192556+00:00",
   "notes": "C3bp attempt15 decisiveNO-GO, routeparked; prior14/history20 retained and actualhistory21. Sourcebinding secondtask/attempt16 unused; no execution/follow-on.",
   "active": [],
   "queue": [],
@@ -47,11 +47,11 @@
         "evidence": "docs/scratch/phase-c3bp-debugger-no-go.md"
       }
     ],
-    "handoff": "STOPPED/PARKED C3bp attempt15 NO-GO. Independent bounded metadata check pins no supported available WinDbg/DbgEng artifact; standardroots missing/aliases+registrations no match, systemWindowsApps accessdenied UNKNOWN not globalabsence. No lifecycleartifact/version/mode can be supported, no liveplan. Sourcebinding task notdispatched afterdecisivefirstgate failure; AW invocationlocal\u2192durableLVL binding remainsunestablished, notprovedimpossible. Prior B1uGDBblindspot/A1trapcleanup failures, BOcaveats/CALL6words, C3bcFXpositive/refusal retained. No implementation/execution/methodswitch/install/hostdryrun. Retained C3FAIL/C1PASS unchanged,no render/rescore. Prior14 andhistorical20throughBO retained, actualhistory21; only1of2attempts used, slot16 notcarryoverpermission. PhaseEpark recorded, directiveconsumed; no automatic feasibility/live continuation.",
+    "handoff": "STOPPED/PARKED C3bp attempt15 NO-GO. Independent bounded metadata check pins no supported available WinDbg/DbgEng artifact; standardroots missing/aliases+registrations no match, systemWindowsApps accessdenied UNKNOWN not globalabsence. No lifecycleartifact/version/mode can be supported, no liveplan. Sourcebinding task notdispatched afterdecisivefirstgate failure; AW invocationlocal\u2192durableLVL binding remainsunestablished, notprovedimpossible. Prior B1uGDBblindspot/A1trapcleanup failures, BOcaveats/CALL6words, C3bcFXpositive/refusal retained. No implementation/execution/methodswitch/install/hostdryrun. Retained C3FAIL/C1PASS unchanged,no render/rescore. Prior14 andhistorical20throughBO retained, actualhistory21; only1of2attempts used, slot16 notcarryoverpermission. PhaseEpark recorded, directiveconsumed; no automatic feasibility/live continuation. Round6a44097 committed/pushed; dispatch-to-landing839.787s. End checks preserve368fixed/source/install inputs,2145prior evidence entries,all historicalarchive entries and9dirty deltas, captureproposal exact andPhaseEoldtext intact. Worker APIterminal/activeabsence rechecked;0native resources acquired/nohostprocess-taskinventory. Actual clocks in current_pass.",
     "stopped": {
-      "date": "2026-10-27T05:35:59.740280+00:00",
+      "date": "2026-10-27T05:37:48.192556+00:00",
       "reason": "Verified decisive NO-GO at debugger artifact/lifecycle gate; route parked. Sourcebinding secondtask/attempt16 deliberately unused, no automatic extension.",
-      "last_commit": "19cf4462cdf6967c0593c5f4213afd72a2910607"
+      "last_commit": "6a44097004cae5674b8a383fd7998e1899791c20"
     },
     "current_pass": {
       "started": "2026-10-27T05:18:22Z",
@@ -63,9 +63,16 @@
           "deadline": "2026-10-27T06:07:39.213204+00:00",
           "worker_completed": "2026-10-27T05:26:26.496000+00:00",
           "worker_reported_metadata_finished": "2026-10-27T05:24:38.051513Z",
-          "verified": "2026-10-27T05:35:59.740280+00:00"
+          "verified": "2026-10-27T05:35:59.740280+00:00",
+          "worker_terminal_clock_source": "API time.idle; reported metadata-finished clock kept separately",
+          "landed": "2026-10-27T05:36:39+00:00",
+          "commit": "6a44097004cae5674b8a383fd7998e1899791c20",
+          "dispatch_to_landing_seconds": 839.786796,
+          "dispatch_to_worker_idle_seconds": 227.282796
         }
-      ]
+      ],
+      "ended": "2026-10-27T05:37:48.192556+00:00",
+      "elapsed_seconds": 1166.192556
     },
     "verified_at": "2026-10-27T05:35:59.740280+00:00",
     "resource_state": {

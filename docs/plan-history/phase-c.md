@@ -1277,3 +1277,17 @@ movement. Retained+1898 producer/backend/geometry inputs still block complete cu
 integration; incidental locator-window coverage variance is disclosed, not erased.
 Zero stock starts/live resources; worker idle/REA closed. Continue runtime HUD and ordinary
 native correlation under the same campaign budget, not a new cap/pool.
+
+### C3bv — final pack adopted on production meshes, 2026-10-27
+
+[Facilitator check](../scratch/phase-c3bv-production-pack.md): campaignattempts1/3/4,
+initial+two repairs; historical packingattempts2–4 retain C3ak. Initial raw-diffuse
+bypass/bias cancellation rejected; repaired native-domain pack decodes physical
+comparison depth without undoing bias. Actual BackdropScene one-call bypass now
+fails a permanent retail RGB+depth assertion; own byte reads,301cases/3010fields,
+isolated source mutation/exact restore and47/47CTest pass. Fresh fixed C3 score
+14934333/235008000=.06354818984885621 FAIL, +3error/3changedpixels; C1 zoom1/elev_down
+footprints exact unchanged PASS. Conditional SOURCE scale/bias/UV defaults are not
+native draw state; clipping/admission/precision gaps remain. At3C3attempts reassess:
+production mechanism connected, no material visual convergence, so continue C2/B2/B3
+now, no pixel polishing/controller repair. Zero stock starts/live resources.

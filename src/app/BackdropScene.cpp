@@ -61,7 +61,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    return &textures.emplace(name,rgba(*img)).first->second;
  };
  const SceneRgbaImage white{1,1,{255,255,255,255}};
- const auto context=predicateContext(camera);
+  const auto context=predicateContext(camera);
+  const auto meshProjectionScale=buildBillboardCameraChain(camera).projectionTransform[10];
   std::map<std::size_t,std::array<double,3>> eyes;
    std::map<std::size_t,std::vector<SceneMeshRecordSource>> secondaryMeshes;
    std::vector<SceneMeshRecordSource> primaryMeshes, legacyMeshes;
@@ -76,7 +77,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     const auto state=options(false,rec.blendSelector==1);
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
-      auto adapted=adaptSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],0.25/p[2],a[0],a[1],{a[2],a[3],a[4],a[5]});
+       auto adapted=adaptPackedSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],meshProjectionScale,0.0,{a[2],a[3],a[4],a[5]},a[0],a[1]);
       if(!adapted){valid=false;break;}v[j]=*adapted;
     }
      if(valid){SceneRasterObserver tagged;if(primary){tagged=*observer;tagged.source=rec.recordSourceOffset;tagged.triangle=k-1;}auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state,primary?&tagged:nullptr);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else ++stats.rejected;}else ++stats.rejected;

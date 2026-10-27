@@ -60,6 +60,12 @@ open.
 
 ### C3 backdrop scenery
 
+**2026-10-27 C3 reassessment:** [C3bv](../scratch/phase-c3bv-production-pack.md)
+adopts final packing in the conditional SOURCE production mesh path. Three campaign
+attempts including two repairs give C3 .06354818984885621 FAIL (+3numerator), not visual
+convergence. Continue C2/B2/B3 before further C3 work; old clip/native-state/admission
+and observer/controller parks below remain. Do not reopen three-pixel polishing.
+
 **C3be bounded diagnostic stop,2026-10-26:**
 [Latest check and resume boundary](../scratch/phase-c3be-residual-attribution.md).
 Two attempts including repair,0starts; restored C3.0635481771FAIL/C1PASS unchanged.

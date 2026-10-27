@@ -129,7 +129,7 @@ add_executable(test_sceneclip src/__test__/test_sceneclip.cpp src/app/SceneClip.
 target_include_directories(test_sceneclip PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME sceneclip COMMAND test_sceneclip)
 
-add_executable(test_scenedepth src/__test__/test_scenedepth.cpp src/app/SceneDepth.cpp src/app/SceneRaster.cpp src/app/SceneBillboardSource.cpp)
+add_executable(test_scenedepth src/__test__/test_scenedepth.cpp src/app/SceneDepth.cpp src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneRaster.cpp src/app/SceneBillboardSource.cpp)
 target_include_directories(test_scenedepth PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME scenedepth COMMAND test_scenedepth)
 
@@ -258,6 +258,7 @@ add_executable(test_backdropscene
   src/app/SceneBillboardSource.cpp
   src/app/SceneDispatch.cpp
   src/app/SceneDepth.cpp
+  src/app/SceneVertexPack.cpp
   src/app/SceneDiffuse.cpp
   src/app/Camera.cpp
   src/app/Raster.cpp
@@ -282,6 +283,10 @@ add_executable(test_scenevertexpack
   src/app/SceneVertexPack.cpp)
 target_include_directories(test_scenevertexpack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME scenevertexpack COMMAND test_scenevertexpack)
+
+add_executable(test_scene_pack_adoption src/__test__/test_scene_pack_adoption.cpp src/app/SceneDepth.cpp src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneRaster.cpp src/app/SceneBillboardSource.cpp)
+target_include_directories(test_scene_pack_adoption PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME scene_pack_adoption COMMAND test_scene_pack_adoption)
 
 add_executable(test_scenediffuse
   src/__test__/test_scenediffuse.cpp

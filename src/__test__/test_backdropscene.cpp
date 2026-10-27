@@ -11,6 +11,7 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <bit>
 
 int main(){
  int checks=0,fail=0;auto check=[&](bool ok,const char* s){++checks;if(!ok){++fail;std::cerr<<"FAIL "<<s<<"\n";}};
@@ -20,13 +21,14 @@ int main(){
   scheduled.clear();
   webo::app::scheduleSceneFrame([&]{scheduled.push_back("primary");},[&]{scheduled.push_back("legacy-unattributed");},[&]{scheduled.push_back("secondary");},[&]{scheduled.push_back("tube");});
   check(scheduled!=std::vector<std::string>({"primary","legacy-unattributed","tube","secondary"}),"secondary-before-tube isolated scheduler mutation fails ordering oracle");
- auto libdir=std::getenv("WEBOLUTION_GAME_DIR");if(!libdir){std::cout<<"SKIP: WEBOLUTION_GAME_DIR unset\n";return 0;}
+  auto libdir=std::getenv("WEBOLUTION_GAME_DIR");if(!libdir){std::cout<<"SKIP: WEBOLUTION_GAME_DIR unset\n";return 0;}
  auto lib=webo::AssetLibrary::open(std::filesystem::path(libdir)/"lemmings.box",std::filesystem::path(libdir)/"patch.box");check(bool(lib),"open retail archive");if(!lib)return 1;
- std::string level;for(auto& n:webo::levelFileNames(*lib))if(n.find("MM_CLIMB_002")!=std::string::npos){level=n;break;}check(!level.empty(),"find supported level");if(level.empty())return 1;
+  std::string level;for(auto& n:webo::levelFileNames(*lib))if(n.find("MM_CLIMB_002")!=std::string::npos){level=n;break;}check(!level.empty(),"find supported level");if(level.empty())return 1;
  auto bytes=lib->read(level);check(bool(bytes),"read supported level");if(!bytes)return 1;
  auto scene=webo::app::BackdropScene::build(*lib,*bytes,"MM_CLIMB_002");check(bool(scene),"parse guarded roots");if(!scene)return 1;
  auto unsupported=webo::app::BackdropScene::build(*lib,*bytes,"MM_DIG_000");check(bool(unsupported)&&unsupported->empty(),"unsupported level is clean empty scene");
- webo::app::CameraParams cp;cp.width=640;cp.height=480;cp.aspect=4.0/3.0;auto cam=webo::app::buildCamera(cp);webo::app::Raster raster(640,480);raster.clear(0,0,0);webo::app::BackdropStats stats;scene->render(raster,cam,*lib,stats);
+  webo::app::CameraParams cp;cp.width=640;cp.height=480;cp.aspect=4.0/3.0;auto cam=webo::app::buildCamera(cp);webo::app::Raster raster(640,480);raster.clear(0,0,0);webo::app::BackdropStats stats;scene->render(raster,cam,*lib,stats);
+   { webo::app::Raster packedRaster(640,480);packedRaster.clear(0,0,0);webo::app::BackdropStats packedStats;scene->renderStage(packedRaster,cam,*lib,packedStats,webo::app::BackdropScene::Stage::Primary);std::uint64_t h=1469598103934665603ull;auto add=[&](std::uint8_t b){h=(h^b)*1099511628211ull;};for(auto b:packedRaster.framebuffer().rgb)add(b);for(double d:packedRaster.mutableDepthBuffer()){auto bits=std::bit_cast<std::uint64_t>(d);for(int i=0;i<8;++i)add(static_cast<std::uint8_t>(bits>>(8*i)));}check(h==0x1fd0bfb82ab39e95ull,"actual BackdropScene primary packed RGB+depth output matches deterministic production fixture"); }
   std::size_t nonblack=0;for(std::size_t i=0;i<raster.framebuffer().rgb.size();i+=3)if(raster.framebuffer().rgb[i]||raster.framebuffer().rgb[i+1]||raster.framebuffer().rgb[i+2])++nonblack;
    webo::app::Raster censusRaster(640,480);censusRaster.clear(0,0,0);webo::app::BackdropStats primaryCensus,legacyCensus,secondaryCensus;
    scene->renderStage(censusRaster,cam,*lib,primaryCensus,webo::app::BackdropScene::Stage::Primary);

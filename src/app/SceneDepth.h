@@ -24,4 +24,12 @@ SceneRasterVertex billboardRasterVertex(const BillboardVertex& slot,
                                         const BillboardCameraChain& chain,
                                         std::array<double, 4> diffuse);
 
+// SOURCE mesh submission adapter. projectionScale and bias are explicit; the
+// BackdropScene caller supplies the current chain's Pzz and its declared zero
+// source bias. Returned depth is decoded to physical view units for SceneRaster.
+std::expected<SceneRasterVertex, std::string> adaptPackedSceneMeshVertex(
+    double screenX, double screenY, double physicalViewZ,
+    double projectionScale, double sourceBias,
+    std::array<double, 4> diffuse, double u, double v);
+
 }  // namespace webo::app

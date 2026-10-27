@@ -55,12 +55,12 @@ but a complete menu/map/audio runtime is not integrated.
   accepted; runtime navigation/map remains unfinished.
 - C1's two amended panel views pass. C2 counters/caption are partial fixtures;
   cursor and runtime HUD/pause integration remain unfinished.
-- C3 full-frame remains **FAIL: 0.0635481771 vs 0.02** (retained baseline).
+- C3 full-frame remains **FAIL: 0.0635481898 vs 0.02** ([C3bv source render](docs/scratch/phase-c3bv-production-pack.md)).
 - Simulation rules/gadgets are implemented, but discrete 5 Hz stepping was later
   retracted. D1/D3 and the D2 digger clock remain user-parked, not accepted.
 
-These are accepted historical results, not a fresh build/live claim from this
-README update. Current direction is integrated retail-level progress, C3 → C2 →
+See the linked checks for dated results/scopes; editing this README alone does
+not establish fresh build/live evidence. Current direction is C3 → C2 →
 B2 → B3; tools support named fidelity decisions, not completion by themselves.
 
 Asset tooling remains available: `make -C src info`, `dump`, `png`, and

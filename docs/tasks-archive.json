@@ -3,6 +3,102 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-windbg-install",
+      "goal": "Install official Microsoft WinDbg only, verify package/filemetadata without launching debugger; stop.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh explicit user go ahead an install one, official Microsoft.WinDbg only;1task/cumulative16,45min overall incl verification/landing/cleanup. Not expiredC3bp slot16;0debugger/gameuse.",
+      "directive_sha256": "099206e2a16dc870356802411988019f87ecb7c4965227638f29b21ff9e34890",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh API active self+unrelateded-ascii only; selfSol/high priorworker succeeded/idle. active/self/prior-worker/parent saved; ff-only pull2be0184.",
+      "started_at": "2026-10-27T05:42:07Z",
+      "deadline": "2026-10-27T06:27:07Z",
+      "grants": {
+        "rounds": 1,
+        "cumulative_question_cap": 16,
+        "overall_minutes": 45,
+        "repair_allowed": false,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injection": 0,
+        "installations": "one official Microsoft.WinDbg with ordinary requireddependencies only;stopforelevation/interactiveconsent",
+        "commits": "isolated own paths, normal origin decompile sync"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 16,
+      "stock_starts_used": 0,
+      "historical_observation": {
+        "through_BP": 21,
+        "current_observation_attempts": 0,
+        "historical_total": 21,
+        "installation_tasks_this_pass": 1,
+        "scope": "Newinstallationtasknotobservationtest; all previous14/15 andexpiredunusedBPslot16 preserved"
+      },
+      "pending_questions": [
+        {
+          "question": "Report installation procedural deviations and remaining lifecycle/source-binding gaps; no action authorized.",
+          "recommendation": "Leave intentional officialdebugger installed; no repair/reinstall/extra research or debugger/game use. C3bc refusal/readinesspark remains. Any further scope requires separate explicit decision.",
+          "evidence": "docs/scratch/phase-c3bq-windbg-install.md"
+        }
+      ],
+      "handoff": "STOPPED C3bq install-only: Microsoft.WinDbg1.2610.1001.0_x64__8wekyb3d8bbwe StatusOk, actualsignedmain/enginehashes independentlyverified; exact managerlogauthenticated. WorkerExecutionPolicyBypass process-scope deviation and $PID wrapperfailure/loststdout-exitcode disclosed, no cleanprocedureclaim; no persistentpolicywrite byflag identified, beforebaselineabsent. SkipReputationCheck1 internalmanageroption retained withoutCLIhashbypass; publishedmanifest and ValidMicrosoftfile signatures distinct. OwnXML rejects worker noaliasclaim:15inclWinDbgXzero-byteAppExecLink→actualDbgX.Shell.exe. No declared/registered package dependency, no completehostdelta. OriginalinstallerPIDs absent/notpartial; intentionalpackage stays. No debugger/game/surrogateexecution, research/lifecycle/sourcebinding or follow-on. C3bc refusal/BPreadinessgaps remain, retainedgates unchanged. Freshinstalltask16 notexpiredBPslot16, observationhistory21 unchanged. Directiveconsumed. Installationevidencefdb08b2 committed/pushed; dispatch-to-landing1642.261s. End checks preserve368fixed/source/install inputs,2184prior evidence entries,allhistory and9dirty deltas, captureproposal exact/PhaseEoldtext intact. CurrentpackageStatusOk/notpartial and originalinstallerPIDs absent rechecked; worker APIterminal. No procedure-compliance/shell-exitcode/fulldependencydelta claim. Actual clocks in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T06:15:21.803352+00:00",
+        "reason": "Installation-only stop: officialpackage installed/metadata verified; report process-scope security-policy deviation and incomplete shell/dependency receipts. No furtherinstall/research/use.",
+        "last_commit": "fdb08b2c510d02cb31a9e4de31f8c554aea22a3c"
+      },
+      "current_pass": {
+        "started": "2026-10-27T05:42:07Z",
+        "rounds": [
+          {
+            "id": "c3bq-windbg-install",
+            "attempt": 16,
+            "dispatched": "2026-10-27T05:46:11.738718+00:00",
+            "deadline": "2026-10-27T06:27:07Z",
+            "worker_completed": "2026-10-27T05:55:28.136000+00:00",
+            "manager_log_stage_register_window": "2026-10-26local23:50:10.094..23:50:35.606; shell exitcode unobserved",
+            "verified": "2026-10-27T06:12:57.865677+00:00",
+            "worker_terminal_clock_source": "API time.idle",
+            "landed": "2026-10-27T06:13:34+00:00",
+            "commit": "fdb08b2c510d02cb31a9e4de31f8c554aea22a3c",
+            "dispatch_to_landing_seconds": 1642.261282,
+            "dispatch_to_worker_idle_seconds": 556.397282
+          }
+        ],
+        "ended": "2026-10-27T06:15:21.803352+00:00",
+        "elapsed_seconds": 1994.803352
+      },
+      "verified_at": "2026-10-27T06:12:57.865677+00:00",
+      "resource_state": {
+        "worker_session": "ses_e841a9a87ffeT7a4A2zDizQji0",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "debugger_sessions": 0,
+        "target_thread_manipulations": 0,
+        "scheduled_task_operations": 0,
+        "installation_attempts": 1,
+        "surrogate_executions": 0,
+        "fixed": 368,
+        "evidence": 2184,
+        "unrelated_dirty_preserved": 9,
+        "capture_proposal_byte_exact": true,
+        "production_and_observer_unchanged": true,
+        "all_historical_archive_entries_preserved": true,
+        "phase_e_old_text_preserved": true,
+        "installed_debugger_retained": true,
+        "debugger_launches": 0,
+        "owned_installer_pids_remaining": 0,
+        "restoration_required": false,
+        "procedural_deviation_reported": "Worker process-scope ExecutionPolicy Bypass; incomplete shell receipt/dependency delta retained"
+      }
+    },
+    {
       "id": "c3-debugger-go-no-go",
       "goal": "Offline debugger artifact/lifecycle then unique sandy-source binding GO/NO-GO. Stop on either decisive blocker; no execution.",
       "milestones": [
@@ -2780,6 +2876,57 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3br-windbg-surrogate",
+      "status": "landed",
+      "brief": "build/tmp/c3-windbg-surrogate-pass/brief.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "kind": "one actual IA32 surrogate debugger trial",
+      "requested_model": "configured pin nooverride/fallback",
+      "attempt": 17,
+      "owns_live_game": false,
+      "owns_surrogate": true,
+      "surrogate_owner": null,
+      "live_owner": null,
+      "worker_output": "build/tmp/c3br-windbg-surrogate/round-note.md",
+      "owned_paths": [
+        "build/tmp/c3br-windbg-surrogate/**",
+        "ordinary per-user debuggerstate/logs for oneownedtestonly"
+      ],
+      "dispatched_at": "2026-10-27T06:28:16.772171+00:00",
+      "task_deadline": "2026-10-27T07:07:02Z",
+      "worker_session": "ses_e83f405b9ffe7D6I10RuWjckn3",
+      "actual_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T06:55:45.021047+00:00",
+      "note": "docs/scratch/phase-c3br-windbg-surrogate.md",
+      "outcome": "FAIL: main marker stops absent; later marker3 and maincleanup1 observed; controller missed disarm-before-continue, exit receipts unavailable. No retry.",
+      "counts": {
+        "debugger_sessions": 1,
+        "surrogate_starts": 1,
+        "stock_starts": 0,
+        "existing_attaches": 0,
+        "injections": 0,
+        "user_software_breakpoints": 0,
+        "repair_dispatches": 0
+      },
+      "frontend": "Official package bundled x86/cdb.exe 10.0.29661.1004; no GUI/frontend retry",
+      "target_sha256": "b334796aa00d5ce3e737251ea7d8237c6fa874cad52016e6be9833f3d4b649db",
+      "facilitator_check": "Separate offline PE/header/export/entry-byte/source/command/raw hit TID parser confirms main0/3,later3/3,cleanup1/1. Own package/frontend/adjacentengine metadata/hash/ValidMicrosoft signatures. Exact ownedPID37312/46328 absence read-only; no target/debugger/controller execution.",
+      "narrowed": [
+        "Missing main marker cause unestablished; maincleanup hardware hit contradicts blanket mainthread failure",
+        "Seventh prompt assumption missed actual fourthhardware cleanup stop; bc only after No runnable debuggees",
+        "Unexpected-stop/error abort contract not implemented; actual arguments/stack not logged",
+        "No live-stopped disarm, actual exit code/mechanism, clean shutdown/detach proof; absence/sourceintent not exit0",
+        "Adjacentengineidentity/banner not actual loadedmodulepath enumeration",
+        "Gallery update/install permissions logged not proof activity; full per-user change delta unavailable"
+      ],
+      "resources": "Worker succeeded/idle; exact originalownedPIDs absent independently. No termination command reported. Installed WinDbg retained. Zero game/sourcebinding/observer/renderer/framework continuation."
+    },
     {
       "id": "c3bq-windbg-install",
       "status": "landed",

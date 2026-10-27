@@ -1192,3 +1192,22 @@ No retry/uninstall; ownedinstallerPIDs absent, debugger intentionallystays. No
 debugger/game/surrogateexecution, lifecycle/sourcebinding/research continuation,
 tests/render/rescore. Retained C3FAIL/C1PASS; captureproposal/dirty/history preserved.
 C3bc refusal andC3bp readinessgaps remain; installationisnot useauthorization.
+
+**C3br, 2026-10-27 — one actual IA32 CDB surrogate trial FAILED; stop, no retry.**
+Fresh task17 after16; historical observation/feasibility21 remains separate.
+One actual bundled x86 CDB10.0.29661.1004 session and one target start,0stock.
+[Independent verification](../scratch/phase-c3br-windbg-surrogate.md) authenticates
+exact package/frontend/adjacent engine and surrogate PE/exports/hash, then parses
+saved raw output without another session. Main marker bodies3/no stops; later
+marker bodies3/three hardware stops; main cleanup body1/one hardware stop.
+No established cause for initial misses, no universal main-thread defect claim.
+OS startup int3 distinct from user hardware observations. Controller assumes
+seventh prompt is cleanup; actual fourth hardware stop was cleanup, continued
+without disarm. Clear/list came after No runnable debuggees, not valid live-stopped
+cleanup proof. Unexpected-event/error abort promised but not implemented. Actual
+exit codes/mechanisms unavailable; EXIT_INTENT0/process absence not exit0/detach.
+Independent exact-PID37312/46328 query finds absent; worker idle, no termination
+command reported. Extension-gallery update permissions logged, not actual update
+proof; no full per-user delta claimed. No retry/repair/game/sourcebinding/observer/
+renderer/framework work or render/rescore. Package/game/evidence/dirty work and
+retained C3FAIL/C1PASS unchanged. C3bc refusal and original readiness remain parked.

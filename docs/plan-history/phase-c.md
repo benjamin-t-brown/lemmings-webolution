@@ -1172,3 +1172,23 @@ rescore. Retained C3.0635481771FAIL/C1.0160864/.0161212PASS unchanged. Worker
 succeeded/idle,0native resources; prior evidence/dirty captureproposal preserved.
 PhaseE park updated; directive consumed at NO-GO, no automatic feasibility extension
 or live launch, original task/overall deadlines retained.
+
+**C3bq, 2026-10-27 — official WinDbg installed, metadata verified; procedural deviations retained.**
+Fresh explicit install-only task16, not expiredBPslot16; observationhistory21
+unchanged. Existingwinget1.29.380 installs exactMicrosoft.WinDbg1.2610.1001.0
+userscope fromofficialMicrosoft URL; currentregistrationStatusOk,X64,notpartial,
+PublisherMicrosoft/SignatureKindDeveloper. Own actualPE/hash/versions/signatures
+verify signed DbgX.Shell.exe andamd64/x86dbgeng10.0.29661.1004, amd64dbgmodel.
+[Facilitator check](../scratch/phase-c3bq-windbg-install.md) rejects worker's noalias
+claim:15manifestaliases inclWinDbgX.exe, actualzero-byteAppExecLink not mainPE.
+Wrapper failed at read-only$PID assignment afterstartingwinget, losingstdout/
+stderr/exitcode; terminalmanagerlog+independentinstalledstate retained, noexit0claim.
+Worker's unnecessary process-scope ExecutionPolicyBypass is a constraintdeviation,
+not excused as installpermission; no persistentregistry-policywrite identified.
+ManagerlogSkipReputationCheck1 separatelydisclosed, noCLIhash-bypassflag; published
+manifest/hashvalidation andvalidfile signatures distinct. No package dependencies
+declared/registered ordependency phase logged, but fullpreinstallhostdelta missing.
+No retry/uninstall; ownedinstallerPIDs absent, debugger intentionallystays. No
+debugger/game/surrogateexecution, lifecycle/sourcebinding/research continuation,
+tests/render/rescore. Retained C3FAIL/C1PASS; captureproposal/dirty/history preserved.
+C3bc refusal andC3bp readinessgaps remain; installationisnot useauthorization.

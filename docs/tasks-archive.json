@@ -3,6 +3,104 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-debugger-go-no-go",
+      "goal": "Offline debugger artifact/lifecycle then unique sandy-source binding GO/NO-GO. Stop on either decisive blocker; no execution.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh user yes; defaultSol offline GO/NO-GO max2attempts15-16,90min overall/45min per task incl repair/verification,0execution. No secondslot after decisiveNO-GO.",
+      "directive_sha256": "b6891c904b728c08a777a4aae1c0496bbbbf8e657097b1944cf206e000ba81e6",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh API active self+unrelateded-ascii only; selfSol/high priorworker succeeded/idle. Saved active/self/prior-worker/parent, ff-only pull19cf446.",
+      "started_at": "2026-10-27T05:18:22Z",
+      "deadline": "2026-10-27T06:48:22Z",
+      "grants": {
+        "rounds": 2,
+        "cumulative_question_cap": 16,
+        "overall_minutes": 90,
+        "task_minutes_including_repairs_verification": 45,
+        "repair_inclusive": true,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injection": 0,
+        "installations": 0,
+        "commits": "isolated own paths, normal origin decompile sync"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 15,
+      "stock_starts_used": 0,
+      "historical_observation": {
+        "through_BO": 20,
+        "retained_prior_breakdown": "AT/AU/AV6+AW/AX3+AY/AZ5+BA/BB3+BC2+BO1; older mixedruns16/3 and fullarchive preserved",
+        "current_actual_attempts": 1,
+        "historical_total": 21
+      },
+      "decomposition": "Task1 pin existing debugger and lifecycle. If decisiveNO-GO stop/park with secondslot unused. Only after verifiedpass dispatchTask2 designated disassembly worker for unique CALL/context→loadedasset→6b72b/596c7 binding; no concurrent unnecessarydispatch.",
+      "pending_questions": [
+        {
+          "question": "No supported available exact debugger/lifecycle is pinned; source binding also remains unestablished.",
+          "recommendation": "Park; no automatic feasibility extension, installation, method change or live request. Any new artifact or changed scope requires a separate explicit user decision; unused slot is not authorization.",
+          "evidence": "docs/scratch/phase-c3bp-debugger-no-go.md"
+        }
+      ],
+      "handoff": "STOPPED/PARKED C3bp attempt15 NO-GO. Independent bounded metadata check pins no supported available WinDbg/DbgEng artifact; standardroots missing/aliases+registrations no match, systemWindowsApps accessdenied UNKNOWN not globalabsence. No lifecycleartifact/version/mode can be supported, no liveplan. Sourcebinding task notdispatched afterdecisivefirstgate failure; AW invocationlocal→durableLVL binding remainsunestablished, notprovedimpossible. Prior B1uGDBblindspot/A1trapcleanup failures, BOcaveats/CALL6words, C3bcFXpositive/refusal retained. No implementation/execution/methodswitch/install/hostdryrun. Retained C3FAIL/C1PASS unchanged,no render/rescore. Prior14 andhistorical20throughBO retained, actualhistory21; only1of2attempts used, slot16 notcarryoverpermission. PhaseEpark recorded, directiveconsumed; no automatic feasibility/live continuation. Round6a44097 committed/pushed; dispatch-to-landing839.787s. End checks preserve368fixed/source/install inputs,2145prior evidence entries,all historicalarchive entries and9dirty deltas, captureproposal exact andPhaseEoldtext intact. Worker APIterminal/activeabsence rechecked;0native resources acquired/nohostprocess-taskinventory. Actual clocks in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T05:37:48.192556+00:00",
+        "reason": "Verified decisive NO-GO at debugger artifact/lifecycle gate; route parked. Sourcebinding secondtask/attempt16 deliberately unused, no automatic extension.",
+        "last_commit": "6a44097004cae5674b8a383fd7998e1899791c20"
+      },
+      "current_pass": {
+        "started": "2026-10-27T05:18:22Z",
+        "rounds": [
+          {
+            "id": "c3bp-debugger-lifecycle",
+            "attempt": 15,
+            "dispatched": "2026-10-27T05:22:39.213204+00:00",
+            "deadline": "2026-10-27T06:07:39.213204+00:00",
+            "worker_completed": "2026-10-27T05:26:26.496000+00:00",
+            "worker_reported_metadata_finished": "2026-10-27T05:24:38.051513Z",
+            "verified": "2026-10-27T05:35:59.740280+00:00",
+            "worker_terminal_clock_source": "API time.idle; reported metadata-finished clock kept separately",
+            "landed": "2026-10-27T05:36:39+00:00",
+            "commit": "6a44097004cae5674b8a383fd7998e1899791c20",
+            "dispatch_to_landing_seconds": 839.786796,
+            "dispatch_to_worker_idle_seconds": 227.282796
+          }
+        ],
+        "ended": "2026-10-27T05:37:48.192556+00:00",
+        "elapsed_seconds": 1166.192556
+      },
+      "verified_at": "2026-10-27T05:35:59.740280+00:00",
+      "resource_state": {
+        "worker_session": "ses_e843025dbffedViWM0UqQsEz4X",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "debugger_sessions": 0,
+        "process_thread_manipulations": 0,
+        "scheduled_task_operations": 0,
+        "installations": 0,
+        "surrogate_executions": 0,
+        "fixed": 368,
+        "evidence": 2145,
+        "unrelated_dirty_preserved": 9,
+        "capture_proposal_byte_exact": true,
+        "production_and_observer_unchanged": true,
+        "all_historical_archive_entries_preserved": true,
+        "phase_e_old_text_preserved": true,
+        "target_operations": 0,
+        "owned_native_resources": 0,
+        "restoration_required": false,
+        "host_process_task_inventory_performed": false
+      },
+      "unused_attempts": 1,
+      "source_binding_task_dispatched": false
+    },
+    {
       "id": "c3-observation-feasibility",
       "goal": "One offline proposal for concrete prospective native-observation safety mechanism relevant to sandy-terrain native correspondence, or supported negative. No implementation/execution.",
       "milestones": [
@@ -2682,6 +2780,44 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bq-windbg-install",
+      "status": "landed",
+      "worker_output": "build/tmp/c3bq-windbg-install/round-note.md",
+      "brief": "build/tmp/c3-windbg-install-pass/brief.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "kind": "official WinDbg installation and metadata only",
+      "requested_model": "configured pin nooverride/fallback",
+      "attempt": 16,
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bq-windbg-install/**",
+        "official Microsoft.WinDbg userpackage and requireddependencies only"
+      ],
+      "dispatched_at": "2026-10-27T05:46:11.738718+00:00",
+      "task_deadline": "2026-10-27T06:27:07Z",
+      "worker_session": "ses_e841a9a87ffeT7a4A2zDizQji0",
+      "actual_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T06:12:57.865677+00:00",
+      "note": "docs/scratch/phase-c3bq-windbg-install.md",
+      "outcome": "Official Microsoft.WinDbg1.2610.1001.0 installed/current-user registered and independently metadata-verified. Procedural deviation and incomplete receipts explicitly retained; not clean procedure attestation.",
+      "installed_package": "Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe",
+      "install_location": "C:\\Program Files\\WindowsApps\\Microsoft.WinDbg_1.2610.1001.0_x64__8wekyb3d8bbwe",
+      "facilitator_check": "Own actualregistration/manifest/PE/hashes/version/ValidMicrosoftAuthenticode of main+3enginefiles; existingmanager signedmetadata; exactoriginalmanagerlog equalsworker copy.15manifestaliases inclWinDbgX reparse link, not mainPE. No package dependency declared/currentregistered. No debugger launch.",
+      "procedural_deviations": [
+        "Worker reported process-scope PowerShell ExecutionPolicy Bypass contrary to constraint; no persistentregistry change by flag perprimarycontract, no prepolicybaseline",
+        "Wrapper $PID read-only assignment failed after startinginstaller; stdout/stderr/shell exitcode unavailable",
+        "Full before/after host dependency inventory unavailable",
+        "Manager internal SkipReputationCheck1 disclosed separately; no CLIhash-bypassflag, hashvalidation/signedfile evidence distinct"
+      ],
+      "resources": "Worker succeeded/idle configured Luna/high; originalownedinstaller/wrapperPIDs absent and package notpartial. Installeddebugger intentionallyretained.0debugger/game/surrogate launches, attaches,injection,hosttasks,gameinstallwrites;no repair/reinstall."
+    },
     {
       "id": "c3bp-debugger-lifecycle",
       "status": "landed",

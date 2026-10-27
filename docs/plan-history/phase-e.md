@@ -536,6 +536,13 @@ switch/install/implementation/live or automatic feasibility extension. A new
 accessible artifact is input for a separate user decision, never automatic resume
 permission; exact lifecycle and source binding would still need support.
 
+Install-only exception2026-10-27: [C3bq](../scratch/phase-c3bq-windbg-install.md)
+adds officialMicrosoft.WinDbg1.2610.1001.0 with independent registration/signed-file
+metadata, preserving receipt/procedure limitations. Availability is now established
+for that installed package, **not lifecycle/source-binding/native readiness**.
+Keep this park andC3bc refusal; no debugger launch/research task follows. This was
+a freshinstallationgrant, not use of BP's expiredunusedslot or a newobservationtest.
+
 ### B3 level pick
 
 - **B3 level pick** (parked 2026-10-25 at the three-round cap, b3e, b3f, b3g). `MM_CLIMB_002` is not in the executable. `lemmings.box` at `0x6F77` is the path `COMPILED\MM_CLIMB_002.LVL`. Lowercase `lemmings.box` is absent. Three `LEMMINGS.BOX` strings, at `0x4C292C`, `0x4C2A60`, and `0x4C2A70`, are pushed at `0x47DF27`, `0x47E298`, and `0x47E2CC`. Each push is followed by a stack-buffer pointer and `call 0x49C760`, then `add esp, 8`. The other argument is `[ebp-0x110]` or `[ebp-0x104]`. No level name and no level index are in those bytes. The body of `0x49C760` was not entered. Resume: open `0x49C760` far enough to say whether it copies the filename or opens the archive, and only then look for the caller that runs on a level choice. Do not treat the archive path as a click handler. See [B3g](../scratch/phase-b3g-box-call.md).

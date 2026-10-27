@@ -1,105 +1,96 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T05:37:48.192556+00:00",
-  "notes": "C3bp attempt15 decisiveNO-GO, routeparked; prior14/history20 retained and actualhistory21. Sourcebinding secondtask/attempt16 unused; no execution/follow-on.",
+  "updated": "2026-10-27T06:12:57.865677+00:00",
+  "notes": "C3bq NEWinstalltask16 complete: officialpackage metadata verified, procedural/receipt limits reported. Historicalobservation21 unchanged;0debuggeruse, no follow-on.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-debugger-go-no-go",
-    "goal": "Offline debugger artifact/lifecycle then unique sandy-source binding GO/NO-GO. Stop on either decisive blocker; no execution.",
+    "id": "c3-windbg-install",
+    "goal": "Install official Microsoft WinDbg only, verify package/filemetadata without launching debugger; stop.",
     "milestones": [
       "C3 full frame"
     ],
     "current": "C3 full frame",
-    "authorized": "Fresh user yes; defaultSol offline GO/NO-GO max2attempts15-16,90min overall/45min per task incl repair/verification,0execution. No secondslot after decisiveNO-GO.",
-    "directive_sha256": "b6891c904b728c08a777a4aae1c0496bbbbf8e657097b1944cf206e000ba81e6",
+    "authorized": "Fresh explicit user go ahead an install one, official Microsoft.WinDbg only;1task/cumulative16,45min overall incl verification/landing/cleanup. Not expiredC3bp slot16;0debugger/gameuse.",
+    "directive_sha256": "099206e2a16dc870356802411988019f87ecb7c4965227638f29b21ff9e34890",
     "owner": "ses_e854d421effeWpblsoJtCyVVFT",
     "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
-    "ownership_check": "Fresh API active self+unrelateded-ascii only; selfSol/high priorworker succeeded/idle. Saved active/self/prior-worker/parent, ff-only pull19cf446.",
-    "started_at": "2026-10-27T05:18:22Z",
-    "deadline": "2026-10-27T06:48:22Z",
+    "ownership_check": "Fresh API active self+unrelateded-ascii only; selfSol/high priorworker succeeded/idle. active/self/prior-worker/parent saved; ff-only pull2be0184.",
+    "started_at": "2026-10-27T05:42:07Z",
+    "deadline": "2026-10-27T06:27:07Z",
     "grants": {
-      "rounds": 2,
+      "rounds": 1,
       "cumulative_question_cap": 16,
-      "overall_minutes": 90,
-      "task_minutes_including_repairs_verification": 45,
-      "repair_inclusive": true,
+      "overall_minutes": 45,
+      "repair_allowed": false,
       "stock_starts": 0,
       "attaches": 0,
       "injection": 0,
-      "installations": 0,
+      "installations": "one official Microsoft.WinDbg with ordinary requireddependencies only;stopforelevation/interactiveconsent",
       "commits": "isolated own paths, normal origin decompile sync"
     },
     "rounds_run": 1,
-    "cumulative_attempts": 15,
+    "cumulative_attempts": 16,
     "stock_starts_used": 0,
     "historical_observation": {
-      "through_BO": 20,
-      "retained_prior_breakdown": "AT/AU/AV6+AW/AX3+AY/AZ5+BA/BB3+BC2+BO1; older mixedruns16/3 and fullarchive preserved",
-      "current_actual_attempts": 1,
-      "historical_total": 21
+      "through_BP": 21,
+      "current_observation_attempts": 0,
+      "historical_total": 21,
+      "installation_tasks_this_pass": 1,
+      "scope": "Newinstallationtasknotobservationtest; all previous14/15 andexpiredunusedBPslot16 preserved"
     },
-    "decomposition": "Task1 pin existing debugger and lifecycle. If decisiveNO-GO stop/park with secondslot unused. Only after verifiedpass dispatchTask2 designated disassembly worker for unique CALL/context\u2192loadedasset\u21926b72b/596c7 binding; no concurrent unnecessarydispatch.",
     "pending_questions": [
       {
-        "question": "No supported available exact debugger/lifecycle is pinned; source binding also remains unestablished.",
-        "recommendation": "Park; no automatic feasibility extension, installation, method change or live request. Any new artifact or changed scope requires a separate explicit user decision; unused slot is not authorization.",
-        "evidence": "docs/scratch/phase-c3bp-debugger-no-go.md"
+        "question": "Report installation procedural deviations and remaining lifecycle/source-binding gaps; no action authorized.",
+        "recommendation": "Leave intentional officialdebugger installed; no repair/reinstall/extra research or debugger/game use. C3bc refusal/readinesspark remains. Any further scope requires separate explicit decision.",
+        "evidence": "docs/scratch/phase-c3bq-windbg-install.md"
       }
     ],
-    "handoff": "STOPPED/PARKED C3bp attempt15 NO-GO. Independent bounded metadata check pins no supported available WinDbg/DbgEng artifact; standardroots missing/aliases+registrations no match, systemWindowsApps accessdenied UNKNOWN not globalabsence. No lifecycleartifact/version/mode can be supported, no liveplan. Sourcebinding task notdispatched afterdecisivefirstgate failure; AW invocationlocal\u2192durableLVL binding remainsunestablished, notprovedimpossible. Prior B1uGDBblindspot/A1trapcleanup failures, BOcaveats/CALL6words, C3bcFXpositive/refusal retained. No implementation/execution/methodswitch/install/hostdryrun. Retained C3FAIL/C1PASS unchanged,no render/rescore. Prior14 andhistorical20throughBO retained, actualhistory21; only1of2attempts used, slot16 notcarryoverpermission. PhaseEpark recorded, directiveconsumed; no automatic feasibility/live continuation. Round6a44097 committed/pushed; dispatch-to-landing839.787s. End checks preserve368fixed/source/install inputs,2145prior evidence entries,all historicalarchive entries and9dirty deltas, captureproposal exact andPhaseEoldtext intact. Worker APIterminal/activeabsence rechecked;0native resources acquired/nohostprocess-taskinventory. Actual clocks in current_pass.",
+    "handoff": "STOPPED C3bq install-only: Microsoft.WinDbg1.2610.1001.0_x64__8wekyb3d8bbwe StatusOk, actualsignedmain/enginehashes independentlyverified; exact managerlogauthenticated. WorkerExecutionPolicyBypass process-scope deviation and $PID wrapperfailure/loststdout-exitcode disclosed, no cleanprocedureclaim; no persistentpolicywrite byflag identified, beforebaselineabsent. SkipReputationCheck1 internalmanageroption retained withoutCLIhashbypass; publishedmanifest and ValidMicrosoftfile signatures distinct. OwnXML rejects worker noaliasclaim:15inclWinDbgXzero-byteAppExecLink\u2192actualDbgX.Shell.exe. No declared/registered package dependency, no completehostdelta. OriginalinstallerPIDs absent/notpartial; intentionalpackage stays. No debugger/game/surrogateexecution, research/lifecycle/sourcebinding or follow-on. C3bc refusal/BPreadinessgaps remain, retainedgates unchanged. Freshinstalltask16 notexpiredBPslot16, observationhistory21 unchanged. Directiveconsumed.",
     "stopped": {
-      "date": "2026-10-27T05:37:48.192556+00:00",
-      "reason": "Verified decisive NO-GO at debugger artifact/lifecycle gate; route parked. Sourcebinding secondtask/attempt16 deliberately unused, no automatic extension.",
-      "last_commit": "6a44097004cae5674b8a383fd7998e1899791c20"
+      "date": "2026-10-27T06:12:57.865677+00:00",
+      "reason": "Installation-only stop: officialpackage installed/metadata verified; report process-scope security-policy deviation and incomplete shell/dependency receipts. No furtherinstall/research/use.",
+      "last_commit": "2be0184b3558f332f21b42f03b6ac7e1adeee217"
     },
     "current_pass": {
-      "started": "2026-10-27T05:18:22Z",
+      "started": "2026-10-27T05:42:07Z",
       "rounds": [
         {
-          "id": "c3bp-debugger-lifecycle",
-          "attempt": 15,
-          "dispatched": "2026-10-27T05:22:39.213204+00:00",
-          "deadline": "2026-10-27T06:07:39.213204+00:00",
-          "worker_completed": "2026-10-27T05:26:26.496000+00:00",
-          "worker_reported_metadata_finished": "2026-10-27T05:24:38.051513Z",
-          "verified": "2026-10-27T05:35:59.740280+00:00",
-          "worker_terminal_clock_source": "API time.idle; reported metadata-finished clock kept separately",
-          "landed": "2026-10-27T05:36:39+00:00",
-          "commit": "6a44097004cae5674b8a383fd7998e1899791c20",
-          "dispatch_to_landing_seconds": 839.786796,
-          "dispatch_to_worker_idle_seconds": 227.282796
+          "id": "c3bq-windbg-install",
+          "attempt": 16,
+          "dispatched": "2026-10-27T05:46:11.738718+00:00",
+          "deadline": "2026-10-27T06:27:07Z",
+          "worker_completed": "2026-10-27T05:55:28.136000+00:00",
+          "manager_log_stage_register_window": "2026-10-26local23:50:10.094..23:50:35.606; shell exitcode unobserved",
+          "verified": "2026-10-27T06:12:57.865677+00:00"
         }
-      ],
-      "ended": "2026-10-27T05:37:48.192556+00:00",
-      "elapsed_seconds": 1166.192556
+      ]
     },
-    "verified_at": "2026-10-27T05:35:59.740280+00:00",
+    "verified_at": "2026-10-27T06:12:57.865677+00:00",
     "resource_state": {
-      "worker_session": "ses_e843025dbffedViWM0UqQsEz4X",
+      "worker_session": "ses_e841a9a87ffeT7a4A2zDizQji0",
       "worker_outcome": "succeeded",
       "worker_idle_confirmed": true,
       "stock_starts": 0,
       "attaches": 0,
       "injections": 0,
       "debugger_sessions": 0,
-      "process_thread_manipulations": 0,
+      "target_thread_manipulations": 0,
       "scheduled_task_operations": 0,
-      "installations": 0,
+      "installation_attempts": 1,
       "surrogate_executions": 0,
       "fixed": 368,
-      "evidence": 2145,
+      "evidence": 2184,
       "unrelated_dirty_preserved": 9,
       "capture_proposal_byte_exact": true,
       "production_and_observer_unchanged": true,
       "all_historical_archive_entries_preserved": true,
       "phase_e_old_text_preserved": true,
-      "target_operations": 0,
-      "owned_native_resources": 0,
+      "installed_debugger_retained": true,
+      "debugger_launches": 0,
+      "owned_installer_pids_remaining": 0,
       "restoration_required": false,
-      "host_process_task_inventory_performed": false
-    },
-    "unused_attempts": 1,
-    "source_binding_task_dispatched": false
+      "procedural_deviation_reported": "Worker process-scope ExecutionPolicy Bypass; incomplete shell receipt/dependency delta retained"
+    }
   }
 }

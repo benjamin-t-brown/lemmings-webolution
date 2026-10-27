@@ -1051,3 +1051,23 @@ C1.0160864/.0161212PASS; no gate/reference/mask/floor change. Own21fixed inputs,
 Worker succeeded/idle; static REA closed;0live actions/resources and no production
 edits. Stop at independently verified comparison/exact integration inputs;
 directive consumed, unused attempt9 not automatic continuation. Times/commits in queue/archive.
+
+**C3bk, 2026-10-26 — conditional mesh scale/bias input contract recovered.**
+Fresh approved delegated Sol pass, cumulativeattempt9 only; no implementation.
+Actual mesh Hnode*Hancestors*V*P chain supports N=Pzz*Z under matched geometric
+inputs, and physical-equivalent biased depth=(N-b)/Pzz. Native P is diagonal,
+zero translation, scaled from camera lens Z by literal0.3; b is context+770.
+Explicit zero reset supports b0 only on the clean first-primary-prefix route,
+not universal holder state or observed repair4 memory. Enclosing model/entity
+object+F8 and other bias scopes remain distinct. Native qword stores do not
+establish production binary32 intermediate precision; retained A1 and current
+production scalar values are preserved separately. [Check](../scratch/phase-c3bk-scale-bias.md).
+Own35PE windows plus complete-vector/accessor reads, raw10corner homogeneous
+factorization, scalar replay and isolated bias-sign failure/restoration pass.
+44/44CTest,32framework; fresh C3.0635481771FAIL/C1.0160864/.0161212PASS,
+PNGs byte-identical and gates/references/masks/floor unchanged. Actual historical
+repair4 operands/PC/RC, clipping/cache/admission/effective state remain open;
+this does not invalidate the conditional input law or require live observation
+to accept that law. No production edit or live operation/resource; worker
+succeeded/idle and REAclosed. Stop at verified contract, fresh directive consumed;
+implementation or observation requires new direction. Timings/commits in queue/archive.

@@ -1,5 +1,17 @@
 # Plan history — Phase B
 
+### B3h — recovered node-atlas prefix, 2026-10-27
+
+[Facilitator check](../scratch/phase-b3h-map-production-inputs.md): campaign9/map-object5,
+changed observed-vtable approach, prior caps retained. Exact mask/atlas bindings,
+103 constructor records/102 node base bytes/seven rectangles and conditional
+state+anchor law verified from original bytes; independent archive parser and
+production-reader RGBA replay pass. Wrong atlas binding changes866448bytes despite
+identical dimensions; restored exact. No native progress-state/background/final
+pixel acceptance, no production/gate movement. First unresolved whole boundary
+49B647 prepares destination/state before blits; close it before a full map render.
+Worker idle/REAclosed,0starts/live resources; full48CTest/fixed gates unchanged.
+
 Moved verbatim from `PLAN.md` on 2026-10-24 (user, overlord review 2026-10-24). Only link
 paths were rebased. The live milestone table, exit gates, status cells and user decisions
 are in [the plan](../../PLAN.md#phase-b--the-frontend). New round notes are appended under

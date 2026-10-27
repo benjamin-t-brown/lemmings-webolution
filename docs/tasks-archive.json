@@ -3,6 +3,107 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-observation-feasibility",
+      "goal": "One offline proposal for concrete prospective native-observation safety mechanism relevant to sandy-terrain native correspondence, or supported negative. No implementation/execution.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh user yes to ONE Sol offline feasibility proposal,45min overall incl verification/landing/cleanup,0execution,no repair/follow-on; C3bc refusal intact",
+      "directive_sha256": "04043694a907e2afaa0e6560b203ffd741b99bb14be7664327494bb6f76d4125",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh API active self+unrelated ed-ascii only; selfSol/high, priorworker succeeded/idle; active/self/prior-worker/parent saved, ff-only pullcurrentc51fef6.",
+      "started_at": "2026-10-27T04:50:16Z",
+      "deadline": "2026-10-27T05:35:16Z",
+      "grants": {
+        "rounds": 1,
+        "cumulative_question_cap": 14,
+        "overall_minutes": 45,
+        "repair_inclusive": true,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injection": 0,
+        "installations": 0,
+        "commits": "isolated own proposal paths, normal origin decompile sync"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 14,
+      "stock_starts_used": 0,
+      "historical_observation": {
+        "evidence": "build/tmp/c3-observation-feasibility-pass/historical-C3-runs.json; unchanged full archive",
+        "post_pivot_prior_attempts": 19,
+        "breakdown": {
+          "AT_initial_repair_AU_AV_initial_two_repairs": 6,
+          "AW_AX_initial_repair": 3,
+          "AY_initial_repair_AZ_initial_two_repairs": 5,
+          "BA_initial_repair_BB": 3,
+          "BC_initial_repair": 2
+        },
+        "older_history": "All precedingC3-known-gaps16/host-reference-big-rocks3 and older C3 observer/controller/preflight entries preserved, not claimed all observation-only or zeroed.",
+        "this_scope": "Fresh one-attempt exception for concrete safety-mechanism proposal; not rename/reset of prior parked observer question"
+      },
+      "pending_questions": [
+        {
+          "question": "Whether to authorize any further artifact-specific prospective review of this conditional debugger proposal.",
+          "remaining": "Exact debugger/mode/startup/exit/threadcoverage policy and CALL/context/source-to-durableasset binding unresolved; no ready operational method, no old permission carried over.",
+          "recommendation": "Parent evaluation only. No implementation/live operation/hostdryrun without separate explicit approval; retain C3bc refusal.",
+          "evidence": "docs/scratch/phase-c3bo-observation-feasibility.md"
+        }
+      ],
+      "handoff": "STOPPED C3bo proposal-only attempt14. Concrete conditional established-debugger hardwareexecuteBP at46D5F3 avoids firstredirect by no codepatch, primary platformcontracts checked. No exact debugger/WOW64/startup/threadcoverage/exitpolicy or durableasset source binding certified; precallrequest not drawsuccess. AW6wordCALL vs5wordPRE and initialBP/killonexit caveats explicit. C3bc operationalrefusal and FXSAVE/FXRSTOR positive/sourcebinding limits stand, postinstall receipts not prospectiveguarantees. Orientationparked. No implementation/testing/native/surrogate/task/install/targetprocess operations; no resources acquired/nohostinventory. Retained C3FAIL/C1PASS unchanged, no render/rescore. Previous13 and all historicalcapturefeasibility attempts retained incl BCinitial/repair; postpivot19prior+this20th distinct ledger. Directive consumed; no automatic implementation/live follow-on. Proposal146895c committed/pushed; dispatch-to-landing1012.574s. End independent checks preserve368fixed/source/install inputs,2105prior evidence files,all historicalarchive entries and9dirty deltas; captureproposal exact. Worker APIterminal/active absence rechecked; no target/native resources acquired or hostinventory performed. Actual clocks in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T05:12:10.347510+00:00",
+        "reason": "Approved proposal-only stop: concrete conditional no-code-redirect candidate documented, native readiness/source binding unresolved; no implementation/execution.",
+        "last_commit": "146895c2cdd28c35aea7af1cf4d22cccc4b1101e"
+      },
+      "current_pass": {
+        "started": "2026-10-27T04:50:16Z",
+        "rounds": [
+          {
+            "id": "c3bo-observation-feasibility",
+            "attempt": 14,
+            "dispatched": "2026-10-27T04:54:15.426358+00:00",
+            "deadline": "2026-10-27T05:35:16Z",
+            "worker_completed": "2026-10-27T04:59:38.850000+00:00",
+            "worker_reported_handoff": "2026-10-27T04:59:06Z",
+            "verified": "2026-10-27T05:10:21.598239+00:00",
+            "worker_terminal_clock_source": "API time.idle; reported note handoff kept separately",
+            "landed": "2026-10-27T05:11:08+00:00",
+            "commit": "146895c2cdd28c35aea7af1cf4d22cccc4b1101e",
+            "dispatch_to_landing_seconds": 1012.573642,
+            "dispatch_to_worker_idle_seconds": 323.423642
+          }
+        ],
+        "ended": "2026-10-27T05:12:10.347510+00:00",
+        "elapsed_seconds": 1314.34751
+      },
+      "verified_at": "2026-10-27T05:10:21.598239+00:00",
+      "resource_state": {
+        "worker_session": "ses_e844a2f61ffe3UrVDkTJXdTxnc",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "debugger_sessions": 0,
+        "process_thread_manipulations": 0,
+        "scheduled_task_operations": 0,
+        "installations": 0,
+        "surrogate_executions": 0,
+        "fixed": 368,
+        "evidence": 2105,
+        "unrelated_dirty_preserved": 9,
+        "capture_proposal_byte_exact": true,
+        "production_and_observer_unchanged": true,
+        "all_historical_archive_entries_preserved": true,
+        "target_operations": 0,
+        "owned_native_resources": 0,
+        "restoration_required": false,
+        "host_inventory_performed": false
+      }
+    },
+    {
       "id": "c3-terrain-image-link",
       "goal": "Connect pictured sandy target to software source contribution and compare orientation using saved repair4 camera only; no correction.",
       "milestones": [
@@ -2581,6 +2682,36 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bp-debugger-lifecycle",
+      "status": "landed",
+      "brief": "build/tmp/c3-debugger-go-no-go-pass/debugger-brief.md",
+      "worker": "round-agent",
+      "worker_tier": "targeted",
+      "kind": "read-only debugger artifact/lifecycle go-no-go",
+      "requested_model": "configured pin nooverride/fallback",
+      "attempt": 15,
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bp-debugger-lifecycle/**"
+      ],
+      "dispatched_at": "2026-10-27T05:22:39.213204+00:00",
+      "task_deadline": "2026-10-27T06:07:39.213204+00:00",
+      "worker_output": "build/tmp/c3bp-debugger-lifecycle/round-note.md; precise metadata-bounded NO-GO, no available supported candidate artifact. Inventory: build/tmp/c3bp-debugger-lifecycle/inventory.json.",
+      "worker_session": "ses_e843025dbffedViWM0UqQsEz4X",
+      "actual_model": {
+        "id": "gpt-6-luna",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T05:35:59.740280+00:00",
+      "note": "docs/scratch/phase-c3bp-debugger-no-go.md",
+      "outcome": "NO-GO: no supported file-backed available WinDbg/DbgEng artifact pinned in bounded metadata search; route parked. Sourcebinding secondtask/attempt16 unused.",
+      "facilitator_check": "Separate read-only PATH/exact8Kitsroots/useralias+package roots/explicit32-64registry views reproduces no artifact. Adds systemWindowsApps accessdenied=UNKNOWN, not global absence; no ACL bypass. Retained AW durablebinding limitation and B1u/A1failure notes reread, no rerun.",
+      "narrowing": "Worker absence statement bounded to accessible scopes. System package root unknown. No exact artifact/version/mode/lifecycle established; generic BO APIcontracts cannot substitute. Unique6b72b/596c7 binding not investigated anew after decisivefirstgate failure, remains unestablished not impossible.",
+      "resources": "Worker succeeded/idle, configured Luna/high nooverride.0candidate/target/surrogateexecution, debugger/attach/injection/process-thread/task/install operations;0ownednative resources. No restoration owed/nohostprocess-taskinventory."
+    },
     {
       "id": "c3bo-observation-feasibility",
       "status": "landed",

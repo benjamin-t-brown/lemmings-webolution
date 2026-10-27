@@ -1,5 +1,19 @@
 # Plan history — Phase B
 
+### B3i — whole preparation and conditional base-map tuple, 2026-10-27
+
+[Facilitator check](../scratch/phase-b3i-map-preparation.md):49B647 is state-only,
+not background restoration. Exact named background is loaded earlier by factory;
+wrapper getter/upload requests and ordered nonzero-flag/link state law recovered.
+Own10byte windows/raw tables/107synthetic state outputs, exact archive joins,
+production background decoder and four independent per-pixel compositions pass.
+One seed3→2 model mutation fails original-byte interpreter, exact restore passes.
+No native flags/save mapping/device pixels/final presentation or B3 gate accepted;
+no production/gate movement.48CTest64.81sPASS,0starts,worker terminal/REAclosed.
+Next useful integration is application base-map display/first-node entry with
+explicit raw flags plus a qualified native screenshot/table pair; no extra tiny
+callee-chain research round implied.
+
 ### B2l — reference-specific image admission, 2026-10-27
 
 [Facilitator check](../scratch/phase-b2l-menu-image-qualification.md): initial

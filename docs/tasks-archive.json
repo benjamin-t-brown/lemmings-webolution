@@ -2261,11 +2261,13 @@
       ],
       "dispatched_at": "2026-10-27T00:52:30.721507+00:00",
       "worker_session": "ses_e85279121ffe0fAGRHus9gulmT",
-      "landed_at": "2026-10-27T01:17:19.991163+00:00",
+      "landed_at": "2026-10-27T01:17:56+00:00",
       "note": "docs/scratch/phase-c3bk-scale-bias.md",
       "summary": "Conditional mesh contract N=Pzz*Z and physical equivalent(N-b)/Pzz recovered from mesh/camera chain; zero b only clean reset-to-first-primary path. Historical repair4 operands/precision not observed. No implementation.",
       "facilitator_check": "35PE windows plus vector/accessors; separate10raw-LVL-corner homogeneous factorization/scalar operands; isolated bias-sign mutation/restoration;44CTest/32framework; fresh gate PNGs exact.",
-      "resources": "Worker succeeded/idle; REAclosed;0live actions/resources; production unchanged"
+      "resources": "Worker succeeded/idle; REAclosed;0live actions/resources; production unchanged",
+      "commit": "9a4bce26c8ce07f734fc2e76c7d7180c761a2a67",
+      "dispatch_to_landing_seconds": 1525.278493
     },
     {
       "id": "c3bj-clipping-contract",

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T16:16:24Z",
+  "updated": "2026-10-27T16:18:36Z",
   "notes": "Fresh approved integrated-retail campaign; prior consumed run preserved verbatim in queue-history and indexed in tasks-archive.previous_runs. No historical pools transferred.",
   "active": [],
   "queue": [],
@@ -28,7 +28,7 @@
     "c3_attempts_used": 3,
     "pending_questions": [{"question": "Separate future Phase D strategy: D1/D3 and cross-state digger clock remain unaccepted/user-parked.", "recommendation": "After observable C2/B2/B3 progress, ask overlord/user for a separately bounded continuous-budget/animation-clock architectural campaign; do not label current optional sim as faithful end-to-end or reopen D in this run.", "evidence": "PLAN.md Phase D; docs/LESSONS.md D1m timing retraction; docs/plan-history/phase-e.md D1/D2/D3 parks"}],
     "gate_scores": {"verified_at": "2026-10-27T16:12:23Z", "C3": {"numerator": 14934333, "denominator": 235008000, "score": 0.06354818984885621, "pass": false, "delta_error": 3}, "C1_zoom1": {"numerator": 285083, "denominator": 17721990, "score": 0.0160863988750699, "pass": true}, "C1_elev_down": {"numerator": 285700, "denominator": 17721990, "score": 0.016121214378294987, "pass": true}, "C2": "not accepted: no new native hover/full-frame acceptance", "B1": "conditional acceptance preserved", "B2_B3": "not accepted; current gates unchanged"},
-    "handoff": "C2o policy landed b9e3f04/pushed; C3bv final-pack production SOURCE connection verified and landed separately now. Own actual-call mutant/exact restore,301cases/3010fields,full47CTest64.72s; C3 .06354818984885621 FAIL(+3error/3pixels),C1 exact footprint PASS.3C3attempt reassessment: mechanism connected but no material image convergence; move C2/B2/B3 now, no further pack/clip/controller repair/pixel polishing. Next linted briefs ready: c2p-runtime-hud (main/RuntimeHud) and c2q-native-cursor (one ordinary stock attempt, actual-path preflight, normal navigation/no slot writes); disjoint, one live owner.4of16attempts,0of8starts,0tooling. Original23:22:19Z deadline and all old parks unchanged. Workers independently terminal/idle; no live resources or restoration owed.",
+    "handoff": "C2o b9e3f04 and C3bv4fdf43a landed/pushed. Own actual-call mutant/exact restore,301cases/3010fields,full47CTest64.72s; C3 .06354818984885621 FAIL(+3error/3pixels),C1 exact footprint PASS.3C3attempt reassessment: mechanism connected but no material image convergence; move C2/B2/B3 now, no further pack/clip/controller repair/pixel polishing. Isolated PLAN C3 status follows in bookkeeping commit after pre-existing-line overlap blocked initial selective staging; signed gates unchanged. Exact first-pair dispatch-to-commit: C2o2231.972s,C3bv2497.976s, both within original16:21:30Z. Next linted briefs: c2p-runtime-hud (main/RuntimeHud) and c2q-native-cursor (one ordinary stock attempt, actual-path preflight, normal navigation/no slot writes); disjoint, one live owner.4of16attempts,0of8starts,0tooling. Original23:22:19Z deadline/parks unchanged. Workers independently terminal/idle; no live resources/restoration owed.",
     "stopped": null
   }
 }

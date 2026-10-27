@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T00:00:54.007983+00:00",
+  "updated": "2026-10-27T00:03:00.048827+00:00",
   "notes": "C3bi comparison accepted; one dispatch cumulativeattempt7, no corrections. Directive consumed; no further work authorized by active heading.",
   "active": [],
   "queue": [],
@@ -37,11 +37,11 @@
       }
     ],
     "stop_point": "Independently verified bounded comparison and any one justified correction; earlier budget/blocker. No automatic follow-on.",
-    "handoff": "STOPPED at accepted C3bi bounded depth comparison attempt7:29248selected software depths reproduced exactly; common physical units coherent under conditional model. Known f32pack gap not a safe native correction without actual projection/bias/clip/precision/effective-state inputs. No production changes; C3FAIL/C1PASS PNGs exact;44CTest/32framework. Worker succeeded idle/REAclosed;0live resources/operations. Directive consumed; no automatic follow-on or attempts8/9.",
+    "handoff": "STOPPED at accepted C3bi bounded depth comparison attempt7:29248selected software depths reproduced exactly; common physical units coherent under conditional model. Known f32pack gap not a safe native correction without actual projection/bias/clip/precision/effective-state inputs. No production changes; C3FAIL/C1PASS PNGs exact;44CTest/32framework. Worker succeeded idle/REAclosed;0live resources/operations. Directive consumed; no automatic follow-on or attempts8/9. Round697342c committed/pushed; dispatch-to-landing1447.338s. Final cleanup/preservation complete; actual pass end in current_pass.",
     "stopped": {
-      "date": "2026-10-27T00:00:54.007983+00:00",
+      "date": "2026-10-27T00:03:00.048827+00:00",
       "reason": "Approved stop point: independently verified comparison with exact unresolved native inputs; no justified shared-depth correction selected.",
-      "last_commit": null
+      "last_commit": "697342c8f60e95edfd997ed60ae615e07678688d"
     },
     "verified_at": "2026-10-27T00:00:54.007983+00:00",
     "resource_state": {
@@ -55,7 +55,13 @@
       "scheduled_tasks": 0,
       "production_changes": false,
       "prior_diagnostic_preserved": true,
-      "static_rea_closed": true
+      "static_rea_closed": true,
+      "fixed_files_preserved": 21,
+      "prior_files_preserved": 250,
+      "full_worker_preservation_files": 491,
+      "initial_dirty_paths_preserved": 9,
+      "game_processes": 0,
+      "lemweb_tasks": 0
     },
     "current_pass": {
       "started": "2026-10-26T23:33:36Z",
@@ -65,9 +71,14 @@
           "attempt": 7,
           "dispatched": "2026-10-26T23:37:39.661948+00:00",
           "worker_completed": "2026-10-26T23:53:48Z",
-          "verified": "2026-10-27T00:00:54.007983+00:00"
+          "verified": "2026-10-27T00:00:54.007983+00:00",
+          "landed": "2026-10-27T00:01:47+00:00",
+          "commit": "697342c8f60e95edfd997ed60ae615e07678688d",
+          "elapsed_seconds": 1447.338052
         }
-      ]
+      ],
+      "ended": "2026-10-27T00:03:00.048827+00:00",
+      "elapsed_seconds": 1764.048827
     }
   }
 }

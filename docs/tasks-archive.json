@@ -2115,7 +2115,10 @@
       "note": "docs/scratch/phase-c3bi-depth-contract.md",
       "result": "29248exact selected software depth replays; known f32 gap confirmed; missing native transform/bias/clip/precision/effective-state inputs prevent justified correction. No code or gate movement.",
       "facilitator_check": "Independent rawLVL/5PEwindows/arithmetic; reload-only scratch mutant rejected/restored;44CTest/32framework; fresh baseline-identical C3/C1gate PNGs;21fixed250prior evidence preserved.",
-      "resources": "worker succeeded/idle; REA closed;0live operations/resources; source unchanged"
+      "resources": "worker succeeded/idle; REA closed;0live operations/resources; source unchanged",
+      "commit": "697342c8f60e95edfd997ed60ae615e07678688d",
+      "landed_at": "2026-10-27T00:01:47+00:00",
+      "dispatch_to_landing_seconds": 1447.338052
     },
     {
       "id": "c3bh-final-influence",

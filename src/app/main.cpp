@@ -61,6 +61,7 @@
 #include "app/Pick.h"
 #include "app/Raster.h"
 #include "app/SimClock.h"
+#include "app/RuntimeHud.h"
 #include "app/SkillPanel.h"
 #include "app/TubeScene.h"
 #include "assets/Bitmap.h"
@@ -584,7 +585,17 @@ int main(int argc, char** argv) {
   // only active when --sim was given; windowed mode always starts the
   // World at tick 0 regardless of --sim-ticks, which is a headless-only,
   // deterministic-render concern (see this file's own --sim-ticks comment).
-  app::SimClock simClock;
+  app::RuntimeSimState runtimeSim;
+  std::optional<Image> runtimeFont;
+  if (args.sim && world) {
+    auto loadedFont = loadTexture(*library, "TEXTURES\\^FONT.BMP");
+    if (!loadedFont) {
+      std::fprintf(stderr, "runtime HUD: %s\n", loadedFont.error().c_str());
+      SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
+      return 1;
+    }
+    runtimeFont = std::move(*loadedFont);
+  }
   // Debug stand-in for a skill panel. Keys 1-8 follow sim::Skill's declaration
   // order. This is not the original panel and is ignored unless --sim is on.
   sim::Skill debugAssignSkill = sim::Skill::Climber;
@@ -615,7 +626,16 @@ int main(int argc, char** argv) {
         const auto key = event.key.keysym.scancode;
         if (focused && (key == SDL_SCANCODE_SPACE || key == SDL_SCANCODE_LCTRL || key == SDL_SCANCODE_RCTRL)) pending.zoom();
         if (focused && key == SDL_SCANCODE_BACKSPACE) pending.flip();
-        if (key == SDL_SCANCODE_ESCAPE) running = false;
+        if (key == SDL_SCANCODE_ESCAPE) {
+          if (args.sim && world && runtimeSim.paused()) {
+            runtimeSim.resume();
+            previous = SDL_GetPerformanceCounter();
+          } else running = false;
+        }
+        if (args.sim && world && focused && key == SDL_SCANCODE_P) {
+          runtimeSim.togglePause();
+          previous = SDL_GetPerformanceCounter();
+        }
         if (args.sim && world && focused) {
           sim::Skill selected = debugAssignSkill;
           bool choose = false;
@@ -660,18 +680,27 @@ int main(int argc, char** argv) {
     }
     bool simTicked = false;
     if (args.sim && world) {
-      simClock.advance(elapsed);
-      while (simClock.takeStep()) {
-        world->tick();
-        simTicked = true;
-      }
+      simTicked = runtimeSim.advance(*world, elapsed);
       if (simTicked)
         options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
     }
-    if (updated || simTicked) {
+    if (updated || simTicked || (args.sim && world)) {
       params = controls.camera();
       renderFrame(params, windowRaster);
-      SDL_UpdateTexture(texture, nullptr, windowRaster.framebuffer().rgb.data(), 640 * 3);
+      std::vector<std::uint8_t> presentedRgb;
+      const void* pixels = windowRaster.framebuffer().rgb.data();
+      if (args.sim && world && runtimeFont) {
+        auto image = toImage(windowRaster.framebuffer());
+        app::drawRuntimeHud(image, *runtimeFont, *world, runtimeSim.paused());
+        presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
+        for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {
+          presentedRgb[i * 3] = image.rgba[i * 4];
+          presentedRgb[i * 3 + 1] = image.rgba[i * 4 + 1];
+          presentedRgb[i * 3 + 2] = image.rgba[i * 4 + 2];
+        }
+        pixels = presentedRgb.data();
+      }
+      SDL_UpdateTexture(texture, nullptr, pixels, 640 * 3);
       SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); SDL_RenderPresent(presenter);
       ++rendered;
     } else SDL_Delay(1);

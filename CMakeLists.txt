@@ -218,6 +218,10 @@ add_executable(test_pausecaption src/__test__/test_pausecaption.cpp src/shell/Pa
 target_link_libraries(test_pausecaption PRIVATE webolution_objects)
 add_test(NAME pausecaption COMMAND test_pausecaption)
 
+add_executable(test_runtimehud src/__test__/test_runtimehud.cpp src/app/RuntimeHud.cpp src/app/SimClock.cpp src/shell/HudText.cpp src/shell/PauseCaption.cpp src/shell/MenuRender.cpp)
+target_link_libraries(test_runtimehud PRIVATE webolution_objects)
+add_test(NAME runtimehud COMMAND test_runtimehud)
+
 # C2o: offline byte-supported cursor selection policy; no SDL or live target.
 add_executable(test_cursorpolicy src/__test__/test_cursorpolicy.cpp src/app/CursorPolicy.cpp)
 target_include_directories(test_cursorpolicy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

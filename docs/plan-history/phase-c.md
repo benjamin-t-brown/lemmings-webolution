@@ -1091,3 +1091,23 @@ fresh byte-identical C3.0635481771FAIL/C1.0160864/.0161212PASS; no gate change.
 21fixed inputs/563prior evidence files and9unrelated dirty deltas preserved;
 worker succeeded/idle,0live actions/resources. Original task deadline retained;
 directive consumed at bounded component/binding stop, cumulative11, no follow-on.
+
+**C3bm, 2026-10-26 — low terrain skirt scoped orientation negative; visible scene indeterminate.**
+Fresh user-approved check-only attempt12, prior11 retained; historical C3ar
+recovered as interrupted/explicitly discarded, not a settled negative or reset.
+Geometrically identified exclusive596c7 component indices564..623:60vertices,
+72records/256corners, closed12-edge radius60.4568 inner loop around tube base.
+Root59644 has sand7/base/top sibling leaves, not a nested sand7→base→top chain.
+Supported original H-chain=10*(local+t), row-vector affine/XYZ bytes reused and
+freshly authenticated. Own independent raw-index/4x4 rational check of actual
+C++ matches world/current-V/retained-A1-native-B intermediates; all60 signed
+front/back signs agree. One private terrain-only reversal rejects256/256corners
+and flips256/256signs,2979other primary corners/tube/camera unchanged, byte/output
+restoration exact. No production edit or correction. [Facilitator check](../scratch/phase-c3bm-terrain-orientation.md).
+Not native repair4 H/V/admission/visible-submission attribution, not all terrain;
+user's broad appearance hypothesis remains indeterminate. No new native bodies,
+REA session, live action or score-selected flip. Fresh45/45CTest/lint pass;
+fresh rescore of RETAINED PNGs C3.0635481771FAIL/C1.0160864/.0161212PASS,
+no new renders or gate movement.175fixed/source inputs,283prior evidence files,
+9unrelated dirty deltas preserved; worker succeeded/idle,0live resources.
+Sole dispatch, no repair, deadline unchanged; consumed directive and stop here.

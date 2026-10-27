@@ -1,94 +1,86 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T02:14:45.897902+00:00",
-  "notes": "C3bl component-only verified with narrowed limits after initial/repair attempts10-11. Production bounds binding unsupported; no gate movement; fresh directive consumed.",
+  "updated": "2026-10-27T02:46:44.317681+00:00",
+  "notes": "C3bm check-only attempt12 consumed, historical C3ar retained. Supported low-skirt conditional negative; broad visible question indeterminate. Production/gates unchanged; no follow-on.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-clip-implementation",
-    "goal": "Implement established explicit-input scene clipping; production integration only at independently supported bindings; no guessed inputs.",
+    "id": "c3-terrain-orientation",
+    "goal": "Check surrounding terrain front-to-back source orientation against supported original geometry/transform evidence; no correction.",
     "milestones": [
       "C3 full frame"
     ],
     "current": "C3 full frame",
-    "authorized": "Fresh user yes 2026-10-26; delegated Sol implementation extension beyond exhausted investigation cap,attempts10-11 max,90min overall/45min task incl verification,zero live",
-    "directive_sha256": "7fc778e5da4f49e29ed99a1bc8517effcd02d3bf661ccc69a9cf156da70bb4a5",
+    "authorized": "Fresh user i approve, one delegated Sol terrain orientation attempt12 only;45min overall incl verification/landing,0live; no repair/follow-on",
+    "directive_sha256": "371b0b96cf5100d9d9973ec765ab0dbe5886a820c8bd916f817ce3fb72195e53",
     "owner": "ses_e854d421effeWpblsoJtCyVVFT",
     "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
-    "ownership_check": "Fresh actual API active set this resumed child and unrelated ed-ascii only; prior worker succeeded/idle, self facilitator Sol/high matches parent. build/tmp/c3-clip-impl-pass/{active-before,self,prior-worker,parent}.json; ff-only pull currentc3807f8.",
-    "started_at": "2026-10-27T01:35:10Z",
-    "deadline": "2026-10-27T03:05:10Z",
+    "ownership_check": "Fresh API checks: resumed self configured Sol/high; prior worker succeeded/idle; active self+unrelated ed-ascii only. Saved active/self/prior-worker/parent; ff-only pull current5f138cb.",
+    "started_at": "2026-10-27T02:19:16Z",
+    "deadline": "2026-10-27T03:04:16Z",
     "grants": {
-      "stock_starts": 0,
-      "rounds": 2,
-      "cumulative_question_cap": 11,
-      "overall_minutes": 90,
-      "round_minutes_including_verification": 45,
+      "rounds": 1,
+      "cumulative_question_cap": 12,
+      "overall_minutes": 45,
       "repair_inclusive": true,
-      "commits": "own isolated paths only; normal sync origin decompile"
+      "stock_starts": 0,
+      "commits": "isolated own paths, normal origin decompile sync"
     },
-    "rounds_run": 2,
-    "cumulative_attempts": 11,
+    "rounds_run": 1,
+    "cumulative_attempts": 12,
     "stock_starts_used": 0,
+    "historical_orientation": {
+      "task": "c3ar-scene-handedness",
+      "worker": "ses_e8992a7c3ffeE8G9zyLenPf2I4",
+      "outcome": "interrupted/discarded incomplete; no claims promoted",
+      "prior_orientation_dispatches": 1,
+      "evidence": "build/tmp/c3ar-scene-handedness and build/tmp/c3-offline-pivot-startup/ar-status.json"
+    },
     "pending_questions": [
       {
-        "question": "Separately review unsupported native clip-global-to-production bounds binding and retained component validation limits before any adoption.",
-        "recommendation": "No automatic integration/discovery. Conditional cache-miss model itself does not require historical observation; keep actual missing bounds binding distinct. If later authorized, address scale regression coverage and overstated guard comments without claiming native precision.",
-        "evidence": "docs/scratch/phase-c3bl-scene-clip.md"
+        "question": "User-visible repair4 sandy scenery orientation beyond the examined low skirt is indeterminate.",
+        "missing_evidence": "Exact linkage from saved visible terrain to tested/other source components and actual repair4 H/V/admission/submissions; A1 fixture agreement cannot supply that linkage.",
+        "recommendation": "Stop; no automatic correction, broad audit, observer or further dispatch. Any new evidence-gathering scope requires fresh direction.",
+        "evidence": "docs/scratch/phase-c3bm-terrain-orientation.md"
       }
     ],
-    "stop_point": "Stop after verified implementation/re-score or unsupported production binding, blocker or budget. Retain verified component honestly; no broad discovery/follow-on.",
-    "handoff": "STOPPED after C3bl initial attempt10 rejected and repair11 bounded component verified. Fresh-cache explicit near\u2192projection/bias\u2192ordered screen helper only; BackdropScene/test unchanged. Missing native clip-globals\u2192production bounds binding stops integration, no discovery. Independent18cases756fields and two isolated mutations pass/restored; CTest misses scaled epsilon, overflow-temporary claim narrowed.45CTest/32framework, fresh byte-identical C3FAIL/C1PASS gates. Worker succeeded/idle;0live resources/actions. Directive consumed, cumulative11; no automatic follow-on. Component round78a0d71 committed/pushed; original dispatch-to-landing2073.472s includes repair. End preservation/worker-terminal/zero-host-resource checks exact; actual end in current_pass.",
+    "handoff": "STOPPED C3bm check-only:60vertex/72record low skirt conditional H-chain not reversed; actual visible sandy structure indeterminate. Own raw-byte/rational/actual-C++ checks and isolated terrain-only reversal/restoration verified. Both view arms A1 fixture, not repair4 runtime/camera replay; world chain conditional and camera-independent. Production untouched; fresh45CTest/lint. Fresh rescore RETAINED PNGs C3.0635481771FAIL/C1.0160864/.0161212PASS, no new render/gate movement. Historical C3ar interruption/discard retained, this is second orientation dispatch; cumulative12 counts previous11. Worker succeeded/idle,0live resources/actions. Directive consumed, no automatic follow-on.",
     "stopped": {
-      "date": "2026-10-27T02:14:45.897902+00:00",
-      "reason": "Approved stop: verified bounded component retained after one repair; production integration stopped at unsupported native bounds binding; attempts10-11 spent.",
-      "last_commit": "78a0d71a01cba4a66bca825c255dca661967ca65"
+      "date": "2026-10-27T02:46:44.317681+00:00",
+      "reason": "Sole approved attempt12 completed: scoped source-pose negative, broad visible repair4 question indeterminate. No repair/correction/follow-on.",
+      "last_commit": "5f138cb56adf0b614da330ea6113ef51047c61fa"
     },
     "current_pass": {
-      "started": "2026-10-27T01:35:10Z",
+      "started": "2026-10-27T02:19:16Z",
       "rounds": [
         {
-          "id": "c3bl-scene-clipping",
-          "attempt": 10,
-          "dispatched": "2026-10-27T01:38:41.527727+00:00",
-          "deadline": "2026-10-27T02:23:41.527727+00:00",
-          "repair_attempt": 11,
-          "repair_dispatched": "2026-10-27T01:49:55.087400+00:00",
-          "initial_worker_completed": "2026-10-27T01:46:11Z",
-          "worker_completed": "2026-10-27T01:58:17Z",
-          "verified": "2026-10-27T02:12:41.077322+00:00",
-          "landed": "2026-10-27T02:13:15+00:00",
-          "commit": "78a0d71a01cba4a66bca825c255dca661967ca65",
-          "elapsed_seconds": 2073.472273,
-          "initial_worker_seconds": 449.472273,
-          "repair_worker_seconds": 501.9126,
-          "repair_dispatch_to_landing_seconds": 1399.9126
+          "id": "c3bm-terrain-orientation",
+          "attempt": 12,
+          "dispatched": "2026-10-27T02:24:04.889438+00:00",
+          "deadline": "2026-10-27T03:04:16Z",
+          "worker_completed": "2026-10-27T02:38:11.888819Z",
+          "verified": "2026-10-27T02:46:44.317681+00:00"
         }
-      ],
-      "ended": "2026-10-27T02:14:45.897902+00:00",
-      "elapsed_seconds": 2375.897902
+      ]
     },
-    "verified_at": "2026-10-27T02:12:41.077322+00:00",
+    "verified_at": "2026-10-27T02:46:44.317681+00:00",
     "resource_state": {
-      "worker_session": "ses_e84fd4312ffeAKONw2wYsggL7q",
+      "worker_session": "ses_e84d3c359ffeByyuXM62sQQPas",
       "worker_outcome": "succeeded",
       "worker_idle_confirmed": true,
-      "static_rea_closed": true,
-      "live_resources": null,
       "stock_starts": 0,
       "attaches": 0,
       "injections": 0,
       "scheduled_tasks": 0,
-      "component_changes": true,
-      "production_integration": false,
+      "native_sessions_acquired": 0,
+      "owned_live_resources": 0,
       "game_processes": 0,
       "lemweb_tasks": 0,
-      "fixed": 21,
-      "evidence": 563,
-      "dirty_paths_preserved": 9,
-      "production_callsite_unchanged": true,
-      "rejected_initial_preserved": true,
-      "component_source_restored": true
+      "fixed": 175,
+      "evidence": 283,
+      "unrelated_dirty_preserved": 9,
+      "production_unchanged": true,
+      "scratch_LVL_restored": true
     }
   }
 }

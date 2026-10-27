@@ -3,6 +3,93 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-clip-implementation",
+      "goal": "Implement established explicit-input scene clipping; production integration only at independently supported bindings; no guessed inputs.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh user yes 2026-10-26; delegated Sol implementation extension beyond exhausted investigation cap,attempts10-11 max,90min overall/45min task incl verification,zero live",
+      "directive_sha256": "7fc778e5da4f49e29ed99a1bc8517effcd02d3bf661ccc69a9cf156da70bb4a5",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh actual API active set this resumed child and unrelated ed-ascii only; prior worker succeeded/idle, self facilitator Sol/high matches parent. build/tmp/c3-clip-impl-pass/{active-before,self,prior-worker,parent}.json; ff-only pull currentc3807f8.",
+      "started_at": "2026-10-27T01:35:10Z",
+      "deadline": "2026-10-27T03:05:10Z",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 2,
+        "cumulative_question_cap": 11,
+        "overall_minutes": 90,
+        "round_minutes_including_verification": 45,
+        "repair_inclusive": true,
+        "commits": "own isolated paths only; normal sync origin decompile"
+      },
+      "rounds_run": 2,
+      "cumulative_attempts": 11,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Separately review unsupported native clip-global-to-production bounds binding and retained component validation limits before any adoption.",
+          "recommendation": "No automatic integration/discovery. Conditional cache-miss model itself does not require historical observation; keep actual missing bounds binding distinct. If later authorized, address scale regression coverage and overstated guard comments without claiming native precision.",
+          "evidence": "docs/scratch/phase-c3bl-scene-clip.md"
+        }
+      ],
+      "stop_point": "Stop after verified implementation/re-score or unsupported production binding, blocker or budget. Retain verified component honestly; no broad discovery/follow-on.",
+      "handoff": "STOPPED after C3bl initial attempt10 rejected and repair11 bounded component verified. Fresh-cache explicit near→projection/bias→ordered screen helper only; BackdropScene/test unchanged. Missing native clip-globals→production bounds binding stops integration, no discovery. Independent18cases756fields and two isolated mutations pass/restored; CTest misses scaled epsilon, overflow-temporary claim narrowed.45CTest/32framework, fresh byte-identical C3FAIL/C1PASS gates. Worker succeeded/idle;0live resources/actions. Directive consumed, cumulative11; no automatic follow-on. Component round78a0d71 committed/pushed; original dispatch-to-landing2073.472s includes repair. End preservation/worker-terminal/zero-host-resource checks exact; actual end in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T02:14:45.897902+00:00",
+        "reason": "Approved stop: verified bounded component retained after one repair; production integration stopped at unsupported native bounds binding; attempts10-11 spent.",
+        "last_commit": "78a0d71a01cba4a66bca825c255dca661967ca65"
+      },
+      "current_pass": {
+        "started": "2026-10-27T01:35:10Z",
+        "rounds": [
+          {
+            "id": "c3bl-scene-clipping",
+            "attempt": 10,
+            "dispatched": "2026-10-27T01:38:41.527727+00:00",
+            "deadline": "2026-10-27T02:23:41.527727+00:00",
+            "repair_attempt": 11,
+            "repair_dispatched": "2026-10-27T01:49:55.087400+00:00",
+            "initial_worker_completed": "2026-10-27T01:46:11Z",
+            "worker_completed": "2026-10-27T01:58:17Z",
+            "verified": "2026-10-27T02:12:41.077322+00:00",
+            "landed": "2026-10-27T02:13:15+00:00",
+            "commit": "78a0d71a01cba4a66bca825c255dca661967ca65",
+            "elapsed_seconds": 2073.472273,
+            "initial_worker_seconds": 449.472273,
+            "repair_worker_seconds": 501.9126,
+            "repair_dispatch_to_landing_seconds": 1399.9126
+          }
+        ],
+        "ended": "2026-10-27T02:14:45.897902+00:00",
+        "elapsed_seconds": 2375.897902
+      },
+      "verified_at": "2026-10-27T02:12:41.077322+00:00",
+      "resource_state": {
+        "worker_session": "ses_e84fd4312ffeAKONw2wYsggL7q",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "static_rea_closed": true,
+        "live_resources": null,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_tasks": 0,
+        "component_changes": true,
+        "production_integration": false,
+        "game_processes": 0,
+        "lemweb_tasks": 0,
+        "fixed": 21,
+        "evidence": 563,
+        "dirty_paths_preserved": 9,
+        "production_callsite_unchanged": true,
+        "rejected_initial_preserved": true,
+        "component_source_restored": true
+      }
+    },
+    {
       "id": "c3-scale-bias-contract",
       "goal": "Resolve selected C3 mesh native-to-physical scale and per-draw bias input contract only; no implementation.",
       "milestones": [
@@ -2321,6 +2408,36 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bm-terrain-orientation",
+      "status": "landed",
+      "worker_output": "build/tmp/c3bm-terrain-orientation/round-note.md",
+      "brief": "build/tmp/c3-terrain-orientation-pass/brief.md",
+      "worker": "disasm-agent",
+      "worker_tier": "hard",
+      "kind": "disassembly read",
+      "requested_model": "configured pin, no override/fallback",
+      "attempt": 12,
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bm-terrain-orientation/**"
+      ],
+      "dispatched_at": "2026-10-27T02:24:04.889438+00:00",
+      "task_deadline": "2026-10-27T03:04:16Z",
+      "worker_session": "ses_e84d3c359ffeByyuXM62sQQPas",
+      "actual_model": {
+        "id": "gpt-6.1-sol",
+        "providerID": "openai",
+        "variant": "high"
+      },
+      "landed_at": "2026-10-27T02:46:44.317681+00:00",
+      "note": "docs/scratch/phase-c3bm-terrain-orientation.md",
+      "outcome": "Scoped conditional negative for connected low skirt source H-chain; broader actual repair4 sandy appearance remains indeterminate. No correction.",
+      "facilitator_check": "Own accepted-C3n raw indices/hierarchy plus rational4x4 transform oracle versus fresh actual-C++ probe:60vertices/72records/256corners.11original byte windows+established compose-wrapper read. One private terrain-only reversal rejects256/256corners/flips256signs;2979other corners unchanged; exact input/output restoration.45CTest/lint pass.",
+      "narrowing": "A1-fixture current-V and raw-native-B comparisons, NOT saved repair4 camera/runtime replay. No native visibility/admission/per-platform attribution or all-terrain negative. World H-chain negative conditional on source-pose inputs.",
+      "resources": "Worker succeeded/idle, configured disasm Sol/high without override/fallback.0live actions or native sessions; host0game/0LemWeb tasks."
+    },
     {
       "id": "c3bl-scene-clipping",
       "status": "landed",

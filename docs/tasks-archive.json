@@ -3,6 +3,83 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-final-influence",
+      "goal": "Bounded software final-image influence of three preselected recorded primary contributions, not a correction.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "User i approve 2026-10-26; delegated Sol bounded influence pass",
+      "directive_sha256": "0aa356b8ae21413f555043e988e101e13a68e21352bdd9f31f4bbbed0bb6ac47",
+      "owner": "ses_e86156bc2ffewXXG2clAuR4Z5o",
+      "parent_session": "ses_e8646168dffeJ0x2Dtz2oTI7yv",
+      "ownership_check": "Read-only actual active API; only parent and this child in project. Prior facilitator/worker succeeded idle. Metadata profile/model/parent match. build/tmp/c3-influence-pass/ownership.json. ff-only pull current c352e1c.",
+      "started_at": "2026-10-26T20:32:58+00:00",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 2,
+        "cumulative_question_cap": 6,
+        "round_minutes_including_verification": 45,
+        "overall_minutes": 120,
+        "repair_inclusive": true,
+        "commits": "named own paths, preserve unrelated edits, sync origin decompile"
+      },
+      "rounds_run": 2,
+      "cumulative_attempts": 6,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Whether to authorize another distinct bounded comparison or correction investigation; none automatic.",
+          "recommendation": "Review C3bh source-level sensitivities and explicit native/later-consumer gaps before granting fresh scope. Do not choose a correction by favorable removal delta, infer native ownership, expand source removal exhaustively or reopen observer.",
+          "evidence": "docs/scratch/phase-c3bh-final-influence.md",
+          "gate_baseline": "C3 .06354817708333334 FAIL; C1 .0160863988750699/.016121214378294987 PASS; exact baseline PNGs preserved."
+        }
+      ],
+      "stop_point": "Accepted bounded influence result or budget/blocker; no next question.",
+      "handoff": "STOPPED at accepted three-record software final influence C3bh:9variants independently reproduced byte-exact by separate implementation; color/depth supports and baseline-vs-removal errors separated, non-additive interactions and2749wood downstream depth pixels established. C3FAIL/C1PASS byte-identical,44CTest/32framework.2dispatches cumulativeattempts5/6, original45min deadline retained;0live/native usage. Worker succeeded idle, all mutations restored,21fixed and209prior evidence preserved,9initial dirty paths isolated. Directive consumed; no automatic next question/native/correction/observer/expanded census. Round02a68af committed/pushed; dispatch-to-landing969.436s including repair; pass1316.731s. Final closure timing/resource check complete.",
+      "stopped": {
+        "date": "2026-10-26T20:54:55.726+00:00",
+        "reason": "Accepted bounded three-record software final-influence result; approved stop point reached. No follow-on authorization.",
+        "last_commit": "02a68af8588fd49a7eb524e6902d548fe504d704"
+      },
+      "dispatched_at": "2026-10-26T20:37:32.564+00:00",
+      "verified_at": "2026-10-26T20:52:33.228+00:00",
+      "resource_state": {
+        "worker_session": "ses_e86113f2dffexNcllQEIQ2UlTd",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "live_resources": null,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_tasks": 0,
+        "native_research": 0,
+        "temporary_source_edits_restored": true,
+        "production_changes": false,
+        "prior_diagnostic_preserved": true
+      },
+      "current_pass": {
+        "started": "2026-10-26T20:32:58.995+00:00",
+        "rounds": [
+          {
+            "id": "c3bh-final-influence",
+            "dispatched": "2026-10-26T20:37:32.564+00:00",
+            "attempt5_completed": "2026-10-26T20:39:12.650+00:00",
+            "repair_dispatched": "2026-10-26T20:40:52.945+00:00",
+            "worker_completed": "2026-10-26T20:43:19.474+00:00",
+            "verified": "2026-10-26T20:52:33.228+00:00",
+            "landing_prepared": "2026-10-26T20:52:33.228+00:00",
+            "landed": "2026-10-26T20:53:42+00:00",
+            "commit": "02a68af8588fd49a7eb524e6902d548fe504d704",
+            "elapsed_seconds": 969.436,
+            "repair_elapsed_seconds": 769.055
+          }
+        ],
+        "ended": "2026-10-26T20:54:55.726+00:00",
+        "elapsed_seconds": 1316.731
+      }
+    },
+    {
       "id": "c3-source-write-recovery",
       "goal": "Build repeatable masked primary source-record to accepted depth/color-write diagnostic; stop before final influence/native comparison/correction.",
       "milestones": [
@@ -2013,6 +2090,33 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bi-depth-contract",
+      "status": "landed",
+      "worker_output": "build/tmp/c3bi-depth-contract/round-note.md",
+      "brief": "build/tmp/c3-depth-pass/compare-brief.md",
+      "worker_tier": "hard",
+      "kind": "disassembly read",
+      "escalation_reason": "Native projection/packing to shared comparison-depth semantics needs machine-code judgement",
+      "worker": "disasm-agent",
+      "worker_session": "ses_e856c2d78ffehzTGP8LcgRnFkF",
+      "owns_live_game": false,
+      "requested_model": "configured openai/gpt-6.1-sol#high; no override",
+      "attempt": 7,
+      "live_owner": null,
+      "owned_paths": [
+        "build/tmp/c3bi-depth-contract/**"
+      ],
+      "dispatched_at": "2026-10-26T23:37:39.661948+00:00",
+      "deadline": "2026-10-27T00:22:39.661948+00:00",
+      "verified_at": "2026-10-27T00:00:54.007983+00:00",
+      "worker_completed_at": "2026-10-26T23:53:48Z",
+      "worker_idle_at": "2026-10-26T23:53:58.523Z",
+      "note": "docs/scratch/phase-c3bi-depth-contract.md",
+      "result": "29248exact selected software depth replays; known f32 gap confirmed; missing native transform/bias/clip/precision/effective-state inputs prevent justified correction. No code or gate movement.",
+      "facilitator_check": "Independent rawLVL/5PEwindows/arithmetic; reload-only scratch mutant rejected/restored;44CTest/32framework; fresh baseline-identical C3/C1gate PNGs;21fixed250prior evidence preserved.",
+      "resources": "worker succeeded/idle; REA closed;0live operations/resources; source unchanged"
+    },
     {
       "id": "c3bh-final-influence",
       "status": "landed",

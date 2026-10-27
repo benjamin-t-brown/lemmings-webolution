@@ -1016,3 +1016,20 @@ C3.0635481771FAIL/C1.0160864/.0161212PASS unchanged.21fixed/source/install input
 deltas; worker succeeded/idle,0live/native usage/resources. No permanent source
 change, correction or expanded census. Directive consumed at this result; no
 third dispatch or automatic follow-on. Actual timings/commits in queue/archive.
+
+**C3bi, 2026-10-26 — selected-record depth contract compared; no correction.**
+Approved delegated Astra pass, cumulativeattempt7 (six earlier attempts retained).
+Independent raw-source/production extraction and arithmetic reproduce all29,248
+accepted depth assignments of the three C3bh records exactly. Physical units are
+coherent under the matched unrounded common-scale model; this is not native
+depth-state equivalence. Known f32 pack omission is numerically discriminated:
+three corners distinguish reloaded-f32Z RHW. Per-draw transform/bias/cache/clip
+inputs, precision and effective depth state remain unknown, so no rounding-domain
+or depth-policy correction is selected. [Facilitator check](../scratch/phase-c3bi-depth-contract.md).
+Own5PE windows, rawLVL checks and single reload-operand mutation/restoration pass;
+44/44CTest,32framework and fresh unchanged gate PNGs. C3.0635481771FAIL,
+C1.0160864/.0161212PASS; references/masks/floor unchanged.21fixed/source/install
+inputs,250prior evidence files and9initial dirty paths preserved outside isolated
+own documentation deltas. No production edit, live operation or observer reopening.
+Worker succeeded/idle; one dispatch, no repairs; stop at verified comparison/exact
+unresolved inputs, directive consumed. Actual times/commits in queue/archive.

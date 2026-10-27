@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T04:07:06.878323+00:00",
+  "updated": "2026-10-27T04:08:48.566186+00:00",
   "notes": "C3bn attempt13 consumed: pictured software target/source link established, saved-repair4 conditional orientation negative; native correspondence indeterminate. Worker projection/depth claims narrowed by independent verification; no production/gate change/follow-on.",
   "active": [],
   "queue": [],
@@ -45,11 +45,11 @@
         "evidence": "docs/scratch/phase-c3bn-terrain-image-link.md"
       }
     ],
-    "handoff": "STOPPED C3bn: annotated right-bank target x560..639,y180..318 linked to6b72b/node596c7 indices218/216/219 via10198retained accepted/final-color-influence pixels. Saved REPAIR4 inputs, not A1: own raw/rational/actual-C++ check projects triangle over target and matches all logged depths, no H/view orientation reversal under matched inputs. Worker projected-near-center discrepancy rejected: wrong lens normalization and signed-depth entry/label; own bounded verification supplies accepted table, worker files untouched. Native visible-terrain correspondence/runtime operands unknown. No correction/parent preapproval exercised.45CTest/lint, fresh rescore RETAINED PNGs C3FAIL/C1PASS unchanged, no new render. Prior12 and C3ar/C3bm historical dispatches retained; this third orientation dispatch is cumulative13, one attempt/no repair. Worker succeeded/idle,0live resources/actions; directive consumed/no automatic continuation.",
+    "handoff": "STOPPED C3bn: annotated right-bank target x560..639,y180..318 linked to6b72b/node596c7 indices218/216/219 via10198retained accepted/final-color-influence pixels. Saved REPAIR4 inputs, not A1: own raw/rational/actual-C++ check projects triangle over target and matches all logged depths, no H/view orientation reversal under matched inputs. Worker projected-near-center discrepancy rejected: wrong lens normalization and signed-depth entry/label; own bounded verification supplies accepted table, worker files untouched. Native visible-terrain correspondence/runtime operands unknown. No correction/parent preapproval exercised.45CTest/lint, fresh rescore RETAINED PNGs C3FAIL/C1PASS unchanged, no new render. Prior12 and C3ar/C3bm historical dispatches retained; this third orientation dispatch is cumulative13, one attempt/no repair. Worker succeeded/idle,0live resources/actions; directive consumed/no automatic continuation. Roundd9f547c committed/pushed; dispatch-to-landing1366.569s. End checks preserve177fixed/source inputs,463prior evidence files and9dirty deltas; worker APIterminal/host empty rechecked. Actual clocks in current_pass, worker note handoff separated from APIidle.",
     "stopped": {
-      "date": "2026-10-27T04:07:06.878323+00:00",
+      "date": "2026-10-27T04:08:48.566186+00:00",
       "reason": "Sole approved attempt13 completed: pictured software source link and scoped conditional negative under saved repair4; native correspondence remains indeterminate. No correction or follow-on.",
-      "last_commit": "9059bfb9e975b74981fa78a0e649e5306b07d56d"
+      "last_commit": "d9f547cb7e0f62c888b9ffb367ca1f9c00a54e3e"
     },
     "current_pass": {
       "started": "2026-10-27T03:41:29Z",
@@ -59,10 +59,18 @@
           "attempt": 13,
           "dispatched": "2026-10-27T03:44:47.431499+00:00",
           "deadline": "2026-10-27T04:26:29Z",
-          "worker_completed": "2026-10-27T03:55:46Z",
-          "verified": "2026-10-27T04:07:06.878323+00:00"
+          "worker_completed": "2026-10-27T03:56:36.862000+00:00",
+          "verified": "2026-10-27T04:07:06.878323+00:00",
+          "worker_reported_handoff": "2026-10-27T03:55:46Z",
+          "worker_terminal_clock_source": "API time.idle; reported note handoff kept separately",
+          "landed": "2026-10-27T04:07:34+00:00",
+          "commit": "d9f547cb7e0f62c888b9ffb367ca1f9c00a54e3e",
+          "dispatch_to_landing_seconds": 1366.568501,
+          "dispatch_to_worker_idle_seconds": 709.430501
         }
-      ]
+      ],
+      "ended": "2026-10-27T04:08:48.566186+00:00",
+      "elapsed_seconds": 1639.566186
     },
     "verified_at": "2026-10-27T04:07:06.878323+00:00",
     "resource_state": {

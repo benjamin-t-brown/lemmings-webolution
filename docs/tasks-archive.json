@@ -2516,13 +2516,18 @@
         "providerID": "openai",
         "variant": "high"
       },
-      "landed_at": "2026-10-27T04:07:06.878323+00:00",
+      "landed_at": "2026-10-27T04:07:34+00:00",
       "note": "docs/scratch/phase-c3bn-terrain-image-link.md",
       "outcome": "Software pictured bank/source link established:6b72b,10198ROI pixels. Scoped conditional H/view/projection negative under saved repair4 inputs; native original-terrain correspondence indeterminate. No correction.",
       "annotation": "build/tmp/c3bn-terrain-image-link/repair4-tested-patch.png",
       "facilitator_check": "Own rawC3n indices/rational H/view/lens ratio vs actual-C++ Camera/SceneMeshSource from SAVED REPAIR4 camera;10198logged pixels inside projectedtriangle, all depths match.12original windows authenticated. One privateGz mutation rejects fixed actual corners and restores exact.45CTest/lint; fresh rescore retained PNGs only.",
       "narrowing": "Reject worker near-center projection/location discrepancy: omitted divide byGz=1/width. Reject signed-depthV[6] and positive=front; ownV[2] normalized table accepted. Worker offline preregistration lapse recorded. No native pixel ownership/runtime correspondence claimed.",
-      "resources": "Worker succeeded/idle, configured Luna/high without override/fallback.0live or native sessions, host0game/0LemWeb tasks; no source edits."
+      "resources": "Worker succeeded/idle, configured Luna/high without override/fallback.0live or native sessions, host0game/0LemWeb tasks; no source edits.",
+      "commit": "d9f547cb7e0f62c888b9ffb367ca1f9c00a54e3e",
+      "dispatch_to_landing_seconds": 1366.568501,
+      "worker_api_idle": "2026-10-27T03:56:36.862000+00:00",
+      "pass_ended": "2026-10-27T04:08:48.566186+00:00",
+      "pass_elapsed_seconds": 1639.566186
     },
     {
       "id": "c3bm-terrain-orientation",

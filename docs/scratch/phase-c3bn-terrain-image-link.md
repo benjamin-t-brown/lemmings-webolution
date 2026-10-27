@@ -141,7 +141,8 @@ and Phase C append. No production/test/CMake/accepted-harness change. Worker
 Luna/high, no override/fallback. Separate host inventory0game/0LemWeb tasks; zero
 starts/attaches/injection/host tasks/install/package writes/owned live resources.
 
-Start03:41:29Z; dispatch03:44:47.431499Z; worker handoff03:55:46Z. Original overall
+Start03:41:29Z; dispatch03:44:47.431499Z; worker-reported handoff03:55:46Z
+(separate API terminal/idle clock recorded in queue). Original overall
 deadline04:26:29Z unchanged. Actual verification/landing/cleanup/end clocks and
 commits in queue/archive. Stop after linked software patch and scoped conditional
 negative. **Native visible-geometry correspondence and actual runtime transforms/

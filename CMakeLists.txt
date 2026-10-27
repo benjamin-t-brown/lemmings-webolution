@@ -125,6 +125,10 @@ add_executable(test_sceneraster src/__test__/test_sceneraster.cpp src/app/SceneR
 target_include_directories(test_sceneraster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME sceneraster COMMAND test_sceneraster)
 
+add_executable(test_sceneclip src/__test__/test_sceneclip.cpp src/app/SceneClip.cpp)
+target_include_directories(test_sceneclip PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME sceneclip COMMAND test_sceneclip)
+
 add_executable(test_scenedepth src/__test__/test_scenedepth.cpp src/app/SceneDepth.cpp src/app/SceneRaster.cpp src/app/SceneBillboardSource.cpp)
 target_include_directories(test_scenedepth PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME scenedepth COMMAND test_scenedepth)

@@ -3,6 +3,84 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-scale-bias-contract",
+      "goal": "Resolve selected C3 mesh native-to-physical scale and per-draw bias input contract only; no implementation.",
+      "milestones": [
+        "C3 full frame"
+      ],
+      "current": "C3 full frame",
+      "authorized": "Fresh user i approve go ahead 2026-10-26; one delegated Sol input-contract attempt9 only,45min overall,zero live",
+      "directive_sha256": "0f56d31e9b71c537200cc8b6fbc3ab1ff80a6b5c8de10bc9d1b4c91877ea45b6",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "ownership_check": "Fresh read-only API active set parent,this resumed child and unrelated ed-ascii only; prior worker succeeded/idle; self configured facilitator Sol/high unchanged. build/tmp/c3-scale-bias-pass/{active-before,self,prior-worker,parent}.json. ff-only pull current920e931.",
+      "started_at": "2026-10-27T00:49:40Z",
+      "deadline": "2026-10-27T01:34:40Z",
+      "grants": {
+        "stock_starts": 0,
+        "rounds": 1,
+        "cumulative_question_cap": 9,
+        "overall_minutes": 45,
+        "repair_inclusive": true,
+        "no_repair_dispatch": true,
+        "commits": "own isolated paths only; normal sync origin decompile"
+      },
+      "rounds_run": 1,
+      "cumulative_attempts": 9,
+      "stock_starts_used": 0,
+      "pending_questions": [
+        {
+          "question": "Choose separately authorized direction after accepted conditional input contract; none automatic.",
+          "recommendation": "A conditional law is now supported without historical live observation; any implementation must declare its input/precision model. Actual repair4 bit/operation-equivalent P/H/V/b,PC/RC and other runtime gaps remain scoped unknowns, not defaults.",
+          "evidence": "docs/scratch/phase-c3bk-scale-bias.md"
+        }
+      ],
+      "stop_point": "Stop at independently verified input contract, concrete blocker or overall deadline; park if incomplete. No implementation/follow-on even on success.",
+      "handoff": "STOPPED after accepted C3bk sole attempt9. Mesh N=Pzz*Z under matched H/V; b context+770, zero only clean first-primary prefix. Explicit qword/source/reference precision boundary preserved. No production changes; fresh C3FAIL/C1PASS PNGs exact. Worker succeeded/idle; REAclosed;0live actions/resources. Fresh directive consumed; no implementation or observation follow-on. Round9a4bce2 committed/pushed; dispatch-to-landing1525.278s. End preservation/terminal-worker/zero-resource checks exact; actual end in current_pass.",
+      "stopped": {
+        "date": "2026-10-27T01:18:53.778602+00:00",
+        "reason": "Approved stop point: conditional input contract independently recovered; no implementation authorized, exact historical operands remain scoped unknowns.",
+        "last_commit": "9a4bce26c8ce07f734fc2e76c7d7180c761a2a67"
+      },
+      "current_pass": {
+        "started": "2026-10-27T00:49:40Z",
+        "rounds": [
+          {
+            "id": "c3bk-scale-bias-contract",
+            "attempt": 9,
+            "dispatched": "2026-10-27T00:52:30.721507+00:00",
+            "worker_completed": "2026-10-27T01:07:03.932165+00:00",
+            "verified": "2026-10-27T01:17:19.991163+00:00",
+            "landed": "2026-10-27T01:17:56+00:00",
+            "commit": "9a4bce26c8ce07f734fc2e76c7d7180c761a2a67",
+            "elapsed_seconds": 1525.278493
+          }
+        ],
+        "ended": "2026-10-27T01:18:53.778602+00:00",
+        "elapsed_seconds": 1753.778602
+      },
+      "verified_at": "2026-10-27T01:17:19.991163+00:00",
+      "resource_state": {
+        "worker_session": "ses_e85279121ffe0fAGRHus9gulmT",
+        "worker_outcome": "succeeded",
+        "worker_idle_confirmed": true,
+        "static_rea_closed": true,
+        "live_resources": null,
+        "stock_starts": 0,
+        "attaches": 0,
+        "injections": 0,
+        "scheduled_tasks": 0,
+        "production_changes": false,
+        "game_processes": 0,
+        "lemweb_tasks": 0,
+        "fixed": 21,
+        "evidence": 382,
+        "dirty_paths_preserved": 9,
+        "worker_inventory_preserved": 488,
+        "production_diff_empty": true
+      }
+    },
+    {
       "id": "c3-clipping-contract",
       "goal": "Bounded shared near/screen-clipping rule comparison before final packing; at most one justified correction.",
       "milestones": [
@@ -2243,6 +2321,46 @@
     }
   ],
   "landed": [
+    {
+      "id": "c3bl-scene-clipping",
+      "status": "landed",
+      "brief": "build/tmp/c3-clip-impl-pass/implementation-brief.md",
+      "worker_tier": "targeted",
+      "kind": "implementation",
+      "worker": "round-agent",
+      "requested_model": "configured pin; no override",
+      "attempt": 11,
+      "cap_extension_reason": "Concrete clipping mismatch C3bj plus recovered conditional C3bk scale/bias law justify bounded implementation, not more attribution.",
+      "owns_live_game": false,
+      "live_owner": null,
+      "owned_paths": [
+        "src/app/SceneClip.h",
+        "src/app/SceneClip.cpp",
+        "src/__test__/test_sceneclip.cpp",
+        "CMakeLists.txt",
+        "cmake/webolution_sources.cmake",
+        "src/app/BackdropScene.cpp",
+        "src/__test__/test_backdropscene.cpp",
+        "build/tmp/c3bl-scene-clipping/**"
+      ],
+      "dispatched_at": "2026-10-27T01:38:41.527727+00:00",
+      "task_deadline": "2026-10-27T02:23:41.527727+00:00",
+      "worker_output": "build/tmp/c3bl-scene-clipping/repair1/round-note.md",
+      "worker_session": "ses_e84fd4312ffeAKONw2wYsggL7q",
+      "repair_brief": "build/tmp/c3-clip-impl-pass/repair1-brief.md",
+      "repair_dispatched_at": "2026-10-27T01:49:55.087400+00:00",
+      "verification_failure": "Initial component rejected: wrong other-screen field, projected-near stage contract, unsorted zero-denominator endpoint. Own actual C++ probe evidence retained.",
+      "landed_at": "2026-10-27T02:12:41.077322+00:00",
+      "note": "docs/scratch/phase-c3bl-scene-clip.md",
+      "summary": "Repaired explicit-input near/projection/screen clipper retained within bounded ordinary-finite SOURCE domain. Component/test/CMake only, no production adoption: clip-global-to-viewport bounds binding unsupported.",
+      "facilitator_check": "Initial actual-coordinate failure rejected; independent30original windows/18cases756fields on actual C++; p/t and native-epsilon isolated mutations/restoration;45CTest/32framework; fresh C3/C1 PNGs exact.",
+      "verification_limits": [
+        "Scaled-epsilon mutant survives permanent CTest but fails independent scaled fixture",
+        "Every-temporary1e100 rejection claim not accepted; source negative control proves narrower validation",
+        "Near-sort header shorthand narrowed to actual pre-bias view-Z sorting"
+      ],
+      "resources": "Worker succeeded/idle; REAclosed;0live actions/resources; production callsite unchanged"
+    },
     {
       "id": "c3bk-scale-bias-contract",
       "status": "landed",

@@ -1071,3 +1071,23 @@ this does not invalidate the conditional input law or require live observation
 to accept that law. No production edit or live operation/resource; worker
 succeeded/idle and REAclosed. Stop at verified contract, fresh directive consumed;
 implementation or observation requires new direction. Timings/commits in queue/archive.
+
+**C3bl, 2026-10-26 — clipping component retained; production bounds binding unsupported.**
+Fresh approved extension beyond9prior attempts; attempts10(initial)/11(repair).
+Initial helper rejected by own actual C++ asymmetric-screen probe and near-stage
+API review. Repair implements preprojection XYZ→near→projection/bias→ordered
+screen clipping under explicit inputs, binary64 fresh-cache model; no f32/cache-hit
+adoption. Independent30PE-window authentication,18cases/756fields against a
+separate Fraction oracle pass; isolated p/t and epsilon-domain mutations fail
+independent outputs and restore exact source. Permanent CTest misses scaled-epsilon
+mutation (scale1fixtures); separate scaled regression discriminates. Advertised
+every-temporary1e100 rejection is narrowed: only supplied/result fields checked,
+an explicit counterexample is retained. No general numeric/native fidelity claim.
+[Facilitator check](../scratch/phase-c3bl-scene-clip.md). Component/test/CMake only;
+BackdropScene/test unchanged. Conditional source/cache-miss law does not require
+historical memory, but no native clip-global→production-bounds binding is supported;
+integration stops there, no discovery campaign. Own45/45CTest,32framework and
+fresh byte-identical C3.0635481771FAIL/C1.0160864/.0161212PASS; no gate change.
+21fixed inputs/563prior evidence files and9unrelated dirty deltas preserved;
+worker succeeded/idle,0live actions/resources. Original task deadline retained;
+directive consumed at bounded component/binding stop, cumulative11, no follow-on.

@@ -1,69 +1,68 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T01:18:53.778602+00:00",
-  "notes": "Fresh attempt9 input-contract pass completed; conditional relation recovered independently, no production/live work. Directive consumed and investigation allowance exhausted.",
+  "updated": "2026-10-27T02:12:41.077322+00:00",
+  "notes": "C3bl component-only verified with narrowed limits after initial/repair attempts10-11. Production bounds binding unsupported; no gate movement; fresh directive consumed.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "c3-scale-bias-contract",
-    "goal": "Resolve selected C3 mesh native-to-physical scale and per-draw bias input contract only; no implementation.",
+    "id": "c3-clip-implementation",
+    "goal": "Implement established explicit-input scene clipping; production integration only at independently supported bindings; no guessed inputs.",
     "milestones": [
       "C3 full frame"
     ],
     "current": "C3 full frame",
-    "authorized": "Fresh user i approve go ahead 2026-10-26; one delegated Sol input-contract attempt9 only,45min overall,zero live",
-    "directive_sha256": "0f56d31e9b71c537200cc8b6fbc3ab1ff80a6b5c8de10bc9d1b4c91877ea45b6",
+    "authorized": "Fresh user yes 2026-10-26; delegated Sol implementation extension beyond exhausted investigation cap,attempts10-11 max,90min overall/45min task incl verification,zero live",
+    "directive_sha256": "7fc778e5da4f49e29ed99a1bc8517effcd02d3bf661ccc69a9cf156da70bb4a5",
     "owner": "ses_e854d421effeWpblsoJtCyVVFT",
     "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
-    "ownership_check": "Fresh read-only API active set parent,this resumed child and unrelated ed-ascii only; prior worker succeeded/idle; self configured facilitator Sol/high unchanged. build/tmp/c3-scale-bias-pass/{active-before,self,prior-worker,parent}.json. ff-only pull current920e931.",
-    "started_at": "2026-10-27T00:49:40Z",
-    "deadline": "2026-10-27T01:34:40Z",
+    "ownership_check": "Fresh actual API active set this resumed child and unrelated ed-ascii only; prior worker succeeded/idle, self facilitator Sol/high matches parent. build/tmp/c3-clip-impl-pass/{active-before,self,prior-worker,parent}.json; ff-only pull currentc3807f8.",
+    "started_at": "2026-10-27T01:35:10Z",
+    "deadline": "2026-10-27T03:05:10Z",
     "grants": {
       "stock_starts": 0,
-      "rounds": 1,
-      "cumulative_question_cap": 9,
-      "overall_minutes": 45,
+      "rounds": 2,
+      "cumulative_question_cap": 11,
+      "overall_minutes": 90,
+      "round_minutes_including_verification": 45,
       "repair_inclusive": true,
-      "no_repair_dispatch": true,
       "commits": "own isolated paths only; normal sync origin decompile"
     },
-    "rounds_run": 1,
-    "cumulative_attempts": 9,
+    "rounds_run": 2,
+    "cumulative_attempts": 11,
     "stock_starts_used": 0,
     "pending_questions": [
       {
-        "question": "Choose separately authorized direction after accepted conditional input contract; none automatic.",
-        "recommendation": "A conditional law is now supported without historical live observation; any implementation must declare its input/precision model. Actual repair4 bit/operation-equivalent P/H/V/b,PC/RC and other runtime gaps remain scoped unknowns, not defaults.",
-        "evidence": "docs/scratch/phase-c3bk-scale-bias.md"
+        "question": "Separately review unsupported native clip-global-to-production bounds binding and retained component validation limits before any adoption.",
+        "recommendation": "No automatic integration/discovery. Conditional cache-miss model itself does not require historical observation; keep actual missing bounds binding distinct. If later authorized, address scale regression coverage and overstated guard comments without claiming native precision.",
+        "evidence": "docs/scratch/phase-c3bl-scene-clip.md"
       }
     ],
-    "stop_point": "Stop at independently verified input contract, concrete blocker or overall deadline; park if incomplete. No implementation/follow-on even on success.",
-    "handoff": "STOPPED after accepted C3bk sole attempt9. Mesh N=Pzz*Z under matched H/V; b context+770, zero only clean first-primary prefix. Explicit qword/source/reference precision boundary preserved. No production changes; fresh C3FAIL/C1PASS PNGs exact. Worker succeeded/idle; REAclosed;0live actions/resources. Fresh directive consumed; no implementation or observation follow-on. Round9a4bce2 committed/pushed; dispatch-to-landing1525.278s. End preservation/terminal-worker/zero-resource checks exact; actual end in current_pass.",
+    "stop_point": "Stop after verified implementation/re-score or unsupported production binding, blocker or budget. Retain verified component honestly; no broad discovery/follow-on.",
+    "handoff": "STOPPED after C3bl initial attempt10 rejected and repair11 bounded component verified. Fresh-cache explicit near\u2192projection/bias\u2192ordered screen helper only; BackdropScene/test unchanged. Missing native clip-globals\u2192production bounds binding stops integration, no discovery. Independent18cases756fields and two isolated mutations pass/restored; CTest misses scaled epsilon, overflow-temporary claim narrowed.45CTest/32framework, fresh byte-identical C3FAIL/C1PASS gates. Worker succeeded/idle;0live resources/actions. Directive consumed, cumulative11; no automatic follow-on.",
     "stopped": {
-      "date": "2026-10-27T01:18:53.778602+00:00",
-      "reason": "Approved stop point: conditional input contract independently recovered; no implementation authorized, exact historical operands remain scoped unknowns.",
-      "last_commit": "9a4bce26c8ce07f734fc2e76c7d7180c761a2a67"
+      "date": "2026-10-27T02:12:41.077322+00:00",
+      "reason": "Approved stop: verified bounded component retained after one repair; production integration stopped at unsupported native bounds binding; attempts10-11 spent.",
+      "last_commit": "c3807f8563132f996c83a5b788be8bd0a2b393df"
     },
     "current_pass": {
-      "started": "2026-10-27T00:49:40Z",
+      "started": "2026-10-27T01:35:10Z",
       "rounds": [
         {
-          "id": "c3bk-scale-bias-contract",
-          "attempt": 9,
-          "dispatched": "2026-10-27T00:52:30.721507+00:00",
-          "worker_completed": "2026-10-27T01:07:03.932165+00:00",
-          "verified": "2026-10-27T01:17:19.991163+00:00",
-          "landed": "2026-10-27T01:17:56+00:00",
-          "commit": "9a4bce26c8ce07f734fc2e76c7d7180c761a2a67",
-          "elapsed_seconds": 1525.278493
+          "id": "c3bl-scene-clipping",
+          "attempt": 10,
+          "dispatched": "2026-10-27T01:38:41.527727+00:00",
+          "deadline": "2026-10-27T02:23:41.527727+00:00",
+          "repair_attempt": 11,
+          "repair_dispatched": "2026-10-27T01:49:55.087400+00:00",
+          "initial_worker_completed": "2026-10-27T01:46:11Z",
+          "worker_completed": "2026-10-27T01:58:17Z",
+          "verified": "2026-10-27T02:12:41.077322+00:00"
         }
-      ],
-      "ended": "2026-10-27T01:18:53.778602+00:00",
-      "elapsed_seconds": 1753.778602
+      ]
     },
-    "verified_at": "2026-10-27T01:17:19.991163+00:00",
+    "verified_at": "2026-10-27T02:12:41.077322+00:00",
     "resource_state": {
-      "worker_session": "ses_e85279121ffe0fAGRHus9gulmT",
+      "worker_session": "ses_e84fd4312ffeAKONw2wYsggL7q",
       "worker_outcome": "succeeded",
       "worker_idle_confirmed": true,
       "static_rea_closed": true,
@@ -72,14 +71,16 @@
       "attaches": 0,
       "injections": 0,
       "scheduled_tasks": 0,
-      "production_changes": false,
+      "component_changes": true,
+      "production_integration": false,
       "game_processes": 0,
       "lemweb_tasks": 0,
       "fixed": 21,
-      "evidence": 382,
+      "evidence": 563,
       "dirty_paths_preserved": 9,
-      "worker_inventory_preserved": 488,
-      "production_diff_empty": true
+      "production_callsite_unchanged": true,
+      "rejected_initial_preserved": true,
+      "component_source_restored": true
     }
   }
 }

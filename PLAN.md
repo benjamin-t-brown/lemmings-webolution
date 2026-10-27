@@ -16,12 +16,16 @@ and a link to the latest note.
 
 ## The goal, restated
 
-The old goal was *the simulation is correct*. It was reached, across **31 research rounds** —
-every behavioural constant in `src/sim/World.h` is a read of the shipped bytes plus a live
-series, all nine classic skills step, and every gadget in the game is settled and
-implemented — and it produced something that does not look like Lemmings Revolution. It booted into a flat 2D debug view,
-drew every lemming from sprite view 0 regardless of viewing angle, and showed a placeholder
-menu in our own font.
+**Direction (user, overlord review 2026-10-27): one faithful, integrated retail-level
+experience.** Convert accepted research into production rendering, controls and HUD;
+prefer observable integration over standalone tooling. Approved campaign: C3 → C2 → B2 →
+B3, with convergence fallback and budgets in [the directive](docs/DIRECTIVE.md).
+
+The reset's historical *simulation is correct* claim described 31 rounds of retained
+rules/gadget work, not current end-to-end acceptance. [D1m's later timing retraction](docs/LESSONS.md#the-simulation--measured-and-worth-keeping)
+withdraws discrete 5 Hz stepping; D1/D3 and D2's digger clock remain user-parked. Keep
+that work, but do not call simulation fidelity complete. The reset replaced a flat debug
+view, fixed sprite direction and placeholder menu with a 3D-first production path.
 
 **The new goal is visible and tactile fidelity: a screenshot of ours should be hard to tell
 from a screenshot of the original, and it should play in 3D on the rotating tube.**
@@ -59,13 +63,13 @@ the settled facts are in `docs/LESSONS.md`.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| A1 camera and controls | **done** | Four static views and zoom/elevation clamps pass the fixed 0.02 metric (0.0116–0.0160); 473 control points |
-| A2 tube fixed ROI | **done** (ROI) | Nine retained views + exposed INN region pass; wider/cavity/rim moved to A7 |
-| A3 sprite view selection | **done** | 608 native branch cases, 42/42 live actor-bound index/mirror |
-| A4 entry point, tube route, window | **done** | `webolution` runs 3D by default; 9/9 views on the production route (A4d); SDL controls (A4e) |
-| A5 one actor billboard raster | **done** (zoom 0) | Both A4f fixtures beat absent-actor; footprint exact (A4v); POINT + `> 0xEF` (A4x/A4y). Zoom 1 residual parked (E) |
-| A6 sim lemmings in the app frame | **done** | Restated gate on the repair 4 pause: tube ROI 0.015584142; all three actor boxes improve. A6d3 slope walker parked (E) |
-| **A7 scene completeness** | **done** | Amended gate passes: nine `MM_CLIMB_002` views (A7p) + one second level (A7q), caption panel + ten skill-panel boxes excluded, all ≤0.02. See below |
+| A1 camera and controls | **Implemented:** camera/input. **Verified (scope):** done, retained views/clamps. **Next deliverable:** preserve. | Four static views and zoom/elevation clamps pass the fixed 0.02 metric (0.0116–0.0160); 473 control points |
+| A2 tube fixed ROI | **Implemented:** tube route. **Verified (scope):** done, ROI only. **Next deliverable:** preserve. | Nine retained views + exposed INN region pass; wider/cavity/rim moved to A7 |
+| A3 sprite view selection | **Implemented:** chooser. **Verified (scope):** done, index/mirror cases. **Next deliverable:** preserve. | 608 native branch cases, 42/42 live actor-bound index/mirror |
+| A4 entry point, tube route, window | **Implemented:** SDL window/controls and headless path. **Verified (scope):** done, A4d/e. **Next deliverable:** preserve. | `webolution` runs 3D by default; 9/9 views on the production route (A4d); SDL controls (A4e) |
+| A5 one actor billboard raster | **Implemented:** actor raster. **Verified (scope):** done, zoom 0 fixtures. **Next deliverable:** preserve; zoom 1 parked. | Both A4f fixtures beat absent-actor; footprint exact (A4v); POINT + `> 0xEF` (A4x/A4y). Zoom 1 residual parked (E) |
+| A6 sim lemmings in the app frame | **Implemented:** actor adapter/optional sim. **Verified (scope):** done, amended repair4 frame only. **Next deliverable:** preserve; D gates separate. | Restated gate on the repair 4 pause: tube ROI 0.015584142; all three actor boxes improve. A6d3 slope walker parked (E) |
+| **A7 scene completeness** | **Implemented:** tube/actor composition. **Verified (scope):** done, amended exclusions/two levels. **Next deliverable:** preserve. | Amended gate passes: nine `MM_CLIMB_002` views (A7p) + one second level (A7q), caption panel + ten skill-panel boxes excluded, all ≤0.02. See below |
 
 **User decisions, Phase A.** Full text in [Phase A history](docs/plan-history/phase-a.md).
 - **A6 exit gate restated (2026-10-20, with user sign-off, after A6d24):** tube ROI
@@ -95,9 +99,9 @@ threshold is 0.02, the same as A1/A2/A7.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| B1 frontend assets and text | **done** (B1w, own re-score 0.005244; the five panels are measured from the reference, not read). Accepted on condition (user, overlord review 2026-10-23): the panel draw is read and re-scored; a failing re-score reopens B1 ([note](docs/scratch/phase-b1w-menu-render.md)) | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
-| B2 screen state machine | queued; parked at the three-round cap (B2a–c) and level-to-map (B2j/B2k, no key or click path named) ([Phase E](docs/plan-history/phase-e.md#b2-screen-state-machine)) | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
-| B3 level select and map | **in progress**, not accepted. Map object and level-pick parked ([B3d](docs/scratch/phase-b3d-map-callers.md), [B3g](docs/scratch/phase-b3g-box-call.md), [Phase E](docs/plan-history/phase-e.md#b3-map-screen-object)). Gate not scored. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
+| B1 frontend assets and text | **Implemented:** menu renderer, not runtime frontend. **Verified (scope):** conditional acceptance, [B1w](docs/scratch/phase-b1w-menu-render.md) .005244; panels measured. **Next deliverable:** read/re-score panels; failure reopens B1. | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
+| B2 screen state machine | **Implemented:** not wired into app. **Verified (scope):** partial reads/live pause, not gate. **Next deliverable:** reproducible menu/confirm/map/level/back; [prior cap-parks](docs/plan-history/phase-e.md#b2-screen-state-machine) retained. | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
+| B3 level select and map | **Implemented:** progress/assets, no integrated map. **Verified (scope):** gate unscored; [object/pick parks](docs/plan-history/phase-e.md#b3-map-screen-object). **Next deliverable:** map selection and two unlock-state comparisons. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
 **User decisions, Phase B.** Full text in [Phase B history](docs/plan-history/phase-b.md).
 - **English reference accepted (user, 2026-10-22):** the German-menu quirk was a harness
@@ -127,81 +131,18 @@ user 2026-10-22.**
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| C1 skill panel | **done, amended scope**: own fresh zoom1/elev_down 0.0160864/0.0161212; elev_up 0.0327825 reported, not gated ([closure](docs/scratch/phase-c1-close-amended-gate.md)). Other reported views remain above 0.02. | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed. **Measured over the panel footprint** (user, overlord review 2026-10-24): the union of the ten button plates, icon rectangles and count-glyph rectangles at their read positions, fixed and committed before any render it scores. Not the C1b `baseline != no-cell-routes` mask, which meets the panel in 0 pixels (C1t). **Gated views** (user, overlord review 2026-10-24, second amendment; third amendment 2026-10-25): A7p `zoom1` and `elev_down`, each ≤ 0.02, rendered with their A7p camera params; `elev_up`, `initial`, the other A7p views and `MM_DIG_000` are scored and reported, not gated, until C3 draws the backdrop behind the panel |
-| C2 counters, cursor, pause caption | **in progress**. Counters and caption drawn; blend parked (C2k). Cursor readers found; the sprite choice is parked ([C2n](docs/scratch/phase-c2n-cursor-read.md), [Phase E](docs/plan-history/phase-e.md#c2-cursor-sprite)). | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
-| C3 full frame | **FAIL .0635482.** [park](docs/scratch/phase-c3bu-controller-final-core.md). | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
+| C1 skill panel | **Implemented:** optional headless panel. **Verified (scope):** amended gate PASS .0160864/.0161212 ([closure](docs/scratch/phase-c1-close-amended-gate.md)); other views fail. **Next deliverable:** runtime composition, preserve gates. | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed. **Measured over the panel footprint** (user, overlord review 2026-10-24): the union of the ten button plates, icon rectangles and count-glyph rectangles at their read positions, fixed and committed before any render it scores. Not the C1b `baseline != no-cell-routes` mask, which meets the panel in 0 pixels (C1t). **Gated views** (user, overlord review 2026-10-24, second amendment; third amendment 2026-10-25): A7p `zoom1` and `elev_down`, each ≤ 0.02, rendered with their A7p camera params; `elev_up`, `initial`, the other A7p views and `MM_DIG_000` are scored and reported, not gated, until C3 draws the backdrop behind the panel |
+| C2 counters, cursor, pause caption | **Implemented:** headless counters/caption, no runtime HUD/cursor. **Verified (scope):** partial, blend/choice [parked](docs/plan-history/phase-e.md#c2-cursor-sprite). **Next deliverable:** cursor and runtime HUD/pause. | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
+| C3 full frame | **Implemented:** conditional backdrop/stage paths. **Verified (scope):** FAIL .0635482; [clip component only](docs/scratch/phase-c3bl-scene-clip.md). **Next deliverable:** supported production connection, not controller repair. | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
 **User decisions, Phase C.** Full text in [Phase C history](docs/plan-history/phase-c.md).
+- **Integrated retail progress (user, overlord review 2026-10-27, "go ahead"):** C3 → C2 → B2 → B3; 8h/16 attempts/8 starts, tooling ≤2 attempts/90min; C3 reassess at 3 attempts/2h. [Directive](docs/DIRECTIVE.md); no Phase D or gate reopening.
 - **Backdrop before C1** (user, overlord review 2026-10-23): backdrop scenery, entrance and
   exit models come before C1. Since parked in Phase E (C3 scenery, 2026-10-24).
-- **Milestone-scoped standing runs (user, overlord review 2026-10-24, "good i approve").**
-  A run may take a milestone to its gate: the facilitator ranks and splits each next question,
-  and an unread input is queued, not a stop. Budget: 3 rounds per question, 3 concurrent
-  offline rounds, a pool of 3 stock starts (each dry-checked offline first, no retry after a
-  failed launch), about 4 hours or 12 rounds per run. No debugger, no choosing by score.
-  First use: the C1 directive of 2026-10-24.
-- **C1 alpha-count run: 2 more starts and a launch-time attach (user, overlord review
-  2026-10-24, "ya sure, 2 yes").** Two stock starts after c1ah spent the pool, so one failed
-  launch can be repaired. A read-only attach may go in at launch, before the frontend loads
-  textures (right after `Popen`, or with the game spawned suspended), when an offline round has
-  placed the `^tab` upload before the level click. Everything else in the milestone-scoped
-  budget is unchanged.
-- **C1 alpha counts: attach at launch without placing the upload first (user, overlord review
-  2026-10-24, "i approve").** c1ai–c1al could not place the `^tab` upload in time offline. The
-  next start attaches at launch and stays attached through level entry and pause, logging
-  continuously, with read-only hooks at the format callback, the upload entry, the mask zero
-  test and the shift. The 2 unspent starts stand; the alpha-count question gets up to 3 more
-  rounds.
-- **C1 alpha counts after the c1ao exit (user, overlord review 2026-10-24, "yep all are good
-  i approve").** c1ao's launch start exited during startup, after a 16-bit upload kept mask
-  `0x8000` and before any shift hit. Up to 3 more alpha-count rounds; the start pool is 2 again
-  (1 left plus 1). The `frida` 17.24.3 package c1an installed for mouv's Python stays; the
-  facilitator updates `docs/agents/MOUV_SSH.md` to say so.
-- **C1 alpha counts: offline first, menu-attach only, then a convergence check (user,
-  overlord review 2026-10-25, "yep all are good i approve").** c1aq and c1as, spawned
-  suspended, both died at startup (`0xC0000005` on c1as) before `^tab` uploaded. Spawn mode
-  is retired. Up to 3 offline rounds and 1 live round; a pool of 1 start, attached at the menu
-  before the level click (the c1s/c1ah recipe); a crash is a hard stop. If this run ends
-  without a gate score, the overlord brings the user a choice: park the plate-alpha question
-  or amend the C1 gate.
-- **Long multi-milestone run (user, overlord review 2026-10-25, "approve").** After c1aw's
-  crash: neither park nor amend yet; first re-read c1au's `+7` fill coverage (the withdrawal
-  looks wrong), then render C1. Scope C1, then C2 cursor, then B3; C3 and B2 reopen only with
-  a written gate reason. Caps park and the run continues; park-or-amend goes to
-  `pending_questions`. About 8 hours or 24 rounds; a pool of 3 starts, menu attach through
-  the REA CLI; a crash ends that question's live arm, a second ends starts for the run.
-- **DERIVED values, value-framed questions, C1 only (user, overlord review 2026-10-25,
-  "approve all").** After run `c1-c2-b3` parked every question with no gate scored. A value
-  may be DERIVED when each link is read from the exe or install or is documented Win32 /
-  DirectX behaviour (struct, field, offset cited); labelled DERIVED, never MEASURED, and a
-  disagreeing live read replaces it. Questions name the value needed and a round follows the
-  chain to it. Next run: C1 only (`+6` and kept format, the `^tab` texel word, render and
-  score); same budget as the previous run.
-- **C1 gated views amended a third time (user, overlord review 2026-10-25, "i approve your
-  recommendations").** After C1bh (0.01617 / 0.03275 / 0.01622): plate 0 carries 420292 of
-  `elev_up`'s 580420; behind it stock shows sand (mean 325 at alpha-0 texels) where we draw
-  black (27), the parked C3 backdrop. `elev_up` moves to reported, not gated; `zoom1` and
-  `elev_down` stay gated at ≤ 0.02. Threshold, footprint and region unchanged. Overlord
-  scripts `build/tmp/overlord-2026-10-25/elevup.py`, `plate0.py` (saved PNGs; evaluation).
-- **Close C1, then C3 backdrop scenery (user, overlord review 2026-10-25, "yes i approve
-  2").** After run `c1-derived-values` stopped on `elev_up` (C1bj: the scene through the plate
-  interior). The next run re-scores and closes C1 under the third amendment, then reopens the
-  parked C3 scene reads with DERIVED values and value-framed questions, renders and scores the
-  full frame. No body cap; 30-minute rounds. C2, B2 and B3 stay out. About 8 hours or 24
-  rounds; a pool of 3 starts, menu attach through the REA CLI.
-- **C3 steering: render now, spend a start on pause values (user, overlord review
-  2026-10-25, "i approve 1 and 2").** After C3n–C3z (16 rounds, 0 starts, no scene drawn,
-  full frame 0.2050523 on repair4). The run renders the scene from the read/DERIVED values and
-  scores it before adding more readers. One live round from the existing pool of 3 lifts the C3z
-  observation park for the pause values (`[game+0]`, `[game+0x5139]`, `0x58d498`, effective
-  texture format). Steering was in `docs/DIRECTIVE.md` at `884798a`.
-- **C3: fix the known render gaps, then one live start (user, overlord review 2026-10-25,
-  "i approve go ahead").** Run `c1-close-c3-scene` stopped on its 24-round budget with C3ae's
-  conditional scene render at 0.0923688 (was 0.2050523) and the live controller rejected in
-  dry-check (C3ad), 0 starts. Next Sol run: fix C3ae's listed integration defects from existing
-  evidence, one per brief with a concrete check, re-scoring after each; repair and fully mock
-  the controller, then one start for the pause values. About 6 hours or 16 rounds, pool of 3
-  starts. Round limit becomes **45 minutes, repairs included**. Gate unchanged.
+- **Standing runs and C1 alpha-count extensions (user, overlord review 2026-10-24/25):** milestone budgets, launch/menu-attach changes, failed-start renewals and convergence decisions retained in the [authorization history](docs/plan-history/phase-c-authorizations-2026-10-27.md); no old pool renewed here.
+- **Long multi-milestone / C1 DERIVED-value runs (user, overlord review 2026-10-25):** retained [in full](docs/plan-history/phase-c-authorizations-2026-10-27.md). DERIVED requires a supported chain; disagreeing live reads replace it.
+- **C1 third gate amendment and closure → C3 (user, overlord review 2026-10-25):** `elev_up` reported, not gated; zoom1/elev_down remain ≤0.02. [Decision/evidence](docs/plan-history/phase-c-authorizations-2026-10-27.md); footprint/threshold unchanged.
+- **C3 render-now and known-gap steering (user, overlord review 2026-10-25):** conditional rendering before more reads; then isolated supported fixes and bounded observation. [Full historical budgets/conditions](docs/plan-history/phase-c-authorizations-2026-10-27.md), not current controller authority.
 - **C3 reference re-capture, scene pose and tube ends (user, overlord review 2026-10-25,
   "approved").** Run `c3-known-gaps-pause-values` stopped 16/16 at 0.0635482 with 0 starts:
   the one-shot was rejected before Popen on a numeric ScheduledTask state. The user saw the
@@ -221,9 +162,9 @@ user 2026-10-22.**
 
 ## Phase D — reconnect the simulation
 
-Wire spawn, exits, skill assignment and the measured gadgets into the new renderer, and get a
-retail level playable end to end in 3D. Starts as soon as A6 passes; it runs alongside A7
-and comes before B and C.
+Spawn, exits, skill assignment and gadgets are connected to the optional sim path, but
+retail end-to-end fidelity is not accepted. User-directed D1/D3/digger-clock parks remain;
+the current C3 → C2 → B2 → B3 campaign does not reopen them.
 
 **Milestones and exit gates (user sign-off 2026-10-21, before any D round).** Every gate is
 scored against the original's actor list at `0x004CBB18`
@@ -232,9 +173,9 @@ change a gate after seeing a result; a needed change stops the standing run.
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| D1 release and walk-out | **parked in Phase E (2026-10-22, user decision); not accepted**: D1o fails literally, 657 / 305 divergences with the continuous clock off / on ([Phase E](docs/plan-history/phase-e.md#d1-whole-milestone)) | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
-| D2 click-to-assign | **(a) accepted** (20/20, D2e); (b) 3 of 4 (climber/blocker/floater), digger parked: 16/50, needs a cross-state percent clock ([Phase E](docs/plan-history/phase-e.md#d2b-digger-bite-timing)) | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
-| D3 one retail level end to end | **parked in Phase E (2026-10-22, user decision); not accepted**: saved count 10/10; two stock runs of one solution end 75 s apart ([Phase E](docs/plan-history/phase-e.md#d3-whole-milestone)) | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
+| D1 release and walk-out | **Implemented:** spawn/walk/optional clock. **Verified (scope):** NOT accepted, 657/305 divergences clock off/on. **Next deliverable:** strategic decision; [user-parked](docs/plan-history/phase-e.md#d1-whole-milestone). | `MM_CLIMB_002`, no input, from level start: for 150 ticks (30 s), every lemming's cell X/Y, facing and state match the original each tick, and the released count and order match |
+| D2 click-to-assign | **Implemented:** pick/assignment. **Verified (scope):** (a) 20/20; (b) 3/4 skills, digger 16/50. **Next deliverable:** strategic decision; [digger parked](docs/plan-history/phase-e.md#d2b-digger-bite-timing). | (a) For 20 recorded cursor positions, the in-level pick (AABB against `lemming+0x128`, cursor doubles at `0x4CBFB0`+0x16A0/+0x16A8) picks the same lemming as the original, or none when it picks none. (b) Climber, floater, blocker and digger each assigned once: the 50 ticks after each assignment match the actor list exactly, and the skill counts decrement the same way |
+| D3 one retail level end to end | **Implemented:** optional sim/play path. **Verified (scope):** NOT accepted; saved10/10, end-time spread75s. **Next deliverable:** strategic decision; [user-parked](docs/plan-history/phase-e.md#d3-whole-milestone). | `MM_CLIMB_002` playable in `webolution` (3D view, lemmings, click to assign). One scripted solution (timed assignments) gives the same saved count and the same end time in whole seconds as the original, and reaches a level-end state. The A6 and A7 frame gates still pass |
 
 **User decisions, Phase D.** Full text in [Phase D history](docs/plan-history/phase-d.md).
 - **D1 direction (user, 2026-10-21):** the D1 gate stays as written; the facing-label

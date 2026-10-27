@@ -3,6 +3,18 @@
   "notes": "Archive of docs/tasks.json, split 2026-10-24 (user, overlord review 2026-10-24). Not the live queue; append only. previous_runs is newest first; landed is newest first.",
   "previous_runs": [
     {
+      "id": "c3-controller-final-core",
+      "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+      "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+      "directive_sha256": "dbc33a3d90cd6f0e096192f1f7c200502341b0c6ce906c7481090b1a7fe569a5",
+      "stopped": {"date": "2026-10-27T08:23:16.801802+00:00", "reason": "FINALnarrowcoreacceptance failed on documentedquotedautomaticg trailer; coreparkedforthisautomationwindow, no repeat/adapter/live route.", "last_commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55"},
+      "rounds_run": 1,
+      "cumulative_attempts": 20,
+      "stock_starts_used": 0,
+      "archived_queue": "docs/queue-history/c3-controller-final-core-2026-10-27.json",
+      "archive_scope": "Full pre-handoff queue preserved byte-for-byte at linked snapshot, including original standing_run, all budgets/deadlines, automation authority, pending questions, resource state and detailed clocks. Snapshot is historical, not a second live queue; old unused pools do not renew."
+    },
+    {
       "id": "c3-controller-correction",
       "goal": "Atmost2sequentialoffline tasks: correctBSconcreteacceptancefailures; onlyifaccepted integrateactualCDBboundaries offline. Stopbeforeparentreview/live.",
       "milestones": [

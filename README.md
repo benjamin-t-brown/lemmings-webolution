@@ -1,130 +1,67 @@
 # Lemmings Webolution
 
-An open reimplementation of **Lemmings Revolution** (Psygnosis Leeds / Take-Two, 2000)
-in C++23 on SDL2 + OpenGL, building natively on MSYS2/UCRT64, Linux, macOS and
-WebAssembly.
+A work-in-progress 1:1 reimplementation of **Lemmings Revolution** (2000), in
+C++23 with SDL2 presentation and a software 3D rasterizer at native 640x480.
+The stock executable is the authority, not classic Lemmings or our own tests.
 
-The aim is a 1:1 mechanical match with the original, starting at its native 640x480.
+**No game data is shipped.** Supply your own installation; the asset library
+reads `lemmings.box` with the `patch.box` overlay. See [PLAN.md](PLAN.md) for
+implemented features, verified scope, signed gates and next deliverables.
 
-**This project ships no game data.** It reads `lemmings.box` and `patch.box` from an
-existing Lemmings Revolution installation at runtime, the way OpenRCT2 and devilutionX
-do. You need your own copy of the game.
+## Build on Windows
 
-See [PLAN.md](PLAN.md) for the reverse-engineering notes and the phased plan.
-
-## Build
-
-Needs CMake 3.28+, Ninja and a C++23 compiler. On Windows use an MSYS2 UCRT64
-shell. Agents in PowerShell should wrap commands with
-`scripts/Invoke-Ucrt64.ps1` (same pattern as Carcer) so they get that
-environment instead of guessing at MSVC or bare `g++`.
-
-UCRT64 packages:
-
-```sh
-pacman -S \
-  mingw-w64-ucrt-x86_64-gcc \
-  mingw-w64-ucrt-x86_64-cmake \
-  mingw-w64-ucrt-x86_64-ninja \
-  mingw-w64-ucrt-x86_64-make \
-  mingw-w64-ucrt-x86_64-pkgconf \
-  mingw-w64-ucrt-x86_64-SDL2
-```
-
-```sh
-make -C src            # build
-make -C src test       # build and run the suite
-make -C src info       # summarise the archives in your game installation
-make -C src dump       # extract every archive entry to build/assets
-make -C src png        # decode every texture to PNG in build/png
-```
-
+The authoritative build uses CMake 3.28+, Ninja and MSYS2 UCRT64 GCC/SDL2.
 From PowerShell:
 
 ```powershell
-.\scripts\Invoke-Ucrt64.ps1 "make -C src test"
+.\scripts\Invoke-Ucrt64.ps1 "cmake --preset dev-debug"
+.\scripts\Invoke-Ucrt64.ps1 "cmake --build --preset dev-debug"
+.\scripts\Invoke-Ucrt64.ps1 "ctest --preset dev-debug"
 ```
 
-Point the tooling at your installation with `GAME_DIR`:
+Set CMake's `WEBOLUTION_GAME_DIR` for retail-data tests; tests may skip their
+retail portion without it. In a UCRT64 shell, `make -C src` / `make -C src test`
+are convenience wrappers. Use `GAME_DIR` for the Makefile's installation path.
+See [build rules](.claude/rules/windows-msys2-build.md) for prerequisites/PATH.
+Linux/macOS/WebAssembly are not accepted platform targets; a Mac test build
+exists with limitations, and the Emscripten preset is not a verified port.
 
-```sh
-make -C src info GAME_DIR="C:/Games/Lemmings Revolution"
+## Current entry point
+
+```powershell
+build/cmake/dev-debug/webolution.exe --game-dir "C:/progs/Lemmings Revolution"
+build/cmake/dev-debug/webolution.exe --level MM_CLIMB_002 --sim
+build/cmake/dev-debug/webolution.exe --level MM_CLIMB_002 --shot build/tmp/frame.png
 ```
 
-Tests that read real game data skip themselves when `WEBOLUTION_GAME_DIR` is
-unset, so the suite is green on a machine without the game.
+- Default: SDL window, retail `MM_CLIMB_002`, 3D tube route and camera controls;
+  retained injected walkers are fixtures, **not** a running simulation.
+- `--sim`: optional simulation, actor drawing, picking and debug skill input.
+  This is not accepted end-to-end retail gameplay or a faithful skill-panel UI.
+- `--shot`: optional headless fixture rendering. `--skill-panel`, `--hud-ticks`
+  and `--pause-caption` currently compose headless HUD fixtures, not windowed HUD.
+- `--flat` is a debug view. The old OpenGL renderer, placeholder frontend,
+  music/SFX shell and its old toggles are retired under `old/`, not the current app.
 
-## Status
+Production wiring: [source inventory](cmake/webolution_sources.cmake),
+[entry point](src/app/main.cpp). Audio decoding/mixer and progress helpers exist,
+but a complete menu/map/audio runtime is not integrated.
 
-The game runs: `make -C src run`. With `--level` the terrain is rebuilt from
-the level's surface lattice; without it a hand-built test level is used.
-Lemmings use the original's artwork when an installation is reachable:
+## Verified scope, not completion
 
-```sh
-make -C src run                                   # the test level
-build/cmake/dev-debug/webolution --level MM_CLIMB_002 --cylinder
-build/cmake/dev-debug/webolution --native
-make -C src lvlmap LEVEL=MM_FLOAT                 # unroll surface vertices
-# lrtool lvlmask <game-dir> <level> <out.png>     # rasterised collision mask
-# lrtool lvlstats <game-dir> [--csv]              # corpus terrain survey
-```
+- Asset readers, collision grids, tube mesh generation, camera and sprite
+  orientation have retained byte/live/offline evidence in [lessons](docs/LESSONS.md).
+- A1–A7 pass their bounded/amended gates. B1's menu fixture is conditionally
+  accepted; runtime navigation/map remains unfinished.
+- C1's two amended panel views pass. C2 counters/caption are partial fixtures;
+  cursor and runtime HUD/pause integration remain unfinished.
+- C3 full-frame remains **FAIL: 0.0635481771 vs 0.02** (retained baseline).
+- Simulation rules/gadgets are implemented, but discrete 5 Hz stepping was later
+  retracted. D1/D3 and the D2 digger clock remain user-parked, not accepted.
 
-- [x] `.box` archive format decoded and validated
-- [x] Repo skeleton, CMake presets, test suite
-- [x] `Box` / `AssetLibrary` reader with patch overlay (`src/assets/`)
-- [x] `lrtool` CLI: `info`, `list`, `extract`, `dump`
-- [x] Input shim so the original can be driven by script (`tools/dinput-shim/`)
-- [x] LRZ texture decoder, verified byte-identical to the original
-- [x] `.ALF` alpha planes, the `^ + $ _ ~` name sigils, BMP -> RGBA, PNG export
-- [x] `.LTX` strings (8 languages, 3 codepages), `LEVELMAP.DAT`, `LEVELS.MAP`, `RELEASERATE.PC`
-- [x] `.WAV` sounds: all 73 retail files decode (17 rates, 8/16-bit, mono/stereo) with load-time resampling
-- [x] `.SPR` sprite sheets: 7,354 frames, animation strips render correctly
-- [x] `.LVL` header: title, seven header words, and the asset manifest, parsing
-      exactly across all 102 levels
-- [x] `.LVL` cylinder: the tube is identical in every level -- 7 rings, 32
-      angular steps of 11.25 degrees, radii 50 and 60 -- which pins the
-      coordinate system the simulation wraps in. `lrtool lvlmap` draws it.
-- [~] `.LVL` collision: the terrain mask is **stored in the level file** --
-      256x96 `u32` flag cells, length-prefixed, read verbatim by the engine
-      into the object it collides against. Verified byte-identical to the
-      running original's own grid on five independently entered levels, and
-      present exactly once in each of the 102 files.
-      Anchored in the chunk order, not by signature: it is the third array
-      after the `Cylinder` chunk, which lands in all 102 levels. `--level`
-      **plays on it** -- the simulation now runs at the engine's own one cell
-      per world unit, and `Rules` carries the world-unit constants read off
-      the binary. All five live dumps reproduce byte for byte from the file
-      alone. See PLAN.md 1.6.
-- [~] `.LVL` surface: one counted array of 49,858 surface indices after the
-      Cylinder preamble, drawn as quads. It is what the engine **draws**; the
-      stored collision grid is what a lemming stands on. `--level` plays on
-      the grid. The earlier "22 of 101 releasable" figure was a `header[3]`
-      window into that index, not the levels. Three `MM_CLIMB_002` constants
-      in the face builder are marked as render-only fits. Skin tiles are
-      scenery and do not encode solidity.
-- [~] Simulation: terrain with cylinder wraparound, lemming state machine, all
-      eight skills, deterministic ticks, the level clock. The step rate (5 Hz),
-      the walk (one column per step), and the spawn interval (`RELEASERATE.PC`)
-      are measured, and so is the climb: one world unit per step, one cell.
-      The fall, the float, and the umbrella and splat distances are
-      read off the binary rather than measured -- 20.0 world units per
-      second at `0x004B0A18`, so 4 cells per tick and 2 under the
-      umbrella, which opens at 10 cells fallen and splats past 30 -- and
-      they still owe a live series. A released lemming is created from two
-      hatch int16s plus the constant 0.5 (`0x0042DE51`), not from the
-      entrance object's translation. The sim still drops from that
-      translation. The skill constants are classic
-      stand-ins. PLAN.md 2.3 has the addresses, and
-      `tools/harness/read_steppers.py` re-runs the read.
-- [x] Rendering: SDL2 + OpenGL (GL 3.3 core / WebGL2), batched textured quads,
-      lemmings drawn from `LEMMINGSLO.SPR`, and both views -- the flat
-      unwrapped one and the cylinder projection (`C` toggles), and a named
-      level's own skin tiles wrapped onto the tube, both surfaces (`T`
-      toggles). With `--level`, collision comes from the stored grid and
-      the skin is drawn behind it as scenery.
-- [x] Game shell: LTX menus (main / confirm / options / map / results),
-      progress unlocks in `webolution_progress.dat`, in-level HUD, SFX +
-      looping `MUSIC\LEMMING01..13`. FMV still open. `--level` bypasses the
-      shell; default language is UK (English) when present.
-- [ ] Linux, macOS and WebAssembly builds. The emscripten preset exists but has
-      never been run -- no activated EMSDK here -- so it is untested, not done.
+These are accepted historical results, not a fresh build/live claim from this
+README update. Current direction is integrated retail-level progress, C3 → C2 →
+B2 → B3; tools support named fidelity decisions, not completion by themselves.
+
+Asset tooling remains available: `make -C src info`, `dump`, `png`, and
+`lvlmap LEVEL=MM_FLOAT`; `lrtool` also exposes archive and level inspection.

@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "updated": "2026-10-27T08:23:16.801802+00:00",
+  "notes": "Task20/window2of4finalnarrowcoreFAIL33/35 despite18/18retained. Parkcoreforwindow/noadapterorliverepeat. 2macroattemptsremain/livepoolsunused;5hourwindowextension recordedwithoutrewritingpastdeadlines;gameexecutiondeferred.",
+  "active": [],
+  "queue": [],
+  "standing_run": {
+    "id": "c3-controller-final-core",
+    "goal": "One finalnarrowofflineactualcore correction: exactHWexecute-size1 listing proof +durableargv/cwdsnapshot; preserveall18BTcontracts,stopbeforeparentadapterreview.",
+    "milestones": [
+      "C3 full frame"
+    ],
+    "current": "C3 full frame",
+    "authorized": "Freshparentreassessmentunderextendedautomation:1finalnarrowtask20/window2,30minoverallinclprepverificationlandingcleanup.0starts/sessions/processcontrol. Failedfinalcoreparksforwindow.",
+    "cap_rationale": "Explicit continuation after2unsuccessfuloutcomes: all14priorcontracts nowfixed; remaining2localizedcoreareas haveretaineddiscriminators. Not renamedquestion/capreset, no broadrepair/adapterwork.",
+    "standing_permission": {
+      "user_sequence": [
+        "approve repair/offline before nexttest",
+        "i authorise debugger sessions or program starts from now on",
+        "Tests and original game with boundedcaps/safety and conditional nativeplan",
+        "and i preauthorize the next pass",
+        "you can extend your limit to 5 hours"
+      ],
+      "standing": "Bounded test AND original-game debugger sessions/starts permitted in principle; not unlimited dispatch or immediate execution, no bypass of caps/safety/sourcebinding.",
+      "successor": {
+        "preauthorized": true,
+        "activation": "Parent accepts independently verifiedoffline repair, issues successor directive and rechecks idleowner/hash before resumption; no further userlaunch approval needed for this specific successor.",
+        "default_tier": "Sol",
+        "debugger_sessions": 1,
+        "disposable_ia32_starts": 1,
+        "overall_minutes": 45,
+        "retries": 0,
+        "extra_repair_dispatches": 0,
+        "stock_starts": 0,
+        "consumed": false,
+        "currently_blocked": true,
+        "blocker": "Finalcoreacceptance failed; coreparkedforautomationwindow. No adapter/live successor."
+      },
+      "native": "Standingpermission not executable scope current/successor; requires runtimecontroller validation and supported safety/sourcebinding plan plus separatelyscoped directive. Original-game execution deferred beyond currentfivehourautomationwindow despite standingpermission."
+    },
+    "automation": {
+      "authority": "docs/DIRECTIVE-AUTOMATION-2026-10-27.md",
+      "sha256": "1756abb81232e6fd236d86e3c104fe1f83fe266aaf726b74fa38c319b9f6b14c",
+      "user_request": "im jus ttrying to make this more automated, ive authorized most things youve said so i kinda want you to keep going for a while",
+      "started_at": "2026-10-27T07:07:42Z",
+      "deadline": "2026-10-27T12:07:42Z",
+      "additional_attempt_cap": 4,
+      "additional_attempts_used": 2,
+      "additional_attempts_remaining": 2,
+      "attempts": [
+        {
+          "id": "c3bt-controller-core",
+          "cumulative": 19,
+          "window_attempt": 1,
+          "dispatch": "2026-10-27T07:35:40.210376+00:00",
+          "verified": "2026-10-27T07:55:54.952659+00:00",
+          "outcome": "FullcoreacceptanceFAIL14/18, integration slotunused",
+          "note": "docs/scratch/phase-c3bt-controller-core.md",
+          "landed": "2026-10-27T07:57:13+00:00",
+          "commit": "8ad609898f63afb71f39094965f541b892326ebe",
+          "task_ended": "2026-10-27T07:58:10.172143+00:00"
+        },
+        {
+          "id": "c3bu-controller-final-core",
+          "cumulative": 20,
+          "window_attempt": 2,
+          "dispatch": "2026-10-27T08:05:25.013844+00:00",
+          "verified": "2026-10-27T08:21:26.639586+00:00",
+          "outcome": "FinalcoreFAIL33/35,parkforwindow",
+          "note": "docs/scratch/phase-c3bu-controller-final-core.md",
+          "landed": "2026-10-27T08:22:03+00:00",
+          "commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55",
+          "task_ended": "2026-10-27T08:23:16.801802+00:00"
+        }
+      ],
+      "live_pools": {
+        "additional_surrogate_sessions": 1,
+        "additional_surrogate_starts": 1,
+        "conditional_game_sessions": 1,
+        "conditional_game_starts": 1,
+        "surrogate_sessions_used": 0,
+        "surrogate_starts_used": 0,
+        "game_sessions_used": 0,
+        "game_starts_used": 0
+      },
+      "parent_evaluation_boundary": "Parent evaluates eachpass andissues eachsuccessordirective; no routine userapprovalneededwithinwindow. Failedlivetrialstopsroute,no retry. Notcurrentliveauthority.",
+      "native_prerequisites": "Runtimecontrollervalidation + supported safety/sourcebindingplan + parent scoped directive, C3bc refusal preserved.",
+      "extensions": [
+        {
+          "user_quote": "you can extend your limit to 5 hours",
+          "observed_at": "2026-10-27T08:01:58Z",
+          "previous_deadline": "2026-10-27T10:07:42Z",
+          "new_deadline": "2026-10-27T12:07:42Z",
+          "previous_sha256": "d63e55a3838dcf4d267d20f52100cdf167a507448d883181f48098c2de8e9960",
+          "new_sha256": "1756abb81232e6fd236d86e3c104fe1f83fe266aaf726b74fa38c319b9f6b14c",
+          "scope": "Samewindow fivehourstotal, not5additionalhours. No cap/pool/history reset; archivedpastdeadlines unchanged."
+        }
+      ],
+      "original_game_deferred_beyond_window": true,
+      "remaining_direction": "Coreparkedforwindow. Remaining2slots notrepurposedforfurthercore repair; separatelydirectedintegration/conditional surrogate blocked onfailedcore. Originalgameexecutiondeferredbeyondwindow.",
+      "core_parked_for_window": true
+    },
+    "directive_sha256": "dbc33a3d90cd6f0e096192f1f7c200502341b0c6ce906c7481090b1a7fe569a5",
+    "owner": "ses_e854d421effeWpblsoJtCyVVFT",
+    "parent_session": "ses_e85509715ffeYQGoROQjsGEKnk",
+    "ownership_check": "FreshAPI active self+unrelateded-ascii only,selfSol/high/priorworkeridle;active/self/prior-worker/parent saved; ff-onlypulle7f7517.",
+    "started_at": "2026-10-27T08:01:58Z",
+    "deadline": "2026-10-27T08:31:58Z",
+    "grants": {
+      "rounds": 1,
+      "overall_minutes": 30,
+      "cumulative_question_cap": 20,
+      "repair_dispatches": 0,
+      "stock_starts": 0,
+      "surrogate_starts": 0,
+      "debugger_sessions": 0,
+      "attaches": 0,
+      "process_control": 0,
+      "installations": 0,
+      "commits": "isolatednormal origin/decompile sync"
+    },
+    "rounds_run": 1,
+    "cumulative_attempts": 20,
+    "stock_starts_used": 0,
+    "surrogate_starts_used": 0,
+    "debugger_session_attempts": 0,
+    "historical_observation": {
+      "prior_observation_feasibility": 21,
+      "installation_tasks": 1,
+      "actual_surrogate_trials": 1,
+      "offline_repair_task18": 1,
+      "offline_core_task19": 1,
+      "current_offline_attempts": 1,
+      "current_stock_observations": 0
+    },
+    "pending_questions": [
+      {
+        "question": "Finalnarrowcore failed fullpredeclaredacceptance onquotedautomaticcontinuation command.",
+        "recommendation": "Parkcoreforthewindow asdirective requires. Do notspendremaining2slots onanothercorecorrection/adapter/live. Standingpermission/livepools unconsumed; parentreceivesblocker,originalgamedeferredbeyondwindow.",
+        "evidence": "docs/scratch/phase-c3bu-controller-final-core.md"
+      }
+    ],
+    "handoff": "STOPPED C3bu task20/window2 FINALcoreFAIL33/35. BothlocalizedBTfixesverified/all18retainedpass; worker13/13. Own15/17additionalpredeclaredcoreprobes pass,butquotedautomatic g suffix onownedcleanup e1row acceptedatinitial/preclear. Coreparserrejectsliteralcommand=notdocumentedquotes. Oldmode/metadata+5priorolddefectobservationsdiscriminate; temporaryquoteverificationmutationfixes2caseswithouteditingcandidateef94d6859970a3e37fadecca0dd17a36d75b1cb5f4e8581d9df7c83e5578ccf5. COREPARKEDFORWINDOW,no furthercore repair,adapterorliveactivation. Governingmacro1756abb81232e6fd236d86e3c104fe1f83fe266aaf726b74fa38c319b9f6b14c records user5hour extension same07:07:42start\u219212:07:42,fiveTOTALnotadditional; pastdeadlines/oldauthorityarchivedintact. 2of4attemptsused/2remain, notrepurposeforcorerepeat. Pools1additionalsurrogate+1conditionalgameuntouched; gameexecutionDEFERREDbeyondwindow despite standingpermission. Parent reviews/newdirectives mandatory,no routineuserapprovalquestion. Noadapter/framing/discovery/realexitparser/runtimeproof.0sessions/starts/attach/control/nativeboundaryattempts,workerdone/noliveresources. BR/BS/BTpacketsintact,mainmisscauseunknown,C3bc/nativeprerequisites/gatesunchanged. Returnblocked. Evidencea2116af committed/pushed; dispatch-to-landing997.986s. Endpreservation373fixedinputs,2407prior evidence entries inclBR/BS/BT/verificationpackets,currentcandidate and10initialdirtypaths; olddeadlinesexact. WorkerAPIterminal/nativeboundaryattempts0/noliveresources. Window2used/2remaining,finalcorePARKED, nofurthercore/adapter/live. Five-total-hourmacroends12:07:42; bothlivepoolsunspent,originalgameDEFERREDbeyondwindow. Actualclocksincurrent_pass.",
+    "stopped": {
+      "date": "2026-10-27T08:23:16.801802+00:00",
+      "reason": "FINALnarrowcoreacceptance failed on documentedquotedautomaticg trailer; coreparkedforthisautomationwindow, no repeat/adapter/live route.",
+      "last_commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55"
+    },
+    "current_pass": {
+      "started": "2026-10-27T08:01:58Z",
+      "rounds": [
+        {
+          "id": "c3bu-controller-final-core",
+          "attempt": 20,
+          "window_attempt": 2,
+          "started": "2026-10-27T08:01:58Z",
+          "dispatched": "2026-10-27T08:05:25.013844+00:00",
+          "deadline": "2026-10-27T08:31:58Z",
+          "worker_completed": "2026-10-27T08:11:40.100000+00:00",
+          "independent_checked": "2026-10-27T08:17:08.961080+00:00",
+          "verified": "2026-10-27T08:21:26.639586+00:00",
+          "worker_terminal_clock_source": "API time.idle",
+          "landed": "2026-10-27T08:22:03+00:00",
+          "commit": "a2116af0f2ad1db0f4997c5ff5fc89fd6c5f4e55",
+          "dispatch_to_landing_seconds": 997.986156,
+          "dispatch_to_worker_idle_seconds": 375.086156,
+          "task_ended": "2026-10-27T08:23:16.801802+00:00",
+          "task_elapsed_seconds": 1278.801802
+        }
+      ],
+      "ended": "2026-10-27T08:23:16.801802+00:00",
+      "elapsed_seconds": 1278.801802
+    },
+    "verified_at": "2026-10-27T08:21:26.639586+00:00",
+    "resource_state": {
+      "worker_session": "ses_e839b254cffeNJe9Di9QFeXPAF",
+      "worker_outcome": "succeeded",
+      "worker_idle_confirmed": true,
+      "fixed": 373,
+      "evidence": 2407,
+      "initial_dirty_paths_preserved": 10,
+      "updated_automation_authority_byte_exact": true,
+      "past_pass_task_macro_deadlines_unchanged": true,
+      "historical_capture_proposal_byte_exact": true,
+      "production_renderer_framework_unchanged": true,
+      "all_historical_archive_entries_preserved": true,
+      "phase_e_old_text_preserved": true,
+      "current_candidate_preserved": true,
+      "BR_BS_BT_and_all_verification_packets_byte_exact": true,
+      "debugger_sessions": 0,
+      "surrogate_starts": 0,
+      "stock_starts": 0,
+      "attaches": 0,
+      "process_control": 0,
+      "guarded_native_boundary_attempts": 0,
+      "live_owned_resources_acquired": false,
+      "conditional_successor_consumed": false,
+      "adapter_work": false,
+      "core_parked_for_window": true
+    }
+  }
+}

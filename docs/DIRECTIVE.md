@@ -1,147 +1,183 @@
-# Overlord directive
+# Overlord directive — integrated retail-level progress
 
-Written by the [overlord](OVERLORD.md); the user signs off what it authorizes. `/facilitator`
-reads this file at startup, in any client. Only a directive with `Status: **active**`
-authorizes a run.
+Status: **approved; activation requires the ownership checks below**.
+Issued: 2026-10-27 (user, overlord review 2026-10-27, "go ahead").
+Identity: `integrated-retail-progress-2026-10-27`.
+Client/tier: **OpenCode, default Sol on mouv**, delegated `facilitator`, with its
+configured worker pins and no model override. Manual launch remains supported,
+but never alongside an owning facilitator. The queue records activation/consumption;
+this heading alone never renews a completed run.
 
-Status: **active**
-Issued: 2026-10-25 (user, overlord review 2026-10-25, "approved": C3 host-tested live
-re-capture, scene orientation and tube ends, remaining known gaps)
-Supersedes: the C3 fix-known-gaps directive, done 2026-10-25 21:34 MDT (run
-`c3-known-gaps-pause-values`: 0.0923688 → 0.0635482, 16/16 rounds, 0/3 starts; the one-shot
-was rejected before Popen on a numeric ScheduledTask state).
+## Approval and direction
 
-Client: **OpenCode**. Tier: **Sol**, `/facilitator` on mouv (`openai/gpt-6.1-sol`) or
-`/facilitator-mac` on the Mac. The score is still converging; Astra is not warranted.
+The user requested a whole-project review and authorized longer-running plans
+without approval of every step, including game launches when useful. After the
+review proposed an 8-hour/16-attempt campaign with 8 stock starts, the user approved
+the focused planning/status changes and issuing the longer standing directive.
+This is new campaign authority, not framework-maintenance permission or renewal
+of the failed controller run. No gate or acceptance scope is amended.
 
-## Why this
+**Priority: one faithful, integrated retail-level experience.** Convert established
+research into production behavior. Prefer complete rendering paths, functioning
+controls/HUD and original-game comparisons. Tooling serves a named fidelity
+decision; it is not an independent deliverable. This is direction, not a new gate
+or a claim that the complete experience can be finished in this campaign.
 
-C3ao: **14934330/235008000 = 0.0635482**, gate ≤ 4700160. Regions: rest/floor 12497635,
-skills 1495773, tube 674411, counters 175829, caption 75548, actor boxes 15134. Several
-read-supported fixes (C3al alpha, C3an raw diffuse, C3ao order) made the screenshot worse,
-which points at an upstream error rather than at those values.
+The previous final-core pass is consumed: [archived directive](DIRECTIVE-CONTROLLER-FINAL-CORE-2026-10-27.md),
+[C3bu result](scratch/phase-c3bu-controller-final-core.md), commits `a2116af` and
+`58c853b`. Its original directive SHA256 was
+`dbc33a3d90cd6f0e096192f1f7c200502341b0c6ce906c7481090b1a7fe569a5` before the
+archive's explicit status correction. Preserve all previous budgets, parks and
+evidence; old unused attempts/starts do not supplement this campaign.
 
-The user compared the frames (2026-10-25) and the overlord checked each point on the saved
-PNGs (`build/tmp/overlord-2026-10-25/c3-compare-ao.png`, `c3-strips.png`, `c3-actors.png`):
+## Initial planning/status deliverable
 
-- **The reference holds state our candidate does not reproduce.** The original shows four
-  walkers and an out-count of 4; ours shows three and 5. `capture_matched_pause.py` persists
-  only `actors[:3]` (`a6f-fresh-pause-gate/repair4/packet-scope-review.md:72-75`), so the
-  fourth walker (near (345,330)) was never recorded. The cursor hovers the hatch, so the
-  reference also carries the hover highlight ("E", green marker, "20"), about 350k of
-  numerator in a 70×90 box at (285,228).
-- **The scene may be posed wrongly.** The checker patch and balloon on the left and the
-  horizon on the right sit differently. Overlord 40-px grid mean errors: most of the frame
-  0.012–0.025; left edge x 0–90 at y 280–360 0.198–0.283; right edge x 560–640 0.26–0.28
-  (partly the orange discs over the counters).
-- **The tube's top and bottom bands are worse than its body**: y 0–40 0.043–0.070,
-  y 440–480 0.064–0.152. This is consistent with the open primary-before-tube ordering debt
-  or undrawn cylinder ends; it is not established.
+Before research dispatch, the facilitator reconciles the live presentation using
+existing accepted evidence; aim for at most 30 minutes, within the campaign clock:
 
-These are observations and leads. Values still come from the read chain.
+- Add the approved direction near the top of PLAN.md. For each milestone,
+  distinguish **Implemented**, **Verified (scope)** and **Next deliverable** in
+  concise status text. Keep exit-gate cells verbatim; do not create a second queue.
+- Correct obsolete README status/entry-point claims against the current plan and
+  production-source inventory. Distinguish windowed integration from optional
+  headless fixture rendering and current code from retired paths. Do not claim
+  fresh builds or live results from historical notes.
+- Clarify the historical "simulation is correct" reset statement using the later
+  D1 timing retraction; retain the evidence and the user-directed Phase D parks.
+- Record this decision and the campaign scope in the appropriate plan decision
+  lists without duplicating a long plan. Preserve unrelated dirty changes.
+- PLAN.md is already 29,977 bytes against its 30,000-byte limit. Make room by
+  concisely presenting existing status and linking historical detail; preserve
+  signed gate text and user decisions, with any relocated detail retained in the
+  appropriate history file. Do not enlarge the limit or rewrite framework checks.
 
-## Scope
+This is scoped project documentation, not an agent/framework rewrite. Facilitator
+owns documentation/queue work and verification; workers own implementation.
 
-Milestone: **C3 full frame** only. Big errors first (user, overlord review 2026-10-25: "get
-the big rocks better before refining"). Overlord split of C3ao's 14.93M: right edge x 560–640
-4.98M (orange discs 2.14M of it), left edge x 0–90 3.59M, middle 3.99M, tube top/bottom bands
-2.39M, hatch cursor 0.35M. The two edge strips hold 57% of the error. Run the offline items
-**alongside** the live arm, which needs only the live owner.
+## Ordered scope and convergence
 
-1. **Live arm, tested on the host.** Repair the controller's ScheduledTask state handling
-   (numeric enum, C3 one-shot note). Then dry-run the actual controller on mouv, in session 1,
-   through every check up to the line before `Popen`, instead of only against mocks. Then spend
-   one start to do both of these:
-   - read the pause values (`[game+0]`, `[game+0x5139]`, `0x58d498`, the effective texture
-     format and binding);
-   - **re-capture the repair4 pause** with the recipe that made it. Park the cursor over plain
-     scenery, clear of actors, hatch and HUD. Persist the **full actor list** and the HUD
-     counter values with the capture.
-2. **Scene pose** (offline, parallel to 1). Check the scene roots' pose and yaw against the
-   read camera chain, using the checker patch, the balloon and the horizon as landmarks to test
-   against, not as targets to fit. Test handedness explicitly: a mirrored axis or swapped
-   winding in the scene root or camera composition (user lead 2026-10-25: geometry and
-   textures look mismatched or mirrored). The bottom-right 200×200 at (440,280) still carries
-   1.997M in C3ao, with a raised sand ledge and blue patch where the original shows a slope.
-3. **Orange discs over the counters** (offline, parallel to 1). Which node, texture and blend
-   draws them, and what the original draws there instead.
-4. **Tube ends.** Find what the original draws for the cylinder's top and bottom and in what
-   order relative to the tube: the primary-before-tube debt.
-5. **Remaining known gaps**: type1 radius/near dispatch; clipping; wiring the C3ak packer into
-   the app. One defect per brief, each with a concrete value or pixel acceptance check.
-   Re-score after each landing and re-rank by region error; a later measurement outranks
-   this order.
+Approved milestone order: **C3 full frame -> C2 counters/cursor/pause -> B2 screen
+state machine -> B3 level select/map**. Already signed gates in PLAN.md apply.
+Independent work may overlap under orchestration's concurrency rules.
 
-### Reference change (user, overlord review 2026-10-25)
+1. **C3 production progress first.** Use the existing frame map and accepted
+   mechanisms to select an unsupported production connection with a concrete
+   comparison and predicted effect. Clip-bound binding and final packing adoption
+   are leads, not prescribed fixes or promises of pixel improvement. Reuse C3ak,
+   C3bl and the later attribution/depth/orientation results; do not repeat them.
+2. **Use a bounded original observation when it resolves the production decision
+   more directly than further static investigation.** Ordinary screenshots/input
+   or supported external memory reads do not require a universal draw recorder.
+   Unobserved state remains unknown; do not infer effective draw state from a
+   between-draw sample. New captures are diagnostics, not reference replacements.
+3. **Move on when C3 stalls.** Reassess after at most 3 C3 attempts or 2 campaign
+   hours, whichever comes first, reserving cleanup time. If no production-linked
+   correction or decisive native observation is verified, park that arm and
+   continue C2/B2/B3. An unused component or another readiness report is not that
+   outcome. A supported correction need not improve the aggregate score to count;
+   its actual effect and limits must be reported. If converging, continue only
+   within the total budget and without starving the other authorized milestones.
+4. **C2/B2/B3 target observable integration.** Correct cursor behavior and runtime
+   HUD/pause composition; reproducible menu/map/level/back sequences; map selection
+   and the two unlock-state comparisons. Preserve B1's conditional acceptance.
+   Level entry is in scope; solving D1/D2/D3 is not implied by B3 reaching a level.
 
-The new capture becomes the C3 reference only if it matches repair4 everywhere outside three
-areas: the cursor and hatch-highlight boxes, the fourth walker's box and the counter glyphs.
-Use the same metric to check this, and record the check in the round note. When it qualifies:
-- score against it, render the candidate with the full captured actor list and counters, and
-  report repair4 beside it for continuity;
-- the threshold (0.02), metric, denominator, region partition and "floor ring included" rule
-  are unchanged.
+This explicitly permits reconsidering the C3 production and C2/B2/B3 cap-parks
+under a changed, outcome-driven approach. It does not reset historical question
+counts. Before reopening a capped question, record prior attempts, the changed
+evidence/approach, the production decision and why the next attempt should resolve
+it. No repetitive caller-by-caller search with a renamed question. If there is no
+credible changed approach, retain the park and choose other authorized work.
 
-If it does not qualify, repair4 stays the reference and the new capture is only reported. In
-either case, stop and report if any other gate parameter would need to change.
+**Still out of scope:** C3 observer/controller core/adapter repairs or trials,
+Frida installation-safety reopening, new capture engines, renderer rewrite,
+D1/D3 and D2 digger-clock reopening, broad residual polishing and platform ports.
+The Phase D work requires a separate strategic decision; put a recommendation in
+pending questions, not an implementation task in this run.
 
-Report C1 `zoom1`/`elev_down` (gated, must keep passing), `elev_up` and the other A7p views
-with each full-frame score. Not in scope: C2, B2, B3.
+## Budget and meaningful checkpoints
 
-## Budget
+- **8 hours or 16 worker attempts**, whichever is first. Start/deadline recorded
+  once by the owning facilitator at activation; setup, verification, documentation
+  and cleanup count. Context/session continuations never restart the clock/pools.
+- **45 minutes per round from first dispatch, repairs included**; repairs also
+  count toward the 16 attempts and historical question caps. Reserve verification
+  and cleanup time before dispatch; no silent extension or worker interruption.
+- Three attempts per new question; capped historical questions require the
+  explicit continuation rationale above. Two unsuccessful repairs trigger
+  reassessment, not facilitator implementation or automatic escalation.
+- **Tooling-only work: at most 2 attempts and 90 minutes total**, including repair
+  and verification. Name the blocked fidelity comparison and its intended next
+  use before dispatch. Exhausting this sub-budget parks the tool route, not all
+  other campaign work. No general harness certification campaign.
+- **8 stock-start attempts total**. Normally 1 per live brief; at most 2 when a
+  predeclared matched comparison needs them. Debit before attempting launch.
+  Application builds/tests/headless renders are not stock starts.
+- Up to 3 independent tasks with disjoint ownership; **at most one live owner**.
+- At every round landing, report implemented change, independently verified
+  scope, affected gate movement (including zero) and next production decision.
+  At least every 3 attempts, make a convergence checkpoint in the handoff/history
+  with relevant screenshots or behavior comparisons; distinguish fresh results
+  from retained baselines. These are internal checkpoints, not approval requests.
+- Isolated per-round commits and ordinary decompile sync are authorized under
+  ROLES.md. Never stage unrelated pre-existing edits merely because they share a
+  file; no reset/stash/checkout/force-push or history rewrite.
 
-- **Run:** about **6 hours or 16 rounds**. A repair counts as a round.
-- **Round limit:** 45 minutes from dispatch, repairs included.
-- **Rounds:** 3 per question, then park it with a resume brief and rank the next.
-- **Concurrency:** up to 3 offline rounds at once, at most one live owner.
-- **Stock starts:** a pool of **3**, each dry-checked first, on the host for the controller
-  path. Normal `Popen`, menu attach through the REA CLI (`rea instrument-with-frida attach`,
-  [MOUV_SSH.md](agents/MOUV_SSH.md)). Python `frida.attach`, `frida.spawn` and suspended
-  launches stay retired. Read-only hooks and one session. The only game-memory write allowed
-  is the restored level-table slot. Moving the cursor is input, not a write. A crash ends the
-  live arm; a second ends starts for the run. No further user authorization is needed.
-- **No debugger.** Per-round commits and pushes.
+## Live permission and limits
 
-## Decisions already made (do not re-ask)
+Normal stock launches and automatic foreground/input/screenshot capture are
+authorized within those limits, using established installed tooling and verified
+host/session bindings. Supported external read-only memory sampling is allowed;
+it is not authorization for debugger attach, hooks, injection or memory mutation.
+First use of a launch path requires a bounded actual-path/host prelaunch check;
+do not demand complete rendering-state knowledge before a simple diagnostic run.
 
-- **C1 is done** under the third amendment; its gate, footprint and views are frozen.
-- **DERIVED** as in `.claude/rules/match-the-original.md`. Label it.
-- **Do not choose by score.** Keep read-supported values that worsen the screenshot (C3al,
-  C3an, C3ao), as the last run did. The C3ae software raster choices remain declared
-  conventions.
-- **Park by default.** A park-or-amend choice goes to `pending_questions` with a
-  recommendation. Do not stop for it.
-- The stack bottom is the camera block from `camera_a1/reference-state.json`,
-  MEASURED-FROM-REFERENCE (C3k). `measure_d2_pick.py:149-156` role swap: note, do not fix.
-- **Time the pass**, total and per round, in the queue. Landing per the 2026-10-24
-  restructure.
-- `levelScreen` is `u32(0x4CBFB0)` per process. Use `acquire_game_foreground`, never
-  `goto_level.focus()`. Live steps run in session 1. Close any game a round leaves running,
-  after checking it. Restore and hash-check every install file in the process that changed it.
-- `frida` 17.24.3 stays installed for mouv's Python.
-- Settled: everything in earlier directives, c1ap–c1bj, C3a–C3ao and the C3 one-shot.
-  Parked and out of scope: the caption blend, the hatch animation, the `MM_DIG_000`
-  shortfall, the HUD tick mismatch, the `+0x3c` writer, C2 cursor, B3 map and level pick.
-  Run CTest on mouv. LF only.
+Predeclare the question, prediction, falsifier, loaded level/state, sampling cap
+and cleanup. Attribute owned processes by identity, not PID alone; use the
+established foreground helper and session-1 recipe. Preserve the install's language.
+Back up and log any established temporary capture-config/save changes and restore
+them exactly; no new level-slot/camera/actor writes, executable patch, installation,
+security-policy change, elevation or package update is authorized. Prefer normal
+navigation; if entry needs an excluded method, park that route rather than improvise.
 
-## Stop point
+No blind retry after a failed launch. A bounded offline diagnosis/repair can justify
+a separately counted ordinary launch only if no safety breach occurred and budgets
+remain. A game crash ends that question's live arm; a second ends stock starts for
+the campaign. Any unrestored write/hash, unattributed process, excluded method or
+start overrun stops the whole run under AGENT_SAFETY.md. C3bc's concrete refusal and
+C3br's failed runtime validation stand; unused historical permission does not make
+either method ready.
 
-Stop and report only when:
-- the C3 gate passes on your own independent re-score;
-- a gate parameter other than the authorized reference swap would need to change;
-- C1 `zoom1` or `elev_down` regresses above 0.02;
-- a guardrail breach: install hashes not restored, an unattributed process, a write left
-  unrestored, or a worker exceeding its start budget or using a retired method;
-- every remaining C3 question is parked or waits on `pending_questions`;
-- the run reaches about 6 hours or 16 rounds;
-- delegation or the pinned model is unavailable, or another session is running a task.
+## Settled evidence and acceptance
 
-A landed render that still fails the gate is not a stop; rank and continue. Running low on
-context is not a stop: leave the queue resumable, write `standing_run.handoff`, and say the
-user should run `/facilitator` again.
+Retained, not newly measured: C3 **0.06354817708333334 FAIL** vs **0.02**;
+C1 zoom1/elev_down **0.0160863988750699 / 0.016121214378294987 PASS**.
+The latest reviewed CTest result is 45/45, historical rather than a new run.
+Keep all gates, masks, exclusions, reference images and cameras unchanged. New
+captures/holdouts validate or diagnose, never select fitted values or replace the
+reference. Preserve read-supported corrections even if aggregate error worsens.
+READ/DERIVED/OBSERVED distinctions, source conditions and precision limits remain.
+Do not re-derive solved assets/gadgets or accepted camera/tube/sprite mechanisms.
 
-## Sync
+## Ownership, continuation and stop
 
-Pull before selecting work and push after each round commit, per
-[ROLES.md](ROLES.md#opencode-on-the-mac-clone). If a push from mouv fails on credentials, leave
-the commits local and say so in the handoff; the overlord carries them to GitHub.
+Parent prelaunch check: queue empty/stopped at `58c853b`; prior facilitator
+`ses_e854d421effeWpblsoJtCyVVFT` and worker `ses_e839b254cffeNJe9Di9QFeXPAF`
+report succeeded/idle. Prior parent `ses_e85509715ffeYQGoROQjsGEKnk` is interrupted/
+idle. Only current overlord `ses_e821d9d54ffe76zZdbg3zhSJ1N` is in the active set.
+A fresh child is permitted after this confirmed completed-pass handoff; recheck
+the active set, directive hash, current queue and old owner before queue writes
+or dispatch. Only the facilitator records itself as owner and archives old state.
+
+Continue without asking for routine next-step/start approval. If blocked on one
+question, record it and continue other authorized work. Return at the campaign
+budget, completion of the listed gates, all remaining work parked/externally
+blocked, a required gate/reference change, regression of accepted C1 gates, safety
+breach, ownership conflict, or unavailable pinned delegation/model. Do not silently
+substitute a model. Finish safe cleanup and disclose any overrun; do not start new
+work past a limit. Context handoff preserves owner/counters/deadline; no second
+facilitator and no assumption that a returned worker has terminated.
+
+Return commits, independent checks, gate scores, documentation changes, actual
+attempt/start/time accounting, restoration/resource proof and pending decisions.
+The overlord evaluates the pass; further scope needs fresh approved direction.

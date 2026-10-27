@@ -460,6 +460,12 @@ acceptance. AD's missing record-size export blocks live approval, not user permi
 
 ### C2 cursor sprite
 
+**2026-10-27 C2q live arm parked at historicalcount6:** [negative](../scratch/phase-c2q-native-cursor.md).
+One ordinary start, unsafe fresh menu candidate5 refused before RETURN; no level,
+cursor samples or screenshot. No crash/hash/write breach. Do not repeat candidate
+scanning; resume only after independently qualified normal entry or specific new
+direction. Unknown producers do not forbid ordinary stored-field diagnostics.
+
 **2026-10-27 continuation, integrated-retail directive:** [C2o](../scratch/phase-c2o-cursor-policy.md),
 historicalattempt4, reads the whole selection/consumer and implements an explicit-input
 policy, not another resource-reader crawl. Prior cap/history below retained. Exit-marker

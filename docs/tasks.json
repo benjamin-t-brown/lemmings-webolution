@@ -1,8 +1,50 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T19:32:27Z",
+  "updated": "2026-10-27T19:38:52.917Z",
   "notes": "Fresh approved pass; prep charged from first ownership check. Prior complete campaign archived without renewal; B2m/B3k only reopened.",
-  "active": [],
+  "active": [
+    {
+      "id": "b2m-native-capture-continuation",
+      "status": "running",
+      "worker": "round-agent",
+      "requested_model": "API-confirmed configured round-agent openai/gpt-6-luna#high, no override",
+      "brief": "build/tmp/native-capture-first-entry-2026-10-27/capture-brief.md",
+      "campaign_attempt": 1,
+      "dispatched": "2026-10-27T19:38:52.917Z",
+      "deadline": "2026-10-27T20:22:00Z",
+      "worker_stop": "2026-10-27T20:07:00Z",
+      "owns_live_game": true,
+      "live_owner": "ses_e81203b8dffefVKDT4Y5vOl825",
+      "stock_start_budget": 1,
+      "owned_paths": [
+        "build/tmp/native-capture-first-entry-2026-10-27/capture/**",
+        "tools/harness/native_entry_capture.py",
+        "tools/harness/test_native_entry_capture.py"
+      ],
+      "cap_rationale": "Explicit new authority reopens historical B2m only; raw capture precedes geometry abort, exact source prelaunch identity and failure-retention actual-path exercise replace rejected probe. One start, no retry.",
+      "worker_session": "ses_e81203b8dffefVKDT4Y5vOl825"
+    },
+    {
+      "id": "b3k-native-binding-continuation",
+      "status": "running",
+      "worker": "disasm-agent",
+      "requested_model": "API-confirmed configured disasm-agent openai/gpt-6.1-sol#high, no override",
+      "brief": "build/tmp/native-capture-first-entry-2026-10-27/binding-brief.md",
+      "campaign_attempt": 2,
+      "question_attempt": 6,
+      "dispatched": "2026-10-27T19:38:52.917Z",
+      "deadline": "2026-10-27T20:22:00Z",
+      "worker_stop": "2026-10-27T20:07:00Z",
+      "owns_live_game": false,
+      "live_owner": null,
+      "stock_start_budget": 0,
+      "owned_paths": [
+        "build/tmp/native-capture-first-entry-2026-10-27/binding/**"
+      ],
+      "cap_rationale": "B3k pick1-5/10bodies retained; explicit new approval permits conditional DERIVED default binding via immediate shared-context/device init+SDK/installedroute,6new bodies maximum; no unrelated transitive architecture proof.",
+      "worker_session": "ses_e81203b6effeBd0oaax89gu13Q"
+    }
+  ],
   "queue": [],
   "standing_run": {
     "id": "native-capture-first-entry-2026-10-27",
@@ -28,11 +70,19 @@
     ],
     "current": "B2 native capture/input evidence",
     "rounds_run": 0,
-    "attempts_used": 0,
+    "attempts_used": 2,
     "stock_starts_used": 0,
-    "stock_start_attempts_charged": 0,
-    "stock_start_budget_remaining": 3,
-    "stock_start_debits": [],
+    "stock_start_attempts_charged": 1,
+    "stock_start_budget_remaining": 2,
+    "stock_start_debits": [
+      {
+        "task": "b2m-native-capture-continuation",
+        "at": "2026-10-27T19:38:52.917Z",
+        "charged": 1,
+        "actual_attempts": 0,
+        "state": "Predebited single ordinary start; failure exercise/prelaunch identity before launch required, no retry/refund assumed."
+      }
+    ],
     "tooling_attempts_used": 0,
     "tooling_seconds_used": 0,
     "stock_crashes": 0,
@@ -70,7 +120,7 @@
       "B2_B3": "unaccepted, no app map-to-level transition; gates unchanged"
     },
     "pending_questions": [],
-    "handoff": "Fresh activation once from19:32:27Z; deadline21:32:27Z includes prep. Archive complete stopped campaign; selectively stage approved authority/PLAN hunks only. Next disjoint live capture/navigation and offline binding briefs. B2m probe rejected; exercise failure retention before any predebited launch. No other focus owner. Current-state not edge; indexedmask notbbox. Preserve all failures/gates/5files/language/progress; stop on supported app entry or concrete blocker/cap.",
+    "handoff": "Attempts1/2of4 queued disjoint: live one-start raw hostcapture/normalentry, offline conditionalbinding6newbodies historicalpick6.20:07return/20:22hardround; pass21:32:27 fixed. One native start predebited;0actual so far. No other focus allowed while live owner. Preserve existing failures/gates5hashes; expected next productionentry after verified packets, no premature acceptance.",
     "stopped": null
   }
 }

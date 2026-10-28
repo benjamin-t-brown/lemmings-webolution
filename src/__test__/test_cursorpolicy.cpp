@@ -1,5 +1,7 @@
 #include "app/CursorPolicy.h"
 
+namespace app = webo::app;
+
 #include <array>
 #include <cstdlib>
 #include <iostream>

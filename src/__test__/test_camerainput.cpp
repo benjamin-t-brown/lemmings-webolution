@@ -53,6 +53,60 @@ int main() {
   check(catchup.numpad4, "held key remains active on catch-up update");
 
   CameraParams p;
+  {
+    CameraController target(p, 96);
+    near(target.pickReference()[0], 32, "target yaw starts at unanimated control yaw");
+    near(target.pickReference()[1], 48, "target height starts at half level rows");
+    near(target.pickReference()[2], 0.5, "ordinary startup shell coefficient");
+    CameraController oddRows(p, 95);
+    near(oddRows.pickReference()[1], 47, "startup half-height truncates odd rows");
+    CameraInput drag; drag.rightMouseDown = true; drag.mouseDy = -200;
+    target.update(drag);
+    near(target.pickReference()[1], 96, "target clamps at rows, not rows minus one");
+    drag.mouseDy = 10;
+    target.update(drag);
+    near(target.pickReference()[1], 91, "target reverses immediately after upper saturation");
+    near(target.camera().elevation, 0, "target height is not camera eye elevation");
+    drag.mouseDy = 400;
+    target.update(drag);
+    near(target.pickReference()[1], 0, "target lower clamp");
+    drag.mouseDy = -2;
+    target.update(drag);
+    near(target.pickReference()[1], 1, "target reverses immediately after lower saturation");
+
+    CameraParams seamParams = p; seamParams.yawUnits = 255;
+    CameraController seam(seamParams);
+    CameraInput turn; turn.rightMouseDown = true; turn.numpad4 = true;
+    seam.update(turn);
+    near(seam.pickReference()[0], 256, "target retains exact256 unlike periodic display yaw");
+    turn.numpad4 = false;
+    seam.update(turn);
+    near(seam.pickReference()[0], 256, "exact256 target survives idle frame");
+    turn.numpad4 = true;
+    seam.update(turn);
+    near(seam.pickReference()[0], 1, "target wraps only above256");
+    CameraParams mixedParams = p; mixedParams.yawUnits = 188;
+    CameraController mixed(mixedParams);
+    CameraInput mixedInput; mixedInput.backspacePressed = true;
+    mixedInput.rightMouseDown = true; mixedInput.mouseDx = 144;
+    mixed.update(mixedInput, 0.384);
+    near(mixed.pickReference()[0], 0,
+         "flip target wraps before subsequent grab delta, not one aggregate wrap");
+
+    CameraController zoomTarget(p);
+    CameraInput zoom; zoom.zoomPressed = true;
+    zoomTarget.update(zoom);
+    near(zoomTarget.pickReference()[1], 48, "zoom-entry eye elevation does not move target height");
+    zoom.zoomPressed = false; zoom.rightMouseDown = true; zoom.mouseDy = 8;
+    zoomTarget.update(zoom);
+    near(zoomTarget.pickReference()[1], 47, "zoom1 target height uses one eighth per dy");
+    zoom.mouseDy = 0; zoom.mouseDx = 12;
+    zoomTarget.update(zoom);
+    near(zoomTarget.pickReference()[0], 27, "raw target follows grabbed yaw input");
+    CameraParams animated = p; animated.introActive = true; animated.introSeconds = 2;
+    CameraController introTarget(animated);
+    near(introTarget.pickReference()[0], 32, "intro animation never enters target yaw");
+  }
   CameraController c(p);
   CameraInput in;
   in.rightMouseDown = true; in.numpad4 = true;

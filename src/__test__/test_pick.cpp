@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+#include <cmath>
 
 using namespace webo::app;
 
@@ -13,6 +14,29 @@ void check(bool condition, const char* message) {
 }  // namespace
 
 int main() {
+  // Retained native D2d sample, not a new live run. Values decoded from
+  // build/tmp/d2d-tie-live/overlap.json's little-endian bytes; both actors
+  // had category 0x12 / priority 0 and eligibility bytes 1. Native hover=3.
+  // Testing the raw operands catches the former all-zero-distance caller.
+  {
+    const std::array<double, 3> reference{32.0, 48.0, 0.5};
+    int actor2 = 2, actor3 = 3;
+    const PickCandidate candidates[] = {
+        {&actor2, {452, 275, 463, 295}, true, 0,
+         pickDistanceSquared({60.53015899658203, 32.0, 0.25}, reference)},
+        {&actor3, {434, 286, 445, 305}, true, 0,
+         pickDistanceSquared({53.0374641418457, 32.0, 0.75}, reference)}};
+    check(std::abs(candidates[0].distanceSquared - 1070.0324723702506) < 1e-9,
+          "retained actor2 raw-vector distance");
+    check(std::abs(candidates[1].distanceSquared - 698.6373975194438) < 1e-9,
+          "retained actor3 raw-vector distance");
+    check(pickHoveredLemming(candidates, {432, 274, 464, 306})->id == &actor3,
+          "retained native overlap selects actor3, not first actor2");
+    check(pickDistanceSquared({1, 2, 3}, {1, 2, 5}) == 4,
+          "distance includes third component");
+    check(pickDistanceSquared({255, 0, 0}, {1, 0, 0}) == 64516,
+          "raw X subtraction does not wrap around cylinder seam");
+  }
   // ---- pickBoxOverlaps: one hit -------------------------------------------
   // A cursor box with comfortable margin on every side (0x0045578C: the real
   // sprite is 32x32; the exact size does not matter to the formula, only
@@ -99,7 +123,7 @@ int main() {
   }
 
   // ---- pickHoveredLemming: a skipped (ineligible) lemming -----------------
-  // 0x00455104 (byte lemming+0x29, the hatch-emergence flag) and 0x00455159
+  // 0x00455104 (byte lemming+0x29, the render-visibility flag) and 0x00455159
   // (byte lemming+0x370 via 0x00455F20) both skip a candidate outright
   // before the box test; folded here into PickCandidate::eligible.
   {

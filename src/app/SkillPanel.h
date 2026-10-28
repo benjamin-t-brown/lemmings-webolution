@@ -28,6 +28,8 @@
 #include <expected>
 #include <string>
 #include <string_view>
+#include <optional>
+#include <vector>
 
 namespace webo { class AssetLibrary; }
 
@@ -90,8 +92,30 @@ webo::Image resizeSkillPlatePatch(const webo::Image& source);
 // HYPOTHESIS: linear sample of s = x * 128 / 72 (C1bi). Request 2 is the
 // DERIVED LINEAR name. The nearest index is not the sample position.
 void drawSkillPanelPlates(webo::Image& dest, const webo::Image& plate);
-// Opt-in, headless C1 fixture renderer. All game data is read from the supplied
-// archive and level trailer; the caller only wires this into --shot.
+// Cached source-fixture renderer. Construction reads and owns the resources;
+// draw() performs no archive access. Selection accepts [0,9] or nullopt.
+class RetailSkillPanel {
+ public:
+  static std::expected<RetailSkillPanel, std::string> create(
+      const webo::AssetLibrary& library, std::string_view levelId);
+  void draw(webo::Image& dest, const std::array<int, 9>& counts,
+            std::optional<int> selectedIndex) const;
+  const std::array<int, 9>& initialCounts() const { return initialCounts_; }
+
+ private:
+  RetailSkillPanel() = default;
+  struct Icon {
+    Image texture;
+    webo::SpriteFrame frame;
+    int x = 0, y = 0, scaleDelta = 0;
+  };
+  Image plate_, selectedPlate_, font_;
+  std::array<int, 9> initialCounts_{};
+  std::vector<Icon> icons_;
+};
+
+// Opt-in, headless C1 fixture renderer. Compatibility wrapper: level counts,
+// selected index 0. This remains a fixture, not runtime/native UI evidence.
 std::expected<void, std::string> drawRetailSkillPanel(webo::Image& dest,
                                                       const webo::AssetLibrary& library,
                                                       std::string_view levelId);

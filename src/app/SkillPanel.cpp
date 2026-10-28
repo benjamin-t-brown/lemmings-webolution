@@ -195,8 +195,8 @@ void drawSkillPanelSelectedPlate(Image& dest, const Image& plate) {
   drawSkillPanelPlateQuad(dest, plate, 0);
 }
 
-std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLibrary& library,
-                                                       std::string_view levelId) {
+std::expected<RetailSkillPanel, std::string> RetailSkillPanel::create(
+    const AssetLibrary& library, std::string_view levelId) {
   auto lvl = library.read("COMPILED\\" + std::string(levelId) + ".LVL");
   auto spriteBytes = library.read("SPRITES\\LEMMINGSHI.SPR");
   auto font = loadTexture(library, "TEXTURES\\_FONTSMALL.BMP");
@@ -219,20 +219,20 @@ std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLi
   constexpr const char* names[10] = {"climb","float","bomb","block","build","bash","mine","dig","questionmark","armageddon"};
   constexpr const char* specialSpr[3] = {"SPRITES\\GREYICONS.SPR","SPRITES\\BLACKICONS.SPR","SPRITES\\ADDITIVEICONS.SPR"};
 
-  std::array<int, 9> counts{};
+  RetailSkillPanel panel;
   for (std::size_t i = 0; i < skills->counts.size(); ++i)
-    counts[i] = static_cast<int>(skills->counts[i]); // READ: level .LVL trailer, findLevelSkills.
-  counts[8] = 0; // UNREAD on MM_DIG_000; C1l MEASURED zero for this slot on MM_CLIMB_002.
+    panel.initialCounts_[i] = static_cast<int>(skills->counts[i]); // READ: level .LVL trailer, findLevelSkills.
+  panel.initialCounts_[8] = 0; // UNREAD on MM_DIG_000; C1l MEASURED zero for this slot on MM_CLIMB_002.
   // HYPOTHESIS: base plates stay the unselected ^tab stream. The extra quad
   // reuses that resizer and plate sampler; both remain hypotheses.
   // DERIVED, C1bg: index 0, enable 1. Not chosen from the stock ring.
-  const Image plate = resizeSkillPlatePatch(*plateSource);
+  Image plate = resizeSkillPlatePatch(*plateSource);
   if (plate.empty()) return std::unexpected("skill-panel plate must be 72x32");
-  const Image selected = resizeSkillPlatePatch(*selectedSource);
+  Image selected = resizeSkillPlatePatch(*selectedSource);
   if (selected.empty()) return std::unexpected("skill-panel selected plate must be 72x32");
-  drawSkillPanelPlates(dest, plate);
-  drawSkillPanelSelectedPlate(dest, selected); // after the ten base plates, before count text.
-  drawSkillPanelCounts(dest, *font, counts); // READ, C1g: count quads precede icon quads.
+  panel.plate_ = std::move(plate);
+  panel.selectedPlate_ = std::move(selected);
+  panel.font_ = std::move(*font);
 
   for (int i = 0; i < 10; ++i) {
     const Sprite* sprite = nullptr;
@@ -259,8 +259,27 @@ std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLi
     if (!texture)
       return std::unexpected(std::format("{}: {}", frame.sheet, texture.error()));
     // DERIVED from byte reads: seven generic icons use mode S=-1; indices 2/8/9 use S=0.
-    drawSkillPanelIcon(dest, *texture, frame, drawX[i], drawY[i], (i == 2 || i == 8 || i == 9) ? 0 : -1);
+    panel.icons_.push_back({std::move(*texture), frame, drawX[i], drawY[i],
+                            (i == 2 || i == 8 || i == 9) ? 0 : -1});
   }
+  return panel;
+}
+
+void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
+                            std::optional<int> selectedIndex) const {
+  drawSkillPanelPlates(dest, plate_);
+  if (selectedIndex && *selectedIndex >= 0 && *selectedIndex < 10)
+    drawSkillPanelPlateQuad(dest, selectedPlate_, *selectedIndex);
+  drawSkillPanelCounts(dest, font_, counts);
+  for (const auto& icon : icons_)
+    drawSkillPanelIcon(dest, icon.texture, icon.frame, icon.x, icon.y, icon.scaleDelta);
+}
+
+std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLibrary& library,
+                                                       std::string_view levelId) {
+  auto panel = RetailSkillPanel::create(library, levelId);
+  if (!panel) return std::unexpected(panel.error());
+  panel->draw(dest, panel->initialCounts(), 0);
   return {};
 }
 

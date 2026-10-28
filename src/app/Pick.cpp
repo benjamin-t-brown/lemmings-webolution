@@ -2,6 +2,14 @@
 
 namespace webo::app {
 
+double pickDistanceSquared(const std::array<double, 3>& position,
+                           const std::array<double, 3>& reference) {
+  const double x = position[0] - reference[0];
+  const double y = position[1] - reference[1];
+  const double z = position[2] - reference[2];
+  return x * x + y * y + z * z;
+}
+
 bool pickBoxOverlaps(const PickBox& box, const PickBox& cursorBox) {
   // 0x00454CB9, re-read this round against the live image (see reads.txt):
   //   lemming.left   <= cursor.right  - 4   (0x00454CD3/0x00454CD6, jg->miss)

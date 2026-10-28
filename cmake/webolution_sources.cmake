@@ -25,6 +25,7 @@ set(WEBOLUTION_SOURCES
   src/assets/PolyList.cpp
   src/assets/SceneNode.cpp
   src/app/SceneMeshSource.cpp
+  src/app/ActorVisibility.cpp
   src/assets/Wav.cpp
 
   # gfx -- renderer-independent sprite orientation selection
@@ -49,10 +50,17 @@ list(TRANSFORM WEBOLUTION_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 set(WEBOLUTION_GFX_SOURCES
   # app -- the A4 presentation layer: camera, rasteriser, tube scene, entry point
   src/app/Camera.cpp
+  src/app/CameraIntro.cpp
   src/app/CameraInput.cpp
   src/app/SimClock.cpp
   src/app/RuntimeHud.cpp
+  src/app/LevelEndTransition.cpp
+  src/app/EntryStartCue.cpp
+  src/app/LevelMenu.cpp
+  src/app/RuntimeSkillPanel.cpp
   src/app/Pick.cpp
+  src/app/RuntimePick.cpp
+  src/app/RuntimeCursor.cpp
   src/app/CursorPolicy.cpp
   src/app/Raster.cpp
   src/app/SceneRaster.cpp
@@ -63,14 +71,13 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/ActorAnim.cpp
   src/app/TubeScene.cpp
   src/app/MapScene.cpp
+  src/app/FrontendSession.cpp
+  src/app/ResultsScene.cpp
+  src/app/FrontendWindow.cpp
+  src/shell/Frontend.cpp
   src/app/BackdropScene.cpp
   src/app/SceneBillboardSource.cpp
-  # C1b: compositing primitive for the ten skill-panel button icons. Not
-  # called from main.cpp yet -- see src/app/SkillPanel.h's own header for why
-  # (the archive's three candidate sheets are read, not guessed, to not be
-  # the ten icons; no confirmed replacement was found within this round's
-  # budget). Listed here so it is ready to use the moment a later round
-  # identifies the correct sheet and placement rule.
+  # C1 fixture renderer, cached for --sim runtime composition as well.
   src/app/SkillPanel.cpp
   # C2g: HUD counters and timer. MenuRender.cpp (font table, textWidth) is not in the shared
   # object library, so it is compiled into each executable that uses it.

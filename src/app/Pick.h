@@ -1,6 +1,7 @@
 #pragma once
 
 #include <span>
+#include <array>
 
 namespace webo::app {
 
@@ -35,6 +36,12 @@ struct PickBox {
 // `0x00454D18`): touching the adjusted edge counts as a hit.
 bool pickBoxOverlaps(const PickBox& box, const PickBox& cursorBox);
 
+// READ 0x4551AB..0x4551EB: subtract the three raw terrain-space doubles
+// (lemming+8) - (screen+0x58), then dot the result with itself. Neither
+// operand is a projected pixel coordinate or a cylindrical model position.
+double pickDistanceSquared(const std::array<double, 3>& position,
+                           const std::array<double, 3>& reference);
+
 // One lemming's candidacy for the hover slot `screen+0x16D8`.
 //
 // `box` is its own rectangle (`lemming+0x128`, confirmed this round to be an
@@ -44,16 +51,18 @@ bool pickBoxOverlaps(const PickBox& box, const PickBox& cursorBox);
 //
 // `eligible` folds the two purely lemming-side skip tests the original
 // performs before it even reaches the box compare for a given candidate: the
-// hatch-emergence byte at `lemming+0x29` (`0x00455104`, skip when zero) and
+// render-visibility byte at `lemming+0x29` (`0x00455104`, skip when zero) and
 // the byte at `lemming+0x370` (`0x00455159`, via the one-line accessor at
 // `0x00455F20`, skip when zero; its exact meaning beyond "the original tests
 // it and skips on zero" is not established by this round's reads). `false`
 // means the original would never select this lemming this frame regardless
 // of its box.
+// Correction to the old hatch-emergence label: 43A9A4/43AA30 write +29
+// from the tube bucket visibility test and actor +28; it is not just alive().
 //
 // `priority` and `distanceSquared` are the two tie-break keys the original
 // computes for every candidate that is eligible: `priority` from a per-state
-// category read at `[state+0x14]` (`0x00430A70`) through an unenumerated
+// category read at `[state+0x14]` (`0x00430A70`) through a partially enumerated
 // table at `0x004C05D0`, and `distanceSquared` the squared distance between
 // the lemming's own position (`lemming+8`, a 3-double vector) and a
 // reference point at `screen+0x58` (also a 3-double vector) -- read at
@@ -61,11 +70,11 @@ bool pickBoxOverlaps(const PickBox& box, const PickBox& cursorBox);
 // (`0x00401830`) feeding a dot-product helper (`0x00418350`), i.e.
 // `dot(a-b, a-b) = |a-b|^2`.
 //
-// This function does not compute either tie-break key itself: the state
-// category table and what `screen+0x58` actually holds (camera position?
-// the unprojected cursor ray? something else) are not settled from static
-// bytes alone -- see `reads.txt` and `round-note.md`. The caller supplies
-// both. Passing 0 for every candidate's `priority` and `distanceSquared`
+// This function does not compute either tie-break key itself. The reference
+// is now traced to the combined input/camera controller's target vector +58,
+// NOT its Cartesian eye or intro-adjusted pose. RuntimePick maps four proven
+// state identities; see docs/scratch/first-level-overlap-selection.md.
+// The caller supplies both keys. Passing 0 for every candidate's keys
 // reproduces "first eligible, overlapping candidate in list order wins",
 // which is only correct when every real candidate is genuinely tied on both
 // keys (the original's own sentinel init -- priority `-1`, distance `1e8`,

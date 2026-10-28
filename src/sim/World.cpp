@@ -886,7 +886,7 @@ void World::step(Lemming& l) {
   ++l.frame;
 }
 
-void World::tick() {
+void World::tick(bool continueHatchesAfterTimeout) {
 
   // Round D1e: an additive, opt-in real-seconds release model
   // (docs/scratch/phase-d1-release-trigger.md and the two D1c/D1d follow-ups),
@@ -898,7 +898,7 @@ void World::tick() {
   // exact same value, per the brief's "Already settled" note.
   const double dt = tickDtSeconds();
 
-  if (!timedOut()) {
+  if (!timedOut() || continueHatchesAfterTimeout) {
     if (setup_.releaseIntervalSeconds > 0.0) {
       releaseElapsedSeconds_ += dt;
       if (!releaseArmed_ && releaseElapsedSeconds_ >= setup_.releaseArmSeconds) {

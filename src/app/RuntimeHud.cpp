@@ -35,13 +35,26 @@ void RuntimeSimState::resume() {
   }
 }
 
-bool RuntimeSimState::advance(sim::World& world, double elapsedSeconds) {
+bool RuntimeSimState::advance(sim::World& world, double elapsedSeconds, bool trackCompletion) {
   if (paused_) return false;
   clock_.advance(elapsedSeconds);
   bool ticked = false;
-  while (clock_.takeStep()) {
-    world.tick();
+  while ((!trackCompletion || end_.phase() != LevelEndPhase::Results) && clock_.takeStep()) {
+    // Native hatches continue while timeout-pending (425A95). Default World
+    // fixtures keep their old timeout-release policy; connected play opts in.
+    world.tick(trackCompletion);
     ticked = true;
+    if (trackCompletion) {
+      int retainedNonRat = 0;
+      for (const auto& lemming : world.lemmings())
+        if (lemming.alive() && lemming.sheetType != 3) ++retainedNonRat;
+      // DERIVED ordinary-population adapter. Native5098 is selected-type
+      // unreleased hatch population, not an active-actor count. Nuke and
+      // selected-type/preplaced population generalization remain separate.
+      end_.afterSimulationSlice(1.0 / world.rules().ticksPerSecond,
+          {world.timedOut(), retainedNonRat, world.setup().totalLemmings - world.spawned(),
+           world.saved(), world.setup().saveTarget});
+    }
   }
   return ticked;
 }

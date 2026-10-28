@@ -166,7 +166,21 @@ CameraBasis buildCamera(const CameraParams& p) {
   const double scale = static_cast<double>(1u << n);
   const double tau = 2.0 * p.posePi;
   const double yawUnits = resolvedYawUnits(p);
-  const double yawTurns = (yawUnits + p.yawOffset) / p.yawUnitsPerTurn;
+  double yawTurns = (yawUnits + p.yawOffset) / p.yawUnitsPerTurn;
+  double localZ = -p.eyeDistance / scale;
+  if (p.introActive) {
+    const double q = p.introSeconds / 2.0;
+    if (q < 1.0)
+      localZ -= 350.0 - (2.0 - q) * q * 350.0;
+    const double u = (p.introSeconds - 1.0) / 2.0;
+    if (u > 0.0) {
+      if (u < 0.5)
+        yawTurns += 2.0 * u * u;
+      else
+        yawTurns += 2.0 * ((2.0 - u) * u - 0.5);
+    }
+    while (yawTurns > 1.0) yawTurns -= 1.0;
+  }
   out.selectorTurns = yawTurns;
   const double yawAngle = tau * yawTurns;
   const double pitchAngle = tau * p.fixedPitchTurns;
@@ -188,7 +202,7 @@ CameraBasis buildCamera(const CameraParams& p) {
   const double eyeLocal[3] = {
       0.0,
       (p.levelEyeHeight + p.heightBias) / scale + (n != 0 ? p.elevation : 0.0),
-      -p.eyeDistance / scale};
+      localZ};
   // The raw pose builder applies yaw to the local eye vector (not transpose(yaw)).
   double eyeWorld[3] = {0.0, 0.0, 0.0};
   for (int i = 0; i < 3; ++i)

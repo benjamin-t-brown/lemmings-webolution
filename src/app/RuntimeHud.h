@@ -4,6 +4,7 @@
 #include "shell/PauseCaption.h"
 #include "sim/World.h"
 #include "app/SimClock.h"
+#include "app/LevelEndTransition.h"
 
 namespace webo::app {
 
@@ -21,11 +22,13 @@ class RuntimeSimState {
   bool paused() const { return paused_; }
   void togglePause();
   void resume();
-  bool advance(sim::World& world, double elapsedSeconds);
+  bool advance(sim::World& world, double elapsedSeconds, bool trackCompletion = false);
+  const LevelEndTransition& endTransition() const { return end_; }
 
  private:
   SimClock clock_;
   bool paused_ = false;
+  LevelEndTransition end_;
 };
 
 }  // namespace webo::app

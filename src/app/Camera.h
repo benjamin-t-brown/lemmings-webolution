@@ -38,6 +38,9 @@ struct CameraParams {
   double lensPi = 3.1415927410125732;
   double angleUnitsPerTurn = 360.0;
   double elevation = 0.0;
+  // Explicit opening-pose state; defaults preserve the settled canonical view.
+  bool introActive = false;
+  double introSeconds = 0.0;
 
   // Bounded unmodified-key/mouse grab case. Absent unless the params file
   // carries a control_case, which is the only thing that consumes these.

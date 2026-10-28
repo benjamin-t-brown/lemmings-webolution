@@ -85,6 +85,13 @@ target_link_libraries(FrontendAssetDump PRIVATE webolution_objects)
 add_executable(MenuRenderDump src/tools/MenuRenderDump.cpp src/shell/MenuRender.cpp)
 target_link_libraries(MenuRenderDump PRIVATE webolution_objects)
 
+# Offline snapshot of the production FrontendSession renderer (no SDL/window).
+add_executable(FrontendRenderDump src/tools/FrontendRenderDump.cpp
+  src/app/ResultsScene.cpp
+  src/app/FrontendSession.cpp src/app/MapScene.cpp src/shell/Frontend.cpp
+  src/shell/MenuRender.cpp src/shell/HudText.cpp)
+target_link_libraries(FrontendRenderDump PRIVATE webolution_objects)
+
 add_executable(actorfixture src/tools/actorfixture.cpp src/app/ActorSprite.cpp src/app/Camera.cpp)
 target_link_libraries(actorfixture PRIVATE webolution_objects)
 
@@ -224,20 +231,219 @@ add_executable(test_pausecaption src/__test__/test_pausecaption.cpp src/shell/Pa
 target_link_libraries(test_pausecaption PRIVATE webolution_objects)
 add_test(NAME pausecaption COMMAND test_pausecaption)
 
-add_executable(test_runtimehud src/__test__/test_runtimehud.cpp src/app/RuntimeHud.cpp src/app/SimClock.cpp src/shell/HudText.cpp src/shell/PauseCaption.cpp src/shell/MenuRender.cpp)
+add_executable(test_runtimehud src/__test__/test_runtimehud.cpp src/app/RuntimeHud.cpp src/app/SimClock.cpp src/app/LevelEndTransition.cpp src/shell/HudText.cpp src/shell/PauseCaption.cpp src/shell/MenuRender.cpp)
 target_link_libraries(test_runtimehud PRIVATE webolution_objects)
 add_test(NAME runtimehud COMMAND test_runtimehud)
+
+add_executable(test_levelend src/__test__/test_levelend.cpp src/app/LevelEndTransition.cpp)
+target_include_directories(test_levelend PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME levelend COMMAND test_levelend)
+
+add_executable(test_entrystartcue src/__test__/test_entrystartcue.cpp src/app/EntryStartCue.cpp src/shell/MenuRender.cpp)
+target_include_directories(test_entrystartcue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME entrystartcue COMMAND test_entrystartcue)
+
+add_executable(test_levelmenu src/__test__/test_levelmenu.cpp src/app/LevelMenu.cpp src/shell/MenuRender.cpp)
+target_link_libraries(test_levelmenu PRIVATE webolution_objects)
+add_test(NAME levelmenu COMMAND test_levelmenu)
+set_tests_properties(levelmenu PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+
+add_executable(test_runtimeskillpanel src/__test__/test_runtimeskillpanel.cpp
+  src/app/RuntimeSkillPanel.cpp src/app/SkillPanel.cpp)
+target_link_libraries(test_runtimeskillpanel PRIVATE webolution_objects)
+add_test(NAME runtimeskillpanel COMMAND test_runtimeskillpanel)
+
+# Exercise the actual SDL loop without creating a desktop window. Compare its
+# deterministic presented CPU frame to the separate headless fixture route.
+# They share drawing primitives; this is a wiring test, not a native oracle.
+if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
+  add_test(NAME runtimewindow COMMAND ${CMAKE_COMMAND}
+    "-DAPP=$<TARGET_FILE:webolution>"
+    "-DGAME_DIR=${WEBOLUTION_GAME_DIR}"
+    "-DOUTPUT_DIR=${CMAKE_BINARY_DIR}/runtime-window-test"
+    -P ${CMAKE_SOURCE_DIR}/src/__test__/runtime_window.cmake)
+  set_tests_properties(runtimewindow PROPERTIES TIMEOUT 120)
+endif()
 
 # C2o: offline byte-supported cursor selection policy; no SDL or live target.
 add_executable(test_cursorpolicy src/__test__/test_cursorpolicy.cpp src/app/CursorPolicy.cpp)
 target_include_directories(test_cursorpolicy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME cursorpolicy COMMAND test_cursorpolicy)
 
+add_executable(test_runtimecursor src/__test__/test_runtimecursor.cpp
+  src/app/RuntimeCursor.cpp src/app/CursorPolicy.cpp src/app/SkillPanel.cpp)
+target_link_libraries(test_runtimecursor PRIVATE webolution_objects)
+add_test(NAME runtimecursor COMMAND test_runtimecursor)
+if(DEFINED WEBOLUTION_GAME_DIR)
+  set_tests_properties(runtimecursor PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()
+
 # B2f: frontend screen sequence replayed from the b2e capture. Frontend.cpp is built
 # into the test directly (as test_skillpanel does) so the shared source list stays put.
 add_executable(test_frontend_sequence src/__test__/test_frontend_sequence.cpp src/shell/Frontend.cpp)
 target_link_libraries(test_frontend_sequence PRIVATE webolution_objects)
 add_test(NAME frontend_sequence COMMAND test_frontend_sequence)
+
+add_executable(test_frontendsession src/__test__/test_frontendsession.cpp
+  src/app/ResultsScene.cpp
+  src/app/FrontendSession.cpp src/app/MapScene.cpp src/shell/Frontend.cpp
+  src/shell/MenuRender.cpp src/shell/HudText.cpp)
+target_link_libraries(test_frontendsession PRIVATE webolution_objects)
+add_test(NAME frontendsession COMMAND test_frontendsession)
+
+add_executable(test_results src/__test__/test_results.cpp
+  src/app/ResultsScene.cpp src/app/FrontendSession.cpp src/app/MapScene.cpp
+  src/shell/Frontend.cpp src/shell/MenuRender.cpp src/shell/HudText.cpp)
+target_link_libraries(test_results PRIVATE webolution_objects)
+add_test(NAME results COMMAND test_results)
+if(DEFINED WEBOLUTION_GAME_DIR)
+  set_tests_properties(results PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()
+
+add_executable(test_cameraintro src/__test__/test_cameraintro.cpp
+  src/app/Camera.cpp src/app/CameraIntro.cpp)
+target_include_directories(test_cameraintro PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME cameraintro COMMAND test_cameraintro)
+
+if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
+  add_executable(test_frontendwindow src/__test__/test_frontendwindow.cpp
+    src/app/ResultsScene.cpp
+    src/app/FrontendWindow.cpp src/app/FrontendSession.cpp src/app/MapScene.cpp
+    src/shell/Frontend.cpp src/shell/MenuRender.cpp src/shell/HudText.cpp)
+  target_link_libraries(test_frontendwindow PRIVATE webolution_objects)
+  target_compile_definitions(test_frontendwindow PRIVATE WEBOLUTION_HAVE_SDL2=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_frontendwindow PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_frontendwindow PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME frontendwindow COMMAND test_frontendwindow)
+  set_tests_properties(frontendwindow PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+
+  # Exact application path, including the frontend-to-level handoff, driven
+  # through the existing frontend observer with owned-process SDL events.
+  add_executable(test_frontendentry src/__test__/test_frontendentry.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_frontendentry PRIVATE webolution_objects)
+  target_compile_definitions(test_frontendentry PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_frontendentry PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_frontendentry PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME frontendentry COMMAND test_frontendentry "${CMAKE_BINARY_DIR}/frontend-entry-test")
+  set_tests_properties(frontendentry PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+
+  add_executable(test_levelinteraction src/__test__/test_levelinteraction.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_levelinteraction PRIVATE webolution_objects)
+  target_compile_definitions(test_levelinteraction PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_levelinteraction PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_levelinteraction PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME levelinteraction COMMAND test_levelinteraction)
+  set_tests_properties(levelinteraction PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_executable(test_leveloverlap src/__test__/test_leveloverlap.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_leveloverlap PRIVATE webolution_objects)
+  target_compile_definitions(test_leveloverlap PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_leveloverlap PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_leveloverlap PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME leveloverlap COMMAND test_leveloverlap)
+  set_tests_properties(leveloverlap PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_executable(test_levelvisibility src/__test__/test_levelvisibility.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_levelvisibility PRIVATE webolution_objects)
+  target_compile_definitions(test_levelvisibility PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_levelvisibility PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_levelvisibility PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME levelvisibility COMMAND test_levelvisibility "${CMAKE_BINARY_DIR}/level-visibility-test")
+  set_tests_properties(levelvisibility PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_executable(test_levelcursor src/__test__/test_levelcursor.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_levelcursor PRIVATE webolution_objects)
+  target_compile_definitions(test_levelcursor PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_levelcursor PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_levelcursor PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME levelcursor COMMAND test_levelcursor)
+  set_tests_properties(levelcursor PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_executable(test_levelreturn src/__test__/test_levelreturn.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_levelreturn PRIVATE webolution_objects)
+  target_compile_definitions(test_levelreturn PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_levelreturn PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_levelreturn PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME levelreturn COMMAND test_levelreturn)
+  set_tests_properties(levelreturn PROPERTIES TIMEOUT 240
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_executable(test_entrycuewindow src/__test__/test_entrycuewindow.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_entrycuewindow PRIVATE webolution_objects)
+  target_compile_definitions(test_entrycuewindow PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_entrycuewindow PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_entrycuewindow PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME entrycuewindow COMMAND test_entrycuewindow)
+  set_tests_properties(entrycuewindow PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_executable(test_levelmenuwindow src/__test__/test_levelmenuwindow.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_levelmenuwindow PRIVATE webolution_objects)
+  target_compile_definitions(test_levelmenuwindow PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_levelmenuwindow PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_levelmenuwindow PRIVATE PkgConfig::SDL2)
+  endif()
+  add_test(NAME levelmenuwindow COMMAND test_levelmenuwindow)
+  set_tests_properties(levelmenuwindow PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  if(DEFINED WEBOLUTION_GAME_DIR)
+    add_test(NAME frontend_menu COMMAND ${CMAKE_COMMAND}
+      "-DAPP=$<TARGET_FILE:webolution>" "-DDUMP=$<TARGET_FILE:MenuRenderDump>"
+      "-DGAME_DIR=${WEBOLUTION_GAME_DIR}" "-DOUTPUT_DIR=${CMAKE_BINARY_DIR}/frontend-menu-test"
+      -P ${CMAKE_SOURCE_DIR}/src/__test__/frontend_menu.cmake)
+    set_tests_properties(frontend_menu PROPERTIES TIMEOUT 120)
+  endif()
+endif()
 
 
 add_executable(test_levelindex src/__test__/test_levelindex.cpp)
@@ -350,6 +556,16 @@ add_executable(test_pick src/__test__/test_pick.cpp src/app/Pick.cpp)
 target_include_directories(test_pick PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME pick COMMAND test_pick)
 
+add_executable(test_runtimepick src/__test__/test_runtimepick.cpp
+  src/app/RuntimePick.cpp src/app/Pick.cpp)
+target_include_directories(test_runtimepick PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(test_runtimepick PRIVATE webolution_objects)
+add_test(NAME runtimepick COMMAND test_runtimepick)
+
+add_executable(test_actorvisibility src/__test__/test_actorvisibility.cpp src/app/ActorVisibility.cpp)
+target_include_directories(test_actorvisibility PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME actorvisibility COMMAND test_actorvisibility)
+
 # D3c: offline click-to-assign wiring. Same shape as test_retaillevel (links
 # the object library, needs the install) plus the app sources the accessor
 # compiles with, following test_actorcompose.
@@ -377,5 +593,7 @@ add_test(NAME collisiongrid COMMAND test_collisiongrid)
 # with -DWEBOLUTION_GAME_DIR=... ; without it those tests report a skip.
 if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(box lrz bitmap gamedata frontend skillpanel progress levelindex surface wav levelobjects polylist scenenode backdropscene world retaillevel corpus collisiongrid cellmesh tileposition spritestate actorpose actorcompose clicktoassign scenemeshsource scenebillboardsource mapscene PROPERTIES
+    ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  set_tests_properties(runtimeskillpanel frontendsession PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()

@@ -48,16 +48,21 @@ class FixedCameraClock {
 
 class CameraController {
  public:
-  explicit CameraController(CameraParams initial = {});
+  explicit CameraController(CameraParams initial = {}, int levelRows = 96);
   void update(const CameraInput& input, double dt = 1.0 / 144.0);
   const CameraParams& camera() const { return camera_; }
   double cursorX() const { return cursorX_; }
   double cursorY() const { return cursorY_; }
   double displayedElevation() const { return displayedElevation_; }
   bool grabbed() const { return grabbed_; }
+  // Native controller +58 target in terrain coordinates, not eyeWorld and
+  // not intro-adjusted display yaw. Ordinary mode2/startup route only.
+  const std::array<double, 3>& pickReference() const { return pickReference_; }
 
  private:
   CameraParams camera_;
+  std::array<double, 3> pickReference_;
+  double levelRows_;
   double cursorX_ = 320.0;
   double cursorY_ = 240.0;
   double displayedElevation_ = 0.0;

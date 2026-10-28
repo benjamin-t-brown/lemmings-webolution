@@ -27,7 +27,40 @@ remains unaccepted; [B2p source/args scope](docs/scratch/phase-b2p-source-argume
 [B2q technical proof/violation](docs/scratch/phase-b2q-testonly-worker-boundary.md) retained.
 [B2r proof/violation](docs/scratch/phase-b2r-single-use-authorization.md) retained;
   [evidence proof](docs/scratch/phase-b2s-evidence-preservation.md) retained;
-  [B2t assessment](docs/scratch/phase-b2t-offline-route-assessment.md) STOPPED; no next/live.
+   [B2t assessment](docs/scratch/phase-b2t-offline-route-assessment.md) STOPPED; no next/live.
+
+**Enacter continuation:** [runtime panel](docs/scratch/runtime-skill-panel-integration.md)
+and [opt-in New Game frontend](docs/scratch/frontend-runtime-integration.md) now run
+in production. [One native comparison](docs/scratch/frontend-native-comparison-2026-10-28.md)
+observes the connected entry and passing menu/confirm/fresh-map frames; save/config
+restored. The [first-level opening camera move](docs/scratch/level-entry-camera-intro.md)
+is now wired from static evidence. Two-state/back-route and matched-view gates remain open.
+[Skill interaction](docs/scratch/first-level-skill-interaction.md) now enforces
+available-stock selection and successful-assignment resume through the actual
+SDL/application path. [Overlap selection](docs/scratch/first-level-overlap-selection.md)
+now uses raw-distance/controller-target keys, four recovered state priorities
+and necessary Climber exclusions; complete native eligibility remains open.
+[Visibility/support](docs/scratch/first-level-pick-visibility-support.md) now
+shares the native angular submission gate between drawing and picking and
+checks bounded first-level upright-Walker support before overlap selection.
+[Runtime cursor/hover](docs/scratch/runtime-cursor-hover.md) now draws retail
+NoLemming/Lemming/Grab artwork and shares the assignment picker and SDL pointer.
+Own-app pixels/events are tested; native cursor rendering acceptance remains open.
+[Results/map return](docs/scratch/level-results-map-return.md) now connects a
+completed or timed-out frontend level to retail win/loss layouts, Continue to
+map, and loss retry, with owned in-memory completion preserved. Loss-results
+[Quit now returns to the map](docs/scratch/loss-results-quit.md), not Menu or
+process exit; Retry skips the opening camera move and map selection restores it.
+Actual-app rescue and failure cycles are tested; native movie/timing acceptance remains open.
+The [pending-end transition](docs/scratch/level-end-transition.md) now preserves
+the read7.0 timer, strict thresholds, continued simulation and trigger-time win
+latch. Native event-sliced timing, movies and general population mapping remain open.
+The [entry “Let's Go!” cue](docs/scratch/level-entry-start-cue.md) now follows the
+read map/Retry clock, squared stretch and texture-alpha blend requests; pause
+freezes it. SOURCE composition is tested; native stretched-text pixels remain open.
+Connected play now has an [in-level Escape menu](docs/scratch/in-level-menu.md)
+with Resume, fresh Retry and no-result Quit-to-map. O-close returns to pause;
+settings and native menu pixel/input acceptance remain incomplete.
 
 The reset's historical *simulation is correct* claim described 31 rounds of retained
 rules/gadget work, not current end-to-end acceptance. [D1m's later timing retraction](docs/LESSONS.md#the-simulation--measured-and-worth-keeping)
@@ -109,8 +142,8 @@ threshold is 0.02, the same as A1/A2/A7.
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
 | B1 frontend assets and text | **Implemented:** menu renderer, not runtime frontend. **Verified (scope):** conditional acceptance, [B1w](docs/scratch/phase-b1w-menu-render.md) .005244; panels measured. **Next deliverable:** read/re-score panels; failure reopens B1. | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
-| B2 screen state machine | **Implemented:** no frontend. **Verified:** [assessment](docs/scratch/phase-b2t-offline-route-assessment.md), P/Q/R/S retained; launcher unaccepted. **Next:** approve owner-adapter contract; no live authority. | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
-| B3 level select and map | **Implemented:** SOURCE app map, no entry. **Verified (scope):** [partial mouse derivation](docs/scratch/phase-b3k-native-binding-partial.md); constructor→shared-context gap, no physical sample. **Next deliverable:** safety-parked after native extra start; gates unpassed. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
+| B2 screen state machine | **Implemented:** [New Game→confirm→map/retail entry](docs/scratch/frontend-runtime-integration.md), map→menu footer, [results→map/retry](docs/scratch/level-results-map-return.md). **Verified:** native entry sequence retained; result semantic routes READ/SDL-tested. **Next:** native return/delay/focus comparison; full gate open. | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
+| B3 level select and map | **Implemented:** indexed picking/retail entry/footer, SOURCE SDL adapter. **Verified:** [fresh native map](docs/scratch/frontend-native-comparison-2026-10-28.md) error0.0082174 and node0 entry; static C→G link, no physical sample. **Next:** second native unlock-state frame, cursor/hover; gate unpassed. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
 **User decisions, Phase B.** Full text in [Phase B history](docs/plan-history/phase-b.md).
 - **Assessment consumed (user,2026-10-28,"yes"):** [scope](docs/DIRECTIVE.md),45min/1attempt/0actions;7rounds/8attempts,5implementation; no next/live.
@@ -157,8 +190,8 @@ user 2026-10-22.**
 
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
-| C1 skill panel | **Implemented:** optional headless panel. **Verified (scope):** amended gate PASS .0160864/.0161212 ([closure](docs/scratch/phase-c1-close-amended-gate.md)); other views fail. **Next deliverable:** runtime composition, preserve gates. | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed. **Measured over the panel footprint** (user, overlord review 2026-10-24): the union of the ten button plates, icon rectangles and count-glyph rectangles at their read positions, fixed and committed before any render it scores. Not the C1b `baseline != no-cell-routes` mask, which meets the panel in 0 pixels (C1t). **Gated views** (user, overlord review 2026-10-24, second amendment; third amendment 2026-10-25): A7p `zoom1` and `elev_down`, each ≤ 0.02, rendered with their A7p camera params; `elev_up`, `initial`, the other A7p views and `MM_DIG_000` are scored and reported, not gated, until C3 draws the backdrop behind the panel |
-| C2 counters, cursor, pause caption | **Implemented:** [runtime World HUD/P pause](docs/scratch/phase-c2p-runtime-hud.md), cursor policy only. **Verified (scope):** own SDL events/state/pixels; native C2 gate unpassed, [cursor live arm parked](docs/scratch/phase-c2q-native-cursor.md). **Next deliverable:** qualified B2/B3 navigation. | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
+| C1 skill panel | **Implemented:** [runtime counts/selection](docs/scratch/runtime-skill-panel-integration.md), fixed icon poses. **Verified (scope):** amended gate unchanged PASS .0160864/.0161212; own-app integration tested. **Next:** native input/animation remain unverified. | Panel indices 2, 5, 6, 8, 9 identified (jump table `0x0045A4DD`). The ten buttons and their counts render inside `x [18,90)` ≤ 0.02 against the A7p/A7q captures, with the A7 panel exclusion removed. **Measured over the panel footprint** (user, overlord review 2026-10-24): the union of the ten button plates, icon rectangles and count-glyph rectangles at their read positions, fixed and committed before any render it scores. Not the C1b `baseline != no-cell-routes` mask, which meets the panel in 0 pixels (C1t). **Gated views** (user, overlord review 2026-10-24, second amendment; third amendment 2026-10-25): A7p `zoom1` and `elev_down`, each ≤ 0.02, rendered with their A7p camera params; `elev_up`, `initial`, the other A7p views and `MM_DIG_000` are scored and reported, not gated, until C3 draws the backdrop behind the panel |
+| C2 counters, cursor, pause caption | **Implemented:** [runtime World HUD/P pause](docs/scratch/phase-c2p-runtime-hud.md), [bounded cursor/hover rendering](docs/scratch/runtime-cursor-hover.md). **Verified (scope):** own SDL events/state/pixels; native C2 gate unpassed, [cursor live arm parked](docs/scratch/phase-c2q-native-cursor.md). **Next deliverable:** connected results/map return; native cursor/object markers remain open. | `^saved`/`^out`/`^time` and the Paused caption `[277,422,363,454)` drawn. The A7 nine-view + second-level score passes with **no** HUD exclusions. Cursor sprite set matches on hover/no-hover/exit |
 | C3 full frame | **Implemented:** [native-domain final pack connected](docs/scratch/phase-c3bv-production-pack.md), conditional SOURCE path. **Verified (scope):** FAIL .06354819 (+3 error); C1 PASS. **Next deliverable:** C2/B2/B3 integration; retain C3 gaps, no pixel polishing. | The A6d24 full-frame score (0.2123 today) ≤ 0.02 on the A6 repair 4 pause with actors, the floor ring included |
 
 **User decisions, Phase C.** Full text in [Phase C history](docs/plan-history/phase-c.md).
@@ -237,7 +270,7 @@ One line per parked item; the evidence and the resume brief are under each link 
 - [C3 observer](docs/plan-history/phase-e.md#c3-minimal-observer-readiness) — core parked for window; no live route (C3bu).
 - [C3 clip](docs/scratch/phase-c3bl-scene-clip.md) — attempt11; component only.
 - [C2 Paused caption text and blend](docs/plan-history/phase-e.md#c2-paused-caption-text-and-blend) — parked 2026-10-23 (C2j, C2k); device render state unread.
-- [C2 cursor sprite](docs/plan-history/phase-e.md#c2-cursor-sprite) — C2o policy read/implemented under fresh cap exception; runtime composition/native hover and retained exit-marker producer still open.
+- [C2 cursor sprite](docs/plan-history/phase-e.md#c2-cursor-sprite) — bounded [runtime composition/shared hover](docs/scratch/runtime-cursor-hover.md) implemented; native hover/pixel acceptance and retained exit-marker producer still open.
 - [B2 level-to-map](docs/plan-history/phase-e.md#b2-level-to-map) — parked 2026-10-23; writer of `[0x4C6A08]` unread.
 - [B2 screen state machine](docs/plan-history/phase-e.md#b2-screen-state-machine) — [B2m](docs/scratch/phase-b2m-native-capture-safety-stop.md):2actual/1authorized starts/tooling2of2 frozen; [B2t](docs/scratch/phase-b2t-offline-route-assessment.md) owner-adapter gaps; launcher unaccepted, no launch authority.
 - [C1 live icon inputs](docs/plan-history/phase-e.md#c1-live-icon-inputs) — C1l read; superseded by C1m–C1x.
@@ -246,7 +279,7 @@ One line per parked item; the evidence and the resume brief are under each link 
 - [C1 launch-time alpha read](docs/plan-history/phase-e.md#c1-launch-time-alpha-read) — parked 2026-10-24 at the cap (c1am–c1ao). Start exited before level; shift site logged0. Historical unused allowance is frozen, not current launch authority.
 - [C1 plate alpha format](docs/plan-history/phase-e.md#c1-plate-alpha-format) — parked 2026-10-25 at the cap (c1ay–c1ba); the bit-count word is not in the image.
 - [B3 map screen object](docs/plan-history/phase-e.md#b3-map-screen-object) — parked 2026-10-25 after b3a–b3d; the jump index is another argument, not the creation counter.
-- [B3 level pick](docs/plan-history/phase-e.md#b3-level-pick) — through continuation6: conditional constructed-mouse binding, C→shared-context link unclosed/no app entry. Re-parked on native capture safety breach; all prior counts retained.
+- [B3 level pick](docs/plan-history/phase-e.md#b3-level-pick) — historical parks retained; [offline integration](docs/scratch/frontend-runtime-integration.md) reads the C→G storage link and adds SOURCE app entry. Physical sample/native gates remain unpassed.
 - [B1f glyph matching](docs/plan-history/phase-e.md#b1f-glyph-matching) — parked 2026-10-22; do not revive the fitting method.
 - [B1h Quit registration](docs/plan-history/phase-e.md#b1h-quit-registration) — parked 2026-10-22; superseded by B1i–B1w.
 - [D2(b) digger bite timing](docs/plan-history/phase-e.md#d2b-digger-bite-timing) — parked 2026-10-22; architectural, multi-round.

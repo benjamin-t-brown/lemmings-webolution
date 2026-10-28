@@ -1,5 +1,7 @@
 #include "app/MapScene.h"
 #include "assets/Bitmap.h"
+#include "assets/GameData.h"
+#include "assets/Lrz.h"
 #include <array>
 #include <fstream>
 #include <limits>
@@ -7,6 +9,40 @@
 
 namespace webo::app {
 namespace {
+std::uint16_t read16(const std::byte* p) {
+  return static_cast<std::uint16_t>(std::to_integer<std::uint8_t>(p[0]) |
+      (static_cast<unsigned>(std::to_integer<std::uint8_t>(p[1])) << 8));
+}
+std::uint32_t read32(const std::byte* p) {
+  return static_cast<std::uint32_t>(std::to_integer<std::uint8_t>(p[0])) |
+      (static_cast<std::uint32_t>(std::to_integer<std::uint8_t>(p[1])) << 8) |
+      (static_cast<std::uint32_t>(std::to_integer<std::uint8_t>(p[2])) << 16) |
+      (static_cast<std::uint32_t>(std::to_integer<std::uint8_t>(p[3])) << 24);
+}
+struct IndexedMask { std::vector<std::uint8_t> pixels; std::uint8_t background; };
+std::expected<IndexedMask, std::string> decodeMapMask(const AssetLibrary& lib) {
+  auto packed = lib.read("TEXTURES\\LEVEL MASK.BMP");
+  if (!packed) return std::unexpected("map mask: "+packed.error());
+  auto decoded = lrzDecode(*packed);
+  if (!decoded) return std::unexpected("map mask: "+decoded.error());
+  const auto& bmp = *decoded;
+  if (bmp.size() < 54 || std::to_integer<char>(bmp[0]) != 'B' || std::to_integer<char>(bmp[1]) != 'M')
+    return std::unexpected("map mask: malformed BMP header");
+  const auto offset=read32(bmp.data()+10), dib=read32(bmp.data()+14);
+  if (dib < 40 || static_cast<std::size_t>(14)+dib > bmp.size() ||
+      read32(bmp.data()+18)!=640 || read32(bmp.data()+22)!=480 ||
+      read16(bmp.data()+26)!=1 || read16(bmp.data()+28)!=8 || read32(bmp.data()+30)!=0)
+    return std::unexpected("map mask must be uncompressed 640x480 indexed 8bpp BMP");
+  constexpr std::size_t pixels=640u*480u;
+  if (offset < 14u+dib || offset > bmp.size() || pixels > bmp.size()-offset)
+    return std::unexpected("map mask pixel data is truncated");
+  IndexedMask result; result.pixels.resize(pixels);
+  for (std::size_t row=0; row<480; ++row)
+    for (std::size_t x=0; x<640; ++x)
+      result.pixels[(479-row)*640+x]=std::to_integer<std::uint8_t>(bmp[offset+row*640+x]);
+  result.background=std::to_integer<std::uint8_t>(bmp[offset]);
+  return result;
+}
 constexpr std::int32_t kLinkEnd = 0x8000;
 constexpr std::array<std::array<std::int32_t, 3>, 102> kMapping = {{
   {{0, 0, 0}},
@@ -252,9 +288,14 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   auto atlas=loadTexture(lib,"TEXTURES\\LEVEL SELECT OBJECTS.BMP");
   if(!bg) return std::unexpected("map background: "+bg.error());
   if(!atlas) return std::unexpected("map atlas: "+atlas.error());
+  auto mask=decodeMapMask(lib);
+  if(!mask) return std::unexpected(mask.error());
+  auto levels=loadLevelTable(lib);
+  if(!levels) return std::unexpected("map level table: "+levels.error());
   if(auto v=validateImage(*bg,"background");!v) return std::unexpected(v.error());
   if(auto v=validateImage(*atlas,"atlas");!v) return std::unexpected(v.error());
   MapScene scene; scene.image_=std::move(*bg);
+  scene.mask_=std::move(mask->pixels); scene.maskBackground_=mask->background;
   std::array<std::int32_t,102> state{}; state.fill(1); state[0]=state[1]=state[2]=3;
   for(std::size_t i=0;i<102;++i) if(flags[i]!=0) {
     state[i]=2; for(int link: {kRecords[i][2],kRecords[i][3]})
@@ -262,6 +303,10 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   }
   for(std::size_t i=0;i<102;++i) {
     const auto group=kMapping[i][0], slot=kMapping[i][1], base=kMapping[i][2];
+    if(group<0 || slot<0 || static_cast<std::size_t>(group)>=levels->groups.size() ||
+       static_cast<std::size_t>(slot)>=levels->groups[static_cast<std::size_t>(group)].size())
+      return std::unexpected("map node mapping is outside the loaded level table");
+    scene.levelIds_[i]=levels->groups[static_cast<std::size_t>(group)][static_cast<std::size_t>(slot)].id;
     const int row=base+(state[i]==2?2:state[i]==3?4:0);
     const auto& r=kRects[static_cast<std::size_t>(row)];
     const int dx=kRecords[i][0]-r[4], dy=kRecords[i][1]-r[5];
@@ -276,4 +321,18 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   }
   scene.states_=state; return scene;
 }
+
+std::optional<std::size_t> MapScene::pickNode(int x, int y) const {
+  if (x<0 || x>=640 || y<0 || y>=480 || mask_.size()!=640u*480u) return std::nullopt;
+  const auto index=mask_[static_cast<std::size_t>(y)*640+static_cast<std::size_t>(x)];
+  if(index==maskBackground_ || index>=states_.size()) return std::nullopt;
+  const auto node=static_cast<std::size_t>(index);
+  if(states_[node]!=2 && states_[node]!=3) return std::nullopt;
+  return node;
 }
+
+std::optional<std::string> MapScene::levelForNode(std::size_t node) const {
+  if(node>=levelIds_.size() || levelIds_[node].empty() || levelIds_[node]=="blank") return std::nullopt;
+  return levelIds_[node];
+}
+}  // namespace webo::app

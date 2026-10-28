@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string_view>
 
-namespace app {
+namespace webo::app {
 
 // READ: software-cursor state numbers at 0x455341..0x45564e; binding
 // 0x45620b..0x456323. State producers outside that decision are not guessed.
@@ -47,4 +47,4 @@ CursorState selectCursorState(const CursorPolicyInput& input);
 // Preserves native fallback: all unknown state numbers bind _curLemRight.
 std::string_view softwareCursorResource(CursorState state);
 
-} // namespace app
+} // namespace webo::app

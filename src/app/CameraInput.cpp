@@ -11,6 +11,13 @@ double wrapYaw(double v) {
   while (v < 0.0) v += 256.0;
   return v;
 }
+double wrapTargetYaw(double v) {
+  // 454153..4541B5: strict >256, not >=. The raw pick subtraction makes
+  // target256 observably different from target0 even with identical views.
+  while (v > 256.0) v -= 256.0;
+  while (v < 0.0) v += 256.0;
+  return v;
+}
 }
 
 void FixedCameraClock::advance(double elapsedSeconds) {
@@ -23,7 +30,10 @@ bool FixedCameraClock::takeStep() {
   return true;
 }
 
-CameraController::CameraController(CameraParams initial) : camera_(initial) {}
+CameraController::CameraController(CameraParams initial, int levelRows)
+    : camera_(initial),
+      pickReference_{initial.yawUnits, static_cast<double>(std::max(0, levelRows) / 2), 0.5},
+      levelRows_(std::max(0, levelRows)) {}
 
 void CameraController::update(const CameraInput& in, double dt) {
   constexpr double flipDuration = 0.384;
@@ -34,8 +44,11 @@ void CameraController::update(const CameraInput& in, double dt) {
     if (camera_.zoomShift != 0) {
       camera_.elevation = clamp(47.5 - 58.0 * ((cursorY_ - 130.0) / 220.0), -10.5, 47.5);
       const double edgeRatio = (cursorX_ - 320.0) / 90.0;
-      if (std::abs(edgeRatio) >= 0.1)
-        camera_.yawUnits += 30.0 * clamp(edgeRatio, -1.0, 1.0);
+      if (std::abs(edgeRatio) >= 0.1) {
+        const double nudge = 30.0 * clamp(edgeRatio, -1.0, 1.0);
+        camera_.yawUnits += nudge;
+        pickReference_[0] = wrapTargetYaw(pickReference_[0] + nudge);
+      }
     }
   }
 
@@ -49,20 +62,25 @@ void CameraController::update(const CameraInput& in, double dt) {
     const double a = (2.0 - u) * u;
     const double total = 128.0 * ((2.0 - a) * a);
     camera_.yawUnits += total - flipApplied_;
+    pickReference_[0] = wrapTargetYaw(pickReference_[0] + (total - flipApplied_));
     flipApplied_ = total;
     if (flipElapsed_ >= flipDuration) flipElapsed_ = -1.0;
   }
 
   if (grabbed_) {
+    const double previousYaw = camera_.yawUnits;
     const double step = in.leftShift ? 3.0 : 1.0;
     if (in.numpad4) camera_.yawUnits += step;
     if (in.numpad6) camera_.yawUnits -= step;
     camera_.yawUnits -= (10.0 / 24.0) * in.mouseDx;
+    pickReference_[0] = wrapTargetYaw(pickReference_[0] + (camera_.yawUnits - previousYaw));
     if (camera_.zoomShift == 0) {
       displayedElevation_ -= 0.5 * in.mouseDy;
+      pickReference_[1] -= 0.5 * in.mouseDy;
     } else {
       camera_.elevation = clamp(camera_.elevation + 1.5 * in.mouseDy, -10.5, 47.5);
       displayedElevation_ -= 0.125 * in.mouseDy;
+      pickReference_[1] -= 0.125 * in.mouseDy;
     }
   } else {
     if (in.numpad4) cursorX_ -= 4.8;
@@ -72,6 +90,9 @@ void CameraController::update(const CameraInput& in, double dt) {
     cursorX_ = clamp(cursorX_, 0.0, static_cast<double>(camera_.width - 1));
     cursorY_ = clamp(cursorY_, 0.0, static_cast<double>(camera_.height - 1));
   }
+  // Keep the target's history. Clamping a cumulative display-height delta
+  // only when clicked loses information after saturation and reversal.
+  pickReference_[1] = clamp(pickReference_[1], 0.0, levelRows_); // 45458F..45462E
   camera_.yawUnits = wrapYaw(camera_.yawUnits);
 }
 

@@ -1031,7 +1031,9 @@ public:
   World(LevelSetup setup, Rules rules);
 
   // One fixed step. Everything that changes, changes here.
-  void tick();
+  // Connected native-style pending-end playback admits hatches after timeout
+  // (425A95 has no time/pending gate). Default retains diagnostic behavior.
+  void tick(bool continueHatchesAfterTimeout = false);
 
   std::uint64_t tickCount() const { return tick_; }
 

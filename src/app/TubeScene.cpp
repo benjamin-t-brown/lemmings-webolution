@@ -1,4 +1,5 @@
 #include "TubeScene.h"
+#include "app/ActorVisibility.h"
 
 #include "app/ActorSprite.h"
 #include "assets/Bitmap.h"
@@ -245,7 +246,11 @@ struct PreparedInjectedWalker {
 std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     const ActorPoseLevel& poseLevel, const SpriteSheet& sprites, const ActorLightMap& light,
     const CameraBasis& camera, const SceneOptions& options,
-    const SceneOptions::InjectedNativeWalker& injected, const AssetLibrary& lib) {
+    const SceneOptions::InjectedNativeWalker& injected, const AssetLibrary& lib,
+    const TubePassBounds& bounds) {
+  if (!options.composeSkipActorVisibility &&
+      !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
+    return std::nullopt;
   const Sprite* walkSprite = sprites.find("walk");
   if (walkSprite == nullptr)
     return std::nullopt;
@@ -327,11 +332,12 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   overlay.alpha = AlphaMode::Embedded;
   overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
 
+  const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
   for (auto it = options.injectedWalkers.rbegin(); it != options.injectedWalkers.rend(); ++it) {
     // Reverse order, same skips, and the same frame/texture/placement/mirror/tint
     // fed to drawActorSprite. alphaTest stays true. The helper does not draw.
     auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
-                                          options, *it, lib);
+                                          options, *it, lib, bounds);
     if (!prepared)
       continue;
     if (!app::drawActorSprite(overlay, prepared->frame, prepared->texture, prepared->placement,
@@ -351,9 +357,10 @@ std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreen
   rewirePoseLevel();
   if (lemmingSprites_.find("walk") == nullptr)
     return boxes;
+  const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
   for (std::size_t i = 0; i < options.injectedWalkers.size(); ++i) {
     if (auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
-                                              options, options.injectedWalkers[i], lib))
+                                              options, options.injectedWalkers[i], lib, bounds))
       boxes[i] = prepared->placement;
   }
   return boxes;
@@ -575,22 +582,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
     // the stored extent and 0.7 of it, chopping each bound toward zero with the
     // engine's float-to-int helper `0x49C5AC`, then shifting the whole set into
     // [0, 32] in 32s.
-    const double extent = cylinderExtent_;
-    double centre = (camera.selectorTurns - 0.5) * 32.0;
-    while (centre < 0.0)
-      centre += 32.0;
-    const auto chop = [](double v) { return static_cast<int>(v); };
-    int a = chop(centre - extent * 32.0);
-    int b = chop(centre - extent * 0.7 * 32.0);
-    int mid = chop(centre);
-    int c = chop(centre + extent * 0.7 * 32.0);
-    int d = chop(centre + extent * 32.0);
-    while (a < 0) {
-      a += 32; b += 32; mid += 32; c += 32; d += 32;
-    }
-    while (a > 32) {
-      a -= 32; b -= 32; mid -= 32; c -= 32; d -= 32;
-    }
+    const auto [centre, a, b, mid, c, d] = tubePassBounds(camera.selectorTurns, cylinderExtent_);
     // `0x462465` compares each quad's child coordinate against the centre
     // bucket in eighths, i.e. the camera's own collision column.
     const double centreColumn = centre * 8.0;

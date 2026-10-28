@@ -4,7 +4,8 @@
 // events. It reproduces the b2e and b2h live captures
 // (docs/scratch/phase-b2e-live-capture.md, phase-b2h-live-esc-sweep.md;
 // build/tmp/b2e-live-capture/report.json, build/tmp/b2h-live-esc-sweep/report.json) and
-// nothing more. Every statement below is tagged OBSERVED, HYPOTHESIS or POLICY. An input
+// plus the READ Yes/No semantic routes at 0x49BC59. Other statements below are
+// tagged OBSERVED, HYPOTHESIS or POLICY. An input
 // the captures did not see returns Outcome::Unobserved and leaves state unchanged; it is
 // never a silent choice.
 //
@@ -32,7 +33,7 @@
 namespace webo::shell {
 
 // Dialog is the one-node screen ESC opens in a level (b2h); its identity is unread.
-enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog };
+enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog, Results };
 
 enum class Key : std::uint8_t { Return, Esc, P, O, MapNodeClick };
 
@@ -55,6 +56,9 @@ inline constexpr std::uint32_t kVtableMenu = 0x4B2528;
 inline constexpr std::uint32_t kVtableConfirm = 0x4B3F38;
 inline constexpr std::uint32_t kVtableMap = 0x4B3EB8;
 inline constexpr std::uint32_t kVtableDialog = 0x4B26B0;
+// READ result constructors 485DF0/4862F0, selectors21/20 respectively.
+inline constexpr std::uint32_t kVtableWinResults = 0x4B1C30;
+inline constexpr std::uint32_t kVtableLossResults = 0x4B1CB0;
 
 // OBSERVED ui_state: 3 on a frontend screen, 0 in a level, 1 paused, 2 at the dialog.
 inline constexpr int kUiFrontend = 3;
@@ -77,6 +81,18 @@ class Frontend {
 
   // holdFrames matters only for Esc.
   Outcome press(Key key, int holdFrames = kEscHoldLevel);
+  // READ semantic activation at 0x49BC59: Yes routes to selector 0x23 (map),
+  // No to selector 7 (new menu). Physical RETURN-at-No is not established.
+  Outcome confirmChoice(bool yes);
+  // READ 0x49B1E4: semantic event0 from map's footer constructs selector7.
+  // Mapping a physical key/button to this action is left to the app adapter.
+  Outcome activateMapFooter();
+  // READ semantic routes, not native end-delay or physical-input timing.
+  Outcome showResults(bool success);
+  Outcome activateResultsContinue();
+  Outcome activateResultsRetry();
+  Outcome activateResultsQuit();
+  Outcome abandonLevelToMap();
   // Highlight of the menu. Initial value 0 is unread, not observed.
   void setHighlight(int highlight) { highlight_ = highlight; }
   // Level back to the map; the triggering input is unobserved, so it is a method.
@@ -99,6 +115,7 @@ class Frontend {
   int counter_ = 0;
   int highlight_ = 0;
   bool paused_ = false;
+  bool resultsWon_ = false;
 };
 
 }  // namespace webo::shell

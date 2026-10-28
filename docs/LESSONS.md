@@ -23,6 +23,97 @@ preparation scratch violation, not a clean relabel; external dump preserved. The
   gameactions. Whole launcher unaccepted; no auto-next/live trial/old-pool renewal.
   All new prep/test/temp current authorized root. Phase D parked.
 
+**Later connected-frontend work:** under a separate explicit desktop-use window,
+the [2026-10-28 comparison](scratch/frontend-native-comparison-2026-10-28.md)
+captured menu3 → confirm4 → fresh map5 → `MM_CLIMB_002`5 in one owned stock
+process. Save/config restored byte-exactly; the original is closed. Menu/confirm/
+one fresh-map-state frames pass0.02; two-state/back-route gates remain open.
+The map footer is UK127, shared row builder488A92 at49AC90, textY440; semantic
+event0 from `[map+40]` in49B1E4 constructs main menu selector7. This is now wired
+in `FrontendSession`; SDL click/Return remain explicit adapters. The dated capture
+script is spent/expired evidence, not permission to relaunch. Historical rejected
+launcher/component findings above are unchanged.
+
+**Opening camera:** do not replace the settled MM_CLIMB_002 yaw32 to fit an
+entry screenshot. [45CC09's three-second intro](scratch/level-entry-camera-intro.md)
+adds an unscaled350-distance ease and a full pose revolution, computed before
+clock advancement and frozen by pause. It is now wired for the first-level
+frontend path; other-level selected-hatch metadata and clock-matched native
+animation validation remain open.
+
+**Skill interaction:** retained455611 refuses panel selection at stock<=0;
+455756 resumes UI1→0 after a successful assignment. Both are now wired and
+[tested through the application](scratch/first-level-skill-interaction.md), without
+another native run. [Overlap continuation](scratch/first-level-overlap-selection.md)
+now wires the controller target/raw-distance keys, four constructor-proven
+priorities and necessary Climber exclusions. Do not conflate this with full
+picking: native visibility, facing and complete skill applicability remain open.
+Actor+29 is a tube-render visibility result (43A9A4/43AA30), not merely hatch
+emergence. Controller+58 is the hover reference; physical eye/intro pose is not.
+[Visibility/support continuation](scratch/first-level-pick-visibility-support.md):
+draw and pick now share the inclusive bucket gate for shellZ<1; shellZ>=1 keeps
+the native bypass. Ordinary left-Walker support X bias-1 is cancelled by42E913's
++1, so the bounded first-level source support probe is `(x,clamp(y+1))`, not
+`(x+1,y+1)`. The authored first-level word alphabet proves solidity equivalence
+only within that scope; sim raw-word retention and inverted anchors remain open.
+
+[Runtime cursor continuation](scratch/runtime-cursor-hover.md):455CB0 is an
+always-true stub;455DD0 tests DirectInput button1 **held**, not its edge. Mode2
+is the failed registry-read fallback, not an unconditional native startup value.
+The software resources are full32x32 bitmaps centered at integer cursor minus16;
+Grab uses fractional ALF alpha and SRCALPHA/INVSRCALPHA. SDL absolute clicks must
+not share feedback with a separately integrated virtual cursor: our bounded
+adapter explicitly uses absolute window coordinates for both, without changing
+the accepted camera controller's relative arithmetic. Native sampler/backend
+pixel equivalence and alternate mode/pressed/object-marker producers remain open.
+
+[Results/map continuation](scratch/level-results-map-return.md): UI4 is **win**
+results (mode3,selector21), UI5 is **loss** (mode4,selector20). They are not
+successive finish stages. Both Continue handlers select map23. Win builder485E55
+writes selected completion flag1 before Continue; loss does not erase it. Use
+MapScene's native mapping/graph, not the older SOURCE sequential Progress unlock.
+Results use SMALL_BACK, red titleY220, count linesY280/310; hidden empty row0 is
+not a blank panel. This step left native initial focus repair and finish-delay/
+list semantics unresolved; the latter are refined by the follow-up below.
+
+[Pending-end closure](scratch/level-end-transition.md) resolves the latter:
+445436 counts retained non-rat actors; actor+4C is sheet type3=`EvilRat`, not a
+death marker. Keep pending dying animations counted (`alive`, not `active`).
+5098 is selected-type unreleased hatch population. Ordinary load seeds timer7;
+the trigger call does not decrement it; pending uses strict<3 and<1. Simulation
+and hatches continue. Win/loss is latched at trigger, but results counts are
+current at the final call, so late saved>=needed must not upgrade a timeout loss
+or be rejected as an inconsistent snapshot. Effect draw490ED6 is empty: do not
+invent a fade. Results keyboard focus, movies and native dt equivalence stay open.
+
+[Loss Quit closure](scratch/loss-results-quit.md):486583 writes4CBFAA;45D72F
+consumes it and builds map23, not Menu or process exit. Keep Quit distinct from
+Continue despite their common destination.4E3584 controls next-load intro:
+Retry=0, Quit/map selection=1; it is not a post-map routing flag. Map footer
+selects Menu7; map cancel separately writes application exit4E3581. Clear clone
+launch-request ownership on Quit but preserve completion flags; only confirmed
+New Game resets owned progress. Native selected path5D59F0 can remain populated
+because independent reload flag5D5A0A—not pointer existence—controls launching.
+
+[Entry cue](scratch/level-entry-start-cue.md): loader45CAEA pushes **hex47=71**,
+UK `Let's Go!`, not decimal47/Continue or the selected level name.4151D0 is a
+font getter. Title clock starts3.5 map/1.5 retry, decrements before draw (unlike
+camera intro), appears at<=1.5 and expires onlybelow-1; pause freezes but still
+draws. Squared stretch uses huge early rectangles and cumulative glyph edges.
+Negative time writes vertex alpha and requests additive mode3, but normal
+caret-font flags8 selects TEXTURE alpha, ignoring the vertex countdown. Do not
+invent an opacity fade or paint a filled panel. Effective sampler/device pixels
+remain unverified; the software POINT adapter is not native visual acceptance.
+
+[In-level menu](scratch/in-level-menu.md): selector1F/table4C4228 has
+Resume/Try Again/Quit/Options atY100/129/158/187, plus an empty fifth widget.
+No bound background or evidenced dimming quad: keep the scene/cue underneath.
+Resume and menu cancel request UI0 even from paused-origin; only O-close writes
+UI1. Do not generalize the old observed O→pause to every dismissal. Strict mouse
+hits use content rectangles, not padded panels. Quit requests Map23 with no
+outcome/progress reset and no intro-preference write; typed leg dispositions
+are needed so the persistent app does not interpret abandonment as process exit.
+
 ## The one rule
 
 The stock 640x480 `Lemmings Revolution.exe` is the authority — not classic Lemmings, not

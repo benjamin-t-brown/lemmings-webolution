@@ -9,6 +9,8 @@
 //   --native         render at the original's 640x480
 //   --camera <json>  camera state params (the A1 fixture/params format)
 //   --shot <png>     render one frame headless and write it
+//   --window-shot <png> with --frames N, save the final presented CPU frame;
+//                     SDL_VIDEODRIVER=dummy exercises the loop without a desktop window.
 //   --geom <what>    wall | wall+surface | wall+polylist | cellmesh | route
 //                    `route` is the original's own tube submission
 //                    (0x43A4EC): the per-cell mesh through the INN pass and the
@@ -27,10 +29,11 @@
 //                     lemmings through the same drawInjectedWalkers path
 //                     (TubeScene::injectedWalkersFromWorld). Off by default;
 //                     every pre-existing command line is unaffected.
-//   --sim-ticks <N>  headless only (with --shot): call World::tick() exactly
+//   --sim-ticks <N>  diagnostic setup: call World::tick() exactly
 //                     N times before rendering, independent of frame count.
 //                     Implies --sim. Prints the tick, lemming count and every
-//                     live lemming's cell to stderr.
+//                     live lemming's cell to stderr. Also seeds a direct-level
+//                     window; natural --frontend entry explicitly resets it.
 //   --hud-ticks <N>  headless only (with --shot): after the frame, tick a separate
 //                     sim::World N times and overlay the Out / Saved counters and the
 //                     timer (shell/HudText.h, C2g). Does not change the scene or the
@@ -40,29 +43,44 @@
 //   --hud-colour R,G,B  with --hud-ticks: the Out / timer glyph colour (UNREAD default
 //                     255,255,255; exists only for the sensitivity run).
 //   --pause-caption   headless only (with --shot): overlay the paused-frame caption panel
+//   --cursor-fixture  headless only: center NoLemming software cursor (runtime wiring test)
 //                     (shell/PauseCaption.h, C2i panel, C2j text via the ^Font path).
 //   --caption-no-text  with --pause-caption: the C2i panel only (the "before" render).
 //   --caption-alpha N  with --pause-caption: panel alpha (HYPOTHESIS 128 of 255; sensitivity only)
 //   --caption-fill R,G,B  with --pause-caption: panel colour (HYPOTHESIS 0,0,0; sensitivity only)
-//   Debug stand-in, windowed --sim only (not the original skill panel):
-//                     keys 1-8 select Climber, Floater, Bomber, Blocker,
+//   SOURCE input adapter, windowed --sim only (not native-validated):
+//                     click the first eight skill plates or use keys 1-8 for
+//                     Climber, Floater, Bomber, Blocker,
 //                     Builder, Basher, Miner, Digger in that enum order, and
-//                     a left click assigns the selected skill to the lemming
-//                     under a 32x32 cursor box centered on the click. Logs
-//                     the index, skill and World::assign's return to stderr.
+//                     a left click outside the plates assigns the skill to the lemming
+//                     under a 32x32 cursor box centered on the click. Hover and
+//                     click share the same bounded eligibility/ranking path.
+//                     Counts and selected plate update; icon poses remain the C1
+//                     fixture. Fast-forward/Armageddon commands remain unsupported.
 //
 // No live game and no captured arena data are used. Everything comes from the
 // install named by WEBOLUTION_GAME_DIR (default C:/progs/Lemmings Revolution).
 
 #include "app/Camera.h"
+#include "app/CameraIntro.h"
+#include "app/EntryStartCue.h"
+#include "app/LevelMenu.h"
+#include "assets/GameData.h"
+#include "app/AppEntry.h"
 #include "app/MapScene.h"
+#include "app/FrontendSession.h"
+#include "app/FrontendWindow.h"
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
 #include "app/CameraInput.h"
 #include "app/Pick.h"
+#include "app/RuntimePick.h"
+#include "app/RuntimeCursor.h"
+#include "app/LevelOutcome.h"
 #include "app/Raster.h"
 #include "app/SimClock.h"
 #include "app/RuntimeHud.h"
+#include "app/RuntimeSkillPanel.h"
 #include "app/SkillPanel.h"
 #include "app/TubeScene.h"
 #include "assets/Bitmap.h"
@@ -107,6 +125,7 @@ struct Args {
   std::string level = "MM_CLIMB_002";
   bool native = false;
   std::string shot;
+  std::string windowShot;
   std::string camera;
   std::string geom = "route";
   std::string tiles = "flipped";
@@ -120,6 +139,7 @@ struct Args {
   int frames = 0;
   bool help = false;
   bool map = false;
+  bool frontend = false;
   bool mapFlagsSpecified = false;
   std::string mapFlags;
   bool noInjectedWalkers = false;
@@ -132,6 +152,7 @@ struct Args {
   int hudOut = -1;
   bool pauseCaption = false;
   bool skillPanel = false;
+  bool cursorFixture = false;
   int captionAlpha = -1;
   std::string captionFill;
   bool captionNoText = false;
@@ -145,10 +166,12 @@ Args parseArgs(int argc, char** argv) {
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
     if (arg == "--map") a.map = true;
+    else if (arg == "--frontend") a.frontend = true;
     else if (arg == "--map-flags") { a.map = true; a.mapFlagsSpecified = true; a.mapFlags = next(); }
     else if (arg == "--level") a.level = next();
     else if (arg == "--native") a.native = true;
     else if (arg == "--shot") a.shot = next();
+    else if (arg == "--window-shot") a.windowShot = next();
     else if (arg == "--frames") a.frames = std::atoi(next().c_str());
     else if (arg == "--camera") a.camera = next();
     else if (arg == "--geom") a.geom = next();
@@ -173,6 +196,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--hud-colour") a.hudColour = next();
     else if (arg == "--pause-caption") a.pauseCaption = true;
     else if (arg == "--skill-panel") a.skillPanel = true;
+    else if (arg == "--cursor-fixture") a.cursorFixture = true;
     else if (arg == "--caption-alpha") a.captionAlpha = std::atoi(next().c_str());
     else if (arg == "--caption-fill") a.captionFill = next();
     else if (arg == "--caption-no-text") a.captionNoText = true;
@@ -193,6 +217,12 @@ void printHelp() {
             "SPACE or CTRL zooms; BACKSPACE flips. Default geometry is route.\n"
             "--shot renders one headless frame; --frames N runs N window frames\n"
             "(use SDL_VIDEODRIVER=dummy for a headless smoke run).\n"
+            "--window-shot PNG with --frames N saves the final presented window frame.\n"
+            "--sim draws live skill counts; click the first eight plates or use keys 1-8\n"
+            "to select a skill. Fast-forward/Armageddon buttons are not implemented.\n"
+            "--frontend starts New Game -> Continue? -> map -> a simulated retail level.\n"
+            "Use RETURN at the first two screens, then click an unlocked map node.\n"
+            "Only New Game is implemented; progress starts empty in memory (no save writes).\n"
             "--map [--map-flags FILE] [--shot PNG] renders the conditional 640x480 map base layer;\n"
             "FILE is exactly 102 signed decimal int32 flags, whitespace-separated. Omitted flags are\n"
             "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.");
@@ -225,16 +255,20 @@ app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
   };
 }
 
-// Debug click-to-assign. Not the original skill panel. The cursor is a 32x32
+// Shared SOURCE hover/click adapter after skill-panel routing. The cursor is a 32x32
 // box centered on the window click (sprite size named in Pick.h at
 // 0x0045578C); pickBoxOverlaps applies the +/-4 adjustment itself. The window
 // and the raster are both 640x480, so the click is in the placement's pixel
-// space. priority and distanceSquared stay 0, the inherited D2a limitation:
-// first eligible overlapping candidate in list order wins only when every
-// candidate is tied on both keys.
-void debugClickToAssign(sim::World& world, const app::TubeScene& scene,
+// space. Raw terrain samples and the displayed frame's controller target
+// supply distance; RuntimePick supplies supported state priorities/exclusions.
+// Full native visibility, facing and applicability are still incomplete.
+std::optional<std::size_t> hoveredActor(const sim::World& world, const app::TubeScene& scene,
                         const app::SceneOptions& options, const AssetLibrary& library,
-                        const app::CameraBasis& camera, int x, int y, sim::Skill skill) {
+                        const app::CameraBasis& camera,
+                        const std::array<double, 3>& pickReference,
+                         int x, int y, sim::Skill skill, bool firstLevelSupport) {
+  // SOURCE stock gate shared by both consumers; -1 remains unlimited.
+  if (world.setup().skills[static_cast<std::size_t>(skill)] == 0) return std::nullopt;
   const auto boxes = scene.injectedWalkerScreenBoxes(camera, options, library);
   std::vector<app::PickCandidate> candidates;
   std::size_t walker = 0;
@@ -242,43 +276,80 @@ void debugClickToAssign(sim::World& world, const app::TubeScene& scene,
   for (std::size_t i = 0; i < lemmings.size(); ++i) {
     if (!lemmings[i].alive())
       continue;
-    if (walker < boxes.size() && boxes[walker]) {
-      app::PickCandidate candidate;
-      candidate.id = reinterpret_cast<void*>(static_cast<std::uintptr_t>(i));
-      candidate.box = pickBoxFromPlacement(*boxes[walker]);
-      candidate.eligible = true;
-      candidate.priority = 0;
-      candidate.distanceSquared = 0.0;
-      candidates.push_back(candidate);
+    if (walker < boxes.size() && boxes[walker] && walker < options.injectedWalkers.size()) {
+      const auto& sample = options.injectedWalkers[walker];
+      const auto support = firstLevelSupport ?
+          app::firstLevelClimberSupport(lemmings[i], skill, world.terrain()) : std::nullopt;
+      candidates.push_back(app::runtimePickCandidate(
+          reinterpret_cast<void*>(static_cast<std::uintptr_t>(i)),
+          pickBoxFromPlacement(*boxes[walker]), lemmings[i], skill,
+          {sample.plus8X, sample.plus8Y, sample.plus8Z}, pickReference, support));
     }
     ++walker;
   }
   const app::PickBox cursor{x - 16, y - 16, x + 16, y + 16};
   const app::PickCandidate* hit = app::pickHoveredLemming(candidates, cursor);
-  const std::string skillText(sim::skillName(skill));
-  if (hit == nullptr) {
-    std::fprintf(stderr, "click-to-assign: no lemming at (%d,%d) skill=%s\n", x, y,
-                 skillText.c_str());
-    return;
-  }
-  const auto index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(hit->id));
-  const bool assigned = world.assign(index, skill);
-  std::fprintf(stderr, "click-to-assign: index=%zu skill=%s assign=%d\n", index, skillText.c_str(),
-               assigned ? 1 : 0);
+  if (!hit) return std::nullopt;
+  return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(hit->id));
 }
 #endif
 
 }  // namespace
 
-int main(int argc, char** argv) {
-  const Args args = parseArgs(argc, argv);
+enum class LegDisposition { Exit, Completed, RetryLevel, ReturnToMap };
+
+static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver observer,
+                            app::LevelFrameObserver levelObserver, app::ApplicationRunOptions runOptions,
+                            app::FrontendSession* persistentFrontend,
+                            std::optional<app::LevelOutcome>& completed, LegDisposition& disposition) {
+  Args args = parseArgs(argc, argv);
   if (args.help) { printHelp(); return 0; }
+  if (!std::isfinite(runOptions.frameSeconds) || runOptions.frameSeconds < 0 ||
+      (runOptions.frameSeconds > 0 && args.frames <= 0)) {
+    std::fprintf(stderr, "test frame clock requires finite positive seconds and --frames\n");
+    return 1;
+  }
+  if (!args.windowShot.empty() && (args.frames <= 0 || !args.shot.empty() || args.map)) {
+    std::fprintf(stderr, "--window-shot requires --frames N > 0 in level window mode, without --shot\n");
+    return 1;
+  }
+  if (args.frontend && args.map) {
+    std::fprintf(stderr, "--frontend starts a new game; --map/--map-flags are separate fixture modes\n");
+    return 1;
+  }
 
   auto library = AssetLibrary::open(fs::path(args.gameDir) / "lemmings.box",
                                     fs::path(args.gameDir) / "patch.box");
   if (!library) {
     std::fprintf(stderr, "assets: %s\n", library.error().c_str());
     return 1;
+  }
+
+  // Opt-in integrated frontend; old direct-level and headless commands retain
+  // their entry paths. Selection feeds the same retail loader/sim below, never
+  // a second executable, a captured world, or the original installation's save.
+  if (args.frontend) {
+    std::optional<app::FrontendSession> localFrontend;
+    auto* frontend = persistentFrontend;
+    if (!frontend) {
+      auto created = app::FrontendSession::create(*library);
+      if (!created) { std::fprintf(stderr, "frontend: %s\n", created.error().c_str()); return 1; }
+      localFrontend = std::move(*created);
+      frontend = &*localFrontend;
+    }
+    if (!args.shot.empty()) {
+      if (auto written = writePng(args.shot, frontend->image()); !written) {
+        std::fprintf(stderr, "frontend screenshot: %s\n", written.error().c_str()); return 1;
+      }
+      return 0;
+    }
+    auto selected = app::runFrontendWindow(*frontend, {args.frames, args.windowShot}, std::move(observer));
+    if (!selected) { std::fprintf(stderr, "frontend: %s\n", selected.error().c_str()); return 1; }
+    if (!*selected) return 0; // closed or reached the requested frontend frame cap
+    args.level = **selected;
+    args.sim = true;
+    args.simTicks = 0;
+    std::fprintf(stderr, "frontend: entering %s from map (SOURCE SDL adapter)\n", args.level.c_str());
   }
 
   // B3j: explicit source-fixture map display. This early branch deliberately
@@ -472,6 +543,9 @@ int main(int argc, char** argv) {
     for (int i = 0; i < args.simTicks; ++i)
       world->tick();
     terrainHeight = world->terrain().height();
+    // READ 0x40BAA0 / 0x45CC09: camera height uses the loaded cylinder rows.
+    // Explicit diagnostic camera files keep their own supplied operands.
+    if (args.frontend && args.camera.empty()) params.levelEyeHeight = terrainHeight;
     options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
 
     const auto& lemmings = world->lemmings();
@@ -488,6 +562,12 @@ int main(int argc, char** argv) {
                   std::string(sim::stateName(l.state)).c_str(), l.alive() ? 1 : 0);
     }
   }
+
+  // The first retail level's base yaw32 is already correct. Its natural entry
+  // additionally arms 45CC09's opening move; do not replace fixture defaults.
+  // Other levels' selected-hatch yaw extraction is not yet implemented.
+  app::CameraIntro cameraIntro(args.frontend && args.level == "MM_CLIMB_002" && args.camera.empty() &&
+      (!persistentFrontend || persistentFrontend->levelIntroEnabled()));
 
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {
     const auto frameCamera = app::buildCamera(frameParams);
@@ -611,6 +691,11 @@ int main(int argc, char** argv) {
                    caption.rect.y0, caption.rect.x1, caption.rect.y1, caption.alpha,
                    caption.alphaScale, caption.fill[0], caption.fill[1], caption.fill[2]);
     }
+    if (args.cursorFixture) {
+      auto cursor = app::RuntimeCursor::load(*library);
+      if (!cursor) { std::fprintf(stderr, "cursor: %s\n", cursor.error().c_str()); return 1; }
+      cursor->draw(image, app::CursorState::NoLemming, image.width / 2, image.height / 2);
+    }
     if (auto written = writePng(args.shot, image); !written) {
       std::fprintf(stderr, "screenshot: %s\n", written.error().c_str());
       return 1;
@@ -634,9 +719,14 @@ int main(int argc, char** argv) {
   if (!texture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit(); return 1; }
 
   params.width = 640; params.height = 480; params.aspect = 4.0 / 3.0;
-  app::CameraController controls(params);
+  app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
+                                 static_cast<int>(params.levelEyeHeight));
   app::Raster windowRaster(640, 480);
   bool running = true, rightDown = false, focused = true;
+  // SOURCE SDL pointer adapter, deliberately separate from the native-style
+  // relative cursor inside CameraController. Hover and clicks use this same
+  // window coordinate; right-drag freezes it. Camera arithmetic is unchanged.
+  int pointerX = 320, pointerY = 240;
   app::PendingCameraEvents pending;
   int rendered = 0;
   const Uint64 frequency = SDL_GetPerformanceFrequency();
@@ -644,93 +734,197 @@ int main(int argc, char** argv) {
   app::FixedCameraClock fixedClock;
   // D3b: the sim ticks at its own measured 200 ms period (SimClock.h),
   // independent of this window's 144 Hz camera clock and its render rate --
-  // only active when --sim was given; windowed mode always starts the
-  // World at tick 0 regardless of --sim-ticks, which is a headless-only,
-  // deterministic-render concern (see this file's own --sim-ticks comment).
+  // only active when --sim was given. Natural frontend entry resets the World
+  // to tick0; a direct-level diagnostic may seed it with --sim-ticks.
   app::RuntimeSimState runtimeSim;
   std::optional<Image> runtimeFont;
+  std::optional<app::RetailSkillPanel> runtimePanel;
+  std::optional<app::RuntimeCursor> runtimeCursor;
+  std::optional<app::EntryStartCue> entryCue;
+  std::optional<app::LevelMenu> levelMenu;
+  std::string entryCueText;
   if (args.sim && world) {
     auto loadedFont = loadTexture(*library, "TEXTURES\\^FONT.BMP");
-    if (!loadedFont) {
-      std::fprintf(stderr, "runtime HUD: %s\n", loadedFont.error().c_str());
+    auto loadedPanel = app::RetailSkillPanel::create(*library, args.level);
+    auto loadedCursor = app::RuntimeCursor::load(*library);
+    if (!loadedFont || !loadedPanel || !loadedCursor) {
+      std::fprintf(stderr, "runtime HUD: %s\n",
+                    (!loadedFont ? loadedFont.error() : !loadedPanel ? loadedPanel.error() : loadedCursor.error()).c_str());
       SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
       return 1;
     }
     runtimeFont = std::move(*loadedFont);
+    runtimePanel = std::move(*loadedPanel);
+    runtimeCursor = std::move(*loadedCursor);
+    if (persistentFrontend) {
+      auto strings = loadStrings(*library, "UK");
+      if (!strings || strings->size() <= 71) {
+        std::fprintf(stderr, "entry cue: missing localized string71\n");
+        SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
+        return 1;
+      }
+      entryCueText = (*strings)[71]; // READ45CAEA pushes hex47: Let's Go!, not Continue/name.
+      entryCue.emplace(persistentFrontend->levelIntroEnabled());
+      auto loadedMenu = app::LevelMenu::load(*library);
+      if (!loadedMenu) {
+        std::fprintf(stderr, "level menu: %s\n", loadedMenu.error().c_str());
+        SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
+        return 1;
+      }
+      levelMenu = std::move(*loadedMenu);
+    }
   }
-  // Debug stand-in for a skill panel. Keys 1-8 follow sim::Skill's declaration
-  // order. This is not the original panel and is ignored unless --sim is on.
-  sim::Skill debugAssignSkill = sim::Skill::Climber;
+  // SOURCE input adapter: fixed C1 artwork with live counts/selection. Native
+  // hit geometry, disabled appearance and animation are not established here.
+  app::RuntimeSkillSelection skillSelection;
+  std::optional<Image> finalWindowFrame;
+  auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
+  auto displayedPickReference = controls.pickReference();
+  const int previousCursorVisibility = SDL_ShowCursor(SDL_QUERY);
+  if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
+  const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
+  const auto resetMenuInput = [&] {
+    rightDown = false; pending.clear(); fixedClock = app::FixedCameraClock{};
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+    previous = SDL_GetPerformanceCounter();
+  };
+  const auto openMenu = [&] {
+    levelMenu->open();
+    if (!runtimeSim.paused()) runtimeSim.togglePause();
+    resetMenuInput();
+  };
+  bool menuDismissedThisFrame = false;
+  const auto activateMenu = [&](app::LevelMenuAction action) {
+    switch (action) {
+      case app::LevelMenuAction::Resume:
+        levelMenu->close(); runtimeSim.resume(); resetMenuInput();
+        menuDismissedThisFrame = true; break;
+      case app::LevelMenuAction::Retry:
+        disposition = LegDisposition::RetryLevel; running = false; break;
+      case app::LevelMenuAction::MapQuit:
+        disposition = LegDisposition::ReturnToMap; running = false; break;
+      default: break; // Unsupported Options and misses are consumed, never gameplay clicks.
+    }
+  };
   while (running && (args.frames <= 0 || rendered < args.frames)) {
+    menuDismissedThisFrame = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_QUIT) running = false;
+      if (event.type == SDL_QUIT) { disposition = LegDisposition::Exit; running = false; break; }
       else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
         focused = false; rightDown = false; pending.clear();
         SDL_SetRelativeMouseMode(SDL_FALSE);
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
         focused = true;
+      } else if (menuDismissedThisFrame) {
+        // SOURCE event-batch ownership: a dismissal must not let already-queued
+        // menu clicks/keys fall through into gameplay. Still service close/focus.
+        continue;
+      } else if (menuOpen()) {
+        // Own ALL input while the menu is open, including misses, unsupported
+        // rows and gameplay keys. No skill assignment, zoom or relative grab.
+        if (!focused) continue;
+        if (event.type == SDL_MOUSEMOTION) {
+          pointerX = event.motion.x; pointerY = event.motion.y;
+          levelMenu->hover(pointerX, pointerY);
+        } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+          pointerX = event.button.x; pointerY = event.button.y;
+          activateMenu(levelMenu->actionAt(pointerX, pointerY));
+        } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
+          const auto key = event.key.keysym.scancode;
+          if (key == SDL_SCANCODE_ESCAPE) activateMenu(app::LevelMenuAction::Resume);
+          else if (key == SDL_SCANCODE_RETURN) activateMenu(levelMenu->focusedAction());
+          else if (key == SDL_SCANCODE_O) {
+            // READ45D575: O-close is NOT Resume; it returns to UI1 paused.
+            levelMenu->close(); resetMenuInput();
+            menuDismissedThisFrame = true;
+          }
+        }
+        if (!running) break;
       } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
         if (focused) { rightDown = true; SDL_SetRelativeMouseMode(SDL_TRUE); }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
         rightDown = false; SDL_SetRelativeMouseMode(SDL_FALSE);
       } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
                  event.button.button == SDL_BUTTON_LEFT) {
-        // Debug only. A command line without --sim never enters this branch.
-        if (focused) {
-          debugClickToAssign(*world, *scene, options, *library,
-                             app::buildCamera(controls.camera()), event.button.x, event.button.y,
-                             debugAssignSkill);
+        // Consume panel clicks before actor picking, including the two command
+        // plates whose actions are not implemented. No click-through assignment.
+        if (focused && !rightDown) {
+          pointerX = event.button.x; pointerY = event.button.y;
+          if (!skillSelection.consumePanelClick(pointerX, pointerY,
+                                                app::runtimeSkillPanelCounts(*world))) {
+            const auto hit = hoveredActor(*world, *scene, options, *library,
+                displayedCamera, displayedPickReference,
+                pointerX, pointerY, skillSelection.selectedSkill(),
+                args.level == "MM_CLIMB_002");
+            const bool assigned = hit && world->assign(*hit, skillSelection.selectedSkill());
+            // READ 0x455756: only a successful assignment resumes native UI1.
+            // Failed picks/assignments and panel selections leave pause intact.
+            if (assigned && runtimeSim.paused()) {
+              runtimeSim.resume();
+              previous = SDL_GetPerformanceCounter();
+            }
+          }
         }
       } else if (event.type == SDL_MOUSEMOTION) {
-        if (focused) pending.mouse(event.motion.xrel, event.motion.yrel);
+        if (focused) {
+          pending.mouse(event.motion.xrel, event.motion.yrel);
+          if (!rightDown) { pointerX = event.motion.x; pointerY = event.motion.y; }
+        }
       } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
         const auto key = event.key.keysym.scancode;
         if (focused && (key == SDL_SCANCODE_SPACE || key == SDL_SCANCODE_LCTRL || key == SDL_SCANCODE_RCTRL)) pending.zoom();
         if (focused && key == SDL_SCANCODE_BACKSPACE) pending.flip();
         if (key == SDL_SCANCODE_ESCAPE) {
+          if (persistentFrontend && !focused) continue;
           if (args.sim && world && runtimeSim.paused()) {
             runtimeSim.resume();
             previous = SDL_GetPerformanceCounter();
-          } else running = false;
+          } else if (levelMenu) openMenu();
+          else running = false; // Preserve standalone diagnostic Escape-close.
+        }
+        if (levelMenu && focused && key == SDL_SCANCODE_O && runtimeSim.paused()) {
+          openMenu();
         }
         if (args.sim && world && focused && key == SDL_SCANCODE_P) {
           runtimeSim.togglePause();
           previous = SDL_GetPerformanceCounter();
         }
         if (args.sim && world && focused) {
-          sim::Skill selected = debugAssignSkill;
-          bool choose = false;
+          int selected = -1;
           switch (key) {
-            case SDL_SCANCODE_1: selected = sim::Skill::Climber; choose = true; break;
-            case SDL_SCANCODE_2: selected = sim::Skill::Floater; choose = true; break;
-            case SDL_SCANCODE_3: selected = sim::Skill::Bomber; choose = true; break;
-            case SDL_SCANCODE_4: selected = sim::Skill::Blocker; choose = true; break;
-            case SDL_SCANCODE_5: selected = sim::Skill::Builder; choose = true; break;
-            case SDL_SCANCODE_6: selected = sim::Skill::Basher; choose = true; break;
-            case SDL_SCANCODE_7: selected = sim::Skill::Miner; choose = true; break;
-            case SDL_SCANCODE_8: selected = sim::Skill::Digger; choose = true; break;
+            case SDL_SCANCODE_1: selected = 0; break;
+            case SDL_SCANCODE_2: selected = 1; break;
+            case SDL_SCANCODE_3: selected = 2; break;
+            case SDL_SCANCODE_4: selected = 3; break;
+            case SDL_SCANCODE_5: selected = 4; break;
+            case SDL_SCANCODE_6: selected = 5; break;
+            case SDL_SCANCODE_7: selected = 6; break;
+            case SDL_SCANCODE_8: selected = 7; break;
             default: break;
           }
-          if (choose) {
-            debugAssignSkill = selected;
+          if (skillSelection.selectAvailableIndex(selected, app::runtimeSkillPanelCounts(*world))) {
             std::fprintf(stderr,
-                         "click-to-assign: debug skill %s (stand-in, not the original skill panel)\n",
-                         std::string(sim::skillName(debugAssignSkill)).c_str());
+                         "click-to-assign: skill %s (SOURCE input adapter)\n",
+                         std::string(sim::skillName(skillSelection.selectedSkill())).c_str());
           }
         }
       }
     }
+    if (!running) break; // Do not compose or observe another frame after close.
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     app::CameraInput input;
-    input.numpad4 = focused && keys[SDL_SCANCODE_KP_4] != 0;
-    input.numpad6 = focused && keys[SDL_SCANCODE_KP_6] != 0;
-    input.leftShift = focused && keys[SDL_SCANCODE_LSHIFT] != 0;
+    input.uiAllowsCamera = !menuOpen();
+    input.uiState = menuOpen() ? 2 : 0;
+    input.numpad4 = focused && !menuOpen() && keys[SDL_SCANCODE_KP_4] != 0;
+    input.numpad6 = focused && !menuOpen() && keys[SDL_SCANCODE_KP_6] != 0;
+    input.leftShift = focused && !menuOpen() && keys[SDL_SCANCODE_LSHIFT] != 0;
     input.rightMouseDown = rightDown;
     const Uint64 now = SDL_GetPerformanceCounter();
     double elapsed = static_cast<double>(now - previous) / static_cast<double>(frequency);
     previous = now;
     if (args.frames > 0) elapsed = app::FixedCameraClock::stepSeconds;
+    if (runOptions.frameSeconds > 0) elapsed = runOptions.frameSeconds;
     fixedClock.advance(elapsed);
     bool updated = false;
     while (fixedClock.takeStep()) {
@@ -741,19 +935,65 @@ int main(int argc, char** argv) {
       updated = true;
     }
     bool simTicked = false;
+    // READ45CC09: title clock updates after input, before simulation/drawing.
+    // Unlike CameraIntro's pose, this frame uses the decremented title clock.
+    if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
     if (args.sim && world) {
-      simTicked = runtimeSim.advance(*world, elapsed);
+      simTicked = runtimeSim.advance(*world, elapsed, persistentFrontend != nullptr);
       if (simTicked)
         options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
+      if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
+        const auto& result = *runtimeSim.endTransition().snapshot();
+        completed = app::LevelOutcome{args.level, result.saved, world->setup().totalLemmings,
+            result.needed, static_cast<int>(world->timeRemainingTicks() / world->rules().ticksPerSecond),
+            result.success};
+        disposition = LegDisposition::Completed;
+        break;
+      }
     }
     if (updated || simTicked || (args.sim && world)) {
       params = controls.camera();
-      renderFrame(params, windowRaster);
+      displayedCamera = renderFrame(cameraIntro.pose(params), windowRaster);
+      displayedPickReference = controls.pickReference();
+      // Native pose is evaluated at the old intro clock before its increment;
+      // pause freezes the opening move independently of camera input updates.
+      cameraIntro.advanceAfterFrame(elapsed, runtimeSim.paused());
       std::vector<std::uint8_t> presentedRgb;
       const void* pixels = windowRaster.framebuffer().rgb.data();
-      if (args.sim && world && runtimeFont) {
+      if (args.sim && world && runtimeFont && runtimePanel) {
         auto image = toImage(windowRaster.framebuffer());
-        app::drawRuntimeHud(image, *runtimeFont, *world, runtimeSim.paused());
+        app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection);
+        app::drawRuntimeHud(image, *runtimeFont, *world, false);
+        const auto cueFrame = entryCue ? entryCue->frame() : std::nullopt;
+        if (cueFrame) app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
+        if (levelMenu) levelMenu->draw(image);
+        const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
+        const auto counts = app::runtimeSkillPanelCounts(*world);
+        const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
+        const auto hover = focused && !menuOpen() && !rightDown && panelIndex < 0 ?
+            hoveredActor(*world, *scene, options, *library, displayedCamera,
+                displayedPickReference, pointerX, pointerY, skillSelection.selectedSkill(),
+                args.level == "MM_CLIMB_002") : std::nullopt;
+        const auto cursorState = menuOpen() ? (focused ? app::CursorState::NoLemming : app::CursorState::Hidden) :
+            app::runtimeCursorState(focused, rightDown, hover.has_value(),
+                runtimeSim.paused(), panelIndex, panelAvailability);
+        runtimeCursor->draw(image, cursorState, pointerX, pointerY);
+        // READ45E2B5/45E342: cue is below the later cursor and pause caption.
+        if (runtimeSim.paused() && !menuOpen()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
+        if (levelObserver) {
+          const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library);
+          std::vector<app::LevelActorView> actors;
+          std::size_t walker = 0;
+          for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
+            if (!world->lemmings()[i].alive()) continue;
+            if (walker < boxes.size() && boxes[walker]) actors.push_back({i, *boxes[walker]});
+            ++walker;
+          }
+          levelObserver({rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
+                         hover, pointerX, pointerY, cursorState,
+                         runtimeSim.endTransition().phase(), runtimeSim.endTransition().timerSeconds(),
+                         cameraIntro.active(), entryCue ? entryCue->seconds() : 0.0, cueFrame, menuOpen(), args.level});
+        }
         presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
         for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {
           presentedRgb[i * 3] = image.rgba[i * 4];
@@ -761,14 +1001,29 @@ int main(int argc, char** argv) {
           presentedRgb[i * 3 + 2] = image.rgba[i * 4 + 2];
         }
         pixels = presentedRgb.data();
+        if (!args.windowShot.empty() && rendered + 1 == args.frames)
+          finalWindowFrame = std::move(image);
       }
+      if (!args.windowShot.empty() && rendered + 1 == args.frames && !finalWindowFrame)
+        finalWindowFrame = toImage(windowRaster.framebuffer());
       SDL_UpdateTexture(texture, nullptr, pixels, 640 * 3);
       SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); SDL_RenderPresent(presenter);
       ++rendered;
     } else SDL_Delay(1);
   }
   SDL_SetRelativeMouseMode(SDL_FALSE);
+  if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);
   SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
+  if (!args.windowShot.empty() && disposition == LegDisposition::Exit) {
+    if (!finalWindowFrame) {
+      std::fprintf(stderr, "window screenshot: exited before the requested final frame\n");
+      return 1;
+    }
+    if (auto written = writePng(args.windowShot, *finalWindowFrame); !written) {
+      std::fprintf(stderr, "window screenshot: %s\n", written.error().c_str());
+      return 1;
+    }
+  }
   (void)camera;
   return 0;
 #else
@@ -776,3 +1031,44 @@ int main(int argc, char** argv) {
   return 1;
 #endif
 }
+
+int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver observer,
+                            LevelFrameObserver levelObserver, ApplicationRunOptions options) {
+  const auto args = parseArgs(argc, argv);
+  std::optional<app::LevelOutcome> completed;
+  LegDisposition disposition = LegDisposition::Exit;
+  if (!args.frontend || !args.shot.empty() || args.help || args.map)
+    return runApplicationLeg(argc, argv, std::move(observer), std::move(levelObserver), options,
+                             nullptr, completed, disposition);
+  auto library = AssetLibrary::open(fs::path(args.gameDir) / "lemmings.box",
+                                    fs::path(args.gameDir) / "patch.box");
+  if (!library) { std::fprintf(stderr, "assets: %s\n", library.error().c_str()); return 1; }
+  auto session = FrontendSession::create(*library);
+  if (!session) { std::fprintf(stderr, "frontend: %s\n", session.error().c_str()); return 1; }
+  // Keep this session alive across level/results/map/retry legs. Every level
+  // still uses the same loader and SDL runtime; no recursive app invocation.
+  for (;;) {
+    completed.reset();
+    disposition = LegDisposition::Exit;
+    const int status = runApplicationLeg(argc, argv, observer, levelObserver, options, &*session, completed, disposition);
+    if (status != 0 || disposition == LegDisposition::Exit) return status;
+    if (disposition == LegDisposition::RetryLevel) {
+      if (!session->retryLevel()) return 1;
+      continue;
+    }
+    if (disposition == LegDisposition::ReturnToMap) {
+      if (!session->abandonLevelToMap()) return 1;
+      continue;
+    }
+    if (!completed) return 1; // Completed is the only disposition allowed to publish an outcome.
+    if (auto shown = session->completeLevel(*library, *completed); !shown) {
+      std::fprintf(stderr, "results: %s\n", shown.error().c_str()); return 1;
+    }
+  }
+}
+
+#ifndef WEBOLUTION_APP_NO_MAIN
+int main(int argc, char** argv) {
+  return webo::app::runApplication(argc, argv);
+}
+#endif

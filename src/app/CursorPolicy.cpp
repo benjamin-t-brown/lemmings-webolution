@@ -1,6 +1,6 @@
 #include "CursorPolicy.h"
 
-namespace app {
+namespace webo::app {
 namespace {
 CursorState directional(const CursorPolicyInput& in, bool lemming) {
     // Native compares the bytes themselves, not just their truth values.
@@ -59,4 +59,4 @@ std::string_view softwareCursorResource(CursorState state) {
     default: return "_curLemRight"; // includes state 6, 0x456316..0x456323
     }
 }
-} // namespace app
+} // namespace webo::app

@@ -25,6 +25,7 @@
 #include <fstream>
 #include <format>
 #include <iostream>
+#include <optional>
 #include <string>
 
 namespace fs = std::filesystem;
@@ -444,6 +445,55 @@ void testSkillPanelIconSheetsAreNotTheTenIcons() {
   }
 }
 
+void testCachedRetailPanel() {
+  const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
+  if (!dir || !*dir) { std::cout << "cached retail panel: SKIPPED (WEBOLUTION_GAME_DIR unset)\n"; return; }
+  std::optional<webo::app::RetailSkillPanel> cached;
+  {
+    auto lib = webo::AssetLibrary::open(fs::path(dir) / "lemmings.box", fs::path(dir) / "patch.box");
+    check(bool(lib), "open archive for cached panel");
+    if (!lib) return;
+    auto panel = webo::app::RetailSkillPanel::create(*lib, "MM_CLIMB_002");
+    check(bool(panel), "construct cached retail panel");
+    if (!panel) return;
+    cached.emplace(std::move(*panel));
+  } // renderer must own everything needed after archive teardown.
+  const auto originalCounts = cached->initialCounts();
+  Image wrapper = makeSolid(640, 480, 0, 0, 0, 255);
+  Image reusable = wrapper;
+  cached->draw(reusable, originalCounts, 0);
+  auto lib = webo::AssetLibrary::open(fs::path(dir) / "lemmings.box", fs::path(dir) / "patch.box");
+  check(bool(lib), "reopen archive for compatibility wrapper");
+  if (!lib) return;
+  auto result = drawRetailSkillPanel(wrapper, *lib, "MM_CLIMB_002");
+  check(bool(result), "legacy wrapper draws");
+  check(wrapper.rgba == reusable.rgba, "cached renderer selected 0 and initial counts equal wrapper pixels");
+
+  Image none = makeSolid(640, 480, 0, 0, 0, 255);
+  Image selectedElsewhere = none;
+  cached->draw(none, originalCounts, std::nullopt);
+  cached->draw(selectedElsewhere, originalCounts, 3);
+  bool insideChanged = false, outsideSame = true;
+  for (int y = 132; y < 164; ++y) for (int x = 18; x < 90; ++x)
+    insideChanged |= !sameRgb(none, selectedElsewhere, x, y);
+  for (int y = 0; y < 480; ++y) for (int x = 0; x < 640; ++x)
+    if (!(x >= 18 && x < 90 && y >= 132 && y < 164))
+      outsideSame &= sameRgb(none, selectedElsewhere, x, y);
+  check(insideChanged && outsideSame, "selection index changes only its measured plate rectangle");
+
+  auto changedCounts = originalCounts;
+  changedCounts[0] = changedCounts[0] == 1 ? 2 : 1;
+  Image changed = makeSolid(640, 480, 0, 0, 0, 255);
+  cached->draw(changed, changedCounts, std::nullopt);
+  bool countChanged = false, countOutsideSame = true;
+  for (int y = 20; y < 34; ++y) for (int x = 66; x < 78; ++x)
+    countChanged |= !sameRgb(none, changed, x, y);
+  for (int y = 0; y < 480; ++y) for (int x = 0; x < 640; ++x)
+    if (!(x >= 66 && x < 78 && y >= 20 && y < 34))
+      countOutsideSame &= sameRgb(none, changed, x, y);
+  check(countChanged && countOutsideSame, "caller count changes only its count glyph rectangle");
+}
+
 }  // namespace
 
 int main() {
@@ -460,6 +510,7 @@ int main() {
   testLinearPlateSampleDiffersFromNearest();
   testPatchPlateFullWordsAgainstC1bc();
   testSkillPanelIconSheetsAreNotTheTenIcons();
+  testCachedRetailPanel();
 
   std::cout << std::format("\n{} checks, {} failures\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;

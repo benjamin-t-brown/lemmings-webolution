@@ -1,106 +1,59 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-27T20:04:12.190Z",
-  "notes": "STOPPED on unauthorizedextra stockstart; bothworkers independentlyterminal, allresources released, no appentry/nativefidelity acceptance. Completeactualclocks and accounting in standing_run; unusedpools frozen.",
+  "updated": "2026-10-28T03:02:38.506442Z",
+  "notes": "STOPPED after independently verified source-only route assessment; no implementation/deployment/native acceptance. One assessment/attempt makes7totalrounds8attempts,still5implementation. P/Q/R/S scopes,Q/R procedural violations/externaldump,nativebreach/lostimages/frozenpools retained. No automaticnext/live/commits.",
   "active": [],
   "queue": [],
   "standing_run": {
-    "id": "native-capture-first-entry-2026-10-27",
-    "owner": "ses_e820ba1caffekErgamqlwBSKq0",
-    "parent_session": "ses_e821d9d54ffe76zZdbg3zhSJ1N",
+    "id": "offline-route-assessment-2026-10-28",
+    "owner": "ses_e7f967be2ffeZlKGBhAXeJprTk",
+    "parent_session": "ses_e7f9969f2ffeaoCoSSUJMuvDZG",
     "directive": "docs/DIRECTIVE.md",
-    "directive_sha256": "88c313b06b0e67dd8a161c343e7e2cb189905c4f14a4e5a689d9e3c14537d2c7",
-    "authorized": "User i approve, delegated same Sol/high owner; new 120min/4attempt/3start authority, only native capture/input and actual first-node entry. No model override/fallback.",
-    "started_at": "2026-10-27T19:32:27Z",
-    "deadline": "2026-10-27T21:32:27Z",
-    "grants": {
-      "overall_minutes": 120,
-      "worker_attempts": 4,
-      "round_minutes_including_repairs": 45,
-      "worker_return_minutes_max": 30,
-      "tooling_attempts": 2,
-      "tooling_minutes": 60,
-      "stock_starts": 3
-    },
-    "milestones": [
-      "B2 screen state machine",
-      "B3 level select and map"
-    ],
-    "current": "B2 native capture/input evidence",
-    "rounds_run": 2,
-    "attempts_used": 3,
-    "stock_starts_used": 2,
-    "stock_start_attempts_charged": 1,
-    "stock_start_budget_remaining": 0,
-    "stock_start_debits": [
-      {
-        "task": "b2m-native-capture-continuation",
-        "at": "2026-10-27T19:38:52.917Z",
-        "charged": 1,
-        "actual_attempts": 2,
-        "state": "BREACH:2actualPopen19:47:23ZPID40140/19:48:14ZPID16480 versus1preauthorizedchargedstart; no retroactive2nddebit/refund. Bothreportedexit1; secondrawcaptureisunqualifieddesktop/notgamepixels; firstreceipt overwritten. Stopallfuturework."
-      }
-    ],
-    "tooling_attempts_used": 2,
-    "tooling_seconds_used": 1519.273899,
-    "stock_crashes": 0,
-    "historical_counts": {
-      "prior_campaign_attempts": 16,
-      "prior_campaign_starts": 2,
-      "prior_campaign_rounds": 10,
-      "B3_pick_continuations_through_B3k": 5,
-      "B3_production_entry_attempts": 2,
-      "B2_history": "B2a-k caps and B2l tooling attempts1/2 plus B2m attempt13 retained; see unchanged archive"
-    },
-    "ownership_check": "19:32:27Z hash/queue/branch/HEAD verified, only self active, prior worker succeeded/idle, exact self Sol/high parent confirmed.19:34:58Z self-only recheck, host inventory clear, ff-only unchanged a7e37e9.",
-    "gate_scores": {
-      "verified_at": "2026-10-27T19:57:12Z",
-      "C3": {
-        "numerator": 14934333,
-        "denominator": 235008000,
-        "score": 0.06354818984885621,
-        "pass": false
-      },
-      "C1_zoom1": {
-        "numerator": 285083,
-        "denominator": 17721990,
-        "score": 0.0160863988750699,
-        "pass": true
-      },
-      "C1_elev_down": {
-        "numerator": 285700,
-        "denominator": 17721990,
-        "score": 0.016121214378294987,
-        "pass": true
-      },
-      "C2": "runtime HUD/own-app pause verified; native hover/full-frame gate unaccepted",
-      "B1": "conditional acceptance preserved",
-      "B2_B3": "UNACCEPTED: capturestartbudgetbreach/unqualifieddesktopimages; constructedmouseconditionalbindingonly, sharedidentitygap, no appentry."
-    },
-    "pending_questions": [
-      {
-        "question": "Safety/launch strategy after2actualstartsagainst1authorized; no current authority remains exercisable.",
-        "recommendation": "Require separate explicit review/approval before newwork. Any future narrow launcher repair must failclosedonstaleexecutedsource/testonly, durablesingleusestartlimit and appendonlyfailureevidence; no native retry now. Then resolve exactC\u2192G/sharedidentity and actualforegroundcapture, not observercore/generalinputarchitecture.",
-        "evidence": "docs/scratch/phase-b2m-native-capture-safety-stop.md; docs/scratch/phase-b3k-native-binding-partial.md"
-      }
-    ],
-    "handoff": "STOPPED safetybreach, not successfulentry or exhaustedoveralltime.3of4attempts/2landedlimitednegative-partialrounds; tooling2of2, broadchargedseconds infield.2actualstockstarts/1authorizedcharged+1unauthorizedactual, no retrodebit/refund; 0observedcrashsignatures, bothownedexit1/notnormalexitproof. Capture4124fa9actual19:59:11Z1218.083s; bindingc963bbbactual20:02:16Z1403.083s, bothbefore20:22hardround/no timingoverrun. Firsttoolreceiptrescuedbutfirstimageslost, second2560x1440rawdesktopisoccludednotgamepixels. Correctedcause:TestOnlypresentbutfailedrefreezeleftoldworkerignoringit. Bindingconstructedmouseconditionalonly,C\u2192G/sharedgap; no nativephysicalsample/productionhelper/appentry.49CTest68.19s/fourmapRGBA/7badCLI/freshfixedC3FAIL+C1PASSscores+hashesunchanged;16signedgates/PLAN27771bytes/dirtyworkpreserved. BothworkerterminalIDsretained, staticREAclosed; final20:03:06Zhostempty/no tasks/pythonw/instrumentation,5protectedhashesexact/noinstallwritesorrestorationowed. NULattributed/preservedremoved,newrejectedhelperpreservedscratchremoved. Original19:32:27start/21:32:27deadline neverreset; consumedpassrequiresnewexplicitreviewbeforeanywork, pendingrecommendationnamesexactstale-source/singleuse/appendonly-evidencedefects. No spareattempt/start/hourtransfer.",
-    "stopped": {
-      "date": "2026-10-27T20:04:12.190Z",
-      "reason": "SAFETY BREACH: capture repair made2actualstockstartsagainst1authorizedpredebit, launchedbeforeforcedexceptionretentionprerequisitepassed, overwrotefirstimages. Allfutureworkfrozen; bothworkersnowindependentlyterminal/REAclosed/hostclear5hashesmatch. No appentry. Finalattempt4unspent is not authority to continue.",
-      "last_commit": "c963bbb2f5fd804d740d51c2260ccab3f55802c0"
-    },
-    "tooling_clock_started": "2026-10-27T19:38:52.917Z",
-    "tooling_clock_note": "Initialcapture+repair conservatively tooling2of2. Captureisolatedcommit19:59:11Z1218.083s; broadchargedwallinterval19:38:52.917Z throughfinaladministrativestop includesoverlappingofflineverification/cleanup, actualtooling_seconds_used measured. Under60min; no thirdtooling/repair.",
-    "safety_stop_requested_at": "2026-10-27T19:50:57Z",
-    "safety_breach": "Capture repair executed2actualstockPopen starts versus1authorized/predebited; also launched before forcedexceptionretentionpassed, overwrotefirstreceipt. No furtherlaunch/task/repair/entry permitted. Offlinebindingworker retainsownershipuntilnotification/terminalcheck; do notinterrupt.",
-    "stock_starts_frozen": true,
-    "stock_start_unauthorized_actuals": 1,
-    "tooling_source_landing_seconds": 1218.083,
-    "resource_verified_at": "2026-10-27T20:03:06Z",
-    "workers_terminal_verified_at": "2026-10-27T19:53:49Z",
-    "elapsed_seconds_at_stop": 1905.190899,
-    "tooling_clock_ended_at": "2026-10-27T20:04:12.190Z",
-    "stock_crash_scope": "0 observedcrashsignatures; both actualownedprocessesexit1, terminationvsnaturalexit notexplicitlymarked in receipts. Do not callnormalexits or infercrashabsencefromprocessabsence."
+    "directive_sha256": "7b36e64946789af5b1b5146f0f8f90d434645efd0bef1681a265712a11bc7555",
+    "authorized": "User yes to assessment AND delegated default facilitator launch; 45min total/ONE assessment worker attempt<=30min tightened for15min review. Zero game/desktop actions, route imports/execution, binary research, implementation/deployment/code/test edits/safety campaign/commit/push/automaticnext. Full directive exclusions govern.",
+    "started_at": "2026-10-28T02:49:21.238Z",
+    "clock_basis": "Fresh newly created child activation at1793155761238, conservative includes all preparation; first shell02:49:26Z. Not prior budgets/session.",
+    "deadline": "2026-10-28T03:34:21.238Z",
+    "worker_absolute_return_deadline": "2026-10-28T03:19:21.238Z",
+    "verification_minutes_reserved": 15,
+    "grants": {"overall_minutes":45,"worker_attempts":1,"worker_return_minutes_max":30,"stock_starts":0},
+    "milestones": ["B2 screen state machine", "B3 level select and map"],
+    "current": "Assessment independently verified/narrowed; proposed protected owner-adapter contract remains separate approval; whole launcher unaccepted",
+    "rounds_run": 1,
+    "attempts_used": 1,
+    "round_clock_started_at": "2026-10-28T02:52:34Z",
+    "worker_session": "ses_e7f934373ffe8zZaG32cUib2Oi",
+    "worker_created_at": "2026-10-28T02:52:52.294Z",
+    "worker_dispatch_request_created_at": "2026-10-28T02:52:45.728Z",
+    "worker_dispatch_tool_started_at": "2026-10-28T02:52:52.235Z",
+    "worker_pin_check": "Authenticated runtime round-agent exact own parent openai/gpt-6-luna#high; default dispatch nooverride/fallback, currentroot/worker-dispatch-pin.json.",
+    "worker_returned_idle_at": "2026-10-28T02:54:52.248Z",
+    "worker_packet_time_reported": "2026-10-28T02:54:40.631277200Z",
+    "worker_request_to_idle_seconds": 126.520,
+    "worker_created_to_idle_seconds": 119.954,
+    "worker_output": "build/tmp/offline-route-assessment-2026-10-28/worker/assessment.md",
+    "facilitator_check": "docs/scratch/phase-b2t-offline-route-assessment.md",
+    "documentation_landed_at": "2026-10-28T03:02:38.506442Z",
+    "worker_request_to_landing_seconds": 592.778442,
+    "final_clock_artifact": "build/tmp/offline-route-assessment-2026-10-28/final-clock.json",
+    "stock_starts_used": 0,
+    "stock_attaches_used": 0,
+    "foreground_actions": 0,
+    "desktop_exercises": 0,
+    "ownership_check": "Authenticated active endpoint only parent+self; prior facilitator and worker succeeded/idle; self runtime exact facilitator Sol/high parent matches. SHA/decompile/e649d10/empty stopped queue and31dirty baseline copies/hashes checked before ownership. Resolved round-agent default Luna/high; no override/fallback.",
+    "scratch": "build/tmp/offline-route-assessment-2026-10-28/ established before saving any new prep/dumps/checks/temp; old evidence roots read-only",
+    "before_source": "All31dirty paths copied/hashed,944old evidence files hash protected; before/docs/tasks.json and prior-stopped-run.json preserve exact stopped run; archived exactly before replacing current run.",
+    "aggregate_history": {"prior_total_rounds":6,"prior_total_attempts":7,"implementation_rounds_unchanged":5,"B2n_review_rounds":1,"B2n_review_attempts":2,"current_assessment_rounds":1,"total_rounds_including_current":7,"total_attempts_including_current":8},
+    "cap_rationale": "Explicit bounded assessment exception beyond same effort cap, not renamed/reset. Determines minimum remaining path to future B2/B3 measurement after scoped proofs, no speculative safety implementation, no native gate movement.",
+    "historical_accounting": "Prior B2s stopped object preserved exactly in archive; all older records untouched. B2q worker scratch violation/B2r facilitator scratch violation and external dump/native2actual1authorized breach/lost images/frozenunused pools retained; whole launcher unaccepted.",
+    "independent_result": {"method":"Source/text/AST/savedJSON only; no live-route import/execution or binary reads","source_ranges_checked":25,"historical_observations_rechecked":"B1b3/0brackets640x480,B2h report+raw loadedpath/counter5/play0","minimum_proposal":"One protected owner-created-child adapter at actual candidate->worker effect boundary, reusing B1b menu crop/brackets before B2h run_plan read/IO sequence; never whole old launchers","remaining_gaps":["actual dependency/deployment closure","separately reviewed local approval scope/store","owned real child/handle and permitted helper lifetime","image/output identity schema and immutable receipts","input release versus exact snapshot restoration","hard-owner-interruption cleanup/qualification","native client/foreground/unobscured-pixel evidence under future approval"],"narrowings":"B1b main launches/configwrites; B2h live first-process attaches, olddriver launches separately; worker mockdispositions/no realcleanup; no general token service requirement; finally not hardcrash/noorphan proof. No completed deployment/native acceptance."},
+    "integrity_result": {"old_evidence_files":944,"inherited_protected_paths":320,"external_dump_sha256":"c4f34715125e10d3f8886d3c7585cb77f32b16b0c1f8f6a5425fc34d24998228","untouched_dirty_paths":26,"signed_gates_unchanged":16,"prior_B2s_stopped_run_exact":true,"older_archive_exact":true,"source_tests_unchanged":true,"framework_brief_lint":"PASS after shortening only new PLAN prose to29992bytes","diff_hygiene":"PASS"},
+    "gate_scores": {"status":"RETAINED,notfresh;all16gates/masks/references/exclusions unchanged","C3":{"score":0.06354818984885621,"pass":false},"C1_zoom1":{"score":0.0160863988750699,"pass":true},"C1_elev_down":{"score":0.016121214378294987,"pass":true},"B2_B3":"unaccepted;B3kCtoG/sharedS physicalbindinggap unchanged","C2":"native gate unpassed","D":"PhaseDparks retained,D1nlanded/D1ofailing"},
+    "worker_terminal_verification": "Authenticated succeeded/idle02:54:52.248Z,not handwritten packetend. Activeendpoint onlyparent+self. Worker toolaudit reads/hash/date/mkdir/status/candidate-note only, one malformed shell request rejected preexecution. All owninspection tools synchronous;no operationalresources/restoration owed; nofreshgame/process/install querying.",
+    "administrative_errors": "InitialMSYS pathconversion/unscopedagent404/obsolete debugagent corrected in currentroot; ownarchivecheck cp1252prepJSON switched to exactbeforecopy UTF8; PLANsize lint shortened newprose only. No workerrepair/implementation/safetyexecution/newattempt.",
+    "changed_paths": ["PLAN.md","docs/LESSONS.md","docs/plan-history/phase-b.md","docs/tasks.json","docs/tasks-archive.json","docs/scratch/phase-b2t-offline-route-assessment.md","build/tmp/offline-route-assessment-2026-10-28/**"],
+    "handoff": "STOPPED after independently verified source-backed assessment. Soleworker succeeded/idle;no operationalresources/gameactions/commits/push. One protected owneradapter proposal and exact future falsifiers recorded; allcomponentlimits/Q/Rviolations/externaldump/nativebreach/frozenallowances preserved. Sevenrounds/eightattempts total,stillfiveimplementation,no capreset. No secondattempt/takeover/automaticimplementation/deployment/live trial. Only nextdecision is whether separately approve bounded offline owner-adapter implementation/verification contract; laterlive also separateexclusive-desktop-window approval.",
+    "pending_questions": [{"question":"Whether separately approve one bounded offline owner-adapter implementation/verification contract?","recommendation":"Use one owner-created child and selected B1b crop/B2h run_plan seams, actual protected boundary and harmless effects only; name exact dependency allowlist, local reviewed grant/store, output schema, timeout/interruption cleanup policy before approval. Hard-owner cleanup unspecified remains a deployment blocker. No live or implementation authority now.","evidence":"docs/scratch/phase-b2t-offline-route-assessment.md"}],
+    "stopped": {"date":"2026-10-28T03:02:38.506442Z","reason":"Independent source-backed assessment verified/narrowed; approved ONEassessment stop reached. No repair/implementation/deployment/live follow-on.","last_commit":"e649d108cae7d897a8d6f34655d66fbfab1cb369","new_commits":0,"overrun":false}
   }
 }

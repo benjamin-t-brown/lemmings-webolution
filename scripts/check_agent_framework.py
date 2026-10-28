@@ -13,7 +13,7 @@ CORE = [
     "docs/agents/ROUND.md", "docs/agents/EXPLORE.md", "docs/briefs/TEMPLATE.md",
     ".cursor/rules/match-the-original.mdc", ".cursor/rules/orchestration.mdc",
     ".cursor/rules/windows-msys2-build.mdc", ".opencode/README.md",
-    "docs/OVERLORD.md", "scripts/overlord/README.md",
+    "docs/OVERLORD.md", "scripts/overlord/README.md", "docs/RENDERING_METHOD.md",
 ]
 CLIENTS = [(".claude", "agents"), (".cursor", "agents"), (".opencode", "agent")]
 FIELDS = [

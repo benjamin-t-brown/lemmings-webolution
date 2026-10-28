@@ -811,6 +811,23 @@ C3.0635481771FAIL,C1gatespass. Run stops16/16attempts,0/3starts; host enum bridg
 requires bounded offline repair before any later execution. Remaining known
 primary/type1/clip/f32/native-state debts not closed and no method permission missing.
 
+### C3 reference and big-errors-first authorization
+
+- **C3 reference re-capture, scene pose and tube ends (user, overlord review 2026-10-25,
+  "approved").** Run `c3-known-gaps-pause-values` stopped 16/16 at 0.0635482 with 0 starts:
+  the one-shot was rejected before Popen on a numeric ScheduledTask state. The user saw the
+  original's fourth walker and out-count 4 missing from ours (5), a possibly mis-posed scene,
+  and missing cylinder ends. The overlord confirmed the walker cause: `capture_matched_pause.py`
+  persists only `actors[:3]`. Next Sol run: host-test the controller, then spend one start to
+  read the pause values and re-capture repair4 with the cursor clear of the hatch, the full
+  actor list and HUD counters. **Reference swap authorized** if the new capture matches repair4
+  outside the cursor/hatch, fourth-walker and counter boxes; threshold, metric, partition and
+  floor rule unchanged; repair4 reported alongside. Then the scene pose, the tube ends, and the
+  rest of the known gaps. About 6 hours or 16 rounds, pool of 3 starts.
+  Re-ranked the same day (user, "get the big rocks better before refining"; "approved"): edge
+  scenery (57% of C3ao's error) and the orange discs ahead of the tube ends, run offline beside
+  the live arm; the scene-pose check tests handedness (user lead: mirrored geometry/textures).
+
 ### C3 rendering pivot — offline feasibility, 2026-10-25
 
 **C3au boundary assessment:** conditionally prefer one caller-scoped pre-wrapper

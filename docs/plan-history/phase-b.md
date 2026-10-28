@@ -1,5 +1,127 @@
 # Plan history — Phase B
 
+### B2t — offline route-connection assessment, 2026-10-28
+
+[Facilitator check](../scratch/phase-b2t-offline-route-assessment.md): sole targeted
+source-only worker returned; own25range source/AST/savedJSON audit supports one
+protected owner-adapter connection to existing B1b menu crop/brackets and B2h
+guarded read/IO sequence. Do not compose B1b main/B2h old launchers: independent
+starts/config writes/first-process attach/reusable outputs remain. Exact dependency,
+reviewed local grant, one owned child, output schema, input and interruption cleanup
+contracts are unqualified; hard-owner crash cannot be repaired by its own finally.
+Fixed later acceptance/failure matrix recorded, no implementation/deployment/test
+campaign/route imports/binary research/game or desktop actions. Whole launcher
+unaccepted; P/Q/R/S proofs and Q/R violations/external dump/native breach/lostimages/
+frozen pools retained.944old files plus320inherited protected paths/26untouched dirty
+paths/16gates and exact previousB2s/allolder archives independently preserved.
+One approved assessment round/attempt makes7totalrounds/8attempts,still5implementation,
+not cap reset. Worker idle, no operational resources, uncommitted/no push. STOP;
+smallest next decision only: separately approve concrete offline owner-adapter
+implementation/verification contract. Later live use still separate exclusive-window
+approval. No native gate moved; C3FAIL/C1PASS retained.
+
+### B2s — offline evidence preservation verified, 2026-10-28
+
+[Facilitator check](../scratch/phase-b2s-evidence-preservation.md): own17/17suite and
+separate42offline Python child actual-entry invocations verify exact success/error
+attribution,4abrupt-interruption boundaries with retained incomplete stages/output,
+16distinct-grant same-destination rejections preserving earlier bytes and rejection
+records,8samegrant renamed restart refusals and8processrace1launch/7refusals.8ownP/Q
+controls plus fullPQR regressions retained. Nonoverwrite-only executed mutant admits
+second valid grant into earlier attempt; stages append/byte equality genuinely fails
+before final exclusive guard refuses. Source/args/TestOnly/singleuse not weakened.
+Initial verifier-only cp1252/UTF8 mutant-fixture error was caught before execution;
+32partialprotected children/artifacts retained, then full42child rerun in fresh root
+(74total), no candidate repair/extra worker. Exact3before sources/320oldartifactpaths
+and hashes incl externalB2rdump/236earlier artifacts/16gates/old archives preserved.
+User retainsB2r proof WITH disclosed facilitator violation, notclean; no deletion.
+Explicit capexception implementationround5sameeffort,totalround6/attempt7inclB2nreview;
+45min/oneattempt/zero gameactions. Worker/children terminal; whole launcher unaccepted,
+all changes uncommitted. Stop, recommend separate approved assessment decision only.
+
+### B2r — at-most-once proof, facilitator scope exception parked, 2026-10-27
+
+[Facilitator check](../scratch/phase-b2r-single-use-authorization.md): own14/14suite
+and separate18offline Python child invocations through actual launcher→worker verify
+fresh positive, sequential/outputrename/restart,8process race, capture-failure retry,
+abrupt exits before/after mock launch and retained spent claim. Consumption-only
+executed mutant reaches2mock launches with valid source/args and distinct outputs;
+same at-most-once property fails. P/Q controls retained. Exact3before sources,
+183oldoffline paths/hashes,236earlier artifacts,16gates and old archives preserved.
+Facilitator preparation nevertheless wrote activation dump outside current scratch
+root; exact external artifact/copy/hash retained, disclosed, not waived by priorB2q
+decision. Technical proof NOT a clean procedural pass; STOPPED/PARKED for user review.
+Explicit capexception implementationround4sameeffort (5rounds/6attempts inclreview),
+45min/oneattempt/zero game-desktop actions; worker/children terminal, uncommitted.
+Whole launcher unaccepted; no follow-on/live trial, retained scores only.
+
+### B2q — behavior verified, scope exception parked, 2026-10-27
+
+[Independent component check](../scratch/phase-b2q-testonly-worker-boundary.md).
+TestOnly now validates trusted synthetic source/args then no-ops at both actual
+boundaries; direct worker rejects absent/stale/mismatched approval before operations.
+Own11/11 suite and separate34cases verify2operational positives,3TestOnly no-ops,
+25refusals including B2p7functional mismatches,2before contrasts and2executed
+guard-only mutants that break their ordinary negative properties. AllOfflineEffects
+methods unchanged. Worker disclosed first test's transient state outside allowlist
+under priorB2p scratch, then cleanup/path correction; own119file set/hashes unchanged,
+236earlier artifacts exact/no old safety-temp directory now. Technical proof retained
+but not an unqualified clean scoped pass: component parked for user disposition.
+Third implementation round same effort (4totalrounds/5attempts including B2n review),
+not renamed caps; no automatic next component. Whole launcher unaccepted,zero game/
+desktop actions, worker terminal, all changes uncommitted, no live trial.
+
+### B2p — operational source/argument component verified, 2026-10-27
+
+[Scoped facilitator check](../scratch/phase-b2p-source-argument-binding.md).
+New user-approved45min/oneattempt/zero-game-action pass; exact B2o before source
+preserved. Literal approval pins and parsed supported-argument comparison now guard
+the non-TestOnly operational launcher→worker path before consume/attempt/capture.
+Own8/8 suite plus separate fixed-fixture positive,7mismatches, before-regression
+and2executed single-guard mutants pass their differential criteria. Before B2o
+argument drift reaches mock success; after valid-source approval refuses it. Both
+guard-only mutants make the ordinary negative property fail with actual mock
+operations; independent source mutant uses full delivered worker plus comment.
+Source snapshots/delivered hashes,16gates,14baseline paths,63prior offline artifacts
+and236saved evidence files preserved. Scope explicitly excludes TestOnly early
+no-op/direct-worker bypass, other safeguards/deployment/native fidelity; whole
+prototype unaccepted. Worker terminal, zero game/desktop actions, no repair/follow-on,
+uncommitted. Retained C3FAIL/C1PASS only; no new gate measurement or live trial.
+
+### B2o — offline safety candidate rejected, 2026-10-27
+
+[Independent rejection](../scratch/phase-b2o-offline-launch-safety-rejected.md).
+New user-approved90min/oneattempt/zerostart pass after B2n; prior pools unchanged.
+Sole worker returned an unwired Python prototype and7passing tests, explicitly
+incomplete. Own suite confirms7/7, but claimed bypass test never runs its mutant;
+none of the4required individual behavior controls completed. Own actual-boundary
+falsifier with pinned source hashes and different approved/requested attempt
+arguments reaches synthetic capture/receipt success: no approved-argument equality
+implemented. Rejected, no facilitator repair/second worker or live trial despite
+unused time. Exact old review/archive,16gates,16baseline paths and236saved evidence
+files preserved; retained C3FAIL/C1PASS only, no new native measurement. Source,
+tests and documentation left uncommitted for user inspection; worker terminal,
+zero native/desktop actions/resources/restoration. Next is a user decision on the
+incomplete prototype, not automatic capture or another implementation pass.
+
+### B2n — Option A offline recovery review, 2026-10-27
+
+[Verified review](../scratch/phase-b2n-offline-recovery-review.md): reuse B1b's
+qualified640x480 foreground/client crop and B2h's observed **scripted shim** entry,
+not a claim neither worked or universal physical-left/SDL binding. B3k's minimum
+C→G/shared-context identity gap stays open. Reject B2m executable route: raw
+TestOnly command present, failed refreeze/unguarded frozen worker, false exception
+PASS, no durable single use, reused output paths/first images lost. Direct-source
+repair addendum required; facilitator corrected two candidate citation/status
+errors before promotion. Independent saved JSON/AST/PNG-header/terminal-output
+checker and236file integrity check;16gates unchanged, retained C3FAIL/C1PASS only.
+D1n landed/D1o failing-parked wording and consumed-authority links corrected.
+One review round/two worker attempts, zero native/desktop actions; no code repair,
+binary research, build or fresh scores. Recommend separately approved90min/one
+attempt offline safety-boundary repair with fail-closed identity/TestOnly,
+single-use nonce, append-only evidence and exact failure-branch controls. Not
+authorization. Stopped uncommitted; prior native accounting archived exactly.
+
 ### B3k continuation6 — partial conditional mouse binding, 2026-10-27
 
 [Independent check](../scratch/phase-b3k-native-binding-partial.md): six new

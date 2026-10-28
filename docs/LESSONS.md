@@ -8,6 +8,21 @@ knowing before you touch anything, each one with the address or the script behin
 **Read this before the plan.** It exists so a new agent does not re-derive, re-measure, or
 re-litigate what cost previous sessions weeks.
 
+**Current authority (2026-10-28):** historical recipes are not permission to run them.
+After the completed [Option A review](scratch/phase-b2n-offline-recovery-review.md), the
+approved90min/one-attempt [offline repair](scratch/phase-b2o-offline-launch-safety-rejected.md)
+stopped rejected/incomplete. The later [source/argument component](scratch/phase-b2p-source-argument-binding.md)
+is preserved. [TestOnly/direct-worker behavior](scratch/phase-b2q-testonly-worker-boundary.md)
+is retained WITH its disclosed path-scope violation, not relabeled clean. User approved
+the [B2r technical proof](scratch/phase-b2r-single-use-authorization.md) WITH facilitator
+preparation scratch violation, not a clean relabel; external dump preserved. The
+[evidence-only component](scratch/phase-b2s-evidence-preservation.md) is independently
+  verified: success/error/incomplete output retained, oldbytes immutable,
+  nonoverwrite-only mutant discriminated. [Route assessment](scratch/phase-b2t-offline-route-assessment.md)
+  STOPPED after source audit:7rounds/8attemptsinclreview,still5implementation,zero
+  gameactions. Whole launcher unaccepted; no auto-next/live trial/old-pool renewal.
+  All new prep/test/temp current authorized root. Phase D parked.
+
 ## The one rule
 
 The stock 640x480 `Lemmings Revolution.exe` is the authority — not classic Lemmings, not
@@ -1123,13 +1138,14 @@ disassembly read of the walk stepper (`0x0041BDD4`) found a mutable, re-checked,
 byref time-budget loop — a shape with no reason to exist under a fixed step — and a
 zero-fitted-parameter continuous replay collapsed the fall/landing-tick mismatch count by
 76–100% against three live captures. **The conclusion is not yet "the tick rate is
-wrong"** — `World::tick()` is still called once per 200 ms and nothing below has been
-re-measured or re-implemented — but the premise that lemmings *step* discretely at 5 Hz,
+wrong"** — D1m did not re-measure/re-implement the table, and `World::tick()` retains
+200 ms bookkeeping; D1n's later opt-in implementation is recorded below — but the premise that lemmings *step* discretely at 5 Hz,
 rather than moving continuously and being *sampled* at 200 ms, no longer has supporting
-evidence and has active evidence against it. D1n (queued) is the implementation/re-score
-round; until it lands, read every `Rules` field below as "the per-tick arithmetic that
-reproduces the original when driven once per 200 ms," not as a confirmed hardware step
-rate.
+evidence and has active evidence against it. [D1n landed](scratch/phase-d1-continuous-stepper-clock.md)
+(`1d68ee0`, landing `24ec965`): opt-in continuous fall/walk budgets, not D1 acceptance.
+[D1o](scratch/phase-d1-continuous-live-recheck.md) (`a2bb9e7`) still fails the unchanged
+gate (retained657/305 divergences off/on); D1 remains user-parked. Read the table's
+per-tick arithmetic as 200 ms bookkeeping, not a confirmed discrete hardware step rate.
 
 The tick was **measured three ways** as 5 Hz (200 ms) and not frame-locked — see the
 withdrawal above. It had been guessed at 20 Hz, which made everything timed in ticks run
@@ -1327,6 +1343,7 @@ easter egg on `e10_kf_1` only; `Axe` is a HUD sprite sheet; `Bubble` is SFX on f
 
 ## What the hard reset was for
 
+**Historical reset rationale (not current simulation-fidelity acceptance; D1m/D1n/D1o above supersede its timing premise):**
 **Thirty-one research rounds** measured the simulation correctly — physics, all nine skills,
 every gadget — and left the *visible* game wrong: it booted into a flat 2D debug view, drew
 every lemming from sprite view 0 regardless of viewing angle, and showed a placeholder menu
@@ -1596,3 +1613,13 @@ the [separate proposal](RENDER_CAPTURE_PROPOSAL.md), not an automatic live follo
 **B3k (READ/data, [negative](scratch/phase-b3k-first-node-entry.md)): map selection uses indexed mask bytes, not RGB or a radius.**49ABC8 reads `(479-y)*640+x`, background equal to first stored byte;49B26A requires state2/3. Decoded named mask's background102 and node0's221pixels are resource-specific. The map's455DB0 query tests current object+0==1, fed from buffer byte12highbit by483B5D; it does NOT consume the separate new-press flag+10. Physical-device/button binding remains unclosed: ANYINSTANCE format declarations/nearby constructor are insufficient. No MapInput/actual app handoff landed; initial6+repair4bodies/campaign16attempts exhausted. Do not infer SDL down/up/left binding or repeat filename/counter crawls.
 
 **B3k continuation6 (conditional DERIVED, [check](scratch/phase-b3k-native-binding-partial.md)): constructed mouse is now linked to the custom format, NOT yet to the shared map context.**482FBA→482F76→482D40 creates enumerated mouse/4839A0 and stores C+C;450873→486A5E copies runtimeG4CBFC0 to sharedS5D59DC. C→G storage remains unclosed. ANYINSTANCE means first available button, generally left only under conventional unremapped/button0-first conditions. Installed shim bytes distinguish disabled forwarding from enabled syntheticIPC byte+1C→sample+12; no runtime route/physical sample observed. Six additional bodies, wrongwriter lead charged; no app entry. Concurrent [capture breach](scratch/phase-b2m-native-capture-safety-stop.md) ends newpass:2actual/1authorized starts, failedforcedexceptionpreflight, firstimages overwritten, secondunqualifieddesktop frame. New helper rejected/preserved scratch; no automatic retry or finalattempt4.
+
+**B2n (offline decision, [check](scratch/phase-b2n-offline-recovery-review.md)): reuse established capture/navigation seams, not the rejected launcher.** B1b remains qualified640x480 English highlight0; B2h's loaded-path/raw packets prove one scripted shim map-to-level entry, not physical-left/SDL binding or complete B2/B3 acceptance. C→G/shared identity remains the minimum binding gap, not grounds to erase earlier entry. Saved executed source/terminal receipts confirm TestOnly present but failed refreeze left old worker ignoring it, geometry refusal falsely earned exception PASS, no durable single-use enforcement and overwritten first images. Later working-source guards are not frozen executed guards. Recommend separately approved offline safety-boundary repair only; no new capture system/live retry, no current authority or gate movement. Retained scores only; all historical budgets/parks unchanged.
+
+**B2o (offline prototype, [rejected](scratch/phase-b2o-offline-launch-safety-rejected.md)): seven green tests are not safety acceptance.** Sole approved worker attempt returned incomplete; own7/7 rerun confirms the claimed guard-bypass test never executes its generated mutant, with no4isolated behavior controls. Independent actual launcher→worker check reaches synthetic capture/receipt success on an argument differing from the approval fixture: approved-argument equality absent. Candidate/source/tests remain unwired, unaccepted and uncommitted for user inspection. No facilitator repair or second worker despite unused time; no live trial. All16gates/236saved evidence files and prior accounting preserved; retained C3FAIL/C1PASS only, zero native/desktop actions. Future work needs new explicit authority, not green tests or unused clock.
+
+**B2p (synthetic component, [scoped check](scratch/phase-b2p-source-argument-binding.md)): source/parsed-argument binding now discriminates its old failure on the operational launcher→worker route.** Literal fixed source pins, matching positive,7independent pre-operation mismatches, exact B2o before-regression and2actual guard-only mutants verified; own8/8 suite. Each mutant makes the corresponding refusal property fail with consume/attempt/mock-capture, not generic selfhash failure. Before/after source and old evidence preserved. TestOnly early no-op/direct-worker paths, other safeguards, deployment and live/native fidelity remain unqualified; whole prototype unaccepted/unwired. One attempt,zero game/desktop actions, stopped uncommitted; no follow-on or old-pool renewal.
+
+**B2q (synthetic boundary, [check/scope exception](scratch/phase-b2q-testonly-worker-boundary.md)): validated TestOnly no-op and direct-worker approval behavior verified, not a clean whole-launcher acceptance.** Own11/11 suite+34independent cases preserve B2p7functional mismatches, reject direct missing/stale/changed approval before operations, and execute2guard-only mutants that break ordinary negative properties with synthetic consume/create/capture. TestOnly validates fixed source/args but qualifies no deployment/native capture. Worker disclosed transient test state under oldB2p scratch outside allowlist, then cleanup; old119file set/hashes and236earlier artifacts exact. Component parked pending user disposition despite behavioral proof. Third implementation round (4total/5attempts including review), no automatic next component/live use; whole launcher unaccepted, all gates retained,zero game/desktop actions.
+
+**B2t (source-only assessment, [check](scratch/phase-b2t-offline-route-assessment.md)): smallest proposed connection is one protected owner adapter, not calling old launchers together.** B1b main starts its own child/swaps config; B2h run_plan accepts read/IO but live() reattaches through first-process selection. Reuse only menu-crop/state brackets and guarded scripted seam, bind one owned child, approved dependency/grant/output/cleanup contract. Existing worker has mock-only launch/result/dispositions and no real lifecycle interface. Release clears/disables, not exact input snapshot restoration; hard-owner crash cleanup remains explicit later blocker. Independent25range source/AST+savedJSON audit,944old artifacts/320inherited paths incl externaldump/16gates preserved. No route imports/execution, tests/mutations, original research or gameactions. One assessment makes7totalrounds/8attempts,still5implementation; P/Q/R/S scopes and Q/R procedural violations retained, wholelauncherunaccepted. Separate implementation and live approvals required; no auto-next.

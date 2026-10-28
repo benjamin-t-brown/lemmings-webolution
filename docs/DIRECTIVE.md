@@ -1,148 +1,129 @@
-# Overlord directive — native capture and first-level entry
+# Overlord directive — commit current work only
 
-Status: **approved; activation requires the ownership checks below**.
-Issued: 2026-10-27 (user, overlord review 2026-10-27, "i approve").
-Identity: `native-capture-first-entry-2026-10-27`.
-Client/tier: **OpenCode, default Sol on mouv**, delegated resume of owning
-`facilitator` session `ses_e820ba1caffekErgamqlwBSKq0`, no model override. Workers
-retain their configured profiles. Manual launch remains supported, never concurrent
-with this owner. Queue records activation/consumption; this heading is not renewal.
+Approved 2026-10-28: user requested "lets commit the code we have".
+Identity: `commit-current-work-2026-10-28`. Delegated default OpenCode facilitator
+on mouv (Sol/high per ROLES.md), resuming idle owner
+`ses_e7f967be2ffeZlKGBhAXeJprTk`; no override/fallback or concurrent facilitator.
 
-## Fresh approval and purpose
+Review and commit the existing tracked changes and relevant untracked source,
+tests and documentation as an honest checkpoint on `decompile`. Include this
+authorization. Do not imply whole-launcher acceptance or new native fidelity.
+Use explicit paths; do not add ignored scratch, secrets or generated artifacts.
+No push, worker dispatch, new research, implementation, game/desktop action,
+framework redesign or new standing run. Keep the queue stopped and unchanged.
+Only bounded read-only diff/content/format checks are needed; do not rerun the
+capture or safety campaigns. If a material problem blocks the commit, report it
+without starting a repair project. Stop after reporting commit hash and status.
+This authorization supersedes prior no-commit restrictions for the existing work
+only, not any other scope or budget. The user's concern about excessive process
+is not implemented as a rule rewrite in this checkpoint.
 
-User approved the overlord recommendation: **two hours, up to four worker attempts
-and three stock starts**, for actual-host capture geometry/failure screenshots,
-native input/button binding evidence, and connecting the recovered map hit-mask
-to first-level entry. Stop on verified entry or a concrete blocker. No debugger
-core revival, gate relaxation or Phase D reopening.
+Ownership checked 2026-10-28T03:10:51Z: owner and its last worker
+`ses_e7f934373ffe8zZaG32cUib2Oi` succeeded/idle; only parent overlord active.
+Recheck before committing. The completed assessment below is historical, not
+permission to dispatch or resume its proposed follow-on.
 
-The [previous campaign](DIRECTIVE-INTEGRATED-RETAIL-2026-10-27.md) is consumed:
-16 attempts, 2 actual/charged starts, 10 rounds, closure `a7e37e9`. Its original
-directive SHA256 was `0ecfdfc6a479db522e4963ab6412f2fba09b7e180a089db657e97bd0534cc40e`
-before the archive status annotation. Preserve its counters/deadlines, evidence
-and parks. This is a separately approved pass, not a reset of historical question
-counts or a transfer of its six unused starts.
+---
 
-## Scope, changed approach and outcomes
+# Historical completed directive — offline route-connection assessment
 
-Milestones **B2 normal navigation and B3 first-node entry**, under existing signed
-gates. This explicitly reopens only the native-entry/capture and first-node binding
-questions parked in B2m/B3k. Historical B2 caps, level-pick continuations through
-B3k and failed observations must remain counted. Facilitator records a bounded
-continuation rationale before dispatch; do not rename the question to erase its cap.
+Status: **approved assessment only; ownership recheck required before activation**.
+Issued: 2026-10-28 UTC (user, overlord review, "yes" to the proposed assessment and
+delegated launch). Identity: `offline-route-assessment-2026-10-28`.
+Client/tier: OpenCode on mouv, default `facilitator` (Sol/high per ROLES.md), no
+model override or fallback. Delegated launch authorized; manual launch remains
+supported, never concurrent with the owner. Prior completed pass is not renewed.
 
-1. **Capture the actual host result before judging it.** B2m reported 2560x1440
-   against 640x480 but retained neither raw geometry nor screenshots. Establish
-   target HWND/identity, actual client/capture coordinate spaces and supported
-   capture configuration. Preserve raw unaltered frames, geometry and errors on
-   success AND failure. Distinguish HWND selection, DPI/desktop composition and
-   game resolution from measured evidence, not a presumed cause. No resized image
-   may masquerade as a stock 640x480 frame or bypass qualification.
-2. **Obtain the minimum native navigation/input evidence.** Use normal input and
-   supported external read-only sampling to connect observed physical input and
-   stable screen/level state. Do not require a complete input/render architecture
-   before a bounded diagnostic. Where an exact byte/ABI chain supports a conditional
-   DERIVED binding, label its conditions; do not demand unrelated transitive proof.
-   An image alone does not identify the sampled input object; source labels alone
-   do not prove the physical binding. Retain the actual executed script/helpers'
-   identity before launch, not merely a post-run edited source snapshot.
-3. **Deliver application entry, not another unused helper.** Once the input
-   relationship is supported, connect the accepted indexed mask/eligibility rule
-   to actual `--map` first-node selection and the existing `MM_CLIMB_002` level
-   path. Independently demonstrate background/ineligible input stays on the map
-   and supported first-node input enters the correct level. Preserve map fixtures,
-   existing 3D/HUD paths and declared source-policy versus native-fidelity limits.
+## Question and deliverable
 
-Reuse [B3j](scratch/phase-b3j-app-base-map.md) and
-[B3k](scratch/phase-b3k-first-node-entry.md): exact mask, state eligibility and
-current sampled bit are already recovered. Do not replace the mask with its
-bounding box, infer new-press semantics, or invent a button/shortcut/save adapter.
-The missing binding and actual capture/navigation evidence are the questions.
+What is the smallest concrete connection between the verified offline protections
+and the established B1b capture/B2h scripted-navigation components, serving future
+B2/B3 measurement and eventual integrated retail entry?
 
-The [B2m probe](scratch/phase-b2m-qualified-navigation.md) is rejected, not a ready
-launcher: executed-source identity is missing and its unreached map reader has
-pointer/decimal-stride defects. Any reused behavior needs actual-path tests of the
-named defects. Preserve original packets. B2l's exact reference-image guard is
-reference-specific, not a universal screen oracle; do not relax it to pass a new
-image. A separately supported host/capture path must explain its own qualification.
+Produce a source-backed connection plan identifying exact remaining deployment,
+dependency, authorization and owned-process cleanup gaps. Give fixed acceptance and
+failure criteria for a separately approved later implementation, distinguish proven
+components from unqualified connections, and recommend the smallest next decision
+or an explicit blocker. This pass assesses the connection; it does not build it.
 
-## Budget and delegation
+Use existing source and saved artifacts. Reuse B2n's established-component review;
+do not repeat the recovery review, rerun the safety implementation campaign, or
+invent a new capture engine/general security architecture. Source paths and saved
+observations must substantiate recommendations, not just conceptual boxes.
+The facilitator scopes one bounded worker assessment and independently checks its
+citations and conclusions. Missing proof remains a gap, not an implementation task
+for the facilitator or a reason to start another worker attempt.
 
-- **120 minutes overall or 4 worker attempts**, whichever comes first. Owning
-  facilitator records activation and one absolute deadline. Preparation, repairs,
-  independent verification, landing and cleanup all count; no context reset.
-- **45 minutes maximum per round from first dispatch through repairs/landing**.
-  Each brief gives its worker a return budget of at most 30 minutes and reserves
-  verification/cleanup time; tighter remaining campaign time governs. Repairs
-  count as attempts and do not restart the original round clock. No interruption
-  of an over-budget worker without user approval; disclose every overrun.
-- At most **2 tooling-only attempts / 60 minutes total**, within the four/120,
-  for the specific host/capture/retention defects. No standalone recorder or
-  certification project. Remaining attempts should acquire native evidence and
-  integrate entry; stop rather than relabel exhausted tooling as observation.
-- **3 stock-start attempts total**, debit before attempting launch; normally one
-  per live brief, at most two for a predeclared matched comparison. No blind retry:
-  another attempt requires retained failure evidence and a bounded verified fix
-  or changed supported hypothesis, within these pools. One game crash ends this
-  pass's live route. Original-game budget excludes our own app tests/renders.
-- Up to 3 independent disjoint tasks, at most one live owner. No other worker/app
-  test may take desktop focus while native input/capture is owned.
-- Per-round isolated commits and normal decompile sync per ROLES.md authorized.
-  Preserve unrelated dirty hunks; no reset/stash/checkout/force-push. Facilitator
-  owns queue/briefs/docs/independent verification; workers own implementation.
+## Settled facts and limits
 
-## Live safety and evidence
+- Preserve B2p source/argument binding, B2q TestOnly/direct-worker checks, B2r
+  at-most-once proof and B2s evidence-preservation proof, each at its stated scope.
+  Whole launcher remains unwired/unaccepted; synthetic effects are not native proof.
+- B1b qualified a 640x480 English menu capture. B2h observed scripted shim-driven
+  map-to-level entry, not the whole physical-left/SDL binding chain or B2/B3 gates.
+  B3k's constructed-mouse to shared-context identity gap remains open; no new
+  original-code research is authorized to close it here.
+- Retain B2q/B2r disclosed scratch-path violations, the original native extra-start
+  breach and lost images, and all frozen unused allowances. The external B2r dump
+  stays preserved; no deletion or procedural-clean relabel is authorized.
+- The consumed evidence directive is preserved byte-for-byte at
+  `docs/DIRECTIVE-EVIDENCE-PRESERVATION-2026-10-28.md`, SHA256
+  `1558246287b80550fa4523dc755491db482521c8c04a20c0865a39f7cf099a8b`.
+  Current queue/archive and B2s note retain its completion record.
 
-Normal starts, established automatic foreground/input, screenshots and supported
-external memory reads are allowed. Use established session-1 tooling with an
-actual-path/host prelaunch check and predeclared prediction/falsifier/sample cap.
-Exercise failure-artifact retention before the stock attempt; raw failure capture
-must precede geometry/admission abort where capture is possible. If it is impossible,
-save the precise capture error and raw geometry/identity rather than invent an image.
-Missing observation is not a passing qualification and does not justify blind retry.
+## Budget and exclusions
 
-Existing temporary wrapper/capture configuration or save backup/restore operations
-may be used only with supported purpose, exact original bytes, write ledger and
-read-back restoration. Preserve language and user progress. Established input-shim
-IPC is ordinary input, not permission for new native memory writes. No new level-
-slot/camera/actor writes, debugger attach, Frida/hooks/injection, executable patch,
-new capture engine, installation/update, elevation or security-policy change.
-The earlier observer safety refusals remain intact.
+- **45 minutes total / one worker attempt / one assessment round**, including
+  preparation, independent review, documentation and cleanup. Fresh activation
+  clock, not the prior session's creation time. Worker return at most **30 minutes**,
+  tightened to leave **15 minutes** for verification/closure within the overall
+  deadline. No retry/repair dispatch or automatic follow-on. Ask before interrupting
+  an over-budget worker; disclose every overrun.
+- Explicit bounded assessment beyond the same safety effort's existing cap, not a
+  renamed effort or cap reset. Preserve **six prior rounds/seven prior attempts**
+  (five implementation rounds plus B2n review). If dispatched, this assessment makes
+  **seven total rounds/eight total attempts**, not implementation round six.
+  Rationale: determine the minimum remaining path to B2/B3 measurement after the
+  component proofs, rather than approve speculative further safety implementation.
+- **Zero game starts/attaches/input/foreground/desktop actions or exercises.** No
+  screenshots, native sampling, interactive app runs, scheduled tasks, debugger,
+  Frida/hooks, install/save/config writes or original-binary research.
+- Assessment only: no implementation, deployment, route wiring, live adapter,
+  imports/execution of live routes, or execution/import of the rejected B2m launcher
+  even in TestOnly. No safety test/mutation campaign or operational capture/navigation
+  execution. Source and saved-artifact inspection are sufficient for this assessment.
+- No framework maintenance, production entry implementation, B3k research, rendering
+  investigation, observer work or reopening of Phase D parks.
+- All changes remain **uncommitted**, no push. Only bounded assessment documentation,
+  facilitator brief/queue/history records and current scratch are authorized writes.
+  Preserve code/tests, unrelated dirty hunks, old artifacts and gates; no reset,
+  stash, checkout or destructive cleanup.
+- Establish `build/tmp/offline-route-assessment-2026-10-28/` before saving any new
+  facilitator/worker preparation data. All their new dumps, checks, temporary state
+  and outputs belong there; old evidence roots remain read-only. Overlord evaluation
+  scratch, if needed, follows its own contract under `build/tmp/overlord-2026-10-28/`.
 
-Verify the owned executable/path/creation identity, loaded state and actual focus
-before input; restore/release input and close only attributed owned resources.
-Bracket all five protected install files and retain receipts. Never use absence
-of a process as proof of a normal exit. Report discrepancies and failed checks.
+## Ownership and stop
 
-## Fixed acceptance and stop
+Parent check 2026-10-28T02:47:47Z: decompile at e649d10, queue empty/stopped.
+Prior facilitator `ses_e80f12432ffebdYi3RdAhbYN8v` and last worker
+`ses_e7fb1cd4affeHGBy1dKd62SIit` are succeeded/idle through authenticated local API.
+Active endpoint lists only current overlord `ses_e7f9969f2ffeaoCoSSUJMuvDZG`.
+New default facilitator child may take confirmed idle ownership for this fresh
+approved scope; no second facilitator or competing clone is authorized. Recheck
+sessions, directive hash, queue and dirty baseline before recording ownership or
+dispatch. Preserve the prior stopped standing_run exactly in the archive; only the
+facilitator writes queue/plan/history state and records its own parent and identity.
 
-Retained baselines: **49/49 CTest**, historical until rerun; C3
-**0.06354818984885621 FAIL** vs0.02; C1 zoom1/elev_down
-**0.0160863988750699 / 0.016121214378294987 PASS**. All16 signed gates, masks,
-references, exclusions and camera fixtures remain unchanged. Fresh native images
-are diagnostics, not replacement gate references. First-node success alone does
-not accept complete B2/B3, all unlock states, cursor fidelity or Phase D gameplay.
+Retained, not fresh: C3 0.06354818984885621 FAIL versus 0.02; C1 zoom1/elev_down
+0.0160863988750699 / 0.016121214378294987 PASS. All 16 signed gates, masks,
+references and exclusions remain unchanged. B2/B3 unaccepted, C2 native gate
+unpassed; Phase D parks and B3k gap retained. No gate movement is promised here.
 
-Stop after independently verified supported first-node application entry and the
-associated native capture/input evidence, or a concrete blocker with no credible
-in-budget continuation, or any budget cap. Also stop for a safety breach, an
-unattributed resource, unrestored write/hash, excluded method/start overrun, needed
-gate/reference change, accepted C1 regression, ownership conflict or unavailable
-pinned delegation. Do not consume spare starts/attempts merely to fill a budget.
-No C3 polishing, cursor investigation, general frontend or Phase D work follows.
-
-Return commits, independent comparisons/actual-app discrimination, native raw
-success/failure frames and scope, gate results, exact attempt/start/time accounting,
-all overruns, restoration/resource/terminal-worker proof and next recommendation.
-Ordinary in-budget steps require no user reapproval; scope beyond this pass does.
-
-## Ownership and activation
-
-Parent check 2026-10-27T19:28:32Z: queue empty/stopped, HEAD/origin `a7e37e9`;
-owner `ses_e820ba1caffekErgamqlwBSKq0` and last worker
-`ses_e815b4bddffentbqX2bUy59ctd` succeeded/idle. Only parent
-`ses_e821d9d54ffe76zZdbg3zhSJ1N` is active. Resume that owning facilitator under
-this new approval; never launch a second one. It rechecks directive hash, sessions,
-queue and historical stop, archives prior run without losing accounting, records
-fresh pass authority/clock and the user decision in PLAN, then dispatches. A parent
-return or context handoff never implies still-running workers have terminated.
+Stop after the independently reviewed recommendation or an unresolved blocker,
+budget exhaustion, ownership conflict, unavailable pinned delegation or safety
+breach. Return exact citations/checks, remaining gaps and proposed later falsifiers,
+changed paths/no commits, clocks/accounting, zero operational actions, and terminal
+worker/resource state. No automatic repair, implementation, deployment or live trial.
+Any later implementation and any live use require separate explicit user approval;
+future live capture also needs an agreed exclusive desktop-use window.

@@ -1,5 +1,11 @@
 # Bounded next capture proposal — requires fresh approval
 
+**Current authorization, 2026-10-26:** [the active Astra review directive](DIRECTIVE.md)
+permits offline review only, with zero starts or safety-policy changes. The earlier
+[integration/observation authorization](DIRECTIVE-INTEGRATION-2026-10-26.md) ended at a
+safety blocker without a start; its unused allowance does not carry over. This document
+is historical proposal/evidence, not current permission to execute Steps 2 or 3.
+
 2026-10-25. C3 offline feasibility pass. This proposal grants **no** execution,
 start, attach, injection, install change, logger deployment or reference swap.
 See [frame map](RENDER_FRAME_MAP.md) and

@@ -1,5 +1,23 @@
 # Plan history — Phase E
 
+### B2s offline component closure — 2026-10-28
+
+[Evidence preservation](../scratch/phase-b2s-evidence-preservation.md) technically
+verified within synthetic trusted-local cases, P/Q/R retained. User retainedB2r
+proof WITH facilitator scratch violation, external dump preserved/no deletion;
+historical violations not relabeled clean. Whole launcher/route/deployment/native
+use remain unaccepted. Resume only with separately approved bounded direction,
+not automatic component/assessment/live trial or renewal of old allowances.
+
+### B2r safety component procedural park — 2026-10-27
+
+[Actual-boundary single-use proof](../scratch/phase-b2r-single-use-authorization.md)
+is independently verified synthetically, but facilitator preparation wrote an
+activation dump outside current scratch root. Artifact/hash preserved, no clean
+procedural pass. Resume only under explicit user disposition/new direction; no
+automatic next exception/live trial. B2q technical retention WITH its prior violation,
+all aggregate counts/old evidence and whole-launcher nonacceptance remain intact.
+
 ### Native capture / first-node entry safety re-park — 2026-10-27
 
 Approved fresh120min/4attempt/3start pass retains historical counts. Actual3attempts
@@ -149,6 +167,17 @@ acceptance. AD's missing record-size export blocks live approval, not user permi
   `docs/scratch/phase-b2j-level-to-map-preflight.md` and `docs/scratch/phase-b2k-level-to-map-input-end.md`.
 
 ### B2 screen state machine
+
+- **Current safety-component park (2026-10-27, B2q):** [TestOnly/direct-worker
+  behavioral checks verified](../scratch/phase-b2q-testonly-worker-boundary.md), but
+  worker wrote transient test state outside its scratch allowlist under the prior
+  B2p worker root, then cleaned it. Old119file set/hashes preserved; no game/desktop
+  action. Parked pending user disposition, not an unqualified clean pass. Same effort
+  has3implementation rounds (B2o failure/B2p scoped pass/B2q) plus B2n review;
+  4totalrounds/5attempts including review. No automatic fourth implementation/fifth
+  total round, live trial or old-pool renewal. Resume requires explicit user review
+  of the scope exception, aggregate cap and remaining unqualified durability/evidence/
+  deployment boundary; this entry grants no research, repair or launch.
 
 - **B2 screen state machine** (parked 2026-10-23 at the three-round cap; B2a preflight failed
   closed, B2b read the key-poll flag `[0x5D5970]` and the focus-store shape, B2c read the

@@ -20,7 +20,14 @@ and a link to the latest note.
 experience.** Convert accepted research into production rendering, controls and HUD;
 prefer observable integration over standalone tooling. The C3 → C2 → B2 → B3
 [campaign](docs/DIRECTIVE-INTEGRATED-RETAIL-2026-10-27.md) stopped at its attempt cap.
-Next: native capture/input binding and first-level entry under [the directive](docs/DIRECTIVE.md).
+The subsequent [native-entry pass](docs/DIRECTIVE-NATIVE-ENTRY-2026-10-27.md) stopped on a launch-safety
+breach at `e649d10`; its remaining budgets are not authority. The subsequent
+[offline safety candidate](docs/scratch/phase-b2o-offline-launch-safety-rejected.md)
+remains unaccepted; [B2p source/args scope](docs/scratch/phase-b2p-source-argument-binding.md) retained.
+[B2q technical proof/violation](docs/scratch/phase-b2q-testonly-worker-boundary.md) retained.
+[B2r proof/violation](docs/scratch/phase-b2r-single-use-authorization.md) retained;
+  [evidence proof](docs/scratch/phase-b2s-evidence-preservation.md) retained;
+  [B2t assessment](docs/scratch/phase-b2t-offline-route-assessment.md) STOPPED; no next/live.
 
 The reset's historical *simulation is correct* claim described 31 rounds of retained
 rules/gadget work, not current end-to-end acceptance. [D1m's later timing retraction](docs/LESSONS.md#the-simulation--measured-and-worth-keeping)
@@ -33,21 +40,22 @@ from a screenshot of the original, and it should play in 3D on the rotating tube
 
 That is a falsifiable goal, which is why it is phrased that way.
 
-## Method change: read the code, diff the pixels
+## Method: reconstruct the pipeline, compare submissions, validate pixels
 
-Phase 3 could measure behaviour by watching memory while the game ran. Rendering mostly
-cannot — you cannot measure a projection matrix by watching a lemming walk. So:
+**User, overlord review 2026-10-25:** adopt the staged rendering pivot, not a renderer
+rewrite. [Rendering method](docs/RENDERING_METHOD.md) defines the comparison and evidence
+contract; [the directive](docs/DIRECTIVE.md) bounds the next pass.
 
-- **Static reading is now primary.** [REA](https://github.com/morluto/rea) is installed and
-  verified against the stock exe; see `docs/REA_SETUP.md`. Use it to read the render setup,
-  the sprite view selection, the frontend state machine and the HUD layout.
-- **The oracle becomes the screenshot.** `tools/harness/screengrab.py` captures the original
-  through a desktop BitBlt. The new comparison is *our frame against its frame at the same
-  level and camera*. An image diff will never be pixel-exact through a D3D11 wrapper, so the
-  first round that uses it must **set the "close enough" threshold explicitly** rather than
-  discover it later.
-- **The old standard still holds.** Cite the address and the bytes. A decompiler line is not
-  a measurement. Where a thing is READ and not MEASURED, label it so.
+- Consolidate existing reads into a top-down frame map: assets/objects, transforms,
+  visibility/clipping, submissions, materials/textures, depth and composition. Mark gaps.
+- Compare the first divergent intermediate result against the original where observable.
+  Recover shared rules; do not fit offsets, materials or object exceptions to one image.
+- Original API submissions and dgVoodoo's translated D3D11 draws are different boundaries.
+  Prove a small capture/comparison path before committing to full-frame instrumentation.
+- Screenshots remain the final acceptance gates and useful diagnostics, not the only
+  oracle. Preserve existing gates; preselect other views/levels for validation, not tuning.
+- Cite bytes or re-runnable observations; preserve READ/DERIVED/OBSERVED distinctions and
+  explicit unknowns. Tests of our own logger/raster do not establish native fidelity.
 
 ## Where the tree stands after the reset
 
@@ -101,14 +109,27 @@ threshold is 0.02, the same as A1/A2/A7.
 | Milestone | Status | Exit gate |
 | --- | --- | --- |
 | B1 frontend assets and text | **Implemented:** menu renderer, not runtime frontend. **Verified (scope):** conditional acceptance, [B1w](docs/scratch/phase-b1w-menu-render.md) .005244; panels measured. **Next deliverable:** read/re-score panels; failure reopens B1. | Background, button and font sprites and the `.LTX` strings for the reference language (English) load. One reference screen (main menu, highlight 0) renders full-frame ≤ 0.02 against a stock screengrab |
-| B2 screen state machine | **Implemented:** no app frontend. **Verified (scope):** [capture safety stop](docs/scratch/phase-b2m-native-capture-safety-stop.md), 2actual/1authorized starts; unqualified desktop images, no sequence. **Next deliverable:** parked for separate safety/launch decision. | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
+| B2 screen state machine | **Implemented:** no frontend. **Verified:** [assessment](docs/scratch/phase-b2t-offline-route-assessment.md), P/Q/R/S retained; launcher unaccepted. **Next:** approve owner-adapter contract; no live authority. | Scripted key sequences (menu, confirm, map, into a level, back) visit the same screen ids (`0x004C416C`) in the same order as the original. Quirk preserved: RETURN only at highlight 0. (Short-ESC clause dropped, user, overlord review 2026-10-23: retracted after B2h.) |
 | B3 level select and map | **Implemented:** SOURCE app map, no entry. **Verified (scope):** [partial mouse derivation](docs/scratch/phase-b3k-native-binding-partial.md); constructor→shared-context gap, no physical sample. **Next deliverable:** safety-parked after native extra start; gates unpassed. | Map screen and level-select full-frame ≤ 0.02 on two unlock states. Selecting `MM_CLIMB_002` from the map reaches the D3 level |
 
 **User decisions, Phase B.** Full text in [Phase B history](docs/plan-history/phase-b.md).
+- **Assessment consumed (user,2026-10-28,"yes"):** [scope](docs/DIRECTIVE.md),45min/1attempt/0actions;7rounds/8attempts,5implementation; no next/live.
+- **Consumed offline approvals:** [B2q](docs/DIRECTIVE-TESTONLY-WORKER-2026-10-27.md), [B2p](docs/DIRECTIVE-SOURCE-ARGUMENT-2026-10-27.md), [B2o](docs/DIRECTIVE-LAUNCH-SAFETY-2026-10-27.md), [B2n](docs/DIRECTIVE-RECOVERY-REVIEW-2026-10-27.md). [History](docs/plan-history/phase-b.md)/archive retain all accounting; no pool renewed.
+- **Desktop context for future overlords (user discussion, overlord review 2026-10-27):**
+  user was using this computer during the failed capture. Concurrent use plausibly
+  explains occlusion/focus loss, not the extra launch or overwritten files; the
+  geometry cause remains unproved. [B1b](docs/scratch/phase-b1-reference-screengrab.md)
+  already verified640x480 capture; [B2h](docs/scratch/phase-b2h-live-esc-sweep.md)
+  observed scripted map-to-level entry, not the whole physical-binding chain. Reuse
+  these facts. Before any future live capture, agree a short exclusive desktop-use
+  window with the user; ordinary offline work must not take foreground. Overlord
+  audit recommends integration next, then separate rendering/gameplay decisions;
+  those later passes are proposals, not approvals. D1n already landed despite the
+  stale queued wording in LESSONS; D1o still fails. Preserve both facts and all parks.
 - **Native capture and first-level entry (user, overlord review 2026-10-27, "i approve"):**
   delegated default-tier pass, 2h/4 attempts/3 stock starts; actual-host failure
   captures, supported input binding and first-node app entry. B2m/B3k questions
-  reopen with history retained; gates/Phase D/observer parks unchanged. [Directive](docs/DIRECTIVE.md).
+  reopened with history retained; **consumed, stopped on safety breach**; gates/Phase D/observer parks unchanged. [Historical directive](docs/DIRECTIVE-NATIVE-ENTRY-2026-10-27.md).
 - **English reference accepted (user, 2026-10-22):** the German-menu quirk was a harness
   language change; leave the install's language unchanged.
 - **Approach steering (user, CEO review 2026-10-22):** measure the menu image by template
@@ -142,6 +163,18 @@ user 2026-10-22.**
 
 **User decisions, Phase C.** Full text in [Phase C history](docs/plan-history/phase-c.md).
 - **Integrated retail progress (user, overlord review 2026-10-27, "go ahead"):** C3 → C2 → B2 → B3; 8h/16 attempts/8 starts, tooling ≤2 attempts/90min; C3 reassess at 3 attempts/2h. [Consumed directive](docs/DIRECTIVE-INTEGRATED-RETAIL-2026-10-27.md); no Phase D or gate reopening.
+- **Depth comparison (user, overlord review 2026-10-26):** historical delegated pass;2h/3 attempts,0starts. [History](docs/plan-history/phase-c.md); not current authority.
+- **Observer readiness (user, overlord review 2026-10-26):** Astra;2h/3 attempts,45min/task;0starts/safety changes/implementation. Sol recommendation: [review](docs/scratch/phase-c3bb-verifier-feasibility.md).
+- **Integration/observation (user, overlord review 2026-10-26, "i like the 2nd one"):**
+  Sol; 4h/8 attempts,45min/task; one conditional start/attach, no retry, gates unchanged.
+  Stopped without a start. [Full authorization](docs/DIRECTIVE-INTEGRATION-2026-10-26.md).
+- **Offline preflight (user, overlord review 2026-10-25, "i approve"):** site/ABI/source
+  attribution and real-host controller checks; Sol,90min/3 attempts,45min/task including
+  repairs,zero starts. Completed with integration blockers; no gate/reference change.
+- **Rendering pivot (user, overlord review 2026-10-25):** update the plan and issue an
+  offline frame-map/capture-feasibility directive following the PIVOT review. No live
+  method or reference change authorized in this pass; C3/C1 gates unchanged. See
+  [method](docs/RENDERING_METHOD.md); historical selection, not current launch authority.
 - **Backdrop before C1** (user, overlord review 2026-10-23): backdrop scenery, entrance and
   exit models come before C1. Since parked in Phase E (C3 scenery, 2026-10-24).
 - **Standing runs and C1 alpha-count extensions (user, overlord review 2026-10-24/25):** milestone budgets, launch/menu-attach changes, failed-start renewals and convergence decisions retained in the [authorization history](docs/plan-history/phase-c-authorizations-2026-10-27.md); no old pool renewed here.
@@ -149,27 +182,22 @@ user 2026-10-22.**
 - **C1 third gate amendment and closure → C3 (user, overlord review 2026-10-25):** `elev_up` reported, not gated; zoom1/elev_down remain ≤0.02. [Decision/evidence](docs/plan-history/phase-c-authorizations-2026-10-27.md); footprint/threshold unchanged.
 - **C3 render-now and known-gap steering (user, overlord review 2026-10-25):** conditional rendering before more reads; then isolated supported fixes and bounded observation. [Full historical budgets/conditions](docs/plan-history/phase-c-authorizations-2026-10-27.md), not current controller authority.
 - **C3 reference re-capture, scene pose and tube ends (user, overlord review 2026-10-25,
-  "approved").** Run `c3-known-gaps-pause-values` stopped 16/16 at 0.0635482 with 0 starts:
-  the one-shot was rejected before Popen on a numeric ScheduledTask state. The user saw the
-  original's fourth walker and out-count 4 missing from ours (5), a possibly mis-posed scene,
-  and missing cylinder ends. The overlord confirmed the walker cause: `capture_matched_pause.py`
-  persists only `actors[:3]`. Next Sol run: host-test the controller, then spend one start to
-  read the pause values and re-capture repair4 with the cursor clear of the hatch, the full
-  actor list and HUD counters. **Reference swap authorized** if the new capture matches repair4
-  outside the cursor/hatch, fourth-walker and counter boxes; threshold, metric, partition and
-  floor rule unchanged; repair4 reported alongside. Then the scene pose, the tube ends, and the
-  rest of the known gaps. About 6 hours or 16 rounds, pool of 3 starts.
-  Re-ranked the same day (user, "get the big rocks better before refining"; "approved"): edge
-  scenery (57% of C3ao's error) and the orange discs ahead of the tube ends, run offline beside
-  the live arm; the scene-pose check tests handedness (user lead: mirrored geometry/textures).
-- **C1 gate measurement amended (user, overlord review 2026-10-24).** C1t showed the scorer could not see the panel: its mask inside the skill bands is x 86..89, the drawn icons x 26..76, overlap 0, so `skill_mae` stayed at the pre-panel 0.1077 / 0.0554. The threshold (0.02), region and captures are unchanged; the pixels scored become the panel's own footprint, built from read geometry (plates, c1s icon positions with the c1p/c1r frame sizes, count glyphs at the c1s text-object positions) and committed before the render. Pixels where a plate is translucent still include whatever the stock frame shows behind it; that share is reported, not masked out.
-- **C1 gated views amended (user, overlord review 2026-10-24, second amendment).** The plates are translucent: all 18033 plate-only footprint pixels differ between the eight A7p stock views, and they carry 83% of c1w's 0.2918. On the 4536 scenery-only pixels between the plates, our render differs from the stock frame by 0.48–0.52 on `initial`, `left`, `right`, `elev0_neg` and `canonical` (sand, sky, balloon: parked C3 scenery) and by 0.0183 / 0.0209 / 0.0174 on `zoom1` / `elev_up` / `elev_down` (the tube wall we draw). So the gate is taken on those three views; the threshold, footprint and region are unchanged. The scenery error alone is near 0.02 there, so a pass is not assured. Overlord scripts `build/tmp/overlord-2026-10-24/split.py`, `constancy.py`, `gaps.py`, `views.py` (measured from the saved A7p PNGs; evaluation, not a new capture).
+  "approved").** Host-test controller then re-capture full actors/HUD with cursor clear;
+  qualified reference swap only, unchanged gates. Edge scenery/handedness and orange discs
+  run alongside live work before tube ends; 6h/16 rounds, 3 starts. [Full authorization](docs/plan-history/phase-c.md#c3-reference-and-big-errors-first-authorization).
+- **C1 measurement amended (user, overlord review 2026-10-24):** replace the mask that
+  missed the panel with its read-geometry footprint, fixed before scoring; translucent
+  backdrop pixels remain included. Threshold unchanged. [Full decision](docs/plan-history/phase-c.md).
+- **C1 gated views, second amendment (user, overlord review 2026-10-24):** gate zoom1,
+  elev_up and elev_down while C3 backdrop is absent; other views reported. Threshold and
+  footprint unchanged; third amendment above supersedes the view list.
+  [Full decision and evidence](docs/plan-history/phase-c.md).
 
 ## Phase D — reconnect the simulation
 
 Spawn, exits, skill assignment and gadgets are connected to the optional sim path, but
 retail end-to-end fidelity is not accepted. User-directed D1/D3/digger-clock parks remain;
-the current C3 → C2 → B2 → B3 campaign does not reopen them.
+the consumed C3 → C2 → B2 → B3 campaign and current offline review do not reopen them.
 
 **Milestones and exit gates (user sign-off 2026-10-21, before any D round).** Every gate is
 scored against the original's actor list at `0x004CBB18`
@@ -205,17 +233,17 @@ One line per parked item; the evidence and the resume brief are under each link 
 - [B1 source, both arms](docs/plan-history/phase-e.md#b1-source-both-arms) — B1v observed one `^Font` source; B1w render passes.
 - [C3 backdrop scenery](docs/plan-history/phase-e.md#c3-backdrop-scenery) — C3bv final-pack SOURCE adoption .06354819 FAIL; C3 reassessed after3attempts, move to C2/B2/B3. Clip/native state/admission gaps retained.
 - [C3 entrance and exit models](docs/plan-history/phase-e.md#c3-entrance-and-exit-models) — re-parked 2026-10-24; Exit width gap open, no render.
-- [C3 draw-correlated observation](docs/plan-history/phase-e.md#c3-draw-correlated-observation) — finalone-shot rejected numericTaskState4 beforePopen; bounded offline enum-bridge fix needed,0starts/no pause values ([check](docs/scratch/phase-c3-pause-one-shot.md)); no new method permission needed.
+- [C3 draw-correlated observation](docs/plan-history/phase-e.md#c3-draw-correlated-observation) — finalone-shot rejected numericTaskState4 beforePopen; offline enum-bridge defect remains,0starts/no pause values ([check](docs/scratch/phase-c3-pause-one-shot.md)); parked, no current execution authority.
 - [C3 observer](docs/plan-history/phase-e.md#c3-minimal-observer-readiness) — core parked for window; no live route (C3bu).
 - [C3 clip](docs/scratch/phase-c3bl-scene-clip.md) — attempt11; component only.
 - [C2 Paused caption text and blend](docs/plan-history/phase-e.md#c2-paused-caption-text-and-blend) — parked 2026-10-23 (C2j, C2k); device render state unread.
 - [C2 cursor sprite](docs/plan-history/phase-e.md#c2-cursor-sprite) — C2o policy read/implemented under fresh cap exception; runtime composition/native hover and retained exit-marker producer still open.
 - [B2 level-to-map](docs/plan-history/phase-e.md#b2-level-to-map) — parked 2026-10-23; writer of `[0x4C6A08]` unread.
-- [B2 screen state machine](docs/plan-history/phase-e.md#b2-screen-state-machine) — B2m native entry re-parked: geometry refusal/no retained image; unexecuted probe readers rejected, tooling2of2 spent. Original caps retained.
+- [B2 screen state machine](docs/plan-history/phase-e.md#b2-screen-state-machine) — [B2m](docs/scratch/phase-b2m-native-capture-safety-stop.md):2actual/1authorized starts/tooling2of2 frozen; [B2t](docs/scratch/phase-b2t-offline-route-assessment.md) owner-adapter gaps; launcher unaccepted, no launch authority.
 - [C1 live icon inputs](docs/plan-history/phase-e.md#c1-live-icon-inputs) — C1l read; superseded by C1m–C1x.
 - [C1 icon-draw mechanism](docs/plan-history/phase-e.md#c1-skill-panel-icon-draw-mechanism) — parked 2026-10-22; `+0x3c` writer unread; selection highlight.
 - [C1 upload call](docs/plan-history/phase-e.md#c1-upload-call) — parked 2026-10-24 at the cap (c1ai, c1ak, c1al). Constructor runs at startup; `0x471746` is not on that chain.
-- [C1 launch-time alpha read](docs/plan-history/phase-e.md#c1-launch-time-alpha-read) — parked 2026-10-24 at the cap (c1am–c1ao). The start exited before the level; the shift site logged 0. One start remains and waits on an offline repair.
+- [C1 launch-time alpha read](docs/plan-history/phase-e.md#c1-launch-time-alpha-read) — parked 2026-10-24 at the cap (c1am–c1ao). Start exited before level; shift site logged0. Historical unused allowance is frozen, not current launch authority.
 - [C1 plate alpha format](docs/plan-history/phase-e.md#c1-plate-alpha-format) — parked 2026-10-25 at the cap (c1ay–c1ba); the bit-count word is not in the image.
 - [B3 map screen object](docs/plan-history/phase-e.md#b3-map-screen-object) — parked 2026-10-25 after b3a–b3d; the jump index is another argument, not the creation counter.
 - [B3 level pick](docs/plan-history/phase-e.md#b3-level-pick) — through continuation6: conditional constructed-mouse binding, C→shared-context link unclosed/no app entry. Re-parked on native capture safety breach; all prior counts retained.
@@ -243,9 +271,10 @@ One line per parked item; the evidence and the resume brief are under each link 
 **One round, one question.** A round that half-answers three things is worth less than one
 that closes a single thing. One agent owns the running game at a time.
 
-**Work to the gate.** Rank the next question by how much full-frame error it removes against
-the current milestone's gate. Three rounds on one question, then park it or re-justify it in
-writing. Pixel-invisible residuals are parked. Tooling rounds need a gate justification. One
+**Work to the gate through the mechanism.** For rendering, follow the frame map to the
+first unsupported or divergent stage; pixel regions prioritize impact, not parameter choice.
+Three rounds on one question, then park or re-justify it. Tooling must unblock a named
+comparison serving the gate, not an open-ended instrumentation project. One
 facilitator owns the queue; commit between rounds. Details:
 [ORCHESTRATION](docs/ORCHESTRATION.md#milestones-gates-and-round-caps).
 

@@ -199,6 +199,10 @@ alpha state that was mostly pixel-invisible, and seven on one zoom 1 residual.
   passes.
 - **Rank by gate error.** The next question is the one expected to remove the most error
   against the current gate, not the most interesting open residual.
+  For rendering, apply the [mechanism-first method](RENDERING_METHOD.md): locate the
+  first unsupported or divergent stage on the frame-map path. Region error informs impact,
+  not fitted values. A bounded comparison-feasibility directive can precede pixel fixes;
+  its completion is not milestone acceptance or a requirement to improve pixels that round.
 - **Three rounds per question.** Count repairs and continuations. After three, park the
   question with a one-line `PLAN.md` Phase E entry linking to its evidence and resume brief in
   [Phase E history](plan-history/phase-e.md), or record in the

@@ -122,10 +122,14 @@ In the queue, move the task to `landed` in [the queue archive](tasks-archive.jso
 `docs/tasks.json` to the current run and the open tasks. A new standing run moves the
 stopped one to the archive's `previous_runs`; do not nest it under `previous`.
 
-### For the visual rounds ahead, step 3 changes
+### For rendering rounds, test the mechanism and report the image
 
-Phase A is rendering, where a "behavioural failure" is a *pixel* difference. The substitute
-is: perturb the measured camera or sprite-view value, re-render, and show the screenshot diff
-against the original gets worse. The first visual round must **state its "close enough"
-threshold explicitly** — an image diff through a D3D11 wrapper is never pixel-exact, and a
-threshold discovered later is a threshold fitted to the result.
+Follow the [rendering method](RENDERING_METHOD.md). Step 3 can discriminate a wrong
+intermediate submission, transform, state or order against independent original evidence;
+aggregate pixel error need not worsen when that single mechanism is reverted. Keep
+read-supported changes that worsen the image and investigate upstream disagreement.
+Synthetic logger/raster tests establish only their declared contracts, not native fidelity.
+Report the fixed screenshot gates after render-affecting landings; preserve the baseline
+for map/tooling-only work and say when no gate moved. Pixel sensitivity remains useful,
+but is not a substitute for identifying the original mechanism. Never fit the threshold
+or normalize away a disagreement after seeing the result.

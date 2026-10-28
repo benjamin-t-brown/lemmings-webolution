@@ -102,12 +102,40 @@ int main() {
     check(f.press(Key::Esc, kEscHoldLevel) == Outcome::Handled, "level ESC handled");
     check(f.screen() == Screen::Dialog, "level ESC opens the dialog");
     checkRow(f, kB2hDialog);
-    check(f.counter() == 5 + kLevelEscConstructions, "counter steps by kLevelEscConstructions");
+    check(f.counter() == 7, "READ root plus menu-page construction advances counter 5 to 7");
     check(f.press(Key::O) == Outcome::Handled, "O at dialog handled");
     checkRow(f, kB2hO);
     check(f.screen() == Screen::Level && f.paused(), "O returns to pause");
     check(f.press(Key::P) == Outcome::Handled, "P handled after O");
     checkRow(f, kB2hP);
+  }
+
+  std::cout << "frontend sequence: explicit root/page lifecycle READ model\n";
+  {
+    Frontend f;
+    check(f.counter() == 3, "initial counter1 plus initial root and Menu page");
+    f.press(Key::Return); f.press(Key::Return); f.press(Key::MapNodeClick);
+    check(f.counter() == 5 && f.screen() == Screen::Level, "Map activation tears frontend down without count");
+    check(f.openLevelMenu() == Outcome::Handled && f.counter() == 7 && f.screen() == Screen::Dialog,
+          "semantic in-level open constructs root then menu page");
+    check(f.openLevelMenu() == Outcome::Ignored && f.counter() == 7,
+          "duplicate open cannot construct a second owned root");
+    check(f.closeLevelMenu(false) == Outcome::Handled && f.counter() == 7 &&
+          f.screen() == Screen::Level && f.uiState() == kUiLevel,
+          "Resume ends root without decrement and resumes playing");
+    check(f.closeLevelMenu(true) == Outcome::Ignored && f.counter() == 7,
+          "close from Level is idempotent and does not change serial");
+    f.openLevelMenu();
+    check(f.counter() == 9 && f.closeLevelMenu(true) == Outcome::Handled &&
+          f.uiState() == kUiPaused, "O close ends root but retains paused distinction");
+    f.openLevelMenu();
+    check(f.retryLevelMenu() == Outcome::Handled && f.counter() == 11 && f.screen() == Screen::Level,
+          "successful menu retry tears down root without construction");
+    check(f.retryLevelMenu() == Outcome::Ignored && f.counter() == 11,
+          "retry outside an owned menu is a no-op");
+    f.openLevelMenu();
+    check(f.abandonLevelToMap() == Outcome::Handled && f.counter() == 15 && f.screen() == Screen::Map,
+          "Quit tears down menu root then constructs new Map root and page");
   }
 
   std::cout << "frontend sequence: unobserved inputs and policy\n";
@@ -151,7 +179,7 @@ int main() {
     f.press(Key::Return);
     f.press(Key::MapNodeClick);
     check(f.leaveLevel() == Outcome::Handled && f.screen() == Screen::Map, "ToMap: back on map");
-    check(f.counter() == 6, "ToMap: new map construction (hypothesis)");
+    check(f.counter() == 7, "ToMap: teardown then new root and Map page (READ)");
   }
   {
     // Preserved quirk: RETURN acts only at highlight exactly 0.

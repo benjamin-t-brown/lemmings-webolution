@@ -5,6 +5,12 @@ fresh map → `Compiled\MM_CLIMB_002.lvl`. Four unscaled640×480 client captures
 are retained in `build/tmp/enacter-native-20261028/`. This closes the missing
 native capture for this route, **not** all B2/B3 or first-level fidelity gates.
 
+**Flag-reader correction (18:13Z follow-up):** this packet's flag sampler used
+hexadecimal0x7000/0x280 instead of native decimal7000/280. Its102 sampled words
+are not102 valid completion-field observations (only node0 is correctly addressed).
+The separately read node states, frames and page/level sequence remain valid.
+See the [stride diagnosis](frontend-native-return-2026-10-28.md#completion-reader-radix-correction).
+
 ## Capture and restoration
 
 The user granted a10–15minute exclusive desktop window at approximately04:38:45Z.
@@ -52,10 +58,10 @@ relaunch; no further desktop authority inferred.** See `restoration.json` and
 |---|---:|---|---|
 | `menu.png` | 3 | `0x4B2528` | highlight0, UI3 |
 | `confirm.png` | 4 | `0x4B3F38` | Continue? / Yes / No, UI3 |
-| `map.png` | 5 | `0x4B3EB8` | UI3;102 raw flags all0; states0–2=3, remaining99=1 |
+| `map.png` | 5 | `0x4B3EB8` | UI3; wrongly addressed words all0 (see correction); valid states0–2=3, remaining99=1 |
 | `level-entry.png` | 5 | empty | UI0; loaded `Compiled\MM_CLIMB_002.lvl` |
 
-Map records and flags were read before the image and checked unchanged afterwards;
+Map records and the misaddressed words were read before the image and checked unchanged afterwards;
 binary snapshots and JSON values accompany the screenshot. This supplies **one
 fresh unlock-state reference**, not the required two-state B3 gate.
 

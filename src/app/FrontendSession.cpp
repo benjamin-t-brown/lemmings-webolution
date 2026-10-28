@@ -15,11 +15,13 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   auto font = loadTexture(library, "TEXTURES\\^FONT.BMP");
   auto strings = loadStrings(library, "UK");
   auto map = MapScene::build(library, {});
+  auto cursor = RuntimeCursor::load(library);
   if (!logo) return std::unexpected(logo.error());
   if (!background) return std::unexpected(background.error());
   if (!font) return std::unexpected(font.error());
   if (!strings) return std::unexpected(strings.error());
   if (!map) return std::unexpected(map.error());
+  if (!cursor) return std::unexpected(cursor.error());
   if (logo->width != 640 || logo->height != 480 ||
       background->width != 640 || background->height != 480 || strings->size() <= 129)
     return std::unexpected("frontend requires native-size backgrounds and UK strings through 129");
@@ -67,6 +69,7 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
       footerLeft + shell::textWidth(footerLabels[0], cells) + footer.panelPadX,
       footerTop + footer.panelHeight};
   result.map_ = std::move(*map);
+  result.cursor_ = std::move(*cursor);
   result.font_ = std::move(*font);
   result.mapFooterLabel_ = footerLabels[0];
   result.initialMap_ = result.map_;
@@ -99,8 +102,14 @@ const Image& FrontendSession::image() const {
     case shell::Screen::Menu: return menu_;
     case shell::Screen::Confirm: return confirm_;
     case shell::Screen::Results: return results_->image();
-    default: return mapImage_; // Level exposes its last frontend image only.
+    default: return mapImage_; // Level/Dialog composition belongs to the level renderer.
   }
+}
+
+Image FrontendSession::composeFrame() const {
+  Image composed = image();
+  cursor_.draw(composed, cursorState(), pointerX_, pointerY_);
+  return composed;
 }
 
 shell::Outcome FrontendSession::pressReturn() {
@@ -109,6 +118,14 @@ shell::Outcome FrontendSession::pressReturn() {
   if (screen() == shell::Screen::Map) return state_.activateMapFooter();
   if (screen() == shell::Screen::Confirm) return confirmChoice(true);
   return state_.press(shell::Key::Return);
+}
+
+shell::Outcome FrontendSession::openLevelMenu() {
+  return state_.openLevelMenu();
+}
+
+shell::Outcome FrontendSession::closeLevelMenu(bool paused) {
+  return state_.closeLevelMenu(paused);
 }
 
 bool FrontendSession::click(int x, int y) {
@@ -184,7 +201,10 @@ std::expected<void, std::string> FrontendSession::completeLevel(
 }
 
 bool FrontendSession::retryLevel() {
-  if (screen() != shell::Screen::Level || !selectedLevel_ || !selectedNode_) return false;
+  if ((screen() != shell::Screen::Level && screen() != shell::Screen::Dialog) ||
+      !selectedLevel_ || !selectedNode_) return false;
+  if (screen() == shell::Screen::Dialog && state_.retryLevelMenu() != shell::Outcome::Handled)
+    return false;
   levelIntroEnabled_ = false; // READ48F5ED, selected launch remains owned.
   outcome_.reset(); results_.reset();
   return true;

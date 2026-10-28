@@ -73,12 +73,26 @@ void testStateSelection() {
          "ordered native policy retains earlier hit for unavailable panel in display mode0");
 }
 
+void testFrontendStateSelection() {
+  using webo::app::CursorState;
+  using webo::app::frontendCursorState;
+  check(frontendCursorState(true, false) == CursorState::NoLemming,
+        "focused frontend without held buttons selects normal cursor");
+  check(frontendCursorState(true, true) == CursorState::MouseDown,
+        "either held frontend button selects MouseDown");
+  check(frontendCursorState(false, false) == CursorState::Hidden,
+        "unfocused frontend cursor is hidden");
+  check(frontendCursorState(false, true) == CursorState::Hidden,
+        "focus loss hides frontend cursor even while button held");
+}
+
 } // namespace
 
 int main() {
   using namespace webo;
   using namespace webo::app;
   testStateSelection();
+  testFrontendStateSelection();
 
   const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
   if (!dir || !*dir || !std::filesystem::exists(std::filesystem::path(dir) / "lemmings.box")) {
@@ -92,11 +106,13 @@ int main() {
   check(bool(library), "open retail asset library");
   if (!library) return 1;
 
-  constexpr std::array<std::string_view, 3> resources = {
-      "TEXTURES\\_curNoLem.BMP", "TEXTURES\\_curLem.BMP", "TEXTURES\\^curGrab.BMP"};
-  constexpr std::array<CursorState, 3> states = {
-      CursorState::NoLemming, CursorState::Lemming, CursorState::Grab};
-  std::array<Image, 3> sourceImages;
+  constexpr std::array<std::string_view, 4> resources = {
+      "TEXTURES\\_curNoLem.BMP", "TEXTURES\\_curLem.BMP",
+      "TEXTURES\\^curGrab.BMP", "TEXTURES\\_curMseDwn.BMP"};
+  constexpr std::array<CursorState, 4> states = {
+      CursorState::NoLemming, CursorState::Lemming,
+      CursorState::Grab, CursorState::MouseDown};
+  std::array<Image, 4> sourceImages;
   for (std::size_t i = 0; i < resources.size(); ++i) {
     auto image = loadTexture(*library, resources[i]);
     check(bool(image), "load retail cursor image");

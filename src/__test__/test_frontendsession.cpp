@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -51,6 +52,9 @@ int main() {
   if (!s) return 1;
   check(s->screen() == Screen::Menu && s->constructionCounter() == 3,
         "retail-backed session starts at menu construction 3");
+  check(s->pointerX() == 320 && s->pointerY() == 240 &&
+        s->cursorState() == app::CursorState::NoLemming,
+        "frontend cursor starts centered in normal state");
   auto logo = loadTexture(*library, "TEXTURES\\MAIN_LOGO.BMP");
   auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");
   auto uk = loadStrings(*library, "UK");
@@ -60,6 +64,78 @@ int main() {
     for (auto i : shell::kLabelIndices) labels.emplace_back((*uk)[i]);
     const auto oracle = shell::renderMainMenu(*logo, *font, labels, {}, shell::fontCells());
     check(s->image().rgba == oracle.rgba, "menu image equals existing renderMainMenu on retail assets");
+    auto cursorArt = loadTexture(*library, "TEXTURES\\_curNoLem.BMP");
+    auto pressedArt = loadTexture(*library, "TEXTURES\\_curMseDwn.BMP");
+    if (cursorArt) {
+      const auto composed = s->composeFrame();
+      bool texelMatch = true, backgroundMatch = true;
+      for (int cy = 0; cy < 32; ++cy) for (int cx = 0; cx < 32; ++cx) {
+        const auto src = pixel(*cursorArt, cx, cy);
+        const auto actual = pixel(composed, 304 + cx, 224 + cy);
+        if (src[0] || src[1] || src[2]) texelMatch &= actual == src;
+        else backgroundMatch &= actual == pixel(s->image(), 304 + cx, 224 + cy);
+      }
+      check(texelMatch, "normal frontend cursor presents every non-key texel independently");
+      check(backgroundMatch, "black-key cursor leaves independent scene background texels unchanged");
+      check(pixel(composed, 0, 0) == pixel(s->image(), 0, 0), "cursor composition preserves distant background");
+    } else check(false, "frontend normal cursor artwork loads independently");
+    s->setPointer(0, 0);
+    const auto clipped = s->composeFrame();
+    check(s->pointerX() == 0 && s->pointerY() == 0 &&
+          clipped.width == 640 && clipped.height == 480 && cursorArt &&
+          pixel(clipped, 0, 0) == pixel(*cursorArt, 16, 16) &&
+          pixel(clipped, 16, 16) == pixel(s->image(), 16, 16),
+          "cursor is clipped at inclusive top-left without altering adjacent background");
+    s->setPointer(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    check(s->pointerX() == 0 && s->pointerY() == 480,
+          "pointer clamp safely handles signed integer extremes");
+    s->setPointer(std::numeric_limits<int>::max(), std::numeric_limits<int>::min());
+    check(s->pointerX() == 640 && s->pointerY() == 0,
+          "pointer clamp safely handles reversed signed integer extremes");
+    s->setPointer(640, 480);
+    const auto bottomRight = s->composeFrame();
+    bool bottomRightTexel = false;
+    if (cursorArt) for (int cy = 0; cy < 16 && !bottomRightTexel; ++cy) {
+      for (int cx = 0; cx < 16 && !bottomRightTexel; ++cx) {
+        const auto source = pixel(*cursorArt, cx, cy);
+        if (source[0] || source[1] || source[2]) {
+          bottomRightTexel = pixel(bottomRight, 624 + cx, 464 + cy) == source;
+        }
+      }
+    }
+    check(bottomRightTexel && pixel(bottomRight, 623, 463) == pixel(s->image(), 623, 463),
+          "cursor clips at inclusive bottom-right with adjacent background unchanged");
+    s->setPointer(320, 240);
+    s->setButtons(true, false);
+    check(s->cursorState() == app::CursorState::MouseDown, "left-held frontend cursor uses MouseDown");
+    if (pressedArt) {
+      const auto pressed = s->composeFrame();
+      bool pressedTexels = true, pressedBackground = true;
+      for (int cy = 0; cy < 32; ++cy) for (int cx = 0; cx < 32; ++cx) {
+        const auto src = pixel(*pressedArt, cx, cy);
+        const auto actual = pixel(pressed, 304 + cx, 224 + cy);
+        if (src[0] || src[1] || src[2]) pressedTexels &= actual == src;
+        else pressedBackground &= actual == pixel(s->image(), 304 + cx, 224 + cy);
+      }
+      check(pressedTexels && pressedBackground,
+            "held frontend cursor presents independent pressed texels and keyed background");
+    } else check(false, "frontend pressed cursor artwork loads independently");
+    s->setButtons(false, true);
+    check(s->cursorState() == app::CursorState::MouseDown, "right-held frontend cursor is MouseDown, not Grab");
+    s->setButtons(true, true);
+    check(s->cursorState() == app::CursorState::MouseDown, "both held frontend buttons retain MouseDown");
+    s->setButtons(false, true);
+    check(s->cursorState() == app::CursorState::MouseDown, "releasing one button retains other held state");
+    s->setButtons(false, false);
+    check(s->cursorState() == app::CursorState::NoLemming, "releasing both restores normal cursor");
+    s->setButtons(true, false);
+    s->setFocused(false);
+    check(s->cursorState() == app::CursorState::Hidden && !s->leftHeld() && !s->rightHeld(),
+          "focus loss hides cursor and clears held buttons");
+    check(s->composeFrame().rgba == s->image().rgba,
+          "hidden frontend cursor composes exactly the cursor-free base image");
+    s->setFocused(true);
+    check(s->cursorState() == app::CursorState::NoLemming, "focus regain restores normal cursor");
   }
   check(!s->clickMap(206, 204) && s->screen() == Screen::Menu,
         "map click before map has no effect");
@@ -142,9 +218,24 @@ int main() {
     check(blackText, "map footer includes black label glyphs");
   }
   check(!route->click(0, 0) && !route->selectedLevel(), "map background click ignored");
+  check(route->openLevelMenu() == shell::Outcome::Ignored &&
+        route->closeLevelMenu(false) == shell::Outcome::Ignored && route->constructionCounter() == 5,
+        "session rejects menu lifecycle calls while Map owns the frontend root");
   check(route->click(206, 204) && route->selectedLevel() == std::optional<std::string>{"MM_CLIMB_002"},
         "node at 206,204 selects MM_CLIMB_002");
   check(route->screen() == Screen::Level && route->constructionCounter() == 5, "node selection enters level with construction counter unchanged");
+  check(route->openLevelMenu() == shell::Outcome::Handled && route->screen() == Screen::Dialog &&
+        route->constructionCounter() == 7, "session semantic menu open constructs root and page");
+  check(route->openLevelMenu() == shell::Outcome::Ignored && route->constructionCounter() == 7,
+        "session cannot construct a second root while menu is owned");
+  check(route->closeLevelMenu(false) == shell::Outcome::Handled && route->screen() == Screen::Level &&
+        route->constructionCounter() == 7 &&
+        route->selectedLevel() == std::optional<std::string>{"MM_CLIMB_002"} &&
+        route->completionFlags() == std::array<std::int32_t, 102>{} && !route->outcome(),
+        "Resume closes root without count or selected-level/progress/outcome mutation");
+  check(route->openLevelMenu() == shell::Outcome::Handled && route->closeLevelMenu(true) == shell::Outcome::Handled &&
+        route->constructionCounter() == 9 && route->screen() == Screen::Level,
+        "session O-close uses a fresh root and preserves paused distinction in shell state");
   check(!route->click(206, 204) && route->selectedLevel() == std::optional<std::string>{"MM_CLIMB_002"},
         "repeated selection click is ignored after leaving map");
   if (!route->selectedLevel()) return 1;

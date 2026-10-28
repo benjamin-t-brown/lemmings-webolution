@@ -52,28 +52,63 @@ int main() {
     shell::Frontend state;
     state.press(shell::Key::Return); state.press(shell::Key::Return);
     state.press(shell::Key::MapNodeClick);
+    state.press(shell::Key::P); // SOURCE setter fixture, not a native paused finish.
     check(state.showResults(success) == shell::Outcome::Handled &&
-          state.screen() == shell::Screen::Results && state.uiState() == (success ? 4 : 5) &&
-          state.nodeVtable() == (success ? shell::kVtableWinResults : shell::kVtableLossResults),
-          "win/loss use distinct READ result UI states and vtables");
+          state.screen() == shell::Screen::Results && !state.paused() && state.uiState() == (success ? 4 : 5) &&
+          state.nodeVtable() == (success ? shell::kVtableWinResults : shell::kVtableLossResults) &&
+          state.counter() == 7,
+          "READ win/loss full init constructs separate root and result page (+2)");
     check(state.press(shell::Key::Return) == shell::Outcome::Unobserved &&
-          state.screen() == shell::Screen::Results, "no invented initial Return-to-Continue focus");
+          state.screen() == shell::Screen::Results && state.uiState() == (success ? 4 : 5),
+          "no invented initial Return-to-Continue focus or dispatch-mode change");
     check(state.activateResultsContinue() == shell::Outcome::Handled &&
-          state.screen() == shell::Screen::Map, "both explicit Continue actions select map");
+          state.screen() == shell::Screen::Map && state.counter() == 8 &&
+          state.uiState() == (success ? 4 : 5),
+          "READ Continue replaces only the page (+1), retaining root and win/loss dispatch mode");
+    check(state.activateMapFooter() == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Menu && state.uiState() == (success ? 4 : 5) &&
+          state.press(shell::Key::Return) == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Confirm && state.uiState() == (success ? 4 : 5) &&
+          state.confirmChoice(true) == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Map && state.uiState() == (success ? 4 : 5),
+          "READ page-only footer/menu/confirm routes do not normalize retained results mode to UI3");
+    check(state.press(shell::Key::MapNodeClick) == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Level && state.uiState() == shell::kUiLevel,
+          "re-entering a level from the retained-mode map resets dispatch to level mode");
   }
   {
     shell::Frontend state;
-    check(state.activateResultsQuit() == shell::Outcome::Ignored && state.screen() == shell::Screen::Menu,
-          "Quit activation outside results is ignored");
+    check(state.press(shell::Key::Return) == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Confirm && state.uiState() == shell::kUiFrontend &&
+          state.confirmChoice(true) == shell::Outcome::Handled && state.uiState() == shell::kUiFrontend,
+          "confirm/map page replacements retain the frontend dispatch mode");
+    check(state.activateMapFooter() == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Menu && state.uiState() == shell::kUiFrontend,
+          "map footer page replacement retains frontend dispatch mode");
+  }
+  {
+    shell::Frontend state;
+    check(state.activateResultsQuit() == shell::Outcome::Ignored && state.screen() == shell::Screen::Menu &&
+          state.uiState() == shell::kUiFrontend,
+          "Quit activation outside results is ignored without changing dispatch mode");
     state.press(shell::Key::Return); state.press(shell::Key::Return);
     state.press(shell::Key::MapNodeClick);
     state.showResults(true);
-    check(state.activateResultsQuit() == shell::Outcome::Ignored && state.screen() == shell::Screen::Results,
-          "Quit activation on win results is ignored");
+    check(state.activateResultsQuit() == shell::Outcome::Ignored &&
+          state.activateResultsRetry() == shell::Outcome::Ignored &&
+          state.screen() == shell::Screen::Results && state.uiState() == 4,
+          "Quit/retry on win results are ignored without changing dispatch mode");
     state.activateResultsContinue(); state.press(shell::Key::MapNodeClick);
     state.showResults(false);
-    check(state.activateResultsQuit() == shell::Outcome::Handled && state.screen() == shell::Screen::Map,
-          "Quit activation on loss results returns to map");
+    check(state.counter() == 10 && state.activateResultsRetry() == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Level && state.counter() == 10 &&
+          state.uiState() == shell::kUiLevel,
+          "READ successful loss Retry tears down results root and resets to level mode without construction");
+    state.showResults(false);
+    check(state.counter() == 12 && state.uiState() == 5 &&
+          state.activateResultsQuit() == shell::Outcome::Handled &&
+          state.screen() == shell::Screen::Map && state.counter() == 14 && state.uiState() == shell::kUiFrontend,
+          "READ loss Quit tears down result root, resets dispatch to UI3, then constructs root and Map (+2)");
   }
   const char* configured = std::getenv("WEBOLUTION_GAME_DIR");
   if (!configured || !*configured) {

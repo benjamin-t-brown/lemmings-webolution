@@ -1,5 +1,6 @@
 #include "app/AppEntry.h"
 #include "app/RuntimePick.h"
+#include "assets/Png.h"
 
 #ifndef WEBOLUTION_HAVE_SDL2
 #define WEBOLUTION_HAVE_SDL2 0
@@ -11,6 +12,8 @@
 #endif
 
 #include <algorithm>
+#include <array>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -31,6 +34,16 @@ bool pushClick(int x, int y) {
   e.button.button = SDL_BUTTON_LEFT; e.button.x = x; e.button.y = y;
   return SDL_PushEvent(&e) == 1;
 }
+bool pushMotion(int x, int y) {
+  SDL_Event e{}; e.type = SDL_MOUSEMOTION; e.motion.type = SDL_MOUSEMOTION;
+  e.motion.x = x; e.motion.y = y;
+  return SDL_PushEvent(&e) == 1;
+}
+bool pushButtonUp(int x, int y) {
+  SDL_Event e{}; e.type = SDL_MOUSEBUTTONUP; e.button.type = SDL_MOUSEBUTTONUP;
+  e.button.button = SDL_BUTTON_LEFT; e.button.x = x; e.button.y = y;
+  return SDL_PushEvent(&e) == 1;
+}
 bool pushQuit() { SDL_Event e{}; e.type = SDL_QUIT; return SDL_PushEvent(&e) == 1; }
 
 struct Trace {
@@ -42,11 +55,35 @@ struct Trace {
   bool checkedUnfocusedReturn = false;
   bool winPendingSeen = false, lossPendingSeen = false;
   bool retrySeen = false, reentrySeen = false;
+  bool winMotionQueued = false, winReleaseQueued = false, winFrameExported = false;
+  bool mapMotionQueued = false, mapReleaseQueued = false, mapFrameExported = false;
   int pendingMenuStage = 0;
   double pendingMenuTimer = 0.0;
   Image initialMap, clearedMap;
   void fail(const char* message) { if (ok) why = message; ok = false; }
 };
+
+bool exportFrameIfRequested(const char* filename, const Image& image) {
+  const char* output = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");
+  if (!output || !*output) return true;
+  std::error_code ec;
+  const std::filesystem::path directory(output);
+  std::filesystem::create_directories(directory, ec);
+  if (ec) return false;
+  return webo::writePng(directory / filename, image).has_value();
+}
+std::array<std::int32_t, 102> expectedCompletionFlags() {
+  std::array<std::int32_t, 102> expected{};
+  expected[0] = 1;
+  return expected;
+}
+std::array<std::int32_t, 102> expectedCompletedMapStates() {
+  std::array<std::int32_t, 102> expected{};
+  expected.fill(1);
+  expected[0] = 2;
+  for (std::size_t i = 1; i <= 4; ++i) expected[i] = 3;
+  return expected;
+}
 #endif
 }
 
@@ -88,9 +125,25 @@ int main() {
         if (s.screen() != Screen::Results || !s.outcome() || !s.outcome()->success ||
             s.outcome()->level != "MM_CLIMB_002" || s.outcome()->saved != 10 ||
             s.outcome()->total != 10 || s.outcome()->required != 1 ||
-            s.outcome()->secondsRemaining <= 0 || s.completionFlags()[0] != 1 || s.selectedLevel() ||
+            s.outcome()->secondsRemaining <= 0 || s.constructionCounter() != 7 ||
+            s.completionFlags() != expectedCompletionFlags() || s.selectedLevel() ||
             !t.winPendingSeen) {
           t.fail("first natural run did not produce the expected successful result/progress"); pushQuit(); return;
+        }
+        if (!t.winMotionQueued) {
+          t.winMotionQueued = pushMotion(320, 240);
+          t.winReleaseQueued = pushButtonUp(320, 240);
+          if (!t.winMotionQueued || !t.winReleaseQueued) {
+            t.fail("could not queue win-frame pointer settle events"); pushQuit(); return;
+          }
+          break;
+        }
+        if (s.pointerX() != 320 || s.pointerY() != 240 || s.leftHeld() || s.rightHeld()) break;
+        if (!t.winFrameExported) {
+          if (!exportFrameIfRequested("levelreturn-win.png", s.composeFrame())) {
+            t.fail("could not export composed win frame"); pushQuit(); return;
+          }
+          t.winFrameExported = true;
         }
         std::cout << "win result: saved=" << s.outcome()->saved << " needed=" << s.outcome()->required
                   << " seconds-left=" << s.outcome()->secondsRemaining << '\n';
@@ -104,12 +157,28 @@ int main() {
         if (!pushClick(320, 360)) { t.fail("could not continue from successful results"); pushQuit(); return; }
         t.stage = 4; break;
       case 4:
-        if (s.screen() != Screen::Map || s.selectedLevel() || s.completionFlags()[0] == 0 ||
-            s.mapStates()[0] != 2 || s.mapStates()[3] != 3 || s.mapStates()[4] != 3 ||
-            s.image().rgba == t.initialMap.rgba) {
+        if (s.screen() != Screen::Map || s.selectedLevel() ||
+            s.constructionCounter() != 8 ||
+            s.completionFlags() != expectedCompletionFlags() ||
+            s.mapStates() != expectedCompletedMapStates() || s.image().rgba == t.initialMap.rgba) {
           t.fail("successful result did not persist on cleared map/unlock node"); pushQuit(); return;
         }
         t.clearedMap = s.image();
+        if (!t.mapMotionQueued) {
+          t.mapMotionQueued = pushMotion(320, 240);
+          t.mapReleaseQueued = pushButtonUp(320, 240);
+          if (!t.mapMotionQueued || !t.mapReleaseQueued) {
+            t.fail("could not queue completed-map pointer settle events"); pushQuit(); return;
+          }
+          break;
+        }
+        if (s.pointerX() != 320 || s.pointerY() != 240 || s.leftHeld() || s.rightHeld()) break;
+        if (!t.mapFrameExported) {
+          if (!exportFrameIfRequested("levelreturn-map-complete.png", s.composeFrame())) {
+            t.fail("could not export composed completed-map frame"); pushQuit(); return;
+          }
+          t.mapFrameExported = true;
+        }
         if (!pushClick(206, 204)) { t.fail("could not reselect completed node"); pushQuit(); return; }
         t.stage = 5; break;
       case 5: {
@@ -201,7 +270,8 @@ int main() {
   const int result = app::runApplication(static_cast<int>(raw.size()), raw.data(), frontend, level,
                                          app::ApplicationRunOptions{.frameSeconds = 2.0});
   if (result != 0) t.fail("runApplication returned failure");
-  if (!t.sawFailureResult || !t.retrySeen || !t.reentrySeen || t.stage != 9)
+  if (!t.sawFailureResult || !t.retrySeen || !t.reentrySeen || t.stage != 9 ||
+      !t.winFrameExported || !t.mapFrameExported)
     t.fail("did not complete success, retry, Quit and map reentry cycles");
   if (!t.ok) { std::cerr << "FAIL: LevelReturn: " << t.why << " (frontend callbacks=" << t.frontCalls
                          << ", level callbacks=" << t.levelCalls << ")\n"; return 1; }

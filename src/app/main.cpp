@@ -338,7 +338,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       frontend = &*localFrontend;
     }
     if (!args.shot.empty()) {
-      if (auto written = writePng(args.shot, frontend->image()); !written) {
+      if (auto written = writePng(args.shot, frontend->composeFrame()); !written) {
         std::fprintf(stderr, "frontend screenshot: %s\n", written.error().c_str()); return 1;
       }
       return 0;
@@ -789,6 +789,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     previous = SDL_GetPerformanceCounter();
   };
   const auto openMenu = [&] {
+    if (persistentFrontend &&
+        persistentFrontend->openLevelMenu() != shell::Outcome::Handled) return;
     levelMenu->open();
     if (!runtimeSim.paused()) runtimeSim.togglePause();
     resetMenuInput();
@@ -797,7 +799,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   const auto activateMenu = [&](app::LevelMenuAction action) {
     switch (action) {
       case app::LevelMenuAction::Resume:
-        levelMenu->close(); runtimeSim.resume(); resetMenuInput();
+        levelMenu->close();
+        if (persistentFrontend)
+          (void)persistentFrontend->closeLevelMenu(false);
+        runtimeSim.resume(); resetMenuInput();
         menuDismissedThisFrame = true; break;
       case app::LevelMenuAction::Retry:
         disposition = LegDisposition::RetryLevel; running = false; break;
@@ -836,7 +841,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           else if (key == SDL_SCANCODE_RETURN) activateMenu(levelMenu->focusedAction());
           else if (key == SDL_SCANCODE_O) {
             // READ45D575: O-close is NOT Resume; it returns to UI1 paused.
-            levelMenu->close(); resetMenuInput();
+            levelMenu->close();
+            if (persistentFrontend)
+              (void)persistentFrontend->closeLevelMenu(true);
+            resetMenuInput();
             menuDismissedThisFrame = true;
           }
         }
@@ -992,7 +1000,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           levelObserver({rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
                          hover, pointerX, pointerY, cursorState,
                          runtimeSim.endTransition().phase(), runtimeSim.endTransition().timerSeconds(),
-                         cameraIntro.active(), entryCue ? entryCue->seconds() : 0.0, cueFrame, menuOpen(), args.level});
+                         cameraIntro.active(), entryCue ? entryCue->seconds() : 0.0, cueFrame, menuOpen(), args.level,
+                         persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt});
         }
         presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
         for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {

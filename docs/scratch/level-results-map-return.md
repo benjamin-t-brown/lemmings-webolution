@@ -5,6 +5,12 @@ No original-game launch, attachment, desktop input, registry access, or installe
 save/config writes. This delivers a connected SOURCE application loop, not a
 new D3 timing or native full-frame acceptance.
 
+**Later bounded native comparison:** [natural win and second unlock state](frontend-native-second-unlock-2026-10-28.md)
+captures ten ordinary Climber assignments, win Results7/UI4 and Continue Map8/UI4.
+Actual SDL natural-completion exports pass the result/map full-frame checks.
+The source-only scope below describes the earlier implementation, not this later
+observation; D3 timing and other result branches remain unaccepted.
+
 **Follow-up:** [pending transition/latching](level-end-transition.md) supersedes
 the initial immediate terminal boundary described below. Native end-count
 identity, timer seed/strict thresholds and outcome latching are now statically

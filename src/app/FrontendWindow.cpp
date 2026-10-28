@@ -27,6 +27,14 @@ struct SdlResources {
   }
 };
 
+struct CursorVisibility {
+  // This frontend path uses the software sprite. Native's alternate backend
+  // owns separate monochrome OS handles; SDL hiding here is not that backend.
+  int previous = SDL_ENABLE;
+  CursorVisibility() : previous(SDL_ShowCursor(SDL_QUERY)) { SDL_ShowCursor(SDL_DISABLE); }
+  ~CursorVisibility() { if (previous >= 0) SDL_ShowCursor(previous); }
+};
+
 std::string sdlError(const char* action) {
   return std::string(action) + ": " + SDL_GetError();
 }
@@ -53,7 +61,14 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
                                   SDL_TEXTUREACCESS_STREAMING, 640, 480);
   if (!sdl.texture) return std::unexpected(sdlError("SDL_CreateTexture"));
 
-  bool running = true, focused = true;
+  CursorVisibility cursorVisibility;
+
+  // A fresh SDL window cannot own holds from a previous window/level. Retain
+  // logical XY, but start a new input lifetime without querying/warping desktop
+  // input. This is the SOURCE adapter boundary, not native focus sampling.
+  session.setFocused(true);
+  session.setButtons(false, false);
+  bool running = true;
   int frames = 0;
   std::optional<Image> lastPresented;
   while (running && (options.maxFrames == 0 || frames < options.maxFrames)) {
@@ -61,20 +76,29 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) { running = false; break; }
       if (event.type == SDL_WINDOWEVENT) {
-        if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) focused = false;
-        else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) focused = true;
-      } else if (focused && event.type == SDL_KEYDOWN && !event.key.repeat &&
+        if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+          session.setFocused(false);
+        } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+          session.setFocused(true);
+        }
+      } else if (session.focused() && event.type == SDL_MOUSEMOTION) {
+        session.setPointer(event.motion.x, event.motion.y);
+      } else if (session.focused() && event.type == SDL_KEYDOWN && !event.key.repeat &&
                  event.key.keysym.sym == SDLK_RETURN) {
         session.pressReturn();
-      } else if (focused && event.type == SDL_MOUSEBUTTONDOWN &&
-                 event.button.button == SDL_BUTTON_LEFT) {
-        session.click(event.button.x, event.button.y);
+      } else if (session.focused() && (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)) {
+        session.setPointer(event.button.x, event.button.y);
+        const bool down = event.type == SDL_MOUSEBUTTONDOWN;
+        if (event.button.button == SDL_BUTTON_LEFT) session.setButtons(down, session.rightHeld());
+        else if (event.button.button == SDL_BUTTON_RIGHT) session.setButtons(session.leftHeld(), down);
+        if (down && event.button.button == SDL_BUTTON_LEFT)
+          session.click(session.pointerX(), session.pointerY());
       }
       if (session.selectedLevel()) return session.selectedLevel();
     }
     if (!running) break;
 
-    const Image& image = session.image();
+    const Image image = session.composeFrame();
     if (image.width != 640 || image.height != 480 || image.rgba.size() != 640u * 480u * 4u)
       return std::unexpected("frontend image must be tightly packed 640x480 RGBA");
     if (SDL_UpdateTexture(sdl.texture, nullptr, image.rgba.data(), 640 * 4) != 0)

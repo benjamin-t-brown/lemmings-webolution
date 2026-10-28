@@ -118,6 +118,7 @@ int main() {
 
   const auto observer = [&](const app::LevelFrameView& frame) {
     ++calls;
+    if (frame.frontendConstructionCounter) { fail("standalone level unexpectedly owns a frontend counter"); return; }
     if (frame.frame != calls - 1 || calls > 5) { fail("unexpected frame sequence"); return; }
     const auto& lemmings = frame.world.lemmings();
     if (calls == 1) {

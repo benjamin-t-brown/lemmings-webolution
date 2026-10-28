@@ -14,9 +14,15 @@ CursorState runtimeCursorState(bool focused, bool grabbed, bool actorHit,
       panelIndex, panelAvailability});
 }
 
+CursorState frontendCursorState(bool focused, bool eitherButtonHeld) {
+  if (!focused) return CursorState::Hidden;
+  return eitherButtonHeld ? CursorState::MouseDown : CursorState::NoLemming;
+}
+
 std::expected<RuntimeCursor, std::string> RuntimeCursor::load(const AssetLibrary& library) {
   RuntimeCursor cursor;
-  constexpr CursorState states[]{CursorState::NoLemming, CursorState::Lemming, CursorState::Grab};
+  constexpr CursorState states[]{CursorState::NoLemming, CursorState::Lemming,
+                                 CursorState::Grab, CursorState::MouseDown};
   for (std::size_t i = 0; i < cursor.images_.size(); ++i) {
     auto image = loadTexture(library, "TEXTURES\\" + std::string(softwareCursorResource(states[i])) + ".BMP");
     if (!image) return std::unexpected(image.error());
@@ -33,6 +39,7 @@ void RuntimeCursor::draw(Image& target, CursorState state, int x, int y) const {
     case CursorState::NoLemming: image = &images_[0]; break;
     case CursorState::Lemming: image = &images_[1]; break;
     case CursorState::Grab: image = &images_[2]; break;
+    case CursorState::MouseDown: image = &images_[3]; break;
     default: return; // Unsupported producers are not silently given artwork.
   }
   // READ 455774/4577CD: full 32x32 quad centered on integer sprite position.

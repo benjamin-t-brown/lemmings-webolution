@@ -1,13 +1,13 @@
-// Frontend screen sequence for the Phase 5 shell.
+// Frontend screen and root/page lifecycle model.
 //
-// Pure state machine (screen, construction counter, highlight, paused) driven by key
-// events. It reproduces the b2e and b2h live captures
+// Pure state machine (screen, frontend root/page ownership, serial allocator,
+// highlight and paused state) driven by key or semantic lifecycle events. It replays the b2e and b2h captures
 // (docs/scratch/phase-b2e-live-capture.md, phase-b2h-live-esc-sweep.md;
 // build/tmp/b2e-live-capture/report.json, build/tmp/b2h-live-esc-sweep/report.json) and
 // plus the READ Yes/No semantic routes at 0x49BC59. Other statements below are
-// tagged OBSERVED, HYPOTHESIS or POLICY. An input
-// the captures did not see returns Outcome::Unobserved and leaves state unchanged; it is
-// never a silent choice.
+// tagged OBSERVED, READ or POLICY. The legacy key replay retains its bounded
+// sampled domains; semantic lifecycle methods separately implement READ routes.
+// Unsupported key events return Outcome::Unobserved without changing state.
 //
 // OBSERVED (b2e, one run): construction counter 0x004C416C reads 3 at the menu, 4 after
 // the first RETURN (confirm), 5 after the second (map), 5 through a map node click and P.
@@ -16,12 +16,11 @@
 // ui_state 0, counter 5, empty list. The old "short ESC fails to leave pause" quirk is
 // retracted (rules file, 2026-10-23).
 // OBSERVED (b2h, one run): ESC in an unpaused level (hold 20) gives ui_state 2, counter
-// +2 (5 to 7), one head node with vtable 0x4B26B0. O there gives ui_state 1, empty list,
-// counter unchanged; P then gives ui_state 0.
-// HYPOTHESIS: the counter counts screens constructed, and two startup screens consume 1
-// and 2 before the menu.
-// HYPOTHESIS: the level-ESC +2 is two counted constructions (a dialog plus one other).
-// The cause is unread; the model only reproduces the step.
+// +2 (5 to 7), one head node with vtable 0x4B26B0. READ explains this as root+page;
+// O there gives ui_state 1, empty list, counter unchanged; P then gives ui_state 0.
+// READ (docs/scratch/frontend-native-return-2026-10-28.md): initial counter is 1;
+// full frontend initialization constructs a separate root and selected page.
+// Level-menu opening invokes that initialization; it is not a hold-20-specific guess.
 // POLICY: ESC hold lengths between the sampled 2 and 40 frames act like the sampled ones
 // (b2g read: P and ESC share one pause store, 0x45D508). Holds outside [2, 40] in pause,
 // and any hold but 20 in the level, are Unobserved.
@@ -32,7 +31,7 @@
 
 namespace webo::shell {
 
-// Dialog is the one-node screen ESC opens in a level (b2h); its identity is unread.
+// Dialog is the in-level menu: READ48F4E0, selector1F; one captured page node.
 enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog, Results };
 
 enum class Key : std::uint8_t { Return, Esc, P, O, MapNodeClick };
@@ -43,8 +42,8 @@ enum class Outcome : std::uint8_t {
   Unobserved,  // the captures have no data for this input; state unchanged
 };
 
-// Level back to the map. NOT observed. Unobserved is a no-op; ToMap constructs a new
-// map screen (counter + 1), which is a POLICY/HYPOTHESIS.
+// Legacy direct level-exit policy; no key for this shortcut was observed.
+// Production menu Quit is separate: observed menu7 -> Map9; READ root+page init.
 enum class LevelExitPolicy : std::uint8_t { Unobserved, ToMap };
 
 struct Policy {
@@ -66,9 +65,6 @@ inline constexpr int kUiLevel = 0;
 inline constexpr int kUiPaused = 1;
 inline constexpr int kUiDialog = 2;
 
-// OBSERVED (b2h): counter step for one ESC in a level. Cause unread.
-inline constexpr int kLevelEscConstructions = 2;
-
 // ESC hold lengths, in frames. Sampled in pause: 2, 5, 10, 25, 40. Sampled in the level: 20.
 inline constexpr int kEscHoldMin = 2;
 inline constexpr int kEscHoldMax = 40;
@@ -76,8 +72,8 @@ inline constexpr int kEscHoldLevel = 20;
 
 class Frontend {
  public:
-  // startupConstructions is the HYPOTHESIS above; the menu is the next construction.
-  explicit Frontend(Policy policy = {}, int startupConstructions = 2);
+  // Counter starts at the READ on-disk value (1). Initial root + Menu page -> 3.
+  explicit Frontend(Policy policy = {}, int initialCounter = 1);
 
   // holdFrames matters only for Esc.
   Outcome press(Key key, int holdFrames = kEscHoldLevel);
@@ -93,6 +89,11 @@ class Frontend {
   Outcome activateResultsRetry();
   Outcome activateResultsQuit();
   Outcome abandonLevelToMap();
+  // Semantic production lifecycle. Opening creates root+menu page; dismissing
+  // deletes both without decrement. The hold-20 key replay remains a separate adapter.
+  Outcome openLevelMenu();
+  Outcome closeLevelMenu(bool paused);
+  Outcome retryLevelMenu();
   // Highlight of the menu. Initial value 0 is unread, not observed.
   void setHighlight(int highlight) { highlight_ = highlight; }
   // Level back to the map; the triggering input is unobserved, so it is a method.
@@ -108,7 +109,9 @@ class Frontend {
   std::uint32_t nodeVtable() const;
 
  private:
-  void construct(Screen s);
+  Outcome beginFrontend(Screen page);
+  Outcome replacePage(Screen page);
+  Outcome endFrontend();
 
   Policy policy_;
   Screen screen_ = Screen::Menu;
@@ -116,6 +119,10 @@ class Frontend {
   int highlight_ = 0;
   bool paused_ = false;
   bool resultsWon_ = false;
+  bool rootOwned_ = false;
+  // Native UI dispatch mode is not derived from the currently displayed page:
+  // results Continue replaces the page while retaining mode 4 (win) or 5 (loss).
+  int dispatchMode_ = kUiFrontend;
 };
 
 }  // namespace webo::shell

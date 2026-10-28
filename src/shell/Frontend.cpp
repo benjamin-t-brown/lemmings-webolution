@@ -2,80 +2,109 @@
 
 namespace webo::shell {
 
-Frontend::Frontend(Policy policy, int startupConstructions)
-    : policy_(policy), counter_(startupConstructions) {
-  construct(Screen::Menu);
+Frontend::Frontend(Policy policy, int initialCounter)
+    : policy_(policy), counter_(initialCounter) {
+  (void)beginFrontend(Screen::Menu);
 }
 
-void Frontend::construct(Screen s) {
-  // The list is replaced, not stacked: one construction, one live screen.
-  screen_ = s;
+Outcome Frontend::beginFrontend(Screen page) {
+  if (rootOwned_ || page == Screen::Level)
+    return Outcome::Ignored;
+  // READ 486F60 -> 48BC00 root, then page factory; each consumes one serial.
+  ++counter_; // root's base constructor
+  rootOwned_ = true;
+  ++counter_; // selected page's base constructor
+  screen_ = page;
+  // Model the full-initialization caller's UI write (45DF33/45E0B7/45D743),
+  // not a side effect of the native page constructor. In contrast,
+  // replacePage deliberately changes only page identity and preserves the mode.
+  switch (page) {
+    case Screen::Menu:
+    case Screen::Confirm:
+    case Screen::Map:
+      dispatchMode_ = kUiFrontend;
+      break;
+    case Screen::Dialog:
+      dispatchMode_ = kUiDialog;
+      break;
+    case Screen::Results:
+      dispatchMode_ = resultsWon_ ? 4 : 5;
+      break;
+    case Screen::Level:
+      break; // rejected above
+  }
+  return Outcome::Handled;
+}
+
+Outcome Frontend::replacePage(Screen page) {
+  if (!rootOwned_ || page == Screen::Level || page == Screen::Dialog)
+    return Outcome::Ignored;
   ++counter_;
+  screen_ = page;
+  return Outcome::Handled;
+}
+
+Outcome Frontend::endFrontend() {
+  if (!rootOwned_) return Outcome::Ignored;
+  rootOwned_ = false;
+  // Destruction does not decrement the global serial allocator.
+  return Outcome::Handled;
 }
 
 Outcome Frontend::press(Key key, int holdFrames) {
   switch (screen_) {
     case Screen::Menu:
-      // Preserved quirk: RETURN acts only when the highlight is exactly 0.
       if (key == Key::Return) {
         if (highlight_ != 0) return Outcome::Ignored;
-        construct(Screen::Confirm);
-        return Outcome::Handled;
+        return replacePage(Screen::Confirm);
       }
       return Outcome::Unobserved;
     case Screen::Confirm:
-      // Observed to advance; the confirm highlight was not read.
-      if (key == Key::Return) {
-        return confirmChoice(true);
-      }
+      if (key == Key::Return) return confirmChoice(true);
       return Outcome::Unobserved;
     case Screen::Map:
       if (key == Key::MapNodeClick) {
-        // A level is not a frontend screen: the counter stays at 5 (observed).
+        if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
         screen_ = Screen::Level;
         paused_ = false;
+        dispatchMode_ = kUiLevel;
         return Outcome::Handled;
       }
       return Outcome::Unobserved;
     case Screen::Level:
       if (key == Key::P) {
         paused_ = !paused_;
+        dispatchMode_ = paused_ ? kUiPaused : kUiLevel;
         return Outcome::Handled;
       }
       if (key == Key::Esc && paused_) {
-        // Observed at holds 2, 5, 10, 25, 40; the range between is policy.
         if (holdFrames < kEscHoldMin || holdFrames > kEscHoldMax) return Outcome::Unobserved;
         paused_ = false;
+        dispatchMode_ = kUiLevel;
         return Outcome::Handled;
       }
       if (key == Key::Esc) {
-        // Observed once, at hold 20.
         if (holdFrames != kEscHoldLevel) return Outcome::Unobserved;
-        screen_ = Screen::Dialog;
-        counter_ += kLevelEscConstructions;
-        return Outcome::Handled;
+        // Legacy key replay is intentionally kept distinct from production semantic open.
+        return beginFrontend(Screen::Dialog);
       }
       return Outcome::Unobserved;
     case Screen::Dialog:
-      // Only O was observed here. ESC, P and RETURN at the dialog were not sent.
-      if (key == Key::O) {
-        screen_ = Screen::Level;
-        paused_ = true;
-        return Outcome::Handled;
-      }
+      if (key == Key::O) return closeLevelMenu(true);
       return Outcome::Unobserved;
     case Screen::Results:
-      // Initial native focus is the subsequently hidden row0; automatic focus
-      // repair is unresolved. Do not invent any-key/Return-to-Continue.
+      // Native initial hidden-row focus repair remains unresolved. No invented
+      // Return-to-Continue; the semantic activation below is separate.
       return Outcome::Unobserved;
   }
   return Outcome::Unobserved;
 }
 
 Outcome Frontend::confirmChoice(bool yes) {
-  if (screen_ != Screen::Confirm) return Outcome::Ignored;
-  construct(yes ? Screen::Map : Screen::Menu);
-  if (!yes) highlight_ = 0;  // rebuilt menu's initial SOURCE selection
+  if (screen_ != Screen::Confirm || !rootOwned_) return Outcome::Ignored;
+  if (replacePage(yes ? Screen::Map : Screen::Menu) != Outcome::Handled)
+    return Outcome::Ignored;
+  if (!yes) highlight_ = 0;
   return Outcome::Handled;
 }
 
@@ -84,22 +113,18 @@ Outcome Frontend::leaveLevel() {
   if (screen_ != Screen::Level) return Outcome::Ignored;
   if (policy_.levelExit == LevelExitPolicy::Unobserved) return Outcome::Unobserved;
   paused_ = false;
-  construct(Screen::Map);
-  return Outcome::Handled;
+  return abandonLevelToMap();
 }
 
 Outcome Frontend::activateMapFooter() {
   if (screen_ != Screen::Map) return Outcome::Ignored;
-  construct(Screen::Menu);
+  if (replacePage(Screen::Menu) != Outcome::Handled) return Outcome::Ignored;
   highlight_ = 0;
   return Outcome::Handled;
 }
 
 int Frontend::uiState() const {
-  if (screen_ == Screen::Results) return resultsWon_ ? 4 : 5;
-  if (screen_ == Screen::Dialog) return kUiDialog;
-  if (screen_ != Screen::Level) return kUiFrontend;
-  return paused_ ? kUiPaused : kUiLevel;
+  return dispatchMode_;
 }
 
 std::uint32_t Frontend::nodeVtable() const {
@@ -115,41 +140,62 @@ std::uint32_t Frontend::nodeVtable() const {
 }
 
 Outcome Frontend::showResults(bool success) {
-  if (screen_ != Screen::Level) return Outcome::Ignored;
+  if (screen_ != Screen::Level || rootOwned_) return Outcome::Ignored;
+  // READ45DF25/45E0A9: full initialization, unlike Continue's page replacement.
   paused_ = false;
   resultsWon_ = success;
-  construct(Screen::Results);
-  return Outcome::Handled;
+  return beginFrontend(Screen::Results);
 }
 
 Outcome Frontend::activateResultsContinue() {
   if (screen_ != Screen::Results) return Outcome::Ignored;
-  // READ 486090 (win),4865AC (loss): selector23, not a new-game reset.
-  construct(Screen::Map);
-  return Outcome::Handled;
+  // READ4886E4 ->48726F: preserve the root, retire/replace the result page.
+  return replacePage(Screen::Map);
 }
 
 Outcome Frontend::activateResultsRetry() {
   if (screen_ != Screen::Results || resultsWon_) return Outcome::Ignored;
-  // READ 486568 -> main reload via4605D0(1). SOURCE immediate reload omits fades.
+  if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
   screen_ = Screen::Level;
   paused_ = false;
+  dispatchMode_ = kUiLevel;
   return Outcome::Handled;
 }
 
 Outcome Frontend::activateResultsQuit() {
   if (screen_ != Screen::Results || resultsWon_) return Outcome::Ignored;
-  // READ486583 ->45D72F..45D7EC: UI3/map23, not Menu7 or application exit.
-  // Semantic destination only; native consumes a request on the next dispatch.
-  construct(Screen::Map);
-  return Outcome::Handled;
+  // READ45D79E/45D7EC: teardown, then full initialization (not Continue).
+  if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
+  return beginFrontend(Screen::Map);
 }
 
 Outcome Frontend::abandonLevelToMap() {
-  if (screen_ != Screen::Level) return Outcome::Ignored;
-  // READ48F601 ->45D606..45D69B: no result or completion write.
+  if (screen_ != Screen::Level && screen_ != Screen::Dialog) return Outcome::Ignored;
+  if (rootOwned_ && endFrontend() != Outcome::Handled) return Outcome::Ignored;
   paused_ = false;
-  construct(Screen::Map);
+  return beginFrontend(Screen::Map);
+}
+
+Outcome Frontend::openLevelMenu() {
+  if (screen_ != Screen::Level || rootOwned_) return Outcome::Ignored;
+  return beginFrontend(Screen::Dialog);
+}
+
+Outcome Frontend::closeLevelMenu(bool paused) {
+  if (screen_ != Screen::Dialog || !rootOwned_) return Outcome::Ignored;
+  if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
+  screen_ = Screen::Level;
+  paused_ = paused;
+  dispatchMode_ = paused ? kUiPaused : kUiLevel;
+  return Outcome::Handled;
+}
+
+Outcome Frontend::retryLevelMenu() {
+  if (screen_ != Screen::Dialog || !rootOwned_) return Outcome::Ignored;
+  if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
+  screen_ = Screen::Level;
+  paused_ = false;
+  dispatchMode_ = kUiLevel;
   return Outcome::Handled;
 }
 

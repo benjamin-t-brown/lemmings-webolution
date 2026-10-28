@@ -1,6 +1,7 @@
 #include "app/FrontendSession.h"
 #include "app/FrontendWindow.h"
 #include "assets/Box.h"
+#include "assets/Png.h"
 
 #ifndef WEBOLUTION_HAVE_SDL2
 #define WEBOLUTION_HAVE_SDL2 0
@@ -15,9 +16,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <optional>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -26,6 +31,11 @@ int main() {
   std::cerr << "FrontendWindow test requires SDL2\n";
   return 1;
 #else
+  const char* driver = std::getenv("SDL_VIDEODRIVER");
+  if (!driver || std::string_view(driver) != "dummy") {
+    std::cerr << "FrontendWindow: refusing to run without SDL_VIDEODRIVER=dummy\n";
+    return 1;
+  }
   const char* configured = std::getenv("WEBOLUTION_GAME_DIR");
   if (!configured || !*configured) {
     std::cout << "FrontendWindow: SKIPPED (set WEBOLUTION_GAME_DIR to retail assets)\n";
@@ -53,6 +63,26 @@ int main() {
       event.button.x = x; event.button.y = y;
     } else event.type = type;
     return SDL_PushEvent(&event) == 1;
+  };
+  auto mouse = [](Uint32 type, Uint8 button, int x, int y) {
+    SDL_Event event{};
+    event.type = type;
+    event.button.type = type;
+    event.button.button = button;
+    event.button.x = x;
+    event.button.y = y;
+    return SDL_PushEvent(&event) == 1;
+  };
+  auto motion = [](int x, int y, int xrel, int yrel) {
+    SDL_Event event{};
+    event.type = SDL_MOUSEMOTION;
+    event.motion.type = SDL_MOUSEMOTION;
+    event.motion.x = x; event.motion.y = y;
+    event.motion.xrel = xrel; event.motion.yrel = yrel;
+    return SDL_PushEvent(&event) == 1;
+  };
+  auto softwareCursorActive = [] {
+    return SDL_ShowCursor(SDL_QUERY) == SDL_DISABLE;
   };
   auto drive = [&](const webo::app::FrontendSession& current, int frame) {
     using webo::shell::Screen;
@@ -87,6 +117,128 @@ int main() {
   if (!result || *result || capped->constructionCounter() != 3) {
     std::cerr << "SDL capped route mismatch\n"; return 1;
   }
+  const char* outputConfigured = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");
+  if (!outputConfigured || !*outputConfigured) {
+    std::cerr << "frontendwindow test requires CTest-owned WEBOLUTION_TEST_OUTPUT_DIR\n"; return 1;
+  }
+  const fs::path outputDir(outputConfigured);
+  fs::create_directories(outputDir);
+  auto screenshot = createSession();
+  if (!screenshot) return 1;
+  const fs::path actualPng = outputDir / "cursor-window.png";
+  const fs::path expectedPng = outputDir / "cursor-expected.png";
+  std::optional<webo::Image> observedFrame;
+  bool screenshotOk = true;
+  auto screenshotResult = webo::app::runFrontendWindow(*screenshot,
+      {.maxFrames = 2, .finalFramePath = actualPng.string()}, [&](const auto& current, int frame) {
+        screenshotOk &= softwareCursorActive();
+        if (frame == 0) screenshotOk &= motion(187, 193, 0, 0);
+        if (frame == 1) {
+          screenshotOk &= current.pointerX() == 187 && current.pointerY() == 193;
+          observedFrame = current.composeFrame();
+        }
+      });
+  if (!screenshotResult || *screenshotResult || !screenshotOk || !observedFrame ||
+      !webo::writePng(expectedPng, *observedFrame)) {
+    std::cerr << "frontend final-frame cursor capture setup failed\n"; return 1;
+  }
+  auto bytes = [](const fs::path& path) {
+    std::ifstream input(path, std::ios::binary);
+    return std::vector<char>(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+  };
+  if (bytes(actualPng) != bytes(expectedPng)) {
+    std::cerr << "final frontend PNG differs from observer's moved-cursor composed frame\n"; return 1;
+  }
+  auto pointer = createSession();
+  if (!pointer) return 1;
+  bool pointerOk = true;
+  auto pointerResult = webo::app::runFrontendWindow(*pointer,
+      {.maxFrames = 7, .finalFramePath = {}}, [&](const auto& current, int frame) {
+        using webo::app::CursorState;
+        if (frame == 0) {
+          // Absolute motion with zero relative delta is still the pointer/hit coordinate.
+          pointerOk &= motion(206, 204, 0, 0);
+          pointerOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT, 206, 204);
+          pointerOk &= current.constructionCounter() == 3 && !current.selectedLevel();
+          pointerOk &= current.cursorState() == CursorState::NoLemming;
+        } else if (frame == 1) {
+          pointerOk &= current.pointerX() == 206 && current.pointerY() == 204;
+          pointerOk &= current.cursorState() == CursorState::MouseDown && !current.selectedLevel();
+          // Motion must continue while right is held (unlike gameplay Grab).
+          pointerOk &= motion(220, 215, 0, 0);
+        } else if (frame == 2) {
+          pointerOk &= current.pointerX() == 220 && current.pointerY() == 215;
+          pointerOk &= current.cursorState() == CursorState::MouseDown;
+          pointerOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 0, 0);
+        } else if (frame == 3) {
+          pointerOk &= current.cursorState() == CursorState::MouseDown;
+          pointerOk &= current.leftHeld() && current.rightHeld();
+          pointerOk &= mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 0, 0);
+          pointerOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 320, 333);
+        } else if (frame == 4) {
+          pointerOk &= current.screen() == webo::shell::Screen::Confirm;
+          pointerOk &= current.cursorState() == CursorState::MouseDown;
+          pointerOk &= current.leftHeld() && current.rightHeld();
+          pointerOk &= current.pointerX() == 320 && current.pointerY() == 333;
+          pointerOk &= mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 320, 333);
+          pointerOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 320, 340);
+        } else if (frame == 5) {
+          pointerOk &= current.screen() == webo::shell::Screen::Menu &&
+                       current.constructionCounter() == 5;
+          pointerOk &= current.cursorState() == CursorState::MouseDown;
+          pointerOk &= current.leftHeld() && !current.rightHeld();
+          pointerOk &= current.pointerX() == 320 && current.pointerY() == 340;
+          pointerOk &= push(SDL_QUIT);
+        }
+      });
+  if (!pointerResult || *pointerResult || !pointerOk) {
+    std::cerr << "SDL frontend cursor motion/button/transition route mismatch\n"; return 1;
+  }
+  bool recreationOk = false;
+  auto recreated = webo::app::runFrontendWindow(*pointer,
+      {.maxFrames = 1, .finalFramePath = {}}, [&](const auto& current, int frame) {
+        recreationOk = frame == 0 && current.pointerX() == 320 && current.pointerY() == 340 &&
+            current.focused() && !current.leftHeld() && !current.rightHeld() &&
+            current.cursorState() == webo::app::CursorState::NoLemming && softwareCursorActive();
+      });
+  if (!recreated || *recreated || !recreationOk) {
+    std::cerr << "same-session window recreation did not retain pointer and reset transient input\n"; return 1;
+  }
+  auto hover = createSession();
+  if (!hover) return 1;
+  bool hoverOk = true;
+  std::array<std::int32_t, 102> hoverFlags{};
+  std::array<std::int32_t, 102> hoverMapStates{};
+  auto hoverResult = webo::app::runFrontendWindow(*hover,
+      {.maxFrames = 6, .finalFramePath = {}}, [&](const auto& current, int frame) {
+        using webo::shell::Screen;
+        if (frame == 0) hoverOk &= push(SDL_KEYDOWN);
+        else if (frame == 1) {
+          hoverOk &= current.screen() == Screen::Confirm;
+          hoverOk &= push(SDL_KEYDOWN);
+        } else if (frame == 2) {
+          hoverOk &= current.screen() == Screen::Map;
+          hoverOk &= current.constructionCounter() == 5 && !current.selectedLevel();
+          hoverFlags = current.completionFlags();
+          hoverMapStates = current.mapStates();
+          hoverOk &= motion(320, 455, 0, 0); // footer hover is presentation-only
+        } else if (frame == 3) {
+          hoverOk &= current.screen() == Screen::Map && current.constructionCounter() == 5;
+          hoverOk &= !current.selectedLevel() && current.completionFlags() == hoverFlags &&
+                     current.mapStates() == hoverMapStates;
+          hoverOk &= current.pointerX() == 320 && current.pointerY() == 455;
+          hoverOk &= motion(206, 204, 0, 0); // node hover is presentation-only
+        } else if (frame == 4) {
+          hoverOk &= current.screen() == Screen::Map && current.constructionCounter() == 5 &&
+                     !current.selectedLevel() && current.completionFlags() == hoverFlags &&
+                     current.mapStates() == hoverMapStates;
+          hoverOk &= current.pointerX() == 206 && current.pointerY() == 204;
+          hoverOk &= push(SDL_QUIT);
+        }
+      });
+  if (!hoverResult || *hoverResult || !hoverOk) {
+    std::cerr << "SDL frontend hover activated a node/footer or changed construction\n"; return 1;
+  }
   auto unfocused = createSession();
   if (!unfocused) return 1;
   bool focusOk = true;
@@ -97,14 +249,33 @@ int main() {
     focusOk &= SDL_PushEvent(&event) == 1;
   };
   auto focusResult = webo::app::runFrontendWindow(*unfocused,
-      {.maxFrames = 4, .finalFramePath = {}}, [&](const auto& current, int frame) {
-        if (frame == 0) { focus(SDL_WINDOWEVENT_FOCUS_LOST); focusOk &= push(SDL_KEYDOWN); }
+      {.maxFrames = 6, .finalFramePath = {}}, [&](const auto& current, int frame) {
+        focusOk &= softwareCursorActive();
+        if (frame == 0) focusOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT, 42, 43);
         if (frame == 1) {
-          focusOk &= current.screen() == webo::shell::Screen::Menu;
-          focus(SDL_WINDOWEVENT_FOCUS_GAINED); focusOk &= push(SDL_KEYDOWN);
+          focusOk &= current.pointerX() == 42 && current.pointerY() == 43;
+          focusOk &= current.cursorState() == webo::app::CursorState::MouseDown && current.rightHeld();
+          focus(SDL_WINDOWEVENT_FOCUS_LOST);
+          focusOk &= push(SDL_KEYDOWN);
+          focusOk &= motion(500, 400, 10, 10);
+          focusOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 320, 333);
+          focusOk &= mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 99, 99);
         }
         if (frame == 2) {
-          focusOk &= current.screen() == webo::shell::Screen::Confirm;
+          focusOk &= !current.focused() && current.cursorState() == webo::app::CursorState::Hidden;
+          focusOk &= !current.leftHeld() && !current.rightHeld();
+          focusOk &= current.pointerX() == 42 && current.pointerY() == 43;
+          focusOk &= current.screen() == webo::shell::Screen::Menu && current.constructionCounter() == 3;
+          focus(SDL_WINDOWEVENT_FOCUS_GAINED);
+        }
+        if (frame == 3) {
+          focusOk &= current.focused() && current.cursorState() == webo::app::CursorState::NoLemming;
+          focusOk &= current.pointerX() == 42 && current.pointerY() == 43;
+          focusOk &= current.screen() == webo::shell::Screen::Menu && current.constructionCounter() == 3;
+          focusOk &= push(SDL_KEYDOWN);
+        }
+        if (frame == 4) {
+          focusOk &= current.screen() == webo::shell::Screen::Confirm && current.constructionCounter() == 4;
           focusOk &= push(SDL_QUIT);
         }
       });
@@ -185,7 +356,7 @@ int main() {
   auto invalid = webo::app::runFrontendWindow(*capped,
       {.maxFrames = 0, .finalFramePath = "must-not-write.png"});
   if (invalid) { std::cerr << "unbounded screenshot request accepted\n"; return 1; }
-  std::cout << "PASS: focused SDL frontend Return/map input, close, and frame cap\n";
+  std::cout << "PASS: focused SDL frontend Return/map input, cursor states, close, and frame cap\n";
   return 0;
 #endif
 }

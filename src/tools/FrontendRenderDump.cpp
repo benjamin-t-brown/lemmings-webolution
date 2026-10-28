@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 
 int main(int argc, char** argv) {
   if (argc != 4) {
-    std::cerr << "usage: FrontendRenderDump <game-dir> <menu|confirm|map|win-fixture|loss-fixture|completed-map-fixture> <out.png>\n";
+    std::cerr << "usage: FrontendRenderDump <game-dir> <menu|confirm|map|map-held-fixture|win-fixture|loss-fixture|completed-map-fixture> <out.png>\n";
     return 1;
   }
 
@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   int returnPresses = 0;
   if (screen == "menu") returnPresses = 0;
   else if (screen == "confirm") returnPresses = 1;
-  else if (screen == "map" || screen == "win-fixture" || screen == "loss-fixture" ||
+  else if (screen == "map" || screen == "map-held-fixture" || screen == "win-fixture" || screen == "loss-fixture" ||
            screen == "completed-map-fixture") returnPresses = 2;
   else {
     std::cerr << "invalid screen: " << screen << '\n';
@@ -39,6 +39,9 @@ int main(int argc, char** argv) {
     return 1;
   }
   for (int i = 0; i < returnPresses; ++i) session->pressReturn();
+  // Explicit composition fixture matching a sampled native held state, not a
+  // substitute for the SDL input regression or proof of physical input binding.
+  if (screen == "map-held-fixture") session->setButtons(false, true);
   if (screen == "win-fixture" || screen == "loss-fixture" || screen == "completed-map-fixture") {
     // Explicit offline composition fixture, not a simulated solution or native
     // capture. Exercise the production result/map renderer with known values.
@@ -54,7 +57,7 @@ int main(int argc, char** argv) {
   }
 
   const fs::path output = argv[3];
-  if (auto written = webo::writePng(output, session->image()); !written) {
+  if (auto written = webo::writePng(output, session->composeFrame()); !written) {
     std::cerr << written.error() << '\n';
     return 1;
   }

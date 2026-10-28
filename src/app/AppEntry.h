@@ -40,6 +40,9 @@ struct LevelFrameView {
   std::optional<EntryCueFrame> entryCueFrame;
   bool levelMenuOpen = false;
   std::string_view levelName;
+  // Present only on the connected frontend/game route. Standalone level runs
+  // do not own the frontend construction allocator.
+  std::optional<int> frontendConstructionCounter;
 };
 using LevelFrameObserver = std::function<void(const LevelFrameView&)>;
 

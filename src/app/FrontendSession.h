@@ -3,8 +3,10 @@
 #include "app/MapScene.h"
 #include "app/LevelOutcome.h"
 #include "app/ResultsScene.h"
+#include "app/RuntimeCursor.h"
 #include "shell/Frontend.h"
 
+#include <algorithm>
 #include <array>
 #include <expected>
 #include <optional>
@@ -23,9 +25,33 @@ class FrontendSession {
       const AssetLibrary& library);
 
   const Image& image() const;
+  // Base scene stays cursor-free for renderer tests; production paths present
+  // this independent copy with the frontend cursor composited last.
+  Image composeFrame() const;
+  // SOURCE absolute SDL adapter; native453C3A..453D23 uses these inclusive
+  // extents after adding relative device deltas. No pointer warp is performed.
+  void setPointer(int x, int y) {
+    pointerX_ = std::clamp(x, 0, 640);
+    pointerY_ = std::clamp(y, 0, 480);
+  }
+  void setButtons(bool left, bool right) { leftHeld_ = left; rightHeld_ = right; }
+  void setFocused(bool focused) {
+    focused_ = focused;
+    if (!focused) leftHeld_ = rightHeld_ = false;
+  }
+  int pointerX() const { return pointerX_; }
+  int pointerY() const { return pointerY_; }
+  bool leftHeld() const { return leftHeld_; }
+  bool rightHeld() const { return rightHeld_; }
+  bool focused() const { return focused_; }
+  CursorState cursorState() const {
+    return frontendCursorState(focused_, leftHeld_ || rightHeld_);
+  }
   shell::Screen screen() const { return state_.screen(); }
   int constructionCounter() const { return state_.counter(); }
   shell::Outcome pressReturn();
+  shell::Outcome openLevelMenu();
+  shell::Outcome closeLevelMenu(bool paused);
   bool click(int x, int y);
   bool clickMap(int x, int y);
   const std::optional<std::string>& selectedLevel() const { return selectedLevel_; }
@@ -50,6 +76,9 @@ class FrontendSession {
   std::array<std::array<int, 4>, 2> confirmBoxes_{};
   std::array<int, 4> mapFooterBox_{};
   MapScene map_;
+  RuntimeCursor cursor_;
+  int pointerX_ = 320, pointerY_ = 240;
+  bool leftHeld_ = false, rightHeld_ = false, focused_ = true;
   MapScene initialMap_;
   std::array<std::int32_t, 102> completionFlags_{};
   std::optional<std::size_t> selectedNode_;

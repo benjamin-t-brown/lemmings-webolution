@@ -88,7 +88,8 @@ target_link_libraries(MenuRenderDump PRIVATE webolution_objects)
 # Offline snapshot of the production FrontendSession renderer (no SDL/window).
 add_executable(FrontendRenderDump src/tools/FrontendRenderDump.cpp
   src/app/ResultsScene.cpp
-  src/app/FrontendSession.cpp src/app/MapScene.cpp src/shell/Frontend.cpp
+  src/app/FrontendSession.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
+  src/app/CursorPolicy.cpp src/app/SkillPanel.cpp src/shell/Frontend.cpp
   src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(FrontendRenderDump PRIVATE webolution_objects)
 
@@ -286,13 +287,15 @@ add_test(NAME frontend_sequence COMMAND test_frontend_sequence)
 
 add_executable(test_frontendsession src/__test__/test_frontendsession.cpp
   src/app/ResultsScene.cpp
-  src/app/FrontendSession.cpp src/app/MapScene.cpp src/shell/Frontend.cpp
+  src/app/FrontendSession.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
+  src/app/CursorPolicy.cpp src/app/SkillPanel.cpp src/shell/Frontend.cpp
   src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(test_frontendsession PRIVATE webolution_objects)
 add_test(NAME frontendsession COMMAND test_frontendsession)
 
 add_executable(test_results src/__test__/test_results.cpp
   src/app/ResultsScene.cpp src/app/FrontendSession.cpp src/app/MapScene.cpp
+  src/app/RuntimeCursor.cpp src/app/CursorPolicy.cpp src/app/SkillPanel.cpp
   src/shell/Frontend.cpp src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(test_results PRIVATE webolution_objects)
 add_test(NAME results COMMAND test_results)
@@ -309,6 +312,7 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_executable(test_frontendwindow src/__test__/test_frontendwindow.cpp
     src/app/ResultsScene.cpp
     src/app/FrontendWindow.cpp src/app/FrontendSession.cpp src/app/MapScene.cpp
+    src/app/RuntimeCursor.cpp src/app/CursorPolicy.cpp src/app/SkillPanel.cpp
     src/shell/Frontend.cpp src/shell/MenuRender.cpp src/shell/HudText.cpp)
   target_link_libraries(test_frontendwindow PRIVATE webolution_objects)
   target_compile_definitions(test_frontendwindow PRIVATE WEBOLUTION_HAVE_SDL2=1)
@@ -319,7 +323,7 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   endif()
   add_test(NAME frontendwindow COMMAND test_frontendwindow)
   set_tests_properties(frontendwindow PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR};WEBOLUTION_TEST_OUTPUT_DIR=${CMAKE_BINARY_DIR}/frontend-window-test")
 
   # Exact application path, including the frontend-to-level handoff, driven
   # through the existing frontend observer with owned-process SDL events.
@@ -407,7 +411,7 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   endif()
   add_test(NAME levelreturn COMMAND test_levelreturn)
   set_tests_properties(levelreturn PROPERTIES TIMEOUT 240
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR};WEBOLUTION_TEST_OUTPUT_DIR=${CMAKE_BINARY_DIR}/levelreturn-test")
   add_executable(test_entrycuewindow src/__test__/test_entrycuewindow.cpp
     ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
@@ -435,10 +439,11 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   endif()
   add_test(NAME levelmenuwindow COMMAND test_levelmenuwindow)
   set_tests_properties(levelmenuwindow PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR};WEBOLUTION_TEST_OUTPUT_DIR=${CMAKE_BINARY_DIR}/levelmenuwindow-test")
   if(DEFINED WEBOLUTION_GAME_DIR)
     add_test(NAME frontend_menu COMMAND ${CMAKE_COMMAND}
-      "-DAPP=$<TARGET_FILE:webolution>" "-DDUMP=$<TARGET_FILE:MenuRenderDump>"
+      "-DAPP=$<TARGET_FILE:webolution>" "-DDUMP=$<TARGET_FILE:FrontendRenderDump>"
+      "-DMENU_DUMP=$<TARGET_FILE:MenuRenderDump>"
       "-DGAME_DIR=${WEBOLUTION_GAME_DIR}" "-DOUTPUT_DIR=${CMAKE_BINARY_DIR}/frontend-menu-test"
       -P ${CMAKE_SOURCE_DIR}/src/__test__/frontend_menu.cmake)
     set_tests_properties(frontend_menu PROPERTIES TIMEOUT 120)

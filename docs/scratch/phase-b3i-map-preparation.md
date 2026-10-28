@@ -7,7 +7,7 @@ identified by B3h, not a new construction-counter/caller crawl. Worker packet:
 
 **READ:**49B647..49B7AF has no call/surface access. It resets record states to1
 until existing state4, seeds nodes0/1/2 to3, then visits records in increasing order.
-For nonzero flag `[4E36E8 + 7000*g + 280*s]`, set own state2 and process linkA then
+For nonzero DWORD flag `[0x4E36E8 + 0x1B58*g + 0x118*s]` (strides7000/280 **decimal**), set own state2 and process linkA then
 linkB: unless0x8000 or target state4, set target state3. Mapping `(g,s,base)` is
 the exact102-record table4B3948. Constructor103records end in state4; all links
 are forward/in-range. Incoming records/terminator validity are conditions; native

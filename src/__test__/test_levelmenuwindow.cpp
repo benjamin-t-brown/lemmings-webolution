@@ -2,6 +2,7 @@
 #include "app/LevelMenu.h"
 #include "app/RuntimeCursor.h"
 #include "assets/Box.h"
+#include "assets/Png.h"
 #include "sim/World.h"
 
 #define SDL_MAIN_HANDLED
@@ -26,6 +27,14 @@ bool click(int x, int y, Uint8 button = SDL_BUTTON_LEFT) {
   e.button.x = x; e.button.y = y; return SDL_PushEvent(&e) == 1;
 }
 bool quit() { SDL_Event e{}; e.type = SDL_QUIT; return SDL_PushEvent(&e) == 1; }
+bool motion(int x, int y) {
+  SDL_Event e{}; e.type = SDL_MOUSEMOTION; e.motion.x = x; e.motion.y = y;
+  return SDL_PushEvent(&e) == 1;
+}
+bool release(int x, int y) {
+  SDL_Event e{}; e.type = SDL_MOUSEBUTTONUP; e.button.button = SDL_BUTTON_LEFT;
+  e.button.x = x; e.button.y = y; return SDL_PushEvent(&e) == 1;
+}
 }
 
 int main() {
@@ -57,6 +66,7 @@ int main() {
     if (s.screen() == shell::Screen::Menu || s.screen() == shell::Screen::Confirm) {
       ok &= phase == 0 && key(SDL_SCANCODE_RETURN);
     } else if (s.screen() == shell::Screen::Map) {
+      ok &= s.constructionCounter() == (phase == 0 ? 5 : phase == 2 ? 17 : 23);
       ok &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
       if (phase == 0) ok &= click(206, 204);
       else if (phase == 2) { phase = 3; ok &= click(otherX, otherY); }
@@ -66,6 +76,18 @@ int main() {
   };
   const auto level = [&](const app::LevelFrameView& f) {
     ++callbacks;
+    const auto expectedCounter = [&]() {
+      if (phase == 0) {
+        constexpr std::array counts{5, 7, 7, 7, 7, 9, 9, 11, 11, 11, 13};
+        return f.frame >= 0 && f.frame < static_cast<int>(counts.size()) ? counts[f.frame] : -1;
+      }
+      if (phase == 1) return f.frame == 0 ? 13 : 15;
+      if (phase == 3) return f.frame == 0 ? 17 : 19;
+      if (phase == 4) return f.frame == 0 ? 19 : 21;
+      return -1;
+    };
+    ok &= f.frontendConstructionCounter.has_value() &&
+          f.frontendConstructionCounter == expectedCounter();
     if (f.levelMenuOpen) {
       const auto pixel = [&](int x, int y, std::array<int, 3> rgb) {
         const auto i = (y * f.image.width + x) * 4;
@@ -143,8 +165,73 @@ int main() {
   std::vector<std::string> args{"level-menu-test", "--frontend", "--frames", "20", "--game-dir", game};
   std::vector<char*> argv; for (auto& a : args) argv.push_back(a.data());
   const int result = app::runApplication(static_cast<int>(argv.size()), argv.data(), front, level,
-                                        {.frameSeconds = 0.5});
+                                         {.frameSeconds = 0.5});
   if (result || !ok || phase != 6 || callbacks != 17) return 1;
-  std::cout << "PASS: menu ownership, Resume/O-close, fresh retries and no-result map abandonment\n";
+
+  // Independent owned SDL-dummy trace for the 2026-10-28 18:27 native route:
+  // startup3 -> Confirm4 -> Map5 -> Level5 -> menu7 -> Quit/Map9 -> footer/Menu10.
+  // Pointer motion and frame exports below use the actual application session.
+  bool traceOk = true;
+  int tracePhase = 0;
+  const char* traceOutput = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");
+  const auto exportFrame = [&](const app::FrontendSession& s, const char* name) {
+    if (!traceOutput || !*traceOutput) return true;
+    const std::filesystem::path dir(traceOutput);
+    std::error_code error;
+    std::filesystem::create_directories(dir, error);
+    return !error && webo::writePng(dir / name, s.composeFrame()).has_value();
+  };
+  const auto traceFront = [&](const app::FrontendSession& s, int) {
+    if (s.screen() == shell::Screen::Menu || s.screen() == shell::Screen::Confirm) {
+      if (tracePhase == 0) {
+        traceOk &= s.constructionCounter() == (s.screen() == shell::Screen::Menu ? 3 : 4);
+        traceOk &= key(SDL_SCANCODE_RETURN);
+      } else {
+        traceOk &= tracePhase == 5 && s.screen() == shell::Screen::Menu && s.constructionCounter() == 10;
+        traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= s.pointerX() == 320 && s.pointerY() == 240 && !s.leftHeld() && !s.rightHeld();
+        traceOk &= exportFrame(s, "menu10-cursor-320-240.png");
+        tracePhase = 6; traceOk &= quit();
+      }
+    } else if (s.screen() == shell::Screen::Map) {
+      if (tracePhase == 0) {
+        traceOk &= s.constructionCounter() == 5 && !s.selectedLevel() && !s.outcome() &&
+                   s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= click(206, 204); tracePhase = 1;
+      } else {
+        traceOk &= tracePhase >= 2 && tracePhase <= 4 && s.constructionCounter() == 9 && !s.selectedLevel() &&
+                    !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= !s.leftHeld() && !s.rightHeld();
+        if (tracePhase == 2) {
+          tracePhase = 3; traceOk &= motion(320, 240);
+        } else if (tracePhase == 3) {
+          traceOk &= s.pointerX() == 320 && s.pointerY() == 240;
+          traceOk &= exportFrame(s, "map9-cursor-320-240.png");
+          tracePhase = 4; traceOk &= motion(320, 455);
+        } else {
+          traceOk &= s.pointerX() == 320 && s.pointerY() == 455;
+          traceOk &= exportFrame(s, "map9-footer-hover-320-455.png");
+          tracePhase = 5;
+          traceOk &= click(320, 455) && release(320, 455) && motion(320, 240);
+        }
+      }
+    } else { traceOk = false; quit(); }
+  };
+  const auto traceLevel = [&](const app::LevelFrameView& f) {
+    if (tracePhase == 1 && f.frame == 0) {
+      traceOk &= f.frontendConstructionCounter == 5 && !f.levelMenuOpen;
+      traceOk &= key(SDL_SCANCODE_ESCAPE);
+    } else if (tracePhase == 1 && f.frame == 1) {
+      traceOk &= f.frontendConstructionCounter == 7 && f.levelMenuOpen && f.paused;
+      tracePhase = 2; traceOk &= click(320, 170);
+    } else if (tracePhase < 2 || tracePhase > 5) traceOk = false;
+  };
+  std::vector<std::string> traceArgs{"level-menu-prefix", "--frontend", "--frames", "8",
+                                    "--game-dir", game};
+  std::vector<char*> traceArgv; for (auto& a : traceArgs) traceArgv.push_back(a.data());
+  const int traceResult = app::runApplication(static_cast<int>(traceArgv.size()), traceArgv.data(),
+      traceFront, traceLevel, {.frameSeconds = 0.5});
+  if (traceResult || !traceOk || tracePhase != 6) return 1;
+  std::cout << "PASS: connected root/page counters, Resume/O-close, retries and map abandonment\n";
   return 0;
 }

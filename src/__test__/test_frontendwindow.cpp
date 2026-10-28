@@ -386,6 +386,59 @@ int main() {
   if (!focusResult || *focusResult || !focusOk) {
     std::cerr << "SDL focus guard mismatch\n"; return 1;
   }
+  auto confirmFocus = createSession();
+  if (!confirmFocus) return 1;
+  bool confirmFocusOk = true;
+  int confirmFocusFrames = 0;
+  std::optional<webo::Image> initialConfirm;
+  const auto freshConfirmMap = [] {
+    std::array<std::int32_t, 102> states;
+    states.fill(1); states[0] = states[1] = states[2] = 3;
+    return states;
+  }();
+  const std::array confirmScreens{webo::shell::Screen::Menu, webo::shell::Screen::Confirm,
+      webo::shell::Screen::Confirm, webo::shell::Screen::Confirm, webo::shell::Screen::Confirm,
+      webo::shell::Screen::Menu, webo::shell::Screen::Confirm, webo::shell::Screen::Map,
+      webo::shell::Screen::Menu};
+  auto confirmFocusResult = webo::app::runFrontendWindow(*confirmFocus,
+      {.maxFrames = 9, .finalFramePath = {}}, [&](const auto& current, int frame) {
+        ++confirmFocusFrames;
+        if (frame >= static_cast<int>(confirmScreens.size())) { push(SDL_QUIT); return; }
+        confirmFocusOk &= current.screen() == confirmScreens[frame];
+        const int expectedCounter[] = {3, 4, 4, 4, 4, 5, 6, 7, 8};
+        confirmFocusOk &= current.constructionCounter() == expectedCounter[frame];
+        confirmFocusOk &= current.completionFlags() == std::array<std::int32_t, 102>{} &&
+                          !current.selectedLevel();
+        auto exportFrame = [&](const char* filename) {
+          if (current.pointerX() != 320 || current.pointerY() != 240 ||
+              current.leftHeld() || current.rightHeld()) return false;
+          return static_cast<bool>(webo::writePng(outputDir / filename, current.composeFrame()));
+        };
+        if (frame == 0) confirmFocusOk &= motion(320, 240, 0, 0) &&
+            mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 320, 240) &&
+            mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 320, 240) && key(SDLK_RETURN);
+        if (frame == 1) {
+          initialConfirm = current.image();
+          confirmFocusOk &= current.menuFocus() == 0 && exportFrame("confirm-focus-yes4.png") && key(SDLK_DOWN);
+        }
+        if (frame == 2) confirmFocusOk &= current.menuFocus() == 1 && initialConfirm &&
+            current.image().rgba != initialConfirm->rgba && exportFrame("confirm-focus-no4.png") && key(SDLK_UP);
+        if (frame == 3) confirmFocusOk &= current.menuFocus() == 0 && initialConfirm &&
+            current.image().rgba == initialConfirm->rgba && key(SDLK_DOWN);
+        if (frame == 4) confirmFocusOk &= current.menuFocus() == 1 && key(SDLK_RETURN);
+        if (frame == 5) confirmFocusOk &= current.menuFocus() == 0 && exportFrame("confirm-focus-menu5.png") && key(SDLK_RETURN);
+        if (frame == 6) confirmFocusOk &= current.menuFocus() == 0 && initialConfirm &&
+            current.image().rgba == initialConfirm->rgba && key(SDLK_RETURN);
+        if (frame == 7) confirmFocusOk &= current.mapStates() == freshConfirmMap &&
+            exportFrame("confirm-focus-map7.png") &&
+            mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 320, 455) &&
+            mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 320, 455) && motion(320, 240, 0, 0);
+        if (frame == 8) confirmFocusOk &= current.menuFocus() == 0 &&
+            exportFrame("confirm-focus-menu8.png") && push(SDL_QUIT);
+      });
+  if (!confirmFocusResult || *confirmFocusResult || !confirmFocusOk || confirmFocusFrames != 9) {
+    std::cerr << "SDL confirmation focus sequence mismatch\n"; return 1;
+  }
   auto cancel = createSession();
   if (!cancel) return 1;
   bool cancelOk = true;

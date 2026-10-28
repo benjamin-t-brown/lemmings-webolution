@@ -1,5 +1,11 @@
 # Frontend runtime integration: New Game to a retail level
 
+**Historical implementation snapshot.** Later [main-menu row1 evidence](frontend-return-negative-prediction-2026-10-28.md)
+supersedes the blanket nonzero-Return claim below. [Confirmation focus observation](frontend-confirmation-focus-2026-10-28.md)
+now establishes the bounded DOWN/UP/DOWN and Return-on-No route; the initial
+fixed-Yes adapter and unverified-keyboard statements below describe this earlier
+stage, not the latest native findings. See [STATUS](../STATUS.md) for current scope.
+
 User approved the next frontend integration step after runtime-panel delivery.
 This implementation is opt-in with **`webolution --frontend`**. Ordinary direct
 level, `--map` fixture, and headless commands retain their prior entry routes.

@@ -43,6 +43,8 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   shell::MenuParams choices;
   choices.baseY = 300;
   const std::array<std::string, 2> labels{std::string((*strings)[21]), std::string((*strings)[22])};
+  result.confirmLabels_ = labels;
+  result.confirmBackdrop_ = *background;
   result.confirm_ = shell::renderMainMenu(*background, *font, labels, choices, cells);
   for (int i = 0; i < 2; ++i) {
     const int left = shell::labelLeft(labels[i], cells, 640);
@@ -54,6 +56,7 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   // RGB(255,0,0), flags0x840 (horizontal centre, no vertical offset). No panel.
   // Reuse the font alpha blitter only; no HUD-specific layout is applied.
   const std::string question((*strings)[129]);
+  result.confirmQuestion_ = question;
   const std::array<shell::HudLine, 1> heading{{
       {question, shell::labelLeft(question, cells, 640), 250, {255, 0, 0}}}};
   shell::drawHud(result.confirm_, *font, heading, cells);
@@ -108,7 +111,21 @@ const Image& FrontendSession::image() const {
         menuImageHighlight_ = menuFocus();
       }
       return menu_;
-    case shell::Screen::Confirm: return confirm_;
+    case shell::Screen::Confirm:
+      if (confirmImageFocus_ != menuFocus()) {
+        shell::MenuParams choices;
+        choices.baseY = 300;
+        choices.highlight = menuFocus();
+        // Recompose the choices and independent red heading from owned assets.
+        confirm_ = shell::renderMainMenu(confirmBackdrop_, font_, confirmLabels_, choices,
+                                         shell::fontCells());
+        const auto& question = confirmQuestion_;
+        const std::array<shell::HudLine, 1> heading{{
+            {question, shell::labelLeft(question, shell::fontCells(), 640), 250, {255, 0, 0}}}};
+        shell::drawHud(confirm_, font_, heading, shell::fontCells());
+        confirmImageFocus_ = menuFocus();
+      }
+      return confirm_;
     case shell::Screen::Results: return results_->image();
     default: return mapImage_; // Level/Dialog composition belongs to the level renderer.
   }
@@ -124,12 +141,19 @@ shell::Outcome FrontendSession::pressReturn() {
   // The native shared builder focuses the sole footer row. SDL Return invokes
   // its recovered semantic action; physical Return binding was not remeasured.
   if (screen() == shell::Screen::Map) return state_.activateMapFooter();
-  if (screen() == shell::Screen::Confirm) return confirmChoice(true);
+  // READ49BC59 dispatches the focused row; observed keyboard No returns Menu5.
+  if (screen() == shell::Screen::Confirm) return confirmChoice(menuFocus() == 0);
   return state_.press(shell::Key::Return);
 }
 
 bool FrontendSession::moveMenuFocus(int direction) {
-  if (screen() != shell::Screen::Menu || (direction != -1 && direction != 1)) return false;
+  if ((screen() != shell::Screen::Menu && screen() != shell::Screen::Confirm) ||
+      (direction != -1 && direction != 1)) return false;
+  if (screen() == shell::Screen::Confirm) {
+    // READ488A92/4891BB: both links of the two-row ring point to the other choice.
+    state_.setHighlight((menuFocus() + direction + 2) % 2);
+    return true;
+  }
   constexpr int rows = static_cast<int>(shell::kLabelIndices.size());
   state_.setHighlight((menuFocus() + direction + rows) % rows);
   return true;

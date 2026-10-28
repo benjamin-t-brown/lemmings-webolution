@@ -77,8 +77,13 @@ class FrontendSession {
   // model's highlight without passing through directional input.
   mutable Image menu_;
   mutable int menuImageHighlight_ = 0;
-  Image menuBackdrop_, confirm_, mapImage_;
+  Image menuBackdrop_, confirmBackdrop_;
+  mutable Image confirm_;
+  Image mapImage_;
+  mutable int confirmImageFocus_ = 0;
   std::vector<std::string> menuLabels_;
+  std::array<std::string, 2> confirmLabels_;
+  std::string confirmQuestion_;
   Image font_, initialMapImage_;
   std::string mapFooterLabel_;
   int firstMenuLeft_ = 0, firstMenuRight_ = 0;

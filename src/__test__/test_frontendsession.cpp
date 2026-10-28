@@ -263,10 +263,53 @@ int main() {
   check(focusedClick->moveMenuFocus(1) && focusedClick->menuFocus() == 1 &&
         focusedClick->click(320, 333) && focusedClick->screen() == Screen::Confirm,
         "New Game click selects its own row, not stale keyboard Continue focus");
-  check(!focusedClick->moveMenuFocus(-1) && focusedClick->screen() == Screen::Confirm,
-        "main-menu arrows do not change confirmation focus");
-  check(focusedClick->click(320, 340) && focusedClick->menuFocus() == 0,
-        "No returns a newly focused row0 menu");
+  const auto confirmYesImage = focusedClick->image();
+  check(focusedClick->moveMenuFocus(1) && focusedClick->menuFocus() == 1 &&
+        pixel(focusedClick->image(), 288, 331) == std::array<unsigned char, 4>{224,128,0,255} &&
+        focusedClick->screen() == Screen::Confirm,
+        "confirmation focus advances to No and renders selected row");
+  const auto confirmNoImage = focusedClick->image();
+  bool unchangedOutsideChoices = true;
+  for (int y = 0; y < 480; ++y) for (int x = 0; x < 640; ++x)
+    if (y < 300 || y >= 358)
+      unchangedOutsideChoices &= pixel(confirmYesImage, x, y) == pixel(confirmNoImage, x, y);
+  check(unchangedOutsideChoices, "focus redraw preserves heading and backdrop outside choices");
+  check(focusedClick->moveMenuFocus(-1) && focusedClick->menuFocus() == 0 &&
+        focusedClick->moveMenuFocus(1) && focusedClick->menuFocus() == 1 &&
+        focusedClick->pressReturn() == shell::Outcome::Handled &&
+        focusedClick->screen() == Screen::Menu && focusedClick->menuFocus() == 0 &&
+        focusedClick->constructionCounter() == 5,
+        "confirmation arrows toggle and Return No resets menu focus");
+  check(focusedClick->pressReturn() == shell::Outcome::Handled && focusedClick->menuFocus() == 0 &&
+        focusedClick->image().rgba == confirmYesImage.rgba,
+        "new Confirm resets Yes and invalidates stale No image");
+  shell::Frontend confirmModel;
+  confirmModel.press(shell::Key::Return);
+  confirmModel.setHighlight(1);
+  check(confirmModel.press(shell::Key::Return) == shell::Outcome::Handled &&
+        confirmModel.screen() == Screen::Menu && confirmModel.highlight() == 0 && confirmModel.counter() == 5,
+        "shell Return agrees with session for focused No");
+
+  // SOURCE-only nonzero progression setup; current native keyboard capture began
+  // with zero flags. Do not substitute this outcome for its actual-app exports.
+  auto confirmProgress = make();
+  if (!confirmProgress) return 1;
+  confirmProgress->pressReturn(); confirmProgress->pressReturn();
+  check(confirmProgress->clickMap(206, 204) &&
+        confirmProgress->completeLevel(*library, {"MM_CLIMB_002", 1, 1, 1, 10, true}).has_value() &&
+        confirmProgress->click(320, 360) && confirmProgress->click(320, 455),
+        "source progress setup reaches menu after earned completion");
+  const auto beforeNoFlags = confirmProgress->completionFlags();
+  const auto beforeNoStates = confirmProgress->mapStates();
+  check(beforeNoFlags[0] == 1 && confirmProgress->pressReturn() == shell::Outcome::Handled &&
+        confirmProgress->moveMenuFocus(1) && confirmProgress->pressReturn() == shell::Outcome::Handled &&
+        confirmProgress->screen() == Screen::Menu && confirmProgress->completionFlags() == beforeNoFlags &&
+        confirmProgress->mapStates() == beforeNoStates,
+        "keyboard No preserves source nonzero progress and map states");
+  check(confirmProgress->pressReturn() == shell::Outcome::Handled && confirmProgress->menuFocus() == 0 &&
+        confirmProgress->pressReturn() == shell::Outcome::Handled && confirmProgress->screen() == Screen::Map &&
+        confirmProgress->completionFlags() == std::array<std::int32_t, 102>{},
+        "fresh Yes clears source nonzero progress after keyboard No");
   for (int row = 2; row < 5; ++row) {
     shell::Frontend unsupported;
     unsupported.setHighlight(row);

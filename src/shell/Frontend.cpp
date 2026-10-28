@@ -61,7 +61,7 @@ Outcome Frontend::press(Key key, int holdFrames) {
       }
       return Outcome::Unobserved;
     case Screen::Confirm:
-      if (key == Key::Return) return confirmChoice(true);
+      if (key == Key::Return) return confirmChoice(highlight_ == 0);
       return Outcome::Unobserved;
     case Screen::Map:
       if (key == Key::MapNodeClick) {

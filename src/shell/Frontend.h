@@ -78,7 +78,8 @@ class Frontend {
   // holdFrames matters only for Esc.
   Outcome press(Key key, int holdFrames = kEscHoldLevel);
   // READ semantic activation at 0x49BC59: Yes routes to selector 0x23 (map),
-  // No to selector 7 (new menu). Physical RETURN-at-No is not established.
+  // No to selector 7 (new menu). Shim Return at focused No observed2026-10-28;
+  // physical-device equivalence and repeat timing remain outside that observation.
   Outcome confirmChoice(bool yes);
   // READ 0x49B1E4: semantic event0 from map's footer constructs selector7.
   // Mapping a physical key/button to this action is left to the app adapter.
@@ -94,7 +95,7 @@ class Frontend {
   Outcome openLevelMenu();
   Outcome closeLevelMenu(bool paused);
   Outcome retryLevelMenu();
-  // Menu focus; initial and returned row0 were structurally observed2026-10-28.
+  // Shared menu/Confirm focus; page construction/return starts at row0.
   void setHighlight(int highlight) { highlight_ = highlight; }
   // Level back to the map; the triggering input is unobserved, so it is a method.
   Outcome leaveLevel();

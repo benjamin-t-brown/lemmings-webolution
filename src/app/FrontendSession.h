@@ -11,6 +11,7 @@
 #include <expected>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace webo::app {
 
@@ -18,7 +19,8 @@ namespace webo::app {
 // adapter: the model does not claim that an SDL click proves native DirectInput
 // binding. New-game progress starts empty in memory; no installed save is read
 // or reset. Results Continue/retry/Quit preserve this owned progress; New Game Yes
-// clears it. Other menu actions and keyboard traversal remain unimplemented.
+// clears it. Other menu actions remain unimplemented; main-menu UP/DOWN is an
+// SDL adapter, not a claim about physical DirectInput bindings.
 class FrontendSession {
  public:
   static std::expected<FrontendSession, std::string> create(
@@ -50,6 +52,8 @@ class FrontendSession {
   shell::Screen screen() const { return state_.screen(); }
   int constructionCounter() const { return state_.counter(); }
   shell::Outcome pressReturn();
+  bool moveMenuFocus(int direction);
+  int menuFocus() const { return state_.highlight(); }
   shell::Outcome openLevelMenu();
   shell::Outcome closeLevelMenu(bool paused);
   bool click(int x, int y);
@@ -69,7 +73,12 @@ class FrontendSession {
   shell::Outcome confirmChoice(bool yes);
   Image renderMapImage(const MapScene& map) const;
   shell::Frontend state_;
-  Image menu_, confirm_, mapImage_;
+  // A render cache, not a second focus owner: page replacement can reset the
+  // model's highlight without passing through directional input.
+  mutable Image menu_;
+  mutable int menuImageHighlight_ = 0;
+  Image menuBackdrop_, confirm_, mapImage_;
+  std::vector<std::string> menuLabels_;
   Image font_, initialMapImage_;
   std::string mapFooterLabel_;
   int firstMenuLeft_ = 0, firstMenuRight_ = 0;

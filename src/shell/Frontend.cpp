@@ -55,8 +55,9 @@ Outcome Frontend::press(Key key, int holdFrames) {
   switch (screen_) {
     case Screen::Menu:
       if (key == Key::Return) {
-        if (highlight_ != 0) return Outcome::Ignored;
-        return replacePage(Screen::Confirm);
+        if (highlight_ == 0) return replacePage(Screen::Confirm);
+        if (highlight_ == 1) return replacePage(Screen::Map);
+        return Outcome::Unobserved;
       }
       return Outcome::Unobserved;
     case Screen::Confirm:

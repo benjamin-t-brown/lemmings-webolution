@@ -17,8 +17,9 @@ Its subject-specific findings are reference material; read those relevant to you
 - **Expect the wrong *shape*, not the wrong number.** An "interval in ticks" was an animation
   cycle; an "explosion radius" was a stored 7x7 bitmap; an exit "rectangle" was an object AABB.
 - **A clean negative is a result.** So is "this does not appear in any reachable level".
-- **Preserve quirks**: RETURN only when the menu highlight is exactly 0. Do not smooth
-  it out. The "short ESC fails to leave pause" quirk was retracted 2026-10-23 (not reproduced; see
+- **Preserve evidenced quirks, not disproved assumptions.** The blanket “RETURN only
+  at menu highlight0” claim is contradicted by [row1 → Map observation](scratch/frontend-return-negative-prediction-2026-10-28.md).
+  Other row actions remain separate. The "short ESC fails to leave pause" quirk was retracted 2026-10-23 (not reproduced; see
   the evidence rules). Menu language is not a quirk
   (user, 2026-10-22); match the reference capture and do not reset the install's language.
 - **Every behavioural change needs a test that fails against the old behaviour**, verified by

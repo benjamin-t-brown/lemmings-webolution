@@ -38,7 +38,7 @@ enum class Key : std::uint8_t { Return, Esc, P, O, MapNodeClick };
 
 enum class Outcome : std::uint8_t {
   Handled,     // state advanced as the captures (or a preserved quirk) say
-  Ignored,     // preserved quirk: RETURN at a menu highlight other than 0
+  Ignored,     // input/action rejected by an established guard
   Unobserved,  // the captures have no data for this input; state unchanged
 };
 
@@ -94,7 +94,7 @@ class Frontend {
   Outcome openLevelMenu();
   Outcome closeLevelMenu(bool paused);
   Outcome retryLevelMenu();
-  // Highlight of the menu. Initial value 0 is unread, not observed.
+  // Menu focus; initial and returned row0 were structurally observed2026-10-28.
   void setHighlight(int highlight) { highlight_ = highlight; }
   // Level back to the map; the triggering input is unobserved, so it is a method.
   Outcome leaveLevel();

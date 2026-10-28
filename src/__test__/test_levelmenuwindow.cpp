@@ -168,14 +168,77 @@ int main() {
                                          {.frameSeconds = 0.5});
   if (result || !ok || phase != 6 || callbacks != 17) return 1;
 
-  // Independent owned SDL-dummy trace for the 2026-10-28 18:27 native route:
-  // startup3 -> Confirm4 -> Map5 -> Level5 -> menu7 -> Quit/Map9 -> footer/Menu10.
-  // Pointer motion and frame exports below use the actual application session.
+  // Retain the earlier native-matched abandonment route and its export names.
+  {
+    bool traceOk = true;
+    int tracePhase = 0;
+    const char* traceOutput = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");
+    if (!traceOutput || !*traceOutput) return 1;
+    const std::filesystem::path outputDir(traceOutput);
+    std::filesystem::create_directories(outputDir);
+    const auto exportFrame = [&](const app::FrontendSession& s, const char* name) {
+      return static_cast<bool>(writePng(outputDir / name, s.composeFrame()));
+    };
+    const auto traceFront = [&](const app::FrontendSession& s, int) {
+      if (s.screen() == shell::Screen::Menu || s.screen() == shell::Screen::Confirm) {
+        if (tracePhase == 0) {
+          traceOk &= s.constructionCounter() == (s.screen() == shell::Screen::Menu ? 3 : 4);
+          traceOk &= key(SDL_SCANCODE_RETURN);
+        } else {
+          traceOk &= tracePhase == 5 && s.screen() == shell::Screen::Menu && s.constructionCounter() == 10;
+          traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+          traceOk &= s.pointerX() == 320 && s.pointerY() == 240 && !s.leftHeld() && !s.rightHeld();
+          traceOk &= exportFrame(s, "menu10-cursor-320-240.png");
+          tracePhase = 6; traceOk &= quit();
+        }
+      } else if (s.screen() == shell::Screen::Map) {
+        if (tracePhase == 0) {
+          traceOk &= s.constructionCounter() == 5 && !s.selectedLevel() && !s.outcome() &&
+                     s.completionFlags() == std::array<std::int32_t, 102>{};
+          traceOk &= click(206, 204); tracePhase = 1;
+        } else {
+          traceOk &= tracePhase >= 2 && tracePhase <= 4 && s.constructionCounter() == 9 && !s.selectedLevel() &&
+                      !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+          traceOk &= !s.leftHeld() && !s.rightHeld();
+          if (tracePhase == 2) {
+            tracePhase = 3; traceOk &= motion(320, 240);
+          } else if (tracePhase == 3) {
+            traceOk &= s.pointerX() == 320 && s.pointerY() == 240;
+            traceOk &= exportFrame(s, "map9-cursor-320-240.png");
+            tracePhase = 4; traceOk &= motion(320, 455);
+          } else {
+            traceOk &= s.pointerX() == 320 && s.pointerY() == 455;
+            traceOk &= exportFrame(s, "map9-footer-hover-320-455.png");
+            tracePhase = 5;
+            traceOk &= click(320, 455) && release(320, 455) && motion(320, 240);
+          }
+        }
+      } else { traceOk = false; quit(); }
+    };
+    const auto traceLevel = [&](const app::LevelFrameView& f) {
+      if (tracePhase == 1 && f.frame == 0) {
+        traceOk &= f.frontendConstructionCounter == 5 && !f.levelMenuOpen;
+        traceOk &= key(SDL_SCANCODE_ESCAPE);
+      } else if (tracePhase == 1 && f.frame == 1) {
+        traceOk &= f.frontendConstructionCounter == 7 && f.levelMenuOpen && f.paused;
+        tracePhase = 2; traceOk &= click(320, 170);
+      } else if (tracePhase < 2 || tracePhase > 5) traceOk = false;
+    };
+    std::vector<std::string> traceArgs{"level-menu-prefix", "--frontend", "--frames", "8", "--game-dir", game};
+    std::vector<char*> traceArgv; for (auto& a : traceArgs) traceArgv.push_back(a.data());
+    const int traceResult = app::runApplication(static_cast<int>(traceArgv.size()), traceArgv.data(),
+        traceFront, traceLevel, {.frameSeconds = 0.5});
+    if (traceResult || !traceOk || tracePhase != 6) return 1;
+  }
+
+  // Independent owned SDL-dummy trace for the bounded connected frontend route.
+  // This runs the application, rather than a FrontendSession-only model.
   bool traceOk = true;
   int tracePhase = 0;
   const char* traceOutput = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");
   const auto exportFrame = [&](const app::FrontendSession& s, const char* name) {
-    if (!traceOutput || !*traceOutput) return true;
+    if (!traceOutput || !*traceOutput || s.pointerX() != 320 || s.pointerY() != 240 ||
+        s.leftHeld() || s.rightHeld()) return false;
     const std::filesystem::path dir(traceOutput);
     std::error_code error;
     std::filesystem::create_directories(dir, error);
@@ -184,54 +247,90 @@ int main() {
   const auto traceFront = [&](const app::FrontendSession& s, int) {
     if (s.screen() == shell::Screen::Menu || s.screen() == shell::Screen::Confirm) {
       if (tracePhase == 0) {
-        traceOk &= s.constructionCounter() == (s.screen() == shell::Screen::Menu ? 3 : 4);
-        traceOk &= key(SDL_SCANCODE_RETURN);
-      } else {
-        traceOk &= tracePhase == 5 && s.screen() == shell::Screen::Menu && s.constructionCounter() == 10;
+        traceOk &= s.screen() == shell::Screen::Menu && s.constructionCounter() == 3;
         traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
         traceOk &= s.pointerX() == 320 && s.pointerY() == 240 && !s.leftHeld() && !s.rightHeld();
-        traceOk &= exportFrame(s, "menu10-cursor-320-240.png");
-        tracePhase = 6; traceOk &= quit();
+        traceOk &= exportFrame(s, "nr-menu3-cursor-320-240.png");
+        traceOk &= key(SDL_SCANCODE_RETURN);
+        tracePhase = 1;
+      } else if (tracePhase == 1) {
+        traceOk &= s.screen() == shell::Screen::Confirm && s.constructionCounter() == 4;
+        traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= exportFrame(s, "nr-confirm4-cursor-320-240.png");
+        traceOk &= click(320, 340) && release(320, 340) && motion(320, 240); tracePhase = 2;
+      } else if (tracePhase == 2) {
+        traceOk &= s.screen() == shell::Screen::Menu && s.constructionCounter() == 5;
+        traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= exportFrame(s, "nr-no-menu5-cursor-320-240.png");
+        traceOk &= key(SDL_SCANCODE_RETURN); tracePhase = 3;
+      } else if (tracePhase == 3) {
+        traceOk &= s.screen() == shell::Screen::Confirm && s.constructionCounter() == 6;
+        traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= exportFrame(s, "nr-confirm6-cursor-320-240.png");
+        traceOk &= key(SDL_SCANCODE_RETURN); tracePhase = 4;
+      } else if (tracePhase == 4) {
+        traceOk &= false;
+      } else if (tracePhase == 9) {
+        traceOk &= s.screen() == shell::Screen::Menu && s.constructionCounter() == 14;
+        traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= s.pointerX() == 320 && s.pointerY() == 240 && !s.leftHeld() && !s.rightHeld();
+        traceOk &= exportFrame(s, "nr-menu14-cursor-320-240.png");
+        tracePhase = 10; traceOk &= quit();
+      } else {
+        traceOk = false; quit();
       }
     } else if (s.screen() == shell::Screen::Map) {
-      if (tracePhase == 0) {
-        traceOk &= s.constructionCounter() == 5 && !s.selectedLevel() && !s.outcome() &&
+      if (tracePhase == 4) {
+        traceOk &= s.constructionCounter() == 7 && !s.selectedLevel() && !s.outcome() &&
                    s.completionFlags() == std::array<std::int32_t, 102>{};
-        traceOk &= click(206, 204); tracePhase = 1;
+        traceOk &= exportFrame(s, "nr-map7-cursor-320-240.png");
+        traceOk &= click(206, 204); tracePhase = 5;
+      } else if (tracePhase == 8) {
+        traceOk &= s.constructionCounter() == 13;
+        traceOk &= motion(320, 240);
+        tracePhase = 11;
+      } else if (tracePhase == 11) {
+        traceOk &= s.constructionCounter() == 13 && s.pointerX() == 320 && s.pointerY() == 240;
+        traceOk &= !s.selectedLevel() && !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
+        traceOk &= exportFrame(s, "nr-map13-cursor-320-240.png");
+        traceOk &= motion(320, 455);
+        tracePhase = 12;
+      } else if (tracePhase == 12) {
+        traceOk &= s.constructionCounter() == 13 && s.pointerX() == 320 && s.pointerY() == 455;
+        traceOk &= click(320, 455) && release(320, 455) && motion(320, 240);
+        tracePhase = 9;
       } else {
-        traceOk &= tracePhase >= 2 && tracePhase <= 4 && s.constructionCounter() == 9 && !s.selectedLevel() &&
-                    !s.outcome() && s.completionFlags() == std::array<std::int32_t, 102>{};
-        traceOk &= !s.leftHeld() && !s.rightHeld();
-        if (tracePhase == 2) {
-          tracePhase = 3; traceOk &= motion(320, 240);
-        } else if (tracePhase == 3) {
-          traceOk &= s.pointerX() == 320 && s.pointerY() == 240;
-          traceOk &= exportFrame(s, "map9-cursor-320-240.png");
-          tracePhase = 4; traceOk &= motion(320, 455);
-        } else {
-          traceOk &= s.pointerX() == 320 && s.pointerY() == 455;
-          traceOk &= exportFrame(s, "map9-footer-hover-320-455.png");
-          tracePhase = 5;
-          traceOk &= click(320, 455) && release(320, 455) && motion(320, 240);
-        }
+        traceOk = false; quit();
       }
     } else { traceOk = false; quit(); }
   };
   const auto traceLevel = [&](const app::LevelFrameView& f) {
-    if (tracePhase == 1 && f.frame == 0) {
-      traceOk &= f.frontendConstructionCounter == 5 && !f.levelMenuOpen;
+    if (tracePhase == 5 && f.frame == 0) {
+      traceOk &= f.levelName == "MM_CLIMB_002" && f.frontendConstructionCounter == 7 && !f.levelMenuOpen;
       traceOk &= key(SDL_SCANCODE_ESCAPE);
-    } else if (tracePhase == 1 && f.frame == 1) {
-      traceOk &= f.frontendConstructionCounter == 7 && f.levelMenuOpen && f.paused;
-      tracePhase = 2; traceOk &= click(320, 170);
-    } else if (tracePhase < 2 || tracePhase > 5) traceOk = false;
+    } else if (tracePhase == 5 && f.frame == 1) {
+      traceOk &= f.levelName == "MM_CLIMB_002" && f.frontendConstructionCounter == 9 && f.levelMenuOpen && f.paused;
+      traceOk &= f.world.tickCount() == 2;
+      traceOk &= click(320, 112) && release(320, 112); tracePhase = 6;
+    } else if (tracePhase == 6) {
+      traceOk &= f.levelName == "MM_CLIMB_002" && f.frontendConstructionCounter == 9 && !f.levelMenuOpen && !f.paused;
+      traceOk &= f.world.tickCount() > 2; // own-app simulation progress only, not native clock acceptance.
+      if (f.world.tickCount() > 2) { tracePhase = 7; traceOk &= key(SDL_SCANCODE_ESCAPE); }
+    } else if (tracePhase == 7) {
+      traceOk &= f.levelName == "MM_CLIMB_002" && f.frontendConstructionCounter == 11 && f.levelMenuOpen && f.paused;
+      traceOk &= click(320, 170) && release(320, 170); tracePhase = 8;
+    } else if (tracePhase == 5) traceOk = false;
   };
-  std::vector<std::string> traceArgs{"level-menu-prefix", "--frontend", "--frames", "8",
+  std::vector<std::string> traceArgs{"level-menu-no-resume", "--frontend", "--frames", "24",
                                     "--game-dir", game};
   std::vector<char*> traceArgv; for (auto& a : traceArgs) traceArgv.push_back(a.data());
   const int traceResult = app::runApplication(static_cast<int>(traceArgv.size()), traceArgv.data(),
       traceFront, traceLevel, {.frameSeconds = 0.5});
-  if (traceResult || !traceOk || tracePhase != 6) return 1;
+  if (traceResult || !traceOk || tracePhase != 10) {
+    std::cerr << "no-resume trace mismatch result=" << traceResult << " phase=" << tracePhase
+              << " ok=" << traceOk << '\n';
+    return 1;
+  }
   std::cout << "PASS: connected root/page counters, Resume/O-close, retries and map abandonment\n";
   return 0;
 }

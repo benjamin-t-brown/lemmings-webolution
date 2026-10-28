@@ -86,6 +86,9 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
       } else if (session.focused() && event.type == SDL_KEYDOWN && !event.key.repeat &&
                  event.key.keysym.sym == SDLK_RETURN) {
         session.pressReturn();
+      } else if (session.focused() && event.type == SDL_KEYDOWN && !event.key.repeat &&
+                 (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_DOWN)) {
+        session.moveMenuFocus(event.key.keysym.sym == SDLK_UP ? -1 : 1);
       } else if (session.focused() && (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)) {
         session.setPointer(event.button.x, event.button.y);
         const bool down = event.type == SDL_MOUSEBUTTONDOWN;

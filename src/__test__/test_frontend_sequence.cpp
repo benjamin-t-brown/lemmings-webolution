@@ -182,14 +182,16 @@ int main() {
     check(f.counter() == 7, "ToMap: teardown then new root and Map page (READ)");
   }
   {
-    // Preserved quirk: RETURN acts only at highlight exactly 0.
+    // Main-menu row1 is the observed Play Current Game / Continue action.
     Frontend f;
     f.setHighlight(1);
-    check(f.press(Key::Return) == Outcome::Ignored, "RETURN at highlight 1 ignored");
-    check(f.screen() == Screen::Menu && f.counter() == 3, "menu unchanged");
-    f.setHighlight(0);
-    check(f.press(Key::Return) == Outcome::Handled && f.screen() == Screen::Confirm,
-          "RETURN at highlight 0 acts");
+    check(f.press(Key::Return) == Outcome::Handled && f.screen() == Screen::Map,
+          "RETURN at highlight 1 selects Continue map page");
+    check(f.counter() == 4, "Continue replaces menu page without a new root");
+    Frontend newGame;
+    newGame.setHighlight(0);
+    check(newGame.press(Key::Return) == Outcome::Handled && newGame.screen() == Screen::Confirm,
+          "RETURN at highlight 0 selects New Game");
   }
 
   std::cout << checks << " checks, " << fails << " failures\n";

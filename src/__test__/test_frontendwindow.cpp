@@ -64,6 +64,12 @@ int main() {
     } else event.type = type;
     return SDL_PushEvent(&event) == 1;
   };
+  auto key = [](SDL_Keycode code, bool repeat = false) {
+    SDL_Event event{};
+    event.type = SDL_KEYDOWN; event.key.type = SDL_KEYDOWN; event.key.repeat = repeat;
+    event.key.keysym.sym = code;
+    return SDL_PushEvent(&event) == 1;
+  };
   auto mouse = [](Uint32 type, Uint8 button, int x, int y) {
     SDL_Event event{};
     event.type = type;
@@ -103,6 +109,110 @@ int main() {
     std::cerr << "SDL frontend event sequence or selected route mismatch\n"; return 1;
   }
 
+  // Production SDL input: directional focus, observed row1 Continue, wrap,
+  // rendered selection, progress retention, and arrows inert on the map.
+  auto navigation = createSession();
+  if (!navigation) return 1;
+  navigation->pressReturn(); navigation->pressReturn();
+  if (!navigation->clickMap(206, 204) ||
+      !navigation->completeLevel(*library, {"MM_CLIMB_002", 1, 1, 1, 10, true}) ||
+      !navigation->click(320, 360) || !navigation->click(320, 455) ||
+      navigation->screen() != webo::shell::Screen::Menu) return 1;
+  const auto earnedFlags = navigation->completionFlags();
+  const int menuCounter = navigation->constructionCounter();
+  const auto rowZeroImage = navigation->image();
+  const char* outputConfigured = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");
+  if (!outputConfigured || !*outputConfigured) {
+    std::cerr << "frontendwindow test requires CTest-owned WEBOLUTION_TEST_OUTPUT_DIR\n"; return 1;
+  }
+  const fs::path outputDir(outputConfigured);
+  fs::create_directories(outputDir);
+  // Exact observed native prefix: ordinary Menu3 -> DOWN row1 -> RETURN Map4.
+  // Unlike the progress-retention setup below, this export has no injected outcome.
+  auto observedRoute = createSession();
+  if (!observedRoute) return 1;
+  bool observedOk = true;
+  int observedFrames = 0;
+  auto observedResult = webo::app::runFrontendWindow(*observedRoute,
+      {.maxFrames = 3, .finalFramePath = {}}, [&](const auto& current, int frame) {
+        ++observedFrames;
+        using webo::shell::Screen;
+        if (frame == 0) {
+          observedOk &= current.screen() == Screen::Menu && current.constructionCounter() == 3 &&
+                        current.menuFocus() == 0;
+          observedOk &= key(SDLK_DOWN);
+        } else if (frame == 1) {
+          observedOk &= current.screen() == Screen::Menu && current.constructionCounter() == 3 &&
+                        current.menuFocus() == 1 && current.pointerX() == 320 && current.pointerY() == 240;
+          observedOk &= static_cast<bool>(webo::writePng(
+              outputDir / "main-menu-row1-observed.png", current.composeFrame()));
+          observedOk &= key(SDLK_RETURN);
+        } else if (frame == 2) {
+          observedOk &= current.screen() == Screen::Map && current.constructionCounter() == 4;
+          observedOk &= push(SDL_QUIT);
+        }
+      });
+  if (!observedResult || *observedResult || !observedOk || observedFrames != 3) {
+    std::cerr << "SDL observed Menu3 row1 to Map4 route mismatch\n"; return 1;
+  }
+  bool rowOneFrameSaved = false;
+  bool navigationOk = true;
+  int navigationFrames = 0;
+  auto navigationResult = webo::app::runFrontendWindow(*navigation,
+      {.maxFrames = 11, .finalFramePath = {}}, [&](const auto& current, int frame) {
+        ++navigationFrames;
+        using webo::shell::Screen;
+        if (frame == 0) {
+          navigationOk &= current.screen() == Screen::Menu && current.menuFocus() == 0;
+          navigationOk &= key(SDLK_UP); // 0 wraps backward to row4.
+        } else if (frame == 1) {
+          navigationOk &= current.menuFocus() == 4 && current.image().rgba != rowZeroImage.rgba;
+          navigationOk &= key(SDLK_DOWN); // wrap forward to row0.
+        } else if (frame == 2) {
+          navigationOk &= current.menuFocus() == 0;
+          navigationOk &= key(SDLK_DOWN);
+        } else if (frame == 3) {
+          navigationOk &= current.menuFocus() == 1 && current.screen() == Screen::Menu;
+          navigationOk &= current.pointerX() == 320 && current.pointerY() == 240;
+          rowOneFrameSaved = static_cast<bool>(webo::writePng(
+              outputDir / "main-menu-row1.png", current.composeFrame()));
+          navigationOk &= key(SDLK_RETURN); // observed Continue action.
+        } else if (frame == 4) {
+          navigationOk &= current.screen() == Screen::Map &&
+                           current.constructionCounter() == menuCounter + 1;
+          navigationOk &= current.completionFlags() == earnedFlags;
+          navigationOk &= key(SDLK_UP) && key(SDLK_DOWN); // inert on Map.
+        } else if (frame == 5) {
+          navigationOk &= current.screen() == Screen::Map && !current.selectedLevel() &&
+                          current.completionFlags() == earnedFlags;
+          navigationOk &= key(SDLK_RETURN); // Map footer returns a new Menu.
+        } else if (frame == 6) {
+          navigationOk &= current.screen() == Screen::Menu && current.menuFocus() == 0 &&
+                          current.image().rgba == rowZeroImage.rgba;
+          navigationOk &= key(SDLK_DOWN) && key(SDLK_DOWN, true);
+        } else if (frame == 7) {
+          navigationOk &= current.menuFocus() == 1; // repeat suppressed by SDL adapter.
+          navigationOk &= key(SDLK_UP);
+        } else if (frame == 8) {
+          navigationOk &= current.menuFocus() == 0 && current.image().rgba == rowZeroImage.rgba;
+          navigationOk &= key(SDLK_RETURN);
+        } else if (frame == 9) {
+          navigationOk &= current.screen() == Screen::Confirm;
+          navigationOk &= key(SDLK_UP) && key(SDLK_DOWN);
+          navigationOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 320, 340) &&
+                          mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 320, 340); // No.
+        } else if (frame == 10) {
+          navigationOk &= current.screen() == Screen::Menu && current.menuFocus() == 0 &&
+                          current.image().rgba == rowZeroImage.rgba &&
+                          current.completionFlags() == earnedFlags;
+          navigationOk &= push(SDL_QUIT);
+        }
+      });
+  if (!navigationResult || *navigationResult || !navigationOk || !rowOneFrameSaved || navigationFrames != 11 ||
+      navigation->screen() != webo::shell::Screen::Menu) {
+    std::cerr << "SDL main-menu focus/Continue route mismatch\n"; return 1;
+  }
+
   auto closing = createSession();
   if (!closing) return 1;
   bool closeSent = false;
@@ -117,12 +227,6 @@ int main() {
   if (!result || *result || capped->constructionCounter() != 3) {
     std::cerr << "SDL capped route mismatch\n"; return 1;
   }
-  const char* outputConfigured = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");
-  if (!outputConfigured || !*outputConfigured) {
-    std::cerr << "frontendwindow test requires CTest-owned WEBOLUTION_TEST_OUTPUT_DIR\n"; return 1;
-  }
-  const fs::path outputDir(outputConfigured);
-  fs::create_directories(outputDir);
   auto screenshot = createSession();
   if (!screenshot) return 1;
   const fs::path actualPng = outputDir / "cursor-window.png";

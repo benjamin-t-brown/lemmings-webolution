@@ -247,15 +247,33 @@ int main() {
     check(world.spawned() >= 1, "selected level World spawns from its loaded setup");
   }
 
-  shell::Frontend quirk;
-  quirk.setHighlight(1);
-  check(quirk.press(shell::Key::Return) == shell::Outcome::Ignored &&
-        quirk.screen() == Screen::Menu && quirk.counter() == 3,
-        "highlight-1 Return preserves ignored quirk");
-  check(quirk.confirmChoice(true) == shell::Outcome::Ignored && quirk.screen() == Screen::Menu,
+  shell::Frontend continueMenu;
+  continueMenu.setHighlight(1);
+  check(continueMenu.press(shell::Key::Return) == shell::Outcome::Handled &&
+        continueMenu.screen() == Screen::Map && continueMenu.counter() == 4,
+        "highlight-1 Return selects Continue map page");
+  check(continueMenu.confirmChoice(true) == shell::Outcome::Ignored && continueMenu.screen() == Screen::Map,
          "confirmChoice is a no-op outside confirmation");
-  check(quirk.activateMapFooter() == shell::Outcome::Ignored,
+  check(shell::Frontend{}.activateMapFooter() == shell::Outcome::Ignored,
         "map footer semantic action ignored outside map");
+  auto focusedClick = make();
+  if (!focusedClick) return 1;
+  check(!focusedClick->moveMenuFocus(0) && !focusedClick->moveMenuFocus(2) &&
+        focusedClick->menuFocus() == 0, "focus adapter rejects invalid directions");
+  check(focusedClick->moveMenuFocus(1) && focusedClick->menuFocus() == 1 &&
+        focusedClick->click(320, 333) && focusedClick->screen() == Screen::Confirm,
+        "New Game click selects its own row, not stale keyboard Continue focus");
+  check(!focusedClick->moveMenuFocus(-1) && focusedClick->screen() == Screen::Confirm,
+        "main-menu arrows do not change confirmation focus");
+  check(focusedClick->click(320, 340) && focusedClick->menuFocus() == 0,
+        "No returns a newly focused row0 menu");
+  for (int row = 2; row < 5; ++row) {
+    shell::Frontend unsupported;
+    unsupported.setHighlight(row);
+    check(unsupported.press(shell::Key::Return) == shell::Outcome::Unobserved &&
+          unsupported.screen() == Screen::Menu && unsupported.counter() == 3,
+          "unimplemented row action is unobserved, not a native ignored-input claim");
+  }
   auto footer = make();
   if (!footer) return 1;
   footer->pressReturn(); footer->pressReturn();

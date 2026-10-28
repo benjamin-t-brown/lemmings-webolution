@@ -28,14 +28,15 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
 
   FrontendSession result;
   const auto& cells = shell::fontCells();
-  std::vector<std::string> menuLabels;
   for (const auto index : shell::kLabelIndices)
-    menuLabels.emplace_back((*strings)[index]);
-  const shell::MenuParams menuParams;
-  result.menu_ = shell::renderMainMenu(*logo, *font, menuLabels, menuParams, cells);
-  result.firstMenuLeft_ = shell::labelLeft(menuLabels[0], cells, 640) - menuParams.panelPadX;
-  result.firstMenuRight_ = result.firstMenuLeft_ + shell::textWidth(menuLabels[0], cells)
-                          + 2 * menuParams.panelPadX;
+    result.menuLabels_.emplace_back((*strings)[index]);
+  result.menuBackdrop_ = *logo;
+  shell::MenuParams menuParams;
+  menuParams.highlight = result.menuFocus();
+  result.menu_ = shell::renderMainMenu(*logo, *font, result.menuLabels_, menuParams, cells);
+  result.firstMenuLeft_ = shell::labelLeft(result.menuLabels_[0], cells, 640) - menuParams.panelPadX;
+  result.firstMenuRight_ = result.firstMenuLeft_ + shell::textWidth(result.menuLabels_[0], cells)
+                           + 2 * menuParams.panelPadX;
 
   // READ 0x49BB6B: base200 + shared row offset100, table 0x4C4514 = {21,22}.
   // Factory selector0x24 binds SMALL_BACK at 0x4879AD (pointer 0x4C08F0).
@@ -99,7 +100,14 @@ shell::Outcome FrontendSession::confirmChoice(bool yes) {
 
 const Image& FrontendSession::image() const {
   switch (screen()) {
-    case shell::Screen::Menu: return menu_;
+    case shell::Screen::Menu:
+      if (menuImageHighlight_ != menuFocus()) {
+        shell::MenuParams params;
+        params.highlight = menuFocus();
+        menu_ = shell::renderMainMenu(menuBackdrop_, font_, menuLabels_, params, shell::fontCells());
+        menuImageHighlight_ = menuFocus();
+      }
+      return menu_;
     case shell::Screen::Confirm: return confirm_;
     case shell::Screen::Results: return results_->image();
     default: return mapImage_; // Level/Dialog composition belongs to the level renderer.
@@ -120,6 +128,13 @@ shell::Outcome FrontendSession::pressReturn() {
   return state_.press(shell::Key::Return);
 }
 
+bool FrontendSession::moveMenuFocus(int direction) {
+  if (screen() != shell::Screen::Menu || (direction != -1 && direction != 1)) return false;
+  constexpr int rows = static_cast<int>(shell::kLabelIndices.size());
+  state_.setHighlight((menuFocus() + direction + rows) % rows);
+  return true;
+}
+
 shell::Outcome FrontendSession::openLevelMenu() {
   return state_.openLevelMenu();
 }
@@ -133,6 +148,9 @@ bool FrontendSession::click(int x, int y) {
   // mouse predicate. Only New Game is implemented on the main menu.
   if (screen() == shell::Screen::Menu) {
     if (x < firstMenuLeft_ || x >= firstMenuRight_ || y < 321 || y >= 348) return false;
+    // Preserve the existing explicit New Game click route independent of the
+    // keyboard-selected row; hover and other row clicks remain unsupported.
+    state_.setHighlight(0);
     return pressReturn() == shell::Outcome::Handled;
   }
   if (screen() == shell::Screen::Confirm) {

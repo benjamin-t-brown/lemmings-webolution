@@ -275,6 +275,140 @@ int main() {
     t.fail("did not complete success, retry, Quit and map reentry cycles");
   if (!t.ok) { std::cerr << "FAIL: LevelReturn: " << t.why << " (frontend callbacks=" << t.frontCalls
                          << ", level callbacks=" << t.levelCalls << ")\n"; return 1; }
+
+  // Separate end-to-end loss route: start from a fresh application/session so
+  // every progress bit and map state is genuinely new-game state.
+  struct LossTrace {
+    bool ok = true;
+    std::string why;
+    int stage = 0;
+    bool loss7 = false, loss9 = false, map11 = false, menu12 = false;
+    bool pending7 = false, pending9 = false, retry = false;
+    bool settleQueued = false;
+    int levelCalls = 0;
+    std::array<std::int32_t, 102> freshMapStates{};
+    void fail(const char* s) { if (ok) why = s; ok = false; }
+  } loss;
+  const auto nativeFreshStates = [] {
+    std::array<std::int32_t, 102> states;
+    states.fill(1);
+    states[0] = states[1] = states[2] = 3;
+    return states;
+  }();
+  const auto exportSettled = [&](const char* name, const app::FrontendSession& s) {
+    if (s.pointerX() != 320 || s.pointerY() != 240 || s.leftHeld() || s.rightHeld()) return false;
+    return exportFrameIfRequested(name, s.composeFrame());
+  };
+  const auto lossFrontend = [&](const app::FrontendSession& s, int) {
+    using shell::Screen;
+    if (!loss.ok) { pushQuit(); return; }
+    const auto zeroFlags = std::all_of(s.completionFlags().begin(), s.completionFlags().end(),
+                                       [](auto flag) { return flag == 0; });
+    const auto freshStates = s.mapStates() == loss.freshMapStates;
+    switch (loss.stage) {
+      case 0:
+        if (s.screen() != Screen::Menu || s.constructionCounter() != 3 || !pushKey()) { loss.fail("fresh app did not start at Menu3"); pushQuit(); return; }
+        loss.stage = 1; break;
+      case 1:
+        if (s.screen() != Screen::Confirm || s.constructionCounter() != 4 || !pushKey()) { loss.fail("ordinary New Game confirmation failed"); pushQuit(); return; }
+        loss.stage = 2; break;
+      case 2:
+        if (s.screen() != Screen::Map || s.constructionCounter() != 5 || !zeroFlags || s.mapStates() != nativeFreshStates ||
+            !pushClick(206, 204)) { loss.fail("fresh New Game did not reach Map5 with zero progress"); pushQuit(); return; }
+        loss.freshMapStates = s.mapStates();
+        loss.stage = 3; break;
+      case 3:
+        if (s.screen() != Screen::Results || !s.outcome() || s.outcome()->success ||
+            s.outcome()->level != "MM_CLIMB_002" || s.outcome()->saved != 0 ||
+            s.outcome()->required != 1 || s.constructionCounter() != 7 || !zeroFlags ||
+            !freshStates || !loss.pending7) { loss.fail("first natural timeout was not fresh loss Results7"); pushQuit(); return; }
+        if (!loss.settleQueued) {
+          if (!pushMotion(320, 240) || !pushButtonUp(320, 240)) { loss.fail("cannot queue first loss screenshot settle events"); pushQuit(); }
+          loss.settleQueued = true;
+          break;
+        }
+        if (!exportSettled("nr-loss-native-loss7.png", s)) { loss.fail("first loss screenshot did not export at released center pointer"); pushQuit(); return; }
+        loss.loss7 = true;
+        if (!pushClick(320, 360)) { loss.fail("Retry click on Results7 failed"); pushQuit(); return; }
+        loss.settleQueued = false; loss.stage = 4; break;
+      case 4:
+        if (s.screen() != Screen::Results || !s.outcome() || s.outcome()->success ||
+            s.outcome()->level != "MM_CLIMB_002" || s.outcome()->saved != 0 || s.outcome()->required != 1 || s.constructionCounter() != 9 ||
+            !zeroFlags || !freshStates || s.levelIntroEnabled() || !loss.retry || !loss.pending9) {
+          loss.fail("Retry did not produce fresh stock/intro-disabled timeout Results9"); pushQuit(); return;
+        }
+        if (!loss.settleQueued) {
+          if (!pushMotion(320, 240) || !pushButtonUp(320, 240)) { loss.fail("cannot queue retry loss screenshot settle events"); pushQuit(); }
+          loss.settleQueued = true;
+          break;
+        }
+        if (!exportSettled("nr-loss-native-loss9.png", s)) { loss.fail("retry loss screenshot did not export at released center pointer"); pushQuit(); return; }
+        loss.loss9 = true;
+        if (!pushClick(320, 420)) { loss.fail("Quit click on Results9 failed"); pushQuit(); return; }
+        loss.settleQueued = false; loss.stage = 5; break;
+      case 5:
+        if (s.screen() != Screen::Map || s.constructionCounter() != 11 || s.selectedLevel() || s.outcome() ||
+            !s.levelIntroEnabled() || !zeroFlags || !freshStates) { loss.fail("Quit did not return to fresh Map11"); pushQuit(); return; }
+        if (!loss.settleQueued) {
+          if (!pushMotion(320, 240) || !pushButtonUp(320, 240)) { loss.fail("cannot queue returned map screenshot settle events"); pushQuit(); }
+          loss.settleQueued = true;
+          break;
+        }
+        if (!exportSettled("nr-loss-native-returnedmap11.png", s)) { loss.fail("returned map screenshot did not export at released center pointer"); pushQuit(); return; }
+        loss.map11 = true;
+        if (!pushClick(320, 455)) { loss.fail("map footer Menu click failed"); pushQuit(); return; }
+        loss.settleQueued = false; loss.stage = 6; break;
+      case 6:
+        if (s.screen() != Screen::Menu || s.constructionCounter() != 12 || !zeroFlags) {
+          loss.fail("Map footer did not reach Menu12"); pushQuit(); return;
+        }
+        if (!loss.settleQueued) {
+          if (!pushMotion(320, 240) || !pushButtonUp(320, 240)) { loss.fail("cannot queue final menu screenshot settle events"); pushQuit(); }
+          loss.settleQueued = true;
+          break;
+        }
+        if (!exportSettled("nr-loss-native-finalmenu12.png", s)) { loss.fail("final menu screenshot did not export at released center pointer"); pushQuit(); return; }
+        loss.menu12 = true;
+        pushQuit(); loss.stage = 7; break;
+      default: pushQuit(); break;
+    }
+  };
+  const auto lossLevel = [&](const app::LevelFrameView& f) {
+    ++loss.levelCalls;
+    if (!loss.ok) { pushQuit(); return; }
+    const auto& w = f.world;
+    if (loss.stage == 3 || loss.stage == 4) {
+      if (f.levelName != "MM_CLIMB_002" || f.frontendConstructionCounter != (loss.stage == 3 ? 5 : 7)) {
+        loss.fail("loss route has wrong level identity or construction counter"); pushQuit(); return;
+      }
+      if (w.setup().skills[static_cast<std::size_t>(sim::Skill::Climber)] != 10) {
+        loss.fail("natural timeout level did not use stock skill inventory"); pushQuit(); return;
+      }
+      if (loss.stage == 3 && f.levelName != "MM_CLIMB_002") {
+        loss.fail("Map5 did not enter MM_CLIMB_002"); pushQuit(); return;
+      }
+      if (loss.stage == 3 && f.frame == 0 && !f.cameraIntroActive) {
+        loss.fail("Map5 level entry skipped its ordinary camera intro"); pushQuit(); return;
+      }
+      if (loss.stage == 3 && f.endPhase == app::LevelEndPhase::Pending && w.timedOut()) loss.pending7 = true;
+      if (loss.stage == 4) {
+        if (f.frame == 0 && (w.tickCount() != 10 || w.saved() != 0 || f.endPhase != app::LevelEndPhase::Running ||
+                             f.cameraIntroActive || f.entryCueSeconds != -0.5 || !f.entryCueFrame || !f.entryCueFrame->additive)) {
+          loss.fail("Retry did not restart stock world with intro disabled"); pushQuit(); return;
+        }
+        if (w.timedOut() && f.endPhase == app::LevelEndPhase::Pending) loss.pending9 = true;
+        loss.retry = true;
+      }
+    }
+  };
+  std::vector<std::string> lossArgs{"levelreturn-loss-test", "--frontend", "--frames", "220", "--game-dir", gameDir};
+  std::vector<char*> lossRaw; for (auto& a : lossArgs) lossRaw.push_back(a.data());
+  const int lossResult = app::runApplication(static_cast<int>(lossRaw.size()), lossRaw.data(), lossFrontend, lossLevel,
+                                             app::ApplicationRunOptions{.frameSeconds = 2.0});
+  if (lossResult != 0) loss.fail("loss-only runApplication returned failure");
+  if (loss.stage != 7 || !loss.loss7 || !loss.loss9 || !loss.map11 || !loss.menu12)
+    loss.fail("loss-only route did not export/verify Results7, Results9, Map11 and Menu12");
+  if (!loss.ok) { std::cerr << "FAIL: LevelReturn loss route: " << loss.why << " (level callbacks=" << loss.levelCalls << ")\n"; return 1; }
   std::cout << "PASS: natural success/failure results return to and preserve map progress\n";
   return 0;
 #endif

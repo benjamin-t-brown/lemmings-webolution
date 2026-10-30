@@ -1,0 +1,18 @@
+--- lemmings hook harness attached 2026-10-29 12:27:08 ---
+module directory: C:\progs\Lemmings Revolution
+requested hook mode: shadow
+recovered allocator bound to the game CRT (new 0x0049c1a8, free 0x0049c13d), replacing the host pair at 71634050
+detour installed at 0x0041bc10 -> 0x716339a0 (trampoline 0x01160000, 6 bytes relocated)
+append_native_int hook active in shadow mode
+detour installed at 0x0040de60 -> 0x71632680 (trampoline 0x02720000, 7 bytes relocated)
+collision_cell hook active in shadow mode
+detour installed at 0x0040dec0 -> 0x71632c30 (trampoline 0x02730000, 7 bytes relocated)
+wrap_cylinder_x hook active in shadow mode
+3 detour(s) installed
+selftest: 19728 in-process comparisons against the original bytes, 0 mismatches
+cylinder selftest: 4219 in-process comparisons against the original bytes, 0 mismatches
+startup selftest: PASS
+forwarding to C:\progs\Lemmings Revolution\patch_orig.dll (DirectDrawCreate=6cbc1bae, DirectDrawEnumerateA=6cbc1ae9)
+CRT is up; running deferred selftests that use the game heap
+array selftest: 2340 in-process comparisons against the original bytes through the game heap, 0 mismatches, 0 guarded
+deferred selftest: PASS

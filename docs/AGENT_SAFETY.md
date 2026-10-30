@@ -1,10 +1,9 @@
 # Mandatory project guardrails
 
-Read this before project work, then the evidence rule sections specified in your brief.
+Read this before project work, then the evidence rules relevant to the task.
 The canonical evidence standard is [match-the-original](../.claude/rules/match-the-original.md).
-Always read its "Separate observations from hypotheses", "Support the conclusion"
-(opening rule), "Preserve quirks" and "Validate against the original" sections.
-Its subject-specific findings are reference material; read those relevant to your task.
+Read its current evidence and validation requirements. Subject-specific findings in
+[the lessons index](LESSONS.md) are reference material; load those relevant to the task.
 
 
 - **Write the prediction down before any live run**, with what would falsify it.
@@ -26,7 +25,11 @@ Its subject-specific findings are reference material; read those relevant to you
   reverting that one thing alone. `test_world`, `test_terrain` and `test_levelobjects` are
   separate binaries; running the wrong one makes a good test look broken.
 - **Restore every live write** — grid cells, save targets, anything written to a lemming — and
-  log them so the facilitator can confirm.
+  log them so restoration can be independently checked. Preserve failure artifacts too.
+- **One owner of the live game; no interference with the user's desktop.** Arrange a
+  short exclusive desktop-use window before live capture. Historical launch grants,
+  scripts and unused budgets are not permission for a fresh run. Offline work must
+  not acquire foreground or modify the installation/save/config.
 
 For builds or scripts, read [Windows build rules](../.claude/rules/windows-msys2-build.md).
 Use the documented wrapper for builds; keep UCRT64 off the harness Python PATH. All text

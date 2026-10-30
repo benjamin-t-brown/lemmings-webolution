@@ -9,7 +9,7 @@ with no automatic retry). Supersedes the completed offline capture-preflight
 directive, stopped at 3/3 attempts and recorded in `8001467`.
 
 Client/tier: **OpenCode, Sol**, `/facilitator` on mouv. Worker pins and independent
-verification follow [ROLES.md](ROLES.md) and [orchestration](ORCHESTRATION.md).
+verification followed the then-current roles and [retired orchestration](../old/docs/agent-framework/ORCHESTRATION.md).
 The user starts the facilitator manually. This directive does not launch a session.
 
 ## Outcome and autonomy

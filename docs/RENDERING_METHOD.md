@@ -2,8 +2,9 @@
 
 Approved direction: user, overlord review 2026-10-25, following the discussion of
 `PIVOT.md`. This refines that proposal; it does not approve its live methods or budget.
-[PLAN.md](../PLAN.md) owns milestones/gates; [DIRECTIVE.md](DIRECTIVE.md) owns the current
-pass authorization. Existing evidence is reused, not discarded or globally re-certified.
+[PLAN.md](../PLAN.md) records milestones/gates. The former directives are historical;
+enacter follows the user's current request. Existing evidence is reused, not discarded
+or globally re-certified.
 
 ## Frame map before local fixes
 

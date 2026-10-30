@@ -235,7 +235,7 @@ shape of amendment already granted to A7 for HUD elements), to invest in closing
 outright (which would mean re-deriving the sim's spawn/landing timing at sub-tick
 precision or changing the tick architecture — not a bounded round), or to leave D1
 parked. The standing run stops here per
-[its gate-change stop condition](../ORCHESTRATION.md#standing-run).
+[its historical gate-change stop condition](../../old/docs/agent-framework/ORCHESTRATION.md#standing-run).
 
 **D1 direction after D1l (user, 2026-10-21, CEO review): gate held as written, not amended.**
 Review observation, a hypothesis and not a measurement: D1l's own raw 50 Hz samples look

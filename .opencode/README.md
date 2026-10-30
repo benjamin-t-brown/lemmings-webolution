@@ -1,49 +1,21 @@
-# OpenCode adapter
+# OpenCode setup
 
-Model choices and dispatch instructions are maintained in [ROLES.md](../docs/ROLES.md).
-Executable pins remain in [opencode.json](opencode.json),
-[facilitator](agent/facilitator.md),
-[round-agent](agent/round-agent.md) and [explore-agent](agent/explore-agent.md).
-Shared behavior lives in the [framework contracts](../docs/agents/README.md).
-Use [AGENTS.md](../AGENTS.md) to select the role from the user request.
+Run **`/enacter`** to continue the project with your selected model. It selects the
+[enacter agent](agents/enacter.md) in the current session with this exact prompt:
 
-Run `/overlord` for strategy, pass evaluation and approved directives. Its
-[command](commands/overlord.md) selects the [primary overlord](agents/overlord.md)
-in the current session, retaining the selected model. It does not resume the queue
-or dispatch workers. A skill or attached Markdown file does not switch the selected
-agent. If the UI still says facilitator, invoke `/overlord` (use `/reload` if the
-new command has not appeared). With an approved directive and the contract's ownership
-checks, it may launch the matching facilitator as a child. Manual launches remain supported.
-Enabling this framework never resumes a stopped project run.
+> Understand and continue this project to completion.  Make use of subagents at lower intelligence tiers to assist you where possible.
 
-Run `/facilitator` in a session opened from this repository. No arguments are
-required: it resumes the queue or selects the next bounded task from the plan.
-The [command](commands/facilitator.md) explicitly selects the primary facilitator
-agent, whose own configuration pins the model and `high` variant even when the current
-session uses another model. Optional arguments constrain that work.
-`@.opencode/commands/facilitator.md` only
-attaches prompt text; it does not apply executable command frontmatter.
+The same [skill](../.claude/skills/enacter/SKILL.md) is available as **`@enacter`**;
+OpenCode discovers project `.claude/skills` automatically. Loading a skill supplies
+instructions but does not switch agents; `/enacter` does. For a clean break from a
+session containing retired role instructions, use `/enacter` in a new session.
 
-Configuration-only checks (no model request or project dispatch):
+Enacter is also the default agent for new sessions. It has no model pin and may
+work directly or launch subagents. [ROLES.md](../docs/ROLES.md) lists existing
+lower-tier helpers, including Mac-provider variants. The root default model and
+helper pins are unchanged. No two-level management chain is required.
 
-```powershell
-opencode debug agents
-opencode debug config
-```
-
-Expect facilitator profiles to have `mode: all`, their configured model and `high`
-variant, and the
-`facilitator` command's agent binding without a command-level model override. Resolved configuration verifies
-discovery and pins; it does not prove a live worker dispatch or provider availability.
-Both worker agents use the OpenAI Luna pin at `high` documented in `ROLES.md`;
-the general session default also uses Luna, retaining its `max` variant. Explore
-retains read-only permissions. OpenCode V2 reloads configuration automatically;
-`/reload` forces a reload. Existing session agent selection is separate from discovery.
-
-Nested dispatch is limited to overlord -> facilitator -> worker:
-`experimental.subagent_depth: 2` plus explicit profile allowlists permit this chain.
-The overlord cannot directly dispatch workers; facilitators cannot dispatch other
-facilitators; workers cannot delegate. Mac and mouv facilitators allow only their own
-worker profiles. Model pins are unchanged. Configuration resolution and framework
-tests do not establish a successful live nested dispatch; no project agents need to
-be launched merely to validate these files.
+Configuration reloads automatically; `/reload` refreshes discovery if needed.
+`opencode debug agents` and `opencode debug config` inspect configuration without
+making a model request. `python scripts/check_agent_framework.py` checks the
+small active setup; it does not enforce project rounds, budgets or queue state.

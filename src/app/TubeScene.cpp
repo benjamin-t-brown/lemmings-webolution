@@ -3,6 +3,7 @@
 
 #include "app/ActorSprite.h"
 #include "assets/Bitmap.h"
+#include "assets/Box.h"
 #include "assets/LightMap.h"
 #include "assets/LevelIndex.h"
 #include "assets/PolyList.h"
@@ -72,8 +73,14 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
         scene.missing_.push_back(std::format("{}: cannot read a position", name));
         continue;
       }
-      auto image = loadTexture(lib, highDetailTiles ? levelTextureAssetNameHi(name)
-                                                    : levelTextureAssetName(name));
+      auto assetName = highDetailTiles ? levelTextureAssetNameHi(name)
+                                      : levelTextureAssetName(name + "Lo");
+      // Constructor 0x0047218A restores the unsuffixed name after a failed
+      // quality probe. Archive presence covers only the absent-entry case;
+      // errors loading an existing HI/Lo entry must remain errors.
+      if (!lib.contains(assetName))
+        assetName = levelTextureAssetName(name);
+      auto image = loadTexture(lib, assetName);
       if (!image) {
         scene.missing_.push_back(std::format("{}: {}", name, image.error()));
         continue;

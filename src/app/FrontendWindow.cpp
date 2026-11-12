@@ -9,6 +9,7 @@
 #if WEBOLUTION_HAVE_SDL2
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
+#include "app/SdlShutdown.hpp"
 #endif
 
 namespace webo::app {
@@ -23,7 +24,7 @@ struct SdlResources {
     if (texture) SDL_DestroyTexture(texture);
     if (renderer) SDL_DestroyRenderer(renderer);
     if (window) SDL_DestroyWindow(window);
-    SDL_Quit();
+    quitWindowSubsystems();
   }
 };
 

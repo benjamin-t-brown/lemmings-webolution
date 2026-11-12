@@ -4,17 +4,20 @@
 // the archive those are 24bpp (10208 of them), 8bpp palettised (160) and 4bpp
 // palettised (15).
 //
-// Transparency is not in the bitmap: it is selected by a sigil on the file
-// name, and the archive uses all of them:
+// Archive transparency handling is selected by a sigil on the file name:
 //
 //     ^   a sibling .ALF holds an 8-bit alpha plane      (82 entries)
 //     _   colour 000000 is transparent                   (78 entries)
 //     $   colour 404040 is transparent                   (161 entries)
-//     +   the bitmap carries its own alpha               (1 entry)
+//     +   a sibling .ALF holds an 8-bit alpha plane       (1 entry)
 //     ~   drawn with additive blending                   (38 entries)
 //
 // `~` is a blend mode rather than a mask, so it is reported but does not
 // change the pixels.
+// '+' retains the historical AlphaMode::Embedded enum label and "embedded"
+// name for compatibility. loadTexture replaces its decoded BMP alpha with
+// the sibling plane. Manually constructed Embedded images use their supplied
+// RGBA; the enum label alone does not cause file loading or pixel changes.
 
 #pragma once
 
@@ -33,7 +36,7 @@ class AssetLibrary;
 enum class AlphaMode {
   Opaque,       // no sigil
   AlfFile,      // '^'
-  Embedded,     // '+'
+  Embedded,     // '+' legacy label; loadTexture fetches sibling ALF
   KeyBlack,     // '_'  colour key 000000
   KeyGrey,      // '$'  colour key 404040
   Additive,     // '~'  blend mode, pixels untouched
@@ -56,7 +59,7 @@ struct Image {
 };
 
 // Decodes a Windows BMP. Bottom-up rows (the usual case) are flipped so the
-// result is always top-down. Alpha comes out opaque.
+// result is always top-down. 32bpp alpha is preserved; other depths are opaque.
 std::expected<Image, std::string> decodeBmp(std::span<const std::byte> bmp);
 
 // Applies an 8-bit alpha plane, as stored in a .ALF: one byte per pixel, left
@@ -64,7 +67,7 @@ std::expected<Image, std::string> decodeBmp(std::span<const std::byte> bmp);
 std::expected<void, std::string> applyAlfAlpha(Image& image, std::span<const std::byte> alf);
 
 // Reads an entry, decompresses it, decodes the bitmap, and applies whatever
-// transparency its name calls for -- fetching the sibling .ALF when needed.
+// transparency its name calls for -- fetching the sibling .ALF for '^' or '+'.
 std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::string_view name);
 
 }  // namespace webo

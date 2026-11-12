@@ -15,7 +15,7 @@ export TEMP := $(if $(strip $(TEMP)),$(TEMP),$(TMP))
 
 # Tests that read real game data need an installation to point at.
 # Override on the command line:  make test GAME_DIR="C:/Games/Lemmings Revolution"
-GAME_DIR ?= C:/progs/Lemmings Revolution
+GAME_DIR ?= $(ROOT)/Lemmings Revolution
 
 ifeq ($(OS),Windows_NT)
 LRTOOL := $(BUILD_DIR)/lrtool.exe

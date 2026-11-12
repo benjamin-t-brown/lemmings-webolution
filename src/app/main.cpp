@@ -1,10 +1,11 @@
 // Lemmings Webolution -- 3D-first entry point.
 //
-// This is the A4 replacement executable. It loads one retail level from an
-// existing installation, builds the tube from the stored .LVL and archive
-// data only, and draws it through the verified A1 camera. The flat unwrapped
-// view is a debug flag (--flat), not the default.
+// Ordinary startup enters the connected frontend. Explicit diagnostics load
+// one retail level, build the tube from stored .LVL and archive data, and draw
+// it through the verified A1 camera. The flat unwrapped view is a debug flag.
 //
+//   --frontend       explicitly enter the connected frontend with other options
+//   --direct-level   request the previous bare-launch injected-walker diagnostic
 //   --level <id>     level to load (default MM_CLIMB_002)
 //   --native         render at the original's 640x480
 //   --camera <json>  camera state params (the A1 fixture/params format)
@@ -23,12 +24,13 @@
 //   --tile-detail    hi | low  (the cylinder skin's archive variant; hi is
 //                    what the retained originals were captured with)
 //   --no-depth       disable the software depth test (diagnostic)
+//   --no-audio       do not open an audio device or route gameplay sound cues
 //   --flat           debug: unwrap the skin to 2D instead of the 3D view
 //   --sim            tick a sim::World (D3a's loadRetailLevel) instead of the
 //                     fixed injected-walker fixtures, and draw its live
 //                     lemmings through the same drawInjectedWalkers path
-//                     (TubeScene::injectedWalkersFromWorld). Off by default;
-//                     every pre-existing command line is unaffected.
+//                     (TubeScene::injectedWalkersFromWorld). Direct-level
+//                     diagnostics retain fixtures unless simulation is requested.
 //   --sim-ticks <N>  diagnostic setup: call World::tick() exactly
 //                     N times before rendering, independent of frame count.
 //                     Implies --sim. Prints the tick, lemming count and every
@@ -59,7 +61,7 @@
 //                     fixture. Fast-forward/Armageddon commands remain unsupported.
 //
 // No live game and no captured arena data are used. Everything comes from the
-// install named by WEBOLUTION_GAME_DIR (default C:/progs/Lemmings Revolution).
+// install named by WEBOLUTION_GAME_DIR (default Lemmings Revolution/ from repo root).
 
 #include "app/Camera.h"
 #include "app/CameraIntro.h"
@@ -87,7 +89,9 @@
 #include "assets/Box.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
+#include "assets/LevelObjects.h"
 #include "assets/Png.h"
+#include "audio/CuePlayback.h"
 #include "sim/RetailLevel.h"
 #include "shell/HudText.h"
 #include "shell/PauseCaption.h"
@@ -98,11 +102,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <format>
+#include <functional>
 #include <iterator>
 #include <optional>
 #include <regex>
@@ -112,6 +118,7 @@
 #if WEBOLUTION_HAVE_SDL2
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
+#include "app/SdlShutdown.hpp"
 #endif
 
 namespace fs = std::filesystem;
@@ -119,7 +126,24 @@ using namespace webo;
 
 namespace {
 
-constexpr const char* kDefaultGameDir = "C:/progs/Lemmings Revolution";
+constexpr const char* kDefaultGameDir = "Lemmings Revolution";
+
+// scene-branch-impl-001: the process-wide CRT generator that draws first-frame choices for
+// branch-1 sprite scenery. The original seeds it from the unpaused millisecond timer T0 at
+// main-loop entry (0x0045D06C) and again at play start (0x004451E5), both through
+// srand(ftol(ms * 32767.0)) (0x00447580); the clone's analogue is this monotonic clock,
+// measured from application start with sim-paused time excluded. Never a constant seed.
+struct SceneryRandom {
+  app::CrtRand rng;
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+  double pausedMs = 0.0;
+  double unpausedMs() const {
+    return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count() - pausedMs;
+  }
+  void seed() { rng.seedFromMs(unpausedMs()); }
+  void begin() { start = std::chrono::steady_clock::now(); pausedMs = 0.0; seed(); }
+};
+SceneryRandom& sceneryRandom() { static SceneryRandom instance; return instance; }
 
 struct Args {
   std::string level = "MM_CLIMB_002";
@@ -133,6 +157,7 @@ struct Args {
   std::string wall = "full";
   std::string route;
   bool noDepth = false;
+  bool noAudio = false;
   bool flat = false;
   bool highDetailTiles = true;
   std::string gameDir;
@@ -161,12 +186,19 @@ struct Args {
 
 Args parseArgs(int argc, char** argv) {
   Args a;
+  // Portable CLI policy, not a recovered original startup sequence. Only a
+  // bare invocation, game-directory options or --no-audio acquire the frontend
+  // default. Other tokens (including ignored unknown options) keep diagnostic
+  // routing; an explicit --frontend remains authoritative regardless of order.
+  bool defaultFrontend = true;
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
+    if (arg != "--game-dir" && arg != "--no-audio") defaultFrontend = false;
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
     if (arg == "--map") a.map = true;
     else if (arg == "--frontend") a.frontend = true;
+    else if (arg == "--direct-level") defaultFrontend = false;
     else if (arg == "--map-flags") { a.map = true; a.mapFlagsSpecified = true; a.mapFlags = next(); }
     else if (arg == "--level") a.level = next();
     else if (arg == "--native") a.native = true;
@@ -185,6 +217,7 @@ Args parseArgs(int argc, char** argv) {
       else a.highDetailTiles = true;
     }
     else if (arg == "--no-depth") a.noDepth = true;
+    else if (arg == "--no-audio") a.noAudio = true;
     else if (arg == "--flat") a.flat = true;
     else if (arg == "--no-injected-walkers") a.noInjectedWalkers = true;
     else if (arg == "--scene-off") a.sceneOff = true;
@@ -200,10 +233,14 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--caption-alpha") a.captionAlpha = std::atoi(next().c_str());
     else if (arg == "--caption-fill") a.captionFill = next();
     else if (arg == "--caption-no-text") a.captionNoText = true;
-    else if (arg == "--game-dir") a.gameDir = next();
+    else if (arg == "--game-dir") {
+      a.gameDir = next();
+      if (a.gameDir.empty()) defaultFrontend = false;
+    }
     else if (arg == "--c3-write-mask") a.c3WriteMask = next();
     else if (arg == "--c3-write-events") a.c3WriteEvents = next();
   }
+  a.frontend = a.frontend || defaultFrontend;
   if (a.gameDir.empty()) {
     const char* env = std::getenv("WEBOLUTION_GAME_DIR");
     a.gameDir = env ? env : kDefaultGameDir;
@@ -212,7 +249,10 @@ Args parseArgs(int argc, char** argv) {
 }
 
 void printHelp() {
-  std::puts("webolution [--level ID] [--native] [--geom route|wall|...] [--shot PNG] [--frames N]\n"
+  std::puts("webolution [--game-dir PATH] [--frontend | --direct-level | --level ID | --map] [options]\n"
+            "No options, or only --game-dir PATH, starts the connected frontend.\n"
+            "Any other option keeps its diagnostic route unless --frontend is explicit.\n"
+            "--direct-level opens the previous MM_CLIMB_002 injected-walker diagnostic.\n"
             "Window: right mouse + NUMPAD4/6 revolves; mouse drag revolves/elevates;\n"
             "SPACE or CTRL zooms; BACKSPACE flips. Default geometry is route.\n"
             "--shot renders one headless frame; --frames N runs N window frames\n"
@@ -222,10 +262,21 @@ void printHelp() {
             "to select a skill. Fast-forward/Armageddon buttons are not implemented.\n"
             "--frontend starts New Game -> Continue? -> map -> a simulated retail level.\n"
             "Use RETURN at the first two screens, then click an unlocked map node.\n"
-            "Only New Game is implemented; progress starts empty in memory (no save writes).\n"
+            "New Game and session-only Play Current Game are connected; other menu actions\n"
+            "are incomplete; no movies. Progress is stored in the clone's own original-layout\n"
+            "SavedGame.dat (1504 bytes) at %LOCALAPPDATA%\\LemmingsWebolution\\SavedGame.dat\n"
+            "(Windows); it is saved after each won level and by New Game, and loaded at start.\n"
+            "Use Play Current Game to continue (New Game resets it). The installed game's\n"
+            "SavedGame.dat is never read, imported or written.\n"
             "--map [--map-flags FILE] [--shot PNG] renders the conditional 640x480 map base layer;\n"
             "FILE is exactly 102 signed decimal int32 flags, whitespace-separated. Omitted flags are\n"
-            "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.");
+            "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.\n"
+            "Sound: the simulated level plays two cues that have retained static play-site evidence:\n"
+            "Ohno (bomber fuse end) and FallSplat (long-fall splat; the sim's Splat is mapped to\n"
+            "FallSplat). Unrouted, silent: Chink (assign), Explode, Yippee (exit), Letsgo, all menu\n"
+            "and frontend sound, and music; none has a retained play site. This is cue routing\n"
+            "only: no claim of native sample timing, volume, mixing or resampling. A missing audio\n"
+            "device or WAV is reported on stderr and the game continues. --no-audio disables sound.");
 }
 
 Image toImage(const app::Framebuffer& fb) {
@@ -301,6 +352,7 @@ enum class LegDisposition { Exit, Completed, RetryLevel, ReturnToMap };
 static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver observer,
                             app::LevelFrameObserver levelObserver, app::ApplicationRunOptions runOptions,
                             app::FrontendSession* persistentFrontend,
+                            [[maybe_unused]] audio::CuePlayback* cues,
                             std::optional<app::LevelOutcome>& completed, LegDisposition& disposition) {
   Args args = parseArgs(argc, argv);
   if (args.help) { printHelp(); return 0; }
@@ -325,8 +377,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     return 1;
   }
 
-  // Opt-in integrated frontend; old direct-level and headless commands retain
-  // their entry paths. Selection feeds the same retail loader/sim below, never
+  // parseArgs resolves ordinary/explicit frontend entry for both app layers.
+  // Selection feeds the same retail loader/sim below, never
   // a second executable, a captured world, or the original installation's save.
   if (args.frontend) {
     std::optional<app::FrontendSession> localFrontend;
@@ -404,17 +456,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 #endif
   }
 
-  std::string levelPath;
-  for (const auto& name : levelFileNames(*library))
-    if (name.find(args.level) != std::string::npos) {
-      levelPath = name;
-      break;
-    }
-  if (levelPath.empty()) {
-    std::fprintf(stderr, "level: no .LVL matching %s\n", args.level.c_str());
+  // The same resolution sim::loadRetailLevel uses below, so the application and
+  // the simulation can never pick different archive levels for one id. The map
+  // names some levels in mixed case ("MM_Block_Bomb_A"); when the id only matches
+  // case-insensitively, continue with the archive's own spelling so every later
+  // use of args.level (skill panel, outcome, observers) sees the canonical id.
+  // Ids that already matched keep the caller's text, as before.
+  const auto resolvedLevel = sim::resolveRetailLevel(*library, args.level);
+  if (!resolvedLevel) {
+    std::fprintf(stderr, "level: %s\n", resolvedLevel.error().c_str());
     return 1;
   }
-  auto blob = library->read(levelPath);
+  if (resolvedLevel->match != sim::LevelMatch::Substring && resolvedLevel->id != args.level)
+    args.level = resolvedLevel->id;
+  auto blob = library->read(resolvedLevel->file);
   if (!blob) {
     std::fprintf(stderr, "level: %s\n", blob.error().c_str());
     return 1;
@@ -437,9 +492,16 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::BackdropScene> backdrop;
   if (!args.sceneOff) {
     auto built = app::BackdropScene::build(*library, *blob, args.level);
-    if (built) backdrop.emplace(std::move(*built));
+    if (built) {
+      backdrop.emplace(std::move(*built));
+      // Play start (0x004451E5 analogue): reseed from the application clock before the
+      // first scenery draw of this level.
+      backdrop->setRandom(&sceneryRandom().rng);
+      sceneryRandom().seed();
+    }
     else std::fprintf(stderr,"backdrop: unsupported/invalid scene: %s\n",built.error().c_str());
   }
+  bool spriteSeedReported = false;
 
   app::CameraParams params;
   if (!args.camera.empty()) {
@@ -563,10 +625,19 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     }
   }
 
-  // The first retail level's base yaw32 is already correct. Its natural entry
-  // additionally arms 45CC09's opening move; do not replace fixture defaults.
-  // Other levels' selected-hatch yaw extraction is not yet implemented.
-  app::CameraIntro cameraIntro(args.frontend && args.level == "MM_CLIMB_002" && args.camera.empty() &&
+  // Connected entry: 0x00444D1E seeds yaw from the selected hatch base and
+  // resets zoom. Keep the borrowed LVL storage alive through ordered parsing.
+  // Diagnostic routes and explicit camera files retain their supplied operands.
+  if (args.frontend && args.camera.empty()) {
+    auto entryCamera = readSelectedHatchCamera(*blob);
+    if (!entryCamera) {
+      std::fprintf(stderr, "level %s: %s\n", args.level.c_str(), entryCamera.error().c_str());
+      return 1;
+    }
+    params.yawUnits = entryCamera->yawUnits;
+    params.zoomShift = 0;
+  }
+  app::CameraIntro cameraIntro(args.frontend && args.camera.empty() &&
       (!persistentFrontend || persistentFrontend->levelIntroEnabled()));
 
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {
@@ -590,12 +661,28 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         for(auto v:e.colorAfter)c3Out<<','<<unsigned(v);
         c3Out<<','<<e.depthBefore<<','<<e.depthAfter<<','<<e.depthAssigned<<'\n';};
     }
+    // fluid-surface-impl-001: feed the live receiver state of the accepted shared-dt world to the
+    // scene (stream order == sim::LevelSetup::gates order). Without --sim there is no world and
+    // the fluid pass draws nothing. Depth policy: BackdropScene::kProvisionalFluidDepthPolicy.
+    if (backdrop && world) {
+      std::vector<app::BackdropScene::FluidGateState> fluid;
+      for (const auto& g : world->setup().gates)
+        fluid.push_back({g.lane, g.height, g.wavePhase, g.animated});
+      backdrop->setFluidState(std::move(fluid));
+    }
      app::scheduleSceneFrame(
           [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary,c3Diagnostic?&observer:nullptr); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
          [&] { scene->render(target, frameCamera, options, &*library); },
+         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Secondary); });
     if (!args.sceneOff) std::fprintf(stderr,"backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu null-materials=%zu null-triangles=%zu predicate-rejected=%zu missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",backdrop.has_value(),backdropStats.roots,backdropStats.meshRecords,backdropStats.meshTriangles,backdropStats.billboards,backdropStats.nullMaterials,backdropStats.nullMaterialTriangles,backdropStats.predicateRejected,backdropStats.missingTextures,backdropStats.rejected,backdropStats.pixels);
+    if (backdrop && !spriteSeedReported && backdrop->firstSpriteDrawRandomState()) {
+      spriteSeedReported = true;
+      std::fprintf(stderr, "backdrop: sprite scenery generator state at first draw = 0x%08x "
+                   "(seeded from the application clock; flame phases are not reproducible)\n",
+                   *backdrop->firstSpriteDrawRandomState());
+    }
     return frameCamera;
   };
   app::Raster raster(params.width, params.height);
@@ -706,6 +793,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 
 #if WEBOLUTION_HAVE_SDL2
   SDL_SetMainReady();
+  // Frontend runs already started the adapter in runApplication (idempotent);
+  // direct-level runs start it here, still once per process.
+  if (cues) cues->start(*library, runOptions.enableAudio && !args.noAudio);
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
     std::fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1;
   }
@@ -737,6 +827,12 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // only active when --sim was given. Natural frontend entry resets the World
   // to tick0; a direct-level diagnostic may seed it with --sim-ticks.
   app::RuntimeSimState runtimeSim;
+  // Sim cues are taken after every World::tick() and after every successful
+  // skill assignment, then routed through the single cue table. The sim's
+  // emission logic and timing are untouched.
+  const std::function<void()> drainCues = [&] {
+    if (cues && world) cues->drain(*world);
+  };
   std::optional<Image> runtimeFont;
   std::optional<app::RetailSkillPanel> runtimePanel;
   std::optional<app::RuntimeCursor> runtimeCursor;
@@ -859,6 +955,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         // plates whose actions are not implemented. No click-through assignment.
         if (focused && !rightDown) {
           pointerX = event.button.x; pointerY = event.button.y;
+          // READ 0x455AFF: plate 8 under a held left button sets the fast-forward
+          // latch (no stock read, no selection change, never cleared here).
+          if (app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward)
+            runtimeSim.latchFastForward();
           if (!skillSelection.consumePanelClick(pointerX, pointerY,
                                                 app::runtimeSkillPanelCounts(*world))) {
             const auto hit = hoveredActor(*world, *scene, options, *library,
@@ -866,6 +966,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                 pointerX, pointerY, skillSelection.selectedSkill(),
                 args.level == "MM_CLIMB_002");
             const bool assigned = hit && world->assign(*hit, skillSelection.selectedSkill());
+            drainCues();
             // READ 0x455756: only a successful assignment resumes native UI1.
             // Failed picks/assignments and panel selections leave pause intact.
             if (assigned && runtimeSim.paused()) {
@@ -877,7 +978,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       } else if (event.type == SDL_MOUSEMOTION) {
         if (focused) {
           pending.mouse(event.motion.xrel, event.motion.yrel);
-          if (!rightDown) { pointerX = event.motion.x; pointerY = event.motion.y; }
+          if (!rightDown) {
+            pointerX = event.motion.x; pointerY = event.motion.y;
+            // READ 0x455AFF: holding the left button and moving onto plate 8
+            // also latches fast-forward. Hover without a button never does.
+            if (args.sim && world && (event.motion.state & SDL_BUTTON_LMASK) &&
+                app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward)
+              runtimeSim.latchFastForward();
+          }
         }
       } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
         const auto key = event.key.keysym.scancode;
@@ -947,7 +1055,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // Unlike CameraIntro's pose, this frame uses the decremented title clock.
     if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
     if (args.sim && world) {
-      simTicked = runtimeSim.advance(*world, elapsed, persistentFrontend != nullptr);
+      // shared-timing-impl-001: explicit elapsed-time world update (integer ms, 100 ms stall
+      // cap, level-second splitting, lemmings then lever contact). The cap applies to the
+      // production wall clock; --frames and frameSeconds are owned deterministic clocks whose
+      // declared step is simulated as given. Camera/input cadence above is unchanged.
+      const bool ownedClock = args.frames > 0 || runOptions.frameSeconds > 0;
+      simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, drainCues,
+                                            ownedClock ? 0 : app::RuntimeSimState::kStallCapMs);
       if (simTicked)
         options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
       if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
@@ -959,9 +1073,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         break;
       }
     }
+    // Scenery clock: frame ms from the existing frame clock (0x0045CFF9 -> 0x004423D2);
+    // advances only in the in-level (--sim) state and never while paused.
+    if (runtimeSim.paused()) sceneryRandom().pausedMs += elapsed * 1000.0;
     if (updated || simTicked || (args.sim && world)) {
+      if (backdrop) backdrop->advanceScenery(elapsed * 1000.0, args.sim && static_cast<bool>(world), runtimeSim.paused());
       params = controls.camera();
-      displayedCamera = renderFrame(cameraIntro.pose(params), windowRaster);
+      const auto displayedPose = cameraIntro.pose(params);
+      displayedCamera = renderFrame(displayedPose, windowRaster);
       displayedPickReference = controls.pickReference();
       // Native pose is evaluated at the old intro clock before its increment;
       // pause freezes the opening move independently of camera input updates.
@@ -1001,7 +1120,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                          hover, pointerX, pointerY, cursorState,
                          runtimeSim.endTransition().phase(), runtimeSim.endTransition().timerSeconds(),
                          cameraIntro.active(), entryCue ? entryCue->seconds() : 0.0, cueFrame, menuOpen(), args.level,
-                         persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt});
+                         persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
+                         cues && cues->deviceReady(), cues ? cues->drained() : 0, cues ? cues->routed() : 0,
+                         displayedPose, displayedPickReference});
         }
         presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
         for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {
@@ -1022,7 +1143,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   }
   SDL_SetRelativeMouseMode(SDL_FALSE);
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);
-  SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
+  SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window);
+  app::quitWindowSubsystems();  // keeps the one open audio device across legs
   if (!args.windowShot.empty() && disposition == LegDisposition::Exit) {
     if (!finalWindowFrame) {
       std::fprintf(stderr, "window screenshot: exited before the requested final frame\n");
@@ -1044,22 +1166,46 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver observer,
                             LevelFrameObserver levelObserver, ApplicationRunOptions options) {
   const auto args = parseArgs(argc, argv);
+  sceneryRandom().begin();  // main-loop entry seed (0x0045D06C analogue)
   std::optional<app::LevelOutcome> completed;
   LegDisposition disposition = LegDisposition::Exit;
+  // One cue adapter, hence one Mixer and one device, for the whole process:
+  // it outlives every frontend and gameplay leg below.
+  audio::CuePlayback* cues = nullptr;
+#if WEBOLUTION_HAVE_SDL2
+  audio::CuePlayback playback;
+  if (args.noAudio) playback.disable();
+  if (options.cueObserver) playback.setObserver(options.cueObserver);
+  cues = &playback;
+#endif
   if (!args.frontend || !args.shot.empty() || args.help || args.map)
     return runApplicationLeg(argc, argv, std::move(observer), std::move(levelObserver), options,
-                             nullptr, completed, disposition);
+                             nullptr, cues, completed, disposition);
   auto library = AssetLibrary::open(fs::path(args.gameDir) / "lemmings.box",
                                     fs::path(args.gameDir) / "patch.box");
   if (!library) { std::fprintf(stderr, "assets: %s\n", library.error().c_str()); return 1; }
-  auto session = FrontendSession::create(*library);
+  // Progress store: injected by tests, or the clone's own per-user SavedGame.dat
+  // for the CLI. Never the installed game directory's save.
+  auto store = options.saveStore;
+  if (!store && options.useDefaultSaveStore) {
+    if (auto made = save::makeDefaultSaveStore(fs::path(args.gameDir)); made) {
+      store = *made;
+    } else {
+      std::fprintf(stderr, "save: %s; progress will not be saved\n", made.error().c_str());
+    }
+  }
+  auto session = FrontendSession::create(*library, store);
   if (!session) { std::fprintf(stderr, "frontend: %s\n", session.error().c_str()); return 1; }
+#if WEBOLUTION_HAVE_SDL2
+  // Device failure, a missing WAV or no audio backend only print a diagnostic.
+  playback.start(*library, options.enableAudio && !args.noAudio);
+#endif
   // Keep this session alive across level/results/map/retry legs. Every level
   // still uses the same loader and SDL runtime; no recursive app invocation.
   for (;;) {
     completed.reset();
     disposition = LegDisposition::Exit;
-    const int status = runApplicationLeg(argc, argv, observer, levelObserver, options, &*session, completed, disposition);
+    const int status = runApplicationLeg(argc, argv, observer, levelObserver, options, &*session, cues, completed, disposition);
     if (status != 0 || disposition == LegDisposition::Exit) return status;
     if (disposition == LegDisposition::RetryLevel) {
       if (!session->retryLevel()) return 1;
@@ -1078,6 +1224,9 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
 
 #ifndef WEBOLUTION_APP_NO_MAIN
 int main(int argc, char** argv) {
-  return webo::app::runApplication(argc, argv);
+  webo::app::ApplicationRunOptions options;
+  options.useDefaultSaveStore = true;  // ordinary startup persists to the clone's own save
+  options.enableAudio = true;          // ordinary startup owns one mixer (--no-audio opts out)
+  return webo::app::runApplication(argc, argv, {}, {}, options);
 }
 #endif

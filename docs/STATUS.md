@@ -1,44 +1,56 @@
-# Current fidelity status
+# Project status
 
-Updated 2026-10-28: [confirmation keyboard focus/No verified](scratch/frontend-confirmation-focus-2026-10-28.md).
-**Confirm4 DOWN/UP/DOWN→Return No Menu5→Confirm6 Yes Map7→Menu8** agrees with the
-production SDL route; five frames pass0.02. Native startup flags were zero in this
-run; nonzero preservation was not exercised. Game closed; exact restoration
-independently verified at 23:25:27Z; desktop released. No timing/movie acceptance.
-Latest Windows build/retail CTest **70/70 PASS,306.13s**. [Loss/Retry/Quit](scratch/frontend-loss-retry-quit-2026-10-28.md), [No/Resume](scratch/frontend-no-resume-comparison-2026-10-28.md),
-[row1 RETURN correction](scratch/frontend-return-negative-prediction-2026-10-28.md),
-[two map states](scratch/frontend-native-second-unlock-2026-10-28.md) and earlier
-failures remain retained. Not full frontend/B2/game acceptance.
-Use [PLAN](../PLAN.md) for sequencing, [lessons](LESSONS.md) for mechanisms and
-[acceptance](acceptance/legacy-gates.md) for unchanged signed gates.
+Updated 2026-11-12 from accepted queue/review evidence. Native Windows C++ build;
+not complete original-game fidelity. Current phase: [fluid milestone accepted; verification workflow next](../agent/IMPLEMENTATION_PLAN.md).
 
-## How to read this page
-
-- **Implemented** means a production path exists, not that it matches the original.
-- **Own-app tested** means unit/fixture/SDL application checks, not native fidelity.
-- **Native verified** always has a stated route, state and coverage limit.
-- **Open / failed / parked** remain unfinished. A historical accepted sub-gate is
-  not acceptance of an entire subsystem. SOURCE/READ/DERIVED are not live observations.
-
-## Product coverage
-
-| Area | Implemented / retained verification | Remaining completion work |
+## Current implementation
+| Area | Accepted scope | Still unproven or incomplete |
 | --- | --- | --- |
-| Assets and levels | Archive/patch overlay, images, sprites, levels/collision, meshes, scene and WAV readers; [format reference](LESSONS.md#the-data-formats--solved). | Maintain retail corpus coverage; distinguish parser success from in-game behavior. |
-| Rendering | Software 3D tube, camera, scene/actors and SDL presentation. A1–A7 accepted within amended scopes. [Frame map](RENDER_FRAME_MAP.md). | C3 full-frame FAIL; conditional scene state/admission/clipping, scenery/entrance/exit, actor residuals and complete HUD composition remain. |
-| Frontend/map | Opt-in entry, [main-menu focus/Play Current Game](scratch/frontend-menu-focus-navigation-2026-10-28.md), [confirmation focus/Return-No](scratch/frontend-confirmation-focus-2026-10-28.md), [cursor composition](scratch/frontend-cursor-return-coverage.md); [two native map states](scratch/frontend-native-second-unlock-2026-10-28.md), correct102 flags/states and cursor1/10. B3 bounded PASS. | Rows2–4 actions, persistent save loading, mouse row selection/hover, physical focus/input, exact cursor colors and remaining return branches. Not full frontend/B2 acceptance. |
-| Connected game flow | [Pending-end state](scratch/level-end-transition.md) and [in-level menu](scratch/in-level-menu.md) integrated. Native [loss7→Retry7→loss9→Quit Map11](scratch/frontend-loss-retry-quit-2026-10-28.md), [No/Resume return](scratch/frontend-no-resume-comparison-2026-10-28.md), abandonment and [win7→Map8](scratch/frontend-native-second-unlock-2026-10-28.md) agree within their bounds. | Native loss Continue/UI5 retention, paused/keyboard Resume, delays/event slicing, results focus/movie behavior, options and complete population mapping remain. |
-| HUD / controls | [Runtime skill stock/selection](scratch/runtime-skill-panel-integration.md), [counters/pause](scratch/phase-c2p-runtime-hud.md), [cursor/hover](scratch/runtime-cursor-hover.md). C1 two-view gate passes. | Native C2 acceptance, frontend/gameplay pointer handoff, icon animation, object markers, complete skill eligibility, fast-forward and Armageddon runtime commands. |
-| Simulation | World/terrain, movement, skills and researched gadgets exist; [timing retraction](LESSONS.md#the-simulation--measured-and-worth-keeping). | Native clock/release/digger timing; accepted full-level replay; remaining interaction coverage. D1/D3/digger work user-parked. |
-| Entry presentation | [Opening camera](scratch/level-entry-camera-intro.md) and [Let's Go cue](scratch/level-entry-start-cue.md) statically recovered and connected for bounded routes. | Other-level metadata, matched native animation timing and stretched-text pixels. |
-| Saves / settings | Connected completion is in memory; `src/shell/Progress.*` has a custom `WEBOPROG` helper, not retail-save compatibility. | Persistent session progression, continue/load, settings and restart behavior; decide save-file compatibility before implementation. Never reset the installed save for normal clone play. |
-| Audio / movies | WAV reader and `src/audio/Mixer.*` exist; mixer is not in production source inventory. | Sound/music routing, native cue/timing/volume behavior, intro media and FMVs. Old shell existence is not runtime integration. |
-| Delivery / platforms | CMake/Ninja UCRT64 Windows build and SDL-dummy tests; [build/run guide](../README.md). | Normal frontend startup is still opt-in; default is a diagnostic actor fixture. Emscripten is not a verified port; no other platform is accepted. |
+| Startup/frontend | Ordinary startup, Play Current Game navigation and existing map/game/result routes connected. | Broader input/return/options parity and ordinary end-to-end play. |
+| Saves | Original-format codec and clone-owned persistent progress across restarts accepted. | Three scripted level wins persisted across restart; broader compatibility and natural-play coverage remain unproven. |
+| Level data | Structured assets, hatches, collision/light/surface data, skill stock and cylinder loading connected. | Loading success is not gameplay correctness. |
+| Rendering | Structural/nested scenery support admits all 102 installed levels; selected-hatch camera integration and MM_W_012 base-fluid rendering accepted. | All-level visual correctness unproved; C2 open, historical C3 FAIL unchanged. |
+| Gameplay | World/skills/gadgets exist; serialized teleport pairing and fast-forward accepted. | Timing/release/digger discrepancies, broad play-through evidence, Armageddon. |
+| Audio/media | Gameplay cue routing/mixer integration accepted. | Full cue coverage, music/media and fidelity remain incomplete. |
+| Platforms | Registered MinGW-w64 Windows builds and source tests. | Emscripten and other platforms are not accepted. |
 
-Source entry: [main.cpp](../src/app/main.cpp);
-production wiring: [source inventory](../cmake/webolution_sources.cmake);
-test registration: [CMakeLists.txt](../CMakeLists.txt).
-Tests that skip retail data cannot establish corpus coverage.
+Evidence authorities: [task records](../agent/tasks.json), accepted per-task reports in
+scratch/, and independent decisions under build/agent-runs/.
+Live queue/run state and exact verification links: [generated ledger](../agent/RUN_STATUS.md).
+Latest accepted task: fluid-lever-assessment-001 (2026-11-12).
+[Final review](../build/agent-runs/loop-7bcd0ea7da8241b58ce68791670dbbc5/0008-review-73effc/decision.json)
+accepted the three-stage fluid milestone; the loop stopped after4h25m32s.
+The ordinary MM_W_012 route activated lever(183,60), visibly filled the tank,
+and won20/20. Reload drained it; private saves and fresh-process persistence
+were preserved. Reviewed images cover initial/rising/settled/reload and two cameras.
+No ordinary second contact was observed: review accepted explicit source/data
+inference that another pull is visually inert. Do not call that an observed repeat.
+[Assessment report](scratch/fluid-lever-assessment-001.md) retains reproduction
+steps, image index and limitations.
+[Final verification](../build/agent-runs/20261112T212549-7804-08300df1/verification.log):
+**148 main /84 recovery tests passed**; not a gameplay-completion percentage.
+Original depth state remains unresolved under provisional Less/write-on. Overlays,
+pipes, spray, drowning, other levers/levels and broader hybrid timing are unproven
+or omitted within this milestone. Historical gates below remain unchanged.
+Earlier Blocker28/30 and scripted Climber/Floater/Bomber wins remain scoped evidence;
+all102 map spellings resolve/load, without implying all-level gameplay correctness.
+
+Selected reports: [startup](scratch/native-017-default-frontend-startup.md),
+[saves](scratch/save-codec-001.md), [commands](scratch/gameplay-commands-research-001.md),
+[fast-forward](scratch/fastforward-impl-001.md).
+The older product summary is archived in plan-history/documentation-2026-11-02/STATUS.md.
+
+## What happens next
+Documented next priority: audit shared test state, trial four concurrent tests,
+then add focused failure checks before full verification and evaluate safe reuse
+of unchanged-content verification. See the current plan for acceptance and limits.
+No workflow task is queued or started; compile jobs12 /tests1 remain unchanged.
+
+## Evidence labels
+Implemented = connected source; source-tested = bounded executable test;
+clone-observed = recorded clone route; original-verified = explicitly scoped
+comparison. None automatically implies the others.
+Historical gates below are retained verbatim; this update is not a new measurement.
 
 ## Retained gate ledger
 
@@ -64,23 +76,3 @@ them into another active table. A “pass” here retains every original exclusi
 | D1 | FAIL / USER-PARKED: 657 / 305 divergences with clock off/on. | [Timing park](plan-history/phase-e.md#d1-whole-milestone); D1n landed, D1o still fails. |
 | D2 | PARTIAL: pick 20/20; 3/4 skill sequences; digger 16/50. | [Digger clock USER-PARKED](plan-history/phase-e.md#d2b-digger-bite-timing); recent app picker work is not a new native pass. |
 | D3 | FAIL / USER-PARKED: saved 10/10, end-time spread 75 s. | [Whole-level replay](plan-history/phase-e.md#d3-whole-milestone); correct saved count alone is insufficient. |
-
-## Known debts and how to resume
-
-- Rendering: use [frame map](RENDER_FRAME_MAP.md) and [method](RENDERING_METHOD.md),
-  then the relevant [Phase E residual](plan-history/phase-e.md). Scenery, actor
-  raster/pose and caption/cursor residuals remain even where amended gates passed.
-- Simulation: keep the timing retraction and D1n/D1o distinction. The new roadmap
-  identifies the dependency but does not automatically reopen the user parks.
-- Retail breadth: retained gadget results include clean negatives, not missing
-  gadgets to invent. Older object-overlap coverage and platform/media debts are
-  in [other debts](plan-history/phase-e.md#other-debts); inventory reachable routes.
-- Observation: retired launcher/controller proposals and component safety proofs
-  do not establish an accepted general live-capture route. Reuse the successful
-  dated comparisons within their limits; the earlier bounded capture task is fulfilled and
-  the desktop released. Any later native task needs a fresh safe,
-  exclusive live access before any fresh capture; preserve failed artifacts too.
-
-Maintain one row per gate/area, replacing stale status with a dated evidence link.
-Keep this file under **150 lines / 16 KB**. Detailed findings belong elsewhere;
-never append a running activity log here.

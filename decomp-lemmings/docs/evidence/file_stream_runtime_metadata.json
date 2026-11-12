@@ -1,0 +1,1753 @@
+[
+  {
+    "evidence_id": "ev_ec84081cea75ddf41e2d55735c1e1919f1fb90ed763b0ae88cf725a1f609db4a",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47db73",
+      "name": "FUN_0047db73",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47db73",
+            "end": "0x47dbf1"
+          }
+        ],
+        "total_bytes": 127,
+        "span_bytes": 127,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "void * __thiscall FUN_0047db73(void * this, uint * param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_10 @ Stack[-0x10]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_14 @ Stack[-0x14]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nvoid * __thiscall FUN_0047db73(void *this,uint *param_1)\r\n\r\n{\r\n  void *local_10;\r\n  undefined1 *puStack_c;\r\n  undefined4 local_8;\r\n  \r\n  local_8 = 0xffffffff;\r\n  puStack_c = &LAB_004ae5c9;\r\n  local_10 = ExceptionList;\r\n  ExceptionList = &local_10;\r\n  FUN_0047f040(this);\r\n  local_8 = 0;\r\n  FUN_0047e395(this,param_1);\r\n  *(undefined4 *)((int)this + 0x118) = 0;\r\n  *(undefined4 *)((int)this + 0x120) = 0;\r\n  *(undefined1 *)((int)this + 0x11c) = 1;\r\n  *(undefined1 *)((int)this + 300) = 0;\r\n  ExceptionList = local_10;\r\n  return this;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "0x47e395",
+        "name": "FUN_0047e395",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47e395",
+              "end": "0x47e40c"
+            }
+          ],
+          "total_bytes": 120,
+          "span_bytes": 120,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47f040",
+        "name": "FUN_0047f040",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47f040",
+              "end": "0x47f04d"
+            }
+          ],
+          "total_bytes": 14,
+          "span_bytes": 14,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_2b432ee4d4eac6ea1a7d34a2a00a9feb3edf1f19d1b7d05e92894a334d33ce9b",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47e40d",
+      "name": "FUN_0047e40d",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47e40d",
+            "end": "0x47e81b"
+          }
+        ],
+        "total_bytes": 1039,
+        "span_bytes": 1039,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined4 __thiscall FUN_0047e40d(void * this, int param_1, char param_2)",
+      "locals": [
+        {
+          "description": "undefined local_124 @ Stack[-0x124]:1",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_128 @ Stack[-0x128]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_12c @ Stack[-0x12c]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_130 @ Stack[-0x130]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined local_18 @ Stack[-0x18]:1",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_1c @ Stack[-0x1c]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_20 @ Stack[-0x20]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_c @ Stack[-0xc]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nundefined4 __thiscall FUN_0047e40d(void *this,int param_1,char param_2)\r\n\r\n{\r\n  bool bVar1;\r\n  int *piVar2;\r\n  LPCSTR pCVar3;\r\n  undefined4 uVar4;\r\n  int iVar5;\r\n  int iVar6;\r\n  void *pvVar7;\r\n  uint *puVar8;\r\n  uint uVar9;\r\n  CHAR local_124 [260];\r\n  int local_20;\r\n  undefined4 *local_1c;\r\n  uint local_18 [3];\r\n  uint local_c;\r\n  uint local_8;\r\n  \r\n  local_c = local_c & 0xffffff00;\r\n  local_8 = local_8 & 0xffffff00;\r\n  FUN_0047dd54(param_1,(uint *)0x0);\r\n  if (DAT_005d5604 == '\\0') {\r\n    do {\r\n      if ((param_1 != 1) || (bVar1 = FUN_0047e89b((LPCSTR)((int)this + 0x14)), bVar1)) {\r\n        *(undefined1 *)((int)this + 0x11d) = 0;\r\n        local_c = CONCAT31(local_c._1_3_,1);\r\n        local_8 = local_8 & 0xffffff00;\r\n      }\r\n      else {\r\n        uVar9 = FUN_0047ef48();\r\n        if ((uVar9 & 0xff) == 0) {\r\n          FUN_0047ef92();\r\n        }\r\n        local_1c = (undefined4 *)FUN_0047f759(&DAT_005d5608,(uint *)((int)this + 0x14));\r\n        if (local_1c == (undefined4 *)0x0) {\r\n          if (param_2 == '\\0') {\r\n            local_8 = (uint)local_8._1_3_ << 8;\r\n          }\r\n          else {\r\n            FUN_0049ca6a(local_124,(byte *)s_Cannot_find_required_file___s___C_004c2a84);\r\n            local_20 = MessageBoxA((HWND)0x0,local_124,s_Lemmings_Revolution_004c2ad0,0x2131);\r\n            local_8 = CONCAT31(local_8._1_3_,local_20 == 1);\r\n          }\r\n          *(undefined1 *)((int)this + 0x11d) = 0;\r\n          local_c = local_c & 0xffffff00;\r\n        }\r\n        else {\r\n          *(undefined4 *)((int)this + 0x10) = local_1c[0x41];\r\n          *(undefined4 *)((int)this + 0x124) = local_1c[0x42];\r\n          *(undefined4 *)((int)this + 0x128) = *local_1c;\r\n          *(undefined1 *)((int)this + 0x11d) = 1;\r\n          local_c = CONCAT31(local_c._1_3_,1);\r\n          local_8 = (uint)local_8._1_3_ << 8;\r\n        }\r\n      }\r\n      if ((local_8 & 0xff) != 0) {\r\n        FUN_0047e2f3();\r\n        FUN_0047e23b();\r\n        FUN_0047efe6();\r\n        FUN_0047ef92();\r\n      }\r\n    } while ((local_8 & 0xff) != 0);\r\n  }\r\n  else {\r\n    *(undefined1 *)((int)this + 0x11d) = 0;\r\n    local_c = CONCAT31(local_c._1_3_,1);\r\n  }\r\n  if ((local_c & 0xff) == 0) {\r\n    uVar4 = 0;\r\n  }\r\n  else {\r\n    *(int *)((int)this + 0x130) = param_1;\r\n    switch(*(undefined4 *)((int)this + 0x130)) {\r\n    case 1:\r\n      FUN_0049c750(local_18,(uint *)&DAT_004c2ae4);\r\n      break;\r\n    case 2:\r\n      FUN_0049c750(local_18,(uint *)&DAT_004c2ae8);\r\n      break;\r\n    case 3:\r\n      FUN_0049c750(local_18,(uint *)&DAT_004c2aec);\r\n      break;\r\n    case 6:\r\n      FUN_0049c750(local_18,(uint *)&DAT_004c2af0);\r\n      break;\r\n    case 7:\r\n      FUN_0049c750(local_18,(uint *)&DAT_004c2af4);\r\n      break;\r\n    case 10:\r\n      FUN_0049c750(local_18,(uint *)&DAT_004c2af8);\r\n    }\r\n    if (*(char *)((int)this + 0x11d) == '\\0') {\r\n      if (*(int *)((int)this + 0x118) != 0) {\r\n        FUN_0049da2c(*(FILE **)((int)this + 0x118));\r\n        *(undefined4 *)((int)this + 0x118) = 0;\r\n      }\r\n      uVar4 = FUN_0049db6a((LPCSTR)((int)this + 0x14),(char *)local_18,0x20);\r\n      *(undefined4 *)((int)this + 0x118) = uVar4;\r\n      if (*(int *)((int)this + 0x118) == 0) {\r\n        *(undefined1 *)((int)this + 0x11c) = 1;\r\n        return (uint)this & 0xffffff00;\r\n      }\r\n      iVar5 = FUN_0049db9d(*(char **)((int)this + 0x118));\r\n      FUN_0049dcf5(*(int **)((int)this + 0x118),0,2);\r\n      iVar6 = FUN_0049db9d(*(char **)((int)this + 0x118));\r\n      *(int *)((int)this + 0x10) = iVar6;\r\n      FUN_0049dcf5(*(int **)((int)this + 0x118),iVar5,0);\r\n    }\r\n    else {\r\n      if (*(int *)((int)this + 0x118) == 0) {\r\n        uVar9 = 0x20;\r\n        puVar8 = local_18;\r\n        piVar2 = (int *)FUN_0047f210(&DAT_005d5608,*(int *)((int)this + 0x128));\r\n        pCVar3 = (LPCSTR)FUN_0047f0b0(*piVar2);\r\n        uVar4 = FUN_0049db6a(pCVar3,(char *)puVar8,uVar9);\r\n        *(undefined4 *)((int)this + 0x118) = uVar4;\r\n      }\r\n      FUN_0049dcf5(*(int **)((int)this + 0x118),*(int *)((int)this + 0x124),0);\r\n    }\r\n    *(undefined1 *)((int)this + 0x11c) = 0;\r\n    pvVar7 = this;\r\n    if (*(int *)((int)this + 0x130) == 1) {\r\n      pvVar7 = (void *)FUN_0047daa9();\r\n    }\r\n    *(undefined1 *)((int)this + 300) = 1;\r\n    uVar4 = CONCAT31((int3)((uint)pvVar7 >> 8),1);\r\n  }\r\n  return uVar4;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "EXTERNAL:0xe",
+        "name": "USER32.DLL::MessageBoxA",
+        "classification": {
+          "external": true,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [],
+          "total_bytes": 0,
+          "span_bytes": 0,
+          "non_contiguous": false,
+          "contains_entry": false
+        }
+      },
+      {
+        "address": "0x47daa9",
+        "name": "FUN_0047daa9",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47daa9",
+              "end": "0x47dac7"
+            }
+          ],
+          "total_bytes": 31,
+          "span_bytes": 31,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47dd54",
+        "name": "FUN_0047dd54",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47dd54",
+              "end": "0x47df09"
+            },
+            {
+              "start": "0x47df27",
+              "end": "0x47e01e"
+            },
+            {
+              "start": "0x47e049",
+              "end": "0x47e068"
+            }
+          ],
+          "total_bytes": 718,
+          "span_bytes": 789,
+          "non_contiguous": true,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47e23b",
+        "name": "FUN_0047e23b",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47e23b",
+              "end": "0x47e2f2"
+            }
+          ],
+          "total_bytes": 184,
+          "span_bytes": 184,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47e2f3",
+        "name": "FUN_0047e2f3",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47e2f3",
+              "end": "0x47e30b"
+            }
+          ],
+          "total_bytes": 25,
+          "span_bytes": 25,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47e89b",
+        "name": "FUN_0047e89b",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47e89b",
+              "end": "0x47e8d8"
+            }
+          ],
+          "total_bytes": 62,
+          "span_bytes": 62,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47ef48",
+        "name": "FUN_0047ef48",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47ef48",
+              "end": "0x47ef91"
+            }
+          ],
+          "total_bytes": 74,
+          "span_bytes": 74,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47ef92",
+        "name": "FUN_0047ef92",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47ef92",
+              "end": "0x47efe5"
+            }
+          ],
+          "total_bytes": 84,
+          "span_bytes": 84,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47efe6",
+        "name": "FUN_0047efe6",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47efe6",
+              "end": "0x47f039"
+            }
+          ],
+          "total_bytes": 84,
+          "span_bytes": 84,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47f0b0",
+        "name": "FUN_0047f0b0",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47f0b0",
+              "end": "0x47f0c5"
+            }
+          ],
+          "total_bytes": 22,
+          "span_bytes": 22,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47f210",
+        "name": "FUN_0047f210",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47f210",
+              "end": "0x47f228"
+            }
+          ],
+          "total_bytes": 25,
+          "span_bytes": 25,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47f759",
+        "name": "FUN_0047f759",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47f759",
+              "end": "0x47f9df"
+            }
+          ],
+          "total_bytes": 647,
+          "span_bytes": 647,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x49c750",
+        "name": "FUN_0049c750",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49c750",
+              "end": "0x49c756"
+            }
+          ],
+          "total_bytes": 7,
+          "span_bytes": 7,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x49ca6a",
+        "name": "FUN_0049ca6a",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49ca6a",
+              "end": "0x49cabb"
+            }
+          ],
+          "total_bytes": 82,
+          "span_bytes": 82,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x49da2c",
+        "name": "FUN_0049da2c",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49da2c",
+              "end": "0x49da81"
+            }
+          ],
+          "total_bytes": 86,
+          "span_bytes": 86,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x49db6a",
+        "name": "FUN_0049db6a",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49db6a",
+              "end": "0x49db89"
+            }
+          ],
+          "total_bytes": 32,
+          "span_bytes": 32,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x49db9d",
+        "name": "FUN_0049db9d",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49db9d",
+              "end": "0x49dcf4"
+            }
+          ],
+          "total_bytes": 344,
+          "span_bytes": 344,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x49dcf5",
+        "name": "FUN_0049dcf5",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49dcf5",
+              "end": "0x49dd80"
+            }
+          ],
+          "total_bytes": 140,
+          "span_bytes": 140,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_78b7c1eca663668c7fd80f80e50a033210c20c96368d8283ecf95330b17c2946",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47e844",
+      "name": "FUN_0047e844",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47e844",
+            "end": "0x47e89a"
+          }
+        ],
+        "total_bytes": 87,
+        "span_bytes": 87,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined __fastcall FUN_0047e844(int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nvoid __fastcall FUN_0047e844(int param_1)\r\n\r\n{\r\n  if (*(int *)(param_1 + 0x118) != 0) {\r\n    FUN_0049da2c(*(FILE **)(param_1 + 0x118));\r\n    *(undefined4 *)(param_1 + 0x118) = 0;\r\n    *(undefined1 *)(param_1 + 0x11c) = 1;\r\n    *(undefined4 *)(param_1 + 0x120) = 0;\r\n    *(undefined1 *)(param_1 + 300) = 0;\r\n  }\r\n  return;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "0x49da2c",
+        "name": "FUN_0049da2c",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49da2c",
+              "end": "0x49da81"
+            }
+          ],
+          "total_bytes": 86,
+          "span_bytes": 86,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_0aff92975ce4a2de0217a3a1403d97656de69001f843792cfdd6068ec31f4a91",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47eef7",
+      "name": "FUN_0047eef7",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47eef7",
+            "end": "0x47ef3c"
+          }
+        ],
+        "total_bytes": 70,
+        "span_bytes": 70,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "uint __thiscall FUN_0047eef7(void * this, uint param_1, char * param_2)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_c @ Stack[-0xc]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nuint __thiscall FUN_0047eef7(void *this,uint param_1,char *param_2)\r\n\r\n{\r\n  uint uVar1;\r\n  \r\n  uVar1 = FUN_0049da82(param_2,1,param_1,*(int **)((int)this + 0x118));\r\n  *(uint *)((int)this + 0x120) = *(int *)((int)this + 0x120) + uVar1;\r\n  return uVar1;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "0x49da82",
+        "name": "FUN_0049da82",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49da82",
+              "end": "0x49db69"
+            }
+          ],
+          "total_bytes": 232,
+          "span_bytes": 232,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_0f55c874c471b6d4633e02eb43302663155f92138ba3b560ef77682b28672ecd",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47e395",
+      "name": "FUN_0047e395",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47e395",
+            "end": "0x47e40c"
+          }
+        ],
+        "total_bytes": 120,
+        "span_bytes": 120,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined __thiscall FUN_0047e395(void * this, uint * param_1)",
+      "locals": [
+        {
+          "description": "undefined local_108 @ Stack[-0x108]:1",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_10c @ Stack[-0x10c]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nvoid __thiscall FUN_0047e395(void *this,uint *param_1)\r\n\r\n{\r\n  uint local_108 [65];\r\n  \r\n  if (DAT_005d5604 == '\\0') {\r\n    FUN_0049c750((uint *)((int)this + 0x14),param_1);\r\n  }\r\n  else {\r\n    FUN_0049c750(local_108,(uint *)&DAT_005d5628);\r\n    FUN_0049c760(local_108,param_1);\r\n    FUN_0049c750((uint *)((int)this + 0x14),local_108);\r\n  }\r\n  return;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "0x49c750",
+        "name": "FUN_0049c750",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49c750",
+              "end": "0x49c756"
+            }
+          ],
+          "total_bytes": 7,
+          "span_bytes": 7,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x49c760",
+        "name": "FUN_0049c760",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x49c760",
+              "end": "0x49c83f"
+            }
+          ],
+          "total_bytes": 224,
+          "span_bytes": 224,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_63c9e6e4b7ab9939f1b9c8b940536719db104fb55963f8a397488bdf7263ed95",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47f040",
+      "name": "FUN_0047f040",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47f040",
+            "end": "0x47f04d"
+          }
+        ],
+        "total_bytes": 14,
+        "span_bytes": 14,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined4 __fastcall FUN_0047f040(undefined4 param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nundefined4 __fastcall FUN_0047f040(undefined4 param_1)\r\n\r\n{\r\n  return param_1;\r\n}\r\n\r\n",
+    "callees": [],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_9f318c3ff9bda70ef970efa8937c13c9e22ca0839d885d18aabea8bbebfe01de",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47daa9",
+      "name": "FUN_0047daa9",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47daa9",
+            "end": "0x47dac7"
+          }
+        ],
+        "total_bytes": 31,
+        "span_bytes": 31,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined __stdcall FUN_0047daa9(void)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nvoid FUN_0047daa9(void)\r\n\r\n{\r\n  DAT_005d5600 = &DAT_005cd5fc;\r\n  DAT_005d55fc = &DAT_005cd5fc;\r\n  return;\r\n}\r\n\r\n",
+    "callees": [],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_80617843829c2332a1172d30b5de544110bd2e57dab6c06c4fbc3f6422239ba6",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47dac8",
+      "name": "FUN_0047dac8",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47dac8",
+            "end": "0x47dae4"
+          }
+        ],
+        "total_bytes": 29,
+        "span_bytes": 29,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined __thiscall FUN_0047dac8(void * this, uint param_1, char * param_2)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nvoid __thiscall FUN_0047dac8(void *this,uint param_1,char *param_2)\r\n\r\n{\r\n  FUN_0047eef7(this,param_1,param_2);\r\n  return;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "0x47eef7",
+        "name": "FUN_0047eef7",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47eef7",
+              "end": "0x47ef3c"
+            }
+          ],
+          "total_bytes": 70,
+          "span_bytes": 70,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_a105f121f962a38b23e02149ccc5df1a51a9c7736d42e03ac0cebaa356d43bd1",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47db2f",
+      "name": "FUN_0047db2f",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47db2f",
+            "end": "0x47db72"
+          }
+        ],
+        "total_bytes": 68,
+        "span_bytes": 68,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "int __fastcall FUN_0047db2f(int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nint __fastcall FUN_0047db2f(int param_1)\r\n\r\n{\r\n  FUN_0047f040(param_1);\r\n  *(undefined4 *)(param_1 + 0x118) = 0;\r\n  *(undefined4 *)(param_1 + 0x120) = 0;\r\n  *(undefined1 *)(param_1 + 0x11c) = 1;\r\n  *(undefined1 *)(param_1 + 300) = 0;\r\n  return param_1;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "0x47f040",
+        "name": "FUN_0047f040",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47f040",
+              "end": "0x47f04d"
+            }
+          ],
+          "total_bytes": 14,
+          "span_bytes": 14,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_0413f78e9817a3a707738ba474eed2671ed30d3e940d43ebf1b17491eb55e196",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47dc28",
+      "name": "ATL::CAtlWinModule::~CAtlWinModule",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47dc28",
+            "end": "0x47dc6f"
+          }
+        ],
+        "total_bytes": 72,
+        "span_bytes": 72,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "void __thiscall ~CAtlWinModule(CAtlWinModule * this)",
+      "locals": [
+        {
+          "description": "undefined4 local_10 @ Stack[-0x10]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_14 @ Stack[-0x14]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\n/* Library Function - Single Match\r\n    public: __thiscall ATL::CAtlWinModule::~CAtlWinModule(void)\r\n   \r\n   Library: Visual Studio 2003 Debug */\r\n\r\nvoid __thiscall ATL::CAtlWinModule::~CAtlWinModule(CAtlWinModule *this)\r\n\r\n{\r\n  void *local_10;\r\n  undefined1 *puStack_c;\r\n  undefined4 local_8;\r\n  \r\n  puStack_c = &LAB_004ae5dc;\r\n  local_10 = ExceptionList;\r\n  local_8 = 0;\r\n  ExceptionList = &local_10;\r\n  FUN_0047e844((int)this);\r\n  local_8 = 0xffffffff;\r\n  FUN_0047ef3d();\r\n  ExceptionList = local_10;\r\n  return;\r\n}\r\n\r\n",
+    "callees": [
+      {
+        "address": "0x47e844",
+        "name": "FUN_0047e844",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47e844",
+              "end": "0x47e89a"
+            }
+          ],
+          "total_bytes": 87,
+          "span_bytes": 87,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      },
+      {
+        "address": "0x47ef3d",
+        "name": "FUN_0047ef3d",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47ef3d",
+              "end": "0x47ef47"
+            }
+          ],
+          "total_bytes": 11,
+          "span_bytes": 11,
+          "non_contiguous": false,
+          "contains_entry": true
+        }
+      }
+    ],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_805198183345b0297b7ba21c4b0ddebb1fef3b41303876f4f010eac8ca95f109",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47ee27",
+      "name": "FUN_0047ee27",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47ee27",
+            "end": "0x47ee37"
+          }
+        ],
+        "total_bytes": 17,
+        "span_bytes": 17,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined4 __fastcall FUN_0047ee27(int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nundefined4 __fastcall FUN_0047ee27(int param_1)\r\n\r\n{\r\n  return *(undefined4 *)(param_1 + 0x10);\r\n}\r\n\r\n",
+    "callees": [],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_9bbe3faad170e940cd78b2f61419cd8f5b594de20222c28256938c08e89585da",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47ee38",
+      "name": "FUN_0047ee38",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47ee38",
+            "end": "0x47ee8b"
+          }
+        ],
+        "total_bytes": 84,
+        "span_bytes": 84,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined1 __fastcall FUN_0047ee38(int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_c @ Stack[-0xc]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nundefined1 __fastcall FUN_0047ee38(int param_1)\r\n\r\n{\r\n  undefined1 local_c;\r\n  \r\n  if (*(int *)(param_1 + 0x130) == 1) {\r\n    if ((DAT_005d55fc == DAT_005d5600) && (*(char *)(param_1 + 0x11c) != '\\0')) {\r\n      local_c = 1;\r\n    }\r\n    else {\r\n      local_c = 0;\r\n    }\r\n  }\r\n  else {\r\n    local_c = *(undefined1 *)(param_1 + 0x11c);\r\n  }\r\n  return local_c;\r\n}\r\n\r\n",
+    "callees": [],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_b39cabd24d29e9f953fbde82b6c12ecb7d34444e8ccfff0a9d106ac803a32ff3",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47ee8c",
+      "name": "FUN_0047ee8c",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47ee8c",
+            "end": "0x47ee9f"
+          }
+        ],
+        "total_bytes": 20,
+        "span_bytes": 20,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined1 __fastcall FUN_0047ee8c(int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nundefined1 __fastcall FUN_0047ee8c(int param_1)\r\n\r\n{\r\n  return *(undefined1 *)(param_1 + 300);\r\n}\r\n\r\n",
+    "callees": [],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  },
+  {
+    "evidence_id": "ev_823f9b0390b32491cc63659554d404e7bee2ca3d51079328bdbeb52b248c242d",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "authority": "shipped-artifact",
+    "confidence": "observed",
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "procedure": {
+      "address": "0x47ef3d",
+      "name": "FUN_0047ef3d",
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47ef3d",
+            "end": "0x47ef47"
+          }
+        ],
+        "total_bytes": 11,
+        "span_bytes": 11,
+        "non_contiguous": false,
+        "contains_entry": true
+      },
+      "signature": "undefined __stdcall FUN_0047ef3d(void)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ]
+    },
+    "pseudocode": "\r\nvoid FUN_0047ef3d(void)\r\n\r\n{\r\n  return;\r\n}\r\n\r\n",
+    "callees": [],
+    "limitations_normalized": [
+      "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+      "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+      "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+    ]
+  }
+]

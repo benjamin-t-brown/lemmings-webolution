@@ -1,6 +1,7 @@
 #pragma once
 
 #include "assets/SceneNode.h"
+#include "assets/Sprite.h"
 
 #include <array>
 #include <expected>
@@ -43,5 +44,54 @@ struct SceneBillboardSource {
 // Produces float64 preclip geometry only. No visibility/cull/pass/state decision.
 std::expected<SceneBillboardSource, std::string> makeSceneBillboardSource(
     const SceneNode& node, const BillboardSourceInputs& inputs);
+
+// ---- type-2 branch 1 (sprite) scenery: scene-branch-impl-001 ------------------------------
+// Per-node temporal state: sub-object +0x1C0 accumulator, +0x1CC temporal index, +0x1D0 mode
+// (constructor 0x004680F0: 1), +0x200 finished, +0x201 loop (constructor: 1), node +0x350
+// first-draw latch (cleared by the reader 0x0047B461).
+struct SpriteTemporalState {
+  std::uint32_t temporal = 0;
+  double accumulator = 0.0;
+  bool firstDrawDone = false;
+  std::uint8_t mode = 1;
+  bool loop = true;
+  bool finished = false;
+};
+
+// First draw (0x0047D391..0x0047D3F8): temporal = ftol(double(count-1) * rand()/32767.0), then
+// the latch is set; later calls change nothing. `unitRandom` is CrtRand::unit() (0x004040A0).
+// Returns true when this call performed the latch.
+bool latchSpriteFirstDrawFrame(SpriteTemporalState& state, std::uint32_t temporalCount,
+                               double unitRandom);
+
+// Forward temporal advance 0x00468833 (mode 1), `dt` already the per-node scenery delta
+// (0x004764C4) and `rate` the clip's double at Sprite+0x10: threshold 0.06 (0x4B1940), epsilon
+// 1e-8 (0x4B1928), loop wrap, finished flag. Modes other than 1 are not implemented (nothing
+// in the reader changes the constructor value).
+void advanceSpriteTemporal(SpriteTemporalState& state, double dt, double rate,
+                           std::uint32_t temporalCount);
+
+// Branch-1 quad: the four sub-object vertices (sub+0x08, +0x70, +0xD8, +0x140) in native slot
+// order with screen x/y/z and u/v, plus the 0x0047A565 argument doubles a0..a4 (before the
+// image offsets are applied). The quad is a separate type from SceneBillboardSource.
+struct SceneSpriteQuad {
+  std::size_t sourceOffset = 0;
+  std::string sourceName;
+  std::string sheetName;     // image sheet as stored in the SPR, e.g. "Sheets\\_Fire0"
+  std::uint32_t blendSelector = 0;
+  std::uint8_t sourceVisibility = 0;
+  bool mirror = false;
+  std::array<double, 5> args{};  // a0..a4 as passed to 0x0047A565
+  std::array<BillboardVertex, 4> vertices{};
+  std::array<unsigned, 4> adapterOrder{0, 3, 2, 1};
+};
+
+// Branch-1 geometry (0x0047D379..0x0047D81B and 0x0047A565): corners as branch 0 with +H/2 on y
+// for all four, the shared projection/slot formulas, then the screen-rectangle fill with the
+// image offsets/size and the UV rule. [0x0058D53C] is taken as 0 (the +h/4 shift), see
+// docs/scratch/scene-branch-research-002.md section 7.
+std::expected<SceneSpriteQuad, std::string> makeSceneSpriteQuad(
+    const SceneNode& node, const BillboardSourceInputs& inputs, const SpriteFrame& image,
+    bool mirror);
 
 }  // namespace webo::app

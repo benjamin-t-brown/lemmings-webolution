@@ -83,8 +83,10 @@ private:
 
   static void callback(void* userdata, std::uint8_t* stream, int len);
   void fill(std::int16_t* out, int frames);
+  void releaseSubsystem();
 
   std::uint32_t device_ = 0;
+  bool ownsAudioSubsystem_ = false;
   int sampleRate_ = 0;
   int channels_ = 0;
   float musicVolume_ = 0.6f;

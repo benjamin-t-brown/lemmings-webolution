@@ -72,6 +72,10 @@ struct RetailLevelReport {
   // Every hatch record found, in stream order. hatches.front() is the one
   // whose rate/min/max drove setup.releaseIntervalSeconds et al.
   std::vector<RetailHatchSummary> hatches;
+  // lever-gates-impl-001: tagged type-1 records paired with a placed lever (by pose, never by
+  // file order) and why the serialized gadget records could not be applied, if they could not.
+  std::size_t pairedLevers = 0;
+  std::string gateLinkDiagnostic;
 };
 
 // Builds the `sim::LevelSetup` the original would run for one retail level,
@@ -109,5 +113,28 @@ std::expected<LevelSetup, std::string> loadRetailLevel(const AssetLibrary& lib,
 // The same build, with the diagnostics `LevelSetup` cannot carry.
 std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     const AssetLibrary& lib, std::string_view levelId);
+
+// How a caller-supplied level id was matched to an archive path. Precedence:
+//   ExactId         the whole id equals the archive file's id, ignoring case
+//                   ("m06_kf_1" -> "COMPILED\\M06_KF_1.LVL"). Wins over any
+//                   substring hit, so "M06_KF_1" never lands on "M06_KF_10".
+//   Substring       the pre-existing case-sensitive substring match, first hit in
+//                   archive order (partial ids, "\\NAME.LVL"). Unchanged behaviour.
+//   CaseInsensitive only when nothing above matched: a case-insensitive substring
+//                   that names exactly one distinct level; more than one is an
+//                   ambiguity error, never a guess.
+enum class LevelMatch { ExactId, Substring, CaseInsensitive };
+
+struct ResolvedLevel {
+  std::string file;  // archive path, e.g. "COMPILED\\MM_BLOCK_BOMB_A.LVL"
+  std::string id;    // the archive file's own id, e.g. "MM_BLOCK_BOMB_A"
+  LevelMatch match = LevelMatch::Substring;
+};
+
+// The one level-id resolution shared by loadRetailLevel and the application
+// (src/app/main.cpp). Archive reads are case-insensitive and patch.box wins over
+// lemmings.box, so two spellings of one path are one level.
+std::expected<ResolvedLevel, std::string> resolveRetailLevel(const AssetLibrary& lib,
+                                                              std::string_view levelId);
 
 }  // namespace webo::sim

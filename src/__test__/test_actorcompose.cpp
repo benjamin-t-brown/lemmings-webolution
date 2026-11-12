@@ -13,7 +13,9 @@
 #include "assets/Sprite.h"
 #include "gfx/SpriteView.h"
 
+#include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -416,6 +418,291 @@ const char* classifyActor2PaintedPixel(const webo::app::Framebuffer& tube,
   return "different_silhouette";
 }
 
+// Asset-free public-scene fixtures. These names/colours and expectations are
+// specified here independently of the production filename selection.
+using TileBytes = std::vector<std::byte>;
+using TileEntries = std::vector<std::pair<std::string, TileBytes>>;
+constexpr const char* kQualityOuter = "Cylinder\\NATIVE020\\OUT_NATIVE020_0_0";
+constexpr const char* kQualityInner = "Cylinder\\NATIVE020\\INN_NATIVE020_0_0";
+constexpr const char* kQualityOuterBmp = "TEXTURES\\CYLINDER\\NATIVE020\\OUT_NATIVE020_0_0.BMP";
+constexpr const char* kQualityInnerBmp = "TEXTURES\\CYLINDER\\NATIVE020\\INN_NATIVE020_0_0.BMP";
+constexpr const char* kQualityOuterHi = "TEXTURES\\CYLINDER\\NATIVE020\\OUT_NATIVE020_0_0HI.BMP";
+constexpr const char* kQualityInnerHi = "TEXTURES\\CYLINDER\\NATIVE020\\INN_NATIVE020_0_0HI.BMP";
+using TileColour = std::array<std::uint8_t, 3>;
+constexpr TileColour kQualityBase{213, 47, 89};
+constexpr TileColour kQualityHi{31, 197, 71};
+constexpr TileColour kQualityPatch{53, 83, 229};
+
+void tilePut32(TileBytes& bytes, std::uint32_t value) {
+  for (int shift = 0; shift < 32; shift += 8)
+    bytes.push_back(static_cast<std::byte>((value >> shift) & 255));
+}
+
+TileBytes tileBmp(TileColour colour) {
+  // One opaque 24-bit pixel plus the BMP row's padding byte.
+  TileBytes bytes{std::byte{'B'}, std::byte{'M'}};
+  tilePut32(bytes, 58);
+  tilePut32(bytes, 0);
+  tilePut32(bytes, 54);
+  tilePut32(bytes, 40);
+  tilePut32(bytes, 1);
+  tilePut32(bytes, 1);
+  tilePut32(bytes, 0x00180001);  // planes=1, bits=24
+  tilePut32(bytes, 0);
+  tilePut32(bytes, 4);
+  for (int i = 0; i < 4; ++i)
+    tilePut32(bytes, 0);
+  bytes.insert(bytes.end(), {std::byte{colour[2]}, std::byte{colour[1]},
+                             std::byte{colour[0]}, std::byte{0}});
+  return bytes;
+}
+
+void writeTileBox(const fs::path& path, TileEntries entries) {
+  // Box::open rejects a zero-entry archive; this unrelated synthetic bitmap
+  // keeps absence cases valid without supplying either requested tile.
+  if (entries.empty())
+    entries.push_back({"TEXTURES\\UNRELATED.BMP", tileBmp({0, 0, 0})});
+  TileBytes bytes;
+  for (char c : std::string_view("LEMBOX"))
+    bytes.push_back(static_cast<std::byte>(c));
+  tilePut32(bytes, static_cast<std::uint32_t>(entries.size()));
+  std::uint32_t nameBytes = 0;
+  for (const auto& [name, payload] : entries)
+    nameBytes += 4 + static_cast<std::uint32_t>(name.size());
+  tilePut32(bytes, nameBytes);
+  for (const auto& [name, payload] : entries) {
+    tilePut32(bytes, static_cast<std::uint32_t>(name.size()));
+    for (char c : name)
+      bytes.push_back(static_cast<std::byte>(c));
+  }
+  auto offset = static_cast<std::uint32_t>(bytes.size() + 8 + entries.size() * 8);
+  tilePut32(bytes, static_cast<std::uint32_t>(entries.size()));
+  for (const auto& [name, payload] : entries) {
+    tilePut32(bytes, offset);
+    offset += static_cast<std::uint32_t>(payload.size());
+  }
+  tilePut32(bytes, static_cast<std::uint32_t>(entries.size()));
+  for (const auto& [name, payload] : entries)
+    tilePut32(bytes, static_cast<std::uint32_t>(payload.size()));
+  for (const auto& [name, payload] : entries)
+    bytes.insert(bytes.end(), payload.begin(), payload.end());
+  std::ofstream out(path, std::ios::binary);
+  out.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+  if (!out)
+    throw std::runtime_error("synthetic tile BOX write failed");
+}
+
+fs::path freshTileDirectory(std::string_view task = "native-020") {
+  const auto parent = fs::path(WEBOLUTION_SOURCE_DIR) / "build" / task;
+  fs::create_directories(parent);
+  const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+  for (int i = 0; i < 100; ++i) {
+    const auto path = parent / std::format("actorcompose-{}-{}", stamp, i);
+    if (fs::create_directory(path))
+      return path;
+  }
+  throw std::runtime_error("cannot create fresh tile fixture directory");
+}
+
+webo::CylinderMesh qualityCylinder() {
+  webo::CylinderMesh mesh;
+  mesh.ringCount = 7;
+  mesh.angularSteps = 32;
+  mesh.thickness = 10;
+  for (int ring = 0; ring < 7; ++ring) {
+    for (int step = 0; step < 32; ++step) {
+      const double angle = step * 2.0 * std::acos(-1.0) / 32.0;
+      for (double radius : {50.0, 60.0})
+        mesh.vertices.push_back({-radius * std::sin(angle), ring * 16.0,
+                                 radius * std::cos(angle)});
+    }
+  }
+  mesh.tileTextures = {kQualityOuter};
+  mesh.innerTileTextures = {kQualityInner};
+  return mesh;
+}
+
+std::size_t qualityPixels(const webo::app::TubeScene& scene, bool outer, TileColour colour) {
+  // A small 3D wall render: independently specified orthogonal view, no retail
+  // camera or geometry data. Each bank is drawn alone to avoid occlusion.
+  webo::app::CameraBasis camera;
+  camera.width = 128;
+  camera.height = 128;
+  camera.cx = 64;
+  camera.cy = 64;
+  camera.focalX = 120;
+  camera.focalY = 120;
+  camera.worldToView = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -48, 150};
+  webo::app::SceneOptions options;
+  options.drawOuter = outer;
+  options.drawInner = !outer;
+  webo::app::Raster raster(128, 128);
+  raster.clear(0, 0, 0);
+  scene.render(raster, camera, options);
+  const auto& rgb = raster.framebuffer().rgb;
+  std::size_t count = 0;
+  for (std::size_t i = 0; i < rgb.size(); i += 3)
+    if (rgb[i] == colour[0] && rgb[i + 1] == colour[1] && rgb[i + 2] == colour[2])
+      ++count;
+  return count;
+}
+
+void testTileQualityFallback() {
+  std::cout << "asset-free scene tile quality selection\n";
+  const auto dir = freshTileDirectory();
+  const auto base = tileBmp(kQualityBase);
+  const auto hi = tileBmp(kQualityHi);
+  const auto patch = tileBmp(kQualityPatch);
+  const TileEntries unsuffixed{{kQualityOuterBmp, base}, {kQualityInnerBmp, base}};
+  const TileEntries preferred{{kQualityOuterHi, hi}, {kQualityInnerHi, hi}};
+  auto both = unsuffixed;
+  both.insert(both.end(), preferred.begin(), preferred.end());
+  const auto run = [&](std::string_view label, const TileEntries& baseEntries,
+                       const TileEntries& patchEntries, bool highDetail,
+                       bool loaded, TileColour colour, std::string_view errorAsset) {
+    const auto caseDir = dir / label;
+    fs::create_directory(caseDir);
+    writeTileBox(caseDir / "base.box", baseEntries);
+    writeTileBox(caseDir / "patch.box", patchEntries);
+    auto lib = webo::AssetLibrary::open(caseDir / "base.box", caseDir / "patch.box");
+    check(lib.has_value(), std::format("{} archive opens", label));
+    if (!lib)
+      return;
+    auto scene = webo::app::TubeScene::build(*lib, qualityCylinder(), {}, {}, highDetail);
+    check(scene.has_value(), std::format("{} scene builds", label));
+    if (!scene)
+      return;
+    check(scene->outerTiles() == (loaded ? 1u : 0u), std::format("{} outer count", label));
+    check(scene->innerTiles() == (loaded ? 1u : 0u), std::format("{} inner count", label));
+    // Optional sprites are intentionally absent. Do not mistake their compose:
+    // diagnostic for a tile failure or rely on the total diagnostic count.
+    const auto missing = scene->missingTiles();
+    for (const char* name : {kQualityOuter, kQualityInner}) {
+      const std::string prefix = std::string(name) + ": ";
+      std::size_t targeted = 0;
+      for (const auto& diagnostic : missing) {
+        if (!diagnostic.starts_with(prefix))
+          continue;
+        ++targeted;
+        check(diagnostic.find(errorAsset) != std::string::npos,
+              std::format("{} targeted diagnostic selects {}", label, errorAsset));
+        check(diagnostic.find(errorAsset == "HI.BMP" ? "too small to be a BMP" : "not in") != std::string::npos,
+              std::format("{} targeted diagnostic reason", label));
+      }
+      check(targeted == (loaded ? 0u : 1u), std::format("{} diagnostic for {}", label, name));
+    }
+    check(std::any_of(missing.begin(), missing.end(), [](const std::string& s) {
+      return s.starts_with("compose: ");
+    }), std::format("{} optional sprite diagnostic remains distinct", label));
+    for (bool outer : {true, false}) {
+      check((qualityPixels(*scene, outer, colour) > 0) == loaded,
+            std::format("{} {} wall consumes expected colour", label, outer ? "outer" : "inner"));
+      if (loaded) {
+        for (const auto other : {kQualityBase, kQualityHi, kQualityPatch})
+          if (other != colour)
+            check(qualityPixels(*scene, outer, other) == 0,
+                  std::format("{} {} rejects other candidate colour", label, outer ? "outer" : "inner"));
+      }
+    }
+  };
+  run("unsuffixed-only", unsuffixed, {}, true, true, kQualityBase, "");
+  run("hi-preferred", both, {}, true, true, kQualityHi, "");
+  run("explicit-low", both, {}, false, true, kQualityBase, "");
+  run("patch-hi", both, {{kQualityOuterHi, patch}, {kQualityInnerHi, patch}},
+      true, true, kQualityPatch, "");
+  run("base-hi-over-patch-plain", preferred,
+      {{kQualityOuterBmp, patch}, {kQualityInnerBmp, patch}}, true, true, kQualityHi, "");
+  run("patch-plain-fallback", unsuffixed,
+      {{kQualityOuterBmp, patch}, {kQualityInnerBmp, patch}}, true, true, kQualityPatch, "");
+  run("both-absent", {}, {}, true, false, kQualityBase, "_0_0.BMP");
+  auto malformed = unsuffixed;
+  malformed.push_back({kQualityOuterHi, {std::byte{'B'}, std::byte{'M'}}});
+  malformed.push_back({kQualityInnerHi, {std::byte{'B'}, std::byte{'M'}}});
+  run("invalid-existing-hi", malformed, {}, true, false, kQualityBase, "HI.BMP");
+}
+
+void testLowTileQualitySelection() {
+  std::cout << "asset-free low-detail scene tile selection\n";
+  const auto dir = freshTileDirectory("native-021");
+  constexpr const char* outerLo = "TEXTURES\\CYLINDER\\NATIVE020\\OUT_NATIVE020_0_0LO.BMP";
+  constexpr const char* innerLo = "TEXTURES\\CYLINDER\\NATIVE020\\INN_NATIVE020_0_0LO.BMP";
+  constexpr TileColour lowColour{227, 173, 29};
+  const auto plain = tileBmp(kQualityBase);
+  const auto lo = tileBmp(lowColour);
+  const auto patch = tileBmp(kQualityPatch);
+  const TileEntries unsuffixed{{kQualityOuterBmp, plain}, {kQualityInnerBmp, plain}};
+  const TileEntries lowOnly{{outerLo, lo}, {innerLo, lo}};
+  auto both = unsuffixed;
+  both.insert(both.end(), lowOnly.begin(), lowOnly.end());
+  const auto run = [&](std::string_view label, const TileEntries& baseEntries,
+                       const TileEntries& patchEntries, bool highDetail,
+                       bool loaded, TileColour colour, std::string_view errorAsset = "",
+                       std::string_view errorReason = "") {
+    const auto caseDir = dir / label;
+    fs::create_directory(caseDir);
+    writeTileBox(caseDir / "base.box", baseEntries);
+    writeTileBox(caseDir / "patch.box", patchEntries);
+    auto lib = webo::AssetLibrary::open(caseDir / "base.box", caseDir / "patch.box");
+    check(lib.has_value(), std::format("{} archive opens", label));
+    if (!lib)
+      return;
+    auto scene = webo::app::TubeScene::build(*lib, qualityCylinder(), {}, {}, highDetail);
+    check(scene.has_value(), std::format("{} scene builds", label));
+    if (!scene)
+      return;
+    check(scene->outerTiles() == (loaded ? 1u : 0u), std::format("{} outer count", label));
+    check(scene->innerTiles() == (loaded ? 1u : 0u), std::format("{} inner count", label));
+    const auto missing = scene->missingTiles();
+    for (const char* name : {kQualityOuter, kQualityInner}) {
+      const std::string prefix = std::string(name) + ": ";
+      std::size_t targeted = 0;
+      for (const auto& diagnostic : missing) {
+        if (!diagnostic.starts_with(prefix))
+          continue;
+        ++targeted;
+        check(diagnostic.find(errorAsset) != std::string::npos,
+              std::format("{} tile-qualified selected filename", label));
+        check(diagnostic.find(errorReason) != std::string::npos,
+              std::format("{} tile-qualified failure reason", label));
+      }
+      check(targeted == (loaded ? 0u : 1u), std::format("{} diagnostic for {}", label, name));
+    }
+    check(std::any_of(missing.begin(), missing.end(), [](const std::string& s) {
+      return s.starts_with("compose: ");
+    }), std::format("{} optional sprite diagnostic remains distinct", label));
+    for (bool outer : {true, false}) {
+      check((qualityPixels(*scene, outer, colour) > 0) == loaded,
+            std::format("{} {} wall consumes expected colour", label, outer ? "outer" : "inner"));
+      // Even a failed selected candidate must not render its valid plain sibling.
+      for (const auto other : {kQualityBase, kQualityHi, kQualityPatch, lowColour})
+        if (!loaded || other != colour)
+          check(qualityPixels(*scene, outer, other) == 0,
+                std::format("{} {} rejects other candidate colour", label, outer ? "outer" : "inner"));
+    }
+  };
+  run("lo-only", lowOnly, {}, false, true, lowColour);
+  run("lo-preferred", both, {}, false, true, lowColour);
+  run("absent-lo-plain", unsuffixed, {}, false, true, kQualityBase);
+  run("patch-lo", both, {{outerLo, patch}, {innerLo, patch}}, false, true, kQualityPatch);
+  run("base-lo-over-patch-plain", lowOnly,
+      {{kQualityOuterBmp, patch}, {kQualityInnerBmp, patch}}, false, true, lowColour);
+  run("absent-lo-patch-plain", unsuffixed,
+      {{kQualityOuterBmp, patch}, {kQualityInnerBmp, patch}}, false, true, kQualityPatch);
+  run("low-both-absent", {}, {}, false, false, lowColour, "_0_0.BMP", "not in");
+  auto malformed = unsuffixed;
+  malformed.push_back({outerLo, {std::byte{'B'}, std::byte{'M'}}});
+  malformed.push_back({innerLo, {std::byte{'B'}, std::byte{'M'}}});
+  run("invalid-existing-lo", malformed, {}, false, false, lowColour,
+      "LO.BMP", "too small to be a BMP");
+  auto all = both;
+  all.push_back({kQualityOuterHi, tileBmp(kQualityHi)});
+  all.push_back({kQualityInnerHi, tileBmp(kQualityHi)});
+  run("lo-preserves-hi-preference", all, {}, true, true, kQualityHi);
+  run("lo-preserves-hi-plain-fallback", both, {}, true, true, kQualityBase);
+  run("lo-only-is-not-hi-fallback", lowOnly, {}, true, false, lowColour,
+      "_0_0.BMP", "not in");
+}
+
 webo::app::Framebuffer renderRoute(const webo::app::TubeScene& scene, const webo::AssetLibrary& lib,
                                    const fs::path& cameraPath,
                                    const std::vector<webo::app::SceneOptions::InjectedNativeWalker>&
@@ -447,10 +734,17 @@ webo::app::Framebuffer renderRoute(const webo::app::TubeScene& scene, const webo
 }  // namespace
 
 int main() {
+  try {
+    testTileQualityFallback();
+    testLowTileQualitySelection();
+  } catch (const std::exception& ex) {
+    check(false, ex.what());
+  }
   const char* env = std::getenv("WEBOLUTION_GAME_DIR");
   if (!env) {
     std::cout << "skip: WEBOLUTION_GAME_DIR not set\n";
-    return 0;
+    std::cout << g_checks << " checks, " << g_failures << " failures\n";
+    return g_failures == 0 ? 0 : 1;
   }
   const fs::path root = fs::path(WEBOLUTION_SOURCE_DIR);
   const fs::path gameDir(env);

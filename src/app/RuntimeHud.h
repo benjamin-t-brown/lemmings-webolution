@@ -6,6 +6,8 @@
 #include "app/SimClock.h"
 #include "app/LevelEndTransition.h"
 
+#include <functional>
+
 namespace webo::app {
 
 // Production window composition: values are read from the same World that
@@ -22,12 +24,60 @@ class RuntimeSimState {
   bool paused() const { return paused_; }
   void togglePause();
   void resume();
-  bool advance(sim::World& world, double elapsedSeconds, bool trackCompletion = false);
+  // afterTick, when set, runs once after every World::tick() so per-tick
+  // products (the sound cues) are taken before the next tick can coalesce them.
+  //
+  // LEGACY / COMPATIBILITY WRAPPER (SimClock + World::tick, fixed 0.2 s ticks). Deterministic
+  // tick-based fixtures keep their documented contract through it; connected play uses
+  // advanceElapsed below.
+  bool advance(sim::World& world, double elapsedSeconds, bool trackCompletion = false,
+               const std::function<void()>& afterTick = {});
+
+  // Shared explicit elapsed-time path used by the native application (shared-timing-impl-001).
+  // Input contract (frame loop 0x45CFF9, gate-cadence-research-001 section 1):
+  //  * `elapsedSeconds` becomes INTEGER milliseconds. The original gets integer timeGetTime
+  //    deltas; this clone measures a double, so the sub-millisecond fraction is carried
+  //    (the sum of integer dt equals real elapsed ms). A frame that yields 0 ms still runs one
+  //    zero-delta world update per pass: contact and bookkeeping execute, nothing moves.
+  //  * `stallCapMs` > 0 clamps a frame to that many ms (the original's 100.0 < dt test; exactly
+  //    100 is unclamped). The discarded time is NOT carried (kStallCapMs for the wall clock).
+  //    0 disables the clamp: used only for owned deterministic clocks (`--frames`,
+  //    ApplicationRunOptions::frameSeconds), where the input is a declared simulated step.
+  //  * Pause discards input and resets the carry; the first unpaused frame carries only its own
+  //    delta. A fresh RuntimeSimState plus a freshly loaded World is a reload.
+  //  * fast-forward repeats the same integer dt for kFastForwardPasses passes; each pass is one
+  //    World::advanceElapsedMs call (level-second splitting, lemmings, then lever contact).
+  // `afterTick` runs after every world update (cue drain); the completion slice is fed that
+  // update's own dt. Returns true when at least one world update ran.
+  bool advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion = false,
+                      const std::function<void()>& afterTick = {}, int stallCapMs = kStallCapMs);
+  static constexpr int kStallCapMs = 100;  // 0x45D927-0x45DA3C
+  // Observations of the shared input contract (for tests and diagnostics).
+  int lastPassMs() const { return lastPassMs_; }
+  long long discardedStallMs() const { return discardedStallMs_; }
+  double carriedMs() const { return carryMs_; }
   const LevelEndTransition& endTransition() const { return end_; }
+
+  // Fast-forward pass budget: dword 0x4B15F8 (READ 0x45DB0E-0x45DD5C). This is
+  // a PASS COUNT per frame, not a measured 7x wall-clock speedup and not a
+  // 200 ms tick. Each pass reuses the whole frame delta through SimClock, so
+  // SimClock quantization and its per-advance cap still apply to every pass.
+  // The original 100 ms delta clamp (0x45D927-0x45DA3C) is not reproduced.
+  static constexpr int kFastForwardPasses = 7;
+  bool fastForward() const { return fastForward_; }
+  // READ 0x455AFF: hover on plate 8 with the left button down sets input+0x20.
+  // The live path only sets it; it is never toggled or cleared by a second
+  // press, and pause/resume leave it alone. Only constructing a fresh state
+  // (constructor 0x452BC2 / reset 0x455774 analogue: a new level leg) clears it.
+  void latchFastForward() { fastForward_ = true; }
 
  private:
   SimClock clock_;
+  double carryMs_ = 0.0;
+  int lastPassMs_ = 0;
+  long long discardedStallMs_ = 0;
   bool paused_ = false;
+  bool fastForward_ = false;
   LevelEndTransition end_;
 };
 

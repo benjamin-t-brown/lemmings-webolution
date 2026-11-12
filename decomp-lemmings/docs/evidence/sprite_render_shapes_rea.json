@@ -1,0 +1,806 @@
+[
+  {
+    "evidence_id": "ev_218f489592d4effca4987848e02b8bb142803dd5f6d02a67e81547846e7b62d5",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "predicate_type": "rea.analysis",
+    "operation": "procedure_info",
+    "parameters": {
+      "procedure": "0x47A565"
+    },
+    "raw_result": {
+      "value": {
+        "name": "FUN_0047a565",
+        "entrypoint": "0x47a565",
+        "basicblock_count": 6,
+        "length": 504,
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47a565",
+              "end": "0x47a75c"
+            }
+          ],
+          "total_bytes": 504,
+          "span_bytes": 504,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __thiscall FUN_0047a565(void * this, double param_1, double param_2, double param_3, double param_4, double param_5)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ],
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        }
+      },
+      "limitations": []
+    },
+    "normalized_result": {
+      "name": "FUN_0047a565",
+      "entrypoint": "0x47a565",
+      "basicblock_count": 6,
+      "length": 504,
+      "signature": "undefined __thiscall FUN_0047a565(void * this, double param_1, double param_2, double param_3, double param_4, double param_5)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_c @ Stack[-0xc]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47a565",
+            "end": "0x47a75c"
+          }
+        ],
+        "total_bytes": 504,
+        "span_bytes": 504,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "relationship_coverage": null,
+    "locations": [],
+    "evidence_links": []
+  },
+  {
+    "evidence_id": "ev_d5c80e02e3da03823a6c2a0f7b648e67c720d1d13078662aaece0c36bdb87ef2",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "predicate_type": "rea.analysis",
+    "operation": "procedure_pseudo_code",
+    "parameters": {
+      "procedure": "0x47A565"
+    },
+    "raw_result": {
+      "value": "\r\nvoid __thiscall\r\nFUN_0047a565(void *this,double param_1,double param_2,double param_3,double param_4,double param_5)\r\n\r\n{\r\n  double dVar1;\r\n  void *pvVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  \r\n  iVar3 = *(int *)((int)this + 0x1b8);\r\n  iVar4 = *(int *)((int)this + 0x1cc);\r\n  pvVar2 = (void *)FUN_00468d00(*(void **)((int)this + 0x1f8),*(int *)((int)this + 0x1c8));\r\n  pvVar2 = (void *)FUN_00468ce0(pvVar2,iVar4);\r\n  iVar3 = FUN_0047abc0(pvVar2,iVar3);\r\n  if (*(int *)((int)this + 0x1b0) == 0) {\r\n    FUN_00440c50(this,*(undefined4 *)(iVar3 + 0x28),*(undefined4 *)(iVar3 + 0x2c),\r\n                 *(undefined4 *)(iVar3 + 0x18),*(undefined4 *)(iVar3 + 0x1c),\r\n                 *(undefined4 *)(iVar3 + 0x20),*(undefined4 *)(iVar3 + 0x24),\r\n                 *(undefined4 *)(iVar3 + 0x10),*(undefined4 *)(iVar3 + 0x14));\r\n  }\r\n  else {\r\n    FUN_00440c50(this,*(undefined4 *)(iVar3 + 0x28),*(undefined4 *)(iVar3 + 0x2c),\r\n                 *(undefined4 *)(iVar3 + 0x10),*(undefined4 *)(iVar3 + 0x14),\r\n                 *(undefined4 *)(iVar3 + 0x20),*(undefined4 *)(iVar3 + 0x24),\r\n                 *(undefined4 *)(iVar3 + 0x18),*(undefined4 *)(iVar3 + 0x1c));\r\n  }\r\n  dVar1 = (double)*(int *)(iVar3 + 0x30) + param_1;\r\n  iVar4 = *(int *)(iVar3 + 0x34);\r\n  *(double *)((int)this + 0x20) = (dVar1 - param_3 / 2.0) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0x88) = (dVar1 - param_4 / 2.0) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0xf0) = (param_4 / 2.0 + dVar1) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0x158) = (param_3 / 2.0 + dVar1) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0x28) =\r\n       ((param_2 - (double)iVar4) - (double)*(int *)(iVar3 + 0x3c) / 2.0) - param_5 / 2.0;\r\n  if (DAT_0058d53c == 0) {\r\n    *(double *)((int)this + 0x28) =\r\n         (double)*(int *)(iVar3 + 0x3c) / 4.0 + *(double *)((int)this + 0x28);\r\n  }\r\n  *(undefined4 *)((int)this + 0x160) = *(undefined4 *)((int)this + 0x28);\r\n  *(undefined4 *)((int)this + 0x164) = *(undefined4 *)((int)this + 0x2c);\r\n  *(double *)((int)this + 0xf8) = param_5 + *(double *)((int)this + 0x28);\r\n  *(undefined4 *)((int)this + 0x90) = *(undefined4 *)((int)this + 0xf8);\r\n  *(undefined4 *)((int)this + 0x94) = *(undefined4 *)((int)this + 0xfc);\r\n  FUN_0047ab96(this,iVar3);\r\n  return;\r\n}\r\n\r\n",
+      "limitations": []
+    },
+    "normalized_result": "\r\nvoid __thiscall\r\nFUN_0047a565(void *this,double param_1,double param_2,double param_3,double param_4,double param_5)\r\n\r\n{\r\n  double dVar1;\r\n  void *pvVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  \r\n  iVar3 = *(int *)((int)this + 0x1b8);\r\n  iVar4 = *(int *)((int)this + 0x1cc);\r\n  pvVar2 = (void *)FUN_00468d00(*(void **)((int)this + 0x1f8),*(int *)((int)this + 0x1c8));\r\n  pvVar2 = (void *)FUN_00468ce0(pvVar2,iVar4);\r\n  iVar3 = FUN_0047abc0(pvVar2,iVar3);\r\n  if (*(int *)((int)this + 0x1b0) == 0) {\r\n    FUN_00440c50(this,*(undefined4 *)(iVar3 + 0x28),*(undefined4 *)(iVar3 + 0x2c),\r\n                 *(undefined4 *)(iVar3 + 0x18),*(undefined4 *)(iVar3 + 0x1c),\r\n                 *(undefined4 *)(iVar3 + 0x20),*(undefined4 *)(iVar3 + 0x24),\r\n                 *(undefined4 *)(iVar3 + 0x10),*(undefined4 *)(iVar3 + 0x14));\r\n  }\r\n  else {\r\n    FUN_00440c50(this,*(undefined4 *)(iVar3 + 0x28),*(undefined4 *)(iVar3 + 0x2c),\r\n                 *(undefined4 *)(iVar3 + 0x10),*(undefined4 *)(iVar3 + 0x14),\r\n                 *(undefined4 *)(iVar3 + 0x20),*(undefined4 *)(iVar3 + 0x24),\r\n                 *(undefined4 *)(iVar3 + 0x18),*(undefined4 *)(iVar3 + 0x1c));\r\n  }\r\n  dVar1 = (double)*(int *)(iVar3 + 0x30) + param_1;\r\n  iVar4 = *(int *)(iVar3 + 0x34);\r\n  *(double *)((int)this + 0x20) = (dVar1 - param_3 / 2.0) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0x88) = (dVar1 - param_4 / 2.0) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0xf0) = (param_4 / 2.0 + dVar1) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0x158) = (param_3 / 2.0 + dVar1) - (double)*(int *)(iVar3 + 0x38) / 2.0;\r\n  *(double *)((int)this + 0x28) =\r\n       ((param_2 - (double)iVar4) - (double)*(int *)(iVar3 + 0x3c) / 2.0) - param_5 / 2.0;\r\n  if (DAT_0058d53c == 0) {\r\n    *(double *)((int)this + 0x28) =\r\n         (double)*(int *)(iVar3 + 0x3c) / 4.0 + *(double *)((int)this + 0x28);\r\n  }\r\n  *(undefined4 *)((int)this + 0x160) = *(undefined4 *)((int)this + 0x28);\r\n  *(undefined4 *)((int)this + 0x164) = *(undefined4 *)((int)this + 0x2c);\r\n  *(double *)((int)this + 0xf8) = param_5 + *(double *)((int)this + 0x28);\r\n  *(undefined4 *)((int)this + 0x90) = *(undefined4 *)((int)this + 0xf8);\r\n  *(undefined4 *)((int)this + 0x94) = *(undefined4 *)((int)this + 0xfc);\r\n  FUN_0047ab96(this,iVar3);\r\n  return;\r\n}\r\n\r\n",
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "Pseudocode is Ghidra decompiler output, not original source and not text-equivalent to Hopper output.",
+      "External functions and functions without an analyzable body return null; other decompiler failures remain explicit.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "relationship_coverage": null,
+    "locations": [],
+    "evidence_links": []
+  },
+  {
+    "evidence_id": "ev_9b6010c282b5cf0b33e6ff5390fa21a8327a17fa05d73437c3eb9470f7f5295a",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "predicate_type": "rea.analysis",
+    "operation": "procedure_info",
+    "parameters": {
+      "procedure": "0x47A75D"
+    },
+    "raw_result": {
+      "value": {
+        "name": "FUN_0047a75d",
+        "entrypoint": "0x47a75d",
+        "basicblock_count": 22,
+        "length": 1081,
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x47a75d",
+              "end": "0x47ab95"
+            }
+          ],
+          "total_bytes": 1081,
+          "span_bytes": 1081,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __thiscall FUN_0047a75d(void * this, double param_1, double param_2)",
+        "locals": [
+          {
+            "description": "undefined8 local_14 @ Stack[-0x14]:8",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_18 @ Stack[-0x18]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_1c @ Stack[-0x1c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_20 @ Stack[-0x20]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_24 @ Stack[-0x24]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_28 @ Stack[-0x28]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ],
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        }
+      },
+      "limitations": []
+    },
+    "normalized_result": {
+      "name": "FUN_0047a75d",
+      "entrypoint": "0x47a75d",
+      "basicblock_count": 22,
+      "length": 1081,
+      "signature": "undefined __thiscall FUN_0047a75d(void * this, double param_1, double param_2)",
+      "locals": [
+        {
+          "description": "undefined8 local_14 @ Stack[-0x14]:8",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_18 @ Stack[-0x18]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_1c @ Stack[-0x1c]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_20 @ Stack[-0x20]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_24 @ Stack[-0x24]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_28 @ Stack[-0x28]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_c @ Stack[-0xc]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47a75d",
+            "end": "0x47ab95"
+          }
+        ],
+        "total_bytes": 1081,
+        "span_bytes": 1081,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "relationship_coverage": null,
+    "locations": [],
+    "evidence_links": []
+  },
+  {
+    "evidence_id": "ev_d2109be10ead0e02f0c4545cbe2cac4d7d32750549b6065fdbca8dfe23064dd6",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "predicate_type": "rea.analysis",
+    "operation": "procedure_pseudo_code",
+    "parameters": {
+      "procedure": "0x47A75D"
+    },
+    "raw_result": {
+      "value": "\r\n/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */\r\n\r\nvoid __thiscall FUN_0047a75d(void *this,double param_1,double param_2)\r\n\r\n{\r\n  void *pvVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  int iVar5;\r\n  double local_14;\r\n  \r\n  if (DAT_0058d53c == 0) {\r\n    FUN_00470f29(&DAT_0058cd80,'\\0');\r\n  }\r\n  iVar5 = *(int *)((int)this + 0x1b8);\r\n  iVar4 = *(int *)((int)this + 0x1cc);\r\n  pvVar1 = (void *)FUN_00468d00(*(void **)((int)this + 0x1f8),*(int *)((int)this + 0x1c8));\r\n  pvVar1 = (void *)FUN_00468ce0(pvVar1,iVar4);\r\n  iVar2 = FUN_0047abc0(pvVar1,iVar5);\r\n  iVar4 = DAT_0058d53c;\r\n  iVar5 = _DAT_0058cb38;\r\n  param_2 = param_2 - (double)*(int *)(iVar2 + 0x34);\r\n  local_14 = (double)*(int *)(iVar2 + 0x3c);\r\n  iVar3 = DAT_0058d53c - _DAT_0058cb38;\r\n  if (*(char *)((int)this + 0x1b4) == '\\0') {\r\n    if (*(int *)((int)this + 0x1b0) == 0) {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c),\r\n                   *(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14));\r\n    }\r\n    else {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14),\r\n                   *(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c));\r\n    }\r\n    if (iVar4 == iVar5) {\r\n      param_1 = param_1 - (double)*(int *)(iVar2 + 0x30);\r\n      *(double *)((int)this + 0x158) = (double)*(int *)(iVar2 + 0x38) + param_1;\r\n      *(undefined4 *)((int)this + 0xf0) = *(undefined4 *)((int)this + 0x158);\r\n      *(undefined4 *)((int)this + 0xf4) = *(undefined4 *)((int)this + 0x15c);\r\n    }\r\n    else if (iVar3 == -1) {\r\n      param_1 = param_1 - (double)*(int *)(iVar2 + 0x30) / 2.0;\r\n      local_14 = local_14 / 2.0;\r\n      *(double *)((int)this + 0x158) = (double)*(int *)(iVar2 + 0x38) / 2.0 + param_1;\r\n      *(undefined4 *)((int)this + 0xf0) = *(undefined4 *)((int)this + 0x158);\r\n      *(undefined4 *)((int)this + 0xf4) = *(undefined4 *)((int)this + 0x15c);\r\n    }\r\n    else {\r\n      param_1 = param_1 - (double)(*(int *)(iVar2 + 0x30) << 1);\r\n      local_14 = local_14 + local_14;\r\n      *(double *)((int)this + 0x158) = (double)(*(int *)(iVar2 + 0x38) << 1) + param_1;\r\n      *(undefined4 *)((int)this + 0xf0) = *(undefined4 *)((int)this + 0x158);\r\n      *(undefined4 *)((int)this + 0xf4) = *(undefined4 *)((int)this + 0x15c);\r\n    }\r\n    *(undefined4 *)((int)this + 0x88) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0x8c) = param_1._4_4_;\r\n    *(undefined4 *)((int)this + 0x20) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0x24) = param_1._4_4_;\r\n  }\r\n  else {\r\n    if (*(int *)((int)this + 0x1b0) == 0) {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c),\r\n                   *(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14));\r\n    }\r\n    else {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14),\r\n                   *(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c));\r\n    }\r\n    if (iVar4 == iVar5) {\r\n      param_1 = (double)*(int *)(iVar2 + 0x30) + param_1;\r\n      *(double *)((int)this + 0x88) = param_1 - (double)*(int *)(iVar2 + 0x38);\r\n      *(undefined4 *)((int)this + 0x20) = *(undefined4 *)((int)this + 0x88);\r\n      *(undefined4 *)((int)this + 0x24) = *(undefined4 *)((int)this + 0x8c);\r\n    }\r\n    else if (iVar3 == -1) {\r\n      param_2 = (double)*(int *)(iVar2 + 0x34) / 2.0 + param_2;\r\n      param_1 = (double)*(int *)(iVar2 + 0x30) / 2.0 + param_1;\r\n      local_14 = local_14 / 2.0;\r\n      *(double *)((int)this + 0x88) = param_1 - (double)*(int *)(iVar2 + 0x38) / 2.0;\r\n      *(undefined4 *)((int)this + 0x20) = *(undefined4 *)((int)this + 0x88);\r\n      *(undefined4 *)((int)this + 0x24) = *(undefined4 *)((int)this + 0x8c);\r\n    }\r\n    else {\r\n      param_2 = param_2 - (double)*(int *)(iVar2 + 0x34);\r\n      param_1 = (double)(*(int *)(iVar2 + 0x30) << 1) + param_1;\r\n      local_14 = local_14 + local_14;\r\n      *(double *)((int)this + 0x88) = param_1 - (double)(*(int *)(iVar2 + 0x38) << 1);\r\n      *(undefined4 *)((int)this + 0x20) = *(undefined4 *)((int)this + 0x88);\r\n      *(undefined4 *)((int)this + 0x24) = *(undefined4 *)((int)this + 0x8c);\r\n    }\r\n    *(undefined4 *)((int)this + 0x158) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0x15c) = param_1._4_4_;\r\n    *(undefined4 *)((int)this + 0xf0) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0xf4) = param_1._4_4_;\r\n  }\r\n  *(double *)((int)this + 0x160) = param_2 - local_14;\r\n  *(undefined4 *)((int)this + 0x28) = *(undefined4 *)((int)this + 0x160);\r\n  *(undefined4 *)((int)this + 0x2c) = *(undefined4 *)((int)this + 0x164);\r\n  *(undefined4 *)((int)this + 0xf8) = param_2._0_4_;\r\n  *(undefined4 *)((int)this + 0xfc) = param_2._4_4_;\r\n  *(undefined4 *)((int)this + 0x90) = param_2._0_4_;\r\n  *(undefined4 *)((int)this + 0x94) = param_2._4_4_;\r\n  FUN_0047ab96(this,iVar2);\r\n  FUN_00470f29(&DAT_0058cd80,'\\x01');\r\n  return;\r\n}\r\n\r\n",
+      "limitations": []
+    },
+    "normalized_result": "\r\n/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */\r\n\r\nvoid __thiscall FUN_0047a75d(void *this,double param_1,double param_2)\r\n\r\n{\r\n  void *pvVar1;\r\n  int iVar2;\r\n  int iVar3;\r\n  int iVar4;\r\n  int iVar5;\r\n  double local_14;\r\n  \r\n  if (DAT_0058d53c == 0) {\r\n    FUN_00470f29(&DAT_0058cd80,'\\0');\r\n  }\r\n  iVar5 = *(int *)((int)this + 0x1b8);\r\n  iVar4 = *(int *)((int)this + 0x1cc);\r\n  pvVar1 = (void *)FUN_00468d00(*(void **)((int)this + 0x1f8),*(int *)((int)this + 0x1c8));\r\n  pvVar1 = (void *)FUN_00468ce0(pvVar1,iVar4);\r\n  iVar2 = FUN_0047abc0(pvVar1,iVar5);\r\n  iVar4 = DAT_0058d53c;\r\n  iVar5 = _DAT_0058cb38;\r\n  param_2 = param_2 - (double)*(int *)(iVar2 + 0x34);\r\n  local_14 = (double)*(int *)(iVar2 + 0x3c);\r\n  iVar3 = DAT_0058d53c - _DAT_0058cb38;\r\n  if (*(char *)((int)this + 0x1b4) == '\\0') {\r\n    if (*(int *)((int)this + 0x1b0) == 0) {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c),\r\n                   *(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14));\r\n    }\r\n    else {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14),\r\n                   *(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c));\r\n    }\r\n    if (iVar4 == iVar5) {\r\n      param_1 = param_1 - (double)*(int *)(iVar2 + 0x30);\r\n      *(double *)((int)this + 0x158) = (double)*(int *)(iVar2 + 0x38) + param_1;\r\n      *(undefined4 *)((int)this + 0xf0) = *(undefined4 *)((int)this + 0x158);\r\n      *(undefined4 *)((int)this + 0xf4) = *(undefined4 *)((int)this + 0x15c);\r\n    }\r\n    else if (iVar3 == -1) {\r\n      param_1 = param_1 - (double)*(int *)(iVar2 + 0x30) / 2.0;\r\n      local_14 = local_14 / 2.0;\r\n      *(double *)((int)this + 0x158) = (double)*(int *)(iVar2 + 0x38) / 2.0 + param_1;\r\n      *(undefined4 *)((int)this + 0xf0) = *(undefined4 *)((int)this + 0x158);\r\n      *(undefined4 *)((int)this + 0xf4) = *(undefined4 *)((int)this + 0x15c);\r\n    }\r\n    else {\r\n      param_1 = param_1 - (double)(*(int *)(iVar2 + 0x30) << 1);\r\n      local_14 = local_14 + local_14;\r\n      *(double *)((int)this + 0x158) = (double)(*(int *)(iVar2 + 0x38) << 1) + param_1;\r\n      *(undefined4 *)((int)this + 0xf0) = *(undefined4 *)((int)this + 0x158);\r\n      *(undefined4 *)((int)this + 0xf4) = *(undefined4 *)((int)this + 0x15c);\r\n    }\r\n    *(undefined4 *)((int)this + 0x88) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0x8c) = param_1._4_4_;\r\n    *(undefined4 *)((int)this + 0x20) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0x24) = param_1._4_4_;\r\n  }\r\n  else {\r\n    if (*(int *)((int)this + 0x1b0) == 0) {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c),\r\n                   *(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14));\r\n    }\r\n    else {\r\n      FUN_00440c50(this,*(undefined4 *)(iVar2 + 0x28),*(undefined4 *)(iVar2 + 0x2c),\r\n                   *(undefined4 *)(iVar2 + 0x10),*(undefined4 *)(iVar2 + 0x14),\r\n                   *(undefined4 *)(iVar2 + 0x20),*(undefined4 *)(iVar2 + 0x24),\r\n                   *(undefined4 *)(iVar2 + 0x18),*(undefined4 *)(iVar2 + 0x1c));\r\n    }\r\n    if (iVar4 == iVar5) {\r\n      param_1 = (double)*(int *)(iVar2 + 0x30) + param_1;\r\n      *(double *)((int)this + 0x88) = param_1 - (double)*(int *)(iVar2 + 0x38);\r\n      *(undefined4 *)((int)this + 0x20) = *(undefined4 *)((int)this + 0x88);\r\n      *(undefined4 *)((int)this + 0x24) = *(undefined4 *)((int)this + 0x8c);\r\n    }\r\n    else if (iVar3 == -1) {\r\n      param_2 = (double)*(int *)(iVar2 + 0x34) / 2.0 + param_2;\r\n      param_1 = (double)*(int *)(iVar2 + 0x30) / 2.0 + param_1;\r\n      local_14 = local_14 / 2.0;\r\n      *(double *)((int)this + 0x88) = param_1 - (double)*(int *)(iVar2 + 0x38) / 2.0;\r\n      *(undefined4 *)((int)this + 0x20) = *(undefined4 *)((int)this + 0x88);\r\n      *(undefined4 *)((int)this + 0x24) = *(undefined4 *)((int)this + 0x8c);\r\n    }\r\n    else {\r\n      param_2 = param_2 - (double)*(int *)(iVar2 + 0x34);\r\n      param_1 = (double)(*(int *)(iVar2 + 0x30) << 1) + param_1;\r\n      local_14 = local_14 + local_14;\r\n      *(double *)((int)this + 0x88) = param_1 - (double)(*(int *)(iVar2 + 0x38) << 1);\r\n      *(undefined4 *)((int)this + 0x20) = *(undefined4 *)((int)this + 0x88);\r\n      *(undefined4 *)((int)this + 0x24) = *(undefined4 *)((int)this + 0x8c);\r\n    }\r\n    *(undefined4 *)((int)this + 0x158) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0x15c) = param_1._4_4_;\r\n    *(undefined4 *)((int)this + 0xf0) = param_1._0_4_;\r\n    *(undefined4 *)((int)this + 0xf4) = param_1._4_4_;\r\n  }\r\n  *(double *)((int)this + 0x160) = param_2 - local_14;\r\n  *(undefined4 *)((int)this + 0x28) = *(undefined4 *)((int)this + 0x160);\r\n  *(undefined4 *)((int)this + 0x2c) = *(undefined4 *)((int)this + 0x164);\r\n  *(undefined4 *)((int)this + 0xf8) = param_2._0_4_;\r\n  *(undefined4 *)((int)this + 0xfc) = param_2._4_4_;\r\n  *(undefined4 *)((int)this + 0x90) = param_2._0_4_;\r\n  *(undefined4 *)((int)this + 0x94) = param_2._4_4_;\r\n  FUN_0047ab96(this,iVar2);\r\n  FUN_00470f29(&DAT_0058cd80,'\\x01');\r\n  return;\r\n}\r\n\r\n",
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "Pseudocode is Ghidra decompiler output, not original source and not text-equivalent to Hopper output.",
+      "External functions and functions without an analyzable body return null; other decompiler failures remain explicit.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "relationship_coverage": null,
+    "locations": [],
+    "evidence_links": []
+  },
+  {
+    "evidence_id": "ev_ccd82dfc29c71bd71d01a8882e2d3e25bd13fa473988ac941b31f0428f5478d9",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "predicate_type": "rea.analysis",
+    "operation": "procedure_info",
+    "parameters": {
+      "procedure": "0x470F29"
+    },
+    "raw_result": {
+      "value": {
+        "name": "FUN_00470f29",
+        "entrypoint": "0x470f29",
+        "basicblock_count": 4,
+        "length": 134,
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x470f29",
+              "end": "0x470fae"
+            }
+          ],
+          "total_bytes": 134,
+          "span_bytes": 134,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __thiscall FUN_00470f29(void * this, char param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ],
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        }
+      },
+      "limitations": []
+    },
+    "normalized_result": {
+      "name": "FUN_00470f29",
+      "entrypoint": "0x470f29",
+      "basicblock_count": 4,
+      "length": 134,
+      "signature": "undefined __thiscall FUN_00470f29(void * this, char param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_c @ Stack[-0xc]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x470f29",
+            "end": "0x470fae"
+          }
+        ],
+        "total_bytes": 134,
+        "span_bytes": 134,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "relationship_coverage": null,
+    "locations": [],
+    "evidence_links": []
+  },
+  {
+    "evidence_id": "ev_29f3486df9d52ce8a9428448625e91ee614770345001bfa401c8d478fa9444cf",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "provider": {
+      "id": "ghidra",
+      "name": "Ghidra",
+      "version": "12.1.4"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "predicate_type": "rea.analysis",
+    "operation": "procedure_pseudo_code",
+    "parameters": {
+      "procedure": "0x470F29"
+    },
+    "raw_result": {
+      "value": "\r\nvoid __thiscall FUN_00470f29(void *this,char param_1)\r\n\r\n{\r\n  undefined4 local_8;\r\n  \r\n  local_8 = 1;\r\n  DAT_004c24e0 = 0xef;\r\n  if ((param_1 != '\\0') && (*(char *)((int)this + 0x3a1) != '\\0')) {\r\n    local_8 = 2;\r\n    DAT_004c24e0 = 0xa0;\r\n  }\r\n  (**(code **)(**(int **)((int)this + 0x38) + 0xa0))\r\n            (*(undefined4 *)((int)this + 0x38),0,0x10,local_8);\r\n  (**(code **)(**(int **)((int)this + 0x38) + 0xa0))\r\n            (*(undefined4 *)((int)this + 0x38),0,0x11,local_8);\r\n  return;\r\n}\r\n\r\n",
+      "limitations": []
+    },
+    "normalized_result": "\r\nvoid __thiscall FUN_00470f29(void *this,char param_1)\r\n\r\n{\r\n  undefined4 local_8;\r\n  \r\n  local_8 = 1;\r\n  DAT_004c24e0 = 0xef;\r\n  if ((param_1 != '\\0') && (*(char *)((int)this + 0x3a1) != '\\0')) {\r\n    local_8 = 2;\r\n    DAT_004c24e0 = 0xa0;\r\n  }\r\n  (**(code **)(**(int **)((int)this + 0x38) + 0xa0))\r\n            (*(undefined4 *)((int)this + 0x38),0,0x10,local_8);\r\n  (**(code **)(**(int **)((int)this + 0x38) + 0xa0))\r\n            (*(undefined4 *)((int)this + 0x38),0,0x11,local_8);\r\n  return;\r\n}\r\n\r\n",
+    "confidence": "observed",
+    "authority": "shipped-artifact",
+    "environment": null,
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "Pseudocode is Ghidra decompiler output, not original source and not text-equivalent to Hopper output.",
+      "External functions and functions without an analyzable body return null; other decompiler failures remain explicit.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ],
+    "relationship_coverage": null,
+    "locations": [],
+    "evidence_links": []
+  }
+]

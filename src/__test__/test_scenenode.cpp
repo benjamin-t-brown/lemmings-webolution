@@ -157,9 +157,54 @@ void testErrors() {
   for(int i=0;i<6;++i) x.f64(i+3);
   x.common("invalid");
   auto badIdx=webo::readSceneNode(x.b,0); check(!badIdx && badIdx.error().find("vertex index 1 outside")!=std::string::npos,"invalid vertex index rejected");
-  // Unsupported type-2 branch is explicit (payload cannot be safely shaped).
+  // scene-branch-impl-001: SUPERSEDED the former "unproved type-2 branch rejected" check, which
+  // required the message "unsupported nonzero type-2 branch" for a nonzero branch byte. Branch 1
+  // is now parsed (testBranchOne). The equivalent error check: the same truncated record (branch
+  // byte but no payload) is still rejected, now as a truncated branch-1 field.
   Bytes branch; branch.u32(2); for(double d:{1.,2.,3.})branch.f64(d); branch.u8(1); branch.u8(1);
-  auto branchErr=webo::readSceneNode(branch.b,0); check(!branchErr && branchErr.error().find("unsupported nonzero type-2 branch")!=std::string::npos,"unproved type-2 branch rejected");
+  auto branchErr=webo::readSceneNode(branch.b,0); check(!branchErr && branchErr.error().find("truncated type-2 branch-1 field")!=std::string::npos,"truncated type-2 branch-1 record rejected");
+}
+
+// scene-branch-impl-001 (0x0047B44C -> 0x00468BF2): branch 1 = u32 f1..f4, a name of capacity 255,
+// the trailing word, then the common base; no UV doubles.
+Bytes branchOne(std::uint8_t branchByte, std::string_view name, std::array<std::uint32_t,4> f, std::uint32_t trailing) {
+  Bytes w; w.u32(2); w.vec3(1.5,2.5,3.5); w.u8(1); w.u8(branchByte);
+  for (auto x : f) w.u32(x);
+  w.str(name); w.u32(trailing); w.common("sprite-node");
+  return w;
+}
+void testBranchOne() {
+  const auto w=branchOne(1,"fire",{1,2,3,4},2);
+  auto r=webo::readSceneNode(w.b,0);
+  check(r.has_value(),r?"branch-1 record parses":r.error()); if(!r) return;
+  const auto& t=r->root.type2;
+  check(r->endOffset==w.b.size(),"branch-1 record consumes exactly its bytes (exact end)");
+  check(t.branch==1 && t.visibility==1 && t.branchName=="fire" && t.trailingWord==2,"branch-1 name/trailing/visibility");
+  check(t.branchWords[0]==1 && t.branchWords[1]==2 && t.branchWords[2]==3 && t.branchWords[3]==4,"branch-1 f1..f4 in file order");
+  check(t.branchDoubles[0]==0 && t.branchDoubles[3]==0,"branch 1 reads no UV doubles");
+  check(r->root.name=="sprite-node" && r->root.matrix[11]==12.0 && r->root.headDoubles[1]==-14.5,"common base follows the trailing word");
+  // The branch byte is a boolean (0x0047B4E5): any nonzero value is branch 1.
+  auto boolean=webo::readSceneNode(branchOne(0xFF,"fire",{0,0,0,0},0).b,0);
+  check(boolean && boolean->root.type2.branch==0xFF && boolean->root.type2.branchName=="fire","nonzero branch byte 0xFF is branch 1");
+  // Name capacity 255 (0x00468C51 push 0xff): 255 accepted, 256 rejected.
+  auto cap=webo::readSceneNode(branchOne(1,std::string(255,'a'),{0,0,0,0},0).b,0);
+  check(cap && cap->root.type2.branchName.size()==255,"255-byte branch-1 name accepted");
+  auto over=webo::readSceneNode(branchOne(1,std::string(256,'a'),{0,0,0,0},0).b,0);
+  check(!over && over.error().find("exceeds capacity 255")!=std::string::npos,"256-byte branch-1 name rejected");
+  // Every strict prefix of a valid record is rejected (bounds checks, no silent short read).
+  bool allRejected=true;
+  for (std::size_t n=0;n<w.b.size();++n) {
+    std::vector<std::byte> cut(w.b.begin(),w.b.begin()+static_cast<std::ptrdiff_t>(n));
+    if (webo::readSceneNode(cut,0)) { allRejected=false; std::cerr<<" prefix "<<n<<" parsed\n"; }
+  }
+  check(allRejected,"every truncated branch-1 prefix is rejected");
+  // Appended bytes are not consumed by the node reader; the caller's exact-end check sees them.
+  Bytes extra=w; extra.u8(0);
+  auto longer=webo::readSceneNode(extra.b,0);
+  check(longer && longer->endOffset==w.b.size() && longer->endOffset!=extra.b.size(),"trailing bytes stay visible to the exact-end check");
+  // Branch 0 stays unchanged next to branch 1 (the existing synthetic tree still parses 4 UV doubles).
+  auto zero=webo::readSceneNode(synthetic().b,0);
+  check(zero && zero->root.children[1].type2.branch==0 && zero->root.children[1].type2.branchWords[0]==0,"branch-0 parsing unchanged");
 }
 
 void tally(const webo::SceneNode& n, std::size_t& nodes, std::size_t& meshes, std::size_t& records,
@@ -214,4 +259,4 @@ void testRetail() {
   check(allKinds[5]==465&&allKinds[6]==16&&allKinds[7]==696,"independent kind record census 465/16/696");
 }
 }
-int main(){testSynthetic();testErrors();testRetail();std::cout<<std::format("{} checks, {} failures\n",checks,failures);return failures?1:0;}
+int main(){testSynthetic();testErrors();testBranchOne();testRetail();std::cout<<std::format("{} checks, {} failures\n",checks,failures);return failures?1:0;}

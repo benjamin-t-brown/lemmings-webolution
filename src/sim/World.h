@@ -22,6 +22,8 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -207,6 +209,17 @@ struct SpeedPad {
 // (face âˆ’1) through 0x00433AC0 â†’ FUN_00433B2E (type 4 / type 5 to linked
 // object ids). No lemming parallel state. Live E16_KF_1 AABB matches
 // SpeedPad's 2Ã—6. docs/scratch/phase3-round21-lever.md.
+// One serialized lever message (element reader 0x00433FB9, dispatch 0x00433B2E): the target's
+// base id, the message type (0 -> vt+0xC(p1,p2), 4 -> vt+4, 5 -> vt+8, others ignored) and the
+// two parameters. A negative id is not a list lookup (-2 is a special arm that no installed
+// lever uses); it is bounded, not applied.
+struct LeverMessage {
+  std::int32_t targetId = -1;
+  std::uint32_t type = 0;
+  std::uint32_t p1 = 0;
+  std::uint32_t p2 = 0;
+};
+
 struct Lever {
   int x = 0;
   int y = 0;
@@ -214,6 +227,87 @@ struct Lever {
   int height = 6;
   // Mirrors object+0xb8. MEASURED E16 start = 1.
   int state = 1;
+  // shared-timing-impl-001 (lever-timing-research-001 section 1): the lever step
+  // reads `cooldown -= dt` while `cooldown > 0`, fires only when contact holds and
+  // the cooldown is <= 0 AFTER that decrement, then reloads it from object+0x98.
+  // The installed levers carry 0.0, so retail behaviour is unchanged; the fields exist
+  // so the explicit-dt contact phase can follow the traced order. Legacy tick() ignores them.
+  double cooldownSeconds = 0.0;
+  double cooldownRemaining = 0.0;
+  // lever-gates-impl-001: the serialized link data of the paired tagged type-1 record
+  // (reader 0x00436FED). `linked` is false for a lever whose placement matched no unique
+  // record; such a lever toggles `state` only, as before. `serializedId` is the record's own
+  // base id (a lever is itself an addressable object). `initialFace` is the stored u32
+  // [+0xDC]; the load-time fan-out (0x0043703F -> 0x00436E6A) sends that face's list once.
+  // faceMinus is list +0xBC (face -1), facePlus is list +0xCC (face +1).
+  bool linked = false;
+  int serializedId = -1;
+  int initialFace = 0;
+  std::vector<LeverMessage> faceMinus;
+  std::vector<LeverMessage> facePlus;
+};
+
+// lever-gates-impl-001: the fluid-zone receiver of vtable 0x004B1020 (ctor 0x00428680, reader
+// 0x0042ACAC, step 0x0042B24D). Field names follow the object offsets of the accepted traces
+// (lever-links section 3, lever-timing section 3, lever-init proof chain 2).
+//   request  [+0x18C]  written by message type 4 (-> 0, raise) and type 5 (-> 1, drain)
+//   done     [+0x188]  ctor 2; settle writes 0 (raised) or 1 (drained)
+//   armed    [+0x1B0]  ctor 0
+//   height   [+0x1A8]  load: low (request 1) or high (request 0); ramps by dt * rate
+//   high [+0x98] / low [+0xA0]; AABB min (+0x48,+0x50) max (+0x60,+0x68) in ORIGINAL rows;
+//   kind [+0x128]: 0 -> zone bit 0x200 (the only plane this clone has), 1 -> 0x2000.
+// The clone has no 0x2000 plane, so a kind-1 gate keeps its request/height/armed/done state
+// but paints nothing (bounded, see docs/scratch/lever-gates-impl-001.md).
+struct FluidGate {
+  int id = -1;
+  int kind = 0;
+  int request = 0;
+  int done = 2;
+  bool armed = false;
+  double minX = 0.0, minY = 0.0, maxX = 0.0, maxY = 0.0;
+  double height = 0.0, high = 0.0, low = 0.0;
+  // fluid-surface-impl-001 (fluid research 6.2 item 3 / 7.4): render-only state of the animation tail
+  // of 0x0042B24D. `lane` = u32 [+0x16C] (serialized value_16c); `wavePhase` = [+0x148], zero at
+  // load, `+= dt` on EVERY update (also when request == done or dt == 0) and wrapped at the 2.0
+  // period; `animated` records that the first update has run (before it the stored mesh is
+  // the raw deserialized one). None of this feeds the height/mask machine above.
+  std::uint32_t lane = 0;
+  double wavePhase = 0.0;
+  bool animated = false;
+  static constexpr double kWavePeriod = 2.0;  // kind-0 measured period (fluid research 6.2 item 3)
+
+  // Rate table 0x004BF6F8 + kind * 0x48 (startup writer 0x00428848): kind 0 = 2.0, kind 1 = 0.5.
+  static double rateFor(int kind);
+  bool paintsZonePlane() const { return kind == 0; }
+  // Reader 0x0042ACAC load pass: request 1 -> height = low and CLEAR the AABB; else
+  // height = high and SET it. The AABB is the stream one (+0x68 is not recomputed).
+  void initialise(Terrain& terrain);
+  // Step 0x0042B24D for one update of `dt` seconds (the same segment dt as the lever contact):
+  // the accepted height/mask machine, then the animation tail (no separate gate clock).
+  void step(double dt, Terrain& terrain);
+  // The accepted height/mask machine alone (unchanged behaviour of the former step()).
+  void stepHeight(double dt, Terrain& terrain);
+  // `[+0x148] += dt; while (2.0 < phase) phase -= 2.0` (0x0042B24D tail, the jump target of the
+  // request == done early exit at 0x42B29E).
+  void advanceWave(double dt);
+};
+
+// What a lever message resolved to. The id table follows the base reader (0x00423310): every
+// constructed actor of ANY collection is stored at list[id] and a later construction wins.
+// Only the 0x4B1020 receiver (ObjectClass::Gate) has traced type 4/5 semantics; anything else
+// is recorded as Other and a message to it is counted, never applied to a gate.
+enum class ObjectClass : std::uint8_t { Gate, Other };
+struct ObjectRef {
+  ObjectClass cls = ObjectClass::Other;
+  int index = -1;                  // index into LevelSetup::gates for Gate
+  const char* collection = "";    // loader collection name, for diagnostics
+};
+
+// Bookkeeping of the lever message fan-out (diagnostic and test visibility).
+struct LeverDispatchStats {
+  std::uint64_t delivered = 0;     // type 4/5 applied to a gate
+  std::uint64_t unresolved = 0;    // id slot empty (0x00433B2E skips it)
+  std::uint64_t unsupported = 0;   // type 0/other types, special ids, non-gate targets
 };
 
 // Balloon cue. READ round 18: string 0x004C0D24 registered to
@@ -338,6 +432,12 @@ struct LevelSetup {
   std::vector<Teleport> teleports;
   std::vector<SpeedPad> speedPads;
   std::vector<Lever> levers;
+  // lever-gates-impl-001: world/level-owned receiver state (a reload builds a new LevelSetup,
+  // so gate request/done/armed/height all restart). `objectIds` is the base-id lookup used by
+  // lever dispatch (later construction wins); `leverStats` counts the fan-out outcomes.
+  std::vector<FluidGate> gates;
+  std::map<int, ObjectRef> objectIds;
+  LeverDispatchStats leverStats;
   int totalLemmings = 10;
   int saveTarget = 1;
   int releaseIntervalTicks = 20;  // ticks between spawns
@@ -391,6 +491,20 @@ struct LevelSetup {
   // (hand-built test levels). Retail .LVL loads fill these from the trailer.
   std::array<int, 8> skills{-1, -1, -1, -1, -1, -1, -1, -1};
 };
+
+// lever-gates-impl-001: the lever message fan-out, shared by the load stage and the runtime
+// contact phase so both follow one dispatch (0x00433AC0 -> 0x00433B2E per element, in list order).
+// Type 4 -> request 0, type 5 -> request 1 on a receiver found through LevelSetup::objectIds by
+// base id; everything else is counted in LevelSetup::leverStats and changes nothing.
+void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& list);
+// 0x00436E6A: face +1 -> state := 1 and send list +0xCC; face -1 -> state := -1 and send list
+// +0xBC; any other face does nothing. The explicit update path calls this on lever contact.
+void activateLeverFace(LevelSetup& setup, Lever& lever, int face);
+// Load-time stage (0x00444417 -> vt+0x28 = 0x0043703F -> 0x00436E6A with the stored face): sends
+// the list of the stored face once, for every linked lever, and applies that same face to
+// Lever::state (lever-initial-face-impl-001; the load stage previously sent the list but left the
+// state at the constructed +1, which is wrong for stored face -1).
+void fanOutLeverLoadFaces(LevelSetup& setup);
 
 class World {
 public:
@@ -1033,9 +1147,39 @@ public:
   // One fixed step. Everything that changes, changes here.
   // Connected native-style pending-end playback admits hatches after timeout
   // (425A95 has no time/pending gate). Default retains diagnostic behavior.
+  //
+  // LEGACY / COMPATIBILITY WRAPPER. One call is exactly one 0.2 s (Rules::ticksPerSecond)
+  // update: it keeps the pre-existing fixed-count steppers (unless the setup opts in to
+  // continuousStepperClock) and evaluates lever contact inside each lemming's own step().
+  // Deterministic tick-based fixtures use this contract; connected play does not.
+  // It advances the same level clock as the explicit path by msPerTick().
   void tick(bool continueHatchesAfterTimeout = false);
 
+  // Shared explicit elapsed-time entry (connected play: RuntimeSimState::advanceElapsed).
+  // One call is one original-style frame PASS of `dtMs` integer milliseconds
+  // (frame loop 0x45CFF9, cadence report section 1.2): the pass is split at every
+  // 1000 ms level-clock boundary, each segment is one world update with
+  // dt = segmentMs / 1000.0, a boundary that lands exactly on the end leaves a trailing
+  // zero-length update, and dtMs == 0 still runs exactly one zero-delta update. Inside
+  // an update the order is hatch release, ALL lemmings, then lever contact
+  // (0x4423D2: lemmings -> levers). Fall/walk use the continuous step budget with
+  // this dt (forced on for this entry); every other lemming state keeps its
+  // measured 5 Hz per-tick step and runs once on the update that reaches a
+  // msPerTick() boundary of the level clock (see stepsOnTickBoundary()).
+  // `afterUpdate(segmentSeconds)` runs after each update; returning false abandons the rest of
+  // the pass. A dtMs that spans several tick boundaries is first split at those boundaries.
+  void advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout = false,
+                        const std::function<bool(double)>& afterUpdate = {});
+
   std::uint64_t tickCount() const { return tick_; }
+  // The single level clock (integer ms). tickCount() == levelClockMs() / msPerTick() on
+  // both entries; timedOut()/timeRemainingTicks() and the HUD read tick_, so there is
+  // no second countdown. levelSecondEvents() counts the 1 Hz level-clock events (0x4458B0).
+  std::uint64_t levelClockMs() const { return levelClockMs_; }
+  std::uint64_t levelSecondEvents() const { return levelSecondEvents_; }
+  // World updates executed through advanceElapsedMs (zero-delta ones included).
+  std::uint64_t explicitUpdateCount() const { return explicitUpdates_; }
+  static constexpr int kLevelEventPeriodMs = 1000;  // repeating event, period 1000 (0x444D1E)
 
   // The level clock, from LEVELMAP.DAT's per-level time limit. A limit of 0
   // means untimed, which is how an unsupplied limit behaves.
@@ -1108,6 +1252,22 @@ private:
   // own release-model dt and by stepFaller/stepWalker's opt-in continuous
   // clock, so both read the exact same number.
   double tickDtSeconds() const;
+  // The dt the fall/walk budget model spends in the CURRENT update: the explicit
+  // segment dt inside advanceElapsedMs, tickDtSeconds() under the legacy tick().
+  double motionDtSeconds() const { return explicitUpdate_ ? updateDtSeconds_ : tickDtSeconds(); }
+  // Continuous fall/walk budgets: the setup's opt-in (legacy) or the explicit entry.
+  bool continuousMotion() const { return explicitUpdate_ || setup_.continuousStepperClock; }
+  // Hatch release for one update; `tickBoundary` gates only the integer-tick release model.
+  void stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout);
+  // One world update of the explicit path (<= one tick boundary), see advanceElapsedMs.
+  void updateSegment(int segmentMs, bool continueHatchesAfterTimeout);
+  // Explicit-path lemming step: the full per-tick step on a tick-boundary update, otherwise
+  // only the continuous fall/walk movement with this update's dt.
+  void stepElapsed(Lemming& l, bool tickBoundary);
+  // Lever contact for the explicit path, AFTER every lemming moved (0x4423D2 order).
+  void stepLeverContacts(double dt);
+  // The facing/state filter of 0x00436D30 for one lever and one lemming.
+  bool leverAccepts(const Lever& lev, const Lemming& l) const;
   // How far a floater still falls at `fallSpeed` after its umbrella opens:
   // `floatOpenMs` of `umbopen` animation. See Rules::floatOpenMs.
   int floatOpenCells() const;
@@ -1137,6 +1297,12 @@ private:
   Rules rules_;
   std::vector<Lemming> lemmings_;
   std::uint64_t tick_ = 0;
+  // shared-timing-impl-001: the one level clock (integer ms) and the explicit-update state.
+  std::uint64_t levelClockMs_ = 0;
+  std::uint64_t levelSecondEvents_ = 0;
+  std::uint64_t explicitUpdates_ = 0;
+  bool explicitUpdate_ = false;       // true only while advanceElapsedMs runs an update
+  double updateDtSeconds_ = 0.0;      // dt of the update in progress (explicit path)
   int spawned_ = 0;
   int saved_ = 0;
   int dead_ = 0;

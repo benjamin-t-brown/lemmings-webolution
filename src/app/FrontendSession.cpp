@@ -4,18 +4,41 @@
 #include "shell/HudText.h"
 #include "shell/MenuRender.h"
 
+#include <cstdio>
 #include <vector>
 
 namespace webo::app {
 
 std::expected<FrontendSession, std::string> FrontendSession::create(
-    const AssetLibrary& library) {
+    const AssetLibrary& library, std::shared_ptr<save::SaveStore> store) {
+  // Restart half of the persistence contract. A missing file is the zero state; a
+  // wrong-size or unreadable file leaves the session empty with a visible
+  // diagnostic, and it is only ever replaced by a later successful save.
+  save::SavedGame loadedImage;
+  std::optional<std::string> loadError;
+  if (store) {
+    if (auto loaded = store->load()) {
+      loadedImage = *loaded;
+    } else {
+      loadError = loaded.error();
+      std::fprintf(stderr,
+                   "save: %s; starting with empty progress (the file is left untouched until a "
+                   "later save succeeds)\n", loadError->c_str());
+    }
+  }
+  const auto loadedFlags = loadedImage.nodeFlags(MapScene::nodeMapping());
+  const bool anyLoaded = std::any_of(loadedFlags.begin(), loadedFlags.end(),
+                                     [](std::int32_t flag) { return flag != 0; });
+
   auto logo = loadTexture(library, "TEXTURES\\MAIN_LOGO.BMP");
   auto background = loadTexture(library, "TEXTURES\\SMALL_BACK.BMP");
   auto font = loadTexture(library, "TEXTURES\\^FONT.BMP");
   auto strings = loadStrings(library, "UK");
-  auto map = MapScene::build(library, {});
+  // The zero-flag map stays the New Game reset target even when progress loads.
+  auto zeroMap = MapScene::build(library, {});
+  auto map = (anyLoaded && zeroMap) ? MapScene::build(library, loadedFlags) : zeroMap;
   auto cursor = RuntimeCursor::load(library);
+  if (!zeroMap) return std::unexpected(zeroMap.error());
   if (!logo) return std::unexpected(logo.error());
   if (!background) return std::unexpected(background.error());
   if (!font) return std::unexpected(font.error());
@@ -34,9 +57,13 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   shell::MenuParams menuParams;
   menuParams.highlight = result.menuFocus();
   result.menu_ = shell::renderMainMenu(*logo, *font, result.menuLabels_, menuParams, cells);
-  result.firstMenuLeft_ = shell::labelLeft(result.menuLabels_[0], cells, 640) - menuParams.panelPadX;
-  result.firstMenuRight_ = result.firstMenuLeft_ + shell::textWidth(result.menuLabels_[0], cells)
-                           + 2 * menuParams.panelPadX;
+  for (std::size_t row = 0; row < result.menuBoxes_.size(); ++row) {
+    const auto& label = result.menuLabels_[row];
+    const int left = shell::labelLeft(label, cells, menuParams.xWord);
+    const int top = menuParams.baseY + static_cast<int>(row) * menuParams.rowStep + menuParams.panelTop;
+    result.menuBoxes_[row] = {left - menuParams.panelPadX, top,
+        left + shell::textWidth(label, cells) + menuParams.panelPadX, top + menuParams.panelHeight};
+  }
 
   // READ 0x49BB6B: base200 + shared row offset100, table 0x4C4514 = {21,22}.
   // Factory selector0x24 binds SMALL_BACK at 0x4879AD (pointer 0x4C08F0).
@@ -67,6 +94,9 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   footer.baseY = 440;
   const std::array<std::string, 1> footerLabels{std::string((*strings)[127])};
   result.mapImage_ = shell::renderMainMenu(map->image(), *font, footerLabels, footer, cells);
+  const Image initialMapImage = anyLoaded
+      ? shell::renderMainMenu(zeroMap->image(), *font, footerLabels, footer, cells)
+      : result.mapImage_;
   const int footerLeft = shell::labelLeft(footerLabels[0], cells, footer.xWord);
   const int footerTop = footer.baseY + footer.panelTop;
   result.mapFooterBox_ = {footerLeft - footer.panelPadX, footerTop,
@@ -76,9 +106,25 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   result.cursor_ = std::move(*cursor);
   result.font_ = std::move(*font);
   result.mapFooterLabel_ = footerLabels[0];
-  result.initialMap_ = result.map_;
-  result.initialMapImage_ = result.mapImage_;
+  result.initialMap_ = *zeroMap;
+  result.initialMapImage_ = initialMapImage;
+  result.completionFlags_ = loadedFlags;
+  result.store_ = std::move(store);
+  result.savedGame_ = loadedImage;
+  result.saveLoadError_ = std::move(loadError);
   return result;
+}
+
+void FrontendSession::persist() {
+  if (!store_) return;
+  ++saveCount_;
+  if (auto saved = store_->save(savedGame_)) {
+    saveError_.reset();
+  } else {
+    // The in-memory progress and any results screen stay; the prior file is intact.
+    saveError_ = saved.error();
+    std::fprintf(stderr, "save: %s (progress kept in memory only)\n", saveError_->c_str());
+  }
 }
 
 Image FrontendSession::renderMapImage(const MapScene& map) const {
@@ -91,12 +137,16 @@ Image FrontendSession::renderMapImage(const MapScene& map) const {
 shell::Outcome FrontendSession::confirmChoice(bool yes) {
   const auto result = state_.confirmChoice(yes);
   if (result == shell::Outcome::Handled && yes) {
-    // New Game resets this session only. Never touch the installed save.
+    // New Game resets the session and writes the zero image to the clone's own
+    // store (0x49BCF4 reset 0x45F883, then 0x49BCFE write 0x45F94D; the reset
+    // zeroes the flag and every A/B/C). Never touch the installed save.
     completionFlags_.fill(0);
     map_ = initialMap_;
     mapImage_ = initialMapImage_;
     selectedNode_.reset(); selectedLevel_.reset(); outcome_.reset();
     results_.reset();
+    savedGame_ = save::SavedGame{};
+    persist();
   }
   return result;
 }
@@ -169,13 +219,16 @@ shell::Outcome FrontendSession::closeLevelMenu(bool paused) {
 
 bool FrontendSession::click(int x, int y) {
   // SOURCE SDL adapter: hit the rendered panels, not a recovered native menu
-  // mouse predicate. Only New Game is implemented on the main menu.
+  // mouse predicate. Main-menu activation reuses the existing semantic route.
   if (screen() == shell::Screen::Menu) {
-    if (x < firstMenuLeft_ || x >= firstMenuRight_ || y < 321 || y >= 348) return false;
-    // Preserve the existing explicit New Game click route independent of the
-    // keyboard-selected row; hover and other row clicks remain unsupported.
-    state_.setHighlight(0);
-    return pressReturn() == shell::Outcome::Handled;
+    for (std::size_t row = 0; row < menuBoxes_.size(); ++row) {
+      const auto& box = menuBoxes_[row];
+      if (x >= box[0] && x < box[2] && y >= box[1] && y < box[3]) {
+        state_.setHighlight(static_cast<int>(row));
+        return pressReturn() == shell::Outcome::Handled;
+      }
+    }
+    return false;
   }
   if (screen() == shell::Screen::Confirm) {
     for (int i = 0; i < 2; ++i) {
@@ -239,6 +292,14 @@ std::expected<void, std::string> FrontendSession::completeLevel(
   results_ = std::move(*results);
   outcome_ = outcome;
   selectedLevel_.reset();
+  if (outcome.success) {
+    // READ485E55 (0x485E2B..0x485E65): mark C of the winning (group, slot), then
+    // write the file. Loss, retry, abandon and exit never reach this. A failed
+    // write is reported by persist() and does not discard the results above.
+    const auto& entry = MapScene::nodeMapping()[*selectedNode_];
+    savedGame_.markComplete(entry[0], entry[1]);
+    persist();
+  }
   return {};
 }
 

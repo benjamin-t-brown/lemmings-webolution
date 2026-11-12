@@ -2,9 +2,15 @@
 
 #include "Box.h"
 
+#include "lemmings/level_name_tables.hpp"
+#include "lemmings/world_geometry_prefix.hpp"
+
+#include <bit>
 #include <cmath>
 #include <cstring>
 #include <format>
+#include <stdexcept>
+#include <utility>
 
 namespace webo {
 namespace {
@@ -59,7 +65,9 @@ std::size_t ActorLightMap::histogram(std::uint8_t value) const {
   return count;
 }
 
-std::expected<ActorLightMap, std::string> findActorLightMap(
+namespace {
+
+std::expected<ActorLightMap, std::string> findActorLightMapLegacy(
     std::span<const std::byte> d) {
   const std::size_t cyl = findCylinderChunk(d);
   if (cyl == std::string::npos)
@@ -120,6 +128,55 @@ std::expected<ActorLightMap, std::string> findActorLightMap(
     p += sizeof(rgb);
     light.palette[static_cast<std::size_t>(i)] = {paletteChannel(rgb[0]), paletteChannel(rgb[1]),
                                                   paletteChannel(rgb[2])};
+  }
+  return light;
+}
+
+}  // namespace
+
+std::expected<ActorLightMap, std::string> findActorLightMap(
+    std::span<const std::byte> d) {
+  // LevelByteStream borrows its input. Keep the adapted storage alive through
+  // both recovered readers, preserving their serialized section order.
+  std::vector<std::uint8_t> bytes;
+  bytes.reserve(d.size());
+  for (const auto byte : d)
+    bytes.push_back(std::to_integer<std::uint8_t>(byte));
+  lemmings::LevelByteStream stream{bytes};
+  lemmings::WorldGeometryPrefix world;
+  try {
+    (void)lemmings::read_compiled_level_prefix(stream);
+    world = lemmings::read_world_geometry_prefix(stream);
+  } catch (const std::invalid_argument& error) {
+    auto fallback = findActorLightMapLegacy(d);
+    const auto rejection = std::format("actor light map: recovered reader at byte {}: {}",
+                                       stream.cursor, error.what());
+    if (!fallback)
+      return std::unexpected(rejection + "; legacy locator: " + fallback.error());
+    fallback->diagnostic = rejection;
+    return fallback;
+  }
+
+  // Existing portable adapter policies, not original loader validation. A
+  // decoded invalid projection must fail without trying a different chunk.
+  const auto rows = world.following_value;
+  if (rows == 0 || rows > kMaxRows)
+    return std::unexpected(std::format("actor light map: implausible height {}", rows));
+  if (world.byte_array.size() != ActorLightMap::kMapBytes)
+    return std::unexpected(
+        std::format("actor light map: expected {} map bytes, the file says {}",
+                    ActorLightMap::kMapBytes, world.byte_array.size()));
+
+  ActorLightMap light;
+  light.map = std::move(world.byte_array);
+  std::size_t p = 0;
+  for (auto& rgb : light.palette) {
+    for (auto& channel : rgb) {
+      std::uint64_t bits = 0;
+      for (int byte = 0; byte < 8; ++byte)
+        bits |= static_cast<std::uint64_t>(world.fixed_bytes[p++]) << (8 * byte);
+      channel = paletteChannel(std::bit_cast<double>(bits));
+    }
   }
   return light;
 }

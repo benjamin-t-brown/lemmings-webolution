@@ -1,0 +1,21 @@
+{
+  "recorded_date_utc": "2026-10-29",
+  "source_commit": "d729b7a",
+  "reference_sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f",
+  "inventory_evidence_id": "ev_3c905cbda0eac7c0404434965cd835246e300d86eca76c2b4e2e352d64462052",
+  "total_identified_procedures": 6322,
+  "excluded_external_functions": 130,
+  "excluded_internal_thunks": 6,
+  "eligible_functions": 6186,
+  "documented_recovery_functions_including_partial": 372,
+  "not_in_recovery_ledger": 5814,
+  "documented_recovery_percent": 6.0135790494665375,
+  "byte_pinned_function_entries": 543,
+  "byte_pinned_percent": 8.77788554801164,
+  "distinct_ledger_address_mentions": 382,
+  "excluded_interior_block_addresses_and_endpoints": 10,
+  "definition": "Unique exact eligible procedure-entry addresses in the first address column of docs/FUNCTIONS.md. Includes partial recoveries. Byte pins alone do not establish recovery. Compiler/runtime functions remain in the denominator.",
+  "fully_recovered_function_count": null,
+  "unknown_function_count": null,
+  "limitations": "Unweighted documented function coverage, not playability or remaining effort. Full/partial/inspected-only/unknown categories have not been audited."
+}

@@ -16,9 +16,10 @@
 // the name -- `fish.a3d`, most `light_*.a3d`) or an identity transform at the
 // origin (`teleport_fx.a3d`). Those are not world placements and are skipped.
 //
-// Skill counts live in a short trailer near EOF: eight little-endian u32
-// counts (climber … digger), four pad bytes, then the marker
-// `01 00 00 00 08 00 00 00`. Verified on all 102 retail levels.
+// Skill counts are the first eight words of the ordered eleven-word panel
+// record read by 0x0045B86D. The historical locator's nearby `1,8` pair was
+// observed across 102 retail levels, not established as a serialized marker.
+// That locator remains a diagnosed fallback for rejected structured input.
 
 #pragma once
 
@@ -102,11 +103,50 @@ struct HatchRecord {
   // The two Vec3 the base loader's tail reads into hatch+0x48 and +0x60: an
   // axis-aligned 8 x 5 box in unrolled space, z 0 and 1, on every record in
   // the corpus. Kept because they are what makes the record recognisable.
+  // That corpus observation came through `findHatchRecords`, which *requires*
+  // 8 x 5, so it cannot speak for records of another size; `readHatchRecords`
+  // reports whatever the stream holds.
   Vec3 boxMin{};
   Vec3 boxMax{};
-  std::size_t at = 0;       // file offset of the count word
-  std::string model;        // "entrance" or "entrance_acid"
+  // File offset of the count word, as located by `findHatchRecords`. The
+  // structured reader (`readHatchRecords`) supplies no field offset, so it
+  // leaves this 0; no consumer reads it.
+  std::size_t at = 0;
+  // The nearest preceding name from `findHatchRecords` ("entrance" or
+  // "entrance_acid"); the record's own model name from `readHatchRecords`,
+  // empty when the record carries no model. The two need not be the same
+  // string, and nothing keys behaviour off it.
+  std::string model;
 };
+
+// Serialized link fields of one 0x004347EC record whose model is
+// teleport_fx.a3d. `id` is the base id read by 0x00423291 (stored at object
+// +0x3A; 0x00423310..0x00423325 then sets actor list 0x004CBB18 [id] = object);
+// `partnerId` is the word stored at object +0x98. 0x00434BCD..0x00434BF3 looks
+// `partnerId` up in that same list (0x00444BA1 is the generic list[index]
+// accessor -> 0x004461D0) and stores the result at +0x260, so the partner is the
+// actor whose base id equals `partnerId`. Retained live data agrees on
+// MM_TELE_003. `y` is base double [1], kept only to verify the correlation with
+// the locator poses.
+struct TeleportLink {
+  std::int32_t id = 0;
+  std::uint32_t partnerId = 0;
+  double y = 0;
+};
+
+// Project the teleport records, in stream order, through the unchanged
+// lemmings::read_compiled_level(bytes, false). Only the reader's
+// std::invalid_argument is translated.
+std::expected<std::vector<TeleportLink>, std::string> readTeleportLinks(
+    std::span<const std::byte>);
+
+// partner[k] = index of the link whose id equals links[k].partnerId; with a
+// repeated id the last in stream order (the list slot is overwritten, 0x00423325),
+// or -1 when none carries it (the slot is zero, 0x00443ABD). `diagnostic` describes
+// every unmatched or repeated id. Ids of non-pad actors share the same list in
+// the original and are not visible here (see native-023 notes).
+std::vector<int> resolveTeleportPartners(std::span<const TeleportLink> links,
+                                         std::string& diagnostic);
 
 struct LevelObjects {
   std::vector<WorldPose> entrances;
@@ -115,11 +155,30 @@ struct LevelObjects {
   std::vector<PlacedModel> placed;
   // The hatches' stored spawn words, in stream order.
   std::vector<HatchRecord> hatches;
+  // Empty when `hatches` came from the structured level reader. Otherwise the
+  // `std::invalid_argument` message that reader threw, with `hatches` from the
+  // `findHatchRecords` byte-pattern fallback. Reported, never discarded.
+  std::string hatchFallbackReason;
+  // native-023: one entry per `placed` teleport.a3d, in locator order, from the
+  // structured 0x004347EC records once count and Y were verified against the
+  // locator. Empty when the structured projection was rejected or could not be
+  // correlated (see teleportLinkDiagnostic) or the level has no teleports.
+  std::vector<TeleportLink> teleportLinks;
+  // For each teleportLinks entry, the index (into teleportLinks) of the pad it
+  // links to, or -1 when no pad carries the linked id.
+  std::vector<int> teleportPartner;
+  // Empty on structured success (and for levels without teleports). Otherwise
+  // the reader's message, or why correlation failed; callers then keep the
+  // file-order stand-in. Unresolved/duplicate ids are also described here.
+  std::string teleportLinkDiagnostic;
 };
 
-// Skill panel order matches classic Lemmings / sim::Skill.
+// Physical panel indices 0..7 match sim::Skill; see phase-c1-panel-indices.
 struct LevelSkills {
   std::array<std::uint32_t, 8> counts{};  // climber … digger
+  // Empty on structured success; otherwise the recovered reader's decorated
+  // invalid_argument rejection, with counts supplied by the legacy scanner.
+  std::string skillFallbackReason;
 };
 
 PlacedKind classifyPlacedModel(std::string_view name);
@@ -127,12 +186,50 @@ PlacedKind classifyPlacedModel(std::string_view name);
 // Find every world-placed `.a3d` (entrances, exits, and the rest).
 std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::byte>);
 
-// Read the eight skill-panel counts from the level trailer.
+// Read the eight skill-panel stocks through the recovered ordered level reader.
+// Counts above 200 are rejected as portable adapter policy. Only a reader
+// invalid_argument enables legacy scanning; combined failure reports both causes.
 std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byte>);
 
+// Portable serialized entry metadata, not the original hatch/controller ABI.
+// 0x00443BDC stores value_5568; 0x00444D1E selects hatch+8 (base yaw),
+// defaulting to 128 when the nonnegative index is outside the hatch list.
+struct SelectedHatchCamera {
+  std::int32_t selector = 0;
+  std::size_t hatchCount = 0;
+  double yawUnits = 128.0;
+};
+
+// Ordered recovered reader, require_eof=false. Negative selectors and nonfinite
+// selected yaw are rejected as portable safeguards, not original validation.
+// Only reader invalid_argument is translated; caller storage stays borrowed
+// throughout parsing. There is no byte-pattern or diagnostic-yaw fallback.
+std::expected<SelectedHatchCamera, std::string> readSelectedHatchCamera(
+    std::span<const std::byte>);
+
 // Every hatch record in the stream, found by the shape of the run the hatch
-// loader reads, not by a remembered offset. See HatchRecord.
+// loader reads, not by a remembered offset. See HatchRecord. This is now only
+// the fallback for inputs the structured reader below rejects: it is a
+// plausibility filter (type <= 8, count in [1,200], x/y < 256, an exactly
+// 8 x 5 box, seven integral doubles), so a supported record with a populated
+// counted triple array or a differently sized box is invisible to it.
 std::vector<HatchRecord> findHatchRecords(std::span<const std::byte>);
+
+// Every hatch record, read through the recovered serialized compiled-level
+// reader (`lemmings::read_compiled_level`, gadget list `0x004487F0` ->
+// `0x00425E50`) instead of a byte pattern: the whole file is decoded in
+// section order and `gadgets.entities_425e50` is projected onto HatchRecord
+// in stream order. EOF is not required -- this extracts records, it is not a
+// file validator.
+//
+// Throws `std::invalid_argument` (the decoder's own message) when the input
+// is not a compiled level the recovered reader supports; `findLevelObjects`
+// catches exactly that and falls back to `findHatchRecords`.
+//
+// This establishes the serialized *read* layout only. It says nothing about
+// the original in-memory hatch object, its allocation, its resource
+// resolution or any release timing.
+std::vector<HatchRecord> readHatchRecords(std::span<const std::byte>);
 
 // The terrain cell a hatch's stored words name. The words are a world column
 // and a world Y measured **up**, in world units -- one cell each, never the

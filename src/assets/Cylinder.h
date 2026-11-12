@@ -3,13 +3,11 @@
 // Lemmings Revolution's levels are not flat: each one wraps around the inside
 // and outside of a vertical tube, which is why the simulation's X axis wraps
 // and its Y axis does not. This is the tube's geometry, read out of the .LVL
-// file and verified against all 102 retail levels.
+// file. The observations below were measured across 102 retail levels.
 //
-// The mesh turns out to be *identical in every level* -- same ring count, same
-// radii, same spacing, same vertex count -- so it is effectively a constant of
-// the game that happens to be stored per level. That is worth knowing: the
-// renderer can treat the tube as fixed, and only the skin textures and the
-// terrain change from level to level.
+// Those measured meshes have identical ring counts, radii, spacing and vertex
+// counts. These are retail observations, not general serialized constraints:
+// the recovered reader counts its first and second block arrays independently.
 //
 // Layout in the file, at the position `findCylinderMesh` locates:
 //
@@ -17,20 +15,21 @@
 //     f64     thickness      10.0 -- outerRadius - innerRadius
 //     u32     ringCount      7
 //     ringCount * 32 * 2 * { f64 x, f64 y, f64 z }     ring vertices
-//     u32     ringCount      again
-//     ringCount * 32 * f64                             per-vertex inner radii
+//     u32     secondCount    7 in the historically measured retail levels
+//     secondCount * 32 * f64                          uninterpreted double blocks
 //     u32     one            1 in every retail level; not yet identified
 //     u32     surfaceCount
 //     surfaceCount * { f64 x, f64 y, f64 z }           the level's surface
-//     u32     zero           0 in every retail level
+//     u32     secondaryCount 0 in the historically measured retail levels
+//     secondaryCount * { f64, f64, f64 }              opaque serialized triples
 //     u32     48
 //     48 * counted string                              OUTER tile names
 //     48 * counted string                              INNER tile names
 //
 // The whole chain parses exactly in all 102 retail levels.
 //
-// The important asymmetry is that everything above is **constant** across the
-// retail levels except `surfaceCount` and its vertices, which range from 539
+// In that retail sample everything above is constant except `surfaceCount`
+// and its vertices, which range from 539
 // to 1558. This mesh is what the engine draws. The collision mask is a
 // separate stored grid (CollisionGrid.h). The per-level surface-index array
 // after the Cylinder preamble is one counted run of 49858 words (LevelIndex.h),
@@ -87,8 +86,10 @@ struct CylinderMesh {
   // ringCount * angularSteps * 2 vertices, inner before outer at each step.
   std::vector<Vec3> vertices;
 
-  // ringCount * angularSteps inner radii, parallel to the inner vertices.
-  // Period 8 in the retail data, so the cross-section has 4-fold symmetry.
+  // Independently counted second blocks, flattened in block/component order.
+  // The name is retained for compatibility. Count equality with ringCount and
+  // a per-inner-vertex relationship are retail observations, not reader rules.
+  // Period 8 in the historically measured retail data.
   std::vector<double> radii;
 
   // The per-level surface geometry. This is the part that varies.
@@ -109,6 +110,10 @@ struct CylinderMesh {
   std::size_t offset = 0;
   std::size_t endOffset = 0;
 
+  // Empty for structured loading. Successful legacy loading retains the
+  // recovered reader's rejection and byte cursor for diagnosis.
+  std::string meshFallbackReason;
+
   const Vec3& vertex(std::uint32_t ring, std::uint32_t step, bool outer) const;
 
   double innerRadius() const;
@@ -128,10 +133,13 @@ struct CylinderMesh {
   std::uint32_t bandsPerTileRow() const { return bandCount() / kTileRows; }
 };
 
-// Finds the mesh by signature rather than by offset: the first ring's first
-// vertex is (0, 0, innerRadius), and the whole vertex run is then validated
-// before the match is accepted. The preceding blocks vary between levels, so
-// a fixed offset would not work.
+// Read counted ring vertices and independent double blocks through the recovered
+// ordered prefix/world readers, then the compatibility surface/tile tail,
+// consuming the recovered secondary-triple count/payload without exposing or
+// interpreting its values.
+// Only a recovered-reader rejection enables the diagnosed legacy signature
+// locator, whose tail still requires equal radius/ring counts and a zero word
+// at the secondary-triple position.
 std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::byte>);
 
 }  // namespace webo

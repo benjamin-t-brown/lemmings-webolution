@@ -1,0 +1,453 @@
+[
+  {
+    "info": {
+      "name": "FUN_00446790",
+      "entrypoint": "0x446790",
+      "basicblock_count": 1,
+      "length": 17,
+      "signature": "undefined4 __fastcall FUN_00446790(int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x446790",
+            "end": "0x4467a0"
+          }
+        ],
+        "total_bytes": 17,
+        "span_bytes": 17,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_a30b2596151fba94f77115207eac653c303949f06043db0f4e3e78cc54f4abb9",
+    "pseudo": "\r\nundefined4 __fastcall FUN_00446790(int param_1)\r\n\r\n{\r\n  return *(undefined4 *)(param_1 + 0x14);\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_004467b0",
+      "entrypoint": "0x4467b0",
+      "basicblock_count": 1,
+      "length": 26,
+      "signature": "bool __thiscall FUN_004467b0(void * this, int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x4467b0",
+            "end": "0x4467c9"
+          }
+        ],
+        "total_bytes": 26,
+        "span_bytes": 26,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_3d34cee13a8d34c014a538a896b58627a6652f520bce76826302a4c73c9c794a",
+    "pseudo": "\r\nbool __thiscall FUN_004467b0(void *this,int param_1)\r\n\r\n{\r\n  return (void *)param_1 == this;\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_00448020",
+      "entrypoint": "0x448020",
+      "basicblock_count": 1,
+      "length": 27,
+      "signature": "int __thiscall FUN_00448020(void * this, int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x448020",
+            "end": "0x44803a"
+          }
+        ],
+        "total_bytes": 27,
+        "span_bytes": 27,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_cbec293dfa1dcdfdd3881fce42bb8ce88eb8821e2afe91334dc05fb18fce197f",
+    "pseudo": "\r\nint __thiscall FUN_00448020(void *this,int param_1)\r\n\r\n{\r\n  return param_1 * 0x28 + *(int *)((int)this + 0xc);\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_00448040",
+      "entrypoint": "0x448040",
+      "basicblock_count": 1,
+      "length": 16,
+      "signature": "undefined4 __fastcall FUN_00448040(undefined4 * param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x448040",
+            "end": "0x44804f"
+          }
+        ],
+        "total_bytes": 16,
+        "span_bytes": 16,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_43a32152cdf3c9ee233478d4d20ba5490b65ccc3f946e8fbd81314f834e61ee0",
+    "pseudo": "\r\nundefined4 __fastcall FUN_00448040(undefined4 *param_1)\r\n\r\n{\r\n  return *param_1;\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_00448050",
+      "entrypoint": "0x448050",
+      "basicblock_count": 13,
+      "length": 354,
+      "signature": "undefined __thiscall FUN_00448050(void * this, undefined4 * param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_10 @ Stack[-0x10]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_14 @ Stack[-0x14]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_18 @ Stack[-0x18]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_1c @ Stack[-0x1c]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_20 @ Stack[-0x20]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_24 @ Stack[-0x24]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_28 @ Stack[-0x28]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_2c @ Stack[-0x2c]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_30 @ Stack[-0x30]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_34 @ Stack[-0x34]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_38 @ Stack[-0x38]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x448050",
+            "end": "0x4481b1"
+          }
+        ],
+        "total_bytes": 354,
+        "span_bytes": 354,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_287512177e5d5f69f4d4b9e54594db9a2b182b4eb569fce69860f0fd5819f85c",
+    "pseudo": "\r\nvoid __thiscall FUN_00448050(void *this,undefined4 *param_1)\r\n\r\n{\r\n  int iVar1;\r\n  int *piVar2;\r\n  int *piVar3;\r\n  undefined4 *puVar4;\r\n  int *local_34;\r\n  int local_18;\r\n  void *local_10;\r\n  undefined1 *puStack_c;\r\n  undefined4 local_8;\r\n  \r\n  local_8 = 0xffffffff;\r\n  puStack_c = &LAB_004ac52b;\r\n  local_10 = ExceptionList;\r\n  if (*(int *)((int)this + 4) <= *(int *)this) {\r\n    ExceptionList = &local_10;\r\n    *(int *)((int)this + 4) = *(int *)((int)this + 4) + *(int *)((int)this + 8);\r\n    iVar1 = *(int *)((int)this + 4);\r\n    local_34 = operator_new(iVar1 * 0x28 + 4);\r\n    local_8 = 0;\r\n    if (local_34 == (int *)0x0) {\r\n      local_34 = (int *)0x0;\r\n    }\r\n    else {\r\n      *local_34 = iVar1;\r\n      FUN_0049c5d3(local_34 + 1,0x28,iVar1,FUN_00447390);\r\n      local_34 = local_34 + 1;\r\n    }\r\n    local_8 = 0xffffffff;\r\n    for (local_18 = 0; local_18 < *(int *)this; local_18 = local_18 + 1) {\r\n      piVar2 = (int *)(*(int *)((int)this + 0xc) + local_18 * 0x28);\r\n      piVar3 = local_34 + local_18 * 10;\r\n      for (iVar1 = 10; iVar1 != 0; iVar1 = iVar1 + -1) {\r\n        *piVar3 = *piVar2;\r\n        piVar2 = piVar2 + 1;\r\n        piVar3 = piVar3 + 1;\r\n      }\r\n    }\r\n    if (*(void **)((int)this + 0xc) != (void *)0x0) {\r\n      FUN_00449050(*(void **)((int)this + 0xc),3);\r\n    }\r\n    *(int **)((int)this + 0xc) = local_34;\r\n  }\r\n  puVar4 = (undefined4 *)(*(int *)((int)this + 0xc) + *(int *)this * 0x28);\r\n  for (iVar1 = 10; iVar1 != 0; iVar1 = iVar1 + -1) {\r\n    *puVar4 = *param_1;\r\n    param_1 = param_1 + 1;\r\n    puVar4 = puVar4 + 1;\r\n  }\r\n  *(int *)this = *(int *)this + 1;\r\n  ExceptionList = local_10;\r\n  return;\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_00447390",
+      "entrypoint": "0x447390",
+      "basicblock_count": 1,
+      "length": 25,
+      "signature": "int __fastcall FUN_00447390(int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x447390",
+            "end": "0x4473a8"
+          }
+        ],
+        "total_bytes": 25,
+        "span_bytes": 25,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_dacbdca25af033e328e3a53fc4274e90a77caca24b55e942e17fcdf8cf339575",
+    "pseudo": "\r\nint __fastcall FUN_00447390(int param_1)\r\n\r\n{\r\n  FUN_004473b0(param_1 + 4);\r\n  return param_1;\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_00447bc0",
+      "entrypoint": "0x447bc0",
+      "basicblock_count": 1,
+      "length": 16,
+      "signature": "undefined4 __fastcall FUN_00447bc0(undefined4 * param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x447bc0",
+            "end": "0x447bcf"
+          }
+        ],
+        "total_bytes": 16,
+        "span_bytes": 16,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_8a83d6c2d8bd1d3a0a947eefc406586aba5912f95554f40c120bb7292806b743",
+    "pseudo": "\r\nundefined4 __fastcall FUN_00447bc0(undefined4 *param_1)\r\n\r\n{\r\n  return *param_1;\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_00424360",
+      "entrypoint": "0x424360",
+      "basicblock_count": 1,
+      "length": 30,
+      "signature": "int __thiscall FUN_00424360(void * this, int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x424360",
+            "end": "0x42437d"
+          }
+        ],
+        "total_bytes": 30,
+        "span_bytes": 30,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_85e4a0cbab6f940ee2773fd02491639e21675aa88943cdc500a0a7aa35589b7e",
+    "pseudo": "\r\nint __thiscall FUN_00424360(void *this,int param_1)\r\n\r\n{\r\n  return param_1 * 0x180 + *(int *)((int)this + 0xc);\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_004157d0",
+      "entrypoint": "0x4157d0",
+      "basicblock_count": 1,
+      "length": 30,
+      "signature": "int __thiscall FUN_004157d0(void * this, int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x4157d0",
+            "end": "0x4157ed"
+          }
+        ],
+        "total_bytes": 30,
+        "span_bytes": 30,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_43186109b8cfa88c37b9cbd2d4675276e2a41f0038be752e482703cca20aabfa",
+    "pseudo": "\r\nint __thiscall FUN_004157d0(void *this,int param_1)\r\n\r\n{\r\n  return param_1 * 0x178 + *(int *)((int)this + 0xc);\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "FUN_004157f0",
+      "entrypoint": "0x4157f0",
+      "basicblock_count": 1,
+      "length": 16,
+      "signature": "undefined4 __fastcall FUN_004157f0(undefined4 * param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x4157f0",
+            "end": "0x4157ff"
+          }
+        ],
+        "total_bytes": 16,
+        "span_bytes": 16,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_532aa60b9cb5b236c6fd5c1058f620675bd75f28d1b3f4019f35d41d5d2e6228",
+    "pseudo": "\r\nundefined4 __fastcall FUN_004157f0(undefined4 *param_1)\r\n\r\n{\r\n  return *param_1;\r\n}\r\n\r\n"
+  },
+  {
+    "info": {
+      "name": "~_String_val<>",
+      "entrypoint": "0x47ac05",
+      "basicblock_count": 1,
+      "length": 22,
+      "signature": "undefined __stdcall ~_String_val<>(void)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x47ac05",
+            "end": "0x47ac1a"
+          }
+        ],
+        "total_bytes": 22,
+        "span_bytes": 22,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_1636ac6913060b4f8748e11c9bcf99b37d647c2da62d65c8476641d662f08a6f",
+    "pseudo": "\r\n/* Library Function - Multiple Matches With Same Base Name\r\n    public: __thiscall std::_String_val<struct std::_Simple_types<char> >::~_String_val<struct\r\n   std::_Simple_types<char> >(void)\r\n    public: __thiscall std::_String_val<struct std::_Simple_types<unsigned short>\r\n   >::~_String_val<struct std::_Simple_types<unsigned short> >(void)\r\n    public: __thiscall std::_String_val<struct std::_Simple_types<wchar_t> >::~_String_val<struct\r\n   std::_Simple_types<wchar_t> >(void)\r\n   \r\n   Libraries: Visual Studio 2017 Debug, Visual Studio 2017 Release, Visual Studio 2019 Debug, Visual\r\n   Studio 2019 Release */\r\n\r\nvoid ~_String_val<>(void)\r\n\r\n{\r\n  FUN_0047ac40();\r\n  return;\r\n}\r\n\r\n"
+  }
+]

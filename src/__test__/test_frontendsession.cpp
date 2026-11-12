@@ -331,6 +331,79 @@ int main() {
   check(footer->pressReturn() == shell::Outcome::Handled && footer->screen() == Screen::Menu &&
         footer->constructionCounter() == 9, "SDL Return adapter activates sole focused footer");
 
+  // SOURCE mouse adapter contract, independently fixed for the visible UK
+  // panels: Start New Game width166, Play Current Game width191, centred at320.
+  // These expected coordinates deliberately do not call production hit helpers.
+  check(uk && (*uk)[125] == "Start New Game" && (*uk)[126] == "Play Current Game",
+        "independent UK panel-coordinate fixture uses the full loaded labels");
+  auto currentGame = make();
+  if (!currentGame) return 1;
+  for (const bool progressed : {false, true}) {
+    if (progressed) {
+      currentGame->pressReturn(); currentGame->pressReturn();
+      check(currentGame->clickMap(206, 204) &&
+            currentGame->completeLevel(*library, {"MM_CLIMB_002", 1, 1, 1, 10, true}).has_value() &&
+            currentGame->click(320, 360) && currentGame->click(320, 455),
+            "SOURCE injected LevelOutcome prepares nonzero menu (not natural gameplay)");
+    }
+    const auto flags = currentGame->completionFlags();
+    const auto states = currentGame->mapStates();
+    check(flags[0] == (progressed ? 1 : 0), "mouse fixture has independently expected completion");
+    auto prepared = *currentGame;
+    prepared.moveMenuFocus(1); prepared.pressReturn();
+    const auto preparedMapImage = prepared.image().rgba;
+    for (int row = 0; row < 2; ++row) {
+      const int left = row == 0 ? 218 : 206, right = row == 0 ? 422 : 435;
+      const int top = row == 0 ? 321 : 350, bottom = row == 0 ? 348 : 377;
+      const int centreY = row == 0 ? 334 : 363;
+      const std::array interior{std::pair{320, centreY}, std::pair{left, centreY},
+          std::pair{right - 1, centreY}, std::pair{320, top}, std::pair{320, bottom - 1},
+          std::pair{left, top}, std::pair{right - 1, top},
+          std::pair{left, bottom - 1}, std::pair{right - 1, bottom - 1}};
+      const std::array exterior{std::pair{left - 1, centreY}, std::pair{right, centreY},
+          std::pair{right + 1, centreY}, std::pair{320, top - 1},
+          std::pair{320, bottom}, std::pair{320, bottom + 1}};
+      for (int priorFocus = 0; priorFocus < 5; ++priorFocus) {
+        auto menu = *currentGame;
+        for (int i = 0; i < priorFocus; ++i) menu.moveMenuFocus(1);
+        const int counter = menu.constructionCounter();
+        for (const auto& [x, y] : interior) {
+          auto hit = menu;
+          check(hit.click(x, y) && hit.screen() == (row == 0 ? Screen::Confirm : Screen::Map) &&
+                hit.menuFocus() == row && hit.constructionCounter() == counter + 1 &&
+                hit.completionFlags() == flags && hit.mapStates() == states && !hit.selectedLevel(),
+                "supported centre/edge/corner activates own row from every prior focus, preserving progress");
+          if (row == 1) check(hit.image().rgba == preparedMapImage,
+                "Play Current Game presents the prepared current-progress map");
+        }
+        for (const auto& [x, y] : exterior) {
+          auto miss = menu;
+          check(!miss.click(x, y) && miss.screen() == Screen::Menu &&
+                miss.menuFocus() == priorFocus && miss.constructionCounter() == counter &&
+                miss.completionFlags() == flags && miss.mapStates() == states && !miss.selectedLevel(),
+                "half-open right/bottom and adjacent exterior pixels preserve page/focus/progress");
+        }
+        for (const auto& [x, y] : {std::pair{320, 348}, {320, 349}, {320, 377}, {320, 378},
+                                  {320, 392}, {320, 421}, {320, 450}, {0, 0}, {639, 479}}) {
+          auto miss = menu;
+          check(!miss.click(x, y) && miss.screen() == Screen::Menu &&
+                miss.menuFocus() == priorFocus && miss.constructionCounter() == counter &&
+                miss.completionFlags() == flags && miss.mapStates() == states && !miss.selectedLevel(),
+                "inter-row gaps, unsupported rows2-4 and distant exterior do not mutate menu");
+        }
+      }
+    }
+    auto no = *currentGame;
+    check(no.click(320, 334) && no.completionFlags() == flags && no.mapStates() == states &&
+          no.click(320, 340) && no.screen() == Screen::Menu && no.completionFlags() == flags &&
+          no.mapStates() == states && !no.selectedLevel(), "New Game then No preserves mouse fixture progress");
+    auto yes = *currentGame;
+    check(yes.click(320, 334) && yes.completionFlags() == flags && yes.click(320, 310) &&
+          yes.screen() == Screen::Map && yes.completionFlags() == std::array<std::int32_t, 102>{} &&
+          yes.mapStates() == s->mapStates() && !yes.selectedLevel(),
+          "only existing Yes action clears progress after New Game click");
+  }
+
   std::cout << checks << " checks, " << failures << " failures\n";
   return failures ? 1 : 0;
 }

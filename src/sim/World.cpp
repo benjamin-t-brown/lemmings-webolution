@@ -95,8 +95,8 @@ void World::spawn(double budgetSeconds) {
   // continuous-release call that happened to land exactly on a tick
   // boundary) means "the full tick," matching the old unconditional
   // behaviour.
-  if (setup_.continuousStepperClock) {
-    const double dt = tickDtSeconds();
+  if (continuousMotion()) {
+    const double dt = motionDtSeconds();
     const double budget = budgetSeconds >= 0.0 ? budgetSeconds : dt;
     l.stepBudgetSeconds = budget - dt;
   }
@@ -158,25 +158,147 @@ const SpeedPad* World::speedPadAt(const Lemming& l) const {
   return nullptr;
 }
 
-Lever* World::leverAt(const Lemming& l) {
+bool World::leverAccepts(const Lever& lev, const Lemming& l) const {
   // 0x00436D30: AABB then facing vs +0xb8. state==1 needs face −1; else +1.
   const int face = static_cast<int>(l.facing);
-  for (Lever& lev : setup_.levers) {
-    const int dx =
-        setup_.terrain.wrapX(l.x - lev.x + setup_.terrain.width() / 2) -
-        setup_.terrain.width() / 2;
-    const int dy = l.y - lev.y;
-    if (dx < 0 || dx > lev.width || dy < 0 || dy > lev.height)
-      continue;
-    if (lev.state == 1) {
-      if (face != -1)
-        continue;
-    } else if (face != 1) {
+  const int dx =
+      setup_.terrain.wrapX(l.x - lev.x + setup_.terrain.width() / 2) -
+      setup_.terrain.width() / 2;
+  const int dy = l.y - lev.y;
+  if (dx < 0 || dx > lev.width || dy < 0 || dy > lev.height)
+    return false;
+  return lev.state == 1 ? face == -1 : face == 1;
+}
+
+Lever* World::leverAt(const Lemming& l) {
+  for (Lever& lev : setup_.levers)
+    if (leverAccepts(lev, l))
+      return &lev;
+  return nullptr;
+}
+
+double FluidGate::rateFor(int kind) {
+  // Startup writer 0x00428848: kind 0 -> 2.0 at 0x004BF6F8, kind 1 -> 0.5 at 0x004BF740
+  // (row stride 0x48). A kind beyond those two has no traced rate: it does not ramp rather
+  // than inventing one.
+  switch (kind) {
+    case 0: return 2.0;
+    case 1: return 0.5;
+    default: return 0.0;
+  }
+}
+
+void FluidGate::initialise(Terrain& terrain) {
+  // Reader 0x0042ACAC (0x42af32..0x42afc4): request 1 -> height := low, CLEAR the zone bit over
+  // the stream AABB; otherwise height := high and SET it. [+0x68] is not recomputed here.
+  const bool drained = request == 1;
+  height = drained ? low : high;
+  if (paintsZonePlane())
+    terrain.paintZoneWaterRect(minX, minY, maxX, maxY, !drained);
+}
+
+void FluidGate::step(double dt, Terrain& terrain) {
+  stepHeight(dt, terrain);
+  advanceWave(dt);
+}
+
+void FluidGate::advanceWave(double dt) {
+  wavePhase += dt;
+  while (kWavePeriod < wavePhase)
+    wavePhase -= kWavePeriod;
+  animated = true;
+}
+
+void FluidGate::stepHeight(double dt, Terrain& terrain) {
+  // 0x0042B24D. While request == done the height machine exits to the wave/model tail
+  // (advanceWave; the model update itself is rendered from this state by the app).
+  if (request == done)
+    return;
+  const double rate = rateFor(kind);
+  if (request == 0) {
+    // Raise (message type 4). The comparison is made BEFORE the add and nothing clamps the
+    // add, so the update that crosses `high` overshoots by less than dt * rate and the next
+    // update snaps to `high`; rows the overshoot set are never cleared. The settle update
+    // still repaints (it is the unconditional tail of this branch).
+    if (height < high) {
+      height = dt * rate + height;
+    } else {
+      height = high;
+      if (armed) {
+        armed = false;
+        done = 0;
+      }
+    }
+    maxY = minY + height;
+    if (paintsZonePlane())
+      terrain.paintZoneWaterRect(minX, minY, maxX, maxY, true);
+  } else {
+    // Drain (message type 5). Settling dispatches the +0x12C list in the original; the
+    // serialized objects carry none, so only the bookkeeping is reproduced. The settle path
+    // neither paints nor recomputes [+0x68].
+    if (height <= low) {
+      height = low;
+      if (!armed) {
+        armed = true;
+        done = 1;
+      }
+    } else {
+      if (paintsZonePlane())
+        terrain.paintZoneWaterRect(minX, minY, maxX, maxY, false);  // CLEAR the current AABB
+      height = height - dt * rate;
+      maxY = minY + height;
+      if (low < height && paintsZonePlane())
+        terrain.paintZoneWaterRect(minX, minY, maxX, maxY, true);  // SET the shortened AABB
+    }
+  }
+}
+
+void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& list) {
+  for (const LeverMessage& m : list) {
+    // 0x00433B2E: only `elem+4 >= 0` is a list lookup; an empty slot is skipped.
+    if (m.targetId < 0) {
+      ++setup.leverStats.unsupported;
       continue;
     }
-    return &lev;
+    const auto it = setup.objectIds.find(m.targetId);
+    if (it == setup.objectIds.end()) {
+      ++setup.leverStats.unresolved;
+      continue;
+    }
+    const ObjectRef& ref = it->second;
+    const bool gateTarget = ref.cls == ObjectClass::Gate && ref.index >= 0 &&
+                            static_cast<std::size_t>(ref.index) < setup.gates.size();
+    if (!gateTarget || (m.type != 4 && m.type != 5)) {
+      // Type 0 (vt+0xC) and the other classes' vt+4/vt+8 are not traced: bounded, not applied.
+      ++setup.leverStats.unsupported;
+      continue;
+    }
+    // vt+4 (0x0042C8C0) writes request 0, vt+8 (0x0042C8E0) writes request 1; nothing else.
+    setup.gates[static_cast<std::size_t>(ref.index)].request = m.type == 4 ? 0 : 1;
+    ++setup.leverStats.delivered;
   }
-  return nullptr;
+}
+
+void activateLeverFace(LevelSetup& setup, Lever& lever, int face) {
+  if (face != 1 && face != -1)
+    return;  // 0x00436E6A ignores every other face value
+  lever.state = face;
+  // Dispatch edits gates and counters only, never the lever lists being iterated.
+  dispatchLeverMessages(setup, face == 1 ? lever.facePlus : lever.faceMinus);
+}
+
+void fanOutLeverLoadFaces(LevelSetup& setup) {
+  // 0x00444417 -> vt+0x28 0x0043703F -> 0x00436E6A([+0xDC]): the stored face is the state AND the
+  // list that is sent, in one step, so the two cannot disagree. activateLeverFace does exactly the
+  // runtime step (state := face, then the matching list) and touches neither the cooldown (the load
+  // path calls 0x00436E6A directly, not the cooldown-reloading 0x00436E14) nor the cue. A face that
+  // is not +-1 changes nothing and the lever keeps its constructed state, as 0x00436E6A ignores it.
+  // An unlinked (legacy / synthetic) lever has no serialized face and is left untouched.
+  for (Lever& lever : setup.levers) {
+    if (!lever.linked)
+      continue;
+    activateLeverFace(setup, lever, lever.initialFace);
+  }
 }
 
 void World::stepTeleporting(Lemming& l) {
@@ -246,7 +368,7 @@ void World::stepFaller(Lemming& l) {
       floating && l.fallDistance >= rules_.floatAfter + floatOpenCells();
   const int speed = halved ? rules_.floatSpeed : rules_.fallSpeed;
 
-  const bool continuous = setup_.continuousStepperClock && speed > 0;
+  const bool continuous = continuousMotion() && speed > 0;
   // D1n: whether this call already carries a REAL, measured sub-tick phase
   // (traced back to a reduced spawn budget from the continuous release
   // model, or a same-tick handoff from an earlier stepper this very tick --
@@ -262,8 +384,11 @@ void World::stepFaller(Lemming& l) {
   // 200ms tick), so it must NOT be handed to the walker -- only a call that
   // is already carrying real phase may extend that same real phase forward.
   const bool hasTrackedPhase = continuous && l.stepBudgetSeconds != 0.0;
-  const double dt = continuous ? tickDtSeconds() : 0.0;
-  const double unitSeconds = continuous ? dt / speed : 0.0;
+  // shared-timing-impl-001: `dt` is this update's own elapsed time (motionDtSeconds(): the
+  // explicit segment dt, or tickDtSeconds() under legacy tick()); the lattice unit stays
+  // the measured tickDtSeconds() / speed, so a legacy 0.2 s call computes exactly as before.
+  const double dt = continuous ? motionDtSeconds() : 0.0;
+  const double unitSeconds = continuous ? tickDtSeconds() / speed : 0.0;
   const double budget = continuous ? dt + l.stepBudgetSeconds : 0.0;
   const int units = continuous
       ? std::clamp(static_cast<int>(std::floor(budget / unitSeconds + 1e-9)), 0, speed)
@@ -401,9 +526,10 @@ void World::stepWalker(Lemming& l) {
   // stepFaller. Off (the default, `continuous` false below): `units` is
   // exactly `rules_.walkSpeed` and `dt`/`unitSeconds`/`budget` are never
   // read, so the loop runs byte-for-byte as it did before this round.
-  const bool continuous = setup_.continuousStepperClock && rules_.walkSpeed > 0;
-  const double dt = continuous ? tickDtSeconds() : 0.0;
-  const double unitSeconds = continuous ? dt / rules_.walkSpeed : 0.0;
+  const bool continuous = continuousMotion() && rules_.walkSpeed > 0;
+  // shared-timing-impl-001: same dt / lattice-unit split as stepFaller.
+  const double dt = continuous ? motionDtSeconds() : 0.0;
+  const double unitSeconds = continuous ? tickDtSeconds() / rules_.walkSpeed : 0.0;
   const double budget = continuous ? dt + l.stepBudgetSeconds : 0.0;
   const int units = continuous
       ? std::clamp(static_cast<int>(std::floor(budget / unitSeconds + 1e-9)), 0,
@@ -843,7 +969,10 @@ void World::step(Lemming& l) {
   // Round 21: Lever AABB (0x004B1288 / 0x00436D30). Facing-gated toggle of
   // Lever::state (object+0xb8); no lemming attach. Mutate-alone: delete this
   // arm and testLeverToggle fails.
-  if (l.state == State::Walker) {
+  // shared-timing-impl-001: only the legacy tick() path evaluates contact here. The explicit
+  // path evaluates it once per update AFTER all lemmings (stepLeverContacts), so the two
+  // semantics never both run in one route.
+  if (l.state == State::Walker && !explicitUpdate_) {
     if (Lever* lev = leverAt(l)) {
       // 0x00436E6A: +0xb8 := pull facing (±1).
       lev->state = static_cast<int>(l.facing);
@@ -886,7 +1015,7 @@ void World::step(Lemming& l) {
   ++l.frame;
 }
 
-void World::tick(bool continueHatchesAfterTimeout) {
+void World::stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout) {
 
   // Round D1e: an additive, opt-in real-seconds release model
   // (docs/scratch/phase-d1-release-trigger.md and the two D1c/D1d follow-ups),
@@ -896,7 +1025,9 @@ void World::tick(bool continueHatchesAfterTimeout) {
   // D1n: the stepper clock's own dt is the same number the release model
   // already computes below -- shared via tickDtSeconds() so both read the
   // exact same value, per the brief's "Already settled" note.
-  const double dt = tickDtSeconds();
+  // shared-timing-impl-001: `dt` is now a parameter -- tickDtSeconds() from the legacy tick(),
+  // the update's own segment dt from the explicit path -- so every elapsed-time consumer
+  // below (arm clock, countdown, spawn phase) sees the same number as the steppers.
 
   if (!timedOut() || continueHatchesAfterTimeout) {
     if (setup_.releaseIntervalSeconds > 0.0) {
@@ -917,7 +1048,7 @@ void World::tick(bool continueHatchesAfterTimeout) {
         const double countdownBefore = releaseCountdown_;
         releaseCountdown_ -= dt;
         if (releaseCountdown_ <= 0.0) {
-          const double spawnBudget = setup_.continuousStepperClock
+          const double spawnBudget = continuousMotion()
                                           ? std::max(0.0, dt - countdownBefore)
                                           : -1.0;
           spawn(spawnBudget);
@@ -926,16 +1057,131 @@ void World::tick(bool continueHatchesAfterTimeout) {
           releaseCountdown_ += setup_.releaseIntervalSeconds;
         }
       }
-    } else if (++sinceSpawn_ >= setup_.releaseIntervalTicks) {
+    } else if (tickBoundary && ++sinceSpawn_ >= setup_.releaseIntervalTicks) {
+      // The integer-tick release model counts whole level-clock ticks, never raw updates.
       sinceSpawn_ = 0;
       spawn();
     }
   }
+}
+
+void World::tick(bool continueHatchesAfterTimeout) {
+  explicitUpdate_ = false;
+  stepRelease(tickDtSeconds(), true, continueHatchesAfterTimeout);
 
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     step(lemmings_[i]);
 
   ++tick_;
+  levelClockMs_ += static_cast<std::uint64_t>(msPerTick());
+  levelSecondEvents_ = levelClockMs_ / kLevelEventPeriodMs;
+}
+
+void World::stepElapsed(Lemming& l, bool tickBoundary) {
+  if (tickBoundary) {
+    step(l);
+    return;
+  }
+  if (!l.alive())
+    return;
+  // Between tick boundaries only the continuous movers advance (their budget carries the
+  // sub-tick time); every other state, bookkeeping and counter keeps its measured 5 Hz step.
+  switch (l.state) {
+    case State::Faller:
+    case State::Floater: stepFaller(l); break;
+    case State::Walker:
+      stepWalker(l);
+      if (l.fasterMs > 0 && l.state == State::Walker)
+        stepWalker(l);
+      break;
+    default: break;
+  }
+}
+
+void World::stepLeverContacts(double dt) {
+  // 0x4423D2 / lever step: `cooldown -= dt` while positive, then the contact test, then
+  // activation only if the cooldown is <= 0 after that decrement (installed cooldown 0.0).
+  // Contact takes the first accepted lemming in list order, so one lever fires at most once
+  // per update no matter how many actors stand in its box (no duplicate dispatch).
+  for (Lever& lev : setup_.levers) {
+    if (lev.cooldownRemaining > 0.0)
+      lev.cooldownRemaining -= dt;
+    const Lemming* contact = nullptr;
+    for (const Lemming& l : lemmings_) {
+      // Same eligibility as the legacy arm: a live walker, then the AABB + facing filter.
+      if (l.alive() && l.state == State::Walker && leverAccepts(lev, l)) {
+        contact = &l;
+        break;
+      }
+    }
+    if (contact && lev.cooldownRemaining <= 0.0) {
+      // 0x00436E6A: +0xb8 := pull facing, then the matching serialized list is sent.
+      activateLeverFace(setup_, lev, static_cast<int>(contact->facing));
+      lev.cooldownRemaining = lev.cooldownSeconds;
+    }
+  }
+}
+
+void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout) {
+  const std::uint64_t period = static_cast<std::uint64_t>(std::max(1, msPerTick()));
+  // The level clock is advanced before the update, as in the frame loop (0x45CFF9).
+  levelClockMs_ += static_cast<std::uint64_t>(segmentMs);
+  const bool tickBoundary = levelClockMs_ / period > tick_;
+  const double dt = static_cast<double>(segmentMs) / 1000.0;
+  explicitUpdate_ = true;
+  updateDtSeconds_ = dt;
+
+  stepRelease(dt, tickBoundary, continueHatchesAfterTimeout);
+  for (std::size_t i = 0; i < lemmings_.size(); ++i)
+    stepElapsed(lemmings_[i], tickBoundary);
+  stepLeverContacts(dt);
+  // 0x4423D2 order: lemmings -> levers -> receivers (+0x1F70). A request written by a contact
+  // above reaches its gate in this same update and its first raise step uses this segment's dt,
+  // including a zero-length one. There is no separate gate clock.
+  for (FluidGate& gate : setup_.gates)
+    gate.step(dt, setup_.terrain);
+
+  if (tickBoundary)
+    tick_ = levelClockMs_ / period;
+  ++explicitUpdates_;
+  explicitUpdate_ = false;
+  updateDtSeconds_ = 0.0;
+}
+
+void World::advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout,
+                             const std::function<bool(double)>& afterUpdate) {
+  const std::uint64_t period = static_cast<std::uint64_t>(std::max(1, msPerTick()));
+  int remaining = std::max(0, dtMs);
+  bool open = true;
+  // One update; reports false once the caller abandoned the pass.
+  const auto run = [&](int ms) {
+    if (!open)
+      return;
+    // A request that spans several tick boundaries first splits at them, so each update
+    // reaches at most one boundary (the connected app never exceeds its 100 ms cap).
+    while (((levelClockMs_ % period) + static_cast<std::uint64_t>(ms)) / period >= 2) {
+      const int toBoundary = static_cast<int>(period - levelClockMs_ % period);
+      updateSegment(toBoundary, continueHatchesAfterTimeout);
+      ms -= toBoundary;
+      if (afterUpdate && !afterUpdate(toBoundary / 1000.0)) {
+        open = false;
+        return;
+      }
+    }
+    updateSegment(ms, continueHatchesAfterTimeout);
+    if (afterUpdate && !afterUpdate(ms / 1000.0))
+      open = false;
+  };
+  // Frame loop 0x45CFF9: advance to each due level-clock event, update, fire it, then the
+  // trailing update with whatever is left (possibly zero).
+  int toEvent = kLevelEventPeriodMs - static_cast<int>(levelClockMs_ % kLevelEventPeriodMs);
+  while (open && toEvent <= remaining) {
+    run(toEvent);
+    remaining -= toEvent;
+    ++levelSecondEvents_;
+    toEvent = kLevelEventPeriodMs;
+  }
+  run(remaining);
 }
 
 bool World::assign(std::size_t index, Skill skill) {

@@ -26,7 +26,21 @@ int main(){
   std::string level;for(auto& n:webo::levelFileNames(*lib))if(n.find("MM_CLIMB_002")!=std::string::npos){level=n;break;}check(!level.empty(),"find supported level");if(level.empty())return 1;
  auto bytes=lib->read(level);check(bool(bytes),"read supported level");if(!bytes)return 1;
  auto scene=webo::app::BackdropScene::build(*lib,*bytes,"MM_CLIMB_002");check(bool(scene),"parse guarded roots");if(!scene)return 1;
- auto unsupported=webo::app::BackdropScene::build(*lib,*bytes,"MM_DIG_000");check(bool(unsupported)&&unsupported->empty(),"unsupported level is clean empty scene");
+ // scene-admission-001: SUPERSEDED. The former check built MM_CLIMB_002's bytes under the ID
+ // "MM_DIG_000" and expected an empty scene, which was only an artifact of the two-ID allowlist.
+ // Admission is now structural, so (a) the same bytes under any ID are admitted and (b) the
+ // equivalent unsupported-form check uses the real MM_DIG_000 bytes (Secondary type-2 branch 1).
+ auto otherId=webo::app::BackdropScene::build(*lib,*bytes,"MM_DIG_000");check(bool(otherId)&&!otherId->empty()&&otherId->diagnostics().empty(),"admission is structural: same supported bytes are admitted under any level ID");
+ auto digBytes=lib->read("COMPILED\\MM_DIG_000.LVL");check(bool(digBytes),"read real unsupported-form level");if(!digBytes)return 1;
+ // scene-branch-impl-001: SUPERSEDED. The real MM_DIG_000 bytes are no longer an unsupported
+ // form (its 19 Secondary branch-1 'fire' sprites are structurally admitted), so the former
+ // "diagnosed empty scene" expectation moves to an unsupported-form variant of the same level:
+ // the first branch-1 record's 4-byte name 'fire' (offset 0xa7587) is changed to 'nofi', a
+ // missing sprite file, which must still give one level-qualified diagnosed empty partial scene.
+ auto admittedDig=webo::app::BackdropScene::build(*lib,*digBytes,"MM_DIG_000");check(bool(admittedDig)&&!admittedDig->empty()&&admittedDig->diagnostics().empty()&&admittedDig->spriteCount()==19,"real MM_DIG_000 branch-1 sprite scenery is admitted (19 sprites)");
+ auto missingSprite=*digBytes;check(missingSprite.size()>0xa758b&&std::equal(missingSprite.begin()+0xa7587,missingSprite.begin()+0xa758b,std::array<std::byte,4>{std::byte{'f'},std::byte{'i'},std::byte{'r'},std::byte{'e'}}.begin()),"first branch-1 record name is 'fire' at 0xa7587");
+ for(std::size_t i=0;i<4;++i)missingSprite[0xa7587+i]=std::byte{"nofi"[i]};
+ auto unsupported=webo::app::BackdropScene::build(*lib,missingSprite,"MM_DIG_000");check(bool(unsupported)&&unsupported->empty()&&unsupported->diagnostics().size()==1&&unsupported->diagnostics()[0].find("MM_DIG_000")!=std::string::npos&&unsupported->diagnostics()[0].find("Secondary")!=std::string::npos&&unsupported->diagnostics()[0].find("unsupported type-2 branch 1 sprite 'nofi'")!=std::string::npos&&unsupported->diagnostics()[0].find("is missing")!=std::string::npos,"unsupported level is clean, diagnosed empty scene");
   webo::app::CameraParams cp;cp.width=640;cp.height=480;cp.aspect=4.0/3.0;auto cam=webo::app::buildCamera(cp);webo::app::Raster raster(640,480);raster.clear(0,0,0);webo::app::BackdropStats stats;scene->render(raster,cam,*lib,stats);
    { webo::app::Raster packedRaster(640,480);packedRaster.clear(0,0,0);webo::app::BackdropStats packedStats;scene->renderStage(packedRaster,cam,*lib,packedStats,webo::app::BackdropScene::Stage::Primary);std::uint64_t h=1469598103934665603ull;auto add=[&](std::uint8_t b){h=(h^b)*1099511628211ull;};for(auto b:packedRaster.framebuffer().rgb)add(b);for(double d:packedRaster.mutableDepthBuffer()){auto bits=std::bit_cast<std::uint64_t>(d);for(int i=0;i<8;++i)add(static_cast<std::uint8_t>(bits>>(8*i)));}check(h==0x1fd0bfb82ab39e95ull,"actual BackdropScene primary packed RGB+depth output matches deterministic production fixture"); }
   std::size_t nonblack=0;for(std::size_t i=0;i<raster.framebuffer().rgb.size();i+=3)if(raster.framebuffer().rgb[i]||raster.framebuffer().rgb[i+1]||raster.framebuffer().rgb[i+2])++nonblack;

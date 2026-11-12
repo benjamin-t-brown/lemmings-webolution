@@ -1,11 +1,15 @@
 #pragma once
 
 #include "app/FrontendWindow.h"
+#include "audio/CuePlayback.h"
 #include "app/ActorSprite.h"
 #include "app/CursorPolicy.h"
 #include "app/LevelEndTransition.h"
 #include "app/EntryStartCue.h"
+#include "app/Camera.h"
+#include "save/SaveStore.h"
 
+#include <memory>
 #include <span>
 #include <optional>
 
@@ -43,6 +47,14 @@ struct LevelFrameView {
   // Present only on the connected frontend/game route. Standalone level runs
   // do not own the frontend construction allocator.
   std::optional<int> frontendConstructionCounter;
+  // Audio adapter state at this frame. Cue routing only, no timing claim.
+  bool audioDeviceReady = false;
+  std::size_t audioCuesDrained = 0;  // every sim cue taken, routed or not
+  std::size_t audioCuesRouted = 0;   // routed cues requested
+  // Read-only source pose used for this image, before the intro clock advances,
+  // and the controller's target/pick seed. No native runtime observation claim.
+  CameraParams displayedPose;
+  std::array<double, 3> cameraPickReference{};
 };
 using LevelFrameObserver = std::function<void(const LevelFrameView&)>;
 
@@ -51,6 +63,22 @@ struct ApplicationRunOptions {
   // for bounded (--frames) level runs. Zero preserves the production clock.
   // This supplies time, not World mutation or a fabricated completion event.
   double frameSeconds = 0.0;
+  // Save persistence for the connected frontend. Null (the default, which every
+  // test that does not opt in uses) means nothing is read or written. The CLI
+  // entry point main() installs the clone's per-user store; tests inject a store
+  // over a temporary directory. The installed save is never involved either way.
+  std::shared_ptr<save::SaveStore> saveStore = nullptr;
+  // Set by main(): resolve the default clone store from the game directory when
+  // saveStore is empty. Tests leave it false.
+  bool useDefaultSaveStore = false;
+  // Gameplay sound cues. Off by default so every test that does not opt in
+  // needs no audio device. main() turns it on; --no-audio turns it back off.
+  // A failed open, a missing WAV or no audio backend degrade to a stderr
+  // diagnostic and a silent run.
+  bool enableAudio = false;
+  // Optional recording sink: receives the literal retail cue name of each routed
+  // cue, whether or not a device exists (unless --no-audio). Tests only.
+  audio::CueObserver cueObserver;
 };
 
 // The CLI and the owned-process integration test use the same application path.

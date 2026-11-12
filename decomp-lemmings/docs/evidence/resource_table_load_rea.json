@@ -1,0 +1,2788 @@
+[
+  {
+    "evidence_id": "ev_6d6acf0212e3ebe5470da5fc34cc4d00af71d5f34c7c8c97bc9f4feb42357f6e",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x445c10",
+        "name": "FUN_00445c10",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x445c10",
+              "end": "0x445d6a"
+            }
+          ],
+          "total_bytes": 347,
+          "span_bytes": 347,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __thiscall FUN_00445c10(void * this, void * param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_10 @ Stack[-0x10]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined local_114 @ Stack[-0x114]:1",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_118 @ Stack[-0x118]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_11c @ Stack[-0x11c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid __thiscall FUN_00445c10(void *this,void *param_1)\r\n\r\n{\r\n  bool bVar1;\r\n  int iVar2;\r\n  void *this_00;\r\n  uint *puVar3;\r\n  int local_118;\r\n  uint local_114 [65];\r\n  int local_10;\r\n  int local_c;\r\n  int local_8;\r\n  \r\n  FUN_00445e10(this);\r\n  local_10 = FUN_00402560(param_1);\r\n  FUN_00449940((void *)((int)this + 0x30),local_10 + *(int *)((int)this + 0x2c));\r\n  local_118 = 0;\r\n  local_8 = 0;\r\n  local_c = 0;\r\n  while (local_c < local_10) {\r\n    FUN_0047d940(param_1,(undefined1 *)local_114,0xff);\r\n    local_c = local_c + 1;\r\n    bVar1 = FUN_00449b30(this,(char *)local_114);\r\n    if (bVar1) {\r\n      local_118 = local_118 + 1;\r\n    }\r\n    else {\r\n      while (iVar2 = FUN_00414d00((void *)((int)this + 0x30),local_8),\r\n            *(char *)(iVar2 + 0x84) != '\\0') {\r\n        local_8 = local_8 + 1;\r\n      }\r\n      puVar3 = local_114;\r\n      this_00 = (void *)FUN_00414d00((void *)((int)this + 0x30),local_8);\r\n      FUN_0041a4c0(this_00,puVar3);\r\n      iVar2 = FUN_00414d00((void *)((int)this + 0x30),local_8);\r\n      *(undefined4 *)(iVar2 + 0x80) = 0;\r\n      iVar2 = FUN_00414d00((void *)((int)this + 0x30),local_8);\r\n      *(undefined1 *)(iVar2 + 0x84) = 1;\r\n    }\r\n  }\r\n  FUN_00449940((void *)((int)this + 0x30),(local_10 + *(int *)((int)this + 0x2c)) - local_118);\r\n  return;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x445c10: PUSH EBP",
+        "0x445c11: MOV EBP, ESP",
+        "0x445c13: SUB ESP, 0x118",
+        "0x445c19: MOV dword ptr [EBP + 0xfffffee8], ECX",
+        "0x445c1f: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445c25: CALL 0x00445e10",
+        "0x445c2a: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x445c2d: CALL 0x00402560",
+        "0x445c32: MOV dword ptr [EBP + -0xc], EAX",
+        "0x445c35: MOV EAX, dword ptr [EBP + 0xfffffee8]",
+        "0x445c3b: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x445c3e: ADD ECX, dword ptr [EAX + 0x2c]",
+        "0x445c41: PUSH ECX",
+        "0x445c42: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445c48: ADD ECX, 0x30",
+        "0x445c4b: CALL 0x00449940",
+        "0x445c50: MOV dword ptr [EBP + 0xfffffeec], 0x0",
+        "0x445c5a: MOV dword ptr [EBP + -0x4], 0x0",
+        "0x445c61: MOV dword ptr [EBP + -0x8], 0x0",
+        "0x445c68: MOV EDX, dword ptr [EBP + -0x8]",
+        "0x445c6b: CMP EDX, dword ptr [EBP + -0xc]",
+        "0x445c6e: JGE 0x00445d44",
+        "0x445c74: PUSH 0xff",
+        "0x445c79: LEA EAX, [EBP + 0xfffffef0]",
+        "0x445c7f: PUSH EAX",
+        "0x445c80: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x445c83: CALL 0x0047d940",
+        "0x445c88: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445c8b: ADD ECX, 0x1",
+        "0x445c8e: MOV dword ptr [EBP + -0x8], ECX",
+        "0x445c91: LEA EDX, [EBP + 0xfffffef0]",
+        "0x445c97: PUSH EDX",
+        "0x445c98: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445c9e: CALL 0x00449b30",
+        "0x445ca3: AND EAX, 0xff",
+        "0x445ca8: TEST EAX, EAX",
+        "0x445caa: JNZ 0x00445d30",
+        "0x445cb0: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x445cb3: PUSH EAX",
+        "0x445cb4: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445cba: ADD ECX, 0x30",
+        "0x445cbd: CALL 0x00414d00",
+        "0x445cc2: XOR ECX, ECX",
+        "0x445cc4: MOV CL, byte ptr [EAX + 0x84]",
+        "0x445cca: TEST ECX, ECX",
+        "0x445ccc: JZ 0x00445cd9",
+        "0x445cce: MOV EDX, dword ptr [EBP + -0x4]",
+        "0x445cd1: ADD EDX, 0x1",
+        "0x445cd4: MOV dword ptr [EBP + -0x4], EDX",
+        "0x445cd7: JMP 0x00445cb0",
+        "0x445cd9: LEA EAX, [EBP + 0xfffffef0]",
+        "0x445cdf: PUSH EAX",
+        "0x445ce0: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x445ce3: PUSH ECX",
+        "0x445ce4: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445cea: ADD ECX, 0x30",
+        "0x445ced: CALL 0x00414d00",
+        "0x445cf2: MOV ECX, EAX",
+        "0x445cf4: CALL 0x0041a4c0",
+        "0x445cf9: MOV EDX, dword ptr [EBP + -0x4]",
+        "0x445cfc: PUSH EDX",
+        "0x445cfd: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445d03: ADD ECX, 0x30",
+        "0x445d06: CALL 0x00414d00",
+        "0x445d0b: MOV dword ptr [EAX + 0x80], 0x0",
+        "0x445d15: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x445d18: PUSH EAX",
+        "0x445d19: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445d1f: ADD ECX, 0x30",
+        "0x445d22: CALL 0x00414d00",
+        "0x445d27: MOV byte ptr [EAX + 0x84], 0x1",
+        "0x445d2e: JMP 0x00445d3f",
+        "0x445d30: MOV ECX, dword ptr [EBP + 0xfffffeec]",
+        "0x445d36: ADD ECX, 0x1",
+        "0x445d39: MOV dword ptr [EBP + 0xfffffeec], ECX",
+        "0x445d3f: JMP 0x00445c68",
+        "0x445d44: MOV EDX, dword ptr [EBP + 0xfffffee8]",
+        "0x445d4a: MOV EAX, dword ptr [EBP + -0xc]",
+        "0x445d4d: ADD EAX, dword ptr [EDX + 0x2c]",
+        "0x445d50: SUB EAX, dword ptr [EBP + 0xfffffeec]",
+        "0x445d56: PUSH EAX",
+        "0x445d57: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445d5d: ADD ECX, 0x30",
+        "0x445d60: CALL 0x00449940",
+        "0x445d65: MOV ESP, EBP",
+        "0x445d67: POP EBP",
+        "0x445d68: RET 0x4"
+      ],
+      "callees": [
+        {
+          "address": "0x402560",
+          "name": "FUN_00402560",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x402560",
+                "end": "0x40257d"
+              }
+            ],
+            "total_bytes": 30,
+            "span_bytes": 30,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x414d00",
+          "name": "FUN_00414d00",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x414d00",
+                "end": "0x414d1d"
+              }
+            ],
+            "total_bytes": 30,
+            "span_bytes": 30,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x41a4c0",
+          "name": "FUN_0041a4c0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x41a4c0",
+                "end": "0x41a4db"
+              }
+            ],
+            "total_bytes": 28,
+            "span_bytes": 28,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x445e10",
+          "name": "FUN_00445e10",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x445e10",
+                "end": "0x445eac"
+              }
+            ],
+            "total_bytes": 157,
+            "span_bytes": 157,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x449940",
+          "name": "FUN_00449940",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x449940",
+                "end": "0x449afc"
+              }
+            ],
+            "total_bytes": 445,
+            "span_bytes": 445,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x449b30",
+          "name": "FUN_00449b30",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x449b30",
+                "end": "0x449bb7"
+              }
+            ],
+            "total_bytes": 136,
+            "span_bytes": 136,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x47d940",
+          "name": "FUN_0047d940",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x47d940",
+                "end": "0x47d9c6"
+              }
+            ],
+            "total_bytes": 135,
+            "span_bytes": 135,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_e30f4863f19068afe2c23008e04fc37af88553b3ef568c2a2dbf62c93d11ed8e",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x445eb0",
+        "name": "FUN_00445eb0",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x445eb0",
+              "end": "0x44600a"
+            }
+          ],
+          "total_bytes": 347,
+          "span_bytes": 347,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __thiscall FUN_00445eb0(void * this, void * param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_10 @ Stack[-0x10]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined local_114 @ Stack[-0x114]:1",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_118 @ Stack[-0x118]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_11c @ Stack[-0x11c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid __thiscall FUN_00445eb0(void *this,void *param_1)\r\n\r\n{\r\n  bool bVar1;\r\n  int iVar2;\r\n  void *this_00;\r\n  uint *puVar3;\r\n  int local_118;\r\n  uint local_114 [65];\r\n  int local_10;\r\n  int local_c;\r\n  int local_8;\r\n  \r\n  FUN_00449fb0(this);\r\n  local_10 = FUN_00402560(param_1);\r\n  FUN_00449bf0((void *)((int)this + 0x30),local_10 + *(int *)((int)this + 0x2c));\r\n  local_118 = 0;\r\n  local_8 = 0;\r\n  local_c = 0;\r\n  while (local_c < local_10) {\r\n    FUN_0047d940(param_1,(undefined1 *)local_114,0xff);\r\n    local_c = local_c + 1;\r\n    bVar1 = FUN_00449f20(this,(char *)local_114);\r\n    if (bVar1) {\r\n      local_118 = local_118 + 1;\r\n    }\r\n    else {\r\n      while (iVar2 = FUN_004307a0((void *)((int)this + 0x30),local_8),\r\n            *(char *)(iVar2 + 0x84) != '\\0') {\r\n        local_8 = local_8 + 1;\r\n      }\r\n      puVar3 = local_114;\r\n      this_00 = (void *)FUN_004307a0((void *)((int)this + 0x30),local_8);\r\n      FUN_0041a4c0(this_00,puVar3);\r\n      iVar2 = FUN_004307a0((void *)((int)this + 0x30),local_8);\r\n      *(undefined4 *)(iVar2 + 0x80) = 0;\r\n      iVar2 = FUN_004307a0((void *)((int)this + 0x30),local_8);\r\n      *(undefined1 *)(iVar2 + 0x84) = 1;\r\n    }\r\n  }\r\n  FUN_00449bf0((void *)((int)this + 0x30),(local_10 + *(int *)((int)this + 0x2c)) - local_118);\r\n  return;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x445eb0: PUSH EBP",
+        "0x445eb1: MOV EBP, ESP",
+        "0x445eb3: SUB ESP, 0x118",
+        "0x445eb9: MOV dword ptr [EBP + 0xfffffee8], ECX",
+        "0x445ebf: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445ec5: CALL 0x00449fb0",
+        "0x445eca: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x445ecd: CALL 0x00402560",
+        "0x445ed2: MOV dword ptr [EBP + -0xc], EAX",
+        "0x445ed5: MOV EAX, dword ptr [EBP + 0xfffffee8]",
+        "0x445edb: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x445ede: ADD ECX, dword ptr [EAX + 0x2c]",
+        "0x445ee1: PUSH ECX",
+        "0x445ee2: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445ee8: ADD ECX, 0x30",
+        "0x445eeb: CALL 0x00449bf0",
+        "0x445ef0: MOV dword ptr [EBP + 0xfffffeec], 0x0",
+        "0x445efa: MOV dword ptr [EBP + -0x4], 0x0",
+        "0x445f01: MOV dword ptr [EBP + -0x8], 0x0",
+        "0x445f08: MOV EDX, dword ptr [EBP + -0x8]",
+        "0x445f0b: CMP EDX, dword ptr [EBP + -0xc]",
+        "0x445f0e: JGE 0x00445fe4",
+        "0x445f14: PUSH 0xff",
+        "0x445f19: LEA EAX, [EBP + 0xfffffef0]",
+        "0x445f1f: PUSH EAX",
+        "0x445f20: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x445f23: CALL 0x0047d940",
+        "0x445f28: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445f2b: ADD ECX, 0x1",
+        "0x445f2e: MOV dword ptr [EBP + -0x8], ECX",
+        "0x445f31: LEA EDX, [EBP + 0xfffffef0]",
+        "0x445f37: PUSH EDX",
+        "0x445f38: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445f3e: CALL 0x00449f20",
+        "0x445f43: AND EAX, 0xff",
+        "0x445f48: TEST EAX, EAX",
+        "0x445f4a: JNZ 0x00445fd0",
+        "0x445f50: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x445f53: PUSH EAX",
+        "0x445f54: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445f5a: ADD ECX, 0x30",
+        "0x445f5d: CALL 0x004307a0",
+        "0x445f62: XOR ECX, ECX",
+        "0x445f64: MOV CL, byte ptr [EAX + 0x84]",
+        "0x445f6a: TEST ECX, ECX",
+        "0x445f6c: JZ 0x00445f79",
+        "0x445f6e: MOV EDX, dword ptr [EBP + -0x4]",
+        "0x445f71: ADD EDX, 0x1",
+        "0x445f74: MOV dword ptr [EBP + -0x4], EDX",
+        "0x445f77: JMP 0x00445f50",
+        "0x445f79: LEA EAX, [EBP + 0xfffffef0]",
+        "0x445f7f: PUSH EAX",
+        "0x445f80: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x445f83: PUSH ECX",
+        "0x445f84: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445f8a: ADD ECX, 0x30",
+        "0x445f8d: CALL 0x004307a0",
+        "0x445f92: MOV ECX, EAX",
+        "0x445f94: CALL 0x0041a4c0",
+        "0x445f99: MOV EDX, dword ptr [EBP + -0x4]",
+        "0x445f9c: PUSH EDX",
+        "0x445f9d: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445fa3: ADD ECX, 0x30",
+        "0x445fa6: CALL 0x004307a0",
+        "0x445fab: MOV dword ptr [EAX + 0x80], 0x0",
+        "0x445fb5: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x445fb8: PUSH EAX",
+        "0x445fb9: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445fbf: ADD ECX, 0x30",
+        "0x445fc2: CALL 0x004307a0",
+        "0x445fc7: MOV byte ptr [EAX + 0x84], 0x1",
+        "0x445fce: JMP 0x00445fdf",
+        "0x445fd0: MOV ECX, dword ptr [EBP + 0xfffffeec]",
+        "0x445fd6: ADD ECX, 0x1",
+        "0x445fd9: MOV dword ptr [EBP + 0xfffffeec], ECX",
+        "0x445fdf: JMP 0x00445f08",
+        "0x445fe4: MOV EDX, dword ptr [EBP + 0xfffffee8]",
+        "0x445fea: MOV EAX, dword ptr [EBP + -0xc]",
+        "0x445fed: ADD EAX, dword ptr [EDX + 0x2c]",
+        "0x445ff0: SUB EAX, dword ptr [EBP + 0xfffffeec]",
+        "0x445ff6: PUSH EAX",
+        "0x445ff7: MOV ECX, dword ptr [EBP + 0xfffffee8]",
+        "0x445ffd: ADD ECX, 0x30",
+        "0x446000: CALL 0x00449bf0",
+        "0x446005: MOV ESP, EBP",
+        "0x446007: POP EBP",
+        "0x446008: RET 0x4"
+      ],
+      "callees": [
+        {
+          "address": "0x402560",
+          "name": "FUN_00402560",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x402560",
+                "end": "0x40257d"
+              }
+            ],
+            "total_bytes": 30,
+            "span_bytes": 30,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x41a4c0",
+          "name": "FUN_0041a4c0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x41a4c0",
+                "end": "0x41a4db"
+              }
+            ],
+            "total_bytes": 28,
+            "span_bytes": 28,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x4307a0",
+          "name": "FUN_004307a0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x4307a0",
+                "end": "0x4307bd"
+              }
+            ],
+            "total_bytes": 30,
+            "span_bytes": 30,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x449bf0",
+          "name": "FUN_00449bf0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x449bf0",
+                "end": "0x449dac"
+              }
+            ],
+            "total_bytes": 445,
+            "span_bytes": 445,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x449f20",
+          "name": "FUN_00449f20",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x449f20",
+                "end": "0x449fa7"
+              }
+            ],
+            "total_bytes": 136,
+            "span_bytes": 136,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x449fb0",
+          "name": "FUN_00449fb0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x449fb0",
+                "end": "0x44a04c"
+              }
+            ],
+            "total_bytes": 157,
+            "span_bytes": 157,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x47d940",
+          "name": "FUN_0047d940",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x47d940",
+                "end": "0x47d9c6"
+              }
+            ],
+            "total_bytes": 135,
+            "span_bytes": 135,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_2db665b8e863303454ca964eab2f57ee9b442ed17e0d315e806b0cd60a9dc429",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x445e10",
+        "name": "FUN_00445e10",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x445e10",
+              "end": "0x445eac"
+            }
+          ],
+          "total_bytes": 157,
+          "span_bytes": 157,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __fastcall FUN_00445e10(int * param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid __fastcall FUN_00445e10(int *param_1)\r\n\r\n{\r\n  int iVar1;\r\n  int local_8;\r\n  \r\n  local_8 = 0;\r\n  do {\r\n    iVar1 = FUN_00449930(param_1 + 0xc);\r\n    if (iVar1 <= local_8) {\r\n      FUN_004498b0(param_1);\r\n      return;\r\n    }\r\n    iVar1 = FUN_00414d00(param_1 + 0xc,local_8);\r\n    if (*(char *)(iVar1 + 0x84) != '\\0') {\r\n      iVar1 = FUN_00414d00(param_1 + 0xc,local_8);\r\n      if (*(int *)(iVar1 + 0x80) != 0) {\r\n        iVar1 = FUN_00414d00(param_1 + 0xc,local_8);\r\n        if (*(int *)(*(int *)(iVar1 + 0x80) + 8) != 0) goto LAB_00445e22;\r\n      }\r\n      iVar1 = FUN_00414d00(param_1 + 0xc,local_8);\r\n      *(undefined1 *)(iVar1 + 0x84) = 0;\r\n    }\r\nLAB_00445e22:\r\n    local_8 = local_8 + 1;\r\n  } while( true );\r\n}\r\n\r\n",
+      "assembly": [
+        "0x445e10: PUSH EBP",
+        "0x445e11: MOV EBP, ESP",
+        "0x445e13: SUB ESP, 0x8",
+        "0x445e16: MOV dword ptr [EBP + -0x8], ECX",
+        "0x445e19: MOV dword ptr [EBP + -0x4], 0x0",
+        "0x445e20: JMP 0x00445e2b",
+        "0x445e22: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x445e25: ADD EAX, 0x1",
+        "0x445e28: MOV dword ptr [EBP + -0x4], EAX",
+        "0x445e2b: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445e2e: ADD ECX, 0x30",
+        "0x445e31: CALL 0x00449930",
+        "0x445e36: CMP dword ptr [EBP + -0x4], EAX",
+        "0x445e39: JGE 0x00445ea1",
+        "0x445e3b: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x445e3e: PUSH ECX",
+        "0x445e3f: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445e42: ADD ECX, 0x30",
+        "0x445e45: CALL 0x00414d00",
+        "0x445e4a: XOR EDX, EDX",
+        "0x445e4c: MOV DL, byte ptr [EAX + 0x84]",
+        "0x445e52: TEST EDX, EDX",
+        "0x445e54: JZ 0x00445e9f",
+        "0x445e56: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x445e59: PUSH EAX",
+        "0x445e5a: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445e5d: ADD ECX, 0x30",
+        "0x445e60: CALL 0x00414d00",
+        "0x445e65: CMP dword ptr [EAX + 0x80], 0x0",
+        "0x445e6c: JZ 0x00445e89",
+        "0x445e6e: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x445e71: PUSH ECX",
+        "0x445e72: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445e75: ADD ECX, 0x30",
+        "0x445e78: CALL 0x00414d00",
+        "0x445e7d: MOV EDX, dword ptr [EAX + 0x80]",
+        "0x445e83: CMP dword ptr [EDX + 0x8], 0x0",
+        "0x445e87: JNZ 0x00445e9f",
+        "0x445e89: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x445e8c: PUSH EAX",
+        "0x445e8d: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445e90: ADD ECX, 0x30",
+        "0x445e93: CALL 0x00414d00",
+        "0x445e98: MOV byte ptr [EAX + 0x84], 0x0",
+        "0x445e9f: JMP 0x00445e22",
+        "0x445ea1: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x445ea4: CALL 0x004498b0",
+        "0x445ea9: MOV ESP, EBP",
+        "0x445eab: POP EBP",
+        "0x445eac: RET"
+      ],
+      "callees": [
+        {
+          "address": "0x414d00",
+          "name": "FUN_00414d00",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x414d00",
+                "end": "0x414d1d"
+              }
+            ],
+            "total_bytes": 30,
+            "span_bytes": 30,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x4498b0",
+          "name": "FUN_004498b0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x4498b0",
+                "end": "0x44992f"
+              }
+            ],
+            "total_bytes": 128,
+            "span_bytes": 128,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x449930",
+          "name": "FUN_00449930",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x449930",
+                "end": "0x44993f"
+              }
+            ],
+            "total_bytes": 16,
+            "span_bytes": 16,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_1e67e825d8006abc2ad3b7e3c785cfb50292308a89fba7983f84cbfca05efc81",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x449940",
+        "name": "FUN_00449940",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x449940",
+              "end": "0x449afc"
+            }
+          ],
+          "total_bytes": 445,
+          "span_bytes": 445,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __thiscall FUN_00449940(void * this, int param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_10 @ Stack[-0x10]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_14 @ Stack[-0x14]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_18 @ Stack[-0x18]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_1c @ Stack[-0x1c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_20 @ Stack[-0x20]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_24 @ Stack[-0x24]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_28 @ Stack[-0x28]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_2c @ Stack[-0x2c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_30 @ Stack[-0x30]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_34 @ Stack[-0x34]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_38 @ Stack[-0x38]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_3c @ Stack[-0x3c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_40 @ Stack[-0x40]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_44 @ Stack[-0x44]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid __thiscall FUN_00449940(void *this,int param_1)\r\n\r\n{\r\n  int iVar1;\r\n  int *local_3c;\r\n  int local_1c;\r\n  void *local_10;\r\n  undefined1 *puStack_c;\r\n  undefined4 local_8;\r\n  \r\n  local_8 = 0xffffffff;\r\n  puStack_c = &LAB_004ac75b;\r\n  local_10 = ExceptionList;\r\n  if (*(int *)((int)this + 4) < param_1) {\r\n    ExceptionList = &local_10;\r\n    if (*(int *)((int)this + 8) == 1) {\r\n      ExceptionList = &local_10;\r\n      *(int *)((int)this + 4) = param_1;\r\n    }\r\n    else {\r\n      do {\r\n        *(int *)((int)this + 4) = *(int *)((int)this + 4) + *(int *)((int)this + 8);\r\n      } while (*(int *)((int)this + 4) <= param_1);\r\n    }\r\n    if (*(int *)((int)this + 4) < 1) {\r\n      if ((*(int *)((int)this + 0xc) != 0) && (*(void **)((int)this + 0xc) != (void *)0x0)) {\r\n        FUN_0044b970(*(void **)((int)this + 0xc),3);\r\n      }\r\n      *(undefined4 *)((int)this + 0xc) = 0;\r\n    }\r\n    else {\r\n      iVar1 = *(int *)((int)this + 4);\r\n      local_3c = operator_new(iVar1 * 0x88 + 4);\r\n      local_8 = 0;\r\n      if (local_3c == (int *)0x0) {\r\n        local_3c = (int *)0x0;\r\n      }\r\n      else {\r\n        *local_3c = iVar1;\r\n        FUN_0049c5d3(local_3c + 1,0x88,iVar1,FUN_0044bdc0);\r\n        local_3c = local_3c + 1;\r\n      }\r\n      local_8 = 0xffffffff;\r\n      if (*(int *)((int)this + 0xc) != 0) {\r\n        for (local_1c = 0; local_1c < *(int *)this; local_1c = local_1c + 1) {\r\n          FUN_0044b9f0(local_3c + local_1c * 0x22,*(int *)((int)this + 0xc) + local_1c * 0x88);\r\n        }\r\n        if (*(void **)((int)this + 0xc) != (void *)0x0) {\r\n          FUN_0044b970(*(void **)((int)this + 0xc),3);\r\n        }\r\n      }\r\n      *(int **)((int)this + 0xc) = local_3c;\r\n    }\r\n  }\r\n  *(int *)this = param_1;\r\n  ExceptionList = local_10;\r\n  return;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x449940: PUSH EBP",
+        "0x449941: MOV EBP, ESP",
+        "0x449943: PUSH -0x1",
+        "0x449945: PUSH 0x4ac75b",
+        "0x44994a: MOV EAX, FS:[0x0]",
+        "0x449950: PUSH EAX",
+        "0x449951: MOV dword ptr FS:[0x0], ESP",
+        "0x449958: SUB ESP, 0x34",
+        "0x44995b: MOV dword ptr [EBP + -0x34], ECX",
+        "0x44995e: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449961: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x449964: CMP ECX, dword ptr [EAX + 0x4]",
+        "0x449967: JLE 0x00449ae5",
+        "0x44996d: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449970: CMP dword ptr [EDX + 0x8], 0x1",
+        "0x449974: JNZ 0x00449981",
+        "0x449976: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449979: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x44997c: MOV dword ptr [EAX + 0x4], ECX",
+        "0x44997f: JMP 0x0044999e",
+        "0x449981: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449984: MOV EAX, dword ptr [EDX + 0x4]",
+        "0x449987: MOV ECX, dword ptr [EBP + -0x34]",
+        "0x44998a: ADD EAX, dword ptr [ECX + 0x8]",
+        "0x44998d: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449990: MOV dword ptr [EDX + 0x4], EAX",
+        "0x449993: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449996: MOV ECX, dword ptr [EAX + 0x4]",
+        "0x449999: CMP ECX, dword ptr [EBP + 0x8]",
+        "0x44999c: JLE 0x00449981",
+        "0x44999e: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x4499a1: CMP dword ptr [EDX + 0x4], 0x0",
+        "0x4499a5: JLE 0x00449aa7",
+        "0x4499ab: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x4499ae: MOV ECX, dword ptr [EAX + 0x4]",
+        "0x4499b1: MOV dword ptr [EBP + -0x10], ECX",
+        "0x4499b4: MOV EDX, dword ptr [EBP + -0x10]",
+        "0x4499b7: IMUL EDX, EDX, 0x88",
+        "0x4499bd: ADD EDX, 0x4",
+        "0x4499c0: PUSH EDX",
+        "0x4499c1: CALL 0x0049c1a8",
+        "0x4499c6: ADD ESP, 0x4",
+        "0x4499c9: MOV dword ptr [EBP + -0x20], EAX",
+        "0x4499cc: MOV dword ptr [EBP + -0x4], 0x0",
+        "0x4499d3: CMP dword ptr [EBP + -0x20], 0x0",
+        "0x4499d7: JZ 0x00449a0b",
+        "0x4499d9: PUSH 0x44bde0",
+        "0x4499de: PUSH 0x44bdc0",
+        "0x4499e3: MOV EAX, dword ptr [EBP + -0x20]",
+        "0x4499e6: MOV ECX, dword ptr [EBP + -0x10]",
+        "0x4499e9: MOV dword ptr [EAX], ECX",
+        "0x4499eb: MOV EDX, dword ptr [EBP + -0x10]",
+        "0x4499ee: PUSH EDX",
+        "0x4499ef: PUSH 0x88",
+        "0x4499f4: MOV EAX, dword ptr [EBP + -0x20]",
+        "0x4499f7: ADD EAX, 0x4",
+        "0x4499fa: PUSH EAX",
+        "0x4499fb: CALL 0x0049c5d3",
+        "0x449a00: MOV ECX, dword ptr [EBP + -0x20]",
+        "0x449a03: ADD ECX, 0x4",
+        "0x449a06: MOV dword ptr [EBP + -0x38], ECX",
+        "0x449a09: JMP 0x00449a12",
+        "0x449a0b: MOV dword ptr [EBP + -0x38], 0x0",
+        "0x449a12: MOV EDX, dword ptr [EBP + -0x38]",
+        "0x449a15: MOV dword ptr [EBP + -0x1c], EDX",
+        "0x449a18: MOV dword ptr [EBP + -0x4], 0xffffffff",
+        "0x449a1f: MOV EAX, dword ptr [EBP + -0x1c]",
+        "0x449a22: MOV dword ptr [EBP + -0x14], EAX",
+        "0x449a25: MOV ECX, dword ptr [EBP + -0x34]",
+        "0x449a28: CMP dword ptr [ECX + 0xc], 0x0",
+        "0x449a2c: JZ 0x00449a9c",
+        "0x449a2e: MOV dword ptr [EBP + -0x18], 0x0",
+        "0x449a35: JMP 0x00449a40",
+        "0x449a37: MOV EDX, dword ptr [EBP + -0x18]",
+        "0x449a3a: ADD EDX, 0x1",
+        "0x449a3d: MOV dword ptr [EBP + -0x18], EDX",
+        "0x449a40: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449a43: MOV ECX, dword ptr [EBP + -0x18]",
+        "0x449a46: CMP ECX, dword ptr [EAX]",
+        "0x449a48: JGE 0x00449a71",
+        "0x449a4a: MOV EDX, dword ptr [EBP + -0x18]",
+        "0x449a4d: IMUL EDX, EDX, 0x88",
+        "0x449a53: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449a56: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x449a59: ADD ECX, EDX",
+        "0x449a5b: PUSH ECX",
+        "0x449a5c: MOV EDX, dword ptr [EBP + -0x18]",
+        "0x449a5f: IMUL EDX, EDX, 0x88",
+        "0x449a65: MOV ECX, dword ptr [EBP + -0x14]",
+        "0x449a68: ADD ECX, EDX",
+        "0x449a6a: CALL 0x0044b9f0",
+        "0x449a6f: JMP 0x00449a37",
+        "0x449a71: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449a74: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x449a77: MOV dword ptr [EBP + -0x28], ECX",
+        "0x449a7a: MOV EDX, dword ptr [EBP + -0x28]",
+        "0x449a7d: MOV dword ptr [EBP + -0x24], EDX",
+        "0x449a80: CMP dword ptr [EBP + -0x24], 0x0",
+        "0x449a84: JZ 0x00449a95",
+        "0x449a86: PUSH 0x3",
+        "0x449a88: MOV ECX, dword ptr [EBP + -0x24]",
+        "0x449a8b: CALL 0x0044b970",
+        "0x449a90: MOV dword ptr [EBP + -0x3c], EAX",
+        "0x449a93: JMP 0x00449a9c",
+        "0x449a95: MOV dword ptr [EBP + -0x3c], 0x0",
+        "0x449a9c: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449a9f: MOV ECX, dword ptr [EBP + -0x14]",
+        "0x449aa2: MOV dword ptr [EAX + 0xc], ECX",
+        "0x449aa5: JMP 0x00449ae5",
+        "0x449aa7: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449aaa: CMP dword ptr [EDX + 0xc], 0x0",
+        "0x449aae: JZ 0x00449adb",
+        "0x449ab0: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449ab3: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x449ab6: MOV dword ptr [EBP + -0x30], ECX",
+        "0x449ab9: MOV EDX, dword ptr [EBP + -0x30]",
+        "0x449abc: MOV dword ptr [EBP + -0x2c], EDX",
+        "0x449abf: CMP dword ptr [EBP + -0x2c], 0x0",
+        "0x449ac3: JZ 0x00449ad4",
+        "0x449ac5: PUSH 0x3",
+        "0x449ac7: MOV ECX, dword ptr [EBP + -0x2c]",
+        "0x449aca: CALL 0x0044b970",
+        "0x449acf: MOV dword ptr [EBP + -0x40], EAX",
+        "0x449ad2: JMP 0x00449adb",
+        "0x449ad4: MOV dword ptr [EBP + -0x40], 0x0",
+        "0x449adb: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449ade: MOV dword ptr [EAX + 0xc], 0x0",
+        "0x449ae5: MOV ECX, dword ptr [EBP + -0x34]",
+        "0x449ae8: MOV EDX, dword ptr [EBP + 0x8]",
+        "0x449aeb: MOV dword ptr [ECX], EDX",
+        "0x449aed: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x449af0: MOV dword ptr FS:[0x0], ECX",
+        "0x449af7: MOV ESP, EBP",
+        "0x449af9: POP EBP",
+        "0x449afa: RET 0x4"
+      ],
+      "callees": [
+        {
+          "address": "0x44b970",
+          "name": "FUN_0044b970",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x44b970",
+                "end": "0x44b9e2"
+              }
+            ],
+            "total_bytes": 115,
+            "span_bytes": 115,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x44b9f0",
+          "name": "FUN_0044b9f0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x44b9f0",
+                "end": "0x44ba2f"
+              }
+            ],
+            "total_bytes": 64,
+            "span_bytes": 64,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x49c1a8",
+          "name": "operator_new",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x49c1a8",
+                "end": "0x49c1b5"
+              }
+            ],
+            "total_bytes": 14,
+            "span_bytes": 14,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x49c5d3",
+          "name": "FUN_0049c5d3",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x49c5d3",
+                "end": "0x49c63c"
+              }
+            ],
+            "total_bytes": 106,
+            "span_bytes": 106,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_e92ab51ece94e63c97fca7bed609c5b9b2b21d9751b57a2ba7a64ac2d5cf12f6",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x449bf0",
+        "name": "FUN_00449bf0",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x449bf0",
+              "end": "0x449dac"
+            }
+          ],
+          "total_bytes": 445,
+          "span_bytes": 445,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __thiscall FUN_00449bf0(void * this, int param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_10 @ Stack[-0x10]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_14 @ Stack[-0x14]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_18 @ Stack[-0x18]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_1c @ Stack[-0x1c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_20 @ Stack[-0x20]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_24 @ Stack[-0x24]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_28 @ Stack[-0x28]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_2c @ Stack[-0x2c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_30 @ Stack[-0x30]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_34 @ Stack[-0x34]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_38 @ Stack[-0x38]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_3c @ Stack[-0x3c]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_40 @ Stack[-0x40]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_44 @ Stack[-0x44]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid __thiscall FUN_00449bf0(void *this,int param_1)\r\n\r\n{\r\n  int iVar1;\r\n  int *local_3c;\r\n  int local_1c;\r\n  void *local_10;\r\n  undefined1 *puStack_c;\r\n  undefined4 local_8;\r\n  \r\n  local_8 = 0xffffffff;\r\n  puStack_c = &LAB_004ac77b;\r\n  local_10 = ExceptionList;\r\n  if (*(int *)((int)this + 4) < param_1) {\r\n    ExceptionList = &local_10;\r\n    if (*(int *)((int)this + 8) == 1) {\r\n      ExceptionList = &local_10;\r\n      *(int *)((int)this + 4) = param_1;\r\n    }\r\n    else {\r\n      do {\r\n        *(int *)((int)this + 4) = *(int *)((int)this + 4) + *(int *)((int)this + 8);\r\n      } while (*(int *)((int)this + 4) <= param_1);\r\n    }\r\n    if (*(int *)((int)this + 4) < 1) {\r\n      if ((*(int *)((int)this + 0xc) != 0) && (*(void **)((int)this + 0xc) != (void *)0x0)) {\r\n        FUN_0044ba30(*(void **)((int)this + 0xc),3);\r\n      }\r\n      *(undefined4 *)((int)this + 0xc) = 0;\r\n    }\r\n    else {\r\n      iVar1 = *(int *)((int)this + 4);\r\n      local_3c = operator_new(iVar1 * 0x88 + 4);\r\n      local_8 = 0;\r\n      if (local_3c == (int *)0x0) {\r\n        local_3c = (int *)0x0;\r\n      }\r\n      else {\r\n        *local_3c = iVar1;\r\n        FUN_0049c5d3(local_3c + 1,0x88,iVar1,FUN_0044be60);\r\n        local_3c = local_3c + 1;\r\n      }\r\n      local_8 = 0xffffffff;\r\n      if (*(int *)((int)this + 0xc) != 0) {\r\n        for (local_1c = 0; local_1c < *(int *)this; local_1c = local_1c + 1) {\r\n          FUN_00448f50(local_3c + local_1c * 0x22,*(int *)((int)this + 0xc) + local_1c * 0x88);\r\n        }\r\n        if (*(void **)((int)this + 0xc) != (void *)0x0) {\r\n          FUN_0044ba30(*(void **)((int)this + 0xc),3);\r\n        }\r\n      }\r\n      *(int **)((int)this + 0xc) = local_3c;\r\n    }\r\n  }\r\n  *(int *)this = param_1;\r\n  ExceptionList = local_10;\r\n  return;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x449bf0: PUSH EBP",
+        "0x449bf1: MOV EBP, ESP",
+        "0x449bf3: PUSH -0x1",
+        "0x449bf5: PUSH 0x4ac77b",
+        "0x449bfa: MOV EAX, FS:[0x0]",
+        "0x449c00: PUSH EAX",
+        "0x449c01: MOV dword ptr FS:[0x0], ESP",
+        "0x449c08: SUB ESP, 0x34",
+        "0x449c0b: MOV dword ptr [EBP + -0x34], ECX",
+        "0x449c0e: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449c11: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x449c14: CMP ECX, dword ptr [EAX + 0x4]",
+        "0x449c17: JLE 0x00449d95",
+        "0x449c1d: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449c20: CMP dword ptr [EDX + 0x8], 0x1",
+        "0x449c24: JNZ 0x00449c31",
+        "0x449c26: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449c29: MOV ECX, dword ptr [EBP + 0x8]",
+        "0x449c2c: MOV dword ptr [EAX + 0x4], ECX",
+        "0x449c2f: JMP 0x00449c4e",
+        "0x449c31: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449c34: MOV EAX, dword ptr [EDX + 0x4]",
+        "0x449c37: MOV ECX, dword ptr [EBP + -0x34]",
+        "0x449c3a: ADD EAX, dword ptr [ECX + 0x8]",
+        "0x449c3d: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449c40: MOV dword ptr [EDX + 0x4], EAX",
+        "0x449c43: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449c46: MOV ECX, dword ptr [EAX + 0x4]",
+        "0x449c49: CMP ECX, dword ptr [EBP + 0x8]",
+        "0x449c4c: JLE 0x00449c31",
+        "0x449c4e: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449c51: CMP dword ptr [EDX + 0x4], 0x0",
+        "0x449c55: JLE 0x00449d57",
+        "0x449c5b: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449c5e: MOV ECX, dword ptr [EAX + 0x4]",
+        "0x449c61: MOV dword ptr [EBP + -0x10], ECX",
+        "0x449c64: MOV EDX, dword ptr [EBP + -0x10]",
+        "0x449c67: IMUL EDX, EDX, 0x88",
+        "0x449c6d: ADD EDX, 0x4",
+        "0x449c70: PUSH EDX",
+        "0x449c71: CALL 0x0049c1a8",
+        "0x449c76: ADD ESP, 0x4",
+        "0x449c79: MOV dword ptr [EBP + -0x20], EAX",
+        "0x449c7c: MOV dword ptr [EBP + -0x4], 0x0",
+        "0x449c83: CMP dword ptr [EBP + -0x20], 0x0",
+        "0x449c87: JZ 0x00449cbb",
+        "0x449c89: PUSH 0x4491b0",
+        "0x449c8e: PUSH 0x44be60",
+        "0x449c93: MOV EAX, dword ptr [EBP + -0x20]",
+        "0x449c96: MOV ECX, dword ptr [EBP + -0x10]",
+        "0x449c99: MOV dword ptr [EAX], ECX",
+        "0x449c9b: MOV EDX, dword ptr [EBP + -0x10]",
+        "0x449c9e: PUSH EDX",
+        "0x449c9f: PUSH 0x88",
+        "0x449ca4: MOV EAX, dword ptr [EBP + -0x20]",
+        "0x449ca7: ADD EAX, 0x4",
+        "0x449caa: PUSH EAX",
+        "0x449cab: CALL 0x0049c5d3",
+        "0x449cb0: MOV ECX, dword ptr [EBP + -0x20]",
+        "0x449cb3: ADD ECX, 0x4",
+        "0x449cb6: MOV dword ptr [EBP + -0x38], ECX",
+        "0x449cb9: JMP 0x00449cc2",
+        "0x449cbb: MOV dword ptr [EBP + -0x38], 0x0",
+        "0x449cc2: MOV EDX, dword ptr [EBP + -0x38]",
+        "0x449cc5: MOV dword ptr [EBP + -0x1c], EDX",
+        "0x449cc8: MOV dword ptr [EBP + -0x4], 0xffffffff",
+        "0x449ccf: MOV EAX, dword ptr [EBP + -0x1c]",
+        "0x449cd2: MOV dword ptr [EBP + -0x14], EAX",
+        "0x449cd5: MOV ECX, dword ptr [EBP + -0x34]",
+        "0x449cd8: CMP dword ptr [ECX + 0xc], 0x0",
+        "0x449cdc: JZ 0x00449d4c",
+        "0x449cde: MOV dword ptr [EBP + -0x18], 0x0",
+        "0x449ce5: JMP 0x00449cf0",
+        "0x449ce7: MOV EDX, dword ptr [EBP + -0x18]",
+        "0x449cea: ADD EDX, 0x1",
+        "0x449ced: MOV dword ptr [EBP + -0x18], EDX",
+        "0x449cf0: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449cf3: MOV ECX, dword ptr [EBP + -0x18]",
+        "0x449cf6: CMP ECX, dword ptr [EAX]",
+        "0x449cf8: JGE 0x00449d21",
+        "0x449cfa: MOV EDX, dword ptr [EBP + -0x18]",
+        "0x449cfd: IMUL EDX, EDX, 0x88",
+        "0x449d03: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449d06: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x449d09: ADD ECX, EDX",
+        "0x449d0b: PUSH ECX",
+        "0x449d0c: MOV EDX, dword ptr [EBP + -0x18]",
+        "0x449d0f: IMUL EDX, EDX, 0x88",
+        "0x449d15: MOV ECX, dword ptr [EBP + -0x14]",
+        "0x449d18: ADD ECX, EDX",
+        "0x449d1a: CALL 0x00448f50",
+        "0x449d1f: JMP 0x00449ce7",
+        "0x449d21: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449d24: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x449d27: MOV dword ptr [EBP + -0x28], ECX",
+        "0x449d2a: MOV EDX, dword ptr [EBP + -0x28]",
+        "0x449d2d: MOV dword ptr [EBP + -0x24], EDX",
+        "0x449d30: CMP dword ptr [EBP + -0x24], 0x0",
+        "0x449d34: JZ 0x00449d45",
+        "0x449d36: PUSH 0x3",
+        "0x449d38: MOV ECX, dword ptr [EBP + -0x24]",
+        "0x449d3b: CALL 0x0044ba30",
+        "0x449d40: MOV dword ptr [EBP + -0x3c], EAX",
+        "0x449d43: JMP 0x00449d4c",
+        "0x449d45: MOV dword ptr [EBP + -0x3c], 0x0",
+        "0x449d4c: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449d4f: MOV ECX, dword ptr [EBP + -0x14]",
+        "0x449d52: MOV dword ptr [EAX + 0xc], ECX",
+        "0x449d55: JMP 0x00449d95",
+        "0x449d57: MOV EDX, dword ptr [EBP + -0x34]",
+        "0x449d5a: CMP dword ptr [EDX + 0xc], 0x0",
+        "0x449d5e: JZ 0x00449d8b",
+        "0x449d60: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449d63: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x449d66: MOV dword ptr [EBP + -0x30], ECX",
+        "0x449d69: MOV EDX, dword ptr [EBP + -0x30]",
+        "0x449d6c: MOV dword ptr [EBP + -0x2c], EDX",
+        "0x449d6f: CMP dword ptr [EBP + -0x2c], 0x0",
+        "0x449d73: JZ 0x00449d84",
+        "0x449d75: PUSH 0x3",
+        "0x449d77: MOV ECX, dword ptr [EBP + -0x2c]",
+        "0x449d7a: CALL 0x0044ba30",
+        "0x449d7f: MOV dword ptr [EBP + -0x40], EAX",
+        "0x449d82: JMP 0x00449d8b",
+        "0x449d84: MOV dword ptr [EBP + -0x40], 0x0",
+        "0x449d8b: MOV EAX, dword ptr [EBP + -0x34]",
+        "0x449d8e: MOV dword ptr [EAX + 0xc], 0x0",
+        "0x449d95: MOV ECX, dword ptr [EBP + -0x34]",
+        "0x449d98: MOV EDX, dword ptr [EBP + 0x8]",
+        "0x449d9b: MOV dword ptr [ECX], EDX",
+        "0x449d9d: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x449da0: MOV dword ptr FS:[0x0], ECX",
+        "0x449da7: MOV ESP, EBP",
+        "0x449da9: POP EBP",
+        "0x449daa: RET 0x4"
+      ],
+      "callees": [
+        {
+          "address": "0x448f50",
+          "name": "FUN_00448f50",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x448f50",
+                "end": "0x448f8f"
+              }
+            ],
+            "total_bytes": 64,
+            "span_bytes": 64,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x44ba30",
+          "name": "FUN_0044ba30",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x44ba30",
+                "end": "0x44baa2"
+              }
+            ],
+            "total_bytes": 115,
+            "span_bytes": 115,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x49c1a8",
+          "name": "operator_new",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x49c1a8",
+                "end": "0x49c1b5"
+              }
+            ],
+            "total_bytes": 14,
+            "span_bytes": 14,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x49c5d3",
+          "name": "FUN_0049c5d3",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x49c5d3",
+                "end": "0x49c63c"
+              }
+            ],
+            "total_bytes": 106,
+            "span_bytes": 106,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_e7c373d2958f3eb8e61ab46a926c38342a1a4f269d6879c4cdf9c8ff131daaa1",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x449f20",
+        "name": "FUN_00449f20",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x449f20",
+              "end": "0x449fa7"
+            }
+          ],
+          "total_bytes": 136,
+          "span_bytes": 136,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "bool __thiscall FUN_00449f20(void * this, char * param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nbool __thiscall FUN_00449f20(void *this,char *param_1)\r\n\r\n{\r\n  int iVar1;\r\n  char *_Str2;\r\n  undefined4 local_8;\r\n  \r\n  local_8 = 0;\r\n  while( true ) {\r\n    iVar1 = FUN_00406640((undefined4 *)((int)this + 0x30));\r\n    if (local_8 == iVar1) break;\r\n    iVar1 = FUN_00406620((void *)((int)this + 0x30),local_8);\r\n    if (*(char *)(iVar1 + 0x84) != '\\0') {\r\n      iVar1 = FUN_00406620((void *)((int)this + 0x30),local_8);\r\n      _Str2 = (char *)Get(iVar1);\r\n      iVar1 = _strcmp(param_1,_Str2);\r\n      if (iVar1 == 0) break;\r\n    }\r\n    local_8 = local_8 + 1;\r\n  }\r\n  iVar1 = FUN_00406640((undefined4 *)((int)this + 0x30));\r\n  return local_8 != iVar1;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x449f20: PUSH EBP",
+        "0x449f21: MOV EBP, ESP",
+        "0x449f23: SUB ESP, 0x8",
+        "0x449f26: MOV dword ptr [EBP + -0x8], ECX",
+        "0x449f29: MOV dword ptr [EBP + -0x4], 0x0",
+        "0x449f30: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x449f33: ADD ECX, 0x30",
+        "0x449f36: CALL 0x00406640",
+        "0x449f3b: CMP dword ptr [EBP + -0x4], EAX",
+        "0x449f3e: JZ 0x00449f8d",
+        "0x449f40: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x449f43: PUSH EAX",
+        "0x449f44: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x449f47: ADD ECX, 0x30",
+        "0x449f4a: CALL 0x00406620",
+        "0x449f4f: XOR ECX, ECX",
+        "0x449f51: MOV CL, byte ptr [EAX + 0x84]",
+        "0x449f57: TEST ECX, ECX",
+        "0x449f59: JZ 0x00449f82",
+        "0x449f5b: MOV EDX, dword ptr [EBP + -0x4]",
+        "0x449f5e: PUSH EDX",
+        "0x449f5f: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x449f62: ADD ECX, 0x30",
+        "0x449f65: CALL 0x00406620",
+        "0x449f6a: MOV ECX, EAX",
+        "0x449f6c: CALL 0x00403720",
+        "0x449f71: PUSH EAX",
+        "0x449f72: MOV EAX, dword ptr [EBP + 0x8]",
+        "0x449f75: PUSH EAX",
+        "0x449f76: CALL 0x0049c870",
+        "0x449f7b: ADD ESP, 0x8",
+        "0x449f7e: TEST EAX, EAX",
+        "0x449f80: JZ 0x00449f8d",
+        "0x449f82: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x449f85: ADD ECX, 0x1",
+        "0x449f88: MOV dword ptr [EBP + -0x4], ECX",
+        "0x449f8b: JMP 0x00449f30",
+        "0x449f8d: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x449f90: ADD ECX, 0x30",
+        "0x449f93: CALL 0x00406640",
+        "0x449f98: XOR EDX, EDX",
+        "0x449f9a: CMP dword ptr [EBP + -0x4], EAX",
+        "0x449f9d: SETNZ DL",
+        "0x449fa0: MOV AL, DL",
+        "0x449fa2: MOV ESP, EBP",
+        "0x449fa4: POP EBP",
+        "0x449fa5: RET 0x4"
+      ],
+      "callees": [
+        {
+          "address": "0x403720",
+          "name": "Get",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x403720",
+                "end": "0x40372d"
+              }
+            ],
+            "total_bytes": 14,
+            "span_bytes": 14,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x406620",
+          "name": "FUN_00406620",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x406620",
+                "end": "0x40663d"
+              }
+            ],
+            "total_bytes": 30,
+            "span_bytes": 30,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x406640",
+          "name": "FUN_00406640",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x406640",
+                "end": "0x40664f"
+              }
+            ],
+            "total_bytes": 16,
+            "span_bytes": 16,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x49c870",
+          "name": "_strcmp",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x49c870",
+                "end": "0x49c8b2"
+              },
+              {
+                "start": "0x49c8b4",
+                "end": "0x49c8b9"
+              },
+              {
+                "start": "0x49c8bc",
+                "end": "0x49c8f3"
+              }
+            ],
+            "total_bytes": 129,
+            "span_bytes": 132,
+            "non_contiguous": true,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_e3e32a3cede9709450095668eea217da8b0c525cd8f37c5c926442b54496374c",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x4498b0",
+        "name": "FUN_004498b0",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x4498b0",
+              "end": "0x44992f"
+            }
+          ],
+          "total_bytes": 128,
+          "span_bytes": 128,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __fastcall FUN_004498b0(int * param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_10 @ Stack[-0x10]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid __fastcall FUN_004498b0(int *param_1)\r\n\r\n{\r\n  undefined4 *puVar1;\r\n  uint uVar2;\r\n  undefined4 *local_8;\r\n  \r\n  local_8 = (undefined4 *)FUN_00414cc0((int)(param_1 + 1));\r\n  while (uVar2 = FUN_00414ce0(param_1 + 1,(int)local_8), (uVar2 & 0xff) == 0) {\r\n    if (local_8[2] == 0) {\r\n      puVar1 = (undefined4 *)local_8[3];\r\n      (**(code **)(*param_1 + 0x10))(*local_8);\r\n      FUN_0044bd60(local_8);\r\n      param_1[0xb] = param_1[0xb] + -1;\r\n      local_8 = puVar1;\r\n    }\r\n    else {\r\n      local_8 = (undefined4 *)local_8[3];\r\n    }\r\n  }\r\n  return;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x4498b0: PUSH EBP",
+        "0x4498b1: MOV EBP, ESP",
+        "0x4498b3: SUB ESP, 0xc",
+        "0x4498b6: MOV dword ptr [EBP + -0xc], ECX",
+        "0x4498b9: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x4498bc: ADD ECX, 0x4",
+        "0x4498bf: CALL 0x00414cc0",
+        "0x4498c4: MOV dword ptr [EBP + -0x4], EAX",
+        "0x4498c7: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x4498ca: PUSH EAX",
+        "0x4498cb: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x4498ce: ADD ECX, 0x4",
+        "0x4498d1: CALL 0x00414ce0",
+        "0x4498d6: AND EAX, 0xff",
+        "0x4498db: TEST EAX, EAX",
+        "0x4498dd: JNZ 0x0044992c",
+        "0x4498df: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x4498e2: CMP dword ptr [ECX + 0x8], 0x0",
+        "0x4498e6: JNZ 0x00449921",
+        "0x4498e8: MOV EDX, dword ptr [EBP + -0x4]",
+        "0x4498eb: MOV dword ptr [EBP + -0x8], EDX",
+        "0x4498ee: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x4498f1: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x4498f4: MOV dword ptr [EBP + -0x4], ECX",
+        "0x4498f7: MOV EDX, dword ptr [EBP + -0x8]",
+        "0x4498fa: MOV EAX, dword ptr [EDX]",
+        "0x4498fc: PUSH EAX",
+        "0x4498fd: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x449900: MOV EDX, dword ptr [ECX]",
+        "0x449902: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x449905: CALL dword ptr [EDX + 0x10]",
+        "0x449908: MOV ECX, dword ptr [EBP + -0x8]",
+        "0x44990b: CALL 0x0044bd60",
+        "0x449910: MOV EAX, dword ptr [EBP + -0xc]",
+        "0x449913: MOV ECX, dword ptr [EAX + 0x2c]",
+        "0x449916: SUB ECX, 0x1",
+        "0x449919: MOV EDX, dword ptr [EBP + -0xc]",
+        "0x44991c: MOV dword ptr [EDX + 0x2c], ECX",
+        "0x44991f: JMP 0x0044992a",
+        "0x449921: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x449924: MOV ECX, dword ptr [EAX + 0xc]",
+        "0x449927: MOV dword ptr [EBP + -0x4], ECX",
+        "0x44992a: JMP 0x004498c7",
+        "0x44992c: MOV ESP, EBP",
+        "0x44992e: POP EBP",
+        "0x44992f: RET"
+      ],
+      "callees": [
+        {
+          "address": "0x414cc0",
+          "name": "FUN_00414cc0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x414cc0",
+                "end": "0x414cd0"
+              }
+            ],
+            "total_bytes": 17,
+            "span_bytes": 17,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x414ce0",
+          "name": "FUN_00414ce0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x414ce0",
+                "end": "0x414cfc"
+              }
+            ],
+            "total_bytes": 29,
+            "span_bytes": 29,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        },
+        {
+          "address": "0x44bd60",
+          "name": "FUN_0044bd60",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x44bd60",
+                "end": "0x44bdb2"
+              }
+            ],
+            "total_bytes": 83,
+            "span_bytes": 83,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_210ae99eb778ce82350c4ec80d9cfc1763a7ad4911a7895967d5d12cec5d1ad4",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x44bdc0",
+        "name": "FUN_0044bdc0",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x44bdc0",
+              "end": "0x44bddf"
+            }
+          ],
+          "total_bytes": 32,
+          "span_bytes": 32,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined1 * __fastcall FUN_0044bdc0(undefined1 * param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nundefined1 * __fastcall FUN_0044bdc0(undefined1 *param_1)\r\n\r\n{\r\n  FUN_0041a490(param_1);\r\n  param_1[0x84] = 0;\r\n  return param_1;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x44bdc0: PUSH EBP",
+        "0x44bdc1: MOV EBP, ESP",
+        "0x44bdc3: PUSH ECX",
+        "0x44bdc4: MOV dword ptr [EBP + -0x4], ECX",
+        "0x44bdc7: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x44bdca: CALL 0x0041a490",
+        "0x44bdcf: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x44bdd2: MOV byte ptr [EAX + 0x84], 0x0",
+        "0x44bdd9: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x44bddc: MOV ESP, EBP",
+        "0x44bdde: POP EBP",
+        "0x44bddf: RET"
+      ],
+      "callees": [
+        {
+          "address": "0x41a490",
+          "name": "FUN_0041a490",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x41a490",
+                "end": "0x41a4a3"
+              }
+            ],
+            "total_bytes": 20,
+            "span_bytes": 20,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_e4db5a4e5af554b7fcdceddee9f429dc02f09468384fbed7f72c63bed0da0e53",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x44b9f0",
+        "name": "FUN_0044b9f0",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x44b9f0",
+              "end": "0x44ba2f"
+            }
+          ],
+          "total_bytes": 64,
+          "span_bytes": 64,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "void * __thiscall FUN_0044b9f0(void * this, int param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid * __thiscall FUN_0044b9f0(void *this,int param_1)\r\n\r\n{\r\n  FUN_004036f0(this,param_1);\r\n  *(undefined4 *)((int)this + 0x80) = *(undefined4 *)(param_1 + 0x80);\r\n  *(undefined1 *)((int)this + 0x84) = *(undefined1 *)(param_1 + 0x84);\r\n  return this;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x44b9f0: PUSH EBP",
+        "0x44b9f1: MOV EBP, ESP",
+        "0x44b9f3: PUSH ECX",
+        "0x44b9f4: MOV dword ptr [EBP + -0x4], ECX",
+        "0x44b9f7: MOV EAX, dword ptr [EBP + 0x8]",
+        "0x44b9fa: PUSH EAX",
+        "0x44b9fb: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x44b9fe: CALL 0x004036f0",
+        "0x44ba03: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x44ba06: MOV EDX, dword ptr [EBP + 0x8]",
+        "0x44ba09: MOV EAX, dword ptr [EDX + 0x80]",
+        "0x44ba0f: MOV dword ptr [ECX + 0x80], EAX",
+        "0x44ba15: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x44ba18: MOV EDX, dword ptr [EBP + 0x8]",
+        "0x44ba1b: MOV AL, byte ptr [EDX + 0x84]",
+        "0x44ba21: MOV byte ptr [ECX + 0x84], AL",
+        "0x44ba27: MOV EAX, dword ptr [EBP + -0x4]",
+        "0x44ba2a: MOV ESP, EBP",
+        "0x44ba2c: POP EBP",
+        "0x44ba2d: RET 0x4"
+      ],
+      "callees": [
+        {
+          "address": "0x4036f0",
+          "name": "FUN_004036f0",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x4036f0",
+                "end": "0x403710"
+              }
+            ],
+            "total_bytes": 33,
+            "span_bytes": 33,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  },
+  {
+    "evidence_id": "ev_0f944aec47d459e5db6e64dc00902207cd8faccb43a49c7bcec38860c08855bc",
+    "subject": {
+      "name": "Lemmings Revolution.exe",
+      "digest": {
+        "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f"
+      },
+      "local_path": "C:\\progs\\Lemmings Revolution\\Lemmings Revolution.exe",
+      "format": "pe",
+      "architecture": "x86"
+    },
+    "analysis_profile": {
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "parameters": {
+        "target_kind": "executable",
+        "target_format": "pe",
+        "executable_role": "application",
+        "managed": false,
+        "native_aot_metadata": {
+          "contract_revision": "rtr-9.1-x64-pe-read-only-v3",
+          "source_bytes": 134217728,
+          "work_units": 67108864,
+          "working_memory_bytes": 67108864,
+          "report_bytes": 4194304
+        },
+        "architecture": "x86",
+        "available_architectures": [
+          "x86"
+        ],
+        "import_mode": "ephemeral-source-immutable",
+        "pdb_observations": "program-info-v1",
+        "annotation_policy": "atomic-function-entry-metadata-v1",
+        "load_image_observations": "source-mappings-entry-context-v2",
+        "function_body_evidence": "complete-inclusive-ranges-v1",
+        "function_references": "complete-body-and-entry-reference-manager-v2",
+        "call_relationship_coverage": "function-body-call-coverage-v5",
+        "function_dossier_coverage": "observed-facets-and-call-relationships-v1",
+        "string_inventory_evidence": "defined-data-coverage-v1",
+        "location_resolution": "explicit-address-exact-entry-symbol-first-v3",
+        "procedure_file_offset_resolution": "address-first-unique-target-source-mapping-v2",
+        "instruction_flow_evidence": "decoded-return-pcode-v1",
+        "instruction_references": "exact-address-incoming-v1",
+        "function_boundary_observations": "ghidra-function-boundary-limitations-v3",
+        "no_return_repair": "disabled-windows-p0",
+        "process_launch": "official-headless-script-v1",
+        "jump_table_evidence": "typed-case-default-blocks-v1",
+        "decompiler_jump_loads": true,
+        "loader": "auto-from-header",
+        "language_id": "auto-from-header",
+        "compiler_spec_id": "auto-default",
+        "analyzer_preset": "ghidra-default"
+      },
+      "digest": "3c06738e45e144d5f073edbd3244c6bff46222f389525fe659bc92dca2ccdece"
+    },
+    "normalized_result": {
+      "procedure": {
+        "address": "0x44bd60",
+        "name": "FUN_0044bd60",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x44bd60",
+              "end": "0x44bdb2"
+            }
+          ],
+          "total_bytes": 83,
+          "span_bytes": 83,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined __fastcall FUN_0044bd60(void * param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_10 @ Stack[-0x10]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_14 @ Stack[-0x14]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          },
+          {
+            "description": "undefined4 local_c @ Stack[-0xc]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nvoid __fastcall FUN_0044bd60(void *param_1)\r\n\r\n{\r\n  *(undefined4 *)(*(int *)((int)param_1 + 0x10) + 0xc) = *(undefined4 *)((int)param_1 + 0xc);\r\n  *(undefined4 *)(*(int *)((int)param_1 + 0xc) + 0x10) = *(undefined4 *)((int)param_1 + 0x10);\r\n  if (param_1 != (void *)0x0) {\r\n    FUN_0044c020(param_1,1);\r\n  }\r\n  return;\r\n}\r\n\r\n",
+      "assembly": [
+        "0x44bd60: PUSH EBP",
+        "0x44bd61: MOV EBP, ESP",
+        "0x44bd63: SUB ESP, 0x10",
+        "0x44bd66: MOV dword ptr [EBP + -0xc], ECX",
+        "0x44bd69: MOV EAX, dword ptr [EBP + -0xc]",
+        "0x44bd6c: MOV ECX, dword ptr [EAX + 0x10]",
+        "0x44bd6f: MOV EDX, dword ptr [EBP + -0xc]",
+        "0x44bd72: MOV EAX, dword ptr [EDX + 0xc]",
+        "0x44bd75: MOV dword ptr [ECX + 0xc], EAX",
+        "0x44bd78: MOV ECX, dword ptr [EBP + -0xc]",
+        "0x44bd7b: MOV EDX, dword ptr [ECX + 0xc]",
+        "0x44bd7e: MOV EAX, dword ptr [EBP + -0xc]",
+        "0x44bd81: MOV ECX, dword ptr [EAX + 0x10]",
+        "0x44bd84: MOV dword ptr [EDX + 0x10], ECX",
+        "0x44bd87: MOV EDX, dword ptr [EBP + -0xc]",
+        "0x44bd8a: MOV dword ptr [EBP + -0x8], EDX",
+        "0x44bd8d: MOV EAX, dword ptr [EBP + -0x8]",
+        "0x44bd90: MOV dword ptr [EBP + -0x4], EAX",
+        "0x44bd93: CMP dword ptr [EBP + -0x4], 0x0",
+        "0x44bd97: JZ 0x0044bda8",
+        "0x44bd99: PUSH 0x1",
+        "0x44bd9b: MOV ECX, dword ptr [EBP + -0x4]",
+        "0x44bd9e: CALL 0x0044c020",
+        "0x44bda3: MOV dword ptr [EBP + -0x10], EAX",
+        "0x44bda6: JMP 0x0044bdaf",
+        "0x44bda8: MOV dword ptr [EBP + -0x10], 0x0",
+        "0x44bdaf: MOV ESP, EBP",
+        "0x44bdb1: POP EBP",
+        "0x44bdb2: RET"
+      ],
+      "callees": [
+        {
+          "address": "0x44c020",
+          "name": "FUN_0044c020",
+          "classification": {
+            "external": false,
+            "thunk": false,
+            "thunk_target": null,
+            "provenance": "ghidra-function-manager"
+          },
+          "body": {
+            "available": true,
+            "provenance": "ghidra-function-body-address-set",
+            "ranges": [
+              {
+                "start": "0x44c020",
+                "end": "0x44c04d"
+              }
+            ],
+            "total_bytes": 46,
+            "span_bytes": 46,
+            "non_contiguous": false,
+            "contains_entry": true
+          }
+        }
+      ]
+    },
+    "limitations": [
+      "The session serves operations only after Ghidra reports default auto-analysis complete; incomplete analysis does not expose partial results.",
+      "The imported Program and temporary project are ephemeral and deleted on close. Annotation operations edit session database metadata; original executable bytes are never written.",
+      "Cancelling an active Ghidra request terminates its ephemeral database and discards session annotations. The selected target remains open; the next provider query imports the original artifact again.",
+      "Default-space addresses use lowercase 0x-prefixed hexadecimal; other address spaces use <percent-encoded-space>:0x<hex>.",
+      "References cover the complete Ghidra function-body AddressSet and exact entry. Dossier incoming edges omit sources owned by that function; procedure_references also retains those internal edges.",
+      "The dossier combines Ghidra FunctionManager, Listing, ReferenceManager, BasicBlockModel, and decompiler observations; provider-specific pseudocode and assembly are not cross-provider text invariants.",
+      "Resolved reference metadata identifies computed, indirect, external, call, jump, and data edges; unresolved targetless flows remain unknown, and function classifications distinguish thunks and externals.",
+      "Synthetic Ghidra entry-point references without actionable memory sources are omitted.",
+      "The Java bridge serializes one function request per Program and lets each decompilation run until it completes or the caller cancels.",
+      "Windows Ghidra P0 accepts native x86 and x86-64 PE applications and DLLs, and explicitly selected raw 6502 images; managed, hostile, sensitive, and mutable-path targets are unsupported.",
+      "The Windows bridge uses authenticated IPv4 loopback because Node path-based IPC does not expose Java AF_UNIX sockets; the endpoint file contains no bearer token.",
+      "Windows sessions require the matching packaged Windows x64 native addon, local NTFS targets and runtimes, and Windows 10 or later. Native handles enforce path admission, private DACLs, and Job Object ownership automatically."
+    ]
+  }
+]

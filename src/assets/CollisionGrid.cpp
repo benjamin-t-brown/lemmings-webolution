@@ -2,8 +2,14 @@
 
 #include "Box.h"
 
+#include "lemmings/level_name_tables.hpp"
+#include "lemmings/world_geometry_prefix.hpp"
+
+#include <bit>
 #include <cstring>
 #include <format>
+#include <stdexcept>
+#include <utility>
 
 namespace webo {
 namespace {
@@ -83,7 +89,9 @@ std::size_t CollisionGrid::solidCells() const {
   return n;
 }
 
-std::expected<CollisionGrid, std::string> findCollisionGrid(
+namespace {
+
+std::expected<CollisionGrid, std::string> findCollisionGridLegacy(
     std::span<const std::byte> d) {
   const std::size_t cyl = findCylinderChunk(d);
   if (cyl == std::string::npos)
@@ -137,6 +145,50 @@ std::expected<CollisionGrid, std::string> findCollisionGrid(
   grid.cylinderExtent = haveExtent ? extent : 0.0;
   grid.cells.resize(want);
   std::memcpy(grid.cells.data(), d.data() + p, want * 4);
+  return grid;
+}
+
+}  // namespace
+
+std::expected<CollisionGrid, std::string> findCollisionGrid(
+    std::span<const std::byte> d) {
+  // Own the byte storage for the entire stream lifetime; the recovered stream
+  // holds a span, and its readers retain the original serialized read order.
+  std::vector<std::uint8_t> bytes;
+  bytes.reserve(d.size());
+  for (const auto byte : d)
+    bytes.push_back(std::to_integer<std::uint8_t>(byte));
+  lemmings::LevelByteStream stream{bytes};
+  lemmings::WorldGeometryPrefix world;
+  try {
+    (void)lemmings::read_compiled_level_prefix(stream);
+    world = lemmings::read_world_geometry_prefix(stream);
+  } catch (const std::invalid_argument& error) {
+    auto fallback = findCollisionGridLegacy(d);
+    const auto rejection = std::format("collision grid: recovered reader at byte {}: {}",
+                                       stream.cursor, error.what());
+    if (!fallback)
+      return std::unexpected(rejection + "; legacy locator: " + fallback.error());
+    fallback->diagnostic = rejection;
+    return fallback;
+  }
+
+  // Portable adapter policy, not original validation. A decoded world with
+  // invalid dimensions must fail here rather than select another chunk.
+  const auto rows = world.following_value;
+  if (rows == 0 || rows > kMaxRows)
+    return std::unexpected(std::format("collision grid: implausible height {}", rows));
+  const auto want = static_cast<std::size_t>(CollisionGrid::kWidth) * rows;
+  if (world.second_integer_array.size() != want)
+    return std::unexpected(
+        std::format("collision grid: expected {} cells for {} rows, the file says {}",
+                    want, rows, world.second_integer_array.size()));
+
+  CollisionGrid grid;
+  grid.height = static_cast<int>(rows);
+  grid.cells = std::move(world.second_integer_array);
+  // The correspondence to runtime world+0x408 remains the existing inference.
+  grid.cylinderExtent = std::bit_cast<double>(world.following_double_bits_2);
   return grid;
 }
 

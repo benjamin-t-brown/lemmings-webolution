@@ -13,7 +13,7 @@ namespace webo {
 
 class AssetLibrary;
 
-// Per-level grey light map and RGB palette stored immediately after the
+// Per-level light map and RGB palette stored immediately after the
 // collision grid (`u32 12288, u8[12288]` then 256 x {f64 R, G, B} with no
 // prefix). Indexed by actor world position; see actorLightMapIndex.
 struct ActorLightMap {
@@ -25,6 +25,10 @@ struct ActorLightMap {
   // Palette channel bytes converted from the stored doubles (grey entries use
   // equal R, G, B).
   std::array<std::array<std::uint8_t, 3>, kPaletteEntries> palette{};
+
+  // Empty on structured success; recovered rejection and cursor when the
+  // legacy locator supplied the data instead.
+  std::string diagnostic;
 
   bool empty() const { return map.empty(); }
 

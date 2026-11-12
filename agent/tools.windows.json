@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "agent_models": {
+    "codex": {
+      "model": "gpt-6.1-sol",
+      "effort": "high"
+    },
+    "claude": {
+      "model": "claude-sonnet-5-5",
+      "effort": "high"
+    }
+  },
+  "inspected_date": "2026-10-29",
+  "repository": "C:/progs/lemmings-webolution",
+  "reference": {
+    "path": "Lemmings Revolution/Lemmings Revolution.exe",
+    "sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f",
+    "architecture": "x86",
+    "policy": "read-only; execution requires explicit user approval"
+  },
+  "assets": {
+    "directory": "Lemmings Revolution",
+    "base": "Lemmings Revolution/lemmings.box",
+    "patch": "Lemmings Revolution/patch.box"
+  },
+  "tools": {
+    "gcc": {
+      "path": "C:/progs/msys2/ucrt64/bin/g++.exe",
+      "version": "16.1.0",
+      "target": "x86_64-w64-mingw32",
+      "purpose": "primary native C++23 compiler"
+    },
+    "gcc_x86": {
+      "path": "C:/progs/msys2/mingw32/bin/g++.exe",
+      "target": "i686-w64-mingw32",
+      "purpose": "later ABI/layout checks; do not run original-byte oracles by default"
+    },
+    "cmake": {
+      "path": "C:/progs/msys2/ucrt64/bin/cmake.exe",
+      "version": "4.3.3"
+    },
+    "ctest": {
+      "path": "C:/progs/msys2/ucrt64/bin/ctest.exe",
+      "version": "4.3.3"
+    },
+    "ninja": {
+      "path": "C:/progs/msys2/ucrt64/bin/ninja.exe",
+      "version": "1.13.2"
+    },
+    "sdl2": {
+      "path": "C:/progs/msys2/ucrt64/bin/SDL2.dll",
+      "version": "2.32.10",
+      "purpose": "native presentation runtime; tests use dummy video/audio"
+    },
+    "python": {
+      "path": "C:/Program Files/Python313/python.exe",
+      "version": "3.13.12"
+    },
+    "git": {
+      "path": "C:/Program Files/Git/cmd/git.exe",
+      "version": "2.53.0.windows.1"
+    },
+    "codex": {
+      "path": "C:/Users/bbrown/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe",
+      "version": "0.163.0",
+      "auth": "not tested; no credentials inspected"
+    },
+    "claude": {
+      "path": "C:/Users/bbrown/AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/claude.exe",
+      "version": "2.1.302",
+      "auth": "not tested; no credentials inspected"
+    },
+    "ghidra": {
+      "path": "C:/progs/ghidra/ghidra_12.1.4_PUBLIC/support/analyzeHeadless.bat",
+      "version": "12.1.4",
+      "purpose": "static analysis via REA"
+    },
+    "java": {
+      "path": "C:/Program Files/Java/jdk-24/bin/java.exe",
+      "version": "24.0.2"
+    },
+    "rea": {
+      "path": "C:/Users/bbrown/AppData/Roaming/npm/node_modules/rea-agents/scripts/rea.mjs",
+      "version": "6.5.0",
+      "purpose": "connected MCP; Ghidra reported available, no target analysis run during setup"
+    }
+  },
+  "runtime_bin": "C:/progs/msys2/ucrt64/bin",
+  "notes": [
+    "Reference and asset paths are relative to the repository root, independent of the caller's working directory. Use the existing local installation inside the ignored Lemmings Revolution folder.",
+    "C:/msys64 is another installation; do not mix its libraries with C:/progs/msys2.",
+    "Registry records inspection, not authentication or end-to-end provider verification.",
+    "Installed CLI help is the compatibility authority; recheck after upgrading.",
+    "Do not prepend UCRT64 bin when using original-game harness Python scripts."
+  ]
+}

@@ -1,0 +1,65 @@
+# native-011: structured actor light-map loading
+
+2026-10-30. Implementation prepared for `needs_review`; queue updates and independent acceptance belong to the supervisor. Only native-011 is implemented here. No original game, original machine-code fragment, oracle, hook, debugger, launcher or capture was executed. Installation files were not modified.
+
+## Runtime change and files
+
+Changed files:
+
+- `src/assets/LightMap.cpp`: production `findActorLightMap` now runs the recovered prefix and world readers, then projects the map and palette. The original locator/walk is an internal fallback with its executable body unchanged.
+- `src/assets/LightMap.h`: adds `ActorLightMap::diagnostic`, empty for structured success and populated for successful fallback.
+- `src/__test__/test_collisiongrid.cpp`: adds asset-free light-map fixtures, error/projection checks, public lookup/modulation checks and fresh archive-backed checks before retail early returns. Existing collision, historical dump, actor-light and Terrain assertions remain.
+- This report. Detailed source-built artifacts and logs are ignored under `build/native-011/`.
+
+Before: a valid first name-table entry named `Cylinder` becomes the old locator's first match. It reads a zero height from unrelated subsequent prefix fields and rejects the supported serialized world, even though the actual world has a valid byte map and palette. After: recovered section-order readers reach the actual world; the same public loader returns its data without a fallback diagnostic. This is an executed source-built supported-input regression, not an observed retail-frame failure.
+
+Traced application path (consumers unchanged): `src/app/main.cpp:429` calls `TubeScene::build`; `src/app/TubeScene.cpp:172` calls production `findActorLightMap(levelBytes)` and moves success into `actorLight_`. Simulation setup at `main.cpp:549` and subsequent updates at `:952` obtain `options.injectedWalkers` through `injectedWalkersFromWorld`. `TubeScene::render` calls `drawInjectedWalkers` through its composition branch at `TubeScene.cpp:570`; `drawInjectedWalkers` calls `prepareInjectedWalker` at `:339`, which calls `actorLightTintAt` at `:304`. The returned tint reaches `drawActorSprite` at `:343`. `ActorSprite.cpp:139` retains alpha testing and `:141` retains RGB modulation. Resource availability, pose readiness, draw-route options and the other existing branch conditions still apply.
+
+The regression does not establish complete scene loading for arbitrary supported worlds. `LevelIndex`, cylinder/mesh location, pose inputs and other scene prerequisites remain outside scope. The fixture deliberately has only three collision words, with no relationship to height; that is permitted by the existing light-map adapter contract and does not imply a renderable complete scene.
+
+## Evidence and boundary
+
+Reference, read as bytes only: repository-local `Lemmings Revolution/Lemmings Revolution.exe`, SHA-256 `32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f`.
+
+Static sequence is retained from `decomp-lemmings/docs/evidence/004432c1.md` and `world_geometry_prefix.md`: `0x004432C1` reads prefix/name tables, then calls `0x00439FD3` after the fifth table and bounded string. The counted byte array is read through `0x0043B700`; the next 6144 raw bytes are read through `0x0043B5B0`. The world reader continues through two strings and 32 tail lists. Production invokes unchanged `read_compiled_level_prefix`, then unchanged `read_world_geometry_prefix`, on one `LevelByteStream`. It stops there, without entity/gadget decoding or an EOF requirement. An owning `vector<uint8_t>` outlives the stream and both reads.
+
+`docs/scratch/phase-a4-actor-tint-writer.md` A4o/A4p/A4q supplies the historical runtime association: world map at `+0x664`, palette at `+0x678`, palette stride `0x18`; the map/palette file offsets for `MM_CLIMB_002` were historically compared byte-for-byte with live copies. A4o describes the `0x403820` controller colour copy (`this` in ECX, `ret 4`) through controller offsets `+0x178/+0x110/+0xA8/+0x40`, and the `0x403F40 -> 0x403FC0 -> 0x403FA0` lookup. These original calling conventions and runtime offsets are evidence, not layouts assigned to the portable containers. No original allocation or ABI object graph was reconstructed here.
+
+A4p's 20 historical tint samples all selected map byte zero, and its worker's `_ftol`/guard interpretation and the facilitator's reread qualifications remain as written. A4q's historical 102-level integral-channel observation and pixel gate remain historical evidence. This task makes no new live-byte, pixel, timing or native-fidelity measurement; its newly measured corpus comparison concerns source loader outputs only. Unknown original field meanings and stores remain untouched.
+
+Projection moves every `world.byte_array` byte without reordering. The 6144 fixed bytes are 256 ordered RGB triples; each binary64 channel uses eight explicit little-endian shifts into a `uint64_t`, `bit_cast<double>`, then the unchanged `paletteChannel`. No unaligned floating pointer access or numeric preprocessing is used. Existing positive-height/4096-row and exact-12288-map policies remain portable adapter checks, not established original validation. No collision-count or height/map-length relationship is added.
+
+Portable channel conversion retains finite/clamp/truncation behavior: nonfinite and nonpositive values produce zero; values at least 255 clamp to 255; other positive values truncate. Fixture fractions, negative numbers, negative zero, above-255 values, infinities and NaN test this policy, not original x87 precision, conversion order or original rendering. Indexing, histogram, tint lookup, modulation, alpha testing and archive precedence are unchanged. Recovery source/header files and build registrations are unchanged; the existing `webolution_compiled_level` and transitive stream library supply the readers.
+
+Only `std::invalid_argument` thrown by the two recovered reads enables the old locator. A successful fallback retains the reader message and cursor; a failed fallback returns both causes. Successfully decoded invalid dimensions/map length return directly without fallback. Allocation failures and unrelated exceptions are not caught.
+
+## Executed before/after regression and checks
+
+Before editing, copied the authentic public source/header to ignored `build/native-011/pre-change/`, preserving exact bytes. Frozen source SHA-256: `4fcb08946fd27f35f1126d56df34eed158e8c19397cbc109773b90a7499b06ab`; header: `f6a3c402e980d1d53d82069d36fcce9a69554803415fdb7f568fc0af3bb26afe`. `preservation-check.json` verifies those against initial hashes and checks that the entire original public-loader executable body equals the new internal fallback body. Removing only the native-011 inserted test block and its main call reproduces the initial test-file hash exactly; the archive loader and remaining tint/modulation/alpha helper source also compare exactly. No production file was temporarily replaced.
+
+The separate `compare_loader.cpp` driver was compiled twice with registered `C:/progs/msys2/ucrt64/bin/g++.exe`, C++23, `-O0 -g -Wall -Wextra -Wpedantic`: once with the frozen source/header and once with current production source/header plus existing recovered libraries. Each calls the real public `findActorLightMap`; the old build uses its original struct layout. Both read through production `Box.cpp`. Compilation commands/results and complete output are retained in `*-compile.log`, `*-plain.log`, `*-decoy.log` and `*-corpus.log`. `run_comparison.py` reproduces these runs; `comparison-results.json` retains command wall durations and complete effective names.
+
+- Frozen loader, no decoy: success. Frozen loader, earlier serialized `Cylinder` name: expected exit 2, `actor light map: implausible height 0`.
+- Current loader: both fixtures succeed, zero fallbacks. The old plain, current plain and current decoy outputs compare equal in every map byte and every converted palette channel.
+- Asset-free `test_collisiongrid.exe` run: **148 checks, zero failures**, logged in `asset-free.log`. All new checks execute before the retail skip. The full retail-enabled registered run subsequently passed **202 checks**, including file comparisons against all five available retained historical grid dumps; those original dump observations remain historical and no new capture occurred. A populated world includes the block arrays, class-one triples/references, integer arrays/triples, fixed palette, names and first/last tail-list records. The literal map count is 12288; every map byte and all 768 channel results are checked against explicit pattern/bit/expected-byte tables. Endpoint map indices 0/255 and non-grey entries are covered. At `(2,0)`, map index 1 selects palette 255 = `{22,33,2}`; `{128,255,200,197}` modulates to literal `{11,33,1,197}`.
+- Input preservation, decoy independence, trailing bytes, accepted height bounds 1/4096 with independently fixed map/collision lengths, exact successful prefix-fallback message/cursor, successful world-tail fallback, combined errors, prefix/world/map/palette/tail truncation and decoded invalid height/map length with a later usable legacy chunk all pass.
+- Generated single-entry base/patch BOX files live in fresh `WEBOLUTION_SOURCE_DIR/build/native-011/archive-test-*` directories. Public `loadActorLightMap` verifies base legacy data, missing assets and a structured patch override using normalized names. Different diagnostics prove which source was selected. Original archive code is unchanged.
+
+## Newly measured installed corpus
+
+All effective installed `.LVL` names come from `AssetLibrary::names()` with base/patch overlay applied: **102 levels**, rather than the 105 physical entries retained in recovery's separate historical archive notes. Neither historical count is silently replaced. Each level is decoded through both authentic public loaders. The driver serializes each complete map and 768 converted RGB channel bytes; Python compares the entire outputs for equality and stops on any failure/discrepancy. This is not a comparison of hashes alone.
+
+| Source loader | Effective levels | Failures | Fallbacks | Sum of decode durations | Driver total duration |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Frozen pre-change | 102 | 0 | 0 (no structured fallback path) | 0.0176635 s | 0.0871434 s |
+| Current production | 102 | 0 | 0 | 1.41149 s | 1.49167 s |
+
+**Zero discrepancies** across 1,253,376 map bytes and 78,336 converted palette channels. Snapshots contain 1,334,765 bytes including per-level names/count framing (see JSON for the exact recorded size). These one-run, unoptimized source timings are descriptive only; the recovered reader materializes intervening arrays and is slower. There is no timing gate or original-game performance claim.
+
+## Verification and preservation
+
+Full registered verification **passed** in this worker: `C:/Program Files/Python313/python.exe tools/agent_control/verify.py --profile all`, exit 0, output at `build/native-011/verify-all.log`. Main: **70/70**, 366.71 s; recovery: **84/84**, 30.36 s. This includes the existing rendering assertions. `levelreturn` passed in 233.19 s under its unchanged registered limit; this is source-test execution, not timing acceptance. Both retained JSON inventories have exactly the required counts; recovery has an empty `LEMMINGS_REFERENCE_EXE` and `native_int_array` is its sole `native_`-prefixed source test. The verifier read the reference digest, used registered MinGW-w64 GCC, ran SDL dummy tests, and passed `git diff --check`. No source test registrations were added. The supervisor will perform its own registered verifier after worker exit; a separate read-only acceptance review remains required.
+
+`initial-status.txt`, `initial-hashes.json` and `preservation-check.json` retain initial dirty state and preservation checks. Only the three implementation/test files changed among those initial hashes; `docs/STATUS.md`, recovery `docs/PROGRESS.md`, queue and build registration files remain byte-identical. All 26 top-level installed files in the initial manifest, including EXE/BOX/log files, remain byte-identical. Existing unrelated staged/unstaged changes were preserved. Recovery baseline 372 / 6,186, historical failures, native-006 deferral, other queue items and D1/D3/digger parks are not edited or reinterpreted. No queue, tool registry, supervisor, verifier or shared instruction was changed. Existing unrelated installation CRLF warnings from Git are retained; installation files were not normalized.
+
+Next action: supervisor verification and independent read-only review of every native-011 acceptance criterion, including tracing the production call path and the authentic regression. Leave completion at `needs_review` pending that process. Original allocation/x87 behavior, complete rendering fidelity, other scene locators and timing remain outside this implementation's evidence.

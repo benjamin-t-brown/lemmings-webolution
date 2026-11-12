@@ -15,6 +15,7 @@ compile_commands.json
 __pycache__/
 .DS_Store
 # Never commit game data -- users supply their own installation.
+/Lemmings Revolution/
 *.box
 *.avi
 # Local checkout of morluto/rea, used as the reverse-engineering agent.

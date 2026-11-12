@@ -199,6 +199,32 @@ void Terrain::setZoneWater(int x, int y, bool on) {
   zoneWater_[index(x, y)] = on ? 1 : 0;
 }
 
+void Terrain::paintZoneWaterRect(double minX, double minY, double maxX, double maxY, bool set) {
+  if (cells_.empty() || width_ <= 0 || height_ <= 0)
+    return;
+  const int x0 = static_cast<int>(minX);  // ftol 0x0049C5AC: truncation toward zero
+  int x1 = static_cast<int>(maxX);
+  // 0x004311EE..0x00431207 (set painter only): a rectangle that wraps the seam is painted
+  // across the column wrap. The clear painter 0x0043127E has no such fix-up.
+  if (set && static_cast<double>(x1) < minX)
+    x1 += width_;
+  const int y0 = static_cast<int>(minY);
+  const int y1 = static_cast<int>(maxY);  // the bound is exclusive, as is x1
+  for (int x = x0; x < x1; ++x) {
+    for (int y = y0; y < y1; ++y) {
+      // 0x0040DE60: rows past the bottom read height-1, negative rows read 0.
+      const int original = y >= height_ ? height_ - 1 : (y < 0 ? 0 : y);
+      const int destY = height_ - 1 - original;  // original-to-clone Y conversion
+      if (zoneWater_.empty()) {
+        if (!set)
+          return;  // nothing can be cleared on an unallocated plane
+        zoneWater_.assign(cells_.size(), 0);
+      }
+      zoneWater_[index(x, destY)] = set ? 1 : 0;
+    }
+  }
+}
+
 std::size_t Terrain::zoneWaterCells() const {
   std::size_t n = 0;
   for (std::uint8_t b : zoneWater_)

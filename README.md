@@ -22,7 +22,11 @@ From PowerShell:
 .\scripts\Invoke-Ucrt64.ps1 "ctest --preset dev-debug"
 ```
 
-Set CMake's `WEBOLUTION_GAME_DIR` for retail-data tests; tests may skip their
+Keep the user-owned game files in the ignored `Lemmings Revolution/` folder at
+the repository root. The reference EXE is local-only and must not be added to Git.
+Run application commands from this repository root; its default game directory
+is `Lemmings Revolution/`. Set CMake's `WEBOLUTION_GAME_DIR` to that folder's
+absolute path for retail-data tests; tests may skip their
 retail portion without it. In a UCRT64 shell, `make -C src` / `make -C src test`
 are convenience wrappers. Use `GAME_DIR` for the Makefile's installation path.
 See [build rules](.claude/rules/windows-msys2-build.md) for prerequisites/PATH.
@@ -32,27 +36,56 @@ exists with limitations, and the Emscripten preset is not a verified port.
 ## Current entry point
 
 ```powershell
-build/cmake/dev-debug/webolution.exe --game-dir "C:/progs/Lemmings Revolution"
+build/cmake/dev-debug/webolution.exe
+build/cmake/dev-debug/webolution.exe --game-dir "Lemmings Revolution"
+build/cmake/dev-debug/webolution.exe --direct-level
 build/cmake/dev-debug/webolution.exe --level MM_CLIMB_002 --sim
 build/cmake/dev-debug/webolution.exe --level MM_CLIMB_002 --shot build/tmp/frame.png
 build/cmake/dev-debug/webolution.exe --map
 build/cmake/dev-debug/webolution.exe --frontend
 ```
 
-- Default: SDL window, retail `MM_CLIMB_002`, 3D tube route and camera controls;
-  retained injected walkers are fixtures, **not** a running simulation.
+- No options, or only `--game-dir PATH`: open the connected frontend. The
+  directory may also come from `WEBOLUTION_GAME_DIR` or the default above.
+- Every other option retains its explicit diagnostic route unless `--frontend`
+  is supplied. This includes `--level`, `--sim`, `--sim-ticks`, `--shot`, `--map`,
+  `--map-flags`, `--frames`, `--window-shot`, `--native` and rendering diagnostics.
+  `--direct-level` requests the previous bare-launch SDL diagnostic: retail
+  `MM_CLIMB_002`, 3D tube route and camera controls, with injected walker fixtures
+  rather than a running simulation. Use `--sim` for simulation.
 - `--sim`: optional simulation, actor drawing/picking, counters and skill input.
   Click the first eight plates or press 1–8, then click a lemming. The last two
   commands are inactive. P toggles pause; paused ESC resumes. Standalone unpaused
   ESC closes. Native gameplay and complete input fidelity remain unaccepted.
-- `--frontend`: opt-in New Game → confirmation → map → simulated retail level.
+- Frontend entry: New Game → confirmation → map → simulated retail level.
   Press Return twice, then click the first unlocked node near 206,204. Results
-  connect to map/retry; completion is in memory, not installed-save progress.
-  Up/Down moves main-menu focus; Return on Play Current Game opens the current
-  session's map without resetting progress. It does **not** load the retail save.
+  connect to map/retry.
+  Up/Down moves main-menu focus; Return on Play Current Game opens the loaded
+  progress map without resetting it. Return on New Game → Yes resets progress.
+  Saved progress: a won level writes the original `SavedGame.dat` layout (1504
+  bytes: int32 flag, then 5×25 records of int32 A/B/C; C is the completion flag)
+  to the clone's own copy at `%LOCALAPPDATA%\LemmingsWebolution\SavedGame.dat`,
+  and the next start loads it. New Game → Yes writes the all-zero image there.
+  Loss, retry, abandon and exit do not save. A wrong-size or unreadable file is
+  reported on stderr, starts empty and is left alone until a later save succeeds.
+  The installed game's `SavedGame.dat` is never read, imported or written, and
+  the clone refuses any save path under the `--game-dir` tree. This is the
+  recovered file layout, not a claim of retail save compatibility; the meaning of
+  the flag, A and B is unknown and they are preserved byte-for-byte.
   In connected play, unpaused ESC opens Resume/Try Again/Quit-to-map/Options
   (Options unsupported). O from pause opens the menu; O-close returns to pause,
   while ESC/Resume returns to play. Other main-menu actions are incomplete.
+  Explicit `--frontend` selects this route even with diagnostic options or
+  `--direct-level`; combining it with `--map`/`--map-flags` remains an error.
+  Default entry adds no movie playback or full frontend fidelity.
+  Gameplay sound cues: ordinary startup owns one SDL mixer across the frontend and
+  level legs (`src/audio/CuePlayback.cpp`; `--no-audio` skips it, a missing device
+  or WAV prints a stderr note and the game stays silent). Routed, each with a
+  retained static play-site read: `Ohno` (bomber fuse end) and `FallSplat` (long
+  fall; the sim's `Splat` is mapped to `FallSplat`, since the retail `Splat` cue is
+  never played). Unrouted, no retained play site: `Chink` (assign), `Explode`,
+  `Yippee` (exit), `Letsgo`, all menu/frontend sound and music. This is cue
+  routing only: no claim of native sample timing, volume, mixing or resampling.
 - `--shot`: optional headless fixture rendering. `--skill-panel`, `--hud-ticks`
   and `--pause-caption` are diagnostic flags; `--sim` draws the runtime panel.
 - `--frames N --window-shot FILE`: save the final window-loop CPU frame. Set
@@ -64,8 +97,9 @@ build/cmake/dev-debug/webolution.exe --frontend
   order. Default zero flags are a SOURCE fixture; standalone map has no entry controls.
 
 Production wiring: [source inventory](cmake/webolution_sources.cmake),
-[entry point](src/app/main.cpp). Audio decoding/mixer and progress helpers exist,
-but a complete menu/map/audio runtime is not integrated.
+[entry point](src/app/main.cpp). The mixer is connected for the two evidenced
+gameplay cues above; music, menu sound and a complete menu/map/audio runtime are
+not integrated.
 
 ## Verification
 

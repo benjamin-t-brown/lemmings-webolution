@@ -42,6 +42,8 @@ struct SceneType2Payload {
   std::uint8_t visibility = 0, branch = 0;
   std::string branchName;
   std::array<double, 4> branchDoubles{};
+  // Branch 1 only (nonzero branch byte): f1 mirror, f2 clip, f3 temporal, f4 directional;
+  // branchName is then the sprite-sheet name (capacity 255) and branchDoubles stay zero.
   std::array<std::uint32_t, 4> branchWords{};
   std::uint32_t trailingWord = 0;
 };

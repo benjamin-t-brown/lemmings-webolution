@@ -65,6 +65,16 @@ struct Reader {
     if (!charge(n, 1, what)) return false;
     s.assign(reinterpret_cast<const char*>(bytes.data() + p), n); p += n; return true;
   }
+  // Length-prefixed string with an explicit capacity (0x0047D940 as called by the
+  // branch-1 reader 0x00468BF2 with capacity 0xFF): longer names are rejected.
+  bool boundedString(std::string& s, std::uint32_t capacity, const char* what) {
+    std::uint32_t n;
+    if (!u32(n, "string length")) return false;
+    if (n > capacity) { error = std::format("{} length {} exceeds capacity {}", what, n, capacity); return false; }
+    if (!require(n, what)) return false;
+    if (!charge(n, 1, what)) return false;
+    s.assign(reinterpret_cast<const char*>(bytes.data() + p), n); p += n; return true;
+  }
   bool count(std::uint32_t& n, const char* what) {
     if (!u32(n, what)) return false;
     if (n > kMaxCount) { error = std::format("{} {} exceeds limit at 0x{:x}", what, n, p-4); return false; }
@@ -119,28 +129,30 @@ struct Reader {
         // 12-byte block header distinct from legacy PolyList's 16-byte header.
         if (!u32(count, "mesh record count") || !u32(slot, "material slot")) return false;
         b.materialSlot = slot;
-        if (b.kind != 5 && b.kind != 6 && b.kind != 7) {
+        if (b.kind != 4 && b.kind != 5 && b.kind != 6 && b.kind != 7) {
           error = std::format("unsupported scene mesh kind {} at 0x{:x}", b.kind, b.sourceOffset); return false;
         }
         if (slot >= out.materials.size()) { error = std::format("material slot {} outside node table at 0x{:x}", slot, b.sourceOffset); return false; }
-        const std::size_t stride = b.kind == 5 ? 160 : b.kind == 6 ? 116 : 212;
+        // Kind 4 (fluid-surface-impl-001, fluid research 6.3 A): serialized stride 96 = normal index,
+        // shared RGBA, three corners (the in-memory record stride 0x70 is a different quantity).
+        const std::size_t stride = b.kind == 4 ? 96 : b.kind == 5 ? 160 : b.kind == 6 ? 116 : 212;
         if (count > (bytes.size() - p) / stride) { error = std::format("mesh record count {} exceeds remaining bytes", count); return false; }
         if (!charge(count, sizeof(SceneRecord), "mesh records")) return false;
         for (std::uint32_t ri = 0; ri < count; ++ri) {
           SceneRecord r; r.sourceOffset = p;
           if (!u32(r.normalIndex, "record normal index")) return false;
           if (r.normalIndex >= out.normals.size()) { error = std::format("normal index {} outside node normals at 0x{:x}", r.normalIndex, r.sourceOffset); return false; }
-          const unsigned corners = b.kind == 5 ? 3 : 4;
+          const unsigned corners = (b.kind == 4 || b.kind == 5) ? 3 : 4;
           if (!charge(corners, sizeof(SceneCorner), "record corners")) return false;
           r.corners.resize(corners);
           double shared[4]{};
-          if (b.kind == 6) for (double& x : shared) if (!f64(x, "kind-6 shared colour/alpha")) return false;
+          if (b.kind == 4 || b.kind == 6) for (double& x : shared) if (!f64(x, "kind-4/6 shared colour/alpha")) return false;
           for (auto& c : r.corners) {
             c.sourceOffset = p;
             if (!u32(c.vertexIndex, "corner vertex index")) return false;
             if (c.vertexIndex >= out.positions.size()) { error = std::format("vertex index {} outside node positions at 0x{:x}", c.vertexIndex, r.sourceOffset); return false; }
             if (!f64(c.u, "corner U") || !f64(c.v, "corner V")) return false;
-            if (b.kind == 6) { c.r=shared[0]; c.g=shared[1]; c.b=shared[2]; c.a=shared[3]; }
+            if (b.kind == 4 || b.kind == 6) { c.r=shared[0]; c.g=shared[1]; c.b=shared[2]; c.a=shared[3]; }
             else if (!f64(c.r, "corner red") || !f64(c.g, "corner green") || !f64(c.b, "corner blue") || !f64(c.a, "corner alpha")) return false;
           }
           b.records.push_back(std::move(r));
@@ -155,7 +167,12 @@ struct Reader {
         if (!string(out.type2.branchName, "type-2 branch name")) return false;
         for (double& x : out.type2.branchDoubles) if (!f64(x, "type-2 branch double")) return false;
       } else {
-        error = std::format("unsupported nonzero type-2 branch {} at 0x{:x}", out.type2.branch, p-1); return false;
+        // Branch 1 (0x0047B44C -> 0x00468BF2). The original normalises the branch byte to a
+        // boolean (0x0047B4E5), so any nonzero byte is branch 1. Four u32 fields (f1 mirror,
+        // f2 clip, f3 temporal, f4 directional; stored at sub+0x1B0/0x1C8/0x1CC/0x1B8), then a
+        // name of capacity 0xFF. There are no UV doubles in this branch.
+        for (std::uint32_t& w : out.type2.branchWords) if (!u32(w, "type-2 branch-1 field")) return false;
+        if (!boundedString(out.type2.branchName, 255, "type-2 branch-1 name")) return false;
       }
       if (!u32(out.type2.trailingWord, "type-2 trailing word")) return false;
     } else if (out.type != 0) {

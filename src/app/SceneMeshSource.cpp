@@ -40,7 +40,7 @@ std::expected<void, std::string> visit(
   const Matrix toView = compose(world, view);
   if (node.type == 1) {
     for (const auto& block : node.meshes) {
-      if (block.kind != 5 && block.kind != 6 && block.kind != 7)
+      if (block.kind != 4 && block.kind != 5 && block.kind != 6 && block.kind != 7)
         return std::unexpected(std::format("unsupported hand-built mesh kind {} at 0x{:x}", block.kind, block.sourceOffset));
       if (block.materialSlot >= node.materials.size())
         return std::unexpected(std::format("material slot {} outside node material table at 0x{:x}", block.materialSlot, block.sourceOffset));

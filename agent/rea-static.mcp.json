@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "rea_static": {
+      "command": "C:/Program Files/Python313/python.exe",
+      "args": [
+        "-B",
+        "C:\\progs\\lemmings-webolution\\tools\\agent_control\\rea_static_proxy.py"
+      ]
+    }
+  }
+}

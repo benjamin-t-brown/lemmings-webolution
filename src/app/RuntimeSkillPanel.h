@@ -10,6 +10,15 @@ namespace webo::app {
 // Same SOURCE plate geometry for hover and click; -1 means outside all plates.
 int runtimeSkillPanelIndex(int x, int y);
 
+// The two command plates after the eight skill plates. READ 0x455AFF: hover
+// index 8 with mouse button 0 down is the fast-forward plate. Index 9 is
+// Armageddon; its action is deliberately not implemented (parked decision).
+enum class RuntimePanelCommand { None, FastForward, Armageddon };
+
+// Reports which command plate, if any, covers the window point. Uses
+// runtimeSkillPanelIndex for geometry, so hit testing is shared with clicks.
+RuntimePanelCommand runtimeSkillPanelCommand(int x, int y);
+
 // Runtime selection/input policy. READ evidence establishes a positive-stock
 // gate for selecting skill plates. Keyboard selection remains a SOURCE adapter;
 // the click rectangles are not a claim about native physical hit testing.

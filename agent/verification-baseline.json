@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "date_local": "2026-10-29",
+  "timezone": "America/Denver",
+  "initial_head": "b2615a2",
+  "compiler": "MinGW-w64 UCRT64 GCC 16.1.0, x86_64-w64-mingw32, C++23 Debug",
+  "main": {
+    "passed": 70,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 220.46,
+    "junit": "build/agent-native/main/agent-results.xml",
+    "log": "build/agent-setup-verification.log"
+  },
+  "recovery": {
+    "passed": 76,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 19.91,
+    "junit": "build/agent-native/recovery/agent-results.xml",
+    "log": "build/agent-setup-recovery-verification.log"
+  },
+  "supervisor": {
+    "passed": 12,
+    "failed": 0,
+    "log": "build/agent-supervisor-tests.log",
+    "workers": "synthetic Python fixtures only; no real AI invocation"
+  },
+  "notes": [
+    "Both source builds are fresh, separate from existing development builds.",
+    "The first combined verification stopped after the main pass because the new inventory guard confused the source native_int_array unit test with an original-byte oracle. The guard was corrected and regression-tested; recovery then passed separately.",
+    "The final guard extraction and CLI previews were checked by the supervisor tests; the long main suite was not redundantly repeated.",
+    "No original-game launch, copied-original instruction execution, hook installation, global configuration change, commit or push was performed by this setup.",
+    "CLI authentication, model access and a real one-hour AI run remain untested.",
+    "A changed tracked game-folder hook log and a new game-folder 7z archive appeared during setup; these unrelated files were left untouched.",
+    "Tests establish source consistency and retained fixture behavior, not new original-game fidelity."
+  ],
+  "follow_up_repair": {
+    "date_local": "2026-10-29",
+    "game_directory": "Lemmings Revolution (relative to repository root)",
+    "tracking": "643 ordinary source/evidence files staged; broken gitlink removed",
+    "main": {
+      "name": "Win32-ninja",
+      "tests": "70",
+      "failures": "0",
+      "disabled": "0",
+      "skipped": "0",
+      "hostname": "DESKTOP-MOUVNOP",
+      "time": "192",
+      "timestamp": "2026-10-29T21:17:49"
+    },
+    "recovery": {
+      "name": "Win32-ninja",
+      "tests": "76",
+      "failures": "0",
+      "disabled": "0",
+      "skipped": "0",
+      "hostname": "DESKTOP-MOUVNOP",
+      "time": "16",
+      "timestamp": "2026-10-29T21:21:03"
+    },
+    "supervisor_tests_passed": 13,
+    "log": "build/agent-repair-local-path-verification.log",
+    "default_path_smoke": "Source-built application rendered a 640x480 frame without --game-dir or WEBOLUTION_GAME_DIR; see build/agent-repair-default-path-smoke.log",
+    "original_game_launched": false
+  }
+}

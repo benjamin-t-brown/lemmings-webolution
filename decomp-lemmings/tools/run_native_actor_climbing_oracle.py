@@ -1,0 +1,27 @@
+"""Compare original climbing entry, update, collision and helper routines."""
+import run_native_actor_walking_oracle as runner
+
+PINS = (
+    (0x413750,55,"35c7883489ced993577b3a1b5458ce6a5e8002e955fe538d17cf09c190b53f3b"),
+    (0x4137A3,26,"762efafb3ef0779159d4b79982c59fbc9025ee40f096341e11f8a2083ba3609c"),
+    (0x4137CA,346,"0f6b9ef825ea04454fd9fc8e5d46dbac3001069b7c2f67a0bf6a8a51ff25f8d6"),
+    (0x413924,155,"d98558c3558d0206d7e4876b80c309bb202a10d1180e62bcd2c468af4cfbe984"),
+    (0x4139BF,615,"7c9f158b967a796755cb2c142ea292c794b3a839746e9c254464dc4c189d3069"),
+    (0x42F35F,149,"030bc891f4fdb30afd4e9b0585aa25e9595eaf36a05c2c657942554beda300bd"),
+    (0x417C80,48,"c4a6045c0b25e3464c8c09698b888785bbf81fda93192af4ea6cbdddf39c0b6c"),
+    (0x418390,47,"254616efe4eeecb6423131c308a44bd17d051f5651e8a0adebbe4d242ca65772"),
+    (0x415FA0,72,"47f4c097829951b2df6234b31be6d06fd266a4e97f0034113238d15a9b65afd1"),
+)
+HELPERS = (0x4066A0,0x403EB0,0x4017F0,0x404D10,0x40DE60,0x40DEC0,
+           0x40DF30,0x40DF50,0x40BAA0,0x49C5AC,0x49C8F4,0x49FC56,0x42F66B)
+CONSTANTS = ((0x4B0338,"0000000000000000"),(0x4B0698,"000000e08e79453e"),
+             (0x4B07A8,"0000000000007040"),(0x4B10B0,"0000000000001440"),
+             (0x4B03F8,"0000000000000040"),(0x4B02D0,"000000000000f03f"),
+             (0x4BF2D4,"636c696d6200"))
+
+if __name__ == "__main__":
+    runner.PINS=PINS
+    runner.HELPERS=HELPERS
+    runner.CONSTANTS=CONSTANTS
+    runner.__doc__=__doc__
+    raise SystemExit(runner.main())

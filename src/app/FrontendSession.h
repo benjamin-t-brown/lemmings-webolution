@@ -4,11 +4,14 @@
 #include "app/LevelOutcome.h"
 #include "app/ResultsScene.h"
 #include "app/RuntimeCursor.h"
+#include "save/SaveStore.h"
+#include "save/SavedGame.h"
 #include "shell/Frontend.h"
 
 #include <algorithm>
 #include <array>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -17,14 +20,26 @@ namespace webo::app {
 
 // Retail assets plus the retained B2 screen sequence. SDL is only an input
 // adapter: the model does not claim that an SDL click proves native DirectInput
-// binding. New-game progress starts empty in memory; no installed save is read
-// or reset. Results Continue/retry/Quit preserve this owned progress; New Game Yes
-// clears it. Other menu actions remain unimplemented; main-menu UP/DOWN is an
-// SDL adapter, not a claim about physical DirectInput bindings.
+// binding. Progress is owned here; the installed save is never read or reset.
+// With a store, create() loads the clone's own original-layout SavedGame.dat
+// (missing file = empty progress; unreadable or wrong-size file = empty progress
+// plus a diagnostic, and the file is left alone until a successful save), a
+// winning completeLevel saves after the in-memory commit, and New Game Yes writes
+// the zero image. Without a store (tests) nothing touches disk. Results
+// Continue/retry/Quit preserve this owned progress. Main-menu clicks support New
+// Game and Play Current Game; other actions remain unimplemented. Main-menu
+// UP/DOWN is an SDL adapter, not a claim about physical DirectInput bindings.
 class FrontendSession {
  public:
   static std::expected<FrontendSession, std::string> create(
-      const AssetLibrary& library);
+      const AssetLibrary& library, std::shared_ptr<save::SaveStore> store = nullptr);
+  // Diagnostics for the clone's save: why the stored image was not loaded, and why
+  // the latest save attempt failed (cleared by the next successful save).
+  const std::optional<std::string>& saveLoadError() const { return saveLoadError_; }
+  const std::optional<std::string>& saveError() const { return saveError_; }
+  // Store write attempts made by this session (successful or not); loading never counts.
+  int saveCount() const { return saveCount_; }
+  const save::SavedGame& savedGame() const { return savedGame_; }
 
   const Image& image() const;
   // Base scene stays cursor-free for renderer tests; production paths present
@@ -86,15 +101,24 @@ class FrontendSession {
   std::string confirmQuestion_;
   Image font_, initialMapImage_;
   std::string mapFooterLabel_;
-  int firstMenuLeft_ = 0, firstMenuRight_ = 0;
+  // SOURCE half-open targets for the two implemented actions, derived from
+  // the rendered panels. The shell model remains the sole focus owner.
+  std::array<std::array<int, 4>, 2> menuBoxes_{};
   std::array<std::array<int, 4>, 2> confirmBoxes_{};
   std::array<int, 4> mapFooterBox_{};
   MapScene map_;
   RuntimeCursor cursor_;
   int pointerX_ = 320, pointerY_ = 240;
   bool leftHeld_ = false, rightHeld_ = false, focused_ = true;
-  MapScene initialMap_;
+  MapScene initialMap_;  // zero-flag map: the New Game reset target, not the loaded one
   std::array<std::int32_t, 102> completionFlags_{};
+  // Persistence. savedGame_ is the full original-layout image so unmapped records,
+  // A, B and the flag survive load -> complete -> save unchanged.
+  std::shared_ptr<save::SaveStore> store_;
+  save::SavedGame savedGame_;
+  std::optional<std::string> saveLoadError_, saveError_;
+  int saveCount_ = 0;
+  void persist();
   std::optional<std::size_t> selectedNode_;
   std::optional<std::string> selectedLevel_;
   std::optional<LevelOutcome> outcome_;

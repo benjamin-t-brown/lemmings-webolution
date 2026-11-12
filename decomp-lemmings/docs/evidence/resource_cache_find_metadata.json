@@ -1,0 +1,152 @@
+{
+  "lookup": {
+    "info": {
+      "name": "FUN_004306f0",
+      "entrypoint": "0x4306f0",
+      "basicblock_count": 8,
+      "length": 106,
+      "signature": "int __thiscall FUN_004306f0(void * this, int param_1)",
+      "locals": [
+        {
+          "description": "undefined4 local_8 @ Stack[-0x8]:4",
+          "provenance": "ghidra-function-database"
+        },
+        {
+          "description": "undefined4 local_c @ Stack[-0xc]:4",
+          "provenance": "ghidra-function-database"
+        }
+      ],
+      "classification": {
+        "external": false,
+        "thunk": false,
+        "thunk_target": null,
+        "provenance": "ghidra-function-manager"
+      },
+      "body": {
+        "available": true,
+        "provenance": "ghidra-function-body-address-set",
+        "ranges": [
+          {
+            "start": "0x4306f0",
+            "end": "0x430759"
+          }
+        ],
+        "total_bytes": 106,
+        "span_bytes": 106,
+        "non_contiguous": false,
+        "contains_entry": true
+      }
+    },
+    "id": "ev_9e639d5c33170c3517c3aa3b8227e9a707cfe22766d7c463e002128e8416b9e2",
+    "pseudo": "\r\nint __thiscall FUN_004306f0(void *this,int param_1)\r\n\r\n{\r\n  uint uVar1;\r\n  int local_8;\r\n  \r\n  for (local_8 = FUN_00430760((int)this + 4);\r\n      (uVar1 = FUN_00430780((void *)((int)this + 4),local_8), (uVar1 & 0xff) == 0 &&\r\n      (*(int *)(local_8 + 4) != param_1)); local_8 = *(int *)(local_8 + 0xc)) {\r\n  }\r\n  uVar1 = FUN_00430780((void *)((int)this + 4),local_8);\r\n  if ((uVar1 & 0xff) != 0) {\r\n    local_8 = 0;\r\n  }\r\n  return local_8;\r\n}\r\n\r\n"
+  },
+  "supporting_records": [
+    {
+      "evidence_id": "ev_f5413304b0c2d6c7b2c7b1fd31fb428ee200d55ea734b11eb5d2ba3553e1e3ff",
+      "target_sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "operation": "analyze_function",
+      "parameters": {
+        "procedure": "0x00430760"
+      },
+      "procedure": {
+        "address": "0x430760",
+        "name": "FUN_00430760",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x430760",
+              "end": "0x430770"
+            }
+          ],
+          "total_bytes": 17,
+          "span_bytes": 17,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined4 __fastcall FUN_00430760(int param_1)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nundefined4 __fastcall FUN_00430760(int param_1)\r\n\r\n{\r\n  return *(undefined4 *)(param_1 + 0xc);\r\n}\r\n\r\n",
+      "limitations": [
+        "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+        "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+        "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+        "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+      ]
+    },
+    {
+      "evidence_id": "ev_824edb7f6f702842687f8a5eda96b69ed689ccc668c784c41b0881a841ecf465",
+      "target_sha256": "32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f",
+      "provider": {
+        "id": "ghidra",
+        "name": "Ghidra",
+        "version": "12.1.4"
+      },
+      "operation": "analyze_function",
+      "parameters": {
+        "procedure": "0x00430A10"
+      },
+      "procedure": {
+        "address": "0x430a10",
+        "name": "FUN_00430a10",
+        "classification": {
+          "external": false,
+          "thunk": false,
+          "thunk_target": null,
+          "provenance": "ghidra-function-manager"
+        },
+        "body": {
+          "available": true,
+          "provenance": "ghidra-function-body-address-set",
+          "ranges": [
+            {
+              "start": "0x430a10",
+              "end": "0x430a4f"
+            }
+          ],
+          "total_bytes": 64,
+          "span_bytes": 64,
+          "non_contiguous": false,
+          "contains_entry": true
+        },
+        "signature": "undefined4 * __thiscall FUN_00430a10(void * this, undefined4 * param_1, undefined4 param_2, undefined4 param_3)",
+        "locals": [
+          {
+            "description": "undefined4 local_8 @ Stack[-0x8]:4",
+            "provenance": "ghidra-function-database"
+          }
+        ]
+      },
+      "pseudocode": "\r\nundefined4 * __thiscall\r\nFUN_00430a10(void *this,undefined4 *param_1,undefined4 param_2,undefined4 param_3)\r\n\r\n{\r\n  FUN_00430920(this);\r\n  *(undefined4 *)this = *param_1;\r\n  *(undefined4 *)((int)this + 4) = param_1[1];\r\n  *(undefined4 *)((int)this + 8) = param_1[2];\r\n  *(undefined4 *)((int)this + 0xc) = param_2;\r\n  *(undefined4 *)((int)this + 0x10) = param_3;\r\n  return this;\r\n}\r\n\r\n",
+      "limitations": [
+        "Unresolved computed or indirect flows without target addresses are not represented as reference edges.",
+        "Thunk and external classifications are Ghidra FunctionManager observations; they do not resolve targetless calls.",
+        "Pseudocode and assembly are Ghidra-specific representations, not original source or Hopper-equivalent text.",
+        "Synthetic Ghidra entry-point references without actionable memory sources are omitted."
+      ]
+    }
+  ],
+  "end_helper": {
+    "address": "0x430780",
+    "length": 29,
+    "provenance": "original-byte disassembly; see resource_cache_find.asm"
+  }
+}

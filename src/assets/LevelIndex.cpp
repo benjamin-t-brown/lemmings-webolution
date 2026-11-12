@@ -2,8 +2,13 @@
 
 #include "Box.h"
 
+#include "lemmings/level_name_tables.hpp"
+#include "lemmings/world_geometry_prefix.hpp"
+
 #include <cstring>
 #include <format>
+#include <stdexcept>
+#include <utility>
 
 namespace webo {
 namespace {
@@ -119,13 +124,30 @@ std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte> d) 
     ++i;
   }
 
-  // One surface-index array sits on the Cylinder walk, not two slices of
-  // header[3]. The preamble is the same skip CollisionGrid.cpp uses to
-  // reach the mask: five u32s, the height u32, and an f64, then u32 N and
-  // N words. N is 49858 in every retail level; it is read, not assumed.
-  // header[3] is a different number and is not consulted here. grid1 stays
-  // empty: the file does not store a second array of that length.
-  if (cylinderChunk != std::string::npos) {
+  // The stream borrows its input; keep the adapted storage alive through both
+  // recovered readers. Stop at the world boundary, without later sections or
+  // EOF validation. The string sweep above remains a separate heuristic index.
+  std::vector<std::uint8_t> bytes;
+  bytes.reserve(d.size());
+  for (const auto byte : d)
+    bytes.push_back(std::to_integer<std::uint8_t>(byte));
+  lemmings::LevelByteStream stream{bytes};
+  lemmings::WorldGeometryPrefix world;
+  try {
+    (void)lemmings::read_compiled_level_prefix(stream);
+    world = lemmings::read_world_geometry_prefix(stream);
+  } catch (const std::invalid_argument& error) {
+    lvl.gridFallbackReason = std::format(
+        "surface-index lattice: recovered reader at byte {}: {}", stream.cursor, error.what());
+  }
+
+  if (lvl.gridFallbackReason.empty()) {
+    // Preserve all words and positions, including an empty array. No dimension
+    // policy or index filtering is part of this serialized projection.
+    lvl.grid0 = std::move(world.first_integer_array);
+  } else if (cylinderChunk != std::string::npos) {
+    // Diagnosed legacy extraction, only after a recovered-reader rejection.
+    // Keep partial-index success even when no usable locator array exists.
     constexpr std::size_t kPreambleBytes = 5 * 4 + 4 + 8;
     const std::size_t countAt = cylinderChunk + kPreambleBytes;
     if (countAt + 4 <= d.size()) {

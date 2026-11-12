@@ -1,4 +1,11 @@
-// A first, deliberately partial reading of .LVL.
+// A partial .LVL index with structured surface-index lattice extraction.
+//
+// indexLevel preserves its heuristic string sweep and header capture, but reads
+// grid0 through the recovered prefix and world readers in serialized order.
+// It stops after the world section, accepts trailing input and projects every
+// first_integer_array u32 unchanged, including an empty array. Only a recovered
+// reader's invalid_argument enables the diagnosed legacy Cylinder locator.
+// Missing grids on that fallback remain successful partial indexes.
 //
 // The level format is large (700 KB - 1.9 MB each), undocumented, and carries
 // several things at once: cylinder geometry, the terrain, placed models, a
@@ -7,8 +14,8 @@
 // the rest of the engine has something real to build against while the format
 // is finished.
 //
-// Verified
-// --------
+// Retained historical corpus observations (not parser validation policies)
+// ----------------------------------------------------------------------
 //   * The file opens with a u32-length-prefixed title ("Level 23").
 //   * Asset references appear as u32-length-prefixed ASCII, and every one of
 //     the 26,021 references across the 102 levels resolves to an entry that
@@ -89,8 +96,10 @@
 //
 // The string sweep is a *heuristic index*, not a parser: it finds
 // length-prefixed strings rather than walking a known structure. The
-// surface-index array is the exception. It is the counted u32[N] on the
-// Cylinder walk above, not a scan for 0xFFFFFFFF.
+// surface-index array is the exception: recovered section-order readers reach
+// world.first_integer_array. The Cylinder walk above is retained only as a
+// diagnosed legacy fallback, not a scan for 0xFFFFFFFF. Other fields here are
+// still a heuristic index; this is not a complete level/runtime object loader.
 
 #pragma once
 
@@ -123,12 +132,17 @@ struct LevelIndex {
 
   std::size_t polyListCount = 0;
 
-  // The u32[N] surface-index lattice after the Cylinder preamble. N is 49858
-  // in every retail level. 0xFFFFFFFF is an empty slot.
+  // Recovered world's first_integer_array, with every u32 bit and position
+  // preserved. Historical retail N is 49858; no length or index policy is
+  // imposed here. 0xFFFFFFFF is the consumers' empty-slot marker.
   std::vector<std::uint32_t> grid0;
   // Not present in the file. Kept so callers can still pass both spans;
   // indexLevel leaves it empty.
   std::vector<std::uint32_t> grid1;
+
+  // Empty on structured success (even for empty grid0); otherwise the recovered
+  // rejection and cursor, whether or not the legacy locator finds an array.
+  std::string gridFallbackReason;
 
   // Cells in grid1 that are not the empty marker (0xFFFFFFFF).
   std::size_t grid1SolidCells() const;

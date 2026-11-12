@@ -18,10 +18,9 @@
 // substantially -- the lattice rasterises to 1.35%..23% solid where the stored
 // mask is 35%..63%.
 //
-// Locating the chunk
-// ------------------
-// Anchored in the chunk order, not by signature. The grid is the third array
-// in a fixed sequence that begins at the literal "Cylinder" chunk:
+// Structured loading reads the compiled prefix and world in section order.
+// The legacy fallback locates the first literal "Cylinder" and walks this
+// fixed sequence; these retained retail observations describe that walk:
 //
 //   u32 8, "Cylinder"
 //   u32[5]        all zero in all 102 levels
@@ -284,6 +283,9 @@ struct CollisionGrid {
   // byte-for-byte pairing; the A2 fixture's nine-view pass used 0.36 fixed.
   double cylinderExtent = 0.0;
 
+  // Empty on structured success; recovered-reader rejection on legacy fallback.
+  std::string diagnostic;
+
   bool empty() const { return cells.empty(); }
 
   // The cell at (x, y), X wrapping the way the engine wraps it. Out of range
@@ -297,8 +299,8 @@ struct CollisionGrid {
   std::size_t solidCells() const;
 };
 
-// Reads the grid out of a level file. Fails rather than guessing when the
-// chunk walk does not land on a well-formed array.
+// Reads the prefix and world in section order. A recovered-reader rejection
+// permits the legacy Cylinder walk, with its cause retained in diagnostic.
 std::expected<CollisionGrid, std::string> findCollisionGrid(std::span<const std::byte>);
 
 std::expected<CollisionGrid, std::string> loadCollisionGrid(const AssetLibrary&,

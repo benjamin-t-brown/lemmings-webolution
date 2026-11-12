@@ -213,6 +213,71 @@ int main() {
     std::cerr << "SDL main-menu focus/Continue route mismatch\n"; return 1;
   }
 
+  // SOURCE mouse activation through the unchanged SDL loop. Injecting an
+  // outcome below prepares progress only; it is not a natural win/native run.
+  for (const bool progressed : {false, true}) {
+    auto clicked = createSession();
+    if (!clicked) return 1;
+    if (progressed) {
+      clicked->pressReturn(); clicked->pressReturn();
+      if (!clicked->clickMap(206, 204) ||
+          !clicked->completeLevel(*library, {"MM_CLIMB_002", 1, 1, 1, 10, true}) ||
+          !clicked->click(320, 360) || !clicked->click(320, 455)) return 1;
+    }
+    const auto flags = clicked->completionFlags();
+    const auto states = clicked->mapStates();
+    auto prepared = *clicked;
+    prepared.moveMenuFocus(1); prepared.pressReturn();
+    const auto mapImage = prepared.image().rgba;
+    const int counter = clicked->constructionCounter();
+    bool clickOk = flags[0] == (progressed ? 1 : 0) && counter == (progressed ? 9 : 3);
+    int clickFrames = 0, quitEvents = 0;
+    auto windowFocus = [&](Uint8 change) {
+      SDL_Event event{};
+      event.type = SDL_WINDOWEVENT; event.window.event = change;
+      return SDL_PushEvent(&event) == 1;
+    };
+    auto clickResult = webo::app::runFrontendWindow(*clicked,
+        {.maxFrames = 7, .finalFramePath = {}}, [&](const auto& current, int frame) {
+          ++clickFrames;
+          using webo::shell::Screen;
+          clickOk &= current.completionFlags() == flags && current.mapStates() == states &&
+                     !current.selectedLevel() && softwareCursorActive();
+          clickOk &= current.screen() == (frame < 5 ? Screen::Menu : Screen::Map) &&
+                     current.constructionCounter() == counter + (frame < 5 ? 0 : 1) &&
+                     current.menuFocus() == (frame == 0 ? 0 : frame < 5 ? 4 : 1);
+          if (frame == 0) {
+            clickOk &= key(SDLK_UP) && motion(320, 363, 0, 0);
+          } else if (frame == 1) {
+            clickOk &= current.pointerX() == 320 && current.pointerY() == 363;
+            clickOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT, 320, 363) &&
+                       mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 320, 363) &&
+                       mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 320, 363) && key(SDLK_RETURN, true);
+          } else if (frame == 2) {
+            clickOk &= !current.leftHeld() && !current.rightHeld();
+            clickOk &= windowFocus(SDL_WINDOWEVENT_FOCUS_LOST) &&
+                       mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 320, 363) &&
+                       key(SDLK_DOWN) && motion(0, 0, 0, 0);
+          } else if (frame == 3) {
+            clickOk &= !current.focused() && !current.leftHeld() && !current.rightHeld() &&
+                       current.pointerX() == 320 && current.pointerY() == 363;
+            clickOk &= windowFocus(SDL_WINDOWEVENT_FOCUS_GAINED);
+          } else if (frame == 4) {
+            clickOk &= current.focused() && !current.leftHeld();
+            clickOk &= mouse(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 320, 363) &&
+                       mouse(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 320, 363);
+          } else if (frame == 5) {
+            clickOk &= current.image().rgba == mapImage && !current.leftHeld() && !current.rightHeld();
+            if (push(SDL_QUIT)) ++quitEvents; else clickOk = false;
+          } else { clickOk = false; push(SDL_QUIT); }
+        });
+    std::cout << "SOURCE current-game SDL progress=" << progressed << " callbacks=" << clickFrames
+              << " quitEvents=" << quitEvents << " counter=" << clicked->constructionCounter() << '\n';
+    if (!clickResult || *clickResult || !clickOk || clickFrames != 6 || quitEvents != 1) {
+      std::cerr << "SDL Play Current Game activation/input guards/progress mismatch\n"; return 1;
+    }
+  }
+
   auto closing = createSession();
   if (!closing) return 1;
   bool closeSent = false;

@@ -1,39 +1,22 @@
-// .SPR -- sprite sheets: which rectangle of which texture each animation frame
-// uses.
+// .SPR compatibility view used by the existing renderer. Parsing delegates to
+// the recovered serialized reader (0x00483EF0 and nested helpers): clips map
+// to Sprite, temporal frames to SpriteAnimation, and pieces to SpriteFrame,
+// preserving all three levels of ordering.
 //
-// The format is not publicly documented; this was derived by parsing the 19
-// retail files until every one was consumed exactly. Layout:
+// Piece values_00 map to bottom/top/left/right, double_bits_10 to the matching
+// u* fields, and values_30 to unknown0/unknown1/width/height. Names use the
+// recovered bounded C-string behavior (capacities 128 for clips, 260 for
+// textures), including embedded-NUL termination and exact-capacity shortening.
+// Numeric fields and clip speeds retain their serialized bits without arithmetic.
+// This is separate from runtime allocation/layout, texture IDs and the original
+// x87 loads/stores that may quiet signaling NaNs while reading runtime objects.
 //
-//     u32 spriteCount
-//     spriteCount x {
-//         u32 animationCount
-//         animationCount x {
-//             u32 frameCount
-//             frameCount x {
-//                 u32    bottom, top, left, right    source rect, pixels
-//                 double bottom, top, left, right    the same, normalised
-//                 u32    unknown0, unknown1
-//                 u32    width, height                == right-left, bottom-top
-//                 u32 len; char[len] sheet            e.g. "Sheets\$LemSheet8"
-//             }
-//         }
-//         u32 len; char[len] name                     e.g. "bash"
-//         double rate
-//     }
-//     u32 paletteCount
-//     paletteCount x { u32 unknown; double[48] }       16 RGB colours, 0..255
-//
-// The integer rectangle and the normalised one always agree, which is what
-// pins down the field order: dividing one by the other recovers the sheet's
-// pixel dimensions, and only the Y-then-X reading gives a sheet's real size
-// rather than its dimensions transposed. `width`/`height` likewise always
-// equal the rectangle's extents.
-//
-// Only the six lemming sheets carry a palette, and all six carry the same one:
-// 16 colours whose first entry is 404040, the shade the '$' name sigil keys
-// out. The two unknown per-frame integers are small and non-negative; they
-// look like a per-frame anchor but that is not confirmed, so they are not
-// given a name that asserts it.
+// The public palette vector flattens populated tagged triple arrays in block
+// order: tag 0 supplies 16 triples, tag 1 supplies 256, other tags supply none.
+// This API name does not establish that every tagged array is a rendering
+// palette. Historical retail observations found six lemming sheets with the
+// same 16-colour type-0 array; that is not a format restriction. Unknown piece
+// integers remain unnamed; rectangle/UV interpretation is retained for consumers.
 
 #pragma once
 
@@ -55,7 +38,7 @@ struct SpriteFrame {
   double uLeft = 0, uTop = 0, uRight = 0, uBottom = 0;
   std::uint32_t unknown0 = 0, unknown1 = 0;
   std::uint32_t width = 0, height = 0;
-  std::string sheet;  // as stored, e.g. "Sheets\\$LemSheet8"
+  std::string sheet;  // bounded texture name, e.g. "Sheets\\$LemSheet8"
 
   // The sheet's pixel size, recovered from the rectangle and its normalised
   // form. Zero when the frame is degenerate.
@@ -79,11 +62,11 @@ struct Sprite {
   std::size_t frameCount() const;
 };
 
-using PaletteColour = std::array<double, 3>;  // RGB, 0..255
+using PaletteColour = std::array<double, 3>;  // compatibility name for serialized triples
 
 struct SpriteSheet {
   std::vector<Sprite> sprites;
-  std::vector<PaletteColour> palette;  // empty unless this is a lemming sheet
+  std::vector<PaletteColour> palette;  // populated tagged triples, flattened in block order
 
   const Sprite* find(std::string_view name) const;
   std::size_t frameCount() const;

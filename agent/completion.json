@@ -1,0 +1,10 @@
+{
+  "goal": "Faithful standalone native C++ reconstruction of Lemmings Revolution using MinGW-w64 GCC; Emscripten comes later.",
+  "criteria": [
+    "Both native source trees build with MinGW-w64 GCC and all registered source and retail-asset verification tests pass.",
+    "The standalone application integrates loading, frontend navigation, gameplay, rendering, input, results, persistent progress and audio without requiring the original executable at runtime.",
+    "Required fidelity gates in docs/STATUS.md are satisfied with scoped reference evidence, including gameplay timing and full-frame behavior; passing source tests alone is insufficient.",
+    "No required feature gaps, unresolved fidelity failures or user-parked completion dependencies remain. Any excluded scope has explicit user authorization."
+  ],
+  "execution_boundary": "Original-game launches, original-byte oracles and user-parked work cannot be authorized or reopened by the controller. Stop with a concrete blocker when required."
+}

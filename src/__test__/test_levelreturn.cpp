@@ -16,7 +16,10 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -264,11 +267,23 @@ int main() {
     }
   };
 
+  // save-codec-001: this natural-gameplay run persists to a temporary store (never
+  // LocalAppData, never the installed save); the restart run below reloads it.
+  std::error_code saveEc;
+  const std::filesystem::path saveRoot = std::filesystem::temp_directory_path(saveEc) / "webolution-levelreturn-save";
+  std::filesystem::remove_all(saveRoot, saveEc);
+  const std::filesystem::path savePath = save::cloneSavePathUnder(saveRoot);
+  const auto makeSaveStore = [&] {
+    return std::make_shared<save::SaveStore>(
+        std::make_unique<save::FileSaveSink>(savePath, std::filesystem::path(gameDir)));
+  };
+
   std::vector<std::string> args{"levelreturn-test", "--frontend", "--frames", "220",
       "--game-dir", gameDir};
   std::vector<char*> raw; for (auto& a : args) raw.push_back(a.data());
   const int result = app::runApplication(static_cast<int>(raw.size()), raw.data(), frontend, level,
-                                         app::ApplicationRunOptions{.frameSeconds = 2.0});
+                                         app::ApplicationRunOptions{.frameSeconds = 2.0,
+                                                                    .saveStore = makeSaveStore()});
   if (result != 0) t.fail("runApplication returned failure");
   if (!t.sawFailureResult || !t.retrySeen || !t.reentrySeen || t.stage != 9 ||
       !t.winFrameExported || !t.mapFrameExported)
@@ -409,7 +424,58 @@ int main() {
   if (loss.stage != 7 || !loss.loss7 || !loss.loss9 || !loss.map11 || !loss.menu12)
     loss.fail("loss-only route did not export/verify Results7, Results9, Map11 and Menu12");
   if (!loss.ok) { std::cerr << "FAIL: LevelReturn loss route: " << loss.why << " (level callbacks=" << loss.levelCalls << ")\n"; return 1; }
+
+  // Restart integration: the first natural run above won node 0, lost, retried and
+  // quit. Only the win may have saved: the file is the zero image except C of
+  // record (0,0) at offset 0x00C.
+  {
+    std::ifstream in(savePath, std::ios::binary);
+    const std::vector<char> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    bool shaped = bytes.size() == 1504;
+    for (std::size_t i = 0; shaped && i < bytes.size(); ++i)
+      shaped = bytes[i] == (i == 0x00C ? char{1} : char{0});
+    if (!shaped) { std::cerr << "FAIL: LevelReturn: saved file is not the zero image plus C of record 0\n"; return 1; }
+  }
+  struct RestartTrace {
+    bool ok = true;
+    std::string why;
+    int stage = 0;
+    bool sawMap = false;
+    void fail(const char* s) { if (ok) why = s; ok = false; }
+  } restart;
+  const auto restartFrontend = [&](const app::FrontendSession& s, int) {
+    using shell::Screen;
+    if (!restart.ok) { pushQuit(); return; }
+    switch (restart.stage) {
+      case 0:  // fresh process view: progress loaded before any menu action
+        if (s.screen() != Screen::Menu || s.saveCount() != 0 || s.saveLoadError() ||
+            s.completionFlags() != expectedCompletionFlags() ||
+            s.mapStates() != expectedCompletedMapStates() || !pushClick(320, 363)) {
+          restart.fail("restart did not load the saved completion before the menu"); pushQuit(); return;
+        }
+        restart.stage = 1; break;
+      case 1:  // Play Current Game presents the loaded map
+        if (s.screen() != Screen::Map || s.saveCount() != 0 ||
+            s.completionFlags() != expectedCompletionFlags() ||
+            s.mapStates() != expectedCompletedMapStates() || s.image().rgba != t.clearedMap.rgba) {
+          restart.fail("Play Current Game did not show the persisted completed map"); pushQuit(); return;
+        }
+        restart.sawMap = true; pushQuit(); restart.stage = 2; break;
+      default: pushQuit(); break;
+    }
+  };
+  std::vector<std::string> restartArgs{"levelreturn-restart-test", "--frontend", "--frames", "60",
+                                       "--game-dir", gameDir};
+  std::vector<char*> restartRaw; for (auto& a : restartArgs) restartRaw.push_back(a.data());
+  const int restartResult = app::runApplication(
+      static_cast<int>(restartRaw.size()), restartRaw.data(), restartFrontend, {},
+      app::ApplicationRunOptions{.saveStore = makeSaveStore()});
+  if (restartResult != 0) restart.fail("restart runApplication returned failure");
+  if (!restart.sawMap) restart.fail("restart did not reach the loaded map");
+  std::filesystem::remove_all(saveRoot, saveEc);
+  if (!restart.ok) { std::cerr << "FAIL: LevelReturn restart: " << restart.why << '\n'; return 1; }
   std::cout << "PASS: natural success/failure results return to and preserve map progress\n";
+  std::cout << "PASS: completed node survives runApplication restart via the clone store\n";
   return 0;
 #endif
 }

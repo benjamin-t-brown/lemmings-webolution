@@ -322,6 +322,8 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   scene.states_=state; return scene;
 }
 
+const std::array<std::array<std::int32_t,3>,102>& MapScene::nodeMapping() { return kMapping; }
+
 std::optional<std::size_t> MapScene::pickNode(int x, int y) const {
   if (x<0 || x>=640 || y<0 || y>=480 || mask_.size()!=640u*480u) return std::nullopt;
   const auto index=mask_[static_cast<std::size_t>(y)*640+static_cast<std::size_t>(x)];

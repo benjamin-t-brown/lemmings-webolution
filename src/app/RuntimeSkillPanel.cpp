@@ -36,13 +36,23 @@ int runtimeSkillPanelIndex(int x, int y) {
   return offset / 40;
 }
 
+RuntimePanelCommand runtimeSkillPanelCommand(int x, int y) {
+  switch (runtimeSkillPanelIndex(x, y)) {
+    case 8: return RuntimePanelCommand::FastForward;
+    case 9: return RuntimePanelCommand::Armageddon;
+    default: return RuntimePanelCommand::None;
+  }
+}
+
 bool RuntimeSkillSelection::consumePanelClick(
     int x, int y, const std::array<int, 9>& counts) {
   const int index = runtimeSkillPanelIndex(x, y);
   if (index < 0) return false;
   if (index >= 0 && index < 8) selectAvailableIndex(index, counts);
   // Physical indices 8/9 are commands, not actor skills. Consume them so the
-  // click cannot fall through to an actor behind this UI.
+  // click cannot fall through to an actor behind this UI. Plate 8 never reads
+  // stock or changes selection (0x455AFF); the fast-forward latch itself is
+  // set by the caller via runtimeSkillPanelCommand and RuntimeSimState.
   return true;
 }
 

@@ -131,6 +131,16 @@ public:
   bool zoneWater(int x, int y) const;   // cell bit 0x200
   void setZoneWater(int x, int y, bool on);
   std::size_t zoneWaterCells() const;
+  // lever-gates-impl-001: the receiver rectangle painters 0x004311D0 (set) / 0x0043127E (clear)
+  // for the 0x200 plane, taking the gate's AABB in ORIGINAL grid coordinates (row 0 = the
+  // original's first row; the clone stores rows flipped, destY = height - 1 - y). Traced
+  // traversal (lever-init-research-001, proof chain 2): columns [ftol(minX), ftol(maxX)) and
+  // rows [ftol(minY), ftol(maxY)) are EXCLUSIVE upper bounds with truncation toward zero;
+  // SET only: if (double)ftol(maxX) < minX the column bound gains one full width (the seam
+  // fix-up; a wrapped rectangle is NOT repaired by clear); every column wraps and every row
+  // clamps into [0, height - 1] exactly like the cell lookup 0x0040DE60. OR / AND-NOT of the
+  // bit only: no other plane or cell is touched.
+  void paintZoneWaterRect(double minX, double minY, double maxX, double maxY, bool set);
   bool zoneAcid(int x, int y) const;    // cell bit 0x4000
   void setZoneAcid(int x, int y, bool on);
   std::size_t zoneAcidCells() const;

@@ -19,6 +19,7 @@
 #include "assets/Bitmap.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -27,6 +28,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 using webo::Image;
@@ -106,6 +108,80 @@ void testPartialAlphaBlend() {
   // specific blend formula elsewhere -- this is the formula this file's own
   // header documents.
   check(dest.rgba[0] == 128, std::format("partial blend: R channel is 128, was {}", dest.rgba[0]));
+}
+
+void testLoadedPlusIcon() {
+  // Asset-free BOX with a raw, bottom-up 3x1 BMP and top-down ALF. Retain
+  // this test's own files under ignored build/, independent of retail data.
+  const auto parent = fs::absolute(fs::path(__FILE__)).parent_path().parent_path().parent_path() /
+                      "build/skillpanel-test";
+  fs::create_directories(parent);
+  const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+  fs::path scratch;
+  for (unsigned attempt = 0; attempt < 100; ++attempt) {
+    const auto candidate = parent / std::format("plus-{}-{}", stamp, attempt);
+    if (fs::create_directory(candidate)) { scratch = candidate; break; }
+  }
+  check(!scratch.empty(), "plus icon: creates fresh test-owned directory");
+  if (scratch.empty()) return;
+  const std::string bmpName = "TEXTURES\\+ICON.BMP", alfName = "TEXTURES\\+ICON.ALF";
+  const std::vector<std::uint8_t> bmp = {
+      0x42, 0x4d, 66, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0,
+      40, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 1, 0, 24, 0,
+      0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 255, 255, 255, 255, 30, 20, 10, 0xa1, 0xb2, 0xc3,
+  };
+  const std::vector<std::uint8_t> alf = {0, 128, 255};
+  std::vector<std::uint8_t> box = {'L', 'E', 'M', 'B', 'O', 'X'};
+  const auto put32 = [&](std::uint32_t value) {
+    for (unsigned i = 0; i < 4; ++i) box.push_back(static_cast<std::uint8_t>(value >> (8 * i)));
+  };
+  const auto namesSize = static_cast<std::uint32_t>(8 + bmpName.size() + alfName.size());
+  const auto dataStart = 22 + namesSize + 16;
+  put32(2); put32(namesSize);
+  for (const auto& name : {bmpName, alfName}) {
+    put32(static_cast<std::uint32_t>(name.size()));
+    box.insert(box.end(), name.begin(), name.end());
+  }
+  put32(2); put32(dataStart); put32(dataStart + static_cast<std::uint32_t>(bmp.size()));
+  put32(2); put32(static_cast<std::uint32_t>(bmp.size())); put32(3);
+  box.insert(box.end(), bmp.begin(), bmp.end());
+  box.insert(box.end(), alf.begin(), alf.end());
+  const auto path = scratch / "icons.box";
+  std::ofstream file(path, std::ios::binary);
+  file.write(reinterpret_cast<const char*>(box.data()), static_cast<std::streamsize>(box.size()));
+  file.close();
+  check(bool(file), "plus icon: writes synthetic BOX");
+  auto lib = webo::AssetLibrary::open(path);
+  check(lib && lib->base().validate().ok, "plus icon: opens valid archive");
+  if (!lib) return;
+  const auto loaded = webo::loadTexture(*lib, bmpName);
+  check(loaded && loaded->width == 3 && loaded->height == 1 &&
+        loaded->alpha == webo::AlphaMode::Embedded && loaded->rgba == std::vector<std::uint8_t>{
+            255, 0, 0, 0, 255, 255, 255, 128, 10, 20, 30, 255},
+        "plus icon: loaded complete RGBA includes ALF");
+  if (!loaded) return;
+  Image dest = makeSolid(3, 1, 0, 0, 0, 255);
+  check(compositeIconRegion(dest, *loaded, {0, 0, 0, 0, 3, 1}) == 3 &&
+        dest.rgba == std::vector<std::uint8_t>{0, 0, 0, 255, 128, 128, 128, 255, 10, 20, 30, 255},
+        "loaded plus icon: existing compositor skips zero, blends intermediate, copies opaque");
+  webo::SpriteFrame frame{};
+  frame.width = 3; frame.height = 1;
+  frame.right = 3; frame.bottom = 1;
+  frame.uRight = 1; frame.uBottom = 1;
+  Image panelDest = makeSolid(3, 1, 0, 0, 0, 255);
+  webo::app::drawSkillPanelIcon(panelDest, *loaded, frame, 0, 1, 0);
+  check(panelDest.rgba == std::vector<std::uint8_t>{0, 0, 0, 255, 128, 128, 128, 255, 10, 20, 30, 255},
+        "loaded plus icon: runtime panel icon drawing consumes the sibling alpha");
+  // Manually constructed overlays still use their supplied RGBA directly.
+  Image overlay = makeSolid(1, 1, 255, 255, 255, 128);
+  overlay.alpha = webo::AlphaMode::Embedded;
+  Image manualDest = makeSolid(1, 1, 0, 0, 0, 255);
+  compositeIconRegion(manualDest, overlay, {0, 0, 0, 0, 1, 1});
+  check(manualDest.rgba == std::vector<std::uint8_t>{128, 128, 128, 255} &&
+        overlay.rgba == std::vector<std::uint8_t>{255, 255, 255, 128},
+        "manually constructed Embedded overlay keeps its existing pixel semantics");
 }
 
 void testClipsDestinationEdge() {
@@ -500,6 +576,7 @@ int main() {
   testOpaqueCopy();
   testFullyTransparentSkipsWrite();
   testPartialAlphaBlend();
+  testLoadedPlusIcon();
   testClipsDestinationEdge();
   testClipsSourceEdge();
   testEmptyInputsAreNoOps();

@@ -2,7 +2,7 @@
 
 #include "assets/Box.h"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include <algorithm>
 #include <cstring>
@@ -29,9 +29,13 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   if (sampleRate <= 0 || channels < 1 || channels > 2)
     return std::unexpected("mixer: bad output format");
 
+  // The application builds with SDL_MAIN_HANDLED, so SDL must be told main()
+  // ran before any subsystem starts. Idempotent.
+  SDL_SetMainReady();
   if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
       return std::unexpected(std::format("mixer: SDL_InitSubSystem: {}", SDL_GetError()));
+    ownsAudioSubsystem_ = true;
   }
 
   SDL_AudioSpec want{};
@@ -46,11 +50,15 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   // Exact format: a negotiated rate would need a second resampler in the
   // callback, which is what load-time resampling exists to avoid.
   const SDL_AudioDeviceID id = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
-  if (id == 0)
-    return std::unexpected(std::format("mixer: SDL_OpenAudioDevice: {}", SDL_GetError()));
+  if (id == 0) {
+    std::string message = std::format("mixer: SDL_OpenAudioDevice: {}", SDL_GetError());
+    releaseSubsystem();
+    return std::unexpected(std::move(message));
+  }
 
   if (have.freq != sampleRate || have.channels != channels || have.format != AUDIO_S16SYS) {
     SDL_CloseAudioDevice(id);
+    releaseSubsystem();
     return std::unexpected(std::format(
         "mixer: device opened as {} Hz {} ch format {:#x}, wanted {} Hz {} ch S16", have.freq,
         have.channels, have.format, sampleRate, channels));
@@ -63,9 +71,20 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   return {};
 }
 
-void Mixer::close() {
-  if (!device_)
+// Only the audio subsystem this mixer started is stopped, and never through
+// SDL_Quit, so the window legs can come and go around one open device.
+void Mixer::releaseSubsystem() {
+  if (!ownsAudioSubsystem_)
     return;
+  ownsAudioSubsystem_ = false;
+  SDL_QuitSubSystem(SDL_INIT_AUDIO);
+}
+
+void Mixer::close() {
+  if (!device_) {
+    releaseSubsystem();
+    return;
+  }
   // Closing the device stops the callback before we free anything it might
   // have been reading.
   SDL_CloseAudioDevice(device_);
@@ -74,6 +93,7 @@ void Mixer::close() {
   clips_.clear();
   sampleRate_ = 0;
   channels_ = 0;
+  releaseSubsystem();
 }
 
 std::expected<void, std::string> Mixer::load(std::string_view cue, const Sound& source) {

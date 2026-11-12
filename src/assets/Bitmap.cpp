@@ -1,10 +1,11 @@
 #include "Bitmap.h"
 
 #include "Box.h"
-#include "Lrz.h"
+#include "lemmings/texture_resource.hpp"
 
 #include <cstring>
 #include <format>
+#include <stdexcept>
 
 namespace webo {
 namespace {
@@ -187,11 +188,15 @@ std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::stri
   if (!raw)
     return std::unexpected(raw.error());
 
-  auto bmpBytes = lrzDecode(*raw);
-  if (!bmpBytes)
-    return std::unexpected(std::format("{}: {}", name, bmpBytes.error()));
+  std::vector<std::uint8_t> bmpBytes;
+  try {
+    bmpBytes = lemmings::decode_texture_bitmap(
+        {reinterpret_cast<const std::uint8_t*>(raw->data()), raw->size()});
+  } catch (const std::invalid_argument& error) {
+    return std::unexpected(std::format("{}: {}", name, error.what()));
+  }
 
-  auto img = decodeBmp(*bmpBytes);
+  auto img = decodeBmp(std::as_bytes(std::span(bmpBytes)));
   if (!img)
     return std::unexpected(std::format("{}: {}", name, img.error()));
 
@@ -203,7 +208,10 @@ std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::stri
     case AlphaMode::KeyGrey:
       applyColourKey(*img, 0x40, 0x40, 0x40);
       break;
-    case AlphaMode::AlfFile: {
+    case AlphaMode::AlfFile:
+    case AlphaMode::Embedded: {
+      // Factory 0x00474485 maps '+' to 0x10; constructor 0x00472325
+      // tests flags & 0x18, so both '+' and '^' load a sibling plane.
       // Same path and stem, .ALF instead of .BMP.
       std::string alfName(name);
       alfName.replace(alfName.size() - 4, 4, ".ALF");
@@ -214,7 +222,6 @@ std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::stri
         return std::unexpected(std::format("{}: {}", name, r.error()));
       break;
     }
-    case AlphaMode::Embedded:
     case AlphaMode::Additive:
     case AlphaMode::Opaque:
       break;

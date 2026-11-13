@@ -367,6 +367,7 @@ add_test(NAME runtimeskillpanel COMMAND test_runtimeskillpanel)
 if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   add_test(NAME runtimewindow COMMAND ${CMAKE_COMMAND}
     "-DAPP=$<TARGET_FILE:webolution>"
+    "-DFIXTURE=$<TARGET_FILE:test_hatch_entry_fixture>"
     "-DGAME_DIR=${WEBOLUTION_GAME_DIR}"
     "-DOUTPUT_DIR=${CMAKE_BINARY_DIR}/runtime-window-test"
     -P ${CMAKE_SOURCE_DIR}/src/__test__/runtime_window.cmake)
@@ -1272,6 +1273,169 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   endforeach()
   if(TARGET test_fastforwardapp_before)
     set_tests_properties(fastforwardapp_after PROPERTIES DEPENDS fastforwardapp_before)
+  endif()
+
+  # P17: public-input on/off/on, per-frame World budgets and actual plate pixels.
+  # The optional baseline uses authentic task-entry files, never modified copies.
+  set(FFT_BASE "${CMAKE_SOURCE_DIR}/build/fastforward-toggle-001/before-source")
+  foreach(side IN ITEMS production baseline)
+    if(side STREQUAL "baseline")
+      if(NOT EXISTS "${FFT_BASE}/src/app/main.cpp")
+        continue()
+      endif()
+      set(fft_sources "${FFT_BASE}/src/app/main.cpp" "${FFT_BASE}/src/app/RuntimeHud.cpp"
+        "${FFT_BASE}/src/app/RuntimeSkillPanel.cpp")
+    else()
+      set(fft_sources src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+    endif()
+    add_executable(test_fastforward_toggle_${side} src/__test__/test_fastforward_toggle.cpp ${fft_sources})
+    target_link_libraries(test_fastforward_toggle_${side} PRIVATE fastforward_support webolution_objects)
+    if(side STREQUAL "baseline")
+      target_include_directories(test_fastforward_toggle_${side} BEFORE PRIVATE "${FFT_BASE}/src")
+    endif()
+    add_test(NAME fastforward_toggle_${side} COMMAND test_fastforward_toggle_${side} ${side}
+      "${CMAKE_CURRENT_BINARY_DIR}/fastforward-toggle-${side}")
+    set_tests_properties(fastforward_toggle_${side} PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endforeach()
+
+  # P7: per-frame fractional placements, public hover/click at that placement,
+  # and identical simulation traces against the authentic task-entry frame loop.
+  set(MOTION_BASE "${CMAKE_SOURCE_DIR}/build/actor-motion-001/before-source")
+  set(MOTION_COMPARE "-")
+  if(EXISTS "${MOTION_BASE}/src/app/main.cpp")
+    set(MOTION_COMPARE "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-baseline")
+  endif()
+  foreach(side IN ITEMS baseline production)
+    if(side STREQUAL "baseline")
+      if(NOT EXISTS "${MOTION_BASE}/src/app/main.cpp")
+        continue()
+      endif()
+      set(motion_main "${MOTION_BASE}/src/app/main.cpp")
+    else()
+      set(motion_main src/app/main.cpp)
+    endif()
+    add_executable(test_actor_motion_${side} src/__test__/test_actor_motion.cpp
+      ${motion_main} src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+    target_link_libraries(test_actor_motion_${side} PRIVATE fastforward_support webolution_objects)
+    add_test(NAME actor_motion_${side} COMMAND test_actor_motion_${side} ${side}
+      "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-${side}"
+      "${MOTION_COMPARE}")
+    set_tests_properties(actor_motion_${side} PROPERTIES TIMEOUT 180
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    add_test(NAME actor_motion_wall_${side} COMMAND test_actor_motion_${side} wall-${side}
+      "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-wall-${side}")
+    set_tests_properties(actor_motion_wall_${side} PROPERTIES TIMEOUT 60
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endforeach()
+  add_test(NAME actor_motion_units COMMAND test_actor_motion_production units
+    "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-units")
+  set_tests_properties(actor_motion_units PROPERTIES TIMEOUT 60)
+  if(TARGET test_actor_motion_baseline)
+    add_test(NAME actor_motion_identity COMMAND ${CMAKE_COMMAND}
+      "-DBASELINE=${MOTION_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/actor_motion_identity.cmake")
+    set_tests_properties(actor_motion_identity PROPERTIES TIMEOUT 30)
+    set_tests_properties(actor_motion_baseline PROPERTIES DEPENDS actor_motion_identity)
+    set_tests_properties(actor_motion_production PROPERTIES DEPENDS actor_motion_baseline)
+  endif()
+
+  set(HATCH_EXIT_BASE "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/before-source")
+  set(HATCH_EXIT_SUPPORT ${FFI_SUPPORT})
+  list(REMOVE_ITEM HATCH_EXIT_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
+  add_library(hatch_exit_support OBJECT ${HATCH_EXIT_SUPPORT}
+    src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(hatch_exit_support PUBLIC webolution_objects)
+  target_compile_definitions(hatch_exit_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  add_executable(test_hatch_entry_fixture src/__test__/test_hatch_entry_fixture.cpp
+    src/app/BackdropScene.cpp src/app/RuntimeHud.cpp)
+  target_link_libraries(test_hatch_entry_fixture PRIVATE hatch_exit_support webolution_objects)
+  foreach(side IN ITEMS before after)
+    if(side STREQUAL "before")
+      if(NOT EXISTS "${HATCH_EXIT_BASE}/src/app/main.cpp")
+        continue()
+      endif()
+      set(hatch_main "${HATCH_EXIT_BASE}/src/app/main.cpp")
+      set(hatch_scene "${HATCH_EXIT_BASE}/src/app/BackdropScene.cpp")
+    else()
+      set(hatch_main src/app/main.cpp)
+      set(hatch_scene src/app/BackdropScene.cpp)
+    endif()
+    add_executable(test_hatch_exit_${side} src/__test__/test_hatch_exit.cpp ${hatch_main} ${hatch_scene}
+      src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+    target_link_libraries(test_hatch_exit_${side} PRIVATE hatch_exit_support webolution_objects)
+    if(side STREQUAL "before")
+      target_compile_definitions(test_hatch_exit_${side} PRIVATE HATCH_EXIT_BASELINE=1)
+    endif()
+    add_test(NAME hatch_exit_app_${side} COMMAND test_hatch_exit_${side} app
+      "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/${side}")
+    add_test(NAME hatch_exit_end_${side} COMMAND test_hatch_exit_${side} end
+      "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/end-${side}")
+    set_tests_properties(hatch_exit_app_${side} hatch_exit_end_${side} PROPERTIES TIMEOUT 180
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endforeach()
+  add_test(NAME hatch_exit_assets COMMAND test_hatch_exit_after assets "${CMAKE_CURRENT_BINARY_DIR}/hatch-exit-assets")
+  set_tests_properties(hatch_exit_assets PROPERTIES TIMEOUT 60
+    ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_test(NAME hatch_exit_models COMMAND test_hatch_exit_after models "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/models")
+  set_tests_properties(hatch_exit_models PROPERTIES TIMEOUT 60
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  if(TARGET test_hatch_exit_before)
+    add_test(NAME hatch_exit_identity COMMAND ${CMAKE_COMMAND}
+      "-DBASELINE=${HATCH_EXIT_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/hatch_exit_identity.cmake")
+    set_tests_properties(hatch_exit_identity PROPERTIES TIMEOUT 30)
+    set_tests_properties(hatch_exit_app_before hatch_exit_end_before PROPERTIES DEPENDS hatch_exit_identity)
+    set_tests_properties(hatch_exit_app_after PROPERTIES DEPENDS hatch_exit_app_before)
+    set_tests_properties(hatch_exit_end_after PROPERTIES DEPENDS hatch_exit_end_before)
+  endif()
+
+  # P8: installed ledge, naturally excavated Basher tunnel and live Bomber full
+  # rotations. Baseline compiles the authentic task-entry TubeScene separately.
+  set(OCCLUSION_BASE "${CMAKE_SOURCE_DIR}/build/actor-occlusion-001/before-source")
+  set(OCCLUSION_SUPPORT ${WEBOLUTION_GFX_SOURCES})
+  list(REMOVE_ITEM OCCLUSION_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/TubeScene.cpp"
+    "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
+  add_library(actor_occlusion_support OBJECT ${OCCLUSION_SUPPORT}
+    src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(actor_occlusion_support PUBLIC webolution_objects)
+  target_compile_definitions(actor_occlusion_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  set(OCCLUSION_COMPARE "-")
+  if(EXISTS "${OCCLUSION_BASE}/src/app/TubeScene.cpp")
+    set(OCCLUSION_COMPARE "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-before")
+  endif()
+  foreach(side IN ITEMS before after)
+    if(side STREQUAL "before")
+      if(NOT EXISTS "${OCCLUSION_BASE}/src/app/TubeScene.cpp")
+        continue()
+      endif()
+      set(occlusion_scene "${OCCLUSION_BASE}/src/app/TubeScene.cpp")
+      set(occlusion_compare "-")
+    else()
+      set(occlusion_scene src/app/TubeScene.cpp)
+      set(occlusion_compare "${OCCLUSION_COMPARE}")
+    endif()
+    add_executable(test_actor_occlusion_${side} src/__test__/test_actor_occlusion.cpp
+      ${occlusion_scene} src/app/main.cpp)
+    target_link_libraries(test_actor_occlusion_${side} PRIVATE actor_occlusion_support webolution_objects)
+    add_test(NAME actor_occlusion_${side} COMMAND test_actor_occlusion_${side} ${side}
+      "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-${side}" "${occlusion_compare}")
+    set_tests_properties(actor_occlusion_${side} PROPERTIES TIMEOUT 180
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    set(occlusion_app_compare "-")
+    if(side STREQUAL "after" AND TARGET test_actor_occlusion_before)
+      set(occlusion_app_compare "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-app-before")
+    endif()
+    add_test(NAME actor_occlusion_app_${side} COMMAND test_actor_occlusion_${side} app-${side}
+      "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-app-${side}" "${occlusion_app_compare}")
+    set_tests_properties(actor_occlusion_app_${side} PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endforeach()
+  if(TARGET test_actor_occlusion_before)
+    add_test(NAME actor_occlusion_identity COMMAND ${CMAKE_COMMAND}
+      "-DBASELINE=${OCCLUSION_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/actor_occlusion_identity.cmake")
+    set_tests_properties(actor_occlusion_identity PROPERTIES TIMEOUT 30)
+    set_tests_properties(actor_occlusion_before actor_occlusion_app_before PROPERTIES DEPENDS actor_occlusion_identity)
+    set_tests_properties(actor_occlusion_after PROPERTIES DEPENDS actor_occlusion_before)
+    set_tests_properties(actor_occlusion_app_after PROPERTIES DEPENDS actor_occlusion_app_before)
   endif()
 
   # playable-baseline-001: scripted public-input assessment of three installed levels. Outcomes

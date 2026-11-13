@@ -67,6 +67,7 @@
 #include "app/CameraIntro.h"
 #include "app/EntryStartCue.h"
 #include "app/LemmingAnim.h"
+#include "app/LemmingMotion.h"
 #include "app/LevelMenu.h"
 #include "assets/GameData.h"
 #include "app/AppEntry.h"
@@ -497,10 +498,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     return 1;
   }
   std::optional<app::BackdropScene> backdrop;
+  std::optional<app::EntranceExitPresentation> entranceExitPresentation;
   if (!args.sceneOff) {
     auto built = app::BackdropScene::build(*library, *blob, args.level);
     if (built) {
       backdrop.emplace(std::move(*built));
+      auto effects = backdrop->entranceExitPresentation(*blob);
+      if (effects) entranceExitPresentation.emplace(std::move(*effects));
+      else std::fprintf(stderr, "hatch/exit presentation: %s\n", effects.error().c_str());
       // Play start (0x004451E5 analogue): reseed from the application clock before the
       // first scenery draw of this level.
       backdrop->setRandom(&sceneryRandom().rng);
@@ -836,6 +841,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // only active when --sim was given. Natural frontend entry resets the World
   // to tick0; a direct-level diagnostic may seed it with --sim-ticks.
   app::RuntimeSimState runtimeSim;
+  // One toggle per left-button gesture, including dragging onto plate 8.
+  // Motion after a click must not undo the click's speed choice.
+  bool fastForwardGestureUsed = false;
   // Sim cues are taken after every World::tick() and after every successful
   // skill assignment, then routed through the single cue table. The sim's
   // emission logic and timing are untouched.
@@ -844,6 +852,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   };
   std::optional<Image> runtimeFont;
   app::LemmingAnimTracker lemmingAnim;
+  app::LemmingMotionTracker lemmingMotion;
   std::optional<app::RetailSkillPanel> runtimePanel;
   std::optional<app::RuntimeCursor> runtimeCursor;
   std::optional<app::EntryStartCue> entryCue;
@@ -887,6 +896,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
   const auto resetMenuInput = [&] {
+    fastForwardGestureUsed = false;
     rightDown = false; pending.clear(); fixedClock = app::FixedCameraClock{};
     SDL_SetRelativeMouseMode(SDL_FALSE);
     previous = SDL_GetPerformanceCounter();
@@ -920,6 +930,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) { disposition = LegDisposition::Exit; running = false; break; }
       else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+        fastForwardGestureUsed = false;
         focused = false; rightDown = false; pending.clear();
         SDL_SetRelativeMouseMode(SDL_FALSE);
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
@@ -956,16 +967,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         if (focused) { rightDown = true; SDL_SetRelativeMouseMode(SDL_TRUE); }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
         rightDown = false; SDL_SetRelativeMouseMode(SDL_FALSE);
+      } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+        fastForwardGestureUsed = false;
       } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
                  event.button.button == SDL_BUTTON_LEFT) {
-        // Consume panel clicks before actor picking, including the two command
-        // plates whose actions are not implemented. No click-through assignment.
+        fastForwardGestureUsed = false;
+        // Consume panel clicks before actor picking, including command plates.
         if (focused && !rightDown) {
           pointerX = event.button.x; pointerY = event.button.y;
-          // READ 0x455AFF: plate 8 under a held left button sets the fast-forward
-          // latch (no stock read, no selection change, never cleared here).
-          if (app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward)
-            runtimeSim.latchFastForward();
+          // PROVISIONAL P17 toggle policy; see RuntimeSimState. No stock or
+          // actor-skill selection change, preserving the traced plate contract.
+          if (app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward) {
+            runtimeSim.toggleFastForward();
+            fastForwardGestureUsed = true;
+          }
           if (!skillSelection.consumePanelClick(pointerX, pointerY,
                                                 app::runtimeSkillPanelCounts(*world))) {
             const auto hit = hoveredActor(*world, *scene, options, *library,
@@ -987,11 +1002,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           pending.mouse(event.motion.xrel, event.motion.yrel);
           if (!rightDown) {
             pointerX = event.motion.x; pointerY = event.motion.y;
-            // READ 0x455AFF: holding the left button and moving onto plate 8
-            // also latches fast-forward. Hover without a button never does.
+            // Retain drag-onto activation (0x455AFF), once per gesture under
+            // the provisional toggle policy. Hover without a button is inert.
             if (args.sim && world && (event.motion.state & SDL_BUTTON_LMASK) &&
-                app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward)
-              runtimeSim.latchFastForward();
+                !fastForwardGestureUsed &&
+                app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward) {
+              runtimeSim.toggleFastForward();
+              fastForwardGestureUsed = true;
+            }
           }
         }
       } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
@@ -1067,7 +1085,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       // production wall clock; --frames and frameSeconds are owned deterministic clocks whose
       // declared step is simulated as given. Camera/input cadence above is unchanged.
       const bool ownedClock = args.frames > 0 || runOptions.frameSeconds > 0;
-      simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, drainCues,
+      // P7: observe each confirmed update, including every fast-forward pass,
+      // using the existing World clock. This never supplies time to simulation.
+      lemmingMotion.observe(*world);
+      const auto afterUpdate = [&] { drainCues(); lemmingMotion.observe(*world); };
+      simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, afterUpdate,
                                             ownedClock ? 0 : app::RuntimeSimState::kStallCapMs);
       // actor-anim-001: every lemming draws its own clip, advanced by level time every frame
       // (not only on a simulation tick) and frozen while paused. Fast-forward runs the world
@@ -1080,7 +1102,19 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         lemmingAnim.advance(*world, *lemmingSheet, levelDt);
       }
       options.injectedWalkers = app::injectedWalkersFromWorld(
-          *world, terrainHeight, args.noActorAnim ? nullptr : &lemmingAnim);
+          *world, terrainHeight, args.noActorAnim ? nullptr : &lemmingAnim, &lemmingMotion);
+      if (backdrop && entranceExitPresentation) {
+        // P9: use the installed door tracks, fitting their presentation to
+        // the already accepted arm interval. PROVISIONAL time mapping: the
+        // serialized 2.8-second clip and retained ~0.723-second arm estimate
+        // do not establish the original animation speed. Never feed this back
+        // into World release timing, counts, spawn coordinates or skill rules.
+        const double arm = world->setup().releaseArmSeconds;
+        const double opening = arm > 0 ? world->levelClockMs()/1000.0/arm : 1.0;
+        const auto& end = runtimeSim.endTransition();
+        backdrop->setEntranceExitPresentation(*entranceExitPresentation, opening,
+            end.phase() == app::LevelEndPhase::Pending ? 7.0-end.timerSeconds() : 0.0);
+      }
       if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
         const auto& result = *runtimeSim.endTransition().snapshot();
         completed = app::LevelOutcome{args.level, result.saved, world->setup().totalLemmings,
@@ -1106,7 +1140,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       const void* pixels = windowRaster.framebuffer().rgb.data();
       if (args.sim && world && runtimeFont && runtimePanel) {
         auto image = toImage(windowRaster.framebuffer());
-        app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection);
+        app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward());
         app::drawRuntimeHud(image, *runtimeFont, *world, false);
         // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
         if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
@@ -1146,7 +1180,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             if (!world->lemmings()[i].alive()) continue;
             if (walker < boxes.size() && boxes[walker]) {
               const auto& drawn = options.injectedWalkers[walker];
-              actors.push_back({i, *boxes[walker], drawn.clip, drawn.walkTemporalIndex});
+              actors.push_back({i, *boxes[walker], drawn.clip, drawn.walkTemporalIndex,
+                               {drawn.plus8X, drawn.plus8Y, drawn.plus8Z}});
             }
             ++walker;
           }

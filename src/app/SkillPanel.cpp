@@ -267,9 +267,15 @@ std::expected<RetailSkillPanel, std::string> RetailSkillPanel::create(
 
 void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
                             std::optional<int> selectedIndex) const {
+  draw(dest, counts, selectedIndex, false);
+}
+
+void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
+                            std::optional<int> selectedIndex, bool fastForward) const {
   drawSkillPanelPlates(dest, plate_);
   if (selectedIndex && *selectedIndex >= 0 && *selectedIndex < 10)
     drawSkillPanelPlateQuad(dest, selectedPlate_, *selectedIndex);
+  if (fastForward) drawSkillPanelPlateQuad(dest, selectedPlate_, 8);
   drawSkillPanelCounts(dest, font_, counts);
   for (const auto& icon : icons_)
     drawSkillPanelIcon(dest, icon.texture, icon.frame, icon.x, icon.y, icon.scaleDelta);

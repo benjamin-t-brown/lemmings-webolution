@@ -51,8 +51,8 @@ bool RuntimeSkillSelection::consumePanelClick(
   if (index >= 0 && index < 8) selectAvailableIndex(index, counts);
   // Physical indices 8/9 are commands, not actor skills. Consume them so the
   // click cannot fall through to an actor behind this UI. Plate 8 never reads
-  // stock or changes selection (0x455AFF); the fast-forward latch itself is
-  // set by the caller via runtimeSkillPanelCommand and RuntimeSimState.
+  // stock or changes selection (0x455AFF); the fast-forward mode itself is
+  // changed by the caller via runtimeSkillPanelCommand and RuntimeSimState.
   return true;
 }
 
@@ -67,8 +67,8 @@ std::array<int, 9> runtimeSkillPanelCounts(const sim::World& world) {
 
 void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
                            const sim::World& world,
-                           const RuntimeSkillSelection& selection) {
-  panel.draw(dest, runtimeSkillPanelCounts(world), selection.selectedIndex());
+                           const RuntimeSkillSelection& selection, bool fastForward) {
+  panel.draw(dest, runtimeSkillPanelCounts(world), selection.selectedIndex(), fastForward);
 }
 
 }  // namespace webo::app

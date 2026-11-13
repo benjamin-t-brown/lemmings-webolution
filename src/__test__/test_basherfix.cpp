@@ -324,10 +324,13 @@ int main(int argc, char** argv) {
         }
         return npos;
       }
-      // Turn the view after the lemming (aim a little ahead of it). Model: the view centre is the column
-      // 256 - yaw; the sign is verified by the error growing and flipped if the guess is wrong.
+      // Turn the view after the lemming (aim a little ahead of it). P8 correction:
+      // Camera::buildCamera and ActorPose use the same angular direction, so the
+      // near-side column is yaw, not 256-yaw. The old driver clicked through the
+      // cylinder at gap 64 and cannot select that now-hidden actor. Keep the
+      // same distance, public hover/click and all Basher behavior assertions.
       const double ahead = static_cast<double>(l.x + 2 * static_cast<int>(l.facing));
-      double delta = std::fmod(256.0 - ahead - f.displayedPose.yawUnits, 256.0);
+      double delta = std::fmod(ahead - f.displayedPose.yawUnits, 256.0);
       if (delta >= 128.0) delta -= 256.0;
       if (delta < -128.0) delta += 256.0;
       const double err = std::abs(delta);

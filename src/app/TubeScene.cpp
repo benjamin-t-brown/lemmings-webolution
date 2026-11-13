@@ -3,6 +3,7 @@
 
 #include "app/ActorSprite.h"
 #include "app/LemmingAnim.h"
+#include "app/LemmingMotion.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
 #include "assets/LightMap.h"
@@ -244,20 +245,102 @@ void compositeActorOverlay(app::Raster& raster, const Image& overlay,
 // walker: the steps `drawInjectedWalkers` already ran immediately before
 // `drawActorSprite`. nullopt is one of that loop's `continue`s (temporal
 // index, empty direction list, forced view out of range, sheet-load failure,
-// placement failure). This does not draw. Callers own iteration order.
+// placement failure). P8 additionally draws far-facing sprites into scratch
+// storage and returns nullopt if the cylinder masks every opaque texel. Callers
+// own iteration order; partially visible actors keep their original pick box.
 struct PreparedInjectedWalker {
   webo::SpriteFrame frame;
   webo::Image texture;
   ActorSpritePlacement placement{};
   bool mirrored = false;
   std::array<std::uint8_t, 3> tint{255, 255, 255};
+  Image clippedSprite;
 };
+
+// P8, provisional playable-v1 policy, not recovered D3D device state. A6c/A6d16
+// leave effective actor depth unresolved. Treat the cylinder's outer envelope
+// as opaque to FAR-facing actors, clipping their billboard pixels at its actual
+// polygonal silhouette. Near-facing actors keep the accepted overlay path: their
+// origin lies within the shell (Z=.75), including inside excavated tunnels, so a
+// blanket depth test against the outer skin would incorrectly bury them.
+// This is deliberately independent of terrain edits, camera and simulation.
+class ActorCylinderOccluder {
+ public:
+  ActorCylinderOccluder(const CylinderMesh& mesh, const CameraBasis& camera) : camera_(camera) {
+    if (mesh.ringCount < 2 || mesh.angularSteps < 3) return;
+    for (std::uint32_t i = 0; i < mesh.angularSteps; ++i) {
+      const auto& a = mesh.vertex(0, i, true);
+      const auto& b = mesh.vertex(0, (i + 1) % mesh.angularSteps, true);
+      double nx = b.z - a.z, nz = a.x - b.x;
+      double limit = nx * a.x + nz * a.z;
+      if (limit < 0) { nx = -nx; nz = -nz; limit = -limit; }
+      planes_.push_back({nx, 0, nz, limit});
+    }
+    const double y0 = mesh.vertex(0, 0, true).y;
+    const double y1 = mesh.vertex(mesh.ringCount - 1, 0, true).y;
+    planes_.push_back({0, -1, 0, -std::min(y0, y1)});
+    planes_.push_back({0, 1, 0, std::max(y0, y1)});
+  }
+
+  bool farFacing(const std::array<double, 3>& p) const {
+    return !planes_.empty() &&
+        p[0] * (camera_.eyeWorld[0] - p[0]) +
+        p[2] * (camera_.eyeWorld[2] - p[2]) < 0;
+  }
+
+  bool occludes(int x, int y, double lensedDepth) const {
+    const auto& m = camera_.worldToView;
+    const auto& eye = camera_.eyeWorld;
+    const double vx = (x - camera_.cx) / camera_.focalX;
+    const double vy = (camera_.cy - y) / camera_.focalY;
+    // Inverse rigid view basis. Ray parameter is physical view Z; actor depth
+    // already carries the accepted .0003 bias in normalized (0.3/width) units.
+    const std::array<double, 3> ray{
+        m[0] * vx + m[1] * vy + m[2],
+        m[3] * vx + m[4] * vy + m[5],
+        m[6] * vx + m[7] * vy + m[8]};
+    double enter = 0, exit = lensedDepth * camera_.width / 0.3;
+    for (const auto& p : planes_) {
+      const double speed = p[0] * ray[0] + p[1] * ray[1] + p[2] * ray[2];
+      const double room = p[3] - p[0] * eye[0] - p[1] * eye[1] - p[2] * eye[2];
+      if (std::abs(speed) < 1e-12) {
+        if (room < 0) return false;
+      } else if (speed < 0) {
+        enter = std::max(enter, room / speed);
+      } else {
+        exit = std::min(exit, room / speed);
+      }
+      if (enter >= exit) return false;
+    }
+    return enter < exit;
+  }
+
+ private:
+  const CameraBasis& camera_;
+  std::vector<std::array<double, 4>> planes_;
+};
+
+bool clipFarActor(Image& sprite, const ActorSpritePlacement& p,
+                  const ActorCylinderOccluder& cylinder) {
+  bool visible = false;
+  for (int y = std::max(0, int(std::ceil(p.top)));
+       y < std::min(sprite.height, int(std::ceil(p.bottom))); ++y) {
+    for (int x = std::max(0, int(std::ceil(p.left)));
+         x < std::min(sprite.width, int(std::ceil(p.right))); ++x) {
+      auto& alpha = sprite.rgba[(std::size_t(y) * sprite.width + x) * 4 + 3];
+      if (!actorSpriteAlphaTestPasses(alpha)) continue;
+      if (cylinder.occludes(x, y, p.depth)) alpha = 0;
+      else visible = true;
+    }
+  }
+  return visible;
+}
 
 std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     const ActorPoseLevel& poseLevel, const SpriteSheet& sprites, const ActorLightMap& light,
     const CameraBasis& camera, const SceneOptions& options,
     const SceneOptions::InjectedNativeWalker& injected, const AssetLibrary& lib,
-    const TubePassBounds& bounds) {
+    const TubePassBounds& bounds, const ActorCylinderOccluder& cylinder) {
   if (!options.composeSkipActorVisibility &&
       !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
     return std::nullopt;
@@ -324,6 +407,18 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   prepared.placement = *placement;
   prepared.mirrored = selection.mirrored;
   prepared.tint = tint;
+  // Keep the explicit visibility diagnostic able to reveal rejected actors,
+  // including actors hidden by the P8 mask. Production never sets this flag.
+  if (!options.composeSkipActorVisibility && !options.composeSkipActorPose &&
+      cylinder.farFacing(worldPosition)) {
+    auto& sprite = prepared.clippedSprite;
+    sprite.width = camera.width;
+    sprite.height = camera.height;
+    sprite.alpha = AlphaMode::Embedded;
+    sprite.rgba.assign(std::size_t(sprite.width) * sprite.height * 4, 0);
+    if (!drawActorSprite(sprite, frame, prepared.texture, *placement, selection.mirrored, tint) ||
+        !clipFarActor(sprite, *placement, cylinder)) return std::nullopt;
+  }
   return prepared;
 }
 
@@ -346,13 +441,29 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
 
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
+  const ActorCylinderOccluder cylinder(mesh_, camera);
   for (auto it = options.injectedWalkers.rbegin(); it != options.injectedWalkers.rend(); ++it) {
     // Reverse order, same skips, and the same frame/texture/placement/mirror/tint
-    // fed to drawActorSprite. alphaTest stays true. The helper does not draw.
+    // fed to drawActorSprite. alphaTest stays true; only far-facing sprites
+    // arrive already rasterised and clipped in scratch storage.
     auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
-                                          options, *it, lib, bounds);
+                                          options, *it, lib, bounds, cylinder);
     if (!prepared)
       continue;
+    if (!prepared->clippedSprite.rgba.empty()) {
+      const auto& sprite = prepared->clippedSprite;
+      const auto& p = prepared->placement;
+      for (int y = std::max(0, int(std::ceil(p.top)));
+           y < std::min({overlay.height, sprite.height, int(std::ceil(p.bottom))}); ++y)
+        for (int x = std::max(0, int(std::ceil(p.left)));
+             x < std::min({overlay.width, sprite.width, int(std::ceil(p.right))}); ++x) {
+          const auto at = (std::size_t(y) * overlay.width + x) * 4;
+          const auto source = (std::size_t(y) * sprite.width + x) * 4;
+          if (actorSpriteAlphaTestPasses(sprite.rgba[source + 3]))
+            std::copy_n(sprite.rgba.begin() + source, 4, overlay.rgba.begin() + at);
+        }
+      continue;
+    }
     if (!app::drawActorSprite(overlay, prepared->frame, prepared->texture, prepared->placement,
                               prepared->mirrored, prepared->tint, true)
              .has_value())
@@ -371,9 +482,10 @@ std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreen
   if (lemmingSprites_.find("walk") == nullptr)
     return boxes;
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
+  const ActorCylinderOccluder cylinder(mesh_, camera);
   for (std::size_t i = 0; i < options.injectedWalkers.size(); ++i) {
     if (auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
-                                              options, options.injectedWalkers[i], lib, bounds))
+                                              options, options.injectedWalkers[i], lib, bounds, cylinder))
       boxes[i] = prepared->placement;
   }
   return boxes;
@@ -822,6 +934,13 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
 
 std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim) {
+  // Keep the pre-P7 signature for frozen source demonstrations/headers too.
+  return injectedWalkersFromWorld(world, terrainHeight, anim, nullptr);
+}
+
+std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
+    const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim,
+    const LemmingMotionTracker* motion) {
   std::vector<SceneOptions::InjectedNativeWalker> out;
   out.reserve(world.lemmings().size());
   const auto& lemmings = world.lemmings();
@@ -834,6 +953,11 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     walker.plus8X = sample.x;
     walker.plus8Y = sample.y;
     walker.plus8Z = sample.z;
+    if (motion) {
+      const auto drawn = motion->positionOf(i, world);
+      walker.plus8X = drawn.x;
+      walker.plus8Y = terrainHeight - 1.0 - drawn.y;
+    }
     walker.facing = static_cast<int>(lemming.facing);
     // Without a tracker every state draws walk entry 0 (the D3b behaviour); with one, the
     // lemming's own clip and temporal entry (actor-anim-001).

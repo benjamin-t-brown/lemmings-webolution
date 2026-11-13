@@ -41,6 +41,7 @@ class RuntimeSkillSelection {
 std::array<int, 9> runtimeSkillPanelCounts(const sim::World& world);
 void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
                            const sim::World& world,
-                           const RuntimeSkillSelection& selection);
+                           const RuntimeSkillSelection& selection,
+                           bool fastForward = false);
 
 }  // namespace webo::app

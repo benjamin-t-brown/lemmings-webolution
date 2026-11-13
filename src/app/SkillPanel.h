@@ -100,6 +100,10 @@ class RetailSkillPanel {
       const webo::AssetLibrary& library, std::string_view levelId);
   void draw(webo::Image& dest, const std::array<int, 9>& counts,
             std::optional<int> selectedIndex) const;
+  // PROVISIONAL clone feedback: plate 8 uses the selected artwork while fast;
+  // the actor-skill selection remains independently highlighted.
+  void draw(webo::Image& dest, const std::array<int, 9>& counts,
+            std::optional<int> selectedIndex, bool fastForward) const;
   const std::array<int, 9>& initialCounts() const { return initialCounts_; }
 
  private:

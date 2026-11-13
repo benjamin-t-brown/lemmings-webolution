@@ -227,6 +227,44 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
  }
  return s;
 }
+std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitPresentation(std::span<const std::byte> bytes) const {
+ EntranceExitPresentation presentation;
+ lemmings::CompiledLevel level;
+ try {
+   level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
+ } catch(const std::invalid_argument& e) { return std::unexpected(e.what()); }
+ for(std::size_t i=0;i<roots_.size();++i) {
+   const auto& owned=roots_[i];
+   if(owned.source.owner=="entities_425e50") {
+     const auto& model=level.gadgets.entities_425e50.at(owned.source.entityIndex).model;
+     if(!model||!model->object)continue;
+     // Water hatch models name the same two-door clip "entrance_acid".
+     // Both names/layouts are measured over all 144 installed hatches.
+     for(const auto& aux:model->object->auxiliary_records)if(aux.name=="entrance"||aux.name=="entrance_acid") {
+       auto animation=readHatchAnimation(aux.serialized_bytes);
+       if(!animation)return std::unexpected(animation.error());
+       presentation.entrances.push_back({i,std::move(*animation)});
+       break;
+     }
+   } else if(owned.source.owner=="entities_426c6b") {
+     presentation.exits.push_back({i,owned.node.matrix});
+   }
+ }
+ return presentation;
+}
+void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& presentation,double openingProgress,double departureSeconds) {
+ if(!std::isfinite(openingProgress)||!std::isfinite(departureSeconds))return;
+ for(const auto& entrance:presentation.entrances)
+   applyHatchAnimation(roots_[entrance.root].node,entrance.animation,openingProgress);
+ for(const auto& exit:presentation.exits) {
+   auto& matrix=roots_[exit.root].node.matrix;
+   matrix=exit.matrix;
+   // READ 0x426A0C..0x426A18: exit Y += dt * 5.0. PROVISIONAL
+   // playable-v1 trigger: the global Pending phase, rather than each exit's
+   // selected-type population. Native bobbing/drift/rotation are not ported.
+   matrix[10]+=5.0*std::max(0.0,departureSeconds);
+ }
+}
 std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
  std::vector<std::size_t> out;
  for(const auto& r:fluidRoots_)out.push_back(r.record.entityIndex);

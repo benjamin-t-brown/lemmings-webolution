@@ -62,14 +62,16 @@ class RuntimeSimState {
   // a PASS COUNT per frame, not a measured 7x wall-clock speedup and not a
   // 200 ms tick. Each pass reuses the whole frame delta through SimClock, so
   // SimClock quantization and its per-advance cap still apply to every pass.
-  // The original 100 ms delta clamp (0x45D927-0x45DA3C) is not reproduced.
+  // advanceElapsed applies the shared 100 ms clamp for the real wall clock.
   static constexpr int kFastForwardPasses = 7;
   bool fastForward() const { return fastForward_; }
-  // READ 0x455AFF: hover on plate 8 with the left button down sets input+0x20.
-  // The live path only sets it; it is never toggled or cleared by a second
-  // press, and pause/resume leave it alone. Only constructing a fresh state
-  // (constructor 0x452BC2 / reset 0x455774 analogue: a new level leg) clears it.
+  // Explicit enable retained for deterministic fixtures and legacy callers.
   void latchFastForward() { fastForward_ = true; }
+  // PROVISIONAL player policy (P17): another plate-8 gesture returns to normal
+  // speed. Static 0x455AFF only sets input+0x20; retained reset paths do not
+  // settle how a player cancels it in the original. Pause keeps this mode;
+  // constructing a new per-level state clears it. Pass timing is unchanged.
+  void toggleFastForward() { fastForward_ = !fastForward_; }
 
  private:
   SimClock clock_;

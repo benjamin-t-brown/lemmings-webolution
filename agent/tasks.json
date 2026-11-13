@@ -13225,7 +13225,7 @@
     {
       "id": "fastforward-toggle-001",
       "title": "Let the player turn fast-forward off",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -13239,12 +13239,102 @@
         "The report states, with cited addresses or retained evidence, what the original does to end fast-forward, or states precisely why static evidence does not settle it and labels the chosen behavior provisional.",
         "Through the production application path with public input on an installed level, fast-forward can be turned on, turned off and turned on again; simulation passes per frame and the plate's drawn state follow each change, shown by a retained trace and images and asserted by a regression test.",
         "Existing fast-forward and scripted play tests pass unchanged or each changed expectation is justified as encoding the defect. Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261113T194138-36400-062ccbe7",
+      "started": "2026-11-13T19:41:38.504186+00:00",
+      "finished": "2026-11-13T20:04:00.791845+00:00",
+      "last_run": "build/agent-runs/20261113T194138-36400-062ccbe7",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by the implementation, retained clone traces and reviewed images, and successful supervisor verification. The cancel gesture and plate feedback are explicitly provisional; this accepts the bounded P17 fix, not original-game fidelity or overall playability.",
+        "checks": [
+          {
+            "criterion": "The report states, with cited addresses or retained evidence, what the original does to end fast-forward, or states precisely why static evidence does not settle it and labels the chosen behavior provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/fastforward-toggle-001.md",
+                "detail": "Identifies the registered reference SHA-256, distinguishes established set/reset sites from unresolved player cancellation, and explicitly limits alias and replay-event coverage. Labels second-click cancellation and selected-plate feedback provisional and specifies the original observation needed to settle both."
+              },
+              {
+                "path": "build/fastforward-toggle-001/static/evidence.json",
+                "detail": "Retained Ghidra pseudocode agrees with instructions: plate handler 0x455AFF checks plate 8 and the button predicate, then 0x455B30 writes input+0x20=1; release skips the write rather than clearing it. Constructor 0x452D2F and reset 0x455AF4 write zero. These establish local behavior without proving an exhaustive original cancellation sequence."
+              },
+              {
+                "path": "src/app/RuntimeHud.h",
+                "detail": "The toggle method documents the provisional player policy and unresolved original cancellation behavior while preserving the seven-pass budget and explicit enable helper."
+              }
+            ]
+          },
+          {
+            "criterion": "Through the production application path with public input on an installed level, fast-forward can be turned on, turned off and turned on again; simulation passes per frame and the plate's drawn state follow each change, shown by a retained trace and images and asserted by a regression test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Production SDL button and held-motion handling calls toggleFastForward once per gesture. The existing advanceElapsed path consumes the mode, and drawRuntimeSkillPanel receives that same mode. Focus, right-drag and menu guards remain in place."
+              },
+              {
+                "path": "src/__test__/test_fastforward_toggle.cpp",
+                "detail": "Runs the production application on installed MM_CLIMB_002 using public SDL events and a read-only observer, without World mutation. Asserts on/off/on budgets from level-clock deltas, explicit update counts, pause behavior, stock and selection preservation, fresh-level reset, and actual plate pixels against independent artwork references."
+              },
+              {
+                "path": "build/agent-native/main/fastforward-toggle-production/run-1794600170864244500/trace.csv",
+                "detail": "Supervisor-run trace records successive presses at frames 1, 4 and 6 producing 7, 1 and 7 passes, with drawn_fast values 1, 0 and 1. Every recorded plate and stock check passes; paused cancellation and fresh-level normal speed also pass."
+              },
+              {
+                "path": "build/agent-native/main/fastforward-toggle-production/run-1794599434397530600/frame-1.png",
+                "detail": "Visually reviewed: the first press outlines the fast-forward plate while the actor-skill highlight remains selected."
+              },
+              {
+                "path": "build/agent-native/main/fastforward-toggle-production/run-1794599434397530600/frame-4.png",
+                "detail": "Visually reviewed: the second press removes the fast-forward outline, matching the trace's return to one pass."
+              },
+              {
+                "path": "build/agent-native/main/fastforward-toggle-production/run-1794599434397530600/frame-6.png",
+                "detail": "Visually reviewed: the third press restores the fast-forward outline, matching seven passes again."
+              },
+              {
+                "path": "build/agent-native/main/fastforward-toggle-baseline/run-1794599435715230800/trace.csv",
+                "detail": "Authentic baseline retains seven passes after the second press and never displays an active plate, establishing the prior cancellation and feedback defects."
+              }
+            ]
+          },
+          {
+            "criterion": "Existing fast-forward and scripted play tests pass unchanged or each changed expectation is justified as encoding the defect. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261113T194138-36400-062ccbe7/verification.log",
+                "detail": "Supervisor verification reports 191/191 main and 84/84 recovery tests passing, including existing fast-forward application/unit/identity tests and playable-baseline, expansion, targeted-play and fluid-lever chains. Registered compiler paths, optimized assertion-enabled main flags and final diff check are retained."
+              },
+              {
+                "path": "build/agent-runs/20261113T194138-36400-062ccbe7/result.json",
+                "detail": "Records verification exit code 0 and verified_content ca7712c303d6ea3ca8e6406f68f4686b416750d6a1c8f99690b471939efd76c9, matching the review context."
+              },
+              {
+                "path": "build/agent-runs/loop-08438af623cd4870bc1e47dd24f712ac/0002-review-5b6057/before-diff.txt",
+                "detail": "Existing unit assertion values are preserved; misleading second-press wording is corrected to explicit-enable wording, and toggle-off/on assertions are added. Scripted play drivers and existing test timeouts are unchanged."
+              },
+              {
+                "path": "build/agent-native/main/fastforward-toggle-production/run-1794600170864244500/summary.txt",
+                "detail": "Supervisor regression reports failures=0, installed_save_unchanged=1 and normal_save_unchanged=1. The inspected test supplies a unique private SaveStore and compares both protected saves' existence and full bytes before and after."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T20:06:32.789463+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T194138-36400-062ccbe7\\verification.log",
+        "verified_content": "ca7712c303d6ea3ca8e6406f68f4686b416750d6a1c8f99690b471939efd76c9"
+      }
     },
     {
       "id": "actor-motion-001",
       "title": "Move lemmings smoothly between simulation steps",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -13259,12 +13349,104 @@
         "After the change the same measurement shows drawn positions changing on presented frames between steps, monotonically along the lemming's path, with no overshoot, a snap on discontinuous steps and no movement while paused; retained frame sequences are reviewed.",
         "Simulation state traces for a scripted route are identical before and after (positions, states, ticks, outcome), and hover/pick still selects the drawn lemming; both are asserted by tests.",
         "The method is labelled provisional with what original observation would settle it. Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261113T200632-36400-2b34d524",
+      "started": "2026-11-13T20:06:33.060261+00:00",
+      "finished": "2026-11-13T20:47:23.913721+00:00",
+      "last_run": "build/agent-runs/20261113T200632-36400-2b34d524",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by inspected source, retained measurements and images, test assertions, and successful supervisor verification. Acceptance covers provisional clone presentation with 200 ms buffering; it does not establish original-game fidelity or human-confirmed playability.",
+        "checks": [
+          {
+            "criterion": "A before measurement on an installed level through the production path shows drawn lemming positions changing only at simulation steps while frames are presented more often.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-motion-001/evidence/wall-baseline/summary.txt",
+                "detail": "Installed MM_CLIMB_002, ordinary wall clock and normal speed: 18.0679 presented frames/s, 4.87547 simulation-position and projected-origin changes/s, and zero between-step origin changes."
+              },
+              {
+                "path": "build/actor-motion-001/before-source/src/app/main.cpp",
+                "detail": "Authentic pre-task production frame loop supplies integer positions through injectedWalkersFromWorld. Its independently checked SHA-256 matches the supervisor entry manifest: fe1454539c44483b5c8b9f0fc8aa4423c6e1f47e63697a27b17af363f20bf30f."
+              },
+              {
+                "path": "src/__test__/test_actor_motion.cpp",
+                "detail": "wallMeasurement invokes runApplication on installed data without a deterministic clock override, measures projected origins with steady_clock, and asserts baseline origin changes coincide with simulation-cell changes."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change the same measurement shows drawn positions changing on presented frames between steps, monotonically along the lemming's path, with no overshoot, a snap on discontinuous steps and no movement while paused; retained frame sequences are reviewed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-motion-001/evidence/wall-production/summary.txt",
+                "detail": "Same installed route: 18.5015 presented frames and origin changes/s versus 4.99247 simulation-position changes/s, including 46 between-step origin changes. Independently reviewed all twelve adjacent wall-production walk PNGs and baseline samples 0, 5 and 11; production advances along the ledge between cell updates."
+              },
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "Samples confirmed endpoints using clamped linear interpolation, unwraps the cylinder seam, and clears history for turns, gravity changes, teleport/stationary transitions and excessive jumps. Reads World level time without modifying simulation."
+              },
+              {
+                "path": "src/__test__/test_actor_motion.cpp",
+                "detail": "Assertions cover monotonic walking, climbing, falling and floating without overshoot, wall-turn and nearby/distant teleport snaps, fractional movement across eight moving-state fixtures, pause freezing and installed-route landing continuity. These registered cases passed."
+              },
+              {
+                "path": "build/actor-motion-001/evidence/production/motion.csv",
+                "detail": "Frames 202\u2013209 retain exactly the same fractional feet position (38.5,63), projected origin and 4040 ms level clock while paused. Reviewed pause-start.png and pause-end.png confirm unchanged actor placement."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation state traces for a scripted route are identical before and after (positions, states, ticks, outcome), and hover/pick still selects the drawn lemming; both are asserted by tests.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-motion-001/evidence/baseline/simulation.txt",
+                "detail": "Independently checked against production/simulation.txt: both 904-frame traces have SHA-256 8e9bdb811d2ca6cebea7441b14c633de03745d4088f9044b6af5255bdc641af9. Trace fields include positions, states, ticks, counters, abilities, stock and outcome. Both finish this bounded observation still running, not won."
+              },
+              {
+                "path": "src/__test__/test_actor_motion.cpp",
+                "detail": "Compares each production simulation serialization against the baseline and asserts equal trace length. Pauses at a fractional drawn position, aims at the displayed rectangle, asserts hover index 0, clicks through public SDL input, and verifies Climber assignment and stock consumption."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Both hover and click use screen boxes and distance samples derived from the same interpolated injectedWalkers used for drawing. Registered production evidence records eight paused frames, successful assignment and subsequent climbing with zero failures."
+              }
+            ]
+          },
+          {
+            "criterion": "The method is labelled provisional with what original observation would settle it. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/actor-motion-001.md",
+                "detail": "Explicitly documents provisional 200 ms buffering, spawn hold, latency and pose/state limitations. Identifies an authorized original per-frame actor-coordinate/render-origin trace through movement, transitions, pause and fast-forward as the settling observation; preserves historical fidelity parks."
+              },
+              {
+                "path": "build/agent-runs/20261113T200632-36400-2b34d524/verification.log",
+                "detail": "Supervisor full verification passed 197/197 main and 84/84 recovery tests, including all motion cases. result.json records verifier exit zero and the supplied verified-content fingerprint. Independently checked all ten worker-tested source hashes against current files: zero mismatches."
+              },
+              {
+                "path": "src/__test__/test_actor_motion.cpp",
+                "detail": "Every application route supplies a private FileSaveSink and snapshots installed and normal clone save existence and complete bytes. Both deterministic and ordinary-clock summaries report unchanged saves and zero failures."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T20:49:41.551428+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T200632-36400-2b34d524\\verification.log",
+        "verified_content": "8bf258e59209d09a8693e2ac32f6d4ab807a61eaa7011931d5218b56d05d07b7"
+      }
     },
     {
       "id": "actor-occlusion-001",
       "title": "Hide lemmings that are behind the cylinder",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -13279,12 +13461,137 @@
         "After the change, the same views show those lemmings hidden or correctly cut by the silhouette, while near-side lemmings, lemmings in dug tunnels and on ledges remain visible across a full rotation; images are retained and reviewed and a regression test covers a far-side and a near-side lemming.",
         "The visibility rule is traced to cited evidence or labelled provisional. Frames with no far-side lemming are pixel-identical to before or each difference is explained; hidden lemmings are not pickable.",
         "Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261113T212415-36400-1244c63c",
+      "started": "2026-11-13T21:24:15.417406+00:00",
+      "finished": "2026-11-13T21:42:20.605656+00:00",
+      "last_run": "build/agent-runs/20261113T212415-36400-1244c63c",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261113T204941-36400-c32647a7/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by inspected source, retained images, rotation measurements and registered verification logs. Acceptance covers the provisional playable-v1 occlusion policy, not original-game fidelity or all-level human playability.",
+        "checks": [
+          {
+            "criterion": "A before measurement and retained images from an installed level through the production path show lemmings drawn while behind the cylinder at stated camera angles.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-occlusion-001/evidence/after/MM_CLIMB_002/rotation.csv",
+                "detail": "Paired measurements record 120 baseline actor pixels at yaw 153.28125 degrees and 114 at 164.53125 degrees, despite both views being far-facing; production renders zero afterward."
+              },
+              {
+                "path": "build/actor-occlusion-001/evidence/before/MM_CLIMB_002/yaw-68.png",
+                "detail": "Independently viewed: the naturally released actor appears through the cylinder's side at yaw 164.53125 degrees."
+              },
+              {
+                "path": "build/actor-occlusion-001/evidence/app-before/far.png",
+                "detail": "Independently viewed ordinary application output shows the far-side actor drawn and selected through the body. The report and application trace identify yaw 179.765625 degrees."
+              },
+              {
+                "path": "cmake/actor_occlusion_identity.cmake",
+                "detail": "Pins the authentic task-entry TubeScene.cpp baseline to SHA-256 954eb8113f0349b7a22bb3ffe104ec64f4ba93597bc13f41919538656de21ee3; independent read-only hashing matched."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, the same views show those lemmings hidden or correctly cut by the silhouette, while near-side lemmings, lemmings in dug tunnels and on ledges remain visible across a full rotation; images are retained and reviewed and a regression test covers a far-side and a near-side lemming.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-occlusion-001/evidence/after/MM_CLIMB_002/yaw-68.png",
+                "detail": "Independently reviewed against the matching before image: the far-side actor disappears while the cylinder remains unchanged."
+              },
+              {
+                "path": "build/actor-occlusion-001/evidence/after/MM_BASH_002/yaw-0.png",
+                "detail": "Reviewed both matching images: the active Basher remains visible in its simulation-excavated notch. The retained state records 12 changed terrain cells."
+              },
+              {
+                "path": "build/actor-occlusion-001/evidence/after/MM_CLIMB_002/yaw-0.png",
+                "detail": "Reviewed both matching images: the near-side walker remains visible on the first ledge."
+              },
+              {
+                "path": "build/actor-occlusion-001/evidence/after/MM_CLIMB_002/supplement-explode-9-60-enlarged.png",
+                "detail": "Reviewed against the retained enlarged baseline: the explicitly supplemental sprite is clipped at the silhouette, retaining one pixel outside it."
+              },
+              {
+                "path": "src/__test__/test_actor_occlusion.cpp",
+                "detail": "Exercises installed Climber, Basher and Bomber snapshots across complete rotations, near/far drawing, countdowns and public application picking. Independently aggregating the retained CSVs confirmed 88 samples per level, 40 submitted far views all hidden, and 31 submitted near views all visible."
+              },
+              {
+                "path": "build/actor-occlusion-001/evidence/after/MM_BOMB/countdown-68.png",
+                "detail": "Reviewed with the matching before image and near-side countdown image: the hidden actor and its countdown disappear together; the near-side countdown remains visible."
+              }
+            ]
+          },
+          {
+            "criterion": "The visibility rule is traced to cited evidence or labelled provisional. Frames with no far-side lemming are pixel-identical to before or each difference is explained; hidden lemmings are not pickable.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Explicitly labels the finite cylinder-envelope policy provisional. Drawing and screen boxes share prepareInjectedWalker; completely masked actors return nullopt, while near-side actors retain the previous path and placements."
+              },
+              {
+                "path": "build/actor-occlusion-001/static/submit-instructions.json",
+                "detail": "Retained Ghidra instructions for registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f agree with the pseudocode: 0x43CC94\u20130x43CCA7 perform the origin-depth gate, 0x43CCB5 subtracts the bias, and 0x43CD4E submits the sprite. These findings do not establish effective hardware depth state."
+              },
+              {
+                "path": "docs/scratch/actor-occlusion-001.md",
+                "detail": "Documents the provisional rule and limitations. Independent comparison of retained rotation CSVs confirmed 48 identical frames per level and zero changed non-far frames. Near and returned-near application PNG hashes also match exactly. Far-view cursor changes are explained by removal of the hover target."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "hoveredActor and countdown construction consume the same filtered screen boxes. Hidden actors therefore cannot enter ordinary pick candidates or countdown views."
+              },
+              {
+                "path": "src/__test__/test_actor_occlusion.cpp",
+                "detail": "The paired public-input route asserts that the hidden actor cannot be hovered, clicking spends no skill, and rotating back restores selection and successful Climber assignment."
+              }
+            ]
+          },
+          {
+            "criterion": "Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-483497d2694f4fb2af53728ad6be337d/0001-verify-e08e18/verification.log",
+                "detail": "Registered verification completed with 202/202 main and 84/84 recovery tests passing, including all five occlusion cases and both previously failing regressions."
+              },
+              {
+                "path": "build/agent-runs/loop-483497d2694f4fb2af53728ad6be337d/0001-review-8ebcf0/before-source-hashes.json",
+                "detail": "Independent read-only hashes matched the inspection snapshot for the changed production/test files, CMake registration and baseline identity script."
+              },
+              {
+                "path": "build/agent-native/main/actor-occlusion-after/summary.txt",
+                "detail": "Final registered scene run records zero failures and unchanged installed and normal clone saves."
+              },
+              {
+                "path": "build/agent-native/main/actor-occlusion-app-after/summary.txt",
+                "detail": "Final registered application run records zero failures and unchanged installed and normal clone saves. Source inspection confirms its save sink uses a private test-output path."
+              }
+            ]
+          }
+        ]
+      },
+      "scope_revision_history": [
+        {
+          "at": "2026-11-13T21:43:12.426253+00:00",
+          "by": "project lead",
+          "change": "Review 0007 returned blocked without inspecting anything: the reviewer believed it had no way to read files. That is a reviewer tooling failure, not a finding about the work; supervisor verification of attempt 2 passed (202 main / 84 recovery). Status blocked -> needs_review for a fresh independent review. Reviewer: reading repository files with read-only commands in the read-only sandbox is permitted and expected."
+        }
+      ],
+      "accepted_at": "2026-11-13T21:57:26.620075+00:00",
+      "accepted_verification": {
+        "profile": "all",
+        "log": "build/agent-runs/loop-483497d2694f4fb2af53728ad6be337d/0001-verify-e08e18/verification.log",
+        "verified_content": "1edb5c0f44a973206501a7b500f6d9b2b87a50dbfdb1fa3474b0579256460b8e"
+      }
     },
     {
       "id": "hatch-exit-presentation-001",
       "title": "Show hatch doors, lemmings dropping in and the exit balloon leaving",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -13295,10 +13602,216 @@
       "user_authorized": true,
       "scope": "Playtest items P9, P10 and P11. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person on every level: the hatch has no opening doors, lemmings appear instantly instead of falling out of the hatch, and the balloon does not fly away when the level ends. Trace the production path for the hatch object, lemming release (World::spawn and the entry cue in src/app/EntryStartCue.cpp) and the exit object and level-end transition (RuntimeSim end transition, results hand-off). From retained evidence and static analysis of the hatch and exit objects' animations in the original, implement in the production level view: the hatch's door-opening animation before the first release; a released lemming starting at the hatch opening and falling to the ground through the existing faller state and animation instead of appearing on the ground; and the exit balloon's departure animation at level end before the results screen. Release cadence, counts and the release-timing park are unchanged: only where a lemming starts and what is drawn. If the three parts cannot all be finished, complete them in the order drop-in, hatch doors, balloon, and report the remainder honestly rather than leaving any half-wired. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
       "acceptance": [
-        "The report traces the hatch, release and exit paths and shows with retained clone images before the change that the hatch is static, lemmings appear without falling and the exit is static at level end.",
+        "The report traces the hatch, release and exit paths and shows with retained clone images or measurements the actual state before the change for the hatch, for where and how a released lemming first appears, and for the exit at level end. Where that state differs from the playtest wording, the report says so and the observed state is the baseline.",
         "After the change, through the production application path on installed levels, retained image sequences show the hatch opening before the first release, released lemmings falling from the hatch opening to the ground, and the balloon leaving at level end before results; each completed part is covered by a regression test, and any part not completed is stated as not done.",
         "Release times and counts for a scripted route are identical before and after apart from the documented fall from the hatch; level outcomes of the existing scripted routes still classify as before or each change is explained.",
         "Animations and positions are traced to cited evidence or listed as provisional. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261113T223906-34648-b23e7597",
+      "started": "2026-11-13T22:39:06.610700+00:00",
+      "finished": "2026-11-13T22:55:56.422898+00:00",
+      "last_run": "build/agent-runs/20261113T223906-34648-b23e7597",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261113T215726-34648-c1fb6993/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All four revised criteria are supported. The authentic baseline already showed falling lemmings, which the report preserves honestly. Doors and balloon departure now animate without changing release traces or outcome classifications. This acceptance does not establish human playability or original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "The report traces the hatch, release and exit paths and shows with retained clone images or measurements the actual state before the change for the hatch, for where and how a released lemming first appears, and for the exit at level end. Where that state differs from the playtest wording, the report says so and the observed state is the baseline.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hatch-exit-presentation-001.md",
+                "detail": "Traces production hatch rendering, stored spawn coordinates, World::spawn/Faller, EntryStartCue and Pending-to-Results handoff. Explicitly corrects P10: falling already works at task entry, so no new spawn behavior is claimed."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/before/MM_CLIMB_002/frame-45.png",
+                "detail": "Inspected baseline image shows closed hatch doors before release."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/before/MM_CLIMB_002/frames.csv",
+                "detail": "Records first appearance at frame 105, terrain (32,53), state Faller and fall clip; descent reaches row 62 at frame 129 and Walker state at row 63 at frame 130. The inspected birth image agrees with this corrected baseline."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/end-before/summary.txt",
+                "detail": "Records a natural successful route and 33 Pending frames with zero balloon-region pixel changes. The inspected pending-30.png shows the balloon remaining grounded."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, through the production application path on installed levels, retained image sequences show the hatch opening before the first release, released lemmings falling from the hatch opening to the ground, and the balloon leaving at level end before results; each completed part is covered by a regression test, and any part not completed is stated as not done.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hatch-exit-presentation-001/after/MM_CLIMB_002/frame-20.png",
+                "detail": "Inspected alongside frame-45.png: doors swing downward and then hang open before the first release at frame 105."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/after/MM_CLIMB_002/frame-129.png",
+                "detail": "Inspected with frames 105 and 130: the released actor descends below the open hatch. Corresponding traces record falling and landing, preserving the existing behavior."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/after/MM_FLOAT/frame-115.png",
+                "detail": "Inspected against frame-105.png on the second installed level: the actor reaches the platform below the open hatch. Its summary records ten visible fall frames and landing."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/end-after/pending-30.png",
+                "detail": "Inspected against pending-1.png and the baseline: the balloon and basket rise substantially during Pending. The retained results.png subsequently shows the ordinary successful Results screen with ten saved."
+              },
+              {
+                "path": "src/__test__/test_hatch_exit.cpp",
+                "detail": "Runs the production application on installed MM_CLIMB_002 and MM_FLOAT. Regression checks cover pre-release door pixels, fall animation and landing, pause freezing, balloon movement and Results ordering. The connected route uses public frontend/map/click input and a natural 10/10 win."
+              }
+            ]
+          },
+          {
+            "criterion": "Release times and counts for a scripted route are identical before and after apart from the documented fall from the hatch; level outcomes of the existing scripted routes still classify as before or each change is explained.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hatch-exit-presentation-001/paired-summary.json",
+                "detail": "Records identical complete simulation traces for 546 connected-route frames and both 180-frame entry routes. All ten connected-route releases match, from 2200 through 28200 ms; both entry routes first release at 2040 ms under their separately documented frame partition."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/end-after/summary.txt",
+                "detail": "Confirms paired comparison, natural success, 33 Pending frames and zero failures, matching the baseline outcome and transition duration."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261113-224553/step-2-core-blocker/play-result.txt",
+                "detail": "Remains LOSS against pre-task run 20261113-214418. Independently inspected sibling results also preserve Climber WIN, Builder LOSS and gadget prerequisite BLOCKED classifications."
+              },
+              {
+                "path": "build/targeted-play-001/runs/20261113-224702/step-1-node3-blocker/play-result.txt",
+                "detail": "Remains LOSS against pre-task run 20261113-214526; the subsequent lever route remains prerequisite BLOCKED. Passing observation drivers are not presented as gameplay wins."
+              }
+            ]
+          },
+          {
+            "criterion": "Animations and positions are traced to cited evidence or listed as provisional. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hatch-exit-presentation-001.md",
+                "detail": "Preserves the registered reference SHA-256, static addresses and installed-asset findings. Explicitly labels door clip-time fitting, quaternion interpolation and global Pending departure policy provisional, and identifies original observations needed to settle them."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/static/0x00477130-instructions.json",
+                "detail": "Retained instructions independently support the reported key interval selection and interpolation denominator, consistent with the accompanying pseudocode and hatch sampler."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/static/0x0042688d-instructions.json",
+                "detail": "Instructions at 0x426A0C\u20130x426A18 multiply elapsed time by a referenced constant and add the exit Y coordinate; accompanying retained pseudocode identifies 5.0. This supports vertical motion, while the report correctly treats the global departure trigger as provisional."
+              },
+              {
+                "path": "build/agent-native/main/hatch-exit-assets/summary.txt",
+                "detail": "Records successful installed-asset coverage: 102 levels, 144 animated hatches, 111 exits and zero failures. Test source also checks production presentation bindings for every installed hatch and exit."
+              },
+              {
+                "path": "build/agent-runs/20261113T223906-34648-b23e7597/verification.log",
+                "detail": "Full supervisor verification passes 209/209 main and 84/84 recovery tests, including all seven hatch/exit checks and the corrected runtimewindow/frontendentry fixtures."
+              },
+              {
+                "path": "build/agent-runs/20261113T223906-34648-b23e7597/result.json",
+                "detail": "Records verification exit code zero and content fingerprint 6bf22d3f9fd99a6af26e53a2a4808dd9f14b01b0feeb80fe49ff5a7a4fa2b0fe, matching the review context. Inspected production and regression files match the verified source hashes."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/end-after/summary.txt",
+                "detail": "Records installed_save_unchanged=1 and normal_save_unchanged=1. Test source uses private FileSaveSink paths and compares real save existence and complete bytes before and after; entry-route summaries independently confirm preservation."
+              }
+            ]
+          }
+        ]
+      },
+      "scope_revision_history": [
+        {
+          "at": "2026-11-13T23:00:10.998625+00:00",
+          "by": "project lead",
+          "change": "Criterion 1 corrected by the lead, who wrote it. It required a before image of lemmings appearing without falling; the worker observed that lemmings already fall at task entry and reported that honestly. The criterion now asks for the observed before state. Previous text: The report traces the hatch, release and exit paths and shows with retained clone images before the change that the hatch is static, lemmings appear without falling and the exit is static at level end. Status blocked -> needs_review; stop_after_review set true so accepted work can be committed."
+        }
+      ],
+      "accepted_at": "2026-11-13T23:04:22.005168+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T223906-34648-b23e7597\\verification.log",
+        "verified_content": "6bf22d3f9fd99a6af26e53a2a4808dd9f14b01b0feeb80fe49ff5a7a4fa2b0fe"
+      }
+    },
+    {
+      "id": "map-level-names-001",
+      "title": "Show the level name when hovering a level on the map",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest item P14, raised by playtest 2 (docs/playtest/2026-11-13-playtest-2.md): the player cannot name levels when reporting because hovering a level on the map shows nothing. Difficulty: routine. Recommended model: Sonnet-class. Trace the map screen's hover path (src/app/MapScene.cpp, FrontendSession, the frontend window loop) and, from retained evidence (docs/lessons/frontend.md, gate B3 notes in docs/STATUS.md) and static analysis, how the original shows a hovered node's level title: which text, font, position and when. Implement it in the production map screen using the existing recovered text/HUD rendering (src/shell/HudText, MenuRender) and the level's display title from installed data; if only the internal id is available from evidenced data, show that and label the title source provisional. Locked nodes follow the original where evidenced, otherwise show no name. Do not change node selection, unlock rules or save behavior. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report traces the map hover path and cites retained or static evidence for where the original gets and draws the hovered level's name, or states precisely what is not evidenced and labels the choice provisional.",
+        "Through the production application path with public pointer input, hovering each selectable node on the map draws that level's name and moving off it removes it, shown by retained images for at least three nodes and asserted by a regression test on real assets.",
+        "Map frames with no hovered node are pixel-identical to before or each difference is explained; node picking, unlock state and saves are unchanged. Full registered main/recovery verification passes."
+      ]
+    },
+    {
+      "id": "walker-lane-001",
+      "title": "Keep walkers on the right side of the path and slide across on turning",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 2 item Q1 (docs/playtest/2026-11-13-playtest-2.md). Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the original's lane rule is not found. Observed by a person who knows the original: lemmings there walk on the right side of the path relative to their direction, and when they reach the end and turn round they slide across so that they stay on the relative right side; the clone draws every walker on one line. This is a depth (radial) placement of the drawn lemming on the walkway, not a simulation position. Establish from retained evidence (docs/lessons/actor-rendering.md, camera-tube-sprites.md, decomp-lemmings actor evidence) and static analysis how the original derives a lemming's radial offset from facing and how it changes over a turn (instant or eased, over what duration). Implement it in the production actor placement path (ActorPose / LemmingAnim / TubeScene actor preparation) as presentation only, consistent with the smooth-motion presentation from actor-motion-001: the offset follows facing and eases across on a turn. Simulation positions, collision, picking of the drawn lemming and timing are unchanged; the cursor must still pick the lemming where it is drawn. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report cites retained or static evidence for the original's radial offset by facing and its change on turning, or states precisely what is not evidenced and labels the chosen values provisional. A before measurement shows left- and right-facing walkers drawn at the same radial position.",
+        "After the change, through the production path on an installed level, right-facing and left-facing walkers are drawn on opposite sides of the walkway, each on its own relative right, and a lemming that turns moves across rather than jumping; retained image sequences are reviewed and a regression test asserts the offset by facing and the transition.",
+        "Simulation traces for a scripted route are identical before and after, and hover/pick selects the drawn lemming. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "fluid-kinds-001",
+      "title": "Draw the remaining level fluids and fix standing height leaving water",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 2 items Q2 and Q3 and sweep item S3 (docs/scratch/level-sweep-001.md finding 1). Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the receiver wave constants cannot be read statically. Observed by a person: a water level on the third row of the map shows no liquid in its bottom tubs although lemmings can walk on it and the level can be won; and lemmings walking from water onto land do not adjust their standing height and visually walk through the floor. Observed by the sweep: 19 levels report 'FluidGate ... receiver kind 1|2 wave constants are not measured; receiver fluid not admitted' from BackdropScene::build (nodes 22, 23, 32, 35, 38, 43, 44, 48, 50, 51, 52, 55, 56, 57, 70, 74, 76, 77, 88). The accepted fluid work (docs/scratch/fluid-surface-research-001.md, fluid-surface-impl-001.md) covers one receiver kind on MM_W_012. First identify the level the player means from the decoded map layout and the sweep census, and state it. Then (1) establish statically the kind 1 and kind 2 receiver constants and draw those fluids through the existing fluid surface path under the same provisional depth policy; (2) establish what the installed level data and retained evidence say about lemmings and that level's fluid (whether these lemmings are meant to walk or wade through it, drown, or stand at a different height) and report it without changing hazard rules unless the clone contradicts evidenced data; (3) trace why a lemming's drawn standing height is wrong after leaving the fluid and fix the presentation or state reset that causes it. Keep the three parts separable in the report and tests. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report names the level the player described with the reasoning, and reproduces through the production path, with retained clone images, both the missing fluid and the wrong standing height after leaving the fluid.",
+        "Receiver kinds 1 and 2 are drawn from statically read constants with cited addresses, or the report states precisely which constant could not be read and what is provisional. After the change the described level and at least one further level of each kind show their fluid in retained images, and the sweep's scenery diagnostic no longer reports those receivers as not admitted, or lists exactly which remain and why.",
+        "After the change a lemming leaving the fluid onto land is drawn standing on the floor, shown in a retained image sequence and asserted by a regression test. The cause is stated as observed.",
+        "What the data and evidence say about lemmings in that fluid is reported with sources; hazard and drowning rules are unchanged unless shown to contradict evidenced data. MM_W_012 fluid frames are unchanged or each difference is explained. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "multi-hatch-release-001",
+      "title": "Release lemmings per hatch on multi-hatch levels",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": true,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Sweep item S2 (docs/scratch/level-sweep-001.md finding 2). Difficulty: difficult. Recommended model: Sonnet-class. Observed by the idle sweep: 33 installed levels have more than one hatch; the clone carries one release cadence from the first hatch and round-robins hatches against it (src/sim/RetailLevel.h LevelSetup, World::spawn), and on M06_KF_1 (node 11) and E10_KF_1 (node 91) not every lemming was released before the time limit (75/100 and 36/50), which would make those levels unwinnable or far harder than intended. Establish from installed level data and static analysis how the original schedules releases when a level has several hatches with their own counts and rates (per-hatch counters and cadences, shared start, ordering). Implement per-hatch release in the production loader and World so each hatch releases its own count at its own evidenced cadence. This is authorized as a playable-v1 defect fix: do not change the single-hatch release cadence, the release-rate values read from data or any other timing. Report VH21_JC (node 97), which the sweep suggests may be short by level data alone. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report cites installed data and static evidence for how the original schedules multiple hatches, and shows the before measurement from the sweep route for nodes 11 and 91.",
+        "After the change, on M06_KF_1 and E10_KF_1 through the production path, each hatch releases its own count at its own cadence and all lemmings are released within the level time, shown by a release trace and asserted by a regression test on real level data.",
+        "Release traces for single-hatch levels used by existing scripted routes are identical before and after. The other multi-hatch levels in the sweep are rechecked and none releases fewer lemmings than before; node 97 is reported honestly.",
+        "Full registered main/recovery verification passes; saves are untouched."
       ]
     }
   ]

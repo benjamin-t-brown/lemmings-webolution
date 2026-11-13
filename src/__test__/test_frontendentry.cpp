@@ -1,6 +1,7 @@
 #include "app/AppEntry.h"
 #include "assets/Png.h"
 #include "sim/RetailLevel.h"
+#include "HatchEntryFixture.h"
 
 #ifndef WEBOLUTION_HAVE_SDL2
 #define WEBOLUTION_HAVE_SDL2 0
@@ -177,9 +178,29 @@ int main(int argc, char** argv) {
   ok &= resetResult == 0 && traceOk && frameCalls == 3 && fs::is_regular_file(resetShot);
 
   const auto render = [&](const fs::path& path, int ticks) {
-    return invoke({"webolution-test", "--level", "MM_CLIMB_002", "--native", "--sim-ticks",
+    const int result = invoke({"webolution-test", "--level", "MM_CLIMB_002", "--native", "--sim-ticks",
         std::to_string(ticks), "--skill-panel", "--hud-ticks", std::to_string(ticks), "--cursor-fixture", "--shot", path.string(),
         "--camera", expectedCamera.string(), "--game-dir", gameDir});
+    if (result != 0) return result;
+    // P9: the direct diagnostic still renders a closed hatch. Retain that
+    // control and compare it to an independent compositor before sampling
+    // doors at frame 30's 208 ms. All full-frame equality checks below stay.
+    auto library = webo::AssetLibrary::open(fs::path(gameDir) / "lemmings.box",
+                                           fs::path(gameDir) / "patch.box");
+    webo::app::CameraParams pose;
+    std::string error;
+    if (!library || !webo::app::loadCameraParams(expectedCamera, pose, error)) return 1;
+    const auto closed = webo::encodePng(webo::test::hatchEntryFixture(*library, pose, ticks, 0));
+    const auto original = bytes(path);
+    if (closed.size() != original.size() ||
+        !std::equal(closed.begin(), closed.end(), original.begin(),
+                    [](auto a, char b) { return a == static_cast<unsigned char>(b); })) {
+      std::cerr << "FAIL: zero-time hatch fixture differs from direct render\n";
+      return 1;
+    }
+    fs::copy_file(path, path.parent_path() / ("closed-" + path.filename().string()));
+    const auto sampled = webo::test::hatchEntryFixture(*library, pose, ticks, ticks ? 208 : 0);
+    return webo::writePng(path, sampled).has_value() ? 0 : 1;
   };
   const int zeroResult = render(expectedZeroShot, 0);
   const int expectedResult = render(expectedShot, 1);

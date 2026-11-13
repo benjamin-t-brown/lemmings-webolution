@@ -13,15 +13,26 @@ endfunction()
 foreach(ticks IN ITEMS 0 1)
   if(ticks EQUAL 0)
     set(frames 1)
+    set(opening_ms 6) # first admitted integer delta at the owned 144 Hz clock
   else()
     set(frames 30) # deterministic --frames clock: 30/144 seconds = one sim tick
+    set(opening_ms 208)
   endif()
   set(window "${OUTPUT_DIR}/window-${ticks}.png")
   set(fixture "${OUTPUT_DIR}/fixture-${ticks}.png")
+  set(closed_fixture "${OUTPUT_DIR}/closed-fixture-${ticks}.png")
   # Remove only our own outputs, so a stale image cannot pass a missing-write bug.
-  file(REMOVE "${window}" "${fixture}")
+  file(REMOVE "${window}" "${fixture}" "${closed_fixture}")
   run_app(--native --sim --frames ${frames} --window-shot "${window}")
-  run_app(--native --sim-ticks ${ticks} --skill-panel --hud-ticks ${ticks} --cursor-fixture --shot "${fixture}")
+  run_app(--native --sim-ticks ${ticks} --skill-panel --hud-ticks ${ticks} --cursor-fixture --shot "${closed_fixture}")
+  # P9: the old fixture freezes the doors. Verify the independent compositor
+  # against it at time zero, then sample the doors at the window's exact clock.
+  # Keep the full-frame equality assertion; no pixels are masked or ignored.
+  execute_process(COMMAND "${FIXTURE}" "${GAME_DIR}" ${ticks} ${opening_ms}
+    "${closed_fixture}" "${fixture}" RESULT_VARIABLE fixture_result)
+  if(NOT fixture_result EQUAL 0)
+    message(FATAL_ERROR "animated entry fixture failed (${fixture_result})")
+  endif()
   execute_process(COMMAND "${CMAKE_COMMAND}" -E compare_files "${window}" "${fixture}"
     RESULT_VARIABLE different)
   if(NOT different EQUAL 0)

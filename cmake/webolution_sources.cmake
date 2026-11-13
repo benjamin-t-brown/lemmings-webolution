@@ -26,6 +26,8 @@ set(WEBOLUTION_SOURCES
   src/assets/SceneNode.cpp
   src/app/SceneMeshSource.cpp
   src/app/ActorVisibility.cpp
+  src/app/LemmingMotion.cpp
+  src/app/HatchAnimation.cpp
   src/assets/Wav.cpp
 
   # gfx -- renderer-independent sprite orientation selection

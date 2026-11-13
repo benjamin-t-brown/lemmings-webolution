@@ -6,6 +6,7 @@
 #include "assets/Sprite.h"
 #include "app/SceneRaster.h"
 #include "app/SceneDispatch.h"
+#include "app/HatchAnimation.h"
 #include "assets/SceneNode.h"
 #include "lemmings/object_base_prefix.hpp"
 
@@ -23,6 +24,14 @@ class AssetLibrary;
 namespace app {
 class Raster;
 class TubeScene;
+// App-owned animation data keeps BackdropScene's layout compatible with the
+// retained demonstrations that compile older headers against current support.
+struct EntranceExitPresentation {
+  struct Entrance { std::size_t root; HatchAnimation animation; };
+  struct Exit { std::size_t root; std::array<double,12> matrix; };
+  std::vector<Entrance> entrances;
+  std::vector<Exit> exits;
+};
 struct BackdropStats {
   std::size_t roots=0, meshRecords=0, stageMeshRecords=0, meshTriangles=0,
       nullMaterials=0, nullMaterialTriangles=0, billboards=0, stageBillboards=0,
@@ -109,6 +118,13 @@ class BackdropScene {
   void visitSecondaryDispatch(const CameraBasis& camera,
        const std::function<void(const SecondaryDispatchItem&)>& visitor) const;
   void visitRoots(const std::function<void(const RootSource&, const SceneNode&)>& visitor) const;
+  // P9-P11 presentation only. The caller derives progress from the existing
+  // release arm clock and departure time from the existing pending end timer.
+  // Absolute samples make pause, retry and repeated draws deterministic.
+  // Build presentation data once from the same bytes passed to build(); it
+  // belongs to this scene and is discarded when the application reloads it.
+  std::expected<EntranceExitPresentation,std::string> entranceExitPresentation(std::span<const std::byte> level) const;
+  void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress, double departureSeconds);
   // Runtime override of the per-node visibility byte +0x110 for Secondary nodes (the original toggles
   // it only for "cutme" type-1 nodes, 0x45DA0D). A hidden node and its subtree are not dispatched.
   // Production never installs one; it is the seam used by mutation checks.

@@ -24,6 +24,8 @@ struct LevelActorView {
   // actor-anim-001: the SPR clip and temporal entry this actor was drawn with this frame.
   const char* clip = "walk";
   int temporalIndex = 0;
+  // P7: actual fractional terrain sample sent to both drawing and picking.
+  std::array<double, 3> drawnSample{};
 };
 
 // Read-only, callback-lifetime view after composing a simulated level frame.

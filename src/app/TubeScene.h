@@ -45,6 +45,7 @@ struct Sprite;
 namespace webo::app {
 
 class LemmingAnimTracker;
+class LemmingMotionTracker;
 
 struct SceneOptions {
   bool drawOuter = true;
@@ -109,7 +110,8 @@ struct SceneOptions {
   // Diagnostic (A6d9): composite overlay with legacy `a != 0` replace instead of A4y `> 0xEF`.
   bool overlayCompositeLegacyNonZero = false;
   bool composeSkipActorPose = false;
-  // Diagnostic only: project/render even actors rejected by native +29 gate.
+  // Diagnostic only: project/render even actors rejected by native +29 gate
+  // or the provisional P8 cylinder mask. Production drawing/picking leaves off.
   bool composeSkipActorVisibility = false;
   // Controller +0x1D8 rotation phase (A3 chooser input; spriteViewScores adds 0.0625).
   // A6d5 live read: all three matched-pause walkers hold 0.0 at controller+0x1D8.
@@ -130,7 +132,8 @@ class TubeScene {
   // Read-only screen box for each `options.injectedWalkers` entry, in that
   // vector's order (forward). Each placement is the one `drawInjectedWalkers`
   // would pass to `drawActorSprite` for that walker; nullopt when that walker
-  // is skipped before the draw. Does not draw and does not modify the scene.
+  // is skipped or fully cylinder-occluded. Far-facing sprites are rasterised
+  // into scratch storage to check visibility; this does not modify the scene.
   //
   // `injectedWalkersFromWorld` emits one walker per alive lemming, in
   // `World::lemmings()` order. While every lemming is alive the returned
@@ -257,7 +260,13 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
 // Without `anim` every entry draws "walk" at temporal index 0 (the D3b behaviour, kept for
 // the fixtures that build walkers without a clock). With `anim` (actor-anim-001) each entry
 // takes the clip and temporal index the tracker holds for its lemming (app/LemmingAnim.h).
+// With `motion` (P7), confirmed terrain coordinates are interpolated in the
+// presentation tracker. The fractional sample feeds drawing AND screen boxes;
+// a null tracker preserves the integer-cell diagnostic/fixture behavior.
 std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim = nullptr);
+std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
+    const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim,
+    const LemmingMotionTracker* motion);
 
 }  // namespace webo::app

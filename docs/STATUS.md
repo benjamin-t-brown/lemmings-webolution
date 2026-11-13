@@ -1,7 +1,7 @@
 # Project status
 
 Updated 2026-11-12 from accepted queue/review evidence. Native Windows C++ build;
-not complete original-game fidelity. Current phase: [fluid milestone accepted; verification workflow next](../agent/IMPLEMENTATION_PLAN.md).
+not complete original-game fidelity. Current phase: [playable v1; capped verification work first](../agent/IMPLEMENTATION_PLAN.md).
 
 ## Current implementation
 | Area | Accepted scope | Still unproven or incomplete |
@@ -41,10 +41,13 @@ Selected reports: [startup](scratch/native-017-default-frontend-startup.md),
 The older product summary is archived in plan-history/documentation-2026-11-02/STATUS.md.
 
 ## What happens next
-Documented next priority: audit shared test state, trial four concurrent tests,
-then add focused failure checks before full verification and evaluate safe reuse
-of unchanged-content verification. See the current plan for acceptance and limits.
-No workflow task is queued or started; compile jobs12 /tests1 remain unchanged.
+User-approved direction (2026-11-12): playable v1, every installed level winnable in
+the clone from the ordinary frontend route. Clone wins recorded so far: 5/102 (map
+nodes 0-3 and 8). First: test-parallel-isolation-001 (queued, not started) and a
+four-job benchmark; preflight and verification reuse are deferred. Then a user
+playtest and/or an all-level smoke sweep to rank defects. Timing, full-frame and
+original-comparison gates below are set aside for this milestone, not resolved, and
+remain required for full completion. Compile jobs12 /tests1 remain unchanged.
 
 ## Evidence labels
 Implemented = connected source; source-tested = bounded executable test;

@@ -3,9 +3,9 @@
 ## Objective and current work
 Recover faithful, readable C++23 with MinGW-w64 GCC on Windows; Emscripten comes later.
 Use this checkout, including the ordinary source folder `decomp-lemmings/`.
-Visible-fluid milestone accepted; next documented priority is safe test parallelism
-and shorter verification cycles, starting with test-parallel-isolation-001, as specified in
-[agent/IMPLEMENTATION_PLAN.md](agent/IMPLEMENTATION_PLAN.md). Completed integrations are
+Visible-fluid milestone accepted. Current milestone is playable v1: all 102 installed
+levels winnable in the clone, per [agent/IMPLEMENTATION_PLAN.md](agent/IMPLEMENTATION_PLAN.md).
+test-parallel-isolation-001 and its benchmark come first; further workflow work is deferred. Completed integrations are
 listed in [docs/STATUS.md](docs/STATUS.md); do not repeat historical tasks.
 
 Read this file, agent/RUN_STATUS.md, the current plan/status, relevant accepted reports, `agent/tasks.json`,
@@ -57,7 +57,7 @@ Unknown fields are not automatically uninitialized fields.
 Prioritize demonstrated gameplay/rendering failures over optional formats, audio
 expansion and test-only work. Bounded prerequisite research needs an explicit task
 and a concrete implementation dependency. The user-authorized playable-baseline-001, playable-expansion-001 and targeted-play-001
-and fluid-lever-assessment-001
+and fluid-lever-assessment-001 and level-sweep-001
 assessments are observation/reporting exceptions to production-change requirements:
 do not manufacture code changes just to satisfy the usual task template.
 Archive detailed evidence; keep active summaries concise and link to it.
@@ -149,3 +149,22 @@ scheduling, preserving test semantics/timeouts/counts and protected controls.
 Acceptance means ready for a later parallel benchmark, not measured speedup.
 The supervisor continues serial verification and stops after independent review.
 The coordinator owns any later verifier/preflight/cache changes under an idle lease.
+
+## Playable v1 direction
+User approved (2026-11-12) a playable-clone-first milestone. It sets original timing,
+full-frame fidelity and original comparison aside without resolving them: completion
+criteria, the gate ledger and every park above are unchanged, and a clone win is not
+fidelity evidence. This is not approval for original execution or for any observation
+task. The user then authorized level-sweep-001 (all-level clone smoke sweep) as one
+observation task; further assessments still need explicit user authorization.
+
+## Original-game execution: interactive sessions only
+User approved (2026-11-12) running the original game, with hooks, debugger, capture or
+REA runtime tools where they help, in interactive coordinating sessions where the user
+can see what is launched. This replaces per-run approval for those sessions only.
+Unattended workers, planners, reviewers and the controller are unchanged: they never
+launch the original or its oracles, keep the static REA profile, and oracle-001 stays
+blocked for the queue. Before each launch state what runs, why and for how long; report
+what actually ran. Back up before changing the installation, never overwrite the
+installed save, and keep original binaries/assets out of version control. The approval
+permits observation and comparison; it does not by itself reopen parked fixes.

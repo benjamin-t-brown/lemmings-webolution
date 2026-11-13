@@ -8,6 +8,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
+- fastforward-toggle-001: **ready** — Let the player turn fast-forward off
+- actor-motion-001: **ready** — Move lemmings smoothly between simulation steps
+- actor-occlusion-001: **ready** — Hide lemmings that are behind the cylinder
+- hatch-exit-presentation-001: **ready** — Show hatch doors, lemmings dropping in and the exit balloon leaving
 
 ## Recently completed queue entries
 

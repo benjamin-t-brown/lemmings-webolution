@@ -13221,6 +13221,85 @@
         "log": "build\\agent-runs\\20261113T165533-32228-13cdd598\\verification.log",
         "verified_content": "7384c41e8fe8593a516835eca1117d63d0baedaf76506600e53f81a9a2be67a6"
       }
+    },
+    {
+      "id": "fastforward-toggle-001",
+      "title": "Let the player turn fast-forward off",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest item P17. Difficulty: routine implementation, difficult evidence. Recommended model: Sonnet-class. Observed by a person: the fast-forward button turns fast-forward on but it cannot be turned off. The accepted fastforward-impl-001 implemented a latch that is never cleared within a level, from the static reading in docs/scratch/gameplay-commands-research-001.md and docs/scratch/fastforward-impl-001.md. Re-read that evidence and the original's plate handling statically for what clears the state (a second click on the plate, releasing the button, pause, another plate, level end). Implement what the evidence shows. If the evidence still shows no clear path, implement a second click on the fast-forward plate turning it off, labelled provisional, because a player must be able to return to normal speed; keep the accepted 7-pass budget while on and keep the plate's visual state in step with the mode. Update the scripted play drivers only where they rely on the latch never clearing. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report states, with cited addresses or retained evidence, what the original does to end fast-forward, or states precisely why static evidence does not settle it and labels the chosen behavior provisional.",
+        "Through the production application path with public input on an installed level, fast-forward can be turned on, turned off and turned on again; simulation passes per frame and the plate's drawn state follow each change, shown by a retained trace and images and asserted by a regression test.",
+        "Existing fast-forward and scripted play tests pass unchanged or each changed expectation is justified as encoding the defect. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "actor-motion-001",
+      "title": "Move lemmings smoothly between simulation steps",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest item P7. Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the interaction with the shared-timing path is unclear. Observed by a person on every level: lemmings do not move smoothly, they jitter across the screen at intervals. Source reading: drawn positions come from integer simulation cells refreshed when the simulation ticks (app::injectedWalkersFromWorld and the LemmingAnim path in the main.cpp frame loop), while frames are presented far more often. Trace the production path from sim::Lemming position to the drawn placement and measure, on an installed level at normal speed, how often a walker's drawn position changes per second versus frames presented. Make presentation smooth: the drawn position of each lemming moves continuously between its previous and current simulation positions according to elapsed level time, for walking, falling, floating, climbing and other moving states, without overshooting, without sliding through a turn or teleport (snap when the step is discontinuous) and frozen while paused. This is presentation only: simulation positions, rules, tick cadence and all timing parks stay exactly as they are; the cursor pick must still select the lemming the player sees. Use retained evidence on the original's continuous movement where it exists (docs/lessons/data-and-simulation.md, the D1 stepper notes) and label the interpolation provisional. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A before measurement on an installed level through the production path shows drawn lemming positions changing only at simulation steps while frames are presented more often.",
+        "After the change the same measurement shows drawn positions changing on presented frames between steps, monotonically along the lemming's path, with no overshoot, a snap on discontinuous steps and no movement while paused; retained frame sequences are reviewed.",
+        "Simulation state traces for a scripted route are identical before and after (positions, states, ticks, outcome), and hover/pick still selects the drawn lemming; both are asserted by tests.",
+        "The method is labelled provisional with what original observation would settle it. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "actor-occlusion-001",
+      "title": "Hide lemmings that are behind the cylinder",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest item P8. Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the depth path is unclear. Observed by a person on every level: lemmings are visible behind the cylinder at its sides while rotating the view. Source reading: actors are composed as an overlay after the tube raster (TubeScene::drawInjectedWalkers / app::drawActorSprite) with a visibility test that does not account for the tube body between the camera and a lemming on the far side. Retained evidence: docs/lessons/actor-rendering.md, docs/lessons/camera-tube-sprites.md and the earlier clipping notes in docs/plan-history/phase-e.md. Trace how the original decides actor visibility and depth against the level cylinder from that evidence and static analysis, measure on an installed level which lemming angles are drawn while geometrically behind the cylinder, and make the production renderer hide (or depth-test) lemmings and their countdowns that the cylinder occludes, including partial occlusion at the silhouette where feasible. Lemmings on the near side, inside tunnels they dug and on ledges must stay visible. Do not change camera, tube geometry, picking of visible lemmings or simulation. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A before measurement and retained images from an installed level through the production path show lemmings drawn while behind the cylinder at stated camera angles.",
+        "After the change, the same views show those lemmings hidden or correctly cut by the silhouette, while near-side lemmings, lemmings in dug tunnels and on ledges remain visible across a full rotation; images are retained and reviewed and a regression test covers a far-side and a near-side lemming.",
+        "The visibility rule is traced to cited evidence or labelled provisional. Frames with no far-side lemming are pixel-identical to before or each difference is explained; hidden lemmings are not pickable.",
+        "Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "hatch-exit-presentation-001",
+      "title": "Show hatch doors, lemmings dropping in and the exit balloon leaving",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": true,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest items P9, P10 and P11. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person on every level: the hatch has no opening doors, lemmings appear instantly instead of falling out of the hatch, and the balloon does not fly away when the level ends. Trace the production path for the hatch object, lemming release (World::spawn and the entry cue in src/app/EntryStartCue.cpp) and the exit object and level-end transition (RuntimeSim end transition, results hand-off). From retained evidence and static analysis of the hatch and exit objects' animations in the original, implement in the production level view: the hatch's door-opening animation before the first release; a released lemming starting at the hatch opening and falling to the ground through the existing faller state and animation instead of appearing on the ground; and the exit balloon's departure animation at level end before the results screen. Release cadence, counts and the release-timing park are unchanged: only where a lemming starts and what is drawn. If the three parts cannot all be finished, complete them in the order drop-in, hatch doors, balloon, and report the remainder honestly rather than leaving any half-wired. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report traces the hatch, release and exit paths and shows with retained clone images before the change that the hatch is static, lemmings appear without falling and the exit is static at level end.",
+        "After the change, through the production application path on installed levels, retained image sequences show the hatch opening before the first release, released lemmings falling from the hatch opening to the ground, and the balloon leaving at level end before results; each completed part is covered by a regression test, and any part not completed is stated as not done.",
+        "Release times and counts for a scripted route are identical before and after apart from the documented fall from the hatch; level outcomes of the existing scripted routes still classify as before or each change is explained.",
+        "Animations and positions are traced to cited evidence or listed as provisional. Full registered main/recovery verification passes; saves are untouched."
+      ]
     }
   ]
 }

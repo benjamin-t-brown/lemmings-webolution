@@ -12789,6 +12789,66 @@
         "log": "build\\agent-runs\\20261113T150217-39648-65445a39\\verification.log",
         "verified_content": "7e9e348ffd03f0b9f19af15c76ff3f4f94173f35e8a1574b57df1344eeb83694"
       }
+    },
+    {
+      "id": "actor-anim-001",
+      "title": "Animate lemmings by state in the level view",
+      "status": "ready",
+      "depends_on": [
+        "terrain-render-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest items P4, P5 and P6. Difficulty: difficult. Recommended model: Claude Sonnet5.5/high; Opus if the state-to-strip mapping stays ambiguous after one attempt. Observed by a person on every level: walkers show a single frame, and climbing, falling, floating, building and exploding have no animation; a lemming with a bomb shows no countdown. Source reading: every live lemming is drawn through the injected-walker path (app::injectedWalkersFromWorld in the main.cpp frame loop, TubeScene::drawInjectedWalkers / prepareInjectedWalker) with one frame; the recovered animation clock (src/app/ActorAnim.cpp, advanceActorAnimClock) and pose/sprite selection (ActorPose, ActorSprite) are not driven per lemming state at runtime. Retained evidence to start from: docs/lessons/actor-rendering.md, docs/lessons/camera-tube-sprites.md, gate A3 in docs/STATUS.md (branch and actor-bound index/mirror selection) and the decomp-lemmings actor_animation / actor_* evidence files.\nTrace the production path from sim::Lemming state to the drawn sprite frame. Implement per-state animation so that each lemming's drawn strip follows its simulation state (at least walker, faller, floater, climber, builder, basher, miner, digger, blocker, bomber/exploding, drowning or dying where a strip exists, exiting) and its frame advances with level time through the recovered animation clock, paused when the level is paused, mirrored by facing as the retained selection rules say. Draw the bomber countdown above a fused lemming. Map states to strips from evidence; where a state's strip is not evidenced use the nearest evidenced strip and list it as provisional. Smooth in-between movement (P7), occlusion (P8), hatch and exit effects (P9-P11) are separate later tasks; do not change simulation rules or positions. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Budget the ten-minute command limit: a change to a widely included header rebuilds most of the test suite, so make header edits early, in one batch, and run `verify.py --profile main` once the build is settled rather than after every edit. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report traces the production path from lemming state to drawn frame and shows, with retained clone images or frame-index measurements before the change, that every state drew one walker frame.",
+        "After the change, through the production application path with public input on installed levels, walkers cycle through multiple frames over time and at least climber (MM_CLIMB_002), floater and faller (MM_FLOAT), bomber (MM_BOMB), builder (MM_BUILD), basher (MM_BASH_002) and blocker (MM_BLOCK_001_A) draw their own strips, with before/after images retained and reviewed. Animation stops while paused.",
+        "A fused Bomber shows a visible countdown above the lemming that decreases to the explosion, shown in retained images.",
+        "The state-to-strip mapping, frame rates and mirroring are traced to cited retained or static evidence, or listed individually as provisional. No simulation rule, position or timing changed; existing frozen render identities pass or each change is justified as this defect.",
+        "A regression test covers state-dependent strip selection and frame advance on real assets; full registered main/recovery verification passes; installed and normal saves are untouched."
+      ]
+    },
+    {
+      "id": "teleport-softlock-001",
+      "title": "Stop lemmings bouncing between paired teleport pads",
+      "status": "ready",
+      "depends_on": [
+        "terrain-render-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Sweep item S1 (docs/scratch/level-sweep-001.md finding 3). Difficulty: difficult. Recommended model: Claude Sonnet5.5/high. Observed in the idle sweep: at the end of the idle window MM_TELE_003 (node 38) had 94 of 100 lemmings in state teleporting, M16_MG_1 (node 43) 6 of 14 and M17_MT_1 (node 44) 44 of 60, with none saved or dead. Unverified inference: World::stepTeleporting places the lemming as a Walker at the partner pad's cell and the pad arm in World::step re-enters Teleporting for any Walker inside a pad box, so an arriving lemming bounces back. First confirm or refute with a per-tick position/state trace of one lemming on MM_TELE_003 through the production path. Then establish from retained evidence (docs/scratch/native-023-teleport-links.md, docs/lessons/data-and-simulation.md) and static analysis how the original prevents re-entry at the destination pad (exit offset, cooldown, facing or one-way pads) and fix src/sim/World.cpp accordingly. If the trace refutes the inference, report the real cause and fix that if it is within teleport handling; otherwise stop and report. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Budget the ten-minute command limit: a change to a widely included header rebuilds most of the test suite, so make header edits early, in one batch, and run `verify.py --profile main` once the build is settled rather than after every edit. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A per-tick trace on installed MM_TELE_003 through the production path before the change shows what lemmings in the teleporting state actually do, and the cause is stated as observed.",
+        "After the change, on MM_TELE_003 and the two other affected levels, lemmings that enter a pad arrive at the partner, leave it and continue; the idle run no longer accumulates lemmings in teleporting, shown by the same measurement before and after. The other teleport levels in the sweep are rechecked and not made worse.",
+        "The arrival rule is traced to cited retained or static evidence, or labelled provisional with what would settle it. Teleport pairing from serialized link ids is unchanged.",
+        "A regression test covers arrival without re-entry on real level data; full registered main/recovery verification passes; installed and normal saves are untouched."
+      ]
+    },
+    {
+      "id": "frontend-window-quit-001",
+      "title": "Keep one window from menu to level and make Quit exit",
+      "status": "ready",
+      "depends_on": [
+        "terrain-render-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": true,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest items P12 and P13. Difficulty: routine. Recommended model: Claude Sonnet5.5/high. Observed by a person: when a level starts the window appears to close and reopen, and Quit on the main menu does nothing. Source reading: the frontend creates its SDL window and renderer in src/app/FrontendWindow.cpp and the level leg creates another in src/app/main.cpp (SDL_CreateWindow near the level loop), destroying one before creating the other. Trace the frontend-to-level and level-to-results transitions and the main menu Quit activation (src/app/FrontendSession.cpp, src/shell). Make the connected application keep a single SDL window across frontend, level, results and return to the map, with no destroy/create between them, preserving the level view's presentation size and the frontend's. Make main-menu Quit end the application cleanly with exit status 0, following the original's menu behavior where retained evidence describes it (docs/lessons/frontend.md, gate B2 notes). Standalone diagnostic routes (--level, --map, --shot) may keep their own windows. Do not change menu layout, focus rules or save behavior. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Budget the ten-minute command limit: a change to a widely included header rebuilds most of the test suite, so make header edits early, in one batch, and run `verify.py --profile main` once the build is settled rather than after every edit. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report traces where the windows are created and destroyed and why Quit had no effect, with a before measurement (window create/destroy count across a frontend-to-level-to-map round trip, and Quit leaving the application running).",
+        "After the change a scripted public-input round trip through the production application (menu, map, level, results, map) uses one SDL window with zero destroy/create between legs, and activating Quit on the main menu ends the application with status 0; both are asserted by a regression test.",
+        "Existing frontend, level-return and results tests pass unchanged or each changed expectation is justified as encoding the defect. Full registered main/recovery verification passes; installed and normal saves are untouched."
+      ]
     }
   ]
 }

@@ -8,6 +8,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
+- actor-anim-001: **ready** — Animate lemmings by state in the level view
+- teleport-softlock-001: **ready** — Stop lemmings bouncing between paired teleport pads
+- frontend-window-quit-001: **ready** — Keep one window from menu to level and make Quit exit
 
 ## Recently completed queue entries
 

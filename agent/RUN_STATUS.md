@@ -8,7 +8,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
+- basher-fix-001: **ready** — Make Basher usable at a wall on MM_BASH_002
 - level-sweep-001: **ready** — Smoke-sweep all 102 installed levels in the clone and rank integrity failures
+- terrain-render-001: **ready** — Show terrain removed or added by skills in the level view
 
 ## Recently completed queue entries
 

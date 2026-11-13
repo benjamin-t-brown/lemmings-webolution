@@ -12400,6 +12400,26 @@
       }
     },
     {
+      "id": "basher-fix-001",
+      "title": "Make Basher usable at a wall on MM_BASH_002",
+      "status": "ready",
+      "depends_on": [
+        "test-parallel-isolation-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest item P1 (blocker). Difficulty: difficult. Recommended model: Claude Sonnet5.5/high first attempt; Opus if the original's start/stop conditions stay ambiguous. Observed by a person on MM_BASH_002 (map node 6, 10 lemmings, need 10): clicking a lemming at the wall with Basher selected reduces the Basher count but no bashing happens, so the level cannot be won. Source reading (inference to confirm): World::assign (src/sim/World.cpp) accepts and sets State::Basher; World::stepBasher returns the lemming to Walker on its first bite when no solid cell lies in the single column l.x+dir over basherHeight rows (rules in src/sim/World.h: basherReach 1, basherHeight 4, basherCycleMs 1440, basherBitePercent 12).\nFirst reproduce on the installed level through the production path with public input (runApplication, read-only observers, as in test_targetedplay.cpp): record the lemming cell, facing, wall cells and the tick-by-tick state after assignment, and establish exactly why it reverts (distance to the wall when a player can click it, row range versus the wall's actual cells, bite phase, or picker selecting a different lemming). Then establish from retained evidence and static analysis how the original Basher starts, advances and stops, and fix the clone in src/sim/World.cpp (and World.h rules if required) so a Basher assigned to a walker at or approaching the wall tunnels through it. Keep steel handling and the stop at open air. Changing Miner/Digger is out of scope unless the same defect is demonstrated for them; report it instead. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: human playtest docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune timing, release rate or other skills beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Use permitted verifier profiles only; the supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The failure is reproduced on installed MM_BASH_002 through the production application path with public input before the change, with the recorded cell/state trace showing why the Basher reverted. The cause is stated as observed, not assumed.",
+        "After the change, on the same route, a Basher assigned through public input at the wall removes terrain column by column until open air, the lemming continues as a walker, following lemmings pass through the tunnel, and the report records the level outcome honestly. Steel still turns the Basher and assignment away from any wall still ends without an endless Basher.",
+        "The Basher start/advance/stop rules implemented are traced to cited retained or static evidence, or are explicitly labelled provisional with the reason; no unrelated skill, timing or release behavior changed. Any existing test expectation altered is one that encoded the defect, with before/after justification.",
+        "A regression test covers the fixed behavior on real level data; full registered main/recovery verification passes; installed and normal saves are untouched."
+      ]
+    },
+    {
       "id": "level-sweep-001",
       "title": "Smoke-sweep all 102 installed levels in the clone and rank integrity failures",
       "status": "ready",
@@ -12408,7 +12428,7 @@
       ],
       "requires_original_execution": false,
       "verification": "all",
-      "stop_after_review": true,
+      "stop_after_review": false,
       "kind": "assessment",
       "user_authorized": true,
       "scope": "User-authorized (2026-11-12) all-level smoke sweep, an explicit one-task observation exception to production-change requirements, for playable v1 step 2 in agent/IMPLEMENTATION_PLAN.md. Difficulty: routine. Recommended model: Claude Sonnet5.5/high; user overrides win, no automatic escalation. Goal: find which installed levels fail basic integrity in the clone so fixes can be ordered by how many levels each defect blocks. It establishes clone behavior only, not winnability and not original fidelity.\nRead accepted reports first (playable-baseline-001, playable-expansion-001, targeted-play-001, level-selection-case-001, scene-admission-001, fluid-lever-assessment-001) and reuse their public runApplication entry, read-only observers and census helpers rather than new production hooks. Enumerate the 102 levels from the decoded frontend map nodes. For every level, through the production load/render/simulation path with no input: load it, render at least one settled frame to a clone image buffer, and run the simulation idle long enough for the hatch to release (justify the duration from level data). Direct level entry is allowed and must be labelled as such; it is not frontend-reachability evidence. A deterministic frameSeconds adapter may be used if labelled scripted source-test timing; production clock rules are unchanged.\nRecord per level: map node, id as stored and as resolved, load result, scenery admission/branch, frame statistics sufficient to detect a blank or near-uniform frame, lemmings released versus expected, exits and hatches present, skill stock, decoded gadget types, final idle outcome, wall and simulated duration, and any exception, assertion, watchdog or abnormal exit. One level crashing or hanging must not hide the others: isolate levels by process or equivalent and report the failing level explicitly. Produce contact sheets of the rendered frames. Keep CTest entries bounded and within existing timeout practice by splitting the sweep into registered chunks; each chunk owns a unique output directory under build/level-sweep-001/ following the accepted isolation rules. Tests assert driver integrity (every level visited, artifacts written); the per-level outcome is a reported observation, never an assertion that hides a failure or demands a pass.\nAllowed edits: new drivers under src/__test__/, their CMake registration, docs/scratch/level-sweep-001.md and ignored build/level-sweep-001/ artifacts. No production, observer API, existing test, assertion, timeout, queue, verifier, controller, model or shared-instruction change. Use a private temporary clone save path; never the installed or normal user save. Never mutate World, actors, terrain, stock or progress. Do not fix anything found and do not reopen timing/release/digger/D1/D3/clipping/controller/capture or Armageddon. No original execution, copied-byte oracle, debugger or hooks. No subagents or concurrent writers.\nFinish with a 102-row matrix, failures grouped by suspected shared cause and ranked by number of levels affected, distinguishing observed failure from source inference, plus a census of skills and gadget types per level to plan later play coverage, limitations, and the smallest recommended next fixes. Use the permitted verifier profiles only; the supervisor owns full verification. Finish needs_review; stop after independent review.",
@@ -12417,6 +12437,34 @@
         "The report and artifacts contain the per-level matrix, blank-frame detection data, contact sheets, build and source identity, invocation, durations and evidence paths. Direct entry and any deterministic timing are labelled. Outcomes are observations: registered tests assert driver integrity only and do not convert a level failure into a pass or a test failure into a hidden result.",
         "Failures are grouped by suspected shared cause and ranked by levels affected, with observation and inference kept distinct, and a per-level skill/gadget census is provided. The report claims neither winnability nor original fidelity for any level.",
         "No production behavior, existing test, assertion, timeout or protected control changed; installed and normal user saves are untouched; no original execution occurred. Full registered main/recovery verification passes and an independent review checks these criteria."
+      ],
+      "scope_revision_history": [
+        {
+          "at": "2026-11-13T04:59:32.532125+00:00",
+          "by": "project lead",
+          "change": "stop_after_review true -> false so the loop continues to terrain-render-001; scope text unchanged"
+        }
+      ]
+    },
+    {
+      "id": "terrain-render-001",
+      "title": "Show terrain removed or added by skills in the level view",
+      "status": "ready",
+      "depends_on": [
+        "basher-fix-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": true,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest items P2 and P3. Difficulty: difficult (renderer and data-path reasoning). Recommended model: Claude Sonnet5.5/high first attempt; Opus recommended if the original's method stays unresolved after one attempt. Observed by a person: Bomber explosions do not visibly remove terrain (MM_BOMB) and Builder bricks do not appear, so lemmings climb nothing (MM_BUILD). The simulation does change sim::Terrain (lemmings respond), but the level view is built from scene/surface data at load and never sees the edits. Basher, Miner and Digger tunnels are expected to have the same defect (MM_BASH_002, MM_MINE, MM_DIG_000).\nTrace the production path from Terrain mutation (clearBox, bomber crater, builder brick stamping in src/sim/World.cpp and Terrain.cpp) to the level renderer (src/app/TubeScene.cpp, SceneMeshSource, main.cpp frame loop) and show where the edit is lost. Establish from retained evidence (docs/lessons, decomp-lemmings/docs/evidence, RENDERING_METHOD.md) and static analysis how the original presents destroyed and built terrain. Implement visible terrain edits in the production renderer: removed cells stop being drawn where the collision grid is now empty, and built bricks are drawn where cells were added, positioned from the same cell coordinates the simulation uses so that what the player sees matches what lemmings walk on. Prefer the original's method where evidenced; otherwise a clone method labelled provisional is acceptable for this milestone. Keep per-frame cost reasonable: update only when terrain changed. Lemming animation, explosion effects and the bomber countdown are separate later tasks. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: human playtest docs/playtest/2026-11-12-playtest-1.md. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune timing, release rate or other skills beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Use permitted verifier profiles only; the supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior, evidence paths, limitations and a two-line handoff. Finish needs_review. Stop after independent review.",
+      "acceptance": [
+        "The report traces the production path from each terrain mutation to the renderer and identifies where edits were lost, with a before image or pixel measurement from the clone showing unchanged terrain after an edit on an installed level.",
+        "After the change, clone frames from installed levels show removed terrain for a Bomber crater (MM_BOMB) and for at least one tunnelling skill, and show Builder bricks (MM_BUILD), each produced through the production application path with public input. Before/after images are retained and reviewed, and the visible edit agrees with the collision cells the simulation changed within a stated tolerance.",
+        "Levels with no terrain edits render pixel-identically to before, or every difference is explained; existing frozen render identities still pass or their change is justified as part of this defect.",
+        "The method is traced to cited evidence of the original, or explicitly labelled provisional with what would settle it. No timing, skill-rule or unrelated renderer change is included.",
+        "A regression test covers visible terrain removal and addition on real level data; full registered main/recovery verification passes; installed and normal saves are untouched."
       ]
     }
   ]

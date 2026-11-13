@@ -41,13 +41,14 @@ Selected reports: [startup](scratch/native-017-default-frontend-startup.md),
 The older product summary is archived in plan-history/documentation-2026-11-02/STATUS.md.
 
 ## What happens next
-User-approved direction (2026-11-12): playable v1, every installed level winnable in
-the clone from the ordinary frontend route. Clone wins recorded so far: 5/102 (map
-nodes 0-3 and 8). First: test-parallel-isolation-001 (queued, not started) and a
-four-job benchmark; preflight and verification reuse are deferred. Then a user
-playtest and/or an all-level smoke sweep to rank defects. Timing, full-frame and
+Direction (2026-11-12): playable v1, judged by human playtests. The
+[first playtest](playtest/2026-11-12-playtest-1.md) recorded 18 open items, including an
+unusable Basher, invisible terrain edits and one-frame lemmings on every level. Scripted
+wins exist on 5 levels (map nodes 0-3 and 8); none is yet confirmed playable by that
+bar. Queued: basher-fix-001, level-sweep-001, terrain-render-001. Timing, full-frame and
 original-comparison gates below are set aside for this milestone, not resolved, and
-remain required for full completion. Compile jobs12 /tests1 remain unchanged.
+remain required for full completion. test-parallel-isolation-001 is accepted; the
+verifier now builds the main suite -O2 with assertions and runs four test jobs.
 
 ## Evidence labels
 Implemented = connected source; source-tested = bounded executable test;

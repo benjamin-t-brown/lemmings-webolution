@@ -35,11 +35,14 @@ files are retained there. This verifier follows the existing build rule's
 process-local UCRT64 PATH approach; it does not change machine PATH or use it
 for live-game harness Python. Nonzero exits and zero registered tests fail.
 
-Build parallelism defaults to 12 jobs (`--jobs`). Tests run one at a time by
-default (`--test-jobs 1`): the rendering-heavy `levelreturn` test approached its
-then-current timeout under concurrent testing while the unchanged serial suite passed.
-This changes scheduling, not test assertions, registration or timeouts. Increase
-`--test-jobs` only when the machine can sustain the rendering workload.
+Build parallelism defaults to 12 jobs (`--jobs`). Since 2026-11-12 the main suite is
+built `-O2 -g` with assertions kept and tests run four at a time (`--test-jobs 4`);
+`--test-jobs 1` is the fallback. Measured on one commit: debug serial 2583 s, debug
+four jobs about 1200 s with `levelreturn` within 3% of its timeout, optimized four
+jobs 329 s. This changes build flags and scheduling, not test assertions, registration
+or timeouts. Do not run the clone on the normal save during verification: several play
+tests assert the normal save is untouched. Older notes below that say tests are serial
+describe earlier runs.
 
 Reference and asset paths in the registry are relative to this repository root:
 `Lemmings Revolution/Lemmings Revolution.exe`, `lemmings.box` and `patch.box`

@@ -1,78 +1,86 @@
 # Current reconstruction roadmap
 
-Updated 2026-11-12. The user approved a playable-clone-first direction. Current
+Updated 2026-11-12 by the project lead after the first human playtest. Current
 milestone: **playable v1**. Full-project completion criteria in completion.json
 are unchanged and are not satisfied by this milestone.
 
-## Playable v1 (current milestone)
-Goal: every one of the 102 installed levels can be entered from the ordinary
-frontend, played with its supplied skills and gadgets, won by the clone's own
-rules and persisted, without the original executable.
+## Playable v1
+Goal: a person can play every one of the 102 installed levels from the ordinary
+frontend, see what the lemmings and the level are doing, win, and keep progress,
+without the original executable.
 
-Explicitly set aside for this milestone, not resolved: original timing (D1/D3,
-release/digger, base clock), full-frame pixel fidelity (C2/C3), original depth
-state, Armageddon timing, and any comparison against the running original. Their
-ledger entries in docs/STATUS.md stay FAIL/OPEN/PARKED exactly as recorded and
-remain required for full completion. A playable-v1 win is clone-observed evidence
-only. Original execution is approved for interactive sessions only (see below);
-oracle-001 stays blocked for the queue.
+The first playtest ([ledger](../docs/playtest/2026-11-12-playtest-1.md)) showed
+that a scripted win is not this bar: scripts read simulation state, while a
+player saw one-frame lemmings, invisible terrain edits and an unusable Basher.
+Scripted routes remain regression tests. Playability is confirmed by short human
+playtests on an optimized build.
 
-## Sequence
-1. **Finish the capped verification work.** Run test-parallel-isolation-001
-   (already queued, prepared launcher run_test_parallelism.py), then the
-   coordinator benchmarks serial versus four test jobs, repeats four jobs once and
-   selects a default with a one-job fallback. Process work stops there. Focused
-   preflight and verification reuse (former steps 4-5) are deferred, not queued;
-   reopen them only if measured verification time still blocks gameplay work.
-2. **Find what is broken, broadly.** Two sources, in either order:
-   - User playtest of the first 10-15 map nodes in the clone, recorded as a ranked
-     defect list (level, what happened, what was expected).
-   - An all-level smoke sweep: for each of the 102 levels load, render a frame,
-     run idle simulation, record crash/hang/blank render/zero-lemming outcomes and
-     a contact sheet. Queued as user-authorized level-sweep-001, after the
-     isolation task. A clean sweep shows integrity, not winnability.
-   The user chose both.
-3. **Fix in order of how many levels a defect blocks.** Expected early items,
-   to be confirmed by step 2 rather than assumed: play evidence for Builder,
-   Miner, Basher and Digger; the gadgets with no accepted route (teleport play,
-   speed pad, remaining levers/fluids, anti-gravity, multi-hatch); frontend
-   reachability of later map nodes through earned progress.
-4. **Track one number.** Levels won through the ordinary frontend route in the
-   clone, out of 102, with the save persisted. Today: 5 (map nodes 0-3 and 8).
-   Scripted and human wins are both counted and labelled.
+Set aside for this milestone, not resolved: matching the original's timing (D1/D3,
+release/digger cadence, base clock), full-frame pixel fidelity (C2/C3), original
+depth state and Armageddon timing. Their ledger entries in docs/STATUS.md stay
+FAIL/OPEN/PARKED and remain required for full completion. Fixes for playtest
+defects may touch the same code (skills, animation timing, occlusion); they aim at
+correct visible behavior, use retained static evidence where it exists, and label
+anything provisional. They are not fidelity passes.
+
+## Work order
+From the playtest ledger; item numbers are its P-numbers.
+1. **basher-fix-001** (queued): Basher usable at a wall on MM_BASH_002 (P1).
+2. **level-sweep-001** (queued): all-level smoke sweep for crashes, hangs and
+   blank renders. Its ranked list feeds later ordering; it does not preempt 3-5.
+3. **terrain-render-001** (queued): terrain removed or added by skills is visible
+   (P2, P3), for Bomber, Builder, Basher, Miner and Digger.
+4. Per-state lemming animation and the bomber countdown (P4-P6), then smooth
+   movement between simulation steps (P7).
+5. Lemmings hidden behind the cylinder (P8).
+6. Small fixes: one window across frontend and level (P12), Quit (P13),
+   fast-forward off (P17, after checking the running original).
+7. Hatch doors, drop-in spawn, balloon departure (P9-P11).
+8. Map level names (P14), remaining sound cues and music (P15, P16), renderer
+   speed (P18).
+After each of 3, 4 and 6 the user playtests ten to fifteen minutes.
 
 ## Acceptance for playable v1
-- 102/102 levels have a recorded clone win from the ordinary frontend route with
-  fresh-process persistence, or an explicit user-accepted exclusion with reason.
+- Every level has been won by a person or, where the user accepts it, by a
+  scripted public-input route, from the ordinary frontend with persistence; or
+  has an explicit user-accepted exclusion.
+- Every skill and gadget type has visible, readable behavior: state animation,
+  terrain change, gadget effect.
 - No known crash, hang or soft-lock on any installed level.
-- Every skill and every gadget type present in the installed levels has at least
-  one win that depends on it.
+- No open playtest item marked blocker.
 - Full registered main/recovery verification passes on the final content.
-- Reports keep clone observation, source inference and original comparison
-  distinct, and do not restate any historical gate as passed.
+- Reports keep human observation, scripted clone observation, source inference
+  and original comparison distinct, and restate no historical gate as passed.
 
-## Carried over from the previous plan
-Visible fluid and ordinary lever interaction on MM_W_012 were accepted in
-loop-7bcd0ea7da8241b58ce68791670dbbc5 (148 main / 84 recovery tests passed). No
-ordinary second lever contact was observed; original depth fidelity remains
-unresolved under the provisional Less/write-on policy. See docs/STATUS.md.
+Progress today: scripted wins exist on 5 levels (map nodes 0-3 and 8); by the bar
+above none is yet confirmed playable. One playtest, 18 open items.
 
-Verification inventory guidance still applies to step 1: inventory registered
-tests from the actual CTest manifests; isolate shared mutable files and add
-dependencies or resource locks; keep play/save/restart chains ordered; compile
-at 12 jobs; trial four test processes on this 32-logical-processor/~31GiB host
-and limit heavy render tests where measured contention demands it. Same tests,
-assertions and timeouts. Protected controller changes occur only with idle
-runners, backups and RepositoryLease.
+## Verification
+Measured 2026-11-12 on commit 721c64e (build/test-parallel-benchmark-001/):
 
-## Execution and model choice
-Recommend Sonnet 5.5/high for the isolation task and for routine gameplay fixes;
-Opus only for a concrete unresolved cross-system difficulty. No automatic
-escalation; Fable requires explicit approval. User overrides win. Model pins,
-verifier defaults (12 compile jobs / 1 test job) and the queue are unchanged by
-this plan update. The completed fluid launcher remains a no-op.
+| Configuration | Main suite wall time | Result |
+| --- | ---: | --- |
+| Debug, 1 test job | 2583 s | 147/148; the failure was a concurrent human playtest writing the normal save |
+| Debug, 4 test jobs | 1183 s and 1212 s | 148/148 twice; `levelreturn` 321 s and 351 s of a 360 s timeout |
+| -O2 with assertions, 4 test jobs | 329 s | 148/148; `levelreturn` 66 s |
 
-## Original game
-The user approved original execution for interactive coordinating sessions only;
-see AGENTS.md. Use it where a clone defect cannot be settled from static evidence,
-for example to confirm what a level or gadget does. Queue workers stay static-only.
+Deterministic outputs were byte-identical across the debug runs. The verifier now
+builds the main suite with `-O2 -g` (assertions kept, `NDEBUG` not defined) and runs
+four test jobs; `--test-jobs 1` remains the fallback. The recovery suite keeps its
+plain Debug build. Tests, assertions and timeouts are unchanged. Do not run the
+clone against the normal save while verification is running: several play tests
+assert that the normal save is untouched.
+
+Process work stops here. Preflight and verification reuse are dropped as goals; a
+six-minute suite does not need them.
+
+Known waste, not yet addressed: playableexpansion steps 2 and 3 (Blocker, Builder)
+end in a watchdog timeout in every run and pass as driver-integrity tests.
+
+## Execution
+The project lead (interactive Fable session) decides sequence, queue, controller
+and model changes and commits accepted work; see AGENTS.md. Queue workers and
+reviewers stay on Claude Sonnet 5.5/high. Moving review and research to Opus is
+intended but not yet implemented in the controller. Original-game execution is
+approved for interactive sessions only; queue workers stay static-only and
+oracle-001 stays blocked for the queue.

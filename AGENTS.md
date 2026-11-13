@@ -3,9 +3,9 @@
 ## Objective and current work
 Recover faithful, readable C++23 with MinGW-w64 GCC on Windows; Emscripten comes later.
 Use this checkout, including the ordinary source folder `decomp-lemmings/`.
-Visible-fluid milestone accepted. Current milestone is playable v1: all 102 installed
-levels winnable in the clone, per [agent/IMPLEMENTATION_PLAN.md](agent/IMPLEMENTATION_PLAN.md).
-test-parallel-isolation-001 and its benchmark come first; further workflow work is deferred. Completed integrations are
+Current milestone is playable v1: a person can play and win every installed level in
+the clone, per [agent/IMPLEMENTATION_PLAN.md](agent/IMPLEMENTATION_PLAN.md). Work order comes
+from the human playtest ledger under docs/playtest/. Workflow work is finished. Completed integrations are
 listed in [docs/STATUS.md](docs/STATUS.md); do not repeat historical tasks.
 
 Read this file, agent/RUN_STATUS.md, the current plan/status, relevant accepted reports, `agent/tasks.json`,
@@ -29,7 +29,9 @@ project completion. A baseline report or empty queue does not complete the proje
   second gate clock is not approved. shared-timing-impl-001 completed its narrow
   shared-dt integration exception. Preserve that accepted path; no broader timing
   reopening follows. Walk/fall use continuous budgets; other states remain hybrid
-  5 Hz. Release/digger/skill retuning and other parks remain closed.
+  5 Hz. Release/digger/skill retuning and other parks remain closed, except that
+  fixes for playtest-ledger defects are authorized where they touch these areas;
+  see Project lead direction.
   Linked receiver zone-mask behavior is accepted with documented limits.
   lever-initial-face-impl-001 is accepted; all four tested levers use stored faces.
   The visible-fluid milestone authorizes one bounded static research stage, its
@@ -76,7 +78,7 @@ The supervisor owns mandatory full registered verification after worker exit.
 Workers may run a permitted profile to answer a concrete development question,
 but need not duplicate the full suite. Report pending supervisor verification
 truthfully; do not repeatedly restart a suite killed by the client time limit. Build jobs default12;
-tests remain serial. Preserve source provenance for frozen/current demonstrations;
+the main suite builds -O2 with assertions and runs four test jobs (one is the fallback). Preserve source provenance for frozen/current demonstrations;
 never replace an authentic pre-task baseline with resumed modified files.
 Do not add original binaries/assets to version control.
 
@@ -168,3 +170,18 @@ blocked for the queue. Before each launch state what runs, why and for how long;
 what actually ran. Back up before changing the installation, never overwrite the
 installed save, and keep original binaries/assets out of version control. The approval
 permits observation and comparison; it does not by itself reopen parked fixes.
+
+## Project lead direction
+The user appointed the interactive Fable session project lead (2026-11-12) with authority
+over sequence, queue, controller, verifier, model pins, documentation and commits. The
+lead still edits protected controls only under RepositoryLease with backups and no live
+runner, and does not push without telling the user. Workers and reviewers are unchanged:
+no commits, no control edits, no original execution.
+Playable v1 is judged by human playtests. Defects listed in docs/playtest/ are demonstrated
+failures and their fixes are authorized production work even where they touch a parked
+area (skill behavior, animation and movement presentation, actor occlusion, fast-forward).
+Such a fix targets correct visible clone behavior, uses retained static evidence where it
+exists, labels provisional choices, and may correct an existing test expectation only where
+that expectation encodes the demonstrated defect, with before/after justification. It is
+not a fidelity pass: matching original timing, the gate ledger and completion criteria are
+unchanged. A scripted win is regression evidence, not proof a level is playable.

@@ -39,8 +39,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['main', 'recovery', 'all'], default='all')
     parser.add_argument('--jobs', type=int, default=12)
-    parser.add_argument('--test-jobs', type=int, default=1,
-                        help='Concurrent CTest processes; default 1 avoids contention in rendering tests')
+    parser.add_argument('--test-jobs', type=int, default=4,
+                        help='Concurrent CTest processes; 4 was benchmarked 2026-11-12, 1 is the fallback')
     args = parser.parse_args()
     registry = json.loads((ROOT / 'agent/tools.windows.json').read_text())
     tools = registry['tools']
@@ -71,6 +71,10 @@ def main():
                      f'-DPython3_EXECUTABLE={tools["python"]["path"]}',
                      f'-DCMAKE_PREFIX_PATH={Path(registry["runtime_bin"]).parent.as_posix()}']
         if profile == 'main':
+            # Optimized with assertions kept (no NDEBUG): the software renderer is several
+            # times slower unoptimized, which put levelreturn within 3% of its timeout
+            # under four test jobs. Measured in build/test-parallel-benchmark-001/.
+            configure += ['-DCMAKE_CXX_FLAGS_DEBUG=-O2 -g']
             configure += [f'-DWEBOLUTION_GAME_DIR={repository_path(registry["assets"]["directory"]).as_posix()}']
         else:
             configure += ['-DLEMMINGS_REFERENCE_EXE=',

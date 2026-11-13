@@ -787,14 +787,29 @@ void World::stepBasher(Lemming& l) {
     l.state = State::Walker;
     return;
   }
-  if (!anySolid) {
+  // basher-fix-001: an empty leading column ends the bash only once the grace cycles are spent
+  // (0x0040C6E8 / 0x0040C357 `+0x44 == 2 && +0x41 == 0`, see Rules::basherGraceCycles). Until then
+  // the swing finds nothing and the lemming still advances a column per cycle. Before this the
+  // first empty bite sent the lemming back to Walker in the tick it was assigned (playtest P1).
+  if (!anySolid && l.bashCycles >= rules_.basherGraceCycles) {
     l.state = State::Walker;
     return;
   }
 
-  setup_.terrain.clearBox(dir > 0 ? x0 : x0 - rules_.basherReach + 1, top,
-                          rules_.basherReach, rules_.basherHeight);
+  if (anySolid)
+    setup_.terrain.clearBox(dir > 0 ? x0 : x0 - rules_.basherReach + 1, top,
+                            rules_.basherReach, rules_.basherHeight);
   l.x = setup_.terrain.wrapX(l.x + dir);
+  if (l.bashCycles < rules_.basherGraceCycles)
+    ++l.bashCycles;
+
+  // 0x0040C6E8: off the ground after the advance -> the fall state. INFERENCE: FUN_0042E913 is the
+  // walker's ground probe (the RuntimePick notes cite it as such) and false selects FUN_00415FA0,
+  // the fall state; this also lets a lemming that swings off a ledge fall instead of hanging.
+  if (!solidAt(l.x, l.y + 1)) {
+    l.state = State::Faller;
+    l.fallDistance = 0;
+  }
 }
 
 void World::stepMiner(Lemming& l) {
@@ -1253,7 +1268,10 @@ bool World::assign(std::size_t index, Skill skill) {
       l.state = State::Builder;
       l.bricksLeft = rules_.builderBricks;
       break;
-    case Skill::Basher: l.state = State::Basher; break;
+    case Skill::Basher:
+      l.state = State::Basher;
+      l.bashCycles = 0;
+      break;
     case Skill::Miner: l.state = State::Miner; break;
     case Skill::Digger: l.state = State::Digger; break;
     default: return false;

@@ -12402,7 +12402,7 @@
     {
       "id": "basher-fix-001",
       "title": "Make Basher usable at a wall on MM_BASH_002",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "test-parallel-isolation-001"
       ],
@@ -12417,12 +12417,109 @@
         "After the change, on the same route, a Basher assigned through public input at the wall removes terrain column by column until open air, the lemming continues as a walker, following lemmings pass through the tunnel, and the report records the level outcome honestly. Steel still turns the Basher and assignment away from any wall still ends without an endless Basher.",
         "The Basher start/advance/stop rules implemented are traced to cited retained or static evidence, or are explicitly labelled provisional with the reason; no unrelated skill, timing or release behavior changed. Any existing test expectation altered is one that encoded the defect, with before/after justification.",
         "A regression test covers the fixed behavior on real level data; full registered main/recovery verification passes; installed and normal saves are untouched."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261113T054733-9912-b7b4fa65",
+      "started": "2026-11-13T05:47:34.061485+00:00",
+      "finished": "2026-11-13T06:19:14.831650+00:00",
+      "last_run": "build/agent-runs/20261113T054733-9912-b7b4fa65",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261113T050903-9912-4e612381/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported. The weakest is the reproduction: the pre-change failure was captured at the steel seam, not at an earth pillar. That is disclosed in the report, and I did not treat it as blocking. I could not re-run anything in this read-only pass, so the behaviour evidence is the worker's retained probe and verifier files plus a source read. I did not re-query the registered EXE. The cited addresses (0x0040BBA0, 0x0040C0AF, 0x0040C357, 0x0040C6E8) come from the report and are not independently re-checked.",
+        "checks": [
+          {
+            "criterion": "The failure is reproduced on installed MM_BASH_002 through the production application path with public input before the change, with the recorded cell/state trace showing why the Basher reverted. The cause is stated as observed, not assumed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-fix-001/probe-gap6.txt",
+                "detail": "Retained pre-change trace from runApplication on MM_BASH_002 with public input (hover-matched click). Lemming 0 was clicked at tick 24 at (239,33) facing right. The trace reads `24,...,walker,11` then `25,239,33,1,walker,1`: frame was reset to 0, the lemming did not move, and the state was Walker again one tick later. The terrain dump shows no solid cell ahead of the lemming. This matches the pre-change stepBasher, which tested only column x+dir and reverted on the first empty bite. The click landed in front of the steel seam, not an earth pillar; the report says so. The pillar-wall cause is inferred from the same code path."
+              },
+              {
+                "path": "docs/scratch/basher-fix-001.md",
+                "detail": "Section 1 states the cause (distance to the wall; the picker, row range and bite phase were ruled out because hover matched the target). It states that no click at an earth pillar was captured before the change. It also notes that the earlier camera-view-only driver never clicked, and that this was corrected. The gap-1 case, where the Basher starts adjacent to the wall, already worked before the change. A walker is within three cells of a pillar for only about 0.6 s. That fits a player's complaint that the Basher count was spent with no bashing."
+              },
+              {
+                "path": "build/agent-runs/20261113T054733-9912-b7b4fa65/before-diff.txt",
+                "detail": "Pre-run snapshot. Together with after-diff.txt it confirms that the removed `if (!anySolid) {` early-Walker block and the unconditional clearBox are the production change under review, and that the lemmings_hooks.log modification was already present before the run."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, on the same route, a Basher assigned through public input at the wall removes terrain column by column until open air, the lemming continues as a walker, following lemmings pass through the tunnel, and the report records the level outcome honestly. Steel still turns the Basher and assignment away from any wall still ends without an endless Basher.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-fix-001/assert-gap2.txt",
+                "detail": "Public-input click at tick 132 on lemming 0 at (154,55) facing left, two cells from the pillar. The Basher stock went 10 to 9 and the Basher ran 123 ticks with x going 153 to 137. Solid cells went 12950 to 12886, which is exactly 16 columns x 4 rows. The lemming was a Walker again at tick 256 on open air, and 8 followers crossed the tunnel columns. The file records `saved=0 won=0`."
+              },
+              {
+                "path": "build/basher-fix-001/probe-gap1.txt",
+                "detail": "Adjacent-wall case (gap 1, tick 133, x 152 to 137, 116 Basher ticks, 12950 to 12886 solid cells, 9 followers crossing). The level outcome is recorded as saved=0 won=0 with later_clicks=0. The report states honestly that the retained driver does not place the second Basher. It notes that an earlier driver run won the level 10/10 but that file was overwritten, and it calls a scripted win regression evidence only."
+              },
+              {
+                "path": "build/basher-fix-001/away-gap64.txt",
+                "detail": "Assignment on the flat y=33 ledge with the nearest tall wall 64 cells ahead. The Basher lasted 15 ticks, advanced one further column and removed nothing (12950 unchanged). It returned to Walker without turning. This shows that assignment away from a wall still ends and the Basher is not endless."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepBasher still runs the anySteel check first, which turns the lemming into a Walker without clearing terrain. An empty leading column ends the bash once bashCycles has reached basherGraceCycles (2). Terrain is cleared only when something solid is there. A lemming with no ground after the advance becomes a Faller. Steel is covered only by the flat fixture test, not by a steel pillar on real level data; the report says so."
+              },
+              {
+                "path": "src/__test__/test_world.cpp",
+                "detail": "Adds testBasherStartsShortOfTheWall, testBasherAwayFromAnyWallEnds and testBasherSteelTurnsIt, all registered in main() at lines 2712-2714. The report corrects the earlier x-sampling bug in the first test."
+              }
+            ]
+          },
+          {
+            "criterion": "The Basher start/advance/stop rules implemented are traced to cited retained or static evidence, or are explicitly labelled provisional with the reason; no unrelated skill, timing or release behavior changed. Any existing test expectation altered is one that encoded the defect, with before/after justification.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/basher-fix-001.md",
+                "detail": "Section 2 traces the rules to the original at constructor 0x0040BBA0, cell helper 0x0040C0AF, bite 0x0040C357 and end-of-cycle 0x0040C6E8. Those four addresses are cited from the worker's static REA work; I did not re-query the EXE. Section 3 lists the provisional deviations and the original observation that would settle each. The deviations are: all four rows of the leading column are tested on the bite tick; the advance happens at the bite tick rather than at 92% of the cycle; and the ground probe FUN_0042E913 is an inference. The report also says Miner, Digger, timing and release were not changed."
+              },
+              {
+                "path": "src/sim/World.h",
+                "detail": "Adds Lemming::bashCycles and Rules::basherGraceCycles = 2, with comments citing the original's +0x44 and +0x41 fields. No other rule constants change in the cited lines."
+              },
+              {
+                "path": "build/agent-runs/20261113T054733-9912-b7b4fa65/after-diff.txt",
+                "detail": "The removed lines are only the old `if (!anySolid)` early Walker, the unconditional clearBox and the one-line Basher assign. They are replaced by the grace logic and the bashCycles reset. No removed assertions appear in test_world.cpp, so no existing expectation was altered."
+              }
+            ]
+          },
+          {
+            "criterion": "A regression test covers the fixed behavior on real level data; full registered main/recovery verification passes; installed and normal saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_basherfix.cpp",
+                "detail": "Real-level driver on MM_BASH_002 through runApplication with camera drags and hover-matched clicks. `basherfix` asserts the gap-2 tunnel through all 16 columns, at least 64 cells removed, the Basher ending, and a follower crossing. `basherfix_away` asserts the far-wall case. The header comment says no save store is installed (standalone --level), so no save file is read or written."
+              },
+              {
+                "path": "build/agent-runs/20261113T054733-9912-b7b4fa65/verification.log",
+                "detail": "Supervisor verification for this run. Main: `100% tests passed, 0 tests failed out of 152` (line 448), including world, basherfix, basherfix_away and basherfix_probe_gap1/3. Recovery: `100% tests passed, 0 tests failed out of 84` (line 1128). The log ends with the recovery pass line at 1131."
+              },
+              {
+                "path": "build/agent-runs/20261113T054733-9912-b7b4fa65/result.json",
+                "detail": "Worker exit 0, verification exit 0, status needs_review, verified_content hash ae5315...5289. This matches the verification context supplied for this review."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T06:20:24.557080+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T054733-9912-b7b4fa65\\verification.log",
+        "verified_content": "ae531541f228396346074626aef77b2228d023e3bc3ccf41a7f0711fa8ed5289"
+      }
     },
     {
       "id": "level-sweep-001",
       "title": "Smoke-sweep all 102 installed levels in the clone and rank integrity failures",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "test-parallel-isolation-001"
       ],
@@ -12444,7 +12541,123 @@
           "by": "project lead",
           "change": "stop_after_review true -> false so the loop continues to terrain-render-001; scope text unchanged"
         }
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261113T062024-9912-8df02d0f",
+      "started": "2026-11-13T06:20:24.910300+00:00",
+      "finished": "2026-11-13T06:48:37.251721+00:00",
+      "last_run": "build/agent-runs/20261113T062024-9912-8df02d0f",
+      "review": {
+        "decision": "accept",
+        "reason": "All four acceptance criteria are covered. The report, driver, artifacts and verification log agree with each other. All 102 levels were enumerated and each has a recorded `completed` outcome, with no crash, hang or exception. The per-level matrix, blank-frame statistics and contact sheets exist, and the labels for direct entry and scripted frameSeconds=1.0 timing are explicit. Failures are grouped and ranked with observation and inference kept apart, and no winnability or fidelity claim is made. The supervisor's verification log shows main 170/170 and recovery 84/84 passing. Evidence shows the normal save unchanged in all 17 chunks. The report states that the original EXE was not executed. Three minor caveats do not block acceptance. (1) The driver FNV in the report (f5555ee9\u2026) differs from `identity.txt` (bc273813\u2026), which the report explains by the one-line NOMINMAX guard edit made after the measured run. (2) The 'levers in roughly 55 levels' census figure is explicitly approximate. (3) The crash/hang path of the driver was written but never exercised, and the report says so. I could not run `git diff`, since this pass is read-only, so the claim that no production file changed rests on the report, the git-status snapshot (World.cpp/.h, test_world.cpp and CMakeLists.txt modified, `test_basherfix.cpp` untracked, consistent with the report's account of pre-existing basher-fix-001 edits) and the driver contents.",
+        "checks": [
+          {
+            "criterion": "All 102 installed levels are enumerated from decoded map data and each has a recorded outcome from the production load, render and idle-simulation path, or an explicit recorded failure naming the level and the earliest failing stage. No level is silently skipped, and one level's crash or hang does not remove others from the matrix.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-sweep-001/report-summary.txt",
+                "detail": "records=102 expected=102 contact_sheets=5, which is the report-test aggregate showing every node has a record."
+              },
+              {
+                "path": "build/level-sweep-001/groups.txt",
+                "detail": "Lists all 102 nodes (0-101) under outcome 'completed @ - -' (no failing stage). Also shows 99 'all released' and 3 shortfalls (nodes 11, 91, 97), 99 'idle-window-after-release' and 3 'sim-cap', and no duplicate settled frames."
+              },
+              {
+                "path": "build/level-sweep-001/chunk-006/node-038/result.txt",
+                "detail": "Sample per-level record. It names the node, stored and resolved id, `entry=DIRECT --level`, load_result=ok, run_status=0, frames observed, scenery admission, spawned/expected and outcome=completed with failing_stage '-'."
+              },
+              {
+                "path": "src/__test__/test_levelsweep.cpp",
+                "detail": "The parent runs one child process per node (`spawnChild`, `runChunk`). A watchdog `TerminateProcess` and a parent-written CRASH/HANG record naming the node and stage keep one level's failure from hiding the others. The chunk asserts only that every node was visited and has a result record."
+              },
+              {
+                "path": "docs/scratch/level-sweep-001.md",
+                "detail": "The 102-row matrix is keyed by node and stored id (with resolved id where the spelling differs). It lists load/run status, released versus expected, end states, simulated and wall seconds, and scenery admission. It also states that the crash/hang path was not exercised."
+              }
+            ]
+          },
+          {
+            "criterion": "The report and artifacts contain the per-level matrix, blank-frame detection data, contact sheets, build and source identity, invocation, durations and evidence paths. Direct entry and any deterministic timing are labelled. Outcomes are observations: registered tests assert driver integrity only and do not convert a level failure into a pass or a test failure into a hidden result.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-sweep-001/matrix.csv",
+                "detail": "Full per-level data, including settled and final frame statistics (distinct colours, luminance mean and sd, modal fraction, black fractions, hash, verdict) used for blank-frame detection."
+              },
+              {
+                "path": "build/level-sweep-001/contact-sheet-0.png",
+                "detail": "First of five contact sheets (nodes 0-24). contact-sheet-1..4.png are also present, with 100-101 on sheet 4."
+              },
+              {
+                "path": "build/level-sweep-001/identity.txt",
+                "detail": "Compiler 16.1.0, SDL 2.32.10, archive sizes, FNV of the sources, frameSeconds=1, idle window, watchdog, chunk size and the reference EXE SHA-256 (read from tools.windows.json, not executed). Its driver hash differs from the report's because of the post-run NOMINMAX guard edit, which the report discloses."
+              },
+              {
+                "path": "build/level-sweep-001/chunk-006/node-038/result.txt",
+                "detail": "Records 'entry=DIRECT --level (not frontend reachability)' and 'timing=scripted source-test frameSeconds=1.00 per frame; production clock unchanged'. Also holds per-level wall and simulated durations and the verdict fields."
+              },
+              {
+                "path": "src/__test__/test_levelsweep.cpp",
+                "detail": "Outcome fields are written with `put`/`writeRecord` and the header says per-level outcomes are 'REPORTED, never asserted'. The only `require` calls cover visited counts and record existence, i.e. driver integrity."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "Registers levelsweep_chunk_00..16 and levelsweep_report with bounded TIMEOUT 1500/300. Each chunk gets a unique directory under build/level-sweep-001, and the report DEPENDS on all chunks."
+              }
+            ]
+          },
+          {
+            "criterion": "Failures are grouped by suspected shared cause and ranked by levels affected, with observation and inference kept distinct, and a per-level skill/gadget census is provided. The report claims neither winnability nor original fidelity for any level.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/level-sweep-001.md",
+                "detail": "A ranking table covers the fluid-receiver diagnostic (19 levels), the shared release cadence on multi-hatch levels (33, with 2 observed shortfalls and a 3rd attributed to level data), teleporting accumulation (3 levels, cause marked as unverified inference) and the node 11 fallers (1 level, unexplained). Observation and inference are labelled separately, and the limitations section disclaims winnability and fidelity."
+              },
+              {
+                "path": "build/level-sweep-001/census.md",
+                "detail": "Per-level census of skill stocks, teleports, speed pads, levers, fluid gates, hazard/trampoline/anti-gravity cells and decoded gadget models. The report's lever tally is hedged as approximate."
+              },
+              {
+                "path": "build/level-sweep-001/chunk-006/node-038/result.txt",
+                "detail": "Supports finding 3 as an observation: final_states=teleporting:94;walker:6, saved=0, dead=0. It also shows fluid-gate diagnostics ('receiver kind 2 ... receiver fluid not admitted') for finding 1 and skills, teleports and gadget_models for the census."
+              }
+            ]
+          },
+          {
+            "criterion": "No production behavior, existing test, assertion, timeout or protected control changed; installed and normal user saves are untouched; no original execution occurred. Full registered main/recovery verification passes and an independent review checks these criteria.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261113T062024-9912-8df02d0f/verification.log",
+                "detail": "Supervisor verification after worker exit: '100% tests passed, 0 tests failed out of 170' (main, including levelsweep_chunk_00..16 and levelsweep_report) and '100% tests passed, 0 tests failed out of 84' (recovery). The final `git diff --check` is the last line."
+              },
+              {
+                "path": "build/level-sweep-001/chunk-000/chunk.txt",
+                "detail": "normal_save_before == normal_save_after (unchanged=1). The same line appears in all 17 chunk.txt files (checked by grep, hash 61451cd1ab5b2ea3), and the report notes no save store is passed to runApplication."
+              },
+              {
+                "path": "src/__test__/test_levelsweep.cpp",
+                "detail": "The driver only reads (hashes) the normal save path and launches only itself as a child via `CreateProcessA`. It never launches the reference EXE, so no original execution occurred."
+              },
+              {
+                "path": "docs/scratch/level-sweep-001.md",
+                "detail": "Declares the allowed edits were new driver, CMake block and report only. The pre-existing World.cpp/.h and test_world.cpp edits belong to basher-fix-001 and were preserved, consistent with the git-status snapshot."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "The level-sweep block is self-contained (lines ~1186-1217). Its new timeouts apply only to new tests, and no existing test timeout is touched in that block."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T06:49:34.263195+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T062024-9912-8df02d0f\\verification.log",
+        "verified_content": "3ecd09f1496611198d0a283b4d7a43dc69425f06bcf608a10872f320e1ecc323"
+      }
     },
     {
       "id": "terrain-render-001",
@@ -12465,6 +12678,18 @@
         "Levels with no terrain edits render pixel-identically to before, or every difference is explained; existing frozen render identities still pass or their change is justified as part of this defect.",
         "The method is traced to cited evidence of the original, or explicitly labelled provisional with what would settle it. No timing, skill-rule or unrelated renderer change is included.",
         "A regression test covers visible terrain removal and addition on real level data; full registered main/recovery verification passes; installed and normal saves are untouched."
+      ],
+      "loop_attempts": 0,
+      "run_id": "20261113T064934-9912-8f0cf081",
+      "started": "2026-11-13T06:49:34.620744+00:00",
+      "finished": "2026-11-13T06:55:54.412202+00:00",
+      "last_run": "build/agent-runs/20261113T064934-9912-8f0cf081",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-13T14:30:28.943152+00:00",
+          "by": "project lead",
+          "change": "Attempt 1 ended after 6 minutes on the provider five-hour usage limit, not a task failure. Partial edits saved to build/lead/terrain-render-001-partial-attempt1.patch and removed from the tree; status blocked -> ready, attempts reset."
+        }
       ]
     }
   ]

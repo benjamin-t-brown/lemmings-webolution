@@ -83,6 +83,10 @@ struct Lemming {
   int fallDistance = 0;    // pixels fallen since leaving the ground
   int frame = 0;           // ticks spent in the current state
   int bricksLeft = 0;      // builder
+  // Basher: finished cycles, capped at Rules::basherGraceCycles (state+0x44 of the original's bash
+  // state, constructor 0x0040BBA0 zeroes it). While below the cap a cycle that removed nothing does
+  // not end the bash. Reset by World::assign.
+  int bashCycles = 0;
   // The bomber countdown, in MILLISECONDS, because that is what the original
   // keeps: the countdown object at vtable 0x004B0990 holds the double 5.0 and
   // its step subtracts the frame's own time slice (`fsub qword ptr [ecx]` at
@@ -855,6 +859,22 @@ public:
     //       emptied, and the one live cell it ever caught was (152, 44).
     int basherReach = 1;        // columns removed per cycle (classic was 2)
     int basherHeight = 4;       // rows, from the feet row upward
+    // basher-fix-001 (playtest P1). When a bash ends. READ from the decompiled bash state, not
+    // measured live: the state's ctor 0x0040BBA0 zeroes a removed-anything flag (+0x41) and a cycle
+    // counter (+0x44) and registers records at 4% steps; the end-of-cycle record 0x0040C6E8 (92%)
+    // advances the lemming one column (+0x48 += facing), then
+    //   `if (+0x44 == 2 && +0x41 == 0) -> walk (FUN_0042F8B9)`, else on ground (FUN_0042E913)
+    //   `if (+0x44 < 2) ++(+0x44); +0x41 = 0` and keep bashing, off ground -> fall state.
+    // The bite 0x0040C357 refuses steel / directional / blocker-field cells (cell helper
+    // 0x0040C0AF returns 1, bite ends the state) and applies the same `+0x44 == 2 && +0x41 == 0`
+    // test after its first record (arg 0, 12%). The helper sets +0x41 only when it clears a nonzero
+    // cell. So the first two cycles swing and advance a column each even through open air; from the
+    // third cycle on, a cycle that removed nothing ends the bash with the lemming facing as before.
+    // The clone samples one whole cycle per tick (see bitesThisTick), so it tests all basherHeight
+    // rows of the leading column at once where the original's 12% record sees only the feet row.
+    // PROVISIONAL difference. Settled by an original observation of a Basher assigned two or three
+    // cells short of a wall and of one assigned beside an overhang.
+    int basherGraceCycles = 2;
     // dig   three cells, `trunc(X) - 1 .. + 1`, in the row below the feet,
     //       then Y steps one cell down. Four diggers on MM_DIG_000 cleared
     //       3 cells x 4 cycles each, every one 0x21 -> 0x00000000.

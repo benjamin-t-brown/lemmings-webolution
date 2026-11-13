@@ -1664,6 +1664,94 @@ void testBashFootprintAndCadence() {
   check(isSolid(w.terrain().at(x0 + dir, y0 + 1)), "the row below the feet is still there");
 }
 
+// basher-fix-001 (playtest P1): when a bash starts and when it ends. The rule is READ from the original's
+// bash state (ctor 0x0040BBA0, end-of-cycle record 0x0040C6E8, bite 0x0040C357; see Rules::basherGraceCycles):
+// two cycles swing and advance a column even through air, then a cycle that removed nothing ends it. The
+// numbers are written out, not derived from Rules.
+//
+// Advance until the lemming walks with its first tall solid column exactly `gap` cells ahead (gap 1 =
+// adjacent), so a skill can be applied at a chosen distance from the wall.
+bool runUntilWallAt(World& w, int gap, int maxTicks) {
+  for (int i = 0; i < maxTicks; ++i) {
+    w.tick();
+    if (w.lemmings().empty())
+      continue;
+    const Lemming& l = w.lemmings()[0];
+    if (l.state != State::Walker)
+      continue;
+    const int dir = static_cast<int>(l.facing);
+    if (w.terrain().solid(l.x + dir * gap, l.y - 3) && !w.terrain().solid(l.x + dir * (gap - 1), l.y - 3))
+      return true;
+  }
+  return false;
+}
+
+void testBasherStartsShortOfTheWall() {
+  std::cout << "a basher assigned three cells short of a wall swings through the gap and tunnels it\n";
+  LevelSetup s = flatLevel();
+  s.terrain.fillBox(120, 50, 10, 30, Material::Earth);
+  World w(s);
+  check(runUntilWallAt(w, 3, 200), "the lemming walked up to three cells short of the wall");
+  const int y0 = w.lemmings()[0].y;
+  const int x0 = w.lemmings()[0].x;
+  const int dir = static_cast<int>(w.lemmings()[0].facing);
+  check(dir == 1 && x0 + 3 == 120, "a right-facing walker with the wall face at column 120");
+  check(w.assign(0, Skill::Basher), "basher applies");
+  w.tick();
+  check(w.lemmings()[0].state == State::Basher,
+        "still a basher after the assignment tick (it used to revert to Walker on its first empty bite)");
+  int ticks = 1;
+  while (w.lemmings()[0].state == State::Basher && ticks < 200) {
+    w.tick();
+    ++ticks;
+  }
+  // Sampled at the tick the bash ends: afterwards the walker carries on (and may turn back).
+  check(w.lemmings()[0].state != State::Basher, "the bash ended at open air (no endless basher)");
+  check(w.lemmings()[0].x >= 129,
+        std::format("the lemming came out the far side (x {} when the bash ended)", w.lemmings()[0].x));
+  bool tunnel = true;
+  for (int cx = 120; cx < 130; ++cx)
+    for (int dy = 0; dy < 4; ++dy)
+      tunnel = tunnel && !isSolid(w.terrain().at(cx, y0 - dy));
+  check(tunnel, "all ten columns of the wall were removed over the four feet rows");
+  check(isSolid(w.terrain().at(125, y0 - 4)), "the rows above the tunnel are still there");
+}
+
+void testBasherAwayFromAnyWallEnds() {
+  std::cout << "a basher assigned well short of a wall ends after its free swings and removes nothing\n";
+  LevelSetup s = flatLevel();
+  s.terrain.fillBox(120, 50, 10, 30, Material::Earth);
+  World w(s);
+  check(runUntilWallAt(w, 6, 200), "the lemming walked up to six cells short of the wall");
+  const std::size_t before = w.terrain().solidCells();
+  const int x0 = w.lemmings()[0].x;
+  check(w.assign(0, Skill::Basher), "basher applies");
+  int ticks = 0;
+  do {
+    w.tick();
+    ++ticks;
+  } while (w.lemmings()[0].state == State::Basher && ticks < 60);
+  check(w.lemmings()[0].state == State::Walker, "the bash ended (no endless basher)");
+  check(ticks >= 14 && ticks <= 16, std::format("after the third bite, tick ~15 (was {})", ticks));
+  check(w.terrain().solidCells() == before, "nothing was removed");
+  check(w.lemmings()[0].x == x0 + 2, "it advanced exactly the two free cycles' columns");
+  check(w.lemmings()[0].facing == Facing::Right, "and it did not turn round");
+}
+
+void testBasherSteelTurnsIt() {
+  std::cout << "a basher against steel turns round and removes nothing\n";
+  LevelSetup s = flatLevel();
+  s.terrain.fillBox(120, 50, 10, 30, Material::Steel);
+  World w(s);
+  check(runUntilWallAt(w, 1, 200), "the lemming reached the steel");
+  const std::size_t before = w.terrain().solidCells();
+  check(w.assign(0, Skill::Basher), "basher applies");
+  runFor(w, 3);
+  check(w.terrain().solidCells() == before, "steel was not removed");
+  check(w.lemmings()[0].state == State::Walker, "back to walking");
+  check(w.lemmings()[0].facing == Facing::Left, "turned away from the steel");
+}
+
 // Round 6: when a builder lays a brick, and which cells it writes.
 //
 // MEASURED off the original on MM_BUILD -- three builders, three processes,
@@ -2621,6 +2709,9 @@ int main() {
   testBasher();
   testDigFootprintAndCadence();
   testBashFootprintAndCadence();
+  testBasherStartsShortOfTheWall();
+  testBasherAwayFromAnyWallEnds();
+  testBasherSteelTurnsIt();
   testBuilderFootprintAndCadence();
   testBuilderRefusesAtAWall();
   testSkillRules();

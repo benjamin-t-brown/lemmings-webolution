@@ -573,6 +573,31 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME levelinteraction COMMAND test_levelinteraction)
   set_tests_properties(levelinteraction PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+
+  # basher-fix-001: the Basher at the wall on the installed MM_BASH_002 through runApplication (standalone
+  # --level, owned clock, no save store). Reports go under the ignored build/ tree. The probes observe at
+  # several distances from the wall and only fail on driver integrity; basherfix asserts the fixed behavior.
+  add_executable(test_basherfix src/__test__/test_basherfix.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_basherfix PRIVATE webolution_objects)
+  target_compile_definitions(test_basherfix PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_basherfix PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_basherfix PRIVATE PkgConfig::SDL2)
+  endif()
+  set(BF_DIR "${CMAKE_SOURCE_DIR}/build/basher-fix-001")
+  set(BF_ENV "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  foreach(gap 1 3)
+    add_test(NAME basherfix_probe_gap${gap} COMMAND test_basherfix probe "${BF_DIR}" ${gap})
+    set_tests_properties(basherfix_probe_gap${gap} PROPERTIES TIMEOUT 300 ENVIRONMENT "${BF_ENV}")
+  endforeach()
+  add_test(NAME basherfix COMMAND test_basherfix assert "${BF_DIR}")
+  set_tests_properties(basherfix PROPERTIES TIMEOUT 300 ENVIRONMENT "${BF_ENV}")
+  add_test(NAME basherfix_away COMMAND test_basherfix away "${BF_DIR}")
+  set_tests_properties(basherfix_away PROPERTIES TIMEOUT 300 ENVIRONMENT "${BF_ENV}")
   add_executable(test_leveloverlap src/__test__/test_leveloverlap.cpp
     ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
@@ -1157,6 +1182,39 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     set_tests_properties(playablebaseline_restart_${route} PROPERTIES TIMEOUT 300 ENVIRONMENT "${PB_ENV}"
       DEPENDS playablebaseline_play_${route})
   endforeach()
+
+  # level-sweep-001: direct-entry, no-input smoke sweep of all 102 map nodes, one CHILD PROCESS per level so a crash
+  # or hang is isolated and named. 17 chunks of 6 nodes; each chunk owns build/level-sweep-001/chunk-NNN (child
+  # records, logs, frames); the report test aggregates them. The tests assert driver integrity only (every node
+  # visited, a result record written, sheets written); a level's outcome is reported, never asserted. No save store is
+  # supplied to runApplication, so no save is read or written by the sweep.
+  set(LS_DIR "${CMAKE_SOURCE_DIR}/build/level-sweep-001")
+  add_executable(test_levelsweep src/__test__/test_levelsweep.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_levelsweep PRIVATE webolution_objects)
+  target_compile_definitions(test_levelsweep PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 LS_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_levelsweep PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_levelsweep PRIVATE PkgConfig::SDL2)
+  endif()
+  set(LS_ENV "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  set(LS_CHUNK_TESTS "")
+  foreach(chunk RANGE 0 16)
+    string(LENGTH "${chunk}" LS_LEN)
+    if(LS_LEN EQUAL 1)
+      set(LS_NAME "0${chunk}")
+    else()
+      set(LS_NAME "${chunk}")
+    endif()
+    add_test(NAME levelsweep_chunk_${LS_NAME} COMMAND test_levelsweep chunk ${chunk} "${LS_DIR}")
+    set_tests_properties(levelsweep_chunk_${LS_NAME} PROPERTIES TIMEOUT 1500 ENVIRONMENT "${LS_ENV}")
+    list(APPEND LS_CHUNK_TESTS levelsweep_chunk_${LS_NAME})
+  endforeach()
+  add_test(NAME levelsweep_report COMMAND test_levelsweep report 0 "${LS_DIR}")
+  set_tests_properties(levelsweep_report PROPERTIES TIMEOUT 300 ENVIRONMENT "${LS_ENV}" DEPENDS "${LS_CHUNK_TESTS}")
 
   # playable-expansion-001: scripted public-input assessment of Blocker (node 3), Builder (node 4) and the nearest
   # selectable gadget level, over ONE isolated save earned from fresh by step 1 (node 0 win). Outcomes (win/loss/

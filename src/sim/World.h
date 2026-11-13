@@ -104,6 +104,11 @@ struct Lemming {
   int fasterMs = 0;
   bool speedPadLatched = false;
 
+  // teleport-softlock-001: transpose each pad's original +0x248 actor-id
+  // exclusion list onto the actor as pad indices. A visit is armed again only
+  // after leaving that pad's closed AABB; no time-based cooldown.
+  std::vector<std::size_t> teleportPadsLatched;
+
   bool canClimb = false;   // climber and floater are permanent, not states
   bool canFloat = false;
 

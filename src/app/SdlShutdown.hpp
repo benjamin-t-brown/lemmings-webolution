@@ -1,9 +1,8 @@
-// Window-leg SDL shutdown that leaves an open audio device alone.
+// Presentation SDL shutdown that leaves an open audio device alone.
 //
-// Each frontend/level leg ends its window with SDL_Quit(), which also force-
-// stops the audio subsystem and would close the one Mixer the application owns
-// across legs. When audio is up, stop only the video and event subsystems the
-// leg started; otherwise keep the previous SDL_Quit() exactly.
+// The connected application owns one window across legs; standalone adapters
+// own a local presentation. At either owner's exit, stop video/events without
+// force-closing the separately owned Mixer. Without audio, SDL_Quit is enough.
 
 #pragma once
 

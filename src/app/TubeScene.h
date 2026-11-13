@@ -44,6 +44,8 @@ struct Sprite;
 
 namespace webo::app {
 
+class LemmingAnimTracker;
+
 struct SceneOptions {
   bool drawOuter = true;
   bool drawInner = true;
@@ -96,6 +98,11 @@ struct SceneOptions {
     // Explicit native actor+28 input. Injected/source alive actors default on;
     // the full native lifecycle producer is not reconstructed by this adapter.
     bool renderEnabled = true;
+    // actor-anim-001: the lemming SPR clip this walker draws ("walk", "climb", ...) and, in
+    // `walkTemporalIndex`, the temporal entry inside that clip. A literal with static storage
+    // (app/LemmingAnim.h names them); a clip the sheet lacks falls back to "walk".
+    // Last member so positional initialisers of the fields above are unaffected.
+    const char* clip = "walk";
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
   bool composeActorsBeforeRoute = false;
@@ -150,6 +157,10 @@ class TubeScene {
   const std::string& terrainError() const { return terrainError_; }
   const CellMeshes& cellMeshes() const { return cellMesh_; }
   const CollisionGrid& collisionGrid() const { return collision_; }
+
+  // actor-anim-001: the lemming sheet (SPRITES\LEMMINGSHI.SPR) the actors are drawn from, or
+  // nullptr when it did not load. The per-lemming animation tracker reads strip lengths from it.
+  const SpriteSheet* lemmingSprites() const { return haveLemmingSprites_ ? &lemmingSprites_ : nullptr; }
 
   std::size_t outerTiles() const { return outerTileCount_; }
   std::size_t innerTiles() const { return innerTileCount_; }
@@ -243,13 +254,10 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
 // included -- Dead/Exited lemmings stay in `World::lemmings()` forever (see
 // World.h) and are not part of what is "on the tube" any more.
 //
-// Every entry's `walkTemporalIndex` is 0: the walk-cycle animation phase is
-// not wired to any per-lemming clock here (that is A6b's `ActorAnim`, which
-// this round does not drive off `World::tick()`), and every non-Walker
-// `sim::State` also reuses the walk strip at that same fixed phase -- there
-// is no other sprite to draw it with (see TubeScene.cpp's round note). Both
-// are named limitations, not a hidden default.
+// Without `anim` every entry draws "walk" at temporal index 0 (the D3b behaviour, kept for
+// the fixtures that build walkers without a clock). With `anim` (actor-anim-001) each entry
+// takes the clip and temporal index the tracker holds for its lemming (app/LemmingAnim.h).
 std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
-    const sim::World& world, int terrainHeight);
+    const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim = nullptr);
 
 }  // namespace webo::app

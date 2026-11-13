@@ -9,6 +9,8 @@
 
 namespace webo::app {
 
+class SdlWindow;
+
 struct FrontendWindowOptions {
   int maxFrames = 0;
   // Capture only on reaching maxFrames. Selecting a level hands capture
@@ -22,6 +24,6 @@ using FrontendWindowObserver = std::function<void(const FrontendSession&, int)>;
 // A selected level is returned immediately and is left for the caller to render/capture.
 std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     FrontendSession& session, const FrontendWindowOptions& options,
-    FrontendWindowObserver observer = {});
+    FrontendWindowObserver observer = {}, SdlWindow* sharedWindow = nullptr);
 
 }  // namespace webo::app

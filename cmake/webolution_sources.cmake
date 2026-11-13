@@ -120,6 +120,8 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/ActorPose.cpp
   src/app/ActorTerrain.cpp
   src/app/ActorAnim.cpp
+  src/app/LemmingAnim.cpp
+  src/app/LemmingCountdown.cpp
   src/app/TubeScene.cpp
   src/app/MapScene.cpp
   src/app/FrontendSession.cpp

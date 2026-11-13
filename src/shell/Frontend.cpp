@@ -57,6 +57,12 @@ Outcome Frontend::press(Key key, int holdFrames) {
       if (key == Key::Return) {
         if (highlight_ == 0) return replacePage(Screen::Confirm);
         if (highlight_ == 1) return replacePage(Screen::Map);
+        if (highlight_ == 4) {
+          // READ48EE41..48EE4C: activating row pointer [menu+50] sets
+          // application exit byte4E3581. Results/level-menu Quit are separate.
+          quitRequested_ = true;
+          return Outcome::Handled;
+        }
         return Outcome::Unobserved;
       }
       return Outcome::Unobserved;

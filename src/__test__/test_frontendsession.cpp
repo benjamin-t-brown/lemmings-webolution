@@ -310,13 +310,19 @@ int main() {
         confirmProgress->pressReturn() == shell::Outcome::Handled && confirmProgress->screen() == Screen::Map &&
         confirmProgress->completionFlags() == std::array<std::int32_t, 102>{},
         "fresh Yes clears source nonzero progress after keyboard No");
-  for (int row = 2; row < 5; ++row) {
+  // P13: row4 is now the recovered Quit action, rather than an unsupported row.
+  for (int row = 2; row < 4; ++row) {
     shell::Frontend unsupported;
     unsupported.setHighlight(row);
     check(unsupported.press(shell::Key::Return) == shell::Outcome::Unobserved &&
           unsupported.screen() == Screen::Menu && unsupported.counter() == 3,
           "unimplemented row action is unobserved, not a native ignored-input claim");
   }
+  shell::Frontend quitMenu;
+  quitMenu.setHighlight(4);
+  check(quitMenu.press(shell::Key::Return) == shell::Outcome::Handled &&
+        quitMenu.quitRequested() && quitMenu.screen() == Screen::Menu && quitMenu.counter() == 3,
+        "Quit requests process exit without replacing the page");
   auto footer = make();
   if (!footer) return 1;
   footer->pressReturn(); footer->pressReturn();
@@ -384,13 +390,18 @@ int main() {
                 "half-open right/bottom and adjacent exterior pixels preserve page/focus/progress");
         }
         for (const auto& [x, y] : {std::pair{320, 348}, {320, 349}, {320, 377}, {320, 378},
-                                  {320, 392}, {320, 421}, {320, 450}, {0, 0}, {639, 479}}) {
+                                  {320, 392}, {320, 421}, {0, 0}, {639, 479}}) {
           auto miss = menu;
           check(!miss.click(x, y) && miss.screen() == Screen::Menu &&
                 miss.menuFocus() == priorFocus && miss.constructionCounter() == counter &&
                 miss.completionFlags() == flags && miss.mapStates() == states && !miss.selectedLevel(),
-                "inter-row gaps, unsupported rows2-4 and distant exterior do not mutate menu");
+                "inter-row gaps, unsupported rows2-3 and distant exterior do not mutate menu");
         }
+        auto quit = menu;
+        check(quit.click(320, 450) && quit.quitRequested() && quit.screen() == Screen::Menu &&
+              quit.menuFocus() == 4 && quit.constructionCounter() == counter &&
+              quit.completionFlags() == flags && quit.mapStates() == states && !quit.selectedLevel(),
+              "Quit activates from every prior focus and preserves progress");
       }
     }
     auto no = *currentGame;

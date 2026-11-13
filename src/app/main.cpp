@@ -66,6 +66,7 @@
 #include "app/Camera.h"
 #include "app/CameraIntro.h"
 #include "app/EntryStartCue.h"
+#include "app/LemmingAnim.h"
 #include "app/LevelMenu.h"
 #include "assets/GameData.h"
 #include "app/AppEntry.h"
@@ -110,6 +111,7 @@
 #include <format>
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <regex>
 #include <string>
@@ -118,7 +120,7 @@
 #if WEBOLUTION_HAVE_SDL2
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
-#include "app/SdlShutdown.hpp"
+#include "app/SdlWindow.hpp"
 #endif
 
 namespace fs = std::filesystem;
@@ -169,6 +171,7 @@ struct Args {
   std::string mapFlags;
   bool noInjectedWalkers = false;
   bool noTerrainSync = false;  // diagnostic: draw the terrain as loaded (the view before terrain-render-001)
+  bool noActorAnim = false;    // diagnostic: every lemming draws walk entry 0 (the view before actor-anim-001)
   bool sceneOff = false;
   std::string walkers;
   bool sim = false;
@@ -222,6 +225,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--flat") a.flat = true;
     else if (arg == "--no-injected-walkers") a.noInjectedWalkers = true;
     else if (arg == "--no-terrain-sync") a.noTerrainSync = true;
+    else if (arg == "--no-actor-anim") a.noActorAnim = true;
     else if (arg == "--scene-off") a.sceneOff = true;
     else if (arg == "--walkers") a.walkers = next();
     else if (arg == "--sim") a.sim = true;
@@ -264,7 +268,7 @@ void printHelp() {
             "to select a skill. Fast-forward/Armageddon buttons are not implemented.\n"
             "--frontend starts New Game -> Continue? -> map -> a simulated retail level.\n"
             "Use RETURN at the first two screens, then click an unlocked map node.\n"
-            "New Game and session-only Play Current Game are connected; other menu actions\n"
+            "New Game, Play Current Game and Quit are connected; other menu actions\n"
             "are incomplete; no movies. Progress is stored in the clone's own original-layout\n"
             "SavedGame.dat (1504 bytes) at %LOCALAPPDATA%\\LemmingsWebolution\\SavedGame.dat\n"
             "(Windows); it is saved after each won level and by New Game, and loaded at start.\n"
@@ -354,6 +358,7 @@ enum class LegDisposition { Exit, Completed, RetryLevel, ReturnToMap };
 static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver observer,
                             app::LevelFrameObserver levelObserver, app::ApplicationRunOptions runOptions,
                             app::FrontendSession* persistentFrontend,
+                            [[maybe_unused]] app::SdlWindow* sharedWindow,
                             [[maybe_unused]] audio::CuePlayback* cues,
                             std::optional<app::LevelOutcome>& completed, LegDisposition& disposition) {
   Args args = parseArgs(argc, argv);
@@ -397,7 +402,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       return 0;
     }
-    auto selected = app::runFrontendWindow(*frontend, {args.frames, args.windowShot}, std::move(observer));
+    auto selected = app::runFrontendWindow(*frontend, {args.frames, args.windowShot}, std::move(observer), sharedWindow);
     if (!selected) { std::fprintf(stderr, "frontend: %s\n", selected.error().c_str()); return 1; }
     if (!*selected) return 0; // closed or reached the requested frontend frame cap
     args.level = **selected;
@@ -797,21 +802,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   }
 
 #if WEBOLUTION_HAVE_SDL2
-  SDL_SetMainReady();
   // Frontend runs already started the adapter in runApplication (idempotent);
   // direct-level runs start it here, still once per process.
   if (cues) cues->start(*library, runOptions.enableAudio && !args.noAudio);
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
-    std::fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1;
+  app::SdlWindow localWindow;
+  auto& presentation = sharedWindow ? *sharedWindow : localWindow;
+  if (auto ready = presentation.ensure(
+      "Lemmings Webolution — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip"); !ready) {
+    std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
   }
-  SDL_Window* window = SDL_CreateWindow(
-      "Lemmings Webolution — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip",
-      SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
-  if (!window) { std::fprintf(stderr, "SDL window: %s\n", SDL_GetError()); SDL_Quit(); return 1; }
-  SDL_Renderer* presenter = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-  if (!presenter) { std::fprintf(stderr, "SDL renderer: %s\n", SDL_GetError()); SDL_DestroyWindow(window); SDL_Quit(); return 1; }
-  SDL_Texture* texture = SDL_CreateTexture(presenter, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 640, 480);
-  if (!texture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit(); return 1; }
+  SDL_Renderer* presenter = presentation.renderer();
+  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> ownedTexture(
+      SDL_CreateTexture(presenter, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 640, 480), SDL_DestroyTexture);
+  SDL_Texture* texture = ownedTexture.get();
+  if (!texture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); return 1; }
 
   params.width = 640; params.height = 480; params.aspect = 4.0 / 3.0;
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
@@ -839,6 +843,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     if (cues && world) cues->drain(*world);
   };
   std::optional<Image> runtimeFont;
+  app::LemmingAnimTracker lemmingAnim;
   std::optional<app::RetailSkillPanel> runtimePanel;
   std::optional<app::RuntimeCursor> runtimeCursor;
   std::optional<app::EntryStartCue> entryCue;
@@ -851,7 +856,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     if (!loadedFont || !loadedPanel || !loadedCursor) {
       std::fprintf(stderr, "runtime HUD: %s\n",
                     (!loadedFont ? loadedFont.error() : !loadedPanel ? loadedPanel.error() : loadedCursor.error()).c_str());
-      SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
       return 1;
     }
     runtimeFont = std::move(*loadedFont);
@@ -861,7 +865,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       auto strings = loadStrings(*library, "UK");
       if (!strings || strings->size() <= 71) {
         std::fprintf(stderr, "entry cue: missing localized string71\n");
-        SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
         return 1;
       }
       entryCueText = (*strings)[71]; // READ45CAEA pushes hex47: Let's Go!, not Continue/name.
@@ -869,7 +872,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       auto loadedMenu = app::LevelMenu::load(*library);
       if (!loadedMenu) {
         std::fprintf(stderr, "level menu: %s\n", loadedMenu.error().c_str());
-        SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window); SDL_Quit();
         return 1;
       }
       levelMenu = std::move(*loadedMenu);
@@ -1067,8 +1069,18 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       const bool ownedClock = args.frames > 0 || runOptions.frameSeconds > 0;
       simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, drainCues,
                                             ownedClock ? 0 : app::RuntimeSimState::kStallCapMs);
-      if (simTicked)
-        options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
+      // actor-anim-001: every lemming draws its own clip, advanced by level time every frame
+      // (not only on a simulation tick) and frozen while paused. Fast-forward runs the world
+      // kFastForwardPasses times per frame. Reuse its accepted integer-ms budget, including
+      // its stall cap and owned-clock exception; this does not change simulation timing.
+      // PROVISIONAL: a transition observed at frame end receives this frame's whole budget.
+      if (const SpriteSheet* lemmingSheet = scene->lemmingSprites(); lemmingSheet && !args.noActorAnim) {
+        const double levelDt = !simTicked ? 0.0 : runtimeSim.lastPassMs() / 1000.0 *
+            (runtimeSim.fastForward() ? app::RuntimeSimState::kFastForwardPasses : 1);
+        lemmingAnim.advance(*world, *lemmingSheet, levelDt);
+      }
+      options.injectedWalkers = app::injectedWalkersFromWorld(
+          *world, terrainHeight, args.noActorAnim ? nullptr : &lemmingAnim);
       if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
         const auto& result = *runtimeSim.endTransition().snapshot();
         completed = app::LevelOutcome{args.level, result.saved, world->setup().totalLemmings,
@@ -1096,6 +1108,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         auto image = toImage(windowRaster.framebuffer());
         app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection);
         app::drawRuntimeHud(image, *runtimeFont, *world, false);
+        // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
+        if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
+                        [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
+          const auto fuseBoxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library);
+          std::vector<app::LevelActorView> fuseActors;
+          std::size_t fuseWalker = 0;
+          for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
+            if (!world->lemmings()[i].alive()) continue;
+            if (fuseWalker < fuseBoxes.size() && fuseBoxes[fuseWalker])
+              fuseActors.push_back({i, *fuseBoxes[fuseWalker]});
+            ++fuseWalker;
+          }
+          app::drawBomberCountdowns(image, *runtimeFont, *world, fuseActors);
+        }
         const auto cueFrame = entryCue ? entryCue->frame() : std::nullopt;
         if (cueFrame) app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
         if (levelMenu) levelMenu->draw(image);
@@ -1118,7 +1144,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           std::size_t walker = 0;
           for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
             if (!world->lemmings()[i].alive()) continue;
-            if (walker < boxes.size() && boxes[walker]) actors.push_back({i, *boxes[walker]});
+            if (walker < boxes.size() && boxes[walker]) {
+              const auto& drawn = options.injectedWalkers[walker];
+              actors.push_back({i, *boxes[walker], drawn.clip, drawn.walkTemporalIndex});
+            }
             ++walker;
           }
           levelObserver({rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
@@ -1149,8 +1178,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   }
   SDL_SetRelativeMouseMode(SDL_FALSE);
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);
-  SDL_DestroyTexture(texture); SDL_DestroyRenderer(presenter); SDL_DestroyWindow(window);
-  app::quitWindowSubsystems();  // keeps the one open audio device across legs
   if (!args.windowShot.empty() && disposition == LegDisposition::Exit) {
     if (!finalWindowFrame) {
       std::fprintf(stderr, "window screenshot: exited before the requested final frame\n");
@@ -1186,7 +1213,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
 #endif
   if (!args.frontend || !args.shot.empty() || args.help || args.map)
     return runApplicationLeg(argc, argv, std::move(observer), std::move(levelObserver), options,
-                             nullptr, cues, completed, disposition);
+                             nullptr, nullptr, cues, completed, disposition);
   auto library = AssetLibrary::open(fs::path(args.gameDir) / "lemmings.box",
                                     fs::path(args.gameDir) / "patch.box");
   if (!library) { std::fprintf(stderr, "assets: %s\n", library.error().c_str()); return 1; }
@@ -1205,13 +1232,19 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
 #if WEBOLUTION_HAVE_SDL2
   // Device failure, a missing WAV or no audio backend only print a diagnostic.
   playback.start(*library, options.enableAudio && !args.noAudio);
+  // Own the window and renderer across menu, levels, retries and results. Legs
+  // borrow them and own only their texture; no video shutdown between pages.
+  SdlWindow presentation;
+  auto* sharedWindow = &presentation;
+#else
+  SdlWindow* sharedWindow = nullptr;
 #endif
   // Keep this session alive across level/results/map/retry legs. Every level
   // still uses the same loader and SDL runtime; no recursive app invocation.
   for (;;) {
     completed.reset();
     disposition = LegDisposition::Exit;
-    const int status = runApplicationLeg(argc, argv, observer, levelObserver, options, &*session, cues, completed, disposition);
+    const int status = runApplicationLeg(argc, argv, observer, levelObserver, options, &*session, sharedWindow, cues, completed, disposition);
     if (status != 0 || disposition == LegDisposition::Exit) return status;
     if (disposition == LegDisposition::RetryLevel) {
       if (!session->retryLevel()) return 1;

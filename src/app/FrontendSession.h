@@ -27,7 +27,7 @@ namespace webo::app {
 // winning completeLevel saves after the in-memory commit, and New Game Yes writes
 // the zero image. Without a store (tests) nothing touches disk. Results
 // Continue/retry/Quit preserve this owned progress. Main-menu clicks support New
-// Game and Play Current Game; other actions remain unimplemented. Main-menu
+// Game, Play Current Game and Quit; other actions remain unimplemented. Main-menu
 // UP/DOWN is an SDL adapter, not a claim about physical DirectInput bindings.
 class FrontendSession {
  public:
@@ -69,6 +69,7 @@ class FrontendSession {
   shell::Outcome pressReturn();
   bool moveMenuFocus(int direction);
   int menuFocus() const { return state_.highlight(); }
+  bool quitRequested() const { return state_.quitRequested(); }
   shell::Outcome openLevelMenu();
   shell::Outcome closeLevelMenu(bool paused);
   bool click(int x, int y);
@@ -101,9 +102,9 @@ class FrontendSession {
   std::string confirmQuestion_;
   Image font_, initialMapImage_;
   std::string mapFooterLabel_;
-  // SOURCE half-open targets for the two implemented actions, derived from
+  // SOURCE half-open targets for the implemented actions, derived from
   // the rendered panels. The shell model remains the sole focus owner.
-  std::array<std::array<int, 4>, 2> menuBoxes_{};
+  std::array<std::array<int, 4>, 5> menuBoxes_{};
   std::array<std::array<int, 4>, 2> confirmBoxes_{};
   std::array<int, 4> mapFooterBox_{};
   MapScene map_;

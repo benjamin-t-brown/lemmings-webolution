@@ -2,6 +2,7 @@
 #include "app/ActorVisibility.h"
 
 #include "app/ActorSprite.h"
+#include "app/LemmingAnim.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
 #include "assets/LightMap.h"
@@ -260,7 +261,10 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   if (!options.composeSkipActorVisibility &&
       !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
     return std::nullopt;
-  const Sprite* walkSprite = sprites.find("walk");
+  // actor-anim-001: the walker's own clip; the walk clip when the sheet lacks it.
+  const Sprite* walkSprite = injected.clip != nullptr ? sprites.find(injected.clip) : nullptr;
+  if (walkSprite == nullptr)
+    walkSprite = sprites.find("walk");
   if (walkSprite == nullptr)
     return std::nullopt;
 
@@ -817,10 +821,12 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
 }
 
 std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
-    const sim::World& world, int terrainHeight) {
+    const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim) {
   std::vector<SceneOptions::InjectedNativeWalker> out;
   out.reserve(world.lemmings().size());
-  for (const sim::Lemming& lemming : world.lemmings()) {
+  const auto& lemmings = world.lemmings();
+  for (std::size_t i = 0; i < lemmings.size(); ++i) {
+    const sim::Lemming& lemming = lemmings[i];
     if (!lemming.alive())
       continue;
     const ActorTerrainSample sample = terrainSampleFromLemming(lemming, terrainHeight);
@@ -829,8 +835,13 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     walker.plus8Y = sample.y;
     walker.plus8Z = sample.z;
     walker.facing = static_cast<int>(lemming.facing);
-    // walkTemporalIndex stays 0 for every state -- see this function's own
-    // declaration comment in TubeScene.h.
+    // Without a tracker every state draws walk entry 0 (the D3b behaviour); with one, the
+    // lemming's own clip and temporal entry (actor-anim-001).
+    if (anim != nullptr) {
+      const LemmingAnimPose pose = anim->poseOf(i);
+      walker.clip = pose.clip;
+      walker.walkTemporalIndex = pose.temporalIndex;
+    }
     out.push_back(walker);
   }
   return out;

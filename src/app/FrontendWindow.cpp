@@ -1,6 +1,7 @@
 #include "app/FrontendWindow.h"
 
 #include "assets/Png.h"
+#include <memory>
 
 #ifndef WEBOLUTION_HAVE_SDL2
 #define WEBOLUTION_HAVE_SDL2 0
@@ -9,25 +10,13 @@
 #if WEBOLUTION_HAVE_SDL2
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
-#include "app/SdlShutdown.hpp"
+#include "app/SdlWindow.hpp"
 #endif
 
 namespace webo::app {
 
 #if WEBOLUTION_HAVE_SDL2
 namespace {
-struct SdlResources {
-  SDL_Window* window = nullptr;
-  SDL_Renderer* renderer = nullptr;
-  SDL_Texture* texture = nullptr;
-  ~SdlResources() {
-    if (texture) SDL_DestroyTexture(texture);
-    if (renderer) SDL_DestroyRenderer(renderer);
-    if (window) SDL_DestroyWindow(window);
-    quitWindowSubsystems();
-  }
-};
-
 struct CursorVisibility {
   // This frontend path uses the software sprite. Native's alternate backend
   // owns separate monochrome OS handles; SDL hiding here is not that backend.
@@ -43,29 +32,26 @@ std::string sdlError(const char* action) {
 
 std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     FrontendSession& session, const FrontendWindowOptions& options,
-    FrontendWindowObserver observer) {
+    FrontendWindowObserver observer, SdlWindow* sharedWindow) {
   if (options.maxFrames < 0) return std::unexpected("maxFrames cannot be negative");
   if (!options.finalFramePath.empty() && options.maxFrames == 0)
     return std::unexpected("frontend screenshot requires a positive frame limit");
   if (session.selectedLevel()) return session.selectedLevel();
+  if (session.quitRequested()) return std::optional<std::string>{};
 
-  SDL_SetMainReady();
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
-    return std::unexpected(sdlError("SDL_Init"));
-  SdlResources sdl;
-  sdl.window = SDL_CreateWindow("Lemmings Webolution", SDL_WINDOWPOS_CENTERED,
-                                SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
-  if (!sdl.window) return std::unexpected(sdlError("SDL_CreateWindow"));
-  sdl.renderer = SDL_CreateRenderer(sdl.window, -1, SDL_RENDERER_SOFTWARE);
-  if (!sdl.renderer) return std::unexpected(sdlError("SDL_CreateRenderer"));
-  sdl.texture = SDL_CreateTexture(sdl.renderer, SDL_PIXELFORMAT_RGBA32,
-                                  SDL_TEXTUREACCESS_STREAMING, 640, 480);
-  if (!sdl.texture) return std::unexpected(sdlError("SDL_CreateTexture"));
+  SdlWindow localWindow;
+  auto& presentation = sharedWindow ? *sharedWindow : localWindow;
+  if (auto ready = presentation.ensure(); !ready) return std::unexpected(ready.error());
+  auto* renderer = presentation.renderer();
+  std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> texture(
+      SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 640, 480),
+      SDL_DestroyTexture);
+  if (!texture) return std::unexpected(sdlError("SDL_CreateTexture"));
 
   CursorVisibility cursorVisibility;
 
-  // A fresh SDL window cannot own holds from a previous window/level. Retain
-  // logical XY, but start a new input lifetime without querying/warping desktop
+  // Each frontend leg starts a new input lifetime, including on the shared
+  // window. Retain logical XY without querying/warping desktop
   // input. This is the SOURCE adapter boundary, not native focus sampling.
   session.setFocused(true);
   session.setButtons(false, false);
@@ -99,18 +85,19 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
           session.click(session.pointerX(), session.pointerY());
       }
       if (session.selectedLevel()) return session.selectedLevel();
+      if (session.quitRequested()) return std::optional<std::string>{};
     }
     if (!running) break;
 
     const Image image = session.composeFrame();
     if (image.width != 640 || image.height != 480 || image.rgba.size() != 640u * 480u * 4u)
       return std::unexpected("frontend image must be tightly packed 640x480 RGBA");
-    if (SDL_UpdateTexture(sdl.texture, nullptr, image.rgba.data(), 640 * 4) != 0)
+    if (SDL_UpdateTexture(texture.get(), nullptr, image.rgba.data(), 640 * 4) != 0)
       return std::unexpected(sdlError("SDL_UpdateTexture"));
-    if (SDL_RenderClear(sdl.renderer) != 0 ||
-        SDL_RenderCopy(sdl.renderer, sdl.texture, nullptr, nullptr) != 0)
+    if (SDL_RenderClear(renderer) != 0 ||
+        SDL_RenderCopy(renderer, texture.get(), nullptr, nullptr) != 0)
       return std::unexpected(sdlError("SDL_RenderCopy"));
-    SDL_RenderPresent(sdl.renderer);
+    SDL_RenderPresent(renderer);
     if (!options.finalFramePath.empty()) lastPresented = image;
     const int frame = frames++;
     if (observer) observer(session, frame);
@@ -129,7 +116,7 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
 }
 #else
 std::expected<std::optional<std::string>, std::string> runFrontendWindow(
-    FrontendSession&, const FrontendWindowOptions&, FrontendWindowObserver) {
+    FrontendSession&, const FrontendWindowOptions&, FrontendWindowObserver, SdlWindow*) {
   return std::unexpected("frontend window requires SDL2");
 }
 #endif

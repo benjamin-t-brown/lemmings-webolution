@@ -12793,7 +12793,7 @@
     {
       "id": "actor-anim-001",
       "title": "Animate lemmings by state in the level view",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "terrain-render-001"
       ],
@@ -12809,12 +12809,182 @@
         "A fused Bomber shows a visible countdown above the lemming that decreases to the explosion, shown in retained images.",
         "The state-to-strip mapping, frame rates and mirroring are traced to cited retained or static evidence, or listed individually as provisional. No simulation rule, position or timing changed; existing frozen render identities pass or each change is justified as this defect.",
         "A regression test covers state-dependent strip selection and frame advance on real assets; full registered main/recovery verification passes; installed and normal saves are untouched."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261113T154733-32228-ef6c5331",
+      "started": "2026-11-13T15:47:33.415212+00:00",
+      "finished": "2026-11-13T16:20:32.563371+00:00",
+      "last_run": "build/agent-runs/20261113T154733-32228-ef6c5331",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261113T152739-41368-85eb59ad/verification.log",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-13T15:47:19.324115+00:00",
+          "by": "project lead",
+          "change": "Resume note. Attempt 1 (Claude Sonnet) left substantial uncommitted work in the tree: src/app/LemmingAnim.cpp/.h, src/app/LemmingCountdown.cpp, src/__test__/test_actoranimstate.cpp, docs/scratch/actor-anim-001.md and edits to TubeScene, main.cpp, AppEntry.h, CMakeLists.txt and cmake/webolution_sources.cmake. Its verification failed at link: undefined reference to webo::app::LemmingAnimTracker::poseOf(unsigned long long) const from TubeScene.cpp:841. Attempt 2 was cancelled by the lead a few minutes in to change provider; it is not a task failure. Inspect and continue that work rather than restarting: read the report first, fix the link error, then run the tests, which have never been executed. The report must be corrected to describe what was actually verified."
+        }
+      ],
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria are supported by source inspection, reviewed clone images, retained measurements and successful supervisor verification. The before images explicitly reconstruct the old path and agree with retained pre-task source; they are not frozen-build captures. Acceptance is limited to this clone implementation, with provisional presentation choices documented. Human playability and original-game fidelity remain unproved.",
+        "checks": [
+          {
+            "criterion": "The report traces the production path from lemming state to drawn frame and shows, with retained clone images or frame-index measurements before the change, that every state drew one walker frame.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/actor-anim-001.md",
+                "detail": "Traces World lemmings through main.cpp, injectedWalkersFromWorld, prepareInjectedWalker and drawing. Clearly identifies the legacy images as a diagnostic reconstruction."
+              },
+              {
+                "path": "build/actor-anim-001/resume-backup/HEAD/src/app/TubeScene.cpp",
+                "detail": "Retained pre-task implementation ignores simulation state, leaves temporal index zero and unconditionally selects walk. Its header and main.cpp backups corroborate the old production path."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/climb-frames.csv",
+                "detail": "Legacy walker and climber samples consistently draw walk[0]; animated samples select advancing walk and climb entries. The other retained route CSVs establish the same legacy behavior for their states."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, through the production application path with public input on installed levels, walkers cycle through multiple frames over time and at least climber (MM_CLIMB_002), floater and faller (MM_FLOAT), bomber (MM_BOMB), builder (MM_BUILD), basher (MM_BASH_002) and blocker (MM_BLOCK_001_A) draw their own strips, with before/after images retained and reviewed. Animation stops while paused.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_actoranimstate.cpp",
+                "detail": "Routes invoke runApplication on installed levels and assign skills through queued public keys, camera input, hover and clicks. Observers read the World without mutating it; assertions check stock consumption, strip advance and matched simulation positions."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/walker-before-after.png",
+                "detail": "Reviewed: upper-row walking poses vary; the legacy row retains the same walking pose."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/climb-before-after.png",
+                "detail": "Reviewed MM_CLIMB_002: changing climbing poses replace the legacy walking pose."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/float-before-after.png",
+                "detail": "Reviewed MM_FLOAT: the umbrella opens and the floating poses advance; the legacy row remains walking."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/faller-before-after.png",
+                "detail": "Reviewed: initial falling poses differ from legacy walking, followed by landing. float-frames.csv records additional fall samples at entries 3, 6, 10 and 13."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/bomb-before-after.png",
+                "detail": "Reviewed MM_BOMB: six pre-blast samples show the explode sequence rather than walking; later columns are empty after actor removal."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/build-before-after.png",
+                "detail": "Reviewed MM_BUILD: builder cap, tools and changing working poses replace the walking strip."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/bash-before-after.png",
+                "detail": "Reviewed MM_BASH_002: changing bashing arm/body poses replace the static walking pose."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/block-before-after.png",
+                "detail": "Reviewed MM_BLOCK_001_A: the blocker strip produces subtle body sway, distinct from the legacy walking pose."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/main-ctest.log",
+                "detail": "Records successful public-input routes and 20/20 paused frames with identical walker-index maps; all 12 walk entries appear before pause and after resume. Reviewed pause-held.png and pause-held-later.png are identical."
+              }
+            ]
+          },
+          {
+            "criterion": "A fused Bomber shows a visible countdown above the lemming that decreases to the explosion, shown in retained images.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/bomb-countdown.png",
+                "detail": "Independently reviewed: clearly visible yellow digits above the lemming read 5, 4, 3, 2, 1."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/bomb-frames.csv",
+                "detail": "Countdown decreases through all five digits, with measured glyph pixels, then reaches zero as the actor selects advancing explode entries."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/bomb-blast-frame.png",
+                "detail": "Reviewed post-blast application frame shows the crater and removal of the target. The test requires actual blast completion in both compared runs."
+              },
+              {
+                "path": "src/app/LemmingCountdown.cpp",
+                "detail": "Draws the existing fuse-derived countdown above the projected sprite using HUD glyphs; it does not control the fuse or explosion."
+              }
+            ]
+          },
+          {
+            "criterion": "The state-to-strip mapping, frame rates and mirroring are traced to cited retained or static evidence, or listed individually as provisional. No simulation rule, position or timing changed; existing frozen render identities pass or each change is justified as this defect.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/actor-anim-001.md",
+                "detail": "Lists each state mapping and individually identifies provisional blocker/splatter mappings, looping policies, frame-end transitions, umbrella handover and countdown presentation. Retains the registered reference SHA-256 and separates static findings from clone observations."
+              },
+              {
+                "path": "docs/scratch/phase-a6-actor-anim-clock.md",
+                "detail": "Retained instruction evidence establishes rate multiplication and strict accumulator >0.06 at 0x468833, remainder preservation, end behavior and strip reset at 0x468AB8. The implementation reuses this unchanged clock."
+              },
+              {
+                "path": "docs/scratch/phase-a3-sprite-view.md",
+                "detail": "Documents temporal/directional axes and count-dependent mirror selection at 0x46840B, including retained 608 branch cases and 42 actor-bound comparisons. The production chooser and pose arithmetic remain unchanged."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/clips.txt",
+                "detail": "Real-asset measurements establish strip lengths, directional counts and rates: ordinary strips 1, shrug 0.5 and cartwheel 2."
+              },
+              {
+                "path": "src/app/LemmingAnim.cpp",
+                "detail": "Reads a const World, selects clips and advances presentation clocks without writing simulation state or positions. main.cpp supplies the existing accepted simulation budget."
+              },
+              {
+                "path": "build/agent-runs/loop-11670dc9c3fa453293858110cf9a52a2/0002-review-490e28/before-diff.txt",
+                "detail": "Production edits are confined to animation/render integration; no simulation implementation or existing test assertion changes appear."
+              },
+              {
+                "path": "build/agent-runs/20261113T154733-32228-ef6c5331/verification.log",
+                "detail": "Frozen-source hash checks and existing actor composition, pose, sprite selection, animation, visibility and click-assignment regressions pass."
+              }
+            ]
+          },
+          {
+            "criterion": "A regression test covers state-dependent strip selection and frame advance on real assets; full registered main/recovery verification passes; installed and normal saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_actoranimstate.cpp",
+                "detail": "Loads installed LEMMINGSHI.SPR, checks state-dependent distinct strips, exercises frame advance and pause, and verifies six public-input skill routes. Standalone runs leave the save store unset."
+              },
+              {
+                "path": "build/agent-runs/20261113T154733-32228-ef6c5331/verification.log",
+                "detail": "Supervisor verification passes 182/182 main and 84/84 recovery tests using registered MinGW-w64 tools; all eight actoranimstate tests pass."
+              },
+              {
+                "path": "build/agent-runs/20261113T154733-32228-ef6c5331/result.json",
+                "detail": "Records verifier exit zero and verified content fingerprint 9d9d5afdeeb7784073a9c6b063382395beda3ee6aaae612cf344014ce2577590."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/worker-tested-sources.json",
+                "detail": "All ten recorded source hashes match the inspected files. Independently checked snapshot manifest entries also match their retained files."
+              },
+              {
+                "path": "build/actor-anim-001/worker-20261113T154733/saves-proof.json",
+                "detail": "Installed and normal LocalAppData SavedGame.dat hashes are unchanged before/after. AppEntry.h confirms these test options perform no save-store reads or writes."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T16:24:05.251561+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T154733-32228-ef6c5331\\verification.log",
+        "verified_content": "9d9d5afdeeb7784073a9c6b063382395beda3ee6aaae612cf344014ce2577590"
+      }
     },
     {
       "id": "teleport-softlock-001",
       "title": "Stop lemmings bouncing between paired teleport pads",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "terrain-render-001"
       ],
@@ -12829,12 +12999,128 @@
         "After the change, on MM_TELE_003 and the two other affected levels, lemmings that enter a pad arrive at the partner, leave it and continue; the idle run no longer accumulates lemmings in teleporting, shown by the same measurement before and after. The other teleport levels in the sweep are rechecked and not made worse.",
         "The arrival rule is traced to cited retained or static evidence, or labelled provisional with what would settle it. Teleport pairing from serialized link ids is unchanged.",
         "A regression test covers arrival without re-entry on real level data; full registered main/recovery verification passes; installed and normal saves are untouched."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261113T162405-32228-8e019ba9",
+      "started": "2026-11-13T16:24:05.509875+00:00",
+      "finished": "2026-11-13T16:52:34.150526+00:00",
+      "last_run": "build/agent-runs/20261113T162405-32228-8e019ba9",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by retained evidence and independent source inspection. The change removes forced teleport bouncing while preserving serialized pairing and existing timing. Supervisor verification passes. This acceptance establishes the scoped clone fix, not human-confirmed playability or original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "A per-tick trace on installed MM_TELE_003 through the production path before the change shows what lemmings in the teleporting state actually do, and the cause is stated as observed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-softlock-001/before/trace/trace.csv",
+                "detail": "The naturally released first lemming enters Teleporting at tick 73, arrives at (241,31) as Walker at tick 76, immediately re-enters at tick 77, and returns to (79,34) at tick 80. This directly establishes repeated bouncing."
+              },
+              {
+                "path": "src/__test__/test_teleportsoftlock.cpp",
+                "detail": "The trace loads installed MM_TELE_003 through loadRetailLevel and advances World::advanceElapsedMs without injecting actors or skills. Application cases additionally exercise runApplication and its clock adapter."
+              },
+              {
+                "path": "build/teleport-softlock-001/source-provenance.json",
+                "detail": "Independently checked retained baseline World.cpp, World.h and CMakeLists.txt hashes match the task-entry values. The report explicitly corrects an early helper that misclassified a bounce as departure."
+              },
+              {
+                "path": "docs/scratch/teleport-softlock-001.md",
+                "detail": "States the cause as observed and traces loading, serialized pairing, elapsed-time updates, pad detection and arrival. The destination Walker was checked for pad entry before it could walk away."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, on MM_TELE_003 and the two other affected levels, lemmings that enter a pad arrive at the partner, leave it and continue; the idle run no longer accumulates lemmings in teleporting, shown by the same measurement before and after. The other teleport levels in the sweep are rechecked and not made worse.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-softlock-001/after/trace/trace.csv",
+                "detail": "The first MM_TELE_003 lemming still arrives at (241,31) at tick 76, then walks left through tick 83 and beyond instead of re-entering."
+              },
+              {
+                "path": "build/teleport-softlock-001/before/sweep/idle.csv",
+                "detail": "Baseline census records Teleporting counts 94, 6 and 44 for MM_TELE_003, M16_MG_1 and M17_MT_1 at 167, 28 and 124 seconds respectively."
+              },
+              {
+                "path": "build/teleport-softlock-001/after/sweep/idle.csv",
+                "detail": "The same horizons yield counts 0, 1 and 5. Independent comparison confirms the complete census rows for the other 15 teleport levels are unchanged. MM_TELE_003 now proceeds into hazards; its 78 deaths are documented rather than presented as a win."
+              },
+              {
+                "path": "build/teleport-softlock-001/after/sweep/visits.csv",
+                "detail": "The three affected routes record 179/177, 21/18 and 420/411 completed arrivals/departures respectively, with maximum transit 600 ms and zero immediate re-entries. Residual Teleporting actors are bounded transits."
+              },
+              {
+                "path": "build/teleport-softlock-001/after/sweep/directed.csv",
+                "detail": "Independently inspected all 108 directed installed-pad visits: every row records departure and no bounce, covering all 54 pads in both facings."
+              },
+              {
+                "path": "docs/scratch/teleport-softlock-001.md",
+                "detail": "The three retained application census files match the sweep results. Independently viewed the linked before-final, after-departure and after-final images for each affected level; they corroborate movement beyond the pad areas. Individual transitions are established by the trace and event audit."
+              }
+            ]
+          },
+          {
+            "criterion": "The arrival rule is traced to cited retained or static evidence, or labelled provisional with what would settle it. Teleport pairing from serialized link ids is unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/teleport-softlock-001/static/instructions.json",
+                "detail": "Retained instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show destination registration at 0x4350E1\u20130x4350F9, membership-based skipping at 0x4354DD\u20130x43550D, and exclusion removal only for missing/outside actors at 0x435454\u20130x435478. These agree with the retained pseudocode."
+              },
+              {
+                "path": "build/teleport-softlock-001/static/register-instructions.json",
+                "detail": "0x434A97\u20130x434AA4 passes the actor id to insertion on the pad's +0x248 list. Retained suppression/list decompilation identifies membership as an equality search and insertion as list-node allocation/linking."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Stores source/arrival contacts, skips excluded pads and removes contacts after leaving their closed wrapped boxes. Existing arrival coordinates, facing and transit timing remain unchanged. Excluding all overlapping arrival pads is explicitly provisional."
+              },
+              {
+                "path": "docs/scratch/teleport-softlock-001.md",
+                "detail": "Explains the transposition from per-pad actor-id lists to per-actor pad indices, distinguishes unreconstructed exit animation/offsets, and states what would settle overlapping-pad behavior. Installed destinations each have exactly one containing pad."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Serialized link-id destination construction remains unchanged. Manifest comparison confirms neither this loader nor LevelObjects.cpp changed during the task; existing pairing regressions also pass."
+              }
+            ]
+          },
+          {
+            "criterion": "A regression test covers arrival without re-entry on real level data; full registered main/recovery verification passes; installed and normal saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_teleportsoftlock.cpp",
+                "detail": "Five registered cases cover the natural installed-level trace, all 18 teleport levels, 108 directed visits, rearming, independent actors and three production application routes. Application runs inject private save stores; every case compares existence and complete bytes of installed and normal saves."
+              },
+              {
+                "path": "build/agent-runs/20261113T162405-32228-8e019ba9/verification.log",
+                "detail": "Supervisor verification records 187/187 main and 84/84 recovery tests passing with registered tools, including all five new cases and existing teleport regressions. This supersedes the worker report's pending-verification statement."
+              },
+              {
+                "path": "build/agent-runs/20261113T162405-32228-8e019ba9/result.json",
+                "detail": "Records verification exit zero and verified-content fingerprint 3190291cac4eca430c3e43abd5ba4dae8d5cae397243342f192b50e1a201f637. Current files match the review-entry manifest; differences from the verification manifest are limited to controller-updated queue/status files."
+              },
+              {
+                "path": "build/teleport-softlock-001/after/MM_TELE_003/save-proof.csv",
+                "detail": "Records both existing 1504-byte saves unchanged. Independently inspected corresponding trace, sweep, M16_MG_1 and M17_MT_1 proof files; all report unchanged installed and normal saves."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T16:55:33.881130+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T162405-32228-8e019ba9\\verification.log",
+        "verified_content": "3190291cac4eca430c3e43abd5ba4dae8d5cae397243342f192b50e1a201f637"
+      }
     },
     {
       "id": "frontend-window-quit-001",
       "title": "Keep one window from menu to level and make Quit exit",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "terrain-render-001"
       ],
@@ -12848,7 +13134,93 @@
         "The report traces where the windows are created and destroyed and why Quit had no effect, with a before measurement (window create/destroy count across a frontend-to-level-to-map round trip, and Quit leaving the application running).",
         "After the change a scripted public-input round trip through the production application (menu, map, level, results, map) uses one SDL window with zero destroy/create between legs, and activating Quit on the main menu ends the application with status 0; both are asserted by a regression test.",
         "Existing frontend, level-return and results tests pass unchanged or each changed expectation is justified as encoding the defect. Full registered main/recovery verification passes; installed and normal saves are untouched."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261113T165533-32228-13cdd598",
+      "started": "2026-11-13T16:55:34.145301+00:00",
+      "finished": "2026-11-13T17:22:19.245195+00:00",
+      "last_run": "build/agent-runs/20261113T165533-32228-13cdd598",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by source inspection, retained before/after runs and supervisor verification. Acceptance covers the clone window/Quit fix; desktop focus/flicker, original window continuity and human-confirmed playability remain unproven. No builds, tests or original execution were performed during this review.",
+        "checks": [
+          {
+            "criterion": "The report traces where the windows are created and destroyed and why Quit had no effect, with a before measurement (window create/destroy count across a frontend-to-level-to-map round trip, and Quit leaving the application running).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/frontend-window-quit-001.md",
+                "detail": "Traces the frontend-local SDL resources, separate level window and recreated results frontend. Identifies both missing Quit paths: mouse hitboxes covered only rows 0/1, and Return supported only rows 0/1."
+              },
+              {
+                "path": "build/agent-native/main/frontend-window-quit-before-test/run-1794589556901866800/windows.csv",
+                "detail": "Records three window creations, two destructions between frontend/level/results legs and final destruction on exit. The quit-still-running frame directly records ineffective main-menu mouse Quit."
+              },
+              {
+                "path": "build/frontend-window-quit-001/before/run-1794589193080560800/summary.txt",
+                "detail": "Authentic initial baseline records three creations/destructions, mouse_quit_survived=1, keyboard_quit_survived=1 and failures=0. The final driver reproduces those measurements against retained baseline sources."
+              },
+              {
+                "path": "build/frontend-window-quit-001/static/quitInstructions.json",
+                "detail": "Retained Ghidra instructions for registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show event-zero dispatch at 0x48EDCB, comparison against menu+0x50 at 0x48EE41\u20130x48EE47 and exit-byte store to 0x4E3581 at 0x48EE4C. This supports the exit request, not original runtime window continuity or exit status."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change a scripted public-input round trip through the production application (menu, map, level, results, map) uses one SDL window with zero destroy/create between legs, and activating Quit on the main menu ends the application with status 0; both are asserted by a regression test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplication owns one presentation across its connected loop and passes it through runApplicationLeg to frontend and level rendering. Leg textures remain local; main returns the application's status directly."
+              },
+              {
+                "path": "src/app/SdlWindow.hpp",
+                "detail": "ensure reuses the existing renderer/window. Destruction occurs at owner exit. Shared ownership is explicitly labelled provisional clone policy."
+              },
+              {
+                "path": "src/__test__/test_frontendwindowquit.cpp",
+                "detail": "Queues public SDL input through menu, confirmation, map node 0, installed MM_CLIMB_002, natural timeout results and returned map/menu. Link wrappers count actual clone SDL creation/destruction calls. Assertions require one window, final cleanup, mouse and keyboard Quit without watchdog intervention, and application status 0."
+              },
+              {
+                "path": "build/agent-native/main/frontend-window-quit-test/run-1794589554426782600/windows.csv",
+                "detail": "Every sampled frontend, level, results and returned-map/menu frame has creates=1 and destroys=0; the window is destroyed only after final Quit."
+              },
+              {
+                "path": "build/frontend-window-quit-001/image-comparison.json",
+                "detail": "Records identical before/after hashes for seven corresponding images. Independently reviewed settled-level images, results and returned map preserve the 640\u00d7480 presentation."
+              }
+            ]
+          },
+          {
+            "criterion": "Existing frontend, level-return and results tests pass unchanged or each changed expectation is justified as encoding the defect. Full registered main/recovery verification passes; installed and normal saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_frontendsession.cpp",
+                "detail": "Changed expectations specifically replace row-4 Return being unsupported and mouse Quit being a no-op. Unsupported rows 2/3, existing exterior/gap checks and progress/page invariants remain covered."
+              },
+              {
+                "path": "build/agent-runs/20261113T165533-32228-13cdd598/verification.log",
+                "detail": "Supervisor verification passes all 189 registered main and 84 recovery tests, including frontend_sequence, frontendsession, frontendwindow, frontendentry, results and levelreturn. Uses registered UCRT64 tools with optimized assertions-enabled main builds."
+              },
+              {
+                "path": "build/agent-runs/20261113T165533-32228-13cdd598/result.json",
+                "detail": "Records verification exit code 0 and verified_content 7384c41e8fe8593a516835eca1117d63d0baedaf76506600e53f81a9a2be67a6. Subsequent supervisor verification resolves the worker report's pending-verification handoff."
+              },
+              {
+                "path": "build/agent-native/main/frontend-window-quit-test/run-1794589554426782600/summary.txt",
+                "detail": "Records failures=0, both Quit survival flags=0, installed_save_unchanged=1 and normal_save_unchanged=1. The inspected driver injects a unique private FileSaveSink and compares save existence and complete bytes before/after."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T17:25:16.643613+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T165533-32228-13cdd598\\verification.log",
+        "verified_content": "7384c41e8fe8593a516835eca1117d63d0baedaf76506600e53f81a9a2be67a6"
+      }
     }
   ]
 }

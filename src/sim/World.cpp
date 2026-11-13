@@ -5,6 +5,22 @@
 
 namespace webo::sim {
 
+namespace {
+bool insideTeleport(const Terrain& terrain, const Teleport& t, const Lemming& l) {
+  const int dx = terrain.wrapX(l.x - t.x + terrain.width() / 2) - terrain.width() / 2;
+  const int dy = l.y - t.y;
+  return dx >= 0 && dx <= t.width && dy >= 0 && dy <= t.height;
+}
+
+void releaseTeleportContacts(const LevelSetup& setup, Lemming& l) {
+  // 0x435467..0x435478: remove an excluded actor only outside the pad.
+  // This also runs for non-walkers, so falling/skill motion can rearm a visit.
+  std::erase_if(l.teleportPadsLatched, [&](std::size_t i) {
+    return i >= setup.teleports.size() || !insideTeleport(setup.terrain, setup.teleports[i], l);
+  });
+}
+}  // namespace
+
 std::string_view skillName(Skill s) {
   switch (s) {
     case Skill::Climber: return "climber";
@@ -129,11 +145,12 @@ bool World::atExit(const Lemming& l) const {
 }
 
 const Teleport* World::teleportAt(const Lemming& l) const {
-  for (const Teleport& t : setup_.teleports) {
-    const int dx = setup_.terrain.wrapX(l.x - t.x + setup_.terrain.width() / 2) -
-                   setup_.terrain.width() / 2;
-    const int dy = l.y - t.y;
-    if (dx >= 0 && dx <= t.width && dy >= 0 && dy <= t.height)
+  for (std::size_t i = 0; i < setup_.teleports.size(); ++i) {
+    const Teleport& t = setup_.teleports[i];
+    // 0x435501/0x43550D: an id already in this pad's +0x248 list is skipped.
+    if (insideTeleport(setup_.terrain, t, l) &&
+        std::find(l.teleportPadsLatched.begin(), l.teleportPadsLatched.end(), i) ==
+            l.teleportPadsLatched.end())
       return &t;
   }
   return nullptr;
@@ -311,6 +328,17 @@ void World::stepTeleporting(Lemming& l) {
   // fields are idle for a walker-sourced teleport.
   l.x = setup_.terrain.wrapX(l.bricksLeft);
   l.y = l.fallDistance;
+  // 0x4350E1..0x4350F9 registers the actor with the partner before relocation.
+  // RetailLevel projects each partner pose to its pad's bottom-center cell;
+  // retain that identity without changing serialized pairing or the snap rule.
+  // Provisional for custom overlapping pads: exclude every pad containing the
+  // arrival cell. Installed links all have exactly one containing destination.
+  for (std::size_t i = 0; i < setup_.teleports.size(); ++i) {
+    if (insideTeleport(setup_.terrain, setup_.teleports[i], l) &&
+        std::find(l.teleportPadsLatched.begin(), l.teleportPadsLatched.end(), i) ==
+            l.teleportPadsLatched.end())
+      l.teleportPadsLatched.push_back(i);
+  }
   l.state = State::Walker;
   l.frame = 0;
   l.bricksLeft = 0;
@@ -887,6 +915,8 @@ void World::step(Lemming& l) {
   if (!l.alive())
     return;
 
+  releaseTeleportContacts(setup_, l);
+
 
 
 
@@ -959,6 +989,7 @@ void World::step(Lemming& l) {
   // than walking out. Mutate-alone: delete this arm and testTeleportPad fails.
   if (l.state == State::Walker) {
     if (const Teleport* pad = teleportAt(l)) {
+      l.teleportPadsLatched.push_back(static_cast<std::size_t>(pad - setup_.teleports.data()));
       l.state = State::Teleporting;
       l.frame = 0;
       l.bricksLeft = pad->destX;
@@ -1099,6 +1130,7 @@ void World::stepElapsed(Lemming& l, bool tickBoundary) {
   }
   if (!l.alive())
     return;
+  releaseTeleportContacts(setup_, l);
   // Between tick boundaries only the continuous movers advance (their budget carries the
   // sub-tick time); every other state, bookkeeping and counter keeps its measured 5 Hz step.
   switch (l.state) {

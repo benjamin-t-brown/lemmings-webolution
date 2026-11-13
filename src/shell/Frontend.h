@@ -104,6 +104,7 @@ class Frontend {
   int counter() const { return counter_; }
   int highlight() const { return highlight_; }
   bool paused() const { return paused_; }
+  bool quitRequested() const { return quitRequested_; }
   int uiState() const;
   // Number of nodes in the screen list: 1 on a frontend screen and at the dialog, 0 in a level.
   int nodeCount() const { return screen_ == Screen::Level ? 0 : 1; }
@@ -121,6 +122,7 @@ class Frontend {
   bool paused_ = false;
   bool resultsWon_ = false;
   bool rootOwned_ = false;
+  bool quitRequested_ = false;
   // Native UI dispatch mode is not derived from the currently displayed page:
   // results Continue replaces the page while retaining mode 4 (win) or 5 (loss).
   int dispatchMode_ = kUiFrontend;

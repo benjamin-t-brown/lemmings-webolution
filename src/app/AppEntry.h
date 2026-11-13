@@ -21,6 +21,9 @@ namespace webo::app {
 struct LevelActorView {
   std::size_t index;
   ActorSpritePlacement placement;
+  // actor-anim-001: the SPR clip and temporal entry this actor was drawn with this frame.
+  const char* clip = "walk";
+  int temporalIndex = 0;
 };
 
 // Read-only, callback-lifetime view after composing a simulated level frame.

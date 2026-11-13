@@ -266,7 +266,9 @@ add_executable(test_actorcompose
   src/app/Camera.cpp
   src/app/Raster.cpp
   src/app/ActorSprite.cpp
-  src/app/ActorPose.cpp)
+  src/app/ActorPose.cpp
+  src/app/ActorAnim.cpp
+  src/app/LemmingAnim.cpp)
 target_link_libraries(test_actorcompose PRIVATE webolution_objects z)
 target_compile_definitions(test_actorcompose PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME actorcompose COMMAND test_actorcompose WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -559,6 +561,45 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   set_tests_properties(frontendentry PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
+  # Observe real SDL window lifetimes in the source application, including teardown.
+  if(MINGW OR (UNIX AND NOT APPLE))
+    add_executable(test_frontendwindowquit src/__test__/test_frontendwindowquit.cpp
+      ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+      src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+    target_link_libraries(test_frontendwindowquit PRIVATE webolution_objects)
+    target_compile_definitions(test_frontendwindowquit PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+    target_link_options(test_frontendwindowquit PRIVATE
+      "-Wl,--wrap=SDL_CreateWindow" "-Wl,--wrap=SDL_DestroyWindow")
+    add_test(NAME frontendwindowquit COMMAND test_frontendwindowquit after "${CMAKE_BINARY_DIR}/frontend-window-quit-test")
+    set_tests_properties(frontendwindowquit PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+
+    # Optional authentic task-entry sources, retained under ignored build/. The
+    # same input driver asserts the measured three-window / ineffective-Quit
+    # baseline; a clean checkout builds only the production regression above.
+    set(FWQ_FROZEN "${CMAKE_SOURCE_DIR}/build/frontend-window-quit-001/before-source")
+    if(EXISTS "${FWQ_FROZEN}/manifest.json")
+      set(FWQ_BEFORE_GFX)
+      foreach(source IN LISTS WEBOLUTION_GFX_SOURCES)
+        file(RELATIVE_PATH relative_source "${CMAKE_SOURCE_DIR}" "${source}")
+        list(APPEND FWQ_BEFORE_GFX "${FWQ_FROZEN}/${relative_source}")
+      endforeach()
+      add_executable(test_frontendwindowquit_before src/__test__/test_frontendwindowquit.cpp
+        ${FWQ_BEFORE_GFX} "${FWQ_FROZEN}/src/app/SceneVertexPack.cpp"
+        "${FWQ_FROZEN}/src/app/SceneDiffuse.cpp" "${FWQ_FROZEN}/src/app/SceneDepth.cpp"
+        "${FWQ_FROZEN}/src/app/SceneDispatch.cpp")
+      target_include_directories(test_frontendwindowquit_before BEFORE PRIVATE "${FWQ_FROZEN}/src")
+      target_link_libraries(test_frontendwindowquit_before PRIVATE webolution_objects)
+      target_compile_definitions(test_frontendwindowquit_before PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+      target_link_options(test_frontendwindowquit_before PRIVATE
+        "-Wl,--wrap=SDL_CreateWindow" "-Wl,--wrap=SDL_DestroyWindow")
+      add_test(NAME frontendwindowquit_before COMMAND test_frontendwindowquit_before baseline
+        "${CMAKE_BINARY_DIR}/frontend-window-quit-before-test")
+      set_tests_properties(frontendwindowquit_before PROPERTIES TIMEOUT 120
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    endif()
+  endif()
+
   add_executable(test_levelinteraction src/__test__/test_levelinteraction.cpp
     ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
@@ -599,6 +640,29 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME basherfix_away COMMAND test_basherfix away "${BF_DIR}")
   set_tests_properties(basherfix_away PROPERTIES TIMEOUT 300 ENVIRONMENT "${BF_ENV}")
 
+  # teleport-softlock-001: real installed pad visits, natural trace and the sweep's idle horizon.
+  add_executable(test_teleportsoftlock src/__test__/test_teleportsoftlock.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_teleportsoftlock PRIVATE webolution_objects)
+  target_compile_definitions(test_teleportsoftlock PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_teleportsoftlock PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_teleportsoftlock PRIVATE PkgConfig::SDL2)
+  endif()
+  set(TS_DIR "${CMAKE_SOURCE_DIR}/build/teleport-softlock-001/after")
+  set(TS_ENV "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  foreach(mode trace sweep)
+    add_test(NAME teleportsoftlock_${mode} COMMAND test_teleportsoftlock ${mode} "${TS_DIR}/${mode}")
+    set_tests_properties(teleportsoftlock_${mode} PROPERTIES TIMEOUT 120 ENVIRONMENT "${TS_ENV}")
+  endforeach()
+  foreach(level MM_TELE_003 M16_MG_1 M17_MT_1)
+    add_test(NAME teleportsoftlock_${level} COMMAND test_teleportsoftlock app "${TS_DIR}/${level}" ${level})
+    set_tests_properties(teleportsoftlock_${level} PROPERTIES TIMEOUT 300 ENVIRONMENT "${TS_ENV}")
+  endforeach()
+
   # terrain-render-001: terrain a skill removes or adds reaches the level view. The scene case runs TubeScene on real
   # level data; the app cases drive runApplication with public input twice (normal and --no-terrain-sync) and compare
   # frames. Images go under the ignored build/ tree. Standalone --level runs install no save store.
@@ -623,6 +687,35 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   set_tests_properties(terrainrender_build PROPERTIES TIMEOUT 300 ENVIRONMENT "${TR_ENV}")
   add_test(NAME terrainrender_dig COMMAND test_terrainrender app "${TR_DIR}" MM_DIG_000 7 dig)
   set_tests_properties(terrainrender_dig PROPERTIES TIMEOUT 300 ENVIRONMENT "${TR_ENV}")
+  # actor-anim-001: lemmings draw the strip of their own state, advance it with level time and freeze it while
+  # paused; a lit bomber fuse shows a countdown. `units` reads the installed lemming sheet; `app` cases drive
+  # runApplication with public input twice (normal and --no-actor-anim); `pause` holds the entries under the
+  # pause key. Images go under the ignored build/ tree.
+  add_executable(test_actoranimstate src/__test__/test_actoranimstate.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_actoranimstate PRIVATE webolution_objects)
+  target_compile_definitions(test_actoranimstate PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_actoranimstate PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_actoranimstate PRIVATE PkgConfig::SDL2)
+  endif()
+  set(AA_DIR "${CMAKE_SOURCE_DIR}/build/actor-anim-001")
+  set(AA_ENV "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_test(NAME actoranimstate_units COMMAND test_actoranimstate units "${AA_DIR}")
+  set_tests_properties(actoranimstate_units PROPERTIES TIMEOUT 300 ENVIRONMENT "${AA_ENV}")
+  add_test(NAME actoranimstate_pause COMMAND test_actoranimstate pause "${AA_DIR}")
+  set_tests_properties(actoranimstate_pause PROPERTIES TIMEOUT 300 ENVIRONMENT "${AA_ENV}")
+  add_test(NAME actoranimstate_climb COMMAND test_actoranimstate app "${AA_DIR}" MM_CLIMB_002 0 climb walker climber climb)
+  add_test(NAME actoranimstate_float COMMAND test_actoranimstate app "${AA_DIR}" MM_FLOAT 1 float walker floater float)
+  add_test(NAME actoranimstate_bomb COMMAND test_actoranimstate app "${AA_DIR}" MM_BOMB 2 bomb walker exploder explode)
+  add_test(NAME actoranimstate_block COMMAND test_actoranimstate app "${AA_DIR}" MM_BLOCK_001_A 3 block walker blocker block)
+  add_test(NAME actoranimstate_build COMMAND test_actoranimstate app "${AA_DIR}" MM_BUILD 4 build walker builder build)
+  add_test(NAME actoranimstate_bash COMMAND test_actoranimstate app "${AA_DIR}" MM_BASH_002 5 bash walker basher bash)
+  set_tests_properties(actoranimstate_climb actoranimstate_float actoranimstate_bomb actoranimstate_block
+    actoranimstate_build actoranimstate_bash PROPERTIES TIMEOUT 300 ENVIRONMENT "${AA_ENV}")
   add_executable(test_leveloverlap src/__test__/test_leveloverlap.cpp
     ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
@@ -1433,6 +1526,8 @@ add_executable(test_clicktoassign
   src/app/Raster.cpp
   src/app/ActorSprite.cpp
   src/app/ActorPose.cpp
+  src/app/ActorAnim.cpp
+  src/app/LemmingAnim.cpp
   src/app/Pick.cpp)
 target_link_libraries(test_clicktoassign PRIVATE webolution_objects)
 target_compile_definitions(test_clicktoassign PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")

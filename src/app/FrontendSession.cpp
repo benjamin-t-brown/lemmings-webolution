@@ -222,6 +222,7 @@ bool FrontendSession::click(int x, int y) {
   // mouse predicate. Main-menu activation reuses the existing semantic route.
   if (screen() == shell::Screen::Menu) {
     for (std::size_t row = 0; row < menuBoxes_.size(); ++row) {
+      if (row != 0 && row != 1 && row != 4) continue; // unsupported actions retain their old input policy
       const auto& box = menuBoxes_[row];
       if (x >= box[0] && x < box[2] && y >= box[1] && y < box[3]) {
         state_.setHighlight(static_cast<int>(row));

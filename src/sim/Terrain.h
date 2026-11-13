@@ -52,6 +52,11 @@ public:
 
   void set(int x, int y, Material m);
 
+  // Counts every `set`, which is how every clear/fill/crater reaches `cells_`. The
+  // level renderer compares it with the last value it drew to skip frames on which
+  // the terrain did not change (terrain-render-001).
+  std::uint64_t version() const { return version_; }
+
   // A blocker's field. MEASURED, round 8: the original keeps it as bit 0x800
   // of the same u32 cell the material lives in, so it is a flag on a cell and
   // not a material -- the stamp is `or ah, 8` at 0x0040E312 and the erase is
@@ -212,6 +217,7 @@ private:
 
   int width_ = 0;
   int height_ = 0;
+  std::uint64_t version_ = 0;
   std::vector<Material> cells_;
   // One byte per cell, non-zero where a blocker's field is stamped. Allocated
   // lazily: a level with no blocker on it costs nothing.

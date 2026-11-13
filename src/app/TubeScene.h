@@ -26,9 +26,11 @@
 #include "assets/Cylinder.h"
 #include "assets/LightMap.h"
 #include "assets/Sprite.h"
+#include "sim/Terrain.h"
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <expected>
 #include <optional>
 #include <span>
@@ -130,6 +132,25 @@ class TubeScene {
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const;
 
+  // terrain-render-001: brings the drawn tube in line with the live simulation terrain, so
+  // cells a skill removed stop being drawn and cells a Builder added are. The cheap path
+  // (terrain version unchanged) is one integer compare. On a change it diffs the terrain
+  // against the solidity the mesh was last built from (grid row y is terrain row
+  // height - 1 - y), updates the collision words the mesh rule reads (a removed cell becomes
+  // 0 like the original's clear; an added cell becomes kCellSolid), fills any key the stored
+  // table lacks with the native 0x43A31D/0x43D2B8 vertex, and regenerates only the 8x16
+  // blocks the changed cells touch, padded by one cell, with the per-cell rule
+  // (rebuildCellMeshCells). The `--geom route` / `cellmesh` banks follow; the constant
+  // lattice skin (`--geom wall`) is not edited.
+  void syncTerrain(const sim::Terrain& terrain);
+  std::size_t terrainCellsChanged() const { return terrainCellsChanged_; }
+  std::size_t terrainBlocksRebuilt() const { return terrainBlocksRebuilt_; }
+  std::size_t terrainVerticesAdded() const { return terrainVerticesAdded_; }
+  std::size_t terrainUnresolved() const { return terrainUnresolved_; }
+  const std::string& terrainError() const { return terrainError_; }
+  const CellMeshes& cellMeshes() const { return cellMesh_; }
+  const CollisionGrid& collisionGrid() const { return collision_; }
+
   std::size_t outerTiles() const { return outerTileCount_; }
   std::size_t innerTiles() const { return innerTileCount_; }
   std::vector<std::string> missingTiles() const { return missing_; }
@@ -187,6 +208,21 @@ class TubeScene {
 
   // The per-cell mesh derived from the collision grid (src/assets/CellMesh).
   CellMeshes cellMesh_;
+
+  // syncTerrain state. `meshedSolid_` is the solidity (grid row order) the current `cellMesh_`
+  // was built from; `editKeys_` is a copy of the stored key table that gains pool vertices
+  // (appended to `mesh_.surface`) for the keys edited blocks need. Both are created on the
+  // first change only, so a level that is never edited costs nothing.
+  bool terrainSeen_ = false;
+  bool terrainFailed_ = false;
+  std::uint64_t terrainVersion_ = 0;
+  std::vector<std::uint8_t> meshedSolid_;
+  std::vector<std::uint32_t> editKeys_;
+  std::size_t terrainCellsChanged_ = 0;
+  std::size_t terrainBlocksRebuilt_ = 0;
+  std::size_t terrainVerticesAdded_ = 0;
+  std::size_t terrainUnresolved_ = 0;
+  std::string terrainError_;
 
   // The stored `f64` cylinder extent (0.36), the walker's pass-bound fraction.
   double cylinderExtent_ = 0.36;

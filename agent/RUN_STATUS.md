@@ -8,14 +8,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
-- terrain-render-001: **ready** — Show terrain removed or added by skills in the level view
 
 ## Recently completed queue entries
 
-- fluid-surface-impl-001: Render the linked fluid surface from live gate state
-  Accepted: 2026-11-12T20:16:15.879562+00:00
-  Verification evidence: `build/agent-runs/20261112T193139-7804-6700ba39/verification.log`
-  Verification evidence: `build\agent-runs\20261112T193139-7804-6700ba39\verification.log`
 - fluid-lever-assessment-001: Verify visible lever-driven fluid in the clone
   Accepted: 2026-11-12T22:14:08.430833+00:00
   Verification evidence: `build/agent-runs/20261112T212549-7804-08300df1/verification.log`
@@ -32,14 +27,18 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-13T06:49:34.263195+00:00
   Verification evidence: `build/agent-runs/20261113T062024-9912-8df02d0f/verification.log`
   Verification evidence: `build\agent-runs\20261113T062024-9912-8df02d0f\verification.log`
+- terrain-render-001: Show terrain removed or added by skills in the level view
+  Accepted: 2026-11-13T15:25:39.460632+00:00
+  Verification evidence: `build/agent-runs/20261113T150217-39648-65445a39/verification.log`
+  Verification evidence: `build\agent-runs\20261113T150217-39648-65445a39\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-8fa76754e17e4e6ab4e42794af11ac5b/result.json`
-- Status: **blocked**
-- Duration: 1h 46m 50s
-- Completed in this invocation: basher-fix-001, level-sweep-001
-- Reason: Worker stopped; inspect build/agent-runs/20261113T064934-9912-8f0cf081
+- Result: `build/agent-runs/loop-583af06d0a15496498fa75eb9efed484/result.json`
+- Status: **milestone_reached**
+- Duration: 0h 54m 19s
+- Completed in this invocation: terrain-render-001
+- Reason: Accepted terrain-render-001; stopped at the requested review boundary
 
 ## Documentation handoff
 

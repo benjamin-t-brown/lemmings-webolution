@@ -57,6 +57,7 @@
 #include <expected>
 #include <span>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace webo {
@@ -115,6 +116,10 @@ struct CellMeshes {
   std::size_t keySlotsTouched = 0;  // distinct keys the rule resolves
   std::size_t unresolved = 0;       // lookups the stored table does not answer
   bool keySupportMatches = false;   // touched keys == populated keys
+  // Lookups the key table failed to answer during rebuildCellMeshCells, summed over
+  // every rebuild (an answered-by-index-0 quad would be garbage). 0 when the caller
+  // filled every key the rebuilt blocks need.
+  std::size_t rebuildUnresolved = 0;
 
   // Cells are stored bucket-major: `band + bucket * bands`.
   const CellMeshCell* at(int bucket, int band) const {
@@ -133,5 +138,17 @@ std::expected<CellMeshes, std::string> buildCellMeshes(
     std::span<const std::uint32_t> keyTable,
     std::span<const std::array<std::int32_t, 3>> doorRecords,
     const CollisionGrid& grid, std::size_t surfaceVertexCount);
+
+// Regenerates the listed (bucket, band) cells of an already built mesh against
+// the grid's present contents, with the per-cell rule `buildCellMeshes` uses.
+// The original re-runs this per-cell scan (0x4615E9 via 0x462264) when a door
+// or gate toggles its collision cells; the cells to re-run are the caller's
+// choice. The key table must answer every vertex the cells ask for;
+// `surfaceVertexCount` bounds the indices as in the full build. The quad totals
+// are recounted.
+std::expected<void, std::string> rebuildCellMeshCells(
+    CellMeshes& meshes, std::span<const std::uint32_t> keyTable,
+    std::span<const std::array<std::int32_t, 3>> doorRecords, const CollisionGrid& grid,
+    std::size_t surfaceVertexCount, std::span<const std::pair<int, int>> cells);
 
 }  // namespace webo

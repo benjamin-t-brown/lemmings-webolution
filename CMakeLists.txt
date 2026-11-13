@@ -598,6 +598,31 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   set_tests_properties(basherfix PROPERTIES TIMEOUT 300 ENVIRONMENT "${BF_ENV}")
   add_test(NAME basherfix_away COMMAND test_basherfix away "${BF_DIR}")
   set_tests_properties(basherfix_away PROPERTIES TIMEOUT 300 ENVIRONMENT "${BF_ENV}")
+
+  # terrain-render-001: terrain a skill removes or adds reaches the level view. The scene case runs TubeScene on real
+  # level data; the app cases drive runApplication with public input twice (normal and --no-terrain-sync) and compare
+  # frames. Images go under the ignored build/ tree. Standalone --level runs install no save store.
+  add_executable(test_terrainrender src/__test__/test_terrainrender.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_terrainrender PRIVATE webolution_objects)
+  target_compile_definitions(test_terrainrender PRIVATE
+    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  if(TARGET SDL2::SDL2)
+    target_link_libraries(test_terrainrender PRIVATE SDL2::SDL2)
+  elseif(TARGET PkgConfig::SDL2)
+    target_link_libraries(test_terrainrender PRIVATE PkgConfig::SDL2)
+  endif()
+  set(TR_DIR "${CMAKE_SOURCE_DIR}/build/terrain-render-001")
+  set(TR_ENV "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_test(NAME terrainrender_scene COMMAND test_terrainrender scene "${TR_DIR}")
+  set_tests_properties(terrainrender_scene PROPERTIES TIMEOUT 300 ENVIRONMENT "${TR_ENV}")
+  add_test(NAME terrainrender_bomb COMMAND test_terrainrender app "${TR_DIR}" MM_BOMB 2 bomb)
+  set_tests_properties(terrainrender_bomb PROPERTIES TIMEOUT 300 ENVIRONMENT "${TR_ENV}")
+  add_test(NAME terrainrender_build COMMAND test_terrainrender app "${TR_DIR}" MM_BUILD 4 build)
+  set_tests_properties(terrainrender_build PROPERTIES TIMEOUT 300 ENVIRONMENT "${TR_ENV}")
+  add_test(NAME terrainrender_dig COMMAND test_terrainrender app "${TR_DIR}" MM_DIG_000 7 dig)
+  set_tests_properties(terrainrender_dig PROPERTIES TIMEOUT 300 ENVIRONMENT "${TR_ENV}")
   add_executable(test_leveloverlap src/__test__/test_leveloverlap.cpp
     ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)

@@ -39,6 +39,14 @@ struct ActorPoseResult {
 ActorTerrainSample terrainSampleFromLemming(const sim::Lemming& lemming, int terrainHeight,
                                             double zSlab = 0.75);
 
+// Native `0x0043D2B8` as `0x0043A31D` calls it (`0x43A3AE`) for a `grid0` key that holds -1:
+// the vertex for grid `(x, y)` on shell `layer` (0 inner, 1 outer), bilinear on the cylinder
+// template with 8-column / 16-row buckets, columns wrapped `& 0x1F`, rows clamped to
+// `gridHeight / 16 - 1` (so grid row `gridHeight` itself lands on the last ring below the top,
+// exactly as the native clamp reads). Used to give edited terrain vertices the stored pool lacks.
+std::optional<Vec3> cylinderTemplateVertex(const CylinderMesh& cylinder, int x, int y, int layer,
+                                           int gridHeight);
+
 // `0x0043D56C` on the stored surface pool: X buckets every 8 world units,
 // Y buckets every 16, Z at `+0x18` selects between layer 0 and 1 vertices.
 std::optional<std::array<double, 3>> interpolateCellMeshPosition(

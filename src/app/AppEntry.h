@@ -9,6 +9,7 @@
 #include "app/Camera.h"
 #include "save/SaveStore.h"
 
+#include <cstddef>
 #include <memory>
 #include <span>
 #include <optional>
@@ -55,6 +56,11 @@ struct LevelFrameView {
   // and the controller's target/pick seed. No native runtime observation claim.
   CameraParams displayedPose;
   std::array<double, 3> cameraPickReference{};
+  // terrain-render-001: running totals of the grid cells whose solidity the drawn tube has been
+  // brought in line with (TubeScene::syncTerrain) and of the 8x16 mesh blocks regenerated for
+  // them. Read-only counters; zero on a level whose terrain was never edited.
+  std::size_t drawnTerrainCellsChanged = 0;
+  std::size_t drawnTerrainBlocksRebuilt = 0;
 };
 using LevelFrameObserver = std::function<void(const LevelFrameView&)>;
 

@@ -15,6 +15,8 @@
 #include <cmath>
 #include <format>
 #include <numbers>
+#include <set>
+#include <utility>
 
 namespace webo::app {
 namespace {
@@ -714,6 +716,96 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       raster.triangle(p, t, tile->texture, face.modulate);
     }
   }
+}
+
+// terrain-render-001. METHOD, with its evidence level:
+//   READ (0x43A31D, 0x43D2B8, static): a vertex the key table lacks is created on demand and
+//     filled by bilinear interpolation of the cylinder template (`cylinderTemplateVertex`).
+//   READ (docs: kCellFlag0x400, CollisionGrid.h): the original already rebuilds the per-cell
+//     mesh after a runtime collision change, by re-running the 0x4615E9 scan for the blocks
+//     concerned; gates and doors do it. This function does the same for skill edits.
+//   PROVISIONAL (not read in the binary): that the original's Basher/Miner/Digger/Bomber/
+//     Builder cell writers (FUN_0043f510 is the cell-clear function; its mesh hand-off was not
+//     traced) queue a rebuild of exactly the touched blocks padded by one cell, that a Builder
+//     brick is drawn with its block's tile material, and the frame on which the original
+//     redraws. What would settle it: an original capture of a bomber crater and a builder
+//     staircase compared with the clone frame (not run here).
+void TubeScene::syncTerrain(const sim::Terrain& terrain) {
+  if (terrainFailed_ || !haveCollision_ || cellMesh_.cells.empty() || poseGrid0_.empty() ||
+      terrain.empty() || terrain.width() != collision_.width ||
+      terrain.height() != collision_.height)
+    return;
+  if (terrainSeen_ && terrain.version() == terrainVersion_)
+    return;
+  const int w = collision_.width;
+  const int h = collision_.height;
+  if (!terrainSeen_) {
+    meshedSolid_.assign(static_cast<std::size_t>(w) * h, 0);
+    for (int y = 0; y < h; ++y)
+      for (int x = 0; x < w; ++x)
+        meshedSolid_[static_cast<std::size_t>(y) * w + x] = collision_.solid(x, y) ? 1 : 0;
+    terrainSeen_ = true;
+  }
+  terrainVersion_ = terrain.version();
+
+  constexpr int kColumnsPerBlock = 8;
+  constexpr int kRowsPerBlock = 16;
+  std::set<std::pair<int, int>> dirty;
+  std::size_t changed = 0;
+  for (int y = 0; y < h; ++y) {
+    for (int x = 0; x < w; ++x) {
+      const bool now = terrain.solid(x, h - 1 - y);
+      std::uint8_t& was = meshedSolid_[static_cast<std::size_t>(y) * w + x];
+      if (now == (was != 0))
+        continue;
+      was = now ? 1 : 0;
+      ++changed;
+      collision_.cells[static_cast<std::size_t>(y) * w + x] = now ? kCellSolid : 0u;
+      // A block's gap lists read its neighbours, so the cells around the edit are queued too.
+      for (int dy = -1; dy <= 1; ++dy)
+        for (int dx = -1; dx <= 1; ++dx) {
+          const int cx = (x + dx) & (w - 1);
+          const int cy = std::clamp(y + dy, 0, h - 1);
+          dirty.insert({cx / kColumnsPerBlock, cy / kRowsPerBlock});
+        }
+    }
+  }
+  if (changed == 0)
+    return;
+
+  if (editKeys_.empty())
+    editKeys_ = poseGrid0_;
+  // Every key a rebuilt block can ask for: its own corners (x0..x0+8, y0..y0+16) with a
+  // margin for the neighbour reads. Keys the stored table holds are left alone.
+  for (const auto& [bucket, band] : dirty) {
+    const int x0 = bucket * kColumnsPerBlock;
+    const int y0 = band * kRowsPerBlock;
+    for (int layer = 0; layer < 2; ++layer)
+      for (int y = std::max(0, y0 - 2); y <= std::min(h, y0 + kRowsPerBlock + 2); ++y)
+        for (int x = std::max(0, x0 - 2); x <= std::min(w, x0 + kColumnsPerBlock + 2); ++x) {
+          const std::size_t key = static_cast<std::size_t>(layer) + (x + y * 0x101) * 2;
+          if (key >= editKeys_.size() || editKeys_[key] != 0xFFFFFFFFu)
+            continue;
+          const auto v = cylinderTemplateVertex(mesh_, x, y, layer, h);
+          if (!v)
+            continue;
+          editKeys_[key] = static_cast<std::uint32_t>(mesh_.surface.size());
+          mesh_.surface.push_back(*v);
+          ++terrainVerticesAdded_;
+        }
+  }
+
+  const std::vector<std::pair<int, int>> blocks(dirty.begin(), dirty.end());
+  if (auto status = rebuildCellMeshCells(cellMesh_, editKeys_, {}, collision_,
+                                         mesh_.surface.size(), blocks);
+      !status) {
+    terrainError_ = status.error();
+    terrainFailed_ = true;
+    return;
+  }
+  terrainUnresolved_ = cellMesh_.rebuildUnresolved;
+  terrainCellsChanged_ += changed;
+  terrainBlocksRebuilt_ += blocks.size();
 }
 
 std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers() {

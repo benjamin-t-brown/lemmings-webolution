@@ -496,6 +496,46 @@ class Builder {
   std::span<const std::array<std::int32_t, 3>> records_;
 };
 
+std::expected<CellMeshCell, std::string> buildOneCell(Builder& builder, int bucket, int band,
+                                                      int bands, std::size_t surfaceVertexCount) {
+  const int x0 = bucket * kColumnsPerBucket;
+  const int y0 = band * kRowsPerBand;
+  std::vector<Record> recs = builder.partLists(x0, y0);
+  std::vector<Gap> left, right, top;
+  builder.annotate(recs, left, right, top);
+
+  CellMeshCell cell;
+  cell.bucket = bucket;
+  cell.band = band;
+  cell.x0 = x0;
+  cell.y0 = y0;
+  cell.material = static_cast<std::uint32_t>((bucket >> 2) + ((bands - 1 - band) / 2) * 8);
+  cell.wall = builder.wallFlag(recs, x0, y0);
+  if (cell.wall) {
+    // FUN_00463100 builds the whole-block quad at entry+8 from four layer-0
+    // vertices; they share the key table with the meshes. `0x4622FD`
+    // submits it as the INN pass's inline quad.
+    cell.inner = builder.wholeBlockQuad(x0, y0);
+    cell.hasInner = true;
+  }
+  cell.mesh0 = builder.mesh0(recs, right, top);
+  cell.mesh4 = builder.mesh4(recs, left, top);
+
+  for (const auto& q : cell.mesh0)
+    for (std::uint32_t i : q.index)
+      if (i >= surfaceVertexCount)
+        return std::unexpected(std::format(
+            "cell mesh: mesh0 index {} is outside the {}-vertex surface pool", i,
+            surfaceVertexCount));
+  for (const auto& q : cell.mesh4)
+    for (std::uint32_t i : q.index)
+      if (i >= surfaceVertexCount)
+        return std::unexpected(std::format(
+            "cell mesh: mesh4 index {} is outside the {}-vertex surface pool", i,
+            surfaceVertexCount));
+  return cell;
+}
+
 }  // namespace
 
 std::expected<CellMeshes, std::string> buildCellMeshes(
@@ -518,49 +558,15 @@ std::expected<CellMeshes, std::string> buildCellMeshes(
   out.cells.reserve(static_cast<std::size_t>(kBuckets) * bands);
 
   for (int bucket = 0; bucket < kBuckets; ++bucket) {
-    const int x0 = bucket * kColumnsPerBucket;
     for (int band = 0; band < bands; ++band) {
-      const int y0 = band * kRowsPerBand;
-      std::vector<Record> recs = builder.partLists(x0, y0);
-      std::vector<Gap> left, right, top;
-      builder.annotate(recs, left, right, top);
-
-      CellMeshCell cell;
-      cell.bucket = bucket;
-      cell.band = band;
-      cell.x0 = x0;
-      cell.y0 = y0;
-      cell.material = static_cast<std::uint32_t>((bucket >> 2) +
-                                                 ((bands - 1 - band) / 2) * 8);
-      cell.wall = builder.wallFlag(recs, x0, y0);
-      if (cell.wall) {
-        // FUN_00463100 builds the whole-block quad at entry+8 from four layer-0
-        // vertices; they share the key table with the meshes. `0x4622FD`
-        // submits it as the INN pass's inline quad.
-        cell.inner = builder.wholeBlockQuad(x0, y0);
-        cell.hasInner = true;
-      }
-      cell.mesh0 = builder.mesh0(recs, right, top);
-      cell.mesh4 = builder.mesh4(recs, left, top);
-
-      for (const auto& q : cell.mesh0)
-        for (std::uint32_t i : q.index)
-          if (i >= surfaceVertexCount)
-            return std::unexpected(std::format(
-                "cell mesh: mesh0 index {} is outside the {}-vertex surface pool",
-                i, surfaceVertexCount));
-      for (const auto& q : cell.mesh4)
-        for (std::uint32_t i : q.index)
-          if (i >= surfaceVertexCount)
-            return std::unexpected(std::format(
-                "cell mesh: mesh4 index {} is outside the {}-vertex surface pool",
-                i, surfaceVertexCount));
-
-      out.mesh0Quads += cell.mesh0.size();
-      out.mesh4Quads += cell.mesh4.size();
-      if (cell.hasInner)
+      auto cell = buildOneCell(builder, bucket, band, bands, surfaceVertexCount);
+      if (!cell)
+        return std::unexpected(cell.error());
+      out.mesh0Quads += cell->mesh0.size();
+      out.mesh4Quads += cell->mesh4.size();
+      if (cell->hasInner)
         ++out.innerQuads;
-      out.cells.push_back(std::move(cell));
+      out.cells.push_back(std::move(*cell));
     }
   }
 
@@ -571,6 +577,35 @@ std::expected<CellMeshes, std::string> buildCellMeshes(
   out.unresolved = builder.unresolved();
   out.keySupportMatches = builder.supportMatches();
   return out;
+}
+
+std::expected<void, std::string> rebuildCellMeshCells(
+    CellMeshes& meshes, std::span<const std::uint32_t> keyTable,
+    std::span<const std::array<std::int32_t, 3>> doorRecords, const CollisionGrid& grid,
+    std::size_t surfaceVertexCount, std::span<const std::pair<int, int>> cells) {
+  if (meshes.cells.empty() || meshes.bands == 0 || grid.height <= 0 ||
+      grid.height / kRowsPerBand != static_cast<int>(meshes.bands))
+    return std::unexpected("cell mesh: rebuild does not match the built mesh");
+  Builder builder(keyTable, grid);
+  builder.setRecords(doorRecords);
+  const int bands = static_cast<int>(meshes.bands);
+  for (const auto& [bucket, band] : cells) {
+    if (bucket < 0 || bucket >= kBuckets || band < 0 || band >= bands)
+      return std::unexpected("cell mesh: rebuild cell outside the grid");
+    auto cell = buildOneCell(builder, bucket, band, bands, surfaceVertexCount);
+    if (!cell)
+      return std::unexpected(cell.error());
+    meshes.cells[static_cast<std::size_t>(bucket) * meshes.bands + band] = std::move(*cell);
+  }
+  meshes.rebuildUnresolved += builder.unresolved();
+  meshes.mesh0Quads = meshes.mesh4Quads = meshes.innerQuads = 0;
+  for (const auto& cell : meshes.cells) {
+    meshes.mesh0Quads += cell.mesh0.size();
+    meshes.mesh4Quads += cell.mesh4.size();
+    if (cell.hasInner)
+      ++meshes.innerQuads;
+  }
+  return {};
 }
 
 }  // namespace webo

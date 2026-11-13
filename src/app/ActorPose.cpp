@@ -128,6 +128,13 @@ ActorTerrainSample terrainSampleFromLemming(const sim::Lemming& lemming, int ter
   return out;
 }
 
+std::optional<Vec3> cylinderTemplateVertex(const CylinderMesh& cylinder, int x, int y, int layer,
+                                           int gridHeight) {
+  if (gridHeight < 16 || cylinder.ringCount < 2 || cylinder.angularSteps != 32)
+    return std::nullopt;
+  return interpolateCylinderTemplateD2B8(cylinder, x, y, layer, gridHeight);
+}
+
 std::optional<std::array<double, 3>> interpolateCellMeshPosition(
     const ActorPoseLevel& level, const ActorTerrainSample& sample) {
   if (level.grid0.empty() || level.surface.empty())

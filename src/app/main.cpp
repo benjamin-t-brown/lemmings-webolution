@@ -168,6 +168,7 @@ struct Args {
   bool mapFlagsSpecified = false;
   std::string mapFlags;
   bool noInjectedWalkers = false;
+  bool noTerrainSync = false;  // diagnostic: draw the terrain as loaded (the view before terrain-render-001)
   bool sceneOff = false;
   std::string walkers;
   bool sim = false;
@@ -220,6 +221,7 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--no-audio") a.noAudio = true;
     else if (arg == "--flat") a.flat = true;
     else if (arg == "--no-injected-walkers") a.noInjectedWalkers = true;
+    else if (arg == "--no-terrain-sync") a.noTerrainSync = true;
     else if (arg == "--scene-off") a.sceneOff = true;
     else if (arg == "--walkers") a.walkers = next();
     else if (arg == "--sim") a.sim = true;
@@ -670,6 +672,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         fluid.push_back({g.lane, g.height, g.wavePhase, g.animated});
       backdrop->setFluidState(std::move(fluid));
     }
+    // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
+    // the terrain version moved since the last frame.
+    if (world && !args.noTerrainSync) scene->syncTerrain(world->terrain());
      app::scheduleSceneFrame(
           [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary,c3Diagnostic?&observer:nullptr); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
@@ -1122,7 +1127,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                          cameraIntro.active(), entryCue ? entryCue->seconds() : 0.0, cueFrame, menuOpen(), args.level,
                          persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
                          cues && cues->deviceReady(), cues ? cues->drained() : 0, cues ? cues->routed() : 0,
-                         displayedPose, displayedPickReference});
+                         displayedPose, displayedPickReference,
+                         scene->terrainCellsChanged(), scene->terrainBlocksRebuilt()});
         }
         presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
         for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {

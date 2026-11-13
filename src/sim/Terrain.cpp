@@ -39,6 +39,7 @@ void Terrain::set(int x, int y, Material m) {
   if (cells_.empty() || y < 0 || y >= height_)
     return;
   cells_[index(x, y)] = m;
+  ++version_;
 }
 
 bool Terrain::blockerField(int x, int y) const {

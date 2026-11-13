@@ -12662,7 +12662,7 @@
     {
       "id": "terrain-render-001",
       "title": "Show terrain removed or added by skills in the level view",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "basher-fix-001"
       ],
@@ -12679,18 +12679,116 @@
         "The method is traced to cited evidence of the original, or explicitly labelled provisional with what would settle it. No timing, skill-rule or unrelated renderer change is included.",
         "A regression test covers visible terrain removal and addition on real level data; full registered main/recovery verification passes; installed and normal saves are untouched."
       ],
-      "loop_attempts": 0,
-      "run_id": "20261113T064934-9912-8f0cf081",
-      "started": "2026-11-13T06:49:34.620744+00:00",
-      "finished": "2026-11-13T06:55:54.412202+00:00",
-      "last_run": "build/agent-runs/20261113T064934-9912-8f0cf081",
+      "loop_attempts": 2,
+      "run_id": "20261113T150217-39648-65445a39",
+      "started": "2026-11-13T15:02:17.218392+00:00",
+      "finished": "2026-11-13T15:24:46.394978+00:00",
+      "last_run": "build/agent-runs/20261113T150217-39648-65445a39",
       "scope_revision_history": [
         {
           "at": "2026-11-13T14:30:28.943152+00:00",
           "by": "project lead",
           "change": "Attempt 1 ended after 6 minutes on the provider five-hour usage limit, not a task failure. Partial edits saved to build/lead/terrain-render-001-partial-attempt1.patch and removed from the tree; status blocked -> ready, attempts reset."
         }
-      ]
+      ],
+      "last_failure": "Verification failed; inspect build/agent-runs/20261113T143120-39648-e4532cdc/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria are covered. Supervisor verification of content hash 7e9e348f... (build/agent-runs/20261113T150217-39648-65445a39/verification.log) passed 174/174 main tests and 84/84 recovery tests, and result.json shows exit 0. The report traces each mutation (stepBomber/clearExplosion, stepBuilder/set, bash/mine/dig/clearBox) through Terrain::set to the load-time-only cellMesh_ in TubeScene::build. It shows the edit was lost because nothing read the sim terrain back into the renderer. The --no-terrain-sync runs give the before measurement: drawn-cells-changed 0 after sim edits of 14 (Bomber), 7 (Builder) and 12 (Digger) cells. The production fix is TubeScene::syncTerrain, called once per frame from main.cpp:677 and gated on Terrain::version(). I reviewed the retained before/after images. The Bomber notch and the Digger gap are clearly visible on installed levels. The Builder bricks are a small stub at the walkway end and partly hidden behind the pillar. That is weak but visible, and the report says so. The MM_BUILD slab scene and MM_BASH_002 tunnel scene show the edits fully. The method cites static addresses 0x43A31D and 0x43D2B8. The one-cell block padding, the brick tile and the redraw frame are labelled PROVISIONAL, with an original capture named as what would settle them. No timing or skill-rule change is included. Limits: the Basher is covered only in the scene-level test, not through a click, and original fidelity is not claimed. Neither limit blocks this milestone's acceptance.",
+        "checks": [
+          {
+            "criterion": "The report traces the production path from each terrain mutation to the renderer and identifies where edits were lost, with a before image or pixel measurement from the clone showing unchanged terrain after an edit on an installed level.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/terrain-render-001.md",
+                "detail": "The 'Where the edit was lost' table traces stepBomber/clearExplosion, stepBuilder/set and bash/mine/dig/clearBox through Terrain::set to TubeScene::build, which builds cellMesh_ once from a private grid copy. It then traces the main.cpp frame loop. The before measurement uses --no-terrain-sync on installed levels: MM_BOMB solid cells 10024 -> 10010 and MM_BUILD 13680 -> 13687, both with drawn-cells-changed 0."
+              },
+              {
+                "path": "build/terrain-render-001/bomb-3-after-nosync.png",
+                "detail": "Clone frame with sync disabled after the Bomber edit. The ledge is intact, so the edit is not rendered in the pre-change view."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "syncTerrain (line 733) is the new hand-off from sim::Terrain to the renderer; its absence was the defect. main.cpp:677 is the single call site."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, clone frames from installed levels show removed terrain for a Bomber crater (MM_BOMB) and for at least one tunnelling skill, and show Builder bricks (MM_BUILD), each produced through the production application path with public input. Before/after images are retained and reviewed, and the visible edit agrees with the collision cells the simulation changed within a stated tolerance.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/terrain-render-001/bomb-4-sync-vs-nosync.png",
+                "detail": "Reviewed. The sync frame shows a notch cut into the wooden ledge on MM_BOMB. The no-sync frame shows no notch. The diff panel confirms the crater region (683 differing pixels inside the box, against 0 before the edit)."
+              },
+              {
+                "path": "build/terrain-render-001/dig-4-sync-vs-nosync.png",
+                "detail": "Reviewed. A gap in the red-arrow shelf on MM_DIG_000 appears with sync and not without it. This covers the tunnelling skill (Digger)."
+              },
+              {
+                "path": "build/terrain-render-001/build-2-after-sync.png",
+                "detail": "Reviewed against build-3-after-nosync.png. Sync draws a short run of new bricks at the walkway end on MM_BUILD, produced via click and camera grab. The stub is small and partly behind the pillar, which the report acknowledges. The scene-level MM_BUILD-slab-scene.png shows the added slab fully."
+              },
+              {
+                "path": "docs/scratch/terrain-render-001.md",
+                "detail": "States the tolerance: 0 cells between drawn collision cells and sim cells; >=90% of changed pixels inside the padded box (scene) and >=50 more than baseline (app). Per-level tables report 14/7/12 cells changed in the app path and 23/36/24/120 in the scene path, all agreeing with the sim."
+              }
+            ]
+          },
+          {
+            "criterion": "Levels with no terrain edits render pixel-identically to before, or every difference is explained; existing frozen render identities still pass or their change is justified as part of this defect.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/terrain-render-001.md",
+                "detail": "For four real levels the pristine scene renders pixel-identically before and after syncTerrain (0 cells, 0 blocks). Whole-frame differences in app runs (229-357 px) are explained as wall-clock-seeded fire-basket scenery, and the box measurement is 0 before the edit. No pre-existing test was edited."
+              },
+              {
+                "path": "build/agent-runs/20261113T150217-39648-65445a39/verification.log",
+                "detail": "The full main profile passed 174/174, including the cellmesh, actorpose, actorcompose, scene and levelsweep tests that carry the frozen render identities. rebuildCellMeshCells shares buildOneCell with the load-time build, so load output is unchanged."
+              }
+            ]
+          },
+          {
+            "criterion": "The method is traced to cited evidence of the original, or explicitly labelled provisional with what would settle it. No timing, skill-rule or unrelated renderer change is included.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/terrain-render-001.md",
+                "detail": "The Method section cites static reads of 0x43A31D, 0x43D2B8 and 0x43A356 against exe SHA 32675bdb.... It cites retained evidence for the original re-running the per-cell mesh scan (kCellFlag0x400, 0x004615E9). It labels PROVISIONAL the one-cell block padding, the brick tile and the redraw frame, and names an original capture as what would settle them. It withdrew attempt 1's unsupported 0x43F7F5 citation."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The comment block above syncTerrain repeats the READ vs PROVISIONAL split in code. The change touches only terrain edit sync, new vertex creation and the cylinderTemplateVertex exposure. There is no timing or skill-rule change."
+              }
+            ]
+          },
+          {
+            "criterion": "A regression test covers visible terrain removal and addition on real level data; full registered main/recovery verification passes; installed and normal saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_terrainrender.cpp",
+                "detail": "New test: terrainrender_scene covers Bomber crater, Builder slab, Digger shaft and Basher tunnel on MM_BOMB, MM_BUILD, MM_DIG_000 and MM_BASH_002 data. terrainrender_bomb, _build and _dig run the application path with public input."
+              },
+              {
+                "path": "build/agent-runs/20261113T150217-39648-65445a39/verification.log",
+                "detail": "Supervisor run: 'main: 174 registered tests passed' (line 497) and 'recovery: 84 registered tests passed' (line 762). terrainrender_bomb, _build and _dig are listed as Passed."
+              },
+              {
+                "path": "build/agent-runs/20261113T150217-39648-65445a39/result.json",
+                "detail": "Worker and verification both exited 0, status needs_review, with verified_content 7e9e348f.... The report states the tests run standalone --level with no save store, and no save path is touched."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T15:25:39.460632+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261113T150217-39648-65445a39\\verification.log",
+        "verified_content": "7e9e348ffd03f0b9f19af15c76ff3f4f94173f35e8a1574b57df1344eeb83694"
+      }
     }
   ]
 }

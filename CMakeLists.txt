@@ -413,8 +413,14 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     target_link_libraries(test_targetedplay PRIVATE PkgConfig::SDL2)
   endif()
   set(TP_ENV "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  # test-parallel-isolation-001: fluidlever_play_* scans ${TP_DIR}/runs/*/save at start (findSourceSave) for
+  # a retained save with a known FNV, newest first. The serial registration order ran both fluid plays
+  # before this chain, so they only ever saw completed earlier runs. DEPENDS keeps that order under
+  # parallel scheduling, so no in-flight run (created by prepare, rewritten by play 1/2) can be selected or
+  # copied mid-update. The fluid variants stay parallel with each other and with every other group.
   add_test(NAME targetedplay_prepare COMMAND test_targetedplay prepare 0 "${TP_DIR}")
-  set_tests_properties(targetedplay_prepare PROPERTIES TIMEOUT 120 ENVIRONMENT "${TP_ENV}")
+  set_tests_properties(targetedplay_prepare PROPERTIES TIMEOUT 120 ENVIRONMENT "${TP_ENV}"
+    DEPENDS "fluidlever_play_stable-camera;fluidlever_play_ordinary-camera")
   set(TP_PREV targetedplay_prepare)
   foreach(step IN ITEMS 1 2)
     add_test(NAME targetedplay_play_${step} COMMAND test_targetedplay play ${step} "${TP_DIR}")

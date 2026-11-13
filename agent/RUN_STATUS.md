@@ -8,14 +8,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
-- test-parallel-isolation-001: **ready** — Prepare test isolation and scheduling for safe four-job verification
+- level-sweep-001: **ready** — Smoke-sweep all 102 installed levels in the clone and rank integrity failures
 
 ## Recently completed queue entries
 
-- lever-gates-impl-001: Connect serialized lever links to coherent gate zone-mask updates
-  Accepted: 2026-11-03T21:32:49.436164+00:00
-  Verification evidence: `build/agent-runs/20261103T201110-34516-a6237f58/verification.log`
-  Verification evidence: `build\agent-runs\20261103T201110-34516-a6237f58\verification.log`
 - lever-initial-face-impl-001: Apply serialized lever starting directions and correct stale reload expectations
   Accepted: 2026-11-03T23:22:09.856685+00:00
   Verification evidence: `build/agent-runs/20261103T221530-20784-c3ce8963/verification.log`
@@ -31,14 +27,18 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-12T22:14:08.430833+00:00
   Verification evidence: `build/agent-runs/20261112T212549-7804-08300df1/verification.log`
   Verification evidence: `build\agent-runs\20261112T212549-7804-08300df1\verification.log`
+- test-parallel-isolation-001: Prepare test isolation and scheduling for safe four-job verification
+  Accepted: 2026-11-13T00:31:24.175556+00:00
+  Verification evidence: `build/agent-runs/20261112T233952-36440-1bd9616b/verification.log`
+  Verification evidence: `build\agent-runs\20261112T233952-36440-1bd9616b\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-7bcd0ea7da8241b58ce68791670dbbc5/result.json`
+- Result: `build/agent-runs/loop-56f4b40f625a4d4ebad118cfeb65bb97/result.json`
 - Status: **milestone_reached**
-- Duration: 4h 25m 32s
-- Completed in this invocation: fluid-surface-research-001, fluid-surface-impl-001, fluid-lever-assessment-001
-- Reason: Accepted fluid-lever-assessment-001; stopped at the requested review boundary
+- Duration: 0h 51m 31s
+- Completed in this invocation: test-parallel-isolation-001
+- Reason: Accepted test-parallel-isolation-001; stopped at the requested review boundary
 
 ## Documentation handoff
 

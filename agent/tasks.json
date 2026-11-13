@@ -12317,7 +12317,7 @@
     {
       "id": "test-parallel-isolation-001",
       "title": "Prepare test isolation and scheduling for safe four-job verification",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "fluid-lever-assessment-001"
       ],
@@ -12331,6 +12331,92 @@
         "The report inventories both registered suites, mutable output/temp/save resources, cleanup ownership and dependency chains using CMake/manifests and test source. Assertion tests and observation-driver exits are distinguished; unknowns and heavyweight limits are explicit, including the recent fluid assessment variants.",
         "Scoped isolation/scheduling edits address demonstrated shared-state conflicts without changing registered test names/counts, assertions, timeouts, gameplay behavior or saves. Play/save/restart and baseline/after dependencies remain ordered; any remaining unsafe shared resources are explicitly blocked rather than assumed safe.",
         "Full registered serial main/recovery verification passes and the independent review checks the changes and evidence. The handoff proposes a same-content serial/four-job/repeated-four-job comparison with preserved logs, per-test results and artifact checks. It truthfully labels parallel operation and speedup as unvalidated until that later benchmark; current verifier defaults and protected controls remain unchanged."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261112T233952-36440-1bd9616b",
+      "started": "2026-11-12T23:39:52.576679+00:00",
+      "finished": "2026-11-13T00:30:48.456425+00:00",
+      "last_run": "build/agent-runs/20261112T233952-36440-1bd9616b",
+      "review": {
+        "decision": "accept",
+        "reason": "The task is ready for a separate four-job benchmark. It does not show that parallel operation is safe or faster. Both edits are narrow and traced to source, and the registered test set is unchanged. The supervisor's full serial verification passed with 148 main and 84 recovery tests. The report and retained maps carry the inventory, caveats and a later-benchmark proposal that is labeled unvalidated. This review was static and read-only. I did not run tests, and I did not need REA for it.",
+        "checks": [
+          {
+            "criterion": "The report inventories both registered suites, mutable output/temp/save resources, cleanup ownership and dependency chains using CMake/manifests and test source. Assertion tests and observation-driver exits are distinguished; unknowns and heavyweight limits are explicit, including the recent fluid assessment variants.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/test-parallel-isolation-001.md",
+                "detail": "Covers the 148-test main suite by group, with serial seconds and mutable roots. Covers the 84-test recovery suite, where only resource_lifecycle_boundaries writes, to a per-process temp dir. Has a cleanup-ownership audit. Labels fluidlever, targetedplay, playablebaseline and playableexpansion as observation drivers whose exit reflects driver integrity, not clone outcome. Lists heavy groups (771, 448, 463, 141 and 228 s) with wall-clock watchdog and timeout margins. Has an explicit Unknowns section: CPU-contention outcome, memory, CLI default save store, TMP assumptions, DEPENDS ignored under -R/-I, and one ctest at a time. Fluid stable and ordinary variants are inventoried."
+              },
+              {
+                "path": "build/test-parallel-isolation-001/resource-map.tsv",
+                "detail": "Per-group resource roots, writer and cleanup owner, cross-test sharing, classification (assertion or observation) and post-task status. Includes the chain-fluid row, which notes the read-scan of targeted-play-001/runs, and the targetedplay, playablebaseline and playableexpansion chains. I spot-checked the box/cueplayback and fluid-reads-targeted-play rows against src/__test__/test_cueplayback.cpp and src/__test__/test_fluidlever_assessment.cpp; they match."
+              },
+              {
+                "path": "build/test-parallel-isolation-001/dependency-graph-before-after.txt",
+                "detail": "Lists all 30 prior DEPENDS edges and the one added edge group, with critical paths. States there were 0 RESOURCE_LOCK, RUN_SERIAL, PROCESSORS and COST properties, and that the recovery suite has no dependencies."
+              }
+            ]
+          },
+          {
+            "criterion": "Scoped isolation/scheduling edits address demonstrated shared-state conflicts without changing registered test names/counts, assertions, timeouts, gameplay behavior or saves. Play/save/restart and baseline/after dependencies remain ordered; any remaining unsafe shared resources are explicitly blocked rather than assumed safe.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_box.cpp",
+                "detail": "scratchDir() now uses <TMP>/webolution_test/box (line 104). Its final remove_all therefore no longer deletes the parent webolution_test that test_cueplayback uses (src/__test__/test_cueplayback.cpp:108, webolution_test/cueplayback). Only the path changed; assertions, names and counts are untouched. The comment at lines 92-94 documents why."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "targetedplay_prepare gets DEPENDS on fluidlever_play_stable-camera and fluidlever_play_ordinary-camera (lines 416-423). The comment explains that findSourceSave (src/__test__/test_fluidlever_assessment.cpp:377-396) scans build/targeted-play-001/runs, which the targetedplay chain writes. Every TIMEOUT value I inspected is unchanged. The other DEPENDS chains remain: fluid play->restart, targetedplay prepare->play->restart->play->restart, playablebaseline survey->play->restart, playableexpansion linear chain, and scene/cameraentry/fastforward/levelselection before->after. No test was added or removed, and no gameplay, save or timeout code changed."
+              },
+              {
+                "path": "docs/scratch/test-parallel-isolation-001.md",
+                "detail": "States that no RESOURCE_LOCK, RUN_SERIAL or PROCESSORS was added, because no audited resource needed a lock and there is no contention data. The edge's critical-path cost (about 995 s versus 771 s) is flagged as a coordinator decision. Remaining unsafe states are blocked by procedure: a single ctest at a time, DEPENDS ignored under subset selection, and fixed TMP names."
+              }
+            ]
+          },
+          {
+            "criterion": "Full registered serial main/recovery verification passes and the independent review checks the changes and evidence. The handoff proposes a same-content serial/four-job/repeated-four-job comparison with preserved logs, per-test results and artifact checks. It truthfully labels parallel operation and speedup as unvalidated until that later benchmark; current verifier defaults and protected controls remain unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261112T233952-36440-1bd9616b/verification.log",
+                "detail": "Supervisor serial verification of this task's content. Main: '100% tests passed, 0 tests failed out of 148', 2546.11 s. Recovery: '100% tests passed, 0 tests failed out of 84', 28.09 s. The counts match the prior baseline of 148 and 84, so the registered test set is unchanged."
+              },
+              {
+                "path": "docs/scratch/test-parallel-isolation-001.md",
+                "detail": "'Proposed later benchmark' gives the serial, four-job and repeated-four-job verify.py commands, with prerequisites. These are idle runners, a lease, normal-save hash before and after, and run-dir listings. It lists artifacts to preserve and four comparisons: per-test results, per-test seconds, deterministic artifact hashes and observation-driver outcome lines, and the normal-save hash. States that parallel operation is unvalidated, that nothing here is a measured speedup, and that the verifier defaults (12 compile jobs, 1 test job, 360 s timeout) are unchanged. The edits touch only test_box.cpp and CMakeLists.txt, with no controller, verifier or queue edits."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-13T00:31:24.175556+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261112T233952-36440-1bd9616b\\verification.log",
+        "verified_content": "cf1e38f065c51644c22e40a2f93100b40720b98c18ef15f3838b35150ec7d2f1"
+      }
+    },
+    {
+      "id": "level-sweep-001",
+      "title": "Smoke-sweep all 102 installed levels in the clone and rank integrity failures",
+      "status": "ready",
+      "depends_on": [
+        "test-parallel-isolation-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": true,
+      "kind": "assessment",
+      "user_authorized": true,
+      "scope": "User-authorized (2026-11-12) all-level smoke sweep, an explicit one-task observation exception to production-change requirements, for playable v1 step 2 in agent/IMPLEMENTATION_PLAN.md. Difficulty: routine. Recommended model: Claude Sonnet5.5/high; user overrides win, no automatic escalation. Goal: find which installed levels fail basic integrity in the clone so fixes can be ordered by how many levels each defect blocks. It establishes clone behavior only, not winnability and not original fidelity.\nRead accepted reports first (playable-baseline-001, playable-expansion-001, targeted-play-001, level-selection-case-001, scene-admission-001, fluid-lever-assessment-001) and reuse their public runApplication entry, read-only observers and census helpers rather than new production hooks. Enumerate the 102 levels from the decoded frontend map nodes. For every level, through the production load/render/simulation path with no input: load it, render at least one settled frame to a clone image buffer, and run the simulation idle long enough for the hatch to release (justify the duration from level data). Direct level entry is allowed and must be labelled as such; it is not frontend-reachability evidence. A deterministic frameSeconds adapter may be used if labelled scripted source-test timing; production clock rules are unchanged.\nRecord per level: map node, id as stored and as resolved, load result, scenery admission/branch, frame statistics sufficient to detect a blank or near-uniform frame, lemmings released versus expected, exits and hatches present, skill stock, decoded gadget types, final idle outcome, wall and simulated duration, and any exception, assertion, watchdog or abnormal exit. One level crashing or hanging must not hide the others: isolate levels by process or equivalent and report the failing level explicitly. Produce contact sheets of the rendered frames. Keep CTest entries bounded and within existing timeout practice by splitting the sweep into registered chunks; each chunk owns a unique output directory under build/level-sweep-001/ following the accepted isolation rules. Tests assert driver integrity (every level visited, artifacts written); the per-level outcome is a reported observation, never an assertion that hides a failure or demands a pass.\nAllowed edits: new drivers under src/__test__/, their CMake registration, docs/scratch/level-sweep-001.md and ignored build/level-sweep-001/ artifacts. No production, observer API, existing test, assertion, timeout, queue, verifier, controller, model or shared-instruction change. Use a private temporary clone save path; never the installed or normal user save. Never mutate World, actors, terrain, stock or progress. Do not fix anything found and do not reopen timing/release/digger/D1/D3/clipping/controller/capture or Armageddon. No original execution, copied-byte oracle, debugger or hooks. No subagents or concurrent writers.\nFinish with a 102-row matrix, failures grouped by suspected shared cause and ranked by number of levels affected, distinguishing observed failure from source inference, plus a census of skills and gadget types per level to plan later play coverage, limitations, and the smallest recommended next fixes. Use the permitted verifier profiles only; the supervisor owns full verification. Finish needs_review; stop after independent review.",
+      "acceptance": [
+        "All 102 installed levels are enumerated from decoded map data and each has a recorded outcome from the production load, render and idle-simulation path, or an explicit recorded failure naming the level and the earliest failing stage. No level is silently skipped, and one level's crash or hang does not remove others from the matrix.",
+        "The report and artifacts contain the per-level matrix, blank-frame detection data, contact sheets, build and source identity, invocation, durations and evidence paths. Direct entry and any deterministic timing are labelled. Outcomes are observations: registered tests assert driver integrity only and do not convert a level failure into a pass or a test failure into a hidden result.",
+        "Failures are grouped by suspected shared cause and ranked by levels affected, with observation and inference kept distinct, and a per-level skill/gadget census is provided. The report claims neither winnability nor original fidelity for any level.",
+        "No production behavior, existing test, assertion, timeout or protected control changed; installed and normal user saves are untouched; no original execution occurred. Full registered main/recovery verification passes and an independent review checks these criteria."
       ]
     }
   ]

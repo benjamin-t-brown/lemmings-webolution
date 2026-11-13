@@ -89,6 +89,9 @@ std::vector<std::byte> makeBox(const std::vector<std::pair<std::string, std::str
 // none are set it happily returns C:\WINDOWS\, which is not writable. That is
 // exactly what happens when the suite is launched from make rather than a
 // shell. Pick a directory we have actually proven we can write to.
+// The directory is test-owned (webolution_test/box): main() removes it at exit,
+// and the shared webolution_test parent also holds test_cueplayback's scratch,
+// so a concurrent run must never delete the parent.
 const fs::path& scratchDir() {
   static const fs::path dir = [] {
     std::error_code ec;
@@ -98,7 +101,7 @@ const fs::path& scratchDir() {
     candidates.push_back(fs::current_path(ec));
 
     for (const auto& base : candidates) {
-      const fs::path d = base / "webolution_test";
+      const fs::path d = base / "webolution_test" / "box";
       fs::create_directories(d, ec);
       std::ofstream probe(d / ".probe");
       if (probe) {

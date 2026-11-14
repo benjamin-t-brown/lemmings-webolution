@@ -35,7 +35,7 @@ files are retained there. This verifier follows the existing build rule's
 process-local UCRT64 PATH approach; it does not change machine PATH or use it
 for live-game harness Python. Nonzero exits and zero registered tests fail.
 
-Build parallelism defaults to 12 jobs (`--jobs`). Since 2026-11-12 the main suite is
+Build parallelism defaults to 8 jobs (`--jobs`; 12 until 2026-11-14, lowered after host low-memory kills). Since 2026-11-12 the main suite is
 built `-O2 -g` with assertions kept and tests run four at a time (`--test-jobs 4`);
 `--test-jobs 1` is the fallback. Measured on one commit: debug serial 2583 s, debug
 four jobs about 1200 s with `levelreturn` within 3% of its timeout, optimized four

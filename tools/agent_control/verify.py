@@ -38,7 +38,7 @@ def check_test_inventory(tests, exe):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--profile', choices=['main', 'recovery', 'all'], default='all')
-    parser.add_argument('--jobs', type=int, default=12)
+    parser.add_argument('--jobs', type=int, default=8)
     parser.add_argument('--test-jobs', type=int, default=4,
                         help='Concurrent CTest processes; 4 was benchmarked 2026-11-12, 1 is the fallback')
     args = parser.parse_args()

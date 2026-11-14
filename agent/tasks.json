@@ -15086,7 +15086,7 @@
     {
       "id": "lever-render-001",
       "title": "Draw levers and recheck the empty containers on Introducing Water Lemmings",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15101,21 +15101,161 @@
         "The report names the level, lists each container's fluid kind, linked lever or gate and initial level with the level-data fields and static addresses that determine them, and either fixes the bottom two containers to start filled with before/after images or documents precisely why the data says empty and what original observation would settle it.",
         "Frames of levels without levers are pixel-identical to before. Scripted route outcomes are unchanged. Full registered main/recovery verification passes; saves are untouched."
       ],
-      "loop_attempts": 1,
-      "run_id": "20261114T090554-33172-107ab3b7",
-      "started": "2026-11-14T09:05:55.077712+00:00",
+      "loop_attempts": 3,
+      "run_id": "20261114T203053-47060-7508069f",
+      "started": "2026-11-14T20:30:54.049599+00:00",
       "scope_revision_history": [
         {
           "at": "2026-11-14T09:18:02.735426+00:00",
           "by": "project lead",
           "change": "Resume note. Attempt 1 was interrupted about 25 minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261114T090554-33172-107ab3b7); that is not a task failure. Its partial work is left uncommitted in the tree: edits to src/app/BackdropScene.cpp, BackdropScene.h, main.cpp and src/__test__/test_fluid_kinds.cpp, new cmake/lever_render.cmake and lever_render_identity.cmake with the include line at the end of CMakeLists.txt, and src/__test__/test_lever_render.cpp, with a copy under build/lead/lever-render-001-attempt1/. None of it has been verified or reported. Inspect and continue it rather than restarting; fluid-hazard-001 is accepted and committed, so every uncommitted source change belongs to this task. An edit to an existing assertion in test_fluid_kinds.cpp needs the before/after justification AGENTS.md requires."
         }
-      ]
+      ],
+      "finished": "2026-11-14T20:59:59.738360+00:00",
+      "last_run": "build/agent-runs/20261114T203053-47060-7508069f",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261114T195512-47060-55025ee9/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by source, inspected images and the successful supervisor verification. Acceptance is scoped to the playable-v1 repair: immediate face changes remain provisional, and the lower-container conclusion remains static evidence awaiting the specified original observation.",
+        "checks": [
+          {
+            "criterion": "Before images through the production path show levels with levers and no lever drawn. After the change, levers are drawn on at least three installed levels including 'Introducing Water Lemmings', at the position where lemmings trigger them, and a retained image sequence shows the lever's face changing when a lemming throws it. A regression test on real level data asserts lever pixels are present and change with the face.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Admits installed tagged type-1 lever models with their serialized transforms and applies stored/current faces using the embedded lever clip. Uses existing scenery depth rendering; immediate settled endpoints are explicitly provisional."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The ordinary application builds lever presentation bindings and supplies live linked World lever IDs and faces before rendering."
+              },
+              {
+                "path": "build/lever-render-001/before/MM_W_012/initial-yaw-160.png",
+                "detail": "Inspected production-renderer baseline: the lower and middle paths have no visible levers."
+              },
+              {
+                "path": "build/lever-render-001/after/MM_W_012/initial-yaw-160.png",
+                "detail": "Matched frame visibly adds placed lever bases, stems and knobs on Introducing Water Lemmings."
+              },
+              {
+                "path": "build/lever-render-001/before/E16_KF_1/initial-yaw-32.png",
+                "detail": "Inspected baseline shows the lower grassy path without a lever."
+              },
+              {
+                "path": "build/lever-render-001/after/E16_KF_1/initial-yaw-32.png",
+                "detail": "Matched frame visibly adds the lever on that path."
+              },
+              {
+                "path": "build/lever-render-001/before/MM_ALL_8_001/initial-yaw-64.png",
+                "detail": "Inspected baseline shows the platform beside the directional wall without a lever."
+              },
+              {
+                "path": "build/lever-render-001/after/MM_ALL_8_001/initial-yaw-64.png",
+                "detail": "Matched frame visibly adds the installed lever beside the wall."
+              },
+              {
+                "path": "build/lever-render-001/app-after/natural-1-before.png",
+                "detail": "Ordinary MM_W_012 application frame shows a hatch-released walker reaching lever 2 at its placed location."
+              },
+              {
+                "path": "build/lever-render-001/app-after/natural-1-thrown.png",
+                "detail": "Inspected subsequent frame shows the stem and knob changing face at contact, with the linked lower pool beginning to fill."
+              },
+              {
+                "path": "src/__test__/test_lever_render.cpp",
+                "detail": "Real installed-level tests require visible depth-tested lever pixels, scenery occlusion, actual World contact face changes and changed rendered pixels for each tested lever. The ordinary application route also observes a natural throw without actor injection."
+              }
+            ]
+          },
+          {
+            "criterion": "The report names the level, lists each container's fluid kind, linked lever or gate and initial level with the level-data fields and static addresses that determine them, and either fixes the bottom two containers to start filled with before/after images or documents precisely why the data says empty and what original observation would settle it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/lever-render-001.md",
+                "detail": "Identifies map node 8 as COMPILED\\MM_W_012.LVL, retains reference/member identities, and lists all 19 water receivers, bounds, IDs, linked levers, request offsets and initial heights. Specifies observing all lower pools before any original lever contact, then lever 2 and its pool after the first pull, to settle the dispute."
+              },
+              {
+                "path": "build/lever-render-001/after/measure.txt",
+                "detail": "Records independently decoded receiver fields and lever lists. Sixteen lower receivers store request 1, high/current 24.5 and low 0; three upper receivers store request 0 and high/current 22.5. Every stored initial lever face selects an empty message list."
+              },
+              {
+                "path": "build/lever-render-001/static/0x0042ACAC-instructions.json",
+                "detail": "Disassembly corroborates the reader pseudocode: 0x42AEF6 tests request against 1; 0x42AEFF\u20130x42AF1D overwrites current height with low; 0x42AF32\u20130x42AF3D clears the water zone. The alternate branch copies high. This explains why serialized current height does not establish a filled start."
+              },
+              {
+                "path": "build/lever-render-001/static/0x43703f-pseudo.json",
+                "detail": "Retained static output shows the load hook applying stored face [+0xDC] through 0x436E6A. Combined with the decoded empty selected lists, it supports no initial lever dispatch filling the lower receivers."
+              },
+              {
+                "path": "build/lever-render-001/after/fixtures.txt",
+                "detail": "Records production-loaded heights after initial-face fan-out: all lower receivers are 0 and the three upper receivers are 22.5. The report correctly distinguishes this clone observation from unobserved original runtime behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "Frames of levels without levers are pixel-identical to before. Scripted route outcomes are unchanged. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lever-render-001/after/fixtures.txt",
+                "detail": "All eight views each of MM_CLIMB_002 and MM_FLOAT record zero differing pixels against the authentic frozen renderer: 16 unchanged no-lever frames."
+              },
+              {
+                "path": "src/__test__/test_lever_render.cpp",
+                "detail": "The after application requires exact equality with the frozen application's 610-frame world.csv, including actor positions/states, lever faces, saved/lost counts and receiver requests/heights. Save snapshots compare complete bytes and existence."
+              },
+              {
+                "path": "build/lever-render-001/app-after/summary.txt",
+                "detail": "Records 610 ordinary application frames, one natural throw and zero failures, including the before/after route comparison."
+              },
+              {
+                "path": "src/__test__/scene_lever_baseline.hpp",
+                "detail": "The justified scene-baseline correction permits differences only at actual accepted Less/write-on stores from installed lever model extents; RGB and depth remain exact elsewhere."
+              },
+              {
+                "path": "build/lever-render-001/retry3-scene/branch/after/measurements.txt",
+                "detail": "Records 24/30 exactly unchanged RGB/depth hash pairs; all six changed pairs have zero differences outside accepted lever stores. The nested driver independently records the same bounded result."
+              },
+              {
+                "path": "build/lever-render-001/before/checks.txt",
+                "detail": "Baseline component execution records installed_save_unchanged=1, normal_save_unchanged=1 and failures=0."
+              },
+              {
+                "path": "build/lever-render-001/after/checks.txt",
+                "detail": "Current component execution records both protected saves unchanged and zero failures."
+              },
+              {
+                "path": "build/lever-render-001/app-before/checks.txt",
+                "detail": "Frozen application execution records both protected saves unchanged and zero failures."
+              },
+              {
+                "path": "build/lever-render-001/app-after/checks.txt",
+                "detail": "Current application execution records both protected saves unchanged and zero failures; application writes use its private task save sink."
+              },
+              {
+                "path": "build/agent-runs/20261114T203053-47060-7508069f/verification.log",
+                "detail": "Latest full registered verification passes 254/254 main and 84/84 recovery tests, including lever-render and corrected scene-baseline cases; diff --check also completes successfully."
+              },
+              {
+                "path": "build/agent-runs/20261114T203053-47060-7508069f/result.json",
+                "detail": "Supervisor records verification exit code 0 and verified_content 1ee408cadf48f0f95bc8367141edd7bde765615b1b20dbf234bbe70abdc04d2b, matching the supplied review context."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-14T21:03:03.425583+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261114T203053-47060-7508069f\\verification.log",
+        "verified_content": "1ee408cadf48f0f95bc8367141edd7bde765615b1b20dbf234bbe70abdc04d2b"
+      }
     },
     {
       "id": "panel-icon-anim-001",
       "title": "Animate skill icons on the panel when hovered or selected",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15129,12 +15269,103 @@
         "The report lists the icon frames available per skill from installed assets and cites retained or static evidence for when the original animates them, or states what is not evidenced and labels the choice provisional. Before images show static icons when hovered and selected.",
         "After the change, through the production path with public input, the hovered plate's icon and the selected plate's icon cycle through their frames over time while idle plates follow the evidenced or stated rule; retained image sequences are reviewed and a regression test asserts frame advance for hovered and selected plates.",
         "Panel frames with nothing hovered and nothing selected are pixel-identical to before or each difference is explained. Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261114T214557-47060-5828f0c3",
+      "started": "2026-11-14T21:45:57.912233+00:00",
+      "finished": "2026-11-14T22:17:37.600037+00:00",
+      "last_run": "build/agent-runs/20261114T214557-47060-5828f0c3",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261114T210303-47060-910328db/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by inspected source, retained clone images and successful supervisor verification. Acceptance covers playable-v1 panel feedback with the documented single-frame Bomber exception and provisional policies; original runtime fidelity remains unproven. No builds, tests or original execution were performed during this review.",
+        "checks": [
+          {
+            "criterion": "The report lists the icon frames available per skill from installed assets and cites retained or static evidence for when the original animates them, or states what is not evidenced and labels the choice provisional. Before images show static icons when hovered and selected.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/panel-icon-anim-001.md",
+                "detail": "Lists temporal frame counts, directions, facing and retained idle poses for all ten icons. Explicitly labels hover advancement, looping, pause/focus/menu behavior and idle restoration provisional, and describes the original observation needed to settle them."
+              },
+              {
+                "path": "build/panel-icon-anim-001/after/assets.txt",
+                "detail": "Installed-asset measurements establish job frame counts 18/15/1/16/16/24/25/20, all with rate 1, and identify texture sheets. Bomber has one installed frame and therefore remains static."
+              },
+              {
+                "path": "build/panel-icon-anim-001/static-evidence.json",
+                "detail": "Retained Ghidra evidence identifies reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Inspected instructions at 0x45AFCD\u20130x45AFE0 advance the selected icon through 0x468833; 0x46889E\u20130x4688E6 implement rate-scaled accumulation and temporal advance. Looping depends on +0x201. The retained hover path supports label refresh, leaving broader original hover behavior unresolved."
+              },
+              {
+                "path": "build/panel-icon-anim-001/before/public-1.png",
+                "detail": "Visually reviewed against before/public-12.png. Selected Climber and hovered Floater remain unchanged; all four retained before public PNGs have identical SHA-256 hashes."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, through the production path with public input, the hovered plate's icon and the selected plate's icon cycle through their frames over time while idle plates follow the evidenced or stated rule; retained image sequences are reviewed and a regression test asserts frame advance for hovered and selected plates.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production level loop creates the animation cache, advances it from frame elapsed time after public input, and passes it through drawRuntimeSkillPanel. The budget remains independent of simulation pause and fast-forward."
+              },
+              {
+                "path": "src/app/SkillPanel.cpp",
+                "detail": "Loads every temporal pose with its own geometry and texture reference. Selected or hovered jobs advance once, wrap through available poses and restore retained idle artwork when inactive. Existing plate/count drawing and command artwork remain unchanged."
+              },
+              {
+                "path": "src/__test__/test_panel_icon_anim.cpp",
+                "detail": "Regression coverage queues public SDL input through runApplication on installed MM_CLIMB_002 and asserts both selected and hovered image regions advance while paused. Supplemental fixtures cover both triggers for all eight jobs, idle stability, restoration, wrapping and single-frame Bomber."
+              },
+              {
+                "path": "build/panel-icon-anim-001/after/public-12.png",
+                "detail": "Reviewed the retained public frames 1, 4, 8 and 12: selected Climber and hovered Floater visibly change while the other plates remain stable. Supplemental Builder hover and Miner selection image pairs also visibly change."
+              },
+              {
+                "path": "build/panel-icon-anim-001/after/public.csv",
+                "detail": "Frames 1\u201314 record selected index 0, pointer (50,68) over Floater, paused state and unchanged world time of 30 ms, corroborating advancement independent of simulation progress."
+              }
+            ]
+          },
+          {
+            "criterion": "Panel frames with nothing hovered and nothing selected are pixel-identical to before or each difference is explained. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/panel-icon-anim-001/before/idle.png",
+                "detail": "Visually reviewed against after/idle.png; both independently read hashes equal e5f281dd22220a1891f70cb3a0010f51c35743f38c6929c96d708746a2eea558. The regression also checks exact RGBA equality after seven idle seconds."
+              },
+              {
+                "path": "docs/scratch/panel-icon-anim-001.md",
+                "detail": "Preserves the earlier verification failure and explains corrected static-icon expectations. Inspected corrections retain exact comparisons outside the measured 189-pixel Climber sprite union; frozen controls retain whole-frame equality."
+              },
+              {
+                "path": "build/agent-runs/20261114T214557-47060-5828f0c3/verification.log",
+                "detail": "Full registered verification passes 257/257 main and 84/84 recovery tests, including panel before/after/identity and corrected pause cases, using registered UCRT64 tools."
+              },
+              {
+                "path": "build/agent-runs/20261114T214557-47060-5828f0c3/result.json",
+                "detail": "Records verification exit code 0 and verified_content 9d9ded9a6d0cf5b9703cc778a3566c9796a24147b06e55e7f9ad4d8a44793e1b, matching the supplied review context."
+              },
+              {
+                "path": "build/panel-icon-anim-001/after/checks.txt",
+                "detail": "Records failures=0, installed_save_unchanged=1 and normal_save_unchanged=1. The inspected driver uses a private FileSaveSink and compares protected save existence and complete bytes before and after."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-14T22:20:10.433625+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261114T214557-47060-5828f0c3\\verification.log",
+        "verified_content": "9d9ded9a6d0cf5b9703cc778a3566c9796a24147b06e55e7f9ad4d8a44793e1b"
+      }
     },
     {
       "id": "antigrav-presentation-001",
       "title": "Draw lemmings correctly in anti-gravity zones",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15148,6 +15379,109 @@
         "The report names the reproduced level and shows, through the production path with retained images and a position/state trace, lemmings in anti-gravity cells drawn clipping through ground or standing on nothing.",
         "The original's inverted-gravity presentation is cited from retained or static evidence, or what is not evidenced is stated and the choice labelled provisional. After the change, lemmings in those cells are drawn upside down on the surface the simulation has them on, and upright again after leaving, in reviewed image sequences and a regression test on real level data.",
         "Any simulation defect found in these zones is reported with evidence and either fixed from a cited rule or explicitly left. Levels without anti-gravity cells render pixel-identically for the scripted routes. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261114T230327-47060-e3005cb7",
+      "started": "2026-11-14T23:03:27.575289+00:00",
+      "finished": "2026-11-14T23:29:54.719098+00:00",
+      "last_run": "build/agent-runs/20261114T230327-47060-e3005cb7",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261114T222010-47060-48bc1f5c/verification.log",
+      "review": {
+        "decision": "blocked",
+        "reason": "The review instructions prohibit shell access, and the available tools provide no non-shell reader for local source, reports, or logs. No permitted filesystem resources were exposed. I could not inspect the evidence or independently establish acceptance; no files were changed and nothing was executed.",
+        "checks": [
+          {
+            "criterion": "The report names the reproduced level and shows, through the production path with retained images and a position/state trace, lemmings in anti-gravity cells drawn clipping through ground or standing on nothing.",
+            "passed": false,
+            "evidence": []
+          },
+          {
+            "criterion": "The original's inverted-gravity presentation is cited from retained or static evidence, or what is not evidenced is stated and the choice labelled provisional. After the change, lemmings in those cells are drawn upside down on the surface the simulation has them on, and upright again after leaving, in reviewed image sequences and a regression test on real level data.",
+            "passed": false,
+            "evidence": []
+          },
+          {
+            "criterion": "Any simulation defect found in these zones is reported with evidence and either fixed from a cited rule or explicitly left. Levels without anti-gravity cells render pixel-identically for the scripted routes. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": false,
+            "evidence": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "test-build-sharing-001",
+      "title": "Compile the application sources once for all tests",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Workflow task authorized by the project lead; no gameplay or test-semantics change. Difficulty: difficult (large mechanical CMake change). Recommended model: Sonnet-class. Read docs/scratch/test-build-sharing-design.md first: the verification build runs 1,867 compile steps for 367 distinct sources because about 59 test executables and five *_support object libraries each recompile the application layer (WEBOLUTION_GFX_SOURCES plus the Scene*.cpp files), although the only macro that reaches a production source is WEBOLUTION_APP_NO_MAIN in src/app/main.cpp. Implement that design in CMakeLists.txt and cmake/*.cmake: one object library for the application layer without main.cpp, one for main.cpp compiled with WEBOLUTION_APP_NO_MAIN=1, linked by webolution and by every test that uses current application sources; test-private macros stay on the test target and its own source. Re-check by grep that no test-private macro is read outside src/__test__ before sharing a target. Frozen 'before' targets that compile a retained source copy under build/<task>/ keep their sources; share the remainder with them only where the frozen copies of the headers involved are byte-identical to the current ones, otherwise leave the target as it is. Do not change any source under src/ except where a test needs a one-line include adjustment, and do not change test names, counts, assertions, timeouts, RUN_SERIAL, DEPENDS or environment properties. Measure compile steps from compile_commands.json with build/lead/compile_census.py or an equivalent retained script, before and after, and time a no-change build, a full clean build and a rebuild after touching src/app/TubeScene.h. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "acceptance": [
+        "The report gives compile-step counts and distinct-source counts before and after from compile_commands.json, the list of targets that could not share and why, and timings for a clean build and for a rebuild after touching src/app/TubeScene.h, before and after.",
+        "The registered test list from ctest -N is identical before and after (names and count), and no test property (timeout, RUN_SERIAL, DEPENDS, environment) differs; the report retains both listings and their comparison.",
+        "The compile-step count falls by at least half, the application executable still builds, and full registered main/recovery verification passes with unchanged frozen baseline sources; saves are untouched."
+      ]
+    },
+    {
+      "id": "empty-receiver-fall-001",
+      "title": "Let lemmings fall into an empty fluid container",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 5 item U3 (docs/playtest/2026-11-14-playtest-5.md). Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the original's surface rule is not found statically. Observed by a person on 'Introducing Water Lemmings' (MM_W_012, see docs/scratch/lever-render-001.md and fluid-hazard-001.md): the lever correctly fills the container when thrown, but it is not needed to win, because lemmings do not fall into the empty water pit; they always walk across the top of it as if it had a lid. Reproduce through the production path with a position/state trace of a lemming crossing an empty receiver on MM_W_012: which cells it stands on, their collision flags, and which code treats them as ground. Establish from retained evidence and static analysis how the original supports a lemming at a fluid receiver: whether the surface is a walkable line that exists only while the receiver holds fluid (water lemmings travel on a filled surface, ordinary lemmings drown on contact per fluid-hazard-001), what an empty or draining receiver offers (a fall to its floor), and how the support follows the live fluid height as a lever fills or drains it. Implement that in the production simulation so that a lemming reaching an empty receiver falls to the container floor with the ordinary fall and splat rules, a lemming at a filled receiver behaves as fluid-hazard-001 established, and the transition follows the live height. Do not change lever, gate or fill timing. Original observation (interactive lead session, docs/playtest/2026-11-14-original-session.md, images docs/playtest/reference/original-2026-11-14/s2-pit-1.jpg and s2-pit-2.jpg): on this level with the lever not thrown, lemmings reaching a bottom container fall into it and are lost; all ten were lost with 0 saved and the level failed by itself. With the lever thrown the container fills in about 4 s and water lemmings then travel along the surface (pit-a.jpg). The bottom containers start empty in the original, so the initial state is right; only the missing fall is wrong. Use this as the target behavior. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "acceptance": [
+        "The report shows, through the production path before the change on MM_W_012, a retained image and a position/state trace of a lemming walking across an empty receiver, with the source-traced reason and the cell flags involved.",
+        "The original's support rule at a fluid receiver is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on MM_W_012 with the lever not thrown, a lemming reaching the empty receiver falls to its floor; with the receiver filled, a water lemming crosses and an ordinary lemming drowns. Regression tests on real level data assert all three, and retained images are reviewed.",
+        "A scripted route on MM_W_012 that wins without throwing the lever no longer wins, or the report shows with evidence why the level is winnable that way in the original. Other registered scripted routes keep their outcomes, or each change is justified as depending on walking over an empty receiver. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "climber-occlusion-001",
+      "title": "Hide climbers behind walls that should cover them",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 5 item U1; playtest 3 R3 remains open for climbers. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person after actor-depth-001 (docs/scratch/actor-depth-001.md): occlusion is better, but climbers are still visible through walls. actor-depth-001 tests each actor pixel against the scene depth buffer with a bias chosen so a climber is not cut by the wall face it touches; a climber sits closest to its wall, so that bias, the depth assigned to a climber's sprite, or the lane offset is the likely reason a climber on the far side of a wall, or on a wall seen from behind, still passes the test. Reproduce through the production path on MM_CLIMB_002 and one other installed level with climbing, rotating the camera through a full turn in at least 24 evenly spaced views while a lemming climbs, and retain the views in which the climber is drawn although a wall is between it and the camera. Trace the climber's sprite depth and the bias for those pixels against the stored scene depth. Fix the depth or bias so a climber is hidden wherever the wall it climbs, or any other wall, is between it and the camera, and stays fully visible when it is on the camera's side of its wall. Picking keeps following visibility. Other states must not regress: walkers on ledges and lemmings in dug tunnels stay uncut as actor-depth-001 established. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "acceptance": [
+        "The report shows before images at stated camera angles on MM_CLIMB_002 and a second installed level in which a climber is drawn through a wall, with the traced actor depth, scene depth and bias at those pixels.",
+        "After the change, across the same full rotation in at least 24 views on both levels, the climber is hidden in every view where a wall is between it and the camera and uncut in every view where it is on the camera's side; the images are retained and reviewed. A regression test on real level data asserts a climber seen from behind its wall draws no pixels and is not pickable, and one seen from the front is fully drawn.",
+        "The walker-on-ledge and dug-tunnel cases of actor-depth-001 are unchanged, and frames containing no climber are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "lemming-type-sprites-001",
+      "title": "Draw water lemmings with their own sprites and fix the drowning animation",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 5 items U4 and U2. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: water lemmings should use a different sprite set from normal lemmings, and the drowning animation looks weird (not a blocker). fluid-hazard-001 (docs/scratch/fluid-hazard-001.md) established that a lemming carries a sheet type (0 ordinary, 1 water, 2 acid) that the simulation uses for the fluid rule; the production view draws every lemming from the ordinary set. From retained evidence (docs/lessons/actor-rendering.md, docs/scratch/actor-anim-001.md) and static analysis establish which installed sprite assets belong to each lemming type, how the original selects them from the sheet type, and whether every state (walk, fall, climb, each skill, drown, exit) has a per-type sequence. Draw each lemming from its own type's set in the production view, including the panel or hover feedback where the original does. Then reproduce the drowning animation through the production path on MM_BUILD_BLOCK_A, state what is wrong with it against the installed frames (wrong sequence, frame order, rate, anchor, or the lemming not sinking with the surface), and correct what the evidence supports; label the rest provisional. Simulation rules and timing are unchanged. Original observation (docs/playtest/2026-11-14-original-session.md): water lemmings are drawn with teal hair and a pale body, ordinary ones with green hair (docs/playtest/reference/original-2026-11-14/pit-a.jpg, s2-pit-1.jpg). Drowning on Build and Block (docs/playtest/reference/original-2026-11-14/s2-drown-zoom.jpg, 4 frames per second): the lemming walks off the ledge onto the water, flails at the surface drawn brightened with small splash droplets, then sinks below the surface as a pale translucent figure that breaks into bubbles, all in about 2 s. Match that sequence as far as the installed frames allow. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "acceptance": [
+        "The report lists the sprite assets per lemming type and state with the static or retained evidence for how the original selects them, or states what is not evidenced and labels the choice provisional. Before images on MM_W_012 show water lemmings drawn with ordinary sprites.",
+        "After the change, through the production path, water lemmings on MM_W_012 are drawn from the water set in walking, falling and at least one skill state, ordinary lemmings on the same level are unchanged, and acid lemmings follow the same rule on an installed level if one exists. Retained images are reviewed and a regression test on real level data asserts the set chosen per type.",
+        "The report shows the drowning sequence before and after as retained frame strips on MM_BUILD_BLOCK_A, names each defect found and what was corrected or left provisional. Levels with only ordinary lemmings render pixel-identically outside drowning frames. Full registered main/recovery verification passes; saves are untouched."
       ]
     },
     {
@@ -15162,11 +15496,18 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 4 item T5 (a) and (c); T5 (b), upside-down drawing, belongs to antigrav-presentation-001: read docs/scratch/antigrav-presentation-001.md first and build on it. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person on the level shown on the map as 'Sometimes Up Sometimes Down': the gravity flippers are not visible, and lemmings that fall into the ceiling do not die, they get stuck. Identify the installed level from docs/scratch/map-level-names-001.md. Part 1: find the gravity-flip gadget in the installed assets and level data (anti_grav model and antiGravCells in docs/scratch/level-sweep-001.md), trace why the production view does not draw it, and draw it at its placed position with scene depth, animated if the model has animation. Part 2: reproduce the stuck lemming with a position/state trace through the production path. From retained evidence and static analysis establish what the original does to a lemming falling under inverted gravity: the fall-distance rule for a splat on the ceiling, and what happens when it leaves the level bounds or meets a solid ceiling. Implement the evidenced rule so that an inverted fall ends in a landing on the ceiling surface, a splat or a loss as upright falls do, and never in a stuck lemming. Upright fall rules and fall timing are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "scope": "Playtest 4 item T5 (a) and (c); T5 (b), upside-down drawing, belongs to antigrav-presentation-001: read docs/scratch/antigrav-presentation-001.md first and build on it. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person on the level shown on the map as 'Sometimes Up Sometimes Down': the gravity flippers are not visible, and lemmings that fall into the ceiling do not die, they get stuck. Identify the installed level from docs/scratch/map-level-names-001.md. Part 1: find the gravity-flip gadget in the installed assets and level data (anti_grav model and antiGravCells in docs/scratch/level-sweep-001.md), trace why the production view does not draw it, and draw it at its placed position with scene depth, animated if the model has animation. Part 2: reproduce the stuck lemming with a position/state trace through the production path. From retained evidence and static analysis establish what the original does to a lemming falling under inverted gravity: the fall-distance rule for a splat on the ceiling, and what happens when it leaves the level bounds or meets a solid ceiling. Implement the evidenced rule so that an inverted fall ends in a landing on the ceiling surface, a splat or a loss as upright falls do, and never in a stuck lemming. Upright fall rules and fall timing are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
       "acceptance": [
         "The report names the level and shows before images with no gravity flipper drawn and a state trace of a lemming stuck after falling upward. After the change the flippers are visible at the cells where gravity changes, in retained images on that level, with a regression test asserting their pixels on real level data.",
         "The original's inverted-fall rule is cited from retained or static evidence, or what is not evidenced is stated and the choice labelled provisional. After the change a lemming falling upward on that level lands, splats or is lost and is counted correctly; no lemming remains in a non-terminating state, asserted by a regression test on real level data.",
         "Levels without anti-gravity cells keep their scripted route outcomes and render pixel-identically. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "scope_revision_history": [
+        {
+          "at": "2026-11-14T23:42:36.411905+00:00",
+          "by": "project lead",
+          "change": "Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12."
+        }
       ]
     },
     {
@@ -15181,11 +15522,18 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 4 item T3. Difficulty: routine to difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: the level name shown on map hover (map-level-names-001, docs/scratch/map-level-names-001.md) does not look like the original. The user supplied a screenshot of the original at docs/playtest/reference/leveltext.png: at the top-left of the map screen, three left-aligned lines in a rounded black font with a red drop shadow: '10 Lemmings : Save 1', then the level name ('Just Climb'), then a green clock icon followed by '5:00'. Read the image. From retained evidence and static analysis find the font, the shadow colour and offset, the clock icon asset, the text position and the format strings the original uses, and where the counts and time limit come from in the level data. Render that block in the production map screen for the hovered level node using the recovered text rendering, replacing the current hover text. Map navigation, node picking and level launch are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "scope": "Playtest 4 item T3. Difficulty: routine to difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: the level name shown on map hover (map-level-names-001, docs/scratch/map-level-names-001.md) does not look like the original. The user supplied a screenshot of the original at docs/playtest/reference/leveltext.png: at the top-left of the map screen, three left-aligned lines in a rounded black font with a red drop shadow: '10 Lemmings : Save 1', then the level name ('Just Climb'), then a green clock icon followed by '5:00'. Read the image. From retained evidence and static analysis find the font, the shadow colour and offset, the clock icon asset, the text position and the format strings the original uses, and where the counts and time limit come from in the level data. Render that block in the production map screen for the hovered level node using the recovered text rendering, replacing the current hover text. Map navigation, node picking and level launch are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Second reference from the original added by the lead: docs/playtest/reference/original-2026-11-14/map-0140.jpg shows the block for another node ('20 Lemmings : Save 10', 'Bash and Mine', clock icon, '10:00'). Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
       "acceptance": [
         "The report shows the current hover text beside docs/playtest/reference/leveltext.png and cites the font, icon, colours, position and format strings from installed assets and static evidence, or states what is not evidenced and labels it provisional.",
         "After the change, through the production path with public pointer input, hovering the 'Just Climb' node shows three lines at the top-left matching the reference in content, order, font, shadow and clock icon; a retained image is compared side by side with the reference and reviewed. Two other nodes show their own lemming count, save target, name and time limit, matching the level data. A regression test asserts the three strings for at least two nodes.",
         "Map frames with no node hovered are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "scope_revision_history": [
+        {
+          "at": "2026-11-14T23:42:36.411905+00:00",
+          "by": "project lead",
+          "change": "Second reference from the original added by the lead: docs/playtest/reference/original-2026-11-14/map-0140.jpg shows the block for another node ('20 Lemmings : Save 10', 'Bash and Mine', clock icon, '10:00'). Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12."
+        }
       ]
     },
     {
@@ -15200,11 +15548,18 @@
       "stop_after_review": true,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 3 item R4. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: at level end the balloon flies straight up, whereas in the original it spirals out slowly. hatch-exit-presentation-001 (docs/scratch/hatch-exit-presentation-001.md) added the departure with a provisional path. From retained evidence and static analysis of the exit object's level-end behavior establish the original's path and duration: the motion in cylinder coordinates (angle, radius and height over time), how long it lasts, whether the camera follows and when the results screen takes over. Implement that path in the production level-end transition. If the path cannot be read statically, implement a slow outward spiral around the cylinder axis with rising height, label every constant provisional and state exactly what a recording of the original would settle. Level outcome, saved counts and the hand-off to results are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "scope": "Playtest 3 item R4. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: at level end the balloon flies straight up, whereas in the original it spirals out slowly. hatch-exit-presentation-001 (docs/scratch/hatch-exit-presentation-001.md) added the departure with a provisional path. From retained evidence and static analysis of the exit object's level-end behavior establish the original's path and duration: the motion in cylinder coordinates (angle, radius and height over time), how long it lasts, whether the camera follows and when the results screen takes over. Implement that path in the production level-end transition. If the path cannot be read statically, implement a slow outward spiral around the cylinder axis with rising height, label every constant provisional and state exactly what a recording of the original would settle. Level outcome, saved counts and the hand-off to results are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Original observation added by the lead (docs/playtest/2026-11-14-original-session.md, images docs/playtest/reference/original-2026-11-14/balloon-a.jpg and s2-balloon.jpg, 2 frames per second, camera still): after the last lemming is saved the balloon leaves its perch within about half a second and moves sideways away from the cylinder at a roughly steady rate with little height change, leaving the view in about 4 to 4.5 s; the level is left about a second later. It does not rise straight up. Both samples are from one camera angle, so how much of the motion is outward and how much is around the cylinder is not determined; choose a path consistent with these frames, label the undetermined part provisional, and compare a clone sequence from the same level and a similar angle side by side with the reference. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
       "acceptance": [
         "The report cites retained or static evidence for the original's balloon path and duration, or states precisely what could not be read and labels the constants provisional. A before image sequence shows the straight vertical departure.",
         "After the change, through the production path on an installed level, a retained image sequence shows the balloon moving outward around the cylinder while rising, over the evidenced or stated duration, before results; a regression test asserts the path is not purely vertical and that results follow.",
         "Outcome, saved count, persistence and scripted route classifications are unchanged. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "scope_revision_history": [
+        {
+          "at": "2026-11-14T23:42:36.411905+00:00",
+          "by": "project lead",
+          "change": "Original observation added by the lead (docs/playtest/2026-11-14-original-session.md, images docs/playtest/reference/original-2026-11-14/balloon-a.jpg and s2-balloon.jpg, 2 frames per second, camera still): after the last lemming is saved the balloon leaves its perch within about half a second and moves sideways away from the cylinder at a roughly steady rate with little height change, leaving the view in about 4 to 4.5 s; the level is left about a second later. It does not rise straight up. Both samples are from one camera angle, so how much of the motion is outward and how much is around the cylinder is not determined; choose a path consistent with these frames, label the undetermined part provisional, and compare a clone sequence from the same level and a similar angle side by side with the reference. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12."
+        }
       ]
     }
   ]

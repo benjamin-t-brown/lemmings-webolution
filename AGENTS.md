@@ -77,7 +77,7 @@ on whichever compiler appears first on PATH. Use LF.
 The supervisor owns mandatory full registered verification after worker exit.
 Workers may run a permitted profile to answer a concrete development question,
 but need not duplicate the full suite. Report pending supervisor verification
-truthfully; do not repeatedly restart a suite killed by the client time limit. Build jobs default12;
+truthfully; do not repeatedly restart a suite killed by the client time limit. Build jobs default8;
 the main suite builds -O2 with assertions and runs four test jobs (one is the fallback). Preserve source provenance for frozen/current demonstrations;
 never replace an authentic pre-task baseline with resumed modified files.
 Do not add original binaries/assets to version control.

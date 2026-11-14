@@ -1267,6 +1267,8 @@ private:
   void stepFaller(Lemming& l);
   void stepBounce(Lemming& l);
   void stepDrown(Lemming& l);
+  // fluid-hazard-001: species-aware contact with the current receiver volume.
+  bool attachFluidHazard(Lemming& l);
   void stepWalker(Lemming& l);
   void stepClimber(Lemming& l);
   void stepHoister(Lemming& l);

@@ -14809,7 +14809,7 @@
     {
       "id": "fluid-hazard-001",
       "title": "Kill ordinary lemmings that enter water",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -14824,16 +14824,264 @@
         "The original's fluid-versus-lemming-type rule is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on that level, an ordinary lemming entering the water drowns and is counted lost; a regression test on real level data asserts it, and a test on an installed water-lemming level asserts water lemmings survive the same contact.",
         "Every scripted route in the registered play tests still reaches its recorded outcome, or each changed outcome is shown to be a route that depended on walking on fluid, with justification. Full registered main/recovery verification passes; saves are untouched."
       ],
-      "loop_attempts": 1,
-      "run_id": "20261114T064508-34708-e3cc25ed",
-      "started": "2026-11-14T06:45:08.532813+00:00",
+      "loop_attempts": 3,
+      "run_id": "20261114T083047-33172-e483c14f",
+      "started": "2026-11-14T08:30:47.277735+00:00",
       "scope_revision_history": [
         {
           "at": "2026-11-14T06:55:11.904287+00:00",
           "by": "project lead",
           "change": "Resume note. Attempt 1 was interrupted about eight minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261114T064508-34708-e3cc25ed); that is not a task failure. Its partial work is left uncommitted in the tree: World::attachFluidHazard in src/sim/World.cpp and World.h, cmake/fluid_hazard.cmake with its include line at the end of CMakeLists.txt, and src/__test__/test_fluid_hazard.cpp, with a copy under build/lead/fluid-hazard-001-attempt1/. None of it has been built, verified or reported. Inspect and continue it rather than restarting; hover-feedback-001 is accepted and committed, so every other uncommitted source change belongs to this task."
         }
-      ]
+      ],
+      "finished": "2026-11-14T09:02:50.099698+00:00",
+      "last_run": "build/agent-runs/20261114T083047-33172-e483c14f",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Criteria 1 and 2 are supported, and full verification passes. Criterion 3 remains unmet: the registered MM_W_012 gadget route previously won 11/20 but loses 0/20 in supervisor verification. Frozen-source losses and identical fixed-input water traces support historical variability, but do not re-establish the recorded win or show a fluid-dependent changed outcome. Retain a final-source run reaching the recorded win without weakening tests or reopening parked work; otherwise surface this unmet requirement for an explicit user decision.",
+        "checks": [
+          {
+            "criterion": "The report names the installed level behind 'Block and Build' and shows, through the production path before the change, a retained image and a position/state trace of ordinary lemmings crossing water alive, with the source-traced reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/fluid-hazard-001.md",
+                "detail": "Identifies node 14 as MM_BUILD_BLOCK_A, installed title 'Build and Block', and traces the production application and World path. Explains that live fluid receivers were rendered while drowning checked only static 0x40 hazards."
+              },
+              {
+                "path": "build/fluid-hazard-001/before/MM_BUILD_BLOCK_A-world.csv",
+                "detail": "At 12,240 ms ordinary sheet-0 actor 0 is a Walker at (176,67), inside receiver 8 with height 24.5, water-zone flag set and static hazard absent. At 14,200 ms it remains a Walker at (185,67), crossing into receiver 9 alive."
+              },
+              {
+                "path": "build/fluid-hazard-001/before/MM_BUILD_BLOCK_A-frame-130.png",
+                "detail": "Independently inspected retained production framebuffer: the ordinary actor is visibly walking across the blue pool surface."
+              },
+              {
+                "path": "src/__test__/test_fluid_hazard.cpp",
+                "detail": "The baseline demonstration loads installed data, releases the natural hatch without actor injection, and records production runApplication framebuffers and actor traces using private save sinks."
+              },
+              {
+                "path": "cmake/fluid_hazard_identity.cmake",
+                "detail": "Pins the frozen task-entry World.cpp and World.h used by the before executable; the supervisor verification reports the identity test passing."
+              }
+            ]
+          },
+          {
+            "criterion": "The original's fluid-versus-lemming-type rule is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on that level, an ordinary lemming entering the water drowns and is counted lost; a regression test on real level data asserts it, and a test on an installed water-lemming level asserts water lemmings survive the same contact.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/fluid-hazard-001/static/asm-0x41BFFC.json",
+                "detail": "Retained Ghidra instructions identify reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Independently checked 0x41C321..0x41C36F: fluid+0x128 kind 1 always takes the fatal branch; lemming+0x4C species 1 matches kind 0 and species 2 matches kind 2. Mismatches construct and attach the fluid-death state through 0x41C3BA and 0x41C3F1."
+              },
+              {
+                "path": "build/fluid-hazard-001/static/asm-0x42DE51.json",
+                "detail": "Instruction 0x42E05F stores the constructor species argument into lemming+0x4C, supporting the reported species provenance."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "attachFluidHazard implements the species matrix against current receiver height, attaches Drown, clears blocker effects and resets animation/movement state. Comments explicitly label the feet-contact threshold provisional and distinguish reused clone drowning from original sinking behavior."
+              },
+              {
+                "path": "src/__test__/test_fluid_hazard.cpp",
+                "detail": "Natural installed-data routes assert ordinary drowning and loss on MM_BUILD_BLOCK_A and living water contact with zero deaths on MM_W_012. Supplemental installed-receiver fixtures assert the species matrix, exactly-once loss accounting, and rising/drained water contact."
+              },
+              {
+                "path": "build/fluid-hazard-001/after/MM_BUILD_BLOCK_A-world.csv",
+                "detail": "Actor 0 enters Drown at 12,240 ms at (176,67), then becomes Dead at 14,200 ms with dead=1."
+              },
+              {
+                "path": "build/fluid-hazard-001/after/MM_BUILD_BLOCK_A-frame-130.png",
+                "detail": "Independently inspected matched production framebuffer: the ordinary actor remains at the pool entrance in its drowning presentation; the application trace records the drown clip and advancing animation entry."
+              },
+              {
+                "path": "build/fluid-hazard-001/after/MM_W_012-world-summary.txt",
+                "detail": "Natural installed water-lemming route records water contact, walking across it, no drowning, zero deaths and three saves. These are clone observations, not original-runtime fidelity evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "Every scripted route in the registered play tests still reaches its recorded outcome, or each changed outcome is shown to be a route that depended on walking on fluid, with justification. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261114T073603-33172-9b04b526/verification.log",
+                "detail": "Supervisor verification passes all 248 main and 84 recovery tests, including the new hazard tests. Passing assessment-driver tests does not establish that their gameplay outcomes remained wins."
+              },
+              {
+                "path": "build/fluid-hazard-001/route-regressions/20261114-062255/step-4-gadget/play-result.txt",
+                "detail": "Pre-task registered MM_W_012 gadget route records WIN, saving 11/20 with zero deaths."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261114-081058/step-4-gadget/play-result.txt",
+                "detail": "Final supervisor run records LOSS, saving 0/20 with zero deaths. The normal save remains unchanged. This does not retain the recorded winning outcome."
+              },
+              {
+                "path": "build/fluid-hazard-001/gadget-before/runs/seed/step-4-gadget/play-result.txt",
+                "detail": "Frozen task-entry World control also loses 0/20 with zero deaths, supporting pre-existing driver variability. It does not demonstrate a final-source win."
+              },
+              {
+                "path": "docs/scratch/fluid-hazard-001.md",
+                "detail": "Explicitly acknowledges the unreproduced gadget win and states this water-species route is not fluid-dependent. That honest limitation leaves the exact route-outcome criterion unsatisfied."
+              },
+              {
+                "path": "build/fluid-hazard-001/after/summary.txt",
+                "detail": "Final demonstration reports zero assertion failures and unchanged installed and normal clone saves; save preservation is supported."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Criteria 1 and 2 are supported, and full verification passes. Criterion 3 remains unmet: the registered MM_W_012 gadget route previously won 11/20 but loses 0/20 in supervisor verification. Frozen-source losses and identical fixed-input water traces support historical variability, but do not re-establish the recorded win or show a fluid-dependent changed outcome. Retain a final-source run reaching the recorded win without weakening tests or reopening parked work; otherwise surface this unmet requirement for an explicit user decision.",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The final-source public-input replay restores the recorded MM_W_012 win at 11/20 with matching Blocker attachment sites and ticks. Full supervisor verification passes 249 main and 84 recovery tests. Original contact depth and sinking presentation remain explicitly provisional; this acceptance does not establish original-game fidelity or full playability.",
+        "checks": [
+          {
+            "criterion": "The report names the installed level behind 'Block and Build' and shows, through the production path before the change, a retained image and a position/state trace of ordinary lemmings crossing water alive, with the source-traced reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/fluid-hazard-001.md",
+                "detail": "Identifies map node 14 as MM_BUILD_BLOCK_A, installed title 'Build and Block'. Traces loading, simulation and rendering, explaining that live fluid receivers were rendered while the old drowning path checked only static 0x40 hazards."
+              },
+              {
+                "path": "build/fluid-hazard-001/before/MM_BUILD_BLOCK_A-world.csv",
+                "detail": "At 12,240 ms ordinary sheet-0 actor 0 is a Walker at (176,67), inside water receiver 8 at height 24.5, with water-zone membership and no static hazard. At 14,200 ms it remains a Walker at (185,67), inside receiver 9."
+              },
+              {
+                "path": "build/fluid-hazard-001/before/MM_BUILD_BLOCK_A-frame-130.png",
+                "detail": "Independently inspected retained production framebuffer shows the ordinary actor walking across the blue pool surface."
+              },
+              {
+                "path": "src/__test__/test_fluid_hazard.cpp",
+                "detail": "Loads installed level data, releases the natural hatch without actor injection, asserts the installed map identification and records production runApplication images and position/state traces."
+              },
+              {
+                "path": "cmake/fluid_hazard_identity.cmake",
+                "detail": "Pins the authentic task-entry World.cpp and World.h used by the before executable. The supervisor log confirms this identity check passes."
+              }
+            ]
+          },
+          {
+            "criterion": "The original's fluid-versus-lemming-type rule is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on that level, an ordinary lemming entering the water drowns and is counted lost; a regression test on real level data asserts it, and a test on an installed water-lemming level asserts water lemmings survive the same contact.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/fluid-hazard-001/static/asm-0x41BFFC.json",
+                "detail": "Retained Ghidra instructions identify reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Independently checked 0x41C321..0x41C36F: fluid+0x128 kind 1 takes the fatal branch; species at lemming+0x4C matches water for species 1 and acid for species 2. Mismatches construct and attach the fluid-death state at 0x41C3BA and 0x41C3F1."
+              },
+              {
+                "path": "build/fluid-hazard-001/static/asm-0x42DE51.json",
+                "detail": "Instructions 0x42E05C..0x42E05F copy the constructor species argument into lemming+0x4C, supporting the reported hatch-to-actor species provenance."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "attachFluidHazard applies the species matrix to current receiver height, attaches Drown, clears Blocker effects and resets animation/movement state. Existing stepDrown performs loss accounting. Comments explicitly label feet contact provisional and distinguish the reused clone drowning duration from original sinking behavior."
+              },
+              {
+                "path": "src/__test__/test_fluid_hazard.cpp",
+                "detail": "Natural installed-data routes assert ordinary drowning and loss on MM_BUILD_BLOCK_A and water-species survival with zero deaths on MM_W_012. Supplemental installed-receiver fixtures assert the species matrix, exactly-once loss accounting, rising/drained heights and clearance above the surface."
+              },
+              {
+                "path": "build/fluid-hazard-001/after/MM_BUILD_BLOCK_A-world.csv",
+                "detail": "Actor 0 enters Drown at 12,240 ms at (176,67), then becomes Dead at 14,200 ms with dead=1."
+              },
+              {
+                "path": "build/fluid-hazard-001/after/MM_BUILD_BLOCK_A-frame-130.png",
+                "detail": "Independently inspected matched production image shows the ordinary actor drowning at the pool entrance. The application test also asserts the drown clip and advancing animation entry."
+              },
+              {
+                "path": "build/fluid-hazard-001/after/MM_W_012-world-summary.txt",
+                "detail": "The natural water-lemming route records contact and walking across water, no drowning, zero deaths and three saves."
+              },
+              {
+                "path": "docs/scratch/fluid-hazard-001.md",
+                "detail": "Explicitly identifies the untraced original immersion threshold and omitted sinking/effects lifetime, labels the chosen behavior provisional and describes the original observation needed to settle those unknowns."
+              }
+            ]
+          },
+          {
+            "criterion": "Every scripted route in the registered play tests still reaches its recorded outcome, or each changed outcome is shown to be a route that depended on walking on fluid, with justification. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261114T083047-33172-e483c14f/verification.log",
+                "detail": "Full registered supervisor verification passes all 249 main and 84 recovery tests, including hazard demonstrations, frozen-source identity, water control, winning gadget replay and registered play/restart tests."
+              },
+              {
+                "path": "build/agent-runs/20261114T083047-33172-e483c14f/after-source-hashes.json",
+                "detail": "Independently confirmed current World.cpp, World.h, both hazard tests, the unchanged expansion driver, application main, hazard CMake registration and root CMakeLists match the verified source manifest."
+              },
+              {
+                "path": "build/fluid-hazard-001/gadget-replay/summary.txt",
+                "detail": "Supervisor replay records failures=0, WIN 11/20, zero deaths, two placements, return to map, attachment ticks 324/387 and unchanged installed/normal saves."
+              },
+              {
+                "path": "build/fluid-hazard-001/gadget-replay/replay.csv",
+                "detail": "Final-source actors 11 and 12 attach as Blockers at (214,41), tick 324, and (165,41), tick 387, matching the retained winning route."
+              },
+              {
+                "path": "build/fluid-hazard-001/route-regressions/20261114-062255/step-4-gadget/action-trace.csv",
+                "detail": "The historical winning trace independently records those same actor IDs, attachment positions and ticks, establishing that the replay preserves the recorded winning placements."
+              },
+              {
+                "path": "build/fluid-hazard-001/gadget-replay/results.png",
+                "detail": "Independently inspected supervisor framebuffer visibly reports 'You Needed 10' and 'You Saved 11'."
+              },
+              {
+                "path": "src/__test__/test_fluid_hazard_gadget_replay.cpp",
+                "detail": "Uses public SDL events through the production frontend/application with the existing deterministic test clock. It asserts winning placements, outcome, return to map, successful private persistence and complete reopened save-image equality with only the earned node completion changed; callbacks do not mutate simulation state."
+              },
+              {
+                "path": "build/playable-baseline-001/route-1/play-result.txt",
+                "detail": "Supervisor Climber route retains WIN 10/10 and reports the normal save unchanged."
+              },
+              {
+                "path": "build/playable-baseline-001/route-2/play-result.txt",
+                "detail": "Supervisor Floater route retains a winning outcome, saving 3/10 against one required, with the normal save unchanged."
+              },
+              {
+                "path": "build/playable-baseline-001/route-3/play-result.txt",
+                "detail": "Supervisor Bomber route retains WIN 15/20 and reports the normal save unchanged."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261114-084506/step-2-core-blocker/play-result.txt",
+                "detail": "Expansion Blocker route retains WIN 23/30 on its recorded second strategy."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261114-084506/step-3-core-builder/play-result.txt",
+                "detail": "Expansion Builder retains its recorded LOSS 0/20; no new winning claim is made."
+              },
+              {
+                "path": "build/targeted-play-001/runs/20261114-084618/step-1-node3-blocker/play-result.txt",
+                "detail": "Targeted Blocker retains its recorded losing outcome."
+              },
+              {
+                "path": "build/targeted-play-001/runs/20261114-084618/step-2-node8-lever/play-result.txt",
+                "detail": "The dependent targeted lever stage retains its recorded prerequisite-blocked outcome."
+              },
+              {
+                "path": "build/fluid-lever-assessment-001/ordinary-camera/result.txt",
+                "detail": "Ordinary-camera lever route retains success with 20/20 saved and reports the normal save unchanged."
+              },
+              {
+                "path": "build/fluid-lever-assessment-001/stable-camera/result.txt",
+                "detail": "Stable-camera lever route also retains success with 20/20 saved and reports the normal save unchanged."
+              },
+              {
+                "path": "docs/scratch/fluid-hazard-001.md",
+                "detail": "Preserves earlier rejected and losing runs, and distinguishes the successful recorded-placement replay from the adaptive wall-clock driver's continuing variability. The replay supplies the previously requested final-source winning observation without weakening existing tests or changing production timing."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-14T09:05:54.821940+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261114T083047-33172-e483c14f\\verification.log",
+        "verified_content": "c26aa34e0ec2b1dcc4f263414bafd919475397ba2397fc995f57c10b0442bd1e"
+      }
     },
     {
       "id": "lever-render-001",
@@ -14847,11 +15095,21 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 4 item T2. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: no levers are drawn on any level, and 'Introducing Water Lemmings' shows no water in the bottom two containers; the user expects water there and suspects the two are related. fluid-kinds-001 (docs/scratch/fluid-kinds-001.md) called the empty tubs a data-defined drained state; treat that conclusion as disputed, not settled. Part 1: levers exist in the simulation and respond to lemmings (docs/scratch/lever-gates-impl-001.md, lever-initial-face-impl-001.md, lever-links-research-001.md) but the production level view draws nothing for them. Find the lever model in the installed assets (lever .a3d placed via findLevelObjects / LevelSetup, see docs/scratch/level-sweep-001.md gadget census), trace why the scene does not draw it, and draw it in the production view at its placed position and orientation, showing its current face (the stored initial face and each face after a lemming throws it), with scene depth so it occludes and is occluded like other scenery. Part 2: identify the installed level behind 'Introducing Water Lemmings', and re-derive from the level data and static analysis what the initial fluid level of each container is, including receivers whose level depends on a lever's initial face or a gate's initial state. If the bottom two containers should start filled, fix the initial state in the production path; if the data really says drained, show the exact fields and the original's code that reads them so a later observation of the original can settle it, and say so plainly. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "scope": "Playtest 4 item T2. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: no levers are drawn on any level, and 'Introducing Water Lemmings' shows no water in the bottom two containers; the user expects water there and suspects the two are related. fluid-kinds-001 (docs/scratch/fluid-kinds-001.md) called the empty tubs a data-defined drained state; treat that conclusion as disputed, not settled. Part 1: levers exist in the simulation and respond to lemmings (docs/scratch/lever-gates-impl-001.md, lever-initial-face-impl-001.md, lever-links-research-001.md) but the production level view draws nothing for them. Find the lever model in the installed assets (lever .a3d placed via findLevelObjects / LevelSetup, see docs/scratch/level-sweep-001.md gadget census), trace why the scene does not draw it, and draw it in the production view at its placed position and orientation, showing its current face (the stored initial face and each face after a lemming throws it), with scene depth so it occludes and is occluded like other scenery. Part 2: identify the installed level behind 'Introducing Water Lemmings', and re-derive from the level data and static analysis what the initial fluid level of each container is, including receivers whose level depends on a lever's initial face or a gate's initial state. If the bottom two containers should start filled, fix the initial state in the production path; if the data really says drained, show the exact fields and the original's code that reads them so a later observation of the original can settle it, and say so plainly. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Resume note. Attempt 1 was interrupted about 25 minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261114T090554-33172-107ab3b7); that is not a task failure. Its partial work is left uncommitted in the tree: edits to src/app/BackdropScene.cpp, BackdropScene.h, main.cpp and src/__test__/test_fluid_kinds.cpp, new cmake/lever_render.cmake and lever_render_identity.cmake with the include line at the end of CMakeLists.txt, and src/__test__/test_lever_render.cpp, with a copy under build/lead/lever-render-001-attempt1/. None of it has been verified or reported. Inspect and continue it rather than restarting; fluid-hazard-001 is accepted and committed, so every uncommitted source change belongs to this task. An edit to an existing assertion in test_fluid_kinds.cpp needs the before/after justification AGENTS.md requires.",
       "acceptance": [
         "Before images through the production path show levels with levers and no lever drawn. After the change, levers are drawn on at least three installed levels including 'Introducing Water Lemmings', at the position where lemmings trigger them, and a retained image sequence shows the lever's face changing when a lemming throws it. A regression test on real level data asserts lever pixels are present and change with the face.",
         "The report names the level, lists each container's fluid kind, linked lever or gate and initial level with the level-data fields and static addresses that determine them, and either fixes the bottom two containers to start filled with before/after images or documents precisely why the data says empty and what original observation would settle it.",
         "Frames of levels without levers are pixel-identical to before. Scripted route outcomes are unchanged. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261114T090554-33172-107ab3b7",
+      "started": "2026-11-14T09:05:55.077712+00:00",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-14T09:18:02.735426+00:00",
+          "by": "project lead",
+          "change": "Resume note. Attempt 1 was interrupted about 25 minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261114T090554-33172-107ab3b7); that is not a task failure. Its partial work is left uncommitted in the tree: edits to src/app/BackdropScene.cpp, BackdropScene.h, main.cpp and src/__test__/test_fluid_kinds.cpp, new cmake/lever_render.cmake and lever_render_identity.cmake with the include line at the end of CMakeLists.txt, and src/__test__/test_lever_render.cpp, with a copy under build/lead/lever-render-001-attempt1/. None of it has been verified or reported. Inspect and continue it rather than restarting; fluid-hazard-001 is accepted and committed, so every uncommitted source change belongs to this task. An edit to an existing assertion in test_fluid_kinds.cpp needs the before/after justification AGENTS.md requires."
+        }
       ]
     },
     {

@@ -1953,3 +1953,4 @@ endif()
 # Playtest Q1 radial walker lanes and source-built before/after evidence.
 include(cmake/walker_lane.cmake)
 include(cmake/fluid_kinds.cmake)
+include(cmake/fluid_hazard.cmake)

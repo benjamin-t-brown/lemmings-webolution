@@ -9,7 +9,6 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- fluid-hazard-001: **ready** — Kill ordinary lemmings that enter water
 - lever-render-001: **ready** — Draw levers and recheck the empty containers on Introducing Water Lemmings
 - panel-icon-anim-001: **ready** — Animate skill icons on the panel when hovered or selected
 - antigrav-presentation-001: **ready** — Draw lemmings correctly in anti-gravity zones
@@ -19,10 +18,6 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Recently completed queue entries
 
-- walker-lane-001: Keep walkers on the right side of the path and slide across on turning
-  Accepted: 2026-11-13T23:59:00.076901+00:00
-  Verification evidence: `build/agent-runs/20261113T233225-17836-92532a4d/verification.log`
-  Verification evidence: `build\agent-runs\20261113T233225-17836-92532a4d\verification.log`
 - fluid-kinds-001: Draw the remaining level fluids and fix standing height leaving water
   Accepted: 2026-11-14T00:41:13.455523+00:00
   Verification evidence: `build/agent-runs/20261113T235900-17836-7342c0bd/verification.log`
@@ -38,13 +33,17 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - hover-feedback-001: Highlight hovered lemmings and show the hatch's remaining count
   Accepted: 2026-11-14T06:45:08.250809+00:00
   Verification evidence: `build/agent-runs/loop-f728c60145c648e4944316d20ed87f50/0001-verify-12bc91/verification.log`
+- fluid-hazard-001: Kill ordinary lemmings that enter water
+  Accepted: 2026-11-14T09:05:54.821940+00:00
+  Verification evidence: `build/agent-runs/20261114T083047-33172-e483c14f/verification.log`
+  Verification evidence: `build\agent-runs\20261114T083047-33172-e483c14f\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-f728c60145c648e4944316d20ed87f50/result.json`
+- Result: `build/agent-runs/loop-e2e88e5f8e324b37bf50fd62d494e067/result.json`
 - Status: **running**
-- Duration: 0h 22m 17s
-- Completed in this invocation: hover-feedback-001
+- Duration: 1h 29m 51s
+- Completed in this invocation: fluid-hazard-001
 
 ## Documentation handoff
 

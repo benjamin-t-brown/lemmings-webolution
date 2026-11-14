@@ -1,0 +1,12 @@
+# Authentic HEAD/task-entry simulation retained before attempt 1's production edits.
+foreach(name IN ITEMS World.cpp World.h)
+  if(name STREQUAL "World.cpp")
+    set(expected "419b9192a3824b6325eea0279222018231967db47ad2c9abb5bb5900f0703b73")
+  else()
+    set(expected "9eda2df1e18bdaad0d88d4d8e4aa5428f90456b0591e0e3ddb96b150d7eacb74")
+  endif()
+  file(SHA256 "${TASK_DIR}/before-source/src/sim/${name}" actual)
+  if(NOT actual STREQUAL expected)
+    message(FATAL_ERROR "fluid-hazard-001 authentic baseline changed: ${name}")
+  endif()
+endforeach()

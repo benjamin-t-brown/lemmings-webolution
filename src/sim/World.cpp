@@ -451,6 +451,9 @@ void World::stepFaller(Lemming& l) {
     l.y += v;
     ++l.fallDistance;
 
+    if (attachFluidHazard(l))
+      return;
+
     // Round 14: 0x2f probes the ground cell every sub-step. Live paint of
     // 0x40 on MM_CLIMB_002 attached drown mid-fall when under=(col,floor)
     // before the walk land (`measure_water.py`). Ahead of trampoline/splat.
@@ -548,6 +551,45 @@ void World::stepDrown(Lemming& l) {
   }
 }
 
+bool World::attachFluidHazard(Lemming& l) {
+  if (!l.active() || l.state == State::Drown || l.state == State::Teleporting)
+    return false;
+  // 0x41C321..0x41C36F: water (kind 0) spares sheet 1, acid (2)
+  // spares sheet 2; lava (1) always kills. 0x404261 enters "drown".
+  // PROVISIONAL playable-v1 contact: feet enter the mean fluid volume,
+  // inclusive vertically and half-open in X. The original writer
+  // of lem+0x54 / exact immersion threshold is not yet traced. Waves are
+  // visual, not a new hazard clock. Read live height, never the stored mask
+  // or maxY (which can remain stale after drain-to-low settling).
+  // Reuse State::Drown's existing animation/loss bookkeeping and duration;
+  // the original fluid-mismatch state (0x23) instead sinks to the bottom.
+  // Its sinking/FX lifetime is not an established clone timing contract.
+  // A ground-cell probe would kill an actor standing above the surface:
+  // MM_BUILD_BLOCK_A has surface Y=28.5 and dry feet at Y=29.
+  const double row = setup_.terrain.height() - 1 - l.y;
+  const int width = setup_.terrain.width();
+  if (width <= 0)
+    return false;
+  for (const FluidGate& g : setup_.gates) {
+    if (g.kind < 0 || g.kind > 2 || !(g.height > 0.0))
+      continue;
+    double span = g.maxX - g.minX;
+    if (span < 0.0) span += width;
+    double dx = std::fmod(l.x - g.minX, double(width));
+    if (dx < 0.0) dx += width;
+    if (dx >= span || row < g.minY || row > g.minY + g.height)
+      continue;
+    if ((g.kind == 0 && l.sheetType == 1) || (g.kind == 2 && l.sheetType == 2))
+      continue;
+    leaveBlocker(l);
+    l.state = State::Drown;
+    l.frame = 0;
+    l.stepBudgetSeconds = 0.0;
+    return true;
+  }
+  return false;
+}
+
 void World::stepWalker(Lemming& l) {
   const int dir = static_cast<int>(l.facing);
   // D1f (round 6), MEASURED via old/docs/scratch/phase3-round10-steppers.md
@@ -582,6 +624,8 @@ void World::stepWalker(Lemming& l) {
     return true;
   };
   if (flipIfAntiGrav())
+    return;
+  if (attachFluidHazard(l))
     return;
   for (int s = 0; s < units; ++s) {
     const int nx = l.x + dir;
@@ -655,11 +699,15 @@ void World::stepWalker(Lemming& l) {
 
       l.x = setup_.terrain.wrapX(nx);
       l.y -= rise * v;
+      if (attachFluidHazard(l))
+        return;
       if (flipIfAntiGrav())
         return;
       continue;
     }
     l.x = setup_.terrain.wrapX(nx);
+    if (attachFluidHazard(l))
+      return;
     if (flipIfAntiGrav())
       return;
 
@@ -669,6 +717,8 @@ void World::stepWalker(Lemming& l) {
       continue;
     if (solidAt(l.x, l.y + 2 * v)) {
       l.y += v;
+      if (attachFluidHazard(l))
+        return;
       continue;
     }
     l.state = State::Faller;
@@ -968,6 +1018,9 @@ void World::step(Lemming& l) {
     return;
   }
 
+  if (attachFluidHazard(l))
+    return;
+
   // Round 14/15: ground cell bit 0x40 attaches drown (side-effect 0x2f /
   // 0x00415386). Acid-as-hazard uses this same attach (round 15); type 0x2e
   // Fluid-match sibling never fired live. Checked before exit so a water
@@ -1137,6 +1190,8 @@ void World::stepElapsed(Lemming& l, bool tickBoundary) {
   if (!l.alive())
     return;
   releaseTeleportContacts(setup_, l);
+  if (attachFluidHazard(l))
+    return;
   // Between tick boundaries only the continuous movers advance (their budget carries the
   // sub-tick time); every other state, bookkeeping and counter keeps its measured 5 Hz step.
   switch (l.state) {

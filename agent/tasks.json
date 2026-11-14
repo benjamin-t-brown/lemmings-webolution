@@ -14695,6 +14695,44 @@
       ]
     },
     {
+      "id": "fluid-hazard-001",
+      "title": "Kill ordinary lemmings that enter water",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 4 item T4 (docs/playtest/2026-11-13-playtest-4.md). Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the lemming-type rule is not found statically. Observed by a person: on the level shown on the map as 'Block and Build' lemmings that are not water lemmings walk across water without dying, which makes the level trivially winnable. Identify the installed level from docs/scratch/map-level-names-001.md and reproduce through the production path with a position/state trace: which cells or fluid surface the lemmings cross, and why State::Drown is not attached. The simulation already drowns on the static cell bit 0x40 (src/sim/World.cpp stepDrown and the 0x40 checks, src/sim/Terrain.h), so establish whether this water is a fluid volume/receiver drawn by the fluid work (docs/scratch/fluid-surface-impl-001.md, fluid-kinds-001.md, lever-gates-impl-001.md) that the simulation does not treat as a hazard, or a cell flag that is missed. From retained evidence and static analysis establish the original's rule: which fluid kinds kill which lemmings, how a lemming's type (ordinary, water, acid) is carried and where it comes from (hatch, level data), and at what depth contact kills. Implement that rule in the production simulation: an ordinary lemming entering water drowns with the drown animation and counts as lost; a water lemming does not; the same for acid if evidenced. Fluid levels changed by levers must be respected at the current level, not the initial one. This is a rules fix authorized by the playtest ledger; do not retune any timing. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report names the installed level behind 'Block and Build' and shows, through the production path before the change, a retained image and a position/state trace of ordinary lemmings crossing water alive, with the source-traced reason.",
+        "The original's fluid-versus-lemming-type rule is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on that level, an ordinary lemming entering the water drowns and is counted lost; a regression test on real level data asserts it, and a test on an installed water-lemming level asserts water lemmings survive the same contact.",
+        "Every scripted route in the registered play tests still reaches its recorded outcome, or each changed outcome is shown to be a route that depended on walking on fluid, with justification. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "lever-render-001",
+      "title": "Draw levers and recheck the empty containers on Introducing Water Lemmings",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 4 item T2. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: no levers are drawn on any level, and 'Introducing Water Lemmings' shows no water in the bottom two containers; the user expects water there and suspects the two are related. fluid-kinds-001 (docs/scratch/fluid-kinds-001.md) called the empty tubs a data-defined drained state; treat that conclusion as disputed, not settled. Part 1: levers exist in the simulation and respond to lemmings (docs/scratch/lever-gates-impl-001.md, lever-initial-face-impl-001.md, lever-links-research-001.md) but the production level view draws nothing for them. Find the lever model in the installed assets (lever .a3d placed via findLevelObjects / LevelSetup, see docs/scratch/level-sweep-001.md gadget census), trace why the scene does not draw it, and draw it in the production view at its placed position and orientation, showing its current face (the stored initial face and each face after a lemming throws it), with scene depth so it occludes and is occluded like other scenery. Part 2: identify the installed level behind 'Introducing Water Lemmings', and re-derive from the level data and static analysis what the initial fluid level of each container is, including receivers whose level depends on a lever's initial face or a gate's initial state. If the bottom two containers should start filled, fix the initial state in the production path; if the data really says drained, show the exact fields and the original's code that reads them so a later observation of the original can settle it, and say so plainly. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "Before images through the production path show levels with levers and no lever drawn. After the change, levers are drawn on at least three installed levels including 'Introducing Water Lemmings', at the position where lemmings trigger them, and a retained image sequence shows the lever's face changing when a lemming throws it. A regression test on real level data asserts lever pixels are present and change with the face.",
+        "The report names the level, lists each container's fluid kind, linked lever or gate and initial level with the level-data fields and static addresses that determine them, and either fixes the bottom two containers to start filled with before/after images or documents precisely why the data says empty and what original observation would settle it.",
+        "Frames of levels without levers are pixel-identical to before. Scripted route outcomes are unchanged. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
       "id": "panel-icon-anim-001",
       "title": "Animate skill icons on the panel when hovered or selected",
       "status": "ready",
@@ -14730,6 +14768,44 @@
         "The report names the reproduced level and shows, through the production path with retained images and a position/state trace, lemmings in anti-gravity cells drawn clipping through ground or standing on nothing.",
         "The original's inverted-gravity presentation is cited from retained or static evidence, or what is not evidenced is stated and the choice labelled provisional. After the change, lemmings in those cells are drawn upside down on the surface the simulation has them on, and upright again after leaving, in reviewed image sequences and a regression test on real level data.",
         "Any simulation defect found in these zones is reported with evidence and either fixed from a cited rule or explicitly left. Levels without anti-gravity cells render pixel-identically for the scripted routes. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "gravity-gadgets-001",
+      "title": "Show gravity flippers and kill lemmings that fall into the ceiling",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 4 item T5 (a) and (c); T5 (b), upside-down drawing, belongs to antigrav-presentation-001: read docs/scratch/antigrav-presentation-001.md first and build on it. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person on the level shown on the map as 'Sometimes Up Sometimes Down': the gravity flippers are not visible, and lemmings that fall into the ceiling do not die, they get stuck. Identify the installed level from docs/scratch/map-level-names-001.md. Part 1: find the gravity-flip gadget in the installed assets and level data (anti_grav model and antiGravCells in docs/scratch/level-sweep-001.md), trace why the production view does not draw it, and draw it at its placed position with scene depth, animated if the model has animation. Part 2: reproduce the stuck lemming with a position/state trace through the production path. From retained evidence and static analysis establish what the original does to a lemming falling under inverted gravity: the fall-distance rule for a splat on the ceiling, and what happens when it leaves the level bounds or meets a solid ceiling. Implement the evidenced rule so that an inverted fall ends in a landing on the ceiling surface, a splat or a loss as upright falls do, and never in a stuck lemming. Upright fall rules and fall timing are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report names the level and shows before images with no gravity flipper drawn and a state trace of a lemming stuck after falling upward. After the change the flippers are visible at the cells where gravity changes, in retained images on that level, with a regression test asserting their pixels on real level data.",
+        "The original's inverted-fall rule is cited from retained or static evidence, or what is not evidenced is stated and the choice labelled provisional. After the change a lemming falling upward on that level lands, splats or is lost and is counted correctly; no lemming remains in a non-terminating state, asserted by a regression test on real level data.",
+        "Levels without anti-gravity cells keep their scripted route outcomes and render pixel-identically. Full registered main/recovery verification passes; saves are untouched."
+      ]
+    },
+    {
+      "id": "map-hover-text-001",
+      "title": "Make the map hover text match the original's three-line block",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 4 item T3. Difficulty: routine to difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: the level name shown on map hover (map-level-names-001, docs/scratch/map-level-names-001.md) does not look like the original. The user supplied a screenshot of the original at docs/playtest/reference/leveltext.png: at the top-left of the map screen, three left-aligned lines in a rounded black font with a red drop shadow: '10 Lemmings : Save 1', then the level name ('Just Climb'), then a green clock icon followed by '5:00'. Read the image. From retained evidence and static analysis find the font, the shadow colour and offset, the clock icon asset, the text position and the format strings the original uses, and where the counts and time limit come from in the level data. Render that block in the production map screen for the hovered level node using the recovered text rendering, replacing the current hover text. Map navigation, node picking and level launch are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "The report shows the current hover text beside docs/playtest/reference/leveltext.png and cites the font, icon, colours, position and format strings from installed assets and static evidence, or states what is not evidenced and labels it provisional.",
+        "After the change, through the production path with public pointer input, hovering the 'Just Climb' node shows three lines at the top-left matching the reference in content, order, font, shadow and clock icon; a retained image is compared side by side with the reference and reviewed. Two other nodes show their own lemming count, save target, name and time limit, matching the level data. A regression test asserts the three strings for at least two nodes.",
+        "Map frames with no node hovered are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched."
       ]
     },
     {

@@ -10,8 +10,12 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - hover-feedback-001: **ready** — Highlight hovered lemmings and show the hatch's remaining count
+- fluid-hazard-001: **ready** — Kill ordinary lemmings that enter water
+- lever-render-001: **ready** — Draw levers and recheck the empty containers on Introducing Water Lemmings
 - panel-icon-anim-001: **ready** — Animate skill icons on the panel when hovered or selected
 - antigrav-presentation-001: **ready** — Draw lemmings correctly in anti-gravity zones
+- gravity-gadgets-001: **ready** — Show gravity flippers and kill lemmings that fall into the ceiling
+- map-hover-text-001: **ready** — Make the map hover text match the original's three-line block
 - exit-balloon-path-001: **ready** — Make the exit balloon spiral out as in the original
 
 ## Recently completed queue entries

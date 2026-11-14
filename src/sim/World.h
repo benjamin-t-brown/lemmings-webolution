@@ -1196,6 +1196,11 @@ public:
   // the pass. A dtMs that spans several tick boundaries is first split at those boundaries.
   void advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout = false,
                         const std::function<bool(double)>& afterUpdate = {});
+  // Connected entry only: hold the hatch clock while the entry presentation
+  // finishes. All level, actor, gadget and completion clocks still advance.
+  // Keep the ordinary entry/ABI for frozen timing demonstrations.
+  void advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterTimeout,
+                        bool releaseEnabled, const std::function<bool(double)>& afterUpdate = {});
 
   std::uint64_t tickCount() const { return tick_; }
   // The single level clock (integer ms). tickCount() == levelClockMs() / msPerTick() on
@@ -1286,7 +1291,7 @@ private:
   // Hatch release for one update; `tickBoundary` gates only the integer-tick release model.
   void stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout);
   // One world update of the explicit path (<= one tick boundary), see advanceElapsedMs.
-  void updateSegment(int segmentMs, bool continueHatchesAfterTimeout);
+  void updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool releaseEnabled);
   // Explicit-path lemming step: the full per-tick step on a tick-boundary update, otherwise
   // only the continuous fall/walk movement with this update's dt.
   void stepElapsed(Lemming& l, bool tickBoundary);

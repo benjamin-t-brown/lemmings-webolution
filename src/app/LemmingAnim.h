@@ -73,8 +73,11 @@ int bomberCountdownDigit(const sim::Lemming& lemming);
 
 // Draw the countdown above every live lemming with a lit fuse, using the ^Font sheet and
 // glyph table the HUD uses (shell::drawHud). `actors` gives each lemming's on-screen box.
-// PROVISIONAL presentation: a text digit above the sprite top, drawn over the finished frame.
+// PROVISIONAL presentation: text above the sprite, at the actor billboard depth.
+// An optional physical scene depth masks each glyph pixel (smaller is nearer).
 void drawBomberCountdowns(Image& frame, const Image& font, const sim::World& world,
                           std::span<const LevelActorView> actors);
+void drawBomberCountdowns(Image& frame, const Image& font, const sim::World& world,
+                          std::span<const LevelActorView> actors, std::span<const double> sceneDepth);
 
 }  // namespace webo::app

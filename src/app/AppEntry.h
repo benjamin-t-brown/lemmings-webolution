@@ -66,6 +66,8 @@ struct LevelFrameView {
   // them. Read-only counters; zero on a level whose terrain was never edited.
   std::size_t drawnTerrainCellsChanged = 0;
   std::size_t drawnTerrainBlocksRebuilt = 0;
+  // Actual door sample submitted by this application frame (clone observation).
+  double hatchOpeningProgress = 0.0;
 };
 using LevelFrameObserver = std::function<void(const LevelFrameView&)>;
 

@@ -1175,7 +1175,7 @@ void World::stepLeverContacts(double dt) {
   }
 }
 
-void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout) {
+void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool releaseEnabled) {
   const std::uint64_t period = static_cast<std::uint64_t>(std::max(1, msPerTick()));
   // The level clock is advanced before the update, as in the frame loop (0x45CFF9).
   levelClockMs_ += static_cast<std::uint64_t>(segmentMs);
@@ -1184,7 +1184,7 @@ void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout) {
   explicitUpdate_ = true;
   updateDtSeconds_ = dt;
 
-  stepRelease(dt, tickBoundary, continueHatchesAfterTimeout);
+  if (releaseEnabled) stepRelease(dt, tickBoundary, continueHatchesAfterTimeout);
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     stepElapsed(lemmings_[i], tickBoundary);
   stepLeverContacts(dt);
@@ -1203,6 +1203,11 @@ void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout) {
 
 void World::advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout,
                              const std::function<bool(double)>& afterUpdate) {
+  advanceElapsedMsWithReleaseGate(dtMs, continueHatchesAfterTimeout, true, afterUpdate);
+}
+
+void World::advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterTimeout,
+                             bool releaseEnabled, const std::function<bool(double)>& afterUpdate) {
   const std::uint64_t period = static_cast<std::uint64_t>(std::max(1, msPerTick()));
   int remaining = std::max(0, dtMs);
   bool open = true;
@@ -1214,14 +1219,14 @@ void World::advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout,
     // reaches at most one boundary (the connected app never exceeds its 100 ms cap).
     while (((levelClockMs_ % period) + static_cast<std::uint64_t>(ms)) / period >= 2) {
       const int toBoundary = static_cast<int>(period - levelClockMs_ % period);
-      updateSegment(toBoundary, continueHatchesAfterTimeout);
+      updateSegment(toBoundary, continueHatchesAfterTimeout, releaseEnabled);
       ms -= toBoundary;
       if (afterUpdate && !afterUpdate(toBoundary / 1000.0)) {
         open = false;
         return;
       }
     }
-    updateSegment(ms, continueHatchesAfterTimeout);
+    updateSegment(ms, continueHatchesAfterTimeout, releaseEnabled);
     if (afterUpdate && !afterUpdate(ms / 1000.0))
       open = false;
   };

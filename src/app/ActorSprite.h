@@ -21,6 +21,16 @@ struct ActorSpritePlacement {
   double bottom = 0.0;
 };
 
+// Decode the existing 0x43CCB5/43CDA0 normalized 0.0003 actor bias to the
+// physical view-Z units used by Raster and SceneDepth. At width 640 this is
+// 0.64 world units toward the camera. R3 adds a PROVISIONAL 4-world-unit
+// contact allowance for the flat SPR billboard overlapping its supporting
+// wall/tunnel surface in the installed clone contact views.
+// Retained submit instructions do not establish original device depth state.
+inline double actorPhysicalDepth(const ActorSpritePlacement& p, int viewportWidth) {
+  return p.depth * viewportWidth / 0.3 - 4.0;
+}
+
 // A lensed view-space input for the actor draw path. Its x/y/z operands are
 // already in the native projection's normalized units (lens Z is 0.3/width).
 struct ActorProjectionInput {

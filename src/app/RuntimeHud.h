@@ -51,6 +51,10 @@ class RuntimeSimState {
   // update's own dt. Returns true when at least one world update ran.
   bool advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion = false,
                       const std::function<void()>& afterTick = {}, int stallCapMs = kStallCapMs);
+  // Same shared-dt path with an explicit start-only hatch gate. Retain the
+  // five-argument entry above for existing callers and frozen demonstrations.
+  bool advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion,
+                      const std::function<void()>& afterTick, int stallCapMs, bool releaseEnabled);
   static constexpr int kStallCapMs = 100;  // 0x45D927-0x45DA3C
   // Observations of the shared input contract (for tests and diagnostics).
   int lastPassMs() const { return lastPassMs_; }

@@ -199,7 +199,10 @@ int main(int argc, char** argv) {
       return 1;
     }
     fs::copy_file(path, path.parent_path() / ("closed-" + path.filename().string()));
-    const auto sampled = webo::test::hatchEntryFixture(*library, pose, ticks, ticks ? 208 : 0);
+    // Connected presentation uses frame seconds (30/144), while the unchanged
+    // World/HUD clock admits 208 integer ms. The old 208 ms sample fitted a
+    // door clip to the World arm interval and encoded playtest R2.
+    const auto sampled = webo::test::hatchEntryFixture(*library, pose, ticks, ticks ? 30.0/144.0*1000.0 : 0, true);
     return webo::writePng(path, sampled).has_value() ? 0 : 1;
   };
   const int zeroResult = render(expectedZeroShot, 0);

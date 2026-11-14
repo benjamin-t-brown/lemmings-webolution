@@ -14269,7 +14269,7 @@
     {
       "id": "actor-depth-001",
       "title": "Occlude lemmings per pixel against the level's depth",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -14284,12 +14284,145 @@
         "After the change those same views show the lemming cut exactly at the occluding silhouette and fully visible where nothing is in front of it; a climber on its wall, a walker on a ledge and a lemming in a dug tunnel are not cut by the surface they touch across a full rotation in at least 12 evenly spaced views. Images are retained and reviewed.",
         "The actor depth derivation and bias are stated with the scene's depth convention and cited evidence, or labelled provisional. A regression test asserts per-pixel occlusion for a far-side, a near-side and a wall-adjacent lemming on real level data; picking follows visibility.",
         "Frames containing no lemming are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261114T014716-38924-40c75173",
+      "started": "2026-11-14T01:47:16.300269+00:00",
+      "finished": "2026-11-14T02:02:47.246400+00:00",
+      "last_run": "build/agent-runs/20261114T014716-38924-40c75173",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261114T011640-38924-b0e5f70c/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by source inspection, independently reviewed retained images, and successful supervisor verification. Acceptance covers the provisional clone behavior; original depth-state fidelity and human playability remain unproven.",
+        "checks": [
+          {
+            "criterion": "The report reproduces both failures through the production path with retained images at stated camera angles: a lemming drawn through a wall that should hide it, and a lemming hidden where it should be visible, including a climber on MM_CLIMB_002.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/actor-depth-001.md",
+                "detail": "Documents natural installed-level snapshots, the production rendering call path, authentic frozen baseline, and exact camera parameters for both failure directions."
+              },
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-before/climber/view-8.png",
+                "detail": "Reviewed full frame: at yaw 106.66666666666666 units (150 degrees), the MM_CLIMB_002 climber overlays the foreground wall, painting 116 pixels."
+              },
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-before/climber/view-36.png",
+                "detail": "Reviewed full frame: at yaw 256 units (360 degrees), the climber is absent despite its exposed position beside the cylinder."
+              },
+              {
+                "path": "src/__test__/test_actor_depth.cpp",
+                "detail": "Loads real level assets, naturally releases actors, assigns skills through World::assign, synchronizes excavated terrain, and renders through TubeScene. Paired state records must match."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change those same views show the lemming cut exactly at the occluding silhouette and fully visible where nothing is in front of it; a climber on its wall, a walker on a ledge and a lemming in a dug tunnel are not cut by the surface they touch across a full rotation in at least 12 evenly spaced views. Images are retained and reviewed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-after/climber/view-8.png",
+                "detail": "Reviewed matching full frame: foreground geometry masks the climber, leaving only 10 exposed pixels instead of the baseline's 116."
+              },
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-after/climber/view-36.png",
+                "detail": "Reviewed matching full frame: the formerly missing climber is now fully visible, with 121 actor pixels."
+              },
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-after/climber/review-12-views.png",
+                "detail": "Independently reviewed against its before sheet: twelve views spaced 30 degrees apart cover a full rotation. Exposed wall-contact poses remain intact; foreground walls mask the other poses."
+              },
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-after/ledge/review-12-views.png",
+                "detail": "Independently reviewed against its before sheet: the walker remains intact on exposed ledges and reappears at view 36, where the baseline wrongly hid it."
+              },
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-after/tunnel/review-12-views.png",
+                "detail": "Independently reviewed against its before sheet and full frames 8/12: exposed excavated-tunnel poses remain intact. Oblique head clipping follows the foreground ceiling lip; distant cylinder surfaces correctly hide the actor."
+              },
+              {
+                "path": "build/actor-depth-001/evidence/actor-depth-after/pillar/review-12-views.png",
+                "detail": "Independently reviewed against its before sheet: the foreground pillar masks individual sprite fragments, including view 40, rather than admitting the whole walker."
+              },
+              {
+                "path": "build/agent-native/main/actor-depth-after/summary.txt",
+                "detail": "Final verified run reports zero leaking or missing views across 192 samples: 67 fully visible, 32 partially visible, and 93 hidden."
+              }
+            ]
+          },
+          {
+            "criterion": "The actor depth derivation and bias are stated with the scene's depth convention and cited evidence, or labelled provisional. A regression test asserts per-pixel occlusion for a far-side, a near-side and a wall-adjacent lemming on real level data; picking follows visibility.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/ActorSprite.h",
+                "detail": "Defines physical comparison depth as placement.depth * viewportWidth / 0.3 - 4.0. Explicitly labels the additional four-world-unit contact allowance provisional and distinguishes it from the retained normalized 0.0003 bias."
+              },
+              {
+                "path": "src/app/Raster.cpp",
+                "detail": "Confirms affine view-depth storage, infinity clearing, and smaller-is-nearer comparison, consistent with the documented actor conversion."
+              },
+              {
+                "path": "build/actor-depth-001/static/submit-instructions.json",
+                "detail": "Retained Ghidra evidence for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f shows the origin gate at 0x43CC94/0x43CC9A, bias subtraction at 0x43CCB5, depth setup call at 0x43CCCA, and submission at 0x43CD4E. These instructions corroborate the retained pseudocode but do not establish effective hardware depth state."
+              },
+              {
+                "path": "src/__test__/test_actor_depth.cpp",
+                "detail": "For all 48 angles on each real-level snapshot, compares every rendered pixel against an unmasked sprite filtered by actual scene depth. Exercises near, far, wall-contact, pillar, and excavated-tunnel cases; asserts picking agrees with surviving pixels and countdown fragments obey depth."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Drawing and screen-box generation share sprite preparation and per-pixel clipping. Fully hidden sprites return no placement; partially visible sprites retain their pick rectangle. Actors preserve scene depth."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Submits actors after scenery, terrain, and fluid passes, then supplies that displayed raster explicitly to hover, click picking, and countdown masking."
+              }
+            ]
+          },
+          {
+            "criterion": "Frames containing no lemming are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261114T014716-38924-40c75173/verification.log",
+                "detail": "Final supervisor verification passes all 223 registered main tests and all 84 recovery tests, including baseline identity, paired rendering, and application checks. This supersedes the report's pending-verification handoff."
+              },
+              {
+                "path": "build/agent-runs/20261114T014716-38924-40c75173/result.json",
+                "detail": "Records verification exit code zero for verified content 44a1b56c6c49f488ae291f35c62d0a5c9d643e4d55daabe05f2020e6bbf3c459, matching the review context."
+              },
+              {
+                "path": "src/__test__/test_actor_depth.cpp",
+                "detail": "Requires PNG-byte equality for all 192 paired actor-free tube frames and checks installed and normal clone-save existence and complete bytes remain unchanged."
+              },
+              {
+                "path": "src/__test__/test_actor_occlusion.cpp",
+                "detail": "Requires byte-identical encoded production frames whenever no living lemming exists. Its application route uses a private FileSaveSink path."
+              },
+              {
+                "path": "build/agent-native/main/actor-occlusion-app-after/app-route-summary.txt",
+                "detail": "Final application run exercised 21 actor-free production frames, with paired simulation/camera comparison enabled."
+              },
+              {
+                "path": "build/agent-native/main/actor-occlusion-app-after/summary.txt",
+                "detail": "Records installed_save_unchanged=1, normal_save_unchanged=1, and failures=0."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-14T02:06:11.987258+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261114T014716-38924-40c75173\\verification.log",
+        "verified_content": "44a1b56c6c49f488ae291f35c62d0a5c9d643e4d55daabe05f2020e6bbf3c459"
+      }
     },
     {
       "id": "hatch-timing-001",
       "title": "Release lemmings after the entry text and slow the hatch doors",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -14303,7 +14436,230 @@
         "The report measures through the production path, before the change, the times of entry-text end, door animation start and end, and first release on at least two installed levels, and cites retained or static evidence for the original's order and door duration, or states what is not evidenced and labels the choice provisional.",
         "After the change the same measurements show no lemming released before the entry text has gone, the doors opening over the evidenced or stated provisional duration, and the first release after the doors are open; retained image sequences are reviewed and a regression test asserts the order.",
         "The interval between subsequent releases, release counts and scripted route outcomes are unchanged apart from the documented start offset. Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261114T030531-38924-3dfc5b73",
+      "started": "2026-11-14T03:05:32.162690+00:00",
+      "finished": "2026-11-14T03:38:55.449746+00:00",
+      "last_run": "build/agent-runs/20261114T030531-38924-3dfc5b73",
+      "last_failure": "The entry-order and door-duration criteria are supported, but scripted outcome preservation is not. The last pre-task expansion run won MM_BLOCK_001_A; both post-change runs lost it, blocking the dependent gadget route. Diagnose this difference with a matched replay and demonstrate criterion 3. Passing observation drivers do not establish unchanged outcomes.",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The entry-order and door-duration criteria are supported, but scripted outcome preservation is not. The last pre-task expansion run won MM_BLOCK_001_A; both post-change runs lost it, blocking the dependent gadget route. Diagnose this difference with a matched replay and demonstrate criterion 3. Passing observation drivers do not establish unchanged outcomes.",
+        "checks": [
+          {
+            "criterion": "The report measures through the production path, before the change, the times of entry-text end, door animation start and end, and first release on at least two installed levels, and cites retained or static evidence for the original's order and door duration, or states what is not evidenced and labels the choice provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hatch-timing-001.md",
+                "detail": "Traces ordinary frontend entry through runApplicationLeg, EntryStartCue, hatch presentation and World release. Reports door phase starting at entry, first positive sample at 0.1 s, and the unresolved original phase/rate relationship. Explicitly labels full 2.8-second playback and cue/door gating provisional, preserves earlier conflicting timing findings, and states what original observation would settle them."
+              },
+              {
+                "path": "build/hatch-timing-001/before/MM_CLIMB_002/summary.txt",
+                "detail": "Pre-change installed node 0 measurements record door start first sample 0.1 s, door end 0.8 s, text retirement 4.5 s and first release 2.2 s, with ten releases and zero driver failures."
+              },
+              {
+                "path": "build/hatch-timing-001/before/MM_BOMB/summary.txt",
+                "detail": "The second installed route, node 2, independently records the same four pre-change event times, twenty releases and zero failures."
+              },
+              {
+                "path": "build/hatch-timing-001/static/instructions-0x425A95.json",
+                "detail": "Retained Ghidra instructions for registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show model update at 0x425B04, completion testing at 0x425B17, countdown seeding at 0x425B44\u20130x425B56 and subtraction at 0x425B84\u20130x425B90. These support completion-before-release arming, without establishing the text-relative startup phase."
+              },
+              {
+                "path": "build/hatch-timing-001/static/instructions-0x451121.json",
+                "detail": "Instructions 0x451175\u20130x451181 add supplied dt directly to model time; 0x4511B2\u20130x4511B8 compare against clip duration. This supports unit-speed model playback locally, while the report appropriately leaves the complete original elapsed-time mapping unresolved."
+              },
+              {
+                "path": "build/hatch-timing-001/assets/door-keys.csv",
+                "detail": "Retains the installed census of 102 levels and 144 hatches, with two 70-key tracks per hatch and approximately 2.8-second durations. The report distinguishes nominal 25 Hz transform keys from rendered video frames."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change the same measurements show no lemming released before the entry text has gone, the doors opening over the evidenced or stated provisional duration, and the first release after the doors are open; retained image sequences are reviewed and a regression test asserts the order.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hatch-timing-001/after/MM_CLIMB_002/frames.csv",
+                "detail": "Records door completion at 2.8 s, cue retirement at 4.5 s and first birth at 5.9 s. Spawn count remains zero throughout the cue lifetime and door motion; four paused frames retain the same door sample."
+              },
+              {
+                "path": "build/hatch-timing-001/after/MM_BOMB/summary.txt",
+                "detail": "Confirms the same corrected event times on the second installed level, twenty final releases and zero failures."
+              },
+              {
+                "path": "src/__test__/test_hatch_timing.cpp",
+                "detail": "Runs ordinary frontend/map input on both installed levels and asserts no births until both gates finish, first birth after full opening, approximately 2.8-second playback, pause freezing and actual fast-forward exercise. A public Retry route covers the shorter cue."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The connected application advances LevelStartSequence alongside EntryStartCue, submits its actual sample to hatch rendering and passes the combined gate through RuntimeSimState into World. Retry constructs fresh per-leg state; direct diagnostic behavior remains explicitly separate."
+              },
+              {
+                "path": "build/hatch-timing-001/after/MM_CLIMB_002/first-release.png",
+                "detail": "Independently inspected against the baseline first-release image and retained frames 0, 31 and 48. The baseline birth is covered by entry text; corrected frames show text retirement before a visible faller beneath fully hanging doors."
+              },
+              {
+                "path": "build/hatch-timing-001/after/MM_BOMB/first-release.png",
+                "detail": "Independently inspected against its baseline and frames 0, 31 and 48. The corrected birth is text-free beneath open doors; earlier sequence frames retain zero population."
+              },
+              {
+                "path": "build/hatch-timing-001/retry/summary.txt",
+                "detail": "Records cue retirement at 2.5 s, full opening at 2.8 s and first birth at 4.2 s. Reviewed cue-retired, doors-open and first-release images corroborate this order. Supplemental model images were also reviewed for closed, swinging and final poses."
+              }
+            ]
+          },
+          {
+            "criterion": "The interval between subsequent releases, release counts and scripted route outcomes are unchanged apart from the documented start offset. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/hatch-timing-001/release-comparison.json",
+                "detail": "Supports cadence/count preservation for the two measured routes: all thirty births shift exactly +3700 ms, and every subsequent observed gap is identical."
+              },
+              {
+                "path": "build/hatch-exit-presentation-001/end-after/summary.txt",
+                "detail": "Supports the paired Climber regression: success, constant +3800 ms start offset, 33 Pending frames, three paused frames, unchanged real saves and zero failures."
+              },
+              {
+                "path": "build/agent-runs/20261114T024345-38924-0bb0704d/verification.log",
+                "detail": "The final supervisor verification passes all 232 main and 84 recovery tests, including hatch timing, levelreturn, audioapp and cameraentry. This satisfies registered verification, but observation-driver passes do not assert their gameplay outcomes."
+              },
+              {
+                "path": "build/hatch-timing-001/after/saves.txt",
+                "detail": "Records installed=1 and normal=1 for unchanged-save checks. The connected timing driver uses explicit private save paths and compares real-save existence and contents."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261114-015157/step-2-core-blocker/play-result.txt",
+                "detail": "The last pre-task expansion result is WIN on MM_BLOCK_001_A. Attempt 2 reports 23/30 saved against a target of 15, earning the prerequisite for the subsequent gadget route."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261114-023201/step-2-core-blocker/play-result.txt",
+                "detail": "The first post-change supervisor run reports LOSS on the same route; attempt 2 saves 0/30. This outcome difference is not explained by the timing report."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261114-024914/step-2-core-blocker/play-result.txt",
+                "detail": "The final verified run again reports LOSS, with both attempts saving 0/30. These wall-clock observations alone do not identify causality, but they prevent accepting outcome preservation without diagnosis and a matched comparison."
+              },
+              {
+                "path": "build/playable-expansion-001/runs/20261114-024914/step-4-gadget/play-result.txt",
+                "detail": "The downstream route is now BLOCKED because its prerequisite was not earned, whereas the pre-task run entered MM_W_012. The report leaves broader classifications pending rather than reconciling this changed coverage."
+              },
+              {
+                "path": "src/__test__/test_playableexpansion.cpp",
+                "detail": "Explicitly reports win/loss/blocked outcomes without asserting them; its exit code measures driver integrity. Therefore the green full-suite result cannot resolve the observed WIN-to-LOSS change."
+              }
+            ]
+          }
+        ]
+      },
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. Matched replays resolve the previous outcome concern: identical placements reproduce the same Blocker win, Blocker loss and gadget loss before and after. Final registered verification passes 234 main and 84 recovery tests. Original startup phase and playback mapping remain explicitly provisional; this acceptance does not establish original fidelity or human playability.",
+        "checks": [
+          {
+            "criterion": "The report measures through the production path, before the change, the times of entry-text end, door animation start and end, and first release on at least two installed levels, and cites retained or static evidence for the original's order and door duration, or states what is not evidenced and labels the choice provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hatch-timing-001.md",
+                "detail": "Traces ordinary frontend entry through runApplicationLeg, EntryStartCue, hatch rendering, RuntimeSimState and World. Documents opening from entry, the first positive sample at 0.1 seconds, measurement resolution and authentic frozen-source provenance. Explicitly labels full-duration playback and cue-relative phase provisional, preserves conflicting historical estimates and identifies the original observation needed to settle them."
+              },
+              {
+                "path": "build/hatch-timing-001/before/MM_CLIMB_002/summary.txt",
+                "detail": "Installed node 0 records opening first sampled at 0.1 seconds, full opening at 0.8, cue retirement at 4.5 and first release at 2.2; ten releases and zero failures."
+              },
+              {
+                "path": "build/hatch-timing-001/before/MM_BOMB/summary.txt",
+                "detail": "Installed node 2 independently records the same four baseline event times, twenty releases and zero failures."
+              },
+              {
+                "path": "build/hatch-timing-001/static/instructions-0x425A95.json",
+                "detail": "Retained Ghidra instructions identify reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Model update at 0x425B04 and completion test at 0x425B17 precede countdown seeding at 0x425B44\u20130x425B56; subtraction follows at 0x425B84\u20130x425B90. This supports completion-before-release arming, without proving text-relative startup phase."
+              },
+              {
+                "path": "build/hatch-timing-001/static/instructions-0x451121.json",
+                "detail": "Instructions 0x451175\u20130x451181 add supplied dt directly to model time; 0x4511B2\u20130x4511B8 compare against clip duration. This corroborates the retained pseudocode's local playback behavior, without resolving the complete original elapsed-time mapping."
+              },
+              {
+                "path": "build/hatch-timing-001/assets/door-keys.csv",
+                "detail": "Retains the installed census of 102 levels and 144 hatches, with two 70-key tracks per hatch and approximately 2.8-second durations. The report distinguishes nominal 25 Hz transform keys from rendered frames."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change the same measurements show no lemming released before the entry text has gone, the doors opening over the evidenced or stated provisional duration, and the first release after the doors are open; retained image sequences are reviewed and a regression test asserts the order.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Connected frontend legs construct LevelStartSequence from installed hatch duration, advance it alongside EntryStartCue, submit its actual opening sample to rendering and pass the combined release gate into RuntimeSimState. World skips only release processing while gated; Retry constructs fresh per-leg state."
+              },
+              {
+                "path": "src/__test__/test_hatch_timing.cpp",
+                "detail": "Ordinary frontend/map routes assert zero births until cue retirement and full opening, first birth after door completion, approximately 2.8-second playback, pause freezing and exercised fast-forward. The public Retry route asserts that its shorter cue still waits for the doors."
+              },
+              {
+                "path": "build/hatch-timing-001/after/MM_CLIMB_002/frames.csv",
+                "detail": "Records full opening at 2.8 seconds, cue retirement at 4.5 and first birth at 5.9. Population remains zero throughout the gate; paused frames retain the door sample."
+              },
+              {
+                "path": "build/hatch-timing-001/after/MM_BOMB/frames.csv",
+                "detail": "Independently records the same corrected order and event times on the second installed route, followed by all twenty releases."
+              },
+              {
+                "path": "build/hatch-timing-001/after/MM_CLIMB_002/first-release.png",
+                "detail": "Independently reviewed with its baseline first-release image and retained frames 31 and 48: baseline birth is covered by entry text; corrected sequence shows zero population during the cue, text retirement, then a visible faller beneath open doors."
+              },
+              {
+                "path": "build/hatch-timing-001/after/MM_BOMB/first-release.png",
+                "detail": "Independently reviewed against its baseline and frames 31 and 48. The corrected first birth is text-free beneath open doors; earlier frames show zero population."
+              },
+              {
+                "path": "build/hatch-timing-001/retry/summary.txt",
+                "detail": "Records cue retirement at 2.5 seconds, full opening at 2.8 and first birth at 4.2. Independently reviewed cue-retired, doors-open and first-release images corroborate this order; supplemental model poses show closed, swinging and final hanging doors."
+              }
+            ]
+          },
+          {
+            "criterion": "The interval between subsequent releases, release counts and scripted route outcomes are unchanged apart from the documented start offset. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hatch-timing-001/release-comparison.json",
+                "detail": "The two initial installed routes retain all thirty releases and every subsequent observed interval, with a constant +3700 ms start offset."
+              },
+              {
+                "path": "docs/scratch/hatch-timing-001.md",
+                "detail": "The follow-up diagnoses different historical Blocker placements and the observer's missed-transition limitation. Matched replay reproduces resulting assignments through public input rather than claiming reconstruction of unlogged wall-clock frames. Level-clock behavior remains unchanged, and comparison stops at absolute timeout."
+              },
+              {
+                "path": "build/hatch-timing-001/review-followup/matched-comparison.json",
+                "detail": "Independently cross-checked against raw before/after gameplay, action, birth and outcome files: both Blocker routes have 538 identical compared state rows at +2000 ms; the earned gadget route has 445 at +3800 ms. Actions and all eighty first-birth-relative release timestamps match. Outcomes remain WIN 23/30, LOSS 0/30 and LOSS 2/20; paired Results PNG hashes match. The Blocker win earns gadget access through private-save persistence."
+              },
+              {
+                "path": "build/hatch-timing-001/win-after/summary.txt",
+                "detail": "The ordinary Climber route retains its ten-release win, zero failures and unchanged real saves. Its paired baseline also wins; the report documents the +3800 ms start offset and corresponding remaining-time difference."
+              },
+              {
+                "path": "build/agent-runs/20261114T030531-38924-3dfc5b73/verification.log",
+                "detail": "Final supervisor verification passes all 234 main and 84 recovery tests, including both matched replay registrations, entry/order checks, levelreturn, audioapp and cameraentry. Reviewed production files, replay source and CMake registration match the retained verified source manifest."
+              },
+              {
+                "path": "build/hatch-timing-001/routes-after/summary.txt",
+                "detail": "Records installed=1, normal=1 and failures=0; the baseline replay records the same preservation results. Source snapshots compare real-save existence and bytes, while replay writes use explicit private save paths."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-14T03:42:28.757908+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261114T030531-38924-3dfc5b73\\verification.log",
+        "verified_content": "ba88121da11140ffe94e4b1a7696c80a75f6c1166502ce12dd849655586e69fd"
+      }
     },
     {
       "id": "hover-feedback-001",
@@ -14323,6 +14679,19 @@
         "After the change, through the production path with public pointer input on an installed level, the hovered lemming is visibly marked and it is the lemming a click then assigns to; moving off removes the mark; with overlapping lemmings exactly one is marked. Retained images are reviewed and a regression test asserts mark and click agree.",
         "Hovering the hatch shows the count of lemmings still to be released, decreasing as they are released, in retained images and a regression test.",
         "Frames with nothing hovered are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261114T041703-38924-b0c5b662",
+      "started": "2026-11-14T04:17:03.470205+00:00",
+      "finished": "2026-11-14T04:17:03.164046+00:00",
+      "last_run": "build/agent-runs/20261114T034228-38924-3eed7e7f",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261114T034228-38924-3eed7e7f/verification.log",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-14T04:28:45.822616+00:00",
+          "by": "project lead",
+          "change": "Resume note. Attempt 1 failed verification (build/agent-runs/20261114T034228-38924-3eed7e7f/verification.log). Attempt 2 finished its edits, then the supervisor was killed by a host low-memory condition during verification (build/agent-runs/20261114T041703-38924-b0c5b662); that is not a task failure. The attempt-2 work is left uncommitted in the tree (HoverFeedback.h, test_hover_feedback.cpp, hover_feedback cmake files, the report and edits to main.cpp, TubeScene, BackdropScene, RuntimeHud, AppEntry.h, CMakeLists.txt and several tests) with a copy under build/lead/hover-feedback-001-attempt2/. It has never completed verification. Inspect and continue it rather than restarting; correct the report to what was actually verified."
+        }
       ]
     },
     {

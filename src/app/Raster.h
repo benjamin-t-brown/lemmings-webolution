@@ -47,6 +47,7 @@ class Raster {
 
   const Framebuffer& framebuffer() const { return color_; }
   Framebuffer& mutableFramebuffer() { return color_; }
+  const std::vector<double>& depthBuffer() const { return depth_; }
   std::vector<double>& mutableDepthBuffer() { return depth_; }
   std::size_t drawnTriangles() const { return triangles_; }
   std::size_t drawnPixels() const { return pixels_; }

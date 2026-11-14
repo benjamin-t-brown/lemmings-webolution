@@ -42,6 +42,11 @@ void RuntimeSimState::resume() {
 
 bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion,
                                      const std::function<void()>& afterTick, int stallCapMs) {
+  return advanceElapsed(world, elapsedSeconds, trackCompletion, afterTick, stallCapMs, true);
+}
+
+bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, bool trackCompletion,
+                                     const std::function<void()>& afterTick, int stallCapMs, bool releaseEnabled) {
   if (paused_) return false;
   if (trackCompletion && end_.phase() == LevelEndPhase::Results) return false;
   // Integer milliseconds with the sub-ms fraction carried (the epsilon absorbs the binary
@@ -63,7 +68,7 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
   bool updated = false;
   for (int pass = 0; pass < passes; ++pass) {
     if (pass > 0 && trackCompletion && end_.phase() == LevelEndPhase::Results) break;
-    world.advanceElapsedMs(dtMs, trackCompletion, [&](double segmentSeconds) {
+    world.advanceElapsedMsWithReleaseGate(dtMs, trackCompletion, releaseEnabled, [&](double segmentSeconds) {
       updated = true;
       if (afterTick) afterTick();
       if (trackCompletion) {

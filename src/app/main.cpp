@@ -66,6 +66,7 @@
 #include "app/Camera.h"
 #include "app/CameraIntro.h"
 #include "app/EntryStartCue.h"
+#include "app/LevelStartSequence.h"
 #include "app/LemmingAnim.h"
 #include "app/LemmingMotion.h"
 #include "app/LevelMenu.h"
@@ -322,12 +323,12 @@ app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
 // Full native visibility, facing and applicability are still incomplete.
 std::optional<std::size_t> hoveredActor(const sim::World& world, const app::TubeScene& scene,
                         const app::SceneOptions& options, const AssetLibrary& library,
-                        const app::CameraBasis& camera,
+                        const app::CameraBasis& camera, const app::Raster& sceneRaster,
                         const std::array<double, 3>& pickReference,
                          int x, int y, sim::Skill skill, bool firstLevelSupport) {
   // SOURCE stock gate shared by both consumers; -1 remains unlimited.
   if (world.setup().skills[static_cast<std::size_t>(skill)] == 0) return std::nullopt;
-  const auto boxes = scene.injectedWalkerScreenBoxes(camera, options, library);
+  const auto boxes = scene.injectedWalkerScreenBoxes(camera, options, library, sceneRaster);
   std::vector<app::PickCandidate> candidates;
   std::size_t walker = 0;
   const auto& lemmings = world.lemmings();
@@ -613,6 +614,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       std::fprintf(stderr, "sim: %s\n", setup.error().c_str());
       return 1;
     }
+    // R1/R2: connected play arms only after the entry presentation below.
+    // Its full door clip replaces the old derived door-arm delay; retain the
+    // 1.3 s first countdown and every recurring interval. Diagnostic World
+    // fixtures keep their existing timing contract.
+    if (persistentFrontend) setup->releaseArmSeconds = 0.0;
     world.emplace(*setup);
     for (int i = 0; i < args.simTicks; ++i)
       world->tick();
@@ -690,12 +696,17 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
     // the terrain version moved since the last frame.
     if (world && !args.noTerrainSync) scene->syncTerrain(world->terrain());
-     app::scheduleSceneFrame(
+    auto geometryOptions = options;
+    if (!options.composeActorsBeforeRoute) geometryOptions.injectedWalkers.clear();
+    app::scheduleSceneFrame(
           [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary,c3Diagnostic?&observer:nullptr); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
-         [&] { scene->render(target, frameCamera, options, &*library); },
+         [&] { scene->render(target, frameCamera, geometryOptions, &*library); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Secondary); });
+    // R3: actors test against completed scenery, fluids and edited terrain.
+    if (options.drawCellRoute && !options.composeActorsBeforeRoute)
+      scene->drawInjectedWalkers(target, frameCamera, options, *library);
     if (!args.sceneOff) std::fprintf(stderr,"backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu null-materials=%zu null-triangles=%zu predicate-rejected=%zu missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",backdrop.has_value(),backdropStats.roots,backdropStats.meshRecords,backdropStats.meshTriangles,backdropStats.billboards,backdropStats.nullMaterials,backdropStats.nullMaterialTriangles,backdropStats.predicateRejected,backdropStats.missingTextures,backdropStats.rejected,backdropStats.pixels);
     if (backdrop && !spriteSeedReported && backdrop->firstSpriteDrawRandomState()) {
       spriteSeedReported = true;
@@ -861,6 +872,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::RetailSkillPanel> runtimePanel;
   std::optional<app::RuntimeCursor> runtimeCursor;
   std::optional<app::EntryStartCue> entryCue;
+  std::optional<app::LevelStartSequence> levelStart;
+  double hatchOpeningProgress = 0.0;
   std::optional<app::LevelMenu> levelMenu;
   std::string entryCueText;
   if (args.sim && world) {
@@ -883,6 +896,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       entryCueText = (*strings)[71]; // READ45CAEA pushes hex47: Let's Go!, not Continue/name.
       entryCue.emplace(persistentFrontend->levelIntroEnabled());
+      double doorSeconds = 0.0;
+      if (entranceExitPresentation)
+        for (const auto& hatch : entranceExitPresentation->entrances)
+          doorSeconds = std::max(doorSeconds, hatch.animation.duration);
+      levelStart.emplace(doorSeconds);
       auto loadedMenu = app::LevelMenu::load(*library);
       if (!loadedMenu) {
         std::fprintf(stderr, "level menu: %s\n", loadedMenu.error().c_str());
@@ -989,7 +1007,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           if (!skillSelection.consumePanelClick(pointerX, pointerY,
                                                 app::runtimeSkillPanelCounts(*world))) {
             const auto hit = hoveredActor(*world, *scene, options, *library,
-                displayedCamera, displayedPickReference,
+                displayedCamera, windowRaster, displayedPickReference,
                 pointerX, pointerY, skillSelection.selectedSkill(),
                 args.level == "MM_CLIMB_002");
             const bool assigned = hit && world->assign(*hit, skillSelection.selectedSkill());
@@ -1084,6 +1102,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // READ45CC09: title clock updates after input, before simulation/drawing.
     // Unlike CameraIntro's pose, this frame uses the decremented title clock.
     if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
+    if (levelStart) levelStart->advance(elapsed, focused && !runtimeSim.paused());
     if (args.sim && world) {
       // shared-timing-impl-001: explicit elapsed-time world update (integer ms, 100 ms stall
       // cap, level-second splitting, lemmings then lever contact). The cap applies to the
@@ -1094,8 +1113,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       // using the existing World clock. This never supplies time to simulation.
       lemmingMotion.observe(*world);
       const auto afterUpdate = [&] { drainCues(); lemmingMotion.observe(*world); };
+      // The gate also covers fast-forward passes and the initial hidden cue
+      // phase. A paused/menu/focus-lost cue cannot be outrun by the hatch.
+      const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryCue && entryCue->active());
       simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, afterUpdate,
-                                            ownedClock ? 0 : app::RuntimeSimState::kStallCapMs);
+                                            ownedClock ? 0 : app::RuntimeSimState::kStallCapMs, releaseEnabled);
       // actor-anim-001: every lemming draws its own clip, advanced by level time every frame
       // (not only on a simulation tick) and frozen while paused. Fast-forward runs the world
       // kFastForwardPasses times per frame. Reuse its accepted integer-ms budget, including
@@ -1109,15 +1131,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       options.injectedWalkers = app::injectedWalkersFromWorld(
           *world, terrainHeight, args.noActorAnim ? nullptr : &lemmingAnim, &lemmingMotion);
       if (backdrop && entranceExitPresentation) {
-        // P9: use the installed door tracks, fitting their presentation to
-        // the already accepted arm interval. PROVISIONAL time mapping: the
-        // serialized 2.8-second clip and retained ~0.723-second arm estimate
-        // do not establish the original animation speed. Never feed this back
-        // into World release timing, counts, spawn coordinates or skill rules.
+        // R2: connected play samples the full installed door duration (25
+        // keys/s); its phase relative to the cue is provisional. The direct
+        // diagnostic retains the historical P9 arm-normalized sampling.
         const double arm = world->setup().releaseArmSeconds;
-        const double opening = arm > 0 ? world->levelClockMs()/1000.0/arm : 1.0;
+        hatchOpeningProgress = levelStart ? levelStart->openingProgress() :
+            (arm > 0 ? world->levelClockMs()/1000.0/arm : 1.0);
         const auto& end = runtimeSim.endTransition();
-        backdrop->setEntranceExitPresentation(*entranceExitPresentation, opening,
+        backdrop->setEntranceExitPresentation(*entranceExitPresentation, hatchOpeningProgress,
             end.phase() == app::LevelEndPhase::Pending ? 7.0-end.timerSeconds() : 0.0);
       }
       if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
@@ -1150,7 +1171,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
         if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
                         [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
-          const auto fuseBoxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library);
+          const auto fuseBoxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
           std::vector<app::LevelActorView> fuseActors;
           std::size_t fuseWalker = 0;
           for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
@@ -1159,7 +1180,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
               fuseActors.push_back({i, *fuseBoxes[fuseWalker]});
             ++fuseWalker;
           }
-          app::drawBomberCountdowns(image, *runtimeFont, *world, fuseActors);
+          app::drawBomberCountdowns(image, *runtimeFont, *world, fuseActors, windowRaster.mutableDepthBuffer());
         }
         const auto cueFrame = entryCue ? entryCue->frame() : std::nullopt;
         if (cueFrame) app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
@@ -1168,7 +1189,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         const auto counts = app::runtimeSkillPanelCounts(*world);
         const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
         const auto hover = focused && !menuOpen() && !rightDown && panelIndex < 0 ?
-            hoveredActor(*world, *scene, options, *library, displayedCamera,
+            hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
                 displayedPickReference, pointerX, pointerY, skillSelection.selectedSkill(),
                 args.level == "MM_CLIMB_002") : std::nullopt;
         const auto cursorState = menuOpen() ? (focused ? app::CursorState::NoLemming : app::CursorState::Hidden) :
@@ -1178,7 +1199,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         // READ45E2B5/45E342: cue is below the later cursor and pause caption.
         if (runtimeSim.paused() && !menuOpen()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
         if (levelObserver) {
-          const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library);
+          const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
           std::vector<app::LevelActorView> actors;
           std::size_t walker = 0;
           for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
@@ -1197,7 +1218,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                          persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
                          cues && cues->deviceReady(), cues ? cues->drained() : 0, cues ? cues->routed() : 0,
                          displayedPose, displayedPickReference,
-                         scene->terrainCellsChanged(), scene->terrainBlocksRebuilt()});
+                         scene->terrainCellsChanged(), scene->terrainBlocksRebuilt(), hatchOpeningProgress});
         }
         presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
         for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {

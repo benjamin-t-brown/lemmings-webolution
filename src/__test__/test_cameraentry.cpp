@@ -28,6 +28,9 @@
 #include "save/SavedGame.h"
 #include "sim/RetailLevel.h"
 #include "sim/World.h"
+#ifndef CAMERAENTRY_FROZEN
+#include "HatchEntryFixture.h"
+#endif
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -298,6 +301,24 @@ int main() {
     report << "entry operands frame " << kSamples[i] << ": yaw_units " << op.yawUnits
            << " yaw_offset " << op.yawOffset << " eye_distance " << op.eyeDistance << '\n';
     runStatic("entry-yaw229-frame" + std::to_string(kSamples[i]), op, kSamples[i], entryStatic[i]);
+#ifndef CAMERAENTRY_FROZEN
+    if (!entryStatic[i].empty()) {
+      // R2 deliberately changes only connected hatch presentation. Preserve the
+      // explicit-camera production render as a control: the independent fixture
+      // must match it exactly with the historical arm mapping, then compose the
+      // connected expectation with the full 2.8 s clip. No pixel masks/tolerance.
+      auto& sample = entryStatic[i].back();
+      const double openingMs = (kSamples[i] + 1) * kFrameSeconds * 1000.0;
+      const auto control = test::hatchEntryFixture(*library, sample.pose,
+          static_cast<int>(sample.tick), openingMs, false, kLevel);
+      expect(changedPixels(control, sample.image) == 0,
+             "static camera frame " + std::to_string(kSamples[i]) +
+             " exactly matches the independent diagnostic hatch compositor");
+      png("diagnostic-entry-yaw229-frame" + std::to_string(kSamples[i]) + ".png", sample.image);
+      sample.image = test::hatchEntryFixture(*library, sample.pose,
+          static_cast<int>(sample.tick), openingMs, true, kLevel);
+    }
+#endif
   }
 
   // ---- Direct diagnostic route: no frontend, no camera file. Unchanged by this task.

@@ -248,8 +248,8 @@ void compositeActorOverlay(app::Raster& raster, const Image& overlay,
 // walker: the steps `drawInjectedWalkers` already ran immediately before
 // `drawActorSprite`. nullopt is one of that loop's `continue`s (temporal
 // index, empty direction list, forced view out of range, sheet-load failure,
-// placement failure). P8 additionally draws far-facing sprites into scratch
-// storage and returns nullopt if the cylinder masks every opaque texel. Callers
+// placement failure). R3 draws sprites into scratch storage and returns
+// nullopt if scene depth masks every opaque texel. Callers
 // own iteration order; partially visible actors keep their original pick box.
 struct PreparedInjectedWalker {
   webo::SpriteFrame frame;
@@ -260,79 +260,23 @@ struct PreparedInjectedWalker {
   Image clippedSprite;
 };
 
-// P8, provisional playable-v1 policy, not recovered D3D device state. A6c/A6d16
-// leave effective actor depth unresolved. Treat the cylinder's outer envelope
-// as opaque to FAR-facing actors, clipping their billboard pixels at its actual
-// polygonal silhouette. Near-facing actors keep the accepted overlay path: their
-// origin lies within the shell (Z=.75), including inside excavated tunnels, so a
-// blanket depth test against the outer skin would incorrectly bury them.
-// This is deliberately independent of terrain edits, camera and simulation.
-class ActorCylinderOccluder {
- public:
-  ActorCylinderOccluder(const CylinderMesh& mesh, const CameraBasis& camera) : camera_(camera) {
-    if (mesh.ringCount < 2 || mesh.angularSteps < 3) return;
-    for (std::uint32_t i = 0; i < mesh.angularSteps; ++i) {
-      const auto& a = mesh.vertex(0, i, true);
-      const auto& b = mesh.vertex(0, (i + 1) % mesh.angularSteps, true);
-      double nx = b.z - a.z, nz = a.x - b.x;
-      double limit = nx * a.x + nz * a.z;
-      if (limit < 0) { nx = -nx; nz = -nz; limit = -limit; }
-      planes_.push_back({nx, 0, nz, limit});
-    }
-    const double y0 = mesh.vertex(0, 0, true).y;
-    const double y1 = mesh.vertex(mesh.ringCount - 1, 0, true).y;
-    planes_.push_back({0, -1, 0, -std::min(y0, y1)});
-    planes_.push_back({0, 1, 0, std::max(y0, y1)});
-  }
-
-  bool farFacing(const std::array<double, 3>& p) const {
-    return !planes_.empty() &&
-        p[0] * (camera_.eyeWorld[0] - p[0]) +
-        p[2] * (camera_.eyeWorld[2] - p[2]) < 0;
-  }
-
-  bool occludes(int x, int y, double lensedDepth) const {
-    const auto& m = camera_.worldToView;
-    const auto& eye = camera_.eyeWorld;
-    const double vx = (x - camera_.cx) / camera_.focalX;
-    const double vy = (camera_.cy - y) / camera_.focalY;
-    // Inverse rigid view basis. Ray parameter is physical view Z; actor depth
-    // already carries the accepted .0003 bias in normalized (0.3/width) units.
-    const std::array<double, 3> ray{
-        m[0] * vx + m[1] * vy + m[2],
-        m[3] * vx + m[4] * vy + m[5],
-        m[6] * vx + m[7] * vy + m[8]};
-    double enter = 0, exit = lensedDepth * camera_.width / 0.3;
-    for (const auto& p : planes_) {
-      const double speed = p[0] * ray[0] + p[1] * ray[1] + p[2] * ray[2];
-      const double room = p[3] - p[0] * eye[0] - p[1] * eye[1] - p[2] * eye[2];
-      if (std::abs(speed) < 1e-12) {
-        if (room < 0) return false;
-      } else if (speed < 0) {
-        enter = std::max(enter, room / speed);
-      } else {
-        exit = std::min(exit, room / speed);
-      }
-      if (enter >= exit) return false;
-    }
-    return enter < exit;
-  }
-
- private:
-  const CameraBasis& camera_;
-  std::vector<std::array<double, 4>> planes_;
-};
-
-bool clipFarActor(Image& sprite, const ActorSpritePlacement& p,
-                  const ActorCylinderOccluder& cylinder) {
+// Playtest R3: compare the flat camera-facing sprite plane against the actual
+// rendered scene, including syncTerrain meshes. Smaller physical view Z wins.
+// actorPhysicalDepth preserves the traced normalized bias plus a provisional
+// contact allowance. Neither scene comparison nor that allowance establishes
+// recovered device depth behavior.
+bool clipActorToScene(Image& sprite, const ActorSpritePlacement& p,
+                      std::span<const double> depth) {
   bool visible = false;
+  const double z = actorPhysicalDepth(p, sprite.width);
   for (int y = std::max(0, int(std::ceil(p.top)));
        y < std::min(sprite.height, int(std::ceil(p.bottom))); ++y) {
     for (int x = std::max(0, int(std::ceil(p.left)));
          x < std::min(sprite.width, int(std::ceil(p.right))); ++x) {
-      auto& alpha = sprite.rgba[(std::size_t(y) * sprite.width + x) * 4 + 3];
+      const auto at = std::size_t(y) * sprite.width + x;
+      auto& alpha = sprite.rgba[at * 4 + 3];
       if (!actorSpriteAlphaTestPasses(alpha)) continue;
-      if (cylinder.occludes(x, y, p.depth)) alpha = 0;
+      if (at < depth.size() && !(z < depth[at])) alpha = 0;
       else visible = true;
     }
   }
@@ -343,7 +287,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     const ActorPoseLevel& poseLevel, const SpriteSheet& sprites, const ActorLightMap& light,
     const CameraBasis& camera, const SceneOptions& options,
     const SceneOptions::InjectedNativeWalker& injected, const AssetLibrary& lib,
-    const TubePassBounds& bounds, const ActorCylinderOccluder& cylinder) {
+    const TubePassBounds& bounds, std::span<const double> depth) {
   if (!options.composeSkipActorVisibility &&
       !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
     return std::nullopt;
@@ -411,16 +355,15 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   prepared.mirrored = selection.mirrored;
   prepared.tint = tint;
   // Keep the explicit visibility diagnostic able to reveal rejected actors,
-  // including actors hidden by the P8 mask. Production never sets this flag.
-  if (!options.composeSkipActorVisibility && !options.composeSkipActorPose &&
-      cylinder.farFacing(worldPosition)) {
+  // including actors hidden by scene depth. Production never sets this flag.
+  if (!options.composeSkipActorVisibility && !options.composeSkipActorPose) {
     auto& sprite = prepared.clippedSprite;
     sprite.width = camera.width;
     sprite.height = camera.height;
     sprite.alpha = AlphaMode::Embedded;
     sprite.rgba.assign(std::size_t(sprite.width) * sprite.height * 4, 0);
     if (!drawActorSprite(sprite, frame, prepared.texture, *placement, selection.mirrored, tint) ||
-        !clipFarActor(sprite, *placement, cylinder)) return std::nullopt;
+        !clipActorToScene(sprite, *placement, depth)) return std::nullopt;
   }
   return prepared;
 }
@@ -444,13 +387,12 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   overlay.rgba.assign(static_cast<std::size_t>(overlay.width) * overlay.height * 4, 0);
 
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
-  const ActorCylinderOccluder cylinder(mesh_, camera);
   for (auto it = options.injectedWalkers.rbegin(); it != options.injectedWalkers.rend(); ++it) {
     // Reverse order, same skips, and the same frame/texture/placement/mirror/tint
-    // fed to drawActorSprite. alphaTest stays true; only far-facing sprites
-    // arrive already rasterised and clipped in scratch storage.
+    // fed to drawActorSprite. Production sprites arrive rasterised and
+    // depth-clipped in scratch storage; diagnostics keep their overlay path.
     auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
-                                          options, *it, lib, bounds, cylinder);
+                                          options, *it, lib, bounds, raster.depthBuffer());
     if (!prepared)
       continue;
     if (!prepared->clippedSprite.rgba.empty()) {
@@ -478,17 +420,25 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
 
 std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreenBoxes(
     const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const {
+  Raster sceneRaster(camera.width, camera.height);
+  auto geometry = options;
+  geometry.injectedWalkers.clear();
+  render(sceneRaster, camera, geometry, nullptr);
+  return injectedWalkerScreenBoxes(camera, options, lib, sceneRaster);
+}
+
+std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreenBoxes(
+    const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib,
+    const Raster& sceneRaster) const {
   std::vector<std::optional<ActorSpritePlacement>> boxes(options.injectedWalkers.size());
-  if (options.injectedWalkers.empty() || !haveLemmingSprites_ || !havePoseLevel_)
+  if (options.injectedWalkers.empty() || !haveLemmingSprites_ || !havePoseLevel_ ||
+      sceneRaster.framebuffer().width != camera.width || sceneRaster.framebuffer().height != camera.height)
     return boxes;
   rewirePoseLevel();
-  if (lemmingSprites_.find("walk") == nullptr)
-    return boxes;
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
-  const ActorCylinderOccluder cylinder(mesh_, camera);
   for (std::size_t i = 0; i < options.injectedWalkers.size(); ++i) {
     if (auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
-                                              options, options.injectedWalkers[i], lib, bounds, cylinder))
+          options, options.injectedWalkers[i], lib, bounds, sceneRaster.depthBuffer()))
       boxes[i] = prepared->placement;
   }
   return boxes;
@@ -811,9 +761,6 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
     }
   }
 
-  if (options.drawCellRoute && !options.composeActorsBeforeRoute)
-    maybeCompose();
-
   if (options.drawPolyList) {
     for (const auto& face : poly_) {
       std::array<std::array<double, 4>, 3> p{};
@@ -835,6 +782,8 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       raster.triangle(p, t, tile->texture, face.modulate);
     }
   }
+  if (options.drawCellRoute && !options.composeActorsBeforeRoute)
+    maybeCompose();
 }
 
 // terrain-render-001. METHOD, with its evidence level:

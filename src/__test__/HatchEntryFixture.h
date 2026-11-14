@@ -15,30 +15,34 @@
 #include "assets/LevelIndex.h"
 #include "sim/RetailLevel.h"
 
+#include <cmath>
 #include <stdexcept>
 
 namespace webo::test {
 inline Image hatchEntryFixture(const AssetLibrary& library,
                                const app::CameraParams& cameraParams,
-                               int hudTicks, int openingMs) {
+                               int hudTicks, double openingMs, bool connectedEntry = false,
+                               const std::string& levelName = "MM_CLIMB_002") {
   const auto require = []<class T>(std::expected<T, std::string> value) -> T {
     if (!value) throw std::runtime_error(value.error());
     return std::move(*value);
   };
-  const auto level = require(sim::resolveRetailLevel(library, "MM_CLIMB_002"));
+  const auto level = require(sim::resolveRetailLevel(library, levelName));
   const auto bytes = require(library.read(level.file));
   const auto mesh = require(findCylinderMesh(bytes));
   const auto index = require(indexLevel(bytes));
   auto tube = require(app::TubeScene::build(library, mesh, bytes, index.grid0, true));
-  auto backdrop = require(app::BackdropScene::build(library, bytes, "MM_CLIMB_002"));
+  auto backdrop = require(app::BackdropScene::build(library, bytes, levelName));
   const auto effects = require(backdrop.entranceExitPresentation(bytes));
-  sim::World world(require(sim::loadRetailLevel(library, "MM_CLIMB_002")));
+  sim::World world(require(sim::loadRetailLevel(library, levelName)));
   for (int i = 0; i < hudTicks; ++i) world.tick();
   // These entry fixtures precede release. Actors would require their own
   // animation/motion clocks, so refuse to silently fake a later gameplay frame.
-  if (world.spawned() != 0 || openingMs < 0 || openingMs > 208)
+  if (world.spawned() != 0 || !std::isfinite(openingMs) || openingMs < 0)
     throw std::runtime_error("hatch entry fixture is restricted to pre-release frames");
-  const double arm = world.setup().releaseArmSeconds;
+  // R2 corrects connected entry's compressed door expectation. Direct-level
+  // diagnostics retain the old arm mapping. Zero-time control stays identical.
+  const double arm = connectedEntry ? 2.799999952316284 : world.setup().releaseArmSeconds;
   backdrop.setEntranceExitPresentation(effects, arm > 0 ? openingMs / 1000.0 / arm : 1, 0);
   app::SceneOptions options;
   options.drawCellRoute = true;
@@ -60,7 +64,7 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
     const auto& rgb = raster.framebuffer().rgb;
     image.rgba.insert(image.rgba.end(), {rgb[i], rgb[i + 1], rgb[i + 2], 255});
   }
-  const auto panel = app::drawRetailSkillPanel(image, library, "MM_CLIMB_002");
+  const auto panel = app::drawRetailSkillPanel(image, library, levelName);
   if (!panel) throw std::runtime_error(panel.error());
   const auto font = require(loadTexture(library, "TEXTURES\\^FONT.BMP"));
   app::drawRuntimeHud(image, font, world, false);

@@ -132,16 +132,63 @@ struct PairTrace {
   std::ofstream out;
   std::ifstream expected;
   bool compare;
-  PairTrace(const fs::path& p, const fs::path& b)
+  bool alignStart;
+  std::vector<std::string> prior;
+  long long startOffsetMs = 0;
+  int frameOffset = -1, lastPrior = -1;
+  PairTrace(const fs::path& p, const fs::path& b, bool allowStartOffset = false)
       : out(p / "simulation.txt"),
-        compare(!baseline && fs::exists(b / "simulation.txt")) {
+        compare(!baseline && fs::exists(b / "simulation.txt")), alignStart(allowStartOffset) {
     if (compare)
       expected.open(b / "simulation.txt");
+    if (compare && alignStart) {
+      std::string line;
+      while (std::getline(expected, line)) prior.push_back(line);
+    }
+  }
+  static std::array<long long, 5> prefix(const std::string& line) {
+    std::istringstream in(line); std::array<long long, 5> fields{};
+    std::string field;
+    for (auto& value : fields) { std::getline(in, field, ','); value = std::stoll(field); }
+    return fields;
+  }
+  static std::string payload(const std::string& line) {
+    std::size_t p = 0;
+    for (int i = 0; i < 4; ++i) p = line.find(',', p) + 1;
+    return line.substr(p);
   }
   void frame(const app::LevelFrameView& f) {
     auto s = state(f);
     out << s << '\n';
     if (compare) {
+      if (alignStart) {
+        // R1 explicitly changes connected entry's start offset. Preserve the
+        // authentic old trace and compare ALL gameplay state after aligning
+        // first birth. Level time still advances during the added wait.
+        if (frameOffset < 0 && f.world.spawned() > 0) {
+          auto first = std::find_if(prior.begin(), prior.end(), [](const auto& l) { return prefix(l)[4] > 0; });
+          check(first != prior.end(), "authentic first birth exists");
+          if (first == prior.end()) return;
+          const auto p = prefix(*first);
+          frameOffset = f.frame - int(p[0]);
+          startOffsetMs = static_cast<long long>(f.world.levelClockMs()) - p[1];
+          check(startOffsetMs > 0, "R1 delays the first connected release");
+        }
+        const int index = frameOffset < 0 ? 0 : f.frame - frameOffset;
+        check(index >= 0 && index < int(prior.size()), "aligned baseline frame exists");
+        if (index < 0 || index >= int(prior.size())) return;
+        check(payload(s) == payload(prior[index]), "all gameplay state equals authentic route after start offset");
+        const auto p = prefix(s);
+        // This route's owned 200 ms frames produce one update plus a trailing
+        // zero update at every level second. Keep the clock/update assertions.
+        check(p[1] / 200 == p[2] && p[2] + p[1] / 1000 == p[3], "unchanged level clock and update counts");
+        if (frameOffset >= 0) {
+          const auto old = prefix(prior[index]);
+          check(p[1] - startOffsetMs == old[1], "only documented level-start offset differs");
+          lastPrior = index;
+        }
+        return;
+      }
       std::string want;
       check(bool(std::getline(expected, want)) && want == s,
             "full simulation identity at frame " + std::to_string(f.frame));
@@ -149,6 +196,11 @@ struct PairTrace {
   }
   void finish() {
     if (compare) {
+      if (alignStart) {
+        check(frameOffset >= 0 && lastPrior == int(prior.size()) - 1,
+              "same complete route frame count after documented start offset");
+        return;
+      }
       std::string s;
       check(!std::getline(expected, s), "identical frame counts");
     }
@@ -409,7 +461,7 @@ int endRoute(const fs::path& out) {
     return 2;
   SaveSnapshot installed(game / "SavedGame.dat"),
       normal(save::cloneSavePathUnder(*local));
-  PairTrace pair(out, out.parent_path() / "end-before");
+  PairTrace pair(out, out.parent_path() / "end-before", true);
   int stage = 0, pending = 0, pauseFrames = 0;
   bool success = false;
   double timer = 0;
@@ -502,6 +554,7 @@ int endRoute(const fs::path& out) {
       << "success=" << success << "\npending_frames=" << pending
       << "\npaused_frames=" << pauseFrames << "\nballoon_pixels_changed=" << balloonPixels
       << "\npaired=" << pair.compare
+      << "\nstart_offset_ms=" << pair.startOffsetMs
       << "\ninstalled_save_unchanged=" << installed.unchanged()
       << "\nnormal_save_unchanged=" << normal.unchanged() << "\nfailures=" << failures
       << '\n';

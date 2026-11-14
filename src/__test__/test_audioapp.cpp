@@ -13,6 +13,7 @@
 
 #include "app/AppEntry.h"
 #include "sim/World.h"
+#include "sim/RetailLevel.h"
 
 #ifndef WEBOLUTION_HAVE_SDL2
 #define WEBOLUTION_HAVE_SDL2 0
@@ -26,6 +27,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -68,6 +70,7 @@ struct Outcome {
   bool cueQuit = false;
   std::size_t drained = 0;
   std::uint64_t tick = 0;
+  std::uint64_t firstReleaseMs = 0, referenceFirstReleaseMs = 0, startOffsetMs = 0;
   std::vector<std::string> cues;
 };
 
@@ -77,11 +80,16 @@ Outcome run(const std::string& gameDir, bool enableAudio, bool noAudioFlag,
   std::vector<std::string> args{"audioapp-test", "--game-dir", gameDir};
   if (noAudioFlag) args.emplace_back("--no-audio");
   int mapX = 206, mapY = 204;
+  std::optional<webo::sim::World> reference;
+  std::uint64_t referenceMs = 0;
   if (observeFall) {
     auto library = webo::AssetLibrary::open(fs::path(gameDir) / "lemmings.box", fs::path(gameDir) / "patch.box");
     if (!library) { out.ok = false; return out; }
     auto map = webo::app::MapScene::build(*library, {});
     if (!map || map->levelForNode(1) != "MM_FLOAT") { out.ok = false; return out; }
+    const auto setup = webo::sim::loadRetailLevel(*library, "MM_FLOAT");
+    if (!setup) { out.ok = false; return out; }
+    reference.emplace(*setup);
     mapX = mapY = -1;
     for (int y = 0; y < 480 && mapX < 0; ++y)
       for (int x = 0; x < 640; ++x)
@@ -114,8 +122,23 @@ Outcome run(const std::string& gameDir, bool enableAudio, bool noAudioFlag,
     out.drained = view.audioCuesDrained; out.tick = view.world.tickCount();
     if (observeFall) {
       out.ok &= view.levelName == "MM_FLOAT" && !view.paused;
+      // R1 deliberately adds an entry-only offset. Replay the old ungated World
+      // with the exact admitted production deltas to measure that offset, then
+      // retain the old tick-108 cutoff in the reference release timeline. This
+      // changes neither the natural-fall cue assertion nor the CTest timeout.
+      const auto now = view.world.levelClockMs();
+      reference->advanceElapsedMs(static_cast<int>(now - referenceMs), true);
+      referenceMs = now;
+      if (!out.referenceFirstReleaseMs && reference->spawned()) out.referenceFirstReleaseMs = now;
+      if (!out.firstReleaseMs && view.world.spawned()) {
+        out.firstReleaseMs = now;
+        out.ok &= out.referenceFirstReleaseMs > 0 && now >= out.referenceFirstReleaseMs;
+        out.startOffsetMs = now - out.referenceFirstReleaseMs;
+      }
       if (out.cueQuit) out.ok &= view.world.dead() > 0 && out.drained > 0;
-      if (view.world.tickCount() >= 108) { out.ok = false; pushQuit(); }
+      if ((now - out.startOffsetMs) / (1000 / view.world.rules().ticksPerSecond) >= 108) {
+        out.ok = false; pushQuit();
+      }
     } else out.ok &= view.frame == 0 && pushQuit();
   };
   out.result = webo::app::runApplication(static_cast<int>(argv.size()), argv.data(), frontend,
@@ -149,6 +172,9 @@ int main() {
   std::cout << "ordinary Menu3 -> Confirm4 -> Map5 -> MM_FLOAT: result=" << fall.result
             << " frontendFrames=" << fall.frontendFrames << " levelFrames=" << fall.levelFrames
             << " tick=" << fall.tick << " device=" << fall.deviceReadyAtLevel
+            << " firstReleaseMs=" << fall.firstReleaseMs
+            << " referenceFirstReleaseMs=" << fall.referenceFirstReleaseMs
+            << " startOffsetMs=" << fall.startOffsetMs
             << " drained=" << fall.drained << " cueQuit=" << fall.cueQuit << " observer=";
   for (const auto& name : fall.cues) std::cout << name << ' ';
   std::cout << '\n';

@@ -111,7 +111,7 @@ struct SceneOptions {
   bool overlayCompositeLegacyNonZero = false;
   bool composeSkipActorPose = false;
   // Diagnostic only: project/render even actors rejected by native +29 gate
-  // or the provisional P8 cylinder mask. Production drawing/picking leaves off.
+  // or the provisional actor scene-depth test. Production drawing/picking leaves off.
   bool composeSkipActorVisibility = false;
   // Controller +0x1D8 rotation phase (A3 chooser input; spriteViewScores adds 0.0625).
   // A6d5 live read: all three matched-pause walkers hold 0.0 at controller+0x1D8.
@@ -129,11 +129,16 @@ class TubeScene {
   void render(Raster& raster, const CameraBasis& camera, const SceneOptions& options,
               const AssetLibrary* composeAssets = nullptr) const;
 
+  // Actor pass after all scenery/terrain/fluid passes. render() also calls this
+  // for standalone scene consumers. Does not change scene depth.
+  void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
+                           const SceneOptions& options, const AssetLibrary& lib) const;
+
   // Read-only screen box for each `options.injectedWalkers` entry, in that
   // vector's order (forward). Each placement is the one `drawInjectedWalkers`
   // would pass to `drawActorSprite` for that walker; nullopt when that walker
-  // is skipped or fully cylinder-occluded. Far-facing sprites are rasterised
-  // into scratch storage to check visibility; this does not modify the scene.
+  // is skipped or fully depth-occluded. Sprites use the same scene-depth
+  // mask as drawing. Without a rendered frame, a tube-only depth pass is used.
   //
   // `injectedWalkersFromWorld` emits one walker per alive lemming, in
   // `World::lemmings()` order. While every lemming is alive the returned
@@ -141,6 +146,12 @@ class TubeScene {
   // lemming has no walker, so it has no entry here.
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const;
+  // Production passes the completed frame explicitly so picking uses exactly
+  // the scene depth that clipped its sprites; the three-argument diagnostic
+  // overload above constructs a fresh tube-only depth pass.
+  std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
+      const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib,
+      const Raster& sceneRaster) const;
 
   // terrain-render-001: brings the drawn tube in line with the live simulation terrain, so
   // cells a skill removed stop being drawn and cells a Builder added are. The cheap path
@@ -184,9 +195,6 @@ class TubeScene {
 
   const Tile* findTile(bool outer, int column, int row) const;
   void rewirePoseLevel() const;
-  void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
-                           const SceneOptions& options, const AssetLibrary& lib) const;
-
   CylinderMesh mesh_;
   CylinderMesh poseCylinderTemplate_;
   std::vector<std::uint32_t> poseGrid0_;

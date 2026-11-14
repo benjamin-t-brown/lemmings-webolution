@@ -164,8 +164,26 @@ int sceneCase(const AssetLibrary& lib,const std::string& level,const fs::path& o
             "diagnostic far actor matches authentic unmasked baseline");
     }
     if(!far&&submitted) {
-      ++nearVisible;check(bool(boxes[0])&&pixels>0,"near-side natural actor stays visible");
-      if(!baseline.empty())check(rec.hash==prior.hash,"near-side frame pixel-identical to before");
+      ++nearVisible;
+      if(before) {
+        check(bool(boxes[0])&&pixels>0,"before: near-side overlay stays visible");
+        if(!baseline.empty())check(rec.hash==prior.hash,"before: near-side frame identity");
+      } else {
+        // R3 correction: near-facing actors can be behind actual side walls.
+        // The former blanket visibility/identity expectations encoded the human
+        // playtest defect. Compare every pixel to the current scene Z instead.
+        auto diagnostic=options;diagnostic.composeSkipActorVisibility=true;
+        const auto raw=render(*scene,lib,camera,diagnostic);
+        const auto rawBoxes=scene->injectedWalkerScreenBoxes(camera,diagnostic,lib);
+        app::Raster geometry(camera.width,camera.height);geometry.clear(19,23,31);
+        auto tube=options;tube.injectedWalkers.clear();scene->render(geometry,camera,tube,&lib);
+        auto expected=empty;
+        if(rawBoxes[0])for(std::size_t at=0;at<geometry.depthBuffer().size();++at)
+          if(app::actorPhysicalDepth(*rawBoxes[0],camera.width)<geometry.depthBuffer()[at])
+            std::copy_n(raw.rgb.begin()+at*3,3,expected.rgb.begin()+at*3);
+        check(frame.rgb==expected.rgb,"near-facing pixels obey actual scene depth");
+        check(bool(boxes[0])==(pixels>0),"near-facing picking follows visible pixels");
+      }
     }
     if(!submitted && !baseline.empty())check(rec.hash==prior.hash,"no-actor frame pixel-identical");
     if(!before&&!boxes[0])check(pixels==0,"fully hidden actor changes no pixels");
@@ -256,7 +274,7 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
     "--native","--frames","160","--game-dir",game.string()};
   std::vector<char*> raw;for(auto& a:args)raw.push_back(a.data());
   bool requestedPause=false,assigned=false,farChecked=false,nearChecked=false;
-  int pausedFrames=0,stock=0,frames=0;std::uint64_t frozenMs=0;
+  int pausedFrames=0,stock=0,frames=0,noActorFrames=0;std::uint64_t frozenMs=0;
   const auto observe=[&](const app::LevelFrameView& f) {
     ++frames;AppRecord r;r.frame=f.frame;r.ms=f.world.levelClockMs();r.paused=f.paused;r.yaw=f.displayedPose.yawUnits;
     if(!f.world.lemmings().empty()){r.x=f.world.lemmings()[0].x;r.y=f.world.lemmings()[0].y;}
@@ -271,6 +289,17 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
             "application simulation/clock/camera identical to authentic before route");
       if(r.box&&old.box)check(r.left==old.left&&r.top==old.top&&r.right==old.right&&r.bottom==old.bottom,
                              "visible application actor retains original pick rectangle");
+    }
+    if(std::none_of(f.world.lemmings().begin(),f.world.lemmings().end(),
+                    [](const auto& actor){return actor.alive();})) {
+      ++noActorFrames;
+      const auto name="no-actor-frame-"+std::to_string(f.frame)+".png";
+      if(paired) {
+        const auto encoded=encodePng(f.image);
+        check(std::string(encoded.begin(),encoded.end())==bytes(baseline/name),
+              "full production frame containing no lemming is pixel-identical");
+      }
+      png(out/name,f.image);
     }
     if(!requestedPause&&r.ms>=6000) {requestedPause=true;key(SDL_SCANCODE_P);}
     if(f.paused) {
@@ -316,11 +345,12 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
     }
   };
   check(app::runApplication(int(raw.size()),raw.data(),{},observe,options)==0,"public application exits");
+  check(noActorFrames>0,"public application no-actor frames exercised");
   check(assigned&&nearChecked&&farChecked&&pausedFrames==14,"public near/far/return/assignment route completes");
   if(paired){std::string extra;std::getline(prior,extra);check(!std::getline(prior,extra),"paired application frame counts equal");}
   std::ofstream(out/"app-route-summary.txt")<<"frames="<<frames<<"\npaused_frames="<<pausedFrames
     <<"\nnear_pick_checked="<<nearChecked<<"\nfar_pick_checked="<<farChecked
-    <<"\nreturned_near_assigned="<<assigned<<"\npaired_simulation_camera="<<paired<<'\n';
+    <<"\nreturned_near_assigned="<<assigned<<"\nno_actor_frames="<<noActorFrames<<"\npaired_simulation_camera="<<paired<<'\n';
   return failures?1:0;
 }
 }

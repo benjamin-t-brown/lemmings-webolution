@@ -60,4 +60,11 @@ ActorPoseResult actorPoseFromLemming(const ActorPoseLevel& level, const sim::Lem
 ActorPoseResult actorPoseFromNativeSample(const ActorPoseLevel& level,
                                           const ActorTerrainSample& plus8, int facing);
 
+// 0x43D56C reads world+0x18 (the cylinder template), not the deformed
+// surface pool at +0x148. Use this for live actors so a water/land boundary
+// cannot flatten their feet onto an unrelated surface-index corner.
+// Here gridHeight is the serialized coordinate height (112), not mask height.
+ActorPoseResult actorPoseFromCylinderSample(const ActorPoseLevel& level,
+                                            const ActorTerrainSample& plus8, int facing);
+
 }  // namespace webo

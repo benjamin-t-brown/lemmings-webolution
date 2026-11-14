@@ -174,7 +174,10 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     scene.poseGrid0_.assign(grid0.begin(), grid0.end());
     scene.poseSurface_ = scene.mesh_.surface;
     scene.poseCylinderTemplate_ = scene.mesh_;
-    scene.poseLevel_.gridHeight = scene.collision_.height;
+    // 0x43D56C clamps against world+0x28, the serialized coordinate-mesh
+    // height (112 in the installed levels), NOT the collision mask's 96 rows.
+    // `faceCount` is Cylinder's historical name for that first stored word.
+    scene.poseLevel_.gridHeight = static_cast<int>(mesh.faceCount);
     scene.poseLevel_.grid0 = scene.poseGrid0_;
     scene.poseLevel_.surface = scene.poseSurface_;
     scene.poseLevel_.cylinderTemplate = &scene.poseCylinderTemplate_;
@@ -357,7 +360,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     pose.modelPosition = {plus8.x, plus8.y, plus8.z};
     pose.basis = {1.0, 0.0, 0.0};
   } else {
-    pose = actorPoseFromNativeSample(poseLevel, plus8, injected.facing);
+    pose = actorPoseFromCylinderSample(poseLevel, plus8, injected.facing);
   }
 
   const gfx::SpriteViewVector cameraToActor{
@@ -957,6 +960,8 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
       const auto drawn = motion->positionOf(i, world);
       walker.plus8X = drawn.x;
       walker.plus8Y = terrainHeight - 1.0 - drawn.y;
+      // Q1: same radial lane sample for actor placement, occlusion and picking.
+      walker.plus8Z = drawn.z;
     }
     walker.facing = static_cast<int>(lemming.facing);
     // Without a tracker every state draws walk entry 0 (the D3b behaviour); with one, the

@@ -277,11 +277,12 @@ struct FluidGate {
   double height = 0.0, high = 0.0, low = 0.0;
   // fluid-surface-impl-001 (fluid research 6.2 item 3 / 7.4): render-only state of the animation tail
   // of 0x0042B24D. `lane` = u32 [+0x16C] (serialized value_16c); `wavePhase` = [+0x148], zero at
-  // load, `+= dt` on EVERY update (also when request == done or dt == 0) and wrapped at the 2.0
+  // load, `+= dt` on EVERY update (also when request == done or dt == 0) and wrapped at the kind's
   // period; `animated` records that the first update has run (before it the stored mesh is
   // the raw deserialized one). None of this feeds the height/mask machine above.
   std::uint32_t lane = 0;
   double wavePhase = 0.0;
+  static double wavePeriodFor(int kind);
   bool animated = false;
   static constexpr double kWavePeriod = 2.0;  // kind-0 measured period (fluid research 6.2 item 3)
 

@@ -190,14 +190,14 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
  }
  // Animated base `Fluid` models of the entities_42acac receivers (fluid-surface-impl-001; contract:
  // docs/scratch/fluid-surface-research-001.md sections 6.2 and 7.4). Structural, never by level ID:
- // only kind-0 receivers (the measured wave constants) with an inline type-0 base model whose first
+ // kinds 0..2 (startup constants at 0x428848) with an inline type-0 base model whose first
  // type-1 node has the traced layout are admitted. A failure omits that receiver's fluid with a
  // diagnostic; it never empties the other roles (they are extracted and validated above).
  for(std::size_t i=0;i<level.gadgets.entities_42acac.size();++i){
    const auto& gate=level.gadgets.entities_42acac[i];
    if(!gate.model)continue;
    const auto reject=[&](const std::string& why){s.diagnostics_.push_back(std::format("{} FluidGate entities_42acac[{}]: {}; receiver fluid not admitted",levelId,i,why));};
-   if(gate.values_18c_128_168[1]!=0){reject(std::format("receiver kind {} wave constants are not measured",gate.values_18c_128_168[1]));continue;}
+   if(gate.values_18c_128_168[1]>2){reject(std::format("receiver kind {} has no traced wave row",gate.values_18c_128_168[1]));continue;}
    if(gate.model->type!=0||!gate.model->object){reject("base model is not an inline type-0 object");continue;}
    const auto& object=*gate.model->object;
    if(!object.marker_matches){reject("Object 09 marker mismatch");continue;}
@@ -217,6 +217,7 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    auto meshes=buildSceneMeshSource(parsed->root,identity(),identity());
    if(!meshes){reject("mesh adapter: "+meshes.error());continue;}
    FluidRecord record;record.entityIndex=i;
+   record.kind=gate.values_18c_128_168[1];
    for(std::size_t k=0;k<4;++k)for(std::size_t j=0;j<3;++j){
      record.posOff[k][j]=std::bit_cast<double>(gate.triples[2*k][j]);
      record.amp[k][j]=std::bit_cast<double>(gate.triples[2*k+1][j]);
@@ -277,18 +278,23 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
   renderStage(target,camera,lib,stats,Stage::Secondary);
 }
 // 0x0042B24D animation tail + 0x0042C5C9 normal sign, applied to a pristine copy of the parsed model.
-// Constants are the measured kind-0 values (period 2.0, amplitude 0.5); pi is the traced promoted-f32
+// Constants are the three rows written by 0x428848; pi is the traced promoted-f32
 // literal 3.1415927410125732, never M_PI (fluid research 7.2).
 void BackdropScene::applyFluidState(SceneNode& g,const FluidRecord& rec,const FluidGateState& st){
- constexpr double kPi=3.1415927410125732,kPeriod=2.0,kAmplitude=0.5;
+ constexpr double kPi=3.1415927410125732;
+ // 0x428848 writes rows at 0x4BF6E8 + kind*0x48; 0x42B24D consumes
+ // period +0, amplitude +8, lane count +0x38. Keep kind 0 arithmetic unchanged.
+ const double period=rec.kind==1?8.0:rec.kind==2?0.8:2.0;
+ const double amplitude=rec.kind==1?1.0:rec.kind==2?0.25:0.5;
+ const std::uint32_t lanes=rec.kind==1?16u:rec.kind==2?2u:4u;
  const double h=st.height;
  // 0x42C5C9: normals 0..2 are negated whenever the height is zero (the facing predicate is then inverted).
  if(h==0.0)for(std::size_t k=0;k<3;++k)for(double& x:g.normals[k])x=-x;
  if(!st.animated)return;  // raw deserialized mesh until the first update has run
- const double phase=st.wavePhase/kPeriod;
- const double x1=static_cast<double>(st.lane&3u)/4.0+phase;
- const double x2=static_cast<double>((st.lane+1u)&3u)/4.0+phase;
- const auto wave=[&](double x){double w=std::cos(2.0*kPi*x)*kAmplitude;if(h==0.0)w=0.0;if(w+h<0.0)w=-h;return w;};
+ const double phase=st.wavePhase/period;
+ const double x1=static_cast<double>(st.lane&(lanes-1u))/lanes+phase;
+ const double x2=static_cast<double>((st.lane+1u)&(lanes-1u))/lanes+phase;
+ const auto wave=[&](double x){double w=std::cos(2.0*kPi*x)*amplitude;if(h==0.0)w=0.0;if(w+h<0.0)w=-h;return w;};
  const double w1=wave(x1),w2=wave(x2);
  const auto place=[&](std::size_t slot,std::size_t k,double w){for(std::size_t j=0;j<3;++j)g.positions[slot][j]=rec.posOff[k][j]+(h+w)*rec.amp[k][j];};
  place(2,0,w1);place(4,3,w1);place(3,1,w2);place(5,2,w2);
@@ -304,6 +310,12 @@ void BackdropScene::applyFluidState(SceneNode& g,const FluidRecord& rec,const Fl
  for(auto& rec5:g.meshes[1].records)for(auto& c:rec5.corners){
    const auto& v=(c.vertexIndex==2||c.vertexIndex==4)?c1:c2;
    c.r=v[0];c.g=v[1];c.b=v[2];
+ }
+ // 0x42BF8D..0x42C1DC: only kind 2 has alphaPeriod != 0. Top corners
+ // and both flat side triangles share max(0, 191 + 64*cos(2*pi*phase/4)).
+ if(rec.kind==2){
+   const double alpha=std::max(0.0,191.0+64.0*std::cos(2.0*kPi*st.alphaPhase/4.0));
+   for(auto& block:g.meshes)for(auto& triangle:block.records)for(auto& c:triangle.corners)c.a=alpha;
  }
 }
 void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,BackdropStats& stats,SceneRasterObserver* observer) const {

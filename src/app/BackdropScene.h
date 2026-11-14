@@ -84,8 +84,9 @@ class BackdropScene {
   struct FluidGateState {
     std::uint32_t lane = 0;   // u32 [+0x16C]
     double height = 0.0;      // [+0x1A8]
-    double wavePhase = 0.0;   // [+0x148], wrapped at the 2.0 period
+    double wavePhase = 0.0;   // [+0x148], wrapped at this receiver kind's period
     bool animated = false;    // first update has run; false => stored deserialized mesh
+    double alphaPhase = 0.0;  // [+0x150], kind 2 only
   };
   // Serialized per-receiver parameters of the animated base model (Entity42acac).
   struct FluidRecord {
@@ -93,6 +94,7 @@ class BackdropScene {
     std::array<std::array<double, 3>, 4> posOff{}, amp{};  // +0x1B8.. / +0x218.. per slot k
     std::array<double, 3> baseColour{};                     // vec3 [+0x170]; c = v + ((255,255,255) - v) * col
     double projectionBias = 0.0;                            // model+0xF8 (third stored double)
+    std::uint32_t kind = 0;  // [+0x128], table 0x4BF6E8 + kind*0x48
   };
   // Applies one animation update to a copy of the parsed base model (verified geometry node):
   // vertices 2..5, the six block[1] top colours and the normal sign (0x0042B24D, 0x0042C5C9).

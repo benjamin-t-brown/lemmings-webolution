@@ -562,6 +562,36 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   set_tests_properties(frontendentry PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
+  # P14: installed map/title/font assets, public SDL motion in runApplication.
+  add_executable(test_maphover src/__test__/test_maphover.cpp
+    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
+    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  target_link_libraries(test_maphover PRIVATE webolution_objects)
+  target_compile_definitions(test_maphover PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  add_test(NAME maphover COMMAND test_maphover after "${CMAKE_BINARY_DIR}/map-hover-test")
+  set_tests_properties(maphover PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+
+  # Authentic task-entry map/session sources, optional and never tracked. The
+  # same public-input driver measures the old missing-title behavior.
+  set(MAP_HOVER_FROZEN "${CMAKE_SOURCE_DIR}/build/map-level-names-001/before-source")
+  if(EXISTS "${MAP_HOVER_FROZEN}/src/app/FrontendSession.cpp" AND
+     EXISTS "${MAP_HOVER_FROZEN}/src/app/MapScene.cpp")
+    set(MAP_HOVER_BEFORE_GFX ${WEBOLUTION_GFX_SOURCES})
+    list(REMOVE_ITEM MAP_HOVER_BEFORE_GFX
+      "${CMAKE_SOURCE_DIR}/src/app/FrontendSession.cpp" "${CMAKE_SOURCE_DIR}/src/app/MapScene.cpp")
+    add_executable(test_maphover_before src/__test__/test_maphover.cpp
+      ${MAP_HOVER_BEFORE_GFX} "${MAP_HOVER_FROZEN}/src/app/FrontendSession.cpp"
+      "${MAP_HOVER_FROZEN}/src/app/MapScene.cpp" src/app/SceneVertexPack.cpp
+      src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+    target_include_directories(test_maphover_before BEFORE PRIVATE "${MAP_HOVER_FROZEN}/src")
+    target_link_libraries(test_maphover_before PRIVATE webolution_objects)
+    target_compile_definitions(test_maphover_before PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+    add_test(NAME maphover_before COMMAND test_maphover_before baseline "${CMAKE_BINARY_DIR}/map-hover-before-test")
+    set_tests_properties(maphover_before PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endif()
+
   # Observe real SDL window lifetimes in the source application, including teardown.
   if(MINGW OR (UNIX AND NOT APPLE))
     add_executable(test_frontendwindowquit src/__test__/test_frontendwindowquit.cpp
@@ -1781,3 +1811,7 @@ if(DEFINED WEBOLUTION_GAME_DIR)
       ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   endforeach()
 endif()
+
+# Playtest Q1 radial walker lanes and source-built before/after evidence.
+include(cmake/walker_lane.cmake)
+include(cmake/fluid_kinds.cmake)

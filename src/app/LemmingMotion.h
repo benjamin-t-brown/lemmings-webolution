@@ -12,6 +12,7 @@ namespace webo::app {
 struct LemmingDrawPosition {
   double x = 0.0;
   double y = 0.0;  // terrain feet, Y down
+  double z = 0.75;  // radial blend: 0 inner shell, 1 outer shell
 };
 
 // P7, PROVISIONAL presentation only. D1m (0x41BDD4) establishes continuous
@@ -41,6 +42,8 @@ class LemmingMotionTracker {
     sim::Facing facing = sim::Facing::Right;
     sim::State state = sim::State::Faller;
     std::uint64_t observedMs = 0;
+    // Q1: keep radial presentation separate from the discontinuity-reset X/Y path.
+    double laneZ = 0.75;
     std::deque<Point> path;
   };
   std::vector<Entry> entries_;

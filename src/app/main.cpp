@@ -678,8 +678,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // the fluid pass draws nothing. Depth policy: BackdropScene::kProvisionalFluidDepthPolicy.
     if (backdrop && world) {
       std::vector<app::BackdropScene::FluidGateState> fluid;
-      for (const auto& g : world->setup().gates)
-        fluid.push_back({g.lane, g.height, g.wavePhase, g.animated});
+      for (const auto& g : world->setup().gates) {
+        // All installed receivers start [+0x150] at zero and receive every
+        // shared-dt update. The existing level clock therefore samples the
+        // kind-2 four-second alpha phase without another simulation clock.
+        fluid.push_back({g.lane, g.height, g.wavePhase, g.animated,
+                         (world->levelClockMs() % 4000) / 1000.0});
+      }
       backdrop->setFluidState(std::move(fluid));
     }
     // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless

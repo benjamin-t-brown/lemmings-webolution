@@ -196,8 +196,8 @@ Lever* World::leverAt(const Lemming& l) {
 
 double FluidGate::rateFor(int kind) {
   // Startup writer 0x00428848: kind 0 -> 2.0 at 0x004BF6F8, kind 1 -> 0.5 at 0x004BF740
-  // (row stride 0x48). A kind beyond those two has no traced rate: it does not ramp rather
-  // than inventing one.
+  // (row stride 0x48). Preserve the accepted kind-0/1 height machine. fluid-kinds-001
+  // traces kind 2's rate too, but adds its rendering without expanding height/zone rules.
   switch (kind) {
     case 0: return 2.0;
     case 1: return 0.5;
@@ -221,9 +221,15 @@ void FluidGate::step(double dt, Terrain& terrain) {
 
 void FluidGate::advanceWave(double dt) {
   wavePhase += dt;
-  while (kWavePeriod < wavePhase)
-    wavePhase -= kWavePeriod;
+  const double period = wavePeriodFor(kind);
+  while (period < wavePhase)
+    wavePhase -= period;
   animated = true;
+}
+
+double FluidGate::wavePeriodFor(int kind) {
+  // Startup 0x428848: 0x4BF6E8/0x4BF730/0x4BF778, rows stride 0x48.
+  return kind == 1 ? 8.0 : kind == 2 ? 0.8 : kWavePeriod;
 }
 
 void FluidGate::stepHeight(double dt, Terrain& terrain) {

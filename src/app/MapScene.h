@@ -28,6 +28,9 @@ public:
   std::optional<std::size_t> pickNode(int x, int y) const;
   // The mask index maps to a group/slot tuple at 0x0049AB95.
   std::optional<std::string> levelForNode(std::size_t node) const;
+  // Installed LEVELMAP.DAT display title, joined to the LEVELS.MAP id.
+  // Eligibility remains owned by pickNode(), shared by hover and activation.
+  std::optional<std::string> titleForNode(std::size_t node) const;
 
  private:
   Image image_;
@@ -35,5 +38,6 @@ public:
   std::vector<std::uint8_t> mask_;
   std::uint8_t maskBackground_ = 0;
   std::array<std::string,102> levelIds_{};
+  std::array<std::string,102> levelTitles_{};
 };
 }

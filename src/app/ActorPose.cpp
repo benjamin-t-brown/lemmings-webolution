@@ -1,5 +1,6 @@
 #include "app/ActorPose.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 
@@ -194,6 +195,34 @@ ActorPoseResult actorPoseFromLemming(const ActorPoseLevel& level, const sim::Lem
                                      double zSlab) {
   const auto sample = terrainSampleFromLemming(lemming, level.gridHeight, zSlab);
   return actorPoseFromNativeSample(level, sample, static_cast<int>(lemming.facing));
+}
+
+ActorPoseResult actorPoseFromCylinderSample(const ActorPoseLevel& level,
+                                            const ActorTerrainSample& plus8, int facing) {
+  if (!level.cylinderTemplate || level.gridHeight < 16 ||
+      level.cylinderTemplate->vertices.size() < static_cast<std::size_t>(level.gridHeight/16)*64)
+    return actorPoseFromNativeSample(level, plus8, facing);
+  // READ 0x43D56C: all four corners come from world+0x18 via 0x43E580 /
+  // 0x43EA20. The surface-index pool is terrain, not an actor anchor.
+  const auto position = [&](ActorTerrainSample p) {
+    const int bx = sarBucketX(p.x), by = sarBucketY(p.y, level.gridHeight);
+    const int nextY = std::min(by + 1, level.gridHeight / 16 - 1);
+    const auto radial = [&](int x, int y) {
+      // 0x43D09A reads alternating inner/outer triples into separate runtime
+      // layers (+0 / +0x300). CylinderMesh preserves FILE interleaving, so
+      // vertex() is the corresponding accessor (0x43E580 / 0x43EA20).
+      const auto v = [&](int shell) { return toArray(level.cylinderTemplate->vertex(
+          static_cast<std::uint32_t>(std::max(0,y)),static_cast<std::uint32_t>(x & 31),shell==1)); };
+      return vecLerp(v(0),v(1),p.z);
+    };
+    const double tx=(p.x-bx*8.0)/8.0, ty=(p.y-by*16.0)/16.0;
+    return vecLerp(vecLerp(radial(bx,by),radial(bx+1,by),tx),
+                   vecLerp(radial(bx,nextY),radial(bx+1,nextY),tx),ty);
+  };
+  ActorPoseResult out;out.modelPosition=position(plus8);
+  auto basis=plus8;basis.x+=facing*0.1;
+  out.basis=normalize(vecSub(position(basis),out.modelPosition));
+  return out;
 }
 
 }  // namespace webo

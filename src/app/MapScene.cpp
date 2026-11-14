@@ -2,6 +2,7 @@
 #include "assets/Bitmap.h"
 #include "assets/GameData.h"
 #include "assets/Lrz.h"
+#include <algorithm>
 #include <array>
 #include <fstream>
 #include <limits>
@@ -292,6 +293,8 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   if(!mask) return std::unexpected(mask.error());
   auto levels=loadLevelTable(lib);
   if(!levels) return std::unexpected("map level table: "+levels.error());
+  auto titles=loadLevelMap(lib);
+  if(!titles) return std::unexpected("map level titles: "+titles.error());
   if(auto v=validateImage(*bg,"background");!v) return std::unexpected(v.error());
   if(auto v=validateImage(*atlas,"atlas");!v) return std::unexpected(v.error());
   MapScene scene; scene.image_=std::move(*bg);
@@ -307,6 +310,13 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
        static_cast<std::size_t>(slot)>=levels->groups[static_cast<std::size_t>(group)].size())
       return std::unexpected("map node mapping is outside the loaded level table");
     scene.levelIds_[i]=levels->groups[static_cast<std::size_t>(group)][static_cast<std::size_t>(slot)].id;
+    const auto id = normaliseAssetName(scene.levelIds_[i]);
+    const auto title = std::find_if(titles->begin(), titles->end(), [&](const LevelInfo& info) {
+      return normaliseAssetName(info.id) == id;
+    });
+    if (title == titles->end() || title->name.empty())
+      return std::unexpected("map display title missing for " + scene.levelIds_[i]);
+    scene.levelTitles_[i] = title->name;
     const int row=base+(state[i]==2?2:state[i]==3?4:0);
     const auto& r=kRects[static_cast<std::size_t>(row)];
     const int dx=kRecords[i][0]-r[4], dy=kRecords[i][1]-r[5];
@@ -336,5 +346,10 @@ std::optional<std::size_t> MapScene::pickNode(int x, int y) const {
 std::optional<std::string> MapScene::levelForNode(std::size_t node) const {
   if(node>=levelIds_.size() || levelIds_[node].empty() || levelIds_[node]=="blank") return std::nullopt;
   return levelIds_[node];
+}
+
+std::optional<std::string> MapScene::titleForNode(std::size_t node) const {
+  if (!levelForNode(node) || levelTitles_[node].empty()) return std::nullopt;
+  return levelTitles_[node];
 }
 }  // namespace webo::app

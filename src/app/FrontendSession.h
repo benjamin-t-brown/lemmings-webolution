@@ -42,8 +42,8 @@ class FrontendSession {
   const save::SavedGame& savedGame() const { return savedGame_; }
 
   const Image& image() const;
-  // Base scene stays cursor-free for renderer tests; production paths present
-  // this independent copy with the frontend cursor composited last.
+  // image() is the cached base scene. Production paths present this independent
+  // copy with map hover text and then the frontend cursor composited last.
   Image composeFrame() const;
   // SOURCE absolute SDL adapter; native453C3A..453D23 uses these inclusive
   // extents after adding relative device deltas. No pointer warp is performed.

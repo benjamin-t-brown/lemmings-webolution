@@ -266,6 +266,60 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
    matrix[10]+=5.0*std::max(0.0,departureSeconds);
  }
 }
+std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
+    const CameraBasis& camera, const Raster& raster) const {
+ std::vector<HatchHoverTarget> targets;
+ if (raster.framebuffer().width != camera.width || raster.framebuffer().height != camera.height) return targets;
+ const auto& depth = raster.depthBuffer();
+ const auto context = predicateContext(camera);
+ for (const auto& owned : roots_) {
+   if (owned.source.owner != "entities_425e50") continue;
+   auto records = buildSceneMeshSource(owned.node, identity(), camera.worldToView);
+   if (!records) continue;
+   std::map<std::size_t,std::array<double,3>> eyes;
+   collectEyes(owned.node, identity(), context, eyes);
+   HatchHoverTarget h{owned.source.entityIndex, camera.width, camera.height, 0, 0};
+   // SOURCE visibility: bounds of mesh pixels present in the completed scene
+   // depth buffer. This follows animated doors and hides rear/occluded hatches.
+   // PROVISIONAL rectangular hit area rather than native model-origin +/-20;
+   // a 0.5 world-unit tolerance covers raster depth conversion/rounding.
+   for (const auto& record : *records) {
+     if (!passesKind5(record, eyes)) continue;
+     for (std::size_t k = 1; k+1 < record.corners.size(); ++k) {
+       const std::size_t ids[]{0,k,k+1};
+       double sx[3], sy[3], z[3]; bool valid = true;
+       for (int j = 0; j < 3; ++j) {
+         const auto& p = record.corners[ids[j]].viewPosition;
+         z[j] = p[2];
+         if (!(z[j] > 0)) { valid = false; break; }
+         sx[j] = camera.cx + camera.focalX*p[0]/z[j];
+         sy[j] = camera.cy - camera.focalY*p[1]/z[j];
+         if (!std::isfinite(sx[j]) || !std::isfinite(sy[j])) valid = false;
+       }
+       if (!valid) continue;
+       const double area = (sx[1]-sx[0])*(sy[2]-sy[0])-(sy[1]-sy[0])*(sx[2]-sx[0]);
+       if (std::abs(area) < 1e-9) continue;
+       const int x0 = int(std::clamp(std::floor(std::min({sx[0],sx[1],sx[2]})), 0.0, double(camera.width)));
+       const int x1 = int(std::clamp(std::ceil(std::max({sx[0],sx[1],sx[2]})), 0.0, double(camera.width)));
+       const int y0 = int(std::clamp(std::floor(std::min({sy[0],sy[1],sy[2]})), 0.0, double(camera.height)));
+       const int y1 = int(std::clamp(std::ceil(std::max({sy[0],sy[1],sy[2]})), 0.0, double(camera.height)));
+       for (int y = y0; y < y1; ++y) for (int x = x0; x < x1; ++x) {
+         const double px=x+0.5, py=y+0.5;
+         const double b=((px-sx[0])*(sy[2]-sy[0])-(py-sy[0])*(sx[2]-sx[0]))/area;
+         const double c=((sx[1]-sx[0])*(py-sy[0])-(sy[1]-sy[0])*(px-sx[0]))/area;
+         const double a=1-b-c;
+         if (a < 0 || b < 0 || c < 0) continue;
+         const double plane=a*z[0]+b*z[1]+c*z[2];
+         if (std::abs(plane-depth[std::size_t(y)*camera.width+x]) > 0.5) continue;
+         h.left=std::min(h.left,x); h.top=std::min(h.top,y);
+         h.right=std::max(h.right,x+1); h.bottom=std::max(h.bottom,y+1);
+       }
+     }
+   }
+   if (h.left < h.right && h.top < h.bottom) targets.push_back(h);
+ }
+ return targets;
+}
 std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
  std::vector<std::size_t> out;
  for(const auto& r:fluidRoots_)out.push_back(r.record.entityIndex);

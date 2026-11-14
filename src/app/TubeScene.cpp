@@ -418,6 +418,35 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
 }
 
+bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker,
+    const CameraBasis& camera, const SceneOptions& options,
+    const AssetLibrary& lib, const Raster& sceneRaster) const {
+  if (walker >= options.injectedWalkers.size() || !haveLemmingSprites_ || !havePoseLevel_ ||
+      target.width != camera.width || target.height != camera.height) return false;
+  rewirePoseLevel();
+  auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
+      options, options.injectedWalkers[walker], lib,
+      tubePassBounds(camera.selectorTurns, cylinderExtent_), sceneRaster.depthBuffer());
+  if (!prepared) return false;
+  auto sprite = std::move(prepared->clippedSprite);
+  if (sprite.rgba.empty()) return false;
+  // READ 454ACA..454B5C copies the selected sprite and redraws it with selector
+  // 2 (ONE/ONE), equal RGB from runtime 4C6988 and an extra depth adjustment.
+  // PROVISIONAL: half-strength additive sprite, no pulse. Runtime intensity,
+  // effective original depth state and pixel blend need original observation.
+  const auto& p = prepared->placement;
+  bool marked = false;
+  for (int y = std::max(0, int(std::ceil(p.top))); y < std::min(target.height, int(std::ceil(p.bottom))); ++y)
+    for (int x = std::max(0, int(std::ceil(p.left))); x < std::min(target.width, int(std::ceil(p.right))); ++x) {
+      const auto at = (std::size_t(y) * target.width + x) * 4;
+      if (!actorSpriteAlphaTestPasses(sprite.rgba[at + 3])) continue;
+      for (int c = 0; c < 3; ++c)
+        target.rgba[at + c] = std::min(255, target.rgba[at + c] + (sprite.rgba[at + c] + 1) / 2);
+      marked = true;
+    }
+  return marked;
+}
+
 std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreenBoxes(
     const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const {
   Raster sceneRaster(camera.width, camera.height);

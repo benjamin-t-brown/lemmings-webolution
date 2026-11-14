@@ -7,6 +7,7 @@
 #include "app/LevelEndTransition.h"
 #include "app/EntryStartCue.h"
 #include "app/Camera.h"
+#include "app/HoverFeedback.h"
 #include "save/SaveStore.h"
 
 #include <cstddef>
@@ -68,6 +69,10 @@ struct LevelFrameView {
   std::size_t drawnTerrainBlocksRebuilt = 0;
   // Actual door sample submitted by this application frame (clone observation).
   double hatchOpeningProgress = 0.0;
+  // Actual feedback composed this frame (empty for historical/baseline paths).
+  std::optional<std::size_t> markedActor = std::nullopt;
+  std::optional<std::size_t> hoveredHatch = std::nullopt;
+  std::span<const HatchHoverTarget> hatches{};
 };
 using LevelFrameObserver = std::function<void(const LevelFrameView&)>;
 

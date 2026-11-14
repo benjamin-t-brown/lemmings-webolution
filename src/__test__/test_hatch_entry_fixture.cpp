@@ -18,7 +18,8 @@ int main(int argc, char** argv) {
     const std::vector<std::uint8_t> expected{std::istreambuf_iterator<char>(file), {}};
     if (closed != expected)
       throw std::runtime_error("zero-time entry fixture differs from existing headless composition");
-    auto frame = webo::test::hatchEntryFixture(*library, {}, ticks, milliseconds);
+    auto frame = webo::test::hatchEntryFixture(*library, {}, ticks, milliseconds,
+        false, "MM_CLIMB_002", true);
     auto written = webo::writePng(argv[5], frame);
     if (!written) throw std::runtime_error(written.error());
     std::cout << "Entry fixture: closed control matches; opening sampled at " << milliseconds << " ms\n";

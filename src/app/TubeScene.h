@@ -134,6 +134,11 @@ class TubeScene {
   void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
                            const SceneOptions& options, const AssetLibrary& lib) const;
 
+  // Redraw only the selected actor silhouette, using the same preparation and
+  // scene-depth mask as drawing/picking. Never changes picking or scene depth.
+  bool drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis&,
+                         const SceneOptions&, const AssetLibrary&, const Raster&) const;
+
   // Read-only screen box for each `options.injectedWalkers` entry, in that
   // vector's order (forward). Each placement is the one `drawInjectedWalkers`
   // would pass to `drawActorSprite` for that walker; nullopt when that walker

@@ -4,6 +4,11 @@
 #include "app/ActorVisibility.h"
 #include "app/LemmingAnim.h"
 #include "app/TubeScene.h"
+#ifdef OCCLUSION_HOVER_EXPECTATION
+#include "app/BackdropScene.h"
+#include "app/RuntimeCursor.h"
+#include "app/SceneFrame.h"
+#endif
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
 #include "assets/Png.h"
@@ -275,6 +280,78 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
   std::vector<char*> raw;for(auto& a:args)raw.push_back(a.data());
   bool requestedPause=false,assigned=false,farChecked=false,nearChecked=false;
   int pausedFrames=0,stock=0,frames=0,noActorFrames=0;std::uint64_t frozenMs=0;
+  // R5/R6 deliberately change these old hovered frames. Keep the authentic
+  // baseline main/scene and all exact comparisons; add only the new feedback
+  // to its pixels, leaving camera, simulation and ordinary rendering under test.
+  const auto compareFrame = [&](const std::string& name, const app::LevelFrameView& f,
+                                const std::string& message) {
+    const auto rawName = name + ".rgba";
+    if (before) {
+      std::ofstream raw(out/rawName,std::ios::binary);
+      raw.write(reinterpret_cast<const char*>(f.image.rgba.data()),f.image.rgba.size());
+      check(bool(raw),"retain authentic baseline pixels");
+    }
+    if (!paired) return;
+    auto expectedBytes = bytes(baseline/(name+".png"));
+#ifdef OCCLUSION_HOVER_EXPECTATION
+    auto lib = AssetLibrary::open(game/"lemmings.box",game/"patch.box");
+    check(bool(lib),"open expected-feedback assets"); if(!lib)return;
+    auto font=loadTexture(*lib,"TEXTURES\\^FONT.BMP");
+    auto cursor=app::RuntimeCursor::load(*lib);
+    check(bool(font)&&bool(cursor),"load expected-feedback font/cursor");if(!font||!cursor)return;
+    const auto hatch = !f.hoveredActor ? app::hoveredHatch(f.hatches,f.cursorX,f.cursorY) : std::nullopt;
+    check(f.markedActor==f.hoveredActor,"feedback marks the existing selected actor only");
+    check(f.hoveredHatch==(hatch?std::optional<std::size_t>{f.hatches[*hatch].index}:std::nullopt),
+          "hatch feedback follows displayed hit bounds with actor precedence");
+    if(f.hoveredActor||hatch) {
+      Image expected=f.image;
+      const auto raw=bytes(baseline/rawName);
+      check(raw.size()==expected.rgba.size(),"authentic baseline raw frame exists");
+      if(raw.size()!=expected.rgba.size())return;
+      expected.rgba.assign(raw.begin(),raw.end());
+      if(f.hoveredActor) {
+        const auto displayed=std::find_if(f.actors.begin(),f.actors.end(),
+            [&](const auto& a){return a.index==*f.hoveredActor;});
+        check(displayed!=f.actors.end(),"selected actor has a displayed sprite");
+        if(displayed==f.actors.end())return;
+        auto level=sim::resolveRetailLevel(*lib,std::string(f.levelName));if(!level){check(false,"resolve expected level");return;}
+        auto data=lib->read(level->file);if(!data){check(false,"read expected level");return;}
+        auto mesh=findCylinderMesh(*data);auto index=indexLevel(*data);
+        if(!mesh||!index){check(false,"parse expected level");return;}
+        auto scene=app::TubeScene::build(*lib,*mesh,*data,index->grid0);
+        auto backdrop=app::BackdropScene::build(*lib,*data,std::string(f.levelName));
+        if(!scene||!backdrop){check(false,"build expected feedback depth");return;}
+        auto effects=backdrop->entranceExitPresentation(*data);
+        if(!effects){check(false,"read expected hatch pose");return;}
+        backdrop->setEntranceExitPresentation(*effects,f.hatchOpeningProgress,0);
+        const auto camera=app::buildCamera(f.displayedPose);
+        app::Raster depth(camera.width,camera.height);depth.clear(0,0,0);
+        app::BackdropStats stats;auto geometry=route();
+        app::scheduleSceneFrame(
+            [&]{backdrop->renderStage(depth,camera,*lib,stats,app::BackdropScene::Stage::Primary);},
+            [&]{backdrop->renderStage(depth,camera,*lib,stats,app::BackdropScene::Stage::LegacyUnattributed);},
+            [&]{scene->render(depth,camera,geometry,&*lib);},
+            [&]{backdrop->renderStage(depth,camera,*lib,stats,app::BackdropScene::Stage::FluidGate);},
+            [&]{backdrop->renderStage(depth,camera,*lib,stats,app::BackdropScene::Stage::Secondary);});
+        const auto& l=f.world.lemmings()[*f.hoveredActor];
+        app::SceneOptions::InjectedNativeWalker walker;
+        walker.plus8X=displayed->drawnSample[0];walker.plus8Y=displayed->drawnSample[1];walker.plus8Z=displayed->drawnSample[2];
+        walker.facing=int(l.facing);walker.walkTemporalIndex=displayed->temporalIndex;walker.clip=displayed->clip;
+        geometry.injectedWalkers={walker};
+        check(scene->drawHoveredWalker(expected,0,camera,geometry,*lib,depth),"compose expected selected-sprite feedback");
+      } else app::drawHatchHover(expected,*font,f.hatches[*hatch]);
+      // Restore the later cursor where feedback overlaps it. The route's pause
+      // caption is already present below y=422, outside every feedback extent;
+      // drawing its translucent background twice would change the old pixels.
+      cursor->draw(expected,f.cursorState,f.cursorX,f.cursorY);
+      const auto encoded=encodePng(expected);
+      expectedBytes.assign(encoded.begin(),encoded.end());
+      png(out/(name+"-expected-feedback.png"),expected);
+    }
+#endif
+    const auto encoded=encodePng(f.image);
+    check(std::string(encoded.begin(),encoded.end())==expectedBytes,message);
+  };
   const auto observe=[&](const app::LevelFrameView& f) {
     ++frames;AppRecord r;r.frame=f.frame;r.ms=f.world.levelClockMs();r.paused=f.paused;r.yaw=f.displayedPose.yawUnits;
     if(!f.world.lemmings().empty()){r.x=f.world.lemmings()[0].x;r.y=f.world.lemmings()[0].y;}
@@ -293,13 +370,9 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
     if(std::none_of(f.world.lemmings().begin(),f.world.lemmings().end(),
                     [](const auto& actor){return actor.alive();})) {
       ++noActorFrames;
-      const auto name="no-actor-frame-"+std::to_string(f.frame)+".png";
-      if(paired) {
-        const auto encoded=encodePng(f.image);
-        check(std::string(encoded.begin(),encoded.end())==bytes(baseline/name),
-              "full production frame containing no lemming is pixel-identical");
-      }
-      png(out/name,f.image);
+      const auto name="no-actor-frame-"+std::to_string(f.frame);
+      compareFrame(name,f,"full no-lemming frame equals authentic baseline plus hatch feedback");
+      png(out/(name+".png"),f.image);
     }
     if(!requestedPause&&r.ms>=6000) {requestedPause=true;key(SDL_SCANCODE_P);}
     if(f.paused) {
@@ -310,8 +383,7 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
       if(q==1)motion(px,py);
       if(q==2) {
         check(r.box&&f.hoveredActor==0,"ordinary near-side actor is pickable");nearChecked=true;
-        if(paired) {const auto oldImage=bytes(baseline/"near.png");const auto encoded=encodePng(f.image);
-          check(std::string(encoded.begin(),encoded.end())==oldImage,"whole near-side application frame pixel-identical");}
+        compareFrame("near",f,"whole near-side frame equals authentic baseline plus selected-actor feedback");
         png(out/"near.png",f.image);button(true,320,240,SDL_BUTTON_RIGHT);
       }
       if(q==3)motion(320,240,-230);
@@ -333,8 +405,7 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
       if(q==12){button(false,px,py,SDL_BUTTON_RIGHT);motion(px,py);}
       if(q==14) {
         check(r.box&&f.hoveredActor==0,"near-side actor still pickable after rotation");
-        if(paired) {const auto oldImage=bytes(baseline/"returned-near.png");const auto encoded=encodePng(f.image);
-          check(std::string(encoded.begin(),encoded.end())==oldImage,"whole returned-near application frame pixel-identical");}
+        compareFrame("returned-near",f,"whole returned-near frame equals authentic baseline plus selected-actor feedback");
         png(out/"returned-near.png",f.image);click(px,py);
       }
     }

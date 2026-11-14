@@ -14664,7 +14664,7 @@
     {
       "id": "hover-feedback-001",
       "title": "Highlight hovered lemmings and show the hatch's remaining count",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -14680,19 +14680,131 @@
         "Hovering the hatch shows the count of lemmings still to be released, decreasing as they are released, in retained images and a regression test.",
         "Frames with nothing hovered are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched."
       ],
-      "loop_attempts": 1,
-      "run_id": "20261114T041703-38924-b0c5b662",
-      "started": "2026-11-14T04:17:03.470205+00:00",
-      "finished": "2026-11-14T04:17:03.164046+00:00",
-      "last_run": "build/agent-runs/20261114T034228-38924-3eed7e7f",
-      "last_failure": "Verification failed; inspect build/agent-runs/20261114T034228-38924-3eed7e7f/verification.log",
+      "loop_attempts": 3,
+      "run_id": "20261114T051130-33768-240764a5",
+      "started": "2026-11-14T05:11:31.060377+00:00",
+      "finished": "2026-11-14T05:35:58.248974+00:00",
+      "last_run": "build/agent-runs/20261114T051130-33768-240764a5",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261114T051130-33768-240764a5/verification.log",
       "scope_revision_history": [
         {
           "at": "2026-11-14T04:28:45.822616+00:00",
           "by": "project lead",
           "change": "Resume note. Attempt 1 failed verification (build/agent-runs/20261114T034228-38924-3eed7e7f/verification.log). Attempt 2 finished its edits, then the supervisor was killed by a host low-memory condition during verification (build/agent-runs/20261114T041703-38924-b0c5b662); that is not a task failure. The attempt-2 work is left uncommitted in the tree (HoverFeedback.h, test_hover_feedback.cpp, hover_feedback cmake files, the report and edits to main.cpp, TubeScene, BackdropScene, RuntimeHud, AppEntry.h, CMakeLists.txt and several tests) with a copy under build/lead/hover-feedback-001-attempt2/. It has never completed verification. Inspect and continue it rather than restarting; correct the report to what was actually verified."
         }
-      ]
+      ],
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by production source, reviewed images, regression evidence and full verification. Acceptance is scoped to clone hover feedback; original appearance and remaining-count semantics remain explicitly provisional.",
+        "checks": [
+          {
+            "criterion": "The report cites retained or static evidence for the original's hovered-lemming marking and hatch hover display, or states precisely what is not evidenced and labels the choices provisional. Before images show no feedback on either.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hover-feedback-001.md",
+                "detail": "Identifies the registered reference SHA-256, traces additive actor highlighting, and explicitly distinguishes the requested remaining count from the original label's +A0 field. Labels brightness, brackets, font, placement, depth tolerance and count semantics provisional, and describes the original observation needed to settle them."
+              },
+              {
+                "path": "build/hover-feedback-001/static/instructions-0x454A85.json",
+                "detail": "Retained Ghidra instructions show the sprite copy and selector 2 at 0x454ACA\u20130x454AF2, overlay submission at 0x454B5C, hatch +A0 passed to integer formatting at 0x454B95\u20130x454BA5, and centered placement with shifted 44-pixel vertical offset at 0x454C34\u20130x454C64. These support the report's bounded claims, not runtime fidelity."
+              },
+              {
+                "path": "build/hover-feedback-001/before/actor/overlap.png",
+                "detail": "Visually reviewed: the lemming beneath the selection cursor has no body brightening."
+              },
+              {
+                "path": "build/hover-feedback-001/before/hatch/hatch-7.png",
+                "detail": "Visually reviewed: hovering the blue hatch shows neither brackets nor a count."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, through the production path with public pointer input on an installed level, the hovered lemming is visibly marked and it is the lemming a click then assigns to; moving off removes the mark; with overlapping lemmings exactly one is marked. Retained images are reviewed and a regression test asserts mark and click agree.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Hover rendering and left-button assignment use the same hoveredActor adapter, displayed camera, scene raster, pick reference and selected skill. Rendering maps its single optional actor index to drawHoveredWalker; no hit produces no marking."
+              },
+              {
+                "path": "src/__test__/test_hover_feedback.cpp",
+                "detail": "Runs installed MM_CLIMB_002 through runApplication with public SDL pointer events. Independently finds two eligible overlapping pick candidates, asserts actor 5 is hovered and marked, checks removal and re-entry, then verifies the same-pointer click assigns Climber only to actor 5 and spends one stock."
+              },
+              {
+                "path": "build/hover-feedback-001/after/actor/overlap.png",
+                "detail": "Visually reviewed against the before image: one lemming is visibly brighter; neighbouring lemmings retain their appearance."
+              },
+              {
+                "path": "build/hover-feedback-001/after/actor/off.png",
+                "detail": "Visually reviewed: moving the pointer away removes the brightening."
+              },
+              {
+                "path": "build/hover-feedback-001/after/actor/trace.csv",
+                "detail": "Frames 2 and 5 report hovered_actor=marked_actor=5; intervening off frames report neither. The route summary records two candidates and zero failures."
+              },
+              {
+                "path": "build/hover-feedback-001/comparison.txt",
+                "detail": "Overlap and re-entry each change exactly 115 pixels, with zero changes outside the selected actor's placement."
+              }
+            ]
+          },
+          {
+            "criterion": "Hovering the hatch shows the count of lemmings still to be released, decreasing as they are released, in retained images and a regression test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_hover_feedback.cpp",
+                "detail": "The ordinary frontend \u2192 map node 0 \u2192 MM_CLIMB_002 route uses natural releases and public pointer input. It asserts remaining=totalLemmings-spawned for this single hatch, captures three decreasing values, and independently checks visible recovered-font numeric pixels. Unit coverage enumerates future round-robin releases for multiple hatch counts."
+              },
+              {
+                "path": "build/hover-feedback-001/after/hatch/hatch-7.png",
+                "detail": "Visually reviewed: gold hatch brackets and a readable white 7 appear above the hatch."
+              },
+              {
+                "path": "build/hover-feedback-001/after/hatch/hatch-6.png",
+                "detail": "Visually reviewed: the label decreases to 6 after another release."
+              },
+              {
+                "path": "build/hover-feedback-001/after/hatch/hatch-5.png",
+                "detail": "Visually reviewed: the label decreases again to 5."
+              },
+              {
+                "path": "build/hover-feedback-001/comparison.txt",
+                "detail": "Records 74, 98 and 93 independently verified numeric-glyph pixels for the 7, 6 and 5 captures, respectively; brackets alone cannot satisfy this regression."
+              }
+            ]
+          },
+          {
+            "criterion": "Frames with nothing hovered are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hover-feedback-001/comparison.txt",
+                "detail": "Actor empty/off and hatch empty/off frames each have zero changed pixels against the retained task-entry application. Paired simulation and stock equality are also asserted by the comparison test."
+              },
+              {
+                "path": "build/agent-runs/loop-f728c60145c648e4944316d20ed87f50/0001-verify-12bc91/verification.log",
+                "detail": "The supplied final-content verification passes all 242 registered main tests and all 84 recovery tests, including all eight hover-feedback checks. Uses registered MinGW tools, optimized main builds with assertions, and finishes with git diff --check."
+              },
+              {
+                "path": "build/hover-feedback-001/after/actor/summary.txt",
+                "detail": "Records zero failures and all_saves_unchanged=1. The driver snapshots installed and normal saves, injects a private save store, and checks byte contents and existence after execution."
+              },
+              {
+                "path": "build/hover-feedback-001/after/hatch/summary.txt",
+                "detail": "The frontend hatch route likewise records zero failures and unchanged installed, normal and private saves."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-14T06:45:08.250809+00:00",
+      "accepted_verification": {
+        "profile": "all",
+        "log": "build/agent-runs/loop-f728c60145c648e4944316d20ed87f50/0001-verify-12bc91/verification.log",
+        "verified_content": "8d56a0a93a3d06b1dcfa2253cfadf2d728064e322cb50caac2c9c9e65d18008c"
+      }
     },
     {
       "id": "fluid-hazard-001",
@@ -14706,11 +14818,21 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 4 item T4 (docs/playtest/2026-11-13-playtest-4.md). Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the lemming-type rule is not found statically. Observed by a person: on the level shown on the map as 'Block and Build' lemmings that are not water lemmings walk across water without dying, which makes the level trivially winnable. Identify the installed level from docs/scratch/map-level-names-001.md and reproduce through the production path with a position/state trace: which cells or fluid surface the lemmings cross, and why State::Drown is not attached. The simulation already drowns on the static cell bit 0x40 (src/sim/World.cpp stepDrown and the 0x40 checks, src/sim/Terrain.h), so establish whether this water is a fluid volume/receiver drawn by the fluid work (docs/scratch/fluid-surface-impl-001.md, fluid-kinds-001.md, lever-gates-impl-001.md) that the simulation does not treat as a hazard, or a cell flag that is missed. From retained evidence and static analysis establish the original's rule: which fluid kinds kill which lemmings, how a lemming's type (ordinary, water, acid) is carried and where it comes from (hatch, level data), and at what depth contact kills. Implement that rule in the production simulation: an ordinary lemming entering water drowns with the drown animation and counts as lost; a water lemming does not; the same for acid if evidenced. Fluid levels changed by levers must be respected at the current level, not the initial one. This is a rules fix authorized by the playtest ledger; do not retune any timing. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "scope": "Playtest 4 item T4 (docs/playtest/2026-11-13-playtest-4.md). Difficulty: difficult. Recommended model: Sonnet-class; a stronger model if the lemming-type rule is not found statically. Observed by a person: on the level shown on the map as 'Block and Build' lemmings that are not water lemmings walk across water without dying, which makes the level trivially winnable. Identify the installed level from docs/scratch/map-level-names-001.md and reproduce through the production path with a position/state trace: which cells or fluid surface the lemmings cross, and why State::Drown is not attached. The simulation already drowns on the static cell bit 0x40 (src/sim/World.cpp stepDrown and the 0x40 checks, src/sim/Terrain.h), so establish whether this water is a fluid volume/receiver drawn by the fluid work (docs/scratch/fluid-surface-impl-001.md, fluid-kinds-001.md, lever-gates-impl-001.md) that the simulation does not treat as a hazard, or a cell flag that is missed. From retained evidence and static analysis establish the original's rule: which fluid kinds kill which lemmings, how a lemming's type (ordinary, water, acid) is carried and where it comes from (hatch, level data), and at what depth contact kills. Implement that rule in the production simulation: an ordinary lemming entering water drowns with the drown animation and counts as lost; a water lemming does not; the same for acid if evidenced. Fluid levels changed by levers must be respected at the current level, not the initial one. This is a rules fix authorized by the playtest ledger; do not retune any timing. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Resume note. Attempt 1 was interrupted about eight minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261114T064508-34708-e3cc25ed); that is not a task failure. Its partial work is left uncommitted in the tree: World::attachFluidHazard in src/sim/World.cpp and World.h, cmake/fluid_hazard.cmake with its include line at the end of CMakeLists.txt, and src/__test__/test_fluid_hazard.cpp, with a copy under build/lead/fluid-hazard-001-attempt1/. None of it has been built, verified or reported. Inspect and continue it rather than restarting; hover-feedback-001 is accepted and committed, so every other uncommitted source change belongs to this task.",
       "acceptance": [
         "The report names the installed level behind 'Block and Build' and shows, through the production path before the change, a retained image and a position/state trace of ordinary lemmings crossing water alive, with the source-traced reason.",
         "The original's fluid-versus-lemming-type rule is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on that level, an ordinary lemming entering the water drowns and is counted lost; a regression test on real level data asserts it, and a test on an installed water-lemming level asserts water lemmings survive the same contact.",
         "Every scripted route in the registered play tests still reaches its recorded outcome, or each changed outcome is shown to be a route that depended on walking on fluid, with justification. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261114T064508-34708-e3cc25ed",
+      "started": "2026-11-14T06:45:08.532813+00:00",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-14T06:55:11.904287+00:00",
+          "by": "project lead",
+          "change": "Resume note. Attempt 1 was interrupted about eight minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261114T064508-34708-e3cc25ed); that is not a task failure. Its partial work is left uncommitted in the tree: World::attachFluidHazard in src/sim/World.cpp and World.h, cmake/fluid_hazard.cmake with its include line at the end of CMakeLists.txt, and src/__test__/test_fluid_hazard.cpp, with a copy under build/lead/fluid-hazard-001-attempt1/. None of it has been built, verified or reported. Inspect and continue it rather than restarting; hover-feedback-001 is accepted and committed, so every other uncommitted source change belongs to this task."
+        }
       ]
     },
     {

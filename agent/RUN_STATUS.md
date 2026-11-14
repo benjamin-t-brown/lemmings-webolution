@@ -9,7 +9,6 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- hover-feedback-001: **ready** — Highlight hovered lemmings and show the hatch's remaining count
 - fluid-hazard-001: **ready** — Kill ordinary lemmings that enter water
 - lever-render-001: **ready** — Draw levers and recheck the empty containers on Introducing Water Lemmings
 - panel-icon-anim-001: **ready** — Animate skill icons on the panel when hovered or selected
@@ -20,10 +19,6 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Recently completed queue entries
 
-- map-level-names-001: Show the level name when hovering a level on the map
-  Accepted: 2026-11-13T23:32:25.505385+00:00
-  Verification evidence: `build/agent-runs/20261113T230454-17836-b6c070eb/verification.log`
-  Verification evidence: `build\agent-runs\20261113T230454-17836-b6c070eb\verification.log`
 - walker-lane-001: Keep walkers on the right side of the path and slide across on turning
   Accepted: 2026-11-13T23:59:00.076901+00:00
   Verification evidence: `build/agent-runs/20261113T233225-17836-92532a4d/verification.log`
@@ -40,13 +35,16 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-14T03:42:28.757908+00:00
   Verification evidence: `build/agent-runs/20261114T030531-38924-3dfc5b73/verification.log`
   Verification evidence: `build\agent-runs\20261114T030531-38924-3dfc5b73\verification.log`
+- hover-feedback-001: Highlight hovered lemmings and show the hatch's remaining count
+  Accepted: 2026-11-14T06:45:08.250809+00:00
+  Verification evidence: `build/agent-runs/loop-f728c60145c648e4944316d20ed87f50/0001-verify-12bc91/verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-6789c90f47134d8b83bc7c23d8c1798b/result.json`
+- Result: `build/agent-runs/loop-f728c60145c648e4944316d20ed87f50/result.json`
 - Status: **running**
-- Duration: 3h 00m 22s
-- Completed in this invocation: actor-depth-001, hatch-timing-001
+- Duration: 0h 22m 17s
+- Completed in this invocation: hover-feedback-001
 
 ## Documentation handoff
 

@@ -1166,6 +1166,27 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       const void* pixels = windowRaster.framebuffer().rgb.data();
       if (args.sim && world && runtimeFont && runtimePanel) {
         auto image = toImage(windowRaster.framebuffer());
+        const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
+        const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
+        const auto hover = canHover ?
+            hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
+                displayedPickReference, pointerX, pointerY, skillSelection.selectedSkill(),
+                args.level == "MM_CLIMB_002") : std::nullopt;
+        std::optional<std::size_t> markedActor;
+        if (hover) {
+          std::size_t walker = 0;
+          for (std::size_t i = 0; i < *hover; ++i) if (world->lemmings()[i].alive()) ++walker;
+          if (scene->drawHoveredWalker(image, walker, displayedCamera, options, *library, windowRaster))
+            markedActor = hover;
+        }
+        auto hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
+            std::vector<app::HatchHoverTarget>{};
+        for (auto& h : hatches) h.remaining = app::hatchRemaining(world->setup().totalLemmings,
+            world->spawned(), world->setup().entrances.size(), h.index);
+        // Actor selection keeps precedence. Hatch feedback never enters the
+        // skill-picking path or changes the existing software cursor family.
+        const auto hatchHover = canHover && !hover ? app::hoveredHatch(hatches, pointerX, pointerY) : std::nullopt;
+        if (hatchHover) app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover]);
         app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward());
         app::drawRuntimeHud(image, *runtimeFont, *world, false);
         // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
@@ -1185,13 +1206,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         const auto cueFrame = entryCue ? entryCue->frame() : std::nullopt;
         if (cueFrame) app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
         if (levelMenu) levelMenu->draw(image);
-        const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
         const auto counts = app::runtimeSkillPanelCounts(*world);
         const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
-        const auto hover = focused && !menuOpen() && !rightDown && panelIndex < 0 ?
-            hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
-                displayedPickReference, pointerX, pointerY, skillSelection.selectedSkill(),
-                args.level == "MM_CLIMB_002") : std::nullopt;
         const auto cursorState = menuOpen() ? (focused ? app::CursorState::NoLemming : app::CursorState::Hidden) :
             app::runtimeCursorState(focused, rightDown, hover.has_value(),
                 runtimeSim.paused(), panelIndex, panelAvailability);
@@ -1218,7 +1234,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                          persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
                          cues && cues->deviceReady(), cues ? cues->drained() : 0, cues ? cues->routed() : 0,
                          displayedPose, displayedPickReference,
-                         scene->terrainCellsChanged(), scene->terrainBlocksRebuilt(), hatchOpeningProgress});
+                         scene->terrainCellsChanged(), scene->terrainBlocksRebuilt(), hatchOpeningProgress,
+                         markedActor, hatchHover ? std::optional<std::size_t>{hatches[*hatchHover].index} : std::nullopt,
+                         hatches});
         }
         presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
         for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {

@@ -7,6 +7,7 @@
 #include "app/SceneRaster.h"
 #include "app/SceneDispatch.h"
 #include "app/HatchAnimation.h"
+#include "app/HoverFeedback.h"
 #include "assets/SceneNode.h"
 #include "lemmings/object_base_prefix.hpp"
 
@@ -127,6 +128,7 @@ class BackdropScene {
   // belongs to this scene and is discarded when the application reloads it.
   std::expected<EntranceExitPresentation,std::string> entranceExitPresentation(std::span<const std::byte> level) const;
   void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress, double departureSeconds);
+  std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
   // Runtime override of the per-node visibility byte +0x110 for Secondary nodes (the original toggles
   // it only for "cutme" type-1 nodes, 0x45DA0D). A hidden node and its subtree are not dispatched.
   // Production never installs one; it is the seam used by mutation checks.

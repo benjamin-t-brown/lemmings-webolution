@@ -1,7 +1,9 @@
 #include "app/AppEntry.h"
 #include "app/LevelMenu.h"
 #include "app/RuntimeCursor.h"
+#include "HatchEntryFixture.h"
 #include "assets/Box.h"
+#include "assets/GameData.h"
 #include "assets/Png.h"
 #include "sim/World.h"
 
@@ -50,6 +52,9 @@ int main() {
   auto menuImage = app::LevelMenu::load(*library);
   auto cursor = app::RuntimeCursor::load(*library);
   if (!menuImage || !cursor) return 1;
+  const auto font = loadTexture(*library, "TEXTURES\\^FONT.BMP");
+  const auto strings = loadStrings(*library, "UK");
+  if (!font || !strings || strings->size() <= 71) return 1;
   int otherX = -1, otherY = -1;
   for (int y = 0; y < 480 && otherX < 0; ++y) for (int x = 0; x < 640; ++x)
     if (map->pickNode(x, y) == 1) { otherX = x; otherY = y; break; }
@@ -145,13 +150,33 @@ int main() {
         ok &= !f.levelMenuOpen && !f.paused && f.world.tickCount() == 2 && f.world.saved() == 0 &&
               f.endPhase == app::LevelEndPhase::Running && f.entryCueSeconds == (retry ? 1.0 : 3.0);
         if (retry) ok &= !f.cameraIntroActive;
-        if (phase == 1) retryFrame = f.image;
+        if (phase == 1) {
+          // R6: Retry resets the pointer onto the hatch, but opening the menu
+          // suppresses that feedback. Independently compose the unhovered base
+          // rather than carrying the highlighted image into the menu check.
+          retryFrame = test::hatchEntryFixture(*library, f.displayedPose,
+              static_cast<int>(f.world.tickCount()), f.hatchOpeningProgress * 2799.999952316284,
+              true, std::string(f.levelName));
+          auto hoveredFrame = retryFrame;
+          const auto hit = app::hoveredHatch(f.hatches, f.cursorX, f.cursorY);
+          ok &= hit.has_value() && !f.markedActor;
+          if (hit) app::drawHatchHover(hoveredFrame, *font, f.hatches[*hit]);
+          if (f.entryCueFrame) {
+            app::drawEntryStartCue(retryFrame, *font, (*strings)[71], *f.entryCueFrame);
+            app::drawEntryStartCue(hoveredFrame, *font, (*strings)[71], *f.entryCueFrame);
+          }
+          cursor->draw(retryFrame, f.cursorState, f.cursorX, f.cursorY);
+          cursor->draw(hoveredFrame, f.cursorState, f.cursorX, f.cursorY);
+          ok &= hoveredFrame.rgba == f.image.rgba;
+        }
         ok &= key(SDL_SCANCODE_ESCAPE);
       } else if (f.frame == 1) {
         ok &= f.levelMenuOpen && f.paused && f.world.tickCount() == 2;
         if (phase == 1) {
           // Retry has no camera intro. Opening menu must leave the exact scene,
-          // cue and HUD beneath it, without a pause caption or full backdrop.
+          // cue and HUD beneath it, with hover feedback now suppressed and
+          // without a pause caption or full backdrop.
+          ok &= !f.markedActor && !f.hoveredHatch;
           menuImage->open(); menuImage->draw(retryFrame);
           cursor->draw(retryFrame, app::CursorState::NoLemming, f.cursorX, f.cursorY);
           ok &= retryFrame.rgba == f.image.rgba;

@@ -1370,6 +1370,49 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   endif()
 
   set(HATCH_EXIT_BASE "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/before-source")
+  # Playtest R5/R6: public pointer routes, frozen task-entry main and exact
+  # paired framebuffer comparison. Current-only checks also run on clean trees.
+  set(HOVER_BASE "${CMAKE_SOURCE_DIR}/build/hover-feedback-001/before-source")
+  set(HOVER_EVIDENCE "${CMAKE_SOURCE_DIR}/build/hover-feedback-001")
+  foreach(side IN ITEMS after before)
+    if(side STREQUAL "before")
+      if(NOT EXISTS "${HOVER_BASE}/src/app/main.cpp")
+        continue()
+      endif()
+      set(hover_main "${HOVER_BASE}/src/app/main.cpp")
+    else()
+      set(hover_main src/app/main.cpp)
+    endif()
+    add_executable(test_hover_feedback_${side} src/__test__/test_hover_feedback.cpp ${hover_main}
+      src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+    target_link_libraries(test_hover_feedback_${side} PRIVATE fastforward_support webolution_objects)
+    if(side STREQUAL "before")
+      target_compile_definitions(test_hover_feedback_${side} PRIVATE HOVER_FEEDBACK_BEFORE=1)
+    endif()
+    foreach(route IN ITEMS actor hatch)
+      add_test(NAME hover_feedback_${route}_${side} COMMAND test_hover_feedback_${side} ${route}
+        "${HOVER_EVIDENCE}/${side}/${route}")
+      set_tests_properties(hover_feedback_${route}_${side} PROPERTIES TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    endforeach()
+  endforeach()
+  add_test(NAME hover_feedback_units COMMAND test_hover_feedback_after units)
+  set_tests_properties(hover_feedback_units PROPERTIES TIMEOUT 30)
+  add_test(NAME hover_feedback_reference COMMAND ${CMAKE_COMMAND}
+    "-DGAME_DIR=${WEBOLUTION_GAME_DIR}" -P "${CMAKE_SOURCE_DIR}/cmake/hover_feedback_reference.cmake")
+  set_tests_properties(hover_feedback_reference PROPERTIES TIMEOUT 30)
+  if(TARGET test_hover_feedback_before)
+    add_test(NAME hover_feedback_identity COMMAND ${CMAKE_COMMAND}
+      "-DBASELINE=${HOVER_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/hover_feedback_identity.cmake")
+    set_tests_properties(hover_feedback_identity PROPERTIES TIMEOUT 30)
+    foreach(route IN ITEMS actor hatch)
+      set_tests_properties(hover_feedback_${route}_before PROPERTIES DEPENDS "hover_feedback_identity;hover_feedback_${route}_after")
+    endforeach()
+    add_test(NAME hover_feedback_comparison COMMAND test_hover_feedback_after compare "${HOVER_EVIDENCE}")
+    set_tests_properties(hover_feedback_comparison PROPERTIES TIMEOUT 30
+      DEPENDS "hover_feedback_actor_before;hover_feedback_hatch_before"
+      ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endif()
   # R1/R2: authentic task-entry application against the connected start fix.
   set(HATCH_TIMING_BASE "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/before-source")
   foreach(side IN ITEMS before after)
@@ -1393,7 +1436,9 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
       "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/win-${side}")
     add_test(NAME hatch_timing_routes_${side} COMMAND test_hatch_timing_${side} routes
       "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/routes-${side}")
-    set_tests_properties(hatch_timing_routes_${side} PROPERTIES TIMEOUT 180
+    # The routes take about 145 s alone against the unchanged 180 s limit; sharing the
+    # machine with three other play tests has pushed them past it, so they run alone.
+    set_tests_properties(hatch_timing_routes_${side} PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE
       ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
     set_tests_properties(hatch_timing_${side} hatch_timing_win_${side} PROPERTIES TIMEOUT 180
       ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
@@ -1494,6 +1539,9 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     add_executable(test_actor_occlusion_${side} src/__test__/test_actor_occlusion.cpp
       ${occlusion_scene} ${occlusion_app})
     target_link_libraries(test_actor_occlusion_${side} PRIVATE actor_occlusion_support webolution_objects)
+    if(side STREQUAL "after")
+      target_compile_definitions(test_actor_occlusion_${side} PRIVATE OCCLUSION_HOVER_EXPECTATION=1)
+    endif()
     add_test(NAME actor_occlusion_${side} COMMAND test_actor_occlusion_${side} ${side}
       "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-${side}" "${occlusion_compare}")
     set_tests_properties(actor_occlusion_${side} PROPERTIES TIMEOUT 180

@@ -1,11 +1,57 @@
 #include "app/RuntimeHud.h"
 
 #include "shell/HudText.h"
+#include "app/HoverFeedback.h"
 
 #include <algorithm>
 #include <cmath>
 
 namespace webo::app {
+
+int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index) {
+  if (!count || index >= count) return 0;
+  // SOURCE: World::spawn cycles the entrance vector once per successful
+  // release. Count future releases assigned to this hatch under that existing
+  // policy; do not substitute the original's unresolved per-hatch scheduling.
+  const auto n = static_cast<long long>(count), i = static_cast<long long>(index);
+  const auto quota = [=](int released) { return std::max(0LL, (released + n - 1 - i) / n); };
+  return static_cast<int>(std::max(0LL, quota(std::max(0, total)) - quota(std::clamp(spawned, 0, std::max(0, total)))));
+}
+
+std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> targets, int x, int y) {
+  for (std::size_t i = 0; i < targets.size(); ++i) {
+    const auto& h = targets[i];
+    if (x >= h.left && x < h.right && y >= h.top && y < h.bottom) return i;
+  }
+  return std::nullopt;
+}
+
+void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h) {
+  // PROVISIONAL hatch highlight: four gold corner brackets. Static 454A85
+  // evidences integer text (rate field +A0), not a remaining-count display or
+  // the final original hatch highlight appearance. Remaining is the requested
+  // playable-v1 choice; an original hover observation would settle the mismatch.
+  const auto pixel = [&](int x, int y) {
+    if (x < 0 || y < 0 || x >= image.width || y >= image.height) return;
+    const auto at = (std::size_t(y) * image.width + x) * 4;
+    image.rgba[at] = 255; image.rgba[at+1] = 232; image.rgba[at+2] = 96;
+  };
+  for (int d = 0; d < 6; ++d) for (int edge = 0; edge < 2; ++edge) {
+    const int x = edge ? h.right + 2 : h.left - 3;
+    const int sign = edge ? -1 : 1;
+    pixel(x + sign*d, h.top-3); pixel(x + sign*d, h.bottom+2);
+    pixel(x, h.top-3+d); pixel(x, h.bottom+2-d);
+  }
+  const auto cells = shell::fontCells();
+  shell::HudLine line{shell::counterText(h.remaining), 0, 0, {255,255,255}};
+  const int width = shell::textWidth(line.text, cells);
+  // READ 454C34..454C64: centered on projected hatch, y - (44 << mode).
+  // PROVISIONAL normal ^Font at 640x480: mode-0's other font is unresolved;
+  // use mesh centre as anchor and clamp labels to keep them on the viewport.
+  line.x = std::clamp((h.left+h.right-width)/2, 0, std::max(0, image.width-width));
+  line.y = std::clamp((h.top+h.bottom)/2 - 44, 0, std::max(0, image.height-shell::kLineHeight));
+  shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
+}
 
 shell::HudValues runtimeHudValues(const sim::World& world) {
   shell::HudValues values;

@@ -310,13 +310,13 @@ int main() {
       auto& sample = entryStatic[i].back();
       const double openingMs = (kSamples[i] + 1) * kFrameSeconds * 1000.0;
       const auto control = test::hatchEntryFixture(*library, sample.pose,
-          static_cast<int>(sample.tick), openingMs, false, kLevel);
+            static_cast<int>(sample.tick), openingMs, false, kLevel, true);
       expect(changedPixels(control, sample.image) == 0,
              "static camera frame " + std::to_string(kSamples[i]) +
              " exactly matches the independent diagnostic hatch compositor");
       png("diagnostic-entry-yaw229-frame" + std::to_string(kSamples[i]) + ".png", sample.image);
       sample.image = test::hatchEntryFixture(*library, sample.pose,
-          static_cast<int>(sample.tick), openingMs, true, kLevel);
+            static_cast<int>(sample.tick), openingMs, true, kLevel, true);
     }
 #endif
   }

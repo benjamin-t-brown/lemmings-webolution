@@ -22,7 +22,7 @@ namespace webo::test {
 inline Image hatchEntryFixture(const AssetLibrary& library,
                                const app::CameraParams& cameraParams,
                                int hudTicks, double openingMs, bool connectedEntry = false,
-                               const std::string& levelName = "MM_CLIMB_002") {
+                               const std::string& levelName = "MM_CLIMB_002", bool hoverFeedback = false) {
   const auto require = []<class T>(std::expected<T, std::string> value) -> T {
     if (!value) throw std::runtime_error(value.error());
     return std::move(*value);
@@ -64,9 +64,21 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
     const auto& rgb = raster.framebuffer().rgb;
     image.rgba.insert(image.rgba.end(), {rgb[i], rgb[i + 1], rgb[i + 2], 255});
   }
+  const auto font = require(loadTexture(library, "TEXTURES\\^FONT.BMP"));
+  // R6: the ordinary window's initial pointer is centered on this hatch.
+  // Keep the historical headless closed control unchanged by opting in only
+  // for expected window frames. Full-frame equality assertions remain exact.
+  if (hoverFeedback) {
+    auto hatches = backdrop.hatchHoverTargets(camera, raster);
+    if (const auto hit = app::hoveredHatch(hatches, image.width/2, image.height/2)) {
+      auto& h = hatches[*hit];
+      h.remaining = app::hatchRemaining(world.setup().totalLemmings, world.spawned(),
+          world.setup().entrances.size(), h.index);
+      app::drawHatchHover(image, font, h);
+    }
+  }
   const auto panel = app::drawRetailSkillPanel(image, library, levelName);
   if (!panel) throw std::runtime_error(panel.error());
-  const auto font = require(loadTexture(library, "TEXTURES\\^FONT.BMP"));
   app::drawRuntimeHud(image, font, world, false);
   const auto cursor = require(app::RuntimeCursor::load(library));
   cursor.draw(image, app::CursorState::NoLemming, image.width / 2, image.height / 2);

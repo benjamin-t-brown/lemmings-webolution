@@ -1,6 +1,7 @@
 // P8 clone-only evidence: installed natural hatch/ledge, a simulation-dug
 // Basher tunnel, and a lit Bomber. Supplemental silhouette samples are labelled.
 #include "app/AppEntry.h"
+#include "app/RuntimeSkillPanel.h"
 #include "app/ActorVisibility.h"
 #include "app/LemmingAnim.h"
 #include "app/TubeScene.h"
@@ -12,6 +13,7 @@
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
 #include "assets/Png.h"
+#include "PanelIconComparison.h"
 #include "sim/RetailLevel.h"
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -292,7 +294,19 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
       check(bool(raw),"retain authentic baseline pixels");
     }
     if (!paired) return;
-    auto expectedBytes = bytes(baseline/(name+".png"));
+    check(f.selectedSkillIndex==0&&app::runtimeSkillPanelIndex(f.cursorX,f.cursorY)<0,
+          "historical comparison has only selected Climber animation");
+    auto comparisonLib=AssetLibrary::open(game/"lemmings.box",game/"patch.box");
+    check(bool(comparisonLib),"open panel expectation assets");if(!comparisonLib)return;
+    const auto iconPixels=test::climberIconComparisonPixels(*comparisonLib);
+    Image expectedPanel=f.image;
+    const auto baselinePixels=bytes(baseline/rawName);
+    check(baselinePixels.size()==expectedPanel.rgba.size(),"baseline raw frame exists");
+    if(baselinePixels.size()!=expectedPanel.rgba.size())return;
+    expectedPanel.rgba.assign(baselinePixels.begin(),baselinePixels.end());
+    test::normalizeClimberIcon(expectedPanel,iconPixels);
+    auto expectedEncoded=encodePng(expectedPanel);
+    std::string expectedBytes(expectedEncoded.begin(),expectedEncoded.end());
 #ifdef OCCLUSION_HOVER_EXPECTATION
     auto lib = AssetLibrary::open(game/"lemmings.box",game/"patch.box");
     check(bool(lib),"open expected-feedback assets"); if(!lib)return;
@@ -344,12 +358,15 @@ int appCase(const fs::path& game,const fs::path& out,const fs::path& baseline,bo
       // caption is already present below y=422, outside every feedback extent;
       // drawing its translucent background twice would change the old pixels.
       cursor->draw(expected,f.cursorState,f.cursorX,f.cursorY);
+      test::normalizeClimberIcon(expected,iconPixels);
       const auto encoded=encodePng(expected);
       expectedBytes.assign(encoded.begin(),encoded.end());
       png(out/(name+"-expected-feedback.png"),expected);
     }
 #endif
-    const auto encoded=encodePng(f.image);
+    auto actual=f.image;
+    test::normalizeClimberIcon(actual,iconPixels);
+    const auto encoded=encodePng(actual);
     check(std::string(encoded.begin(),encoded.end())==expectedBytes,message);
   };
   const auto observe=[&](const app::LevelFrameView& f) {

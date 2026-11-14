@@ -188,6 +188,23 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    s.diagnostics_.push_back(extracted.error().message+"; scenery not admitted: empty partial scene");
    std::fprintf(stderr,"backdrop: %s\n",s.diagnostics_.back().c_str());
  }
+ // Playtest T2: the tagged collection was absent from scene extraction. Admit
+ // only its type-1 lever models, retaining the placed Object 09 root matrix.
+ // Use the same mesh/billboard depth path as other placed scenery.
+ for(std::size_t i=0;i<level.gadgets.tagged_entities.size();++i){
+   const auto& lever=level.gadgets.tagged_entities[i];
+   if(lever.type!=1)continue;
+   const auto& model=lever.model;
+   if(!model||model->type!=0||!model->object){
+     s.diagnostics_.push_back(std::format("{} lever[{}]: unsupported model",levelId,i));
+     continue;
+   }
+   auto added=add({Stage::LegacyUnattributed,"tagged-lever",i,model->object->source_extent},model->object->marker_matches);
+   if(!added)return std::unexpected(added.error().message);
+ }
+ auto levers=s.leverPresentation(bytes);
+ if(!levers)return std::unexpected(levers.error());
+ s.setLeverFaces(*levers,{});
  // Animated base `Fluid` models of the entities_42acac receivers (fluid-surface-impl-001; contract:
  // docs/scratch/fluid-surface-research-001.md sections 6.2 and 7.4). Structural, never by level ID:
  // kinds 0..2 (startup constants at 0x428848) with an inline type-0 base model whose first
@@ -227,6 +244,39 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    s.fluidRoots_.push_back({{Stage::FluidGate,"entities_42acac",i,object.source_extent},std::move(parsed->root),record});
  }
  return s;
+}
+std::expected<LeverPresentation,std::string> BackdropScene::leverPresentation(std::span<const std::byte> bytes) const {
+ LeverPresentation presentation;
+ // Avoid parsing the full level twice for levels without levers.
+ if(std::none_of(roots_.begin(),roots_.end(),[](const auto& r){return r.source.owner=="tagged-lever";}))return presentation;
+ lemmings::CompiledLevel level;
+ try{level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});}
+ catch(const std::invalid_argument& e){return std::unexpected(e.what());}
+ for(std::size_t i=0;i<roots_.size();++i){
+   const auto& root=roots_[i];if(root.source.owner!="tagged-lever")continue;
+   const auto& lever=level.gadgets.tagged_entities.at(root.source.entityIndex);
+   const auto& tracks=lever.model->object->auxiliary_records;
+   const auto track=std::find_if(tracks.begin(),tracks.end(),[](const auto& a){return a.name=="lever";});
+   if(track==tracks.end())return std::unexpected("lever model lacks its lever transform track");
+   auto animation=readHatchAnimation(track->serialized_bytes);
+   if(!animation)return std::unexpected("lever transform: "+animation.error());
+   presentation.bindings.push_back({i,lever.id,static_cast<std::int32_t>(lever.values[0]),lever.flag_a0,std::move(*animation)});
+ }
+ return presentation;
+}
+void BackdropScene::setLeverFaces(const LeverPresentation& presentation,std::span<const std::pair<int,int>> idFaces){
+ for(const auto& binding:presentation.bindings){
+   int face=binding.initialFace;
+   for(const auto& [id,current]:idFaces)if(id==binding.id){face=current;break;}
+   if(face!=1&&face!=-1)continue; // 0x436E6A ignores unsupported faces.
+   // 0x436E6A selects "lever" and direction (face == -1) XOR [+0xA0].
+   // Load hook 0x43703F calls model vt+0x24 (0x45130A): forward
+   // samples duration, reverse samples zero. Keep that settled face mapping.
+   // PROVISIONAL presentation: show the settled endpoint immediately. Native
+   // pull interpolation is not connected; no simulation clock is changed.
+   const bool reverse=(face==-1)!=binding.reversed;
+   applyHatchAnimation(roots_.at(binding.root).node,binding.animation,reverse?0.0:1.0);
+ }
 }
 std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitPresentation(std::span<const std::byte> bytes) const {
  EntranceExitPresentation presentation;

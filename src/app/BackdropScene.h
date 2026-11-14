@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <utility>
 
 namespace webo {
 class AssetLibrary;
@@ -32,6 +33,17 @@ struct EntranceExitPresentation {
   struct Exit { std::size_t root; std::array<double,12> matrix; };
   std::vector<Entrance> entrances;
   std::vector<Exit> exits;
+};
+// Application-owned binding: serialized tagged IDs are shared with sim::Lever.
+// Keeping this outside BackdropScene preserves the retained renderers' layout.
+struct LeverPresentation {
+  struct Binding {
+    std::size_t root;
+    int id, initialFace;
+    bool reversed;
+    HatchAnimation animation;
+  };
+  std::vector<Binding> bindings;
 };
 struct BackdropStats {
   std::size_t roots=0, meshRecords=0, stageMeshRecords=0, meshTriangles=0,
@@ -128,6 +140,8 @@ class BackdropScene {
   // belongs to this scene and is discarded when the application reloads it.
   std::expected<EntranceExitPresentation,std::string> entranceExitPresentation(std::span<const std::byte> level) const;
   void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress, double departureSeconds);
+  std::expected<LeverPresentation,std::string> leverPresentation(std::span<const std::byte> level) const;
+  void setLeverFaces(const LeverPresentation&, std::span<const std::pair<int,int>> idFaces);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
   // Runtime override of the per-node visibility byte +0x110 for Secondary nodes (the original toggles
   // it only for "cutme" type-1 nodes, 0x45DA0D). A hidden node and its subtree are not dispatched.

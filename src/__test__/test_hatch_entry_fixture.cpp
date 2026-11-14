@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     if (closed != expected)
       throw std::runtime_error("zero-time entry fixture differs from existing headless composition");
     auto frame = webo::test::hatchEntryFixture(*library, {}, ticks, milliseconds,
-        false, "MM_CLIMB_002", true);
+        false, "MM_CLIMB_002", true, milliseconds / 1000.0);
     auto written = webo::writePng(argv[5], frame);
     if (!written) throw std::runtime_error(written.error());
     std::cout << "Entry fixture: closed control matches; opening sampled at " << milliseconds << " ms\n";

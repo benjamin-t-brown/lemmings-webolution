@@ -36,7 +36,7 @@ struct SavedFile {
   explicit SavedFile(fs::path path):p(std::move(path)),existed(fs::exists(p)),data(file(p)){}
   bool unchanged()const{return existed==fs::exists(p)&&data==file(p);}
 };
-struct Shot {Image image;app::BackdropStats stats;std::vector<std::optional<app::ActorSpritePlacement>> actors;};
+struct Shot {Image image;app::BackdropStats stats;std::vector<std::optional<app::ActorSpritePlacement>> actors;std::vector<std::uint8_t> leverPixels;};
 Shot shoot(app::BackdropScene& backdrop,const app::TubeScene& tube,const AssetLibrary& lib,
     const sim::World& world,const app::CameraBasis& camera,const app::LemmingMotionTracker* motion=nullptr){
   app::Raster raster(640,480);raster.clear(0,0,0);Shot result;
@@ -50,7 +50,19 @@ Shot shoot(app::BackdropScene& backdrop,const app::TubeScene& tube,const AssetLi
   }
   backdrop.setFluidState(std::move(states));using S=app::BackdropScene::Stage;
   backdrop.renderStage(raster,camera,lib,result.stats,S::Primary);
-  backdrop.renderStage(raster,camera,lib,result.stats,S::LegacyUnattributed);
+  // lever-render-001 corrects the invisible levers captured by the fluid task's
+  // baseline. Only accepted stores from those real model extents may differ;
+  // all other matched-phase fluid/scenery pixels must still match exactly.
+  result.leverPixels.assign(640*480,0);
+  std::vector<lemmings::ObjectSourceExtent> leverExtents;
+  backdrop.visitRoots([&](const auto& source,const auto&){if(source.owner=="tagged-lever")leverExtents.push_back(source.extent);});
+  std::vector<std::uint8_t> allPixels(640*480,1);
+  app::SceneRasterObserver leverObserver;leverObserver.mask=&allPixels;
+  leverObserver.accepted=[&](const app::SceneRasterWriteEvent& e){
+    for(const auto& extent:leverExtents)
+      if(e.source>=extent.typed_root_begin&&e.source<extent.tree_end)result.leverPixels[e.pixel]=1;
+  };
+  backdrop.renderStage(raster,camera,lib,result.stats,S::LegacyUnattributed,&leverObserver);
   app::SceneOptions opts;opts.drawCellRoute=true;opts.drawWall=false;opts.drawOuter=false;opts.drawInner=false;
   if(motion){opts.injectedWalkers=app::injectedWalkersFromWorld(world,world.terrain().height(),nullptr,motion);
     if(opts.injectedWalkers.size()>1)opts.injectedWalkers.resize(1);
@@ -194,10 +206,19 @@ int main(int argc,char** argv){
     for(int yaw=0;yaw<256;yaw+=32){
       app::CameraParams p;p.yawUnits=yaw;p.levelEyeHeight=world.terrain().height();
       const auto shot=shoot(*backdrop,*tube,*lib,world,app::buildCamera(p));png(dir/("initial-yaw-"+std::to_string(yaw)+".png"),shot.image);
+      if(n==8){std::ofstream rawFrame(dir/("initial-yaw-"+std::to_string(yaw)+".rgba"),std::ios::binary);
+        rawFrame.write(reinterpret_cast<const char*>(shot.image.rgba.data()),shot.image.rgba.size());}
       best=std::max(best,shot.stats.fluidPixelsChanged);census<<*id<<" yaw="<<yaw<<" fluid_pixels="<<shot.stats.fluidPixelsChanged<<'\n';
 #if defined(FLUID_KINDS_after) && defined(FLUID_BASELINE_AVAILABLE)
-      if(n==8)check(file(dir/("initial-yaw-"+std::to_string(yaw)+".png"))==
-        file(out.parent_path()/"before"/resolved->id/("initial-yaw-"+std::to_string(yaw)+".png")),"MM_W_012 matched-phase fluid frames byte-identical");
+      if(n==8){
+        const auto raw=file(out.parent_path()/"before"/resolved->id/("initial-yaw-"+std::to_string(yaw)+".rgba"));
+        check(raw.size()==shot.image.rgba.size(),"MM_W_012 matched-phase baseline RGBA present");
+        bool same=raw.size()==shot.image.rgba.size();
+        if(same)for(std::size_t pixel=0;pixel<shot.leverPixels.size();++pixel)if(!shot.leverPixels[pixel])
+          for(std::size_t channel=0;channel<4;++channel)
+            same&=static_cast<std::uint8_t>(raw[4*pixel+channel])==shot.image.rgba[4*pixel+channel];
+        check(same,"MM_W_012 matched-phase fluid/scenery byte-identical outside evidenced lever stores");
+      }
 #endif
     }
 #ifdef FLUID_KINDS_after

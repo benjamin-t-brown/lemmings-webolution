@@ -12,6 +12,7 @@
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
 #include "assets/Png.h"
+#include "scene_lever_baseline.hpp"
 #ifndef SCENE_FROZEN
 #include "app/AppEntry.h"
 #include "app/CrtRand.h"
@@ -86,13 +87,14 @@ constexpr std::array<BackdropScene::Stage, 3> stages = {BackdropScene::Stage::Pr
 constexpr std::array<const char*, 3> stageNames = {"Primary", "LegacyUnattributed", "Secondary"};
 struct Rendered {
   Raster raster{640, 480};
+  leverbaseline::Pixels leverPixels;
   std::array<BackdropStats, 3> stats{};
   std::array<std::size_t, 3> writes{}, depthWrites{}, candidates{};
   std::set<std::size_t> spritePixels;  // pixels accepted from sprite submissions
 };
 Rendered render(const BackdropScene& backdrop, const TubeScene* tube, const AssetLibrary& lib, const CameraBasis& cam,
                 bool scenery, bool compose, const std::set<std::size_t>* spriteOffsets = nullptr) {
-  Rendered out; out.raster.clear(0, 0, 0);
+  Rendered out; out.raster.clear(0, 0, 0); out.leverPixels.bind(backdrop);
   std::vector<std::uint8_t> mask(640 * 480, 1);
   SceneOptions options; options.drawCellRoute = true; options.drawWall = false;
   options.drawOuter = false; options.drawInner = false;
@@ -102,6 +104,7 @@ Rendered render(const BackdropScene& backdrop, const TubeScene* tube, const Asse
     observer.candidate = [&](auto, auto, auto, auto) { ++out.candidates[i]; };
     observer.accepted = [&](const SceneRasterWriteEvent& e) {
       ++out.writes[i]; out.depthWrites[i] += e.depthAssigned;
+      out.leverPixels.accepted(e);
       if (spriteOffsets && spriteOffsets->count(static_cast<std::size_t>(e.source))) out.spritePixels.insert(e.pixel);
     };
     backdrop.renderStage(out.raster, cam, lib, out.stats[i], stages[i], &observer);
@@ -451,6 +454,10 @@ int main() try {
     for (const auto& [mode, r] : {std::pair<const char*, Rendered*>{"scene-only", &scene}, {"scene-on", &on}, {"scene-off", &off}}) {
       const auto h = hashes(r->raster);
       hashFile << id << ':' << mode << " rgb=" << hex(h.rgb) << " depth=" << hex(h.depth) << '\n';
+      // Retain authentic frozen pixels and the precise provenance of the new
+      // lever stores; whole-frame equality used to encode invisible levers.
+      artifact(dir, id + "-" + mode, r->raster, true);
+      r->leverPixels.save(dir / (id + "-" + mode + ".lever-mask"));
     }
     if (id == "MM_CLIMB_002") {
       artifact(dir, id + "-scene-only", scene.raster, true);
@@ -474,12 +481,16 @@ int main() try {
   const auto before = readLines(root / "before" / "hashes.txt"), now = readLines(dir / "hashes.txt");
   const auto beforeLevels = readLines(root / "before" / "levels.txt"), nowLevels = readLines(dir / "levels.txt");
   require(!before.empty() && before.size() == 30, "frozen hashes available (10 levels x 3 modes)");
-  std::size_t compared = 0;
+  std::size_t compared = 0, exact = 0;
   for (const auto& [key, value] : before) {
-    require(now.count(key) && now.at(key) == value, "admitted-level RGB/depth hash equals frozen: " + key);
+    const bool identical = now.count(key) && now.at(key) == value;
+    require(now.count(key) && (identical || leverbaseline::unchangedOutsideLeverStores(
+        root / "before", dir, key, log)), "admitted-level RGB/depth equals frozen outside accepted lever stores: " + key);
+    exact += identical;
     ++compared;
   }
-  log << "frozenCurrentEqualHashes=" << compared << " (10 admitted levels x scene-only/scene-on/scene-off, RGB and depth)\n";
+  log << "frozenCurrentBaselineChecks=" << compared << " exactHashes=" << exact
+      << " (10 admitted levels x scene-only/scene-on/scene-off, RGB and depth)\n";
   std::vector<std::string> newly;
   for (const auto& [id, line] : nowLevels) if (line.find("admitted=1") == 0 && beforeLevels.at(id).find("admitted=0") == 0) newly.push_back(id);
   log << "newlyAdmitted=" << newly.size() << ':'; for (const auto& id : newly) log << ' ' << id; log << '\n';

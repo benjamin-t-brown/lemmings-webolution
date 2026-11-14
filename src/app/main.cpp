@@ -500,6 +500,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   }
   std::optional<app::BackdropScene> backdrop;
   std::optional<app::EntranceExitPresentation> entranceExitPresentation;
+  std::optional<app::LeverPresentation> leverPresentation;
   if (!args.sceneOff) {
     auto built = app::BackdropScene::build(*library, *blob, args.level);
     if (built) {
@@ -507,6 +508,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       auto effects = backdrop->entranceExitPresentation(*blob);
       if (effects) entranceExitPresentation.emplace(std::move(*effects));
       else std::fprintf(stderr, "hatch/exit presentation: %s\n", effects.error().c_str());
+      auto levers = backdrop->leverPresentation(*blob);
+      if (levers) leverPresentation.emplace(std::move(*levers));
+      else std::fprintf(stderr, "lever presentation: %s\n", levers.error().c_str());
       // Play start (0x004451E5 analogue): reseed from the application clock before the
       // first scenery draw of this level.
       backdrop->setRandom(&sceneryRandom().rng);
@@ -692,6 +696,12 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                          (world->levelClockMs() % 4000) / 1000.0});
       }
       backdrop->setFluidState(std::move(fluid));
+      if (leverPresentation) {
+        std::vector<std::pair<int,int>> faces;
+        for (const auto& lever : world->setup().levers)
+          if (lever.linked) faces.emplace_back(lever.serializedId, lever.state);
+        backdrop->setLeverFaces(*leverPresentation, faces);
+      }
     }
     // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
     // the terrain version moved since the last frame.
@@ -870,6 +880,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   app::LemmingAnimTracker lemmingAnim;
   app::LemmingMotionTracker lemmingMotion;
   std::optional<app::RetailSkillPanel> runtimePanel;
+  std::optional<app::SkillPanelIconAnimation> panelIconAnimation;
   std::optional<app::RuntimeCursor> runtimeCursor;
   std::optional<app::EntryStartCue> entryCue;
   std::optional<app::LevelStartSequence> levelStart;
@@ -887,6 +898,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     }
     runtimeFont = std::move(*loadedFont);
     runtimePanel = std::move(*loadedPanel);
+    auto loadedIcons = app::SkillPanelIconAnimation::create(*library);
+    if (!loadedIcons) { std::fprintf(stderr, "panel animation: %s\n", loadedIcons.error().c_str()); return 1; }
+    panelIconAnimation = std::move(*loadedIcons);
     runtimeCursor = std::move(*loadedCursor);
     if (persistentFrontend) {
       auto strings = loadStrings(*library, "UK");
@@ -909,8 +923,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       levelMenu = std::move(*loadedMenu);
     }
   }
-  // SOURCE input adapter: fixed C1 artwork with live counts/selection. Native
-  // hit geometry, disabled appearance and animation are not established here.
+  // SOURCE input adapter: retained C1 geometry with live counts/selection.
   app::RuntimeSkillSelection skillSelection;
   std::optional<Image> finalWindowFrame;
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
@@ -1089,6 +1102,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     previous = now;
     if (args.frames > 0) elapsed = app::FixedCameraClock::stepSeconds;
     if (runOptions.frameSeconds > 0) elapsed = runOptions.frameSeconds;
+    if (panelIconAnimation) {
+      const int hover = focused && !menuOpen() && !rightDown ?
+          app::runtimeSkillPanelIndex(pointerX, pointerY) : -1;
+      // R7: UI animation continues while simulation is paused and is never
+      // multiplied by fast-forward. Menu/focus suspension is provisional.
+      panelIconAnimation->advanceIcons(focused && !menuOpen() ? elapsed : 0.0,
+                                 skillSelection.selectedIndex(), hover);
+    }
     fixedClock.advance(elapsed);
     bool updated = false;
     while (fixedClock.takeStep()) {
@@ -1187,7 +1208,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         // skill-picking path or changes the existing software cursor family.
         const auto hatchHover = canHover && !hover ? app::hoveredHatch(hatches, pointerX, pointerY) : std::nullopt;
         if (hatchHover) app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover]);
-        app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward());
+        app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
+                                   &*panelIconAnimation);
         app::drawRuntimeHud(image, *runtimeFont, *world, false);
         // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
         if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),

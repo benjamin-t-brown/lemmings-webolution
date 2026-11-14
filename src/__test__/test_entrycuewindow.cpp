@@ -1,9 +1,12 @@
 #include "app/AppEntry.h"
 #include "app/RuntimeCursor.h"
+#include "app/RuntimeSkillPanel.h"
 #include "assets/Box.h"
 #include "assets/GameData.h"
 #include "shell/MenuRender.h"
 #include "shell/PauseCaption.h"
+#include "PanelIconComparison.h"
+#include "assets/Png.h"
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -12,6 +15,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -91,6 +95,10 @@ int main() {
   bool ok = true;
   int frames = 0;
   Image firstPaused;
+  const auto iconPixels = test::climberIconComparisonPixels(*library);
+  const auto evidence = std::filesystem::path("entrycuewindow-panel-pause");
+  std::filesystem::create_directories(evidence);
+  std::ofstream pauseLog(evidence / "checks.txt");
   const auto front = [&](const app::FrontendSession& s, int) {
     if (s.screen() == shell::Screen::Map) ok &= selectNode();
     else ok &= key(SDLK_RETURN);
@@ -116,8 +124,23 @@ int main() {
       }
     }
     if (f.frame == 4 || f.frame == 6) ok &= key(SDLK_p);
-    if (f.frame == 5) firstPaused = f.image;
-    if (f.frame == 6) ok &= firstPaused.rgba == f.image.rgba;
+    if (f.frame == 5 || f.frame == 6) {
+      // R7 explicitly animates the selected icon while paused. This assertion
+      // previously encoded the static-icon defect. Retain exact equality for
+      // all other pixels, including the cue, HUD, plates and stock numbers.
+      // panel_icon_after separately checks the animated icon pixels.
+      ok &= f.selectedSkillIndex == 0 && app::runtimeSkillPanelIndex(f.cursorX, f.cursorY) == -1;
+      if (f.frame == 5) firstPaused = f.image;
+      auto expected = firstPaused, actual = f.image;
+      test::normalizeClimberIcon(expected, iconPixels);
+      test::normalizeClimberIcon(actual, iconPixels);
+      const bool exact = expected.rgba == actual.rgba;
+      pauseLog << "frame=" << f.frame << " raw_frozen=" << (firstPaused.rgba == f.image.rgba)
+               << " sprite_union_pixels=" << iconPixels.size() << " frozen_outside_icon=" << exact << '\n';
+      ok &= exact;
+      ok &= writePng(evidence / ("actual-" + std::to_string(f.frame) + ".png"), f.image).has_value();
+      ok &= writePng(evidence / ("compared-" + std::to_string(f.frame) + ".png"), actual).has_value();
+    }
     if (f.frame == 11) {
       int changed = 0;
       for (const auto& [x, y] : opaque) {

@@ -22,7 +22,8 @@ namespace webo::test {
 inline Image hatchEntryFixture(const AssetLibrary& library,
                                const app::CameraParams& cameraParams,
                                int hudTicks, double openingMs, bool connectedEntry = false,
-                               const std::string& levelName = "MM_CLIMB_002", bool hoverFeedback = false) {
+                               const std::string& levelName = "MM_CLIMB_002", bool hoverFeedback = false,
+                               double panelSeconds = 0) {
   const auto require = []<class T>(std::expected<T, std::string> value) -> T {
     if (!value) throw std::runtime_error(value.error());
     return std::move(*value);
@@ -77,8 +78,12 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
       app::drawHatchHover(image, font, h);
     }
   }
-  const auto panel = app::drawRetailSkillPanel(image, library, levelName);
-  if (!panel) throw std::runtime_error(panel.error());
+  const auto panel = require(app::RetailSkillPanel::create(library, levelName));
+  auto icons = require(app::SkillPanelIconAnimation::create(library));
+  // R7: the old fixed icon expectation encoded the playtest defect. Sample
+  // explicit UI time; retain the zero-time control and exact full-frame checks.
+  icons.advanceIcons(panelSeconds, 0, -1);
+  panel.draw(image, panel.initialCounts(), 0, false, &icons);
   app::drawRuntimeHud(image, font, world, false);
   const auto cursor = require(app::RuntimeCursor::load(library));
   cursor.draw(image, app::CursorState::NoLemming, image.width / 2, image.height / 2);

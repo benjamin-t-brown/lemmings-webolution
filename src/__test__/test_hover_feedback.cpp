@@ -1,5 +1,7 @@
 // Source-built application only. Public SDL pointer events, private saves.
 #include "app/AppEntry.h"
+#include "app/RuntimeSkillPanel.h"
+#include "PanelIconComparison.h"
 #include "app/Pick.h"
 #include "app/RuntimePick.h"
 #include "assets/Png.h"
@@ -111,6 +113,8 @@ int route(const std::string& mode,const fs::path& out) {
   trace<<"frame,spawned,hovered_actor,marked_actor,hovered_hatch,remaining\n";
   auto command=[&](int f,Command c){events<<f<<' '<<c.kind<<' '<<c.x<<' '<<c.y<<'\n';send(c);};
   auto shot=[&](const app::LevelFrameView& f,std::string name,char kind,int l=0,int t=0,int r=640,int b=480){
+    check(f.selectedSkillIndex==0&&app::runtimeSkillPanelIndex(f.cursorX,f.cursorY)<0,
+          "historical comparison has only selected Climber animation");
     shotlog<<f.frame<<' '<<name<<' '<<kind<<' '<<l<<' '<<t<<' '<<r<<' '<<b<<'\n';image(out,name,f);
   };
   int x=0,y=0,stock=0,n=0;std::size_t expected=0;int captures=0,offFrame=-1,firstRemaining=-1;
@@ -200,12 +204,17 @@ int compare(const fs::path& root) {
   const char* game=std::getenv("WEBOLUTION_GAME_DIR");if(!game)return 2;
   auto library=AssetLibrary::open(fs::path(game)/"lemmings.box",fs::path(game)/"patch.box");if(!library)return 2;
   auto font=loadTexture(*library,"TEXTURES\\^FONT.BMP");if(!font)return 2;
+  const auto iconPixels=test::climberIconComparisonPixels(*library);
+  summary<<"R7 animated Climber footprint="<<iconPixels.size()<<" pixels; exact comparison elsewhere\n";
   for(const auto& mode:{"actor","hatch"}) {
     const auto after=root/"after"/mode,old=root/"before"/mode;
     std::ifstream shots(after/"shots.txt");int frame,l,t,r,b;std::string name;char kind;int count=0;
     while(shots>>frame>>name>>kind>>l>>t>>r>>b) {
-      ++count;const auto a=bytes(after/(name+".rgba")),o=bytes(old/(name+".rgba"));
+      ++count;auto a=bytes(after/(name+".rgba")),o=bytes(old/(name+".rgba"));
       check(a.size()==640*480*4&&a.size()==o.size(),"paired raw framebuffer sizes");
+      // Both routes select Climber and point outside the panel. Static vs
+      // animated Climber pixels encode R7, not an actor/hatch feedback failure.
+      for(auto at:iconPixels)for(int c=0;c<4;++c) {a.at(at+c)=0;o.at(at+c)=0;}
       check(bytes(after/(name+".state"))==bytes(old/(name+".state")),"paired simulation and stock identical: "+name);
       int changed=0,outside=0;
       for(std::size_t at=0;at+3<std::min(a.size(),o.size());at+=4) {

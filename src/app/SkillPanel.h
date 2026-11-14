@@ -94,6 +94,7 @@ webo::Image resizeSkillPlatePatch(const webo::Image& source);
 void drawSkillPanelPlates(webo::Image& dest, const webo::Image& plate);
 // Cached source-fixture renderer. Construction reads and owns the resources;
 // draw() performs no archive access. Selection accepts [0,9] or nullopt.
+class SkillPanelIconAnimation;
 class RetailSkillPanel {
  public:
   static std::expected<RetailSkillPanel, std::string> create(
@@ -105,6 +106,9 @@ class RetailSkillPanel {
   void draw(webo::Image& dest, const std::array<int, 9>& counts,
             std::optional<int> selectedIndex, bool fastForward) const;
   const std::array<int, 9>& initialCounts() const { return initialCounts_; }
+  void draw(webo::Image& dest, const std::array<int, 9>& counts,
+            std::optional<int> selectedIndex, bool fastForward,
+            const SkillPanelIconAnimation* animation) const;
 
  private:
   RetailSkillPanel() = default;
@@ -116,6 +120,27 @@ class RetailSkillPanel {
   Image plate_, selectedPlate_, font_;
   std::array<int, 9> initialCounts_{};
   std::vector<Icon> icons_;
+};
+
+// Separate per-level UI state preserves the fixed renderer's layout and fixture
+// contract, including historical source-built demonstrations.
+class SkillPanelIconAnimation {
+ public:
+  static std::expected<SkillPanelIconAnimation, std::string> create(const AssetLibrary& library);
+  // Original 45AF0E advances selection; hover animation is provisional feedback.
+  void advanceIcons(double seconds, std::optional<int> selectedIndex, int hoveredIndex);
+  void drawIcon(Image& dest, std::size_t index) const;
+ private:
+  struct Icon {
+    struct Pose { SpriteFrame frame; std::size_t texture; };
+    std::vector<Pose> poses;
+    std::size_t idle = 0, current = 0;
+    double rate = 0, phase = 0;
+    bool active = false;
+    int x = 0, y = 0, scaleDelta = 0;
+  };
+  std::vector<Icon> icons_;
+  std::vector<Image> textures_;
 };
 
 // Opt-in, headless C1 fixture renderer. Compatibility wrapper: level counts,

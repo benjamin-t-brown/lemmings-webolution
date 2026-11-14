@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdint>
 #include <format>
+#include <map>
 #include <optional>
 
 namespace webo::app {
@@ -265,6 +266,79 @@ std::expected<RetailSkillPanel, std::string> RetailSkillPanel::create(
   return panel;
 }
 
+std::expected<SkillPanelIconAnimation, std::string> SkillPanelIconAnimation::create(const AssetLibrary& library) {
+  auto sheet = loadSpriteSheet(library, "SPRITES\\LEMMINGSHI.SPR");
+  auto bomb = loadSpriteSheet(library, "SPRITES\\GREYICONS.SPR");
+  if (!sheet || !bomb) return std::unexpected(!sheet ? sheet.error() : bomb.error());
+  // Retain C1l's measured fixed poses, facing and anchors. PROVISIONAL idle
+  // policy: that was a selected-start snapshot, not an all-idle observation;
+  // 45AC5C's reset formula gives Climber 3, while this retained pose is 4.
+  constexpr const char* names[] = {"climb","float","bomb","block","build","bash","mine","dig"};
+  constexpr int idle[] = {4,0,0,0,15,0,21,1};
+  constexpr int facing[] = {2,4,0,4,2,2,2,4};
+  constexpr int x[] = {39,37,38,39,40,39,41,37};
+  constexpr int y[] = {40,92,121,158,197,238,279,317};
+  SkillPanelIconAnimation result;
+  std::map<std::string, std::size_t> textures;
+  for (int i = 0; i < 8; ++i) {
+    const auto* sprite = (i == 2 ? *bomb : *sheet).find(names[i]);
+    if (!sprite || std::size_t(idle[i]) >= sprite->animations.size())
+      return std::unexpected(std::format("panel animation missing {}", names[i]));
+    Icon icon;
+    icon.idle = icon.current = idle[i]; icon.rate = sprite->rate;
+    icon.x = x[i]; icon.y = y[i]; icon.scaleDelta = i == 2 ? 0 : -1;
+    for (const auto& entry : sprite->animations) {
+      if (std::size_t(facing[i]) >= entry.frames.size())
+        return std::unexpected(std::format("panel facing missing {}", names[i]));
+      const auto& frame = entry.frames[facing[i]];
+      auto found = textures.find(frame.sheet);
+      if (found == textures.end()) {
+        auto texture = loadTexture(library, sheetAssetName(frame.sheet));
+        if (!texture) return std::unexpected(texture.error());
+        found = textures.emplace(frame.sheet, result.textures_.size()).first;
+        result.textures_.push_back(std::move(*texture));
+      }
+      icon.poses.push_back({frame, found->second});
+    }
+    result.icons_.push_back(std::move(icon));
+  }
+  return result;
+}
+
+void SkillPanelIconAnimation::drawIcon(Image& dest, std::size_t index) const {
+  if (index >= icons_.size()) return;
+  const auto& icon = icons_[index];
+  const auto& pose = icon.poses[icon.current];
+  drawSkillPanelIcon(dest, textures_[pose.texture], pose.frame, icon.x, icon.y, icon.scaleDelta);
+}
+
+void SkillPanelIconAnimation::advanceIcons(double seconds, std::optional<int> selectedIndex, int hoveredIndex) {
+  if (!std::isfinite(seconds) || seconds < 0) return;
+  for (std::size_t i = 0; i < icons_.size(); ++i) {
+    auto& icon = icons_[i];
+    // READ 45AFCD..45AFE0: selected icon advances through 468833.
+    // PROVISIONAL R7: also animate an unselected hovered skill; reset idle
+    // artwork on leaving both states. Command artwork/rules stay unchanged.
+    const bool active = i < 8 && ((selectedIndex && *selectedIndex == static_cast<int>(i)) ||
+                                  hoveredIndex == static_cast<int>(i));
+    if (!active || !icon.active) { icon.current = icon.idle; icon.phase = 0; }
+    icon.active = active;
+    if (!active || icon.poses.size() <= 1 || !std::isfinite(icon.rate) || icon.rate <= 0) continue;
+    // 46889E..4688E6: accumulator += dt*rate, strict >0.06 then next
+    // temporal entry. PROVISIONAL: loop for feedback and reset fractional
+    // phase on activation; native panel loop/pause flags were not traced.
+    // Direction is fixed by C1l.
+    // Reduce whole cycles before multiplying to bound work after a long stall.
+    const double cycle = 0.06 * icon.poses.size();
+    icon.phase += std::fmod(seconds, cycle / icon.rate) * icon.rate;
+    while (icon.phase > 0.06) {
+      icon.current = (icon.current + 1) % icon.poses.size();
+      icon.phase -= 0.06;
+      if (icon.phase <= 9.99999993922529e-09) icon.phase = 0;
+    }
+  }
+}
+
 void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
                             std::optional<int> selectedIndex) const {
   draw(dest, counts, selectedIndex, false);
@@ -272,13 +346,24 @@ void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
 
 void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
                             std::optional<int> selectedIndex, bool fastForward) const {
+  draw(dest, counts, selectedIndex, fastForward, nullptr);
+}
+
+void RetailSkillPanel::draw(Image& dest, const std::array<int, 9>& counts,
+                            std::optional<int> selectedIndex, bool fastForward,
+                            const SkillPanelIconAnimation* animation) const {
   drawSkillPanelPlates(dest, plate_);
   if (selectedIndex && *selectedIndex >= 0 && *selectedIndex < 10)
     drawSkillPanelPlateQuad(dest, selectedPlate_, *selectedIndex);
   if (fastForward) drawSkillPanelPlateQuad(dest, selectedPlate_, 8);
   drawSkillPanelCounts(dest, font_, counts);
-  for (const auto& icon : icons_)
-    drawSkillPanelIcon(dest, icon.texture, icon.frame, icon.x, icon.y, icon.scaleDelta);
+  for (std::size_t i = 0; i < icons_.size(); ++i) {
+    if (animation && i < 8) animation->drawIcon(dest, i);
+    else {
+      const auto& icon = icons_[i];
+      drawSkillPanelIcon(dest, icon.texture, icon.frame, icon.x, icon.y, icon.scaleDelta);
+    }
+  }
 }
 
 std::expected<void, std::string> drawRetailSkillPanel(Image& dest, const AssetLibrary& library,

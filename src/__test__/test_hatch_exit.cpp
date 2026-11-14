@@ -3,6 +3,7 @@
 #include "app/BackdropScene.h"
 #include "app/HatchAnimation.h"
 #include "app/RuntimeHud.h"
+#include "app/RuntimeSkillPanel.h"
 #include "app/RuntimePick.h"
 #include "app/Raster.h"
 #include "assets/Box.h"
@@ -10,6 +11,7 @@
 #include "assets/Png.h"
 #include "sim/RetailLevel.h"
 #include "lemmings/compiled_level.hpp"
+#include "PanelIconComparison.h"
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <algorithm>
@@ -381,6 +383,9 @@ int application(const fs::path& out) {
     int falling = 0, landed = 0, pausedFrames = 0, priorY = -1;
     double drawnY = -1;
     Image frozen, closed;
+    const auto lib = library();
+    const auto iconPixels = test::climberIconComparisonPixels(lib);
+    std::ofstream pauseLog(dir / "panel-pause.txt");
     auto observer = [&](const app::LevelFrameView& f) {
       pair.frame(f);
       bool shot = f.frame == 0 || f.frame == 10 || f.frame == 20 || f.frame == 35 ||
@@ -399,10 +404,24 @@ int application(const fs::path& out) {
       if (f.frame == 15)
         key(SDL_SCANCODE_P);
       if (f.paused) {
+        check(f.selectedSkillIndex == 0 && app::runtimeSkillPanelIndex(f.cursorX, f.cursorY) == -1,
+              "pause comparison has only the selected Climber icon active");
         if (pausedFrames++ == 0)
           frozen = f.image;
-        else
-          check(frozen.rgba == f.image.rgba, "pause freezes hatch and actors");
+        // R7's UI clock continues during pause; only its measured Climber
+        // sprite footprint may move. The frozen application still requires
+        // full-frame equality. panel_icon_after covers the icon itself.
+        auto expected = frozen, actual = f.image;
+        if (!baseline) {
+          test::normalizeClimberIcon(expected, iconPixels);
+          test::normalizeClimberIcon(actual, iconPixels);
+        }
+        pauseLog << "frame=" << f.frame << " raw_frozen=" << (frozen.rgba == f.image.rgba)
+                 << " sprite_union_pixels=" << iconPixels.size()
+                 << " frozen_outside_icon=" << (expected.rgba == actual.rgba) << '\n';
+        check(expected.rgba == actual.rgba, "pause freezes hatch and actors outside the animated UI icon");
+        png(dir / ("pause-actual-" + std::to_string(f.frame) + ".png"), f.image);
+        png(dir / ("pause-compared-" + std::to_string(f.frame) + ".png"), actual);
       }
       if (!f.world.lemmings().empty()) {
         auto& l = f.world.lemmings()[0];
@@ -466,6 +485,9 @@ int endRoute(const fs::path& out) {
   bool success = false;
   double timer = 0;
   Image frozen, stationary;
+  const auto lib = library();
+  const auto iconPixels = test::climberIconComparisonPixels(lib);
+  std::ofstream pauseLog(out / "panel-pause.txt");
   std::size_t balloonPixels = 0;
   auto front = [&](const app::FrontendSession& s, int) {
     if (s.screen() == shell::Screen::Menu || s.screen() == shell::Screen::Confirm)
@@ -522,10 +544,24 @@ int endRoute(const fs::path& out) {
       }
       if (f.paused) {
         check(timer == f.endTimerSeconds, "pause freezes departure timer");
+        check(f.selectedSkillIndex == 0 && app::runtimeSkillPanelIndex(f.cursorX, f.cursorY) == -1,
+              "departure pause comparison has only the selected Climber icon active");
         if (pauseFrames++ == 0)
           frozen = f.image;
-        else
-          check(frozen.rgba == f.image.rgba, "pause freezes balloon pixels");
+        // The simulation/balloon and departure timer freeze; R7's selected
+        // Climber icon keeps UI time. Preserve the original full-frame check
+        // for the frozen application and exact equality elsewhere after R7.
+        auto expected = frozen, actual = f.image;
+        if (!baseline) {
+          test::normalizeClimberIcon(expected, iconPixels);
+          test::normalizeClimberIcon(actual, iconPixels);
+        }
+        pauseLog << "frame=" << f.frame << " raw_frozen=" << (frozen.rgba == f.image.rgba)
+                 << " sprite_union_pixels=" << iconPixels.size()
+                 << " frozen_outside_icon=" << (expected.rgba == actual.rgba) << '\n';
+        check(expected.rgba == actual.rgba, "pause freezes balloon pixels outside the animated UI icon");
+        png(out / ("pause-actual-" + std::to_string(f.frame) + ".png"), f.image);
+        png(out / ("pause-compared-" + std::to_string(f.frame) + ".png"), actual);
         if (pauseFrames == 3) {
           key(SDL_SCANCODE_P);
           stage = 2;

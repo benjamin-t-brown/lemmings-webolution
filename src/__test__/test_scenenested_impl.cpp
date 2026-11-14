@@ -11,6 +11,7 @@
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
 #include "assets/Png.h"
+#include "scene_lever_baseline.hpp"
 #ifndef SCENE_FROZEN
 #include "app/AppEntry.h"
 #include "sceneadmission_census.hpp"
@@ -90,6 +91,7 @@ constexpr std::array<BackdropScene::Stage, 3> stages = {BackdropScene::Stage::Pr
 constexpr std::array<const char*, 3> stageNames = {"Primary", "LegacyUnattributed", "Secondary"};
 struct Rendered {
   Raster raster{640, 480};
+  leverbaseline::Pixels leverPixels;
   std::array<BackdropStats, 3> stats{};
   std::array<std::size_t, 3> writes{}, depthWrites{}, candidates{};
   // Secondary-stage probes: node draw order (first candidate), records/triangles per node, accepted stores per record.
@@ -98,7 +100,7 @@ struct Rendered {
 };
 Rendered render(const BackdropScene& backdrop, const TubeScene* tube, const AssetLibrary& lib, const CameraBasis& cam,
                 bool scenery, bool compose) {
-  Rendered out; out.raster.clear(0, 0, 0);
+  Rendered out; out.raster.clear(0, 0, 0); out.leverPixels.bind(backdrop);
   std::vector<std::uint8_t> mask(640 * 480, 1);
   SceneOptions options; options.drawCellRoute = true; options.drawWall = false;
   options.drawOuter = false; options.drawInner = false;
@@ -113,6 +115,7 @@ Rendered render(const BackdropScene& backdrop, const TubeScene* tube, const Asse
     };
     observer.accepted = [&, i](const SceneRasterWriteEvent& e) {
       ++out.writes[i]; out.depthWrites[i] += e.depthAssigned;
+      out.leverPixels.accepted(e);
       if (i == 2) ++out.writesBySource[static_cast<std::size_t>(e.source)];
     };
     backdrop.renderStage(out.raster, cam, lib, out.stats[i], stages[i], &observer);
@@ -450,11 +453,15 @@ int main() try {
     }
 #endif
     if (ten) {
+      artifact(dir, id + "-scene-only", scene.raster, true);
+      scene.leverPixels.save(dir / (id + "-scene-only.lever-mask"));
       auto on = render(backdrop, tubePtr.get(), *lib, cam, true, true);
       auto off = render(backdrop, tubePtr.get(), *lib, cam, false, true);
       for (const auto& [mode, r] : {std::pair<const char*, Rendered*>{"scene-on", &on}, {"scene-off", &off}}) {
         const auto hh = hashes(r->raster);
         hashFile << id << ':' << mode << " rgb=" << hex(hh.rgb) << " depth=" << hex(hh.depth) << '\n';
+        artifact(dir, id + "-" + mode, r->raster, true);
+        r->leverPixels.save(dir / (id + "-" + mode + ".lever-mask"));
       }
       if (id == "MM_CLIMB_002") {
         require(scene.stats[0].stageMeshRecords == 923 && scene.stats[0].stageBillboards == 0 && scene.stats[1].stageMeshRecords == 172 &&
@@ -474,17 +481,20 @@ int main() try {
   log << "renderAllSeconds=" << renderSeconds << " admittedRendered=" << admitted.size() << '\n';
 
 #ifndef SCENE_FROZEN
-  // ---- Phase 3: the ten originally admitted levels are byte-identical to the frozen run ----
+  // ---- Phase 3: ten-level RGB/depth equality outside the repaired lever omission ----
   const auto before = readLines(root / "before" / "hashes.txt"), now = readLines(dir / "hashes.txt");
-  std::size_t compared = 0;
+  std::size_t compared = 0, exact = 0;
   for (const auto& [key, value] : before) {
     const auto id = key.substr(0, key.find(':'));
     if (!acceptedTen.count(id)) continue;
-    require(now.count(key) && now.at(key) == value, "ten-level RGB/depth hash equals frozen: " + key);
+    const bool identical = now.count(key) && now.at(key) == value;
+    require(now.count(key) && (identical || leverbaseline::unchangedOutsideLeverStores(
+        root / "before", dir, key, log)), "ten-level RGB/depth equals frozen outside accepted lever stores: " + key);
+    exact += identical;
     ++compared;
   }
   require(compared == 30, "10 levels x scene-only/scene-on/scene-off compared");
-  log << "frozenCurrentEqualHashes=" << compared << '\n';
+  log << "frozenCurrentBaselineChecks=" << compared << " exactHashes=" << exact << '\n';
   // ---- Phase 4: E11_KF_1 demonstration and bounded public route ----
   auto e11 = lib->read("COMPILED\\E11_KF_1.LVL"); require(bool(e11), "read E11_KF_1");
   e11Demonstration(*lib, *e11, cam, dir, log);

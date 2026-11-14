@@ -156,7 +156,7 @@ int main() {
           // rather than carrying the highlighted image into the menu check.
           retryFrame = test::hatchEntryFixture(*library, f.displayedPose,
               static_cast<int>(f.world.tickCount()), f.hatchOpeningProgress * 2799.999952316284,
-              true, std::string(f.levelName));
+              true, std::string(f.levelName), false, 0.5);
           auto hoveredFrame = retryFrame;
           const auto hit = app::hoveredHatch(f.hatches, f.cursorX, f.cursorY);
           ok &= hit.has_value() && !f.markedActor;

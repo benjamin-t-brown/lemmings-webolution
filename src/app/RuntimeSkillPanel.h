@@ -43,5 +43,9 @@ void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
                            const sim::World& world,
                            const RuntimeSkillSelection& selection,
                            bool fastForward = false);
+void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
+                           const sim::World& world,
+                           const RuntimeSkillSelection& selection, bool fastForward,
+                           const SkillPanelIconAnimation* animation);
 
 }  // namespace webo::app

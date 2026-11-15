@@ -10,11 +10,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - lemming-type-sprites-001: **ready** — Draw water lemmings with their own sprites and fix the drowning animation
+- frame-rate-profile-001: **ready** — Measure where the clone's frame time goes and remove the cheap waste
 - gravity-gadgets-001: **ready** — Show gravity flippers and kill lemmings that fall into the ceiling
 - map-hover-text-001: **ready** — Make the map hover text match the original's three-line block
 - exit-balloon-path-001: **ready** — Make the exit balloon spiral out as in the original
 - hatch-release-direction-001: **ready** — Lemmings leave the hatch in the level's stored directions
-- frame-rate-profile-001: **ready** — Measure where the clone's frame time goes and remove the cheap waste
 
 ## Recently completed queue entries
 

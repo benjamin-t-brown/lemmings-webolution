@@ -16830,6 +16830,146 @@
         "log": "build\\agent-runs\\20261115T184524-37880-4ea03312\\verification.log",
         "verified_content": "00696ac1b73dbd71f61de4c84aa5190893186275d834ff4f20f535aa63822f35"
       }
+    },
+    {
+      "id": "window-scale-001",
+      "title": "Play the clone in a window twice the size",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 6 V9 (docs/playtest/2026-11-15-playtest-6.md): the game window is small on the user's screen. Let the interactive clone window open at an integer scale of the game image, default 2x for the ordinary interactive window (frontend and levels, the single shared window), with an explicit command-line option to choose 1x, 2x or 3x. Use the presenter's scaling (for example SDL logical size or a scaled destination rectangle) with crisp integer scaling; the game image, simulation, software rasterizer resolution and saved framebuffer/screenshot outputs stay at the present resolution. Pointer coordinates must map back to game coordinates exactly so map clicks, hover picking, panel clicks and skill assignment behave as at 1x. Registered tests and automation options must keep their current window size and outputs unless they ask for a scale. Frame rate must not drop measurably: report the frame time at 1x and 2x on one level. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "Launching the clone interactively without a scale option opens a window twice the game image size, and an explicit option selects 1x, 2x or 3x; scripts/Play-Clone.ps1 uses the default.",
+        "At 2x, a retained window capture shows the whole game image scaled without blur or cropping, and a test demonstrates that pointer positions map to the same game coordinates as at 1x for a map node click, a panel skill click and a lemming hover.",
+        "Saved screenshots, framebuffer outputs and every existing registered test keep their current resolution and results.",
+        "The report gives measured frame time at 1x and 2x on one named level."
+      ]
+    },
+    {
+      "id": "antigrav-skill-assign-001",
+      "title": "Assign Blocker and other skills to upside-down lemmings",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 6 V6: on the installed level titled 'Sometimes Up Sometimes Down' the user could not assign the Blocker job to upside-down (antigravity) lemmings, so the level cannot be won. Find the level id from the map titles. Reproduce on that level through the production input path (pointer hover, panel selection, click) with a lemming walking on the ceiling after a gravity flipper, and source-trace why the assignment is refused or never targeted: picking of the inverted sprite, the assignment eligibility rule, or the skill's own state entry. Fix it so every skill the original allows for an inverted lemming can be assigned; use retained static evidence for which skills those are and label anything provisional. A blocker on the ceiling must turn other inverted walkers around. Check each skill offered on that level, and state the result for the remaining skills even where no installed gravity level offers them. Do not change normal-gravity skill behavior. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A test drives the production pointer path on the named level and assigns Blocker to an upside-down lemming; before the change the same input is refused, and the report explains the traced cause.",
+        "The ceiling blocker turns inverted walkers around, shown by a state record and retained clone images.",
+        "A scripted route wins 'Sometimes Up Sometimes Down' using skills assigned to upside-down lemmings, or the report names the exact remaining obstacle with evidence.",
+        "The report lists, for every skill, whether it can be assigned to an inverted lemming and on what evidence; normal-gravity assignment tests are unchanged and pass."
+      ]
+    },
+    {
+      "id": "lemming-pick-nearest-001",
+      "title": "Hover and assignment pick the lemming nearest the cursor centre",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 6 V7: hover highlight and job assignment do not consistently pick the lemming under the cursor; with several lemmings near the cursor the choice favours one on the left or right, which makes assigning hard. Trace the production pick used by both hover feedback and assignment. Change the choice among candidate lemmings to the one whose on-screen body centre is nearest the centre of the cursor dot, with a stated deterministic tie-break, keeping the existing candidate radius and occlusion/eligibility rules unless they cause the defect. Hover and assignment must always agree: the highlighted lemming is the one that receives the job. If retained static evidence shows the original uses a different priority (for example preferring lemmings that can accept the selected skill), report it and keep nearest-centre as the labelled provisional clone policy unless the two agree. Cover lemmings walking in both directions, overlapping lemmings, and upside-down lemmings. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A test places several lemmings around the cursor on an installed level and shows the picked lemming is the one nearest the cursor centre for cursor positions left of, right of and between them; before the change at least one of these cases picks a farther lemming.",
+        "Hover highlight and assignment use the same pick: in the test the highlighted lemming is the one that receives the assigned skill in every case.",
+        "The tie-break is deterministic and documented; candidate radius and eligibility rules are unchanged or the report justifies each change with the demonstrated failure.",
+        "Existing hover-feedback and assignment tests pass, with any changed expectation justified before/after as encoding this defect."
+      ]
+    },
+    {
+      "id": "nuke-all-001",
+      "title": "Make Nuke all work",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 6 V3: the Nuke (Armageddon) control does nothing in the clone. This is a playtest-ledger defect, so the fix is authorized although timed Armageddon was parked; it is a playable-clone fix, not a timing-fidelity pass, and the park on matching the original's exact Armageddon timing stays. Trace the production path from the panel nuke control (and its keyboard shortcut if the clone has one) to the simulation. Implement: activating it stops further hatch releases and makes every live lemming explode, as the Bomber does (including craters and the level-end/result accounting), with lemmings going off in sequence rather than in one frame. Use retained static evidence for the activation gesture (single or double click), the countdown and the per-lemming stagger; where it is insufficient choose simple values, label them provisional and say what observation would settle them. The level must then end and show the results screen with correct saved counts. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A test drives the production pointer path on an installed level: activating Nuke stops releases, every live lemming explodes, and the level ends at the results screen with correct saved/lost counts; before the change the same input has no effect.",
+        "Retained clone images show the nuke control's feedback and lemmings exploding in sequence.",
+        "Activation gesture, countdown and stagger are each cited to static evidence or labelled provisional with the settling observation named.",
+        "Bomber behavior and existing tests are unchanged apart from expectations that encoded the missing nuke, each justified before/after."
+      ]
+    },
+    {
+      "id": "release-rate-control-001",
+      "title": "Change the release rate by clicking the hatch box",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 6 V8: clicking and right-clicking the spawn (release rate) box on the panel does not change how fast lemmings leave the hatch. Each level should have its own minimum and maximum. This is a playtest-ledger defect, so it is authorized although release timing was parked: add the control, do not retune the existing mapping from rate to release interval beyond what the control needs. Use retained static evidence and the level data for the stored initial/minimum/maximum release values and for which gesture raises and which lowers the rate, including click-and-hold repeat if the original has it; label provisional choices. The panel must show the current value. The level's stored initial rate is the starting value and the player cannot go outside the level's limits. Multi-hatch scheduling (multi-hatch-release-001) stays blocked and out of scope. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A test drives the production pointer path on an installed level: one gesture on the release box raises the rate and the other lowers it, the measured interval between releases changes accordingly, and the value stops at the level's stored minimum and maximum; before the change the input has no effect.",
+        "The panel shows the current release value, with retained clone images at minimum, initial and maximum.",
+        "The report cites where the level's initial, minimum and maximum values come from for at least three installed levels with different values, or states that static evidence shows a fixed range.",
+        "With no player input, release timing on existing routes is unchanged and existing scripted wins still win."
+      ]
+    },
+    {
+      "id": "death-particles-001",
+      "title": "Show explosion debris and splat pieces",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 6 V1 and V2: when a lemming explodes there are no particles showing the lemming bursting or the blocks being destroyed, and a lemming that falls to its death does not splat into pieces, unlike the original. Presentation only: the simulation outcome (who dies, when, which cells are removed) must not change. Use retained static evidence and installed assets for the original's particle sprites or models, counts, colours, motion and lifetime for (a) a bomber explosion, (b) destroyed block debris, (c) a fatal-fall splat; reference frames from the 2026-11-14 original session under docs/playtest/reference/ may help. Where evidence is insufficient implement simple gravity-affected particles using the lemming's and block's own colours or textures, labelled provisional. Particles must respect the scene depth buffer like lemmings do and must not cost measurable frame time when none are alive. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "Retained clone image sequences on named installed levels show debris for a bomber explosion, for destroyed blocks, and pieces for a fatal fall; the corresponding before images show none.",
+        "Gameplay, release, action and outcome records for existing routes that include a bomber and a fatal fall are byte-identical before and after.",
+        "Each effect's sprite source, count, motion and lifetime is cited to static evidence or labelled provisional with the settling observation named.",
+        "Frame time on one level with no particles alive is unchanged within measurement noise, with the measurement reported."
+      ]
+    },
+    {
+      "id": "exit-yippee-sound-001",
+      "title": "Play the yippee sound when a lemming reaches the balloon",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": true,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 6 V4: lemmings do not play the 'yippee' sound when they reach the exit balloon. Trace the clone's existing sound-cue path and the installed sound assets; use retained static evidence to identify the sample the original plays when a lemming is saved and the call site that triggers it. Play it once per saved lemming at the moment the clone counts the lemming as saved, through the existing audio path, without blocking the frame loop and without clipping when several lemmings exit close together. Do not expand into general sound-effect or music work (P15/P16 remain separate). Tests must not require an audio device. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "acceptance": [
+        "A test on an installed level shows one saved-lemming cue is issued per saved lemming, at the tick the save is counted, and none before the change.",
+        "The sample is identified from the installed assets with static evidence for the original's choice, or labelled provisional with the candidates listed.",
+        "The clone runs and the tests pass with no audio device; several exits within a few ticks each issue a cue.",
+        "No other sound behavior changes."
+      ]
     }
   ]
 }

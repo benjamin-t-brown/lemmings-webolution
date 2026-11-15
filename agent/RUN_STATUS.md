@@ -9,6 +9,13 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- window-scale-001: **ready** — Play the clone in a window twice the size
+- antigrav-skill-assign-001: **ready** — Assign Blocker and other skills to upside-down lemmings
+- lemming-pick-nearest-001: **ready** — Hover and assignment pick the lemming nearest the cursor centre
+- nuke-all-001: **ready** — Make Nuke all work
+- release-rate-control-001: **ready** — Change the release rate by clicking the hatch box
+- death-particles-001: **ready** — Show explosion debris and splat pieces
+- exit-yippee-sound-001: **ready** — Play the yippee sound when a lemming reaches the balloon
 
 ## Recently completed queue entries
 

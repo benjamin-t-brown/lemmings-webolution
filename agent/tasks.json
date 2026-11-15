@@ -15388,7 +15388,7 @@
       "last_failure": "Verification failed; inspect build/agent-runs/20261114T222010-47060-48bc1f5c/verification.log",
       "review": {
         "decision": "blocked",
-        "reason": "The review instructions prohibit shell access, and the available tools provide no non-shell reader for local source, reports, or logs. No permitted filesystem resources were exposed. I could not inspect the evidence or independently establish acceptance; no files were changed and nothing was executed.",
+        "reason": "Independent review is blocked by evidence access. Reviewer instructions prohibit shell access, and no available non-shell tool or MCP resource exposes local source, reports, snapshots, or verification logs. The supplied paths and content hash alone cannot establish acceptance. Provide a permitted local text reader or include the retained evidence in the review context. No files were changed and no project code was executed.",
         "checks": [
           {
             "criterion": "The report names the reproduced level and shows, through the production path with retained images and a position/state trace, lemmings in anti-gravity cells drawn clipping through ground or standing on nothing.",

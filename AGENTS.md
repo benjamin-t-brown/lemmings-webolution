@@ -100,7 +100,8 @@ profile. It restricts target hash, Ghidra provider and named static tools. No ru
 debugger, capture, metadata mutation, snapshots or blanket permission bypass.
 Read schemas; start from retained evidence; cross-check pseudocode against instructions;
 close analysis without snapshot arguments. Ghidra/Java analysis is not game execution.
-Planner/reviewer file access remains read-only, without shell/build/test permission;
+Planner/reviewer file access remains read-only, without build/test permission; a Codex
+planner/reviewer reads files with read-only commands in its read-only sandboxed shell;
 their evidence stays in structured responses. Hooks/plugins and inherited settings
 remain isolated. Do not alter launch profiles or import user-global configuration.
 Permissions and process-lifetime controls are not a complete OS security boundary.

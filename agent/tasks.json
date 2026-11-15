@@ -15856,7 +15856,7 @@
     {
       "id": "lemming-type-sprites-001",
       "title": "Draw water lemmings with their own sprites and fix the drowning animation",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15871,21 +15871,132 @@
         "After the change, through the production path, water lemmings on MM_W_012 are drawn from the water set in walking, falling and at least one skill state, ordinary lemmings on the same level are unchanged, and acid lemmings follow the same rule on an installed level if one exists. Retained images are reviewed and a regression test on real level data asserts the set chosen per type.",
         "The report shows the drowning sequence before and after as retained frame strips on MM_BUILD_BLOCK_A, names each defect found and what was corrected or left provisional. Levels with only ordinary lemmings render pixel-identically outside drowning frames. Full registered main/recovery verification passes; saves are untouched."
       ],
-      "loop_attempts": 1,
-      "run_id": "20261115T035614-45884-bb6b3277",
-      "started": "2026-11-15T03:56:14.885668+00:00",
+      "loop_attempts": 2,
+      "run_id": "20261115T040514-30012-ecd404d7",
+      "started": "2026-11-15T04:05:15.167052+00:00",
       "scope_revision_history": [
         {
           "at": "2026-11-15T04:03:06.208175+00:00",
           "by": "project lead",
           "change": "Resume note. Attempt 1 was interrupted when the supervisor was killed by a host low-memory condition (build/agent-runs/20261115T035614-45884-bb6b3277); that is not a task failure. Its partial work is left uncommitted in the tree: edits to src/app/LemmingAnim.cpp, LemmingAnim.h, TubeScene.cpp, TubeScene.h and main.cpp, new cmake/lemming_type_sprites.cmake with its include line at the end of CMakeLists.txt, and src/__test__/test_lemming_type_sprites.cpp. None of it has been verified or reported. Inspect and continue it rather than restarting; every earlier task is accepted and committed (f62b3b8), so every uncommitted source change belongs to this task."
         }
-      ]
+      ],
+      "finished": "2026-11-15T05:04:17.593111+00:00",
+      "last_run": "build/agent-runs/20261115T040514-30012-ecd404d7",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported by source inspection, retained images and supervisor verification. This accepts the scoped playable-v1 presentation fix; particle effects, underwater depth and original lifetime fidelity remain explicitly provisional.",
+        "checks": [
+          {
+            "criterion": "The report lists the sprite assets per lemming type and state with the static or retained evidence for how the original selects them, or states what is not evidenced and labels the choice provisional. Before images on MM_W_012 show water lemmings drawn with ordinary sprites.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/lemming-type-sprites-001.md",
+                "detail": "Lists ordinary, water and acid sheets, state clips, lengths, directions and rates; identifies missing exit/dead strips and preserves provisional state mappings. Separates static findings, clone observations and original-session references."
+              },
+              {
+                "path": "decomp-lemmings/docs/evidence/actor_resource_selection.md",
+                "detail": "Documents loader 0x4437F6..0x44389D registering ordinary/water/acid categories in array 0x4E335C, with Hi/Lo suffixes, against reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/static/asm-0x42DE51.json",
+                "detail": "Independently inspected retained instructions: 0x42DF75..0x42DF89 index 0x4E335C using the constructor type and bind actor+0x128; 0x42E05F stores that same type at actor+0x4C."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/after/assets.tsv",
+                "detail": "Records exact installed texture filenames per clip for all three species, including the differing water strip order and special-species hoist lengths."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/before/MM_W_012/state-strip.png",
+                "detail": "Reviewed directly: naturally released water lemmings previously have ordinary green hair and blue clothing in walking and falling samples."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, through the production path, water lemmings on MM_W_012 are drawn from the water set in walking, falling and at least one skill state, ordinary lemmings on the same level are unchanged, and acid lemmings follow the same rule on an installed level if one exists. Retained images are reviewed and a regression test on real level data asserts the set chosen per type.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Loads the three species sheets, copies World sheetType into render samples, and selects that sheet for drawing, screen boxes and hover redraw. Named clip lookup avoids assuming identical serialized clip indices."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Production animation advancement supplies all three species sheets before adapting World actors into scene samples; simulation rules are unchanged."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/after/water-skill/state-strip.png",
+                "detail": "Reviewed against its retained before strip: production MM_W_012 walking, falling and publicly assigned Blocker samples now have teal hair and pale clothing."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/after/water-skill/hover.png",
+                "detail": "Reviewed production hover image: the highlighted actor retains the water appearance; fixed ordinary panel icons remain consistent with retained panel research."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/after/MM_W_012-type-states.png",
+                "detail": "Reviewed against the before sheet: ordinary controls remain unchanged across fourteen state rows, while water and acid controls use distinct appearances. The report correctly identifies these as placed controls because MM_W_012 has only a water hatch."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/after/M20_MT_1/state-strip.png",
+                "detail": "Reviewed against its before strip: naturally released acid lemmings on installed M20_MT_1 change from ordinary colors to orange hair and green clothing in walking and falling."
+              },
+              {
+                "path": "src/__test__/test_lemming_type_sprites.cpp",
+                "detail": "Uses real installed hatch data and production application routes. Asserts species propagation, distinct physical texture references, per-type hoist lengths, ordinary pixel equality and changed special-species pixels across both installed scene controls."
+              }
+            ]
+          },
+          {
+            "criterion": "The report shows the drowning sequence before and after as retained frame strips on MM_BUILD_BLOCK_A, names each defect found and what was corrected or left provisional. Levels with only ordinary lemmings render pixel-identically outside drowning frames. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/before/MM_BUILD_BLOCK_A/drown-strip.png",
+                "detail": "Reviewed twenty retained samples: the ordinary drowning animation remains at the surface and holds its terminal pose before disappearing."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/worker-resume-20261115T0424/after/MM_BUILD_BLOCK_A/drown-strip.png",
+                "detail": "Reviewed corresponding samples: bright initial contact, small effects, descending figure and fading bubbles replace the stationary presentation. Full original body fragmentation is not reproduced and is explicitly provisional."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/static/asm-0x404372.json",
+                "detail": "Retained instructions corroborate height-dependent equal RGB and selector 2 at 0x4043BC..0x404434, and vertical-direction-dependent descent at 0x404655..0x404675. The implementation confines this to presentation."
+              },
+              {
+                "path": "docs/scratch/lemming-type-sprites-001.md",
+                "detail": "Names missing descent, brightness/fade, droplets/bubbles and submerged visibility; explains why clip order/rate were preserved. Labels deterministic particles, depth policy, bottom clamp and retained death timer provisional."
+              },
+              {
+                "path": "src/__test__/test_lemming_type_sprites.cpp",
+                "detail": "Compares all eighty ordinary-only MM_CLIMB_002 application frames pixel-identically against frozen source, plus twenty-eight ordinary state controls across two installed scenes. Also compares simulation traces and checks save bytes and existence."
+              },
+              {
+                "path": "build/agent-runs/20261115T040514-30012-ecd404d7/verification.log",
+                "detail": "Supervisor verification passes 273/273 main and 84/84 recovery tests, including baseline identity, before/after species tests and affected compatibility regressions."
+              },
+              {
+                "path": "build/agent-runs/20261115T040514-30012-ecd404d7/result.json",
+                "detail": "Records verifier exit code zero and verified_content 90f39bc493dc0476f3cd2724a2184da1e9dd926331515e1e988cbbfc4a650b04, matching the review context."
+              },
+              {
+                "path": "build/lemming-type-sprites-001/after/saves-proof.txt",
+                "detail": "Supervisor-regenerated evidence records installed_unchanged=1 and normal_unchanged=1. Demonstrations use private build-directory save paths."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T05:07:20.342600+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T040514-30012-ecd404d7\\verification.log",
+        "verified_content": "90f39bc493dc0476f3cd2724a2184da1e9dd926331515e1e988cbbfc4a650b04"
+      }
     },
     {
       "id": "frame-rate-profile-001",
       "title": "Measure where the clone's frame time goes and remove the cheap waste",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15895,12 +16006,124 @@
       "kind": "implementation",
       "user_authorized": true,
       "scope": "User playtest report (2026-11-14): the clone is playable but runs at a low frame rate. The clone draws each 640x480 frame in software (src/app/TubeScene.cpp, SceneRaster.cpp, Raster.cpp, BackdropScene.cpp) and presents it through SDL in src/app/main.cpp. Step 1, measure: on a Release build of the production executable, on at least two installed levels (one small, one large or fluid-bearing) with lemmings out, record per-frame wall time split into simulation, scene preparation (mesh/billboard/texture work), rasterization by pass (backdrop, tube, actors, fluid, HUD/panel) and presentation (SDL_UpdateTexture/RenderCopy/Present, including whether the SDL renderer is software and whether the loop sleeps or waits on vsync). Use a sampling profiler or scoped timers behind a command-line flag or environment variable that is off by default. Also measure, for one of the slow play tests (hatch_timing_routes), what share of its run time is rendering. Report frames per second and the table of costs before any change. Step 2, fix: remove waste the measurement demonstrates (for example per-frame rebuilding of data that does not change, per-frame allocation, repeated texture decoding, redundant clears or copies, a software SDL presenter), largest first, without changing any rendered pixel: existing framebuffer/pixel tests must pass unchanged and no test assertion or timeout may be altered. Report the same table after. Do not add an OpenGL/Vulkan scene renderer in this task; that is a later, separate step. If the remaining cost is inherent to software rasterization at this design, say so with the numbers and stop. Difficulty: difficult. Recommended model: Opus (cross-system performance reasoning); run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
-      "acceptance": "Report docs/scratch/frame-rate-profile-001.md gives the method, machine, build flags, levels, and before/after per-frame cost tables and frames per second from actual runs of the production executable, plus the rendering share of one slow play test. Each change is tied to a measured cost. Rendered output is unchanged (existing pixel tests pass unmodified) and the full registered verification passes. Any instrumentation is off by default and has no measurable cost when off. The report states what limits the frame rate after the changes."
+      "acceptance": [
+        "Report docs/scratch/frame-rate-profile-001.md gives the method, machine, build flags, levels, and before/after per-frame cost tables and frames per second from actual runs of the production executable, plus the rendering share of one slow play test.",
+        "Each change is tied to a measured cost.",
+        "Rendered output is unchanged (existing pixel tests pass unmodified) and the full registered verification passes.",
+        "Any instrumentation is off by default and has no measurable cost when off.",
+        "The report states what limits the frame rate after the changes."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T050720-30012-0e1eb7d3",
+      "started": "2026-11-15T05:07:20.637257+00:00",
+      "finished": "2026-11-15T06:03:32.980282+00:00",
+      "last_run": "build/agent-runs/20261115T050720-30012-0e1eb7d3",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria are supported by retained measurements, source inspection, unchanged pixel checks and successful supervisor verification. This accepts the scoped performance improvement, not original-game fidelity or full playability.",
+        "checks": [
+          {
+            "criterion": "Report docs/scratch/frame-rate-profile-001.md gives the method, machine, build flags, levels, and before/after per-frame cost tables and frames per second from actual runs of the production executable, plus the rendering share of one slow play test.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/frame-rate-profile-001.md",
+                "detail": "Documents the machine, registered toolchain, Release -O3 -DNDEBUG flags, exclusive timers, production commands, private storage, sampling method and before/after pass costs for MM_CLIMB_002 and MM_W_012 with released lemmings."
+              },
+              {
+                "path": "build/frame-rate-profile-001/paired-benchmarks.json",
+                "detail": "Independently recomputed the retained trial CSV means: tutorial 49.100\u219232.707 ms, 20.37\u219230.57 FPS; water 45.847\u219233.229 ms, 21.81\u219230.09 FPS. Each side uses 387 sampled frames per level."
+              },
+              {
+                "path": "build/frame-rate-profile-001/hatch-costs.json",
+                "detail": "The 1,614-iteration hatch routes record rendering shares of 96.25% before and 92.36% after, against process wall times of 126.427 and 72.522 seconds."
+              }
+            ]
+          },
+          {
+            "criterion": "Each change is tied to a measured cost.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/assets/Bitmap.cpp",
+                "detail": "Successful texture decoding is cached within the owning application leg, preserving independent caller images. Measured texture decode costs fall from 8.963/5.067 ms to 0.009/effectively zero."
+              },
+              {
+                "path": "src/app/SceneRaster.cpp",
+                "detail": "Integer wrapping and reused bilinear tap addresses target measured backdrop rasterization costs, reduced by approximately 5.4 ms per frame."
+              },
+              {
+                "path": "src/app/Raster.cpp",
+                "detail": "Single conditional wrapping replaces redundant modulo operations on bounded tube tap coordinates; measured tube rasterization falls by approximately 1 ms per frame."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Later scene passes skip rebuilding roots belonging to other stages while retaining primary census and selected draw order. Measured preparation falls by approximately 1.0\u20131.1 ms per frame."
+              }
+            ]
+          },
+          {
+            "criterion": "Rendered output is unchanged (existing pixel tests pass unmodified) and the full registered verification passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261115T050720-30012-0e1eb7d3/verification.log",
+                "detail": "Supervisor verification passes all 277 main and 84 recovery tests, including existing rendering tests, both production image checks, cache checks and raster differential checks."
+              },
+              {
+                "path": "build/frame-rate-profile-001/entry-sha256.json",
+                "detail": "Independent comparison found all 138 retained pre-task test sources unchanged. All 14 task files also match worker-tested-sources.json."
+              },
+              {
+                "path": "cmake/frame_rate_profile_run.cmake",
+                "detail": "Production checks require exact pre-task PNG hashes. Independently hashing retained before/after images confirmed identical tutorial and water pairs; their hashes match these assertions."
+              },
+              {
+                "path": "src/__test__/test_frame_raster_equivalence.cpp",
+                "detail": "Checks exact colour and depth against authenticated pre-task clone raster sources across 640 scene and 640 tube triangles. Uncontrolled flame-image differences are explicitly excluded from pixel-equality claims in the report."
+              }
+            ]
+          },
+          {
+            "criterion": "Any instrumentation is off by default and has no measurable cost when off.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrameProfile.h",
+                "detail": "Timers activate only when WEBOLUTION_FRAME_PROFILE names an output file. Disabled scopes take no clock samples or file writes; instrumentation is outside pixel loops."
+              },
+              {
+                "path": "build/frame-rate-profile-001/disabled-overhead.json",
+                "detail": "Four alternating 300-frame pairs measure 35.677 ms/frame disabled versus 36.029 ms compiled out, within reported run variation. All eight output hashes agree."
+              },
+              {
+                "path": "cmake/frame_rate_profile.cmake",
+                "detail": "The excluded control target substitutes an empty timer header for the six instrumented translation units while retaining the optimized production implementation."
+              }
+            ]
+          },
+          {
+            "criterion": "The report states what limits the frame rate after the changes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/frame-rate-profile-001.md",
+                "detail": "Identifies CPU backdrop/tube rasterization as the remaining dominant cost: 25.63/26.42 ms, approximately 78\u201380% of frame time. Separately identifies remaining preparation costs and small simulation/presentation costs, while limiting conclusions to the measured routes."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T06:06:09.339823+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T050720-30012-0e1eb7d3\\verification.log",
+        "verified_content": "2072004c9ff015551bc1632f0ebc12837dd7d81e4c0e965687b05dca336bfae1"
+      }
     },
     {
       "id": "gravity-gadgets-001",
       "title": "Show gravity flippers and kill lemmings that fall into the ceiling",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15921,6 +16144,134 @@
           "by": "project lead",
           "change": "Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12."
         }
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261115T065957-22780-c25dfb5b",
+      "started": "2026-11-15T06:59:57.403242+00:00",
+      "finished": "2026-11-15T07:29:50.258501+00:00",
+      "last_run": "build/agent-runs/20261115T065957-22780-c25dfb5b",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261115T060609-22780-87a907a3/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by source inspection, retained clone images and traces, and full registered verification. Acceptance covers the bounded playable-v1 fix; original coordinate/animation fidelity and human playability remain explicitly unconfirmed.",
+        "checks": [
+          {
+            "criterion": "The report names the level and shows before images with no gravity flipper drawn and a state trace of a lemming stuck after falling upward. After the change the flippers are visible at the cells where gravity changes, in retained images on that level, with a regression test asserting their pixels on real level data.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/gravity-gadgets-001.md",
+                "detail": "Identifies map node 11, M06_KF_1, Sometimes up..sometimes down.; documents the omitted type-3 model extraction, production render path, placed coordinates, and authentic task-entry baseline provenance."
+              },
+              {
+                "path": "build/gravity-gadgets-001/development-evidence/before/pad-0-0.png",
+                "detail": "Directly inspected: the upper flipper is absent beneath its ledge."
+              },
+              {
+                "path": "build/gravity-gadgets-001/development-evidence/after/pad-0-0.png",
+                "detail": "Directly inspected: the upper flipper is visibly suspended beneath the same ledge."
+              },
+              {
+                "path": "build/gravity-gadgets-001/development-evidence/before/pad-1-0.png",
+                "detail": "Directly inspected: the lower pad has no visible flipper."
+              },
+              {
+                "path": "build/gravity-gadgets-001/development-evidence/after/pad-1-0.png",
+                "detail": "Directly inspected: the lower flipper stands on its placed pad."
+              },
+              {
+                "path": "build/gravity-gadgets-001/development-evidence/before/m06_kf_1/positions.csv",
+                "detail": "Production application trace retains actor 0 as an inverted Faller outside the grid through 24 seconds, at y=-101; the report explains the rendering clamp that makes it appear stuck."
+              },
+              {
+                "path": "src/__test__/test_gravity_gadgets.cpp",
+                "detail": "Loads real installed level data; checks both model placements against anti-gravity cells, surviving completed-scene RGB pixels from serialized model extents, depth rejection, changing UV animation, and pause stability."
+              }
+            ]
+          },
+          {
+            "criterion": "The original's inverted-fall rule is cited from retained or static evidence, or what is not evidenced is stated and the choice labelled provisional. After the change a lemming falling upward on that level lands, splats or is lost and is counted correctly; no lemming remains in a non-terminating state, asserted by a regression test on real level data.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gravity-gadgets-001/static-fall-ins.json",
+                "detail": "Retained instructions for registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show gravity-dependent support sampling at 0x416465, bounds loss through 0x40B3A0 at 0x416518, and shared fall-distance/floater/zone checks at 0x4165FC..0x41664A without an inverted-gravity exemption."
+              },
+              {
+                "path": "build/gravity-gadgets-001/static-splat-threshold.json",
+                "detail": "Retains bytes 0000000000003e40 at 0x4B10A8, encoding the 30.0 threshold used by the strict greater-than splat branch."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The inverted bounds branch enters Splatter, resets its frame/budget and counts one loss. Existing Splatter processing reaches Dead without incrementing the loss again. Upright movement remains unchanged; immediate ceiling contact and grid/native-coordinate adaptation are explicitly provisional."
+              },
+              {
+                "path": "build/gravity-gadgets-001/development-evidence/after/natural-summary.txt",
+                "detail": "Records natural ceiling landing, no grid escape, subsequent Splatter and Dead, and first loss at 18,940 ms."
+              },
+              {
+                "path": "src/__test__/test_gravity_gadgets.cpp",
+                "detail": "Natural-route regression asserts spawned=active+saved+dead and no active inverted actor outside bounds. Supplemental falls on unmodified installed terrain check immediate contact, 30-cell landing, 31-cell splat, floater exemption, single loss counting and eventual finished()."
+              },
+              {
+                "path": "docs/scratch/gravity-gadgets-001.md",
+                "detail": "Separates static findings from provisional coordinate/contact adapters, states unresolved animation details, and identifies the original observations needed to settle them."
+              }
+            ]
+          },
+          {
+            "criterion": "Levels without anti-gravity cells keep their scripted route outcomes and render pixel-identically. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gravity-gadgets-001/development-evidence/comparison.json",
+                "detail": "MM_CLIMB_002 and MM_BASH_002 each retain 160/160 identical simulation records and whole-frame pixel hashes against task entry. The gravity route preserves 189 simulation frames before the intended roof-loss change."
+              },
+              {
+                "path": "build/agent-runs/20261115T065957-22780-c25dfb5b/verification.log",
+                "detail": "Full registered verification passes 280/280 main and 84/84 recovery tests, including gravity identity/before/after and both repaired historical scene comparisons; registered tools, eight build jobs and assertions-enabled main flags are retained."
+              },
+              {
+                "path": "src/__test__/scene_lever_baseline.hpp",
+                "detail": "The justified invisible-flipper expectation correction masks only actual depth-tested stores from serialized gravity-model extents. Exact RGB/depth comparison remains required outside gadget stores; missing or malformed masks fail."
+              },
+              {
+                "path": "build/gravity-gadgets-001/retry-002/preservation-and-comparison.json",
+                "detail": "Records unchanged frozen/current render hashes across the expectation-only retry, 21 exact views per historical comparison and zero unexpected pixels in the remaining views."
+              },
+              {
+                "path": "build/gravity-gadgets-001/after/summary.txt",
+                "detail": "Latest regression output records zero failures and unchanged installed and normal clone save bytes/presence. Application demonstrations use private save stores and assert those remain untouched too."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T07:32:10.259596+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T065957-22780-c25dfb5b\\verification.log",
+        "verified_content": "acf8d145f440149e3095f0acc2799696aca2d060708b3b8348df1f1634a3c279"
+      }
+    },
+    {
+      "id": "test-render-skip-001",
+      "title": "Play tests stop drawing frames nobody inspects",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User-authorized test-speed task (2026-11-14), a bounded exception to gameplay production-change requirements like test-parallel-isolation-001. frame-rate-profile-001 measured that a play test (hatch_timing_routes) spends over 90 percent of its wall time rendering frames, while simulation costs about 0.03 ms per frame. Step 1: for every registered test taking more than 20 s in the latest full verification log, record its wall time and classify what it consumes from rendering: nothing, only specific saved images, or per-frame pixels/state derived from rendering (picking, hover, occlusion, depth). Step 2: give the production level loop a way, off by default and reachable only through an explicit test/automation option, to skip scene rasterization and presentation on iterations whose image is not consumed, while everything the simulation, input, picking and outcome paths depend on is still computed. Frames that a test saves or inspects must still be rendered by the unchanged production path. Step 3: enable it only for tests whose classification shows it is safe. Test semantics, counts, assertions and timeouts stay unchanged; RUN_SERIAL settings stay. Prove equivalence: for each converted test, gameplay, release, action, frame-state and outcome records are byte-identical with and without skipping, and every inspected image is identical apart from the already documented wall-clock flame seeding, which must not be changed here. Normal interactive play must be unaffected. Do not edit verifier, controller or queue controls. Difficulty: difficult. Recommended model: Opus (cross-system reasoning about what each test consumes); run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "acceptance": [
+        "Report docs/scratch/test-render-skip-001.md lists every test over 20 s with its before and after wall time from actual runs and its classification of what it consumes from rendering.",
+        "The skip is off by default, reachable only through an explicit test or automation option, and ordinary interactive play renders every frame as before.",
+        "For each converted test, the retained gameplay, release, action, frame-state and outcome records are byte-identical with and without skipping, and inspected images match apart from the documented wall-clock flame seeding.",
+        "No test was removed and no assertion, count or timeout was changed; tests that consume per-frame rendering are left unconverted and named.",
+        "Full registered verification passes and the report states the main suite's total test time before and after."
       ]
     },
     {
@@ -15946,8 +16297,18 @@
           "at": "2026-11-14T23:42:36.411905+00:00",
           "by": "project lead",
           "change": "Second reference from the original added by the lead: docs/playtest/reference/original-2026-11-14/map-0140.jpg shows the block for another node ('20 Lemmings : Save 10', 'Bash and Mine', clock icon, '10:00'). Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12."
+        },
+        {
+          "at": "2026-11-15T07:32:52.574347+00:00",
+          "by": "project lead",
+          "change": "Lead note: run 20261115T073210-22780-79778116 was cancelled five seconds after dispatch by the lead's own STOP request to reorder the queue; no work was done and it is not counted as an attempt (loop_attempts 1 -> 0)."
         }
-      ]
+      ],
+      "loop_attempts": 0,
+      "run_id": "20261115T073210-22780-79778116",
+      "started": "2026-11-15T07:32:10.567711+00:00",
+      "finished": "2026-11-15T07:32:15.234186+00:00",
+      "last_run": "build/agent-runs/20261115T073210-22780-79778116"
     },
     {
       "id": "exit-balloon-path-001",
@@ -15988,7 +16349,11 @@
       "kind": "implementation",
       "user_authorized": true,
       "scope": "User playtest 5 addendum (2026-11-14): on 'Introducing - Water Lemmings' (MM_W_012) every other lemming should leave the hatch going left, but in the clone all of them go right, so the clone does not appear to load or apply the level's starting directions. Trace statically in the registered reference EXE how the hatch/entry record and release code choose each released lemming's initial facing (fixed per hatch, alternating, or stored per lemming), find where the clone's production release path sets facing, and make the clone follow the traced rule. Show before/after facings of the first six released lemmings on MM_W_012 and on two other installed levels, including one where all lemmings correctly leave in one direction. The lead will check the recordings build/lead/original-session/session-1.mkv and session-2-game.mkv for the original's order on MM_W_012 and add it here if visible; absent that, the static trace is the authority and the user's report is the target. Existing route tests that depend on the old facings may be corrected only with before/after justification. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
-      "acceptance": "Report docs/scratch/hatch-release-direction-001.md cites the EXE addresses for the facing rule, the clone production call path, and before/after facings from actual clone runs on MM_W_012 (alternating as reported) and two other levels. A source test covers the rule on real level data. Full registered verification passes; any changed test expectation is listed with its justification."
+      "acceptance": [
+        "Report docs/scratch/hatch-release-direction-001.md cites the EXE addresses for the facing rule, the clone production call path, and before/after facings from actual clone runs on MM_W_012 (alternating as reported) and two other levels.",
+        "A source test covers the rule on real level data.",
+        "Full registered verification passes; any changed test expectation is listed with its justification."
+      ]
     }
   ]
 }

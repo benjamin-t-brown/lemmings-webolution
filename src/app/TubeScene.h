@@ -107,8 +107,15 @@ struct SceneOptions {
     // Simulation gravity persists after leaving a flipper cell. Keep it with
     // the shared draw/pick sample rather than resampling the terrain at draw time.
     int verticalDir = 1;
+    int sheetType = 0;  // actor+4C: ordinary / water / acid (42DF75..42DF89)
+    double drownSeconds = -1.0;  // presentation only; negative outside fluid drowning
+    int drownFluidKind = -1;  // -1 keeps static-cell drowning on its existing path
+    double drownSurfaceY = 0.0, drownBrightness = 1.0;
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
+  // U2: opaque scenery depth with the fluid pass excluded, only for the
+  // additive submerged figure/effects. Normal actors use the completed depth.
+  std::span<const double> fluidDrownSceneDepth;
   bool composeActorsBeforeRoute = false;
   // Diagnostic (A6d9): composite overlay with legacy `a != 0` replace instead of A4y `> 0xEF`.
   bool overlayCompositeLegacyNonZero = false;
@@ -180,9 +187,11 @@ class TubeScene {
   const CellMeshes& cellMeshes() const { return cellMesh_; }
   const CollisionGrid& collisionGrid() const { return collision_; }
 
-  // actor-anim-001: the lemming sheet (SPRITES\LEMMINGSHI.SPR) the actors are drawn from, or
-  // nullptr when it did not load. The per-lemming animation tracker reads strip lengths from it.
-  const SpriteSheet* lemmingSprites() const { return haveLemmingSprites_ ? &lemmingSprites_ : nullptr; }
+  // actor+4C selects ordinary / water / acid; nullptr if that sheet is absent.
+  // Trackers read per-type strip lengths (special flip: 15, ordinary: 14).
+  const SpriteSheet* lemmingSprites(int type = 0) const {
+    return type >= 0 && type < 3 && haveLemmingSprites_[type] ? &lemmingSprites_[type] : nullptr;
+  }
 
   std::size_t outerTiles() const { return outerTileCount_; }
   std::size_t innerTiles() const { return innerTileCount_; }
@@ -210,8 +219,9 @@ class TubeScene {
   ActorPoseLevel poseLevel_{};
   bool havePoseLevel_ = false;
   ActorLightMap actorLight_;
-  SpriteSheet lemmingSprites_;
-  bool haveLemmingSprites_ = false;
+  std::array<SpriteSheet, 3> lemmingSprites_;
+  std::array<bool, 3> haveLemmingSprites_{};
+  SpriteSheet bubbleSprites_;
 
   bool haveCollision_ = false;
   CollisionGrid collision_;

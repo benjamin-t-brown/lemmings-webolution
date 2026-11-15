@@ -1956,6 +1956,9 @@ include(cmake/panel_icon_anim.cmake)
 include(cmake/antigrav_presentation.cmake)
 include(cmake/empty_receiver.cmake)
 include(cmake/climber_occlusion.cmake)
+include(cmake/lemming_type_sprites.cmake)
+include(cmake/frame_rate_profile.cmake)
+include(cmake/gravity_gadgets.cmake)
 
 # New full application drivers should keep just their test sources and link
 # webolution_app, webolution_app_nomain and webolution_objects. Test-private

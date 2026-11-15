@@ -448,8 +448,28 @@ void World::stepFaller(Lemming& l) {
     // move safe here -- a fall's gap-to-ground is never 1 at the start of
     // any stepFaller call, so this can never walk a lemming INTO solid
     // ground before its own post-move check gets a chance to catch it.
-    l.y += v;
-    ++l.fallDistance;
+    // PROVISIONAL feet-grid adapter for inverted entries already adjacent to
+    // a ceiling: do not move through that support. Upright's accepted move/check
+    // order is unchanged; ordinary inverted falls also move first.
+    if (v > 0 || !groundAt(l.x, l.y - 1, v)) {
+      l.y += v;
+      ++l.fallDistance;
+    }
+
+    if (v < 0 && (l.y < 0 || l.y >= setup_.terrain.height())) {
+      // READ 4164CE..41653A: vertical bounds precede landing and attach the
+      // same type-1A loss as an excessive fall; distance/gravity do not exempt
+      // it. PROVISIONAL feet/raw-origin adapter: lose at the first cell outside
+      // this Y-down grid. Native raw Y/bias/clamp differs (40DF50, 42F22E).
+      // Keep the existing clone splat lifetime/counting, without fall retiming.
+      l.y = std::clamp(l.y, 0, std::max(0, setup_.terrain.height() - 1));
+      l.state = State::Splatter;
+      l.frame = 0;
+      l.stepBudgetSeconds = 0.0;
+      ++dead_;
+      cue(SoundCue::Splat);
+      return;
+    }
 
     if (attachFluidHazard(l))
       return;

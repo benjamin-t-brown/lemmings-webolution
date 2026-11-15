@@ -1,3 +1,4 @@
+#include "app/FrameProfile.h"
 #include "Raster.h"
 
 #include <algorithm>
@@ -35,6 +36,7 @@ void Raster::clear(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
 void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
                       const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
                       const std::array<double, 3>& modulate) {
+  profile::Scope profileRaster(profile::TubeRaster);
   if (texture.width <= 0 || texture.height <= 0 || texture.rgb.empty())
     return;
 
@@ -85,12 +87,16 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
       double acc[3] = {0.0, 0.0, 0.0};
       const double wx[2] = {1.0 - dx, dx};
       const double wy[2] = {1.0 - dy, dy};
+      // Fractional UV puts ix in [-1, tw-1] and iy in [-1, th-1].
+      // The adjacent taps need at most one wrap; avoid six modulo operations
+      // per accepted pixel without changing weights or accumulation order.
+      const auto wrapTap = [](int i, int n) { return i < 0 ? i + n : i >= n ? i - n : i; };
+      const int xs[]{wrapTap(ix, tw), wrapTap(ix + 1, tw)};
+      const int ys[]{wrapTap(iy, th), wrapTap(iy + 1, th)};
       for (int j = 0; j < 2; ++j) {
-        int ty = (iy + j) % th;
-        if (ty < 0) ty += th;
+        const int ty = ys[j];
         for (int i = 0; i < 2; ++i) {
-          int tx = (ix + i) % tw;
-          if (tx < 0) tx += tw;
+          const int tx = xs[i];
           const double w = wx[i] * wy[j];
           const std::uint8_t* texel =
               texture.rgb.data() + (static_cast<std::size_t>(ty) * tw + tx) * 3;

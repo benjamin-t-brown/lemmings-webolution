@@ -481,15 +481,15 @@ int main() try {
   log << "renderAllSeconds=" << renderSeconds << " admittedRendered=" << admitted.size() << '\n';
 
 #ifndef SCENE_FROZEN
-  // ---- Phase 3: ten-level RGB/depth equality outside the repaired lever omission ----
+  // ---- Phase 3: ten-level RGB/depth equality outside repaired lever/flipper omissions ----
   const auto before = readLines(root / "before" / "hashes.txt"), now = readLines(dir / "hashes.txt");
   std::size_t compared = 0, exact = 0;
   for (const auto& [key, value] : before) {
     const auto id = key.substr(0, key.find(':'));
     if (!acceptedTen.count(id)) continue;
     const bool identical = now.count(key) && now.at(key) == value;
-    require(now.count(key) && (identical || leverbaseline::unchangedOutsideLeverStores(
-        root / "before", dir, key, log)), "ten-level RGB/depth equals frozen outside accepted lever stores: " + key);
+    require(now.count(key) && (identical || leverbaseline::unchangedOutsideGadgetStores(
+        root / "before", dir, key, log)), "ten-level RGB/depth equals frozen outside accepted lever/flipper stores: " + key);
     exact += identical;
     ++compared;
   }

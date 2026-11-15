@@ -1,0 +1,68 @@
+if(BUILD_TESTING AND WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
+  set(lts_root "${CMAKE_SOURCE_DIR}/build/lemming-type-sprites-001")
+  # TubeScene/SceneOptions now carry species and fluid presentation. The U1
+  # frozen renderer must keep its own header in its driver/main as well, rather
+  # than mixing two layouts of the same C++ class. No frozen source is changed.
+  foreach(target IN ITEMS test_climber_occlusion_before test_climber_occlusion_app_before)
+    if(TARGET ${target})
+      set(lts_co "${CMAKE_SOURCE_DIR}/build/climber-occlusion-001/before-source")
+      set(lts_co_headers "${CMAKE_CURRENT_BINARY_DIR}/climber-occlusion-before-headers")
+      configure_file("${lts_co}/src/app/TubeScene.h" "${lts_co_headers}/app/TubeScene.h" COPYONLY)
+      target_include_directories(${target} BEFORE PRIVATE "${lts_co_headers}")
+      if(target STREQUAL "test_climber_occlusion_app_before")
+        get_target_property(lts_co_sources ${target} SOURCES)
+        list(REMOVE_ITEM lts_co_sources src/app/main.cpp "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
+        list(APPEND lts_co_sources "${lts_co}/src/app/main.cpp")
+        set_property(TARGET ${target} PROPERTY SOURCES "${lts_co_sources}")
+      endif()
+    endif()
+  endforeach()
+  # P17 freezes a whole include tree but links the current renderer/animation
+  # support. Keep those two types coherent across that boundary; preserve its
+  # frozen input loop and RuntimeHud/RuntimeSkillPanel sources and headers.
+  if(TARGET test_fastforward_toggle_baseline)
+    set(lts_shared_headers "${CMAKE_CURRENT_BINARY_DIR}/type-sprites-shared-renderer-headers")
+    foreach(name IN ITEMS TubeScene LemmingAnim)
+      configure_file("${CMAKE_SOURCE_DIR}/src/app/${name}.h"
+        "${lts_shared_headers}/app/${name}.h" COPYONLY)
+    endforeach()
+    target_include_directories(test_fastforward_toggle_baseline BEFORE PRIVATE "${lts_shared_headers}")
+  endif()
+  foreach(side IN ITEMS before after)
+    if(side STREQUAL "before")
+      if(NOT EXISTS "${lts_root}/before-source/src/app/TubeScene.cpp")
+        continue()
+      endif()
+      set(lts_sources ${WEBOLUTION_APP_SOURCES})
+      foreach(name IN ITEMS TubeScene LemmingAnim)
+        list(REMOVE_ITEM lts_sources "${CMAKE_SOURCE_DIR}/src/app/${name}.cpp")
+        list(APPEND lts_sources "${lts_root}/before-source/src/app/${name}.cpp")
+      endforeach()
+      add_executable(test_lemming_type_sprites_before src/__test__/test_lemming_type_sprites.cpp
+        ${lts_sources} "${lts_root}/before-source/src/app/main.cpp")
+      target_include_directories(test_lemming_type_sprites_before BEFORE PRIVATE "${lts_root}/before-source/src")
+      target_compile_definitions(test_lemming_type_sprites_before PRIVATE TYPE_SPRITES_BEFORE=1
+        WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+      target_link_libraries(test_lemming_type_sprites_before PRIVATE webolution_objects)
+    else()
+      add_executable(test_lemming_type_sprites_after src/__test__/test_lemming_type_sprites.cpp)
+      target_link_libraries(test_lemming_type_sprites_after PRIVATE webolution_app webolution_app_nomain webolution_objects)
+      target_compile_definitions(test_lemming_type_sprites_after PRIVATE WEBOLUTION_HAVE_SDL2=1)
+    endif()
+    set(lts_compare "-")
+    if(side STREQUAL "after" AND TARGET test_lemming_type_sprites_before)
+      set(lts_compare "${lts_root}/before")
+    endif()
+    add_test(NAME lemming_type_sprites_${side} COMMAND test_lemming_type_sprites_${side}
+      ${side} "${lts_root}/${side}" "${lts_compare}")
+    set_tests_properties(lemming_type_sprites_${side} PROPERTIES TIMEOUT 240
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endforeach()
+  if(TARGET test_lemming_type_sprites_before)
+    add_test(NAME lemming_type_sprites_identity COMMAND ${CMAKE_COMMAND}
+      "-DBASELINE=${lts_root}/before-source" -P "${CMAKE_SOURCE_DIR}/cmake/lemming_type_sprites_identity.cmake")
+    set_tests_properties(lemming_type_sprites_identity PROPERTIES TIMEOUT 30)
+    set_tests_properties(lemming_type_sprites_before PROPERTIES DEPENDS lemming_type_sprites_identity)
+    set_tests_properties(lemming_type_sprites_after PROPERTIES DEPENDS lemming_type_sprites_before)
+  endif()
+endif()

@@ -55,6 +55,12 @@ bool lemmingClipLoops(const char* clip) {
 
 void LemmingAnimTracker::advance(const sim::World& world, const SpriteSheet& sprites,
                                  double elapsedSeconds) {
+  advance(world, std::array<const SpriteSheet*, 3>{&sprites, &sprites, &sprites}, elapsedSeconds);
+}
+
+void LemmingAnimTracker::advance(const sim::World& world,
+                                 const std::array<const SpriteSheet*, 3>& sprites,
+                                 double elapsedSeconds) {
   const auto& lemmings = world.lemmings();
   if (entries_.size() < lemmings.size())
     entries_.resize(lemmings.size());
@@ -68,9 +74,13 @@ void LemmingAnimTracker::advance(const sim::World& world, const SpriteSheet& spr
       e.state = lemming.state;
       e.clip = lemmingClipName(lemming);
       e.clock = ActorAnimClockState{};
+      e.seconds = 0.0;
       e.clock.loopAtEnd = lemmingClipLoops(e.clip) && lemming.state != sim::State::Splatter;
     }
-    const Sprite* clip = sprites.find(e.clip);
+    e.seconds += std::max(0.0, elapsedSeconds);
+    const int type = lemming.sheetType;
+    const SpriteSheet* sheet = type >= 0 && type < 3 ? sprites[type] : nullptr;
+    const Sprite* clip = sheet ? sheet->find(e.clip) : nullptr;
     if (clip == nullptr || clip->animations.empty())
       continue;
     const ActorAnimStrip strip{static_cast<int>(clip->animations.size()), clipRate(*clip)};
@@ -89,7 +99,8 @@ void LemmingAnimTracker::advance(const sim::World& world, const SpriteSheet& spr
 LemmingAnimPose LemmingAnimTracker::poseOf(std::size_t index) const {
   if (index >= entries_.size() || !entries_[index].valid)
     return {};
-  return {entries_[index].clip, entries_[index].clock.temporalIndex};
+  const auto& e = entries_[index];
+  return {e.clip, e.clock.temporalIndex, e.state == sim::State::Drown ? e.seconds : -1.0};
 }
 
 int bomberCountdownDigit(const sim::Lemming& lemming) {

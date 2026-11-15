@@ -1,4 +1,6 @@
+#include "app/FrameProfile.h"
 #include "Bitmap.h"
+#include "assets/TextureCache.h"
 
 #include "Box.h"
 #include "lemmings/texture_resource.hpp"
@@ -184,6 +186,16 @@ void applyColourKey(Image& image, std::uint8_t r, std::uint8_t g, std::uint8_t b
 }  // namespace
 
 std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::string_view name) {
+  // Only the owning application leg opts in. Asset/unit consumers retain an
+  // uncached read, and failures are never cached. Image copies preserve the
+  // existing caller-owned alpha/colour modification contract.
+  auto* cache = activeTextureCache;
+  if (cache && cache->library != &lib) cache = nullptr;
+  if (cache) {
+    const auto found = cache->images.find(std::string(name));
+    if (found != cache->images.end()) { ++cache->hits; return found->second; }
+  }
+  app::profile::Scope profileDecode(app::profile::TextureDecode);
   auto raw = lib.read(name);
   if (!raw)
     return std::unexpected(raw.error());
@@ -227,6 +239,7 @@ std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::stri
       break;
   }
 
+  if (cache) cache->images.emplace(std::string(name), *img);
   return img;
 }
 

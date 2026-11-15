@@ -1,3 +1,4 @@
+#include "app/FrameProfile.h"
 #include "app/BackdropScene.h"
 #include "app/Raster.h"
 #include "app/SceneBillboardSource.h"
@@ -188,18 +189,18 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    s.diagnostics_.push_back(extracted.error().message+"; scenery not admitted: empty partial scene");
    std::fprintf(stderr,"backdrop: %s\n",s.diagnostics_.back().c_str());
  }
- // Playtest T2: the tagged collection was absent from scene extraction. Admit
- // only its type-1 lever models, retaining the placed Object 09 root matrix.
+ // Playtests T2/T5: the tagged collection was absent from scene extraction.
+ // Admit type-1 levers and type-3 gravity models, retaining each placed root.
  // Use the same mesh/billboard depth path as other placed scenery.
  for(std::size_t i=0;i<level.gadgets.tagged_entities.size();++i){
-   const auto& lever=level.gadgets.tagged_entities[i];
-   if(lever.type!=1)continue;
-   const auto& model=lever.model;
+   const auto& gadget=level.gadgets.tagged_entities[i];
+   if(gadget.type!=1&&gadget.type!=3)continue;
+   const auto& model=gadget.model;
    if(!model||model->type!=0||!model->object){
-     s.diagnostics_.push_back(std::format("{} lever[{}]: unsupported model",levelId,i));
+     s.diagnostics_.push_back(std::format("{} tagged type {}[{}]: unsupported model",levelId,gadget.type,i));
      continue;
    }
-   auto added=add({Stage::LegacyUnattributed,"tagged-lever",i,model->object->source_extent},model->object->marker_matches);
+   auto added=add({Stage::LegacyUnattributed,gadget.type==3?"tagged-gravity":"tagged-lever",i,model->object->source_extent},model->object->marker_matches);
    if(!added)return std::unexpected(added.error().message);
  }
  auto levers=s.leverPresentation(bytes);
@@ -244,6 +245,75 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    s.fluidRoots_.push_back({{Stage::FluidGate,"entities_42acac",i,object.source_extent},std::move(parsed->root),record});
  }
  return s;
+}
+std::expected<GravityPresentation,std::string> BackdropScene::gravityPresentation(std::span<const std::byte> bytes) const {
+ GravityPresentation result;
+ if(std::none_of(roots_.begin(),roots_.end(),[](const auto& r){return r.source.owner=="tagged-gravity";}))return result;
+ try {
+   const auto level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
+   for(std::size_t root=0;root<roots_.size();++root){
+     const auto& owned=roots_[root];if(owned.source.owner!="tagged-gravity")continue;
+     const auto& model=*level.gadgets.tagged_entities.at(owned.source.entityIndex).model;
+     for(const auto& aux:model.object->auxiliary_records){
+       if(aux.name!="anti_grav")continue;
+       // READ 47C93D/47CF5C: second array = two-component material tracks,
+       // not colour tracks. Installed anti_grav has no transform/event tracks.
+       std::size_t at=0;const auto& raw=aux.serialized_bytes;
+       const auto integer=[&](std::size_t size){
+         if(at>raw.size()||size>raw.size()-at)throw std::invalid_argument("truncated gravity UV animation");
+         std::uint64_t n=0;for(std::size_t k=0;k<size;++k)n|=std::uint64_t(raw[at++])<<(8*k);return n;
+       };
+       const auto number=[&](){double n=std::bit_cast<double>(integer(8));if(!std::isfinite(n))throw std::invalid_argument("nonfinite gravity UV key");return n;};
+       GravityPresentation::Binding binding{root,number(),{}};
+       if(binding.duration<=0||integer(4)!=0)throw std::invalid_argument("unsupported gravity transform tracks/duration");
+       std::vector<const SceneNode*> nodes;
+       const auto collect=[&](auto& self,const SceneNode& n)->void{nodes.push_back(&n);for(const auto& c:n.children)self(self,c);};collect(collect,owned.node);
+       const auto count=integer(4);if(count>raw.size()/16)throw std::invalid_argument("invalid gravity track count");
+       for(std::size_t i=0;i<count;++i){
+         if(integer(4)!=0)throw std::invalid_argument("unsupported gravity UV track id");
+         GravityPresentation::Track track;
+         const auto keys=integer(4);if(!keys||keys>(raw.size()-at)/40)throw std::invalid_argument("invalid gravity UV key count");
+         double previous=0;
+         for(std::size_t k=0;k<keys;++k){GravityPresentation::Key key{number(),number(),number(),number(),number()};if(key.end<previous)throw std::invalid_argument("unordered gravity UV keys");previous=key.end;track.keys.push_back(key);}
+         if(previous<binding.duration)throw std::invalid_argument("gravity UV keys do not cover duration");
+         const auto material=integer(4), targets=integer(4);if(targets>(raw.size()-at)/4)throw std::invalid_argument("invalid gravity UV target count");
+         for(std::size_t k=0;k<targets;++k){
+           // PROVISIONAL node-index adapter, shared with the hatch track
+           // convention: serialized ids address the placed tree in preorder.
+           // Real anti_grav tracks select its four coil panels (1,2,4,5).
+           const auto node=integer(4);if(node>=nodes.size())throw std::invalid_argument("gravity UV node outside placed tree");
+           for(std::size_t m=0;m<nodes[node]->meshes.size();++m){const auto& mesh=nodes[node]->meshes[m];if(mesh.materialSlot!=material)continue;
+             for(std::size_t r=0;r<mesh.records.size();++r)for(std::size_t c=0;c<mesh.records[r].corners.size();++c){const auto& uv=mesh.records[r].corners[c];track.corners.push_back({std::size_t(node),m,r,c,uv.u,uv.v});}
+           }
+         }
+         if(integer(4)!=0)throw std::invalid_argument("unsupported gravity sprite UV targets");
+         if(track.corners.empty())throw std::invalid_argument("gravity UV track has no mesh targets");
+         binding.tracks.push_back(std::move(track));
+       }
+       if(integer(4)!=0)throw std::invalid_argument("unsupported gravity event tracks");
+       result.bindings.push_back(std::move(binding));
+     }
+   }
+ }catch(const std::exception& e){return std::unexpected(std::string("gravity presentation: ")+e.what());}
+ return result;
+}
+void BackdropScene::animateGravity(const GravityPresentation& presentation){
+ for(const auto& binding:presentation.bindings){
+   std::vector<SceneNode*> nodes;
+   const auto collect=[&](auto& self,SceneNode& n)->void{nodes.push_back(&n);for(auto& c:n.children)self(self,c);};collect(collect,roots_.at(binding.root).node);
+   // PROVISIONAL playable-v1 adapter: loop the stored UV clip on the existing
+   // paused scenery clock, with a shared zero phase. Native per-object start
+   // phase/contact-driven sound/activation are not established here.
+   const double time=std::fmod(sceneryClock_,binding.duration);
+   for(const auto& track:binding.tracks){
+     std::size_t k=0;while(k+1<track.keys.size()&&time>track.keys[k].end)++k;
+     const auto& key=track.keys[k];const double start=k?track.keys[k-1].end:0.0;
+     const double t=key.end>start?std::clamp((time-start)/(key.end-start),0.0,1.0):0.0;
+     // READ 476FB0/476A80: interval fraction, then base + fraction*delta.
+     const double u=key.u+t*key.du,v=key.v+t*key.dv;
+     for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+u;uv.v=c.v+v;}
+   }
+ }
 }
 std::expected<LeverPresentation,std::string> BackdropScene::leverPresentation(std::span<const std::byte> bytes) const {
  LeverPresentation presentation;
@@ -423,6 +493,7 @@ void BackdropScene::applyFluidState(SceneNode& g,const FluidRecord& rec,const Fl
  }
 }
 void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,BackdropStats& stats,SceneRasterObserver* observer) const {
+ profile::ScenePass profilePass(profile::FluidRaster);
  if(!hasFluidState_||fluidRoots_.empty())return;
  SceneRgbaFramebuffer fb;fb.width=camera.width;fb.height=camera.height;fb.rgba.resize(target.framebuffer().rgb.size()/3*4);
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
@@ -517,8 +588,28 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    std::map<std::size_t,std::vector<SceneMeshRecordSource>> secondaryMeshes;
    std::vector<SceneMeshRecordSource> primaryMeshes, legacyMeshes;
   const auto secondaryRoot=std::find_if(roots_.begin(),roots_.end(),[](const auto& n){return n.source.stage==Stage::Secondary;});
-   for(const auto& owned:roots_){const auto& root=owned.node;collectEyes(root,identity(),context,eyes);if(stage==Stage::Primary)++stats.roots;auto records=buildSceneMeshSource(root,identity(),camera.worldToView);if(!records){const auto message=webo::app::context(levelId_,owned.source,root.sourceOffset)+records.error();stats.diagnostics.push_back(message);std::fprintf(stderr,"backdrop: %s\n",message.c_str());continue;}
-    for(auto& rec:*records){if(stage==Stage::Primary)++stats.meshRecords;if(owned.source.stage==Stage::Secondary)secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));else if(owned.source.stage==Stage::Primary)primaryMeshes.push_back(std::move(rec));else legacyMeshes.push_back(std::move(rec));}
+  for (const auto& owned : roots_) {
+    const auto& root = owned.node;
+    if (stage == Stage::Primary) ++stats.roots;
+    // Primary retains the all-root census. Later passes need only their own
+    // roots: they previously rebuilt and discarded the entire primary mesh.
+    // Local facing predicates depend only on ancestors inside the owned root.
+    if (stage != Stage::Primary && owned.source.stage != stage) continue;
+    collectEyes(root, identity(), context, eyes);
+    auto records = buildSceneMeshSource(root, identity(), camera.worldToView);
+    if (!records) {
+      const auto message = webo::app::context(levelId_, owned.source, root.sourceOffset) + records.error();
+      stats.diagnostics.push_back(message);
+      std::fprintf(stderr, "backdrop: %s\n", message.c_str());
+      continue;
+    }
+    for (auto& rec : *records) {
+      if (stage == Stage::Primary) ++stats.meshRecords;
+      if (owned.source.stage != stage) continue;
+      if (stage == Stage::Secondary) secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));
+      else if (stage == Stage::Primary) primaryMeshes.push_back(std::move(rec));
+      else legacyMeshes.push_back(std::move(rec));
+    }
   }
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
     if((rec.kind==4||rec.kind==5)&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}

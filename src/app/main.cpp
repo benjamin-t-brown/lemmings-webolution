@@ -1,3 +1,4 @@
+#include "app/FrameProfile.h"
 // Lemmings Webolution -- 3D-first entry point.
 //
 // Ordinary startup enters the connected frontend. Explicit diagnostics load
@@ -89,6 +90,7 @@
 #include "app/SkillPanel.h"
 #include "app/TubeScene.h"
 #include "assets/Bitmap.h"
+#include "assets/TextureCache.h"
 #include "assets/Box.h"
 #include "assets/Cylinder.h"
 #include "assets/LevelIndex.h"
@@ -386,6 +388,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     return 1;
   }
 
+  TextureCacheScope textureCache(*library);
+
   // parseArgs resolves ordinary/explicit frontend entry for both app layers.
   // Selection feeds the same retail loader/sim below, never
   // a second executable, a captured world, or the original installation's save.
@@ -501,6 +505,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::BackdropScene> backdrop;
   std::optional<app::EntranceExitPresentation> entranceExitPresentation;
   std::optional<app::LeverPresentation> leverPresentation;
+  std::optional<app::GravityPresentation> gravityPresentation;
   if (!args.sceneOff) {
     auto built = app::BackdropScene::build(*library, *blob, args.level);
     if (built) {
@@ -511,6 +516,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       auto levers = backdrop->leverPresentation(*blob);
       if (levers) leverPresentation.emplace(std::move(*levers));
       else std::fprintf(stderr, "lever presentation: %s\n", levers.error().c_str());
+      auto gravity = backdrop->gravityPresentation(*blob);
+      if (gravity) gravityPresentation.emplace(std::move(*gravity));
+      else std::fprintf(stderr, "%s\n", gravity.error().c_str());
       // Play start (0x004451E5 analogue): reseed from the application clock before the
       // first scenery draw of this level.
       backdrop->setRandom(&sceneryRandom().rng);
@@ -662,7 +670,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   app::CameraIntro cameraIntro(args.frontend && args.camera.empty() &&
       (!persistentFrontend || persistentFrontend->levelIntroEnabled()));
 
+  std::vector<double> fluidDrownSceneDepth;
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {
+    app::profile::Scope profilePrepare(app::profile::Preparation);
     const auto frameCamera = app::buildCamera(frameParams);
     target.clear(0, 0, 0);
     app::BackdropStats backdropStats;
@@ -706,14 +716,32 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
     // the terrain version moved since the last frame.
     if (world && !args.noTerrainSync) scene->syncTerrain(world->terrain());
+    fluidDrownSceneDepth.clear();
+    options.fluidDrownSceneDepth = {};
     auto geometryOptions = options;
     if (!options.composeActorsBeforeRoute) geometryOptions.injectedWalkers.clear();
+    const bool fluidDrowning = std::any_of(options.injectedWalkers.begin(), options.injectedWalkers.end(),
+        [](const auto& l) { return l.drownFluidKind >= 0; });
+    std::vector<double> afterFluidDepth;
     app::scheduleSceneFrame(
           [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary,c3Diagnostic?&observer:nullptr); },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
          [&] { scene->render(target, frameCamera, geometryOptions, &*library); },
-         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate); },
+         [&] {
+           if (fluidDrowning) fluidDrownSceneDepth = target.depthBuffer();
+           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate);
+           if (fluidDrowning) afterFluidDepth = target.depthBuffer();
+         },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Secondary); });
+    if (fluidDrowning) {
+      // U2 PROVISIONAL: additive drowning is visible through its water, while
+      // all opaque scenery (including the later secondary pass) still hides it.
+      // This does not change the fluid depth policy or ordinary actor depth.
+      const auto& completed = target.depthBuffer();
+      for (std::size_t p = 0; p < fluidDrownSceneDepth.size(); ++p)
+        if (completed[p] != afterFluidDepth[p]) fluidDrownSceneDepth[p] = completed[p];
+      options.fluidDrownSceneDepth = fluidDrownSceneDepth;
+    }
     // R3: actors test against completed scenery, fluids and edited terrain.
     if (options.drawCellRoute && !options.composeActorsBeforeRoute)
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
@@ -960,7 +988,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       default: break; // Unsupported Options and misses are consumed, never gameplay clicks.
     }
   };
+  app::profile::Run frameProfile;
+  SDL_RendererInfo rendererInfo{};
+  if (SDL_GetRendererInfo(presenter, &rendererInfo) == 0)
+    std::fprintf(stderr, "presenter: %s flags=0x%x software=%d vsync=%d; simulation frames do not sleep\n",
+        rendererInfo.name, rendererInfo.flags, bool(rendererInfo.flags & SDL_RENDERER_SOFTWARE),
+        bool(rendererInfo.flags & SDL_RENDERER_PRESENTVSYNC));
   while (running && (args.frames <= 0 || rendered < args.frames)) {
+    app::profile::Run::Frame measuredFrame(frameProfile, args.level.c_str(), rendered, options.injectedWalkers.size());
     menuDismissedThisFrame = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -1089,6 +1124,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
     }
     if (!running) break; // Do not compose or observe another frame after close.
+    app::profile::Scope profileSim(app::profile::Simulation);
     const Uint8* keys = SDL_GetKeyboardState(nullptr);
     app::CameraInput input;
     input.uiAllowsCamera = !menuOpen();
@@ -1147,7 +1183,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       if (const SpriteSheet* lemmingSheet = scene->lemmingSprites(); lemmingSheet && !args.noActorAnim) {
         const double levelDt = !simTicked ? 0.0 : runtimeSim.lastPassMs() / 1000.0 *
             (runtimeSim.fastForward() ? app::RuntimeSimState::kFastForwardPasses : 1);
-        lemmingAnim.advance(*world, *lemmingSheet, levelDt);
+        lemmingAnim.advance(*world, std::array<const SpriteSheet*, 3>{
+            lemmingSheet, scene->lemmingSprites(1), scene->lemmingSprites(2)}, levelDt);
       }
       options.injectedWalkers = app::injectedWalkersFromWorld(
           *world, terrainHeight, args.noActorAnim ? nullptr : &lemmingAnim, &lemmingMotion);
@@ -1171,11 +1208,15 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         break;
       }
     }
+    profileSim.stop();
     // Scenery clock: frame ms from the existing frame clock (0x0045CFF9 -> 0x004423D2);
     // advances only in the in-level (--sim) state and never while paused.
     if (runtimeSim.paused()) sceneryRandom().pausedMs += elapsed * 1000.0;
     if (updated || simTicked || (args.sim && world)) {
-      if (backdrop) backdrop->advanceScenery(elapsed * 1000.0, args.sim && static_cast<bool>(world), runtimeSim.paused());
+      if (backdrop) {
+        backdrop->advanceScenery(elapsed * 1000.0, args.sim && static_cast<bool>(world), runtimeSim.paused());
+        if (gravityPresentation) backdrop->animateGravity(*gravityPresentation);
+      }
       params = controls.camera();
       const auto displayedPose = cameraIntro.pose(params);
       displayedCamera = renderFrame(displayedPose, windowRaster);
@@ -1186,6 +1227,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       std::vector<std::uint8_t> presentedRgb;
       const void* pixels = windowRaster.framebuffer().rgb.data();
       if (args.sim && world && runtimeFont && runtimePanel) {
+        app::profile::Scope profileHud(app::profile::Hud);
         auto image = toImage(windowRaster.framebuffer());
         const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
         const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
@@ -1237,6 +1279,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         // READ45E2B5/45E342: cue is below the later cursor and pause caption.
         if (runtimeSim.paused() && !menuOpen()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
         if (levelObserver) {
+          app::profile::Scope profileObserver(app::profile::Other);
           const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
           std::vector<app::LevelActorView> actors;
           std::size_t walker = 0;
@@ -1272,10 +1315,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       if (!args.windowShot.empty() && rendered + 1 == args.frames && !finalWindowFrame)
         finalWindowFrame = toImage(windowRaster.framebuffer());
-      SDL_UpdateTexture(texture, nullptr, pixels, 640 * 3);
-      SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); SDL_RenderPresent(presenter);
+      { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * 3); }
+      { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); }
+      { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
       ++rendered;
-    } else SDL_Delay(1);
+    } else { app::profile::Scope scope(app::profile::Idle); SDL_Delay(1); }
   }
   SDL_SetRelativeMouseMode(SDL_FALSE);
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);

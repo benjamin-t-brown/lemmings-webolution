@@ -1,3 +1,4 @@
+#include "app/FrameProfile.h"
 #include "app/SceneRaster.h"
 
 #include <algorithm>
@@ -27,10 +28,14 @@ std::uint8_t unorm8(double v) {
   return static_cast<std::uint8_t>(std::floor(v + 0.5));
 }
 
-int addressIndex(double i, int n, SceneAddress mode) {
+int addressIndex(std::int64_t i, int n, SceneAddress mode) {
   if (mode == SceneAddress::Clamp)
-    return static_cast<int>(std::clamp(i, 0.0, static_cast<double>(n - 1)));
-  double r = std::fmod(i, static_cast<double>(n));
+    return static_cast<int>(std::clamp<std::int64_t>(i, 0, n - 1));
+  // Power-of-two textures (including the 1x1 null material) need no divide.
+  // Unsigned conversion is modulo 2^64, so this also preserves negative wrap.
+  if ((n & (n - 1)) == 0)
+    return static_cast<int>(static_cast<std::uint64_t>(i) & static_cast<std::uint64_t>(n - 1));
+  auto r = i % n;
   if (r < 0) r += n;
   return static_cast<int>(r);
 }
@@ -38,21 +43,27 @@ int addressIndex(double i, int n, SceneAddress mode) {
 std::array<double, 4> sample(const SceneRgbaImage& image, double u, double v,
                              SceneFilter filter, SceneAddress address) {
   if (filter == SceneFilter::Point) {
-    const int x = addressIndex(std::floor(u * image.width), image.width, address);
-    const int y = addressIndex(std::floor(v * image.height), image.height, address);
+    const int x = addressIndex(static_cast<std::int64_t>(std::floor(u * image.width)), image.width, address);
+    const int y = addressIndex(static_cast<std::int64_t>(std::floor(v * image.height)), image.height, address);
     const auto at = (static_cast<std::size_t>(y) * image.width + x) * 4;
     return {double(image.rgba[at]), double(image.rgba[at + 1]),
             double(image.rgba[at + 2]), double(image.rgba[at + 3])};
   }
   const double fx = u * image.width - 0.5, fy = v * image.height - 0.5;
   const double floorX = std::floor(fx), floorY = std::floor(fy);
-  // UV inputs are range checked to keep these conversions representable.
-  const double x0 = floorX, y0 = floorY;
+  // UV is bounded to +/-1e6 before sampling; even INT_MAX dimensions give
+  // integer floors below 2.15e15 (<2^53 and INT64_MAX). Integer modulo is
+  // therefore exactly the former floating fmod, including negative wrap.
+  const auto x0 = static_cast<std::int64_t>(floorX);
+  const auto y0 = static_cast<std::int64_t>(floorY);
   const double tx = fx - floorX, ty = fy - floorY;
+  // Four addresses per pixel rather than repeating X/Y for every tap. Keep
+  // weights, channel accumulation order and final rounding exactly as before.
+  const int xs[]{addressIndex(x0, image.width, address), addressIndex(x0 + 1, image.width, address)};
+  const int ys[]{addressIndex(y0, image.height, address), addressIndex(y0 + 1, image.height, address)};
   std::array<double, 4> out{};
   for (int j = 0; j < 2; ++j) for (int i = 0; i < 2; ++i) {
-    const int x = addressIndex(x0 + i, image.width, address);
-    const int y = addressIndex(y0 + j, image.height, address);
+    const int x = xs[i], y = ys[j];
     const auto at = (static_cast<std::size_t>(y) * image.width + x) * 4;
     const double weight = (i ? tx : 1.0 - tx) * (j ? ty : 1.0 - ty);
     for (int c = 0; c < 4; ++c) out[c] += image.rgba[at + c] * weight;
@@ -86,6 +97,7 @@ std::expected<void, std::string> rasterizeSceneTriangle(
     SceneRgbaFramebuffer& target, std::vector<double>& depth,
     const SceneRgbaImage& texture, const std::array<SceneRasterVertex, 3>& p,
     const SceneRasterOptions& o, const SceneRasterObserver* observer) {
+  profile::Scope profileRaster(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
   if (!dimensionsValid(target.width, target.height, 4, target.rgba.size()) ||
       depth.size() != static_cast<std::size_t>(target.width) * target.height)
     return std::unexpected("invalid target image/depth dimensions or storage");

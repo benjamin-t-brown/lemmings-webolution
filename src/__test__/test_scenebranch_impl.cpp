@@ -455,7 +455,7 @@ int main() try {
       const auto h = hashes(r->raster);
       hashFile << id << ':' << mode << " rgb=" << hex(h.rgb) << " depth=" << hex(h.depth) << '\n';
       // Retain authentic frozen pixels and the precise provenance of the new
-      // lever stores; whole-frame equality used to encode invisible levers.
+      // lever/flipper stores; whole-frame equality encoded invisible gadgets.
       artifact(dir, id + "-" + mode, r->raster, true);
       r->leverPixels.save(dir / (id + "-" + mode + ".lever-mask"));
     }
@@ -484,8 +484,8 @@ int main() try {
   std::size_t compared = 0, exact = 0;
   for (const auto& [key, value] : before) {
     const bool identical = now.count(key) && now.at(key) == value;
-    require(now.count(key) && (identical || leverbaseline::unchangedOutsideLeverStores(
-        root / "before", dir, key, log)), "admitted-level RGB/depth equals frozen outside accepted lever stores: " + key);
+    require(now.count(key) && (identical || leverbaseline::unchangedOutsideGadgetStores(
+        root / "before", dir, key, log)), "admitted-level RGB/depth equals frozen outside accepted lever/flipper stores: " + key);
     exact += identical;
     ++compared;
   }

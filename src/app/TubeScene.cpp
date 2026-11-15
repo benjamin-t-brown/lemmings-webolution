@@ -1,3 +1,4 @@
+#include "app/FrameProfile.h"
 #include "TubeScene.h"
 #include "app/ActorVisibility.h"
 
@@ -186,14 +187,23 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
   }
   if (auto light = findActorLightMap(levelBytes))
     scene.actorLight_ = std::move(*light);
-  if (auto sprites = loadSpriteSheet(lib, "SPRITES\\LEMMINGSHI.SPR")) {
-    scene.lemmingSprites_ = std::move(*sprites);
-    scene.haveLemmingSprites_ = true;
-    if (scene.lemmingSprites_.find("walk") == nullptr)
-      scene.missing_.push_back("compose: walk action missing from LEMMINGSHI.SPR");
-  } else {
-    scene.missing_.push_back(std::format("compose: {}", sprites.error()));
+  // READ: loader 4437F6..44389D registers these categories in this order;
+  // constructor 42DF75..42DF89 binds 4E335C[sheetType] to actor+128.
+  constexpr const char* names[]{"SPRITES\\LEMMINGSHI.SPR", "SPRITES\\LEMMINGSWATERHI.SPR",
+                                "SPRITES\\LEMMINGSACIDHI.SPR"};
+  for (int type = 0; type < 3; ++type) {
+    if (auto sprites = loadSpriteSheet(lib, names[type])) {
+      scene.lemmingSprites_[type] = std::move(*sprites);
+      scene.haveLemmingSprites_[type] = true;
+      if (scene.lemmingSprites_[type].find("walk") == nullptr)
+        scene.missing_.push_back(std::format("compose: walk missing from {}", names[type]));
+    } else {
+      scene.missing_.push_back(std::format("compose: {}", sprites.error()));
+    }
   }
+
+  if (auto bubbles = loadSpriteSheet(lib, "SPRITES\\BUBBLES.SPR"))
+    scene.bubbleSprites_ = std::move(*bubbles);
 
   scene.rewirePoseLevel();
   return scene;
@@ -268,13 +278,15 @@ struct PreparedInjectedWalker {
 // contact allowance. Neither scene comparison nor that allowance establishes
 // recovered device depth behavior.
 bool clipActorToScene(Image& sprite, const ActorSpritePlacement& p,
-                      std::span<const double> depth, bool behindClimbingWall) {
+                      std::span<const double> depth, bool withoutContactAllowance) {
   bool visible = false;
   // U1, PROVISIONAL clone policy: the contact allowance keeps the front of
   // a flat billboard intact, but pulling it toward the camera on the other
   // side of its climbing wall exposes it through that wall. Retain only the
   // traced normalized bias there. Original device/contact state is unknown.
-  const double z = actorPhysicalDepth(p, sprite.width) + (behindClimbingWall ? 4.0 : 0.0);
+  // U2: a sinking figure has no supporting-wall contact either. Retain the
+  // normalized bias, but do not pull its billboard through the pool's rim.
+  const double z = actorPhysicalDepth(p, sprite.width) + (withoutContactAllowance ? 4.0 : 0.0);
   for (int y = std::max(0, int(std::ceil(p.top)));
        y < std::min(sprite.height, int(std::ceil(p.bottom))); ++y) {
     for (int x = std::max(0, int(std::ceil(p.left)));
@@ -380,7 +392,10 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
         std::string_view(injected.clip) == "climb" && wallSide > 0.0;
     if (!drawActorSprite(sprite, frame, prepared.texture, *placement, selection.mirrored, tint,
                          true, prepared.inverted) ||
-        !clipActorToScene(sprite, *placement, depth, behindClimbingWall)) return std::nullopt;
+        !clipActorToScene(sprite, *placement,
+            injected.drownFluidKind >= 0 && !options.fluidDrownSceneDepth.empty() ?
+                options.fluidDrownSceneDepth : depth,
+            behindClimbingWall || injected.drownFluidKind >= 0)) return std::nullopt;
   }
   return prepared;
 }
@@ -390,12 +405,10 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
 void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
                                     const SceneOptions& options,
                                     const AssetLibrary& lib) const {
-  if (options.injectedWalkers.empty() || !haveLemmingSprites_ || !havePoseLevel_)
+  profile::Scope profileActors(profile::Actors);
+  if (options.injectedWalkers.empty() || !havePoseLevel_)
     return;
   rewirePoseLevel();
-  const Sprite* walkSprite = lemmingSprites_.find("walk");
-  if (walkSprite == nullptr)
-    return;
 
   Image overlay;
   overlay.width = raster.framebuffer().width;
@@ -408,10 +421,76 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
     // Reverse order, same skips, and the same frame/texture/placement/mirror/tint
     // fed to drawActorSprite. Production sprites arrive rasterised and
     // depth-clipped in scratch storage; diagnostics keep their overlay path.
-    auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
+    const auto* sprites = lemmingSprites(it->sheetType);
+    if (!sprites) continue;
+    auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
                                           options, *it, lib, bounds, raster.depthBuffer());
     if (!prepared)
       continue;
+    if (it->drownFluidKind >= 0 && !prepared->clippedSprite.rgba.empty()) {
+      // READ 4043F3..404434 sets selector 2 (ONE/ONE) and equal RGB
+      // proportional to height above the fluid bottom. Preserve ordinary
+      // actor composition; flush its pending layer before this additive one.
+      compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
+      std::fill(overlay.rgba.begin(), overlay.rgba.end(), 0);
+      auto add = [&](const Image& sprite, double strength) {
+        auto& rgb = raster.mutableFramebuffer().rgb;
+        for (std::size_t p = 0; p < sprite.pixelCount(); ++p) {
+          if (!actorSpriteAlphaTestPasses(sprite.rgba[p * 4 + 3])) continue;
+          for (int c = 0; c < 3; ++c)
+            rgb[p * 3 + c] = std::min(255, rgb[p * 3 + c] +
+                int(std::lround(sprite.rgba[p * 4 + c] * strength)));
+        }
+      };
+      // The fluid state supplies neutral brightness rather than the light map.
+      Image figure = std::move(prepared->clippedSprite);
+      std::fill(figure.rgba.begin(), figure.rgba.end(), 0);
+      const auto grey = std::uint8_t(std::clamp(it->drownBrightness, 0.0, 1.0) * 255.0);
+      if (!drawActorSprite(figure, prepared->frame, prepared->texture, prepared->placement,
+          prepared->mirrored, {grey, grey, grey}, true, prepared->inverted)) continue;
+      clipActorToScene(figure, prepared->placement,
+          options.fluidDrownSceneDepth.empty() ? raster.depthBuffer() : options.fluidDrownSceneDepth, true);
+      add(figure, 1.0);
+
+      // READ: 404372 creates Bubbles FX once submerged by 5..10 units.
+      // PROVISIONAL deterministic presentation: two installed bubble sprites
+      // rise from the body; small early ones stand in for splash droplets.
+      // Original randomized emitter/lifetimes are not reconstructed.
+      if (it->drownFluidKind == 0) {
+        const Sprite* bubbles = bubbleSprites_.find("bubbles");
+        if (bubbles && !bubbles->animations.empty()) {
+          const double t = it->drownSeconds;
+          for (int b = 0; b < 2; ++b) {
+            const bool splash = t < 0.6;
+            const double phase = std::fmod(std::max(0.0, t - 0.5) + b * 0.21, 0.48);
+            const std::size_t n = std::min(bubbles->animations.size() - 1,
+                std::size_t(phase / 0.06));
+            if (bubbles->animations[n].frames.empty()) continue;
+            const auto& frame = bubbles->animations[n].frames[0];
+            auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
+            if (!texture) continue;
+            ActorTerrainSample sample{it->plus8X + (b ? 1.5 : -1.5),
+                splash ? it->drownSurfaceY + 2.0 + 5.0 * std::sin(t / 0.6 * std::numbers::pi) :
+                    std::min(it->drownSurfaceY, it->plus8Y + 5.0 + phase * 12.0), it->plus8Z};
+            const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, it->facing);
+            auto box = actorSpritePlacement(frame, pose.modelPosition, camera, false, -1);
+            if (!box) continue;
+            const double scale = splash ? 0.45 : 0.8;
+            box->left = box->originX + (box->left - box->originX) * scale;
+            box->right = box->originX + (box->right - box->originX) * scale;
+            box->top = box->originY + (box->top - box->originY) * scale;
+            box->bottom = box->originY + (box->bottom - box->originY) * scale;
+            Image effect = figure;
+            std::fill(effect.rgba.begin(), effect.rgba.end(), 0);
+            if (!drawActorSprite(effect, frame, *texture, *box, false)) continue;
+            clipActorToScene(effect, *box, options.fluidDrownSceneDepth.empty() ?
+                raster.depthBuffer() : options.fluidDrownSceneDepth, true);
+            add(effect, splash ? 0.8 : it->drownBrightness);
+          }
+        }
+      }
+      continue;
+    }
     if (!prepared->clippedSprite.rgba.empty()) {
       const auto& sprite = prepared->clippedSprite;
       const auto& p = prepared->placement;
@@ -438,10 +517,12 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
 bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker,
     const CameraBasis& camera, const SceneOptions& options,
     const AssetLibrary& lib, const Raster& sceneRaster) const {
-  if (walker >= options.injectedWalkers.size() || !haveLemmingSprites_ || !havePoseLevel_ ||
+  if (walker >= options.injectedWalkers.size() || !havePoseLevel_ ||
       target.width != camera.width || target.height != camera.height) return false;
   rewirePoseLevel();
-  auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
+  const auto* sprites = lemmingSprites(options.injectedWalkers[walker].sheetType);
+  if (!sprites) return false;
+  auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
       options, options.injectedWalkers[walker], lib,
       tubePassBounds(camera.selectorTurns, cylinderExtent_), sceneRaster.depthBuffer());
   if (!prepared) return false;
@@ -477,13 +558,15 @@ std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreen
     const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib,
     const Raster& sceneRaster) const {
   std::vector<std::optional<ActorSpritePlacement>> boxes(options.injectedWalkers.size());
-  if (options.injectedWalkers.empty() || !haveLemmingSprites_ || !havePoseLevel_ ||
+  if (options.injectedWalkers.empty() || !havePoseLevel_ ||
       sceneRaster.framebuffer().width != camera.width || sceneRaster.framebuffer().height != camera.height)
     return boxes;
   rewirePoseLevel();
   const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
   for (std::size_t i = 0; i < options.injectedWalkers.size(); ++i) {
-    if (auto prepared = prepareInjectedWalker(poseLevel_, lemmingSprites_, actorLight_, camera,
+    const auto* sprites = lemmingSprites(options.injectedWalkers[i].sheetType);
+    if (!sprites) continue;
+    if (auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
           options, options.injectedWalkers[i], lib, bounds, sceneRaster.depthBuffer()))
       boxes[i] = prepared->placement;
   }
@@ -960,12 +1043,37 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     }
     walker.facing = static_cast<int>(lemming.facing);
     walker.verticalDir = lemming.verticalDir;
+    walker.sheetType = lemming.sheetType;
     // Without a tracker every state draws walk entry 0 (the D3b behaviour); with one, the
     // lemming's own clip and temporal entry (actor-anim-001).
     if (anim != nullptr) {
       const LemmingAnimPose pose = anim->poseOf(i);
       walker.clip = pose.clip;
       walker.walkTemporalIndex = pose.temporalIndex;
+      walker.drownSeconds = pose.drownSeconds;
+      if (lemming.state == sim::State::Drown && pose.drownSeconds >= 0.0) {
+        const double row = terrainHeight - 1.0 - lemming.y;
+        const int width = world.terrain().width();
+        for (const auto& g : world.setup().gates) {
+          if (width <= 0 || g.kind < 0 || g.kind > 2 || g.height <= 0) continue;
+          double span = g.maxX - g.minX;
+          if (span < 0) span += width;
+          double dx = std::fmod(lemming.x - g.minX, double(width));
+          if (dx < 0) dx += width;
+          if (dx >= span || row < g.minY || row > g.minY + g.height) continue;
+          walker.drownFluidKind = g.kind;
+          walker.drownSurfaceY = g.minY + g.height;
+          // READ 404655..404675: Y -= verticalDir * 20 * dt / 2.
+          // Presentation only: World position, death timer and counters stay
+          // unchanged. PROVISIONAL clamp at the receiver bottom; the original
+          // removes type 0x23 there, while the clone's existing timer owns death.
+          walker.plus8Y = std::clamp(row - lemming.verticalDir * 10.0 * pose.drownSeconds,
+              g.minY, g.minY + g.height);
+          walker.drownBrightness = std::clamp((walker.plus8Y - g.minY) /
+              (g.high > 0.0 ? g.high : g.height), 0.0, 1.0);
+          break;
+        }
+      }
     }
     out.push_back(walker);
   }

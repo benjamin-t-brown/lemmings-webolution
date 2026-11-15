@@ -27,6 +27,7 @@
 #include "sim/World.h"
 
 #include <cstddef>
+#include <array>
 #include <span>
 #include <vector>
 
@@ -43,6 +44,7 @@ bool lemmingClipLoops(const char* clip);
 struct LemmingAnimPose {
   const char* clip = "walk";
   int temporalIndex = 0;
+  double drownSeconds = -1.0;
 };
 
 class LemmingAnimTracker {
@@ -53,6 +55,8 @@ class LemmingAnimTracker {
   // Floating plays "umbopen" once, then "float" (the open animation finishes first; World.h
   // floatOpenMs). Index i is World::lemmings()[i].
   void advance(const sim::World& world, const SpriteSheet& sprites, double elapsedSeconds);
+  void advance(const sim::World& world, const std::array<const SpriteSheet*, 3>& sprites,
+               double elapsedSeconds);
 
   // The pose of lemming `index` as of the last advance(); walk entry 0 for an unseen lemming.
   LemmingAnimPose poseOf(std::size_t index) const;
@@ -63,6 +67,7 @@ class LemmingAnimTracker {
     sim::State state = sim::State::Faller;
     const char* clip = "walk";
     ActorAnimClockState clock;
+    double seconds = 0.0;
   };
   std::vector<Entry> entries_;
 };

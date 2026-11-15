@@ -45,6 +45,18 @@ struct LeverPresentation {
   };
   std::vector<Binding> bindings;
 };
+// App-owned UV tracks for the placed type-3 gravity gadgets. No scene layout
+// change: historical render demonstrations keep their own compatible headers.
+struct GravityPresentation {
+  struct Key { double end, u, v, du, dv; };
+  struct Corner {
+    std::size_t node, mesh, record, corner;
+    double u, v;
+  };
+  struct Track { std::vector<Key> keys; std::vector<Corner> corners; };
+  struct Binding { std::size_t root; double duration; std::vector<Track> tracks; };
+  std::vector<Binding> bindings;
+};
 struct BackdropStats {
   std::size_t roots=0, meshRecords=0, stageMeshRecords=0, meshTriangles=0,
       nullMaterials=0, nullMaterialTriangles=0, billboards=0, stageBillboards=0,
@@ -142,6 +154,8 @@ class BackdropScene {
   void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress, double departureSeconds);
   std::expected<LeverPresentation,std::string> leverPresentation(std::span<const std::byte> level) const;
   void setLeverFaces(const LeverPresentation&, std::span<const std::pair<int,int>> idFaces);
+  std::expected<GravityPresentation,std::string> gravityPresentation(std::span<const std::byte> level) const;
+  void animateGravity(const GravityPresentation&);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
   // Runtime override of the per-node visibility byte +0x110 for Secondary nodes (the original toggles
   // it only for "cutme" type-1 nodes, 0x45DA0D). A hidden node and its subtree are not dispatched.

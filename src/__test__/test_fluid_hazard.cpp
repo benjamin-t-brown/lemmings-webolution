@@ -62,6 +62,8 @@ void natural(const AssetLibrary& lib, const fs::path& out, const std::string& id
   sim::World w(std::move(*setup));
   std::ofstream trace(out/(id+"-world.csv"));
   std::ofstream all(out/(id+"-world-all.csv"));
+  std::ofstream supported(out/(id+"-supported-prefix.csv"));
+  bool reachedDryReceiver=false;
   all<<std::setprecision(17)<<"ms,index,x,y,state,sheet,frame,budget,dead,saved\n";
   trace<<"ms,index,x,y,state,sheet,gate,kind,height,feet_original_y,probe_original_y,static_40,zone_water,dead,saved\n";
   bool touched=false,drowned=false,crossed=false; int lastX=-1;
@@ -74,6 +76,23 @@ void natural(const AssetLibrary& lib, const fs::path& out, const std::string& id
     }
     if(w.lemmings().empty())continue;
     const auto& l=w.lemmings()[0]; int g=contact(w,l);
+    // U3 intentionally changes the later empty-pit route. Keep an exact
+    // before/after control up to its first dry receiver, plus the unchanged
+    // public app prefix, rather than calling dry falls immunity.
+    if(id=="MM_W_012") {
+      const double row=w.terrain().height()-1-l.y;
+      for(const auto& receiver:w.setup().gates)
+        if(receiver.height<=0 && l.x>=receiver.minX && l.x<receiver.maxX &&
+           row>=receiver.minY && row<=receiver.minY+receiver.high)
+          reachedDryReceiver=true;
+      if(!reachedDryReceiver)
+        for(std::size_t index=0;index<w.lemmings().size();++index) {
+          const auto& actor=w.lemmings()[index];
+          supported<<w.levelClockMs()<<','<<index<<','<<actor.x<<','<<actor.y<<','
+            <<sim::stateName(actor.state)<<','<<actor.sheetType<<','<<actor.frame<<','
+            <<std::setprecision(17)<<actor.stepBudgetSeconds<<','<<w.saved()<<','<<w.dead()<<'\n';
+        }
+    }
     if(l.x!=lastX||g>=0||l.state==sim::State::Drown||l.state==sim::State::Dead) {
       trace<<w.levelClockMs()<<",0,"<<l.x<<','<<l.y<<','<<sim::stateName(l.state)<<','<<l.sheetType<<','<<g<<','
         <<(g<0?-1:w.setup().gates[g].kind)<<','<<(g<0?0:w.setup().gates[g].height)<<','
@@ -93,7 +112,12 @@ void natural(const AssetLibrary& lib, const fs::path& out, const std::string& id
     check(crossed&&!drowned,"task-entry ordinary lemming crosses water alive");
 #endif
   } else if(id=="MM_W_012") {
-    check(crossed&&!drowned&&w.dead()==0,"installed water hatch survives water contact");
+    check(crossed&&!drowned,"installed water hatch survives water contact");
+#ifdef FLUID_HAZARD_after
+    check(reachedDryReceiver&&w.dead()>0,"U3: water immunity does not prevent dry-pit splats");
+#else
+    check(w.dead()==0,"historical baseline has permanent dry-pit support");
+#endif
   }
   std::ofstream(out/(id+"-world-summary.txt"))<<"touched="<<touched<<"\ndrowned="<<drowned
     <<"\ncrossed_walking="<<crossed<<"\ndead="<<w.dead()<<"\nsaved="<<w.saved()<<'\n';
@@ -108,11 +132,23 @@ void application(const fs::path& game,const fs::path& out,const std::string& id)
   app::ApplicationRunOptions options;options.frameSeconds=0.1;
   options.saveStore=std::make_shared<save::SaveStore>(std::make_unique<save::FileSaveSink>(out/(id+"-SavedGame.dat"),game));
   std::ofstream trace(out/(id+"-app.csv"));
+  std::ofstream prefix(out/(id+"-app-supported-prefix.csv"));
+  bool dryReceiver=false;
   trace<<"frame,ms,x,y,state,sheet,gate,dead,saved,clip,temporal,screen_left,screen_top,screen_right,screen_bottom\n";
   bool first=false,firstDrown=false,animated=false;
   const auto observe=[&](const app::LevelFrameView& f) {
     if(f.world.lemmings().empty())return;
     const auto& l=f.world.lemmings()[0];const int g=contact(f.world,l);
+    if(id=="MM_W_012") {
+      const double row=f.world.terrain().height()-1-l.y;
+      for(const auto& receiver:f.world.setup().gates)
+        if(receiver.height<=0 && l.x>=receiver.minX && l.x<receiver.maxX &&
+           row>=receiver.minY && row<=receiver.minY+receiver.high)
+          dryReceiver=true;
+      if(!dryReceiver)
+        prefix<<f.frame<<','<<f.world.levelClockMs()<<','<<l.x<<','<<l.y<<','<<sim::stateName(l.state)<<','
+          <<l.frame<<','<<std::setprecision(17)<<l.stepBudgetSeconds<<','<<f.world.saved()<<','<<f.world.dead()<<'\n';
+    }
     const auto actor=std::find_if(f.actors.begin(),f.actors.end(),[](const auto& a){return a.index==0;});
     trace<<f.frame<<','<<f.world.levelClockMs()<<','<<l.x<<','<<l.y<<','<<sim::stateName(l.state)<<','
       <<l.sheetType<<','<<g<<','<<f.world.dead()<<','<<f.world.saved()<<','

@@ -82,13 +82,16 @@ if(WEBOLUTION_HAVE_SDL2)
   endif()
 endif()
 
+include(cmake/webolution_app.cmake)
+
 # ---- the game -------------------------------------------------------------
 # HARD RESET, 2026-10-18: src/main.cpp and src/gfx moved to old/. A4 restores a
 # runnable, 3D-first entry point (src/app). The renderer rasterises on the CPU
 # and presents through SDL2 when a window is requested; without a display the
 # binary still renders and writes a PNG from file data (--shot).
 
-add_executable(webolution ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+add_executable(webolution src/app/main.cpp)
+target_link_libraries(webolution PRIVATE webolution_app)
 target_link_libraries(webolution PRIVATE webolution_objects)
 
 if(WEBOLUTION_HAVE_SDL2)
@@ -383,9 +386,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   # copy of a retained targeted-play-001 clone save; images/logs go to build/fluid-lever-assessment-001/<variant>. Outcomes are
   # reported, never asserted; exit code = driver integrity (route ran, artifacts written, normal save untouched).
   set(FLA_DIR "${CMAKE_SOURCE_DIR}/build/fluid-lever-assessment-001")
-  add_executable(test_fluidlever_assessment src/__test__/test_fluidlever_assessment.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_fluidlever_assessment src/__test__/test_fluidlever_assessment.cpp)
+  target_link_libraries(test_fluidlever_assessment PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_fluidlever_assessment PRIVATE webolution_objects)
   target_compile_definitions(test_fluidlever_assessment PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 FLA_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -404,9 +406,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   endforeach()
 
   set(TP_DIR "${CMAKE_SOURCE_DIR}/build/targeted-play-001")
-  add_executable(test_targetedplay src/__test__/test_targetedplay.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_targetedplay src/__test__/test_targetedplay.cpp)
+  target_link_libraries(test_targetedplay PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_targetedplay PRIVATE webolution_objects)
   target_compile_definitions(test_targetedplay PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 TP_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -547,9 +548,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
 
   # Exact application path, including the frontend-to-level handoff, driven
   # through the existing frontend observer with owned-process SDL events.
-  add_executable(test_frontendentry src/__test__/test_frontendentry.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_frontendentry src/__test__/test_frontendentry.cpp)
+  target_link_libraries(test_frontendentry PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_frontendentry PRIVATE webolution_objects)
   target_compile_definitions(test_frontendentry PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -563,9 +563,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
   # P14: installed map/title/font assets, public SDL motion in runApplication.
-  add_executable(test_maphover src/__test__/test_maphover.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_maphover src/__test__/test_maphover.cpp)
+  target_link_libraries(test_maphover PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_maphover PRIVATE webolution_objects)
   target_compile_definitions(test_maphover PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
   add_test(NAME maphover COMMAND test_maphover after "${CMAKE_BINARY_DIR}/map-hover-test")
@@ -594,9 +593,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
 
   # Observe real SDL window lifetimes in the source application, including teardown.
   if(MINGW OR (UNIX AND NOT APPLE))
-    add_executable(test_frontendwindowquit src/__test__/test_frontendwindowquit.cpp
-      ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-      src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+    add_executable(test_frontendwindowquit src/__test__/test_frontendwindowquit.cpp)
+    target_link_libraries(test_frontendwindowquit PRIVATE webolution_app webolution_app_nomain)
     target_link_libraries(test_frontendwindowquit PRIVATE webolution_objects)
     target_compile_definitions(test_frontendwindowquit PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
     target_link_options(test_frontendwindowquit PRIVATE
@@ -631,9 +629,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
     endif()
   endif()
 
-  add_executable(test_levelinteraction src/__test__/test_levelinteraction.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_levelinteraction src/__test__/test_levelinteraction.cpp)
+  target_link_libraries(test_levelinteraction PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_levelinteraction PRIVATE webolution_objects)
   target_compile_definitions(test_levelinteraction PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -649,9 +646,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   # basher-fix-001: the Basher at the wall on the installed MM_BASH_002 through runApplication (standalone
   # --level, owned clock, no save store). Reports go under the ignored build/ tree. The probes observe at
   # several distances from the wall and only fail on driver integrity; basherfix asserts the fixed behavior.
-  add_executable(test_basherfix src/__test__/test_basherfix.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_basherfix src/__test__/test_basherfix.cpp)
+  target_link_libraries(test_basherfix PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_basherfix PRIVATE webolution_objects)
   target_compile_definitions(test_basherfix PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -672,9 +668,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   set_tests_properties(basherfix_away PROPERTIES TIMEOUT 300 ENVIRONMENT "${BF_ENV}")
 
   # teleport-softlock-001: real installed pad visits, natural trace and the sweep's idle horizon.
-  add_executable(test_teleportsoftlock src/__test__/test_teleportsoftlock.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_teleportsoftlock src/__test__/test_teleportsoftlock.cpp)
+  target_link_libraries(test_teleportsoftlock PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_teleportsoftlock PRIVATE webolution_objects)
   target_compile_definitions(test_teleportsoftlock PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -697,9 +692,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   # terrain-render-001: terrain a skill removes or adds reaches the level view. The scene case runs TubeScene on real
   # level data; the app cases drive runApplication with public input twice (normal and --no-terrain-sync) and compare
   # frames. Images go under the ignored build/ tree. Standalone --level runs install no save store.
-  add_executable(test_terrainrender src/__test__/test_terrainrender.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_terrainrender src/__test__/test_terrainrender.cpp)
+  target_link_libraries(test_terrainrender PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_terrainrender PRIVATE webolution_objects)
   target_compile_definitions(test_terrainrender PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -722,9 +716,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   # paused; a lit bomber fuse shows a countdown. `units` reads the installed lemming sheet; `app` cases drive
   # runApplication with public input twice (normal and --no-actor-anim); `pause` holds the entries under the
   # pause key. Images go under the ignored build/ tree.
-  add_executable(test_actoranimstate src/__test__/test_actoranimstate.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_actoranimstate src/__test__/test_actoranimstate.cpp)
+  target_link_libraries(test_actoranimstate PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_actoranimstate PRIVATE webolution_objects)
   target_compile_definitions(test_actoranimstate PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -747,9 +740,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME actoranimstate_bash COMMAND test_actoranimstate app "${AA_DIR}" MM_BASH_002 5 bash walker basher bash)
   set_tests_properties(actoranimstate_climb actoranimstate_float actoranimstate_bomb actoranimstate_block
     actoranimstate_build actoranimstate_bash PROPERTIES TIMEOUT 300 ENVIRONMENT "${AA_ENV}")
-  add_executable(test_leveloverlap src/__test__/test_leveloverlap.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_leveloverlap src/__test__/test_leveloverlap.cpp)
+  target_link_libraries(test_leveloverlap PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_leveloverlap PRIVATE webolution_objects)
   target_compile_definitions(test_leveloverlap PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -761,9 +753,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME leveloverlap COMMAND test_leveloverlap)
   set_tests_properties(leveloverlap PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  add_executable(test_levelvisibility src/__test__/test_levelvisibility.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_levelvisibility src/__test__/test_levelvisibility.cpp)
+  target_link_libraries(test_levelvisibility PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_levelvisibility PRIVATE webolution_objects)
   target_compile_definitions(test_levelvisibility PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -775,9 +766,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME levelvisibility COMMAND test_levelvisibility "${CMAKE_BINARY_DIR}/level-visibility-test")
   set_tests_properties(levelvisibility PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  add_executable(test_levelcursor src/__test__/test_levelcursor.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_levelcursor src/__test__/test_levelcursor.cpp)
+  target_link_libraries(test_levelcursor PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_levelcursor PRIVATE webolution_objects)
   target_compile_definitions(test_levelcursor PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -789,9 +779,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME levelcursor COMMAND test_levelcursor)
   set_tests_properties(levelcursor PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  add_executable(test_levelreturn src/__test__/test_levelreturn.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_levelreturn src/__test__/test_levelreturn.cpp)
+  target_link_libraries(test_levelreturn PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_levelreturn PRIVATE webolution_objects)
   target_compile_definitions(test_levelreturn PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -815,9 +804,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
     ENVIRONMENT "SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   # native-022: ordinary frontend entry -> level with one owned audio device.
   # Failure guard only; success is decided by the observers and SDL_QUIT.
-  add_executable(test_audioapp src/__test__/test_audioapp.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_audioapp src/__test__/test_audioapp.cpp)
+  target_link_libraries(test_audioapp PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_audioapp PRIVATE webolution_objects)
   target_compile_definitions(test_audioapp PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -834,7 +822,7 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   # The frozen source stays ignored; clean checkouts still run the current side.
   set(AUDIO_DEMO_SOURCES ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM AUDIO_DEMO_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp")
-  add_library(audio_demo_app OBJECT ${AUDIO_DEMO_SOURCES}
+  add_library(audio_demo_app STATIC ${AUDIO_DEMO_SOURCES}
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(audio_demo_app PUBLIC webolution_objects)
@@ -860,9 +848,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
     endif()
   endforeach()
-  add_executable(test_entrycuewindow src/__test__/test_entrycuewindow.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_entrycuewindow src/__test__/test_entrycuewindow.cpp)
+  target_link_libraries(test_entrycuewindow PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_entrycuewindow PRIVATE webolution_objects)
   target_compile_definitions(test_entrycuewindow PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -874,9 +861,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME entrycuewindow COMMAND test_entrycuewindow)
   set_tests_properties(entrycuewindow PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  add_executable(test_levelmenuwindow src/__test__/test_levelmenuwindow.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_levelmenuwindow src/__test__/test_levelmenuwindow.cpp)
+  target_link_libraries(test_levelmenuwindow PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_levelmenuwindow PRIVATE webolution_objects)
   target_compile_definitions(test_levelmenuwindow PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -1065,7 +1051,7 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   list(REMOVE_ITEM SCENE_DEMO_SUPPORT
     "${CMAKE_SOURCE_DIR}/src/app/main.cpp"
     "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
-  add_library(scene_demo_support OBJECT ${SCENE_DEMO_SUPPORT}
+  add_library(scene_demo_support STATIC ${SCENE_DEMO_SUPPORT}
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(scene_demo_support PUBLIC webolution_objects)
@@ -1274,7 +1260,7 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     "${CMAKE_SOURCE_DIR}/src/app/main.cpp"
     "${CMAKE_SOURCE_DIR}/src/app/RuntimeHud.cpp"
     "${CMAKE_SOURCE_DIR}/src/app/RuntimeSkillPanel.cpp")
-  add_library(fastforward_support OBJECT ${FFI_SUPPORT}
+  add_library(fastforward_support STATIC ${FFI_SUPPORT}
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(fastforward_support PUBLIC webolution_objects)
@@ -1460,7 +1446,7 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   endif()
   set(HATCH_EXIT_SUPPORT ${FFI_SUPPORT})
   list(REMOVE_ITEM HATCH_EXIT_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
-  add_library(hatch_exit_support OBJECT ${HATCH_EXIT_SUPPORT}
+  add_library(hatch_exit_support STATIC ${HATCH_EXIT_SUPPORT}
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(hatch_exit_support PUBLIC webolution_objects)
   target_compile_definitions(hatch_exit_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -1512,7 +1498,7 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   set(OCCLUSION_SUPPORT ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM OCCLUSION_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/TubeScene.cpp"
     "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
-  add_library(actor_occlusion_support OBJECT ${OCCLUSION_SUPPORT}
+  add_library(actor_occlusion_support STATIC ${OCCLUSION_SUPPORT}
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(actor_occlusion_support PUBLIC webolution_objects)
   target_compile_definitions(actor_occlusion_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
@@ -1538,6 +1524,15 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     endif()
     add_executable(test_actor_occlusion_${side} src/__test__/test_actor_occlusion.cpp
       ${occlusion_scene} ${occlusion_app})
+    if(side STREQUAL "before")
+      # The frozen renderer includes its local TubeScene.h. Its driver must
+      # share that header's walker vector layout (before R8 added gravity).
+      # Isolate just this header; the driver still needs current support APIs.
+      set(occlusion_headers "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-before-headers")
+      configure_file("${OCCLUSION_BASE}/src/app/TubeScene.h"
+        "${occlusion_headers}/app/TubeScene.h" COPYONLY)
+      target_include_directories(test_actor_occlusion_before BEFORE PRIVATE "${occlusion_headers}")
+    endif()
     target_link_libraries(test_actor_occlusion_${side} PRIVATE actor_occlusion_support webolution_objects)
     if(side STREQUAL "after")
       target_compile_definitions(test_actor_occlusion_${side} PRIVATE OCCLUSION_HOVER_EXPECTATION=1)
@@ -1586,6 +1581,12 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
       endif()
     endif()
     add_executable(test_actor_depth_${side} src/__test__/test_actor_depth.cpp ${depth_scene})
+    if(side STREQUAL "before")
+      set(depth_headers "${CMAKE_CURRENT_BINARY_DIR}/actor-depth-before-headers")
+      configure_file("${ACTOR_DEPTH_BASE}/src/app/TubeScene.h"
+        "${depth_headers}/app/TubeScene.h" COPYONLY)
+      target_include_directories(test_actor_depth_before BEFORE PRIVATE "${depth_headers}")
+    endif()
     target_link_libraries(test_actor_depth_${side} PRIVATE actor_occlusion_support webolution_objects)
     if(side STREQUAL "before")
       target_compile_definitions(test_actor_depth_${side} PRIVATE ACTOR_DEPTH_BEFORE=1)
@@ -1610,9 +1611,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   # (win/loss/watchdog) are reported to build/playable-baseline-001, never asserted; the exit code
   # reflects driver integrity only. Isolated FileSaveSink under that directory; no installed save.
   set(PB_DIR "${CMAKE_SOURCE_DIR}/build/playable-baseline-001")
-  add_executable(test_playablebaseline src/__test__/test_playablebaseline.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_playablebaseline src/__test__/test_playablebaseline.cpp)
+  target_link_libraries(test_playablebaseline PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_playablebaseline PRIVATE webolution_objects)
   target_compile_definitions(test_playablebaseline PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 PB_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -1639,9 +1639,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   # visited, a result record written, sheets written); a level's outcome is reported, never asserted. No save store is
   # supplied to runApplication, so no save is read or written by the sweep.
   set(LS_DIR "${CMAKE_SOURCE_DIR}/build/level-sweep-001")
-  add_executable(test_levelsweep src/__test__/test_levelsweep.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_levelsweep src/__test__/test_levelsweep.cpp)
+  target_link_libraries(test_levelsweep PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_levelsweep PRIVATE webolution_objects)
   target_compile_definitions(test_levelsweep PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 LS_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -1671,9 +1670,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   # blocked/watchdog) are reported to build/playable-expansion-001/runs/<stamp>, never asserted; the exit code reflects
   # driver integrity only. Order is play N -> restart N -> play N+1 so each restart sees the save as play N left it.
   set(PE_DIR "${CMAKE_SOURCE_DIR}/build/playable-expansion-001")
-  add_executable(test_playableexpansion src/__test__/test_playableexpansion.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_playableexpansion src/__test__/test_playableexpansion.cpp)
+  target_link_libraries(test_playableexpansion PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_playableexpansion PRIVATE webolution_objects)
   target_compile_definitions(test_playableexpansion PRIVATE
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 PE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -1709,9 +1707,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     -P ${CMAKE_SOURCE_DIR}/cmake/levelselectioncase_identity.cmake)
   set_tests_properties(levelselection_identity PROPERTIES TIMEOUT 60)
 
-  add_executable(test_levelselection_after src/__test__/test_levelselection.cpp
-    ${WEBOLUTION_GFX_SOURCES} src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-    src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+  add_executable(test_levelselection_after src/__test__/test_levelselection.cpp)
+  target_link_libraries(test_levelselection_after PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_levelselection_after PRIVATE webolution_objects)
   target_compile_definitions(test_levelselection_after PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
   if(TARGET SDL2::SDL2)
@@ -1956,3 +1953,12 @@ include(cmake/fluid_kinds.cmake)
 include(cmake/fluid_hazard.cmake)
 include(cmake/lever_render.cmake)
 include(cmake/panel_icon_anim.cmake)
+include(cmake/antigrav_presentation.cmake)
+include(cmake/empty_receiver.cmake)
+include(cmake/climber_occlusion.cmake)
+
+# New full application drivers should keep just their test sources and link
+# webolution_app, webolution_app_nomain and webolution_objects. Test-private
+# macros belong on that driver. Legacy partial/frozen targets below share only
+# their requested current objects, after all frozen include paths are known.
+webolution_share_registered_app_sources()

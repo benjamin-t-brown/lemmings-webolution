@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <set>
 #include <sstream>
 using namespace webo;
 namespace fs = std::filesystem;
@@ -28,6 +29,11 @@ namespace {
 constexpr bool before = true;
 #else
 constexpr bool before = false;
+#endif
+#ifdef EMPTY_RECEIVER_BASELINE
+constexpr bool receiverBaseline = true;
+#else
+constexpr bool receiverBaseline = false;
 #endif
 int failures = 0;
 void check(bool ok, const std::string& message) {
@@ -368,7 +374,9 @@ int routes(const fs::path& out) {
     const auto dir=out/label; fs::create_directories(dir);
     const auto baselineDir=out.parent_path()/"routes-before"/label;
     const auto& sites=gadget?gadgetSites:miss?losing:winning;
-    std::ofstream trace(dir/"frames.csv"),actions(dir/"actions.csv"),states(dir/"gameplay.txt");
+    std::ofstream trace(dir/"frames.csv"),actions(dir/"actions.csv"),states(dir/"gameplay.txt"),losses(dir/"dry-receiver-losses.csv");
+    losses << "age_frame,actor,x,y,fall_distance,receiver_id,height,request\n";
+    std::set<std::size_t> drySplats, exitedActors;
     trace<<"frame,ms,age_frame,spawned,saved,dead,phase,stock\n";
     actions<<"age_frame,actor,x,y,click_x,click_y,stock\n";
     std::ifstream expected;
@@ -416,6 +424,26 @@ int routes(const fs::path& out) {
       }
       trace<<f.frame<<','<<f.world.levelClockMs()<<','<<age<<','<<f.world.spawned()<<','
            <<f.world.saved()<<','<<f.world.dead()<<','<<int(f.endPhase)<<','<<f.world.setup().skills[3]<<'\n';
+      if(gadget) {
+        for(std::size_t i=0;i<f.world.lemmings().size();++i) {
+          const auto& l=f.world.lemmings()[i];
+          if(l.state==sim::State::Exited) exitedActors.insert(i);
+          if(l.state!=sim::State::Splatter || drySplats.contains(i)) continue;
+          for(const auto& g:f.world.setup().gates) {
+            if(g.height==0 && l.x>=g.minX && l.x<g.maxX &&
+               f.world.terrain().height()-1-l.y==g.minY &&
+               f.world.terrain().solid(l.x,l.y+1)) {
+              drySplats.insert(i);
+              losses<<age<<','<<i<<','<<l.x<<','<<l.y<<','<<l.fallDistance<<','
+                    <<g.id<<','<<g.height<<','<<g.request<<'\n';
+              check(l.x==222 && l.y==91 && l.fallDistance==50,
+                    "gadget's former survivors fall fifty cells to the actual dry receiver floor");
+              png(dir/("dry-floor-splat-"+std::to_string(i)+".png"),f.image);
+              break;
+            }
+          }
+        }
+      }
       if(firstFrame>=0 && !f.world.timedOut()) {
         const auto state=routeState(f);states<<state<<'\n';
         if(paired){std::string old;check(bool(std::getline(expected,old)) && old==state,
@@ -455,8 +483,16 @@ int routes(const fs::path& out) {
     check(next==sites.size() && confirmed==int(sites.size()),"all matched placements confirmed");
     if(pass==0)check(won && saved==23 && mapEarned,"historical placements win 23/30 and genuinely unlock gadget");
     if(miss)check(!won && saved==0,"historical losing placements reproduce trapped zero-save loss");
-    if(gadget)check(mapEarned && spawned==20 && !won && saved==2,
-                    "previously blocked gadget preserves historical two-save loss");
+    if(gadget) {
+      // U3: both former survivors used the baked dry-fluid lid. Keep an
+      // authenticated entry-simulation replay alongside the corrected route,
+      // rather than accepting an arbitrary changed saved count.
+      check(mapEarned && spawned==20 && !won && saved==(receiverBaseline?2:0),
+            "earned gadget retains its loss, with the U3 dry-pit correction to the saved count");
+      check(receiverBaseline ? (drySplats.empty() && exitedActors==std::set<std::size_t>{0,1}) :
+                               (drySplats==std::set<std::size_t>{0,1} && exitedActors.empty()),
+            "exactly actors 0 and 1 change from saved across the dry lid to dry-floor splats");
+    }
     check(births.size()==std::size_t(gadget?20:30),"matched full release count");
     if(paired) {
       std::ifstream oldBirths(baselineDir/"births.txt");unsigned long long ms;std::size_t i=0;
@@ -471,6 +507,7 @@ int routes(const fs::path& out) {
     std::ofstream(dir/"summary.txt")<<"level="<<level<<"\nwon="<<won<<"\nsaved="<<saved<<"\nspawned="<<spawned
       <<"\nfirst_ms="<<firstMs<<"\nretry_legs="<<leg<<"\nclicks="<<clicks<<"\nconfirmed="<<confirmed
       <<"\nfast_forward_age_frame="<<ffAge<<"\nseconds_remaining="<<remaining<<"\nmap_earned="<<mapEarned
+      <<"\ndry_receiver_splats="<<drySplats.size()<<"\nexited_actors="<<exitedActors.size()
       <<"\npaired="<<paired<<"\nfailures="<<failures<<'\n';
   }
   check(installed.unchanged() && normal.unchanged(),"matched routes preserve real saves");

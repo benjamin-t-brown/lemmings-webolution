@@ -1,5 +1,7 @@
-// Replay the two Blocker placements from the retained MM_W_012 WIN 11/20:
+// Replay the two Blocker placements from the historical MM_W_012 WIN 11/20:
 // build/fluid-hazard-001/route-regressions/20261114-062255/step-4-gadget/action-trace.csv.
+// empty-receiver-fall-001: that win depended on walking across dry receivers.
+// The same placements must now lose enough actors to make winning impossible.
 // This supplements the unchanged wall-clock assessment driver. Only SDL inputs
 // are written; World, stock, progress and clocks are never mutated by callbacks.
 #include "app/AppEntry.h"
@@ -83,6 +85,7 @@ int main(int argc, char** argv) {
   options.saveStore = store;
   bool entered = false, ff = false, selected = false, results = false, won = false, returned = false;
   bool menuClick = false, mapClick = false;
+  bool doomed = false, drySplat = false;
   int placements = 0, saved = -1, dead = -1, resultSaved = -1;
   std::array<bool, 2> blockerSeen{};
   std::array<std::uint64_t, 2> attachTicks{};
@@ -121,6 +124,21 @@ int main(int argc, char** argv) {
     const auto& world = frame.world;
     saved = world.saved();
     dead = world.dead();
+    check(std::none_of(world.lemmings().begin(),world.lemmings().end(),
+          [](const auto& l){return l.state==sim::State::Drown;}),
+          "water species does not drown on this route");
+    for(const auto& l:world.lemmings())
+      drySplat |= l.state==sim::State::Splatter && l.y>=90;
+    if(!doomed && blockerSeen[0] && blockerSeen[1] && world.dead()>10 && saved==0) {
+      doomed=true;
+      check(drySplat,"loss follows a fall to a dry receiver floor");
+      check(std::all_of(world.setup().gates.begin(),world.setup().gates.end(),
+            [](const auto& g){return g.minY!=4||g.height==0;}),
+            "recorded no-lever route leaves all lower receivers empty");
+      check(writePng(out/"dry-pit-loss.png",frame.image).has_value(),"retain inevitable loss frame");
+      quit(); // Public close once fewer than the required ten can survive.
+      return;
+    }
     // These two actor IDs/edges are the recorded winning route. Do not place an
     // earlier actor as the adaptive wall-clock driver sometimes does on faster runs.
     const auto emit = [&](std::size_t index, const char* action) {
@@ -181,23 +199,21 @@ int main(int argc, char** argv) {
           "retain placement pixels");
   };
   const int status = app::runApplication(int(raw.size()), raw.data(), frontend, observe, options);
-  check(status == 0 && entered && results && returned, "complete public frontend/level/result/map route");
+  check(status == 0 && entered && doomed, "public no-lever route can no longer rescue the required ten");
   check(placements == 2 && blockerSeen[0] && blockerSeen[1], "both recorded actor placements take effect");
-  check(won && saved >= 11 && resultSaved == saved && dead == 0, "retain recorded WIN at least 11/20 with zero deaths");
+  check(!won && saved == 0 && dead > 10, "historical dry-pit WIN becomes an inevitable loss");
   // Read the file through a fresh store, then compare the complete codec image:
-  // only the genuinely won node may change from the pinned earned seed.
+  // the failed route must preserve the pinned earned seed completely.
   save::SaveStore reopened(std::make_unique<save::FileSaveSink>(privateSave, game));
   const auto persisted = reopened.load();
-  check(bool(persisted), "reopen private save after win");
+  check(bool(persisted), "reopen private save after the losing route");
   if (initial && persisted) {
     auto expected = *initial;
-    const auto& mapping = app::MapScene::nodeMapping()[8];
-    check(expected.markComplete(mapping[0], mapping[1]), "valid node 8 save mapping");
-    check(expected.serialize() == persisted->serialize(), "persist only earned node 8 completion, preserve other fields");
+    check(expected.serialize() == persisted->serialize(), "losing route preserves private progress");
   }
   check(installed.unchanged() && normal.unchanged(), "installed and normal saves unchanged");
   std::ofstream(out / "summary.txt") << "failures=" << failures << "\nstatus=" << status
-      << "\nwon=" << won << "\nsaved=" << saved << "\nresult_saved=" << resultSaved << "\ndead=" << dead
+      << "\nwon=" << won << "\ndoomed=" << doomed << "\ndry_splat=" << drySplat << "\nsaved=" << saved << "\nresult_saved=" << resultSaved << "\ndead=" << dead
       << "\nplacements=" << placements << "\nreturned_to_map=" << returned
       << "\nblocker_11_attach_tick=" << attachTicks[0] << "\nblocker_12_attach_tick=" << attachTicks[1]
       << "\ninstalled_save_unchanged=" << installed.unchanged()

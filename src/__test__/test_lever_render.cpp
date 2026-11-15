@@ -184,11 +184,12 @@ void appRoute(const fs::path&game,const fs::path&out){
     if(frames==610){
       png(out/"final.png",f.image);
       for(const auto& gate:f.world.setup().gates)if(gate.id==5||gate.id==6)
-        check(gate.height==24.5,"natural lever contact fills both bottom receivers");
+        check(gate.height==0,"U3: no-input route loses actors before the lever; bottom receivers stay empty");
+      check(f.world.saved()==0&&f.world.dead()>0,"U3: ordinary no-input route cannot cross dry pits to win");
     }
     previous=f.image;previousFaces=faces;
   };
-  check(app::runApplication(int(raw.size()),raw.data(),{},observe,options)==0,"ordinary application returned");check(frames>400&&throws>0,"ordinary hatch walkers throw lever without injection");trace.close();
+  check(app::runApplication(int(raw.size()),raw.data(),{},observe,options)==0,"ordinary application returned");check(frames>400&&throws==0,"U3: ordinary hatch walkers fall into the first dry pit before reaching a lever");trace.close();
 #if defined(LEVER_RENDER_after) && defined(LEVER_BASELINE_AVAILABLE)
   check(file(out/"world.csv")==file(out.parent_path()/"app-before"/"world.csv"),"ordinary scripted route outcomes and every actor state unchanged");
 #endif

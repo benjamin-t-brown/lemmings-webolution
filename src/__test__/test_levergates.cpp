@@ -280,23 +280,38 @@ int main(int argc, char** argv) {
       }
     }
     check(req1Left == 0 && req0Kept == 528, "16 request-1 regions clear 3072, the three request-0 regions keep 528");
-    // Every other plane and cell equals the stored-grid terrain (only the water-zone plane changed).
+    // empty-receiver-fall-001: raw fluid-only cells are no longer immutable
+    // Earth. Independently identify those cells from the installed receiver
+    // rectangles; every actual floor/wall and every unrelated plane stays exact.
     auto grid = webo::findCollisionGrid(*blob);
     check(grid.has_value(), "collision grid");
     if (grid) {
       const sim::Terrain stored = sim::Terrain::fromCollisionGrid(*grid);
       bool same = stored.width() == s.terrain.width() && stored.height() == s.terrain.height();
-      std::size_t diff = 0;
-      for (int y = 0; same && y < stored.height(); ++y)
+      std::size_t diff = 0, materialDiff = 0, fluidOnlyCells = 0;
+      for (int y = 0; y < stored.height(); ++y)
         for (int x = 0; x < stored.width(); ++x) {
-          if (stored.at(x, y) != s.terrain.at(x, y) || stored.waterHazard(x, y) != s.terrain.waterHazard(x, y) ||
+          const int row = stored.height() - 1 - y;
+          const auto word = grid->at(x, row);
+          constexpr auto fluidBits = kCellZoneType0 | kCellZoneType1 | kCellZoneType2;
+          const bool fluidOnly = (word & fluidBits) && !(word & ~fluidBits) &&
+              std::any_of(g_rects.begin(), g_rects.end(), [&](const Rect& r) {
+                return x >= r.x0 && x < r.x1 && row >= r.y0 && row < r.y1;
+              });
+          fluidOnlyCells += fluidOnly;
+          const auto expected = fluidOnly ? sim::Material::Empty : stored.at(x, y);
+          if (expected != s.terrain.at(x, y) || stored.waterHazard(x, y) != s.terrain.waterHazard(x, y) ||
               stored.zoneAcid(x, y) != s.terrain.zoneAcid(x, y) || stored.antiGrav(x, y) != s.terrain.antiGrav(x, y))
             same = false;
+          if (stored.at(x, y) != s.terrain.at(x, y)) ++materialDiff;
           if (stored.zoneWater(x, y) != s.terrain.zoneWater(x, y)) ++diff;
         }
-      check(same, "materials, hazard, acid and anti-grav planes are untouched");
+      check(same, "only receiver fluid-only material changes; floors, walls, hazard, acid and anti-grav stay exact");
+      check(fluidOnlyCells == 3600 && materialDiff == fluidOnlyCells,
+            "exactly 3600 baked fluid-only Earth cells lose immutable material, including the filled upper receiver");
       check(stored.zoneWaterCells() == 3600 && diff == 3072, "exactly the 3072 request-1 cells changed against the stored grid");
-      note(std::format("REAL load: stored-grid zoneWaterCells={} changed cells vs stored={}", stored.zoneWaterCells(), diff));
+      note(std::format("REAL load: stored-grid zoneWaterCells={} changed zone cells={} removed fluid-only material cells={}",
+                       stored.zoneWaterCells(), diff, materialDiff));
     }
 
     // Serialized links by base id (not file order).

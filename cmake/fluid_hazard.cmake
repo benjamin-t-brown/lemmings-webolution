@@ -16,6 +16,16 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN AND DEFINED WEBOLUTION_GAME_DIR)
         "${CMAKE_SOURCE_DIR}/build/fluid-hazard-001/before-source/src/sim/World.cpp")
       target_include_directories(test_fluid_hazard_before PRIVATE
         "${CMAKE_SOURCE_DIR}/src/sim")
+      # U3 changes the loader's baked fluid-only material. Keep the earlier
+      # simulation baseline paired with its authentic pre-U3 loader too.
+      if(EXISTS "${CMAKE_SOURCE_DIR}/build/empty-receiver-fall-001/before-source/src/sim/RetailLevel.cpp")
+        get_target_property(fh_sources test_fluid_hazard_before SOURCES)
+        list(REMOVE_ITEM fh_sources "$<FILTER:$<TARGET_OBJECTS:webolution_objects>,EXCLUDE,sim.World.cpp.obj>")
+        set_property(TARGET test_fluid_hazard_before PROPERTY SOURCES "${fh_sources}")
+        target_sources(test_fluid_hazard_before PRIVATE
+          "$<FILTER:$<TARGET_OBJECTS:webolution_objects>,EXCLUDE,sim.(World|RetailLevel).cpp.obj>"
+          "${CMAKE_SOURCE_DIR}/build/empty-receiver-fall-001/before-source/src/sim/RetailLevel.cpp")
+      endif()
     else()
       target_sources(test_fluid_hazard_after PRIVATE $<TARGET_OBJECTS:webolution_objects>)
     endif()
@@ -47,6 +57,14 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN AND DEFINED WEBOLUTION_GAME_DIR)
       target_include_directories(test_fluid_hazard_gadget_before PRIVATE
         "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/src/sim")
       target_compile_definitions(test_fluid_hazard_gadget_before PRIVATE PE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+      if(EXISTS "${CMAKE_SOURCE_DIR}/build/empty-receiver-fall-001/before-source/src/sim/RetailLevel.cpp")
+        get_target_property(fhg_sources test_fluid_hazard_gadget_before SOURCES)
+        list(REMOVE_ITEM fhg_sources "$<FILTER:$<TARGET_OBJECTS:webolution_objects>,EXCLUDE,sim.World.cpp.obj>")
+        set_property(TARGET test_fluid_hazard_gadget_before PROPERTY SOURCES "${fhg_sources}")
+        target_sources(test_fluid_hazard_gadget_before PRIVATE
+          "$<FILTER:$<TARGET_OBJECTS:webolution_objects>,EXCLUDE,sim.(World|RetailLevel).cpp.obj>"
+          "${CMAKE_SOURCE_DIR}/build/empty-receiver-fall-001/before-source/src/sim/RetailLevel.cpp")
+      endif()
       add_test(NAME fluid_hazard_gadget_seed COMMAND ${CMAKE_COMMAND}
         "-DTASK_DIR=${CMAKE_SOURCE_DIR}/build/fluid-hazard-001"
         -P "${CMAKE_SOURCE_DIR}/cmake/fluid_hazard_gadget_seed.cmake")

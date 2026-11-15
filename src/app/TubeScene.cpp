@@ -18,6 +18,7 @@
 #include <format>
 #include <numbers>
 #include <set>
+#include <string_view>
 #include <utility>
 
 namespace webo::app {
@@ -256,6 +257,7 @@ struct PreparedInjectedWalker {
   webo::Image texture;
   ActorSpritePlacement placement{};
   bool mirrored = false;
+  bool inverted = false;
   std::array<std::uint8_t, 3> tint{255, 255, 255};
   Image clippedSprite;
 };
@@ -266,9 +268,13 @@ struct PreparedInjectedWalker {
 // contact allowance. Neither scene comparison nor that allowance establishes
 // recovered device depth behavior.
 bool clipActorToScene(Image& sprite, const ActorSpritePlacement& p,
-                      std::span<const double> depth) {
+                      std::span<const double> depth, bool behindClimbingWall) {
   bool visible = false;
-  const double z = actorPhysicalDepth(p, sprite.width);
+  // U1, PROVISIONAL clone policy: the contact allowance keeps the front of
+  // a flat billboard intact, but pulling it toward the camera on the other
+  // side of its climbing wall exposes it through that wall. Retain only the
+  // traced normalized bias there. Original device/contact state is unknown.
+  const double z = actorPhysicalDepth(p, sprite.width) + (behindClimbingWall ? 4.0 : 0.0);
   for (int y = std::max(0, int(std::ceil(p.top)));
        y < std::min(sprite.height, int(std::ceil(p.bottom))); ++y) {
     for (int x = std::max(0, int(std::ceil(p.left)));
@@ -341,6 +347,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   auto placement = app::actorSpritePlacement(frame, worldPosition, camera, selection.mirrored, -1);
   if (!placement)
     return std::nullopt;
+  *placement = actorSpriteGravityPlacement(*placement, injected.verticalDir);
 
   std::array<std::uint8_t, 3> tint{255, 255, 255};
   if (!light.empty()) {
@@ -353,6 +360,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   prepared.texture = std::move(*texture);
   prepared.placement = *placement;
   prepared.mirrored = selection.mirrored;
+  prepared.inverted = injected.verticalDir < 0;
   prepared.tint = tint;
   // Keep the explicit visibility diagnostic able to reveal rejected actors,
   // including actors hidden by scene depth. Production never sets this flag.
@@ -362,8 +370,17 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     sprite.height = camera.height;
     sprite.alpha = AlphaMode::Embedded;
     sprite.rgba.assign(std::size_t(sprite.width) * sprite.height * 4, 0);
-    if (!drawActorSprite(sprite, frame, prepared.texture, *placement, selection.mirrored, tint) ||
-        !clipActorToScene(sprite, *placement, depth)) return std::nullopt;
+    // pose.basis points in the actor's facing direction, into its climbing
+    // wall. The camera is across that face when this dot product is positive.
+    // Use the same decision for composition and picking through this function.
+    double wallSide = 0.0;
+    for (int k = 0; k < 3; ++k)
+      wallSide += pose.basis[k] * (camera.eyeWorld[k] - pose.modelPosition[k]);
+    const bool behindClimbingWall = injected.clip != nullptr &&
+        std::string_view(injected.clip) == "climb" && wallSide > 0.0;
+    if (!drawActorSprite(sprite, frame, prepared.texture, *placement, selection.mirrored, tint,
+                         true, prepared.inverted) ||
+        !clipActorToScene(sprite, *placement, depth, behindClimbingWall)) return std::nullopt;
   }
   return prepared;
 }
@@ -410,7 +427,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
       continue;
     }
     if (!app::drawActorSprite(overlay, prepared->frame, prepared->texture, prepared->placement,
-                              prepared->mirrored, prepared->tint, true)
+                              prepared->mirrored, prepared->tint, true, prepared->inverted)
              .has_value())
       continue;
   }
@@ -942,6 +959,7 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
       walker.plus8Z = drawn.z;
     }
     walker.facing = static_cast<int>(lemming.facing);
+    walker.verticalDir = lemming.verticalDir;
     // Without a tracker every state draws walk entry 0 (the D3b behaviour); with one, the
     // lemming's own clip and temporal entry (actor-anim-001).
     if (anim != nullptr) {

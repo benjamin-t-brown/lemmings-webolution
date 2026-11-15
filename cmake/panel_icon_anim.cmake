@@ -1,8 +1,8 @@
 if(TARGET fluid_kinds_support)
-  # An archive reuses existing application objects; directly compiled panel
-  # objects below override its members for authentic frozen/current demos.
-  add_library(panel_icon_support STATIC $<TARGET_OBJECTS:fluid_kinds_support>)
-  target_link_libraries(panel_icon_support PUBLIC webolution_objects)
+  # The support archive reuses shared application objects; the panel
+  # sources below supply the authentic frozen/current overrides.
+  add_library(panel_icon_support INTERFACE)
+  target_link_libraries(panel_icon_support INTERFACE fluid_kinds_support webolution_objects)
   foreach(side IN ITEMS before after)
     if(side STREQUAL "before")
       set(panel_src "${CMAKE_SOURCE_DIR}/build/panel-icon-anim-001/frozen/src")

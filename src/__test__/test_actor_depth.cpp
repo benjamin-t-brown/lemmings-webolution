@@ -138,8 +138,18 @@ int main(int argc, char** argv) {
       const auto raw=render(*scene,*lib,camera,rawOpt);
       const auto rawBoxes=scene->injectedWalkerScreenBoxes(camera,rawOpt,*lib);
       check(bool(rawBoxes[0]),"raw placement exists");if(!rawBoxes[0])continue;
-      const auto placement=*rawBoxes[0];const double z=placement.depth*640/0.3-4.0;
+      const auto placement=*rawBoxes[0];double z=placement.depth*640/0.3-4.0;
       check(app::actorPhysicalDepth(placement,640)==z,"physical Z conversion and provisional contact bias");
+#ifndef ACTOR_DEPTH_BEFORE
+      // U1 corrects the former expectation that a contact allowance may pull
+      // a climber through its wall. Geometry and raw sprites are unchanged.
+      if(name=="climber") {
+        ActorPoseLevel level;level.gridHeight=mesh->faceCount;level.cylinderTemplate=&*mesh;
+        const auto pose=actorPoseFromCylinderSample(level,{sample.plus8X,sample.plus8Y,sample.plus8Z},sample.facing);
+        double side=0;for(int k=0;k<3;++k)side+=pose.basis[k]*(camera.eyeWorld[k]-pose.modelPosition[k]);
+        if(side>0)z+=4.0;
+      }
+#endif
       // Independent pixel oracle: unmasked production sprite + actual scene Z.
       const bool gate=app::actorSubmissionVisible(actors[0].plus8X,actors[0].plus8Z,true,
           app::tubePassBounds(camera.selectorTurns,scene->collisionGrid().cylinderExtent));

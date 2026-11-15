@@ -94,6 +94,25 @@ std::expected<void, std::string> drawActorSprite(webo::Image& overlay,
                                                  bool horizontalMirror,
                                                  std::array<std::uint8_t, 3> vertexRgb,
                                                  bool alphaTest) {
+  return drawActorSprite(overlay, frame, sheet, p, horizontalMirror, vertexRgb, alphaTest, false);
+}
+
+ActorSpritePlacement actorSpriteGravityPlacement(ActorSpritePlacement p, int verticalDir) {
+  if (verticalDir < 0) {
+    const double top = 2.0 * p.originY - p.bottom;
+    p.bottom = nativeFloat(2.0 * p.originY - p.top);
+    p.top = nativeFloat(top);
+  }
+  return p;
+}
+
+std::expected<void, std::string> drawActorSprite(webo::Image& overlay,
+                                                 const webo::SpriteFrame& frame,
+                                                 const webo::Image& sheet,
+                                                 const ActorSpritePlacement& p,
+                                                 bool horizontalMirror,
+                                                 std::array<std::uint8_t, 3> vertexRgb,
+                                                 bool alphaTest, bool verticalMirror) {
   if (overlay.width <= 0 || overlay.height <= 0 ||
       overlay.rgba.size() != static_cast<std::size_t>(overlay.width) * overlay.height * 4)
     return std::unexpected("actor sprite: invalid overlay storage");
@@ -121,7 +140,8 @@ std::expected<void, std::string> drawActorSprite(webo::Image& overlay,
   const int y0 = std::max(0, static_cast<int>(std::ceil(p.top)));
   const int y1 = std::min(overlay.height, static_cast<int>(std::ceil(p.bottom)));
   for (int y = y0; y < y1; ++y) {
-    const double v = (y - p.top) / (p.bottom - p.top);
+    double v = (y - p.top) / (p.bottom - p.top);
+    if (verticalMirror) v = 1.0 - v;
     const double sourceV = frame.uTop + v * (frame.uBottom - frame.uTop);
     const int sy = std::clamp(static_cast<int>(std::floor(sourceV * sheet.height)),
                               static_cast<int>(frame.top), static_cast<int>(frame.bottom) - 1);

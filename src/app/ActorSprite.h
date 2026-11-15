@@ -65,4 +65,16 @@ std::expected<void, std::string> drawActorSprite(
     const ActorSpritePlacement& placement, bool horizontalMirror,
     std::array<std::uint8_t, 3> vertexRgb = {255, 255, 255}, bool alphaTest = true);
 
+// R8: original orientation+2D8 reverses V independently of horizontal mirror
+// (42E5D4, 47A7F1/47A999). Preserve the old overload for upright consumers.
+std::expected<void, std::string> drawActorSprite(
+    webo::Image& overlay, const webo::SpriteFrame& frame, const webo::Image& sheet,
+    const ActorSpritePlacement& placement, bool horizontalMirror,
+    std::array<std::uint8_t, 3> vertexRgb, bool alphaTest, bool verticalMirror);
+
+// PROVISIONAL clone support-point adapter: reflect the sprite box around the
+// projected feet. Native origin/+368 collision bias is a different convention;
+// an original inverted contact-frame comparison must settle exact anchoring.
+ActorSpritePlacement actorSpriteGravityPlacement(ActorSpritePlacement placement, int verticalDir);
+
 }  // namespace webo::app

@@ -55,8 +55,9 @@ const webo::LevelInfo* findLevelInfo(const std::vector<webo::LevelInfo>& infos,
 // each tagged type-1 record with its placed lever and finally applies each linked lever's stored
 // face once, as its state and as its list send (0x00444417 -> 0x0043703F -> 0x00436E6A runs last). Returns a diagnostic when the records cannot be read, in
 // which case the level keeps the stored mask and unlinked levers (the pre-existing behaviour).
-std::string linkLevelGates(std::span<const std::byte> bytes, int maskWidth, int maskHeight,
+std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid& grid,
                            LevelSetup& s, std::size_t& pairedLevers) {
+  const int maskWidth = grid.width, maskHeight = grid.height;
   lemmings::CompiledLevel level;
   try {
     const std::span<const std::uint8_t> raw(reinterpret_cast<const std::uint8_t*>(bytes.data()),
@@ -105,6 +106,33 @@ std::string linkLevelGates(std::span<const std::byte> bytes, int maskWidth, int 
   // Reader load pass, in stream order, on the populated terrain.
   for (FluidGate& gate : s.gates)
     gate.initialise(s.terrain);
+
+  // empty-receiver-fall-001: fromCollisionGrid admits every nonzero landable
+  // word, including a fluid-zone bit by itself. The reader's load pass above
+  // clears the zone plane in a dry receiver, but previously left that baked
+  // Earth behind as a permanent lid. Only discard fluid-only words belonging
+  // to a registered receiver; retain actual floor, wall and bridge materials.
+  // Runtime support comes from World::groundAt's live height, not this mask.
+  constexpr auto fluidBits = kCellZoneType0 | kCellZoneType1 | kCellZoneType2;
+  for (const FluidGate& gate : s.gates) {
+    double span = gate.maxX - gate.minX;
+    if (span < 0.0)
+      span += maskWidth;
+    for (int x = 0; x < maskWidth; ++x) {
+      double dx = std::fmod(x - gate.minX, double(maskWidth));
+      if (dx < 0.0)
+        dx += maskWidth;
+      if (dx >= span)
+        continue;
+      for (int row = 0; row < maskHeight; ++row) {
+        if (row < gate.minY || row >= gate.minY + gate.high)
+          continue;
+        const auto word = grid.at(x, row);
+        if ((word & fluidBits) && !(word & ~fluidBits))
+          s.terrain.set(x, maskHeight - 1 - row, Material::Empty);
+      }
+    }
+  }
 
   // Pair each tagged type-1 record (a lever) with its placed lever. The record carries the same
   // pose as the lever.a3d placement; the pairing is by that pose through the production box
@@ -343,7 +371,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
   }
 
   // lever-gates-impl-001: after the terrain, the placed levers and every other object exist.
-  report.gateLinkDiagnostic = linkLevelGates(*blob, grid->width, grid->height, s, report.pairedLevers);
+  report.gateLinkDiagnostic = linkLevelGates(*blob, *grid, s, report.pairedLevers);
 
   for (std::size_t i = 0; i < skills->counts.size(); ++i)
     s.skills[i] = static_cast<int>(skills->counts[i]);

@@ -2,7 +2,7 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN AND DEFINED WEBOLUTION_GAME_DIR)
   set(fluid_support ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM fluid_support "${CMAKE_SOURCE_DIR}/src/app/main.cpp"
     "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp" "${CMAKE_SOURCE_DIR}/src/app/TubeScene.cpp")
-  add_library(fluid_kinds_support OBJECT ${fluid_support}
+  add_library(fluid_kinds_support STATIC ${fluid_support}
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(fluid_kinds_support PUBLIC webolution_objects)
   target_compile_definitions(fluid_kinds_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)

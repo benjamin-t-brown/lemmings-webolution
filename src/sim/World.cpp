@@ -462,7 +462,7 @@ void World::stepFaller(Lemming& l) {
       l.frame = 0;
       return;
     }
-    if (solidAt(l.x, l.y + v)) {
+    if (groundAt(l.x, l.y + v, v)) {
 
       if (setup_.terrain.trampoline(l.x, l.y + v)) {
         l.state = State::Bounce;
@@ -551,6 +551,32 @@ void World::stepDrown(Lemming& l) {
   }
 }
 
+bool World::groundAt(int x, int y, int verticalDir) const {
+  if (solidAt(x, y))
+    return true;
+  if (verticalDir < 0 || setup_.terrain.width() <= 0)
+    return false;
+  const int width = setup_.terrain.width();
+  const int row = setup_.terrain.height() - 1 - y;
+  for (const FluidGate& g : setup_.gates) {
+    if (g.kind < 0 || g.kind > 2 || !(g.height > 0.0))
+      continue;
+    double span = g.maxX - g.minX;
+    if (span < 0.0)
+      span += width;
+    double dx = std::fmod(x - g.minX, double(width));
+    if (dx < 0.0)
+      dx += width;
+    // Provisional integer support: feet use floor(mean live surface), so
+    // the ground probe is one row below it. Visual waves are not collision.
+    // Original 0x41C321..0x41C41D separates receiver/species contact from
+    // terrain; human MM_W_012 observations establish dry fall / wet travel.
+    if (dx < span && row == int(std::floor(g.minY + g.height)) - 1)
+      return true;
+  }
+  return false;
+}
+
 bool World::attachFluidHazard(Lemming& l) {
   if (!l.active() || l.state == State::Drown || l.state == State::Teleporting)
     return false;
@@ -579,8 +605,15 @@ bool World::attachFluidHazard(Lemming& l) {
     if (dx < 0.0) dx += width;
     if (dx >= span || row < g.minY || row > g.minY + g.height)
       continue;
-    if ((g.kind == 0 && l.sheetType == 1) || (g.kind == 2 && l.sheetType == 2))
+    if ((g.kind == 0 && l.sheetType == 1) || (g.kind == 2 && l.sheetType == 2)) {
+      // Provisional cell quantization of surface riding. Re-evaluate the
+      // live height each update, including while a linked receiver rises.
+      // Do not move an actor standing on actual terrain above the fluid.
+      if (l.verticalDir > 0 && (l.state == State::Walker ||
+          l.state == State::Faller || l.state == State::Floater))
+        l.y = setup_.terrain.height() - 1 - int(std::floor(g.minY + g.height));
       continue;
+    }
     leaveBlocker(l);
     l.state = State::Drown;
     l.frame = 0;
@@ -713,9 +746,9 @@ void World::stepWalker(Lemming& l) {
 
 
 
-    if (solidAt(l.x, l.y + v))
+    if (groundAt(l.x, l.y + v, v))
       continue;
-    if (solidAt(l.x, l.y + 2 * v)) {
+    if (groundAt(l.x, l.y + 2 * v, v)) {
       l.y += v;
       if (attachFluidHazard(l))
         return;
@@ -1108,7 +1141,7 @@ void World::step(Lemming& l) {
 
 
 
-      if (!solidAt(l.x, l.y + 1)) {
+      if (!groundAt(l.x, l.y + 1, 1)) {
         leaveBlocker(l);
         l.state = State::Faller;
         l.fallDistance = 0;
@@ -1353,7 +1386,7 @@ bool World::assign(std::size_t index, Skill skill) {
 
   switch (skill) {
     case Skill::Blocker:
-      if (!solidAt(l.x, l.y + 1)) {
+      if (!groundAt(l.x, l.y + 1, 1)) {
 
         if (l.state == State::Blocker)
           stampBlockerField(l);

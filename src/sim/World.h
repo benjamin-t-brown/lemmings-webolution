@@ -1269,6 +1269,8 @@ private:
   void stepDrown(Lemming& l);
   // fluid-hazard-001: species-aware contact with the current receiver volume.
   bool attachFluidHazard(Lemming& l);
+  // Live receiver support is separate from terrain walls/skill material.
+  bool groundAt(int x, int y, int verticalDir) const;
   void stepWalker(Lemming& l);
   void stepClimber(Lemming& l);
   void stepHoister(Lemming& l);

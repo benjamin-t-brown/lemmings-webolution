@@ -104,6 +104,9 @@ struct SceneOptions {
     // (app/LemmingAnim.h names them); a clip the sheet lacks falls back to "walk".
     // Last member so positional initialisers of the fields above are unaffected.
     const char* clip = "walk";
+    // Simulation gravity persists after leaving a flipper cell. Keep it with
+    // the shared draw/pick sample rather than resampling the terrain at draw time.
+    int verticalDir = 1;
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
   bool composeActorsBeforeRoute = false;

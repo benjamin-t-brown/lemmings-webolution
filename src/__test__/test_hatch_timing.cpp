@@ -1,5 +1,6 @@
 // Owned-process clone observations through the ordinary frontend. No original run.
 #include "app/AppEntry.h"
+#include "FrameConsumptionAudit.h"
 #include "app/RuntimeHud.h"
 #include "app/LevelStartSequence.h"
 #include "app/RuntimePick.h"
@@ -111,7 +112,11 @@ int entry(const fs::path& out, bool fast) {
       else if (s.screen() == shell::Screen::Map) click(px,py);
       else { check(false, "entry stays on expected frontend route"); quit(); }
     };
+    // Frozen historical mains have no render-demand path and stay unconverted.
+    std::unique_ptr<test::FrameConsumptionAudit> audit;
+    if (!before && !fast) audit = std::make_unique<test::FrameConsumptionAudit>(dir);
     auto frame = [&](const app::LevelFrameView& f) {
+      if (audit) audit->frame(f);
       ++frameCount;
       if (!f.paused) elapsed += 0.1;
       check(f.levelName == *id, "selected installed level matches");
@@ -137,16 +142,16 @@ int entry(const fs::path& out, bool fast) {
       if (f.world.spawned() > spawned) {
         check(f.world.spawned() == spawned + 1, "one release per observed frame");
         releases.push_back(f.world.levelClockMs()); spawned=f.world.spawned();
-        if (first < 0) { first=elapsed; png(dir / "first-release.png", f.image); }
+        if (first < 0) { first=elapsed; png(dir / "first-release.png", test::inspectedImage(f)); }
         if (!before) check(cueEnd >= 0 && doorEnd >= 0 && first > doorEnd,
                            "first release after cue and fully open doors");
         shot = true;
       }
-      if (shot) png(dir / ("frame-" + std::to_string(f.frame) + ".png"), f.image);
-      if (f.frame == 8) key(SDL_SCANCODE_P);
-      if (f.paused && ++paused == 4) key(SDL_SCANCODE_P);
+      if (shot) png(dir / ("frame-" + std::to_string(f.frame) + ".png"), test::inspectedImage(f));
+      if (f.frame == 8) { if (audit) audit->action("pause"); key(SDL_SCANCODE_P); }
+      if (f.paused && ++paused == 4) { if (audit) audit->action("resume"); key(SDL_SCANCODE_P); }
       if (fast && (f.frame == 1 || f.frame == 35)) click(50,348); // public FF plate
-      if ((!fast && spawned == f.world.setup().totalLemmings) || (fast && elapsed > 8.0)) quit();
+      if ((!fast && spawned == f.world.setup().totalLemmings) || (fast && elapsed > 8.0)) { if (audit) audit->action("quit"); quit(); }
     };
     std::vector<std::string> args{"hatch-timing", "--frontend", "--native", "--frames", "900", "--game-dir", game.string()};
     std::vector<char*> argv; for (auto& a : args) argv.push_back(a.data());
@@ -356,16 +361,25 @@ int routes(const fs::path& out) {
   struct Site { std::size_t actor; int x,y; sim::Facing face; };
   // Use actors-at-end, not state-blocker events: the historical observer resets
   // its previous-state vector at each birth and can miss valid transitions.
-  const std::vector<Site> winning{{0,177,24,sim::Facing::Right},{1,82,45,sim::Facing::Left},
-                               {2,176,65,sim::Facing::Right},{3,155,65,sim::Facing::Left}};
-  const std::vector<Site> losing{{0,175,24,sim::Facing::Right},{1,82,45,sim::Facing::Left},
-                               {2,175,65,sim::Facing::Right},
-                               {3,153,65,sim::Facing::Left}};
+  // hatch-release-direction-001: both levels alternate. The old all-right
+  // actor IDs no longer reach these sites. Preserve the historical simulation
+  // control; the current route first turns left-born actors on the upper shelf,
+  // then places the same four physical blockers with the right-born even IDs.
+  const std::vector<Site> winning = receiverBaseline ?
+      std::vector<Site>{{0,177,24,sim::Facing::Right},{1,82,45,sim::Facing::Left},
+                       {2,176,65,sim::Facing::Right},{3,155,65,sim::Facing::Left}} :
+      std::vector<Site>{{1,110,14,sim::Facing::Left},{0,177,24,sim::Facing::Right},
+                       {2,82,45,sim::Facing::Left},{4,176,65,sim::Facing::Right},
+                       {6,155,65,sim::Facing::Left}};
+  const std::vector<Site> losing{{0,175,24,sim::Facing::Right},{receiverBaseline?1u:2u,82,45,sim::Facing::Left},
+                               {receiverBaseline?2u:4u,175,65,sim::Facing::Right},
+                               {receiverBaseline?3u:6u,153,65,sim::Facing::Left}};
   // Actual final placements in the pre-task expansion gadget route. Its third
   // click intended actor 11 but picked actor 12. Replay that resulting input
   // choice explicitly, rather than relying on a wall-clock picking race.
-  const std::vector<Site> gadgetSites{{2,214,41,sim::Facing::Right},{3,163,41,sim::Facing::Left},
-                                     {12,185,26,sim::Facing::Right}};
+  const std::vector<Site> gadgetSites{{receiverBaseline?2u:4u,214,41,sim::Facing::Right},
+                                     {receiverBaseline?3u:6u,163,41,sim::Facing::Left},
+                                     {receiverBaseline?12u:18u,185,26,sim::Facing::Right}};
   for(int pass=0;pass<3;++pass) {
     const bool gadget=pass==1, miss=pass==2;
     const std::string label=gadget?"earned-gadget":miss?"losing-placements":"winning-placements";
@@ -428,7 +442,9 @@ int routes(const fs::path& out) {
         for(std::size_t i=0;i<f.world.lemmings().size();++i) {
           const auto& l=f.world.lemmings()[i];
           if(l.state==sim::State::Exited) exitedActors.insert(i);
-          if(l.state!=sim::State::Splatter || drySplats.contains(i)) continue;
+          // Seven-pass fast-forward may finish a splat between observations.
+          // Dead retains the same floor, fall distance and actor identity.
+          if((l.state!=sim::State::Splatter && l.state!=sim::State::Dead) || drySplats.contains(i)) continue;
           for(const auto& g:f.world.setup().gates) {
             if(g.height==0 && l.x>=g.minX && l.x<g.maxX &&
                f.world.terrain().height()-1-l.y==g.minY &&
@@ -436,8 +452,9 @@ int routes(const fs::path& out) {
               drySplats.insert(i);
               losses<<age<<','<<i<<','<<l.x<<','<<l.y<<','<<l.fallDistance<<','
                     <<g.id<<','<<g.height<<','<<g.request<<'\n';
-              check(l.x==222 && l.y==91 && l.fallDistance==50,
-                    "gadget's former survivors fall fifty cells to the actual dry receiver floor");
+              const bool rightBorn=i%2==0;
+              check(l.x==(rightBorn?222:40) && l.y==91 && l.fallDistance==(rightBorn?50:51),
+                    "alternating births reach the right or left dry receiver floor");
               png(dir/("dry-floor-splat-"+std::to_string(i)+".png"),f.image);
               break;
             }
@@ -490,8 +507,8 @@ int routes(const fs::path& out) {
       check(mapEarned && spawned==20 && !won && saved==(receiverBaseline?2:0),
             "earned gadget retains its loss, with the U3 dry-pit correction to the saved count");
       check(receiverBaseline ? (drySplats.empty() && exitedActors==std::set<std::size_t>{0,1}) :
-                               (drySplats==std::set<std::size_t>{0,1} && exitedActors.empty()),
-            "exactly actors 0 and 1 change from saved across the dry lid to dry-floor splats");
+                               (drySplats==std::set<std::size_t>{0,1,2,3,5,7,9,11,13,15,17,19} && exitedActors.empty()),
+            "right-born actors 0/2 and all ten left-born actors splat in dry receivers");
     }
     check(births.size()==std::size_t(gadget?20:30),"matched full release count");
     if(paired) {

@@ -16256,7 +16256,7 @@
     {
       "id": "test-render-skip-001",
       "title": "Play tests stop drawing frames nobody inspects",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16272,12 +16272,230 @@
         "For each converted test, the retained gameplay, release, action, frame-state and outcome records are byte-identical with and without skipping, and inspected images match apart from the documented wall-clock flame seeding.",
         "No test was removed and no assertion, count or timeout was changed; tests that consume per-frame rendering are left unconverted and named.",
         "Full registered verification passes and the report states the main suite's total test time before and after."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261115T160516-37880-1dcb4aa5",
+      "started": "2026-11-15T16:05:16.252923+00:00",
+      "finished": "2026-11-15T16:25:47.914495+00:00",
+      "last_run": "build/agent-runs/20261115T160516-37880-1dcb4aa5",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-15T08:23:22.344451+00:00",
+          "by": "project lead",
+          "change": "Lead note: run 20261115T073256-38144-45ceec0a was recorded interrupted (worker time limit) although worker.jsonl shows the final turn completed with status needs_review and the report docs/scratch/test-render-skip-001.md written. Sent to supervisor verification and independent review without another worker pass; last-message.txt is absent, the final message is in worker.jsonl."
+        }
+      ],
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The implementation and equivalence evidence satisfy the first four criteria. Update the report with the completed supervisor verification: 281/281 main and 84/84 recovery tests passed; main-suite total was 1217.67 s before and 1017.66 s after. The report still calls verification and the after total pending. This requires a documentation correction, not another test run on unchanged content.",
+        "checks": [
+          {
+            "criterion": "Report docs/scratch/test-render-skip-001.md lists every test over 20 s with its before and after wall time from actual runs and its classification of what it consumes from rendering.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/test-render-skip-001.md",
+                "detail": "Lists all 60 registrations exceeding 20 seconds in the pre-task full verification, their actual before/after times, consumption classifications and conversion decisions. Distinguishes scoped measurements from full-suite totals."
+              },
+              {
+                "path": "build/agent-runs/20261115T065957-22780-c25dfb5b/verification.log",
+                "detail": "Independently counted 60 registrations over 20 seconds; none is missing from classification-with-times.json."
+              },
+              {
+                "path": "build/test-render-skip-001/classification-with-times.json",
+                "detail": "All 60 entries have classifications, source mappings and actual after times, supported by the retained scoped run logs."
+              }
+            ]
+          },
+          {
+            "criterion": "The skip is off by default, reachable only through an explicit test or automation option, and ordinary interactive play renders every frame as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrameConsumption.h",
+                "detail": "The thread-local automation scope defaults to absent; skipUnconsumed returns false without an explicit enabled scope. No CLI or interactive environment setting enables it."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Skipping additionally requires an owned clock and simulated frame view. Default execution materializes every frame through the production renderer. Requested inspection, final window screenshots and raster diagnostics force rendering; discarded scene depth is refreshed before picking."
+              },
+              {
+                "path": "src/__test__/test_frame_consumption.cpp",
+                "detail": "The registered regression compares default, explicitly disabled and enabled policies over 120 installed-level frames, checking state, inspected images, screenshots, scope restoration and public picking after a discarded frame. Supervisor verification passes this regression."
+              }
+            ]
+          },
+          {
+            "criterion": "For each converted test, the retained gameplay, release, action, frame-state and outcome records are byte-identical with and without skipping, and inspected images match apart from the documented wall-clock flame seeding.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/test-render-skip-001/paired-001/comparison.json",
+                "detail": "Retains successful full/skip comparisons for sweep chunk 00, hatch entry and both receiver variants, plus authentic entry-loop controls. All five record streams match; image differences remain within actual sprite-write masks."
+              },
+              {
+                "path": "build/test-render-skip-001/paired-sweep-001/comparison.json",
+                "detail": "Covers the remaining sixteen converted sweep registrations. Together the paired manifests cover all 20 conversions, with 530 matching record files, 290 inspected images and zero differences outside recorded sprite writes."
+              },
+              {
+                "path": "build/test-render-skip-001/final-registered-comparison.json",
+                "detail": "Connects final compiled registered outputs to retained full-render references. Independently read and SHA-256-compared all 530 retained record pairs: zero mismatches. The six retained original driver trace files also compare identically."
+              },
+              {
+                "path": "build/test-render-skip-001/paired-001/skip/hatch_timing_after/MM_CLIMB_002/first-release.png",
+                "detail": "Directly viewed alongside the retained full-render counterpart; both show the same hatch, first lemming, scene and HUD."
+              },
+              {
+                "path": "build/test-render-skip-001/final-source-sha256.json",
+                "detail": "Every listed final source hash matches the current checkout, preserving the connection between reviewed source and retained final evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "No test was removed and no assertion, count or timeout was changed; tests that consume per-frame rendering are left unconverted and named.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-bea97485bf464c098da1a44b276433ba/0001-review-1ad214/before-diff.txt",
+                "detail": "The source diff preserves existing assertions, frame/sample limits and registration properties. Changes add explicit image inspection and audit records to three drivers; existing tests are retained."
+              },
+              {
+                "path": "cmake/frame_consumption.cmake",
+                "detail": "Adds one contract regression and optional evidence targets without modifying existing timeouts, dependencies or RUN_SERIAL settings. Verification increases from 280 to 281 main registrations."
+              },
+              {
+                "path": "build/test-render-skip-001/assertion-call-counts.json",
+                "detail": "Records unchanged existing assertion call counts: 8 for levelsweep, 73 for hatch timing and 33 for empty receiver; consistent with the inspected source diff."
+              },
+              {
+                "path": "docs/scratch/test-render-skip-001.md",
+                "detail": "Names every slow per-frame consumer left unconverted, including picking, hover, occlusion, actor-motion, hatch-route and gameplay assessment registrations."
+              }
+            ]
+          },
+          {
+            "criterion": "Full registered verification passes and the report states the main suite's total test time before and after.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-bea97485bf464c098da1a44b276433ba/0001-verify-679451/verification.log",
+                "detail": "Full registered verification passes: 281/281 main tests in 1017.66 seconds and 84/84 recovery tests in 18.41 seconds."
+              },
+              {
+                "path": "build/agent-runs/20261115T065957-22780-c25dfb5b/verification.log",
+                "detail": "The pre-task full run passed 280/280 main tests with a main-suite real total of 1217.67 seconds."
+              },
+              {
+                "path": "docs/scratch/test-render-skip-001.md",
+                "detail": "States the before total but explicitly leaves full verification and the after main-suite total pending, including in its handoff. Append the exact supervisor log and completed totals, preserving the distinction between scoped measurements and full-suite results."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The implementation and equivalence evidence satisfy the first four criteria. Update the report with the completed supervisor verification: 281/281 main and 84/84 recovery tests passed; main-suite total was 1217.67 s before and 1017.66 s after. The report still calls verification and the after total pending. This requires a documentation correction, not another test run on unchanged content.",
+      "review": {
+        "decision": "accept",
+        "reason": "The report correction resolves the prior review finding. All five criteria are supported by current source and retained evidence. This accepts the scoped test-speed change, without establishing original-game fidelity or human playability.",
+        "checks": [
+          {
+            "criterion": "Report docs/scratch/test-render-skip-001.md lists every test over 20 s with its before and after wall time from actual runs and its classification of what it consumes from rendering.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/test-render-skip-001.md",
+                "detail": "Lists all 60 registrations exceeding 20 seconds in the pre-task full verification, with before/after times, rendering-consumption classifications and conversion decisions."
+              },
+              {
+                "path": "build/test-render-skip-001/classification-with-times.json",
+                "detail": "Independently matched all 60 names against the baseline verification log and all after times against the three cited scoped-run logs; no omissions or timing mismatches."
+              }
+            ]
+          },
+          {
+            "criterion": "The skip is off by default, reachable only through an explicit test or automation option, and ordinary interactive play renders every frame as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrameConsumption.h",
+                "detail": "The active automation scope defaults to null; skipping requires explicit ScopedFrameConsumption opt-in."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Skipping additionally requires an owned clock and simulation view. Default execution materializes every frame; inspection, final screenshots and raster diagnostics force rendering. Public picking refreshes discarded scene depth before simulation advances."
+              },
+              {
+                "path": "src/__test__/test_frame_consumption.cpp",
+                "detail": "Exercises default, disabled and enabled policies on the same 120-frame installed-level route, including exact inspected images, scope restoration, final screenshot and public picking after a discarded frame."
+              }
+            ]
+          },
+          {
+            "criterion": "For each converted test, the retained gameplay, release, action, frame-state and outcome records are byte-identical with and without skipping, and inspected images match apart from the documented wall-clock flame seeding.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/test-render-skip-001/final-registered-comparison.json",
+                "detail": "Covers all 20 converted registrations and 290 inspected images, with zero reported differences outside actual sprite-store masks. Independently SHA-256-compared all 530 retained record pairs against full-render references and recorded hashes: zero mismatches."
+              },
+              {
+                "path": "build/test-render-skip-001/final-source-sha256.json",
+                "detail": "All ten listed source/build-tool hashes independently match the current checkout, connecting retained equivalence evidence to reviewed content."
+              },
+              {
+                "path": "build/test-render-skip-001/paired-001/skip/hatch_timing_after/MM_CLIMB_002/first-release.png",
+                "detail": "Directly viewed alongside its retained full-render counterpart; hatch, first lemming, scene and HUD agree."
+              }
+            ]
+          },
+          {
+            "criterion": "No test was removed and no assertion, count or timeout was changed; tests that consume per-frame rendering are left unconverted and named.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-bea97485bf464c098da1a44b276433ba/0003-review-2cb2f1/before-diff.txt",
+                "detail": "Source changes preserve existing assertions, frame limits and registrations while adding explicit image-inspection requests and audit records to the converted drivers."
+              },
+              {
+                "path": "cmake/frame_consumption.cmake",
+                "detail": "Adds one contract regression and optional evidence targets; existing test timeouts, dependencies and RUN_SERIAL settings remain unchanged."
+              },
+              {
+                "path": "docs/scratch/test-render-skip-001.md",
+                "detail": "Names the slow per-frame consumers retained on full rendering, including picking, hover, occlusion, motion and gameplay assessments. Existing main registrations remain; the count increases from 280 to 281."
+              }
+            ]
+          },
+          {
+            "criterion": "Full registered verification passes and the report states the main suite's total test time before and after.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/test-render-skip-001.md",
+                "detail": "The correction records completed supervisor verification and exact log links: 281/281 main and 84/84 recovery passed; main total 1217.67 seconds before and 1017.66 seconds after. It explicitly supersedes the earlier pending statement."
+              },
+              {
+                "path": "build/agent-runs/loop-bea97485bf464c098da1a44b276433ba/0001-verify-679451/verification.log",
+                "detail": "Confirms the report's cited after results: 281 main tests passed in 1017.66 seconds and 84 recovery tests passed in 18.41 seconds."
+              },
+              {
+                "path": "build/agent-runs/20261115T160516-37880-1dcb4aa5/verification.log",
+                "detail": "The latest supervisor verification also passes all 281 main and 84 recovery tests, in 1094.39 and 21.30 seconds respectively. These are a separate run from the report's explicitly cited comparison."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T16:28:02.776467+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T160516-37880-1dcb4aa5\\verification.log",
+        "verified_content": "9841c0fe1d7cb3c11d3d690e43bd1fd6b7c747e9735ad22ce7b3c23129ac86fd"
+      }
     },
     {
       "id": "map-hover-text-001",
       "title": "Make the map hover text match the original's three-line block",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16304,16 +16522,101 @@
           "change": "Lead note: run 20261115T073210-22780-79778116 was cancelled five seconds after dispatch by the lead's own STOP request to reorder the queue; no work was done and it is not counted as an attempt (loop_attempts 1 -> 0)."
         }
       ],
-      "loop_attempts": 0,
-      "run_id": "20261115T073210-22780-79778116",
-      "started": "2026-11-15T07:32:10.567711+00:00",
-      "finished": "2026-11-15T07:32:15.234186+00:00",
-      "last_run": "build/agent-runs/20261115T073210-22780-79778116"
+      "loop_attempts": 1,
+      "run_id": "20261115T162802-37880-9e8b82a7",
+      "started": "2026-11-15T16:28:03.088158+00:00",
+      "finished": "2026-11-15T16:59:21.246273+00:00",
+      "last_run": "build/agent-runs/20261115T162802-37880-9e8b82a7",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported by the source, retained images, static evidence and supervisor verification. Independent visual review confirms the requested block. Exact native sampling remains explicitly provisional; this acceptance does not establish full original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "The report shows the current hover text beside docs/playtest/reference/leveltext.png and cites the font, icon, colours, position and format strings from installed assets and static evidence, or states what is not evidenced and labels it provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/map-hover-text-001.md",
+                "detail": "Documents the production path, installed ^FONT.BMP/ALF, clock atlas rectangle, colours, coordinates, format strings and level-data fields. Records the reference EXE SHA-256 and static addresses, and explicitly labels sampling and focus behavior provisional."
+              },
+              {
+                "path": "build/map-hover-text-001/just-climb-comparison.png",
+                "detail": "Viewed the labeled before/after/reference panels alongside leveltext.png. They show the title-only defect and the corrected counts, title and clock/time block."
+              },
+              {
+                "path": "build/map-hover-text-001/static/0x49ac47-read_function_instructions.json",
+                "detail": "Instructions confirm black text origins (30,0), (30,20), (30,60), red origins offset (2,2), RGB(220,50,50), and alignment flag0x100."
+              },
+              {
+                "path": "build/map-hover-text-001/static/0x49b7b0-read_function_instructions.json",
+                "detail": "Cross-checked against retained pseudocode: the clock uses the map atlas, black source colour key and destination (0,60)."
+              },
+              {
+                "path": "build/map-hover-text-001/static/0x4c44e4-read_bytes.json",
+                "detail": "Retained bytes contain '%d:%02d' at 0x4C44E4 and '%d Lemmings : %s %d' at 0x4C44EC, matching the implementation."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, through the production path with public pointer input, hovering the 'Just Climb' node shows three lines at the top-left matching the reference in content, order, font, shadow and clock icon; a retained image is compared side by side with the reference and reviewed. Two other nodes show their own lemming count, save target, name and time limit, matching the level data. A regression test asserts the three strings for at least two nodes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_maphover.cpp",
+                "detail": "Queues public SDL mouse motion through runApplication after ordinary frontend navigation. Asserts exact triples for Just Climb and Bash and Mine, checks all 102 production triples against installed metadata, and compares composed frames against an independent glyph/atlas pixel oracle."
+              },
+              {
+                "path": "src/app/FrontendWindow.cpp",
+                "detail": "The production mouse-motion handler calls setPointer; presentation obtains composeFrame. FrontendSession then uses unchanged pickNode eligibility and MapScene::drawHover before drawing the cursor."
+              },
+              {
+                "path": "build/map-hover-text-001/bash-and-mine-comparison.png",
+                "detail": "Independently reviewed before/after/original panels. The final block shows '20 Lemmings : Save 10', 'Bash and Mine', the green clock and '10:00', with the requested font and shadow."
+              },
+              {
+                "path": "build/agent-native/main/map-hover-test/run-1794760471402480500/fresh-node-1.png",
+                "detail": "Viewed the retained public-input frame: '10 Lemmings : Save 1', 'Just Float', clock and '5:00'."
+              },
+              {
+                "path": "build/agent-native/main/map-hover-test/run-1794760471402480500/fresh-node-2.png",
+                "detail": "Viewed the retained public-input frame: '20 Lemmings : Save 10', 'Just Bomb', clock and '5:00'. These values are checked against installed level metadata."
+              }
+            ]
+          },
+          {
+            "criterion": "Map frames with no node hovered are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-native/main/map-hover-text-comparison/image-comparison.json",
+                "detail": "Supervisor-run comparison records 114 unchanged no-hover frames and 109 changed hover frames. Retained no-hover PNG pairs have identical hashes; changed image regions remain within the top-left block."
+              },
+              {
+                "path": "tools/compare_map_hover.py",
+                "detail": "Checks matching route/frame metadata and base hashes, unchanged no-hover hashes, and decoded pixels for 21 retained PNG pairs. It also requires successful baseline/final summaries and unchanged installed/normal saves."
+              },
+              {
+                "path": "build/agent-native/main/map-hover-test/run-1794760471402480500/summary.txt",
+                "detail": "Records 102 selectable nodes, ordinary level launch, zero failures, installed_save_unchanged=1 and normal_save_unchanged=1. The driver supplies unique private save paths and checks that hovering does not rewrite them."
+              },
+              {
+                "path": "build/agent-runs/20261115T162802-37880-9e8b82a7/verification.log",
+                "detail": "Full registered verification passes: main 283/283 and recovery 84/84, including maphover, frozen baseline and comparison tests. Uses the registered compiler, eight build jobs, assertion-enabled main configuration, and finishes with git diff --check."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T17:01:18.323580+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T162802-37880-9e8b82a7\\verification.log",
+        "verified_content": "aec972dc9fcfc42a2eefe3850e1240e1d46871ea4f1b5d4dd2847eec41909e16"
+      }
     },
     {
       "id": "exit-balloon-path-001",
       "title": "Make the exit balloon spiral out as in the original",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16334,12 +16637,102 @@
           "by": "project lead",
           "change": "Original observation added by the lead (docs/playtest/2026-11-14-original-session.md, images docs/playtest/reference/original-2026-11-14/balloon-a.jpg and s2-balloon.jpg, 2 frames per second, camera still): after the last lemming is saved the balloon leaves its perch within about half a second and moves sideways away from the cylinder at a roughly steady rate with little height change, leaving the view in about 4 to 4.5 s; the level is left about a second later. It does not rise straight up. Both samples are from one camera angle, so how much of the motion is outward and how much is around the cylinder is not determined; choose a path consistent with these frames, label the undetermined part provisional, and compare a clone sequence from the same level and a similar angle side by side with the reference. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12."
         }
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T170118-37880-6ae7dfe3",
+      "started": "2026-11-15T17:01:18.642711+00:00",
+      "finished": "2026-11-15T17:50:53.100134+00:00",
+      "last_run": "build/agent-runs/20261115T170118-37880-6ae7dfe3",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by retained images, source, static instructions and supervisor verification. The departure visibly improves on the vertical baseline. Camera matching, exact disappearance timing, orientation and trigger differences remain explicitly limited; this acceptance does not establish full original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "The report cites retained or static evidence for the original's balloon path and duration, or states precisely what could not be read and labels the constants provisional. A before image sequence shows the straight vertical departure.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/exit-balloon-path-001.md",
+                "detail": "Identifies MM_CLIMB_002, the registered reference SHA-256, production call path, original observations and static addresses. Separates recovered coordinate rates from provisional orientation/global triggering and documents camera, onset and disappearance-time limitations."
+              },
+              {
+                "path": "build/exit-balloon-path-001/static/rea_final2.json",
+                "detail": "Cross-checked instructions against retained pseudocode: 0x426A0C..0x426A95 adds dt*5 to logical Y and dt*0.5 to logical X and radial blend, then forwards the triple through model slot +8. Constant reads retain 0.5 and 5.0 separately."
+              },
+              {
+                "path": "build/exit-balloon-path-001/static/rea_check1.json",
+                "detail": "Instructions at 0x43D56C support radial-layer interpolation followed by angular-sector and height-row interpolation. This supports treating the third coordinate as a blend rather than a world-space distance."
+              },
+              {
+                "path": "build/exit-balloon-path-001/static/loader_instructions.json",
+                "detail": "0x43D09A reads alternating triples into sector*0x18 and sector*0x18+0x300 for 32 sectors, supporting the production adapter's deinterleaving."
+              },
+              {
+                "path": "build/exit-balloon-path-001/inspection-montage.png",
+                "detail": "Independently viewed the labeled original/before/after sequence at 0, 2, 4 and 5 seconds. The authentic baseline rises vertically; the replacement moves diagonally outward, consistent with the retained reference's departure direction."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, through the production path on an installed level, a retained image sequence shows the balloon moving outward around the cylinder while rising, over the evidenced or stated duration, before results; a regression test asserts the path is not purely vertical and that results follow.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Binds serialized exit positions and the installed coordinate lattice, samples the traced rates, and updates the complete exit root absolutely. The existing main loop supplies elapsed Pending time; simulation and Results transition logic are unchanged."
+              },
+              {
+                "path": "src/__test__/test_exit_balloon.cpp",
+                "detail": "Uses ordinary frontend navigation and public SDL clicks to win Just Climb 10/10. Asserts increasing radius, changing angle, rising height, substantial nonvertical displacement, pause stability and subsequent Results. Production framebuffer checks distinguish the outward path from the frozen vertical baseline."
+              },
+              {
+                "path": "build/exit-balloon-path-001/after/model-path.csv",
+                "detail": "Half-second samples through six seconds show radius increasing from 64.81459 to 95.27087 and world height from 40 to 70, with changing angular position."
+              },
+              {
+                "path": "build/exit-balloon-path-001/after/summary.txt",
+                "detail": "Records successful production completion, 64 Pending frames including three paused frames, a final departure sample at six seconds, sideways cloth movement and disappearance before Results, with zero failures."
+              },
+              {
+                "path": "build/exit-balloon-path-001/after/results.png",
+                "detail": "Independently viewed the retained Results framebuffer showing successful completion and 'You Saved 10'."
+              }
+            ]
+          },
+          {
+            "criterion": "Outcome, saved count, persistence and scripted route classifications are unchanged. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-balloon-path-001/comparison.json",
+                "detail": "Records both routes winning 10/10, identical complete simulation traces and private save bytes, identical initial images, and later pixel differences confined to the balloon region. Both summaries report installed and normal saves unchanged."
+              },
+              {
+                "path": "tools/compare_exit_balloon.py",
+                "detail": "Requires byte-identical paired simulation traces and saved progress, successful route summaries and unchanged installed/normal saves before producing the comparison manifest."
+              },
+              {
+                "path": "build/exit-balloon-path-001/task-only.patch",
+                "detail": "Shows the production change confined to exit presentation and coordinate linkage, with supporting test registration. Outcome, persistence and simulation implementations and existing route expectations are unchanged."
+              },
+              {
+                "path": "build/agent-runs/20261115T170118-37880-6ae7dfe3/verification.log",
+                "detail": "Supervisor verification passes all 288 main and 84 recovery tests, including frozen/current balloon routes, identity, installed assets and image comparison. Existing route regressions pass. Uses registered MinGW tools, eight build jobs, assertion-enabled -O2 main configuration, and finishes with git diff --check."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T17:53:17.986459+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T170118-37880-6ae7dfe3\\verification.log",
+        "verified_content": "93be15bcf2d415e362d0b36b5a1721736563c1f46aa8c4975f6341cc9f7aa152"
+      }
     },
     {
       "id": "hatch-release-direction-001",
       "title": "Lemmings leave the hatch in the level's stored directions",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16353,7 +16746,90 @@
         "Report docs/scratch/hatch-release-direction-001.md cites the EXE addresses for the facing rule, the clone production call path, and before/after facings from actual clone runs on MM_W_012 (alternating as reported) and two other levels.",
         "A source test covers the rule on real level data.",
         "Full registered verification passes; any changed test expectation is listed with its justification."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261115T184524-37880-4ea03312",
+      "started": "2026-11-15T18:45:25.096565+00:00",
+      "finished": "2026-11-15T19:16:22.271426+00:00",
+      "last_run": "build/agent-runs/20261115T184524-37880-4ea03312",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261115T175318-37880-81129669/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria are supported. Subsequent supervisor verification resolves the report's pending-verification handoff. Acceptance covers stored hatch directions; it does not establish full original-game fidelity or human playability.",
+        "checks": [
+          {
+            "criterion": "Report docs/scratch/hatch-release-direction-001.md cites the EXE addresses for the facing rule, the clone production call path, and before/after facings from actual clone runs on MM_W_012 (alternating as reported) and two other levels.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hatch-release-direction-001.md",
+                "detail": "Identifies the registered EXE SHA-256, playtest failure and production path through readHatchRecords, RetailLevel, RuntimeSimState, stepRelease and spawn. Documents six actual application births per level: MM_W_012 changes from RRRRRR to RLRLRL; MM_CLIMB_002 remains RRRRRR; MM_BASH_002 changes to LLLLLL. Separates static findings, clone observations and unperformed original comparison."
+              },
+              {
+                "path": "build/hatch-release-direction-001/static/reader-instructions.json",
+                "detail": "Retained Ghidra instructions confirm the stored direction word at hatch +0xB4, written at 0x425F8D, and normalization of the serialized alternation byte before storage at +0xB6 at 0x425FA8."
+              },
+              {
+                "path": "build/hatch-release-direction-001/static/release-instructions.json",
+                "detail": "Cross-checked against retained pseudocode: 0x425C6E..0x425C7D reverses the actor only for signed direction -1. Instructions at 0x425C82..0x425CAC toggle that hatch's direction from 1 to -1, otherwise to 1, before the first actor update at 0x425CCC."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Production spawn applies the exact signed comparison and post-selection toggle to the selected entrance. RetailLevel passes the projected fields into Entrance. Release cadence and scheduling remain unchanged."
+              },
+              {
+                "path": "build/hatch-release-direction-001/birth-comparison.json",
+                "detail": "Retains all 18 paired birth records and image hashes. Clocks, coordinates, states and species match across each pair. Hatch-crop differences occur only on water births 2/4/6 and all fixed-left births; every fixed-right crop remains identical."
+              },
+              {
+                "path": "build/hatch-release-direction-001/after/MM_W_012/birth-2.png",
+                "detail": "Independently viewed this production framebuffer and its retained before counterpart, confirming the second newborn's mirrored facing. Also inspected paired MM_BASH_002 birth-1 and MM_CLIMB_002 birth-2 images."
+              }
+            ]
+          },
+          {
+            "criterion": "A source test covers the rule on real level data.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_hatch_direction.cpp",
+                "detail": "Loads installed assets through the recovered decoder and production retail loader, checks both hatch projections, and exercises World births across all 102 effective levels and 144 hatches. Application observers independently pin the three acceptance patterns. Supplemental cases cover noncanonical direction words, independent hatch phases and fresh-World reset."
+              },
+              {
+                "path": "build/hatch-release-direction-001/assets/checks.txt",
+                "detail": "Records 1658 checks with zero failures. The supervisor verification also passes hatch_direction_assets and all six before/after application routes."
+              }
+            ]
+          },
+          {
+            "criterion": "Full registered verification passes; any changed test expectation is listed with its justification.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261115T184524-37880-4ea03312/verification.log",
+                "detail": "Full registered verification passes 299 main and 84 recovery tests, followed by git diff --check. Uses registered UCRT64 tools, eight build jobs, four test jobs and assertion-enabled -O2 main builds."
+              },
+              {
+                "path": "docs/scratch/hatch-release-direction-001.md",
+                "detail": "Enumerates and justifies seven dependent corrections: hatch-route actor IDs and placements; alternating-birth dry-floor losses; fluid control comparisons; gadget replay IDs; fixed-left gravity control; replacement of the obsolete MM_FLOAT_CLIMB2 climber route with E22_KF_1 and its exposed camera; and the water performance-frame golden. Retains historical failures and explains preserved outcome, visibility, persistence and timing assertions."
+              },
+              {
+                "path": "build/hatch-release-direction-001/retry-2/profile-comparison.json",
+                "detail": "Supports the changed water golden with authentic-before and current-after hashes: only 59 RGB pixels differ, bounded by (511,53)..(515,71); all other 307141 pixels match."
+              },
+              {
+                "path": "build/agent-runs/20261115T175318-37880-81129669/before-source-hashes.json",
+                "detail": "Task-entry World.cpp, RetailLevel.cpp and LevelObjects.cpp hashes match the identities pinned by hatch_direction_identity.cmake, supporting the authenticity of the all-right baseline."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T19:19:02.623494+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T184524-37880-4ea03312\\verification.log",
+        "verified_content": "00696ac1b73dbd71f61de4c84aa5190893186275d834ff4f20f535aa63822f35"
+      }
     }
   ]
 }

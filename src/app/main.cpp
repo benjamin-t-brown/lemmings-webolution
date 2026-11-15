@@ -1,4 +1,5 @@
 #include "app/FrameProfile.h"
+#include "app/FrameConsumption.h"
 // Lemmings Webolution -- 3D-first entry point.
 //
 // Ordinary startup enters the connected frontend. Explicit diagnostics load
@@ -670,29 +671,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   app::CameraIntro cameraIntro(args.frontend && args.camera.empty() &&
       (!persistentFrontend || persistentFrontend->levelIntroEnabled()));
 
-  std::vector<double> fluidDrownSceneDepth;
-  auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target) {
+  const auto prepareScene = [&] {
     app::profile::Scope profilePrepare(app::profile::Preparation);
-    const auto frameCamera = app::buildCamera(frameParams);
-    target.clear(0, 0, 0);
-    app::BackdropStats backdropStats;
-    app::SceneRasterObserver observer;
-    std::vector<std::uint8_t> c3Mask;
-    std::ofstream c3Out;
-    const bool c3Diagnostic=!args.c3WriteMask.empty()||!args.c3WriteEvents.empty();
-    if(c3Diagnostic){
-      if(args.c3WriteMask.empty()||args.c3WriteEvents.empty()||frameCamera.width!=640||frameCamera.height!=480){std::fprintf(stderr,"C3 diagnostic requires both paths and a 640x480 frame\n");std::exit(2);}
-      std::ifstream mf(args.c3WriteMask,std::ios::binary);c3Mask.assign(std::istreambuf_iterator<char>(mf),{});
-      if(!mf||c3Mask.size()!=640u*480u){std::fprintf(stderr,"C3 mask must be raw 640x480 bytes\n");std::exit(2);}
-      c3Out.open(args.c3WriteEvents,std::ios::binary);if(!c3Out){std::fprintf(stderr,"cannot open C3 event output\n");std::exit(2);}
-      c3Out<<"kind,source,node,block,triangleIndex,pixel,beforeR,beforeG,beforeB,beforeA,afterR,afterG,afterB,afterA,depthBefore,depthAfter,depthAssigned\n";
-      observer.mask=&c3Mask;
-      observer.candidate=[&](auto s,auto n,auto b,auto nt){c3Out<<"candidate,"<<s<<','<<n<<','<<b<<','<<nt<<",,,,,,\n";};
-      observer.accepted=[&](const app::SceneRasterWriteEvent& e){c3Out<<std::setprecision(17)<<"write,"<<e.source<<",,,"<<e.triangle<<','<<e.pixel;
-        for(auto v:e.colorBefore)c3Out<<','<<unsigned(v);
-        for(auto v:e.colorAfter)c3Out<<','<<unsigned(v);
-        c3Out<<','<<e.depthBefore<<','<<e.depthAfter<<','<<e.depthAssigned<<'\n';};
-    }
     // fluid-surface-impl-001: feed the live receiver state of the accepted shared-dt world to the
     // scene (stream order == sim::LevelSetup::gates order). Without --sim there is no world and
     // the fluid pass draws nothing. Depth policy: BackdropScene::kProvisionalFluidDepthPolicy.
@@ -716,6 +696,31 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
     // the terrain version moved since the last frame.
     if (world && !args.noTerrainSync) scene->syncTerrain(world->terrain());
+  };
+  std::vector<double> fluidDrownSceneDepth;
+  auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target, bool scenePrepared = false) {
+    app::profile::Scope profilePrepare(app::profile::Preparation);
+    const auto frameCamera = app::buildCamera(frameParams);
+    target.clear(0, 0, 0);
+    app::BackdropStats backdropStats;
+    app::SceneRasterObserver observer;
+    std::vector<std::uint8_t> c3Mask;
+    std::ofstream c3Out;
+    const bool c3Diagnostic=!args.c3WriteMask.empty()||!args.c3WriteEvents.empty();
+    if(c3Diagnostic){
+      if(args.c3WriteMask.empty()||args.c3WriteEvents.empty()||frameCamera.width!=640||frameCamera.height!=480){std::fprintf(stderr,"C3 diagnostic requires both paths and a 640x480 frame\n");std::exit(2);}
+      std::ifstream mf(args.c3WriteMask,std::ios::binary);c3Mask.assign(std::istreambuf_iterator<char>(mf),{});
+      if(!mf||c3Mask.size()!=640u*480u){std::fprintf(stderr,"C3 mask must be raw 640x480 bytes\n");std::exit(2);}
+      c3Out.open(args.c3WriteEvents,std::ios::binary);if(!c3Out){std::fprintf(stderr,"cannot open C3 event output\n");std::exit(2);}
+      c3Out<<"kind,source,node,block,triangleIndex,pixel,beforeR,beforeG,beforeB,beforeA,afterR,afterG,afterB,afterA,depthBefore,depthAfter,depthAssigned\n";
+      observer.mask=&c3Mask;
+      observer.candidate=[&](auto s,auto n,auto b,auto nt){c3Out<<"candidate,"<<s<<','<<n<<','<<b<<','<<nt<<",,,,,,\n";};
+      observer.accepted=[&](const app::SceneRasterWriteEvent& e){c3Out<<std::setprecision(17)<<"write,"<<e.source<<",,,"<<e.triangle<<','<<e.pixel;
+        for(auto v:e.colorBefore)c3Out<<','<<unsigned(v);
+        for(auto v:e.colorAfter)c3Out<<','<<unsigned(v);
+        c3Out<<','<<e.depthBefore<<','<<e.depthAfter<<','<<e.depthAssigned<<'\n';};
+    }
+    if (!scenePrepared) prepareScene();
     fluidDrownSceneDepth.clear();
     options.fluidDrownSceneDepth = {};
     auto geometryOptions = options;
@@ -732,7 +737,21 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
            if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate);
            if (fluidDrowning) afterFluidDepth = target.depthBuffer();
          },
-         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Secondary); });
+         [&] {
+           if (app::ScopedFrameConsumption::observing())
+             app::detail::frameSpriteCoverage().assign(std::size_t(frameCamera.width) * frameCamera.height, 0);
+           std::vector<std::uint8_t> spriteObserveAll;
+           if (app::ScopedFrameConsumption::observing())
+             spriteObserveAll.assign(std::size_t(frameCamera.width) * frameCamera.height, 1);
+           app::SceneRasterObserver spriteCoverage;
+           spriteCoverage.mask = &spriteObserveAll;
+           if (app::ScopedFrameConsumption::observing()) spriteCoverage.accepted = [&](const app::SceneRasterWriteEvent& e) {
+             if (backdrop->spriteState(e.source)) app::detail::frameSpriteCoverage()[e.pixel] = 1;
+           };
+           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
+               app::BackdropScene::Stage::Secondary,
+               app::ScopedFrameConsumption::observing() ? &spriteCoverage : nullptr);
+         });
     if (fluidDrowning) {
       // U2 PROVISIONAL: additive drowning is visible through its water, while
       // all opaque scenery (including the later secondary pass) still hides it.
@@ -956,6 +975,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<Image> finalWindowFrame;
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
   auto displayedPickReference = controls.pickReference();
+  auto displayedScenePose = cameraIntro.pose(controls.camera());
+  // Preserve the original initial input contract. Only an actually discarded
+  // loop frame invalidates depth and requires a later click to refresh it.
+  bool windowSceneCurrent = true;
+  // First-draw sprite latches consume RNG in dispatch order. Until every sprite
+  // has latched, retain every full draw (including permanently hidden nodes).
+  // Skipping must not defer a latch or change the wall-clock seeding policy.
+  bool scenerySpritesReady = false;
   const int previousCursorVisibility = SDL_ShowCursor(SDL_QUERY);
   if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
@@ -1054,6 +1081,12 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           }
           if (!skillSelection.consumePanelClick(pointerX, pointerY,
                                                 app::runtimeSkillPanelCounts(*world))) {
+            // A click consumes the previous frame's exact scene depth even if
+            // its observer did not inspect pixels. No simulation advances here.
+            if (!windowSceneCurrent) {
+              displayedCamera = renderFrame(displayedScenePose, windowRaster, true);
+              windowSceneCurrent = true;
+            }
             const auto hit = hoveredActor(*world, *scene, options, *library,
                 displayedCamera, windowRaster, displayedPickReference,
                 pointerX, pointerY, skillSelection.selectedSkill(),
@@ -1219,105 +1252,150 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       params = controls.camera();
       const auto displayedPose = cameraIntro.pose(params);
-      displayedCamera = renderFrame(displayedPose, windowRaster);
+      displayedScenePose = displayedPose;
+      displayedCamera = app::buildCamera(displayedPose);
       displayedPickReference = controls.pickReference();
+      prepareScene();
+      windowSceneCurrent = false;
       // Native pose is evaluated at the old intro clock before its increment;
       // pause freezes the opening move independently of camera input updates.
       cameraIntro.advanceAfterFrame(elapsed, runtimeSim.paused());
       std::vector<std::uint8_t> presentedRgb;
-      const void* pixels = windowRaster.framebuffer().rgb.data();
-      if (args.sim && world && runtimeFont && runtimePanel) {
-        app::profile::Scope profileHud(app::profile::Hud);
-        auto image = toImage(windowRaster.framebuffer());
-        const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
-        const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
-        const auto hover = canHover ?
-            hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
-                displayedPickReference, pointerX, pointerY, skillSelection.selectedSkill(),
-                args.level == "MM_CLIMB_002") : std::nullopt;
-        std::optional<std::size_t> markedActor;
-        if (hover) {
-          std::size_t walker = 0;
-          for (std::size_t i = 0; i < *hover; ++i) if (world->lemmings()[i].alive()) ++walker;
-          if (scene->drawHoveredWalker(image, walker, displayedCamera, options, *library, windowRaster))
-            markedActor = hover;
-        }
-        auto hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
-            std::vector<app::HatchHoverTarget>{};
-        for (auto& h : hatches) h.remaining = app::hatchRemaining(world->setup().totalLemmings,
-            world->spawned(), world->setup().entrances.size(), h.index);
-        // Actor selection keeps precedence. Hatch feedback never enters the
-        // skill-picking path or changes the existing software cursor family.
-        const auto hatchHover = canHover && !hover ? app::hoveredHatch(hatches, pointerX, pointerY) : std::nullopt;
-        if (hatchHover) app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover]);
-        app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
-                                   &*panelIconAnimation);
-        app::drawRuntimeHud(image, *runtimeFont, *world, false);
-        // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
-        if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
-                        [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
-          const auto fuseBoxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
-          std::vector<app::LevelActorView> fuseActors;
-          std::size_t fuseWalker = 0;
-          for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
-            if (!world->lemmings()[i].alive()) continue;
-            if (fuseWalker < fuseBoxes.size() && fuseBoxes[fuseWalker])
-              fuseActors.push_back({i, *fuseBoxes[fuseWalker]});
-            ++fuseWalker;
-          }
-          app::drawBomberCountdowns(image, *runtimeFont, *world, fuseActors, windowRaster.mutableDepthBuffer());
-        }
-        const auto cueFrame = entryCue ? entryCue->frame() : std::nullopt;
-        if (cueFrame) app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
-        if (levelMenu) levelMenu->draw(image);
-        const auto counts = app::runtimeSkillPanelCounts(*world);
-        const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
-        const auto cursorState = menuOpen() ? (focused ? app::CursorState::NoLemming : app::CursorState::Hidden) :
-            app::runtimeCursorState(focused, rightDown, hover.has_value(),
-                runtimeSim.paused(), panelIndex, panelAvailability);
-        runtimeCursor->draw(image, cursorState, pointerX, pointerY);
-        // READ45E2B5/45E342: cue is below the later cursor and pause caption.
-        if (runtimeSim.paused() && !menuOpen()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
-        if (levelObserver) {
-          app::profile::Scope profileObserver(app::profile::Other);
-          const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
-          std::vector<app::LevelActorView> actors;
-          std::size_t walker = 0;
-          for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
-            if (!world->lemmings()[i].alive()) continue;
-            if (walker < boxes.size() && boxes[walker]) {
-              const auto& drawn = options.injectedWalkers[walker];
-              actors.push_back({i, *boxes[walker], drawn.clip, drawn.walkTemporalIndex,
-                               {drawn.plus8X, drawn.plus8Y, drawn.plus8Z}});
-            }
-            ++walker;
-          }
-          levelObserver({rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
-                         hover, pointerX, pointerY, cursorState,
+      Image image;
+      std::vector<app::LevelActorView> actors;
+      std::vector<app::HatchHoverTarget> hatches;
+      // This state-only view is never offered to an ordinary observer. The
+      // explicit automation scope opts into inspectLevelFrame() for pixels,
+      // hover, visible actor boxes and hatch depth; all other fields are ready.
+      const auto cueFrame = entryCue ? entryCue->frame() : std::nullopt;
+      std::optional<app::LevelFrameView> pendingView;
+      if (args.sim && world && runtimeFont && runtimePanel)
+        pendingView.emplace(app::LevelFrameView{rendered, *world, runtimeSim.paused(), skillSelection.selectedIndex(), actors, image,
+                         std::nullopt, pointerX, pointerY, app::CursorState::Hidden,
                          runtimeSim.endTransition().phase(), runtimeSim.endTransition().timerSeconds(),
                          cameraIntro.active(), entryCue ? entryCue->seconds() : 0.0, cueFrame, menuOpen(), args.level,
                          persistentFrontend ? std::optional<int>{persistentFrontend->constructionCounter()} : std::nullopt,
                          cues && cues->deviceReady(), cues ? cues->drained() : 0, cues ? cues->routed() : 0,
                          displayedPose, displayedPickReference,
                          scene->terrainCellsChanged(), scene->terrainBlocksRebuilt(), hatchOpeningProgress,
-                         markedActor, hatchHover ? std::optional<std::size_t>{hatches[*hatchHover].index} : std::nullopt,
+                         std::nullopt, std::nullopt,
                          hatches});
+      const std::function<void()> materialize = [&] {
+        if (windowSceneCurrent) return;
+        displayedCamera = renderFrame(displayedPose, windowRaster, true);
+        windowSceneCurrent = true;
+        if (pendingView) {
+          auto& view = *pendingView;
+          app::profile::Scope profileHud(app::profile::Hud);
+          image = toImage(windowRaster.framebuffer());
+          const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
+          const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
+          const auto hover = canHover ?
+              hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
+                  displayedPickReference, pointerX, pointerY, skillSelection.selectedSkill(),
+                  args.level == "MM_CLIMB_002") : std::nullopt;
+          std::optional<std::size_t> markedActor;
+          if (hover) {
+            std::size_t walker = 0;
+            for (std::size_t i = 0; i < *hover; ++i) if (world->lemmings()[i].alive()) ++walker;
+            if (scene->drawHoveredWalker(image, walker, displayedCamera, options, *library, windowRaster))
+              markedActor = hover;
+          }
+          hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
+              std::vector<app::HatchHoverTarget>{};
+          for (auto& h : hatches) h.remaining = app::hatchRemaining(world->setup().totalLemmings,
+              world->spawned(), world->setup().entrances.size(), h.index);
+          // Actor selection keeps precedence. Hatch feedback never enters the
+          // skill-picking path or changes the existing software cursor family.
+          const auto hatchHover = canHover && !hover ? app::hoveredHatch(hatches, pointerX, pointerY) : std::nullopt;
+          if (hatchHover) app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover]);
+          app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
+                                     &*panelIconAnimation);
+          app::drawRuntimeHud(image, *runtimeFont, *world, false);
+          // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
+          if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
+                          [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
+            const auto fuseBoxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
+            std::vector<app::LevelActorView> fuseActors;
+            std::size_t fuseWalker = 0;
+            for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
+              if (!world->lemmings()[i].alive()) continue;
+              if (fuseWalker < fuseBoxes.size() && fuseBoxes[fuseWalker])
+                fuseActors.push_back({i, *fuseBoxes[fuseWalker]});
+              ++fuseWalker;
+            }
+            app::drawBomberCountdowns(image, *runtimeFont, *world, fuseActors, windowRaster.mutableDepthBuffer());
+          }
+          if (cueFrame) app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
+          if (levelMenu) levelMenu->draw(image);
+          const auto counts = app::runtimeSkillPanelCounts(*world);
+          const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
+          const auto cursorState = menuOpen() ? (focused ? app::CursorState::NoLemming : app::CursorState::Hidden) :
+              app::runtimeCursorState(focused, rightDown, hover.has_value(),
+                  runtimeSim.paused(), panelIndex, panelAvailability);
+          runtimeCursor->draw(image, cursorState, pointerX, pointerY);
+          // READ45E2B5/45E342: cue is below the later cursor and pause caption.
+          if (runtimeSim.paused() && !menuOpen()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
+          if (levelObserver) {
+            const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
+            actors.clear();
+            std::size_t walker = 0;
+            for (std::size_t i = 0; i < world->lemmings().size(); ++i) {
+              if (!world->lemmings()[i].alive()) continue;
+              if (walker < boxes.size() && boxes[walker]) {
+                const auto& drawn = options.injectedWalkers[walker];
+                actors.push_back({i, *boxes[walker], drawn.clip, drawn.walkTemporalIndex,
+                                 {drawn.plus8X, drawn.plus8Y, drawn.plus8Z}});
+              }
+              ++walker;
+            }
+          }
+          view.actors = actors;
+          view.hoveredActor = hover;
+          view.cursorState = cursorState;
+          view.markedActor = markedActor;
+          view.hoveredHatch = hatchHover ? std::optional<std::size_t>{hatches[*hatchHover].index} : std::nullopt;
+          view.hatches = hatches;
         }
-        presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
-        for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {
-          presentedRgb[i * 3] = image.rgba[i * 4];
-          presentedRgb[i * 3 + 1] = image.rgba[i * 4 + 1];
-          presentedRgb[i * 3 + 2] = image.rgba[i * 4 + 2];
-        }
-        pixels = presentedRgb.data();
-        if (!args.windowShot.empty() && rendered + 1 == args.frames)
-          finalWindowFrame = std::move(image);
+      };
+      if (!scenerySpritesReady && backdrop) {
+        scenerySpritesReady = true;
+        const auto visit = [&](const auto& self, const SceneNode& node) -> void {
+          if (const auto* state = backdrop->spriteState(node.sourceOffset); state && !state->firstDrawDone)
+            scenerySpritesReady = false;
+          for (const auto& child : node.children) self(self, child);
+        };
+        backdrop->visitRoots([&](const auto&, const auto& root) { visit(visit, root); });
       }
-      if (!args.windowShot.empty() && rendered + 1 == args.frames && !finalWindowFrame)
-        finalWindowFrame = toImage(windowRaster.framebuffer());
-      { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * 3); }
-      { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); }
-      { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
+      const bool finalShot = !args.windowShot.empty() && rendered + 1 == args.frames;
+      const bool skipUnconsumed = app::ScopedFrameConsumption::skipUnconsumed() &&
+          (args.frames > 0 || runOptions.frameSeconds > 0) && pendingView &&
+          (!backdrop || scenerySpritesReady) && !finalShot &&
+          args.c3WriteMask.empty() && args.c3WriteEvents.empty();
+      if (!skipUnconsumed) materialize();
+      if (levelObserver && pendingView) {
+        app::profile::Scope profileObserver(app::profile::Other);
+        app::detail::PendingFrameInspection inspection(materialize);
+        levelObserver(*pendingView);
+      }
+      if (windowSceneCurrent) {
+        const void* pixels = windowRaster.framebuffer().rgb.data();
+        if (pendingView) {
+          app::profile::Scope profileHud(app::profile::Hud);
+          presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
+          for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {
+            presentedRgb[i * 3] = image.rgba[i * 4];
+            presentedRgb[i * 3 + 1] = image.rgba[i * 4 + 1];
+            presentedRgb[i * 3 + 2] = image.rgba[i * 4 + 2];
+          }
+          pixels = presentedRgb.data();
+          if (finalShot) finalWindowFrame = std::move(image);
+        }
+        if (finalShot && !finalWindowFrame) finalWindowFrame = toImage(windowRaster.framebuffer());
+        { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * 3); }
+        { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); }
+        { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
+      }
       ++rendered;
     } else { app::profile::Scope scope(app::profile::Idle); SDL_Delay(1); }
   }

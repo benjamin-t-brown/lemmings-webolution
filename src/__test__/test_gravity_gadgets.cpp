@@ -144,15 +144,27 @@ void scenery(const AssetLibrary&lib,const fs::path&out){
 void application(const AssetLibrary&,const fs::path&game,const fs::path&base,const std::string&id,int count){
  const auto out=base/id;fs::create_directories(out);app::ApplicationRunOptions opts;opts.frameSeconds=.1;opts.saveStore=std::make_shared<save::SaveStore>(std::make_unique<save::FileSaveSink>(out/"SavedGame.dat",game));Preserved privateSave(out/"SavedGame.dat");
  std::vector<std::string> args{"gravity-gadgets","--level",id,"--sim","--native","--no-audio","--frames",std::to_string(count),"--game-dir",game.string()};std::vector<char*>argv;for(auto&a:args)argv.push_back(a.data());
- std::ofstream states(out/"states.txt"),pixels(out/"pixels.txt"),trace(out/"positions.csv");trace<<"frame,ms,x,y,gravity,state,fall,dead,active\n";int frames=0;bool escaped=false,terminated=false;
+ std::ofstream states(out/"states.txt"),pixels(out/"pixels.txt"),trace(out/"positions.csv");trace<<"frame,ms,x,y,gravity,state,fall,dead,active\n";int frames=0,births=0;bool escaped=false,terminated=false;
 #ifdef GRAVITY_GADGETS_BASELINE_AVAILABLE
  std::ifstream expectedStates(base.parent_path()/"before"/id/"states.txt"),expectedPixels(base.parent_path()/"before"/id/"pixels.txt");check(bool(expectedStates)&&bool(expectedPixels),"authentic entry route evidence exists");
 #endif
  const auto observe=[&](const app::LevelFrameView&f){++frames;auto serial=state(f.world);auto h=hash(f.image);states<<serial<<'\n';pixels<<h<<'\n';
 #ifdef GRAVITY_GADGETS_BASELINE_AVAILABLE
-  std::string s,p;check(bool(std::getline(expectedStates,s))&&bool(std::getline(expectedPixels,p)),"matching entry frame exists");if(id!="m06_kf_1"){check(s==serial,"non-gravity scripted simulation/outcomes unchanged");check(p==std::to_string(h),"non-gravity production frame pixel-identical");}
-  else if(f.world.levelClockMs()<=18900)check(s==serial,"gravity route physics/timing identical until the demonstrated roof escape");
+  std::string s,p;check(bool(std::getline(expectedStates,s))&&bool(std::getline(expectedPixels,p)),"matching entry frame exists");if(id=="MM_CLIMB_002"){check(s==serial,"unchanged right-facing non-gravity simulation/outcomes");check(p==std::to_string(h),"unchanged right-facing non-gravity production pixels");}
+  else if(id=="m06_kf_1" && f.world.levelClockMs()<=18900)check(s==serial,"gravity route physics/timing identical until the demonstrated roof escape");
 #endif
+  // hatch-release-direction-001: this control stores fixed left. The old
+  // simulation baseline hard-coded right, so its later motion/pixels change.
+  // Keep both traces and pin the corrected natural births instead of comparing
+  // the obsolete all-right trajectory. MM_CLIMB_002 remains an exact control.
+  if(id=="MM_BASH_002")while(births<f.world.spawned()) {
+#ifdef GRAVITY_GADGETS_BEFORE
+    check(f.world.lemmings()[births].facing==sim::Facing::Right,"historical all-right hatch control");
+#else
+    check(f.world.lemmings()[births].facing==sim::Facing::Left,"stored fixed-left hatch control");
+#endif
+    ++births;
+  }
   const auto ms=f.world.levelClockMs();if(f.frame==0||f.frame==count-1||ms==7400||ms==9000||ms==18900||ms==19000||ms==20600)png(out/("frame-"+std::to_string(ms)+".png"),f.image);
   if(!f.world.lemmings().empty()){const auto&l=f.world.lemmings()[0];escaped|=l.y<0;terminated|=l.state==sim::State::Dead;trace<<f.frame<<','<<ms<<','<<l.x<<','<<l.y<<','<<l.verticalDir<<','<<sim::stateName(l.state)<<','<<l.fallDistance<<','<<f.world.dead()<<','<<f.world.activeCount()<<'\n';}
  };

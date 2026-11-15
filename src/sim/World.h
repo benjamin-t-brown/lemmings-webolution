@@ -168,6 +168,11 @@ struct Entrance {
   // difference is stored, not computed.
   enum class Source : std::uint8_t { EntranceModel, HatchWords };
   Source source = Source::EntranceModel;
+  // Stored hatch +0xB4/+0xB6; direction becomes the next birth's direction.
+  // Keep these in the former padding before sheetType: frozen pre-task source
+  // demonstrations retain the same existing field offsets and record size.
+  bool alternateDirection = false;
+  std::int16_t direction = 1;
   // Hatch type word → [lemming+0x4c]. MEASURED round 29: from HatchRecord.type
   // (hatch+0xB0). 1 = LemmingsWater, 2 = LemmingsAcid.
   int sheetType = 0;

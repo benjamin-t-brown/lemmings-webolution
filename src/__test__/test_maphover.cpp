@@ -79,6 +79,7 @@ int main(int argc, char** argv) {
   if (argc != 3 || !std::getenv("SDL_VIDEODRIVER") ||
       std::string(std::getenv("SDL_VIDEODRIVER")) != "dummy" || !std::getenv("WEBOLUTION_GAME_DIR")) return 2;
   const bool before = std::string(argv[1]) == "baseline";
+  const bool previous = std::string(argv[1]) == "previous";
   const fs::path out = fs::path(argv[2]) / ("run-" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
   fs::create_directories(out);
   std::cout << "evidence: " << out.string() << '\n';
@@ -92,9 +93,14 @@ int main(int argc, char** argv) {
   auto infos = loadLevelMap(*lib);
   auto table = loadLevelTable(*lib);
   auto font = loadTexture(*lib, "TEXTURES\\^FONT.BMP");
+  auto atlas = loadTexture(*lib, "TEXTURES\\LEVEL SELECT OBJECTS.BMP");
+  auto strings = loadStrings(*lib,"UK");
   auto cursor = app::RuntimeCursor::load(*lib);
   auto packed = lib->read("TEXTURES\\LEVEL MASK.BMP");
-  if (!infos || !table || !font || !cursor || !packed) return 2;
+  if (!infos || !table || !font || !atlas || !strings || !cursor || !packed) return 2;
+  check((*strings)[123]=="Save","installed UK save label at index 123");
+  check(writePng(out/"installed-font.png",*font).has_value(),"retain installed font measurement");
+  check(writePng(out/"installed-map-atlas.png",*atlas).has_value(),"retain installed clock atlas measurement");
   auto raw = lrzDecode(*packed);
   if (!raw || raw->size() < 308278) return 2;
   const auto u32 = [&](std::size_t p) {
@@ -110,8 +116,9 @@ int main(int argc, char** argv) {
     if (n < 102) { points[n].x += x; points[n].y += y; ++counts[n]; }
   }
   std::array<std::string, 102> titles{}, ids{};
+  std::array<std::array<std::string,3>,102> blocks{};
   std::ofstream audit(out / "frames.csv");
-  audit << "route,frame,node,x,y,title,base_hash,composed_hash\n";
+  audit << "route,frame,node,x,y,title,base_hash,composed_hash,counts,time\n";
   for (std::size_t n = 0; n < 102; ++n) {
     if (!counts[n]) return 2;
     points[n].x /= counts[n]; points[n].y /= counts[n];
@@ -120,11 +127,27 @@ int main(int argc, char** argv) {
     const auto& key = app::MapScene::nodeMapping()[n];
     ids[n] = table->groups[key[0]][key[1]].id;
     for (const auto& info : *infos)
-      if (normaliseAssetName(info.id) == normaliseAssetName(ids[n])) titles[n] = info.name;
+      if (normaliseAssetName(info.id) == normaliseAssetName(ids[n])) {
+        titles[n] = info.name;
+        blocks[n]={std::to_string(info.totalLemmings)+" Lemmings : Save "+std::to_string(info.saveTarget),
+          info.name,std::to_string(info.timeLimitSeconds/60)+":"+
+          (info.timeLimitSeconds%60<10?"0":"")+std::to_string(info.timeLimitSeconds%60)};
+      }
     check(!titles[n].empty() && titles[n] != ids[n], "real display title for node " + std::to_string(n));
     check(shell::textWidth(titles[n], shell::fontCells()) <= 608, "installed title fits native right edge");
   }
   check(titles[0] == "Just Climb", "first level's known title");
+  check(blocks[0]==std::array<std::string,3>{"10 Lemmings : Save 1","Just Climb","5:00"},
+        "all three Just Climb strings match original reference");
+  const auto bash=std::find(titles.begin(),titles.end(),"Bash and Mine")-titles.begin();
+  check(bash<102 && blocks[bash]==std::array<std::string,3>{"20 Lemmings : Save 10","Bash and Mine","10:00"},
+        "all three Bash and Mine strings match second original reference");
+#ifndef MAP_HOVER_FROZEN
+  auto map=app::MapScene::build(*lib,{});
+  check(map.has_value(),"production metadata block builds");
+  if(map) for(std::size_t n=0;n<102;++n)
+    check(map->hoverTextForNode(n)==blocks[n],"production three strings match installed metadata node "+std::to_string(n));
+#endif
   int visited = 0, levelFrames = 0;
   for (bool all : {false, true}) {
     const std::string route = all ? "all-progress" : "fresh";
@@ -181,8 +204,22 @@ int main(int argc, char** argv) {
               "hover preserves cached map, selection, unlocks and save count");
         Image expected = base;
         if (v.node >= 0 && !before) {
-          text(expected, *font, titles[v.node], 30, 20, {0, 0, 0});
-          text(expected, *font, titles[v.node], 32, 22, {220, 50, 50});
+          if(previous) {
+            text(expected, *font, titles[v.node], 30, 20, {0, 0, 0});
+            text(expected, *font, titles[v.node], 32, 22, {220, 50, 50});
+          } else {
+            constexpr std::array<int,3> rows{0,20,60};
+            for(std::size_t line=0;line<3;++line) {
+              text(expected,*font,blocks[v.node][line],32,rows[line]+2,{220,50,50});
+              text(expected,*font,blocks[v.node][line],30,rows[line],{0,0,0});
+            }
+            // Independent literal atlas/key copy, not the production compositor.
+            for(int y=0;y<31;++y) for(int x=0;x<28;++x) {
+              const auto* src=atlas->rgba.data()+(static_cast<std::size_t>(y)*640+193+x)*4;
+              if(src[0] || src[1] || src[2])
+                std::copy_n(src,4,expected.rgba.data()+(static_cast<std::size_t>(y+60)*640+x)*4);
+            }
+          }
           check(expected.rgba != base.rgba, "hover adds visible title pixels");
         }
         cursor->draw(expected, s.cursorState(), s.pointerX(), s.pointerY());
@@ -190,8 +227,9 @@ int main(int argc, char** argv) {
         check(frame.rgba == expected.rgba, route + " " + v.label + " exact composed title/cursor oracle");
         check(bytes(savePath) == privateBytes, "hover never rewrites private save");
         audit << route << ',' << index << ',' << v.node << ',' << v.point.x << ',' << v.point.y << ','
-              << csv(v.node < 0 ? "" : titles[v.node]) << ',' << hash(base) << ',' << hash(frame) << '\n';
-        if (!all || (v.node >= 0 && v.node < 3))
+              << csv(v.node < 0 ? "" : titles[v.node]) << ',' << hash(base) << ',' << hash(frame) << ','
+              << csv(v.node<0?"":blocks[v.node][0]) << ',' << csv(v.node<0?"":blocks[v.node][2]) << '\n';
+        if (!all || (v.node >= 0 && (v.node < 3 || v.node==bash)))
           check(writePng(out / (route + "-" + v.label + ".png"), frame).has_value(), "retain clone image");
         if (all && v.node >= 0 && v.label == "node-" + std::to_string(v.node)) ++visited;
       }

@@ -31,6 +31,9 @@ public:
   // Installed LEVELMAP.DAT display title, joined to the LEVELS.MAP id.
   // Eligibility remains owned by pickNode(), shared by hover and activation.
   std::optional<std::string> titleForNode(std::size_t node) const;
+  // Counts, display title, then m:ss, from the installed LEVELMAP.DAT row.
+  std::optional<std::array<std::string,3>> hoverTextForNode(std::size_t node) const;
+  void drawHover(Image& target, const Image& font, std::size_t node) const;
 
  private:
   Image image_;
@@ -38,6 +41,7 @@ public:
   std::vector<std::uint8_t> mask_;
   std::uint8_t maskBackground_ = 0;
   std::array<std::string,102> levelIds_{};
-  std::array<std::string,102> levelTitles_{};
+  std::array<std::array<std::string,3>,102> hoverText_{};
+  Image clock_;
 };
 }

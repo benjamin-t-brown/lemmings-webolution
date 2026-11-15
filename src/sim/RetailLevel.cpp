@@ -281,6 +281,8 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     e.y = cy;
     e.source = Entrance::Source::HatchWords;
     e.sheetType = h.type;
+    e.direction = h.direction;
+    e.alternateDirection = h.alternateDirection;
     s.entrances.push_back(e);
 
     RetailHatchSummary hs;

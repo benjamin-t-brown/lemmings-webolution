@@ -1,5 +1,6 @@
 // Installed receiver regression and production application images. No original execution.
 #include "app/AppEntry.h"
+#include "FrameConsumptionAudit.h"
 #include "app/BackdropScene.h"
 #include "app/TubeScene.h"
 #include "app/LemmingAnim.h"
@@ -109,11 +110,12 @@ void application(const fs::path& game,const fs::path& out){
  auto camera=out/"camera.json";std::ofstream(camera)<<"{\"viewport\":[640,480],\"yaw_units\":224,\"level_eye_height\":40}\n";
  std::vector<std::string> args{"empty-receiver","--game-dir",game.string(),"--level","MM_W_012","--sim","--native","--camera",camera.string(),"--frames","300","--no-audio"};std::vector<char*> raw;for(auto&a:args)raw.push_back(a.data());
  app::ApplicationRunOptions opt;opt.frameSeconds=0.1;opt.saveStore=std::make_shared<save::SaveStore>(std::make_unique<save::FileSaveSink>(out/"SavedGame.dat",game));
+ test::FrameConsumptionAudit audit(out);
  bool captured=false,deep=false,floor=false;std::ofstream f(out/"app.csv");f<<"frame,ms,index,x,y,state,saved,dead\n";
- auto observe=[&](const app::LevelFrameView& v){for(std::size_t i=0;i<v.world.lemmings().size();++i){const auto&l=v.world.lemmings()[i];f<<v.frame<<','<<v.world.levelClockMs()<<','<<i<<','<<l.x<<','<<l.y<<','<<sim::stateName(l.state)<<','<<v.world.saved()<<','<<v.world.dead()<<'\n';if(!captured&&l.x>=216&&l.x<224&&l.y>=66){check(writePng(out/"first-lower-pit.png",v.image).has_value(),"retain production pit image");captured=true;}
- if(!deep&&l.x>=216&&l.x<224&&l.y>=78&&l.state==sim::State::Faller){check(writePng(out/"inside-empty-pit.png",v.image).has_value(),"retain deep fall image");deep=true;}
- if(!floor&&l.x>=216&&l.x<224&&l.state==sim::State::Splatter){check(writePng(out/"pit-floor-splat.png",v.image).has_value(),"retain floor splat image");floor=true;}
- }if(v.frame==232||v.frame==238||v.frame==243||v.frame==280)check(writePng(out/("frame-"+std::to_string(v.frame)+".png"),v.image).has_value(),"retain matched frame");};
+ auto observe=[&](const app::LevelFrameView& v){audit.frame(v);for(std::size_t i=0;i<v.world.lemmings().size();++i){const auto&l=v.world.lemmings()[i];f<<v.frame<<','<<v.world.levelClockMs()<<','<<i<<','<<l.x<<','<<l.y<<','<<sim::stateName(l.state)<<','<<v.world.saved()<<','<<v.world.dead()<<'\n';if(!captured&&l.x>=216&&l.x<224&&l.y>=66){check(writePng(out/"first-lower-pit.png",test::inspectedImage(v)).has_value(),"retain production pit image");captured=true;}
+ if(!deep&&l.x>=216&&l.x<224&&l.y>=78&&l.state==sim::State::Faller){check(writePng(out/"inside-empty-pit.png",test::inspectedImage(v)).has_value(),"retain deep fall image");deep=true;}
+ if(!floor&&l.x>=216&&l.x<224&&l.state==sim::State::Splatter){check(writePng(out/"pit-floor-splat.png",test::inspectedImage(v)).has_value(),"retain floor splat image");floor=true;}
+ }if(v.frame==232||v.frame==238||v.frame==243||v.frame==280)check(writePng(out/("frame-"+std::to_string(v.frame)+".png"),test::inspectedImage(v)).has_value(),"retain matched frame");};
  check(app::runApplication(int(raw.size()),raw.data(),{},observe,opt)==0,"run production application");check(captured,"natural actor reaches lower receiver");
 #ifdef EMPTY_RECEIVER_AFTER
  check(deep&&floor,"production app shows ordinary fall and splat in dry receiver");

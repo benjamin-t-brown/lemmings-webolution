@@ -10,6 +10,7 @@
 #include "app/HoverFeedback.h"
 #include "assets/SceneNode.h"
 #include "lemmings/object_base_prefix.hpp"
+#include "lemmings/world_coordinates.hpp"
 
 #include <array>
 #include <cstdint>
@@ -30,9 +31,16 @@ class TubeScene;
 // retained demonstrations that compile older headers against current support.
 struct EntranceExitPresentation {
   struct Entrance { std::size_t root; HatchAnimation animation; };
-  struct Exit { std::size_t root; std::array<double,12> matrix; };
+  struct Exit {
+    std::size_t root;
+    std::array<double,12> matrix;
+    std::array<double,3> cylinderPosition{};
+  };
   std::vector<Entrance> entrances;
   std::vector<Exit> exits;
+  // Own the installed coordinate lattice: WorldCoordinateMesh itself is a view.
+  std::int32_t exitCoordinateHeight = 0;
+  std::vector<lemmings::WorldGeometryPrefix::TripleBlock> exitCoordinateRows;
 };
 // Application-owned binding: serialized tagged IDs are shared with sim::Lever.
 // Keeping this outside BackdropScene preserves the retained renderers' layout.

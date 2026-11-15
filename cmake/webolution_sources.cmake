@@ -78,6 +78,7 @@ set(WEBOLUTION_COMPILED_LEVEL_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/src/compiled_level_header.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/src/level_name_tables.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/src/world_geometry_prefix.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/src/world_coordinates.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/src/object_base_prefix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/src/level_entity_prefix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/src/level_gadget_records.cpp

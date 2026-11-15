@@ -2,11 +2,14 @@
 #include "assets/Bitmap.h"
 #include "assets/GameData.h"
 #include "assets/Lrz.h"
+#include "app/SkillPanel.h"
+#include "shell/HudText.h"
 #include <algorithm>
 #include <array>
 #include <fstream>
 #include <limits>
 #include <sstream>
+#include <format>
 
 namespace webo::app {
 namespace {
@@ -295,9 +298,20 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   if(!levels) return std::unexpected("map level table: "+levels.error());
   auto titles=loadLevelMap(lib);
   if(!titles) return std::unexpected("map level titles: "+titles.error());
+  auto strings=loadStrings(lib,"UK");
+  if(!strings || strings->size()<=123)
+    return std::unexpected("map hover requires UK string 123 (Save)");
   if(auto v=validateImage(*bg,"background");!v) return std::unexpected(v.error());
   if(auto v=validateImage(*atlas,"atlas");!v) return std::unexpected(v.error());
   MapScene scene; scene.image_=std::move(*bg);
+  // READ 49B7B0 / table 4B3EA0: source (193,0,28,31), black colour key.
+  scene.clock_={28,31,AlphaMode::KeyBlack,std::vector<std::uint8_t>(28u*31u*4u)};
+  for(int y=0;y<31;++y) for(int x=0;x<28;++x) {
+    const auto* src=atlas->rgba.data()+(static_cast<std::size_t>(y)*640+193+x)*4;
+    auto* dst=scene.clock_.rgba.data()+(static_cast<std::size_t>(y)*28+x)*4;
+    std::copy_n(src,4,dst);
+    dst[3]=(src[0]==0 && src[1]==0 && src[2]==0)?0:255;
+  }
   scene.mask_=std::move(mask->pixels); scene.maskBackground_=mask->background;
   std::array<std::int32_t,102> state{}; state.fill(1); state[0]=state[1]=state[2]=3;
   for(std::size_t i=0;i<102;++i) if(flags[i]!=0) {
@@ -316,7 +330,11 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
     });
     if (title == titles->end() || title->name.empty())
       return std::unexpected("map display title missing for " + scene.levelIds_[i]);
-    scene.levelTitles_[i] = title->name;
+    // READ 49B2F6: "%d Lemmings : %s %d", localized string 123, "%d:%02d".
+    scene.hoverText_[i] = {
+        std::format("{} Lemmings : {} {}",title->totalLemmings,(*strings)[123],title->saveTarget),
+        title->name,
+        std::format("{}:{:02}",title->timeLimitSeconds/60,title->timeLimitSeconds%60)};
     const int row=base+(state[i]==2?2:state[i]==3?4:0);
     const auto& r=kRects[static_cast<std::size_t>(row)];
     const int dx=kRecords[i][0]-r[4], dy=kRecords[i][1]-r[5];
@@ -349,7 +367,30 @@ std::optional<std::string> MapScene::levelForNode(std::size_t node) const {
 }
 
 std::optional<std::string> MapScene::titleForNode(std::size_t node) const {
-  if (!levelForNode(node) || levelTitles_[node].empty()) return std::nullopt;
-  return levelTitles_[node];
+  if (!levelForNode(node) || hoverText_[node][1].empty()) return std::nullopt;
+  return hoverText_[node][1];
+}
+
+std::optional<std::array<std::string,3>> MapScene::hoverTextForNode(std::size_t node) const {
+  if (!titleForNode(node)) return std::nullopt;
+  return hoverText_[node];
+}
+
+void MapScene::drawHover(Image& target, const Image& font, std::size_t node) const {
+  const auto block=hoverTextForNode(node);
+  if(!block) return;
+  // READ 49AC47: left aligned default ^Font, black at x30, red (220,50,50)
+  // at x32/y+2; row origins 0,20,60. The supplied original screenshots settle
+  // the former provisional stacking: red shadow first, black foreground last.
+  constexpr std::array<int,3> rows{0,20,60};
+  std::array<shell::HudLine,6> lines;
+  for(std::size_t i=0;i<3;++i) {
+    lines[i*2]={(*block)[i],32,rows[i]+2,{220,50,50}};
+    lines[i*2+1]={(*block)[i],30,rows[i],{0,0,0}};
+  }
+  shell::drawHud(target,font,lines,shell::fontCells());
+  compositeIconRegion(target,clock_,{0,60,0,0,28,31});
+  // Provisional: reuse the clone's integer alpha blit; exact native sampling
+  // and framebuffer quantization require a matching original pixel comparison.
 }
 }  // namespace webo::app

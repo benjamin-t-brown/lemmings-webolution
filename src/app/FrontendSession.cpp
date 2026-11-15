@@ -184,20 +184,11 @@ const Image& FrontendSession::image() const {
 Image FrontendSession::composeFrame() const {
   Image composed = image();
   if (screen() == shell::Screen::Map && focused_) {
-    // READ 49B2F6: indexed-mask hover, state2/3 only; clear the title off-node.
-    // The native title comes from 4E3654 + group*1B58 + slot*118, rather than
-    // the launch id at 4E35D4. MapScene joins the installed display-title data.
+    // READ 49B2F6: indexed-mask hover, state2/3 only. Each frame starts from
+    // the clean map, so leaving a node removes all three lines and the clock.
+    // Provisional focus policy retained: hide the block while unfocused.
     if (const auto node = map_.pickNode(pointerX_, pointerY_)) {
-      if (const auto title = map_.titleForNode(*node)) {
-        // READ 49AC47: title widgets +48/+54 at (30,20)/(32,22), black and
-        // RGB(220,50,50), left aligned (flags100), default ^Font (4898EC,
-        // 48B650 -> 486A9C -> 4CBF78). Reuse the recovered alpha blitter.
-        // Provisional clone policy: black then red, and hide on focus loss;
-        // native final widget stacking/focus pixels have not been observed.
-        const std::array<shell::HudLine, 2> lines{{
-            {*title, 30, 20, {0, 0, 0}}, {*title, 32, 22, {220, 50, 50}}}};
-        shell::drawHud(composed, font_, lines, shell::fontCells());
-      }
+      map_.drawHover(composed,font_,*node);
     }
   }
   cursor_.draw(composed, cursorState(), pointerX_, pointerY_);

@@ -34,7 +34,9 @@ std::string state(const app::LevelFrameView& f){std::ostringstream s;s<<std::set
 void application(const AssetLibrary& lib,const fs::path& game,const std::string& level,
     const fs::path& out,const fs::path& baseline,bool before){
   fs::create_directories(out);const bool paired=!baseline.empty();
-  const double initial=level=="MM_CLIMB_002"?32.0:200.0;
+  // E22_KF_1 replaces the obsolete all-right MM_FLOAT_CLIMB2 route: its
+  // naturally released actor reaches a wall with the stored hatch direction.
+  const double initial=level=="MM_CLIMB_002"?32.0:112.0;
   std::ofstream(out/"camera.json")<<"{\"yaw_units\":"<<initial<<"}\n";
   auto resolved=sim::resolveRetailLevel(lib,level);check(bool(resolved),"resolve app level");if(!resolved)return;
   auto blob=lib.read(resolved->file);auto mesh=findCylinderMesh(*blob);auto idx=indexLevel(*blob);
@@ -64,7 +66,7 @@ void application(const AssetLibrary& lib,const fs::path& game,const std::string&
     if(l.state==sim::State::Climber&&climbStart<0)climbStart=l.y;
     if(clicked&&l.state==sim::State::Climber&&!pauseRequested&&l.y<climbStart-4){pauseRequested=true;key(SDL_SCANCODE_P);}
     if(!f.paused)return;
-    if(!frozen){if(level=="MM_FLOAT_CLIMB2")key(SDL_SCANCODE_2);check(actor!=f.actors.end(),"front-facing paused contact sprite visible");if(actor==f.actors.end())return;frozen=*actor;frozenMs=f.world.levelClockMs();startYaw=frozen->drawnSample[0];}
+    if(!frozen){if(level=="E22_KF_1")key(SDL_SCANCODE_2);check(actor!=f.actors.end(),"front-facing paused contact sprite visible");if(actor==f.actors.end())return;frozen=*actor;frozenMs=f.world.levelClockMs();startYaw=frozen->drawnSample[0];}
     check(f.world.levelClockMs()==frozenMs&&l.state==sim::State::Climber&&l.canClimb,"public pause freezes naturally assigned climber");
     app::SceneOptions raw;raw.drawCellRoute=true;raw.drawWall=false;raw.composeSkipActorVisibility=true;
     app::SceneOptions::InjectedNativeWalker w;w.plus8X=frozen->drawnSample[0];w.plus8Y=frozen->drawnSample[1];w.plus8Z=frozen->drawnSample[2];w.clip=frozen->clip;w.walkTemporalIndex=frozen->temporalIndex;w.facing=int(l.facing);w.verticalDir=l.verticalDir;raw.injectedWalkers={w};
@@ -74,11 +76,11 @@ void application(const AssetLibrary& lib,const fs::path& game,const std::string&
       if(query==1){query=2;return;}
       if(step==4){
         check(before?(actor!=f.actors.end()):(actor==f.actors.end()&&f.hoveredActor!=0),"public displayed/pick-box list obeys covered climber visibility");
-        if(level=="MM_FLOAT_CLIMB2")check(before?(f.hoveredActor==0):(f.hoveredActor!=0),"public Floater hover follows covered climber visibility");
+        if(level=="E22_KF_1")check(before?(f.hoveredActor==0):(f.hoveredActor!=0),"public Floater hover follows covered climber visibility");
         ++hiddenChecks;
       }else {
         check(actor!=f.actors.end(),"public exposed climber has displayed pick box");
-        if(level=="MM_FLOAT_CLIMB2")check(f.hoveredActor==0,"public Floater hover selects exposed climber");
+        if(level=="E22_KF_1")check(f.hoveredActor==0,"public Floater hover selects exposed climber");
         // Just Climb has only Climber stock: the accepted picker intentionally
         // excludes an actor which already has that permanent capability.
         else check(f.hoveredActor!=0,"public Climber selection preserves existing capability exclusion");
@@ -111,7 +113,7 @@ int main(int argc,char** argv){
   const bool before=std::string(argv[1])=="before";const fs::path out=argv[2],baseline=std::string(argv[3])=="-"?fs::path{}:fs::path(argv[3]),game=std::getenv("WEBOLUTION_GAME_DIR");
   auto local=save::localAppDataDirectory();if(!local)return 2;Saved installed(game/"SavedGame.dat"),normal(save::cloneSavePathUnder(*local));
   auto lib=AssetLibrary::open(game/"lemmings.box",game/"patch.box");if(!lib)return 2;
-  for(const std::string id:{"MM_CLIMB_002","MM_FLOAT_CLIMB2"})application(*lib,game,id,out/id,baseline.empty()?fs::path{}:baseline/id,before);
+  for(const std::string id:{"MM_CLIMB_002","E22_KF_1"})application(*lib,game,id,out/id,baseline.empty()?fs::path{}:baseline/id,before);
   check(installed.unchanged()&&normal.unchanged(),"installed and normal saves untouched");
   std::ofstream(out/"summary.txt")<<"installed_save_unchanged="<<installed.unchanged()<<"\nnormal_save_unchanged="<<normal.unchanged()<<"\nfailures="<<failures<<'\n';
   std::cout<<"climber application "<<argv[1]<<": "<<failures<<" failures\n";return failures?1:0;

@@ -93,7 +93,8 @@ void World::place(Lemming lemming) {
 void World::spawn(double budgetSeconds) {
   if (spawned_ >= setup_.totalLemmings || setup_.entrances.empty())
     return;
-  const Entrance& e = setup_.entrances[nextEntrance_ % setup_.entrances.size()];
+  const std::size_t entranceIndex = nextEntrance_ % setup_.entrances.size();
+  Entrance& e = setup_.entrances[entranceIndex];
   nextEntrance_ = (nextEntrance_ + 1) % setup_.entrances.size();
 
   Lemming l;
@@ -102,7 +103,13 @@ void World::spawn(double budgetSeconds) {
   l.state = State::Faller;
   // Round 29: hatch+0xB0 -> [lemming+0x4c] at 0x0042E05F.
   l.sheetType = e.sheetType;
-  l.facing = Facing::Right;
+  // 0x42DFDD initializes +0x40=1; 0x425C6E..0x425C7D reverses it only
+  // for hatch +0xB4 == -1. Toggle this hatch AFTER choosing the birth face,
+  // before the actor's first update (0x425C82..0x425CCC).
+  auto& direction = e.direction;
+  l.facing = direction == -1 ? Facing::Left : Facing::Right;
+  if (e.alternateDirection)
+    direction = direction == 1 ? -1 : 1;
   // D1n: under the opt-in continuous stepper clock, a lemming released
   // partway through the tick that spawned it (continuous release model
   // only -- the caller passes a reduced budgetSeconds in that case) should

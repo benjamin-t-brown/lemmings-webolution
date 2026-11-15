@@ -14,6 +14,7 @@
 // Nothing here mutates a World, actor, terrain, stock, flag or save. The only injected event is SDL_QUIT once the
 // idle window has elapsed. The sweep's per-level outcome is REPORTED, never asserted.
 #include "app/AppEntry.h"
+#include "FrameConsumptionAudit.h"
 #include "app/BackdropScene.h"
 #include "app/MapScene.h"
 #include "assets/Bitmap.h"
@@ -277,15 +278,14 @@ void observe(ChildCtx& c, const app::LevelFrameView& f) {
   c.endPhase = phaseName(f.endPhase);
   c.states.clear();
   for (const auto& l : w.lemmings()) ++c.states[std::string(sim::stateName(l.state))];
-  c.lastImage = f.image;
   const bool settled = !f.cameraIntroActive && !f.entryCueFrame && !f.levelMenuOpen;
   if (settled && !c.settledSeen) {
     c.settledSeen = true;
     c.settledFrame = f.frame;
     c.settledMs = c.clockMs;
-    c.settled = frameStats(f.image);
-    (void)writePng(c.dir / "frame-settled.png", f.image);
-    writeThumb(c.dir / "thumb.rgb", f.image);
+    c.settled = frameStats(test::inspectedImage(f));
+    (void)writePng(c.dir / "frame-settled.png", test::inspectedImage(f));
+    writeThumb(c.dir / "thumb.rgb", test::inspectedImage(f));
   }
   if (c.releaseDoneMs < 0 && c.total > 0 && c.spawned >= c.total) c.releaseDoneMs = c.clockMs;
   if (c.quitSent) return;
@@ -294,6 +294,7 @@ void observe(ChildCtx& c, const app::LevelFrameView& f) {
   else if (c.clockMs >= static_cast<long>(c.capSeconds * 1000)) why = "sim-cap";
   else if (f.endPhase != app::LevelEndPhase::Running) why = "end-transition";
   if (why) {
+    c.lastImage = test::inspectedImage(f);
     c.stop = why;
     SDL_Event quit{};
     quit.type = SDL_QUIT;
@@ -440,9 +441,16 @@ int runChild(int node, const fs::path& root) {
     for (auto& a : args) argv.push_back(a.data());
     app::ApplicationRunOptions options;
     options.frameSeconds = kFrameSeconds;
+    test::FrameConsumptionAudit audit(dir);
     const double wallStart = wallSeconds();
     const int status = app::runApplication(static_cast<int>(argv.size()), argv.data(), {},
-                                           [&](const app::LevelFrameView& f) { observe(c, f); }, options);
+                                           [&](const app::LevelFrameView& f) {
+                                             audit.frame(f);
+                                             observe(c, f);
+                                             // The frame cap is also a terminal image consumer.
+                                             if (f.frame + 1 == frameCap) c.lastImage = test::inspectedImage(f);
+                                             if (c.quitSent) audit.action("quit");
+                                           }, options);
     const double wallRun = wallSeconds() - wallStart;
     put(r, "run_status", std::to_string(status));
     put(r, "frames_observed", std::to_string(c.frames));

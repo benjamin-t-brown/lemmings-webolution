@@ -9,7 +9,11 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     if(level STREQUAL "MM_CLIMB_002")
       set(expected 61933b158580b1c869dd545500c7592b02c26cc36bd67ae2d93ec79cec4413ba)
     else()
-      set(expected 3633704696154420f7a8edf02eb20fe109c6e32669867e20a0f8a1feca8c4b40)
+      # hatch-release-direction-001: the old all-right frame was
+      # 3633704696154420f7a8edf02eb20fe109c6e32669867e20a0f8a1feca8c4b40.
+      # Stored alternating births change actor pixels and subsequent positions.
+      # Authentic earlier images remain in build/frame-rate-profile-001/.
+      set(expected 03c498d568daedf2eb74d90e321b3233178dee70e6f51bddd237bccaa57df38d)
     endif()
     add_test(NAME frame_profile_${level} COMMAND ${CMAKE_COMMAND}
       "-DCLONE=$<TARGET_FILE:webolution>" "-DGAME_DIR=${WEBOLUTION_GAME_DIR}"

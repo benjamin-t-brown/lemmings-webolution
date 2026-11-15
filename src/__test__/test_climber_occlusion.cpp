@@ -94,7 +94,10 @@ int main(int argc, char** argv) {
   int changedClimberViews=0, unchangedControlViews=0;
   std::ofstream pixels(out/"pixels.csv");pixels<<std::setprecision(17)<<"route,view,screen_x,screen_y,actor_world_z,normalized_bias,contact_allowance,comparison_z,scene_z,drawn\n";
   for(const std::string name:{"climber","climber2","ledge","pillar","tunnel"}) {
-    const std::string level=name=="climber2"?"MM_FLOAT_CLIMB2":(name=="climber"||name=="ledge")?"MM_CLIMB_002":"MM_BASH_002";
+    // MM_FLOAT_CLIMB2's first hatch faces left: its natural actor now walks
+    // away from the old test wall. E22_KF_1 naturally reaches a right wall and
+    // retains real Climber/Floater stock for the paired application hover check.
+    const std::string level=name=="climber2"?"E22_KF_1":(name=="climber"||name=="ledge")?"MM_CLIMB_002":"MM_BASH_002";
     auto setup=sim::loadRetailLevel(*lib,level);check(bool(setup),"load "+level);if(!setup)continue;
     sim::World world(*setup);std::string path;
     for(const auto& p:levelFileNames(*lib))if(p.find(level)!=std::string::npos){path=p;break;}
@@ -187,14 +190,17 @@ int main(int argc, char** argv) {
       check(actualRaster.depthBuffer()==empty.depthBuffer(),"actor composition preserves scene depth");
 
       if(name=="climber"||name=="climber2") {
-        // At 30 degrees into the wall's back and at the exposed 300-degree
-        // view these installed faces fill the actor rectangle. These explicit
+        // At 30 degrees into the wall's back these installed faces fill the
+        // actor rectangle. The exposed view is 300 degrees for Just Climb and
+        // 315 for E22_KF_1: at 300 its neighbouring terrain still covers part
+        // of the sprite. Both selected front views show the whole raw sprite.
+        // These explicit
         // requirements don't derive their expected answer from the bias rule.
         if(view==4) {
           if(before)check(changed(empty.framebuffer(),actual)>0&&bool(boxes[0]),"reproduce back-of-wall leak and pickability "+evidenceName);
           else check(changed(empty.framebuffer(),actual)==0&&!boxes[0],"back-of-wall climber has no pixels or pick box "+evidenceName);
         }
-        if(view==40)check(actual.rgb==raw.rgb&&bool(boxes[0]),"front-of-wall climber fully drawn and pickable "+evidenceName);
+        if(view==(name=="climber2"?42:40))check(actual.rgb==raw.rgb&&bool(boxes[0]),"front-of-wall climber fully drawn and pickable "+evidenceName);
       }
       const auto actualPng=encodePng(image(actual));
       if(!baseline.empty()) {

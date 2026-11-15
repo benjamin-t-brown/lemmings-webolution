@@ -86,11 +86,14 @@ void natural(const AssetLibrary& lib, const fs::path& out, const std::string& id
            row>=receiver.minY && row<=receiver.minY+receiver.high)
           reachedDryReceiver=true;
       if(!reachedDryReceiver)
-        for(std::size_t index=0;index<w.lemmings().size();++index) {
+        // The current hatch alternates; the historical World released all right.
+        // Compare actor 0's unchanged water motion, independently of later births
+        // and their now-different aggregate losses. Full traces stay above.
+        for(std::size_t index=0;index<std::min(std::size_t{1},w.lemmings().size());++index) {
           const auto& actor=w.lemmings()[index];
           supported<<w.levelClockMs()<<','<<index<<','<<actor.x<<','<<actor.y<<','
             <<sim::stateName(actor.state)<<','<<actor.sheetType<<','<<actor.frame<<','
-            <<std::setprecision(17)<<actor.stepBudgetSeconds<<','<<w.saved()<<','<<w.dead()<<'\n';
+            <<std::setprecision(17)<<actor.stepBudgetSeconds<<'\n';
         }
     }
     if(l.x!=lastX||g>=0||l.state==sim::State::Drown||l.state==sim::State::Dead) {
@@ -147,7 +150,7 @@ void application(const fs::path& game,const fs::path& out,const std::string& id)
           dryReceiver=true;
       if(!dryReceiver)
         prefix<<f.frame<<','<<f.world.levelClockMs()<<','<<l.x<<','<<l.y<<','<<sim::stateName(l.state)<<','
-          <<l.frame<<','<<std::setprecision(17)<<l.stepBudgetSeconds<<','<<f.world.saved()<<','<<f.world.dead()<<'\n';
+          <<l.frame<<','<<std::setprecision(17)<<l.stepBudgetSeconds<<'\n';
     }
     const auto actor=std::find_if(f.actors.begin(),f.actors.end(),[](const auto& a){return a.index==0;});
     trace<<f.frame<<','<<f.world.levelClockMs()<<','<<l.x<<','<<l.y<<','<<sim::stateName(l.state)<<','

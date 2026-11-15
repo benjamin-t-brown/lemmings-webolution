@@ -299,7 +299,8 @@ target_compile_definitions(test_bitmap PRIVATE
 add_test(NAME bitmap COMMAND test_bitmap)
 
 # B3j: production conditional map compositor against accepted SOURCE images.
-add_executable(test_mapscene src/__test__/test_mapscene.cpp src/app/MapScene.cpp)
+add_executable(test_mapscene src/__test__/test_mapscene.cpp src/app/MapScene.cpp
+  src/shell/MenuRender.cpp src/shell/HudText.cpp src/app/SkillPanel.cpp)
 target_link_libraries(test_mapscene PRIVATE webolution_objects)
 target_compile_definitions(test_mapscene PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME mapscene COMMAND test_mapscene WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -464,7 +465,8 @@ add_test(NAME frontendsession COMMAND test_frontendsession)
 
 # save-codec-001: pure SavedGame codec, storage adapter, and the read-only check of
 # the node mapping against the reference executable bytes (hash first).
-add_executable(test_savedgame src/__test__/test_savedgame.cpp src/app/MapScene.cpp)
+add_executable(test_savedgame src/__test__/test_savedgame.cpp src/app/MapScene.cpp
+  src/shell/MenuRender.cpp src/shell/HudText.cpp src/app/SkillPanel.cpp)
 target_link_libraries(test_savedgame PRIVATE webolution_objects)
 target_compile_definitions(test_savedgame PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME savedgame COMMAND test_savedgame WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -585,10 +587,37 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
       src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
     target_include_directories(test_maphover_before BEFORE PRIVATE "${MAP_HOVER_FROZEN}/src")
     target_link_libraries(test_maphover_before PRIVATE webolution_objects)
-    target_compile_definitions(test_maphover_before PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+    target_compile_definitions(test_maphover_before PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 MAP_HOVER_FROZEN=1)
     add_test(NAME maphover_before COMMAND test_maphover_before baseline "${CMAKE_BINARY_DIR}/map-hover-before-test")
     set_tests_properties(maphover_before PROPERTIES TIMEOUT 120
       ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endif()
+
+  # T3: compare the three-line block with authentic task-entry title-only sources.
+  # Optional local provenance fixture; no original code or assets are copied.
+  set(MAP_HOVER_TEXT_FROZEN "${CMAKE_SOURCE_DIR}/build/map-hover-text-001/before-source")
+  if(EXISTS "${MAP_HOVER_TEXT_FROZEN}/src/app/FrontendSession.cpp")
+    set(MAP_HOVER_TEXT_BEFORE_GFX ${WEBOLUTION_GFX_SOURCES})
+    list(REMOVE_ITEM MAP_HOVER_TEXT_BEFORE_GFX
+      "${CMAKE_SOURCE_DIR}/src/app/FrontendSession.cpp" "${CMAKE_SOURCE_DIR}/src/app/MapScene.cpp"
+      "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
+    add_executable(test_maphovertext_before src/__test__/test_maphover.cpp
+      ${MAP_HOVER_TEXT_BEFORE_GFX} "${MAP_HOVER_TEXT_FROZEN}/src/app/FrontendSession.cpp"
+      "${MAP_HOVER_TEXT_FROZEN}/src/app/MapScene.cpp" "${MAP_HOVER_TEXT_FROZEN}/src/app/main.cpp"
+      src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
+    target_include_directories(test_maphovertext_before BEFORE PRIVATE "${MAP_HOVER_TEXT_FROZEN}/src")
+    target_link_libraries(test_maphovertext_before PRIVATE webolution_objects)
+    target_compile_definitions(test_maphovertext_before PRIVATE
+      WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 MAP_HOVER_FROZEN=1)
+    add_test(NAME maphovertext_before COMMAND test_maphovertext_before previous "${CMAKE_BINARY_DIR}/map-hover-text-before-test")
+    set_tests_properties(maphovertext_before PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME maphovertext_compare COMMAND "${Python3_EXECUTABLE}"
+      "${CMAKE_SOURCE_DIR}/tools/compare_map_hover.py" "${CMAKE_BINARY_DIR}"
+      "${CMAKE_BINARY_DIR}/map-hover-text-comparison")
+    set_tests_properties(maphovertext_compare PROPERTIES TIMEOUT 120
+      DEPENDS "maphover;maphovertext_before")
   endif()
 
   # Observe real SDL window lifetimes in the source application, including teardown.
@@ -1265,6 +1294,63 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(fastforward_support PUBLIC webolution_objects)
   target_compile_definitions(fastforward_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  # Hatch release direction: authentic task-entry release/loader sources share
+  # unchanged presentation support. Filter only the three replaced object files.
+  set(HATCH_DIRECTION_DIR "${CMAKE_SOURCE_DIR}/build/hatch-release-direction-001")
+  foreach(side IN ITEMS before after)
+    if(side STREQUAL "before" AND NOT EXISTS "${HATCH_DIRECTION_DIR}/before-source/World.cpp")
+      continue()
+    endif()
+    add_executable(test_hatch_direction_${side} src/__test__/test_hatch_direction.cpp
+      src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+    if(side STREQUAL "before")
+      target_sources(test_hatch_direction_${side} PRIVATE
+        "${HATCH_DIRECTION_DIR}/before-source/World.cpp"
+        "${HATCH_DIRECTION_DIR}/before-source/RetailLevel.cpp"
+        "${HATCH_DIRECTION_DIR}/before-source/LevelObjects.cpp")
+      target_include_directories(test_hatch_direction_${side} PRIVATE src/sim src/assets)
+      target_compile_definitions(test_hatch_direction_${side} PRIVATE HATCH_DIRECTION_BEFORE=1)
+      target_link_libraries(test_hatch_direction_${side} PRIVATE fastforward_support
+        "$<FILTER:$<TARGET_OBJECTS:webolution_objects>,EXCLUDE,(World|RetailLevel|LevelObjects)[.]cpp[.]obj$>")
+    else()
+      target_link_libraries(test_hatch_direction_${side} PRIVATE fastforward_support webolution_objects)
+    endif()
+    foreach(level IN ITEMS MM_W_012 MM_CLIMB_002 MM_BASH_002)
+      add_test(NAME hatch_direction_${level}_${side} COMMAND test_hatch_direction_${side}
+        run "${HATCH_DIRECTION_DIR}/${side}/${level}" "${level}")
+      set_tests_properties(hatch_direction_${level}_${side} PROPERTIES TIMEOUT 120
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    endforeach()
+    if(side STREQUAL "before")
+      set(hatch_profile_expected 3633704696154420f7a8edf02eb20fe109c6e32669867e20a0f8a1feca8c4b40)
+    else()
+      set(hatch_profile_expected 03c498d568daedf2eb74d90e321b3233178dee70e6f51bddd237bccaa57df38d)
+    endif()
+    add_test(NAME hatch_direction_profile_${side} COMMAND ${CMAKE_COMMAND}
+      "-DDRIVER=$<TARGET_FILE:test_hatch_direction_${side}>" "-DSIDE=${side}"
+      "-DOUTPUT=${HATCH_DIRECTION_DIR}/profile-${side}" "-DEXPECTED=${hatch_profile_expected}"
+      -P "${CMAKE_SOURCE_DIR}/cmake/hatch_direction_profile.cmake")
+    set_tests_properties(hatch_direction_profile_${side} PROPERTIES TIMEOUT 60
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endforeach()
+  add_test(NAME hatch_direction_assets COMMAND test_hatch_direction_after assets "${HATCH_DIRECTION_DIR}/assets")
+  set_tests_properties(hatch_direction_assets PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  if(TARGET test_hatch_direction_before)
+    add_test(NAME hatch_direction_identity COMMAND ${CMAKE_COMMAND}
+      "-DBASELINE=${HATCH_DIRECTION_DIR}/before-source" -P "${CMAKE_SOURCE_DIR}/cmake/hatch_direction_identity.cmake")
+    set_tests_properties(hatch_direction_identity PROPERTIES TIMEOUT 30)
+    set_tests_properties(hatch_direction_profile_before PROPERTIES DEPENDS hatch_direction_identity)
+    foreach(level IN ITEMS MM_W_012 MM_CLIMB_002 MM_BASH_002)
+      set_tests_properties(hatch_direction_${level}_before PROPERTIES DEPENDS hatch_direction_identity)
+      set_tests_properties(hatch_direction_${level}_after PROPERTIES DEPENDS hatch_direction_${level}_before)
+    endforeach()
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME hatch_direction_compare COMMAND "${Python3_EXECUTABLE}"
+      "${CMAKE_SOURCE_DIR}/tools/compare_hatch_direction.py" "${CMAKE_SOURCE_DIR}")
+    set_tests_properties(hatch_direction_compare PROPERTIES TIMEOUT 30
+      DEPENDS "hatch_direction_MM_W_012_before;hatch_direction_MM_W_012_after;hatch_direction_MM_CLIMB_002_before;hatch_direction_MM_CLIMB_002_after;hatch_direction_MM_BASH_002_before;hatch_direction_MM_BASH_002_after")
+  endif()
   foreach(side IN ITEMS before after)
     if(side STREQUAL "before")
       set(ffi_files "${FFI_DIR}/frozen/src/app/main.cpp" "${FFI_DIR}/frozen/src/app/RuntimeHud.cpp"
@@ -1450,6 +1536,48 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(hatch_exit_support PUBLIC webolution_objects)
   target_compile_definitions(hatch_exit_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+  # R4: same installed natural win through frozen/current production paths.
+  set(EXIT_BALLOON_BASE "${CMAKE_SOURCE_DIR}/build/exit-balloon-path-001/before-source")
+  foreach(side IN ITEMS before after)
+    if(side STREQUAL "before")
+      if(NOT EXISTS "${EXIT_BALLOON_BASE}/src/app/BackdropScene.cpp")
+        continue()
+      endif()
+      set(balloon_main "${EXIT_BALLOON_BASE}/src/app/main.cpp")
+      set(balloon_scene "${EXIT_BALLOON_BASE}/src/app/BackdropScene.cpp")
+    else()
+      set(balloon_main src/app/main.cpp)
+      set(balloon_scene src/app/BackdropScene.cpp)
+    endif()
+    add_executable(test_exit_balloon_${side} src/__test__/test_exit_balloon.cpp
+      ${balloon_main} ${balloon_scene} src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+    target_link_libraries(test_exit_balloon_${side} PRIVATE hatch_exit_support webolution_objects)
+    if(side STREQUAL "before")
+      target_compile_definitions(test_exit_balloon_${side} PRIVATE EXIT_BALLOON_BEFORE=1)
+    endif()
+    add_test(NAME exit_balloon_${side} COMMAND test_exit_balloon_${side}
+      "${CMAKE_SOURCE_DIR}/build/exit-balloon-path-001/${side}")
+    set_tests_properties(exit_balloon_${side} PROPERTIES TIMEOUT 180
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endforeach()
+  if(TARGET test_exit_balloon_before)
+    add_test(NAME exit_balloon_identity COMMAND ${CMAKE_COMMAND}
+      "-DBASELINE=${EXIT_BALLOON_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/exit_balloon_identity.cmake")
+    set_tests_properties(exit_balloon_identity PROPERTIES TIMEOUT 30)
+    set_tests_properties(exit_balloon_before PROPERTIES DEPENDS exit_balloon_identity)
+    set_tests_properties(exit_balloon_after PROPERTIES DEPENDS exit_balloon_before)
+  endif()
+  add_test(NAME exit_balloon_assets COMMAND test_exit_balloon_after
+    "${CMAKE_SOURCE_DIR}/build/exit-balloon-path-001/assets" assets)
+  set_tests_properties(exit_balloon_assets PROPERTIES TIMEOUT 60
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  if(TARGET test_exit_balloon_before)
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME exit_balloon_compare COMMAND "${Python3_EXECUTABLE}"
+      "${CMAKE_SOURCE_DIR}/tools/compare_exit_balloon.py" "${CMAKE_SOURCE_DIR}")
+    set_tests_properties(exit_balloon_compare PROPERTIES TIMEOUT 60
+      DEPENDS "exit_balloon_before;exit_balloon_after")
+  endif()
   add_executable(test_hatch_entry_fixture src/__test__/test_hatch_entry_fixture.cpp
     src/app/BackdropScene.cpp src/app/RuntimeHud.cpp)
   target_link_libraries(test_hatch_entry_fixture PRIVATE hatch_exit_support webolution_objects)
@@ -1965,3 +2093,6 @@ include(cmake/gravity_gadgets.cmake)
 # macros belong on that driver. Legacy partial/frozen targets below share only
 # their requested current objects, after all frozen include paths are known.
 webolution_share_registered_app_sources()
+
+# Explicit render-demand automation and optional authentic worker controls.
+include(cmake/frame_consumption.cmake)

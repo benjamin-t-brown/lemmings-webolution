@@ -420,8 +420,9 @@ std::vector<HatchRecord> readHatchRecords(std::span<const std::byte> d) {
   //   values_a0_a4_a8     [+0xA0, +0xA4, +0xA8] -> rate, rateMin, rateMax
   //   double_bits_48_60   [+0x48] -> boxMin, [+0x60] -> boxMax (bits only)
   //   model->name                 -> model
-  // Everything else the record carries (id, flag_28/_38/_40/_41/_ac/_ad/_b6,
-  // short_b4, the five base doubles and both counted triple arrays) is
+  // short_b4 / flag_b6 -> direction / alternateDirection (0x425C6E..0x425CAC).
+  // Everything else the record carries (id, flag_28/_38/_40/_41/_ac/_ad,
+  // the five base doubles and both counted triple arrays) is
   // deliberately not projected: no evidence establishes what those mean, and
   // guessing one into a gameplay field would invent a rule.
   const std::span<const std::uint8_t> bytes(
@@ -440,6 +441,8 @@ std::vector<HatchRecord> readHatchRecords(std::span<const std::byte> d) {
     h.rate = static_cast<int>(e.values_a0_a4_a8[0]);
     h.rateMin = static_cast<int>(e.values_a0_a4_a8[1]);
     h.rateMax = static_cast<int>(e.values_a0_a4_a8[2]);
+    h.direction = std::bit_cast<std::int16_t>(e.short_b4);
+    h.alternateDirection = e.flag_b6;
     // The decoder retains binary64 bit patterns; transfer them, do not compute.
     h.boxMin = {std::bit_cast<double>(e.double_bits_48_60[0]),
                 std::bit_cast<double>(e.double_bits_48_60[1]),
@@ -542,6 +545,12 @@ std::vector<HatchRecord> findHatchRecords(std::span<const std::byte> d) {
     h.rate = static_cast<int>(rate);
     h.rateMin = static_cast<int>(rateMin);
     h.rateMax = static_cast<int>(rateMax);
+    // The historical locator accepts truncated tails. Preserve that fallback
+    // with the hand-built default; complete records carry the same stored fields.
+    if (p + kTailAt + 16 <= d.size()) {
+      h.direction = std::bit_cast<std::int16_t>(u16At(d, p + kTailAt + 13));
+      h.alternateDirection = d[p + kTailAt + 15] != std::byte{0};
+    }
     h.boxMin = {v[0], v[1], v[2]};
     h.boxMax = {v[3], v[4], v[5]};
     h.at = p + kTripleAt;

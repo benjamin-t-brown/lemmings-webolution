@@ -149,7 +149,9 @@ int main(int argc, char** argv) {
             << ',' << saved << ',' << dead << ',' << action << '\n';
     };
     for (std::size_t n = 0; n < 2; ++n) {
-      const auto index = 11 + n;
+      // Alternating births: actor 11 now starts left and never reaches the
+      // recorded right-hand site. Use the next right-born actors, 12 and 14.
+      const auto index = 12 + 2*n;
       if (index < world.lemmings().size() && world.lemmings()[index].state == sim::State::Blocker) {
         if (!blockerSeen[n]) {
           emit(index, "blocker-observed");
@@ -178,7 +180,7 @@ int main(int argc, char** argv) {
       return;
     }
     if (placements >= 2 || (placements == 1 && !blockerSeen[0])) return;
-    const std::size_t index = 11 + placements;
+    const std::size_t index = 12 + 2*placements;
     if (index >= world.lemmings().size() || frame.selectedSkillIndex != 3) return;
     const auto& actor = world.lemmings()[index];
     if (actor.state != sim::State::Walker || actor.y != 41) return;
@@ -215,7 +217,7 @@ int main(int argc, char** argv) {
   std::ofstream(out / "summary.txt") << "failures=" << failures << "\nstatus=" << status
       << "\nwon=" << won << "\ndoomed=" << doomed << "\ndry_splat=" << drySplat << "\nsaved=" << saved << "\nresult_saved=" << resultSaved << "\ndead=" << dead
       << "\nplacements=" << placements << "\nreturned_to_map=" << returned
-      << "\nblocker_11_attach_tick=" << attachTicks[0] << "\nblocker_12_attach_tick=" << attachTicks[1]
+      << "\nblocker_12_attach_tick=" << attachTicks[0] << "\nblocker_14_attach_tick=" << attachTicks[1]
       << "\ninstalled_save_unchanged=" << installed.unchanged()
       << "\nnormal_save_unchanged=" << normal.unchanged() << '\n';
   return failures ? 1 : 0;

@@ -354,6 +354,14 @@ std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitP
  try {
    level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
  } catch(const std::invalid_argument& e) { return std::unexpected(e.what()); }
+ presentation.exitCoordinateHeight=static_cast<std::int32_t>(level.world.leading_value);
+ presentation.exitCoordinateRows.resize(level.world.first_blocks.size());
+ // 0x43D09A deinterleaves FILE inner/outer pairs into the RUNTIME layers
+ // consumed by 0x43D56C. Match ActorPose's cylinder-template accessor here;
+ // do not pass the raw serialized blocks to the runtime-coordinate helper.
+ for(std::size_t row=0;row<level.world.first_blocks.size();++row)
+   for(std::size_t x=0;x<32;++x)for(std::size_t layer=0;layer<2;++layer)
+     presentation.exitCoordinateRows[row][layer*32+x]=level.world.first_blocks[row][x*2+layer];
  for(std::size_t i=0;i<roots_.size();++i) {
    const auto& owned=roots_[i];
    if(owned.source.owner=="entities_425e50") {
@@ -368,7 +376,15 @@ std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitP
        break;
      }
    } else if(owned.source.owner=="entities_426c6b") {
-     presentation.exits.push_back({i,owned.node.matrix});
+     const auto& entity=level.gadgets.entities_426c6b.at(owned.source.entityIndex);
+     std::array<double,3> position{};
+     for(std::size_t j=0;j<3;++j)position[j]=std::bit_cast<double>(entity.double_bits[j]);
+     // Validate the view once at binding, before the frame loop uses it.
+     try {
+       (void)lemmings::map_world_coordinates(
+           {presentation.exitCoordinateHeight,presentation.exitCoordinateRows},position);
+     }catch(const std::exception& e){return std::unexpected(std::string("exit coordinates: ")+e.what());}
+     presentation.exits.push_back({i,owned.node.matrix,position});
    }
  }
  return presentation;
@@ -380,10 +396,32 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
  for(const auto& exit:presentation.exits) {
    auto& matrix=roots_[exit.root].node.matrix;
    matrix=exit.matrix;
-   // READ 0x426A0C..0x426A18: exit Y += dt * 5.0. PROVISIONAL
-   // playable-v1 trigger: the global Pending phase, rather than each exit's
-   // selected-type population. Native bobbing/drift/rotation are not ported.
-   matrix[10]+=5.0*std::max(0.0,departureSeconds);
+   const double time=std::max(0.0,departureSeconds);
+   if(time==0.0)continue;
+   // READ 0x426A0C..0x426A95: logical X += dt*0.5, Y += dt*5,
+   // radial BLEND += dt*0.5; X wraps at 256 (0x4231DE). The blend is
+   // not a world-space distance: the installed lattice converts it into
+   // the large outward motion missing from the former Y-only departure.
+   // Model slot+8 (0x451668 -> 0x4658D6 -> 0x43D56C) maps this triple.
+   auto position=exit.cylinderPosition;
+   position[0]=std::fmod(position[0]+0.5*time,256.0);
+   position[1]+=5.0*time;
+   position[2]+=0.5*time;
+   const lemmings::WorldCoordinateMesh mesh{presentation.exitCoordinateHeight,presentation.exitCoordinateRows};
+   const auto start=lemmings::map_world_coordinates(mesh,exit.cylinderPosition);
+   const auto moved=lemmings::map_world_coordinates(mesh,position);
+   for(std::size_t j=0;j<3;++j)matrix[9+j]+=moved[j]-start[j];
+   // PROVISIONAL presentation adapter: turn the stored model with its radial
+   // heading, preserving its scale/tilt. Native tangent heading and phase-
+   // dependent 0.02 bob/roll are not reproduced. Path rates above are traced,
+   // not fitted to the recording. Keep the accepted global Pending trigger
+   // and results timer; per-type departure/removal remains outside this fix.
+   const double angle=std::atan2(moved[2],moved[0])-std::atan2(start[2],start[0]);
+   const double c=std::cos(angle),s=std::sin(angle);
+   for(std::size_t row=0;row<3;++row){
+     const double x=exit.matrix[3*row],z=exit.matrix[3*row+2];
+     matrix[3*row]=c*x-s*z;matrix[3*row+2]=s*x+c*z;
+   }
  }
 }
 std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(

@@ -100,6 +100,11 @@ struct HatchRecord {
   int rate = 0;      // u32 -> hatch+0xA0, preferred RELEASERATE.PC row
   int rateMin = 1;   // u32 -> hatch+0xA4, clamp lower bound
   int rateMax = 99;  // u32 -> hatch+0xA8, clamp upper bound
+  // 0x425F8D / 0x425FA8: stored hatch+0xB4 direction and normalized +0xB6.
+  // 0x425C6E..0x425CAC uses -1 for left, otherwise right, then alternates
+  // this hatch's next direction (1 -> -1, anything else -> 1) when enabled.
+  std::int16_t direction = 1;
+  bool alternateDirection = false;
   // The two Vec3 the base loader's tail reads into hatch+0x48 and +0x60: an
   // axis-aligned 8 x 5 box in unrolled space, z 0 and 1, on every record in
   // the corpus. Kept because they are what makes the record recognisable.

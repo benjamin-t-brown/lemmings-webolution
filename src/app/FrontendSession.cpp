@@ -4,6 +4,9 @@
 #include "shell/HudText.h"
 #include "shell/MenuRender.h"
 
+#include <string_view>
+#include <cctype>
+#include <algorithm>
 #include <cstdio>
 #include <vector>
 
@@ -276,8 +279,16 @@ bool FrontendSession::click(int x, int y) {
 
 std::expected<void, std::string> FrontendSession::completeLevel(
     const AssetLibrary& library, const LevelOutcome& outcome) {
+  // Playtest 6: the map stores 20 launch ids in mixed case (MM_Block_Bomb_A)
+  // while the level leg reports the resolved archive id (MM_BLOCK_BOMB_A).
+  // Clone policy: ids are compared without ASCII case, as the level resolver
+  // does, and the session keeps the map's own spelling for retry.
+  const auto sameId = [](std::string_view a, std::string_view b) {
+    return std::ranges::equal(a, b, [](unsigned char x, unsigned char y) {
+      return std::toupper(x) == std::toupper(y); });
+  };
   if (screen() != shell::Screen::Level || !selectedLevel_ || !selectedNode_ ||
-      outcome.level != *selectedLevel_ || map_.levelForNode(*selectedNode_) != selectedLevel_)
+      !sameId(outcome.level, *selectedLevel_) || map_.levelForNode(*selectedNode_) != selectedLevel_)
     return std::unexpected("result does not belong to the selected level");
   if (outcome.saved < 0 || outcome.total < outcome.saved || outcome.required < 0 ||
       outcome.secondsRemaining < 0)
@@ -300,6 +311,7 @@ std::expected<void, std::string> FrontendSession::completeLevel(
   mapImage_ = std::move(mapImage);
   results_ = std::move(*results);
   outcome_ = outcome;
+  outcome_->level = *selectedLevel_;
   selectedLevel_.reset();
   if (outcome.success) {
     // READ485E55 (0x485E2B..0x485E65): mark C of the winning (group, slot), then

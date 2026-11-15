@@ -315,6 +315,17 @@ int main() {
         fresh->completionFlags()[0] == 0,
         "new game via footer/menu/confirm resets owned flags and rebuilds initial map");
 
+  // Playtest 6: 20 map nodes spell their launch id in a different case from the
+  // id the level leg reports. The result must be accepted and retry must work.
+  auto mixed = make();
+  if (!mixed) return 1;
+  mixed->pressReturn(); mixed->pressReturn();
+  check(mixed->clickMap(206, 204) &&
+        mixed->completeLevel(*library, outcome("mm_climb_002", 0, 20, 10, false)).has_value() &&
+        mixed->screen() == Screen::Results && mixed->outcome() &&
+        mixed->outcome()->level == "MM_CLIMB_002",
+        "result id differing only in case is accepted and keeps the map spelling");
+
   std::cout << checks << " checks, " << failures << " failures\n";
   return failures ? 1 : 0;
 }

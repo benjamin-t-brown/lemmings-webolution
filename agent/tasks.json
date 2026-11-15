@@ -15365,7 +15365,7 @@
     {
       "id": "antigrav-presentation-001",
       "title": "Draw lemmings correctly in anti-gravity zones",
-      "status": "needs_review",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15387,31 +15387,116 @@
       "last_run": "build/agent-runs/20261114T230327-47060-e3005cb7",
       "last_failure": "Verification failed; inspect build/agent-runs/20261114T222010-47060-48bc1f5c/verification.log",
       "review": {
-        "decision": "blocked",
-        "reason": "Independent review is blocked by evidence access. Reviewer instructions prohibit shell access, and no available non-shell tool or MCP resource exposes local source, reports, snapshots, or verification logs. The supplied paths and content hash alone cannot establish acceptance. Provide a permitted local text reader or include the retained evidence in the review context. No files were changed and no project code was executed.",
+        "decision": "accept",
+        "reason": "All three criteria are supported by independently inspected source, retained images and traces, and final verification: 260 main and 84 recovery tests passed. Acceptance is scoped to clone presentation; exact original anchoring remains provisional, return-upright coverage uses a disclosed placed actor, and the documented roof-escape defect remains unchanged.",
         "checks": [
           {
             "criterion": "The report names the reproduced level and shows, through the production path with retained images and a position/state trace, lemmings in anti-gravity cells drawn clipping through ground or standing on nothing.",
-            "passed": false,
-            "evidence": []
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/antigrav-presentation-001.md",
+                "detail": "Names node 11, m06_kf_1, Sometimes up..sometimes down.; identifies installed flippers and hatch route, checks candidate reachability, and explicitly discloses direct-level entry because the candidates were locked."
+              },
+              {
+                "path": "src/__test__/test_antigrav_presentation.cpp",
+                "detail": "Reproduction calls production runApplication with the installed level, natural hatch release, deterministic clock, and private save sink. It records framebuffer images, simulation state, interpolated position, lane, placement, animation, pause and hover."
+              },
+              {
+                "path": "build/antigrav-presentation-001/before/m06_kf_1/ceiling-steady-detail.png",
+                "detail": "Directly reviewed: the upright actor is largely clipped into the ceiling, leaving an apparently unsupported fragment."
+              },
+              {
+                "path": "build/antigrav-presentation-001/before/m06_kf_1/positions.csv",
+                "detail": "Records gravity -1 after the first flip at 7400 ms and supported ceiling walking at 7900 ms. At 9000 ms the actor is (73,77), supported above, while its upright sprite extends upward from projected feet Y=342.3363."
+              },
+              {
+                "path": "build/antigrav-presentation-001/entry-provenance.json",
+                "detail": "Frozen baseline source hashes match the supervisor's authentic task-entry source, supporting the before-image provenance."
+              }
+            ]
           },
           {
             "criterion": "The original's inverted-gravity presentation is cited from retained or static evidence, or what is not evidenced is stated and the choice labelled provisional. After the change, lemmings in those cells are drawn upside down on the surface the simulation has them on, and upright again after leaving, in reviewed image sequences and a regression test on real level data.",
-            "passed": false,
-            "evidence": []
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/antigrav-presentation-001/static-evidence.json",
+                "detail": "Retained Ghidra results identify reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Inspected instructions at 0x42E58C..0x42E5D4 set orientation from gravity; 0x47A7F1/0x47A999 branch on orientation and exchange vertical UV arguments independently of horizontal mirroring."
+              },
+              {
+                "path": "src/app/ActorSprite.h",
+                "detail": "Explicitly labels reflection around projected feet as provisional and identifies the original contact-frame comparison needed to settle exact anchoring."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Carries persistent simulation gravity through injectedWalkersFromWorld into shared actor preparation. Rendering, depth clipping, screen boxes and highlighting use the same reflected placement and vertically flipped silhouette; motion, lane and animation samples remain shared."
+              },
+              {
+                "path": "build/antigrav-presentation-001/after/m06_kf_1/ceiling-steady-detail.png",
+                "detail": "Directly reviewed against the before detail: feet remain at the ceiling contact while body and green hair extend downward."
+              },
+              {
+                "path": "build/antigrav-presentation-001/after/m06_kf_1/ceiling-11.png",
+                "detail": "Reviewed natural-route ceiling sequence frames 0, 4, 8 and 11: the inverted actor progresses along the ceiling with changing animation while upright actors remain upright."
+              },
+              {
+                "path": "build/antigrav-presentation-001/after/placed-return-flipper/frame-0.png",
+                "detail": "Reviewed with frames 1, 4 and 7: the actor starts inverted at the installed second flipper, then draws upright after the simulation restores gravity +1. This is disclosed placed-actor evidence on unmodified real terrain."
+              },
+              {
+                "path": "build/antigrav-presentation-001/after/placed-return-flipper/transition.csv",
+                "detail": "Confirms gravity changes from -1 to +1 at 20 ms, the rectangle switches sides of the same projected origin, and upright presentation persists after departure."
+              },
+              {
+                "path": "src/__test__/test_antigrav_presentation.cpp",
+                "detail": "Regression covers natural first inversion and ceiling walking, animation, paused motion/lane/placement, hover/highlight, independent flipped texels and alpha, and return upright on the actual installed second flipper."
+              }
+            ]
           },
           {
             "criterion": "Any simulation defect found in these zones is reported with evidence and either fixed from a cited rule or explicitly left. Levels without anti-gravity cells render pixel-identically for the scripted routes. Full registered main/recovery verification passes; saves are untouched.",
-            "passed": false,
-            "evidence": []
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/antigrav-presentation-001.md",
+                "detail": "Explicitly leaves the roof-escape simulation defect: inverted Fallers continue above the world and their displayed pose clamps near the top ring. It records the evidence and defers ceiling termination to gravity-gadgets-001 without changing simulation rules."
+              },
+              {
+                "path": "build/antigrav-presentation-001/after/m06_kf_1/positions.csv",
+                "detail": "Records the unchanged defect at (104,-1) at 19000 ms and (104,-53) at 21600 ms, still an inverted Faller."
+              },
+              {
+                "path": "build/antigrav-presentation-001/retry-002/evidence/comparison.json",
+                "detail": "Records byte-identical simulation on all three routes and matching entire-frame pixel hashes for all 160 frames each on non-antigravity MM_CLIMB_002 and MM_BASH_002."
+              },
+              {
+                "path": "build/agent-runs/loop-74fa1376ca404209855704db4e38cf31/0001-verify-0dcf13/verification.log",
+                "detail": "Final registered verification passes 260/260 main and 84/84 recovery tests, including antigrav identity/before/after and the previously failing frozen-renderer tests. Uses registered UCRT64 tools, optimized assertions-enabled main build, eight build jobs and four test jobs."
+              },
+              {
+                "path": "build/agent-runs/loop-74fa1376ca404209855704db4e38cf31/0001-review-1b9e55/before-source-hashes.json",
+                "detail": "Read-only hash comparison confirmed current production files, regression driver and CMake changes match the review-entry snapshot."
+              },
+              {
+                "path": "build/antigrav-presentation-001/after/summary.txt",
+                "detail": "Records installed_save_unchanged=1, normal_save_unchanged=1 and zero failures. The inspected driver additionally asserts each private route save remains unchanged."
+              }
+            ]
           }
         ]
+      },
+      "accepted_at": "2026-11-15T00:34:13.191572+00:00",
+      "accepted_verification": {
+        "profile": "all",
+        "log": "build/agent-runs/loop-74fa1376ca404209855704db4e38cf31/0001-verify-0dcf13/verification.log",
+        "verified_content": "6bc3d794c68201dfe281f942d283d4ef7639474d30d6b15d81aeb613405b259a"
       }
     },
     {
       "id": "test-build-sharing-001",
       "title": "Compile the application sources once for all tests",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15425,12 +15510,110 @@
         "The report gives compile-step counts and distinct-source counts before and after from compile_commands.json, the list of targets that could not share and why, and timings for a clean build and for a rebuild after touching src/app/TubeScene.h, before and after.",
         "The registered test list from ctest -N is identical before and after (names and count), and no test property (timeout, RUN_SERIAL, DEPENDS, environment) differs; the report retains both listings and their comparison.",
         "The compile-step count falls by at least half, the application executable still builds, and full registered main/recovery verification passes with unchanged frozen baseline sources; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T003413-45884-58a4b4c0",
+      "started": "2026-11-15T00:34:13.483903+00:00",
+      "finished": "2026-11-15T01:20:58.268202+00:00",
+      "last_run": "build/agent-runs/20261115T003413-45884-58a4b4c0",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. Compilation falls 72.2%, test registration and properties are unchanged, and supervisor verification passes 260 main and 84 recovery tests. Independent read-only comparisons confirm preserved sources, frozen headers and saves. This establishes build-workflow acceptance, not original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "The report gives compile-step counts and distinct-source counts before and after from compile_commands.json, the list of targets that could not share and why, and timings for a clean build and for a rebuild after touching src/app/TubeScene.h, before and after.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/test-build-sharing-001.md",
+                "detail": "Reports all required measurements and names twelve targets retaining private application compilation because frozen headers differ; also documents fully frozen targets and retained base variants."
+              },
+              {
+                "path": "build/test-build-sharing-001/before/compile_commands.json",
+                "detail": "Independent parsing confirms 1,867 compile steps and 367 distinct source paths."
+              },
+              {
+                "path": "build/test-build-sharing-001/after/compile_commands.json",
+                "detail": "Independent parsing confirms 519 compile steps and the same 367 distinct source paths."
+              },
+              {
+                "path": "build/test-build-sharing-001/comparison.json",
+                "detail": "Retains clean-build timings of 500.071 versus 205.865 seconds, header-rebuild timings of 145.997 versus 50.055 seconds, and no-change timings of 3.564 versus 0.284 seconds."
+              },
+              {
+                "path": "build/test-build-sharing-001/measure.py",
+                "detail": "Documents registered tools, equivalent build flags, eight build jobs, fresh benchmark directories, and touching then restoring TubeScene.h's timestamp."
+              }
+            ]
+          },
+          {
+            "criterion": "The registered test list from ctest -N is identical before and after (names and count), and no test property (timeout, RUN_SERIAL, DEPENDS, environment) differs; the report retains both listings and their comparison.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/test-build-sharing-001/before/ctest-N.txt",
+                "detail": "Retains the complete original listing of 260 registered tests."
+              },
+              {
+                "path": "build/test-build-sharing-001/after/ctest-N.txt",
+                "detail": "Retains the complete final listing; independent comparison finds identical names, order and count after normalizing the binary directory."
+              },
+              {
+                "path": "build/test-build-sharing-001/before/ctest-inventory.json",
+                "detail": "Retains original test commands and properties for comparison."
+              },
+              {
+                "path": "build/test-build-sharing-001/after/ctest-inventory.json",
+                "detail": "Independent comparison against the original inventory finds no command or property differences after binary-directory normalization, including timeout, RUN_SERIAL, DEPENDS and environment."
+              },
+              {
+                "path": "build/test-build-sharing-001/ctest-N-comparison.txt",
+                "detail": "Retains the successful listing comparison and both test counts; the report links this artifact and the detailed comparison."
+              }
+            ]
+          },
+          {
+            "criterion": "The compile-step count falls by at least half, the application executable still builds, and full registered main/recovery verification passes with unchanged frozen baseline sources; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261115T003413-45884-58a4b4c0/verification.log",
+                "detail": "Records successful linking of webolution.exe, all 260 main tests passing, and all 84 recovery tests passing using the registered toolchain."
+              },
+              {
+                "path": "build/test-build-sharing-001/comparison.json",
+                "detail": "Records a reduction of 1,348 compile steps, or 72.2%, with matching compiled-source, frozen-header and source/save manifests."
+              },
+              {
+                "path": "cmake/webolution_app.cmake",
+                "detail": "Separates shared application objects from main.cpp, preserves explicitly frozen translation units, and conservatively rejects sharing when retained headers differ or lack current counterparts."
+              },
+              {
+                "path": "build/test-build-sharing-001/before/compiled-source-hashes.json",
+                "detail": "All 367 recorded compiled-source hashes match the final manifest and independently read current files, including retained baseline translation units."
+              },
+              {
+                "path": "build/test-build-sharing-001/before/frozen-header-hashes.json",
+                "detail": "All 723 retained-header hashes match the final manifest and independently read current files."
+              },
+              {
+                "path": "build/test-build-sharing-001/before/source-save-manifest.json",
+                "detail": "Initial source/save manifest matches the final manifest. Independent live hashing also confirms both normal clone and installed SavedGame.dat files retain their recorded hashes after supervisor verification."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T01:23:30.907051+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T003413-45884-58a4b4c0\\verification.log",
+        "verified_content": "0b4c52bc0873dcbc72ba895a9f0507f87a98cb3c3ade49e584fce9c28e8f62a5"
+      }
     },
     {
       "id": "empty-receiver-fall-001",
       "title": "Let lemmings fall into an empty fluid container",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15444,12 +15627,123 @@
         "The report shows, through the production path before the change on MM_W_012, a retained image and a position/state trace of a lemming walking across an empty receiver, with the source-traced reason and the cell flags involved.",
         "The original's support rule at a fluid receiver is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on MM_W_012 with the lever not thrown, a lemming reaching the empty receiver falls to its floor; with the receiver filled, a water lemming crosses and an ordinary lemming drowns. Regression tests on real level data assert all three, and retained images are reviewed.",
         "A scripted route on MM_W_012 that wins without throwing the lever no longer wins, or the report shows with evidence why the level is winnable that way in the original. Other registered scripted routes keep their outcomes, or each change is justified as depending on walking over an empty receiver. Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261115T022549-45884-0a63ad1f",
+      "started": "2026-11-15T02:25:49.314663+00:00",
+      "finished": "2026-11-15T03:01:32.890496+00:00",
+      "last_run": "build/agent-runs/20261115T022549-45884-0a63ad1f",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261115T012330-45884-36de11d1/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by source inspection, retained traces and reviewed images, and successful full verification. This accepts the scoped playable-v1 correction; exact original surface rounding, rider attachment and wave interaction remain explicitly provisional.",
+        "checks": [
+          {
+            "criterion": "The report shows, through the production path before the change on MM_W_012, a retained image and a position/state trace of a lemming walking across an empty receiver, with the source-traced reason and the cell flags involved.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/empty-receiver-fall-001.md",
+                "detail": "Traces loading through CollisionGrid/Terrain, receiver initialization, and production application advancement into World walk/fall ground probes. Correctly identifies that clearing the dry receiver's water mask left baked Earth material behind."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/before/natural.csv",
+                "detail": "At 23120 ms actor 0 is Walker at (222,67), probing original row 27: raw flags 512 (0x200), material solid=1, live water zone=0. At 46120 ms it also walks at (159,67) over another dry receiver."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/before/frame-238.png",
+                "detail": "Reviewed production application image showing the actor at the dry receiver's former support height. The accompanying app.csv records actor 0 walking at (225,67) at 23900 ms."
+              },
+              {
+                "path": "src/assets/CollisionGrid.cpp",
+                "detail": "CollisionGrid::solid accepts any nonzero cell lacking kCellNotLandable. Terrain::fromCollisionGrid consequently converted fluid-only 0x200 cells into Earth before receiver initialization."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/baseline-provenance.json",
+                "detail": "Frozen World.cpp, World.h and RetailLevel.cpp hashes match the original implementation run's entry manifest, preserving an authentic pre-task simulation baseline."
+              }
+            ]
+          },
+          {
+            "criterion": "The original's support rule at a fluid receiver is cited from retained or static evidence with addresses, or what is not evidenced is stated and the choice labelled provisional. After the change, on MM_W_012 with the lever not thrown, a lemming reaching the empty receiver falls to its floor; with the receiver filled, a water lemming crosses and an ordinary lemming drowns. Regression tests on real level data assert all three, and retained images are reviewed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/playtest/2026-11-14-original-session.md",
+                "detail": "Retained human observations establish empty-container falls and zero saved without the lever, and water-species travel after filling. Reviewed s2-pit-1.jpg, s2-pit-2.jpg and pit-a.jpg corroborate these observations; they do not distinguish ordinary splat from a special floor death."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/retry-2/retained-instruction-crosscheck.txt",
+                "detail": "Instructions corroborate receiver/species checks at 0x41C321\u20130x41C36F, matching-species flag at 0x41C426/0x41C429, fall construction/attachment at 0x41C7A0/0x41C7D7, and conditional terrain snapping at 0x41C80E\u20130x41C833. Fluid updates at 0x42B24D change live height and invoke 0x43127E/0x4311D0 to clear/repaint volume."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "groundAt supplies positive-live-height support separately from terrain; attachFluidHazard preserves species mismatch drowning and updates matching upright movers to the mean surface. Integer rounding and surface riding are explicitly provisional. Lever and fill timing are unchanged."
+              },
+              {
+                "path": "src/__test__/test_empty_receiver.cpp",
+                "detail": "Loads actual MM_W_012 data. Asserts natural actor 0 reaches (222,91), Splatter, fallDistance=50; separately asserts empty-basin falling, a water lemming crossing a receiver filled through real messages, and an ordinary lemming drowning with exactly one loss. Also checks rising/draining support."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/after/inside-empty-pit.png",
+                "detail": "Reviewed natural production application image shows the actor descending inside the empty basin."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/after/pit-floor-splat.png",
+                "detail": "Reviewed floor-contact frame; natural.csv independently records the fifty-cell fall and Splatter at the real floor."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/after/fixture-phase-1-sheet-1.png",
+                "detail": "Reviewed production-rendered installed-level fixture shows the matching water actor at the filled surface; fixtures.csv and regression assertions establish crossing."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/after/fixture-phase-1-sheet-0.png",
+                "detail": "Reviewed corresponding ordinary-species fixture shows entry into drowning at the surface. The report accurately distinguishes these placed-actor fixtures from natural gameplay and leaves drowning presentation outside this fix."
+              }
+            ]
+          },
+          {
+            "criterion": "A scripted route on MM_W_012 that wins without throwing the lever no longer wins, or the report shows with evidence why the level is winnable that way in the original. Other registered scripted routes keep their outcomes, or each change is justified as depending on walking over an empty receiver. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/empty-receiver-fall-001/gadget-before/summary.txt",
+                "detail": "Authenticated historical simulation wins 11/20 with zero deaths using Blocker placements at ticks 324 and 387."
+              },
+              {
+                "path": "build/fluid-hazard-001/gadget-replay/summary.txt",
+                "detail": "Identical placement ticks now produce zero saved and eleven deaths, with dry-floor splatting and an inevitable loss. Installed and normal save preservation checks both pass."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/retry-2/hatch-comparison.json",
+                "detail": "Matched public actions and release offsets preserve Blocker outcomes of WIN 23/30 and LOSS 0/30. MM_W_012 changes from two saved to zero specifically because actors 0 and 1 fall fifty cells to (222,91) in empty receiver 16."
+              },
+              {
+                "path": "docs/scratch/empty-receiver-fall-001.md",
+                "detail": "Accounts for registered route outcomes, including both fluid-lever assessments changing to zero-save losses because their former routes crossed empty receivers. Justifies corrected material and saved-count assertions while retaining authenticated historical expectations in separate baseline replays."
+              },
+              {
+                "path": "build/agent-runs/20261115T022549-45884-0a63ad1f/verification.log",
+                "detail": "Final registered verification passes 265/265 main and 84/84 recovery tests, including receiver baselines/current behavior, gadget replay, levergates and both corrected hatch routes. Uses registered GCC, eight build jobs, optimized assertions-enabled main build; diff check completes successfully."
+              },
+              {
+                "path": "build/empty-receiver-fall-001/after/summary.txt",
+                "detail": "Receiver demonstrations report zero failures and unchanged complete installed and normal clone save bytes/existence. Application execution uses a private task-local save."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T03:03:55.735881+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T022549-45884-0a63ad1f\\verification.log",
+        "verified_content": "76c89a4a57e0c18af8f7ee36419bbac0a99f628f86151662873d487d82df9ae6"
+      }
     },
     {
       "id": "climber-occlusion-001",
       "title": "Hide climbers behind walls that should cover them",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -15463,7 +15757,101 @@
         "The report shows before images at stated camera angles on MM_CLIMB_002 and a second installed level in which a climber is drawn through a wall, with the traced actor depth, scene depth and bias at those pixels.",
         "After the change, across the same full rotation in at least 24 views on both levels, the climber is hidden in every view where a wall is between it and the camera and uncut in every view where it is on the camera's side; the images are retained and reviewed. A regression test on real level data asserts a climber seen from behind its wall draws no pixels and is not pickable, and one seen from the front is fully drawn.",
         "The walker-on-ledge and dug-tunnel cases of actor-depth-001 are unchanged, and frames containing no climber are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T030355-45884-8ccb8ffc",
+      "started": "2026-11-15T03:03:56.033331+00:00",
+      "finished": "2026-11-15T03:53:18.216898+00:00",
+      "last_run": "build/agent-runs/20261115T030355-45884-8ccb8ffc",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported by source inspection, retained before/after images and supervisor verification. Independently reviewed all 48 complete-scene views on both levels. Acceptance covers provisional clone presentation, not original depth fidelity or human-confirmed playability. This review performed no builds, tests or original execution.",
+        "checks": [
+          {
+            "criterion": "The report shows before images at stated camera angles on MM_CLIMB_002 and a second installed level in which a climber is drawn through a wall, with the traced actor depth, scene depth and bias at those pixels.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/climber-occlusion-001.md",
+                "detail": "Documents naturally reached climbing snapshots on MM_CLIMB_002 and MM_FLOAT_CLIMB2, exact camera angles, production rendering path and the provisional contact-bias correction."
+              },
+              {
+                "path": "build/climber-occlusion-001/evidence/before/climber-full-scene/view-4.png",
+                "detail": "Reviewed full frame at yaw 85.33333333333333 units (120 degrees): the climber appears through its wall."
+              },
+              {
+                "path": "build/climber-occlusion-001/evidence/before/climber2-full-scene/view-4.png",
+                "detail": "Reviewed MM_FLOAT_CLIMB2 frame at yaw 264.33333333333331 units (371.71875 degrees): the climber appears through the metal wall."
+              },
+              {
+                "path": "build/climber-occlusion-001/evidence/before/pixels.csv",
+                "detail": "At the respective view-4 pixels, comparison Z 331.69320262815108 passes scene Z 333.05802335766532, and comparison Z 322.30908140944399 passes scene Z 323.64324959612213. Both rows record the 0.64 traced bias, additional 4-unit allowance and drawn pixels."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, across the same full rotation in at least 24 views on both levels, the climber is hidden in every view where a wall is between it and the camera and uncut in every view where it is on the camera's side; the images are retained and reviewed. A regression test on real level data asserts a climber seen from behind its wall draws no pixels and is not pickable, and one seen from the front is fully drawn.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Removes the extra contact allowance only for climb sprites viewed across their climbing face. Drawing, picking and hover share prepareInjectedWalker and the completed scene depth buffer."
+              },
+              {
+                "path": "src/__test__/test_climber_occlusion.cpp",
+                "detail": "Naturally releases and assigns climbers on both installed levels, then renders 48 evenly spaced views in tube-only and complete-scene contexts. Independent categorical assertions require view 4 to draw zero pixels with no pick box and view 40 to equal the entire unmasked sprite."
+              },
+              {
+                "path": "build/climber-occlusion-001/evidence/after/rotation.csv",
+                "detail": "Records all 48 angles per route, actor/raw/expected pixel counts, depth operands and pick-box presence. Complete-scene view 4 has zero pixels and no box on both levels; view 40 retains all 108 and 99 sprite pixels respectively. All recorded views have zero leaked or missing pixels."
+              },
+              {
+                "path": "build/climber-occlusion-001/evidence/after/climber-full-scene/review-page-0.png",
+                "detail": "Independently reviewed all four consecutive before/after pages for this level, covering views 0\u201347. Covered views 3\u20139 lose the leak; silhouette fragments remain appropriately clipped and exposed sprites remain intact."
+              },
+              {
+                "path": "build/climber-occlusion-001/evidence/after/climber2-full-scene/review-page-0.png",
+                "detail": "Independently reviewed all four consecutive before/after pages for the second level. The wall covers the climber correctly; exposed views retain the sprite, with legitimate hatch occlusion preserved at views 34/35."
+              },
+              {
+                "path": "src/__test__/test_climber_occlusion_app.cpp",
+                "detail": "Exercises public SDL skill assignment, pause and 48-view rotation through runApplication on both levels. It asserts covered/exposed pick visibility and Floater hover selection on MM_FLOAT_CLIMB2 without changing existing skill eligibility."
+              }
+            ]
+          },
+          {
+            "criterion": "The walker-on-ledge and dug-tunnel cases of actor-depth-001 are unchanged, and frames containing no climber are pixel-identical to before. Full registered main/recovery verification passes; saves are untouched.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/climber-occlusion-001/evidence/after/summary.txt",
+                "detail": "Records zero failures and 288 byte-identical non-climber control frames covering ledge, pillar and dug-tunnel routes. Source assertions also compare all 480 actor-free scene frames against the authentic baseline."
+              },
+              {
+                "path": "src/__test__/test_climber_occlusion_app.cpp",
+                "detail": "Compares all 128 full application frames containing no climber byte-for-byte, checks matching simulation/camera traces, uses private saves and verifies installed and normal clone saves remain unchanged."
+              },
+              {
+                "path": "build/climber-occlusion-001/evidence/app-after/summary.txt",
+                "detail": "Records installed_save_unchanged=1, normal_save_unchanged=1 and failures=0; per-level summaries additionally confirm private-save preservation."
+              },
+              {
+                "path": "build/agent-runs/20261115T030355-45884-8ccb8ffc/verification.log",
+                "detail": "Supervisor verification passes all 270 registered main and 84 recovery tests, including the paired climber and prior actor-depth regressions. Uses registered UCRT64 tools, eight build jobs and optimized main builds with assertions."
+              },
+              {
+                "path": "build/agent-runs/20261115T030355-45884-8ccb8ffc/result.json",
+                "detail": "Records verifier exit code 0 and verified_content 22cf2d683e98ddc70ade0e7b830c3d8dc811bf43922a89213103bad256e7f65e, matching the supplied review context."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T03:56:14.500650+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T030355-45884-8ccb8ffc\\verification.log",
+        "verified_content": "22cf2d683e98ddc70ade0e7b830c3d8dc811bf43922a89213103bad256e7f65e"
+      }
     },
     {
       "id": "lemming-type-sprites-001",
@@ -15477,11 +15865,21 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 5 items U4 and U2. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: water lemmings should use a different sprite set from normal lemmings, and the drowning animation looks weird (not a blocker). fluid-hazard-001 (docs/scratch/fluid-hazard-001.md) established that a lemming carries a sheet type (0 ordinary, 1 water, 2 acid) that the simulation uses for the fluid rule; the production view draws every lemming from the ordinary set. From retained evidence (docs/lessons/actor-rendering.md, docs/scratch/actor-anim-001.md) and static analysis establish which installed sprite assets belong to each lemming type, how the original selects them from the sheet type, and whether every state (walk, fall, climb, each skill, drown, exit) has a per-type sequence. Draw each lemming from its own type's set in the production view, including the panel or hover feedback where the original does. Then reproduce the drowning animation through the production path on MM_BUILD_BLOCK_A, state what is wrong with it against the installed frames (wrong sequence, frame order, rate, anchor, or the lemming not sinking with the surface), and correct what the evidence supports; label the rest provisional. Simulation rules and timing are unchanged. Original observation (docs/playtest/2026-11-14-original-session.md): water lemmings are drawn with teal hair and a pale body, ordinary ones with green hair (docs/playtest/reference/original-2026-11-14/pit-a.jpg, s2-pit-1.jpg). Drowning on Build and Block (docs/playtest/reference/original-2026-11-14/s2-drown-zoom.jpg, 4 frames per second): the lemming walks off the ledge onto the water, flails at the surface drawn brightened with small splash droplets, then sinks below the surface as a pale translucent figure that breaks into bubbles, all in about 2 s. Match that sequence as far as the installed frames allow. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "scope": "Playtest 5 items U4 and U2. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: water lemmings should use a different sprite set from normal lemmings, and the drowning animation looks weird (not a blocker). fluid-hazard-001 (docs/scratch/fluid-hazard-001.md) established that a lemming carries a sheet type (0 ordinary, 1 water, 2 acid) that the simulation uses for the fluid rule; the production view draws every lemming from the ordinary set. From retained evidence (docs/lessons/actor-rendering.md, docs/scratch/actor-anim-001.md) and static analysis establish which installed sprite assets belong to each lemming type, how the original selects them from the sheet type, and whether every state (walk, fall, climb, each skill, drown, exit) has a per-type sequence. Draw each lemming from its own type's set in the production view, including the panel or hover feedback where the original does. Then reproduce the drowning animation through the production path on MM_BUILD_BLOCK_A, state what is wrong with it against the installed frames (wrong sequence, frame order, rate, anchor, or the lemming not sinking with the surface), and correct what the evidence supports; label the rest provisional. Simulation rules and timing are unchanged. Original observation (docs/playtest/2026-11-14-original-session.md): water lemmings are drawn with teal hair and a pale body, ordinary ones with green hair (docs/playtest/reference/original-2026-11-14/pit-a.jpg, s2-pit-1.jpg). Drowning on Build and Block (docs/playtest/reference/original-2026-11-14/s2-drown-zoom.jpg, 4 frames per second): the lemming walks off the ledge onto the water, flails at the surface drawn brightened with small splash droplets, then sinks below the surface as a pale translucent figure that breaks into bubbles, all in about 2 s. Match that sequence as far as the installed frames allow. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12. Resume note. Attempt 1 was interrupted when the supervisor was killed by a host low-memory condition (build/agent-runs/20261115T035614-45884-bb6b3277); that is not a task failure. Its partial work is left uncommitted in the tree: edits to src/app/LemmingAnim.cpp, LemmingAnim.h, TubeScene.cpp, TubeScene.h and main.cpp, new cmake/lemming_type_sprites.cmake with its include line at the end of CMakeLists.txt, and src/__test__/test_lemming_type_sprites.cpp. None of it has been verified or reported. Inspect and continue it rather than restarting; every earlier task is accepted and committed (f62b3b8), so every uncommitted source change belongs to this task.",
       "acceptance": [
         "The report lists the sprite assets per lemming type and state with the static or retained evidence for how the original selects them, or states what is not evidenced and labels the choice provisional. Before images on MM_W_012 show water lemmings drawn with ordinary sprites.",
         "After the change, through the production path, water lemmings on MM_W_012 are drawn from the water set in walking, falling and at least one skill state, ordinary lemmings on the same level are unchanged, and acid lemmings follow the same rule on an installed level if one exists. Retained images are reviewed and a regression test on real level data asserts the set chosen per type.",
         "The report shows the drowning sequence before and after as retained frame strips on MM_BUILD_BLOCK_A, names each defect found and what was corrected or left provisional. Levels with only ordinary lemmings render pixel-identically outside drowning frames. Full registered main/recovery verification passes; saves are untouched."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T035614-45884-bb6b3277",
+      "started": "2026-11-15T03:56:14.885668+00:00",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-15T04:03:06.208175+00:00",
+          "by": "project lead",
+          "change": "Resume note. Attempt 1 was interrupted when the supervisor was killed by a host low-memory condition (build/agent-runs/20261115T035614-45884-bb6b3277); that is not a task failure. Its partial work is left uncommitted in the tree: edits to src/app/LemmingAnim.cpp, LemmingAnim.h, TubeScene.cpp, TubeScene.h and main.cpp, new cmake/lemming_type_sprites.cmake with its include line at the end of CMakeLists.txt, and src/__test__/test_lemming_type_sprites.cpp. None of it has been verified or reported. Inspect and continue it rather than restarting; every earlier task is accepted and committed (f62b3b8), so every uncommitted source change belongs to this task."
+        }
       ]
     },
     {
@@ -15545,7 +15943,7 @@
       ],
       "requires_original_execution": false,
       "verification": "all",
-      "stop_after_review": true,
+      "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
       "scope": "Playtest 3 item R4. Difficulty: difficult. Recommended model: Sonnet-class. Observed by a person who knows the original: at level end the balloon flies straight up, whereas in the original it spirals out slowly. hatch-exit-presentation-001 (docs/scratch/hatch-exit-presentation-001.md) added the departure with a provisional path. From retained evidence and static analysis of the exit object's level-end behavior establish the original's path and duration: the motion in cylinder coordinates (angle, radius and height over time), how long it lasts, whether the camera follows and when the results screen takes over. Implement that path in the production level-end transition. If the path cannot be read statically, implement a slow outward spiral around the cylinder axis with rising height, label every constant provisional and state exactly what a recording of the original would settle. Level outcome, saved counts and the hand-off to results are unchanged. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Original observation added by the lead (docs/playtest/2026-11-14-original-session.md, images docs/playtest/reference/original-2026-11-14/balloon-a.jpg and s2-balloon.jpg, 2 frames per second, camera still): after the last lemming is saved the balloon leaves its perch within about half a second and moves sideways away from the cylinder at a roughly steady rate with little height change, leaving the view in about 4 to 4.5 s; the level is left about a second later. It does not rise straight up. Both samples are from one camera angle, so how much of the motion is outward and how much is around the cylinder is not determined; choose a path consistent with these frames, label the undetermined part provisional, and compare a clone sequence from the same level and a similar angle side by side with the reference. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
@@ -15561,6 +15959,36 @@
           "change": "Original observation added by the lead (docs/playtest/2026-11-14-original-session.md, images docs/playtest/reference/original-2026-11-14/balloon-a.jpg and s2-balloon.jpg, 2 frames per second, camera still): after the last lemming is saved the balloon leaves its perch within about half a second and moves sideways away from the cylinder at a roughly steady rate with little height change, leaving the view in about 4 to 4.5 s; the level is left about a second later. It does not rise straight up. Both samples are from one camera angle, so how much of the motion is outward and how much is around the cylinder is not determined; choose a path consistent with these frames, label the undetermined part provisional, and compare a clone sequence from the same level and a similar angle side by side with the reference. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12."
         }
       ]
+    },
+    {
+      "id": "hatch-release-direction-001",
+      "title": "Lemmings leave the hatch in the level's stored directions",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User playtest 5 addendum (2026-11-14): on 'Introducing - Water Lemmings' (MM_W_012) every other lemming should leave the hatch going left, but in the clone all of them go right, so the clone does not appear to load or apply the level's starting directions. Trace statically in the registered reference EXE how the hatch/entry record and release code choose each released lemming's initial facing (fixed per hatch, alternating, or stored per lemming), find where the clone's production release path sets facing, and make the clone follow the traced rule. Show before/after facings of the first six released lemmings on MM_W_012 and on two other installed levels, including one where all lemmings correctly leave in one direction. The lead will check the recordings build/lead/original-session/session-1.mkv and session-2-game.mkv for the original's order on MM_W_012 and add it here if visible; absent that, the static trace is the authority and the user's report is the target. Existing route tests that depend on the old facings may be corrected only with before/after justification. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "acceptance": "Report docs/scratch/hatch-release-direction-001.md cites the EXE addresses for the facing rule, the clone production call path, and before/after facings from actual clone runs on MM_W_012 (alternating as reported) and two other levels. A source test covers the rule on real level data. Full registered verification passes; any changed test expectation is listed with its justification."
+    },
+    {
+      "id": "frame-rate-profile-001",
+      "title": "Measure where the clone's frame time goes and remove the cheap waste",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "all",
+      "stop_after_review": true,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User playtest report (2026-11-14): the clone is playable but runs at a low frame rate. The clone draws each 640x480 frame in software (src/app/TubeScene.cpp, SceneRaster.cpp, Raster.cpp, BackdropScene.cpp) and presents it through SDL in src/app/main.cpp. Step 1, measure: on a Release build of the production executable, on at least two installed levels (one small, one large or fluid-bearing) with lemmings out, record per-frame wall time split into simulation, scene preparation (mesh/billboard/texture work), rasterization by pass (backdrop, tube, actors, fluid, HUD/panel) and presentation (SDL_UpdateTexture/RenderCopy/Present, including whether the SDL renderer is software and whether the loop sleeps or waits on vsync). Use a sampling profiler or scoped timers behind a command-line flag or environment variable that is off by default. Also measure, for one of the slow play tests (hatch_timing_routes), what share of its run time is rendering. Report frames per second and the table of costs before any change. Step 2, fix: remove waste the measurement demonstrates (for example per-frame rebuilding of data that does not change, per-frame allocation, repeated texture decoding, redundant clears or copies, a software SDL presenter), largest first, without changing any rendered pixel: existing framebuffer/pixel tests must pass unchanged and no test assertion or timeout may be altered. Report the same table after. Do not add an OpenGL/Vulkan scene renderer in this task; that is a later, separate step. If the remaining cost is inherent to software rasterization at this design, say so with the numbers and stop. Difficulty: difficult. Recommended model: Opus (cross-system performance reasoning); run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Build with at most 8 parallel jobs (cmake --build ... --parallel 8); the host has run out of memory at 12.",
+      "acceptance": "Report docs/scratch/frame-rate-profile-001.md gives the method, machine, build flags, levels, and before/after per-frame cost tables and frames per second from actual runs of the production executable, plus the rendering share of one slow play test. Each change is tied to a measured cost. Rendered output is unchanged (existing pixel tests pass unmodified) and the full registered verification passes. Any instrumentation is off by default and has no measurable cost when off. The report states what limits the frame rate after the changes."
     }
   ]
 }

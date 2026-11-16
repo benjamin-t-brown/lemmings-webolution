@@ -19021,6 +19021,27 @@
       "lead_note": "2026-11-16: the lead retired the two playtest-9 recordings that encode the Y6 refused click (docs/playtest/replays/README.md, Retired recordings). The replay criterion now covers the 15 remaining .replay files, all of which pass on the lead's release build."
     },
     {
+      "id": "basher-occlusion-001",
+      "title": "Occlusion pass: bashers and other workers inside walls",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y9 (user, 2026-11-16), reopening playtest 7 W1 which had been deferred: a basher is not drawn behind the wall it is bashing through when the cylinder is rotated so the lemming is on one of the sides of the view; it shows through wall that should cover it. The user reports it is clearly worse the closer the lemming is to the centre of the cylinder (deep inside terrain) than on the outside face. Earlier work: actor-occlusion-001, actor-depth-001 (per-pixel actor depth against level depth) and climber-occlusion-001; read their reports first. Trace the production actor depth path for a lemming standing inside a tunnel it has cut: which depth the sprite is given, which radius or layer it is placed at, any bias, and what the terrain on the viewer's side writes to the depth buffer at side-on angles. Fix so a basher, miner or digger inside terrain is covered by the wall between it and the camera at every rotation, while lemmings on the outer face stay fully visible and the freshly cut tunnel opening shows the lemming where it is really exposed. Then do a pass over the other states at side-on rotation (walker, builder, blocker, climber, floater, faller, exiting) and over z-fighting or flicker between lemmings and terrain, bridges, pipes and fluid; fix what shares the cause and list the rest with level and angle. Presentation only: no simulation change. Matching original depth policy is not required; label provisional choices. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Bash (MM_BASH_002), with the cylinder rotated so the basher is at the side of the view, the basher inside the wall is hidden by the wall in front of it, at depths near the outer face and near the cylinder centre; it remains visible through the tunnel opening and when facing the camera.",
+        "The cause is traced through the production depth path and stated; miner and digger are covered by the same fix or reported.",
+        "The side-on pass over the other states and the z-fighting check are reported with level, rotation and result; remaining defects are listed, not hidden.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "bash-particles-001",
       "title": "Show debris particles while bashing",
       "status": "ready",

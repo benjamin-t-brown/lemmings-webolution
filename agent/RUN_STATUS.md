@@ -9,22 +9,12 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- pad-pipe-presentation-001: **ready** — Animate the beam switch and put lemmings behind the tank pipe
-- builder-shrug-assign-001: **ready** — Let a shrugging builder be hovered and given a new job
-- gameplay-sounds-001: **ready** — Add the Let's Go, bashing and last-bricks sounds
+- gameplay-sounds-001: **needs_review** — Add the Let's Go, bashing and last-bricks sounds
 - bash-particles-001: **ready** — Show debris particles while bashing
 - exit-balloon-bob-001: **ready** — Make exit balloons bob slowly
 
 ## Recently completed queue entries
 
-- crab-hazard-001: Show and simulate the crab in the water
-  Accepted: 2026-11-16T08:00:16.923125+00:00
-  Verification evidence: `build/agent-runs/20261116T074012-26408-8280d51b/verification.log`
-  Verification evidence: `build\agent-runs\20261116T074012-26408-8280d51b\verification.log`
-- pipe-render-001: Draw the drain and supply pipes on fluid levels
-  Accepted: 2026-11-16T08:13:55.852647+00:00
-  Verification evidence: `build/agent-runs/20261116T080016-26408-73ac4f0b/verification.log`
-  Verification evidence: `build\agent-runs\20261116T080016-26408-73ac4f0b\verification.log`
 - moving-hazards-001: Show and simulate deathrollers, buzzsaws, scorpions and robins
   Accepted: 2026-11-16T08:45:57.306375+00:00
   Verification evidence: `build/agent-runs/20261116T081355-26408-6cafc0b2/verification.log`
@@ -37,14 +27,22 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-16T09:23:56.247766+00:00
   Verification evidence: `build/agent-runs/20261116T091025-26408-df7972d8/verification.log`
   Verification evidence: `build\agent-runs\20261116T091025-26408-df7972d8\verification.log`
+- pad-pipe-presentation-001: Animate the beam switch and put lemmings behind the tank pipe
+  Accepted: 2026-11-16T17:29:03.339376+00:00
+  Verification evidence: `build/agent-runs/20261116T171342-11176-1b06c5a5/verification.log`
+  Verification evidence: `build\agent-runs\20261116T171342-11176-1b06c5a5\verification.log`
+- builder-shrug-assign-001: Let a shrugging builder be hovered and given a new job
+  Accepted: 2026-11-16T17:39:10.956613+00:00
+  Verification evidence: `build/agent-runs/20261116T172903-11176-81f01ca9/verification.log`
+  Verification evidence: `build\agent-runs\20261116T172903-11176-81f01ca9\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-91fdee629d414960b931b911af426708/result.json`
-- Status: **milestone_reached**
-- Duration: 2h 04m 53s
-- Completed in this invocation: pressure-pad-drain-001, crab-hazard-001, pipe-render-001, moving-hazards-001, exit-jump-anim-001, hatch-click-rate-001
-- Reason: Accepted hatch-click-rate-001; stopped at the requested review boundary
+- Result: `build/agent-runs/loop-981e969dfbe149c6bfa22cd1bafb5fbc/result.json`
+- Status: **blocked**
+- Duration: 0h 46m 55s
+- Completed in this invocation: pad-pipe-presentation-001, builder-shrug-assign-001
+- Reason: The audio implementation and current smoke run are supported, but the all-replays criterion remains unmet: fifteen recordings pass and two stop at inherited, accepted shrug-assignment divergences. The report-only revision confirms that coordinator reconciliation is still required. Another worker retry cannot resolve this authority dependency; preserve the recordings, replay validation and accepted shrug behavior.
 
 ## Documentation handoff
 

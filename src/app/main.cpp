@@ -119,6 +119,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <limits>
 #include <optional>
 #include <regex>
 #include <string>
@@ -310,10 +311,11 @@ void printHelp() {
             "--map [--map-flags FILE] [--shot PNG] renders the conditional 640x480 map base layer;\n"
             "FILE is exactly 102 signed decimal int32 flags, whitespace-separated. Omitted flags are\n"
             "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.\n"
-            "Sound: the simulated level plays three cues with retained static play-site evidence:\n"
+            "Sound: the simulated level plays six cues with retained static play-site evidence:\n"
             "Ohno (bomber fuse end) and FallSplat (long-fall splat; the sim's Splat is mapped to\n"
-            "FallSplat), and Yippee (saved at the exit). Unrouted, silent: Chink (assign), Explode,\n"
-            "Letsgo, all menu and frontend sound, and music; none has a retained play site. Cue routing\n"
+            "FallSplat), Yippee (saved at the exit), Letsgo (level start), Mine (bashing), and\n"
+            "Chink (last three builder bricks). Assignment, Explode, other events, menus and music\n"
+            "remain silent. Entry/skill cadence and repeated-SFX overlap are provisional. Cue routing\n"
             "only: no claim of native sample timing, volume, mixing or resampling. A missing audio\n"
             "device or WAV is reported on stderr and the game continues. --no-audio disables sound.");
 }
@@ -751,7 +753,12 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // the terrain version moved since the last frame.
     if (world && !args.noTerrainSync) scene->syncTerrain(world->terrain());
   };
-  std::vector<double> fluidDrownSceneDepth;
+  std::vector<double> fluidDrownSceneDepth, pipeSceneDepth;
+  bool hasPipes = false;
+  if (backdrop) backdrop->visitRoots([&](const auto& source, const auto&) {
+    hasPipes |= source.stage == app::BackdropScene::Stage::FluidPipe;
+  });
+  std::vector<std::uint8_t> pipeDepthMask;
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target, bool scenePrepared = false) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
     const auto frameCamera = app::buildCamera(frameParams);
@@ -777,6 +784,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     if (!scenePrepared) prepareScene();
     fluidDrownSceneDepth.clear();
     options.fluidDrownSceneDepth = {};
+    options.pipeSceneDepth = {};
     auto geometryOptions = options;
     if (!options.composeActorsBeforeRoute) geometryOptions.injectedWalkers.clear();
     const bool fluidDrowning = std::any_of(options.injectedWalkers.begin(), options.injectedWalkers.end(),
@@ -789,7 +797,23 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
          [&] {
            // 0x4418C2: draw all receiver pipes after the tube and before water.
            // Include their opaque depth in the drowning-actor scenery snapshot.
-           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidPipe);
+           if (backdrop) {
+             app::SceneRasterObserver pipeObserver;
+             if (hasPipes) {
+               // Preserve actual accepted pipe fragments separately: later
+               // water can replace their depth. Only supporting terrain gets
+               // the actor's provisional four-unit contact allowance (Y2).
+               pipeSceneDepth.assign(target.depthBuffer().size(), std::numeric_limits<double>::infinity());
+               pipeDepthMask.assign(pipeSceneDepth.size(), 1);
+               pipeObserver.mask = &pipeDepthMask;
+               pipeObserver.accepted = [&](const app::SceneRasterWriteEvent& e) {
+                 if (e.depthAssigned) pipeSceneDepth[e.pixel] = e.depthAfter;
+               };
+             }
+             backdrop->renderStage(target, frameCamera, *library, backdropStats,
+                 app::BackdropScene::Stage::FluidPipe, hasPipes ? &pipeObserver : nullptr);
+             if (hasPipes) options.pipeSceneDepth = pipeSceneDepth;
+           }
            if (fluidDrowning) fluidDrownSceneDepth = target.depthBuffer();
            if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate);
            if (fluidDrowning) afterFluidDepth = target.depthBuffer();
@@ -978,6 +1002,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // One toggle per left-button gesture, including dragging onto plate 8.
   // Motion after a click must not undo the click's speed choice.
   bool fastForwardGestureUsed = false;
+  bool levelStartSoundPending = true;
   // Sim cues are taken after every World::tick() and after every successful
   // skill assignment, then routed through the single cue table. The sim's
   // emission logic and timing are untouched.
@@ -1315,6 +1340,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       updated = true;
     }
     bool simTicked = false;
+    // 0x425ADB: a one-shot Letsgo before the hatch opening/release path.
+    // PROVISIONAL clone point: first focused, unpaused gameplay frame,
+    // including direct level entry. This latch is per level leg, outside
+    // fast-forward passes, and advances independently of device availability.
+    if (args.sim && world && levelStartSoundPending && focused && !runtimeSim.paused()) {
+      levelStartSoundPending = false;
+      if (cues) cues->play(sim::SoundCue::LevelStart);
+    }
     // READ45CC09: title clock updates after input, before simulation/drawing.
     // Unlike CameraIntro's pose, this frame uses the decremented title clock.
     if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());

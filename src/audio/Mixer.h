@@ -34,7 +34,10 @@ class Mixer {
 public:
   // Average is an opt-in bus for overlapping exit cheers. Other SFX retain
   // the existing additive mix. The policy is provisional, not retail mixing.
-  enum class Overlap { Add, Average };
+  // SkipPlaying is an additive one-shot, suppressed while the same clip is
+  // still audible. No delayed requests or looping voice are created.
+  // RestartPlaying preserves every warning's attack without stacking tails.
+  enum class Overlap { Add, Average, SkipPlaying, RestartPlaying };
 
   Mixer() = default;
   ~Mixer();

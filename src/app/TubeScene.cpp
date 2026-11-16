@@ -278,7 +278,8 @@ struct PreparedInjectedWalker {
 // contact allowance. Neither scene comparison nor that allowance establishes
 // recovered device depth behavior.
 bool clipActorToScene(Image& sprite, const ActorSpritePlacement& p,
-                      std::span<const double> depth, bool withoutContactAllowance) {
+                      std::span<const double> depth, bool withoutContactAllowance,
+                      std::span<const double> pipeDepth = {}) {
   bool visible = false;
   // U1, PROVISIONAL clone policy: the contact allowance keeps the front of
   // a flat billboard intact, but pulling it toward the camera on the other
@@ -287,6 +288,7 @@ bool clipActorToScene(Image& sprite, const ActorSpritePlacement& p,
   // U2: a sinking figure has no supporting-wall contact either. Retain the
   // normalized bias, but do not pull its billboard through the pool's rim.
   const double z = actorPhysicalDepth(p, sprite.width) + (withoutContactAllowance ? 4.0 : 0.0);
+  const double pipeZ = actorPhysicalDepth(p, sprite.width) + 4.0;
   for (int y = std::max(0, int(std::ceil(p.top)));
        y < std::min(sprite.height, int(std::ceil(p.bottom))); ++y) {
     for (int x = std::max(0, int(std::ceil(p.left)));
@@ -294,7 +296,8 @@ bool clipActorToScene(Image& sprite, const ActorSpritePlacement& p,
       const auto at = std::size_t(y) * sprite.width + x;
       auto& alpha = sprite.rgba[at * 4 + 3];
       if (!actorSpriteAlphaTestPasses(alpha)) continue;
-      if (at < depth.size() && !(z < depth[at])) alpha = 0;
+      if ((at < depth.size() && !(z < depth[at])) ||
+          (at < pipeDepth.size() && !(pipeZ < pipeDepth[at]))) alpha = 0;
       else visible = true;
     }
   }
@@ -396,7 +399,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
         !clipActorToScene(sprite, *placement,
             injected.drownFluidKind >= 0 && !options.fluidDrownSceneDepth.empty() ?
                 options.fluidDrownSceneDepth : depth,
-            behindClimbingWall || injected.drownFluidKind >= 0)) return std::nullopt;
+            behindClimbingWall || injected.drownFluidKind >= 0, options.pipeSceneDepth)) return std::nullopt;
   }
   return prepared;
 }

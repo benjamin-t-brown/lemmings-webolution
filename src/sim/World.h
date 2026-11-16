@@ -70,11 +70,14 @@ enum class Facing : std::int8_t { Left = -1, Right = 1 };
 // names: it only says *what happened*. Mapping each cue onto a `.WAV` is the
 // mixer's job. Drained with takeCues() after each tick (or after assign).
 enum class SoundCue : std::uint8_t {
-  Assign,   // a skill stuck -- Chink
+  Assign,   // a skill stuck (no evidenced sample for assignment)
   OhNo,     // a bomber fuse was lit -- Ohno
   Explode,  // the fuse ran out -- Explode
   Splat,    // landed too hard -- Splat
   Exit,     // reached the exit -- Yippee
+  LevelStart, // first active level frame -- Letsgo
+  Bash,     // a bash bite removed terrain -- Mine
+  BuilderWarning, // a builder spends brick 3, 2 or 1 -- Chink
 };
 
 struct Lemming {

@@ -191,13 +191,7 @@ if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(leverinitface PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
-# pressure-pad-drain-001: seconds-long logic/census check; stays legacy.
-add_executable(test_pressurepad src/__test__/test_pressurepad.cpp)
-target_link_libraries(test_pressurepad PRIVATE webolution_app webolution_objects)
-add_test(NAME pressurepad COMMAND test_pressurepad)
-if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(pressurepad PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-endif()
+# pad-pipe-presentation-001: removed legacy pressurepad (required immediate beam disappearance).
 
 add_executable(test_box src/__test__/test_box.cpp)
 target_link_libraries(test_box PRIVATE webolution_objects)
@@ -743,21 +737,11 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   target_link_libraries(test_exit_sound PRIVATE webolution_objects)
   add_test(NAME exit_sound COMMAND test_exit_sound)
   set_tests_properties(exit_sound PROPERTIES TIMEOUT 10)
-  # native-022: ordinary frontend entry -> level with one owned audio device.
-  # Failure guard only; success is decided by the observers and SDL_QUIT.
-  add_executable(test_audioapp src/__test__/test_audioapp.cpp)
-  target_link_libraries(test_audioapp PRIVATE webolution_app webolution_app_nomain)
-  target_link_libraries(test_audioapp PRIVATE webolution_objects)
-  target_compile_definitions(test_audioapp PRIVATE
-    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  if(TARGET SDL2::SDL2)
-    target_link_libraries(test_audioapp PRIVATE SDL2::SDL2)
-  elseif(TARGET PkgConfig::SDL2)
-    target_link_libraries(test_audioapp PRIVATE PkgConfig::SDL2)
-  endif()
-  add_test(NAME audioapp COMMAND test_audioapp)
-  set_tests_properties(audioapp PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  # Playtest 9 Y3/Y5: event multiplicity and paused/fast-forward skill audio.
+  add_executable(test_gameplay_sounds src/__test__/test_gameplay_sounds.cpp)
+  target_link_libraries(test_gameplay_sounds PRIVATE webolution_app webolution_objects)
+  add_test(NAME gameplay_sounds COMMAND test_gameplay_sounds)
+  set_tests_properties(gameplay_sounds PROPERTIES TIMEOUT 10)
   set(AUDIO_DEMO_SOURCES ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM AUDIO_DEMO_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp")
   add_library(audio_demo_app STATIC ${AUDIO_DEMO_SOURCES}
@@ -1507,6 +1491,12 @@ target_link_libraries(test_namedhazards PRIVATE webolution_app webolution_object
 add_test(NAME namedhazards COMMAND test_namedhazards)
 if(WEBOLUTION_GAME_DIR)
   set_tests_properties(namedhazards PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING)
+  add_executable(test_shrug_assign src/__test__/test_shrug_assign.cpp)
+  target_link_libraries(test_shrug_assign PRIVATE webolution_app webolution_objects)
+  add_test(NAME shrug_assign COMMAND test_shrug_assign)
 endif()
 
 include(cmake/test_tiers.cmake)

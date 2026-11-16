@@ -29,19 +29,29 @@ constexpr CueRoute kRoutes[] = {
      "docs/scratch/exit-yippee-sound-001.md: 0x0045E540..0x0045E552 loads Yippee "
      "into level+0x1C8B0 (=0x004E32B8); save step 0x0041818A increments saved "
      "at 0x004182A1, then plays that handle at 0x004182E5 via 0x00445274"},
+    {sim::SoundCue::LevelStart, "Letsgo",
+     "docs/scratch/gameplay-sounds-001.md: hatch step 0x00425A95 tests its "
+     "+0xAE latch, plays Letsgo handle 0x004E32B4 at 0x00425ADB before hatch "
+     "opening/release; provisional clone point: first active gameplay frame"},
+    {sim::SoundCue::Bash, "Mine",
+     "docs/scratch/gameplay-sounds-001.md: destructible-cell arm 0x0040C0AF "
+     "loads Mine handle 0x004E32E8 at 0x0040C317 and plays at 0x0040C32F; "
+     "provisional clone cadence: once per successful hybrid bash bite"},
+    {sim::SoundCue::BuilderWarning, "Chink",
+     "docs/scratch/gameplay-sounds-001.md: 0x0040FF54 tests bricks < 4, "
+     "0x0040FF5C loads Chink handle 0x004E32BC, 0x0040FF73 plays it before "
+     "the brick counter decrement at 0x0040FF93"},
 };
 
-// No retained play-site read for these. Chink and Explode are registered
-// strings (0x004C0C8C, 0x004C0C94) and the sim already emits them, but no note
-// records where the retail executable plays them.
-// UNKNOWN, not guessed from classic Lemmings.
+// No assignment play site: Chink belongs to the last three builder bricks,
+// not every skill assignment. Explode remains outside the routed scope.
 constexpr sim::SoundCue kUnrouted[] = {
-    sim::SoundCue::Assign,   // Chink  -- no retained play site
+    sim::SoundCue::Assign,   // no retained assignment play site
     sim::SoundCue::Explode,  // Explode -- no retained play site
 };
 
 static_assert(std::size(kRoutes) + std::size(kUnrouted) ==
-                  static_cast<std::size_t>(sim::SoundCue::Exit) + 1,
+                  static_cast<std::size_t>(sim::SoundCue::BuilderWarning) + 1,
               "every SoundCue is either routed with evidence or listed as unrouted");
 
 }  // namespace
@@ -95,8 +105,14 @@ void CuePlayback::play(sim::SoundCue cue) {
   if (mixer_.ready() && mixer_.has(*name)) {
     // Provisional clone policy: average overlapping exit cheers to avoid
     // clipping. Retail sample/call site are traced; retail mixing is unknown.
-    mixer_.play(*name, 1.0f, cue == sim::SoundCue::Exit ? Mixer::Overlap::Average
-                                                      : Mixer::Overlap::Add);
+    // PROVISIONAL: bash clips finish before another can start; each warning
+    // starts afresh (its tail may be cut). Neither stacks or queues a backlog
+    // during fast-forward/group assignments. Normal brick spacing exceeds
+    // Chink's 0.137 s duration, so all three play in full at normal speed.
+    const auto overlap = cue == sim::SoundCue::Exit ? Mixer::Overlap::Average :
+        cue == sim::SoundCue::Bash ? Mixer::Overlap::SkipPlaying :
+        cue == sim::SoundCue::BuilderWarning ? Mixer::Overlap::RestartPlaying : Mixer::Overlap::Add;
+    mixer_.play(*name, 1.0f, overlap);
   }
 }
 

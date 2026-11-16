@@ -499,7 +499,54 @@ std::expected<PressurePadPresentation,std::string> BackdropScene::pressurePadPre
    for(std::size_t i=0;i<roots_.size();++i){
      const auto& root=roots_[i];if(root.source.owner!="tagged-pressure-pad")continue;
      const auto& pad=level.gadgets.tagged_entities.at(root.source.entityIndex);
-     presentation.bindings.push_back({i,pad.id,static_cast<std::int32_t>(pad.values[0]),root.node,0});
+     PressurePadPresentation::Binding binding{};
+     binding.root=i;binding.id=pad.id;binding.initialState=static_cast<std::int32_t>(pad.values[0]);binding.original=root.node;
+     binding.displayedState=binding.initialState;
+     const auto& clips=pad.model->object->auxiliary_records;
+     if(clips.empty())return std::unexpected("pressure pad has no animation");
+     // The pad selects clip index 0 (43191F/431950). Its transform and
+     // material tracks share the Object 09 clock and preorder node indices.
+     const auto& raw=clips.front().serialized_bytes;
+     std::size_t at=0;
+     const auto integer=[&](std::size_t size){
+       if(at>raw.size()||size>raw.size()-at)throw std::invalid_argument("truncated pad animation");
+       std::uint64_t value=0;for(std::size_t k=0;k<size;++k)value|=std::uint64_t(raw[at++])<<(8*k);return value;
+     };
+     const auto number=[&](){const double value=std::bit_cast<double>(integer(8));if(!std::isfinite(value))throw std::invalid_argument("nonfinite pad animation");return value;};
+     number();const auto transforms=integer(4);
+     if(transforms>raw.size()/8)throw std::invalid_argument("invalid pad transform count");
+     for(std::size_t t=0;t<transforms;++t){integer(4);const auto keys=integer(4);if(keys>(raw.size()-at)/89)throw std::invalid_argument("invalid pad key count");at+=keys*89;}
+     // Reuse the instruction-checked transform sampler without changing the
+     // hatch reader's contract. The following arrays are material/event tracks.
+     std::vector<std::uint8_t> transformBytes(raw.begin(),raw.begin()+at);
+     transformBytes.insert(transformBytes.end(),8,0);
+     auto animation=readHatchAnimation(transformBytes);
+     if(!animation)return std::unexpected("pressure pad: "+animation.error());
+     binding.animation=std::move(*animation);
+     std::vector<const SceneNode*> nodes;
+     const auto collect=[&](auto& self,const SceneNode& n)->void{nodes.push_back(&n);for(const auto& c:n.children)self(self,c);};collect(collect,root.node);
+     for(const auto& track:binding.animation.tracks)if(track.node>=nodes.size())throw std::invalid_argument("pad transform node outside tree");
+     const auto tracks=integer(4);if(tracks>raw.size()/16)throw std::invalid_argument("invalid pad UV track count");
+     for(std::size_t t=0;t<tracks;++t){
+       if(integer(4)!=0)throw std::invalid_argument("unsupported pad material track");
+       PressurePadPresentation::UvTrack track;
+       const auto keys=integer(4);if(!keys||keys>(raw.size()-at)/40)throw std::invalid_argument("invalid pad UV keys");
+       double previous=0;
+       for(std::size_t k=0;k<keys;++k){PressurePadPresentation::UvKey key{number(),number(),number(),number(),number()};if(key.end<previous)throw std::invalid_argument("unordered pad UV keys");previous=key.end;track.keys.push_back(key);}
+       if(previous<binding.animation.duration)throw std::invalid_argument("pad UV keys do not cover duration");
+       const auto material=integer(4),targets=integer(4);if(targets>(raw.size()-at)/4)throw std::invalid_argument("invalid pad UV targets");
+       for(std::size_t k=0;k<targets;++k){
+         const auto node=integer(4);if(node>=nodes.size())throw std::invalid_argument("pad UV node outside tree");
+         for(std::size_t m=0;m<nodes[node]->meshes.size();++m){const auto& mesh=nodes[node]->meshes[m];if(mesh.materialSlot!=material)continue;
+           for(std::size_t r=0;r<mesh.records.size();++r)for(std::size_t c=0;c<mesh.records[r].corners.size();++c){const auto& uv=mesh.records[r].corners[c];track.corners.push_back({std::size_t(node),m,r,c,uv.u,uv.v});}
+         }
+       }
+       if(integer(4)!=0)throw std::invalid_argument("unsupported pad sprite UV targets");
+       if(track.corners.empty())throw std::invalid_argument("pad UV track has no mesh targets");
+       binding.uvTracks.push_back(std::move(track));
+     }
+     if(integer(4)!=0)throw std::invalid_argument("unsupported pad event tracks");
+     presentation.bindings.push_back(std::move(binding));
    }
  } catch(const std::invalid_argument& e){return std::unexpected(e.what());}
  return presentation;
@@ -508,12 +555,27 @@ void BackdropScene::setPressurePadStates(PressurePadPresentation& presentation,s
  for(auto& binding:presentation.bindings){
    int state=binding.initialState;
    for(const auto& [id,current]:idStates)if(id==binding.id){state=current;break;}
-   if(state==binding.displayedState)continue;
+   if(state!=binding.displayedState){binding.triggeredAt=sceneryClock_;binding.displayedState=state;}
    auto& root=roots_.at(binding.root).node;
    root=binding.original;
-   if(state==1){
+   const double duration=binding.animation.duration;
+   const double time=state==1?std::min(duration,sceneryClock_-binding.triggeredAt):std::fmod(sceneryClock_,duration);
+   applyHatchAnimation(root,binding.animation,time/duration);
+   std::vector<SceneNode*> nodes;
+   const auto collect=[&](auto& self,SceneNode& n)->void{nodes.push_back(&n);for(auto& c:n.children)self(self,c);};collect(collect,root);
+   for(const auto& track:binding.uvTracks){
+     std::size_t k=0;while(k+1<track.keys.size()&&time>track.keys[k].end)++k;
+     const auto& key=track.keys[k];const double start=k?track.keys[k-1].end:0.0;
+     const double t=key.end>start?std::clamp((time-start)/(key.end-start),0.0,1.0):0.0;
+     // 476FB0/476A80: base UV plus the key's offset + fraction*delta.
+     for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+key.u+t*key.du;uv.v=c.v+key.v+t*key.dv;}
+   }
+   if(state==1&&time>=duration){
      // 0x431B93..0x431BF9 finds names containing "cut"; 0x4319E5
      // hides them after first activation. Keep the base cube visible.
+     // PROVISIONAL Y1 feedback: play the stored clip once before hiding its
+     // beams, rather than native 4319E5's immediate hide. The simulation latch
+     // and messages still fire immediately; this delay is presentation only.
      // Pruning only this owned model also suppresses a cut node's subtree.
      const auto hide=[&](auto& self,SceneNode& node)->void{
        if(node.name.find("cut")!=std::string::npos){node.meshes.clear();node.children.clear();return;}

@@ -148,6 +148,25 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap) {
   SDL_LockAudioDevice(device_);
   const auto it = clips_.find(upperCue(cue));
   if (it != clips_.end() && !it->second.samples.empty()) {
+    if (overlap == Overlap::SkipPlaying) {
+      const Clip* clip = &it->second;
+      const bool playing = std::any_of(voices_.begin(), voices_.end(),
+          [clip, this](const Voice& v) {
+            return v.clip == clip && v.cursor < clip->samples.size() /
+                static_cast<std::size_t>(channels_);
+          });
+      if (playing) {
+        SDL_UnlockAudioDevice(device_);
+        return;
+      }
+      overlap = Overlap::Add;
+    }
+    if (overlap == Overlap::RestartPlaying) {
+      const Clip* clip = &it->second;
+      voices_.erase(std::remove_if(voices_.begin(), voices_.end(),
+          [clip](const Voice& v) { return v.clip == clip; }), voices_.end());
+      overlap = Overlap::Add;
+    }
     // Preserve the existing cap for additive voices (e.g. a long nuke).
     // Exit cheers own a separate bus: one short voice per saved actor. Do not
     // cut earlier cheers off when a whole group reaches the exit together,

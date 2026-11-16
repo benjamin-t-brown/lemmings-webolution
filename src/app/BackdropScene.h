@@ -15,6 +15,7 @@
 #include <array>
 #include <cstdint>
 #include <map>
+#include <limits>
 #include <optional>
 #include <span>
 #include <string>
@@ -55,11 +56,17 @@ struct LeverPresentation {
   std::vector<Binding> bindings;
 };
 struct PressurePadPresentation {
+  struct UvKey { double end, u, v, du, dv; };
+  struct Corner { std::size_t node, mesh, record, corner; double u, v; };
+  struct UvTrack { std::vector<UvKey> keys; std::vector<Corner> corners; };
   struct Binding {
     std::size_t root;
     int id, initialState;
     SceneNode original;
     int displayedState = 0;
+    HatchAnimation animation;
+    std::vector<UvTrack> uvTracks;
+    double triggeredAt = -std::numeric_limits<double>::infinity();
   };
   std::vector<Binding> bindings;
 };

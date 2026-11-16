@@ -118,6 +118,9 @@ struct SceneOptions {
   // U2: opaque scenery depth with the fluid pass excluded, only for the
   // additive submerged figure/effects. Normal actors use the completed depth.
   std::span<const double> fluidDrownSceneDepth;
+  // Y2: only pipe fragments that passed scene depth. Test these without the
+  // provisional terrain-contact allowance, for both drawing and picking.
+  std::span<const double> pipeSceneDepth;
   bool composeActorsBeforeRoute = false;
   // Diagnostic (A6d9): composite overlay with legacy `a != 0` replace instead of A4y `> 0xEF`.
   bool overlayCompositeLegacyNonZero = false;

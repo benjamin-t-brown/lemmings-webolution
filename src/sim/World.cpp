@@ -928,6 +928,10 @@ void World::stepBuilder(Lemming& l) {
   }
 
   l.x = setup_.terrain.wrapX(l.x + dir);
+  // 0x40FF54..0x40FF73: Chink with the PRE-decrement count 3, 2 or 1.
+  // Keep the accepted hybrid brick timing; attach only an audio event.
+  if (l.bricksLeft > 0 && l.bricksLeft < 4)
+    cue(SoundCue::BuilderWarning);
   --l.bricksLeft;
   if (l.bricksLeft <= 0) {
     l.state = State::Shrugger;
@@ -983,9 +987,14 @@ void World::stepBasher(Lemming& l) {
     return;
   }
 
-  if (anySolid)
+  if (anySolid) {
     setup_.terrain.clearBox(dir > 0 ? x0 : x0 - rules_.basherReach + 1, top,
                             rules_.basherReach, rules_.basherHeight);
+    // 0x40C0AF's destructible-cell arm plays Mine (0x4E32E8) at 0x40C32F.
+    // PROVISIONAL: one sound per successful hybrid bite; the original tests
+    // individual cells/subpasses. Empty swings and refusal stay silent here.
+    cue(SoundCue::Bash);
+  }
   l.x = setup_.terrain.wrapX(l.x + dir);
   if (l.bashCycles < rules_.basherGraceCycles)
     ++l.bashCycles;
@@ -1698,7 +1707,10 @@ bool World::assign(std::size_t index, Skill skill) {
 
 
 
-  if (l.state != State::Walker && l.state != State::Builder && l.state != State::Basher &&
+  // A spent builder can take another walking job without waiting for its shrug.
+  // Native shrug category 0x1D (0x41AB4B) is not excluded by 0x4183D3.
+  if (l.state != State::Walker && l.state != State::Shrugger &&
+      l.state != State::Builder && l.state != State::Basher &&
       l.state != State::Miner && l.state != State::Digger && l.state != State::Blocker)
     return false;
 

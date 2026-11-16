@@ -18596,7 +18596,7 @@
     {
       "id": "pad-pipe-presentation-001",
       "title": "Animate the beam switch and put lemmings behind the tank pipe",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -18611,12 +18611,96 @@
         "On Seafood Sarnie a lemming passing behind the tank pipe is occluded by it; pipes on MM_W_012 still draw.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T171342-11176-1b06c5a5",
+      "started": "2026-11-16T17:13:42.340845+00:00",
+      "finished": "2026-11-16T17:26:25.151053+00:00",
+      "last_run": "build/agent-runs/20261116T171342-11176-1b06c5a5",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained evidence and supervisor verification. Provisional presentation choices are explicit. Human confirmation remains for the next playtest; this is not an original-fidelity pass.",
+        "checks": [
+          {
+            "criterion": "On Seafood Sarnie the beam switch visibly animates before and when a lemming triggers it; the animation source is cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "pressurePadPresentation binds the installed transform and UV tracks. setPressurePadStates repeats the idle clip, restarts it on activation and hides cut subtrees after one cycle, restoring pristine geometry before each sample."
+              },
+              {
+                "path": "build/pad-pipe-presentation-001/static/pad-static-1.json",
+                "detail": "Registered-reference instructions at 0x431969 and 0x43197E select clip zero and seek zero; 0x4319E5 immediately hides collected nodes. The report explicitly labels delayed hiding as provisional player feedback."
+              },
+              {
+                "path": "docs/scratch/pad-pipe-presentation-001.md",
+                "detail": "Cites the reference hash, animation evidence, authored 1.6666666269302368-second clip and repeating-idle evidence at 0x4319F2. Distinguishes recovered data from provisional activation timing."
+              }
+            ]
+          },
+          {
+            "criterion": "On Seafood Sarnie a lemming passing behind the tank pipe is occluded by it; pipes on MM_W_012 still draw.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "renderFrame retains accepted FluidPipe depth fragments before water renders and supplies them through SceneOptions::pipeSceneDepth to the normal actor and picking paths."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "prepareInjectedWalker applies the separate pipe comparison without the four-unit terrain-contact allowance. Behind-pipe pixels are removed while foreground pixels pass; drawing and picking share this preparation."
+              },
+              {
+                "path": "build/pad-pipe-presentation-001/presentation.txt",
+                "detail": "Retained inspection reports 2,899 Seafood Sarnie pipe-depth pixels and 5,052 MM_W_012 pixels. Supplemental constant-depth checks pass for hidden and foreground actors and preserved terrain allowance; these are explicitly not natural gameplay observations."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/pad-pipe-presentation-001/replay-results.tsv",
+                "detail": "Lists all 17 promoted recordings individually, each with exit 0, PASS, won=1 and completed=1. Seafood Sarnie reproduces 21/20 saved and MM_W_012 reproduces 16/10."
+              },
+              {
+                "path": "build/pad-pipe-presentation-001/run_replays.py",
+                "detail": "The retained runner enumerates every promoted .replay recursively and invokes the built clone's --replay entry point, retaining individual outputs and requiring successful completion."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T171342-11176-1b06c5a5/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261116T171342-11176-1b06c5a5/result.json",
+                "detail": "Records verifier exit 0 and verified content e983df93de51a26f610a3091393802dfb3a6adb0eb9eb59a5cddac2b890fbf58, matching the review context."
+              },
+              {
+                "path": "docs/scratch/pad-pipe-presentation-001.md",
+                "detail": "Ends with actions and expected results for Seafood Sarnie's idle/trigger animation, pause and pipe occlusion, plus MM_W_012 pipe visibility during filling. Its pending-verification wording describes worker handoff; the subsequent supervisor log establishes the pass."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T17:29:03.339376+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T171342-11176-1b06c5a5\\verification.log",
+        "verified_content": "e983df93de51a26f610a3091393802dfb3a6adb0eb9eb59a5cddac2b890fbf58"
+      }
     },
     {
       "id": "builder-shrug-assign-001",
       "title": "Let a shrugging builder be hovered and given a new job",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -18631,12 +18715,112 @@
         "Lemmings in other non-assignable states are unaffected.",
         "All promoted playtest replays still reproduce their results, or any that change are listed with the reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T172903-11176-81f01ca9",
+      "started": "2026-11-16T17:29:03.680609+00:00",
+      "finished": "2026-11-16T17:37:13.032102+00:00",
+      "last_run": "build/agent-runs/20261116T172903-11176-81f01ca9",
+      "review": {
+        "decision": "accept",
+        "reason": "The production path, scoped diff and retained verification support all criteria. Two replay divergences are explained by the intended reassignment change. Human visual confirmation remains for the next playtest; this is not an original-fidelity pass.",
+        "checks": [
+          {
+            "criterion": "On Build and Block (node 14) or Seafood Sarnie, hovering a shrugging builder shows the cursor highlight and assigning Builder starts a new bridge from where the last one ended; another skill such as Basher also applies.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "hoveredActor supplies the same resolved actor to hover highlighting, runtimeCursorState and the left-click World::assign consumer. Existing stock and input gates remain."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "injectedWalkerScreenBoxes and drawHoveredWalker share prepareInjectedWalker, which prepares the displayed shrug clip without a shrug-specific exclusion. RuntimePick.cpp likewise admits active Shruggers."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepBuilder advances to the final brick endpoint before entering Shrugger. assign now admits Shrugger to the existing work-skill branch; Builder replenishes bricks and Basher resets bashCycles. Both reset frame without changing position or facing."
+              },
+              {
+                "path": "build/builder-shrug-assign-001/static/crosscheck.txt",
+                "detail": "Retained instructions identify shrug category 0x1D at 0x41AB4B. Builder 0x4102B4 and Basher 0x40C061 delegate to 0x4183D3, whose category exclusions omit 0x1D. This supports eligibility inference, not native runtime or hover fidelity."
+              },
+              {
+                "path": "docs/scratch/builder-shrug-assign-001.md",
+                "detail": "Connects playtest-9 Y6 to Build and Block and Seafood Sarnie, traces the production path, labels unresolved picking/fidelity limits and gives the required human hover/reassignment check."
+              }
+            ]
+          },
+          {
+            "criterion": "Lemmings in other non-assignable states are unaffected.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-shrug-assign-001/task-only.patch",
+                "detail": "The only production change adds Shrugger to the work-state whitelist. Other state exclusions, capability/fuse checks, stock handling and Blocker support checks remain unchanged; comparison with the retained entry source confirms this scope."
+              },
+              {
+                "path": "src/__test__/test_shrug_assign.cpp",
+                "detail": "Checks refusal of all five work skills in eleven other excluded states, preserving state, frame and stock. Also covers all eight skills during early/late shrug and both facings."
+              },
+              {
+                "path": "build/builder-shrug-assign-001/focused.log",
+                "detail": "The supplemental legacy shrug_assign check passed in 0.04 seconds."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results, or any that change are listed with the reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-shrug-assign-001/replay-results.tsv",
+                "detail": "Accounts for all 17 promoted recordings: fifteen reproduce with exit 0, PASS, won=1 and completed=1; two return divergence."
+              },
+              {
+                "path": "build/builder-shrug-assign-001/MM_BLOCK_BUILD_BASH-1794847643546172700-1.log",
+                "detail": "Seafood Sarnie diverges at step 2850 on actor 3 assignment acceptance. Its unchanged recording expects Builder refusal while Shrugger at (198,63); the new behavior accepts it."
+              },
+              {
+                "path": "build/builder-shrug-assign-001/MM_E4_4_SKILLS-1794847852301294400-2.log",
+                "detail": "A Long and Lonely Road diverges at step 2075 on actor 2 assignment acceptance. Its unchanged recording expects Basher refusal while Shrugger at (169,74); the new behavior accepts it."
+              },
+              {
+                "path": "docs/scratch/builder-shrug-assign-001.md",
+                "detail": "Lists both changed recordings and their exact rejected-click rows, explains their direct connection to Y6 and explicitly avoids claiming their later outcomes."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T172903-11176-81f01ca9/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261116T172903-11176-81f01ca9/result.json",
+                "detail": "Records verifier exit 0 and verified_content bd192ad4432424a2ba61fde12b28d1ad38832fa0b840beb10f0756b75a82e3c7, matching the review context."
+              },
+              {
+                "path": "docs/scratch/builder-shrug-assign-001.md",
+                "detail": "Ends with level, action and expected results for hovering and chaining Builder during shrug, repeating with Basher and retaining falling/dead work-skill refusal. Pending-smoke wording records the worker handoff before supervisor verification."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T17:39:10.956613+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T172903-11176-81f01ca9\\verification.log",
+        "verified_content": "bd192ad4432424a2ba61fde12b28d1ad38832fa0b840beb10f0756b75a82e3c7"
+      }
     },
     {
       "id": "gameplay-sounds-001",
       "title": "Add the Let's Go, bashing and last-bricks sounds",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -18651,7 +18835,190 @@
         "A basher makes its sound while bashing and the builder's last three bricks each make theirs; samples and triggers are cited to static evidence or labelled provisional.",
         "Fast-forward and pause do not stack or loop the sounds; all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261116T175542-11176-c3a24e69",
+      "started": "2026-11-16T17:55:42.864132+00:00",
+      "finished": "2026-11-16T17:58:51.812616+00:00",
+      "last_run": "build/agent-runs/20261116T175542-11176-c3a24e69",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The audio implementation and smoke verification are supported, but the exact replay criterion remains unmet: 15 recordings pass and two diverge. Both divergences were previously accepted for the shrug fix, so they are not new audio regressions. The coordinator must explicitly reconcile those inherited exceptions before this criterion can pass; preserve the recordings, replay validation and accepted shrug behavior.",
+        "checks": [
+          {
+            "criterion": "Starting any level plays the Let's Go sample once at the point the evidence shows (or a labelled provisional point).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg uses a fresh per-level latch to request LevelStart on the first focused, unpaused gameplay frame, outside fast-forward passes. Retries create another leg. The trigger point is explicitly provisional."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "LevelStart maps to Letsgo through the existing asset-loading and Mixer path; unavailable or disabled audio creates no playback backlog."
+              },
+              {
+                "path": "build/gameplay-sounds-001/static/start-instructions.json",
+                "detail": "For reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, instructions test hatch+0xAE and global 0x4E32A0, play handle 0x4E32B4 at 0x425ADB, then set the latch at 0x425AE3 before opening/release checks."
+              }
+            ]
+          },
+          {
+            "criterion": "A basher makes its sound while bashing and the builder's last three bricks each make theirs; samples and triggers are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepBasher emits Bash after successful terrain clearing. stepBuilder emits BuilderWarning before decrementing brick counts 3, 2 and 1. These additions do not change simulation state or timing."
+              },
+              {
+                "path": "build/gameplay-sounds-001/static/bash-sound-instructions.json",
+                "detail": "The destructible-cell effects arm loads Mine handle 0x4E32E8 at 0x40C317 and calls the sound wrapper at 0x40C32F. The clone's one-request-per-successful-bite cadence is explicitly provisional."
+              },
+              {
+                "path": "build/gameplay-sounds-001/static/builder-instructions.json",
+                "detail": "0x40FF54 compares the pre-decrement counter with 4; 0x40FF5C loads Chink handle 0x4E32BC, 0x40FF73 plays it, and 0x40FF93 stores the decremented count."
+              },
+              {
+                "path": "build/gameplay-sounds-001/targeted-tests-final.log",
+                "detail": "Production decoding finds Letsgo, Mine and Chink in base lemmings.box. The focused gameplay_sounds check passes exact last-three event counts and successful versus empty/steel bash cases."
+              }
+            ]
+          },
+          {
+            "criterion": "Fast-forward and pause do not stack or loop the sounds; all promoted playtest replays still reproduce their results.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "SkipPlaying suppresses overlapping Mine requests; RestartPlaying replaces an existing Chink voice. Both create non-looping voices without delayed queues. RuntimeSimState's paused early return prevents new skill events."
+              },
+              {
+                "path": "build/gameplay-sounds-001/replays-final.json",
+                "detail": "Accounts for all 17 recordings: fifteen return PASS with won=1 and completed=1. MM_BLOCK_BUILD_BASH diverges at step 2850 on actor 3 assignment acceptance; MM_E4_4_SKILLS diverges at step 2075 on actor 2 assignment acceptance. Their recorded wins are therefore not reproduced."
+              },
+              {
+                "path": "docs/scratch/builder-shrug-assign-001.md",
+                "detail": "Documents the same two divergences before this audio task: previously refused Builder/Basher assignments during shrug now succeed. This establishes that they are inherited intended changes, but does not establish their later outcomes or satisfy the unqualified all-replays criterion."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T173911-11176-b6712ac5/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261116T173911-11176-b6712ac5/result.json",
+                "detail": "Records verifier exit 0 and verified_content 96435e830b5a57c63b0a2a4a2c3204064d7ce17fb8b0c31872c5b340eb0352b4, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/gameplay-sounds-001.md",
+                "detail": "Ends with level/action/expected-result checks for MM_CLIMB_002 entry, MM_BASH_002 bashing and MM_BUILD's final three bricks, including pause and fast-forward. It distinguishes provisional audio policies and pending human listening from original fidelity."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The audio implementation and smoke verification are supported, but the exact replay criterion remains unmet: 15 recordings pass and two diverge. Both divergences were previously accepted for the shrug fix, so they are not new audio regressions. The coordinator must explicitly reconcile those inherited exceptions before this criterion can pass; preserve the recordings, replay validation and accepted shrug behavior.",
+      "review": {
+        "decision": "blocked",
+        "reason": "The audio implementation and current smoke run are supported, but the all-replays criterion remains unmet: fifteen recordings pass and two stop at inherited, accepted shrug-assignment divergences. The report-only revision confirms that coordinator reconciliation is still required. Another worker retry cannot resolve this authority dependency; preserve the recordings, replay validation and accepted shrug behavior.",
+        "checks": [
+          {
+            "criterion": "Starting any level plays the Let's Go sample once at the point the evidence shows (or a labelled provisional point).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg initializes a per-level latch and requests LevelStart on the first focused, unpaused gameplay frame, outside fast-forward passes. Retry and subsequent level legs receive fresh latches."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "LevelStart routes to Letsgo through the existing asset-loading and Mixer path. Disabled or unavailable audio does not accumulate deferred requests."
+              },
+              {
+                "path": "build/gameplay-sounds-001/static/start-instructions.json",
+                "detail": "Retained Ghidra instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f test hatch+0xAE and global 0x4E32A0, load handle 0x4E32B4 at 0x425AD0, call playback at 0x425ADB and set the latch at 0x425AE3 before opening/release checks."
+              },
+              {
+                "path": "docs/scratch/gameplay-sounds-001.md",
+                "detail": "Explicitly labels the first active clone frame provisional; exact retail startup phase and global guard semantics remain unreconstructed."
+              }
+            ]
+          },
+          {
+            "criterion": "A basher makes its sound while bashing and the builder's last three bricks each make theirs; samples and triggers are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepBasher emits Bash after successful terrain clearing, excluding empty swings and steel refusal. stepBuilder emits BuilderWarning before decrementing remaining counts 3, 2 and 1. The changes add audio events without changing simulation timing or state transitions."
+              },
+              {
+                "path": "build/gameplay-sounds-001/static/bash-sound-instructions.json",
+                "detail": "The destructible-cell branch clears nonzero terrain, admits effects subpasses 0/3, loads Mine handle 0x4E32E8 at 0x40C317 and calls playback at 0x40C32F. The report explicitly labels the clone's once-per-successful-bite cadence provisional."
+              },
+              {
+                "path": "build/gameplay-sounds-001/static/builder-instructions.json",
+                "detail": "0x40FF54 compares the pre-decrement counter with 4; JGE skips playback. Otherwise 0x40FF5C loads Chink handle 0x4E32BC, 0x40FF73 plays it and 0x40FF93 stores the decremented count."
+              },
+              {
+                "path": "build/gameplay-sounds-001/targeted-tests-final.log",
+                "detail": "Production decoding resolves Letsgo, Mine and Chink from installed base lemmings.box. Supplemental gameplay_sounds checks pass last-three event multiplicity and successful versus empty/steel bash cases; these are source-test results, not original-runtime fidelity evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "Fast-forward and pause do not stack or loop the sounds; all promoted playtest replays still reproduce their results.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "SkipPlaying discards overlapping Mine requests; RestartPlaying removes the existing Chink voice before starting another. Playback creates non-looping voices without a delayed queue."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "advanceElapsed returns immediately while paused and invokes the cue-draining callback after simulation updates within fast-forward passes. This supports the no-backlog behavior."
+              },
+              {
+                "path": "build/gameplay-sounds-001/replays-final.json",
+                "detail": "Accounts for all 17 promoted recordings: fifteen report PASS, won=1 and completed=1. MM_BLOCK_BUILD_BASH stops at step 2850 on actor 3 assignment acceptance; MM_E4_4_SKILLS stops at step 2075 on actor 2 assignment acceptance. Their final results are not reproduced."
+              },
+              {
+                "path": "build/agent-runs/loop-981e969dfbe149c6bfa22cd1bafb5fbc/0004-review-b017fc/decision.json",
+                "detail": "The accepted shrug review explicitly allowed these two changed recordings under its criterion permitting explained divergences. That establishes inherited intended behavior, but does not waive this task's unqualified criterion."
+              },
+              {
+                "path": "docs/scratch/gameplay-sounds-001.md",
+                "detail": "The revision explicitly acknowledges the criterion remains unmet, identifies both conflicting recorded commands and leaves later outcomes unverified. It records coordinator reconciliation as a dependency rather than changing recordings, validation or accepted shrug behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T175542-11176-c3a24e69/verification.log",
+                "detail": "The current supervisor run passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261116T175542-11176-c3a24e69/result.json",
+                "detail": "Records verifier exit 0 and verified_content b77d8a341d888a93baf4da8a8494079690783d528eeea9e8a5e704805905cfc2, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/gameplay-sounds-001.md",
+                "detail": "Ends with level/action/expected-result checks for MM_CLIMB_002 entry and retry, MM_BASH_002 bashing, and MM_BUILD's final three bricks, including pause and fast-forward. Human listening and original fidelity remain explicitly unproved."
+              }
+            ]
+          }
+        ]
+      },
+      "lead_note": "2026-11-16: the lead retired the two playtest-9 recordings that encode the Y6 refused click (docs/playtest/replays/README.md, Retired recordings). The replay criterion now covers the 15 remaining .replay files, all of which pass on the lead's release build."
     },
     {
       "id": "bash-particles-001",

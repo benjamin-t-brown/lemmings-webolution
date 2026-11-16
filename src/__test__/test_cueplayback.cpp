@@ -126,7 +126,7 @@ void record(audio::CuePlayback& playback, std::vector<std::string>& heard) {
 void testTable() {
   std::cout << "cue table\n";
   const auto routes = audio::cueRoutes();
-  check(routes.size() == 3, "exactly three cues have retained play-site evidence");
+  check(routes.size() == 6, "six cues have retained play-site evidence (playtest 9 Y3-Y5)");
 
   // Literal retail names, not values produced by another recovered invocation.
   check(audio::routedCueName(sim::SoundCue::OhNo) == std::optional<std::string_view>("Ohno"),
@@ -137,6 +137,12 @@ void testTable() {
         "the retail Splat cue (zero play references) is never played");
   check(audio::routedCueName(sim::SoundCue::Exit) == std::optional<std::string_view>("Yippee"),
         "saving at the exit routes to Yippee (playtest 6 V4)");
+  check(audio::routedCueName(sim::SoundCue::LevelStart) == std::optional<std::string_view>("Letsgo"),
+        "level start routes to Letsgo (playtest 9 Y4)");
+  check(audio::routedCueName(sim::SoundCue::Bash) == std::optional<std::string_view>("Mine"),
+        "successful bashing routes to Mine (playtest 9 Y3)");
+  check(audio::routedCueName(sim::SoundCue::BuilderWarning) == std::optional<std::string_view>("Chink"),
+        "last bricks route to Chink (playtest 9 Y5)");
   for (sim::SoundCue unevidenced :
        {sim::SoundCue::Assign, sim::SoundCue::Explode})
     check(!audio::routedCueName(unevidenced).has_value(), "no retained play site => unrouted");
@@ -156,7 +162,8 @@ void testTable() {
   // Synthetic archive carrying exactly the routed names: every route resolves.
   const std::string wav = makeWav();
   const auto path = writeBox("table", {{"SOUNDS\\OHNO.WAV", wav}, {"SOUNDS\\FALLSPLAT.WAV", wav},
-                                      {"SOUNDS\\YIPPEE.WAV", wav}});
+                                      {"SOUNDS\\YIPPEE.WAV", wav}, {"SOUNDS\\LETSGO.WAV", wav},
+                                      {"SOUNDS\\MINE.WAV", wav}, {"SOUNDS\\CHINK.WAV", wav}});
   {
     auto lib = AssetLibrary::open(path);
     check(lib.has_value(), "synthetic archive opens");

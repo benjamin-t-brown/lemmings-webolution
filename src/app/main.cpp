@@ -297,7 +297,7 @@ void printHelp() {
             "(use SDL_VIDEODRIVER=dummy for a headless smoke run).\n"
             "--window-shot PNG with --frames N saves the final presented window frame.\n"
             "--sim draws live skill counts; click the first eight plates or use keys 1-8\n"
-            "to select a skill. Left/right-click RATE to slow/speed releases; hold to repeat.\n"
+            "to select a skill. Left/right-click a hatch to slow/speed releases; hold to repeat.\n"
             "Double-click Nuke to end releases and explode the remaining lemmings.\n"
             "--frontend starts New Game -> Continue? -> map -> a simulated retail level.\n"
             "Use RETURN at the first two screens, then click an unlocked map node.\n"
@@ -534,6 +534,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::BackdropScene> backdrop;
   std::optional<app::EntranceExitPresentation> entranceExitPresentation;
   std::optional<app::LeverPresentation> leverPresentation;
+  std::optional<app::PressurePadPresentation> pressurePadPresentation;
+  std::optional<app::CrabPresentation> crabPresentation;
+  std::optional<app::NamedHazardPresentation> namedHazardPresentation;
   std::optional<app::GravityPresentation> gravityPresentation;
   if (!args.sceneOff) {
     auto built = app::BackdropScene::build(*library, *blob, args.level);
@@ -545,6 +548,15 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       auto levers = backdrop->leverPresentation(*blob);
       if (levers) leverPresentation.emplace(std::move(*levers));
       else std::fprintf(stderr, "lever presentation: %s\n", levers.error().c_str());
+      auto pads = backdrop->pressurePadPresentation(*blob);
+      if (pads) pressurePadPresentation.emplace(std::move(*pads));
+      else std::fprintf(stderr, "pressure pad presentation: %s\n", pads.error().c_str());
+      auto crabs = backdrop->crabPresentation(*blob);
+      if (crabs) crabPresentation.emplace(std::move(*crabs));
+      else std::fprintf(stderr, "crab presentation: %s\n", crabs.error().c_str());
+      auto hazards = backdrop->namedHazardPresentation(*blob);
+      if (hazards) namedHazardPresentation.emplace(std::move(*hazards));
+      else std::fprintf(stderr, "named hazard presentation: %s\n", hazards.error().c_str());
       auto gravity = backdrop->gravityPresentation(*blob);
       if (gravity) gravityPresentation.emplace(std::move(*gravity));
       else std::fprintf(stderr, "%s\n", gravity.error().c_str());
@@ -720,11 +732,19 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                          (world->levelClockMs() % 4000) / 1000.0});
       }
       backdrop->setFluidState(std::move(fluid));
+      if (crabPresentation) backdrop->setCrabStates(*crabPresentation, world->setup().crabs);
+      if (namedHazardPresentation) backdrop->setNamedHazardStates(*namedHazardPresentation, world->setup().namedHazards);
       if (leverPresentation) {
         std::vector<std::pair<int,int>> faces;
         for (const auto& lever : world->setup().levers)
           if (lever.linked) faces.emplace_back(lever.serializedId, lever.state);
         backdrop->setLeverFaces(*leverPresentation, faces);
+      }
+      if (pressurePadPresentation) {
+        std::vector<std::pair<int,int>> states;
+        for (const auto& pad : world->setup().pressurePads)
+          states.emplace_back(pad.id, pad.state);
+        backdrop->setPressurePadStates(*pressurePadPresentation, states);
       }
     }
     // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
@@ -767,6 +787,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
          [&] { scene->render(target, frameCamera, geometryOptions, &*library); },
          [&] {
+           // 0x4418C2: draw all receiver pipes after the tube and before water.
+           // Include their opaque depth in the drowning-actor scenery snapshot.
+           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidPipe);
            if (fluidDrowning) fluidDrownSceneDepth = target.depthBuffer();
            if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::FluidGate);
            if (fluidDrowning) afterFluidDepth = target.depthBuffer();
@@ -864,12 +887,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       const auto lines = shell::layoutHud(values, hudParams, shell::fontCells());
       shell::drawHud(image, *sheet, lines, shell::fontCells());
-      // V8: headless panel/HUD composition includes the same initial-rate box.
-      if (args.skillPanel) {
-        auto rate = app::RuntimeReleaseRateControl::create(*library, args.level);
-        if (!rate) { std::fprintf(stderr, "release control: %s\n", rate.error().c_str()); return 1; }
-        rate->draw(image, *sheet);
-      }
       std::fprintf(stderr, "hud: tick=%d out=%d saved=%d target=%d seconds=%d\n", args.hudTicks,
                    values.out, values.saved, values.saveTarget, values.secondsRemaining);
       static const char* const names[] = {"out", "saved", "timer"};
@@ -1032,7 +1049,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     else std::fprintf(stderr, "record: %s; playing without recording\n", made.error().c_str());
   }
   const auto recordCommands = [&] {
-    if (recorder) recorder->commands(*world, runtimeSim, skillSelection, releaseControl->current());
+    if (recorder) recorder->commands(*world, runtimeSim, skillSelection,
+                                    releaseControl->current(), releaseControl->rateHatch());
   };
   std::optional<Image> finalWindowFrame;
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
@@ -1048,6 +1066,22 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   const int previousCursorVisibility = SDL_ShowCursor(SDL_QUERY);
   if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
+  // Clicks and held input use the same displayed hatch geometry and actor
+  // precedence as hover. A hatch right-click is consumed before camera grab.
+  const auto hatchAtPointer = [&](int x, int y) -> std::optional<std::size_t> {
+    if (!world || !backdrop || !focused || rightDown || menuOpen() ||
+        app::runtimeSkillPanelIndex(x, y) >= 0) return std::nullopt;
+    if (!windowSceneCurrent) {
+      displayedCamera = renderFrame(displayedScenePose, windowRaster, true);
+      windowSceneCurrent = true;
+    }
+    if (hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
+                     x, y, skillSelection.selectedSkill(), args.level == "MM_CLIMB_002"))
+      return std::nullopt;
+    const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
+    const auto hit = app::hoveredHatch(targets, x, y);
+    return hit ? std::optional<std::size_t>{targets[*hit].index} : std::nullopt;
+  };
   const auto resetMenuInput = [&] {
     nukeInput.reset();
     if (releaseControl) releaseControl->reset();
@@ -1130,7 +1164,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         if (!running) break;
       } else if (focused && !rightDown && releaseControl &&
                  event.type == SDL_MOUSEBUTTONDOWN &&
-                 releaseControl->press(event.button.x, event.button.y, event.button.button, *world)) {
+                 (event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT) &&
+                 releaseControl->press(hatchAtPointer(event.button.x, event.button.y), event.button.button, *world)) {
         pointerX = event.button.x; pointerY = event.button.y;
         nukeInput.reset();
       } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
@@ -1191,7 +1226,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                         double(event.motion.yrel) / presentation.scale());
           if (!rightDown) {
             pointerX = event.motion.x; pointerY = event.motion.y;
-            if (releaseControl) releaseControl->advance(0.0, pointerX, pointerY, *world);
+            if (releaseControl && releaseControl->holding())
+              releaseControl->advance(0.0, hatchAtPointer(pointerX, pointerY), *world);
             // Retain drag-onto activation (0x455AFF), once per gesture under
             // the provisional toggle policy. Hover without a button is inert.
             if (args.sim && world && (event.motion.state & SDL_BUTTON_LMASK) &&
@@ -1266,8 +1302,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       panelIconAnimation->advanceIcons(focused && !menuOpen() ? elapsed : 0.0,
                                  skillSelection.selectedIndex(), hover);
     }
-    if (releaseControl && focused && !menuOpen())
-      releaseControl->advance(elapsed, pointerX, pointerY, *world);
+    if (releaseControl && releaseControl->holding() && focused && !menuOpen())
+      releaseControl->advance(elapsed, hatchAtPointer(pointerX, pointerY), *world);
     recordCommands();
     fixedClock.advance(elapsed);
     bool updated = false;
@@ -1383,8 +1419,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           app::profile::Scope profileHud(app::profile::Hud);
           image = toImage(windowRaster.framebuffer());
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
-          const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0 &&
-              !(releaseControl && app::RuntimeReleaseRateControl::contains(pointerX, pointerY));
+          const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
           const auto hover = canHover ?
               hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
                   pointerX, pointerY, skillSelection.selectedSkill(),
@@ -1398,16 +1433,17 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           }
           hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
               std::vector<app::HatchHoverTarget>{};
-          for (auto& h : hatches) h.remaining = world->nukeRequested() ? 0 : app::hatchRemaining(world->setup().totalLemmings,
-              world->spawned(), world->setup().entrances.size(), h.index);
-          // Actor selection keeps precedence. Hatch feedback never enters the
-          // skill-picking path or changes the existing software cursor family.
+          for (auto& h : hatches) {
+            h.remaining = world->nukeRequested() ? 0 : app::hatchRemaining(world->setup().totalLemmings,
+                world->spawned(), world->setup().entrances.size(), h.index);
+            h.rate = releaseControl ? releaseControl->current() : 0;
+          }
+          // Actor selection keeps precedence, matching hatchAtPointer input.
           const auto hatchHover = canHover && !hover ? app::hoveredHatch(hatches, pointerX, pointerY) : std::nullopt;
           if (hatchHover) app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover]);
           app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
                                      &*panelIconAnimation);
           app::drawRuntimeHud(image, *runtimeFont, *world, false);
-          if (releaseControl) releaseControl->draw(image, *runtimeFont);
           app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
           // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
           if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),

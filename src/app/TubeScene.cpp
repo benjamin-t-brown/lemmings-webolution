@@ -340,7 +340,8 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   if (dirCount == 0)
     return std::nullopt;
 
-  const auto scores = gfx::spriteViewScores(cameraToActor, basisVec, options.composeActorPhase);
+  const auto scores = gfx::spriteViewScores(cameraToActor, basisVec,
+      options.composeActorPhase + injected.rotationPhase);
   auto selection = gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
   if (injected.forcedViewIndex >= 0)
     selection.index = static_cast<std::size_t>(injected.forcedViewIndex);
@@ -1239,6 +1240,25 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
       }
     }
     out.push_back(walker);
+  }
+  // Exit tails are render-only and follow the live prefix. Keep the established
+  // alive-lemming -> screen-box indices used by hovering, skills and observers.
+  if (motion) for (std::size_t i = 0; i < lemmings.size(); ++i) {
+    const double t = motion->exitSeconds(i, world);
+    if (t < 0.0) continue;
+    const auto& lemming = lemmings[i];
+    const auto p = motion->positionOf(i, world);
+    SceneOptions::InjectedNativeWalker jumper;
+    jumper.plus8X = p.x;
+    jumper.plus8Y = terrainHeight - 1.0 - p.y;
+    jumper.plus8Z = p.z;
+    jumper.facing = static_cast<int>(lemming.facing);
+    jumper.verticalDir = lemming.verticalDir;
+    jumper.sheetType = lemming.sheetType;
+    jumper.clip = "fall";  // 41800A: no separate exit strip
+    jumper.rotationPhase = 0.25;  // 418017..418027 -> 4683E9
+    if (anim) jumper.walkTemporalIndex = anim->poseOf(i).temporalIndex;
+    out.push_back(jumper);
   }
   return out;
 }

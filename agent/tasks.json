@@ -17884,7 +17884,7 @@
     {
       "id": "pressure-pad-drain-001",
       "title": "Make the Seafood Sarnie switch drain the water",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17899,12 +17899,116 @@
         "The report cites static evidence for the trigger's activation rule and link resolution, labels provisional choices, and lists the 23 levels with whether their triggers resolve.",
         "The playtest replays for MM_W_012 and the other recorded levels with water or levers still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T071902-26408-272b94c1",
+      "started": "2026-11-16T07:19:02.979770+00:00",
+      "finished": "2026-11-16T07:38:03.146187+00:00",
+      "last_run": "build/agent-runs/20261116T071902-26408-272b94c1",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported under the current verification tiers. The production path connects serialized pressure-pad contact to existing fluid drainage and visible fired geometry. All recorded replays and smoke verification pass. Human confirmation of Seafood Sarnie playability remains pending; original fidelity is not established.",
+        "checks": [
+          {
+            "criterion": "On Seafood Sarnie through the production path, a lemming activating the trigger drains the water as the level data links it, the drained area stops killing lemmings, and the trigger and its fired state are visible.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "linkLevelGates loads type-0 trigger bounds, initial latch and messages, preserving tagged contact order and the existing ID-based receiver lookup."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "updateSegment evaluates pad contacts before FluidGate::step. Contact latches once and dispatches the serialized messages. Type 5 requests drainage; groundAt and attachFluidHazard ignore receivers whose live height reaches zero."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The application loads the retail setup, advances World through RuntimeSimState, and supplies live fluid heights and pad latch states during scene preparation."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Type-0 placed models enter the production scenery path. setPressurePadStates removes cut geometry when fired while retaining the base, restoring the original model on reset."
+              },
+              {
+                "path": "build/pressure-pad-drain-001/census.txt",
+                "detail": "Seafood Sarnie stores bounds [45,47] \u00d7 [20,26] \u00d7 [0,1] and five type-5 messages targeting water gates 8 through 4, each with high 10.5 and low zero."
+              },
+              {
+                "path": "build/pressure-pad-drain-001/Seafood-Sarnie-ready.png",
+                "detail": "Retained clone image visibly shows the red trigger on the lower walkway. Fired visibility is supported by the source path, rather than an observed fired screenshot."
+              }
+            ]
+          },
+          {
+            "criterion": "The report cites static evidence for the trigger's activation rule and link resolution, labels provisional choices, and lists the 23 levels with whether their triggers resolve.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/pressure-pad-drain-001.md",
+                "detail": "Identifies the registered reference hash and static addresses, distinguishes evidence types, lists all 23 levels, and labels integer-feet/radial contact, immediate fired presentation and inherited fluid behavior provisional. Reports zero missing target IDs while explicitly distinguishing unsupported non-fluid effects."
+              },
+              {
+                "path": "build/pressure-pad-drain-001/static/0x00431950-instructions.json",
+                "detail": "Instructions at 0x431984\u20130x4319A7 confirm the latch comparison, assignment to one before fan-out, and dispatch through 0x433AC0. At 0x4319E5 collected model visibility is cleared."
+              },
+              {
+                "path": "build/pressure-pad-drain-001/static/0x00431A59-instructions.json",
+                "detail": "Confirms actor-list traversal, actor-point retrieval through 0x42F22E, AABB call 0x430BA1 and previous-actor exclusion, without lever-style facing or walking-state checks."
+              },
+              {
+                "path": "docs/scratch/lever-links-research-001.md",
+                "detail": "Accepted static evidence traces signed base-ID resolution through 0x433B2E and 0x444BA1, type-5 receiver request assignment at 0x42C8E0, and the existing lowering state machine."
+              },
+              {
+                "path": "build/pressure-pad-drain-001/review-unit-ctest.log",
+                "detail": "Production-loader census covers 45 pads across exactly the listed 23 levels, with zero missing IDs and explicit gate-versus-other message counts."
+              }
+            ]
+          },
+          {
+            "criterion": "The playtest replays for MM_W_012 and the other recorded levels with water or levers still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/pressure-pad-drain-001/replays.txt",
+                "detail": "All 15 promoted human-play recordings report exit zero, PASS, won=1 and completed=1. MM_W_012 reproduces 16 saved against 10 required; no recorded divergence is reported."
+              },
+              {
+                "path": "build/pressure-pad-drain-001/MM_W_012-1794811181667577800-9.log",
+                "detail": "Individual retained replay output confirms MM_W_012 PASS at step 1742 with saved=16/10 and completed victory."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T071902-26408-272b94c1/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including the installed-level sweep and frontend round trip, plus all 84 recovery tests and diff checking."
+              },
+              {
+                "path": "build/agent-runs/20261116T071902-26408-272b94c1/result.json",
+                "detail": "Records verification exit zero and verified content fingerprint 76bfe1de72567d08f9a739ae420d3df7f09fe6d56dd8d276469d63fe25245cab."
+              },
+              {
+                "path": "docs/scratch/pressure-pad-drain-001.md",
+                "detail": "Ends with Seafood Sarnie's level, trigger location, crossing action, disappearing beams, lowering pool, safe drained crossing, one-shot behavior and retry reset. The worker's pending-verification wording correctly predates supervisor execution."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T07:40:12.351011+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T071902-26408-272b94c1\\verification.log",
+        "verified_content": "76bfe1de72567d08f9a739ae420d3df7f09fe6d56dd8d276469d63fe25245cab"
+      }
     },
     {
       "id": "crab-hazard-001",
       "title": "Show and simulate the crab in the water",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17919,12 +18023,124 @@
         "Position, motion, kill volume and death presentation are cited to static evidence or labelled provisional.",
         "All promoted playtest replays still reproduce their results (none of those levels has a crab).",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T074012-26408-8280d51b",
+      "started": "2026-11-16T07:40:12.689381+00:00",
+      "finished": "2026-11-16T07:56:31.839738+00:00",
+      "last_run": "build/agent-runs/20261116T074012-26408-8280d51b",
+      "review": {
+        "decision": "accept",
+        "reason": "The production rendering and simulation paths implement the crab from installed data, retained static evidence supports its behavior, all 15 promoted replays pass, and supervisor smoke verification passes. Human playtest confirmation and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Seafood Sarnie the crab is visible where the level data places it, moves or animates as the evidence shows, and a lemming that walks into it dies and is counted dead; lemmings that do not touch it are unaffected.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "loadRetailLevelReport constructs crabs from structured named STAT records, retaining enabled state, relative contact boxes and stored rest/attack durations. It rejects unsupported behavior and mismatched placement counts."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "build admits Crab.a3d through the existing mesh/depth path with its stored transform. crabPresentation binds serialized rest/attack clips; setCrabStates samples simulation-owned animation state."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "prepareScene supplies World crab states to the presentation. The death observer emits existing body-piece particles, and renderFrame draws them through the production scene."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "updateSegment calls stepCrabs after receivers. Only active actors inside a stored closed volume are killed; each victim clears its Blocker field, becomes Dead and increments dead_ once. Attack state prevents repeated kills until rearmed. Animation advances from admitted simulation time without RNG or rendering-driven updates."
+              },
+              {
+                "path": "build/crab-hazard-001/Seafood-Sarnie-crab.png",
+                "detail": "Independently inspected retained clone image: the crab is visible inside the pool, with foreground scenery occluding it."
+              },
+              {
+                "path": "src/__test__/test_crab.cpp",
+                "detail": "Supplementary logic checks cover inside/outside contacts, closed corners, simultaneous deaths, removed actors, attack recovery and deterministic updates. Installed checks cover all 14 crabs on the 12 specified levels, including Seafood Sarnie's origin and stationary animated model."
+              },
+              {
+                "path": "build/crab-hazard-001/final-unit-ctest.log",
+                "detail": "The crab legacy test passed in 0.28 seconds. This supports logic/data integration, not natural gameplay or original fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "Position, motion, kill volume and death presentation are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/crab-hazard-001/census.txt",
+                "detail": "Serialized census records Seafood Sarnie's position (116,9,0.3), relative box [0,0,0]..[14,7,1], rest duration 1 second and attack duration approximately 1.16667 seconds. All 14 installed crabs use STAT records."
+              },
+              {
+                "path": "build/crab-hazard-001/static/432e3f_asm.json",
+                "detail": "Retained instructions corroborate animation advancement, attack-completion recovery at 0x432EB1..0x432F15, the attack latch check at 0x43303D..0x43304A, victim removal at 0x4330D7..0x433106 and nonlooping attack activation at 0x433150..0x433186."
+              },
+              {
+                "path": "build/crab-hazard-001/static/430c9c_asm.json",
+                "detail": "Instructions corroborate closed relative-box comparisons in both facing branches, adding +0x48/+0x50/+0x58 to both endpoints. Together with installed data, this establishes Seafood Sarnie's contact volume [110,124] x [9,16] x [0,1]."
+              },
+              {
+                "path": "build/crab-hazard-001/static/4331d0_asm.json",
+                "detail": "The selector-5 branch at 0x4332D6 reaches constructor 0x40A6A0 at 0x4332F9, supporting the selected death presentation."
+              },
+              {
+                "path": "build/crab-hazard-001/static/40a6ec_asm.json",
+                "detail": "Death-entry instructions pass six to body-piece creation at 0x40A795 and 0x40A964, and ten to particle creation at 0x40AB2E. Subsequent binary64 constants encode RGB(255,127,127). Retained records identify the registered EXE SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f."
+              },
+              {
+                "path": "docs/scratch/crab-hazard-001.md",
+                "detail": "The report cites placement, animation, contact and death evidence, while explicitly marking integer-feet/radial-lane adaptation, overlap ordering, transform interpolation, particle presentation and inherited depth policies provisional. It claims neither original fidelity nor a Seafood Sarnie human win."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results (none of those levels has a crab).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/crab-hazard-001/final-replay-results.tsv",
+                "detail": "Lists all 15 promoted recordings across playtests 7 and 8; every final run reports exit=0, PASS, won=1 and completed=1, with saved counts meeting requirements. The listed files match the promoted replay inventory."
+              },
+              {
+                "path": "build/crab-hazard-001/task.diff",
+                "detail": "Task-only production diff preserves replay files and existing assertions/timeouts. Simulation changes are confined to levels containing crab records; the promoted replay levels contain none."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T074012-26408-8280d51b/verification.log",
+                "detail": "Supervisor verification uses registered UCRT64 tools and reports 95/95 main smoke tests, including all level-sweep chunks, and 84/84 recovery tests passing. Reference identity is checked by reading bytes only."
+              },
+              {
+                "path": "build/agent-runs/20261116T074012-26408-8280d51b/result.json",
+                "detail": "Records supervisor verification exit code 0 and verified_content 83f13c0b1af59ffd5adb1522677efb2087d18960a223a53897aee7eb7e40d496, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/crab-hazard-001.md",
+                "detail": "Ends with a Seafood Sarnie/node-15 what-to-check note covering locating the crab, draining the pool, contact death and particles, one death-count increment, attack/rest recovery, outside-contact survival, pause, fast-forward and retry."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T08:00:16.923125+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T074012-26408-8280d51b\\verification.log",
+        "verified_content": "83f13c0b1af59ffd5adb1522677efb2087d18960a223a53897aee7eb7e40d496"
+      }
     },
     {
       "id": "pipe-render-001",
       "title": "Draw the drain and supply pipes on fluid levels",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17939,12 +18155,108 @@
         "Model, placement and any flow state are cited to static evidence or labelled provisional; levels whose pipes do not resolve are listed.",
         "No simulation outcome changes: all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T080016-26408-73ac4f0b",
+      "started": "2026-11-16T08:00:17.271204+00:00",
+      "finished": "2026-11-16T08:11:34.794593+00:00",
+      "last_run": "build/agent-runs/20261116T080016-26408-73ac4f0b",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production diff and retained evidence. Acceptance covers clone presentation and regression safety; human playability and original depth fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Seafood Sarnie the drain is visible at its stored position, and on MM_W_012 or another lever level a supply or drainage pipe is visible; neither hides lemmings that should be in front of it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/pipe-render-001/Seafood-Sarnie.png",
+                "detail": "Inspected retained clone image: the grilled drain is visible beside the pool."
+              },
+              {
+                "path": "build/pipe-render-001/MM_W_012.png",
+                "detail": "Inspected retained clone image: a grilled supply pipe is visible beside the bottom walkway."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Both optional pipe models use their serialized scene trees and transforms. Meshes retain model projection bias and use the existing Less/write-on depth path."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Pipes render after tube geometry and before water and ordinary actors. Their depth enters the drowning scenery snapshot."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Ordinary actors compare physical depth against completed scenery through clipActorToScene; nearer actor pixels remain visible. This supports foreground preservation by source inspection, without claiming an observed foreground-lemming comparison."
+              }
+            ]
+          },
+          {
+            "criterion": "Model, placement and any flow state are cited to static evidence or labelled provisional; levels whose pipes do not resolve are listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/pipe-render-001/static/pipe-draw-asm.json",
+                "detail": "Registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f: instructions at 0x42C560/0x42C57D and 0x42C583/0x42C5A0 null-check and draw +0x160/+0x164, with no flow or height predicate."
+              },
+              {
+                "path": "build/pipe-render-001/static/frame-order-asm.json",
+                "detail": "Instructions corroborate tube call 0x441884, pipe call 0x4418C2 and subsequent base-fluid virtual call 0x44190D, matching production scheduling."
+              },
+              {
+                "path": "build/pipe-render-001/census.txt",
+                "detail": "Records names, complete placement matrices, projection-bias operands and absent animation tracks for 71 pipes across 35 installed levels; unresolved=0. Includes Seafood Sarnie's drain and MM_W_012's four supplies."
+              },
+              {
+                "path": "docs/scratch/pipe-render-001.md",
+                "detail": "Cites static evidence, explicitly lists unresolved pipe levels as none, explains static pipe presentation during fill/drain, and labels clone depth provisional. Spray and stream effects remain documented omissions."
+              }
+            ]
+          },
+          {
+            "criterion": "No simulation outcome changes: all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/pipe-render-001/task.diff",
+                "detail": "Task-specific production changes affect only BackdropScene.cpp, BackdropScene.h and main.cpp rendering; pre-existing simulation edits belong to earlier tasks."
+              },
+              {
+                "path": "build/pipe-render-001/replay-results.tsv",
+                "detail": "All 15 promoted recordings are represented, each with exit 0, PASS, won=1 and completed=1. The affected MM_W_012 route reproduces saved=16/10 at step 1742."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T080016-26408-73ac4f0b/verification.log",
+                "detail": "Supervisor verification passed all 95 main smoke tests, including installed-level sweep chunks, and all 84 recovery tests; final git diff --check also succeeded."
+              },
+              {
+                "path": "build/agent-runs/20261116T080016-26408-73ac4f0b/result.json",
+                "detail": "Records verification exit 0 and verified_content 8c00d5f6af5a65972b3d2b4058d8e39086e5154a9228af8d2f20ca867675ba53, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/pipe-render-001.md",
+                "detail": "Ends with level/action/expected-result instructions: drain Seafood Sarnie's pool while checking pipe and foreground-lemming visibility, then activate MM_W_012's lower lever and check stored supply placement as water rises."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T08:13:55.852647+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T080016-26408-73ac4f0b\\verification.log",
+        "verified_content": "8c00d5f6af5a65972b3d2b4058d8e39086e5154a9228af8d2f20ca867675ba53"
+      }
     },
     {
       "id": "moving-hazards-001",
       "title": "Show and simulate deathrollers, buzzsaws, scorpions and robins",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17959,12 +18271,104 @@
         "Behavior of each kind is cited to static evidence or labelled provisional.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T081355-26408-6cafc0b2",
+      "started": "2026-11-16T08:13:56.181975+00:00",
+      "finished": "2026-11-16T08:42:10.962025+00:00",
+      "last_run": "build/agent-runs/20261116T081355-26408-6cafc0b2",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production changes and retained logs. The implementation covers all four kinds, documents provisional adapters, preserves all 15 promoted replay results, and passes supervisor smoke verification. This accepts the scoped clone implementation; human playability and original-game fidelity remain unproven. No files were edited or programs/tests launched during this review.",
+        "checks": [
+          {
+            "criterion": "On node 20 the deathroller is visible, moves as the evidence shows, and affects lemmings as the evidence shows; each other kind is either implemented the same way on one named level or reported as drawn-but-inert with the missing observation named.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Loads structured placement, relative contact volumes, clip durations and serialized patrol state into namedHazards. Registers hazard message targets before load-time lever dispatch."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The elapsed production update calls stepNamedHazards. It handles contact deaths and accounting, retained single victims for robins/scorpions, animation state, and roller patrol advancement, terrain cutting and steel reversal."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Admits all four model kinds and samples their transforms/spin from simulation state. main.cpp supplies the live states through prepareScene."
+              },
+              {
+                "path": "build/moving-hazards-001/MM_E1_4SKILLS-tick6.png",
+                "detail": "Directly inspected alongside the retained initial and tick-1 images: node 20's roller is visible and changes position and orientation. These are clone render observations, without a lemming encounter."
+              },
+              {
+                "path": "docs/scratch/moving-hazards-001.md",
+                "detail": "Names implemented examples for robin node 37/M02_MG_1, scorpion node 63/M07_mg_1 and buzzsaw node 81/VH05_JC1. Their retained images were directly inspected and show the authored models. All kinds simulate; none is reported inert."
+              }
+            ]
+          },
+          {
+            "criterion": "Behavior of each kind is cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/moving-hazards-001/static/0x0042478f-asm.json",
+                "detail": "Retained instructions corroborate roller contact update before cutting, direction XOR reverse, steel-bit detection, and subsequent travel/path sampling. Companion pseudocode and 0x451997 support the serialized patrol interpretation."
+              },
+              {
+                "path": "build/moving-hazards-001/static/0x00432E3F-asm.json",
+                "detail": "Instructions corroborate the +0x1D1 contact-selection and +0x1D4 attack-latch branches, contact collection at 0x432F76 and victim-removal flow. This supports the shared hazard contract used by all four kinds."
+              },
+              {
+                "path": "build/moving-hazards-001/census.txt",
+                "detail": "Records installed placements, flags, relative boxes, paths and clip bindings, including node 20's stored segment/phase and the differing single-contact and continuous-contact kinds."
+              },
+              {
+                "path": "docs/scratch/moving-hazards-001.md",
+                "detail": "Identifies reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f and static addresses for contact, death selectors and spin. Explicitly labels contact-coordinate, timing, interpolation, orientation and numeric adapters provisional, and discloses omitted sounds and terrain debris."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/moving-hazards-001/final-replay-results.tsv",
+                "detail": "Contains all 15 recordings currently promoted under docs/playtest/replays: 12 from playtest 7 and three from playtest 8. Every entry records exit 0, PASS, won=1 and completed=1. Corresponding final replay logs agree; no promoted replay was changed."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T081355-26408-6cafc0b2/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests. It uses the registered UCRT64 toolchain and finishes with git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261116T081355-26408-6cafc0b2/result.json",
+                "detail": "Records verifier exit_code 0 and verified_content f37a42d2b3c519b547e3a834e8f30d1d7772d76f1837d8965b41ee36ac04e18f, matching the supplied verification context."
+              },
+              {
+                "path": "docs/scratch/moving-hazards-001.md",
+                "detail": "Ends with level/action/expected-result checks for nodes 20, 37, 63 and 81, including patrol/contact behavior, pause and retry. Its smoke-pending wording describes worker handoff; the subsequent supervisor log establishes the pass."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T08:45:57.306375+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T081355-26408-6cafc0b2\\verification.log",
+        "verified_content": "f37a42d2b3c519b547e3a834e8f30d1d7772d76f1837d8965b41ee36ac04e18f"
+      }
     },
     {
       "id": "exit-jump-anim-001",
       "title": "Animate lemmings jumping into the balloon",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17979,12 +18383,104 @@
         "Saved counts and level results are unchanged: the twelve playtest-7 replays are run and each result reported; any divergence is explained by the animation's timing, not hidden.",
         "Frames, placement and duration are cited to static evidence or assets, or labelled provisional.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T084557-26408-1109dcaf",
+      "started": "2026-11-16T08:45:57.651606+00:00",
+      "finished": "2026-11-16T09:07:53.066948+00:00",
+      "last_run": "build/agent-runs/20261116T084557-26408-1109dcaf",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained static evidence, replay results and supervisor smoke log. Human visual confirmation remains pending; this acceptance does not establish original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "On MM_CLIMB_002 each lemming that reaches the balloon plays a visible exit animation into it instead of vanishing, through the production render path, and several arriving close together each play it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Production gameplay observes motion before simulation and after every update, advances animation using level time, and supplies both trackers to injectedWalkersFromWorld."
+              },
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "Each stable actor index retains an independent exit start time and radial lane. Exited actors receive a sampled jump for one level second, including overlapping arrivals."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Exit sprites are appended after the live prefix with fall frames, quarter-turn phase, type and gravity. drawInjectedWalkers uses ordinary cylinder placement, sprite selection and rasterization. Picking remains restricted to live actors."
+              },
+              {
+                "path": "src/__test__/test_exit_jump.cpp",
+                "detail": "Supplementary legacy checks cover simultaneous and staggered exit lifetimes, frame advancement, pause, live-prefix indexing, type/gravity propagation and skill exclusion; they are not presented as natural-play evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "Saved counts and level results are unchanged: the twelve playtest-7 replays are run and each result reported; any divergence is explained by the animation's timing, not hidden.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-jump-anim-001/replay-results.tsv",
+                "detail": "All twelve playtest-7 recordings report exit 0, PASS, won=1 and completed=1: CLIMB 10/1, FLOAT 10/1, BOMB 17/10, BLOCK 24/15, BUILD 20/10, MINE 20/10, BASH 10/10, DIG 19/10, W_012 16/10, BLOCK_BOMB 12/10, BASH_MINE 20/10 and M06_KF_1 93/50. No divergence is reported."
+              },
+              {
+                "path": "build/exit-jump-anim-001/task-only.diff",
+                "detail": "The production change is confined to presentation adapters; simulation save accounting, cue emission and level-result transitions are unchanged."
+              },
+              {
+                "path": "docs/scratch/exit-jump-anim-001.md",
+                "detail": "Reports each replay separately and explicitly preserves immediate clone counting/Yippee despite the original's completion-time events."
+              }
+            ]
+          },
+          {
+            "criterion": "Frames, placement and duration are cited to static evidence or assets, or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-jump-anim-001/static/0x417FE4-asm.json",
+                "detail": "Retained instructions show fall selection at 0x41800A, phase 0.25 at 0x418017\u20130x418027, target-vector construction and storage of entry Y and jump impulse."
+              },
+              {
+                "path": "build/exit-jump-anim-001/static/0x41818A-asm.json",
+                "detail": "Instructions corroborate the timer, quadratic vertical term, delta*dt addition, and one-second completion comparison at 0x418257\u20130x418268."
+              },
+              {
+                "path": "build/exit-jump-anim-001/unit-detail-final.log",
+                "detail": "Production asset decoding records ordinary, water and acid fall strips, each with 15 temporal entries, five directional frames and rate 1, including texture names and rectangles."
+              },
+              {
+                "path": "docs/scratch/exit-jump-anim-001.md",
+                "detail": "Labels rounded trigger-derived placement, omitted bobbing, clone update slices and frame-end ordering as provisional; preserves depth, inversion-comparison and early-departure limitations."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T084557-26408-1109dcaf/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests and all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "docs/scratch/exit-jump-anim-001.md",
+                "detail": "Ends with level/action/expected-result checks for MM_CLIMB_002 arrivals, close arrivals, skill exclusion, pause, fast-forward and saved totals, plus water and inverted artwork checks."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T09:10:25.135774+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T084557-26408-1109dcaf\\verification.log",
+        "verified_content": "95ecafb10f38e3eff12c98b4225954ac809b4d362cd0900241a4f64b39e7e937"
+      }
     },
     {
       "id": "hatch-click-rate-001",
       "title": "Change a hatch's release rate by clicking the hatch",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17999,7 +18495,103 @@
         "On M06_KF_1 (two hatches) clicking either hatch changes the rate, and the report states the shared-cadence limit.",
         "The twelve playtest-7 replays still load and reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T091025-26408-df7972d8",
+      "started": "2026-11-16T09:10:25.479601+00:00",
+      "finished": "2026-11-16T09:22:11.164420+00:00",
+      "last_run": "build/agent-runs/20261116T091025-26408-df7972d8",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained replay results and supervisor smoke verification. Shared cadence and input ergonomics are explicitly provisional. Human playtest confirmation and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On MM_CLIMB_002, clicking the hatch in the level raises the release rate with one button and lowers it with the other, within the level's stored limits, and the current rate is readable on screen; there is no separate panel rate button unless static evidence for one is cited.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Converted SDL pointer input reaches hatchAtPointer and RuntimeReleaseRateControl::press before camera grab or skill assignment. Picking reuses displayed hatch geometry with actor precedence. Hover receives the current rate; the separate panel-rate drawing calls are removed."
+              },
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "Left input decrements and right input increments. Changes clamp against the clicked hatch's stored limits and update the existing World interval through the release-rate table, preserving the running countdown."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "drawHatchHover renders RATE plus the effective value using the retail font, with viewport-clamped placement."
+              },
+              {
+                "path": "build/release-rate-control-001/resume-20261116T0413/retained-observations/after/units/installed-rates.csv",
+                "detail": "MM_CLIMB_002 has stored initial/minimum/maximum values 20/1/50."
+              },
+              {
+                "path": "build/hatch-click-rate-001/static/crosscheck.txt",
+                "detail": "Retained instructions trace hatch selection at 0x454E52\u20130x454EAE, publication to screen+1894 at 0x45525C, and the caller at 0x4537EC. Selected-hatch branches at 0x453A42\u20130x453AAF increment or decrement through 0x425DE3. This supports world-hatch input, without establishing runtime fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "On M06_KF_1 (two hatches) clicking either hatch changes the rate, and the report states the shared-cadence limit.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "hatchAtPointer passes the picked target's serialized hatch index into the control, allowing either visible hatch to select its own limits."
+              },
+              {
+                "path": "build/hatch-click-rate-001/focused.xml",
+                "detail": "The passing legacy unit exercises both M06_KF_1 hatch indices with left/right input. Both have limits 1..99 and update the shared interval."
+              },
+              {
+                "path": "docs/scratch/hatch-click-rate-001.md",
+                "detail": "Explicitly states that both hatches initially display shared rate 30 and either changes the shared cadence, clamped to the clicked hatch's limits. Independent scheduling and the parked M20_MT_1 regression remain outside scope."
+              }
+            ]
+          },
+          {
+            "criterion": "The twelve playtest-7 replays still load and reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hatch-click-rate-001/replays.json",
+                "detail": "Lists all twelve playtest-7 files with exit 0, PASS, won=1 and completed=1, retaining their saved/required results, including MM_CLIMB_002 10/1 and M06_KF_1 93/50. Individual retained logs corroborate the results."
+              },
+              {
+                "path": "src/app/Replay.hpp",
+                "detail": "Keeps WEBOLUTION_REPLAY version 1. Effective rate commands now store the clicked hatch index in the previously zero third value; historical zero values select the primary hatch. Playback validates that hatch's limits and existing interval-table values."
+              },
+              {
+                "path": "docs/scratch/hatch-click-rate-001.md",
+                "detail": "Reports each replay result and explains the recording contract. Existing replay files were preserved; replay success is correctly identified as simulation regression evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T091025-26408-df7972d8/verification.log",
+                "detail": "Supervisor smoke verification passes 95/95 main tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261116T091025-26408-df7972d8/result.json",
+                "detail": "Records verifier exit 0 and verified content bf762cbe589760e359e00bd7e3efaa03b9970b570f762d2eb9ae2131c5a57b8a."
+              },
+              {
+                "path": "docs/scratch/hatch-click-rate-001.md",
+                "detail": "Ends with a what-to-check note naming MM_CLIMB_002 and M06_KF_1, hover values, left/right actions, bounds, hold cancellation and shared-rate expectations. Its pending-verification wording describes worker handoff; the subsequent supervisor log establishes the pass."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T09:23:56.247766+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T091025-26408-df7972d8\\verification.log",
+        "verified_content": "bf762cbe589760e359e00bd7e3efaa03b9970b570f762d2eb9ae2131c5a57b8a"
+      }
     }
   ]
 }

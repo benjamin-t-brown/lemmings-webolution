@@ -112,6 +112,7 @@ struct SceneOptions {
     double drownSeconds = -1.0;  // presentation only; negative outside fluid drowning
     int drownFluidKind = -1;  // -1 keeps static-cell drowning on its existing path
     double drownSurfaceY = 0.0, drownBrightness = 1.0;
+    double rotationPhase = 0.0;  // exit enter 418027 sets controller phase to 0.25
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
   // U2: opaque scenery depth with the fluid pass excluded, only for the
@@ -166,7 +167,9 @@ class TubeScene {
   // `injectedWalkersFromWorld` emits one walker per alive lemming, in
   // `World::lemmings()` order. While every lemming is alive the returned
   // vector is index-aligned with `World::lemmings()`. A dead or exited
-  // lemming has no walker, so it has no entry here.
+  // lemming has no live walker. When motion tracking is supplied, still-visible
+  // exit jumps are appended AFTER all live walkers; hover/skill/countdown code
+  // only consumes the live prefix, so these tails cannot be picked.
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const;
   // Production passes the completed frame explicitly so picking uses exactly
@@ -291,9 +294,8 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
 // `sim::World::terrain().height()` when both are read from the same `.LVL`
 // collision grid, which `webolution`'s `main.cpp` guarantees by construction).
 //
-// Only lemmings with `Lemming::alive()` (not yet Exited or Dead) are
-// included -- Dead/Exited lemmings stay in `World::lemmings()` forever (see
-// World.h) and are not part of what is "on the tube" any more.
+// The live prefix contains only `Lemming::alive()` actors. With motion tracking,
+// one-second, noninteractive exit tails are appended after that prefix.
 //
 // Without `anim` every entry draws "walk" at temporal index 0 (the D3b behaviour, kept for
 // the fixtures that build walkers without a clock). With `anim` (actor-anim-001) each entry

@@ -49,8 +49,8 @@ struct LemmingAnimPose {
 
 class LemmingAnimTracker {
  public:
-  // Advance every live lemming's clock by `elapsedSeconds` of level time (0 while paused: the
-  // clock then does not move, but a state change still restarts the new clip at entry 0).
+  // Advance live lemmings and saved exit tails by `elapsedSeconds` of level time.
+  // At 0 (paused) clocks hold, but a state change still restarts the new clip at entry 0.
   // A lemming whose state changed since the last call starts its new clip from temporal 0.
   // Floating plays "umbopen" once, then "float" (the open animation finishes first; World.h
   // floatOpenMs). Index i is World::lemmings()[i].

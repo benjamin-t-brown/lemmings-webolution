@@ -267,6 +267,24 @@ struct Lever {
   std::vector<LeverMessage> facePlus;
 };
 
+// Tagged type 0, pressure_pad.a3d (vt 0x4B1148). 0x431A59 tests the
+// actor point against the serialized closed AABB, without a facing/state
+// filter. 0x431950 latches +0xB8 to 1 and sends +0xBC only on that edge.
+// Its cooldown cannot rearm that latch; only loading a fresh level does.
+struct PressurePad {
+  int id = -1;
+  int state = 0;
+  // Original cylinder coordinates (Y up). Installed pads span Z [0,1].
+  std::array<double, 3> min{}, max{};
+  std::vector<LeverMessage> messages;
+};
+
+// The original updates tagged objects in stream order before fluid receivers.
+struct GadgetContactRef {
+  bool pressurePad = false;
+  std::size_t index = 0;
+};
+
 // lever-gates-impl-001: the fluid-zone receiver of vtable 0x004B1020 (ctor 0x00428680, reader
 // 0x0042ACAC, step 0x0042B24D). Field names follow the object offsets of the accepted traces
 // (lever-links section 3, lever-timing section 3, lever-init proof chain 2).
@@ -315,18 +333,18 @@ struct FluidGate {
 
 // What a lever message resolved to. The id table follows the base reader (0x00423310): every
 // constructed actor of ANY collection is stored at list[id] and a later construction wins.
-// Only the 0x4B1020 receiver (ObjectClass::Gate) has traced type 4/5 semantics; anything else
-// is recorded as Other and a message to it is counted, never applied to a gate.
-enum class ObjectClass : std::uint8_t { Gate, Other };
+// Gates and the admitted named hazards have traced message semantics. Other
+// classes stay diagnosed and are never interpreted as one of these targets.
+enum class ObjectClass : std::uint8_t { Gate, Other, NamedHazard };
 struct ObjectRef {
   ObjectClass cls = ObjectClass::Other;
-  int index = -1;                  // index into LevelSetup::gates for Gate
+  int index = -1;                  // index into gates or namedHazards, by cls
   const char* collection = "";    // loader collection name, for diagnostics
 };
 
 // Bookkeeping of the lever message fan-out (diagnostic and test visibility).
 struct LeverDispatchStats {
-  std::uint64_t delivered = 0;     // type 4/5 applied to a gate
+  std::uint64_t delivered = 0;     // supported message applied to a gate/hazard
   std::uint64_t unresolved = 0;    // id slot empty (0x00433B2E skips it)
   std::uint64_t unsupported = 0;   // type 0/other types, special ids, non-gate targets
 };
@@ -446,6 +464,52 @@ inline constexpr bool kChangeopGadgetInRetail = false;
 // docs/scratch/phase3-round28-die.md. Mutate-alone: set true.
 inline constexpr bool kDieGadgetInRetail = false;
 
+// Installed Crab.a3d records are stationary named STAT hazards (0x4333D2),
+// not moving DYNA actors. Contact uses the relative boxes at +0x78/+0x88,
+// added to the stored broad-box minimum (0x430C9C), not its maximum.
+struct Crab {
+  struct Volume { std::array<double, 3> min{}, max{}; };
+  std::size_t entityIndex = 0;  // named_entities stream index, shared with the scene
+  std::array<double, 3> boxOrigin{};
+  std::vector<Volume> volumes;
+  bool enabled = true;
+  double restDuration = 1.0, attackDuration = 1.0;
+  bool attacking = false;
+  double animationSeconds = 0.0;
+};
+
+// Named STAT/DYNA hazards: 0x4333D2 / 0x42576F. Patrol segments are
+// serialized start + velocity*time (0x451997), not inferred terrain routes.
+struct NamedHazard {
+  enum class Kind { Deathroller, Buzzsaw, Scorpion, Robin };
+  struct Segment {
+    double duration = 0;
+    unsigned direction = 0;  // 0 left, 1 right, 2 down, 3 up; XOR reverse
+    std::array<double, 2> start{}, velocity{};
+  };
+  struct Path {
+    bool loop = false;
+    std::vector<Segment> segments;
+    std::vector<unsigned> junctions;
+  };
+  Kind kind = Kind::Deathroller;
+  std::size_t entityIndex = 0;
+  int id = -1;
+  bool enabled = true, moving = false, moved = false;
+  std::array<double, 3> position{}, initialPosition{}, boxOrigin{};
+  std::vector<Crab::Volume> volumes;
+  std::array<double, 4> cutOffsets{}; // minX/minY/maxX/maxY relative to position
+  std::array<Path, 2> paths;
+  unsigned path = 0, requestedPath = 0, segment = 0;
+  double travel = 0, speed = 1;
+  bool reverse = false;
+  bool allContacts = true, attacking = false, particles = true;
+  int pendingVictim = -1;
+  double animationSeconds = 0, restDuration = 1, attackDuration = 0;
+
+  void advancePatrol(double dt, Terrain&);
+};
+
 struct LevelSetup {
   Terrain terrain;
   std::vector<Entrance> entrances;
@@ -453,6 +517,10 @@ struct LevelSetup {
   std::vector<Teleport> teleports;
   std::vector<SpeedPad> speedPads;
   std::vector<Lever> levers;
+  std::vector<PressurePad> pressurePads;
+  std::vector<Crab> crabs;
+  std::vector<NamedHazard> namedHazards;
+  std::vector<GadgetContactRef> gadgetContactOrder;
   // lever-gates-impl-001: world/level-owned receiver state (a reload builds a new LevelSetup,
   // so gate request/done/armed/height all restart). `objectIds` is the base-id lookup used by
   // lever dispatch (later construction wins); `leverStats` counts the fan-out outcomes.
@@ -1332,8 +1400,10 @@ private:
   // Explicit-path lemming step: the full per-tick step on a tick-boundary update, otherwise
   // only the continuous fall/walk movement with this update's dt.
   void stepElapsed(Lemming& l, bool tickBoundary);
-  // Lever contact for the explicit path, AFTER every lemming moved (0x4423D2 order).
-  void stepLeverContacts(double dt);
+  // Tagged lever/pad contacts AFTER every lemming moved, before receivers (0x4423D2).
+  void stepGadgetContacts(double dt);
+  void stepCrabs(double dt);
+  void stepNamedHazards(double dt);
   // The facing/state filter of 0x00436D30 for one lever and one lemming.
   bool leverAccepts(const Lever& lev, const Lemming& l) const;
   // How far a floater still falls at `fallSpeed` after its umbrella opens:

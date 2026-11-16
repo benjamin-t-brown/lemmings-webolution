@@ -1,6 +1,5 @@
 #include "app/RuntimeHud.h"
 #include "app/RuntimeSkillPanel.h"
-#include "app/ReleaseRateDisplay.h"
 
 #include "shell/HudText.h"
 #include "app/HoverFeedback.h"
@@ -9,28 +8,6 @@
 #include <cmath>
 
 namespace webo::app {
-
-void RuntimeReleaseRateControl::draw(Image& image, const Image& font) const {
-  drawReleaseRateDisplay(image, font, current_);
-}
-
-void drawReleaseRateDisplay(Image& image, const Image& font, int rate) {
-  // PROVISIONAL presentation, using the existing retail font. The label is a
-  // rate (higher is faster), not seconds or remaining hatch population.
-  for (int y = 412; y < std::min(468, image.height); ++y)
-    for (int x = 18; x < std::min(90, image.width); ++x) {
-      const auto p = (std::size_t(y) * image.width + x) * 4;
-      const bool edge = x == 18 || x == 89 || y == 412 || y == 467;
-      for (int c = 0; c < 3; ++c)
-        image.rgba[p+c] = edge ? 200 : std::uint8_t(image.rgba[p+c] / 3);
-    }
-  const auto cells = shell::fontCells();
-  std::array<shell::HudLine, 2> lines{{{"RATE", 0, 414, {255,255,255}},
-      {std::to_string(rate), 0, 440, {255,232,96}}}};
-  for (auto& line : lines) line.x = 54 - shell::textWidth(line.text, cells) / 2;
-  shell::drawHud(image, font, lines, cells);
-}
-
 
 int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index) {
   if (!count || index >= count) return 0;
@@ -53,8 +30,8 @@ std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> target
 void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h) {
   // PROVISIONAL hatch highlight: four gold corner brackets. Static 454A85
   // evidences integer text (rate field +A0), not a remaining-count display or
-  // the final original hatch highlight appearance. Remaining is the requested
-  // playable-v1 choice; an original hover observation would settle the mismatch.
+  // the final original hatch highlight appearance. Keep the accepted remaining
+  // count and add the effective release rate above it, using the same font.
   const auto pixel = [&](int x, int y) {
     if (x < 0 || y < 0 || x >= image.width || y >= image.height) return;
     const auto at = (std::size_t(y) * image.width + x) * 4;
@@ -75,6 +52,16 @@ void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h) 
   line.x = std::clamp((h.left+h.right-width)/2, 0, std::max(0, image.width-width));
   line.y = std::clamp((h.top+h.bottom)/2 - 44, 0, std::max(0, image.height-shell::kLineHeight));
   shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
+  if (h.rate > 0) {
+    line.text = "RATE " + std::to_string(h.rate);
+    const int rateWidth = shell::textWidth(line.text, cells);
+    line.x = std::clamp((h.left+h.right-rateWidth)/2, 0, std::max(0, image.width-rateWidth));
+    // Put the second label below the count if the upper edge has no room.
+    line.y = line.y >= shell::kLineHeight ? line.y - shell::kLineHeight :
+        std::min(line.y + shell::kLineHeight, std::max(0, image.height-shell::kLineHeight));
+    line.colour = {255,232,96};
+    shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
+  }
 }
 
 void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world, bool armed) {

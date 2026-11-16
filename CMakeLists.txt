@@ -191,6 +191,14 @@ if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(leverinitface PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
+# pressure-pad-drain-001: seconds-long logic/census check; stays legacy.
+add_executable(test_pressurepad src/__test__/test_pressurepad.cpp)
+target_link_libraries(test_pressurepad PRIVATE webolution_app webolution_objects)
+add_test(NAME pressurepad COMMAND test_pressurepad)
+if(DEFINED WEBOLUTION_GAME_DIR)
+  set_tests_properties(pressurepad PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()
+
 add_executable(test_box src/__test__/test_box.cpp)
 target_link_libraries(test_box PRIVATE webolution_objects)
 add_test(NAME box COMMAND test_box)
@@ -243,6 +251,12 @@ add_executable(test_actorcompose
   src/app/ActorAnim.cpp
   src/app/LemmingAnim.cpp)
 target_link_libraries(test_actorcompose PRIVATE webolution_objects z)
+
+# Playtest 7 W5: independent noninteractive exit tails; legacy, no gameplay route.
+add_executable(test_exit_jump src/__test__/test_exit_jump.cpp)
+target_link_libraries(test_exit_jump PRIVATE webolution_app webolution_objects)
+add_test(NAME exit_jump COMMAND test_exit_jump "${WEBOLUTION_GAME_DIR}")
+set_tests_properties(exit_jump PROPERTIES TIMEOUT 10)
 target_compile_definitions(test_actorcompose PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME actorcompose COMMAND test_actorcompose WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
@@ -1480,5 +1494,19 @@ endif()
 add_executable(test_death_particles src/__test__/test_death_particles.cpp)
 target_link_libraries(test_death_particles PRIVATE webolution_objects)
 add_test(NAME death_particles COMMAND test_death_particles)
+
+add_executable(test_crab src/__test__/test_crab.cpp)
+target_link_libraries(test_crab PRIVATE webolution_app webolution_objects)
+add_test(NAME crab COMMAND test_crab)
+if(WEBOLUTION_GAME_DIR)
+  set_tests_properties(crab PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()
+
+add_executable(test_namedhazards src/__test__/test_namedhazards.cpp)
+target_link_libraries(test_namedhazards PRIVATE webolution_app webolution_objects)
+add_test(NAME namedhazards COMMAND test_namedhazards)
+if(WEBOLUTION_GAME_DIR)
+  set_tests_properties(namedhazards PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()
 
 include(cmake/test_tiers.cmake)

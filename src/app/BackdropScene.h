@@ -24,6 +24,7 @@
 
 namespace webo {
 class AssetLibrary;
+namespace sim { struct Crab; struct NamedHazard; }
 namespace app {
 class Raster;
 class TubeScene;
@@ -52,6 +53,34 @@ struct LeverPresentation {
     HatchAnimation animation;
   };
   std::vector<Binding> bindings;
+};
+struct PressurePadPresentation {
+  struct Binding {
+    std::size_t root;
+    int id, initialState;
+    SceneNode original;
+    int displayedState = 0;
+  };
+  std::vector<Binding> bindings;
+};
+struct CrabPresentation {
+  struct Binding {
+    std::size_t root, entityIndex;
+    HatchAnimation rest, attack;
+  };
+  std::vector<Binding> bindings;
+};
+struct NamedHazardPresentation {
+  struct Spin { std::size_t node; unsigned axis; double turnsPerSecond; };
+  struct Clip { HatchAnimation transforms; std::vector<Spin> spins; };
+  struct Binding {
+    std::size_t root, entityIndex;
+    Clip rest, attack;
+    std::vector<std::array<double,12>> originalMatrices;
+  };
+  std::vector<Binding> bindings;
+  std::int32_t coordinateHeight = 0;
+  std::vector<lemmings::WorldGeometryPrefix::TripleBlock> coordinateRows;
 };
 // App-owned UV tracks for the placed type-3 gravity gadgets. No scene layout
 // change: historical render demonstrations keep their own compatible headers.
@@ -106,7 +135,7 @@ class BackdropScene {
   // FluidGate (fluid-surface-impl-001): the post-tube base `Fluid` pass of the entities_42acac
   // receivers (frame order 0x441845: tube, +0x160/+0x164, base Fluid, +0x15C, secondary). It draws
   // only while the caller supplies live gate state (setFluidState); without it nothing is drawn.
-  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate };
+  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe };
   // PROVISIONAL clone depth policy for the alpha-blended fluid draw (user-approved milestone
   // exception). The inherited original ZENABLE/ZWRITEENABLE/ZFUNC/device ZBIAS are UNRESOLVED
   // (fluid research section 7.1); LessWriteOn is the clone's existing mesh default, not original
@@ -162,6 +191,12 @@ class BackdropScene {
   void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress, double departureSeconds);
   std::expected<LeverPresentation,std::string> leverPresentation(std::span<const std::byte> level) const;
   void setLeverFaces(const LeverPresentation&, std::span<const std::pair<int,int>> idFaces);
+  std::expected<PressurePadPresentation,std::string> pressurePadPresentation(std::span<const std::byte> level) const;
+  void setPressurePadStates(PressurePadPresentation&, std::span<const std::pair<int,int>> idStates);
+  std::expected<CrabPresentation,std::string> crabPresentation(std::span<const std::byte> level) const;
+  void setCrabStates(const CrabPresentation&, std::span<const sim::Crab>);
+  std::expected<NamedHazardPresentation,std::string> namedHazardPresentation(std::span<const std::byte> level) const;
+  void setNamedHazardStates(const NamedHazardPresentation&, std::span<const sim::NamedHazard>);
   std::expected<GravityPresentation,std::string> gravityPresentation(std::span<const std::byte> level) const;
   void animateGravity(const GravityPresentation&);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
@@ -203,7 +238,7 @@ class BackdropScene {
   };
   static SceneryTelemetry& telemetry();
  private:
-  struct OwnedRoot { RootSource source; SceneNode node; };
+  struct OwnedRoot { RootSource source; SceneNode node; double projectionBias = 0.0; };
   struct SpriteNode {
     std::string sheetName;  // registry name -> SPRITES\<name>.SPR
     std::size_t clip = 0;

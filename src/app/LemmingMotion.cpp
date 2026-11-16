@@ -39,6 +39,20 @@ void LemmingMotionTracker::observe(const sim::World& world) {
   for (std::size_t i = 0; i < entries_.size(); ++i) {
     auto& e = entries_[i];
     const auto& l = world.lemmings()[i];
+    if (l.state == sim::State::Exited) {
+      if (!e.valid || e.state != sim::State::Exited || now < e.observedMs) {
+        const double lane = e.valid ? e.laneZ : walkingLane(l.facing);
+        e = {};
+        e.valid = true;
+        e.state = sim::State::Exited;
+        e.laneZ = lane;
+        e.observedMs = e.exitUpdatedMs = now;
+      } else if (now > e.exitUpdatedMs) {
+        e.exitStepSeconds = (now - e.exitUpdatedMs) / 1000.0;
+        e.exitUpdatedMs = now;
+      }
+      continue;
+    }
     if (!l.alive()) { e = {}; continue; }
     const int width = world.terrain().width();
     int dx = l.x - e.x;
@@ -96,9 +110,44 @@ void LemmingMotionTracker::observe(const sim::World& world) {
   }
 }
 
+double LemmingMotionTracker::exitSeconds(std::size_t index, const sim::World& world) const {
+  if (index >= entries_.size() || index >= world.lemmings().size() ||
+      world.lemmings()[index].state != sim::State::Exited) return -1.0;
+  const auto& e = entries_[index];
+  const auto now = world.levelClockMs();
+  if (!e.valid || e.state != sim::State::Exited || now < e.observedMs ||
+      now - e.observedMs >= 1000) return -1.0;
+  return (now - e.observedMs) / 1000.0;
+}
+
 LemmingDrawPosition LemmingMotionTracker::positionOf(std::size_t index, const sim::World& world) const {
   if (index >= world.lemmings().size()) return {};
   const auto& l = world.lemmings()[index];
+  const double exitTime = exitSeconds(index, world);
+  if (exitTime >= 0.0) {
+    const auto& e = entries_[index];
+    const int width = world.terrain().width();
+    for (const auto& balloon : world.setup().exits) {
+      const double contactX = wrapped(l.x - balloon.x + width / 2, width) - width / 2;
+      if (contactX < 0 || contactX > balloon.width || l.y < balloon.y ||
+          l.y > balloon.y + balloon.height) continue;
+      const double dx = wrapped(balloon.x + balloon.width * 0.5 - l.x + width * 0.5, width) - width * 0.5;
+      // Invert the accepted retail trigger adapter: box top is model Y - 6.
+      // PROVISIONAL: rounded static pose rather than the original bobbing root;
+      // all exit themes use this box. Native target adds (0,2,0) to the root;
+      // Y-down therefore subtracts another 2. The exit root's radial Z is 1.5.
+      const double dy = balloon.y - 8.0 - l.y;
+      const double dz = 1.5 - e.laneZ;
+      const double speed = std::sqrt(dx * dx + dy * dy + dz * dz);
+      // READ 417FE4/41818A: fall clip, length(delta) impulse, -12.5*t*t,
+      // then delta*dt. Y is reset from entry every update before that addition;
+      // it deliberately uses dy*dt, not dy*t. X/Z accumulate to the target.
+      const double lift = speed * exitTime - 12.5 * exitTime * exitTime;
+      return {wrapped(l.x + dx * exitTime, width),
+          l.y - l.verticalDir * lift + dy * e.exitStepSeconds,
+          e.laneZ + dz * exitTime};
+    }
+  }
   if (index >= entries_.size() || !entries_[index].valid || entries_[index].path.empty())
     return {static_cast<double>(l.x), static_cast<double>(l.y),
             l.state == sim::State::Walker ? walkingLane(l.facing) : 0.75};

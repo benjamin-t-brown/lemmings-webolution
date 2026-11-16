@@ -104,7 +104,7 @@ class ReplayRecorder {
   // Observe effective simulation commands after each input event and held-rate
   // repeat. No timestamp, SDL event, cursor pixel or camera is serialized.
   void commands(const sim::World& world, const RuntimeSimState& runtime,
-                const RuntimeSkillSelection& selection, int rate) {
+                const RuntimeSkillSelection& selection, int rate, std::size_t rateHatch = 0) {
     if (selected_ != selection.selectedIndex()) {
       selected_ = selection.selectedIndex(); append('s', {selected_});
     }
@@ -113,7 +113,9 @@ class ReplayRecorder {
     if (nuked_ != world.nukeRequested()) { nuked_ = world.nukeRequested(); append('n', {}); }
     if (rate_ != rate) {
       rate_ = rate;
-      auto& row = append('r', {rate, world.setup().releaseIntervalTicks});
+      // Version 1's spare third value now identifies the clicked hatch. Old
+      // panel recordings contain zero here, correctly selecting the primary.
+      auto& row = append('r', {rate, world.setup().releaseIntervalTicks, static_cast<int>(rateHatch)});
       row.seconds = world.setup().releaseIntervalSeconds;
     }
   }
@@ -241,7 +243,8 @@ inline int replayLevel(const AssetLibrary& library, const std::filesystem::path&
         if (world.nukeRequested() || world.setup().nukeStock <= 0) return fail("nuke refused");
         world.nuke(); break;
       case 'r':
-        if (v[0] < rate->minimum() || v[0] > rate->maximum() ||
+        if (v[2] < 0 || static_cast<std::size_t>(v[2]) >= rate->hatchCount() ||
+            v[0] < rate->minimum(v[2]) || v[0] > rate->maximum(v[2]) ||
             row.seconds != rates->secondsPerLemming(v[0]) ||
             v[1] != rates->intervalTicks(v[0], world.rules().ticksPerSecond)) return fail("release-rate input changed");
         world.setReleaseInterval(row.seconds, v[1]); break;

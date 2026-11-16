@@ -302,6 +302,27 @@ void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& l
       continue;
     }
     const ObjectRef& ref = it->second;
+    if (ref.cls == ObjectClass::NamedHazard && ref.index >= 0 &&
+        static_cast<std::size_t>(ref.index) < setup.namedHazards.size()) {
+      auto& hazard = setup.namedHazards[static_cast<std::size_t>(ref.index)];
+      if (m.type == 4 || m.type == 5) {
+        hazard.enabled = m.type == 4; // 0x43645E / 0x436471 -> 0x41DC00/20
+      } else if (m.type == 0 && hazard.moving && m.p1 <= 2) {
+        // 0x424583: choose a path, or toggle the requested path. The actual
+        // switch waits for a shared junction in advancePatrol.
+        const unsigned next = m.p1 == 2 ? 1 - hazard.requestedPath : m.p1;
+        if (hazard.paths[next].segments.empty()) {
+          ++setup.leverStats.unsupported;
+          continue;
+        }
+        hazard.requestedPath = next;
+      } else {
+        ++setup.leverStats.unsupported;
+        continue;
+      }
+      ++setup.leverStats.delivered;
+      continue;
+    }
     const bool gateTarget = ref.cls == ObjectClass::Gate && ref.index >= 0 &&
                             static_cast<std::size_t>(ref.index) < setup.gates.size();
     if (!gateTarget || (m.type != 4 && m.type != 5)) {
@@ -319,7 +340,7 @@ void activateLeverFace(LevelSetup& setup, Lever& lever, int face) {
   if (face != 1 && face != -1)
     return;  // 0x00436E6A ignores every other face value
   lever.state = face;
-  // Dispatch edits gates and counters only, never the lever lists being iterated.
+  // Dispatch edits target state and counters, never the lever lists being iterated.
   dispatchLeverMessages(setup, face == 1 ? lever.facePlus : lever.faceMinus);
 }
 
@@ -1166,7 +1187,7 @@ void World::step(Lemming& l) {
   // Lever::state (object+0xb8); no lemming attach. Mutate-alone: delete this
   // arm and testLeverToggle fails.
   // shared-timing-impl-001: only the legacy tick() path evaluates contact here. The explicit
-  // path evaluates it once per update AFTER all lemmings (stepLeverContacts), so the two
+  // path evaluates it once per update AFTER all lemmings (stepGadgetContacts), so the two
   // semantics never both run in one route.
   if (l.state == State::Walker && !explicitUpdate_) {
     if (Lever* lev = leverAt(l)) {
@@ -1271,6 +1292,9 @@ void World::tick(bool continueHatchesAfterTimeout) {
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     step(lemmings_[i]);
 
+  stepCrabs(tickDtSeconds());
+  stepNamedHazards(tickDtSeconds());
+
   ++tick_;
   levelClockMs_ += static_cast<std::uint64_t>(msPerTick());
   levelSecondEvents_ = levelClockMs_ / kLevelEventPeriodMs;
@@ -1301,12 +1325,213 @@ void World::stepElapsed(Lemming& l, bool tickBoundary) {
   }
 }
 
-void World::stepLeverContacts(double dt) {
+void World::stepCrabs(double dt) {
+  for (Crab& crab : setup_.crabs) {
+    if (!crab.enabled) continue;
+    // 0x432E68 advances the model before testing attack completion/contact.
+    // At completion 0x432EB1..0x432F15 restarts the looping rest clip.
+    crab.animationSeconds += dt;
+    if (crab.attacking) {
+      if (crab.animationSeconds < crab.attackDuration) continue;
+      crab.attacking = false;
+      crab.animationSeconds = 0.0;
+    } else {
+      crab.animationSeconds = std::fmod(crab.animationSeconds, crab.restDuration);
+    }
+    bool killed = false;
+    for (Lemming& l : lemmings_) {
+      if (!l.active()) continue;
+      // PROVISIONAL coordinate adapter: integer feet, radial lane 0, as with
+      // the other clone contacts. Original 0x430F4D uses the actor's 3D point.
+      const std::array<double, 3> point{double(l.x),
+          double(setup_.terrain.height() - 1 - l.y), 0.0};
+      const bool contact = std::any_of(crab.volumes.begin(), crab.volumes.end(),
+          [&](const Crab::Volume& box) {
+            for (std::size_t axis = 0; axis < 3; ++axis)
+              if (point[axis] < crab.boxOrigin[axis] + box.min[axis] ||
+                  point[axis] > crab.boxOrigin[axis] + box.max[axis]) return false;
+            return true;
+          });
+      if (!contact) continue;
+      // Installed +0x1D1=1: collect/kill all contacts, without a species,
+      // gravity, facing or skill filter. +0x1D4 prevents kills during attack.
+      // 0x4330D7..0x433106 removes the victim from the active actor list;
+      // +0xC0=5 selects 0x40A6A0 -> death particles, not a drowning strip.
+      leaveBlocker(l);
+      l.state = State::Dead;
+      l.frame = 0;
+      ++dead_;
+      if (deathObserver_) deathObserver_(l, false, {});
+      killed = true;
+    }
+    if (killed) {
+      crab.attacking = true;
+      crab.animationSeconds = 0.0;
+    }
+  }
+}
+
+void NamedHazard::advancePatrol(double dt, Terrain& terrain) {
+  if (!moving || !enabled) return;
+  const auto& oldPath = paths[path];
+  const unsigned oldSegment = segment;
+  const bool oldReverse = reverse;
+  // 0x42478F cuts the leading edge BEFORE advancing. Steel reverses the
+  // direction; ordinary solid cells (including bridges) are removed.
+  const unsigned direction = oldPath.segments[segment].direction ^ unsigned(reverse);
+  const int x0 = int(position[0] + cutOffsets[0]);
+  const int x1 = int(position[0] + cutOffsets[2]);
+  const int y0 = int(position[1] + cutOffsets[1]);
+  const int y1 = int(position[1] + cutOffsets[3]);
+  const auto cut = [&](int x, int y) {
+    const int row = std::clamp(y, 0, terrain.height() - 1);
+    const auto material = terrain.at(x, terrain.height() - 1 - row);
+    if (material == Material::Steel) return false;
+    if (isSolid(material)) terrain.set(x, terrain.height() - 1 - row, Material::Empty);
+    return true;
+  };
+  if (direction & 2) {
+    const int y = direction == 2 ? y0 : y1;
+    for (int x = x0; x <= x1; ++x) if (!cut(x, y)) { reverse = !reverse; break; }
+  } else {
+    const int x = direction == 1 ? x1 : x0;
+    for (int y = y0; y <= y1; ++y) if (!cut(x, y)) { reverse = !reverse; break; }
+  }
+  travel += (reverse ? -dt : dt) * speed;
+  const auto sample = [&] {
+    const auto& route = paths[path];
+    const auto& segments = route.segments;
+    if (segments.size() == 1) {
+      segment = 0; travel = 0; reverse = false;
+    } else {
+      // All installed non-final segments have positive duration. A zero
+      // final record is an endpoint on non-looping paths.
+      while (travel < 0) {
+        if (segment == 0) {
+          if (!route.loop) { reverse = false; travel = -travel; break; }
+          segment = unsigned(segments.size() - 1);
+        } else --segment;
+        travel += segments[segment].duration;
+      }
+      while (travel > segments[segment].duration) {
+        travel -= segments[segment].duration;
+        if (!route.loop && segment == segments.size() - 2) {
+          reverse = true;
+          travel = segments[segment].duration - travel;
+        } else segment = segment + 1 == segments.size() ? 0 : segment + 1;
+        // A large admitted dt may reflect past BOTH endpoints. Normalize
+        // again instead of sampling a negative distance.
+        while (travel < 0) {
+          if (segment == 0 && !route.loop) { reverse = false; travel = -travel; break; }
+          segment = segment == 0 ? unsigned(segments.size() - 1) : segment - 1;
+          travel += segments[segment].duration;
+        }
+      }
+    }
+    for (unsigned axis = 0; axis < 2; ++axis) {
+      const double velocity = segments[segment].velocity[axis];
+      // PROVISIONAL numeric guard for SHOW_KF3's infinite wait: zero
+      // velocity retains its authored point even after a reverse wrap adds
+      // +infinity to travel. Do not feed 0*infinity NaNs to the renderer.
+      position[axis] = segments[segment].start[axis] + (velocity == 0 ? 0 : travel * velocity);
+    }
+    position[2] = 0.5;
+  };
+  sample();
+  // 0x4245F1 / 0x425047: a requested route takes effect only when crossing
+  // one of this path's stored junction indices. The lists correspond by
+  // ordinal to the destination path's junction list.
+  if (path != requestedPath &&
+      (segment != oldSegment || reverse != oldReverse || oldPath.segments.size() == 1)) {
+    const auto crossed = [&](unsigned node) {
+      if (!reverse) {
+        if (!oldPath.loop && node == 0) return oldReverse;
+        if (!oldPath.loop && node == oldPath.segments.size() - 1) return false;
+        if (oldPath.loop && node == 0) return segment < oldSegment && !oldReverse;
+        return oldSegment <= node && node <= segment && !oldReverse;
+      }
+      if (!oldPath.loop && node == 0) return false;
+      if (!oldPath.loop && node == oldPath.segments.size() - 1) return !oldReverse;
+      if (oldPath.loop && node == 0) return oldSegment < segment && oldReverse;
+      return segment <= node && node <= oldSegment && oldReverse;
+    };
+    for (std::size_t j = 0; j < oldPath.junctions.size(); ++j) {
+      const unsigned node = oldPath.junctions[j];
+      if (oldPath.segments.size() != 1 && !crossed(node)) continue;
+      if (!reverse) {
+        while (segment > node) { --segment; travel += oldPath.segments[segment].duration; }
+      } else {
+        const unsigned end = oldPath.loop && node == 0 ? unsigned(oldPath.segments.size() - 1) : node - 1;
+        while (segment < end) { ++segment; travel += oldPath.segments[segment].duration; }
+      }
+      path = requestedPath;
+      segment = paths[path].junctions[j];
+      if (oldPath.segments.size() == 1) travel = 0;
+      sample();
+      break;
+    }
+  }
+  // 0x430FE1 wraps X and clamps Y before adding the relative kill boxes.
+  for (unsigned axis = 0; axis < 2; ++axis) {
+    double v = position[axis] + cutOffsets[axis];
+    if (axis == 0) { v = std::fmod(v, double(terrain.width())); if (v < 0) v += terrain.width(); }
+    else v = std::clamp(v, 0.0, double(terrain.height() - 1));
+    boxOrigin[axis] = v;
+  }
+  moved = true;
+}
+
+void World::stepNamedHazards(double dt) {
+  for (auto& hazard : setup_.namedHazards) {
+    // Model update precedes enabled/contact checks (0x432E3F). Disabled
+    // hazards retain their model animation, but do not move or kill.
+    hazard.animationSeconds += dt;
+    bool finished = hazard.animationSeconds >=
+        (hazard.attacking ? hazard.attackDuration : hazard.restDuration);
+    if (finished) {
+      if (hazard.attacking) { hazard.attacking = false; hazard.animationSeconds = 0; }
+      else hazard.animationSeconds = std::fmod(hazard.animationSeconds, hazard.restDuration);
+    }
+    if (!hazard.enabled) continue;
+    const auto contact = [&](const Lemming& l) {
+      const std::array<double,3> point{double(l.x), double(setup_.terrain.height()-1-l.y), 0};
+      return std::any_of(hazard.volumes.begin(), hazard.volumes.end(), [&](const auto& box) {
+        for (unsigned axis=0; axis<3; ++axis)
+          if (point[axis] < hazard.boxOrigin[axis]+box.min[axis] ||
+              point[axis] > hazard.boxOrigin[axis]+box.max[axis]) return false;
+        return true;
+      });
+    };
+    // +0x1D1=0 retains the first victim's id until the current clip ends;
+    // it does not retest that victim's position. IDs are clone stable indices.
+    if (!hazard.allContacts && !hazard.attacking && hazard.pendingVictim < 0) {
+      for (std::size_t i=0; i<lemmings_.size(); ++i)
+        if (lemmings_[i].active() && contact(lemmings_[i])) { hazard.pendingVictim = int(i); break; }
+    }
+    bool killed = false;
+    if (!hazard.attacking && (hazard.allContacts || finished)) {
+      for (std::size_t i=0; i<lemmings_.size(); ++i) {
+        auto& l = lemmings_[i];
+        if (!l.active() || (hazard.allContacts ? !contact(l) : int(i)!=hazard.pendingVictim)) continue;
+        leaveBlocker(l); l.state = State::Dead; l.frame = 0; ++dead_;
+        if (hazard.particles && deathObserver_) deathObserver_(l, false, {});
+        killed = true;
+      }
+      hazard.pendingVictim = -1;
+      if (killed && hazard.attackDuration > 0) {
+        hazard.attacking = true; hazard.animationSeconds = 0;
+      }
+    }
+    hazard.advancePatrol(dt, setup_.terrain);
+  }
+}
+
+void World::stepGadgetContacts(double dt) {
   // 0x4423D2 / lever step: `cooldown -= dt` while positive, then the contact test, then
   // activation only if the cooldown is <= 0 after that decrement (installed cooldown 0.0).
   // Contact takes the first accepted lemming in list order, so one lever fires at most once
   // per update no matter how many actors stand in its box (no duplicate dispatch).
-  for (Lever& lev : setup_.levers) {
+  const auto leverContact = [&](Lever& lev) {
     if (lev.cooldownRemaining > 0.0)
       lev.cooldownRemaining -= dt;
     const Lemming* contact = nullptr;
@@ -1321,6 +1546,37 @@ void World::stepLeverContacts(double dt) {
       // 0x00436E6A: +0xb8 := pull facing, then the matching serialized list is sent.
       activateLeverFace(setup_, lev, static_cast<int>(contact->facing));
       lev.cooldownRemaining = lev.cooldownSeconds;
+    }
+  };
+  const auto padContact = [&](PressurePad& pad) {
+    if (pad.state == 1 || setup_.terrain.width() <= 0)
+      return;
+    for (const Lemming& l : lemmings_) {
+      // 0x431A59 scans the actor list, unlike a lever's facing predicate.
+      // Clone actors have integer feet and no radial lane: use that same
+      // feet point as other gadgets. All installed pad Z ranges include 0.
+      if (!l.alive() || pad.min[2] > 0.0 || pad.max[2] < 0.0)
+        continue;
+      const double row = setup_.terrain.height() - 1 - l.y;
+      double span = pad.max[0] - pad.min[0];
+      if (span < 0.0) span += setup_.terrain.width();
+      double dx = std::fmod(l.x - pad.min[0], double(setup_.terrain.width()));
+      if (dx < 0.0) dx += setup_.terrain.width();
+      if (dx > span || row < pad.min[1] || row > pad.max[1])
+        continue;
+      pad.state = 1;  // 0x431984..0x4319A7: latch before fan-out, once.
+      dispatchLeverMessages(setup_, pad.messages);
+      break;
+    }
+  };
+  if (setup_.gadgetContactOrder.empty()) {
+    // Hand-built setups predate the serialized order list.
+    for (Lever& lev : setup_.levers) leverContact(lev);
+    for (PressurePad& pad : setup_.pressurePads) padContact(pad);
+  } else {
+    for (const auto& ref : setup_.gadgetContactOrder) {
+      if (ref.pressurePad) padContact(setup_.pressurePads.at(ref.index));
+      else leverContact(setup_.levers.at(ref.index));
     }
   }
 }
@@ -1338,12 +1594,16 @@ void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool 
   if (releaseEnabled) stepRelease(dt, tickBoundary, continueHatchesAfterTimeout);
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     stepElapsed(lemmings_[i], tickBoundary);
-  stepLeverContacts(dt);
-  // 0x4423D2 order: lemmings -> levers -> receivers (+0x1F70). A request written by a contact
+  stepGadgetContacts(dt);
+  // 0x4423D2 order: lemmings -> tagged triggers -> receivers (+0x1F70). A request written by a contact
   // above reaches its gate in this same update and its first raise step uses this segment's dt,
   // including a zero-length one. There is no separate gate clock.
   for (FluidGate& gate : setup_.gates)
     gate.step(dt, setup_.terrain);
+  // Clone contact order: named hazards run after the existing tagged triggers
+  // and receivers. Cross-class overlap priority is provisional.
+  stepCrabs(dt);
+  stepNamedHazards(dt);
 
   if (tickBoundary)
     tick_ = levelClockMs_ / period;

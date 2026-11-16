@@ -9,6 +9,7 @@
 #include "app/SceneDispatch.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
+#include "sim/World.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -26,6 +27,7 @@ std::string context(std::string_view level, const BackdropScene::RootSource& roo
  return std::format("{} {} {}[{}] source=0x{:x}: ", level,
      root.stage==BackdropScene::Stage::Primary?"Primary":
      root.stage==BackdropScene::Stage::Secondary?"Secondary":
+     root.stage==BackdropScene::Stage::FluidPipe?"FluidPipe":
      root.stage==BackdropScene::Stage::FluidGate?"FluidGate":"LegacyUnattributed",
      root.owner,root.entityIndex,offset);
 }
@@ -127,7 +129,7 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    }
    return {};
  };
- const auto add=[&](RootSource source,bool marker)->std::expected<void,Failure>{
+ const auto add=[&](RootSource source,bool marker,double projectionBias=0.0)->std::expected<void,Failure>{
    const auto& e=source.extent;
    const auto label=context(levelId,source,e.typed_root_begin);
    if(!marker)return std::unexpected(Failure{false,label+"Object 09 marker mismatch"});
@@ -156,7 +158,7 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    // conceal invalid material/vertex/normal references or unsupported meshes.
    auto meshes=buildSceneMeshSource(parsed->root,identity(),identity());
    if(!meshes)return formFailure(label,meshes.error());
-   s.roots_.push_back({std::move(source),std::move(parsed->root)});
+   s.roots_.push_back({std::move(source),std::move(parsed->root),projectionBias});
    return {};
  };
  const auto models=[&](const auto& entities,std::string_view owner)->std::expected<void,Failure>{
@@ -190,22 +192,73 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    std::fprintf(stderr,"backdrop: %s\n",s.diagnostics_.back().c_str());
  }
  // Playtests T2/T5: the tagged collection was absent from scene extraction.
- // Admit type-1 levers and type-3 gravity models, retaining each placed root.
+ // Admit type-0 pressure pads, type-1 levers and type-3 gravity models, retaining each placed root.
  // Use the same mesh/billboard depth path as other placed scenery.
  for(std::size_t i=0;i<level.gadgets.tagged_entities.size();++i){
    const auto& gadget=level.gadgets.tagged_entities[i];
-   if(gadget.type!=1&&gadget.type!=3)continue;
+   if(gadget.type!=0&&gadget.type!=1&&gadget.type!=3)continue;
    const auto& model=gadget.model;
    if(!model||model->type!=0||!model->object){
      s.diagnostics_.push_back(std::format("{} tagged type {}[{}]: unsupported model",levelId,gadget.type,i));
      continue;
    }
-   auto added=add({Stage::LegacyUnattributed,gadget.type==3?"tagged-gravity":"tagged-lever",i,model->object->source_extent},model->object->marker_matches);
+   auto added=add({Stage::LegacyUnattributed,gadget.type==0?"tagged-pressure-pad":gadget.type==3?"tagged-gravity":"tagged-lever",i,model->object->source_extent},model->object->marker_matches);
    if(!added)return std::unexpected(added.error().message);
  }
+ // The installed Crab.a3d models belong to named STAT entities, not scenery
+ // or fluid receivers. Keep their stored cylinder placement and scene depth.
+ for(std::size_t i=0;i<level.gadgets.named_entities.size();++i){
+   const auto& entity=level.gadgets.named_entities[i];
+   const auto& model=entity.model;
+   if(!model||model->name!="Crab.a3d")continue;
+   if(entity.type!="STAT"||model->type!=0||!model->object)
+     return std::unexpected(std::string(levelId)+": unsupported crab model/placement");
+   auto added=add({Stage::LegacyUnattributed,"named-crab",i,model->object->source_extent},model->object->marker_matches);
+   if(!added)return std::unexpected(added.error().message);
+ }
+ auto crabs=s.crabPresentation(bytes);
+ if(!crabs)return std::unexpected(crabs.error());
+ s.setCrabStates(*crabs,{});
+ // moving-hazards-001: named STAT and DYNA objects were parsed but omitted
+ // from scene extraction. They share the ordinary placed-mesh depth path.
+ for(std::size_t i=0;i<level.gadgets.named_entities.size();++i){
+   const auto& model=level.gadgets.named_entities[i].model;
+   if(!model||(model->name!="deathroller.a3d"&&model->name!="buzzsaw.a3d"&&
+       model->name!="Scorp.a3d"&&model->name!="robin.a3d"))continue;
+   if(model->type!=0||!model->object)
+     return std::unexpected(std::string(levelId)+": unsupported named hazard model");
+   auto added=add({Stage::LegacyUnattributed,"named-hazard",i,model->object->source_extent},
+       model->object->marker_matches,std::bit_cast<double>(model->double_bits[2]));
+   if(!added)return std::unexpected(added.error().message);
+ }
+ auto hazards=s.namedHazardPresentation(bytes);
+ if(!hazards)return std::unexpected(hazards.error());
+ s.setNamedHazardStates(*hazards,{});
  auto levers=s.leverPresentation(bytes);
  if(!levers)return std::unexpected(levers.error());
  s.setLeverFaces(*levers,{});
+ // 0x42C556 submits the optional +0x160 drain and +0x164 supply in receiver
+ // order, unconditionally with respect to height/request. Their inline roots
+ // retain authored placement/orientation (unlike the world-space Fluid root).
+ // Installed pipes have no animation tracks; do not invent a flow animation.
+ for(std::size_t i=0;i<level.gadgets.entities_42acac.size();++i){
+   const auto& gate=level.gadgets.entities_42acac[i];
+   for(const auto slot:{0x160,0x164}){
+     const auto& model=slot==0x160?gate.model_160:gate.model_164;
+     if(!model)continue;
+     const auto owner=slot==0x160?"fluid-pipe-160":"fluid-pipe-164";
+     if(model->type!=0||!model->object){
+       s.diagnostics_.push_back(std::format("{} FluidPipe {}[{}]: unsupported model type {}; pipe not admitted",levelId,owner,i,model->type));
+       continue;
+     }
+     const auto& object=*model->object;
+     // Model+0xF8 is the third stored double (0x451865). Drains use 0.0003;
+     // supplies use zero. Preserve it independently of the clone depth policy.
+     auto added=add({Stage::FluidPipe,owner,i,object.source_extent},object.marker_matches,
+                    std::bit_cast<double>(model->double_bits[2]));
+     if(!added)return std::unexpected(added.error().message);
+   }
+ }
  // Animated base `Fluid` models of the entities_42acac receivers (fluid-surface-impl-001; contract:
  // docs/scratch/fluid-surface-research-001.md sections 6.2 and 7.4). Structural, never by level ID:
  // kinds 0..2 (startup constants at 0x428848) with an inline type-0 base model whose first
@@ -313,6 +366,161 @@ void BackdropScene::animateGravity(const GravityPresentation& presentation){
      const double u=key.u+t*key.du,v=key.v+t*key.dv;
      for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+u;uv.v=c.v+v;}
    }
+ }
+}
+std::expected<CrabPresentation,std::string> BackdropScene::crabPresentation(std::span<const std::byte> bytes) const {
+ CrabPresentation presentation;
+ if(std::none_of(roots_.begin(),roots_.end(),[](const auto& r){return r.source.owner=="named-crab";}))return presentation;
+ try {
+   const auto level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
+   for(std::size_t i=0;i<roots_.size();++i){
+     const auto& root=roots_[i];if(root.source.owner!="named-crab")continue;
+     const auto& entity=level.gadgets.named_entities.at(root.source.entityIndex);
+     const auto& tracks=entity.model->object->auxiliary_records;
+     const auto animation=[&](const std::string& name)->std::expected<HatchAnimation,std::string>{
+       for(const auto& track:tracks)if(track.name==name)return readHatchAnimation(track.serialized_bytes);
+       return std::unexpected("crab lacks transform clip '"+name+"'");
+     };
+     auto rest=animation(entity.names[0]),attack=animation(entity.names[1]);
+     if(!rest)return std::unexpected(rest.error());
+     if(!attack)return std::unexpected(attack.error());
+     presentation.bindings.push_back({i,root.source.entityIndex,std::move(*rest),std::move(*attack)});
+   }
+ }catch(const std::invalid_argument& e){return std::unexpected(e.what());}
+ return presentation;
+}
+void BackdropScene::setCrabStates(const CrabPresentation& presentation,std::span<const sim::Crab> states){
+ for(const auto& binding:presentation.bindings){
+   const auto state=std::find_if(states.begin(),states.end(),[&](const auto& c){return c.entityIndex==binding.entityIndex;});
+   const bool attacking=state!=states.end()&&state->attacking;
+   const auto& clip=attacking?binding.attack:binding.rest;
+   const double time=state==states.end()?0.0:state->animationSeconds;
+   applyHatchAnimation(roots_.at(binding.root).node,clip,time/clip.duration);
+ }
+}
+std::expected<NamedHazardPresentation,std::string> BackdropScene::namedHazardPresentation(
+    std::span<const std::byte> bytes) const {
+ NamedHazardPresentation result;
+ if(std::none_of(roots_.begin(),roots_.end(),[](const auto& r){return r.source.owner=="named-hazard";}))return result;
+ try {
+   const auto level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
+   result.coordinateHeight=std::int32_t(level.world.leading_value);
+   result.coordinateRows.resize(level.world.first_blocks.size());
+   // Same FILE-to-runtime lattice adapter as the accepted balloon departure.
+   for(std::size_t row=0;row<result.coordinateRows.size();++row)
+     for(std::size_t x=0;x<32;++x)for(std::size_t layer=0;layer<2;++layer)
+       result.coordinateRows[row][layer*32+x]=level.world.first_blocks[row][x*2+layer];
+   for(std::size_t i=0;i<roots_.size();++i){
+     const auto& root=roots_[i];if(root.source.owner!="named-hazard")continue;
+     const auto& entity=level.gadgets.named_entities.at(root.source.entityIndex);
+     NamedHazardPresentation::Binding binding{i,root.source.entityIndex,{},{},{}};
+     const auto collect=[&](auto& self,const SceneNode& node)->void{
+       binding.originalMatrices.push_back(node.matrix);for(const auto& c:node.children)self(self,c);
+     };collect(collect,root.node);
+     const auto animation=[&](const std::string& name)->NamedHazardPresentation::Clip {
+       NamedHazardPresentation::Clip clip;
+       if(name.empty())return clip;
+       for(const auto& a:entity.model->object->auxiliary_records)if(a.name==name){
+         if(a.third_count==0){
+           auto transforms=readHatchAnimation(a.serialized_bytes);
+           if(!transforms)throw std::invalid_argument(name+": "+transforms.error());
+           clip.transforms=std::move(*transforms);
+         }else{
+           // 0x476277/0x47CDE7: third array = node, axis, turns/sec.
+           // 0x476EE0 uses absolute clip time, not accumulated frame angles.
+           if(a.first_count||a.second_count)throw std::invalid_argument("mixed hazard spin/transform tracks");
+           const auto& raw=a.serialized_bytes;std::size_t at=20;
+           const auto integer=[&](std::size_t n){
+             if(at>raw.size()||n>raw.size()-at)throw std::invalid_argument("truncated hazard spin");
+             std::uint64_t v=0;for(std::size_t k=0;k<n;++k)v|=std::uint64_t(raw[at++])<<(8*k);return v;
+           };
+           clip.transforms.duration=std::bit_cast<double>(a.leading_double_bits);
+           for(unsigned j=0;j<a.third_count;++j){
+             const auto node=integer(4),axis=integer(4);const double speed=std::bit_cast<double>(integer(8));
+             if(node>=binding.originalMatrices.size()||axis>2||!std::isfinite(speed))
+               throw std::invalid_argument("invalid hazard spin target");
+             clip.spins.push_back({std::size_t(node),unsigned(axis),speed});
+           }
+         }
+         return clip;
+       }
+       throw std::invalid_argument("missing hazard clip '"+name+"'");
+     };
+     binding.rest=animation(entity.names[0]);binding.attack=animation(entity.names[1]);
+     result.bindings.push_back(std::move(binding));
+   }
+ }catch(const std::exception& e){return std::unexpected(std::string("named hazard presentation: ")+e.what());}
+ return result;
+}
+void BackdropScene::setNamedHazardStates(const NamedHazardPresentation& presentation,
+    std::span<const sim::NamedHazard> states){
+ for(const auto& binding:presentation.bindings){
+   auto& root=roots_.at(binding.root).node;
+   std::vector<SceneNode*> nodes;
+   const auto collect=[&](auto& self,SceneNode& node)->void{
+     nodes.push_back(&node);for(auto& c:node.children)self(self,c);
+   };collect(collect,root);
+   for(std::size_t i=0;i<nodes.size();++i)nodes[i]->matrix=binding.originalMatrices[i];
+   const auto state=std::find_if(states.begin(),states.end(),[&](const auto& h){return h.entityIndex==binding.entityIndex;});
+   const auto& clip=state!=states.end()&&state->attacking?binding.attack:binding.rest;
+   const double time=state==states.end()?0:state->animationSeconds;
+   if(clip.transforms.duration>0)applyHatchAnimation(root,clip.transforms,time/clip.transforms.duration);
+   for(const auto& spin:clip.spins){
+     const double angle=time*spin.turnsPerSecond*2*3.1415927410125732; // 0x4B0F88
+     const double c=std::cos(angle),s=std::sin(angle);
+     auto& matrix=nodes[spin.node]->matrix;
+     // 0x481D10/1E26/1F3C overwrite the rotation and retain translation.
+     std::array<double,9> rotation{1,0,0,0,1,0,0,0,1};
+     const unsigned a=(spin.axis+1)%3,b=(spin.axis+2)%3;
+     rotation[3*a+a]=rotation[3*b+b]=c;
+     rotation[3*a+b]=-s;rotation[3*b+a]=s;
+     std::copy(rotation.begin(),rotation.end(),matrix.begin());
+   }
+   if(state==states.end()||!state->moved)continue;
+   const lemmings::WorldCoordinateMesh mesh{presentation.coordinateHeight,presentation.coordinateRows};
+   const auto start=lemmings::map_world_coordinates(mesh,state->initialPosition);
+   const auto moved=lemmings::map_world_coordinates(mesh,state->position);
+   for(unsigned j=0;j<3;++j)root.matrix[9+j]+=moved[j]-start[j];
+   // PROVISIONAL orientation adapter: preserve authored tilt/scale while
+   // following radial heading, as in the accepted balloon departure path.
+   const double angle=std::atan2(moved[2],moved[0])-std::atan2(start[2],start[0]);
+   const double c=std::cos(angle),s=std::sin(angle);
+   for(unsigned row=0;row<3;++row){
+     const double x=root.matrix[3*row],z=root.matrix[3*row+2];
+     root.matrix[3*row]=c*x-s*z;root.matrix[3*row+2]=s*x+c*z;
+   }
+ }
+}
+std::expected<PressurePadPresentation,std::string> BackdropScene::pressurePadPresentation(std::span<const std::byte> bytes) const {
+ PressurePadPresentation presentation;
+ if(std::none_of(roots_.begin(),roots_.end(),[](const auto& r){return r.source.owner=="tagged-pressure-pad";}))return presentation;
+ try {
+   const auto level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
+   for(std::size_t i=0;i<roots_.size();++i){
+     const auto& root=roots_[i];if(root.source.owner!="tagged-pressure-pad")continue;
+     const auto& pad=level.gadgets.tagged_entities.at(root.source.entityIndex);
+     presentation.bindings.push_back({i,pad.id,static_cast<std::int32_t>(pad.values[0]),root.node,0});
+   }
+ } catch(const std::invalid_argument& e){return std::unexpected(e.what());}
+ return presentation;
+}
+void BackdropScene::setPressurePadStates(PressurePadPresentation& presentation,std::span<const std::pair<int,int>> idStates){
+ for(auto& binding:presentation.bindings){
+   int state=binding.initialState;
+   for(const auto& [id,current]:idStates)if(id==binding.id){state=current;break;}
+   if(state==binding.displayedState)continue;
+   auto& root=roots_.at(binding.root).node;
+   root=binding.original;
+   if(state==1){
+     // 0x431B93..0x431BF9 finds names containing "cut"; 0x4319E5
+     // hides them after first activation. Keep the base cube visible.
+     // Pruning only this owned model also suppresses a cut node's subtree.
+     const auto hide=[&](auto& self,SceneNode& node)->void{
+       if(node.name.find("cut")!=std::string::npos){node.meshes.clear();node.children.clear();return;}
+       for(auto& child:node.children)self(self,child);
+     };hide(hide,root);
+   }
+   binding.displayedState=state;
  }
 }
 std::expected<LeverPresentation,std::string> BackdropScene::leverPresentation(std::span<const std::byte> bytes) const {
@@ -486,6 +694,7 @@ std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
 void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats) const {
   renderStage(target,camera,lib,stats,Stage::Primary);
   renderStage(target,camera,lib,stats,Stage::LegacyUnattributed);
+  renderStage(target,camera,lib,stats,Stage::FluidPipe);
   renderStage(target,camera,lib,stats,Stage::FluidGate);
   renderStage(target,camera,lib,stats,Stage::Secondary);
 }
@@ -599,9 +808,11 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
  // Resolve diagnostic identities through owned-tree ancestry too; offsets
  // identify source records but never select their rendering stage.
  std::map<std::size_t,const RootSource*> nodeOwners;
+ std::map<std::size_t,double> nodeBias;
  for(const auto& root:roots_){
    const auto own=[&](const auto& self,const SceneNode& n)->void{
      nodeOwners.emplace(n.sourceOffset,&root.source);
+     nodeBias.emplace(n.sourceOffset,root.projectionBias);
      for(const auto& child:n.children)self(self,child);
    };own(own,root.node);
  }
@@ -654,7 +865,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     const auto state=options(false,rec.blendSelector==1);
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
-       auto adapted=adaptPackedSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],meshProjectionScale,0.0,{a[2],a[3],a[4],a[5]},a[0],a[1]);
+       auto adapted=adaptPackedSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],meshProjectionScale,nodeBias.at(rec.nodeSourceOffset),{a[2],a[3],a[4],a[5]},a[0],a[1]);
       if(!adapted){diagnose(describe(rec.nodeSourceOffset,rec.recordSourceOffset)+"mesh vertex adapter: "+adapted.error());valid=false;break;}v[j]=*adapted;
     }
      if(valid){SceneRasterObserver tagged;if(observed){tagged=*observer;tagged.source=rec.recordSourceOffset;tagged.triangle=k-1;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state,observed?&tagged:nullptr);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else {++stats.rejected;++stats.rasterRejected;diagnose(describe(rec.nodeSourceOffset,rec.recordSourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}
@@ -662,7 +873,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
   };
    const auto& meshes=stage==Stage::Primary?primaryMeshes:legacyMeshes;
    if(stage==Stage::Primary)stats.stageMeshRecords+=primaryMeshes.size();
-   else if(stage==Stage::LegacyUnattributed)stats.stageMeshRecords+=legacyMeshes.size();
+   else if(stage!=Stage::Secondary)stats.stageMeshRecords+=legacyMeshes.size();
    else for(const auto& [offset,items]:secondaryMeshes){(void)offset;stats.stageMeshRecords+=items.size();}
    if(stage!=Stage::Secondary)for(const auto& rec:meshes)drawMesh(rec);
   const auto builtChain=buildBillboardCameraChain(camera);
@@ -675,7 +886,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    // inputs) and realized at their Secondary dispatch slot: the first-draw frame, and so the
    // quad, can only be chosen when the node is actually drawn.
    std::map<std::size_t,PendingSprite> pendingSprites;
-   collectBillboards(chain,[&](const RootSource& source,const SceneBillboardSource& b){if(source.stage==Stage::Secondary)secondaryBillboards.emplace(b.sourceOffset,b);else if(source.stage==Stage::Primary)primaryBillboards.push_back(b);else legacyBillboards.push_back(b);},[&](const std::string& message){stats.diagnostics.push_back(message);std::fprintf(stderr,"backdrop: %s\n",message.c_str());},
+   collectBillboards(chain,[&](const RootSource& source,const SceneBillboardSource& b){if(source.stage!=stage)return;if(source.stage==Stage::Secondary)secondaryBillboards.emplace(b.sourceOffset,b);else if(source.stage==Stage::Primary)primaryBillboards.push_back(b);else legacyBillboards.push_back(b);},[&](const std::string& message){stats.diagnostics.push_back(message);std::fprintf(stderr,"backdrop: %s\n",message.c_str());},
      [&](const RootSource& source,const SceneNode& n,const BillboardSourceInputs& in){if(source.stage==Stage::Secondary)pendingSprites.emplace(n.sourceOffset,PendingSprite{&n,in});});
    std::map<std::string,SceneRgbaImage> spriteTextures;
    const auto drawSprite=[&](const PendingSprite& ps){
@@ -731,7 +942,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
       std::uint64_t bi=0;for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){SceneRasterObserver tagged;if(observer){tagged=*observer;tagged.source=b.sourceOffset;tagged.triangle=bi;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st,observer?&tagged:nullptr);if(r)++stats.meshTriangles;else {++stats.rejected;++stats.rasterRejected;diagnose(describe(b.sourceOffset,b.sourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}++bi;}};
    const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;
    if(stage==Stage::Primary)stats.stageBillboards+=primaryBillboards.size();
-   else if(stage==Stage::LegacyUnattributed)stats.stageBillboards+=legacyBillboards.size();
+   else if(stage!=Stage::Secondary)stats.stageBillboards+=legacyBillboards.size();
    else{stats.stageBillboards+=secondaryBillboards.size();stats.stageSprites+=pendingSprites.size();}
    if(stage!=Stage::Secondary)for(const auto& b:billboards)drawBillboard(b);
    if(stage==Stage::Secondary&&secondaryRoot!=roots_.end())dispatchSecondaryChildren(secondaryRoot->node,nativeAffine(chain.parentCamera),nativeAffine(chain.sourceTransform),[&](const SecondaryDispatchItem& item){

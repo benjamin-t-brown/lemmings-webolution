@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdint>
 #include <format>
+#include <optional>
 #include <span>
 #include <stdexcept>
 
@@ -101,7 +102,13 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
   addOther(g.basic_4342bf, "basic_4342bf");
   addOther(g.spatial_41e038, "spatial_41e038");
   addOther(g.tagged_entities, "tagged_entities");
-  addOther(g.named_entities, "named_entities");
+  for (std::size_t entity = 0; entity < g.named_entities.size(); ++entity) {
+    const auto& e = g.named_entities[entity];
+    s.objectIds[e.id] = {ObjectClass::Other, -1, "named_entities"};
+    for (std::size_t i = 0; i < s.namedHazards.size(); ++i)
+      if (s.namedHazards[i].entityIndex == entity)
+        s.objectIds[e.id] = {ObjectClass::NamedHazard, int(i), "named_entities"};
+  }
 
   // Reader load pass, in stream order, on the populated terrain.
   for (FluidGate& gate : s.gates)
@@ -134,11 +141,26 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
     }
   }
 
-  // Pair each tagged type-1 record (a lever) with its placed lever. The record carries the same
+  // Build type-0 pads from their serialized volumes and single message lists
+  // (0x431B30). Pair each tagged type-1 record (a lever) with its placed lever. The record carries the same
   // pose as the lever.a3d placement; the pairing is by that pose through the production box
   // transform and never by file order. A record that matches no unclaimed lever stays unlinked.
   std::vector<bool> claimed(s.levers.size(), false);
   for (const auto& t : g.tagged_entities) {
+    if (t.type == 0) {
+      PressurePad pad;
+      pad.id = t.id;
+      pad.state = static_cast<std::int32_t>(t.values[0]);
+      for (std::size_t axis = 0; axis < 3; ++axis) {
+        pad.min[axis] = std::bit_cast<double>(t.double_bits_48_60[axis]);
+        pad.max[axis] = std::bit_cast<double>(t.double_bits_48_60[axis + 3]);
+      }
+      for (const auto& r : t.record_arrays[0])
+        pad.messages.push_back({static_cast<std::int32_t>(r[0]), r[1], r[2], r[3]});
+      s.gadgetContactOrder.push_back({true, s.pressurePads.size()});
+      s.pressurePads.push_back(std::move(pad));
+      continue;
+    }
     if (t.type != 1)
       continue;
     const double rx = std::bit_cast<double>(t.double_bits[0]);
@@ -153,6 +175,7 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
       if (claimed[j] || lev.x != boxX || lev.y != boxY)
         continue;
       claimed[j] = true;
+      s.gadgetContactOrder.push_back({false, j});
       ++pairedLevers;
       lev.linked = true;
       lev.serializedId = t.id;
@@ -169,6 +192,9 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
       break;
     }
   }
+  // Preserve the existing placement-only fallback for an unpaired lever.
+  for (std::size_t j = 0; j < s.levers.size(); ++j)
+    if (!claimed[j]) s.gadgetContactOrder.push_back({false, j});
 
   // Once per load, after every lever record and receiver exists (lever-initial-face-impl-001):
   // state := stored face and the same face's list is sent. Reload rebuilds the whole LevelSetup.
@@ -373,6 +399,166 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
   }
 
   // lever-gates-impl-001: after the terrain, the placed levers and every other object exist.
+  if (std::any_of(objs->placed.begin(), objs->placed.end(),
+                  [](const auto& p) { return p.name == "Crab.a3d"; })) {
+    try {
+      const auto decoded = lemmings::read_compiled_level(
+          {reinterpret_cast<const std::uint8_t*>(blob->data()), blob->size()}, false);
+      for (std::size_t i = 0; i < decoded.gadgets.named_entities.size(); ++i) {
+        const auto& e = decoded.gadgets.named_entities[i];
+        if (!e.model || e.model->name != "Crab.a3d") continue;
+        // All 14 installed crabs have this traced STAT contract. Do not
+        // silently turn an unimplemented moving/pending-victim variant into it.
+        if (e.type != "STAT" || !e.model->object || e.value_c0 != 5 ||
+            !e.flag_1d1 || e.flag_1d2 || e.flag_1d3 ||
+            e.triple_arrays[0].empty() ||
+            e.triple_arrays[0].size() != e.triple_arrays[1].size())
+          return std::unexpected(file + ": unsupported crab behavior/volumes");
+        Crab crab;
+        crab.entityIndex = i;
+        crab.enabled = e.flag_38;
+        for (std::size_t axis = 0; axis < 3; ++axis)
+          crab.boxOrigin[axis] = std::bit_cast<double>(e.double_bits_48_60[axis]);
+        for (std::size_t j = 0; j < e.triple_arrays[0].size(); ++j) {
+          Crab::Volume volume;
+          for (std::size_t axis = 0; axis < 3; ++axis) {
+            volume.min[axis] = std::bit_cast<double>(e.triple_arrays[0][j][axis]);
+            volume.max[axis] = std::bit_cast<double>(e.triple_arrays[1][j][axis]);
+            if (!std::isfinite(crab.boxOrigin[axis]) || !std::isfinite(volume.min[axis]) ||
+                !std::isfinite(volume.max[axis]) || volume.min[axis] > volume.max[axis])
+              return std::unexpected(file + ": invalid crab contact volume");
+          }
+          crab.volumes.push_back(volume);
+        }
+        const auto duration = [&](const std::string& name) -> double {
+          for (const auto& a : e.model->object->auxiliary_records)
+            if (a.name == name) return std::bit_cast<double>(a.leading_double_bits);
+          return 0.0;
+        };
+        crab.restDuration = duration(e.names[0]);  // +0x148, looping
+        crab.attackDuration = duration(e.names[1]);  // +0xC8, one shot
+        if (!std::isfinite(crab.restDuration) || crab.restDuration <= 0 ||
+            !std::isfinite(crab.attackDuration) || crab.attackDuration <= 0)
+          return std::unexpected(file + ": crab lacks rest/attack animation durations");
+        s.crabs.push_back(std::move(crab));
+      }
+      const auto placed = std::count_if(objs->placed.begin(), objs->placed.end(),
+          [](const auto& p) { return p.name == "Crab.a3d"; });
+      if (static_cast<std::size_t>(placed) != s.crabs.size())
+        return std::unexpected(file + ": crab placements lack structured records");
+    } catch (const std::invalid_argument& e) {
+      return std::unexpected(file + ": crab records: " + e.what());
+    }
+  }
+
+  // moving-hazards-001: named records own behavior AND model placement. Read
+  // the existing recovered layout; never infer a patrol from a model name.
+  const auto hazardKind = [](std::string_view name) -> std::optional<NamedHazard::Kind> {
+    if (name == "deathroller.a3d") return NamedHazard::Kind::Deathroller;
+    if (name == "buzzsaw.a3d") return NamedHazard::Kind::Buzzsaw;
+    if (name == "Scorp.a3d") return NamedHazard::Kind::Scorpion;
+    if (name == "robin.a3d") return NamedHazard::Kind::Robin;
+    return {};
+  };
+  if (std::any_of(objs->placed.begin(), objs->placed.end(),
+                  [&](const auto& p) { return hazardKind(p.name).has_value(); })) {
+    try {
+      const auto level = lemmings::read_compiled_level(
+          {reinterpret_cast<const std::uint8_t*>(blob->data()), blob->size()}, false);
+      const auto number = [](std::uint64_t bits) {
+        const double v = std::bit_cast<double>(bits);
+        if (!std::isfinite(v)) throw std::invalid_argument("nonfinite hazard field");
+        return v;
+      };
+      for (std::size_t i = 0; i < level.gadgets.named_entities.size(); ++i) {
+        const auto& e = level.gadgets.named_entities[i];
+        if (!e.model) continue;
+        const auto kind = hazardKind(e.model->name);
+        if (!kind) continue;
+        if (!e.model->object || (e.type != "STAT" && e.type != "DYNA") ||
+            (e.type == "DYNA" && (e.subclass_name != "STAT" || *kind != NamedHazard::Kind::Deathroller)) ||
+            e.flag_1d2 || e.flag_1d3 || e.triple_arrays[0].empty() ||
+            e.triple_arrays[0].size() != e.triple_arrays[1].size())
+          throw std::invalid_argument("unsupported named hazard contract");
+        NamedHazard h;
+        h.kind = *kind; h.entityIndex = i; h.id = e.id; h.enabled = e.flag_38;
+        h.moving = e.type == "DYNA";
+        h.allContacts = e.flag_1d1;
+        // Selector 0 (buzzsaw) removes the actor without a particle state;
+        // 7, 8 and 14 all select 0x40A6A0 via 0x4331D0.
+        h.particles = e.value_c0 == 7 || e.value_c0 == 8 || e.value_c0 == 14;
+        if (!h.particles && e.value_c0 != 0) throw std::invalid_argument("unsupported hazard death selector");
+        for (unsigned axis=0; axis<3; ++axis) {
+          h.initialPosition[axis] = h.position[axis] = number(e.double_bits[axis]);
+          h.boxOrigin[axis] = number(e.double_bits_48_60[axis]);
+        }
+        for (std::size_t j=0; j<e.triple_arrays[0].size(); ++j) {
+          Crab::Volume box;
+          for (unsigned axis=0; axis<3; ++axis) {
+            box.min[axis] = number(e.triple_arrays[0][j][axis]);
+            box.max[axis] = number(e.triple_arrays[1][j][axis]);
+            if (box.min[axis] > box.max[axis]) throw std::invalid_argument("inverted hazard volume");
+          }
+          h.volumes.push_back(box);
+        }
+        const auto duration = [&](const std::string& name) {
+          if (name.empty()) return 0.0;
+          for (const auto& a : e.model->object->auxiliary_records)
+            if (a.name == name) return number(a.leading_double_bits);
+          throw std::invalid_argument("missing hazard animation '" + name + "'");
+        };
+        h.restDuration = duration(e.names[0]); h.attackDuration = duration(e.names[1]);
+        if (h.restDuration <= 0 || (!e.names[1].empty() && h.attackDuration <= 0))
+          throw std::invalid_argument("invalid hazard clip duration");
+        if (h.moving) {
+          for (unsigned j=0; j<4; ++j) h.cutOffsets[j] = number(e.dynamic_pairs[j]);
+          for (unsigned route=0; route<2; ++route) {
+            const auto index = e.dynamic_values[route];
+            if (route == 1 && index == UINT32_MAX) continue;
+            if (index >= level.entities.groups.size()) throw std::invalid_argument("hazard path outside table");
+            const auto& source = level.entities.groups[index];
+            auto& dest = h.paths[route]; dest.loop = source.flag;
+            dest.junctions.assign(source.integer_values.begin(), source.integer_values.end());
+            for (std::size_t k=0; k<source.records.size(); ++k) {
+              const auto& r = source.records[k];
+              NamedHazard::Segment segment;
+              // SHOW_KF3's parked endpoint is an authored +infinity duration
+              // with zero velocity, consumed by the ordinary sampler comparison.
+              segment.duration = std::bit_cast<double>(r.leading_double_bits); segment.direction = r.value;
+              for (unsigned axis=0; axis<2; ++axis) {
+                segment.start[axis] = number(r.double_bits[axis]);
+                segment.velocity[axis] = number(r.double_bits[axis+2]);
+              }
+              if (segment.direction > 3 || std::isnan(segment.duration) || segment.duration < 0 ||
+                  (std::isinf(segment.duration) && segment.velocity != std::array<double,2>{0,0}) ||
+                  (segment.duration == 0 && k+1 != source.records.size()))
+                throw std::invalid_argument("invalid hazard path segment");
+              dest.segments.push_back(segment);
+            }
+            if (dest.segments.empty() || (dest.segments.size()>1 &&
+                std::none_of(dest.segments.begin(), dest.segments.end(), [](const auto& v) { return v.duration > 0; })))
+              throw std::invalid_argument("empty/zero-length hazard loop");
+            for (auto junction : dest.junctions) if (junction >= dest.segments.size())
+              throw std::invalid_argument("hazard junction outside path");
+          }
+          h.path = h.requestedPath = e.dynamic_values[2]; h.segment = e.dynamic_values[3];
+          h.travel = number(e.subclass_doubles[0]); h.speed = number(e.subclass_doubles[1]);
+          h.reverse = e.dynamic_flag_200;
+          if (h.path > 1 || h.segment >= h.paths[h.path].segments.size() || h.speed < 0 ||
+              (!h.paths[1].segments.empty() && h.paths[0].junctions.size() != h.paths[1].junctions.size()))
+            throw std::invalid_argument("invalid hazard patrol state");
+        }
+        s.namedHazards.push_back(std::move(h));
+      }
+      const auto placed = std::count_if(objs->placed.begin(), objs->placed.end(),
+          [&](const auto& p) { return hazardKind(p.name).has_value(); });
+      if (std::size_t(placed) != s.namedHazards.size())
+        throw std::invalid_argument("hazard placements lack structured records");
+    } catch (const std::invalid_argument& e) {
+      return std::unexpected(file + ": named hazards: " + e.what());
+    }
+  }
+  // Named hazard targets must exist before the levers' load-time fan-out.
   report.gateLinkDiagnostic = linkLevelGates(*blob, *grid, s, report.pairedLevers);
 
   for (std::size_t i = 0; i < skills->counts.size(); ++i)

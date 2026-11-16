@@ -5,29 +5,35 @@
 #include "sim/World.h"
 
 #include <array>
+#include <optional>
+#include <vector>
 
 namespace webo::app {
 
-// Playable-v1 panel adapter for the primary hatch, matching RetailLevel's
-// existing shared scheduler. This does not implement per-hatch scheduling.
+// Playable-v1 world-hatch input. Limits belong to the clicked hatch; the rate
+// remains shared until the parked per-hatch scheduler is resolved.
 class RuntimeReleaseRateControl {
  public:
   static std::expected<RuntimeReleaseRateControl, std::string> create(
       const AssetLibrary& library, std::string_view levelId);
-  static bool contains(int x, int y);
   // SDL button numbers: conventional button 0/1 native state maps to left/right.
-  bool press(int x, int y, int button, sim::World& world);
+  bool press(std::optional<std::size_t> hatch, int button, sim::World& world);
   void release(int button) { if (button == heldButton_) reset(); }
-  void reset() { heldButton_ = 0; repeatSeconds_ = 0; }
-  void advance(double seconds, int x, int y, sim::World& world);
-  void draw(Image& image, const Image& font) const;
+  void reset() { heldButton_ = 0; heldHatch_.reset(); repeatSeconds_ = 0; }
+  void advance(double seconds, std::optional<std::size_t> hatch, sim::World& world);
+  bool holding() const { return heldButton_ != 0; }
   int current() const { return current_; }
-  int minimum() const { return minimum_; }
-  int maximum() const { return maximum_; }
+  std::size_t rateHatch() const { return rateHatch_; }
+  std::size_t hatchCount() const { return limits_.size(); }
+  int minimum(std::size_t hatch = 0) const { return limits_.at(hatch)[0]; }
+  int maximum(std::size_t hatch = 0) const { return limits_.at(hatch)[1]; }
  private:
-  void change(int delta, sim::World& world);
+  void change(std::size_t hatch, int delta, sim::World& world);
   ReleaseRates rates_;
-  int current_ = 1, minimum_ = 1, maximum_ = 99, heldButton_ = 0;
+  std::vector<std::array<int, 2>> limits_;
+  std::optional<std::size_t> heldHatch_;
+  std::size_t rateHatch_ = 0;
+  int current_ = 1, heldButton_ = 0;
   double repeatSeconds_ = 0;
 };
 

@@ -30,6 +30,9 @@ class LemmingMotionTracker {
   // passes. Identity is the stable append-only World::lemmings() index.
   void observe(const sim::World& world);
   LemmingDrawPosition positionOf(std::size_t index, const sim::World& world) const;
+  // Presentation only: saved actors retain a one-second jump, without becoming
+  // alive/assignable again. Negative outside that interval. Uses level time.
+  double exitSeconds(std::size_t index, const sim::World& world) const;
 
  private:
   struct Point {
@@ -44,6 +47,8 @@ class LemmingMotionTracker {
     std::uint64_t observedMs = 0;
     // Q1: keep radial presentation separate from the discontinuity-reset X/Y path.
     double laneZ = 0.75;
+    double exitStepSeconds = 0.0;
+    std::uint64_t exitUpdatedMs = 0;
     std::deque<Point> path;
   };
   std::vector<Entry> entries_;

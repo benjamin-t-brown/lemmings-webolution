@@ -14,54 +14,53 @@ std::expected<RuntimeReleaseRateControl, std::string> RuntimeReleaseRateControl:
   if (!bytes || !rates) return std::unexpected(!bytes ? bytes.error() : rates.error());
   const auto hatches = readHatchRecords(*bytes);
   if (hatches.empty()) return std::unexpected("release control: no hatch record");
-  const auto& hatch = hatches.front();
-  if (hatch.rateMin < 1 || hatch.rateMax > static_cast<int>(rates->size()) || hatch.rateMin > hatch.rateMax)
-    return std::unexpected("release control: invalid stored rate limits");
   RuntimeReleaseRateControl control;
+  for (const auto& hatch : hatches) {
+    if (hatch.rateMin < 1 || hatch.rateMax > static_cast<int>(rates->size()) || hatch.rateMin > hatch.rateMax)
+      return std::unexpected("release control: invalid stored rate limits");
+    control.limits_.push_back({hatch.rateMin, hatch.rateMax});
+  }
   control.rates_ = std::move(*rates);
-  control.minimum_ = hatch.rateMin;
-  control.maximum_ = hatch.rateMax;
+  const auto& hatch = hatches.front();
   control.current_ = std::clamp(hatch.rate, hatch.rateMin, hatch.rateMax);
   // Loading is deliberately read-only: no player input must leave the accepted
   // RetailLevel timing path bit-for-bit unchanged, including first release.
   return control;
 }
 
-bool RuntimeReleaseRateControl::contains(int x, int y) {
-  // PROVISIONAL panel layout: a separate box below Nuke. Native 453A31 uses
-  // the hovered world hatch (+1894); no native panel-box geometry is claimed.
-  return x >= 18 && x < 90 && y >= 412 && y < 468;
-}
-
-void RuntimeReleaseRateControl::change(int delta, sim::World& world) {
-  const int rate = std::clamp(current_ + delta, minimum_, maximum_);
+void RuntimeReleaseRateControl::change(std::size_t hatch, int delta, sim::World& world) {
+  const int rate = std::clamp(current_ + delta, minimum(hatch), maximum(hatch));
   if (rate == current_) return;
   current_ = rate;
+  rateHatch_ = hatch;
+  // PROVISIONAL: all hatches still use RetailLevel's accepted shared cadence.
+  // A click uses this hatch's limits without introducing a second scheduler.
   // READ 425DE3: change +A0 and table interval +B8, never countdown +C0.
   world.setReleaseInterval(rates_.secondsPerLemming(rate),
                            rates_.intervalTicks(rate, world.rules().ticksPerSecond));
 }
 
-bool RuntimeReleaseRateControl::press(int x, int y, int button, sim::World& world) {
-  if (!contains(x, y) || (button != 1 && button != 3)) return false;
+bool RuntimeReleaseRateControl::press(std::optional<std::size_t> hatch, int button, sim::World& world) {
+  if (!hatch || *hatch >= hatchCount() || (button != 1 && button != 3)) return false;
   heldButton_ = button;
+  heldHatch_ = hatch;
   repeatSeconds_ = 0;
   // READ 453A42..453AAF / 455DB0 / 455DF0: button 0 lowers, button 1
   // raises, queried as held state. Conventional SDL left/right binding.
-  change(button == 1 ? -1 : 1, world);
+  change(*hatch, button == 1 ? -1 : 1, world);
   return true;
 }
 
-void RuntimeReleaseRateControl::advance(double seconds, int x, int y, sim::World& world) {
+void RuntimeReleaseRateControl::advance(double seconds, std::optional<std::size_t> hatch, sim::World& world) {
   if (!heldButton_) return;
-  if (!contains(x, y)) { reset(); return; }
+  if (hatch != heldHatch_) { reset(); return; }
   if (!std::isfinite(seconds) || seconds <= 0) return;
   // PROVISIONAL player-friendly repeat: immediate unit step, then 0.4 s delay
   // and 0.1 s repeats, independent of simulation pause/fast-forward. Original
   // repeats per input update; authorized original observation would settle feel.
   repeatSeconds_ += std::min(10.0, seconds);
   while (repeatSeconds_ + 1e-9 >= 0.4) {
-    change(heldButton_ == 1 ? -1 : 1, world);
+    change(*heldHatch_, heldButton_ == 1 ? -1 : 1, world);
     repeatSeconds_ -= 0.1;
   }
 }

@@ -66,7 +66,7 @@ void LemmingAnimTracker::advance(const sim::World& world,
     entries_.resize(lemmings.size());
   for (std::size_t i = 0; i < lemmings.size(); ++i) {
     const sim::Lemming& lemming = lemmings[i];
-    if (!lemming.alive())
+    if (!lemming.alive() && lemming.state != sim::State::Exited)
       continue;
     Entry& e = entries_[i];
     if (!e.valid || e.state != lemming.state) {

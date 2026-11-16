@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 15 of 102.
+under docs/playtest/replays/. Won so far: 17 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -26,8 +26,8 @@ under docs/playtest/replays/. Won so far: 15 of 102.
 | 12 | MM_BASH_DIG_001_A | Bash and Dig | ok | playtest 8 | pass |  |
 | 13 | MM_FLOAT_CLIMB2 | Float and Climb | ok | playtest 8 | pass |  |
 | 14 | MM_BUILD_BLOCK_A | Build and Block | ok | playtest 8 | pass |  |
-| 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok |  |  | playtest 8 X1-X3 fixed in queue run 2026-11-16, not yet replayed by a person; has: pressure pad, crab |
-| 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok |  |  |  |
+| 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok | playtest 9 | pass | playtest 9 Y1 (switch animation), Y2 (pipe depth) |
+| 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok | playtest 9 | pass |  |
 | 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok |  |  |  |
 | 18 | MM_E2_4SKILLS | The Abyss | ok |  |  |  |
 | 19 | E19_KF_2 | Kriss Kross | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |

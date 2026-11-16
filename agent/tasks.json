@@ -18592,6 +18592,106 @@
         "log": "build\\agent-runs\\20261116T091025-26408-df7972d8\\verification.log",
         "verified_content": "bf762cbe589760e359e00bd7e3efaa03b9970b570f762d2eb9ae2131c5a57b8a"
       }
+    },
+    {
+      "id": "pad-pipe-presentation-001",
+      "title": "Animate the beam switch and put lemmings behind the tank pipe",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y1 and Y2 on Seafood Sarnie (map node 15, MM_BLOCK_BUILD_BASH), which the user has now won. Y1: the red beam switch (pressure_pad, added by pressure-pad-drain-001) has no animation; give it the animation the model and static evidence show for idle and for being triggered, rather than only vanishing. Y2: lemmings are drawn in front of the pipe in the water tank (pipes added by pipe-render-001); fix the depth or draw order so a lemming behind the pipe is hidden by it and one in front is not. Presentation only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Seafood Sarnie the beam switch visibly animates before and when a lemming triggers it; the animation source is cited to static evidence or labelled provisional.",
+        "On Seafood Sarnie a lemming passing behind the tank pipe is occluded by it; pipes on MM_W_012 still draw.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "builder-shrug-assign-001",
+      "title": "Let a shrugging builder be hovered and given a new job",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y6: when a builder runs out of bricks and shrugs, the player cannot hover it or assign it a new skill until the shrug ends; the user expects to be able to (for example to chain another Builder). Trace the production picking and assignment path, make a lemming in the builder shrug state hoverable and assignable for every skill a walker could take, and have the new skill start from the shrug position. Use retained static evidence for the original rule where it exists; otherwise label the choice provisional. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Build and Block (node 14) or Seafood Sarnie, hovering a shrugging builder shows the cursor highlight and assigning Builder starts a new bridge from where the last one ended; another skill such as Basher also applies.",
+        "Lemmings in other non-assignable states are unaffected.",
+        "All promoted playtest replays still reproduce their results, or any that change are listed with the reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "gameplay-sounds-001",
+      "title": "Add the Let's Go, bashing and last-bricks sounds",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y3, Y4, Y5: three sounds the user expects are missing in level play. Y4: no \"Let's Go\" sound at the start of a level. Y3: no sound effect while a lemming bashes. Y5: the last three bricks a builder lays should each play a warning sound. Find the installed samples and, from static evidence, when the original triggers each; play them through the existing production mixer path used by the exit and death sounds. While there, list in the report any other skill or event that the static evidence gives a sound and the clone leaves silent, without implementing them. Audio only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Starting any level plays the Let's Go sample once at the point the evidence shows (or a labelled provisional point).",
+        "A basher makes its sound while bashing and the builder's last three bricks each make theirs; samples and triggers are cited to static evidence or labelled provisional.",
+        "Fast-forward and pause do not stack or loop the sounds; all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "bash-particles-001",
+      "title": "Show debris particles while bashing",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y7: bashing produces no particles. Using the particle path added by death-particles-001 and static evidence for what the original emits, add debris particles at the basher's work face while it removes terrain. Check whether the same evidence gives particles for miner and digger; if so add them the same way, otherwise report it. Presentation only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Bash (MM_BASH_002) a basher throws visible debris particles from the wall face for as long as it is cutting; appearance is cited to static evidence or labelled provisional.",
+        "Miner and digger are either given their particles or reported with the evidence found.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "exit-balloon-bob-001",
+      "title": "Make exit balloons bob slowly",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y8: exit balloons are static; the user expects them to slowly bob up and down. Establish from static evidence how the original moves the exit balloon (amplitude, period, whether the basket and the jump-in target move with it) and implement it in the production render path, keeping exit-jump-anim-001's jump landing in the basket. The exit's simulation trigger position must not move. Presentation only. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Climb (MM_CLIMB_002) the exit balloon bobs slowly and continuously, including while paused state is handled as the evidence shows; motion is cited to static evidence or labelled provisional.",
+        "Lemmings still jump into the basket and are counted at the same moment as before.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

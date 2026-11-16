@@ -28,7 +28,7 @@ under docs/playtest/replays/. Won so far: 17 of 102.
 | 14 | MM_BUILD_BLOCK_A | Build and Block | ok | playtest 8 | pass |  |
 | 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok | playtest 9 | retired (Y6 fix) | playtest 9 Y1 (switch animation), Y2 (pipe depth) |
 | 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok | playtest 9 | retired (Y6 fix) |  |
-| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok |  |  |  |
+| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok |  |  | playtest 9 Y10 (lemmings seen through wall when turning) |
 | 18 | MM_E2_4SKILLS | The Abyss | ok |  |  |  |
 | 19 | E19_KF_2 | Kriss Kross | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |
 | 20 | MM_E1_4SKILLS | Sergeant Bash | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |

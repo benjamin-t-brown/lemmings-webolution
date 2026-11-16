@@ -9,6 +9,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- pressure-pad-drain-001: **ready** — Make the Seafood Sarnie switch drain the water
+- crab-hazard-001: **ready** — Show and simulate the crab in the water
+- pipe-render-001: **ready** — Draw the drain and supply pipes on fluid levels
+- moving-hazards-001: **ready** — Show and simulate deathrollers, buzzsaws, scorpions and robins
 - exit-jump-anim-001: **ready** — Animate lemmings jumping into the balloon
 - hatch-click-rate-001: **ready** — Change a hatch's release rate by clicking the hatch
 

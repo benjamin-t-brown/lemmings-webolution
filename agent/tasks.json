@@ -17882,6 +17882,86 @@
       }
     },
     {
+      "id": "pressure-pad-drain-001",
+      "title": "Make the Seafood Sarnie switch drain the water",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 8 X1, blocker: Seafood Sarnie (map node 15, MM_BLOCK_BUILD_BASH) cannot be won in the clone. The user compared the original: a switch they describe as a laser-wall-like thing drains the water when triggered, and the clone has no such mechanic. The level data has no lever; it has pressure_pad.a3dx1, pipe_drainage.a3dx1 and five fluid gates (build/level-sweep-001/matrix.csv). The clone parses pressure_pad in src/assets/LevelObjects.cpp but nothing in the simulation acts on it; levers already drive fluid gates through the accepted lever/gate path. From static evidence and the level data establish what the trigger object is, what activates it (a lemming entering its volume, once or repeatedly), which gates or fluid volumes it is linked to, and what happens to the water (level, rate, whether it is permanent). Implement it in the production loader and World by reusing the lever-to-gate machinery where the original shares it, so that draining removes the water hazard and the level becomes winnable, and draw the trigger so a player can see it and see that it fired. The same object kind appears on 23 installed levels (nodes 15 33 43 44 48 51 53 56 57 59 61 64 65 69 73 77 80 82 85 88 92 93 98): implement the mechanic generally from the data, verify on node 15, and list any of the others whose links do not resolve. Existing lever levels must behave as before. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Seafood Sarnie through the production path, a lemming activating the trigger drains the water as the level data links it, the drained area stops killing lemmings, and the trigger and its fired state are visible.",
+        "The report cites static evidence for the trigger's activation rule and link resolution, labels provisional choices, and lists the 23 levels with whether their triggers resolve.",
+        "The playtest replays for MM_W_012 and the other recorded levels with water or levers still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "crab-hazard-001",
+      "title": "Show and simulate the crab in the water",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 8 X3: on Seafood Sarnie the original has a lobster-like creature in the water that kills lemmings that walk into it; the clone neither shows nor simulates it. The level data names it Crab.a3dx1; the clone parses Crab in src/assets/LevelObjects.cpp and does nothing with it. From static evidence, the model and the level data establish where it sits, whether and how it moves (path, speed, turning), its animation, what volume kills a lemming and how the death is presented and counted. Render it through the production scene path with correct depth, and simulate the kill in World. Crabs are on 12 installed levels (nodes 15 19 21 36 39 44 46 49 63 67 84 96): implement from the data, verify on node 15, and report any level where placement or motion does not resolve. Keep the creature update recordable-deterministic so replays still reproduce. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Seafood Sarnie the crab is visible where the level data places it, moves or animates as the evidence shows, and a lemming that walks into it dies and is counted dead; lemmings that do not touch it are unaffected.",
+        "Position, motion, kill volume and death presentation are cited to static evidence or labelled provisional.",
+        "All promoted playtest replays still reproduce their results (none of those levels has a crab).",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "pipe-render-001",
+      "title": "Draw the drain and supply pipes on fluid levels",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 8 X2: on Seafood Sarnie the original draws the drain on the water and the clone does not. The level data names pipe_drainage.a3dx1; pipe_supply and pipe_drainage models appear on 35 installed levels and are parsed in src/assets/LevelObjects.cpp but not drawn. Render both pipe kinds through the production scene path at their stored placement and orientation with correct depth, and, where static evidence shows it, their visible state while water is flowing in or out (after pressure-pad-drain-001 and for existing lever levels such as MM_W_012). Presentation only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Seafood Sarnie the drain is visible at its stored position, and on MM_W_012 or another lever level a supply or drainage pipe is visible; neither hides lemmings that should be in front of it.",
+        "Model, placement and any flow state are cited to static evidence or labelled provisional; levels whose pipes do not resolve are listed.",
+        "No simulation outcome changes: all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "moving-hazards-001",
+      "title": "Show and simulate deathrollers, buzzsaws, scorpions and robins",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Found by the lead while scoping playtest 8: besides crabs and pressure pads, four more object kinds are parsed from level data and have no simulation or rendering in the clone: deathroller (14 levels, nodes 20 24 30 34 39 46 49 60 68 72 83 85 93 101), robin (nodes 37 58 62 78), Scorp (node 63) and buzzsaw (node 81). No player has reached them yet; they are queued because each affected level is presumed unwinnable or wrong without them. Following the pattern crab-hazard-001 established, establish from static evidence, models and level data what each does (placement, motion, kill or other effect on lemmings, animation) and implement render plus simulation for each. Do deathroller first as the most common; if a kind cannot be settled from static evidence, implement the others, leave that kind drawn but inert, and say exactly what observation of the original would settle it. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On node 20 the deathroller is visible, moves as the evidence shows, and affects lemmings as the evidence shows; each other kind is either implemented the same way on one named level or reported as drawn-but-inert with the missing observation named.",
+        "Behavior of each kind is cited to static evidence or labelled provisional.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "exit-jump-anim-001",
       "title": "Animate lemmings jumping into the balloon",
       "status": "ready",

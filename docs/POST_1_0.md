@@ -1,0 +1,29 @@
+# After 1.0: improvements on the original
+
+Requested by the user on 2026-11-15. Deferred until playable v1 is reached (every installed
+level won by a person; see agent/IMPLEMENTATION_PLAN.md). Nothing here is queued or authorized
+as current work, and none of it is reconstruction: these change or extend the original game.
+Order below is the lead's suggestion, not a commitment.
+
+## Presentation and input
+- OpenGL renderer in place of the software rasterizer. Expected to remove the minor z clipping
+  seen in playtest 7 (W1) and to make higher resolutions cheap.
+- Drawing at other resolutions (beyond the current 2x window scale).
+- Hardware mouse cursor, so the pointer does not lag behind the system cursor.
+- Better fast-forward: selectable 2x / 4x / 8x and a clearer control.
+- Custom soundtrack.
+
+## New content
+- Level editor.
+- New lemming types, such as lava lemmings.
+- New jobs, such as sliding lemmings and guard lemmings that can fight wombats.
+- New mechanics, such as moving platforms.
+
+## Notes for when this starts
+- Keep each improvement separable from original behavior (an option or a distinct mode), so
+  the fidelity ledger in docs/STATUS.md and the Emscripten goal are not entangled with it.
+- New jobs, types and mechanics need a level format that can express them; decide the editor's
+  format before adding them. Installed original levels must keep loading unchanged.
+- New simulation inputs must stay recordable, so playtest replays keep working.
+- If cursor lag or the fast-forward control gets in the way of finishing v1 playtests, either
+  can be pulled forward as an ordinary playtest defect.

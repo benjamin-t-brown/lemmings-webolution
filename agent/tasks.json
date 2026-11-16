@@ -19021,6 +19021,26 @@
       "lead_note": "2026-11-16: the lead retired the two playtest-9 recordings that encode the Y6 refused click (docs/playtest/replays/README.md, Retired recordings). The replay criterion now covers the 15 remaining .replay files, all of which pass on the lead's release build."
     },
     {
+      "id": "ui-sounds-001",
+      "title": "Add UI and assignment sounds; move Let's Go to first spawn",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y12 and Y13 (user, after hearing the build with gameplay-sounds-001). Y13: \"Let's Go\" currently plays on the first gameplay frame after the level loads; the user wants it when the lemmings begin to spawn, matching the on-screen Let's Go text. gameplay-sounds-001's own static note (hatch latch at 0x425AE3 before the opening and release checks) points the same way: move the trigger to the moment the hatch starts releasing, in step with the text, once per level attempt. Y12: there are no sounds for UI buttons (skill panel selection, pause, fast-forward, nuke, release-rate hatch clicks, and the frontend or map buttons if the evidence gives them one) or for clicking and assigning a skill to a lemming, including the refused-assignment case if the original distinguishes it. gameplay-sounds-001's report lists silent cues it found; start from that list, find the installed samples and static trigger sites, and play them through the same production mixer path. Audio only: no simulation change, and replays must not depend on audio. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Let's Go plays once per level attempt at the moment the first hatch begins releasing, together with the Let's Go text; not at level load, not again after pause, fast-forward or a later hatch.",
+        "Selecting a skill and each other panel button makes its sound, and assigning a skill to a lemming makes the assignment sound; samples and triggers are cited to static evidence or labelled provisional, and buttons with no evidence are listed.",
+        "Holding or repeating clicks does not stack sounds into noise; all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "basher-occlusion-001",
       "title": "Occlusion pass: bashers in walls, turn-around at walls, feet through bridges",
       "status": "ready",

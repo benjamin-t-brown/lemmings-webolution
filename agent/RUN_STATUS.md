@@ -10,6 +10,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - gameplay-sounds-001: **needs_review** — Add the Let's Go, bashing and last-bricks sounds
+- ui-sounds-001: **ready** — Add UI and assignment sounds; move Let's Go to first spawn
 - basher-occlusion-001: **ready** — Occlusion pass: bashers in walls, turn-around at walls, feet through bridges
 - bash-particles-001: **ready** — Show debris particles while bashing
 - exit-balloon-bob-001: **ready** — Make exit balloons bob slowly

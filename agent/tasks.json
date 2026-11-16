@@ -17880,6 +17880,65 @@
         "log": "build\\agent-runs\\20261116T053851-49132-19c7334a\\verification.log",
         "verified_content": "e3756c0bf4369e6bdad85a0e0e7d3fce068e7dea91341d15437af214dbdeb2ea"
       }
+    },
+    {
+      "id": "bomber-skill-particles-001",
+      "title": "Show explosion particles for the Bomber skill",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 7 W4: an exploding lemming shows particles when Armageddon (Nuke all) is used but not when the Bomber skill is assigned to a lemming in ordinary play. death-particles-001 (docs/scratch/death-particles-001.md) was accepted on a scripted Bomber image, so its driver does not take the path a player takes. Start from the recorded human attempts docs/playtest/replays/2026-11-15-playtest-7/MM_BOMB-*.replay and MM_BLOCK_BOMB_A-*.replay, which assign Bombers through the real input path: find why the bomber burst and block debris are not emitted or not drawn there (assignment route, countdown expiry path, camera/depth, frame at which the actor is removed) while the Nuke path works, and fix the production path so both behave the same. Presentation only: the simulation outcome must not change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On MM_BOMB, a Bomber assigned by clicking a lemming in ordinary play shows the lemming pieces and block debris that Armageddon already shows; the report names the cause of the difference.",
+        "The MM_BOMB and MM_BLOCK_BOMB_A playtest-7 replays still reproduce their recorded results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "exit-jump-anim-001",
+      "title": "Animate lemmings jumping into the balloon",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 7 W5: lemmings reaching the exit balloon have no animation of jumping into it; they just disappear. Use retained static evidence, the installed sprite assets and the reference frames from the 2026-11-14 original session under docs/playtest/reference/ to identify the original's exit sequence (sprite frames, where the lemming moves relative to the balloon basket, duration, when it stops being drawn) and play it in the clone when a lemming exits, including for upside-down and water lemmings if they have their own artwork. Keep the moment the lemming is counted as saved and the yippee cue where they are unless static evidence ties them to a point in the animation; say which you chose. The lemming must not be assignable or block others while exiting. Do not change the balloon's own departure (playtest 6 V5 stays deferred). Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On MM_CLIMB_002 each lemming that reaches the balloon plays a visible exit animation into it instead of vanishing, through the production render path, and several arriving close together each play it.",
+        "Saved counts and level results are unchanged: the twelve playtest-7 replays are run and each result reported; any divergence is explained by the animation's timing, not hidden.",
+        "Frames, placement and duration are cited to static evidence or assets, or labelled provisional.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "hatch-click-rate-001",
+      "title": "Change a hatch's release rate by clicking the hatch",
+      "status": "ready",
+      "depends_on": [
+        "frontend-window-quit-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": true,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 7 W3, correcting release-rate-control-001: the user reports that in the original the release rate is changed by clicking the spawner (hatch) box in the level itself, not a separate panel button, so different hatches can run at different rates. Retained static evidence agrees that rate limits are per hatch (build/multi-hatch-release-001/static/0x00425DE3-instructions.json: the supplied rate is clamped against that hatch's own minimum/maximum and its interval looked up per hatch). Confirm from static evidence how a click on a hatch reaches that routine and which button raises or lowers. Then make clicking a hatch in the level view change the rate, reusing the existing hatch picking/hover path and the RuntimeReleaseRateControl logic, show the hatch's current rate where the player can read it (the existing hatch hover text is acceptable), and remove the separate RATE panel box unless static evidence shows the original has one. On single-hatch levels this is the whole change. On multi-hatch levels the clone still shares one release cadence (multi-hatch-release-001 is parked with a known regression on M20_MT_1 and stays out of scope): there, clicking any hatch changes the shared rate, clamped to that hatch's limits, and the report says so plainly as a provisional limit. Replay files record release-rate input; keep existing replay files readable and state how the input is recorded now. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On MM_CLIMB_002, clicking the hatch in the level raises the release rate with one button and lowers it with the other, within the level's stored limits, and the current rate is readable on screen; there is no separate panel rate button unless static evidence for one is cited.",
+        "On M06_KF_1 (two hatches) clicking either hatch changes the rate, and the report states the shared-cadence limit.",
+        "The twelve playtest-7 replays still load and reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

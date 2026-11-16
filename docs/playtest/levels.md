@@ -5,24 +5,24 @@ Playable v1 progress: one row per installed level. The lead updates it from each
 evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv, 2026-11-15
 (loads, renders a non-blank view and idles without crash or hang; not winnability).
 
-Not yet filled from playtests 1-6: the ledgers record defects, not a per-level win list. The user
-marks wins from the next playtest on; the playtest save is not evidence because every completion
-flag was set by request.
+Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
+the playtest save is not evidence because every completion flag was set by request. Replays are
+under docs/playtest/replays/. Won so far: 12 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 0 | MM_CLIMB_002 | Just Climb | ok |  |  |  |
-| 1 | MM_FLOAT | Just Float | ok |  |  |  |
-| 2 | MM_BOMB | Just Bomb | ok |  |  |  |
-| 3 | MM_BLOCK_001_A | Just Block | ok |  |  |  |
-| 4 | MM_BUILD | Just Build | ok |  |  |  |
-| 5 | MM_MINE | Just Mine | ok |  |  |  |
-| 6 | MM_BASH_002 | Just Bash | ok |  |  |  |
-| 7 | MM_DIG_000 | Just Dig | ok |  |  |  |
-| 8 | MM_W_012 | Introducing - Water Lemmings | ok |  |  |  |
-| 9 | MM_Block_Bomb_A | Block And Bomb | ok |  |  |  |
-| 10 | MM_BASH_MINE_WLR1 | Bash and Mine | ok |  |  |  |
-| 11 | m06_kf_1 | Sometimes up..sometimes down. | ok |  |  |  |
+| 0 | MM_CLIMB_002 | Just Climb | ok | playtest 7 | pass |  |
+| 1 | MM_FLOAT | Just Float | ok | playtest 7 | pass |  |
+| 2 | MM_BOMB | Just Bomb | ok | playtest 7 | pass |  |
+| 3 | MM_BLOCK_001_A | Just Block | ok | playtest 7 | pass |  |
+| 4 | MM_BUILD | Just Build | ok | playtest 7 | pass |  |
+| 5 | MM_MINE | Just Mine | ok | playtest 7 | pass |  |
+| 6 | MM_BASH_002 | Just Bash | ok | playtest 7 | pass |  |
+| 7 | MM_DIG_000 | Just Dig | ok | playtest 7 | pass |  |
+| 8 | MM_W_012 | Introducing - Water Lemmings | ok | playtest 7 | pass |  |
+| 9 | MM_Block_Bomb_A | Block And Bomb | ok | playtest 7 | pass |  |
+| 10 | MM_BASH_MINE_WLR1 | Bash and Mine | ok | playtest 7 | pass |  |
+| 11 | m06_kf_1 | Sometimes up..sometimes down. | ok | playtest 7 | pass |  |
 | 12 | MM_BASH_DIG_001_A | Bash and Dig | ok |  |  |  |
 | 13 | MM_FLOAT_CLIMB2 | Float and Climb | ok |  |  |  |
 | 14 | MM_BUILD_BLOCK_A | Build and Block | ok |  |  |  |

@@ -17327,7 +17327,7 @@
     {
       "id": "release-rate-control-001",
       "title": "Change the release rate by clicking the hatch box",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17343,11 +17343,11 @@
         "The report cites where the level's initial, minimum and maximum values come from, or states that static evidence shows a fixed range.",
         "With no player input, release timing is unchanged. The smoke profile passes."
       ],
-      "loop_attempts": 1,
-      "run_id": "20261116T020511-39368-a07ba930",
-      "started": "2026-11-16T02:05:11.964565+00:00",
-      "finished": "2026-11-16T02:05:11.464946+00:00",
-      "last_run": "build/agent-runs/20261116T011339-39368-7a50ec64",
+      "loop_attempts": 2,
+      "run_id": "20261116T040952-49132-8a2a2e41",
+      "started": "2026-11-16T04:09:52.548389+00:00",
+      "finished": "2026-11-16T04:21:39.874048+00:00",
+      "last_run": "build/agent-runs/20261116T040952-49132-8a2a2e41",
       "last_failure": "Verification failed; inspect build/agent-runs/20261116T011339-39368-7a50ec64/verification.log",
       "scope_revision_history": [
         {
@@ -17355,12 +17355,107 @@
           "by": "project lead",
           "change": "Resume note. Attempt 1 finished its worker pass but failed supervisor verification (build/agent-runs/20261116T011339-39368-7a50ec64/verification.log). Attempt 2 was interrupted about 65 minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261116T020511-39368-a07ba930); that is not a task failure and the attempt count was set back to 1. The partial work of both attempts is left uncommitted in the tree, with a copy under build/lead/release-rate-control-001-attempt2/. window-scale-001, antigrav-skill-assign-001, lemming-pick-nearest-001 and nuke-all-001 are accepted and committed, so every uncommitted source change belongs to this task. Inspect and continue it rather than restarting; first confirm the verification failure of attempt 1 is resolved."
         }
-      ]
+      ],
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained clone evidence and passing supervisor smoke verification. Layout and hold cadence are explicitly provisional. Human playtest acceptance and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On an installed level one gesture on the release box raises the rate and the other lowers it through the production pointer path, the interval between releases changes accordingly, and the value stops at the level's stored minimum and maximum.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "SDL events pass through gameCoordinates before release-control input. The control consumes mouse-down before camera grab or actor selection, advances held input, and resets on release, focus loss and menu transitions."
+              },
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "RuntimeReleaseRateControl loads the primary hatch's stored limits. Left input decrements and right input increments; change clamps the value and selects the existing ReleaseRates table row before calling World::setReleaseInterval."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepRelease adds setup_.releaseIntervalSeconds after each birth, so the edited interval changes subsequent spacing while preserving the current countdown."
+              },
+              {
+                "path": "build/release-rate-control-001/resume-20261116T0413/retained-observations/after/pointer/releases.txt",
+                "detail": "Retained MM_CLIMB_002 pointer observations record births at 2030, 4920, 7810, 10690, 13530, 16360 and 19240 ms: the increased rate produces a 2840 ms gap and restoring rate 20 produces a 2880 ms gap. The report and retained images document clamping at 1 and 50."
+              }
+            ]
+          },
+          {
+            "criterion": "The panel shows the current release value.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "RuntimeReleaseRateControl::draw supplies current_ to drawReleaseRateDisplay, which renders RATE and its numeric value using the retail font. The live panel composition calls this draw method."
+              },
+              {
+                "path": "build/release-rate-control-001/resume-20261116T0413/retained-observations/after/pointer/initial.png",
+                "detail": "Inspected retained clone image visibly shows RATE 20 below Nuke."
+              },
+              {
+                "path": "build/release-rate-control-001/resume-20261116T0413/retained-observations/after/pointer/maximum.png",
+                "detail": "Inspected retained clone image visibly shows RATE 50 after adjustment."
+              }
+            ]
+          },
+          {
+            "criterion": "The report cites where the level's initial, minimum and maximum values come from, or states that static evidence shows a fixed range.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/release-rate-control-001.md",
+                "detail": "Identifies the registered reference hash, compiled hatch reader, +A0/+A4/+A8 field mapping and RELEASERATE.PC consumer. Lists MM_CLIMB_002's initial/minimum/maximum as 20/1/50 and distinguishes varying ranges from fixed-rate levels."
+              },
+              {
+                "path": "build/release-rate-control-001/resume-20261116T0413/static-crosscheck.txt",
+                "detail": "Retained instructions show reads stored at +A0/+A4/+A8 at 0x425F40/0x425F51/0x425F62. Instructions at 0x425DF0\u20130x425E44 clamp against +A4/+A8, select the interval and store +A0 without modifying countdown +C0. This is static evidence, not runtime fidelity proof."
+              },
+              {
+                "path": "src/assets/LevelObjects.cpp",
+                "detail": "readHatchRecords projects values_a0_a4_a8[0..2] directly into rate, rateMin and rateMax, matching the report and control loader."
+              }
+            ]
+          },
+          {
+            "criterion": "With no player input, release timing is unchanged. The smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "Control creation does not modify World, and advance returns immediately without a held button. Interval mutation occurs only when player input changes the selected rate."
+              },
+              {
+                "path": "src/sim/World.h",
+                "detail": "The new setter changes only recurring seconds/ticks fields. It preserves the running countdown, first-release seed, arm phase and tick carry; the existing scheduler implementation is unchanged."
+              },
+              {
+                "path": "build/release-rate-control-001/resume-20261116T0413/retained-observations/before/idle/releases.txt",
+                "detail": "Retained pre-change idle births are 2030, 4920, 7810, 10690, 13580, 16470 and 19350 ms."
+              },
+              {
+                "path": "build/release-rate-control-001/resume-20261116T0413/retained-observations/after/idle/releases.txt",
+                "detail": "Retained post-change idle births exactly match the pre-change sequence."
+              },
+              {
+                "path": "build/agent-runs/20261116T040952-49132-8a2a2e41/verification.log",
+                "detail": "Supervisor built smoke_tests and ran the smoke label: 95/95 main tests passed, followed by 84/84 recovery tests and git diff --check. Smoke registrations, assertions and timeouts were preserved."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T04:23:42.813193+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T040952-49132-8a2a2e41\\verification.log",
+        "verified_content": "165460930bb99bbe7f21bd77aa34f191f567e6cb26d2e0b69368e62d5b5ae86e"
+      }
     },
     {
       "id": "replay-recorder-001",
       "title": "Record a played level and replay it headless",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17375,12 +17470,92 @@
         "A replay whose result is not reproduced exits non-zero and prints the level, the step and the first divergent input or count.",
         "scripts/Play-Clone.ps1 records by default into a folder outside version control, and the report says how a winning replay is promoted to docs/playtest/replays/.",
         "The smoke profile passes."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T042342-49132-0b068fef",
+      "started": "2026-11-16T04:23:43.186686+00:00",
+      "finished": "2026-11-16T05:00:28.093759+00:00",
+      "last_run": "build/agent-runs/20261116T042342-49132-0b068fef",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production code and retained execution evidence. This establishes clone replay behavior, not human playability or original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "Playing an installed level with --record writes a replay file; --replay of that file reproduces the same saved count and win/lose result headless, in a small fraction of real time, on two different levels including one that needs at least two skill assignments.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/replay-recorder-001/existing-checks.txt",
+                "detail": "MM_CLIMB_002 and MM_FLOAT recorded runs took 20.752 and 14.139 seconds; CLI replay exited 0 in 0.031 and 0.028 seconds, reproducing completed wins with saved counts 10 and 9."
+              },
+              {
+                "path": "build/replay-recorder-001/matched-recordings/MM_BLOCK_001_A-1794804357819370700-2.replay",
+                "detail": "Contains five accepted Blocker assignments at steps 54, 75, 202, 326 and 373, followed by a completed win with saved=23 and required=15."
+              },
+              {
+                "path": "build/replay-recorder-001/matched-checks.txt",
+                "detail": "The existing production-input route confirms all five assignments and the 23/15 win. CLI replay reproduces that result in 0.095 seconds; completed losses also reproduce."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Records resolved actor assignments, effective commands and admitted simulation updates. The replay branch returns before window, audio and SaveStore construction."
+              }
+            ]
+          },
+          {
+            "criterion": "A replay whose result is not reproduced exits non-zero and prints the level, the step and the first divergent input or count.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/replay-recorder-001/final-checks-latest.txt",
+                "detail": "Altered result, assignment and count recordings each exit 1 and name MM_CLIMB_002, the divergent step (429, 126 and 0), and the differing result, input or counts. Truncated recordings also fail."
+              },
+              {
+                "path": "src/app/Replay.hpp",
+                "detail": "The consumer checks ordered records sequentially and immediately returns 1 on the first assignment, count, clock, phase or final-result mismatch, printing the level and current step."
+              }
+            ]
+          },
+          {
+            "criterion": "scripts/Play-Clone.ps1 records by default into a folder outside version control, and the report says how a winning replay is promoted to docs/playtest/replays/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "scripts/Play-Clone.ps1",
+                "detail": "The normal launch passes --record build/playtest/replays and retains the separate playtest save location."
+              },
+              {
+                "path": ".gitignore",
+                "detail": "The build/ entry excludes the default recording directory from version control."
+              },
+              {
+                "path": "docs/scratch/replay-recorder-001.md",
+                "detail": "Explains promotion after a human win: replay the file, require PASS with won=1 and completed=1, then copy the unchanged recording into docs/playtest/replays/."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T042342-49132-0b068fef/verification.log",
+                "detail": "Supervisor verification builds smoke_tests and passes all 95 main smoke tests, including the level sweep, followed by all 84 recovery tests and git diff --check."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T05:02:21.445046+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T042342-49132-0b068fef\\verification.log",
+        "verified_content": "97215503bdfa6bdc3b7c4193bdfa3e4099071fc493a218de614e00eb85a11517"
+      }
     },
     {
       "id": "death-particles-001",
       "title": "Show explosion debris and splat pieces",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17395,12 +17570,112 @@
         "The simulation outcome (who dies, when, which cells are removed) is unchanged; the change is presentation only.",
         "Each effect's sprite source, count, motion and lifetime is cited to static evidence or labelled provisional.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T050221-49132-35db5184",
+      "started": "2026-11-16T05:02:21.793472+00:00",
+      "finished": "2026-11-16T05:21:09.991104+00:00",
+      "last_run": "build/agent-runs/20261116T050221-49132-35db5184",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained clone evidence and supervisor smoke results. Original-effect fidelity remains provisional; human playtest confirmation remains outstanding.",
+        "checks": [
+          {
+            "criterion": "A bomber explosion, destroyed blocks and a fatal fall each show debris or pieces on a named installed level, through the production render path, respecting scene depth.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg connects World death notifications to TubeScene emission and draws particles after the completed scene and ordinary actors."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Sprite pieces use clipActorToScene without the supporting-wall allowance; chips use the same physical view-Z convention and strict scene-depth comparison. Empty particle lists return before allocation or rendering work."
+              },
+              {
+                "path": "build/death-particles-001/bomber/bomb-blast-frame.png",
+                "detail": "Inspected MM_BOMB image shows separated actor pieces above the destroyed ledge."
+              },
+              {
+                "path": "build/death-particles-001/nuke-final/crater-3.png",
+                "detail": "Inspected MM_CLIMB_002 image shows actor pieces, red particles and terrain-coloured debris around the crater."
+              },
+              {
+                "path": "build/death-particles-001/float-104.png",
+                "detail": "Inspected MM_FLOAT image shows separated head/body/limb pieces and pink droplets at the fatal landing."
+              }
+            ]
+          },
+          {
+            "criterion": "The simulation outcome (who dies, when, which cells are removed) is unchanged; the change is presentation only.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "explode preserves clearExplosion, death accounting and cue order, then reports cells actually removed. Both fatal-fall branches notify after their existing Splatter transition. No death threshold, timer, stencil or movement rule changes."
+              },
+              {
+                "path": "build/death-particles-001/task.diff",
+                "detail": "The incremental diff isolates presentation notifications, rendering and clock observation from pre-existing edits. Rendering receives const lemming/cell views and does not mutate simulation or consume its RNG."
+              },
+              {
+                "path": "build/death-particles-001/bomber.log",
+                "detail": "The existing MM_BOMB regression passes its assignment, countdown, animation and outcome assertions: assignment frame 17, Exploder frame 42 and blast frame 48."
+              }
+            ]
+          },
+          {
+            "criterion": "Each effect's sprite source, count, motion and lifetime is cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/death-particles-001.md",
+                "detail": "The effect table identifies installed BITS artwork, six actor pieces, four debris chips per selected site, 100 explosion particles and ten splat droplets. Resource binding, sampling, motion, sizes, fallback emission and lifetimes are explicitly provisional."
+              },
+              {
+                "path": "build/death-particles-001/static/pieces.json",
+                "detail": "Retained Ghidra pseudocode agrees with instructions at 0x401CA7\u20130x401D0B selecting indices 0,1,2,2,3,3; 0x401C7B loads shared resource global 0x4E3308."
+              },
+              {
+                "path": "build/death-particles-001/static/rea.json",
+                "detail": "For registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained instructions confirm actor hiding at 0x40B4AF, six children at 0x40B534, ten droplets at 0x40B8A7 and four debris children at 0x40C9FE. These static findings do not establish runtime fidelity."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Emission and drawing comments mark deterministic ballistics, gravity, lifetimes, artwork binding, animation sampling and terrain-colour sampling as provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T050221-49132-35db5184/verification.log",
+                "detail": "Supervisor verification builds smoke_tests and runs the smoke label: 95/95 main tests pass, followed by 84/84 recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261116T050221-49132-35db5184/result.json",
+                "detail": "Verification exits zero and records verified_content 4750ec8619efbe2b0df045e1af937a28ff2ae89f5590806f4957bdea81cdf233, matching the review context."
+              },
+              {
+                "path": "docs/scratch/death-particles-001.md",
+                "detail": "The report ends with named MM_BOMB/MM_BLOCK_BOMB_A and MM_FLOAT actions and expected debris, splat, occlusion, pause and fast-forward behavior. Its pending-smoke wording predates the subsequent successful supervisor run."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T05:22:58.804050+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T050221-49132-35db5184\\verification.log",
+        "verified_content": "4750ec8619efbe2b0df045e1af937a28ff2ae89f5590806f4957bdea81cdf233"
+      }
     },
     {
       "id": "exit-yippee-sound-001",
       "title": "Play the yippee sound when a lemming reaches the balloon",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17415,12 +17690,108 @@
         "The sample is identified from the installed assets with static evidence, or labelled provisional with the candidates listed.",
         "The clone still runs with no audio device. No other sound behavior changes.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T052258-49132-07f9e578",
+      "started": "2026-11-16T05:22:59.172221+00:00",
+      "finished": "2026-11-16T05:36:36.137750+00:00",
+      "last_run": "build/agent-runs/20261116T052258-49132-07f9e578",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained static evidence and supervisor smoke verification. Human listening remains pending; retail mixing and timing fidelity are explicitly unproven.",
+        "checks": [
+          {
+            "criterion": "One saved-lemming cue is issued per saved lemming, when the save is counted, through the existing audio path.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::step sets Exited, increments saved_ and emits Exit together. Exited actors cannot repeat this transition; cue() preserves individual Exit events and takeCues() drains them once."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The application-owned CuePlayback receives drainCues after each runtime update, including fast-forward passes. The existing device lifecycle remains intact."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Exit now maps to Yippee and requests one Mixer voice per drained event. Playback queues audio rather than waiting for the clip to finish."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Each exit voice retains its own cursor. The separate averaging bus preserves overlapping cheers without evicting earlier cheers or existing effects."
+              }
+            ]
+          },
+          {
+            "criterion": "The sample is identified from the installed assets with static evidence, or labelled provisional with the candidates listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-yippee-sound-001/static/registration-instructions.json",
+                "detail": "Retained Ghidra instructions for the registered EXE SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show string 0x4C0C84 registered at 0x45E540\u20130x45E552 into receiver+0x1C8B0. The accompanying registration pseudocode identifies the string as Yippee."
+              },
+              {
+                "path": "build/exit-yippee-sound-001/static/registration-caller-instructions.json",
+                "detail": "Instructions at 0x450890\u20130x450895 establish receiver 0x4C6A08, making that sound handle address 0x4E32B8."
+              },
+              {
+                "path": "build/exit-yippee-sound-001/static/exit-step-instructions.json",
+                "detail": "Save-state instructions increment total saved at 0x4182A1, then load handle 0x4E32B8 and call the sound wrapper at 0x4182E5. This independently supports the claimed save-to-Yippee association."
+              },
+              {
+                "path": "build/exit-yippee-sound-001/targeted-tests-final.log",
+                "detail": "Production decoding finds SOUNDS\\YIPPEE.WAV in installed lemmings.box: 4,592 bytes, mono, 10,101 Hz, 4,548 frames and 0.450252 seconds. Sample identity is evidenced; overlap loudness remains labelled provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "The clone still runs with no audio device. No other sound behavior changes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Device-open failure still reports continuing silently. Disabled audio and missing clips remain safe. Ohno/FallSplat mappings remain unchanged; Assign and Explode remain unrouted."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Only Exit opts into averaging. Existing additive mixing, music handling and the 32 additive-voice limit remain effective; exit voices do not consume those slots."
+              },
+              {
+                "path": "src/__test__/test_cueplayback.cpp",
+                "detail": "Retains absent-backend, disabled-audio, no-opt-in and missing-WAV checks. Supervisor smoke verification passes this test. Changed table expectations directly reflect the newly authorized Exit route."
+              },
+              {
+                "path": "src/audio/OverlapMix.h",
+                "detail": "Averages exit samples in double precision and attenuates only that bus to available output headroom. With no exit voices, existing samples remain untouched."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T052258-49132-07f9e578/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests and all 84 recovery tests, including cueplayback and the installed-level sweep. This supersedes the worker report's pending-verification handoff."
+              },
+              {
+                "path": "docs/scratch/exit-yippee-sound-001.md",
+                "detail": "Ends with a concrete check: MM_CLIMB_002 / Just Climb, assign Climbers, expect one Yippee per saved-counter increment, undistorted close arrivals, unchanged Results totals and usable play with audio unavailable."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T05:38:51.794256+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T052258-49132-07f9e578\\verification.log",
+        "verified_content": "de34f93d84197520f4f7202fa9636f4980adf4fb15c9ff2bd411c0adec8d8a76"
+      }
     },
     {
       "id": "test-legacy-prune-001",
       "title": "Delete before/baseline/identity replay tests",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -17434,7 +17805,81 @@
         "No registered main test builds or runs frozen pre-task sources or compares against them; the report lists the removed tests and files.",
         "The smoke test list and its tests are unchanged and the smoke profile passes.",
         "A full main build (all targets) still compiles, and no production source changed."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T053851-49132-19c7334a",
+      "started": "2026-11-16T05:38:52.142790+00:00",
+      "finished": "2026-11-16T05:52:17.856414+00:00",
+      "last_run": "build/agent-runs/20261116T053851-49132-19c7334a",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The task removes 90 legacy tests and 41 files, preserves all 95 smoke tests, and changes no production source. Retained verification passes; no builds or tests were run during this review.",
+        "checks": [
+          {
+            "criterion": "No registered main test builds or runs frozen pre-task sources or compares against them; the report lists the removed tests and files.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/test-legacy-prune-001/task-only.patch",
+                "detail": "Removes frozen-source targets, before-side registrations, identity/comparison registrations and automatic historical-file comparisons. Retained optional comparison inputs are disabled."
+              },
+              {
+                "path": "docs/scratch/test-legacy-prune-001-inventory.json",
+                "detail": "Lists all 90 removed tests and 41 deleted files. The retained independent static reference checks do not compare frozen clone sources."
+              },
+              {
+                "path": "docs/scratch/test-legacy-prune-001.md",
+                "detail": "Reports 323 to 233 registered tests and links the existing before/after ctest -N listings and complete removal inventory."
+              },
+              {
+                "path": "build/agent-native/main/compile_commands.json",
+                "detail": "Compiler inputs contain no frozen pre-task sources. Build-directory source inputs are wrappers including current production sources for the optional profiling target."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke test list and its tests are unchanged and the smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/test-legacy-prune-001/inventory-before.json",
+                "detail": "Independent comparison with inventory-after.json confirms identical names, commands and properties for all 95 smoke tests."
+              },
+              {
+                "path": "build/test-legacy-prune-001/entry-hashes.json",
+                "detail": "Independent hash comparison confirms cmake/test_tiers.cmake and smoke test sources are unchanged; source changes are confined to the listed legacy drivers and helper."
+              },
+              {
+                "path": "build/agent-runs/20261116T053851-49132-19c7334a/verification.log",
+                "detail": "Supervisor smoke verification passes 95/95 main tests and 84/84 recovery tests."
+              }
+            ]
+          },
+          {
+            "criterion": "A full main build (all targets) still compiles, and no production source changed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/test-legacy-prune-001/build-all.log",
+                "detail": "Retains the completed full main ALL build, including compilation and linking of retained legacy executables."
+              },
+              {
+                "path": "build/test-legacy-prune-001/build-all-final.log",
+                "detail": "Records the final unrestricted main build command with eight jobs; the retained audit confirms successful completion."
+              },
+              {
+                "path": "build/agent-runs/20261116T053851-49132-19c7334a/before-source-hashes.json",
+                "detail": "Independent comparison with the after-source manifest confirms no production or recovery source changes. Production edits visible against Git HEAD were already present at task entry."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T05:54:33.075974+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T053851-49132-19c7334a\\verification.log",
+        "verified_content": "e3756c0bf4369e6bdad85a0e0e7d3fce068e7dea91341d15437af214dbdeb2ea"
+      }
     }
   ]
 }

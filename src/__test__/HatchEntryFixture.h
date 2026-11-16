@@ -13,6 +13,8 @@
 #include "assets/Cylinder.h"
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
+#include "assets/LevelObjects.h"
+#include "app/ReleaseRateDisplay.h"
 #include "sim/RetailLevel.h"
 
 #include <cmath>
@@ -85,6 +87,12 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   icons.advanceIcons(panelSeconds, 0, -1);
   panel.draw(image, panel.initialCounts(), 0, false, &icons);
   app::drawRuntimeHud(image, font, world, false);
+  // V8: the old expected frame omitted the player release-rate display.
+  const auto hatches = readHatchRecords(bytes);
+  if (hatches.empty()) throw std::runtime_error("entry fixture has no hatch");
+  const auto& hatch = hatches.front();
+  app::drawReleaseRateDisplay(image, font,
+      std::clamp(hatch.rate, hatch.rateMin, hatch.rateMax));
   const auto cursor = require(app::RuntimeCursor::load(library));
   cursor.draw(image, app::CursorState::NoLemming, image.width / 2, image.height / 2);
   return image;

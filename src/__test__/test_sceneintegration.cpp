@@ -1,5 +1,5 @@
-// scene-integration-001: identical installed inputs and fixed source camera,
-// authentic frozen/current loaders in separate executables. No original code.
+// scene-integration-001: installed inputs through current loaders and a fixed
+// source camera. No original code runs.
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
 #include "app/TubeScene.h"
@@ -9,11 +9,9 @@
 #include "assets/Bitmap.h"
 #include "assets/Png.h"
 #include "lemmings/compiled_level.hpp"
-#ifndef SCENE_FROZEN
 #include "app/AppEntry.h"
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
-#endif
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -113,19 +111,16 @@ Rendered render(const BackdropScene& backdrop,const TubeScene& tube,const AssetL
        <<",successfulRasterReturns="<<s.meshTriangles<<",acceptedColorStores="<<out.writes[i]
        <<",acceptedDepthStores="<<out.depthWrites[i]<<",changedColorStores="<<out.changedColors[i]
        <<",predicateCulls="<<s.predicateRejected<<",missing="<<s.missingTextures<<",rejected="<<s.rejected;
-#ifndef SCENE_FROZEN
     log<<",rasterCalls="<<s.rasterCalls<<",projectionRejected="<<s.projectionRejected
        <<",rasterRejected="<<s.rasterRejected;
     require(s.rejected==s.projectionRejected+s.rasterRejected,"rejection attribution");
     require(s.acceptedColorWrites==out.writes[i]&&s.acceptedDepthWrites==out.depthWrites[i],"accepted-event counters");
     for(const auto& d:s.diagnostics)log<<"\ndiagnostic,"<<d;
-#endif
     log<<'\n';
   }
   log<<"tubeCalls="<<out.raster.drawnTriangles()<<",tubeAcceptedPixels="<<out.raster.drawnPixels()<<'\n';
   return out;
 }
-#ifndef SCENE_FROZEN
 std::uint32_t word(const Bytes& b,std::size_t p) {
   std::uint32_t v=0;for(int i=0;i<4;++i)v|=std::uint32_t(std::to_integer<unsigned char>(b.at(p+i)))<<(i*8);return v;
 }
@@ -278,17 +273,12 @@ void application(const std::string& gameDir,const fs::path& dir,std::ostream& lo
   const auto pixels=changed(frames[0].rgba,frames[1].rgba,4);require(pixels>0,"public route scenery changes rendered pixels");
   log<<"applicationChangedPixels="<<pixels<<'\n';
 }
-#endif
 }
 
 int main()try {
   const char* gameDir=std::getenv("WEBOLUTION_GAME_DIR");require(gameDir&&*gameDir,"installed assets required");
   auto lib=AssetLibrary::open(fs::path(gameDir)/"lemmings.box",fs::path(gameDir)/"patch.box");require(bool(lib),"open installed archives");
-#ifdef SCENE_FROZEN
-  const std::string side="before";
-#else
   const std::string side="after";
-#endif
   const fs::path root=SCENE_DEMO_DIR,dir=root/side;fs::create_directories(dir);
   std::ofstream log(dir/"measurements.txt");log<<std::setprecision(17);
   CameraParams cp;const auto cam=buildCamera(cp); // explicit same source camera for both levels/sides
@@ -299,12 +289,8 @@ int main()try {
     auto tube=TubeScene::build(*lib,*mesh,*bytes,index->grid0,true);require(bool(tube),"production tube build");
     for(const auto& missing:tube->missingTiles())log<<"tubeMissing,"<<missing<<'\n';
     log<<"level="<<id<<",side="<<side<<",bytes="<<bytes->size()<<'\n';
-#ifdef SCENE_FROZEN
-    require(backdrop->empty()==(id=="MM_BASH_002"),"authentic before empty-return behavior");
-#else
     boundaries(*backdrop,*bytes,id=="MM_BASH_002",log);
     if(id=="MM_BASH_002")negatives(*lib,*bytes,log);
-#endif
     log<<"scene-only\n";auto scene=render(*backdrop,*tube,*lib,cam,true,false,log);artifact(dir,id+"-scene-only",scene.raster);
     log<<"composed-scene-on\n";auto on=render(*backdrop,*tube,*lib,cam,true,true,log);artifact(dir,id+"-scene-on",on.raster);
     log<<"composed-scene-off\n";auto off=render(*backdrop,*tube,*lib,cam,false,true,log);artifact(dir,id+"-scene-off",off.raster);
@@ -314,26 +300,13 @@ int main()try {
       Raster primary(640,480);primary.clear(0,0,0);BackdropStats st;backdrop->renderStage(primary,cam,*lib,st,stages[0]);
       require(hash(primary)==0x1fd0bfb82ab39e95ull,"preserve primary RGB/depth hash");
       require(scene.stats[0].stageMeshRecords==923&&scene.stats[1].stageMeshRecords==172&&scene.stats[2].stageMeshRecords==82&&scene.stats[2].stageBillboards==17,"retain stage candidate partitions");
-#ifndef SCENE_FROZEN
-      for(const std::string mode:{"scene-only","scene-on","scene-off"})for(const std::string ext:{"rgb","depth"}){
-        const auto file=id+"-"+mode+"."+ext;
-        require(read(root/"before"/file)==read(dir/file),"complete frozen/current output: "+file);
-      }
-      log<<"completeFrozenCurrentRgbDepthEqual=true\n";
-#endif
     }else{
-#ifdef SCENE_FROZEN
-      require(scene.stats[0].meshRecords==0&&scene.stats[0].meshTriangles==0&&changedPixels==0,"before has zero scene submissions/writes/pixel effect");
-#else
       require(!backdrop->empty()&&scene.stats[0].meshRecords==1177,"current populated candidates");
       require(scene.stats[0].rasterCalls+scene.stats[2].rasterCalls>0&&scene.writes[0]+scene.writes[2]>0&&scene.depthWrites[0]+scene.depthWrites[2]>0,"actual scenery raster calls and accepted color/depth stores");
       require(changedPixels>0,"composed additional-level scenery changes pixels");
-#endif
     }
   }
-#ifndef SCENE_FROZEN
   application(gameDir,dir,log);
-#endif
   log.close();const auto report=read(dir/"measurements.txt");std::cout.write(report.data(),static_cast<std::streamsize>(report.size()));
   std::cout<<"\nPASS scene-integration "<<side<<'\n';return 0;
 }catch(const std::exception& e){std::cerr<<"FAIL scene-integration: "<<e.what()<<'\n';return 1;}

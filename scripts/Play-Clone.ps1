@@ -25,7 +25,7 @@ try {
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     $env:LOCALAPPDATA = $PlayData
-    & (Join-Path $PSScriptRoot 'Invoke-Ucrt64.ps1') "build/cmake/gcc-release/webolution.exe --game-dir 'Lemmings Revolution'"
+    & (Join-Path $PSScriptRoot 'Invoke-Ucrt64.ps1') "build/cmake/gcc-release/webolution.exe --game-dir 'Lemmings Revolution' --record build/playtest/replays"
 } finally {
     $env:LOCALAPPDATA = Split-Path -Parent (Split-Path -Parent $NormalSave)
     Pop-Location

@@ -32,6 +32,10 @@ namespace webo::audio {
 
 class Mixer {
 public:
+  // Average is an opt-in bus for overlapping exit cheers. Other SFX retain
+  // the existing additive mix. The policy is provisional, not retail mixing.
+  enum class Overlap { Add, Average };
+
   Mixer() = default;
   ~Mixer();
   Mixer(const Mixer&) = delete;
@@ -54,7 +58,7 @@ public:
   std::expected<void, std::string> loadFrom(const AssetLibrary& lib, std::string_view cue);
 
   bool has(std::string_view cue) const;
-  void play(std::string_view cue, float volume = 1.0f);
+  void play(std::string_view cue, float volume = 1.0f, Overlap overlap = Overlap::Add);
 
   // Looping bed (menu / in-level music). One music voice at a time.
   std::expected<void, std::string> loadMusicFrom(const AssetLibrary& lib, std::string_view cue);
@@ -79,6 +83,7 @@ private:
     float volume = 1.0f;
     bool loop = false;
     bool music = false;
+    Overlap overlap = Overlap::Add;
   };
 
   static void callback(void* userdata, std::uint8_t* stream, int len);

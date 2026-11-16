@@ -101,7 +101,7 @@ if(WEBOLUTION_HAVE_SDL2)
   elseif(TARGET PkgConfig::SDL2)
     target_link_libraries(webolution PRIVATE PkgConfig::SDL2)
   endif()
-else()
+  else()
   target_compile_definitions(webolution PRIVATE WEBOLUTION_HAVE_SDL2=0)
 endif()
 
@@ -153,21 +153,6 @@ include(CTest)
 # coverage they also carried is a debt: re-establish it once the new renderer
 # decides where tile parsing and state->sprite mapping live. See PLAN.md.
 
-# shared-timing-impl-001: legacy-path baseline/wrapper driver for the MM_W_012 lever route.
-# Registered first so a client time limit on a long suite cannot cut it off. It uses only the
-# pre-existing RuntimeSimState::advance/World::tick API, so one source records the pre-edit
-# baseline and then guards the documented compatibility wrapper.
-add_executable(test_sharedtiming_baseline src/__test__/test_sharedtiming_baseline.cpp
-  src/app/RuntimeHud.cpp src/app/SimClock.cpp src/app/LevelEndTransition.cpp
-  src/shell/HudText.cpp src/shell/PauseCaption.cpp src/shell/MenuRender.cpp
-  src/app/RuntimeSkillPanel.cpp src/app/SkillPanel.cpp)
-target_link_libraries(test_sharedtiming_baseline PRIVATE webolution_objects)
-add_test(NAME sharedtiming_baseline
-  COMMAND test_sharedtiming_baseline "${CMAKE_SOURCE_DIR}/build/shared-timing-impl-001/legacy-wrapper-observations.txt")
-if(DEFINED WEBOLUTION_GAME_DIR)
-  set_tests_properties(sharedtiming_baseline PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-endif()
-
 # shared-timing-impl-001: the connected explicit elapsed-time path (RuntimeSimState::advanceElapsed
 # -> World::advanceElapsedMs) on installed MM_W_012. Observations go to build/shared-timing-impl-001.
 add_executable(test_sharedtiming src/__test__/test_sharedtiming.cpp
@@ -182,13 +167,6 @@ if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(sharedtiming PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
-# lever-gates-impl-001: the genuine pre-edit baseline driver src/__test__/test_levergates_baseline.cpp
-# (legacy-visible API only) was registered as `levergates_baseline` and PASSED against the UNEDITED
-# production sources (verify.py --profile main, before any production edit); its output is retained as
-# build/lever-gates-impl-001/baseline-before-edit.txt. Its assertions describe the pre-edit behaviour
-# (3600 stored cells, pulls change nothing), which the integration deliberately changes, so it is no
-# longer registered; the source and the retained output are the record.
-# After the integration: public loader + shared elapsed path, independent reference recurrence.
 add_executable(test_levergates src/__test__/test_levergates.cpp
   src/app/RuntimeHud.cpp src/app/SimClock.cpp src/app/LevelEndTransition.cpp
   src/shell/HudText.cpp src/shell/PauseCaption.cpp src/shell/MenuRender.cpp
@@ -201,14 +179,6 @@ if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(levergates PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
-# lever-initial-face-impl-001: the genuine pre-edit driver src/__test__/test_leverinitface_baseline.cpp
-# (public loader + shared elapsed path only, observation only) was registered as `leverinitface_baseline`
-# and run by verify.py --profile main against the UNEDITED production sources; its output is retained as
-# build/lever-initial-face-impl-001/baseline-before-edit.txt. It records the pre-edit wrong default, so it
-# is no longer registered (registering it would overwrite that retained evidence); the source and the
-# output are the record.
-# After the change: independent serialized records, all four levers, first pull/repeat/reload, the
-# ids 5/6 ramp, once-only load fan-out and unsupported-face fixtures through the unchanged loader.
 add_executable(test_leverinitface src/__test__/test_leverinitface.cpp
   src/app/RuntimeHud.cpp src/app/SimClock.cpp src/app/LevelEndTransition.cpp
   src/shell/HudText.cpp src/shell/PauseCaption.cpp src/shell/MenuRender.cpp
@@ -483,10 +453,6 @@ if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(savepersist PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
-# save-codec-001 before/after restart demonstration. One driver, two builds: "after" uses
-# the current FrontendSession.cpp with a temp-directory store; "before" is built only when
-# the frozen pre-change FrontendSession.{h,cpp} exist under the ignored
-# build/save-codec-001/frozen/ (they are never tracked), so a clean checkout skips it.
 add_executable(test_savedemo_after src/__test__/test_savedemo.cpp
   src/app/ResultsScene.cpp
   src/app/FrontendSession.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
@@ -496,24 +462,8 @@ target_link_libraries(test_savedemo_after PRIVATE webolution_objects)
 target_compile_definitions(test_savedemo_after PRIVATE
   SAVEDEMO_REPORT_DIR="${CMAKE_SOURCE_DIR}/build/save-codec-001")
 add_test(NAME savedemo_after COMMAND test_savedemo_after)
-set(SAVEDEMO_FROZEN_DIR ${CMAKE_SOURCE_DIR}/build/save-codec-001/frozen/app)
-if(EXISTS ${SAVEDEMO_FROZEN_DIR}/FrontendSession.cpp AND EXISTS ${SAVEDEMO_FROZEN_DIR}/FrontendSession.h)
-  add_executable(test_savedemo_before src/__test__/test_savedemo.cpp
-    ${SAVEDEMO_FROZEN_DIR}/FrontendSession.cpp
-    src/app/ResultsScene.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
-    src/app/CursorPolicy.cpp src/app/SkillPanel.cpp src/shell/Frontend.cpp
-    src/shell/MenuRender.cpp src/shell/HudText.cpp)
-  target_include_directories(test_savedemo_before BEFORE PRIVATE ${CMAKE_SOURCE_DIR}/build/save-codec-001/frozen)
-  target_link_libraries(test_savedemo_before PRIVATE webolution_objects)
-  target_compile_definitions(test_savedemo_before PRIVATE SAVEDEMO_BEFORE
-    SAVEDEMO_REPORT_DIR="${CMAKE_SOURCE_DIR}/build/save-codec-001")
-  add_test(NAME savedemo_before COMMAND test_savedemo_before)
-endif()
 if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(savedemo_after PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  if(TARGET test_savedemo_before)
-    set_tests_properties(savedemo_before PROPERTIES ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endif()
 endif()
 
 add_executable(test_results src/__test__/test_results.cpp
@@ -573,53 +523,6 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   set_tests_properties(maphover PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # Authentic task-entry map/session sources, optional and never tracked. The
-  # same public-input driver measures the old missing-title behavior.
-  set(MAP_HOVER_FROZEN "${CMAKE_SOURCE_DIR}/build/map-level-names-001/before-source")
-  if(EXISTS "${MAP_HOVER_FROZEN}/src/app/FrontendSession.cpp" AND
-     EXISTS "${MAP_HOVER_FROZEN}/src/app/MapScene.cpp")
-    set(MAP_HOVER_BEFORE_GFX ${WEBOLUTION_GFX_SOURCES})
-    list(REMOVE_ITEM MAP_HOVER_BEFORE_GFX
-      "${CMAKE_SOURCE_DIR}/src/app/FrontendSession.cpp" "${CMAKE_SOURCE_DIR}/src/app/MapScene.cpp")
-    add_executable(test_maphover_before src/__test__/test_maphover.cpp
-      ${MAP_HOVER_BEFORE_GFX} "${MAP_HOVER_FROZEN}/src/app/FrontendSession.cpp"
-      "${MAP_HOVER_FROZEN}/src/app/MapScene.cpp" src/app/SceneVertexPack.cpp
-      src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
-    target_include_directories(test_maphover_before BEFORE PRIVATE "${MAP_HOVER_FROZEN}/src")
-    target_link_libraries(test_maphover_before PRIVATE webolution_objects)
-    target_compile_definitions(test_maphover_before PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 MAP_HOVER_FROZEN=1)
-    add_test(NAME maphover_before COMMAND test_maphover_before baseline "${CMAKE_BINARY_DIR}/map-hover-before-test")
-    set_tests_properties(maphover_before PROPERTIES TIMEOUT 120
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endif()
-
-  # T3: compare the three-line block with authentic task-entry title-only sources.
-  # Optional local provenance fixture; no original code or assets are copied.
-  set(MAP_HOVER_TEXT_FROZEN "${CMAKE_SOURCE_DIR}/build/map-hover-text-001/before-source")
-  if(EXISTS "${MAP_HOVER_TEXT_FROZEN}/src/app/FrontendSession.cpp")
-    set(MAP_HOVER_TEXT_BEFORE_GFX ${WEBOLUTION_GFX_SOURCES})
-    list(REMOVE_ITEM MAP_HOVER_TEXT_BEFORE_GFX
-      "${CMAKE_SOURCE_DIR}/src/app/FrontendSession.cpp" "${CMAKE_SOURCE_DIR}/src/app/MapScene.cpp"
-      "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
-    add_executable(test_maphovertext_before src/__test__/test_maphover.cpp
-      ${MAP_HOVER_TEXT_BEFORE_GFX} "${MAP_HOVER_TEXT_FROZEN}/src/app/FrontendSession.cpp"
-      "${MAP_HOVER_TEXT_FROZEN}/src/app/MapScene.cpp" "${MAP_HOVER_TEXT_FROZEN}/src/app/main.cpp"
-      src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
-    target_include_directories(test_maphovertext_before BEFORE PRIVATE "${MAP_HOVER_TEXT_FROZEN}/src")
-    target_link_libraries(test_maphovertext_before PRIVATE webolution_objects)
-    target_compile_definitions(test_maphovertext_before PRIVATE
-      WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 MAP_HOVER_FROZEN=1)
-    add_test(NAME maphovertext_before COMMAND test_maphovertext_before previous "${CMAKE_BINARY_DIR}/map-hover-text-before-test")
-    set_tests_properties(maphovertext_before PROPERTIES TIMEOUT 120
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    find_package(Python3 COMPONENTS Interpreter REQUIRED)
-    add_test(NAME maphovertext_compare COMMAND "${Python3_EXECUTABLE}"
-      "${CMAKE_SOURCE_DIR}/tools/compare_map_hover.py" "${CMAKE_BINARY_DIR}"
-      "${CMAKE_BINARY_DIR}/map-hover-text-comparison")
-    set_tests_properties(maphovertext_compare PROPERTIES TIMEOUT 120
-      DEPENDS "maphover;maphovertext_before")
-  endif()
-
   # Observe real SDL window lifetimes in the source application, including teardown.
   if(MINGW OR (UNIX AND NOT APPLE))
     add_executable(test_windowscale src/__test__/test_windowscale.cpp)
@@ -646,30 +549,6 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
     set_tests_properties(frontendwindowquit PROPERTIES TIMEOUT 120
       ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-    # Optional authentic task-entry sources, retained under ignored build/. The
-    # same input driver asserts the measured three-window / ineffective-Quit
-    # baseline; a clean checkout builds only the production regression above.
-    set(FWQ_FROZEN "${CMAKE_SOURCE_DIR}/build/frontend-window-quit-001/before-source")
-    if(EXISTS "${FWQ_FROZEN}/manifest.json")
-      set(FWQ_BEFORE_GFX)
-      foreach(source IN LISTS WEBOLUTION_GFX_SOURCES)
-        file(RELATIVE_PATH relative_source "${CMAKE_SOURCE_DIR}" "${source}")
-        list(APPEND FWQ_BEFORE_GFX "${FWQ_FROZEN}/${relative_source}")
-      endforeach()
-      add_executable(test_frontendwindowquit_before src/__test__/test_frontendwindowquit.cpp
-        ${FWQ_BEFORE_GFX} "${FWQ_FROZEN}/src/app/SceneVertexPack.cpp"
-        "${FWQ_FROZEN}/src/app/SceneDiffuse.cpp" "${FWQ_FROZEN}/src/app/SceneDepth.cpp"
-        "${FWQ_FROZEN}/src/app/SceneDispatch.cpp")
-      target_include_directories(test_frontendwindowquit_before BEFORE PRIVATE "${FWQ_FROZEN}/src")
-      target_link_libraries(test_frontendwindowquit_before PRIVATE webolution_objects)
-      target_compile_definitions(test_frontendwindowquit_before PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-      target_link_options(test_frontendwindowquit_before PRIVATE
-        "-Wl,--wrap=SDL_CreateWindow" "-Wl,--wrap=SDL_DestroyWindow")
-      add_test(NAME frontendwindowquit_before COMMAND test_frontendwindowquit_before baseline
-        "${CMAKE_BINARY_DIR}/frontend-window-quit-before-test")
-      set_tests_properties(frontendwindowquit_before PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
   endif()
 
   add_executable(test_levelinteraction src/__test__/test_levelinteraction.cpp)
@@ -845,6 +724,11 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME cueplayback COMMAND test_cueplayback)
   set_tests_properties(cueplayback PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  # Playtest 6 V4: save event multiplicity and exit overlap headroom, no device.
+  add_executable(test_exit_sound src/__test__/test_exit_sound.cpp)
+  target_link_libraries(test_exit_sound PRIVATE webolution_objects)
+  add_test(NAME exit_sound COMMAND test_exit_sound)
+  set_tests_properties(exit_sound PROPERTIES TIMEOUT 10)
   # native-022: ordinary frontend entry -> level with one owned audio device.
   # Failure guard only; success is decided by the observers and SDL_QUIT.
   add_executable(test_audioapp src/__test__/test_audioapp.cpp)
@@ -860,9 +744,6 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_test(NAME audioapp COMMAND test_audioapp)
   set_tests_properties(audioapp PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  # native-022: same synthetic installed-terrain scenarios in authentic frozen
-  # HEAD main.cpp and current main.cpp. Only the test driver's loader is replaced.
-  # The frozen source stays ignored; clean checkouts still run the current side.
   set(AUDIO_DEMO_SOURCES ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM AUDIO_DEMO_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp")
   add_library(audio_demo_app STATIC ${AUDIO_DEMO_SOURCES}
@@ -871,26 +752,17 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   target_link_libraries(audio_demo_app PUBLIC webolution_objects)
   target_compile_definitions(audio_demo_app PUBLIC
     WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  foreach(side IN ITEMS after before)
-    if(side STREQUAL "before")
-      set(demo_main "${CMAKE_SOURCE_DIR}/build/native-022/frozen-main.cpp")
-    else()
-      set(demo_main "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
-    endif()
-    if(EXISTS "${demo_main}")
-      add_executable(test_audiodemo_${side} src/__test__/test_audiodemo.cpp)
-      target_link_libraries(test_audiodemo_${side} PRIVATE audio_demo_app webolution_objects)
-      target_compile_definitions(test_audiodemo_${side} PRIVATE
-        WEBOLUTION_AUDIO_DEMO_MAIN="${demo_main}"
-        WEBOLUTION_AUDIO_DEMO_DIR="${CMAKE_SOURCE_DIR}/build/native-022")
-      if(side STREQUAL "before")
-        target_compile_definitions(test_audiodemo_${side} PRIVATE WEBOLUTION_AUDIO_DEMO_BEFORE=1)
-      endif()
-      add_test(NAME audiodemo_${side} COMMAND test_audiodemo_${side})
-      set_tests_properties(audiodemo_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
-  endforeach()
+  set(demo_main "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
+  if(EXISTS "${demo_main}")
+    add_executable(test_audiodemo_after src/__test__/test_audiodemo.cpp)
+    target_link_libraries(test_audiodemo_after PRIVATE audio_demo_app webolution_objects)
+    target_compile_definitions(test_audiodemo_after PRIVATE
+      WEBOLUTION_AUDIO_DEMO_MAIN="${demo_main}"
+      WEBOLUTION_AUDIO_DEMO_DIR="${CMAKE_SOURCE_DIR}/build/native-022")
+    add_test(NAME audiodemo_after COMMAND test_audiodemo_after)
+    set_tests_properties(audiodemo_after PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  endif()
   add_executable(test_entrycuewindow src/__test__/test_entrycuewindow.cpp)
   target_link_libraries(test_entrycuewindow PRIVATE webolution_app webolution_app_nomain)
   target_link_libraries(test_entrycuewindow PRIVATE webolution_objects)
@@ -927,11 +799,9 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   endif()
 endif()
 
-
 add_executable(test_levelindex src/__test__/test_levelindex.cpp)
 target_link_libraries(test_levelindex PRIVATE webolution_objects)
 add_test(NAME levelindex COMMAND test_levelindex)
-
 
 add_executable(test_surface src/__test__/test_surface.cpp)
 target_link_libraries(test_surface PRIVATE webolution_objects)
@@ -994,18 +864,7 @@ target_link_libraries(test_backdropscene PRIVATE webolution_objects)
 target_include_directories(test_backdropscene PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME backdropscene COMMAND test_backdropscene WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-# scene-admission-001: authentic task-entry BackdropScene.cpp/.h are frozen once into
-# the ignored build/scene-admission-001/frozen/ (never swapped into src/) and
-# identified by the supervisor entry manifest's SHA-256; the step-1 census is a
-# source-built read-only measurement of every effective installed level.
 set(SCENE_ADMISSION_DIR "${CMAKE_SOURCE_DIR}/build/scene-admission-001")
-include(cmake/sceneadmission_freeze.cmake)
-sceneadmission_freeze("${CMAKE_SOURCE_DIR}/src" "${SCENE_ADMISSION_DIR}/frozen")
-add_test(NAME sceneadmission_identity COMMAND ${CMAKE_COMMAND}
-  "-DFROZEN_DIR=${SCENE_ADMISSION_DIR}/frozen"
-  "-DMANIFEST=${CMAKE_SOURCE_DIR}/build/agent-runs/${SA_ENTRY_RUN}/before-source-hashes.json"
-  -P ${CMAKE_SOURCE_DIR}/cmake/sceneadmission_identity.cmake)
-set_tests_properties(sceneadmission_identity PROPERTIES TIMEOUT 60)
 if(DEFINED WEBOLUTION_GAME_DIR)
   add_executable(test_sceneadmission_census
     src/__test__/test_sceneadmission_census.cpp
@@ -1058,36 +917,18 @@ if(DEFINED WEBOLUTION_GAME_DIR)
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
-# scene-branch-impl-001: asset-free branch-1 formula tests (CRT generator, first-draw latch,
-# temporal advance) and the frozen-source identity check against the supervisor entry manifest.
 add_executable(test_scenebranch_units src/__test__/test_scenebranch_units.cpp
   src/app/CrtRand.cpp src/app/SceneBillboardSource.cpp)
 target_link_libraries(test_scenebranch_units PRIVATE webolution_objects)
 target_include_directories(test_scenebranch_units PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME scenebranch_units COMMAND test_scenebranch_units)
 set_tests_properties(scenebranch_units PROPERTIES TIMEOUT 60)
-add_test(NAME scenebranchimpl_identity COMMAND ${CMAKE_COMMAND}
-  "-DFROZEN_DIR=${CMAKE_SOURCE_DIR}/build/scene-branch-impl-001/frozen"
-  "-DMANIFEST=${CMAKE_SOURCE_DIR}/build/agent-runs/20261031T193658-47832-2e53d4d4/before-source-hashes.json"
-  -P ${CMAKE_SOURCE_DIR}/cmake/scenebranchimpl_identity.cmake)
-set_tests_properties(scenebranchimpl_identity PROPERTIES TIMEOUT 60)
 
-# scene-nested-impl-001: asset-free ordering/traversal checks and the frozen-source identity check
-# against the supervisor entry manifest (the frozen copies live in the ignored
-# build/scene-nested-impl-001/frozen/ and are never swapped into src/).
 add_executable(test_scenenested_units src/__test__/test_scenenested_units.cpp src/app/SceneDispatch.cpp)
 target_include_directories(test_scenenested_units PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME scenenested_units COMMAND test_scenenested_units)
 set_tests_properties(scenenested_units PROPERTIES TIMEOUT 60)
-add_test(NAME scenenestedimpl_identity COMMAND ${CMAKE_COMMAND}
-  "-DFROZEN_DIR=${CMAKE_SOURCE_DIR}/build/scene-nested-impl-001/frozen"
-  "-DMANIFEST=${CMAKE_SOURCE_DIR}/build/scene-nested-impl-001/entry-manifest.json"
-  -P ${CMAKE_SOURCE_DIR}/cmake/scenenestedimpl_identity.cmake)
-set_tests_properties(scenenestedimpl_identity PROPERTIES TIMEOUT 60)
 
-# scene-integration-001: compile authentic entry-snapshot and current backdrop
-# loaders separately. Never swap production files. Shared support excludes both
-# the loader and application entry; only the current side calls runApplication.
 if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   set(SCENE_DEMO_DIR "${CMAKE_SOURCE_DIR}/build/scene-integration-001")
   set(SCENE_DEMO_SUPPORT ${WEBOLUTION_GFX_SOURCES})
@@ -1099,161 +940,66 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(scene_demo_support PUBLIC webolution_objects)
   target_compile_definitions(scene_demo_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      set(scene_loader "${SCENE_DEMO_DIR}/BackdropScene.cpp")
-    else()
-      set(scene_loader "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
-    endif()
-    if(EXISTS "${scene_loader}")
-      add_executable(test_sceneintegration_${side}
-        src/__test__/test_sceneintegration.cpp "${scene_loader}")
-      target_link_libraries(test_sceneintegration_${side} PRIVATE scene_demo_support webolution_objects)
-      target_compile_definitions(test_sceneintegration_${side} PRIVATE SCENE_DEMO_DIR="${SCENE_DEMO_DIR}")
-      if(side STREQUAL "before")
-        target_include_directories(test_sceneintegration_${side} BEFORE PRIVATE "${SCENE_DEMO_DIR}")
-        target_compile_definitions(test_sceneintegration_${side} PRIVATE SCENE_FROZEN=1)
-      else()
-        target_sources(test_sceneintegration_${side} PRIVATE src/app/main.cpp)
-      endif()
-      add_test(NAME sceneintegration_${side} COMMAND test_sceneintegration_${side})
-      set_tests_properties(sceneintegration_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
-  endforeach()
-  if(TARGET test_sceneintegration_before)
-    set_tests_properties(sceneintegration_after PROPERTIES DEPENDS sceneintegration_before)
+  set(scene_loader "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
+  if(EXISTS "${scene_loader}")
+    add_executable(test_sceneintegration_after
+      src/__test__/test_sceneintegration.cpp "${scene_loader}")
+    target_link_libraries(test_sceneintegration_after PRIVATE scene_demo_support webolution_objects)
+    target_compile_definitions(test_sceneintegration_after PRIVATE SCENE_DEMO_DIR="${SCENE_DEMO_DIR}")
+    target_sources(test_sceneintegration_after PRIVATE src/app/main.cpp)
+    add_test(NAME sceneintegration_after COMMAND test_sceneintegration_after)
+    set_tests_properties(sceneintegration_after PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   endif()
 
-  # scene-admission-001: authentic task-entry BackdropScene.cpp/.h (frozen, identity-checked by
-  # sceneadmission_identity) versus the current structural-admission loader, one driver over
-  # every effective installed level, separate executables, shared support, no file swapping.
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      set(sa_loader "${SCENE_ADMISSION_DIR}/frozen/BackdropScene.cpp")
-    else()
-      set(sa_loader "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
-    endif()
-    if(EXISTS "${sa_loader}" AND EXISTS "${SCENE_ADMISSION_DIR}/frozen/app/BackdropScene.h")
-      add_executable(test_sceneadmission_${side}
-        src/__test__/test_sceneadmission.cpp src/__test__/test_sceneadmission_census.cpp "${sa_loader}")
-      target_link_libraries(test_sceneadmission_${side} PRIVATE scene_demo_support webolution_objects)
-      target_compile_definitions(test_sceneadmission_${side} PRIVATE
-        SCENE_ADMISSION_DIR="${SCENE_ADMISSION_DIR}" SCENE_ADMISSION_NO_MAIN=1)
-      if(side STREQUAL "before")
-        target_include_directories(test_sceneadmission_${side} BEFORE PRIVATE "${SCENE_ADMISSION_DIR}/frozen")
-        target_compile_definitions(test_sceneadmission_${side} PRIVATE SCENE_FROZEN=1)
-      else()
-        target_sources(test_sceneadmission_${side} PRIVATE src/app/main.cpp)
-      endif()
-      add_test(NAME sceneadmission_${side} COMMAND test_sceneadmission_${side})
-      set_tests_properties(sceneadmission_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
-  endforeach()
-  if(TARGET test_sceneadmission_before)
-    set_tests_properties(sceneadmission_after PROPERTIES DEPENDS sceneadmission_before)
+  set(sa_loader "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
+  if(EXISTS "${sa_loader}")
+    add_executable(test_sceneadmission_after
+      src/__test__/test_sceneadmission.cpp src/__test__/test_sceneadmission_census.cpp "${sa_loader}")
+    target_link_libraries(test_sceneadmission_after PRIVATE scene_demo_support webolution_objects)
+    target_compile_definitions(test_sceneadmission_after PRIVATE
+      SCENE_ADMISSION_DIR="${SCENE_ADMISSION_DIR}" SCENE_ADMISSION_NO_MAIN=1)
+    target_sources(test_sceneadmission_after PRIVATE src/app/main.cpp)
+    add_test(NAME sceneadmission_after COMMAND test_sceneadmission_after)
+    set_tests_properties(sceneadmission_after PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   endif()
 
-  # scene-branch-impl-001: authentic task-entry SceneNode.{h,cpp}, BackdropScene.{h,cpp},
-  # SceneBillboardSource.{h,cpp} and main.cpp were copied (never swapped into src/) to the ignored
-  # build/scene-branch-impl-001/frozen/ before any production edit; scenebranchimpl_identity checks
-  # them against the supervisor entry manifest. The frozen driver compiles the frozen SceneNode.cpp
-  # and BackdropScene.cpp under a renamed readSceneNode so it never links the current parser; the
-  # current driver adds the real runApplication. One driver source, two executables.
   set(SBI_DIR "${CMAKE_SOURCE_DIR}/build/scene-branch-impl-001")
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      set(sbi_sources "${SBI_DIR}/frozen/src/app/BackdropScene.cpp" "${SBI_DIR}/frozen/src/assets/SceneNode.cpp")
-    else()
-      set(sbi_sources src/app/BackdropScene.cpp src/app/main.cpp
-          src/__test__/test_sceneadmission_census.cpp decomp-lemmings/src/texture_creation.cpp)
-    endif()
-    if(side STREQUAL "after" OR (EXISTS "${SBI_DIR}/frozen/src/app/BackdropScene.cpp" AND EXISTS "${SBI_DIR}/frozen/src/assets/SceneNode.cpp"))
-      add_executable(test_scenebranchimpl_${side} src/__test__/test_scenebranch_impl.cpp ${sbi_sources})
-      target_link_libraries(test_scenebranchimpl_${side} PRIVATE scene_demo_support webolution_objects)
-      target_compile_definitions(test_scenebranchimpl_${side} PRIVATE SCENE_BRANCH_IMPL_DIR="${SBI_DIR}")
-      if(side STREQUAL "before")
-        target_include_directories(test_scenebranchimpl_${side} BEFORE PRIVATE "${SBI_DIR}/frozen/src")
-        target_compile_definitions(test_scenebranchimpl_${side} PRIVATE SCENE_FROZEN=1)
-        set_source_files_properties("${SBI_DIR}/frozen/src/app/BackdropScene.cpp" "${SBI_DIR}/frozen/src/assets/SceneNode.cpp"
-          PROPERTIES COMPILE_DEFINITIONS "readSceneNode=frozenReadSceneNode")
-      else()
-        target_compile_definitions(test_scenebranchimpl_${side} PRIVATE SCENE_ADMISSION_NO_MAIN=1 SCENE_ADMISSION_DIR="${SCENE_ADMISSION_DIR}")
-        target_include_directories(test_scenebranchimpl_${side} PRIVATE ${CMAKE_SOURCE_DIR}/decomp-lemmings/include)
-      endif()
-      add_test(NAME scenebranchimpl_${side} COMMAND test_scenebranchimpl_${side})
-      set_tests_properties(scenebranchimpl_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
-  endforeach()
-  if(TARGET test_scenebranchimpl_before)
-    set_tests_properties(scenebranchimpl_after PROPERTIES DEPENDS scenebranchimpl_before)
-  endif()
+  set(sbi_sources src/app/BackdropScene.cpp src/app/main.cpp
+      src/__test__/test_sceneadmission_census.cpp decomp-lemmings/src/texture_creation.cpp)
+  add_executable(test_scenebranchimpl_after src/__test__/test_scenebranch_impl.cpp ${sbi_sources})
+  target_link_libraries(test_scenebranchimpl_after PRIVATE scene_demo_support webolution_objects)
+  target_compile_definitions(test_scenebranchimpl_after PRIVATE SCENE_BRANCH_IMPL_DIR="${SBI_DIR}")
+  target_compile_definitions(test_scenebranchimpl_after PRIVATE SCENE_ADMISSION_NO_MAIN=1 SCENE_ADMISSION_DIR="${SCENE_ADMISSION_DIR}")
+  target_include_directories(test_scenebranchimpl_after PRIVATE ${CMAKE_SOURCE_DIR}/decomp-lemmings/include)
+  add_test(NAME scenebranchimpl_after COMMAND test_scenebranchimpl_after)
+  set_tests_properties(scenebranchimpl_after PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # scene-nested-impl-001: authentic task-entry BackdropScene/SceneDispatch/SceneNode (identity-checked by
-  # scenenestedimpl_identity) are compiled from the ignored build/scene-nested-impl-001/frozen/ into
-  # the "before" driver under renamed entry points (readSceneNode, dispatchSecondaryChildren) so the
-  # current parser/dispatch never link into it; the "after" driver adds the real runApplication.
-  # One driver source, two executables; no production file is swapped.
   set(SNI_DIR "${CMAKE_SOURCE_DIR}/build/scene-nested-impl-001")
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      set(sni_sources "${SNI_DIR}/frozen/src/app/BackdropScene.cpp" "${SNI_DIR}/frozen/src/app/SceneDispatch.cpp" "${SNI_DIR}/frozen/src/assets/SceneNode.cpp")
-    else()
-      set(sni_sources src/app/BackdropScene.cpp src/app/main.cpp
-          src/__test__/test_sceneadmission_census.cpp decomp-lemmings/src/texture_creation.cpp)
-    endif()
-    if(side STREQUAL "after" OR (EXISTS "${SNI_DIR}/frozen/src/app/BackdropScene.cpp" AND EXISTS "${SNI_DIR}/frozen/src/app/SceneDispatch.cpp" AND EXISTS "${SNI_DIR}/frozen/src/assets/SceneNode.cpp"))
-      add_executable(test_scenenestedimpl_${side} src/__test__/test_scenenested_impl.cpp ${sni_sources})
-      target_link_libraries(test_scenenestedimpl_${side} PRIVATE scene_demo_support webolution_objects)
-      target_compile_definitions(test_scenenestedimpl_${side} PRIVATE SCENE_NESTED_IMPL_DIR="${SNI_DIR}")
-      if(side STREQUAL "before")
-        target_include_directories(test_scenenestedimpl_${side} BEFORE PRIVATE "${SNI_DIR}/frozen/src")
-        target_compile_definitions(test_scenenestedimpl_${side} PRIVATE SCENE_FROZEN=1)
-        set_source_files_properties("${SNI_DIR}/frozen/src/app/BackdropScene.cpp" "${SNI_DIR}/frozen/src/app/SceneDispatch.cpp" "${SNI_DIR}/frozen/src/assets/SceneNode.cpp"
-          PROPERTIES COMPILE_DEFINITIONS "readSceneNode=frozenReadSceneNode;dispatchSecondaryChildren=frozenDispatchSecondaryChildren")
-      else()
-        target_compile_definitions(test_scenenestedimpl_${side} PRIVATE SCENE_ADMISSION_NO_MAIN=1 SCENE_ADMISSION_DIR="${SCENE_ADMISSION_DIR}")
-        target_include_directories(test_scenenestedimpl_${side} PRIVATE ${CMAKE_SOURCE_DIR}/decomp-lemmings/include)
-      endif()
-      add_test(NAME scenenestedimpl_${side} COMMAND test_scenenestedimpl_${side})
-      set_tests_properties(scenenestedimpl_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
-  endforeach()
-  if(TARGET test_scenenestedimpl_before)
-    set_tests_properties(scenenestedimpl_after PROPERTIES DEPENDS scenenestedimpl_before)
-  endif()
+  set(sni_sources src/app/BackdropScene.cpp src/app/main.cpp
+      src/__test__/test_sceneadmission_census.cpp decomp-lemmings/src/texture_creation.cpp)
+  add_executable(test_scenenestedimpl_after src/__test__/test_scenenested_impl.cpp ${sni_sources})
+  target_link_libraries(test_scenenestedimpl_after PRIVATE scene_demo_support webolution_objects)
+  target_compile_definitions(test_scenenestedimpl_after PRIVATE SCENE_NESTED_IMPL_DIR="${SNI_DIR}")
+  target_compile_definitions(test_scenenestedimpl_after PRIVATE SCENE_ADMISSION_NO_MAIN=1 SCENE_ADMISSION_DIR="${SCENE_ADMISSION_DIR}")
+  target_include_directories(test_scenenestedimpl_after PRIVATE ${CMAKE_SOURCE_DIR}/decomp-lemmings/include)
+  add_test(NAME scenenestedimpl_after COMMAND test_scenenestedimpl_after)
+  set_tests_properties(scenenestedimpl_after PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # camera-entry-001: authentic entry-snapshot main.cpp/AppEntry.h versus current,
-  # one driver, separate executables over the shared (scene-integration) support.
-  # The frozen files live in the ignored build/camera-entry-001/frozen/ and are
-  # never swapped into src/. Failure guards only; success comes from the observers.
   set(CAMERA_ENTRY_DIR "${CMAKE_SOURCE_DIR}/build/camera-entry-001")
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      set(camera_main "${CAMERA_ENTRY_DIR}/frozen/main.cpp")
-    else()
-      set(camera_main "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
-    endif()
-    if(EXISTS "${camera_main}" AND EXISTS "${CAMERA_ENTRY_DIR}/frozen/app/AppEntry.h")
-      add_executable(test_cameraentry_${side}
-        src/__test__/test_cameraentry.cpp "${camera_main}" src/app/BackdropScene.cpp)
-      target_link_libraries(test_cameraentry_${side} PRIVATE scene_demo_support webolution_objects)
-      target_compile_definitions(test_cameraentry_${side} PRIVATE
-        CAMERA_ENTRY_DIR="${CAMERA_ENTRY_DIR}")
-      if(side STREQUAL "before")
-        target_include_directories(test_cameraentry_${side} BEFORE PRIVATE "${CAMERA_ENTRY_DIR}/frozen")
-        target_compile_definitions(test_cameraentry_${side} PRIVATE CAMERAENTRY_FROZEN=1)
-      endif()
-      add_test(NAME cameraentry_${side} COMMAND test_cameraentry_${side})
-      set_tests_properties(cameraentry_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
-  endforeach()
-  if(TARGET test_cameraentry_before)
-    set_tests_properties(cameraentry_after PROPERTIES DEPENDS cameraentry_before)
+  set(camera_main "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
+  if(EXISTS "${camera_main}")
+    add_executable(test_cameraentry_after
+      src/__test__/test_cameraentry.cpp "${camera_main}" src/app/BackdropScene.cpp)
+    target_link_libraries(test_cameraentry_after PRIVATE scene_demo_support webolution_objects)
+    target_compile_definitions(test_cameraentry_after PRIVATE
+      CAMERA_ENTRY_DIR="${CAMERA_ENTRY_DIR}")
+    add_test(NAME cameraentry_after COMMAND test_cameraentry_after)
+    set_tests_properties(cameraentry_after PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   endif()
 
   # native-023: public runApplication --level MM_TELE_003 --sim reaches a World
@@ -1276,13 +1022,6 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(fluidsurface_impl PROPERTIES TIMEOUT 600
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # fastforward-impl-001: asset-backed unit checks on the installed MM_CLIMB_002 World, plus
-  # public runApplication demonstrations. The authentic task-entry main.cpp, RuntimeHud.{h,cpp}
-  # and RuntimeSkillPanel.{h,cpp} were copied (never swapped into src/) to the ignored
-  # build/fastforward-impl-001/frozen/ before any production edit; fastforwardimpl_identity
-  # checks them against the supervisor entry manifest. One driver source, two executables: the
-  # "before" side compiles the frozen three files with the frozen headers first on the include
-  # path, the "after" side the current ones, over identical shared support.
   add_executable(test_fastforward_units src/__test__/test_fastforward_units.cpp
     src/app/RuntimeHud.cpp src/app/SimClock.cpp src/app/LevelEndTransition.cpp
     src/shell/HudText.cpp src/shell/PauseCaption.cpp src/shell/MenuRender.cpp
@@ -1293,11 +1032,6 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
   set(FFI_DIR "${CMAKE_SOURCE_DIR}/build/fastforward-impl-001")
-  add_test(NAME fastforwardimpl_identity COMMAND ${CMAKE_COMMAND}
-    "-DFROZEN_DIR=${FFI_DIR}/frozen"
-    "-DMANIFEST=${FFI_DIR}/entry-manifest.json"
-    -P ${CMAKE_SOURCE_DIR}/cmake/fastforwardimpl_identity.cmake)
-  set_tests_properties(fastforwardimpl_identity PROPERTIES TIMEOUT 60)
   set(FFI_SUPPORT ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM FFI_SUPPORT
     "${CMAKE_SOURCE_DIR}/src/app/main.cpp"
@@ -1308,335 +1042,133 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(fastforward_support PUBLIC webolution_objects)
   target_compile_definitions(fastforward_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  # Hatch release direction: authentic task-entry release/loader sources share
-  # unchanged presentation support. Filter only the three replaced object files.
   set(HATCH_DIRECTION_DIR "${CMAKE_SOURCE_DIR}/build/hatch-release-direction-001")
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before" AND NOT EXISTS "${HATCH_DIRECTION_DIR}/before-source/World.cpp")
-      continue()
-    endif()
-    add_executable(test_hatch_direction_${side} src/__test__/test_hatch_direction.cpp
-      src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    if(side STREQUAL "before")
-      target_sources(test_hatch_direction_${side} PRIVATE
-        "${HATCH_DIRECTION_DIR}/before-source/World.cpp"
-        "${HATCH_DIRECTION_DIR}/before-source/RetailLevel.cpp"
-        "${HATCH_DIRECTION_DIR}/before-source/LevelObjects.cpp")
-      target_include_directories(test_hatch_direction_${side} PRIVATE src/sim src/assets)
-      target_compile_definitions(test_hatch_direction_${side} PRIVATE HATCH_DIRECTION_BEFORE=1)
-      target_link_libraries(test_hatch_direction_${side} PRIVATE fastforward_support
-        "$<FILTER:$<TARGET_OBJECTS:webolution_objects>,EXCLUDE,(World|RetailLevel|LevelObjects)[.]cpp[.]obj$>")
-    else()
-      target_link_libraries(test_hatch_direction_${side} PRIVATE fastforward_support webolution_objects)
-    endif()
-    foreach(level IN ITEMS MM_W_012 MM_CLIMB_002 MM_BASH_002)
-      add_test(NAME hatch_direction_${level}_${side} COMMAND test_hatch_direction_${side}
-        run "${HATCH_DIRECTION_DIR}/${side}/${level}" "${level}")
-      set_tests_properties(hatch_direction_${level}_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endforeach()
-    if(side STREQUAL "before")
-      set(hatch_profile_expected 3633704696154420f7a8edf02eb20fe109c6e32669867e20a0f8a1feca8c4b40)
-    else()
-      set(hatch_profile_expected 03c498d568daedf2eb74d90e321b3233178dee70e6f51bddd237bccaa57df38d)
-    endif()
-    add_test(NAME hatch_direction_profile_${side} COMMAND ${CMAKE_COMMAND}
-      "-DDRIVER=$<TARGET_FILE:test_hatch_direction_${side}>" "-DSIDE=${side}"
-      "-DOUTPUT=${HATCH_DIRECTION_DIR}/profile-${side}" "-DEXPECTED=${hatch_profile_expected}"
-      -P "${CMAKE_SOURCE_DIR}/cmake/hatch_direction_profile.cmake")
-    set_tests_properties(hatch_direction_profile_${side} PROPERTIES TIMEOUT 60
+  add_executable(test_hatch_direction_after src/__test__/test_hatch_direction.cpp
+    src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  target_link_libraries(test_hatch_direction_after PRIVATE fastforward_support webolution_objects)
+  foreach(level IN ITEMS MM_W_012 MM_CLIMB_002 MM_BASH_002)
+    add_test(NAME hatch_direction_${level}_after COMMAND test_hatch_direction_after
+      run "${HATCH_DIRECTION_DIR}/after/${level}" "${level}")
+    set_tests_properties(hatch_direction_${level}_after PROPERTIES TIMEOUT 120
       ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   endforeach()
+  # release-rate-control-001: retire legacy frame hashes that omit RATE.
   add_test(NAME hatch_direction_assets COMMAND test_hatch_direction_after assets "${HATCH_DIRECTION_DIR}/assets")
   set_tests_properties(hatch_direction_assets PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  if(TARGET test_hatch_direction_before)
-    add_test(NAME hatch_direction_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${HATCH_DIRECTION_DIR}/before-source" -P "${CMAKE_SOURCE_DIR}/cmake/hatch_direction_identity.cmake")
-    set_tests_properties(hatch_direction_identity PROPERTIES TIMEOUT 30)
-    set_tests_properties(hatch_direction_profile_before PROPERTIES DEPENDS hatch_direction_identity)
-    foreach(level IN ITEMS MM_W_012 MM_CLIMB_002 MM_BASH_002)
-      set_tests_properties(hatch_direction_${level}_before PROPERTIES DEPENDS hatch_direction_identity)
-      set_tests_properties(hatch_direction_${level}_after PROPERTIES DEPENDS hatch_direction_${level}_before)
-    endforeach()
-    find_package(Python3 COMPONENTS Interpreter REQUIRED)
-    add_test(NAME hatch_direction_compare COMMAND "${Python3_EXECUTABLE}"
-      "${CMAKE_SOURCE_DIR}/tools/compare_hatch_direction.py" "${CMAKE_SOURCE_DIR}")
-    set_tests_properties(hatch_direction_compare PROPERTIES TIMEOUT 30
-      DEPENDS "hatch_direction_MM_W_012_before;hatch_direction_MM_W_012_after;hatch_direction_MM_CLIMB_002_before;hatch_direction_MM_CLIMB_002_after;hatch_direction_MM_BASH_002_before;hatch_direction_MM_BASH_002_after")
-  endif()
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      set(ffi_files "${FFI_DIR}/frozen/src/app/main.cpp" "${FFI_DIR}/frozen/src/app/RuntimeHud.cpp"
-                    "${FFI_DIR}/frozen/src/app/RuntimeSkillPanel.cpp")
-    else()
-      set(ffi_files src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    endif()
-    if(side STREQUAL "after" OR (EXISTS "${FFI_DIR}/frozen/src/app/main.cpp" AND
-       EXISTS "${FFI_DIR}/frozen/src/app/RuntimeHud.cpp" AND EXISTS "${FFI_DIR}/frozen/src/app/RuntimeHud.h" AND
-       EXISTS "${FFI_DIR}/frozen/src/app/RuntimeSkillPanel.cpp" AND EXISTS "${FFI_DIR}/frozen/src/app/RuntimeSkillPanel.h"))
-      add_executable(test_fastforwardapp_${side} src/__test__/test_fastforward_app.cpp ${ffi_files})
-      target_link_libraries(test_fastforwardapp_${side} PRIVATE fastforward_support webolution_objects)
-      target_compile_definitions(test_fastforwardapp_${side} PRIVATE FASTFORWARD_IMPL_DIR="${FFI_DIR}")
-      if(side STREQUAL "before")
-        target_include_directories(test_fastforwardapp_${side} BEFORE PRIVATE "${FFI_DIR}/frozen/src")
-        target_compile_definitions(test_fastforwardapp_${side} PRIVATE FASTFORWARD_FROZEN=1)
-      endif()
-      add_test(NAME fastforwardapp_${side} COMMAND test_fastforwardapp_${side})
-      set_tests_properties(fastforwardapp_${side} PROPERTIES TIMEOUT 120
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endif()
-  endforeach()
-  if(TARGET test_fastforwardapp_before)
-    set_tests_properties(fastforwardapp_after PROPERTIES DEPENDS fastforwardapp_before)
-  endif()
+  set(ffi_files src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  add_executable(test_fastforwardapp_after src/__test__/test_fastforward_app.cpp ${ffi_files})
+  target_link_libraries(test_fastforwardapp_after PRIVATE fastforward_support webolution_objects)
+  target_compile_definitions(test_fastforwardapp_after PRIVATE FASTFORWARD_IMPL_DIR="${FFI_DIR}")
+  add_test(NAME fastforwardapp_after COMMAND test_fastforwardapp_after)
+  set_tests_properties(fastforwardapp_after PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # P17: public-input on/off/on, per-frame World budgets and actual plate pixels.
-  # The optional baseline uses authentic task-entry files, never modified copies.
-  set(FFT_BASE "${CMAKE_SOURCE_DIR}/build/fastforward-toggle-001/before-source")
-  foreach(side IN ITEMS production baseline)
-    if(side STREQUAL "baseline")
-      if(NOT EXISTS "${FFT_BASE}/src/app/main.cpp")
-        continue()
-      endif()
-      set(fft_sources "${FFT_BASE}/src/app/main.cpp" "${FFT_BASE}/src/app/RuntimeHud.cpp"
-        "${FFT_BASE}/src/app/RuntimeSkillPanel.cpp")
-    else()
-      set(fft_sources src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    endif()
-    add_executable(test_fastforward_toggle_${side} src/__test__/test_fastforward_toggle.cpp ${fft_sources})
-    target_link_libraries(test_fastforward_toggle_${side} PRIVATE fastforward_support webolution_objects)
-    if(side STREQUAL "baseline")
-      target_include_directories(test_fastforward_toggle_${side} BEFORE PRIVATE "${FFT_BASE}/src")
-    endif()
-    add_test(NAME fastforward_toggle_${side} COMMAND test_fastforward_toggle_${side} ${side}
-      "${CMAKE_CURRENT_BINARY_DIR}/fastforward-toggle-${side}")
-    set_tests_properties(fastforward_toggle_${side} PROPERTIES TIMEOUT 120
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
+  set(fft_sources src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  add_executable(test_fastforward_toggle_production src/__test__/test_fastforward_toggle.cpp ${fft_sources})
+  target_link_libraries(test_fastforward_toggle_production PRIVATE fastforward_support webolution_objects)
+  add_test(NAME fastforward_toggle_production COMMAND test_fastforward_toggle_production production
+    "${CMAKE_CURRENT_BINARY_DIR}/fastforward-toggle-production")
+  set_tests_properties(fastforward_toggle_production PROPERTIES TIMEOUT 120
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # P7: per-frame fractional placements, public hover/click at that placement,
-  # and identical simulation traces against the authentic task-entry frame loop.
-  set(MOTION_BASE "${CMAKE_SOURCE_DIR}/build/actor-motion-001/before-source")
   set(MOTION_COMPARE "-")
-  if(EXISTS "${MOTION_BASE}/src/app/main.cpp")
-    set(MOTION_COMPARE "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-baseline")
-  endif()
-  foreach(side IN ITEMS baseline production)
-    if(side STREQUAL "baseline")
-      if(NOT EXISTS "${MOTION_BASE}/src/app/main.cpp")
-        continue()
-      endif()
-      set(motion_main "${MOTION_BASE}/src/app/main.cpp")
-    else()
-      set(motion_main src/app/main.cpp)
-    endif()
-    add_executable(test_actor_motion_${side} src/__test__/test_actor_motion.cpp
-      ${motion_main} src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    target_link_libraries(test_actor_motion_${side} PRIVATE fastforward_support webolution_objects)
-    add_test(NAME actor_motion_${side} COMMAND test_actor_motion_${side} ${side}
-      "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-${side}"
-      "${MOTION_COMPARE}")
-    set_tests_properties(actor_motion_${side} PROPERTIES TIMEOUT 180
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    add_test(NAME actor_motion_wall_${side} COMMAND test_actor_motion_${side} wall-${side}
-      "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-wall-${side}")
-    set_tests_properties(actor_motion_wall_${side} PROPERTIES TIMEOUT 60
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
+  set(motion_main src/app/main.cpp)
+  add_executable(test_actor_motion_production src/__test__/test_actor_motion.cpp
+    ${motion_main} src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  target_link_libraries(test_actor_motion_production PRIVATE fastforward_support webolution_objects)
+  add_test(NAME actor_motion_production COMMAND test_actor_motion_production production
+    "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-production"
+    "${MOTION_COMPARE}")
+  set_tests_properties(actor_motion_production PROPERTIES TIMEOUT 180
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  add_test(NAME actor_motion_wall_production COMMAND test_actor_motion_production wall-production
+    "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-wall-production")
+  set_tests_properties(actor_motion_wall_production PROPERTIES TIMEOUT 60
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   add_test(NAME actor_motion_units COMMAND test_actor_motion_production units
     "${CMAKE_CURRENT_BINARY_DIR}/actor-motion-units")
   set_tests_properties(actor_motion_units PROPERTIES TIMEOUT 60)
-  if(TARGET test_actor_motion_baseline)
-    add_test(NAME actor_motion_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${MOTION_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/actor_motion_identity.cmake")
-    set_tests_properties(actor_motion_identity PROPERTIES TIMEOUT 30)
-    set_tests_properties(actor_motion_baseline PROPERTIES DEPENDS actor_motion_identity)
-    set_tests_properties(actor_motion_production PROPERTIES DEPENDS actor_motion_baseline)
-  endif()
 
-  set(HATCH_EXIT_BASE "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/before-source")
-  # Playtest R5/R6: public pointer routes, frozen task-entry main and exact
-  # paired framebuffer comparison. Current-only checks also run on clean trees.
-  set(HOVER_BASE "${CMAKE_SOURCE_DIR}/build/hover-feedback-001/before-source")
   set(HOVER_EVIDENCE "${CMAKE_SOURCE_DIR}/build/hover-feedback-001")
-  foreach(side IN ITEMS after before)
-    if(side STREQUAL "before")
-      if(NOT EXISTS "${HOVER_BASE}/src/app/main.cpp")
-        continue()
-      endif()
-      set(hover_main "${HOVER_BASE}/src/app/main.cpp")
-    else()
-      set(hover_main src/app/main.cpp)
-    endif()
-    add_executable(test_hover_feedback_${side} src/__test__/test_hover_feedback.cpp ${hover_main}
-      src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    target_link_libraries(test_hover_feedback_${side} PRIVATE fastforward_support webolution_objects)
-    if(side STREQUAL "before")
-      target_compile_definitions(test_hover_feedback_${side} PRIVATE HOVER_FEEDBACK_BEFORE=1)
-    endif()
-    foreach(route IN ITEMS actor hatch)
-      add_test(NAME hover_feedback_${route}_${side} COMMAND test_hover_feedback_${side} ${route}
-        "${HOVER_EVIDENCE}/${side}/${route}")
-      set_tests_properties(hover_feedback_${route}_${side} PROPERTIES TIMEOUT 180
-        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    endforeach()
+  set(hover_main src/app/main.cpp)
+  add_executable(test_hover_feedback_after src/__test__/test_hover_feedback.cpp ${hover_main}
+    src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  target_link_libraries(test_hover_feedback_after PRIVATE fastforward_support webolution_objects)
+  foreach(route IN ITEMS actor hatch)
+    add_test(NAME hover_feedback_${route}_after COMMAND test_hover_feedback_after ${route}
+      "${HOVER_EVIDENCE}/after/${route}")
+    set_tests_properties(hover_feedback_${route}_after PROPERTIES TIMEOUT 180
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   endforeach()
   add_test(NAME hover_feedback_units COMMAND test_hover_feedback_after units)
   set_tests_properties(hover_feedback_units PROPERTIES TIMEOUT 30)
   add_test(NAME hover_feedback_reference COMMAND ${CMAKE_COMMAND}
     "-DGAME_DIR=${WEBOLUTION_GAME_DIR}" -P "${CMAKE_SOURCE_DIR}/cmake/hover_feedback_reference.cmake")
   set_tests_properties(hover_feedback_reference PROPERTIES TIMEOUT 30)
-  if(TARGET test_hover_feedback_before)
-    add_test(NAME hover_feedback_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${HOVER_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/hover_feedback_identity.cmake")
-    set_tests_properties(hover_feedback_identity PROPERTIES TIMEOUT 30)
-    foreach(route IN ITEMS actor hatch)
-      set_tests_properties(hover_feedback_${route}_before PROPERTIES DEPENDS "hover_feedback_identity;hover_feedback_${route}_after")
-    endforeach()
-    add_test(NAME hover_feedback_comparison COMMAND test_hover_feedback_after compare "${HOVER_EVIDENCE}")
-    set_tests_properties(hover_feedback_comparison PROPERTIES TIMEOUT 30
-      DEPENDS "hover_feedback_actor_before;hover_feedback_hatch_before"
-      ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endif()
-  # R1/R2: authentic task-entry application against the connected start fix.
-  set(HATCH_TIMING_BASE "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/before-source")
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      if(NOT EXISTS "${HATCH_TIMING_BASE}/src/app/main.cpp")
-        continue()
-      endif()
-      set(timing_main "${HATCH_TIMING_BASE}/src/app/main.cpp")
-    else()
-      set(timing_main src/app/main.cpp)
-    endif()
-    add_executable(test_hatch_timing_${side} src/__test__/test_hatch_timing.cpp ${timing_main}
-      src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    target_link_libraries(test_hatch_timing_${side} PRIVATE fastforward_support webolution_objects)
-    if(side STREQUAL "before")
-      target_compile_definitions(test_hatch_timing_${side} PRIVATE HATCH_TIMING_BEFORE=1)
-    endif()
-    add_test(NAME hatch_timing_${side} COMMAND test_hatch_timing_${side} entry
-      "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/${side}")
-    add_test(NAME hatch_timing_win_${side} COMMAND test_hatch_timing_${side} win
-      "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/win-${side}")
-    add_test(NAME hatch_timing_routes_${side} COMMAND test_hatch_timing_${side} routes
-      "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/routes-${side}")
-    # The routes take about 145 s alone against the unchanged 180 s limit; sharing the
-    # machine with three other play tests has pushed them past it, so they run alone.
-    set_tests_properties(hatch_timing_routes_${side} PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    set_tests_properties(hatch_timing_${side} hatch_timing_win_${side} PROPERTIES TIMEOUT 180
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
+  set(timing_main src/app/main.cpp)
+  add_executable(test_hatch_timing_after src/__test__/test_hatch_timing.cpp ${timing_main}
+    src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  target_link_libraries(test_hatch_timing_after PRIVATE fastforward_support webolution_objects)
+  add_test(NAME hatch_timing_after COMMAND test_hatch_timing_after entry
+    "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/after")
+  add_test(NAME hatch_timing_win_after COMMAND test_hatch_timing_after win
+    "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/win-after")
+  add_test(NAME hatch_timing_routes_after COMMAND test_hatch_timing_after routes
+    "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/routes-after")
+  # The routes take about 145 s alone against the unchanged 180 s limit; sharing the
+  # machine with three other play tests has pushed them past it, so they run alone.
+  set_tests_properties(hatch_timing_routes_after PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  set_tests_properties(hatch_timing_after hatch_timing_win_after PROPERTIES TIMEOUT 180
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   add_test(NAME hatch_timing_units COMMAND test_hatch_timing_after units "${CMAKE_CURRENT_BINARY_DIR}/hatch-timing-units")
   add_test(NAME hatch_timing_fast COMMAND test_hatch_timing_after fast "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/fast")
   add_test(NAME hatch_timing_assets COMMAND test_hatch_timing_after assets "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/assets")
   add_test(NAME hatch_timing_retry COMMAND test_hatch_timing_after retry "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/retry")
   set_tests_properties(hatch_timing_units hatch_timing_fast hatch_timing_assets hatch_timing_retry PROPERTIES TIMEOUT 180
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  if(TARGET test_hatch_timing_before)
-    add_test(NAME hatch_timing_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${HATCH_TIMING_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/hatch_timing_identity.cmake")
-    set_tests_properties(hatch_timing_identity PROPERTIES TIMEOUT 30)
-    set_tests_properties(hatch_timing_before hatch_timing_win_before PROPERTIES DEPENDS hatch_timing_identity)
-    set_tests_properties(hatch_timing_after PROPERTIES DEPENDS hatch_timing_before)
-    set_tests_properties(hatch_timing_routes_before PROPERTIES DEPENDS hatch_timing_identity)
-    set_tests_properties(hatch_timing_routes_after PROPERTIES DEPENDS hatch_timing_routes_before)
-  endif()
   set(HATCH_EXIT_SUPPORT ${FFI_SUPPORT})
   list(REMOVE_ITEM HATCH_EXIT_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
   add_library(hatch_exit_support STATIC ${HATCH_EXIT_SUPPORT}
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(hatch_exit_support PUBLIC webolution_objects)
   target_compile_definitions(hatch_exit_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  # R4: same installed natural win through frozen/current production paths.
-  set(EXIT_BALLOON_BASE "${CMAKE_SOURCE_DIR}/build/exit-balloon-path-001/before-source")
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      if(NOT EXISTS "${EXIT_BALLOON_BASE}/src/app/BackdropScene.cpp")
-        continue()
-      endif()
-      set(balloon_main "${EXIT_BALLOON_BASE}/src/app/main.cpp")
-      set(balloon_scene "${EXIT_BALLOON_BASE}/src/app/BackdropScene.cpp")
-    else()
-      set(balloon_main src/app/main.cpp)
-      set(balloon_scene src/app/BackdropScene.cpp)
-    endif()
-    add_executable(test_exit_balloon_${side} src/__test__/test_exit_balloon.cpp
-      ${balloon_main} ${balloon_scene} src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    target_link_libraries(test_exit_balloon_${side} PRIVATE hatch_exit_support webolution_objects)
-    if(side STREQUAL "before")
-      target_compile_definitions(test_exit_balloon_${side} PRIVATE EXIT_BALLOON_BEFORE=1)
-    endif()
-    add_test(NAME exit_balloon_${side} COMMAND test_exit_balloon_${side}
-      "${CMAKE_SOURCE_DIR}/build/exit-balloon-path-001/${side}")
-    set_tests_properties(exit_balloon_${side} PROPERTIES TIMEOUT 180
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
-  if(TARGET test_exit_balloon_before)
-    add_test(NAME exit_balloon_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${EXIT_BALLOON_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/exit_balloon_identity.cmake")
-    set_tests_properties(exit_balloon_identity PROPERTIES TIMEOUT 30)
-    set_tests_properties(exit_balloon_before PROPERTIES DEPENDS exit_balloon_identity)
-    set_tests_properties(exit_balloon_after PROPERTIES DEPENDS exit_balloon_before)
-  endif()
+  set(balloon_main src/app/main.cpp)
+  set(balloon_scene src/app/BackdropScene.cpp)
+  add_executable(test_exit_balloon_after src/__test__/test_exit_balloon.cpp
+    ${balloon_main} ${balloon_scene} src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  target_link_libraries(test_exit_balloon_after PRIVATE hatch_exit_support webolution_objects)
+  add_test(NAME exit_balloon_after COMMAND test_exit_balloon_after
+    "${CMAKE_SOURCE_DIR}/build/exit-balloon-path-001/after")
+  set_tests_properties(exit_balloon_after PROPERTIES TIMEOUT 180
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   add_test(NAME exit_balloon_assets COMMAND test_exit_balloon_after
     "${CMAKE_SOURCE_DIR}/build/exit-balloon-path-001/assets" assets)
   set_tests_properties(exit_balloon_assets PROPERTIES TIMEOUT 60
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  if(TARGET test_exit_balloon_before)
-    find_package(Python3 COMPONENTS Interpreter REQUIRED)
-    add_test(NAME exit_balloon_compare COMMAND "${Python3_EXECUTABLE}"
-      "${CMAKE_SOURCE_DIR}/tools/compare_exit_balloon.py" "${CMAKE_SOURCE_DIR}")
-    set_tests_properties(exit_balloon_compare PROPERTIES TIMEOUT 60
-      DEPENDS "exit_balloon_before;exit_balloon_after")
-  endif()
+  # release-rate-control-001: legacy exit_balloon_compare omits RATE.
   add_executable(test_hatch_entry_fixture src/__test__/test_hatch_entry_fixture.cpp
     src/app/BackdropScene.cpp src/app/RuntimeHud.cpp)
   target_link_libraries(test_hatch_entry_fixture PRIVATE hatch_exit_support webolution_objects)
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      if(NOT EXISTS "${HATCH_EXIT_BASE}/src/app/main.cpp")
-        continue()
-      endif()
-      set(hatch_main "${HATCH_EXIT_BASE}/src/app/main.cpp")
-      set(hatch_scene "${HATCH_EXIT_BASE}/src/app/BackdropScene.cpp")
-    else()
-      set(hatch_main src/app/main.cpp)
-      set(hatch_scene src/app/BackdropScene.cpp)
-    endif()
-    add_executable(test_hatch_exit_${side} src/__test__/test_hatch_exit.cpp ${hatch_main} ${hatch_scene}
-      src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-    target_link_libraries(test_hatch_exit_${side} PRIVATE hatch_exit_support webolution_objects)
-    if(side STREQUAL "before")
-      target_compile_definitions(test_hatch_exit_${side} PRIVATE HATCH_EXIT_BASELINE=1)
-    endif()
-    add_test(NAME hatch_exit_app_${side} COMMAND test_hatch_exit_${side} app
-      "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/${side}")
-    add_test(NAME hatch_exit_end_${side} COMMAND test_hatch_exit_${side} end
-      "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/end-${side}")
-    set_tests_properties(hatch_exit_app_${side} hatch_exit_end_${side} PROPERTIES TIMEOUT 180
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
+  set(hatch_main src/app/main.cpp)
+  set(hatch_scene src/app/BackdropScene.cpp)
+  add_executable(test_hatch_exit_after src/__test__/test_hatch_exit.cpp ${hatch_main} ${hatch_scene}
+    src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
+  target_link_libraries(test_hatch_exit_after PRIVATE hatch_exit_support webolution_objects)
+  add_test(NAME hatch_exit_app_after COMMAND test_hatch_exit_after app
+    "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/after")
+  add_test(NAME hatch_exit_end_after COMMAND test_hatch_exit_after end
+    "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/end-after")
+  set_tests_properties(hatch_exit_app_after hatch_exit_end_after PROPERTIES TIMEOUT 180
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   add_test(NAME hatch_exit_assets COMMAND test_hatch_exit_after assets "${CMAKE_CURRENT_BINARY_DIR}/hatch-exit-assets")
   set_tests_properties(hatch_exit_assets PROPERTIES TIMEOUT 60
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   add_test(NAME hatch_exit_models COMMAND test_hatch_exit_after models "${CMAKE_SOURCE_DIR}/build/hatch-exit-presentation-001/models")
   set_tests_properties(hatch_exit_models PROPERTIES TIMEOUT 60
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  if(TARGET test_hatch_exit_before)
-    add_test(NAME hatch_exit_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${HATCH_EXIT_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/hatch_exit_identity.cmake")
-    set_tests_properties(hatch_exit_identity PROPERTIES TIMEOUT 30)
-    set_tests_properties(hatch_exit_app_before hatch_exit_end_before PROPERTIES DEPENDS hatch_exit_identity)
-    set_tests_properties(hatch_exit_app_after PROPERTIES DEPENDS hatch_exit_app_before)
-    set_tests_properties(hatch_exit_end_after PROPERTIES DEPENDS hatch_exit_end_before)
-  endif()
 
-  # P8: installed ledge, naturally excavated Basher tunnel and live Bomber full
-  # rotations. Baseline compiles the authentic task-entry TubeScene separately.
-  set(OCCLUSION_BASE "${CMAKE_SOURCE_DIR}/build/actor-occlusion-001/before-source")
   set(OCCLUSION_SUPPORT ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM OCCLUSION_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/TubeScene.cpp"
     "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
@@ -1645,109 +1177,30 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   target_link_libraries(actor_occlusion_support PUBLIC webolution_objects)
   target_compile_definitions(actor_occlusion_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
   set(OCCLUSION_COMPARE "-")
-  if(EXISTS "${OCCLUSION_BASE}/src/app/TubeScene.cpp")
-    set(OCCLUSION_COMPARE "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-before")
-  endif()
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      if(NOT EXISTS "${OCCLUSION_BASE}/src/app/TubeScene.cpp")
-        continue()
-      endif()
-      set(occlusion_scene "${OCCLUSION_BASE}/src/app/TubeScene.cpp")
-      set(occlusion_app "${OCCLUSION_BASE}/src/app/main.cpp")
-      if(EXISTS "${CMAKE_SOURCE_DIR}/build/actor-depth-001/before-source/src/app/main.cpp")
-        set(occlusion_app "${CMAKE_SOURCE_DIR}/build/actor-depth-001/before-source/src/app/main.cpp")
-      endif()
-      set(occlusion_compare "-")
-    else()
-      set(occlusion_scene src/app/TubeScene.cpp)
-      set(occlusion_app src/app/main.cpp)
-      set(occlusion_compare "${OCCLUSION_COMPARE}")
-    endif()
-    add_executable(test_actor_occlusion_${side} src/__test__/test_actor_occlusion.cpp
-      ${occlusion_scene} ${occlusion_app})
-    if(side STREQUAL "before")
-      # The frozen renderer includes its local TubeScene.h. Its driver must
-      # share that header's walker vector layout (before R8 added gravity).
-      # Isolate just this header; the driver still needs current support APIs.
-      set(occlusion_headers "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-before-headers")
-      configure_file("${OCCLUSION_BASE}/src/app/TubeScene.h"
-        "${occlusion_headers}/app/TubeScene.h" COPYONLY)
-      target_include_directories(test_actor_occlusion_before BEFORE PRIVATE "${occlusion_headers}")
-    endif()
-    target_link_libraries(test_actor_occlusion_${side} PRIVATE actor_occlusion_support webolution_objects)
-    if(side STREQUAL "after")
-      target_compile_definitions(test_actor_occlusion_${side} PRIVATE OCCLUSION_HOVER_EXPECTATION=1)
-    endif()
-    add_test(NAME actor_occlusion_${side} COMMAND test_actor_occlusion_${side} ${side}
-      "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-${side}" "${occlusion_compare}")
-    set_tests_properties(actor_occlusion_${side} PROPERTIES TIMEOUT 180
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-    set(occlusion_app_compare "-")
-    if(side STREQUAL "after" AND TARGET test_actor_occlusion_before)
-      set(occlusion_app_compare "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-app-before")
-    endif()
-    add_test(NAME actor_occlusion_app_${side} COMMAND test_actor_occlusion_${side} app-${side}
-      "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-app-${side}" "${occlusion_app_compare}")
-    set_tests_properties(actor_occlusion_app_${side} PROPERTIES TIMEOUT 120
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
-  if(TARGET test_actor_occlusion_before)
-    add_test(NAME actor_occlusion_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${OCCLUSION_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/actor_occlusion_identity.cmake")
-    set_tests_properties(actor_occlusion_identity PROPERTIES TIMEOUT 30)
-    set_tests_properties(actor_occlusion_before actor_occlusion_app_before PROPERTIES DEPENDS actor_occlusion_identity)
-    set_tests_properties(actor_occlusion_after PROPERTIES DEPENDS actor_occlusion_before)
-    set_tests_properties(actor_occlusion_app_after PROPERTIES DEPENDS actor_occlusion_app_before)
-  endif()
+  set(occlusion_scene src/app/TubeScene.cpp)
+  set(occlusion_app src/app/main.cpp)
+  set(occlusion_compare "${OCCLUSION_COMPARE}")
+  add_executable(test_actor_occlusion_after src/__test__/test_actor_occlusion.cpp
+    ${occlusion_scene} ${occlusion_app})
+  target_link_libraries(test_actor_occlusion_after PRIVATE actor_occlusion_support webolution_objects)
+  target_compile_definitions(test_actor_occlusion_after PRIVATE OCCLUSION_HOVER_EXPECTATION=1)
+  add_test(NAME actor_occlusion_after COMMAND test_actor_occlusion_after after
+    "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-after" "${occlusion_compare}")
+  set_tests_properties(actor_occlusion_after PROPERTIES TIMEOUT 180
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # R3: actual installed climber/ledge/pillar/dug-tunnel snapshots, 48 views
-  # each. Before source was frozen at actor-depth-001 entry, never regenerated.
-  set(ACTOR_DEPTH_BASE "${CMAKE_SOURCE_DIR}/build/actor-depth-001/before-source")
   add_test(NAME actor_depth_reference COMMAND ${CMAKE_COMMAND}
     "-DGAME_DIR=${WEBOLUTION_GAME_DIR}"
     -P "${CMAKE_SOURCE_DIR}/cmake/actor_depth_reference.cmake")
   set_tests_properties(actor_depth_reference PROPERTIES TIMEOUT 30)
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      if(NOT EXISTS "${ACTOR_DEPTH_BASE}/src/app/TubeScene.cpp")
-        continue()
-      endif()
-      set(depth_scene "${ACTOR_DEPTH_BASE}/src/app/TubeScene.cpp")
-      set(depth_compare "-")
-    else()
-      set(depth_scene src/app/TubeScene.cpp)
-      set(depth_compare "-")
-      if(EXISTS "${ACTOR_DEPTH_BASE}/src/app/TubeScene.cpp")
-        set(depth_compare "${CMAKE_CURRENT_BINARY_DIR}/actor-depth-before")
-      endif()
-    endif()
-    add_executable(test_actor_depth_${side} src/__test__/test_actor_depth.cpp ${depth_scene})
-    if(side STREQUAL "before")
-      set(depth_headers "${CMAKE_CURRENT_BINARY_DIR}/actor-depth-before-headers")
-      configure_file("${ACTOR_DEPTH_BASE}/src/app/TubeScene.h"
-        "${depth_headers}/app/TubeScene.h" COPYONLY)
-      target_include_directories(test_actor_depth_before BEFORE PRIVATE "${depth_headers}")
-    endif()
-    target_link_libraries(test_actor_depth_${side} PRIVATE actor_occlusion_support webolution_objects)
-    if(side STREQUAL "before")
-      target_compile_definitions(test_actor_depth_${side} PRIVATE ACTOR_DEPTH_BEFORE=1)
-    endif()
-    add_test(NAME actor_depth_${side} COMMAND test_actor_depth_${side} ${side}
-      "${CMAKE_CURRENT_BINARY_DIR}/actor-depth-${side}" "${depth_compare}")
-    set_tests_properties(actor_depth_${side} PROPERTIES TIMEOUT 180
-      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
-  if(TARGET test_actor_depth_before)
-    add_test(NAME actor_depth_identity COMMAND ${CMAKE_COMMAND}
-      "-DBASELINE=${ACTOR_DEPTH_BASE}" -P "${CMAKE_SOURCE_DIR}/cmake/actor_depth_identity.cmake")
-    set_tests_properties(actor_depth_identity PROPERTIES TIMEOUT 30)
-    set_tests_properties(actor_depth_before PROPERTIES DEPENDS "actor_depth_identity;actor_depth_reference")
-    if(TARGET test_actor_occlusion_before)
-      set_tests_properties(actor_occlusion_app_before PROPERTIES DEPENDS "actor_occlusion_identity;actor_depth_identity")
-    endif()
-    set_tests_properties(actor_depth_after PROPERTIES DEPENDS actor_depth_before)
-  endif()
+  set(depth_scene src/app/TubeScene.cpp)
+  set(depth_compare "-")
+  add_executable(test_actor_depth_after src/__test__/test_actor_depth.cpp ${depth_scene})
+  target_link_libraries(test_actor_depth_after PRIVATE actor_occlusion_support webolution_objects)
+  add_test(NAME actor_depth_after COMMAND test_actor_depth_after after
+    "${CMAKE_CURRENT_BINARY_DIR}/actor-depth-after" "${depth_compare}")
+  set_tests_properties(actor_depth_after PROPERTIES TIMEOUT 180
+    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
   # playable-baseline-001: scripted public-input assessment of three installed levels. Outcomes
   # (win/loss/watchdog) are reported to build/playable-baseline-001, never asserted; the exit code
@@ -1797,7 +1250,7 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     string(LENGTH "${chunk}" LS_LEN)
     if(LS_LEN EQUAL 1)
       set(LS_NAME "0${chunk}")
-    else()
+  else()
       set(LS_NAME "${chunk}")
     endif()
     add_test(NAME levelsweep_chunk_${LS_NAME} COMMAND test_levelsweep chunk ${chunk} "${LS_DIR}")
@@ -1836,18 +1289,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     set(PE_PREV playableexpansion_restart_${step})
   endforeach()
 
-  # level-selection-case-001: the 20 map spellings that differ in case from the archive. The frozen
-  # task-entry main.cpp/RetailLevel.cpp (ignored build/level-selection-case-001/frozen, written before any
-  # production edit, identity-checked below) are built into their own driver and must REPRODUCE the failure
-  # through the frontend; the current build must enter the canonical level on the same route. Frontend runs use
-  # an isolated save (nodes >= 3 a labelled DIAGNOSTIC prepared-save fixture); outputs under LSC_DIR/evidence.
   set(LSC_DIR "${CMAKE_SOURCE_DIR}/build/level-selection-case-001")
   set(LSC_ENV "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  add_test(NAME levelselection_identity COMMAND ${CMAKE_COMMAND}
-    "-DFROZEN_DIR=${LSC_DIR}/frozen"
-    "-DMANIFEST=${CMAKE_SOURCE_DIR}/build/agent-runs/loop-4070ec7c9130425f9242b8cbc09c0fab/0004-review-af050c/before-source-hashes.json"
-    -P ${CMAKE_SOURCE_DIR}/cmake/levelselectioncase_identity.cmake)
-  set_tests_properties(levelselection_identity PROPERTIES TIMEOUT 60)
 
   add_executable(test_levelselection_after src/__test__/test_levelselection.cpp)
   target_link_libraries(test_levelselection_after PRIVATE webolution_app webolution_app_nomain)
@@ -1859,46 +1302,10 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     target_link_libraries(test_levelselection_after PRIVATE PkgConfig::SDL2)
   endif()
 
-  if(EXISTS "${LSC_DIR}/frozen/src/app/main.cpp" AND EXISTS "${LSC_DIR}/frozen/src/sim/RetailLevel.cpp")
-    set(LSC_BASE ${WEBOLUTION_SOURCES})
-    list(REMOVE_ITEM LSC_BASE "${CMAKE_SOURCE_DIR}/src/sim/RetailLevel.cpp")
-    add_library(lsc_before_base OBJECT ${LSC_BASE} ${WEBOLUTION_AUDIO_SOURCES}
-      "${LSC_DIR}/frozen/src/sim/RetailLevel.cpp")
-    target_include_directories(lsc_before_base PUBLIC
-      ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/assets ${CMAKE_SOURCE_DIR}/src/sim)
-    target_link_libraries(lsc_before_base PUBLIC
-      webolution_texture_decoder webolution_sprite_resource webolution_compiled_level)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      target_link_libraries(lsc_before_base PUBLIC stdc++exp)
-    endif()
-    target_compile_options(lsc_before_base PUBLIC
-      $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
-    if(TARGET SDL2::SDL2)
-      target_link_libraries(lsc_before_base PUBLIC SDL2::SDL2)
-    elseif(TARGET PkgConfig::SDL2)
-      target_link_libraries(lsc_before_base PUBLIC PkgConfig::SDL2)
-    endif()
-    set(LSC_GFX ${WEBOLUTION_GFX_SOURCES})
-    list(REMOVE_ITEM LSC_GFX "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
-    add_executable(test_levelselection_before src/__test__/test_levelselection.cpp ${LSC_GFX}
-      "${LSC_DIR}/frozen/src/app/main.cpp" src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp
-      src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
-    target_link_libraries(test_levelselection_before PRIVATE lsc_before_base)
-    target_compile_definitions(test_levelselection_before PRIVATE
-      WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1 LSC_FROZEN=1)
-    foreach(node IN ITEMS 0 9)
-      add_test(NAME levelselection_before_node${node}
-        COMMAND test_levelselection_before frontend ${node} "${LSC_DIR}/evidence")
-      set_tests_properties(levelselection_before_node${node} PROPERTIES TIMEOUT 300 ENVIRONMENT "${LSC_ENV}")
-    endforeach()
-  endif()
   foreach(node IN ITEMS 0 9 11 21)
     add_test(NAME levelselection_after_node${node}
       COMMAND test_levelselection_after frontend ${node} "${LSC_DIR}/evidence")
     set_tests_properties(levelselection_after_node${node} PROPERTIES TIMEOUT 300 ENVIRONMENT "${LSC_ENV}")
-    if(TARGET test_levelselection_before)
-      set_tests_properties(levelselection_after_node${node} PROPERTIES DEPENDS levelselection_before_node9)
-    endif()
   endforeach()
   add_test(NAME levelselection_census COMMAND test_levelselection_after census "${LSC_DIR}/evidence")
   set_tests_properties(levelselection_census PROPERTIES TIMEOUT 300 ENVIRONMENT "${LSC_ENV}")
@@ -1939,7 +1346,6 @@ add_test(NAME scenemeshsource COMMAND test_scenemeshsource)
 add_executable(test_wav src/__test__/test_wav.cpp)
 target_link_libraries(test_wav PRIVATE webolution_objects)
 add_test(NAME wav COMMAND test_wav)
-
 
 add_executable(test_terrain src/__test__/test_terrain.cpp)
 target_link_libraries(test_terrain PRIVATE webolution_objects)
@@ -2030,66 +1436,17 @@ if(DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(runtimeskillpanel frontendsession PROPERTIES
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  # native-023: public loadRetailLevel on every installed teleport level in the
-  # frozen task-entry build and in the current build. The frozen sources live in
-  # the ignored build/native-023/frozen/ (never in src/); their identity is the
-  # supervisor entry manifest's, checked by native023_identity_report.
-  include(cmake/native023_freeze.cmake)
   set(N023_DIR "${CMAKE_SOURCE_DIR}/build/native-023")
-  native023_freeze("${N023_DIR}/frozen")
-  message(STATUS "native-023 frozen sources: ${NATIVE023_FROZEN_STATE}")
-  # Fails unless the frozen files hash like the supervisor entry manifest.
-  add_test(NAME native023_identity_report COMMAND ${CMAKE_COMMAND}
-    "-DFROZEN_DIR=${N023_DIR}/frozen"
-    "-DMANIFEST=${CMAKE_SOURCE_DIR}/build/agent-runs/${N023_ENTRY_RUN}/before-source-hashes.json"
-    -P ${CMAKE_SOURCE_DIR}/cmake/native023_identity.cmake)
-  set_tests_properties(native023_identity_report PROPERTIES TIMEOUT 60)
-  native023_frozen_matches("${N023_DIR}/frozen" N023_FROZEN_OK)
-  if(N023_FROZEN_OK)
-    set(N023_BASE ${WEBOLUTION_SOURCES})
-    list(REMOVE_ITEM N023_BASE
-      "${CMAKE_SOURCE_DIR}/src/assets/LevelObjects.cpp" "${CMAKE_SOURCE_DIR}/src/sim/RetailLevel.cpp")
-    add_library(native023_before_base OBJECT ${N023_BASE}
-      "${N023_DIR}/frozen/assets/LevelObjects.cpp" "${N023_DIR}/frozen/sim/RetailLevel.cpp")
-    # Frozen headers first (assets/LevelObjects.h), then the tree for everything else.
-    target_include_directories(native023_before_base PUBLIC
-      "${N023_DIR}/frozen" ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/assets ${CMAKE_SOURCE_DIR}/src/sim)
-    target_link_libraries(native023_before_base PUBLIC
-      webolution_texture_decoder webolution_sprite_resource webolution_compiled_level)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      target_link_libraries(native023_before_base PUBLIC stdc++exp)
-    endif()
-    target_compile_options(native023_before_base PUBLIC
-      $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
-    if(TARGET SDL2::SDL2)
-      target_link_libraries(native023_before_base PUBLIC SDL2::SDL2)
-    elseif(TARGET PkgConfig::SDL2)
-      target_link_libraries(native023_before_base PUBLIC PkgConfig::SDL2)
-    endif()
-  endif()
-  foreach(side IN ITEMS before after)
-    if(side STREQUAL "before")
-      if(NOT TARGET native023_before_base)
-        continue()
-      endif()
-      set(n023_lib native023_before_base)
-    else()
-      set(n023_lib webolution_objects)
-    endif()
-    add_executable(test_teleportdemo_${side} src/__test__/test_teleportdemo.cpp)
-    target_link_libraries(test_teleportdemo_${side} PRIVATE ${n023_lib})
-    target_compile_definitions(test_teleportdemo_${side} PRIVATE
-      TELEPORTDEMO_OUT_DIR="${N023_DIR}")
-    if(side STREQUAL "before")
-      target_compile_definitions(test_teleportdemo_${side} PRIVATE TELEPORTDEMO_FROZEN=1)
-    endif()
-    add_test(NAME teleportdemo_${side} COMMAND test_teleportdemo_${side})
-    set_tests_properties(teleportdemo_${side} PROPERTIES TIMEOUT 120
-      ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  endforeach()
+  set(n023_lib webolution_objects)
+  add_executable(test_teleportdemo_after src/__test__/test_teleportdemo.cpp)
+  target_link_libraries(test_teleportdemo_after PRIVATE ${n023_lib})
+  target_compile_definitions(test_teleportdemo_after PRIVATE
+    TELEPORTDEMO_OUT_DIR="${N023_DIR}")
+  add_test(NAME teleportdemo_after COMMAND test_teleportdemo_after)
+  set_tests_properties(teleportdemo_after PROPERTIES TIMEOUT 120
+    ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
-# Playtest Q1 radial walker lanes and source-built before/after evidence.
 include(cmake/walker_lane.cmake)
 include(cmake/fluid_kinds.cmake)
 include(cmake/fluid_hazard.cmake)
@@ -2102,17 +1459,26 @@ include(cmake/lemming_type_sprites.cmake)
 include(cmake/frame_rate_profile.cmake)
 include(cmake/gravity_gadgets.cmake)
 
-# New full application drivers should keep just their test sources and link
-# webolution_app, webolution_app_nomain and webolution_objects. Test-private
-# macros belong on that driver. Legacy partial/frozen targets below share only
-# their requested current objects, after all frozen include paths are known.
 webolution_share_registered_app_sources()
 
-# Explicit render-demand automation and optional authentic worker controls.
 include(cmake/frame_consumption.cmake)
 include(cmake/antigrav_skill_assign.cmake)
 include(cmake/pick_nearest.cmake)
 include(cmake/nuke.cmake)
+include(cmake/release_rate.cmake)
+
+if(BUILD_TESTING AND NOT EMSCRIPTEN)
+  # Player recordings are regression evidence, not original fidelity evidence.
+  # test_tiers.cmake leaves this corpus check in legacy; an empty corpus passes.
+  add_executable(test_playtest_replays src/__test__/test_playtest_replays.cpp)
+  target_link_libraries(test_playtest_replays PRIVATE webolution_app webolution_objects)
+  add_test(NAME playtest_replays COMMAND test_playtest_replays
+    "${CMAKE_SOURCE_DIR}/docs/playtest/replays" "${WEBOLUTION_GAME_DIR}")
+endif()
 
 # Keep last: assigns the smoke/legacy tiers to every test registered above.
+add_executable(test_death_particles src/__test__/test_death_particles.cpp)
+target_link_libraries(test_death_particles PRIVATE webolution_objects)
+add_test(NAME death_particles COMMAND test_death_particles)
+
 include(cmake/test_tiers.cmake)

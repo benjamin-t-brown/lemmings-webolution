@@ -126,7 +126,7 @@ void record(audio::CuePlayback& playback, std::vector<std::string>& heard) {
 void testTable() {
   std::cout << "cue table\n";
   const auto routes = audio::cueRoutes();
-  check(routes.size() == 2, "exactly two cues have retained play-site evidence");
+  check(routes.size() == 3, "exactly three cues have retained play-site evidence");
 
   // Literal retail names, not values produced by another recovered invocation.
   check(audio::routedCueName(sim::SoundCue::OhNo) == std::optional<std::string_view>("Ohno"),
@@ -135,10 +135,12 @@ void testTable() {
         "the sim's Splat is corrected to FallSplat");
   check(audio::routedCueName(sim::SoundCue::Splat) != std::optional<std::string_view>("Splat"),
         "the retail Splat cue (zero play references) is never played");
+  check(audio::routedCueName(sim::SoundCue::Exit) == std::optional<std::string_view>("Yippee"),
+        "saving at the exit routes to Yippee (playtest 6 V4)");
   for (sim::SoundCue unevidenced :
-       {sim::SoundCue::Assign, sim::SoundCue::Explode, sim::SoundCue::Exit})
+       {sim::SoundCue::Assign, sim::SoundCue::Explode})
     check(!audio::routedCueName(unevidenced).has_value(), "no retained play site => unrouted");
-  check(audio::unroutedCues().size() == 3, "Assign, Explode and Exit are listed as unknown");
+  check(audio::unroutedCues().size() == 2, "Assign and Explode are listed as unknown");
 
   for (const auto& route : routes) {
     check(!route.evidence.empty() && route.evidence.find("0x") != std::string_view::npos,
@@ -153,7 +155,8 @@ void testTable() {
 
   // Synthetic archive carrying exactly the routed names: every route resolves.
   const std::string wav = makeWav();
-  const auto path = writeBox("table", {{"SOUNDS\\OHNO.WAV", wav}, {"SOUNDS\\FALLSPLAT.WAV", wav}});
+  const auto path = writeBox("table", {{"SOUNDS\\OHNO.WAV", wav}, {"SOUNDS\\FALLSPLAT.WAV", wav},
+                                      {"SOUNDS\\YIPPEE.WAV", wav}});
   {
     auto lib = AssetLibrary::open(path);
     check(lib.has_value(), "synthetic archive opens");

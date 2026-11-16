@@ -364,10 +364,24 @@ void World::stepTeleporting(Lemming& l) {
   l.fallDistance = 0;
 }
 void World::explode(Lemming& l) {
+  std::array<std::array<int, 2>, 49> occupied{};
+  std::size_t count = 0;
+  if (deathObserver_) {
+    for (int y = l.y - 4; y < l.y + 3; ++y)
+      for (int x = l.x - 4; x < l.x + 3; ++x)
+        if (y >= 0 && y < setup_.terrain.height() &&
+            setup_.terrain.at(x, y) != Material::Empty)
+          occupied[count++] = {setup_.terrain.wrapX(x), y};
+  }
   setup_.terrain.clearExplosion(l.x, l.y);
   l.state = State::Dead;
   ++dead_;
   cue(SoundCue::Explode);
+  if (deathObserver_) {
+    const auto end = std::remove_if(occupied.begin(), occupied.begin() + count,
+        [&](const auto& cell) { return setup_.terrain.at(cell[0], cell[1]) != Material::Empty; });
+    deathObserver_(l, true, std::span(occupied.begin(), end));
+  }
 }
 void World::stepExploder(Lemming& l) {
 
@@ -481,6 +495,7 @@ void World::stepFaller(Lemming& l) {
       l.stepBudgetSeconds = 0.0;
       ++dead_;
       cue(SoundCue::Splat);
+      if (deathObserver_) deathObserver_(l, false, {});
       return;
     }
 
@@ -513,6 +528,7 @@ void World::stepFaller(Lemming& l) {
         l.state = State::Splatter;
         ++dead_;
         cue(SoundCue::Splat);
+        if (deathObserver_) deathObserver_(l, false, {});
         return;
       }
       l.state = State::Walker;

@@ -1,6 +1,7 @@
 #include "Mixer.h"
 
 #include "assets/Box.h"
+#include "audio/OverlapMix.h"
 
 #include <SDL.h>
 
@@ -140,26 +141,30 @@ bool Mixer::has(std::string_view cue) const {
   return found;
 }
 
-void Mixer::play(std::string_view cue, float volume) {
+void Mixer::play(std::string_view cue, float volume, Overlap overlap) {
   if (!ready() || volume <= 0.0f || sfxVolume_ <= 0.0f)
     return;
 
   SDL_LockAudioDevice(device_);
   const auto it = clips_.find(upperCue(cue));
   if (it != clips_.end() && !it->second.samples.empty()) {
-    // Cap concurrent voices so a long nuke cannot grow without bound. Drop
-    // the oldest non-music when full -- short SFX recover.
-    constexpr std::size_t kMaxVoices = 32;
-    if (voices_.size() >= kMaxVoices) {
+    // Preserve the existing cap for additive voices (e.g. a long nuke).
+    // Exit cheers own a separate bus: one short voice per saved actor. Do not
+    // cut earlier cheers off when a whole group reaches the exit together,
+    // and do not let those new voices steal slots from existing effects.
+    constexpr int kMaxVoices = 32;
+    const auto additiveVoices = std::count_if(voices_.begin(), voices_.end(),
+        [](const Voice& v) { return v.overlap == Overlap::Add; });
+    if (overlap == Overlap::Add && additiveVoices >= kMaxVoices) {
       for (auto vit = voices_.begin(); vit != voices_.end(); ++vit) {
-        if (!vit->music) {
+        if (!vit->music && vit->overlap == Overlap::Add) {
           voices_.erase(vit);
           break;
         }
       }
     }
     const float v = std::clamp(volume, 0.0f, 1.0f) * sfxVolume_;
-    voices_.push_back(Voice{&it->second, 0, v, false, false});
+    voices_.push_back(Voice{&it->second, 0, v, false, false, overlap});
   }
   SDL_UnlockAudioDevice(device_);
 }
@@ -236,7 +241,7 @@ void Mixer::fill(std::int16_t* out, int frames) {
 
   const std::size_t ch = static_cast<std::size_t>(channels_);
   for (Voice& v : voices_) {
-    if (!v.clip)
+    if (!v.clip || v.overlap == Overlap::Average)
       continue;
     const auto& samples = v.clip->samples;
     const std::size_t totalFrames = samples.size() / ch;
@@ -258,6 +263,26 @@ void Mixer::fill(std::int16_t* out, int frames) {
       }
       ++v.cursor;
     }
+  }
+
+  // Only opt-in exit cheers use this bus. Each voice keeps its own cursor,
+  // including when another lemming exits before the previous cheer finishes.
+  // Average only voices still playing at this frame, so an ended voice does
+  // not attenuate the remaining tails for the rest of the callback block.
+  const bool hasExitVoices = std::any_of(voices_.begin(), voices_.end(),
+      [](const Voice& v) { return v.overlap == Overlap::Average; });
+  for (int f = 0; hasExitVoices && f < frames; ++f) {
+    OverlapMix mix;
+    for (Voice& v : voices_) {
+      if (!v.clip || v.overlap != Overlap::Average)
+        continue;
+      const auto& samples = v.clip->samples;
+      if (v.cursor >= samples.size() / ch)
+        continue;
+      mix.add(std::span<const std::int16_t>(samples).subspan(v.cursor * ch, ch), v.volume);
+      ++v.cursor;
+    }
+    mix.mixInto(std::span<std::int16_t>(out + static_cast<std::size_t>(f) * ch, ch));
   }
 
   voices_.erase(std::remove_if(voices_.begin(), voices_.end(),

@@ -1,11 +1,35 @@
 #pragma once
 
 #include "app/SkillPanel.h"
+#include "assets/GameData.h"
 #include "sim/World.h"
 
 #include <array>
 
 namespace webo::app {
+
+// Playable-v1 panel adapter for the primary hatch, matching RetailLevel's
+// existing shared scheduler. This does not implement per-hatch scheduling.
+class RuntimeReleaseRateControl {
+ public:
+  static std::expected<RuntimeReleaseRateControl, std::string> create(
+      const AssetLibrary& library, std::string_view levelId);
+  static bool contains(int x, int y);
+  // SDL button numbers: conventional button 0/1 native state maps to left/right.
+  bool press(int x, int y, int button, sim::World& world);
+  void release(int button) { if (button == heldButton_) reset(); }
+  void reset() { heldButton_ = 0; repeatSeconds_ = 0; }
+  void advance(double seconds, int x, int y, sim::World& world);
+  void draw(Image& image, const Image& font) const;
+  int current() const { return current_; }
+  int minimum() const { return minimum_; }
+  int maximum() const { return maximum_; }
+ private:
+  void change(int delta, sim::World& world);
+  ReleaseRates rates_;
+  int current_ = 1, minimum_ = 1, maximum_ = 99, heldButton_ = 0;
+  double repeatSeconds_ = 0;
+};
 
 // Same SOURCE plate geometry for hover and click; -1 means outside all plates.
 int runtimeSkillPanelIndex(int x, int y);

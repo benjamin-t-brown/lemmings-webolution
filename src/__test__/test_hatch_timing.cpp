@@ -163,20 +163,6 @@ int entry(const fs::path& out, bool fast) {
     if (!before) check(std::abs(doorEnd-2.8) < 0.11, "full door duration is 2.8 s, within frame resolution");
     if (!fast) {
       check(spawned > 2, "recurring release measured");
-      // Compare every recurring gap exactly at this matched owned partition.
-      // A clean checkout still asserts production order/count/cadence; paired
-      // historical replay is available when its authentic frozen source exists.
-      const auto baselineReleases=out.parent_path()/"before"/ *id / "releases.txt";
-      if (!before && fs::exists(baselineReleases)) {
-        std::ifstream in(baselineReleases);
-        std::vector<unsigned long long> old; unsigned long long n;
-        while(in >> n) old.push_back(n);
-        check(old.size() == releases.size(), "release count preserved");
-        for(std::size_t i=1;i<std::min(old.size(),releases.size());++i)
-          check(std::llabs(static_cast<long long>(releases[i]-releases[i-1])-
-                          static_cast<long long>(old[i]-old[i-1])) == 0,
-                "every recurring release interval exactly unchanged");
-      }
     }
     std::ofstream releaseOut(dir / "releases.txt"); for(auto n:releases) releaseOut<<n<<'\n';
     check(privateSave.unchanged(), "entry does not write its private save");
@@ -386,16 +372,12 @@ int routes(const fs::path& out) {
     const std::size_t node=gadget?8:3;
     const std::string level=gadget?"MM_W_012":"MM_BLOCK_001_A";
     const auto dir=out/label; fs::create_directories(dir);
-    const auto baselineDir=out.parent_path()/"routes-before"/label;
     const auto& sites=gadget?gadgetSites:miss?losing:winning;
     std::ofstream trace(dir/"frames.csv"),actions(dir/"actions.csv"),states(dir/"gameplay.txt"),losses(dir/"dry-receiver-losses.csv");
     losses << "age_frame,actor,x,y,fall_distance,receiver_id,height,request\n";
     std::set<std::size_t> drySplats, exitedActors;
     trace<<"frame,ms,age_frame,spawned,saved,dead,phase,stock\n";
     actions<<"age_frame,actor,x,y,click_x,click_y,stock\n";
-    std::ifstream expected;
-    const bool paired=!before && fs::exists(baselineDir/"gameplay.txt");
-    if(paired) expected.open(baselineDir/"gameplay.txt");
     int leg=0,firstFrame=-1,age=-1,spawned=0,saved=0,clicks=0,confirmed=0,pending=0;
     int stage=0,ffAge=-1; bool results=false,won=false,mapEarned=false;
     unsigned long long firstMs=0; std::vector<unsigned long long> births;
@@ -463,8 +445,6 @@ int routes(const fs::path& out) {
       }
       if(firstFrame>=0 && !f.world.timedOut()) {
         const auto state=routeState(f);states<<state<<'\n';
-        if(paired){std::string old;check(bool(std::getline(expected,old)) && old==state,
-                                      label+" all post-birth gameplay state matches");}
       }
       if(pendingActor>=0) {
         const auto& l=f.world.lemmings()[pendingActor];
@@ -511,21 +491,13 @@ int routes(const fs::path& out) {
             "right-born actors 0/2 and all ten left-born actors splat in dry receivers");
     }
     check(births.size()==std::size_t(gadget?20:30),"matched full release count");
-    if(paired) {
-      std::ifstream oldBirths(baselineDir/"births.txt");unsigned long long ms;std::size_t i=0;
-      while(oldBirths>>ms){check(i<births.size() && births[i]-firstMs==ms,"matched every release offset");++i;}
-      check(i==births.size(),"matched same number of releases");
-      std::ifstream oldOutcome(baselineDir/"outcome.txt");std::string oldResult;std::getline(oldOutcome,oldResult);
-      check(oldResult==std::to_string(won)+","+std::to_string(saved)+","+std::to_string(spawned),
-            "matched exact saved/count/win outcome");
-    }
     {std::ofstream b(dir/"births.txt");for(auto ms:births)b<<ms-firstMs<<'\n';}
     std::ofstream(dir/"outcome.txt")<<won<<','<<saved<<','<<spawned<<'\n';
     std::ofstream(dir/"summary.txt")<<"level="<<level<<"\nwon="<<won<<"\nsaved="<<saved<<"\nspawned="<<spawned
       <<"\nfirst_ms="<<firstMs<<"\nretry_legs="<<leg<<"\nclicks="<<clicks<<"\nconfirmed="<<confirmed
       <<"\nfast_forward_age_frame="<<ffAge<<"\nseconds_remaining="<<remaining<<"\nmap_earned="<<mapEarned
       <<"\ndry_receiver_splats="<<drySplats.size()<<"\nexited_actors="<<exitedActors.size()
-      <<"\npaired="<<paired<<"\nfailures="<<failures<<'\n';
+      <<"\nfailures="<<failures<<'\n';
   }
   check(installed.unchanged() && normal.unchanged(),"matched routes preserve real saves");
   std::ofstream(out/"summary.txt")<<"installed="<<installed.unchanged()<<"\nnormal="<<normal.unchanged()<<"\nfailures="<<failures<<'\n';

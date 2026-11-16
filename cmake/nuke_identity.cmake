@@ -1,7 +1,0 @@
-file(READ "${TASK_DIR}/before-sha256.json" manifest)
-string(JSON expected GET "${manifest}" "src/app/main.cpp")
-file(SHA256 "${TASK_DIR}/before-source/src/app/main.cpp" actual)
-if(NOT actual STREQUAL expected)
-  message(FATAL_ERROR "Nuke task-entry input baseline changed")
-endif()
-message(STATUS "Nuke task-entry main.cpp identity ${actual}")

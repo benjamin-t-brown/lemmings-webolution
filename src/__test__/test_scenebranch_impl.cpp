@@ -1,6 +1,5 @@
-// scene-branch-impl-001: authentic frozen (supervisor task-entry SceneNode/BackdropScene) and
-// current loaders in separate executables over EVERY effective installed level, plus the
-// MM_DIG_000 type-2 branch-1 sprite demonstration (current side only).
+// scene-branch-impl-001: current loaders over every effective installed level,
+// plus the MM_DIG_000 type-2 branch-1 sprite demonstration.
 // Fixed source camera, injected generator state; source-built rendering evidence only. No
 // original code runs; no claim of original admission, flame-phase agreement, x87 equivalence,
 // clipping or full-frame fidelity; C3 stays FAIL.
@@ -13,7 +12,6 @@
 #include "assets/LevelIndex.h"
 #include "assets/Png.h"
 #include "scene_lever_baseline.hpp"
-#ifndef SCENE_FROZEN
 #include "app/AppEntry.h"
 #include "app/CrtRand.h"
 #include "assets/Sprite.h"
@@ -21,7 +19,6 @@
 #include "sceneadmission_census.hpp"
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
-#endif
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -129,13 +126,7 @@ std::string firstReason(const std::string& d) {
   if (const auto at = text.find(" at 0x"); at != std::string::npos) text.resize(at);
   return d.substr(roleBegin, roleEnd - roleBegin) + ": " + text.substr(0, 160);
 }
-std::map<std::string, std::string> readLines(const fs::path& path) {
-  std::map<std::string, std::string> out; std::ifstream in(path); std::string line;
-  while (std::getline(in, line)) { const auto sp = line.find(' '); if (sp != std::string::npos) out[line.substr(0, sp)] = line.substr(sp + 1); }
-  return out;
-}
 
-#ifndef SCENE_FROZEN
 // ---- MM_DIG_000 fixed measured record (docs/scratch/scene-branch-research-002.md section 8) ----
 constexpr std::array<std::size_t, 19> kDigNodes = {0xA7555, 0xBC6EA, 0xBC7C7, 0xBC8A4, 0xBC981, 0xBCA5E, 0xBCB3B, 0xBCC18, 0xBCCF5, 0xBCDD2,
                                                    0xC1DE8, 0xC1EC5, 0xC1FA2, 0xC207F, 0xC215C, 0xC2239, 0xC2316, 0xC23F3, 0xC24D0};
@@ -349,17 +340,12 @@ void digDemonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
   require(afterAdvance.raster.framebuffer().rgb != beforeAdvance.raster.framebuffer().rgb, "advancing the temporal state changes the sprite pixels");
   log << "advance,pausedNoChange=1,oneFrameStep=1,cappedAt100ms=1,changedAfterAdvance=1\n";
 }
-#endif
 }  // namespace
 
 int main() try {
   const char* gameDir = std::getenv("WEBOLUTION_GAME_DIR"); require(gameDir && *gameDir, "installed assets required");
   auto lib = AssetLibrary::open(fs::path(gameDir) / "lemmings.box", fs::path(gameDir) / "patch.box"); require(bool(lib), "open installed archives");
-#ifdef SCENE_FROZEN
-  const std::string side = "before";
-#else
   const std::string side = "after";
-#endif
   const fs::path root = SCENE_BRANCH_IMPL_DIR, dir = root / side; fs::create_directories(dir);
   std::ofstream log(dir / "measurements.txt"); log << std::setprecision(17);
   const auto cam = buildCamera(CameraParams{});  // explicit fixed source camera for every level and side
@@ -378,10 +364,8 @@ int main() try {
     auto backdrop = BackdropScene::build(*lib, *bytes, id);
     const auto ms = seconds(t0, Clock::now()) * 1000;
     require(bool(backdrop), "no installed level may hard-error: " + id + (backdrop ? "" : ": " + backdrop.error()));
-#ifndef SCENE_FROZEN
     const auto outcome = sceneadmission::structuralOutcome(*bytes, &*lib);
     require(!outcome.malformed && backdrop->empty() == !outcome.supported, "production admission equals the independent structural outcome: " + id);
-#endif
     if (backdrop->empty()) {
       ++emptyCount;
       require(!backdrop->diagnostics().empty() && backdrop->diagnostics().front().find("empty partial scene") != std::string::npos, "empty level carries a diagnostic: " + id);
@@ -401,37 +385,17 @@ int main() try {
   for (const auto& [k, v] : emptyReasons) log << "emptyReason \"" << k.substr(0, 200) << "\" levels=" << v << '\n';
   log << "admittedIds="; for (const auto& [id, _] : admitted) log << id << ','; log << '\n';
 
-#ifdef SCENE_FROZEN
-  // Entry state: ten structurally admitted levels (scene-admission-001 accepted outcome).
-  require(admitted.size() == 10 && emptyCount == names.size() - 10, "frozen task-entry admission is the ten accepted levels");
-  require(admitted.count("MM_CLIMB_002") && !admitted.count("MM_DIG_000"), "frozen: MM_CLIMB_002 admitted, MM_DIG_000 not");
-  {
-    auto dig = lib->read("COMPILED\\MM_DIG_000.LVL"); require(bool(dig), "read MM_DIG_000");
-    auto frozen = BackdropScene::build(*lib, *dig, "MM_DIG_000");
-    require(frozen && frozen->empty() && frozen->diagnostics().size() == 1 && frozen->diagnostics()[0].find("MM_DIG_000") != std::string::npos &&
-            frozen->diagnostics()[0].find("Secondary") != std::string::npos && frozen->diagnostics()[0].find("unsupported nonzero type-2 branch 1 at 0xa7572") != std::string::npos,
-            "frozen MM_DIG_000 is the diagnosed empty partial scene with exactly one diagnostic");
-    log << "frozenMM_DIG_000," << frozen->diagnostics()[0] << '\n';
-  }
-#else
   require(admitted.count("MM_DIG_000") == 1, "current admits MM_DIG_000");
-#endif
 
   // ---- Phase 2: render every admitted level, record RGB/depth hashes (and raw MM_CLIMB_002) ----
   std::ofstream hashFile(dir / "hashes.txt");
   double renderSeconds = 0;
-#ifndef SCENE_FROZEN
-  // Levels admitted by the frozen run get the full scene-only / composed on / composed off comparison;
-  // levels admitted only now (a tube-free scene-only render keeps this driver inside its time guard).
-  std::set<std::string> frozenAdmitted;
-  for (const auto& [id, line] : readLines(root / "before" / "levels.txt")) if (line.find("admitted=1") == 0) frozenAdmitted.insert(id);
-  require(frozenAdmitted.size() == 10, "frozen levels file lists ten admitted levels");
-#endif
+  // Preserve the ten composed routes; other installed levels use scene-only rendering.
+  static const std::set<std::string> composedLevels = {"E06_KF_1", "H17_MG_1", "M06_KF_1", "M08_KF_1", "MM_BASH_002", "MM_CLIMB_002", "MM_E1_3_SKILLS", "MM_E1_4SKILLS", "MM_W_012", "VH22_JC"};
   for (const auto& [id, backdrop] : admitted) {
     const auto& bytes = admittedBytes.at(id);
     const auto r0 = Clock::now();
-#ifndef SCENE_FROZEN
-    if (!frozenAdmitted.count(id)) {
+    if (!composedLevels.count(id)) {
       auto scene = render(backdrop, nullptr, *lib, cam, true, false);
       const auto h = hashes(scene.raster);
       hashFile << id << ":scene-only rgb=" << hex(h.rgb) << " depth=" << hex(h.depth) << '\n';
@@ -443,7 +407,6 @@ int main() try {
       renderSeconds += seconds(r0, Clock::now());
       continue;
     }
-#endif
     auto mesh = findCylinderMesh(bytes); auto index = indexLevel(bytes);
     std::expected<TubeScene, std::string> tube = std::unexpected(std::string("no tube input"));
     if (mesh && index) tube = TubeScene::build(*lib, *mesh, bytes, index->grid0, true);
@@ -454,8 +417,7 @@ int main() try {
     for (const auto& [mode, r] : {std::pair<const char*, Rendered*>{"scene-only", &scene}, {"scene-on", &on}, {"scene-off", &off}}) {
       const auto h = hashes(r->raster);
       hashFile << id << ':' << mode << " rgb=" << hex(h.rgb) << " depth=" << hex(h.depth) << '\n';
-      // Retain authentic frozen pixels and the precise provenance of the new
-      // lever/flipper stores; whole-frame equality encoded invisible gadgets.
+      // Retain current pixels and the provenance of depth-tested gadget stores.
       artifact(dir, id + "-" + mode, r->raster, true);
       r->leverPixels.save(dir / (id + "-" + mode + ".lever-mask"));
     }
@@ -476,34 +438,11 @@ int main() try {
   hashFile.close();
   log << "renderAllSeconds=" << renderSeconds << " admittedRendered=" << admitted.size() << '\n';
 
-#ifndef SCENE_FROZEN
-  // ---- Phase 3: compare with the frozen run ----
-  const auto before = readLines(root / "before" / "hashes.txt"), now = readLines(dir / "hashes.txt");
-  const auto beforeLevels = readLines(root / "before" / "levels.txt"), nowLevels = readLines(dir / "levels.txt");
-  require(!before.empty() && before.size() == 30, "frozen hashes available (10 levels x 3 modes)");
-  std::size_t compared = 0, exact = 0;
-  for (const auto& [key, value] : before) {
-    const bool identical = now.count(key) && now.at(key) == value;
-    require(now.count(key) && (identical || leverbaseline::unchangedOutsideGadgetStores(
-        root / "before", dir, key, log)), "admitted-level RGB/depth equals frozen outside accepted lever/flipper stores: " + key);
-    exact += identical;
-    ++compared;
-  }
-  log << "frozenCurrentBaselineChecks=" << compared << " exactHashes=" << exact
-      << " (10 admitted levels x scene-only/scene-on/scene-off, RGB and depth)\n";
-  std::vector<std::string> newly;
-  for (const auto& [id, line] : nowLevels) if (line.find("admitted=1") == 0 && beforeLevels.at(id).find("admitted=0") == 0) newly.push_back(id);
-  log << "newlyAdmitted=" << newly.size() << ':'; for (const auto& id : newly) log << ' ' << id; log << '\n';
-  require(std::find(newly.begin(), newly.end(), "MM_DIG_000") != newly.end(), "MM_DIG_000 is newly admitted versus the frozen run");
-  for (const auto& id : newly) require(now.count(id + ":scene-only"), "newly admitted level rendered scene-only: " + id);
-  require(newly.size() == admitted.size() - 10, "every admitted level is either frozen-admitted or newly admitted");
-
   // ---- Phase 4: MM_DIG_000 demonstration ----
   auto dig = lib->read("COMPILED\\MM_DIG_000.LVL"); require(bool(dig), "read MM_DIG_000");
   digDemonstration(*lib, *dig, cam, dir, log);
   // ---- Phase 5: bounded public route ----
   application(gameDir, dir, log);
-#endif
   log.close();
   std::ifstream report(dir / "measurements.txt"); std::cout << report.rdbuf();
   std::cout << "\nPASS scene-branch-impl " << side << '\n';

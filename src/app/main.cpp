@@ -1,5 +1,6 @@
 #include "app/FrameProfile.h"
 #include "app/FrameConsumption.h"
+#include "app/Replay.hpp"
 // Lemmings Webolution -- 3D-first entry point.
 //
 // Ordinary startup enters the connected frontend. Explicit diagnostics load
@@ -159,6 +160,9 @@ struct Args {
   std::string shot;
   std::string windowShot;
   std::string camera;
+  std::string recordDir;
+  std::string replayFile;
+  bool invalidReplayOption = false;
   std::string geom = "route";
   std::string tiles = "flipped";
   std::string order = "inner-first";
@@ -206,7 +210,7 @@ Args parseArgs(int argc, char** argv) {
   bool defaultFrontend = true;
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
-    if (arg != "--game-dir" && arg != "--no-audio" && arg != "--window-scale") defaultFrontend = false;
+    if (arg != "--game-dir" && arg != "--no-audio" && arg != "--window-scale" && arg != "--record") defaultFrontend = false;
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
     if (arg == "--map") a.map = true;
@@ -214,6 +218,8 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--direct-level") defaultFrontend = false;
     else if (arg == "--map-flags") { a.map = true; a.mapFlagsSpecified = true; a.mapFlags = next(); }
     else if (arg == "--level") a.level = next();
+    else if (arg == "--record") { a.recordDir = next(); a.invalidReplayOption |= a.recordDir.empty(); }
+    else if (arg == "--replay") { a.replayFile = next(); a.invalidReplayOption |= a.replayFile.empty(); }
     else if (arg == "--native") a.native = true;
     else if (arg == "--shot") a.shot = next();
     else if (arg == "--window-shot") a.windowShot = next();
@@ -282,6 +288,8 @@ void printHelp() {
             "Any other option keeps its diagnostic route unless --frontend is explicit.\n"
             "--direct-level opens the previous MM_CLIMB_002 injected-walker diagnostic.\n"
             "--window-scale 1|2|3 chooses crisp integer window scaling (ordinary play: 2).\n"
+            "--record DIR records each level attempt as DIR/*.replay (default via Play-Clone.ps1).\n"
+            "--replay FILE checks a recording headless at full speed, without opening a save.\n"
             "Bounded runs, map diagnostics and observers default to 1; CPU screenshots keep their resolution.\n"
             "Window: right mouse + NUMPAD4/6 revolves; mouse drag revolves/elevates;\n"
             "SPACE or CTRL zooms; BACKSPACE flips. Default geometry is route.\n"
@@ -289,7 +297,8 @@ void printHelp() {
             "(use SDL_VIDEODRIVER=dummy for a headless smoke run).\n"
             "--window-shot PNG with --frames N saves the final presented window frame.\n"
             "--sim draws live skill counts; click the first eight plates or use keys 1-8\n"
-            "to select a skill. Double-click Nuke to end releases and explode the remaining lemmings.\n"
+            "to select a skill. Left/right-click RATE to slow/speed releases; hold to repeat.\n"
+            "Double-click Nuke to end releases and explode the remaining lemmings.\n"
             "--frontend starts New Game -> Continue? -> map -> a simulated retail level.\n"
             "Use RETURN at the first two screens, then click an unlocked map node.\n"
             "New Game, Play Current Game and Quit are connected; other menu actions\n"
@@ -301,10 +310,10 @@ void printHelp() {
             "--map [--map-flags FILE] [--shot PNG] renders the conditional 640x480 map base layer;\n"
             "FILE is exactly 102 signed decimal int32 flags, whitespace-separated. Omitted flags are\n"
             "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.\n"
-            "Sound: the simulated level plays two cues that have retained static play-site evidence:\n"
+            "Sound: the simulated level plays three cues with retained static play-site evidence:\n"
             "Ohno (bomber fuse end) and FallSplat (long-fall splat; the sim's Splat is mapped to\n"
-            "FallSplat). Unrouted, silent: Chink (assign), Explode, Yippee (exit), Letsgo, all menu\n"
-            "and frontend sound, and music; none has a retained play site. This is cue routing\n"
+            "FallSplat), and Yippee (saved at the exit). Unrouted, silent: Chink (assign), Explode,\n"
+            "Letsgo, all menu and frontend sound, and music; none has a retained play site. Cue routing\n"
             "only: no claim of native sample timing, volume, mixing or resampling. A missing audio\n"
             "device or WAV is reported on stderr and the game continues. --no-audio disables sound.");
 }
@@ -652,8 +661,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // fixtures keep their existing timing contract.
     if (persistentFrontend) setup->releaseArmSeconds = 0.0;
     world.emplace(*setup);
+    world->setDeathObserver([&](const sim::Lemming& lemming, bool explosion,
+        std::span<const std::array<int, 2>> removed) {
+      scene->emitDeathParticles(lemming, explosion, removed, world->levelClockMs(),
+                                world->terrain().height(), *library);
+    });
     for (int i = 0; i < args.simTicks; ++i)
       world->tick();
+    scene->advanceDeathParticles(world->levelClockMs());
     terrainHeight = world->terrain().height();
     // READ 0x40BAA0 / 0x45CC09: camera height uses the loaded cylinder rows.
     // Explicit diagnostic camera files keep their own supplied operands.
@@ -783,6 +798,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // R3: actors test against completed scenery, fluids and edited terrain.
     if (options.drawCellRoute && !options.composeActorsBeforeRoute)
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
+    scene->drawDeathParticles(target, frameCamera, *library);
     if (!args.sceneOff) std::fprintf(stderr,"backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu null-materials=%zu null-triangles=%zu predicate-rejected=%zu missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",backdrop.has_value(),backdropStats.roots,backdropStats.meshRecords,backdropStats.meshTriangles,backdropStats.billboards,backdropStats.nullMaterials,backdropStats.nullMaterialTriangles,backdropStats.predicateRejected,backdropStats.missingTextures,backdropStats.rejected,backdropStats.pixels);
     if (backdrop && !spriteSeedReported && backdrop->firstSpriteDrawRandomState()) {
       spriteSeedReported = true;
@@ -848,6 +864,12 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       const auto lines = shell::layoutHud(values, hudParams, shell::fontCells());
       shell::drawHud(image, *sheet, lines, shell::fontCells());
+      // V8: headless panel/HUD composition includes the same initial-rate box.
+      if (args.skillPanel) {
+        auto rate = app::RuntimeReleaseRateControl::create(*library, args.level);
+        if (!rate) { std::fprintf(stderr, "release control: %s\n", rate.error().c_str()); return 1; }
+        rate->draw(image, *sheet);
+      }
       std::fprintf(stderr, "hud: tick=%d out=%d saved=%d target=%d seconds=%d\n", args.hudTicks,
                    values.out, values.saved, values.saveTarget, values.secondsRemaining);
       static const char* const names[] = {"out", "saved", "timer"};
@@ -949,6 +971,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   app::LemmingAnimTracker lemmingAnim;
   app::LemmingMotionTracker lemmingMotion;
   std::optional<app::RetailSkillPanel> runtimePanel;
+  std::optional<app::RuntimeReleaseRateControl> releaseControl;
   std::optional<app::SkillPanelIconAnimation> panelIconAnimation;
   std::optional<app::RuntimeCursor> runtimeCursor;
   std::optional<app::EntryStartCue> entryCue;
@@ -966,6 +989,12 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       return 1;
     }
     runtimeFont = std::move(*loadedFont);
+    auto loadedRelease = app::RuntimeReleaseRateControl::create(*library, args.level);
+    if (!loadedRelease) {
+      std::fprintf(stderr, "release control: %s\n", loadedRelease.error().c_str());
+      return 1;
+    }
+    releaseControl = std::move(*loadedRelease);
     runtimePanel = std::move(*loadedPanel);
     auto loadedIcons = app::SkillPanelIconAnimation::create(*library);
     if (!loadedIcons) { std::fprintf(stderr, "panel animation: %s\n", loadedIcons.error().c_str()); return 1; }
@@ -995,6 +1024,16 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // SOURCE input adapter: retained C1 geometry with live counts/selection.
   app::RuntimeSkillSelection skillSelection;
   app::RuntimeNukeInput nukeInput;
+  std::optional<app::ReplayRecorder> recorder;
+  if (!args.recordDir.empty() && world && releaseControl) {
+    auto made = app::ReplayRecorder::create(args.recordDir, args.level, persistentFrontend != nullptr,
+                                           args.simTicks, releaseControl->current());
+    if (made) recorder.emplace(std::move(*made));
+    else std::fprintf(stderr, "record: %s; playing without recording\n", made.error().c_str());
+  }
+  const auto recordCommands = [&] {
+    if (recorder) recorder->commands(*world, runtimeSim, skillSelection, releaseControl->current());
+  };
   std::optional<Image> finalWindowFrame;
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
   auto displayedPickReference = controls.pickReference();
@@ -1011,6 +1050,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
   const auto resetMenuInput = [&] {
     nukeInput.reset();
+    if (releaseControl) releaseControl->reset();
     fastForwardGestureUsed = false;
     rightDown = false; pending.clear(); fixedClock = app::FixedCameraClock{};
     SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -1054,6 +1094,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       if (event.type == SDL_QUIT) { disposition = LegDisposition::Exit; running = false; break; }
       else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
         nukeInput.reset();
+        if (releaseControl) releaseControl->reset();
         fastForwardGestureUsed = false;
         focused = false; rightDown = false; pending.clear();
         SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -1087,12 +1128,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           }
         }
         if (!running) break;
+      } else if (focused && !rightDown && releaseControl &&
+                 event.type == SDL_MOUSEBUTTONDOWN &&
+                 releaseControl->press(event.button.x, event.button.y, event.button.button, *world)) {
+        pointerX = event.button.x; pointerY = event.button.y;
+        nukeInput.reset();
       } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
         nukeInput.reset();
+        if (releaseControl) releaseControl->reset();
         if (focused) { rightDown = true; SDL_SetRelativeMouseMode(SDL_TRUE); }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
+        if (releaseControl) releaseControl->release(event.button.button);
         rightDown = false; SDL_SetRelativeMouseMode(SDL_FALSE);
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+        if (releaseControl) releaseControl->release(event.button.button);
         fastForwardGestureUsed = false;
         if (args.sim && world && focused && !rightDown) {
           pointerX = event.button.x; pointerY = event.button.y;
@@ -1123,7 +1172,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                 displayedCamera, windowRaster,
                 pointerX, pointerY, skillSelection.selectedSkill(),
                 args.level == "MM_CLIMB_002");
+            // Record the resolved simulation target, never the picking pixels.
+            const auto before = recorder && hit ? std::optional{world->lemmings()[*hit]} : std::nullopt;
             const bool assigned = hit && world->assign(*hit, skillSelection.selectedSkill());
+            if (before) recorder->assignment(*hit, skillSelection.selectedSkill(), assigned, *before);
             drainCues();
             // READ 0x455756: only a successful assignment resumes native UI1.
             // Failed picks/assignments and panel selections leave pause intact.
@@ -1139,6 +1191,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                         double(event.motion.yrel) / presentation.scale());
           if (!rightDown) {
             pointerX = event.motion.x; pointerY = event.motion.y;
+            if (releaseControl) releaseControl->advance(0.0, pointerX, pointerY, *world);
             // Retain drag-onto activation (0x455AFF), once per gesture under
             // the provisional toggle policy. Hover without a button is inert.
             if (args.sim && world && (event.motion.state & SDL_BUTTON_LMASK) &&
@@ -1188,6 +1241,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           }
         }
       }
+      recordCommands();
     }
     if (!running) break; // Do not compose or observe another frame after close.
     app::profile::Scope profileSim(app::profile::Simulation);
@@ -1212,6 +1266,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       panelIconAnimation->advanceIcons(focused && !menuOpen() ? elapsed : 0.0,
                                  skillSelection.selectedIndex(), hover);
     }
+    if (releaseControl && focused && !menuOpen())
+      releaseControl->advance(elapsed, pointerX, pointerY, *world);
+    recordCommands();
     fixedClock.advance(elapsed);
     bool updated = false;
     while (fixedClock.takeStep()) {
@@ -1235,12 +1292,16 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       // P7: observe each confirmed update, including every fast-forward pass,
       // using the existing World clock. This never supplies time to simulation.
       lemmingMotion.observe(*world);
-      const auto afterUpdate = [&] { drainCues(); lemmingMotion.observe(*world); };
+      const auto afterUpdate = [&] {
+        drainCues(); lemmingMotion.observe(*world);
+        scene->advanceDeathParticles(world->levelClockMs());
+      };
       // The gate also covers fast-forward passes and the initial hidden cue
       // phase. A paused/menu/focus-lost cue cannot be outrun by the hatch.
       const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryCue && entryCue->active());
       simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, afterUpdate,
                                             ownedClock ? 0 : app::RuntimeSimState::kStallCapMs, releaseEnabled);
+      if (recorder && simTicked) recorder->advanced(*world, runtimeSim, releaseEnabled);
       // actor-anim-001: every lemming draws its own clip, advanced by level time every frame
       // (not only on a simulation tick) and frozen while paused. Fast-forward runs the world
       // kFastForwardPasses times per frame. Reuse its accepted integer-ms budget, including
@@ -1322,7 +1383,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           app::profile::Scope profileHud(app::profile::Hud);
           image = toImage(windowRaster.framebuffer());
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
-          const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
+          const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0 &&
+              !(releaseControl && app::RuntimeReleaseRateControl::contains(pointerX, pointerY));
           const auto hover = canHover ?
               hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
                   pointerX, pointerY, skillSelection.selectedSkill(),
@@ -1345,6 +1407,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
                                      &*panelIconAnimation);
           app::drawRuntimeHud(image, *runtimeFont, *world, false);
+          if (releaseControl) releaseControl->draw(image, *runtimeFont);
           app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
           // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
           if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
@@ -1435,6 +1498,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   }
   SDL_SetRelativeMouseMode(SDL_FALSE);
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);
+  if (recorder) {
+    const char* reason = disposition == LegDisposition::Completed ? "completed" :
+        disposition == LegDisposition::RetryLevel ? "retry" :
+        disposition == LegDisposition::ReturnToMap ? "map" : "closed/frame-limit";
+    if (auto written = recorder->finish(*world, runtimeSim, reason); !written)
+      std::fprintf(stderr, "record: %s; replay remains incomplete\n", written.error().c_str());
+    else std::fprintf(stderr, "record: saved %s\n", written->string().c_str());
+  }
   if (!args.windowShot.empty() && disposition == LegDisposition::Exit) {
     if (!finalWindowFrame) {
       std::fprintf(stderr, "window screenshot: exited before the requested final frame\n");
@@ -1457,6 +1528,21 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
                             LevelFrameObserver levelObserver, ApplicationRunOptions options) {
   const auto args = parseArgs(argc, argv);
   if (args.invalidWindowScale) { std::fprintf(stderr, "--window-scale requires 1, 2 or 3\n"); return 1; }
+  if (args.invalidReplayOption || (!args.recordDir.empty() && !args.replayFile.empty())) {
+    std::fprintf(stderr, "--record DIR and --replay FILE require paths and cannot be combined\n"); return 1;
+  }
+  if (!args.replayFile.empty() && !args.help) {
+    auto library = AssetLibrary::open(fs::path(args.gameDir) / "lemmings.box", fs::path(args.gameDir) / "patch.box");
+    if (!library) { std::fprintf(stderr, "replay assets: %s\n", library.error().c_str()); return 1; }
+    return app::replayLevel(*library, args.replayFile);
+  }
+  if (!args.recordDir.empty() && !args.help &&
+      ((!args.frontend && !args.sim) || args.map || !args.shot.empty() || args.simTicks < 0 || args.simTicks > 1000000)) {
+    std::fprintf(stderr, "--record requires frontend play or --level ID --sim, without --map/--shot\n"); return 1;
+  }
+  // Read the clone image once before any gameplay clock starts. Attempt setup
+  // later uses this cached identity and never hashes inside a measured frame.
+  if (!args.recordDir.empty()) (void)app::replayBuildIdentity();
   sceneryRandom().begin();  // main-loop entry seed (0x0045D06C analogue)
   std::optional<app::LevelOutcome> completed;
   LegDisposition disposition = LegDisposition::Exit;

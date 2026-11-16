@@ -20,6 +20,7 @@
 #include "app/ActorPose.h"
 #include "app/ActorSprite.h"
 #include "app/Camera.h"
+#include "app/DeathParticles.h"
 #include "app/Raster.h"
 #include "assets/CellMesh.h"
 #include "assets/CollisionGrid.h"
@@ -144,6 +145,13 @@ class TubeScene {
   void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
                            const SceneOptions& options, const AssetLibrary& lib) const;
 
+  void emitDeathParticles(const sim::Lemming&, bool explosion,
+      std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
+      int terrainHeight, const AssetLibrary&);
+  void advanceDeathParticles(std::uint64_t clockMs);
+  void drawDeathParticles(Raster&, const CameraBasis&, const AssetLibrary&) const;
+  std::size_t deathParticleCount() const { return deathParticles_.size(); }
+
   // Redraw only the selected actor silhouette, using the same preparation and
   // scene-depth mask as drawing/picking. Never changes picking or scene depth.
   bool drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis&,
@@ -222,6 +230,10 @@ class TubeScene {
   std::array<SpriteSheet, 3> lemmingSprites_;
   std::array<bool, 3> haveLemmingSprites_{};
   SpriteSheet bubbleSprites_;
+  std::vector<DeathParticle> deathParticles_;
+  SpriteSheet deathSprites_;
+  bool deathSpritesLoaded_ = false;
+  std::uint64_t deathClockMs_ = 0;
 
   bool haveCollision_ = false;
   CollisionGrid collision_;

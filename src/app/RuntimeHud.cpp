@@ -1,4 +1,6 @@
 #include "app/RuntimeHud.h"
+#include "app/RuntimeSkillPanel.h"
+#include "app/ReleaseRateDisplay.h"
 
 #include "shell/HudText.h"
 #include "app/HoverFeedback.h"
@@ -7,6 +9,28 @@
 #include <cmath>
 
 namespace webo::app {
+
+void RuntimeReleaseRateControl::draw(Image& image, const Image& font) const {
+  drawReleaseRateDisplay(image, font, current_);
+}
+
+void drawReleaseRateDisplay(Image& image, const Image& font, int rate) {
+  // PROVISIONAL presentation, using the existing retail font. The label is a
+  // rate (higher is faster), not seconds or remaining hatch population.
+  for (int y = 412; y < std::min(468, image.height); ++y)
+    for (int x = 18; x < std::min(90, image.width); ++x) {
+      const auto p = (std::size_t(y) * image.width + x) * 4;
+      const bool edge = x == 18 || x == 89 || y == 412 || y == 467;
+      for (int c = 0; c < 3; ++c)
+        image.rgba[p+c] = edge ? 200 : std::uint8_t(image.rgba[p+c] / 3);
+    }
+  const auto cells = shell::fontCells();
+  std::array<shell::HudLine, 2> lines{{{"RATE", 0, 414, {255,255,255}},
+      {std::to_string(rate), 0, 440, {255,232,96}}}};
+  for (auto& line : lines) line.x = 54 - shell::textWidth(line.text, cells) / 2;
+  shell::drawHud(image, font, lines, cells);
+}
+
 
 int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index) {
   if (!count || index >= count) return 0;

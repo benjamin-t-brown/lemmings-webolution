@@ -514,6 +514,166 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
 }
 
+void TubeScene::advanceDeathParticles(std::uint64_t clockMs) {
+  if (deathParticles_.empty()) return;
+  deathClockMs_ = clockMs;
+  std::erase_if(deathParticles_, [&](const DeathParticle& p) {
+    return clockMs >= p.bornMs && (clockMs - p.bornMs) / 1000.0 >= p.lifetime;
+  });
+}
+
+void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
+    std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
+    int terrainHeight, const AssetLibrary& lib) {
+  advanceDeathParticles(clockMs);
+  deathClockMs_ = clockMs;
+  if (!deathSpritesLoaded_) {
+    deathSpritesLoaded_ = true;
+    if (auto bits = loadSpriteSheet(lib, "SPRITES\\BITS.SPR")) deathSprites_ = std::move(*bits);
+  }
+  // READ: 408227 creates six actor pieces; 40B3EC does the same on splat.
+  // 401C50 selects piece indices 0,1,2,2,3,3. BITS.SPR/$LemBits0 is the
+  // installed piece artwork. Its binding and animation sampling are provisional.
+  // PROVISIONAL physics throughout: deterministic terrain-coordinate ballistics,
+  // gravity 32 units/s^2, no collision/bounce, finite 0.55..1.6 second life.
+  // No World RNG, state, counters, timers or terrain are written here.
+  auto origin = terrainSampleFromLemming(lemming, terrainHeight,
+                                         lemming.verticalDir < 0 ? 0.55 : 0.75);
+  const int gravityDir = lemming.verticalDir < 0 ? -1 : 1;
+  origin.y += gravityDir * (explosion ? 3.0 : 1.0);
+  const auto add = [&](ActorTerrainSample at, int index, int count, bool piece,
+                       std::array<std::uint8_t, 3> colour, double life, double size,
+                       double spread, double rise) {
+    // Deterministic radial fans do not consume simulation/scenery randomness.
+    const double angle = (index + 0.5) * 2.0 * std::numbers::pi / count;
+    DeathParticle p;
+    p.origin = at;
+    p.vx = std::cos(angle) * spread;
+    p.vy = gravityDir * (rise + std::sin(angle) * rise * 0.35);
+    p.vz = std::sin(angle * 3.0) * 0.10;
+    p.gravity = -gravityDir * 32.0;
+    p.bornMs = clockMs;
+    p.lifetime = life;
+    p.size = size;
+    p.colour = colour;
+    constexpr int clips[]{0, 1, 2, 2, 3, 3};
+    p.piece = piece ? clips[index % 6] : -1;
+    p.verticalDir = gravityDir;
+    deathParticles_.push_back(p);
+  };
+  // Bound presentation memory under repeated Nuke/retry stress. At capacity
+  // evict oldest particles only; every new death still gets its complete burst.
+  constexpr std::size_t maxParticles = 4096;
+  if (deathParticles_.size() > maxParticles - 160)
+    deathParticles_.erase(deathParticles_.begin(), deathParticles_.begin() +
+        (deathParticles_.size() - (maxParticles - 160)));
+  for (int i = 0; i < 6; ++i)
+    add(origin, i, 6, true, {255,255,255}, 1.6, 2.0, explosion ? 15.0 : 12.0,
+        explosion ? 17.0 : 10.0);
+  // READ 43F510: count 100 and RGB(255,32,32). READ 40B3EC:
+  // count 10, RGB doubles (255,127,127). Size/motion/life are provisional;
+  // plain coloured chips stand in for the unrecovered particle renderer.
+  const int count = explosion ? 100 : 10;
+  for (int i = 0; i < count; ++i)
+    add(origin, i, count, false, explosion ? std::array<std::uint8_t,3>{255,32,32} :
+        std::array<std::uint8_t,3>{255,127,127}, 0.55 + (i % 7) * 0.07,
+        0.45, 8.0 + (i % 11), explosion ? 12.0 : 5.0);
+
+  if (!explosion || removedCells.empty()) return;
+  const auto debris = [&](const std::array<int, 2>& cell) {
+    const int row = terrainHeight - 1 - cell[1];
+    std::array<std::uint8_t, 3> colour{128, 104, 72};
+    // PROVISIONAL chips sample their destroyed block's installed OUT texture.
+    // The exact original fragment model/UV selection (40C960) is unresolved.
+    // The cell renderer reverses tile rows against its Y-up grid. Reuse
+    // its material descriptor rather than assuming the file-row tile bank.
+    const auto material = cellMesh_.buckets > unsigned(cell[0] / 8) &&
+        cellMesh_.bands > unsigned(row / 16) ?
+        cellMesh_.at(cell[0] / 8, row / 16)->material :
+        std::uint32_t(cell[0] / 32 + cell[1] / 32 * 8);
+    if (const auto* tile = findTile(true, material % 8, material / 8);
+        tile && !tile->texture.empty()) {
+      const auto& t = tile->texture;
+      const int px = int(((cell[0] & 31) + 0.5) * t.width / 32);
+      const int py = int((31.5 - (row & 31)) * t.height / 32);
+      const auto at = (std::size_t(py) * t.width + px) * 3;
+      std::copy_n(t.rgb.begin() + at, 3, colour.begin());
+    }
+    for (int i = 0; i < 4; ++i)
+      add({double(cell[0]), double(row), origin.z}, i, 4, false, colour,
+          1.2 + i * 0.1, 1.4, 9.0 + i, 12.0);
+  };
+  bool emitted = false;
+  // READ 43F510: four fragments at eligible 4x4-aligned removed cells.
+  for (const auto& cell : removedCells)
+    if ((cell[0] & 3) == 0 && ((terrainHeight - 1 - cell[1]) & 3) == 0) {
+      debris(cell);
+      emitted = true;
+    }
+  // PROVISIONAL: a thin destroyed ledge can miss every original grid site.
+  // Keep that terrain removal visible with one four-chip burst in this case.
+  if (!emitted) debris(removedCells.front());
+}
+
+void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
+                                   const AssetLibrary& lib) const {
+  // No allocations, asset reads, depth copies or scans on an empty frame.
+  if (deathParticles_.empty() || !havePoseLevel_) return;
+  rewirePoseLevel();
+  auto& buffer = raster.mutableFramebuffer();
+  const auto& depth = raster.depthBuffer();
+  const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
+  Image overlay;
+  overlay.width = buffer.width; overlay.height = buffer.height;
+  overlay.alpha = AlphaMode::Embedded;
+  overlay.rgba.resize(std::size_t(buffer.width) * buffer.height * 4);
+  for (const auto& p : deathParticles_) {
+    auto sample = p.position(deathClockMs_);
+    sample.x = std::fmod(sample.x, 256.0);
+    if (sample.x < 0) sample.x += 256.0;
+    if (sample.y < 0 || sample.y >= poseLevel_.gridHeight ||
+        !actorSubmissionVisible(sample.x, sample.z, true, bounds)) continue;
+    const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, 1);
+    if (p.piece >= 0 && std::size_t(p.piece) < deathSprites_.sprites.size()) {
+      const auto& clip = deathSprites_.sprites[p.piece];
+      if (!clip.animations.empty()) {
+        // PROVISIONAL: use stored strip rate when positive, otherwise 12 fps.
+        const double rate = clip.rate > 0 && std::isfinite(clip.rate) ? clip.rate : 12.0;
+        const auto index = std::size_t((deathClockMs_ - p.bornMs) / 1000.0 * rate) % clip.animations.size();
+        const auto& entry = clip.animations[index];
+        if (!entry.frames.empty()) {
+          const auto& frame = entry.frames.front();
+          auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
+          auto box = actorSpritePlacement(frame, pose.modelPosition, camera, false, -1);
+          if (texture && box) {
+            *box = actorSpriteGravityPlacement(*box, p.verticalDir);
+            std::fill(overlay.rgba.begin(), overlay.rgba.end(), 0);
+            if (drawActorSprite(overlay, frame, *texture, *box, false, p.colour, true,
+                                p.verticalDir < 0) &&
+                clipActorToScene(overlay, *box, depth, true))
+              compositeActorOverlay(raster, overlay, false);
+            continue;
+          }
+        }
+      }
+    }
+    std::array<double, 4> projected;
+    if (!project(camera, {pose.modelPosition[0], pose.modelPosition[1], pose.modelPosition[2]}, projected))
+      continue;
+    const double r = std::clamp(camera.focalY * p.size / projected[2], 0.6, 5.0);
+    // Same strict completed-scene comparison and traced normalized actor bias;
+    // airborne chips have no supporting-wall contact allowance. No depth writes.
+    const double z = projected[2] - camera.width * 0.001;
+    for (int y = std::max(0, int(std::ceil(projected[1] - r)));
+         y < std::min(buffer.height, int(std::ceil(projected[1] + r))); ++y)
+      for (int x = std::max(0, int(std::ceil(projected[0] - r)));
+           x < std::min(buffer.width, int(std::ceil(projected[0] + r))); ++x) {
+        const auto at = std::size_t(y) * buffer.width + x;
+        if (z < depth[at]) std::copy(p.colour.begin(), p.colour.end(), buffer.rgb.begin() + at * 3);
+      }
+  }
+}
+
 bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker,
     const CameraBasis& camera, const SceneOptions& options,
     const AssetLibrary& lib, const Raster& sceneRaster) const {
@@ -1031,6 +1191,9 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
       continue;
     const ActorTerrainSample sample = terrainSampleFromLemming(lemming, terrainHeight);
     SceneOptions::InjectedNativeWalker walker;
+    // READ 40B4AF hides the intact actor on splat entry. Retain its vector
+    // slot so screen-box/hover indices for other live actors stay aligned.
+    walker.renderEnabled = lemming.state != sim::State::Splatter;
     walker.plus8X = sample.x;
     walker.plus8Y = sample.y;
     walker.plus8Z = sample.z;

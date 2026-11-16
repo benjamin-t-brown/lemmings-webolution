@@ -25,16 +25,19 @@ constexpr CueRoute kRoutes[] = {
      "old/docs/scratch/phase3-round28-die.md: FallSplat (DAT_004E32E0) is played "
      "once, at 0x0040B4B6 inside splat enter FUN_0040b3ec (type 0x1a) after a "
      "long fall; Splat (DAT_004E32D4) has 0 play references"},
+    {sim::SoundCue::Exit, "Yippee",
+     "docs/scratch/exit-yippee-sound-001.md: 0x0045E540..0x0045E552 loads Yippee "
+     "into level+0x1C8B0 (=0x004E32B8); save step 0x0041818A increments saved "
+     "at 0x004182A1, then plays that handle at 0x004182E5 via 0x00445274"},
 };
 
-// No retained play-site read for any of these. Chink, Yippee and Explode are
-// registered strings (0x004C0C8C, 0x004C0C84, 0x004C0C94) and the sim already
-// emits them, but no note records where the retail executable plays them.
+// No retained play-site read for these. Chink and Explode are registered
+// strings (0x004C0C8C, 0x004C0C94) and the sim already emits them, but no note
+// records where the retail executable plays them.
 // UNKNOWN, not guessed from classic Lemmings.
 constexpr sim::SoundCue kUnrouted[] = {
     sim::SoundCue::Assign,   // Chink  -- no retained play site
     sim::SoundCue::Explode,  // Explode -- no retained play site
-    sim::SoundCue::Exit,     // Yippee -- no retained play site
 };
 
 static_assert(std::size(kRoutes) + std::size(kUnrouted) ==
@@ -89,8 +92,12 @@ void CuePlayback::play(sim::SoundCue cue) {
   ++routed_;
   if (observer_)
     observer_(*name);
-  if (mixer_.ready() && mixer_.has(*name))
-    mixer_.play(*name);
+  if (mixer_.ready() && mixer_.has(*name)) {
+    // Provisional clone policy: average overlapping exit cheers to avoid
+    // clipping. Retail sample/call site are traced; retail mixing is unknown.
+    mixer_.play(*name, 1.0f, cue == sim::SoundCue::Exit ? Mixer::Overlap::Average
+                                                      : Mixer::Overlap::Add);
+  }
 }
 
 void CuePlayback::drain(sim::World& world) {

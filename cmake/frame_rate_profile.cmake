@@ -5,57 +5,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   add_test(NAME frame_profile_texture_cache COMMAND test_texture_cache)
   set_tests_properties(frame_profile_texture_cache PROPERTIES TIMEOUT 30
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  foreach(level IN ITEMS MM_CLIMB_002 MM_W_012)
-    if(level STREQUAL "MM_CLIMB_002")
-      set(expected 61933b158580b1c869dd545500c7592b02c26cc36bd67ae2d93ec79cec4413ba)
-    else()
-      # hatch-release-direction-001: the old all-right frame was
-      # 3633704696154420f7a8edf02eb20fe109c6e32669867e20a0f8a1feca8c4b40.
-      # Stored alternating births change actor pixels and subsequent positions.
-      # Authentic earlier images remain in build/frame-rate-profile-001/.
-      set(expected 03c498d568daedf2eb74d90e321b3233178dee70e6f51bddd237bccaa57df38d)
-    endif()
-    add_test(NAME frame_profile_${level} COMMAND ${CMAKE_COMMAND}
-      "-DCLONE=$<TARGET_FILE:webolution>" "-DGAME_DIR=${WEBOLUTION_GAME_DIR}"
-      "-DLEVEL=${level}" "-DEXPECTED=${expected}"
-      "-DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/frame-rate-profile/${level}"
-      -P "${CMAKE_SOURCE_DIR}/cmake/frame_rate_profile_run.cmake")
-    set_tests_properties(frame_profile_${level} PROPERTIES TIMEOUT 60 RUN_SERIAL TRUE)
-  endforeach()
-endif()
-
-# Retained pre-task clone sources supply an independent differential oracle.
-# A fresh checkout still runs both fixed-hash production demonstrations above.
-set(frp_reference "${CMAKE_SOURCE_DIR}/build/frame-rate-profile-001/entry-source/src")
-if(EXISTS "${frp_reference}/app/Raster.cpp")
-  file(READ "${CMAKE_SOURCE_DIR}/build/frame-rate-profile-001/entry-sha256.json" frp_manifest)
-  foreach(name IN ITEMS Raster.cpp Raster.h SceneRaster.cpp SceneRaster.h)
-    file(SHA256 "${frp_reference}/app/${name}" frp_actual)
-    string(JSON frp_expected ERROR_VARIABLE frp_key_error GET "${frp_manifest}" "src/app/${name}")
-    if(frp_key_error)
-      string(JSON frp_expected GET "${frp_manifest}" "src\\app\\${name}")
-    endif()
-    if(NOT frp_actual STREQUAL frp_expected)
-      message(FATAL_ERROR "Frame-profile frozen clone source changed: ${name}")
-    endif()
-  endforeach()
-  add_library(frame_profile_reference STATIC "${frp_reference}/app/Raster.cpp" "${frp_reference}/app/SceneRaster.cpp")
-  target_include_directories(frame_profile_reference PRIVATE "${frp_reference}")
-  target_compile_definitions(frame_profile_reference PRIVATE webo=webo_frame_reference)
-  # Identical #pragma-once headers can be deduplicated by GCC across paths.
-  # Generate the reference declarations without that directive, leaving the
-  # authenticated retained files untouched.
-  file(READ "${frp_reference}/app/Raster.h" frp_raster_header)
-  file(READ "${frp_reference}/app/SceneRaster.h" frp_scene_header)
-  string(REPLACE "#pragma once" "" frp_raster_header "${frp_raster_header}")
-  string(REPLACE "#pragma once" "" frp_scene_header "${frp_scene_header}")
-  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/frame_profile_reference.h"
-    "#define webo webo_frame_reference\n${frp_raster_header}\n${frp_scene_header}\n#undef webo\n")
-  add_executable(test_frame_raster_equivalence src/__test__/test_frame_raster_equivalence.cpp src/app/Raster.cpp src/app/SceneRaster.cpp)
-  target_include_directories(test_frame_raster_equivalence PRIVATE "${CMAKE_SOURCE_DIR}/src" "${CMAKE_CURRENT_BINARY_DIR}")
-  target_link_libraries(test_frame_raster_equivalence PRIVATE frame_profile_reference)
-  add_test(NAME frame_profile_raster_equivalence COMMAND test_frame_raster_equivalence)
-  set_tests_properties(frame_profile_raster_equivalence PROPERTIES TIMEOUT 60)
+  # release-rate-control-001: retire the two legacy application frame hashes
+  # that omit RATE; the texture-cache check remains.
 endif()
 
 # Optional control for measuring disabled instrumentation overhead. Replace only

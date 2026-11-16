@@ -9,41 +9,37 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- release-rate-control-001: **ready** — Change the release rate by clicking the hatch box
-- replay-recorder-001: **ready** — Record a played level and replay it headless
-- death-particles-001: **ready** — Show explosion debris and splat pieces
-- exit-yippee-sound-001: **ready** — Play the yippee sound when a lemming reaches the balloon
-- test-legacy-prune-001: **ready** — Delete before/baseline/identity replay tests
 
 ## Recently completed queue entries
 
-- hatch-release-direction-001: Lemmings leave the hatch in the level's stored directions
-  Accepted: 2026-11-15T19:19:02.623494+00:00
-  Verification evidence: `build/agent-runs/20261115T184524-37880-4ea03312/verification.log`
-  Verification evidence: `build\agent-runs\20261115T184524-37880-4ea03312\verification.log`
-- window-scale-001: Play the clone in a window twice the size
-  Accepted: 2026-11-15T22:43:44.301513+00:00
-  Verification evidence: `build/agent-runs/20261115T215915-39368-aaa694f4/verification.log`
-  Verification evidence: `build\agent-runs\20261115T215915-39368-aaa694f4\verification.log`
-- antigrav-skill-assign-001: Assign Blocker and other skills to upside-down lemmings
-  Accepted: 2026-11-15T23:23:23.264523+00:00
-  Verification evidence: `build/agent-runs/20261115T224344-39368-47694f59/verification.log`
-  Verification evidence: `build\agent-runs\20261115T224344-39368-47694f59\verification.log`
-- lemming-pick-nearest-001: Hover and assignment pick the lemming nearest the cursor centre
-  Accepted: 2026-11-16T00:00:52.619006+00:00
-  Verification evidence: `build/agent-runs/20261115T232323-39368-dab7e8e7/verification.log`
-  Verification evidence: `build\agent-runs\20261115T232323-39368-dab7e8e7\verification.log`
-- nuke-all-001: Make Nuke all work
-  Accepted: 2026-11-16T01:13:38.996532+00:00
-  Verification evidence: `build/agent-runs/20261116T003831-39368-917d40c4/verification.log`
-  Verification evidence: `build\agent-runs\20261116T003831-39368-917d40c4\verification.log`
+- release-rate-control-001: Change the release rate by clicking the hatch box
+  Accepted: 2026-11-16T04:23:42.813193+00:00
+  Verification evidence: `build/agent-runs/20261116T040952-49132-8a2a2e41/verification.log`
+  Verification evidence: `build\agent-runs\20261116T040952-49132-8a2a2e41\verification.log`
+- replay-recorder-001: Record a played level and replay it headless
+  Accepted: 2026-11-16T05:02:21.445046+00:00
+  Verification evidence: `build/agent-runs/20261116T042342-49132-0b068fef/verification.log`
+  Verification evidence: `build\agent-runs\20261116T042342-49132-0b068fef\verification.log`
+- death-particles-001: Show explosion debris and splat pieces
+  Accepted: 2026-11-16T05:22:58.804050+00:00
+  Verification evidence: `build/agent-runs/20261116T050221-49132-35db5184/verification.log`
+  Verification evidence: `build\agent-runs\20261116T050221-49132-35db5184\verification.log`
+- exit-yippee-sound-001: Play the yippee sound when a lemming reaches the balloon
+  Accepted: 2026-11-16T05:38:51.794256+00:00
+  Verification evidence: `build/agent-runs/20261116T052258-49132-07f9e578/verification.log`
+  Verification evidence: `build\agent-runs\20261116T052258-49132-07f9e578\verification.log`
+- test-legacy-prune-001: Delete before/baseline/identity replay tests
+  Accepted: 2026-11-16T05:54:33.075974+00:00
+  Verification evidence: `build/agent-runs/20261116T053851-49132-19c7334a/verification.log`
+  Verification evidence: `build\agent-runs\20261116T053851-49132-19c7334a\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-4423ea42f7ae43be8b4a8c68489de0a4/result.json`
-- Status: **running**
-- Duration: 4h 05m 55s
-- Completed in this invocation: window-scale-001, antigrav-skill-assign-001, lemming-pick-nearest-001, nuke-all-001
+- Result: `build/agent-runs/loop-36afa45bb9bc4016b8d9cd81478b6166/result.json`
+- Status: **milestone_reached**
+- Duration: 1h 44m 40s
+- Completed in this invocation: release-rate-control-001, replay-recorder-001, death-particles-001, exit-yippee-sound-001, test-legacy-prune-001
+- Reason: Accepted test-legacy-prune-001; stopped at the requested review boundary
 
 ## Documentation handoff
 

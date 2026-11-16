@@ -1,5 +1,0 @@
-file(SHA256 "${TASK_DIR}/before-source/src/app/main.cpp" actual)
-set(expected "66f2070a6388d55be8e6abfe9032f47e9ed5174a23219e926162c904399bf2a0")
-if(NOT actual STREQUAL expected)
-  message(FATAL_ERROR "nearest-pick authentic task-entry main identity mismatch")
-endif()

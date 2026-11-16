@@ -22,10 +22,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1241,6 +1243,16 @@ public:
   const LevelSetup& setup() const { return setup_; }
   const Rules& rules() const { return rules_; }
 
+  // Player release control: replace only the recurring interval. Preserve the
+  // running countdown, first-release seed, arm phase and integer tick carry.
+  // Keep this small interval edit inline; it adds no scheduler state.
+  void setReleaseInterval(double seconds, int ticks) {
+    if (std::isfinite(seconds) && seconds > 0.0 && ticks > 0) {
+      setup_.releaseIntervalSeconds = seconds;
+      setup_.releaseIntervalTicks = ticks;
+    }
+  }
+
   int spawned() const { return spawned_; }
   int saved() const { return saved_; }
   int dead() const { return dead_; }
@@ -1269,6 +1281,12 @@ public:
 
   // Pending sound cues since the last drain. Cleared by the call.
   std::vector<SoundCue> takeCues();
+
+  // Read-only presentation notification at the existing death transition.
+  // Removed cells are reported from the actual blast result, never predicted.
+  using DeathObserver = std::function<void(const Lemming&, bool explosion,
+                                           std::span<const std::array<int, 2>>)>;
+  void setDeathObserver(DeathObserver observer) { deathObserver_ = std::move(observer); }
 
 private:
   void cue(SoundCue c);
@@ -1367,6 +1385,7 @@ private:
   double releaseCountdown_ = 0.0;
   std::size_t nextEntrance_ = 0;
   std::vector<SoundCue> cues_;
+  DeathObserver deathObserver_;
 };
 
 }  // namespace webo::sim

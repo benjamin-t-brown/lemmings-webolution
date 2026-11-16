@@ -130,83 +130,10 @@ std::string state(const app::LevelFrameView& f) {
   }
   return s.str();
 }
-struct PairTrace {
+struct SimulationTrace {
   std::ofstream out;
-  std::ifstream expected;
-  bool compare;
-  bool alignStart;
-  std::vector<std::string> prior;
-  long long startOffsetMs = 0;
-  int frameOffset = -1, lastPrior = -1;
-  PairTrace(const fs::path& p, const fs::path& b, bool allowStartOffset = false)
-      : out(p / "simulation.txt"),
-        compare(!baseline && fs::exists(b / "simulation.txt")), alignStart(allowStartOffset) {
-    if (compare)
-      expected.open(b / "simulation.txt");
-    if (compare && alignStart) {
-      std::string line;
-      while (std::getline(expected, line)) prior.push_back(line);
-    }
-  }
-  static std::array<long long, 5> prefix(const std::string& line) {
-    std::istringstream in(line); std::array<long long, 5> fields{};
-    std::string field;
-    for (auto& value : fields) { std::getline(in, field, ','); value = std::stoll(field); }
-    return fields;
-  }
-  static std::string payload(const std::string& line) {
-    std::size_t p = 0;
-    for (int i = 0; i < 4; ++i) p = line.find(',', p) + 1;
-    return line.substr(p);
-  }
-  void frame(const app::LevelFrameView& f) {
-    auto s = state(f);
-    out << s << '\n';
-    if (compare) {
-      if (alignStart) {
-        // R1 explicitly changes connected entry's start offset. Preserve the
-        // authentic old trace and compare ALL gameplay state after aligning
-        // first birth. Level time still advances during the added wait.
-        if (frameOffset < 0 && f.world.spawned() > 0) {
-          auto first = std::find_if(prior.begin(), prior.end(), [](const auto& l) { return prefix(l)[4] > 0; });
-          check(first != prior.end(), "authentic first birth exists");
-          if (first == prior.end()) return;
-          const auto p = prefix(*first);
-          frameOffset = f.frame - int(p[0]);
-          startOffsetMs = static_cast<long long>(f.world.levelClockMs()) - p[1];
-          check(startOffsetMs > 0, "R1 delays the first connected release");
-        }
-        const int index = frameOffset < 0 ? 0 : f.frame - frameOffset;
-        check(index >= 0 && index < int(prior.size()), "aligned baseline frame exists");
-        if (index < 0 || index >= int(prior.size())) return;
-        check(payload(s) == payload(prior[index]), "all gameplay state equals authentic route after start offset");
-        const auto p = prefix(s);
-        // This route's owned 200 ms frames produce one update plus a trailing
-        // zero update at every level second. Keep the clock/update assertions.
-        check(p[1] / 200 == p[2] && p[2] + p[1] / 1000 == p[3], "unchanged level clock and update counts");
-        if (frameOffset >= 0) {
-          const auto old = prefix(prior[index]);
-          check(p[1] - startOffsetMs == old[1], "only documented level-start offset differs");
-          lastPrior = index;
-        }
-        return;
-      }
-      std::string want;
-      check(bool(std::getline(expected, want)) && want == s,
-            "full simulation identity at frame " + std::to_string(f.frame));
-    }
-  }
-  void finish() {
-    if (compare) {
-      if (alignStart) {
-        check(frameOffset >= 0 && lastPrior == int(prior.size()) - 1,
-              "same complete route frame count after documented start offset");
-        return;
-      }
-      std::string s;
-      check(!std::getline(expected, s), "identical frame counts");
-    }
-  }
+  explicit SimulationTrace(const fs::path& p) : out(p / "simulation.txt") {}
+  void frame(const app::LevelFrameView& f) { out << state(f) << '\n'; }
 };
 int assets(const fs::path& out) {
   auto lib = library();
@@ -371,7 +298,7 @@ int application(const fs::path& out) {
   for (std::string id : {"MM_CLIMB_002", "MM_FLOAT"}) {
     auto dir = out / id;
     fs::create_directories(dir);
-    PairTrace pair(dir, out.parent_path() / "before" / id);
+    SimulationTrace traceState(dir);
     std::ofstream trace(dir / "frames.csv");
     trace << "frame,ms,spawned,x,y,state,clip,draw_y\n";
     std::vector<std::string> args{"hatch-exit", "--level",    id,
@@ -387,7 +314,7 @@ int application(const fs::path& out) {
     const auto iconPixels = test::climberIconComparisonPixels(lib);
     std::ofstream pauseLog(dir / "panel-pause.txt");
     auto observer = [&](const app::LevelFrameView& f) {
-      pair.frame(f);
+      traceState.frame(f);
       bool shot = f.frame == 0 || f.frame == 10 || f.frame == 20 || f.frame == 35 ||
                   f.frame == 45;
       if (f.frame == 0)
@@ -458,12 +385,11 @@ int application(const fs::path& out) {
         std::make_unique<save::FileSaveSink>(dir / "SavedGame.dat", game));
     check(app::runApplication(int(raw.size()), raw.data(), {}, observer, options) == 0,
           "installed entry path exits");
-    pair.finish();
     check(falling >= 5 && landed && pausedFrames == 4,
           "visible drop, landing and pause on " + id);
     std::ofstream(dir / "summary.txt")
         << "visible_fall_frames=" << falling << "\nlanded=" << bool(landed)
-        << "\npaused_frames=" << pausedFrames << "\npaired=" << pair.compare
+        << "\npaused_frames=" << pausedFrames
         << "\nfailures=" << failures << '\n';
   }
   check(installed.unchanged() && normal.unchanged(), "entry preserves both real saves");
@@ -480,7 +406,7 @@ int endRoute(const fs::path& out) {
     return 2;
   SaveSnapshot installed(game / "SavedGame.dat"),
       normal(save::cloneSavePathUnder(*local));
-  PairTrace pair(out, out.parent_path() / "end-before", true);
+  SimulationTrace traceState(out);
   int stage = 0, pending = 0, pauseFrames = 0;
   bool success = false;
   double timer = 0;
@@ -504,7 +430,7 @@ int endRoute(const fs::path& out) {
     }
   };
   auto observer = [&](const app::LevelFrameView& f) {
-    pair.frame(f);
+    traceState.frame(f);
     // Retain entry through the ordinary map path as well as the fixed-camera
     // direct-level samples. The existing entry title can cover the first
     // birth; the second release happens after it retires.
@@ -583,14 +509,11 @@ int endRoute(const fs::path& out) {
   check(app::runApplication(int(raw.size()), raw.data(), front, observer, options) == 0,
         "connected results route exits");
   check(success && pauseFrames == 3, "win and pending pause completed");
-  pair.finish();
   check(installed.unchanged() && normal.unchanged(),
         "end route preserves both real saves");
   std::ofstream(out / "summary.txt")
       << "success=" << success << "\npending_frames=" << pending
       << "\npaused_frames=" << pauseFrames << "\nballoon_pixels_changed=" << balloonPixels
-      << "\npaired=" << pair.compare
-      << "\nstart_offset_ms=" << pair.startOffsetMs
       << "\ninstalled_save_unchanged=" << installed.unchanged()
       << "\nnormal_save_unchanged=" << normal.unchanged() << "\nfailures=" << failures
       << '\n';

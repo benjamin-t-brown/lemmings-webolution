@@ -9,45 +9,39 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- window-scale-001: **ready** — Play the clone in a window twice the size
-- antigrav-skill-assign-001: **ready** — Assign Blocker and other skills to upside-down lemmings
-- lemming-pick-nearest-001: **ready** — Hover and assignment pick the lemming nearest the cursor centre
-- nuke-all-001: **ready** — Make Nuke all work
 - release-rate-control-001: **ready** — Change the release rate by clicking the hatch box
 - death-particles-001: **ready** — Show explosion debris and splat pieces
 - exit-yippee-sound-001: **ready** — Play the yippee sound when a lemming reaches the balloon
 
 ## Recently completed queue entries
 
-- gravity-gadgets-001: Show gravity flippers and kill lemmings that fall into the ceiling
-  Accepted: 2026-11-15T07:32:10.259596+00:00
-  Verification evidence: `build/agent-runs/20261115T065957-22780-c25dfb5b/verification.log`
-  Verification evidence: `build\agent-runs\20261115T065957-22780-c25dfb5b\verification.log`
-- test-render-skip-001: Play tests stop drawing frames nobody inspects
-  Accepted: 2026-11-15T16:28:02.776467+00:00
-  Verification evidence: `build/agent-runs/20261115T160516-37880-1dcb4aa5/verification.log`
-  Verification evidence: `build/agent-runs/loop-bea97485bf464c098da1a44b276433ba/0001-verify-679451/verification.log`
-  Verification evidence: `build\agent-runs\20261115T160516-37880-1dcb4aa5\verification.log`
-- map-hover-text-001: Make the map hover text match the original's three-line block
-  Accepted: 2026-11-15T17:01:18.323580+00:00
-  Verification evidence: `build/agent-runs/20261115T162802-37880-9e8b82a7/verification.log`
-  Verification evidence: `build\agent-runs\20261115T162802-37880-9e8b82a7\verification.log`
-- exit-balloon-path-001: Make the exit balloon spiral out as in the original
-  Accepted: 2026-11-15T17:53:17.986459+00:00
-  Verification evidence: `build/agent-runs/20261115T170118-37880-6ae7dfe3/verification.log`
-  Verification evidence: `build\agent-runs\20261115T170118-37880-6ae7dfe3\verification.log`
 - hatch-release-direction-001: Lemmings leave the hatch in the level's stored directions
   Accepted: 2026-11-15T19:19:02.623494+00:00
   Verification evidence: `build/agent-runs/20261115T184524-37880-4ea03312/verification.log`
   Verification evidence: `build\agent-runs\20261115T184524-37880-4ea03312\verification.log`
+- window-scale-001: Play the clone in a window twice the size
+  Accepted: 2026-11-15T22:43:44.301513+00:00
+  Verification evidence: `build/agent-runs/20261115T215915-39368-aaa694f4/verification.log`
+  Verification evidence: `build\agent-runs\20261115T215915-39368-aaa694f4\verification.log`
+- antigrav-skill-assign-001: Assign Blocker and other skills to upside-down lemmings
+  Accepted: 2026-11-15T23:23:23.264523+00:00
+  Verification evidence: `build/agent-runs/20261115T224344-39368-47694f59/verification.log`
+  Verification evidence: `build\agent-runs\20261115T224344-39368-47694f59\verification.log`
+- lemming-pick-nearest-001: Hover and assignment pick the lemming nearest the cursor centre
+  Accepted: 2026-11-16T00:00:52.619006+00:00
+  Verification evidence: `build/agent-runs/20261115T232323-39368-dab7e8e7/verification.log`
+  Verification evidence: `build\agent-runs\20261115T232323-39368-dab7e8e7\verification.log`
+- nuke-all-001: Make Nuke all work
+  Accepted: 2026-11-16T01:13:38.996532+00:00
+  Verification evidence: `build/agent-runs/20261116T003831-39368-917d40c4/verification.log`
+  Verification evidence: `build\agent-runs\20261116T003831-39368-917d40c4\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-bea97485bf464c098da1a44b276433ba/result.json`
-- Status: **milestone_reached**
-- Duration: 3h 34m 28s
-- Completed in this invocation: test-render-skip-001, map-hover-text-001, exit-balloon-path-001, hatch-release-direction-001
-- Reason: Accepted hatch-release-direction-001; stopped at the requested review boundary
+- Result: `build/agent-runs/loop-4423ea42f7ae43be8b4a8c68489de0a4/result.json`
+- Status: **running**
+- Duration: 4h 05m 55s
+- Completed in this invocation: window-scale-001, antigrav-skill-assign-001, lemming-pick-nearest-001, nuke-all-001
 
 ## Documentation handoff
 

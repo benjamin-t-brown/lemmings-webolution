@@ -16834,7 +16834,7 @@
     {
       "id": "window-scale-001",
       "title": "Play the clone in a window twice the size",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16849,12 +16849,112 @@
         "At 2x, a retained window capture shows the whole game image scaled without blur or cropping, and a test demonstrates that pointer positions map to the same game coordinates as at 1x for a map node click, a panel skill click and a lemming hover.",
         "Saved screenshots, framebuffer outputs and every existing registered test keep their current resolution and results.",
         "The report gives measured frame time at 1x and 2x on one named level."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T215915-39368-aaa694f4",
+      "started": "2026-11-15T21:59:16.162983+00:00",
+      "finished": "2026-11-15T22:41:40.166355+00:00",
+      "last_run": "build/agent-runs/20261115T215915-39368-aaa694f4",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by source inspection, retained clone captures, input-route evidence and successful supervisor verification. The measured 2x frame-time difference is within observed run variation. This accepts the scoped clone presentation change, not original-game fidelity or playable-v1 completion.",
+        "checks": [
+          {
+            "criterion": "Launching the clone interactively without a scale option opens a window twice the game image size, and an explicit option selects 1x, 2x or 3x; scripts/Play-Clone.ps1 uses the default.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "parseArgs accepts --window-scale 1|2|3 and rejects invalid values. windowScale defaults ordinary interactive frontend and level routes to 2, while bounded runs, screenshots, map diagnostics and observers retain 1. runApplication passes the selected scale to the shared SdlWindow."
+              },
+              {
+                "path": "scripts/Play-Clone.ps1",
+                "detail": "Launches the release executable with only --game-dir, so ordinary frontend startup inherits the new 2x default."
+              },
+              {
+                "path": "build/window-scale-001/desktop-final-1794780878853453200/audit.csv",
+                "detail": "Records ordinary frontend and unbounded interactive-level defaults at 1280x960, plus explicit 640x480, 1280x960 and 1920x1440 client dimensions for scales 1, 2 and 3."
+              }
+            ]
+          },
+          {
+            "criterion": "At 2x, a retained window capture shows the whole game image scaled without blur or cropping, and a test demonstrates that pointer positions map to the same game coordinates as at 1x for a map node click, a panel skill click and a lemming hover.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/window-scale-001/desktop-final-1794780878853453200/scale-2-hover-window.png",
+                "detail": "Independently viewed the full 1280x960 presenter capture: the complete gameplay frame and panel are present, with crisp integer enlargement and no cropping."
+              },
+              {
+                "path": "build/window-scale-001/desktop-final-1794780878853453200/scale-2-map-window.png",
+                "detail": "Independently viewed the full 2x map capture, including the hover text, selected node and bottom navigation."
+              },
+              {
+                "path": "src/__test__/test_windowscale.cpp",
+                "detail": "Queues public SDL events at the last physical pixel of logical cells. At every scale it checks map coordinates (206,204) and entry into MM_CLIMB_002, Climber panel coordinates (50,25), natural Walker hover and successful assignment. A separate MM_BASH_002 route proves an actual skill selection change at (50,225) from index 0 to 5. Presenter readback is compared exhaustively against integer-expanded CPU RGB."
+              },
+              {
+                "path": "build/window-scale-001/desktop-final-1794780878853453200/audit.csv",
+                "detail": "Records identical hover coordinates (318,287), actor 0 and Basher selection coordinates/index across all three scales, with zero presenter RGB differences for the captured scenes."
+              },
+              {
+                "path": "build/window-scale-001/desktop-final-1794780878853453200/summary.txt",
+                "detail": "The desktop driver completed with failures=0 and both normal and installed saves unchanged."
+              }
+            ]
+          },
+          {
+            "criterion": "Saved screenshots, framebuffer outputs and every existing registered test keep their current resolution and results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_windowscale.cpp",
+                "detail": "Checks CPU images remain 640x480, bounded automation defaults to 1x, the saved 2x screenshot is byte-identical to the unscaled screenshot, and a scale-3 headless screenshot preserves those bytes without creating a window."
+              },
+              {
+                "path": "build/window-scale-001/image-comparison.json",
+                "detail": "Records 24 byte-identical CPU PNG comparisons against the retained pre-edit baseline, covering menu, map, hover and assignment at all three scales on desktop and dummy backends."
+              },
+              {
+                "path": "cmake/frame_rate_profile.cmake",
+                "detail": "Retains the existing MM_CLIMB_002 framebuffer SHA-256 expectation, 61933b158580b1c869dd545500c7592b02c26cc36bd67ae2d93ec79cec4413ba."
+              },
+              {
+                "path": "build/agent-runs/20261115T215915-39368-aaa694f4/verification.log",
+                "detail": "Supervisor verification passed all 302 main and 84 recovery registered tests, including windowscale and the unchanged framebuffer regression. The CMake diff adds three tests without changing existing assertions or timeouts."
+              }
+            ]
+          },
+          {
+            "criterion": "The report gives measured frame time at 1x and 2x on one named level.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/window-scale-001.md",
+                "detail": "Reports MM_CLIMB_002 on Windows Direct3D11 without vsync: 44.4991 ms at 1x and 44.5355 ms at 2x. The 0.0364 ms increase (0.0817%) is within the observed variation across three runs per scale."
+              },
+              {
+                "path": "build/window-scale-001/performance-summary.json",
+                "detail": "Identifies all six sequential runs and raw CSV paths. Each run retains 210 measured frames after discarding 30 warmup frames; each scale contributes 630 frames. Run means and standard deviations support the report's bounded performance conclusion."
+              },
+              {
+                "path": "src/app/FrameProfile.h",
+                "detail": "Uses steady-clock measurements around complete production frames and writes CSV rows after the measured interval. The benchmark driver supplies no observer or pixel readback during measured frames."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T22:43:44.301513+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T215915-39368-aaa694f4\\verification.log",
+        "verified_content": "d6d737201c3a46c99980d28d109a17802a4ea59b013d800ba15d7a21bc5ed5b0"
+      }
     },
     {
       "id": "antigrav-skill-assign-001",
       "title": "Assign Blocker and other skills to upside-down lemmings",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16869,12 +16969,124 @@
         "The ceiling blocker turns inverted walkers around, shown by a state record and retained clone images.",
         "A scripted route wins 'Sometimes Up Sometimes Down' using skills assigned to upside-down lemmings, or the report names the exact remaining obstacle with evidence.",
         "The report lists, for every skill, whether it can be assigned to an inverted lemming and on what evidence; normal-gravity assignment tests are unchanged and pass."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T224344-39368-47694f59",
+      "started": "2026-11-15T22:43:44.644839+00:00",
+      "finished": "2026-11-15T23:21:15.863920+00:00",
+      "last_run": "build/agent-runs/20261115T224344-39368-47694f59",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by source inspection, retained clone evidence and supervisor verification: 306 main and 84 recovery tests passed. Acceptance covers inverted assignment and ceiling Blocker behavior, not human playability or original-game fidelity. The native-to-clone footprint conversion remains explicitly provisional.",
+        "checks": [
+          {
+            "criterion": "A test drives the production pointer path on the named level and assigns Blocker to an upside-down lemming; before the change the same input is refused, and the report explains the traced cause.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_antigrav_skill_assign.cpp",
+                "detail": "Loads installed m06_kf_1, naturally reaches an inverted ceiling Walker, and sends SDL panel, pointer-motion and click events through runApplication. The observer reads application state without modifying its World."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/before/pointer-route.csv",
+                "detail": "At 9000 ms, hover targets actor 0 at cursor (512,351); clicking leaves it a Walker at (73,77), gravity -1."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/pointer-route.csv",
+                "detail": "The same hover coordinates and click produce a Blocker at (73,77), gravity -1, recorded at 9100 ms."
+              },
+              {
+                "path": "docs/scratch/antigrav-skill-assign-001.md",
+                "detail": "Identifies map node 11 as Sometimes up..sometimes down., traces panel selection through the shared picker to World::assign, and explains that upright-only support checks caused refusal and would also terminate an inverted Blocker after entry."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Entry and continuation now sample y+verticalDir with the matching gravity sign. Field stamp and erase reflect their rows with gravity; upright expressions retain their prior results."
+              }
+            ]
+          },
+          {
+            "criterion": "The ceiling blocker turns inverted walkers around, shown by a state record and retained clone images.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/pointer-route.csv",
+                "detail": "Actor 0 remains an inverted Blocker at (73,77). Actor 2 approaches right-facing at (72,77), then becomes left-facing at 13700 ms; actor 4 turns at the same field at 18500 ms."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/after-click-detail.png",
+                "detail": "Directly inspected retained application crop shows the inverted actor in its Blocker pose beneath the platform."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/turn-sequence-13500.png",
+                "detail": "Directly inspected full clone frame shows the approaching ceiling Walker beside the assigned Blocker; panel stock is 29."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/turn-sequence-14200.png",
+                "detail": "Directly inspected subsequent frame shows separation after the turn. The CSV supplies precise actor identity and facing where sprites overlap."
+              }
+            ]
+          },
+          {
+            "criterion": "A scripted route wins 'Sometimes Up Sometimes Down' using skills assigned to upside-down lemmings, or the report names the exact remaining obstacle with evidence.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_antigrav_skill_assign.cpp",
+                "detail": "winningRoute uses the installed World, ordinary RuntimeSimState completion handling and seven naturally reached Blocker assignment positions. It requires reaching the target before timeout and obtaining a successful completion snapshot."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/winning-route.csv",
+                "detail": "Records inverted Blocker assignments at 13140, 24180 and 34620 ms, and 50 saved at 173800 ms, before the installed 180-second deadline."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/winning-summary.txt",
+                "detail": "Records success_snapshot=1 at 186020 ms, 54 saved against a requirement of 50, zero dead and all seven control points assigned."
+              },
+              {
+                "path": "docs/scratch/antigrav-skill-assign-001.md",
+                "detail": "Clearly distinguishes the state-driven scripted win from the pointer demonstration and human playability. Explicitly rejects an earlier late-target exploratory route as invalid win evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "The report lists, for every skill, whether it can be assigned to an inverted lemming and on what evidence; normal-gravity assignment tests are unchanged and pass.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/antigrav-skill-assign-001.md",
+                "detail": "Lists all eight skills, assignment results and native eligibility addresses. Distinguishes the level's actual Blocker stock from supplemental stock for seven absent skills, and identifies unassessed inverted stepper behavior."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/after/skills.csv",
+                "detail": "Records successful inverted assignment for all eight skills, including capability flags, Bomber fuse and action-state entries."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/static-instructions.json",
+                "detail": "Retained Ghidra instructions for registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f support the eligibility trace. Support loads actor+44 at 0x42E989 and subtracts it at 0x42E98C; stamp and erase multiply row offsets by that sign at 0x40E2D7 and 0x40E19A."
+              },
+              {
+                "path": "build/antigrav-skill-assign-001/worker-evidence/comparison.json",
+                "detail": "Records byte-identical before/after normal-gravity traces covering eight assignments and 100 subsequent ticks per skill."
+              },
+              {
+                "path": "build/agent-runs/20261115T224344-39368-47694f59/verification.log",
+                "detail": "Supervisor verification passes all 306 main and 84 recovery tests, including world, runtimepick, clicktoassign, runtimeskillpanel and antigrav_skill_normal_unchanged. Entry/exit source manifests show no existing test source was changed."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-15T23:23:23.264523+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T224344-39368-47694f59\\verification.log",
+        "verified_content": "5f196fa6009187fb1dc106237449bd5fe136bb79d39bc836630fac35a4b65bbc"
+      }
     },
     {
       "id": "lemming-pick-nearest-001",
       "title": "Hover and assignment pick the lemming nearest the cursor centre",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16889,12 +17101,104 @@
         "Hover highlight and assignment use the same pick: in the test the highlighted lemming is the one that receives the assigned skill in every case.",
         "The tie-break is deterministic and documented; candidate radius and eligibility rules are unchanged or the report justifies each change with the demonstrated failure.",
         "Existing hover-feedback and assignment tests pass, with any changed expectation justified before/after as encoding this defect."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261115T232323-39368-dab7e8e7",
+      "started": "2026-11-15T23:23:23.579244+00:00",
+      "finished": "2026-11-15T23:58:58.741965+00:00",
+      "last_run": "build/agent-runs/20261115T232323-39368-dab7e8e7",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by production source, paired installed-level evidence and supervisor verification: 324 main and 84 recovery tests passed. Nearest-screen-centre selection is explicitly provisional; this acceptance does not establish original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "A test places several lemmings around the cursor on an installed level and shows the picked lemming is the one nearest the cursor centre for cursor positions left of, right of and between them; before the change at least one of these cases picks a farther lemming.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_pick_nearest.cpp",
+                "detail": "Runs paired application drivers on installed MM_CLIMB_002 with naturally prepared actors. Independently computes displayed-centre distances, requires multiple candidates and both walking directions, and exercises left, right, between and overlapping-body positions."
+              },
+              {
+                "path": "build/lemming-pick-nearest-001/worker-evidence/comparison.json",
+                "detail": "All three positional cases change actor 5 to nearer actor 3. Squared distances improve from 254.722 to 251.753, 240.267 to 0.0665, and 214.648 to 0.6104 respectively. The overlapping-body case changes actor 0 to nearer actor 2."
+              },
+              {
+                "path": "build/lemming-pick-nearest-001/worker-evidence/after/upright-right/hover.png",
+                "detail": "Direct visual inspection against the retained before image confirms the highlight moves from the actor left of the cursor to the actor under its centre."
+              }
+            ]
+          },
+          {
+            "criterion": "Hover highlight and assignment use the same pick: in the test the highlighted lemming is the one that receives the assigned skill in every case.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Both hover composition and left-click assignment call hoveredActor with the displayed camera, actor samples and scene depth. Its returned index drives the highlight and World::assign; click handling precedes simulation advancement."
+              },
+              {
+                "path": "src/__test__/test_pick_nearest.cpp",
+                "detail": "Every route asserts markedActor equals hoveredActor, clicks the same pointer coordinates, then checks that exactly the highlighted actor receives Climber or Blocker and exactly one skill is consumed."
+              },
+              {
+                "path": "build/agent-runs/20261115T232323-39368-dab7e8e7/verification.log",
+                "detail": "All seven before and seven after route tests pass, including the three naturally inverted m06_kf_1 controls. Those inverted controls have one eligible actor, as the report explicitly discloses."
+              }
+            ]
+          },
+          {
+            "criterion": "The tie-break is deterministic and documented; candidate radius and eligibility rules are unchanged or the report justifies each change with the demonstrated failure.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/RuntimePick.h",
+                "detail": "Documents the provisional displayed-sprite-box centre policy and exact-distance ties retaining the first candidate, which is the lowest World index in production."
+              },
+              {
+                "path": "src/app/RuntimePick.cpp",
+                "detail": "Uses strict smaller squared screen distance and retains pickBoxOverlaps for candidate admission. Production retains the stock, visibility, active-state, Climber-exclusion and support gates."
+              },
+              {
+                "path": "build/lemming-pick-nearest-001/worker-only.patch",
+                "detail": "Isolates the ranking change from incoming edits; Pick.cpp and existing eligibility helpers remain unchanged. New unit cases cover exact ties, fractional centres, two-dimensional distance, ineligible candidates and inclusive radius boundaries."
+              },
+              {
+                "path": "docs/scratch/lemming-pick-nearest-001.md",
+                "detail": "Distinguishes this clone policy from retained original instructions at 455194..4551AA and 4551AB..455203: applicability precedes state-priority and terrain-target-distance ranking. Original applicability limitations remain explicit."
+              }
+            ]
+          },
+          {
+            "criterion": "Existing hover-feedback and assignment tests pass, with any changed expectation justified before/after as encoding this defect.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261115T232323-39368-dab7e8e7/verification.log",
+                "detail": "Supervisor verification passes all 324 main and 84 recovery tests, including leveloverlap, runtimepick, clicktoassign, all eight hover-feedback checks and all nearest-pick checks."
+              },
+              {
+                "path": "build/lemming-pick-nearest-001/worker-only.patch",
+                "detail": "The leveloverlap oracle changes from terrain-target distance to displayed-centre distance while preserving assignment, stock and retry assertions. Hover-feedback uses a multiple-candidate point where old and new policies agree, preserving its frozen-baseline pixel comparison; dedicated paired routes establish the ranking defect separately."
+              },
+              {
+                "path": "docs/scratch/lemming-pick-nearest-001.md",
+                "detail": "Explains both expectation changes against playtest V7 and records authentic task-entry baseline provenance, before/after behavior and preserved historical limitations."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T00:00:52.619006+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261115T232323-39368-dab7e8e7\\verification.log",
+        "verified_content": "3485a55b40b375eec367cd0ef81acc20b6960a2c6f45082acd93c8f5501d666a"
+      }
     },
     {
       "id": "nuke-all-001",
       "title": "Make Nuke all work",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "frontend-window-quit-001"
       ],
@@ -16909,7 +17213,116 @@
         "Retained clone images show the nuke control's feedback and lemmings exploding in sequence.",
         "Activation gesture, countdown and stagger are each cited to static evidence or labelled provisional with the settling observation named.",
         "Bomber behavior and existing tests are unchanged apart from expectations that encoded the missing nuke, each justified before/after."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261116T003831-39368-917d40c4",
+      "started": "2026-11-16T00:38:31.343669+00:00",
+      "finished": "2026-11-16T01:10:38.873045+00:00",
+      "last_run": "build/agent-runs/20261116T003831-39368-917d40c4",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261116T000052-39368-4f53a67f/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by production-source inspection, retained clone images and successful supervisor verification: 330 main and 84 recovery tests. Acceptance is limited to the playable-clone fix; exact original Armageddon timing remains provisional.",
+        "checks": [
+          {
+            "criterion": "A test drives the production pointer path on an installed level: activating Nuke stops releases, every live lemming explodes, and the level ends at the results screen with correct saved/lost counts; before the change the same input has no effect.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_nuke.cpp",
+                "detail": "Drives ordinary frontend navigation to installed MM_CLIMB_002 and sends SDL pointer gestures through runApplication without mutating World. Checks release cancellation, distinct explosion ticks for every activation survivor, crater rendering, results, saved counts and preservation of normal/installed saves."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Production left-button presses/releases reach RuntimeNukeInput before actor picking; plate clicks remain consumed. World::nuke connects through the existing simulation and frontend result path."
+              },
+              {
+                "path": "build/agent-native/main/nuke-before/live/summary.txt",
+                "detail": "Supervisor baseline records five actors at activation input, zero explosions, no craters, no results and zero assertion failures. This uses retained task-entry input source with current shared objects, as explicitly disclosed."
+              },
+              {
+                "path": "build/agent-native/main/nuke-after/live/summary.txt",
+                "detail": "Supervisor after-route records releases stopped at five, all five actors exploding, craters and results, with zero assertion failures."
+              },
+              {
+                "path": "build/agent-native/main/nuke-after/partial/result.txt",
+                "detail": "After one natural rescue, results retain saved=1, lost=9 and success=1. The empty-hatch and zero-rescue cases also pass registered verification."
+              }
+            ]
+          },
+          {
+            "criterion": "Retained clone images show the nuke control's feedback and lemmings exploding in sequence.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/nuke-all-001/retry-2/observations/after/live/confirmation.png",
+                "detail": "Directly inspected: the first click outlines the Nuke plate and displays CLICK AGAIN."
+              },
+              {
+                "path": "build/nuke-all-001/retry-2/observations/after/live/activated.png",
+                "detail": "Directly inspected: confirmation changes to NUKE 5 after activation."
+              },
+              {
+                "path": "build/nuke-all-001/retry-2/observations/after/live/exploding-mid-0.png",
+                "detail": "Directly inspected: early actors show explosion poses while later actors remain upright."
+              },
+              {
+                "path": "build/nuke-all-001/retry-2/observations/after/live/exploding-mid-3.png",
+                "detail": "Directly inspected: the wave has advanced, the first actor is removed and its crater is visible while subsequent actors continue exploding."
+              },
+              {
+                "path": "build/nuke-all-001/retry-2/observations/after/live/trace.csv",
+                "detail": "Corroborates sequential losses at 24.0, 24.2, 24.4, 24.6 and 24.8 seconds, with releases fixed at five and 71 rendered terrain cells changed."
+              }
+            ]
+          },
+          {
+            "criterion": "Activation gesture, countdown and stagger are each cited to static evidence or labelled provisional with the settling observation named.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/nuke-all-001/retained-static/evidence.json",
+                "detail": "Retains Ghidra instruction evidence tied to reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Inspected assembly confirms the release-edge comparison against 500 ms at 0x483CCB..0x483D03, countdown constructor arguments 5/5 at 0x4426BF..0x4426C9, and cursor advance/credit updates at 0x4429C0..0x442A2C."
+              },
+              {
+                "path": "docs/scratch/nuke-all-001.md",
+                "detail": "Separates static behavior from the provisional two-complete-click adapter and 200 ms stagger. Names timestamped original startup/activation observations to settle confirmation semantics and successive attachment/blast cadence. Also discloses provisional feedback, pause and completion policies."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Documents the five-second countdown source and explicitly labels one replacement per existing 5 Hz tick provisional, naming the recording needed to settle visible cadence."
+              }
+            ]
+          },
+          {
+            "criterion": "Bomber behavior and existing tests are unchanged apart from expectations that encoded the missing nuke, each justified before/after.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/nuke-all-001/worker-evidence/final/task-only.patch",
+                "detail": "Independent comparison with task-entry World.cpp confirms ordinary Bomber assignment, fuse processing, stepExploder and explode remain unchanged. New ownership branches apply only to Nuke; no existing test assertions or timeouts were changed."
+              },
+              {
+                "path": "cmake/nuke.cmake",
+                "detail": "Retry repairs eight historical mixed-source binaries by compiling unchanged retained method sources against a compatible current World declaration. Original snapshots and identity checks remain intact; this changes build compatibility, not expected outcomes."
+              },
+              {
+                "path": "build/nuke-all-001/retry-2/validation.json",
+                "detail": "Records unchanged task-entry snapshots and 69 checked provenance entries matching original hashes. The report explains the initial layout-corruption failures and the bounded repair without presenting those failures as passes."
+              },
+              {
+                "path": "build/agent-runs/20261116T003831-39368-917d40c4/verification.log",
+                "detail": "Supervisor verification passes all 330 main and 84 recovery tests, including actoranimstate_bomb, world, runtimeskillpanel, existing fast-forward checks, repaired historical comparisons and all six Nuke checks."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T01:13:38.996532+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T003831-39368-917d40c4\\verification.log",
+        "verified_content": "ff3631e88b9ca046e817925ba5c0482356e829ac211d553f0f88d5be26978f0d"
+      }
     },
     {
       "id": "release-rate-control-001",
@@ -16923,12 +17336,25 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 6 V8: clicking and right-clicking the spawn (release rate) box on the panel does not change how fast lemmings leave the hatch. Each level should have its own minimum and maximum. This is a playtest-ledger defect, so it is authorized although release timing was parked: add the control, do not retune the existing mapping from rate to release interval beyond what the control needs. Use retained static evidence and the level data for the stored initial/minimum/maximum release values and for which gesture raises and which lowers the rate, including click-and-hold repeat if the original has it; label provisional choices. The panel must show the current value. The level's stored initial rate is the starting value and the player cannot go outside the level's limits. Multi-hatch scheduling (multi-hatch-release-001) stays blocked and out of scope. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review.",
+      "scope": "Playtest 6 V8: clicking and right-clicking the spawn (release rate) box on the panel does not change how fast lemmings leave the hatch. Each level should have its own minimum and maximum. This is a playtest-ledger defect, so it is authorized although release timing was parked: add the control, do not retune the existing mapping from rate to release interval beyond what the control needs. Use retained static evidence and the level data for the stored initial/minimum/maximum release values and for which gesture raises and which lowers the rate, including click-and-hold repeat if the original has it; label provisional choices. The panel must show the current value. The level's stored initial rate is the starting value and the player cannot go outside the level's limits. Multi-hatch scheduling (multi-hatch-release-001) stays blocked and out of scope. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player, label it provisional in code comments and the report, and say what original observation would settle it. No original execution, debugger, hooks or capture. Do not retune simulation timing, release rate or skill rules beyond what this defect requires. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. A change to a widely included header rebuilds most of the test suite, so make header edits early and in one batch. The supervisor owns full verification. Report under docs/scratch/ with the production call path, before/after behavior with retained clone images, evidence paths, limitations and a two-line handoff. Finish needs_review. Resume note. Attempt 1 finished its worker pass but failed supervisor verification (build/agent-runs/20261116T011339-39368-7a50ec64/verification.log). Attempt 2 was interrupted about 65 minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261116T020511-39368-a07ba930); that is not a task failure and the attempt count was set back to 1. The partial work of both attempts is left uncommitted in the tree, with a copy under build/lead/release-rate-control-001-attempt2/. window-scale-001, antigrav-skill-assign-001, lemming-pick-nearest-001 and nuke-all-001 are accepted and committed, so every uncommitted source change belongs to this task. Inspect and continue it rather than restarting; first confirm the verification failure of attempt 1 is resolved.",
       "acceptance": [
         "A test drives the production pointer path on an installed level: one gesture on the release box raises the rate and the other lowers it, the measured interval between releases changes accordingly, and the value stops at the level's stored minimum and maximum; before the change the input has no effect.",
         "The panel shows the current release value, with retained clone images at minimum, initial and maximum.",
         "The report cites where the level's initial, minimum and maximum values come from for at least three installed levels with different values, or states that static evidence shows a fixed range.",
         "With no player input, release timing on existing routes is unchanged and existing scripted wins still win."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T020511-39368-a07ba930",
+      "started": "2026-11-16T02:05:11.964565+00:00",
+      "finished": "2026-11-16T02:05:11.464946+00:00",
+      "last_run": "build/agent-runs/20261116T011339-39368-7a50ec64",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261116T011339-39368-7a50ec64/verification.log",
+      "scope_revision_history": [
+        {
+          "at": "2026-11-16T02:14:41.869019+00:00",
+          "by": "project lead",
+          "change": "Resume note. Attempt 1 finished its worker pass but failed supervisor verification (build/agent-runs/20261116T011339-39368-7a50ec64/verification.log). Attempt 2 was interrupted about 65 minutes in when the supervisor was killed by a host low-memory condition (build/agent-runs/20261116T020511-39368-a07ba930); that is not a task failure and the attempt count was set back to 1. The partial work of both attempts is left uncommitted in the tree, with a copy under build/lead/release-rate-control-001-attempt2/. window-scale-001, antigrav-skill-assign-001, lemming-pick-nearest-001 and nuke-all-001 are accepted and committed, so every uncommitted source change belongs to this task. Inspect and continue it rather than restarting; first confirm the verification failure of attempt 1 is resolved."
+        }
       ]
     },
     {

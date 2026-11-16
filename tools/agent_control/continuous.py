@@ -30,7 +30,7 @@ TASK = obj({'id': TEXT, 'title': TEXT, 'scope': TEXT,
             'production_files': {'type': 'array', 'items': TEXT, 'minItems': 1},
             'acceptance': {'type': 'array', 'items': TEXT, 'minItems': 1},
             'depends_on': STRINGS, 'requires_original_execution': {'type': 'boolean'},
-            'verification': {'enum': ['main', 'recovery', 'all']}})
+            'verification': {'enum': ['smoke', 'main', 'recovery', 'all']}})
 PLAN = obj({'decision': {'enum': ['task', 'complete', 'blocked']}, 'reason': TEXT,
             'task': {'anyOf': [TASK, {'type': 'null'}]}, 'checks': CHECKS})
 REVIEW = obj({'decision': {'enum': ['accept', 'revise', 'blocked']},

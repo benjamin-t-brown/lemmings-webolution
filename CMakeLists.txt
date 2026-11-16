@@ -2113,3 +2113,6 @@ include(cmake/frame_consumption.cmake)
 include(cmake/antigrav_skill_assign.cmake)
 include(cmake/pick_nearest.cmake)
 include(cmake/nuke.cmake)
+
+# Keep last: assigns the smoke/legacy tiers to every test registered above.
+include(cmake/test_tiers.cmake)

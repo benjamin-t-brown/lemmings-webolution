@@ -73,7 +73,7 @@ def select_task(queue, task_id):
     by_id = {t['id']: t for t in tasks}
     if any(by_id.get(dep, {}).get('status') != 'done' for dep in task.get('depends_on', [])):
         raise ValueError('Dependencies are not reviewed and done')
-    if task.get('verification') not in ('main', 'recovery', 'all'):
+    if task.get('verification') not in ('smoke', 'main', 'recovery', 'all'):
         raise ValueError('Invalid verification profile')
     return task
 
@@ -145,6 +145,7 @@ def command_for(backend, registry, run_dir, *, read_only=False, schema=None, tas
         command += ['--allowedTools',
                     'Bash(git --no-pager show --no-ext-diff --no-textconv HEAD:src/app/main.cpp)',
                     'Bash(python tools/agent_control/verify.py --help)',
+                    'Bash(python tools/agent_control/verify.py --profile smoke)',
                     'Bash(python tools/agent_control/verify.py --profile main)',
                     'Bash(python tools/agent_control/verify.py --profile recovery)',
                     'Bash(python tools/agent_control/verify.py --profile all)']
@@ -180,9 +181,10 @@ def make_prompt(task, minutes):
             'Call close_binary without arguments when finished. Runtime, debugger, capture and metadata mutation tools are unavailable. '
             'Claude workers have Bash access for these exact commands: '
             'git --no-pager show --no-ext-diff --no-textconv HEAD:src/app/main.cpp; '
-            'python tools/agent_control/verify.py --profile main (or recovery or all). '
-            'Run commands verbatim and separately from repo root; do not append echo, status checks, pipes or wrappers. For verifier Bash calls set timeout=600000 and run_in_background=false so results are available before reporting. Register source-built demonstrations '
-            'and read-only asset measurements in CTest so the verifier executes them. '
+            'python tools/agent_control/verify.py --profile smoke (or main, recovery or all). '
+            'Run commands verbatim and separately from repo root; do not append echo, status checks, pipes or wrappers. For verifier Bash calls set timeout=600000 and run_in_background=false so results are available before reporting. The gate is the smoke profile; '
+            'do not add before/after replay fixtures, frozen-source builds, identity checks or per-task play routes. '
+            'Add a test only for logic a later change could silently break, keep it to a few seconds, and leave it in the legacy tier. '
             'Use file tools to retain git-show output under the task build directory. '
             'The supervisor owns the mandatory full verification run after your exit. Do not duplicate '
             'the full suite merely to finish your report. Run a permitted profile during development '

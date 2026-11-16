@@ -790,6 +790,15 @@ int runReport(const fs::path& root) {
   sum << "records=" << have << " expected=" << kNodes << " contact_sheets=" << sheets << '\n';
   std::cout << "report: " << have << "/" << kNodes << " level records, " << sheets << " contact sheets\n";
   require(have == kNodes, "all 102 level records present");
+  // Smoke gate (2026-11-15): every level's outcome was only reported until all 102 completed with a
+  // non-blank settled view. A crash, hang, failed load or blank view on any installed level now fails.
+  std::string bad;
+  for (int node = 0; node < kNodes; ++node) {
+    auto& r = rows[node];
+    if (r["outcome"] != "completed" || r["settled_verdict"] == "BLANK" || r["settled_verdict"] == "none")
+      bad += " " + std::to_string(node) + ":" + r["stored_id"] + "=" + r["outcome"] + "/" + r["settled_verdict"];
+  }
+  if (!bad.empty()) throw std::runtime_error("level sweep failures (node:id=outcome/settled view):" + bad);
   return 0;
 }
 

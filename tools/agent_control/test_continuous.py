@@ -499,6 +499,7 @@ class LoopTests(unittest.TestCase):
         self.assertEqual(set(allowed), {
             'Bash(git --no-pager show --no-ext-diff --no-textconv HEAD:src/app/main.cpp)',
             'Bash(python tools/agent_control/verify.py --help)',
+            'Bash(python tools/agent_control/verify.py --profile smoke)',
             'Bash(python tools/agent_control/verify.py --profile main)',
             'Bash(python tools/agent_control/verify.py --profile recovery)',
             'Bash(python tools/agent_control/verify.py --profile all)'})

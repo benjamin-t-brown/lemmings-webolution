@@ -23,7 +23,8 @@ including `decomp-lemmings/`, rather than the old standalone copy.
 ```powershell
 python tools/agent_control/test_control.py
 python tools/agent_control/test_continuous.py
-python tools/agent_control/verify.py --profile all
+python tools/agent_control/verify.py --profile smoke   # per-task gate, about two minutes
+python tools/agent_control/verify.py --profile all     # milestone sign-off, includes legacy tests
 ```
 
 The verifier uses absolute tool paths, prepends only the selected UCRT64 runtime

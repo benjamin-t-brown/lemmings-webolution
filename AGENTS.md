@@ -74,9 +74,9 @@ Reports cite exact runs and retain earlier findings with explicit corrections.
 ## Builds, saves and preservation
 Use registered tool paths and `.claude/rules/windows-msys2-build.md`; do not rely
 on whichever compiler appears first on PATH. Use LF.
-The supervisor owns mandatory full registered verification after worker exit.
-Workers may run a permitted profile to answer a concrete development question,
-but need not duplicate the full suite. Report pending supervisor verification
+The supervisor owns mandatory verification after worker exit, at the task's profile
+(smoke by default; see Verification tiers). Workers may run a permitted profile to
+answer a concrete development question, but need not duplicate it. Report pending supervisor verification
 truthfully; do not repeatedly restart a suite killed by the client time limit. Build jobs default8;
 the main suite builds -O2 with assertions and runs four test jobs (one is the fallback). Preserve source provenance for frozen/current demonstrations;
 never replace an authentic pre-task baseline with resumed modified files.
@@ -186,3 +186,26 @@ exists, labels provisional choices, and may correct an existing test expectation
 that expectation encodes the demonstrated defect, with before/after justification. It is
 not a fidelity pass: matching original timing, the gate ledger and completion criteria are
 unchanged. A scripted win is regression evidence, not proof a level is playable.
+
+## Verification tiers
+User approved (2026-11-15) replacing the full suite as the per-task gate. The clone is close
+enough that long task-specific tests repeat what a playtest shows, and they had grown to
+19 minutes a run.
+- `verify.py --profile smoke` is the task gate: the tests `cmake/test_tiers.cmake` labels
+  smoke (units, one frontend-to-save round trip, the 102-level sweep, which now fails on any
+  crash, hang, failed load or blank view) plus the recovery suite. About two minutes.
+- Every other main test is `legacy`: neither built nor run by the gate. `--profile all` runs
+  them at a milestone sign-off. A legacy test broken by an intended behavior change is
+  removed with a one-line reason in the task report, not repaired. This is the one permitted
+  way to drop a test; smoke tests and their assertions and timeouts stay protected.
+- Tasks do not add before/after replay fixtures, frozen-source builds, identity checks or
+  per-task scripted routes. "Demonstrate before/after behavior" means the playtest ledger
+  entry for before, and the report's production call path plus a short what-to-check note
+  (level, action, expected result) for after. A new test is justified only for logic a later
+  change could silently break; it runs in seconds and stays legacy unless the lead adds it
+  to the smoke list.
+- Acceptance of a playtest defect is the user's next playtest. Review checks the call path,
+  the diff and the smoke result; it does not demand test or image evidence.
+- test-legacy-prune-001 is authorized as a build/test-only task: remove the registrations
+  and sources of before/baseline/identity replays. It needs no production change.
+- The fidelity gate ledger, completion.json, the recovery suite and every park are unchanged.

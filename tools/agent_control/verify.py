@@ -37,7 +37,9 @@ def check_test_inventory(tests, exe):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--profile', choices=['main', 'recovery', 'all'], default='all')
+    parser.add_argument('--profile', choices=['smoke', 'main', 'recovery', 'all'], default='all',
+                        help='smoke is the per-task gate: the smoke-labelled main tests and the '
+                             'recovery suite; all adds the legacy main tests for a milestone sign-off')
     parser.add_argument('--jobs', type=int, default=8)
     parser.add_argument('--test-jobs', type=int, default=4,
                         help='Concurrent CTest processes; 4 was benchmarked 2026-11-12, 1 is the fallback')
@@ -60,8 +62,11 @@ def main():
     target = subprocess.check_output([tools['gcc']['path'], '-dumpmachine'], text=True).strip()
     if target != 'x86_64-w64-mingw32':
         raise RuntimeError(f'Refusing unexpected compiler target: {target}')
-    profiles = ['main', 'recovery'] if args.profile == 'all' else [args.profile]
+    # smoke builds only the smoke_tests target and runs the tests cmake/test_tiers.cmake labels smoke.
+    smoke = args.profile == 'smoke'
+    profiles = ['main', 'recovery'] if args.profile in ('all', 'smoke') else [args.profile]
     for profile in profiles:
+        tier = ['-L', '^smoke$'] if smoke and profile == 'main' else []
         source = ROOT if profile == 'main' else ROOT / 'decomp-lemmings'
         build = ROOT / 'build/agent-native' / profile
         configure = [cmake, '-S', source, '-B', build, '-G', 'Ninja',
@@ -81,17 +86,18 @@ def main():
                           f'-DLEMMINGS_ARCHIVE={repository_path(registry["assets"]["base"]).as_posix()}',
                           f'-DLEMMINGS_PATCH_ARCHIVE={repository_path(registry["assets"]["patch"]).as_posix()}']
         check(configure)
-        check([cmake, '--build', build, '--parallel', str(args.jobs)])
+        check([cmake, '--build', build, '--parallel', str(args.jobs)]
+              + (['--target', 'smoke_tests'] if tier else []))
         listing = subprocess.check_output([ctest, '--test-dir', str(build),
-                                           '--show-only=json-v1'], text=True)
+                                           '--show-only=json-v1'] + tier, text=True)
         tests = json.loads(listing)['tests']
         # A source-only profile must not acquire original-byte oracle tests.
         check_test_inventory(tests, exe)
         (build / 'agent-test-inventory.json').write_text(listing, encoding='utf-8')
-        check([ctest, '--test-dir', build, '--output-on-failure',
+        check([ctest, '--test-dir', build, '--output-on-failure'] + tier + [
                '--no-tests=error', '--timeout', '360', '--parallel', str(args.test_jobs),
                '--output-junit', build / 'agent-results.xml'])
-        print(f'{profile}: {len(tests)} registered tests passed. '
+        print(f'{profile}{" (smoke tier)" if tier else ""}: {len(tests)} registered tests passed. '
               'This is source verification, not new native fidelity evidence.', flush=True)
     check([tools['git']['path'], 'diff', '--check'])
 

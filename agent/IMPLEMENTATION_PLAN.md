@@ -1,6 +1,6 @@
 # Current reconstruction roadmap
 
-Updated 2026-11-12 by the project lead after the first human playtest. Current
+Updated 2026-11-15 by the project lead: smoke gate and playtest-driven confirmation. Current
 milestone: **playable v1**. Full-project completion criteria in completion.json
 are unchanged and are not satisfied by this milestone.
 
@@ -24,39 +24,45 @@ correct visible behavior, use retained static evidence where it exists, and labe
 anything provisional. They are not fidelity passes.
 
 ## Work order
-From the playtest ledger; item numbers are its P-numbers.
-1. **basher-fix-001** (queued): Basher usable at a wall on MM_BASH_002 (P1).
-2. **level-sweep-001** (queued): all-level smoke sweep for crashes, hangs and
-   blank renders. Its ranked list feeds later ordering; it does not preempt 3-5.
-3. **terrain-render-001** (queued): terrain removed or added by skills is visible
-   (P2, P3), for Bomber, Builder, Basher, Miner and Digger.
-4. Per-state lemming animation and the bomber countdown (P4-P6), then smooth
-   movement between simulation steps (P7).
-5. Lemmings hidden behind the cylinder (P8).
-6. Small fixes: one window across frontend and level (P12), Quit (P13),
-   fast-forward off (P17, after checking the running original).
-7. Hatch doors, drop-in spawn, balloon departure (P9-P11).
-8. Map level names (P14), remaining sound cues and music (P15, P16), renderer
-   speed (P18).
-After each of 3, 4 and 6 the user playtests ten to fifteen minutes.
+Defects come from the playtest ledgers under docs/playtest/; the queue (agent/RUN_STATUS.md)
+holds the current ones. Standing order:
+1. Finish release-rate-control-001 under the smoke gate.
+2. **replay-recorder-001**: record a played level's inputs and replay them headless, so each
+   level the user wins becomes a regression check without anyone writing a test.
+3. Remaining playtest-6 defects (death particles, yippee cue), then each new ledger batch.
+4. **test-legacy-prune-001**: delete before/baseline/identity replays and their CMake.
+
+After each batch the lead rebuilds the playtest binary and gives the user a what-to-check
+list. Progress is the level table, [docs/playtest/levels.md](../docs/playtest/levels.md):
+one row per installed level, won by a person or not.
 
 ## Acceptance for playable v1
-- Every level has been won by a person or, where the user accepts it, by a
-  scripted public-input route, from the ordinary frontend with persistence; or
-  has an explicit user-accepted exclusion.
-- Every skill and gadget type has visible, readable behavior: state animation,
-  terrain change, gadget effect.
-- No known crash, hang or soft-lock on any installed level.
+- Every level is marked won by a person in the level table (or, where the user accepts it,
+  by a recorded replay), or has an explicit user-accepted exclusion.
+- Every skill and gadget type has visible, readable behavior.
+- The smoke gate passes on the final content: no crash, hang, failed load or blank view on
+  any installed level, and the recovery suite passes.
 - No open playtest item marked blocker.
-- Full registered main/recovery verification passes on the final content.
-- Reports keep human observation, scripted clone observation, source inference
-  and original comparison distinct, and restate no historical gate as passed.
-
-Progress today: scripted wins exist on 5 levels (map nodes 0-3 and 8); by the bar
-above none is yet confirmed playable. One playtest, 18 open items.
+- One `--profile all` run at sign-off; legacy tests that fail on intended changes are
+  removed with reasons, the rest pass.
+- Reports keep human observation, scripted clone observation, source inference and original
+  comparison distinct, and restate no historical gate as passed.
 
 ## Verification
-Measured 2026-11-12 on commit 721c64e (build/test-parallel-benchmark-001/):
+Per-task gate: `python tools/agent_control/verify.py --profile smoke`. First run 2026-11-15:
+95 main smoke tests in 60 s and 84 recovery tests in 19 s, 1 min 40 s wall with an
+incremental build. Tiers and rules are in AGENTS.md "Verification tiers" and
+cmake/test_tiers.cmake.
+
+Why it changed: between 2026-11-12 and 2026-11-15 the main suite grew from 148 tests and
+5.5 minutes to 330 tests and 19 minutes, 39% of it re-running frozen pre-task code, while
+the user's playtests twice overruled work the tests and reviews had accepted. Commits in
+that period added about 13,000 lines of tests and CMake against 3,400 of production code.
+
+Do not run the clone against the normal save while verification runs; use
+scripts/Play-Clone.ps1.
+
+History, full suite on 2026-11-12, commit 721c64e (build/test-parallel-benchmark-001/):
 
 | Configuration | Main suite wall time | Result |
 | --- | ---: | --- |
@@ -64,18 +70,7 @@ Measured 2026-11-12 on commit 721c64e (build/test-parallel-benchmark-001/):
 | Debug, 4 test jobs | 1183 s and 1212 s | 148/148 twice; `levelreturn` 321 s and 351 s of a 360 s timeout |
 | -O2 with assertions, 4 test jobs | 329 s | 148/148; `levelreturn` 66 s |
 
-Deterministic outputs were byte-identical across the debug runs. The verifier now
-builds the main suite with `-O2 -g` (assertions kept, `NDEBUG` not defined) and runs
-four test jobs; `--test-jobs 1` remains the fallback. The recovery suite keeps its
-plain Debug build. Tests, assertions and timeouts are unchanged. Do not run the
-clone against the normal save while verification is running: several play tests
-assert that the normal save is untouched.
-
-Process work stops here. Preflight and verification reuse are dropped as goals; a
-six-minute suite does not need them.
-
-Known waste, not yet addressed: playableexpansion steps 2 and 3 (Blocker, Builder)
-end in a watchdog timeout in every run and pass as driver-integrity tests.
+The full suite keeps `-O2 -g` with assertions and four test jobs.
 
 ## Execution
 The project lead (interactive Fable session) decides sequence, queue, controller

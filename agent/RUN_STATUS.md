@@ -10,8 +10,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - release-rate-control-001: **ready** — Change the release rate by clicking the hatch box
+- replay-recorder-001: **ready** — Record a played level and replay it headless
 - death-particles-001: **ready** — Show explosion debris and splat pieces
 - exit-yippee-sound-001: **ready** — Play the yippee sound when a lemming reaches the balloon
+- test-legacy-prune-001: **ready** — Delete before/baseline/identity replay tests
 
 ## Recently completed queue entries
 

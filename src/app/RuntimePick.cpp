@@ -54,4 +54,22 @@ PickCandidate runtimePickCandidate(void* id, const PickBox& box,
           pickDistanceSquared(terrainPosition, reference)};
 }
 
+const ScreenPickCandidate* pickNearestScreenLemming(
+    std::span<const ScreenPickCandidate> candidates, int cursorX, int cursorY) {
+  const PickBox cursor{cursorX - 16, cursorY - 16, cursorX + 16, cursorY + 16};
+  const ScreenPickCandidate* best = nullptr;
+  double bestDistance = 0.0;
+  for (const auto& candidate : candidates) {
+    if (!candidate.eligible || !pickBoxOverlaps(candidate.box, cursor)) continue;
+    const double dx = candidate.bodyCentre[0] - cursorX;
+    const double dy = candidate.bodyCentre[1] - cursorY;
+    const double distance = dx * dx + dy * dy;
+    if (!best || distance < bestDistance) {
+      best = &candidate;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
 }  // namespace webo::app

@@ -47,6 +47,8 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
       SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 640, 480),
       SDL_DestroyTexture);
   if (!texture) return std::unexpected(sdlError("SDL_CreateTexture"));
+  if (SDL_SetTextureScaleMode(texture.get(), SDL_ScaleModeNearest) != 0)
+    return std::unexpected(sdlError("SDL_SetTextureScaleMode"));
 
   CursorVisibility cursorVisibility;
 
@@ -61,6 +63,7 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
   while (running && (options.maxFrames == 0 || frames < options.maxFrames)) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+      presentation.gameCoordinates(event);
       if (event.type == SDL_QUIT) { running = false; break; }
       if (event.type == SDL_WINDOWEVENT) {
         if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {

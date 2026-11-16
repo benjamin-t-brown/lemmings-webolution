@@ -30,4 +30,19 @@ PickCandidate runtimePickCandidate(void* id, const PickBox& box,
     const std::array<double, 3>& reference,
     std::optional<bool> terrainSupport = std::nullopt);
 
+struct ScreenPickCandidate {
+  void* id = nullptr;
+  PickBox box;
+  bool eligible = true;
+  std::array<double, 2> bodyCentre{};
+};
+
+// PROVISIONAL playable-v1 policy (playtest 6 V7): nearest displayed sprite-box
+// centre to cursor-dot centre, irrespective of facing, gravity or native state
+// priority. Exact squared-distance ties keep the first candidate (the lowest
+// World index in the production scan). Preserve the native overlap/eligibility
+// gates; the recovered terrain-reference priority picker remains in Pick.cpp.
+const ScreenPickCandidate* pickNearestScreenLemming(
+    std::span<const ScreenPickCandidate> candidates, int cursorX, int cursorY);
+
 }  // namespace webo::app

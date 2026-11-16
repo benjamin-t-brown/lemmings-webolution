@@ -377,6 +377,16 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
 
   for (std::size_t i = 0; i < skills->counts.size(); ++i)
     s.skills[i] = static_cast<int>(skills->counts[i]);
+  // Static command-stock contract 0x45B86D/0x454725; retain the resource
+  // value rather than assuming all installed levels offer one command.
+  s.nukeStock = 0;
+  try {
+    const auto decoded = lemmings::read_compiled_level(
+        std::span(reinterpret_cast<const std::uint8_t*>(blob->data()), blob->size()), false);
+    s.nukeStock = static_cast<int>(std::min<std::uint32_t>(decoded.gadgets.values_27d0[9], 200));
+  } catch (const std::invalid_argument&) {
+    // Legacy skill-trailer fallback has no established command-stock field.
+  }
 
   return report;
 }

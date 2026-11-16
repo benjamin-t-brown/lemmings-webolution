@@ -42,13 +42,12 @@ app::PickBox boxFor(const app::ActorSpritePlacement& p) {
           static_cast<int>(p.right), static_cast<int>(p.bottom)};
 }
 
-// Independent test oracle: among overlapping eligible walkers, rank by the
-// raw actor sample's squared distance to the measured D2d reference point.
-// Priority is equal (Walker=0); vector order is only the final tie breaker.
-double distanceToReference(const sim::Lemming& l, int terrainHeight) {
-  const auto p = terrainSampleFromLemming(l, terrainHeight);
-  const double dx = p.x - 32.0, dy = p.y - 48.0, dz = p.z - 0.5;
-  return dx * dx + dy * dy + dz * dz;
+// V7 replaces the terrain-target expectation that encoded the demonstrated
+// picking defect. Independent displayed-centre oracle; stable World-order ties.
+double distanceToCursor(const app::ActorSpritePlacement& p, int x, int y) {
+  const double dx = (p.left + p.right) / 2 - x;
+  const double dy = (p.top + p.bottom) / 2 - y;
+  return dx * dx + dy * dy;
 }
 
 bool eligibleWalker(const sim::Lemming& l) {
@@ -71,8 +70,8 @@ bool findUsefulCursor(const app::LevelFrameView& frame, int& outX, int& outY,
     }
     if (ineligibleHit || hits.size() < 2) continue;
     const auto closest = *std::min_element(hits.begin(), hits.end(), [&](auto* a, auto* b) {
-      const double da = distanceToReference(lemmings[a->index], frame.world.terrain().height());
-      const double db = distanceToReference(lemmings[b->index], frame.world.terrain().height());
+      const double da = distanceToCursor(a->placement, x, y);
+      const double db = distanceToCursor(b->placement, x, y);
       return da < db;
     });
     if (closest->index == hits.front()->index) continue;
@@ -142,7 +141,7 @@ int main() {
       for (const auto& actor : frame.actors) {
         if (!app::pickBoxOverlaps(boxFor(actor.placement), cursor) || actor.index >= lemmings.size() ||
             !eligibleWalker(lemmings[actor.index])) continue;
-        const double d = distanceToReference(lemmings[actor.index], frame.world.terrain().height());
+        const double d = distanceToCursor(actor.placement, clickX, clickY);
         if (d < best) { best = d; secondExpected = actor.index; }
       }
       if (!std::isfinite(best) || secondExpected == firstExpected || !pushClick(clickX, clickY))

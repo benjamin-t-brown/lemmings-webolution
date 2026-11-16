@@ -622,6 +622,20 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
 
   # Observe real SDL window lifetimes in the source application, including teardown.
   if(MINGW OR (UNIX AND NOT APPLE))
+    add_executable(test_windowscale src/__test__/test_windowscale.cpp)
+    target_link_libraries(test_windowscale PRIVATE webolution_app webolution_app_nomain webolution_objects)
+    target_compile_definitions(test_windowscale PRIVATE WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
+    target_link_options(test_windowscale PRIVATE "-Wl,--wrap=SDL_CreateWindow" "-Wl,--wrap=SDL_RenderPresent")
+    add_test(NAME windowscale COMMAND test_windowscale after "${CMAKE_BINARY_DIR}/window-scale-test")
+    set_tests_properties(windowscale PROPERTIES TIMEOUT 120
+      ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    foreach(factor IN ITEMS 1 2)
+      add_test(NAME windowscale_frames_${factor}x COMMAND test_windowscale "bench${factor}"
+        "${CMAKE_BINARY_DIR}/window-scale-test")
+      set_tests_properties(windowscale_frames_${factor}x PROPERTIES TIMEOUT 120
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+    endforeach()
+
     add_executable(test_frontendwindowquit src/__test__/test_frontendwindowquit.cpp)
     target_link_libraries(test_frontendwindowquit PRIVATE webolution_app webolution_app_nomain)
     target_link_libraries(test_frontendwindowquit PRIVATE webolution_objects)
@@ -2096,3 +2110,6 @@ webolution_share_registered_app_sources()
 
 # Explicit render-demand automation and optional authentic worker controls.
 include(cmake/frame_consumption.cmake)
+include(cmake/antigrav_skill_assign.cmake)
+include(cmake/pick_nearest.cmake)
+include(cmake/nuke.cmake)

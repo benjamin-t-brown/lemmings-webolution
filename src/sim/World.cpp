@@ -77,7 +77,7 @@ int World::activeCount() const {
 }
 
 bool World::finished() const {
-  if (spawned_ < setup_.totalLemmings)
+  if (remainingToRelease() > 0)
     return false;
   for (const auto& l : lemmings_)
     if (l.alive())
@@ -127,12 +127,18 @@ void World::spawn(double budgetSeconds) {
   ++spawned_;
 }
 void World::stampBlockerField(const Lemming& l) {
+  // 40E2D7 multiplies the row offset by actor+44; 40E19A does the
+  // same on exit. Convert Y-up to our feet-based Y-down coordinates.
+  // The exact original +368 anchor conversion remains provisional, as for
+  // inverted drawing; reflect the accepted upright footprint about the feet.
+  const int v = l.verticalDir >= 0 ? 1 : -1;
   for (int k = 0; k < rules_.blockerFieldHeight; ++k)
-    setup_.terrain.setBlockerField(l.x, l.y - k, true);
+    setup_.terrain.setBlockerField(l.x, l.y - k * v, true);
 }
 void World::clearBlockerField(const Lemming& l) {
+  const int v = l.verticalDir >= 0 ? 1 : -1;
   for (int k = 0; k < rules_.blockerFieldHeight; ++k)
-    setup_.terrain.setBlockerField(l.x, l.y - k, false);
+    setup_.terrain.setBlockerField(l.x, l.y - k * v, false);
 }
 
 void World::leaveBlocker(Lemming& l) {
@@ -1031,6 +1037,15 @@ void World::step(Lemming& l) {
   if (!l.alive())
     return;
 
+  if (l.nukeExploding) {
+    // Nuke is a primary-state replacement (0x42E696), not a Bomber skill
+    // assignment. Do not let exit/fluid contact replace it before removal.
+    // frame -1 gives the same entry-only tick as an ordinary fuse expiring.
+    if (l.frame >= 0) stepExploder(l);
+    ++l.frame;
+    return;
+  }
+
   releaseTeleportContacts(setup_, l);
 
 
@@ -1168,7 +1183,8 @@ void World::step(Lemming& l) {
 
 
 
-      if (!groundAt(l.x, l.y + 1, 1)) {
+      // Shared native support 42E913 subtracts actor+44 in Y-up.
+      if (!groundAt(l.x, l.y + l.verticalDir, l.verticalDir)) {
         leaveBlocker(l);
         l.state = State::Faller;
         l.fallDistance = 0;
@@ -1181,6 +1197,7 @@ void World::step(Lemming& l) {
 }
 
 void World::stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout) {
+  if (nukeRequested_) return;
 
   // Round D1e: an additive, opt-in real-seconds release model
   // (docs/scratch/phase-d1-release-trigger.md and the two D1c/D1d follow-ups),
@@ -1232,6 +1249,7 @@ void World::stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterT
 
 void World::tick(bool continueHatchesAfterTimeout) {
   explicitUpdate_ = false;
+  stepNuke(msPerTick(), true);
   stepRelease(tickDtSeconds(), true, continueHatchesAfterTimeout);
 
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
@@ -1249,6 +1267,7 @@ void World::stepElapsed(Lemming& l, bool tickBoundary) {
   }
   if (!l.alive())
     return;
+  if (l.nukeExploding) return; // Bomber animation remains on the existing 5 Hz clock.
   releaseTeleportContacts(setup_, l);
   if (attachFluidHazard(l))
     return;
@@ -1299,6 +1318,7 @@ void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool 
   explicitUpdate_ = true;
   updateDtSeconds_ = dt;
 
+  stepNuke(segmentMs, tickBoundary);
   if (releaseEnabled) stepRelease(dt, tickBoundary, continueHatchesAfterTimeout);
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     stepElapsed(lemmings_[i], tickBoundary);
@@ -1413,7 +1433,7 @@ bool World::assign(std::size_t index, Skill skill) {
 
   switch (skill) {
     case Skill::Blocker:
-      if (!groundAt(l.x, l.y + 1, 1)) {
+      if (!groundAt(l.x, l.y + l.verticalDir, l.verticalDir)) {
 
         if (l.state == State::Blocker)
           stampBlockerField(l);
@@ -1458,11 +1478,42 @@ std::optional<std::size_t> World::pick(int x, int y, int radius) const {
 }
 
 void World::nuke() {
-  for (auto& l : lemmings_)
-    if (l.active() && l.fuseMs < 0)
-      l.fuseMs = rules_.bomberFuseMs;
+  if (nukeRequested_ || setup_.nukeStock <= 0) return;
+  --setup_.nukeStock;
+  nukeRequested_ = true;
+  nukeCountdownMs_ = 5000; // Static 0x4423D2 -> 0x413F15: global five-second overlay.
+  nukeCursor_ = 0;
+  // PROVISIONAL playable-v1: stop releases immediately, including an empty
+  // hatch. Original stops in the consumer after a non-type-3 actor exists.
+}
 
-
+void World::stepNuke(int elapsedMs, bool tickBoundary) {
+  if (!nukeRequested_) return;
+  if (nukeCountdownMs_ > 0) {
+    nukeCountdownMs_ = std::max(0, nukeCountdownMs_ - elapsedMs);
+    if (nukeCountdownMs_ > 0) return;
+  }
+  if (!tickBoundary) return;
+  // Static 0x4423D2: oldest insertion first, primary replacement, no skill
+  // eligibility veto. Stable vector indices skip actors already removed by
+  // gameplay, avoiding the unresolved original cursor lifetime hazard.
+  // PROVISIONAL stagger: one per existing 5 Hz tick (normally 200 ms).
+  // Original adds 0.05 s credit, at most one attachment per update, with
+  // credit accumulating during countdown. A native activation recording
+  // with frame/update timestamps would settle its player-visible cadence.
+  while (nukeCursor_ < lemmings_.size()) {
+    auto& l = lemmings_[nukeCursor_++];
+    if (!l.active()) continue; // Splatter is already counted lost at entry.
+    if (l.state == State::Exploder) continue; // preserve an already running Bomber.
+    leaveBlocker(l);
+    l.teleportPadsLatched.clear();
+    l.fuseMs = 0;
+    l.nukeExploding = true;
+    l.state = State::Exploder;
+    l.frame = -1;
+    cue(SoundCue::OhNo);
+    break;
+  }
 }
 
 void World::cue(SoundCue c) {

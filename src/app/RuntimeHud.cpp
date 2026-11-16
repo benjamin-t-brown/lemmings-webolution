@@ -53,6 +53,22 @@ void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h) 
   shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
 }
 
+void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world, bool armed) {
+  if (!armed && !world.nukeRequested()) return;
+  // PROVISIONAL control feedback: gold outline, confirmation hint and the
+  // shared level-clock countdown. Native confirmation/overlay pixels unread.
+  for (int y = 372; y < std::min(404, image.height); ++y)
+    for (int x = 18; x < std::min(90, image.width); ++x)
+      if (x < 20 || x >= 88 || y < 374 || y >= 402) {
+        const auto p = (std::size_t(y) * image.width + x) * 4;
+        image.rgba[p] = 255; image.rgba[p+1] = 220; image.rgba[p+2] = 64;
+      }
+  const std::string text = !world.nukeRequested() ? "CLICK AGAIN" :
+      world.nukeCountdownMs() > 0 ? "NUKE " + std::to_string((world.nukeCountdownMs()+999)/1000) : "NUKE";
+  const shell::HudLine line{text, 100, 380, {255,220,64}};
+  shell::drawHud(image, font, std::span(&line, 1), shell::fontCells());
+}
+
 shell::HudValues runtimeHudValues(const sim::World& world) {
   shell::HudValues values;
   values.out = world.spawned() - world.saved() - world.dead();
@@ -120,10 +136,14 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
       if (trackCompletion) {
         int retainedNonRat = 0;
         for (const auto& lemming : world.lemmings())
-          if (lemming.alive() && lemming.sheetType != 3) ++retainedNonRat;
+          if (lemming.alive() && (world.nukeRequested() || lemming.sheetType != 3)) ++retainedNonRat;
         // The completion slice receives this update's own dt, not a fixed 1/ticksPerSecond.
-        end_.afterSimulationSlice(segmentSeconds,
-            {world.timedOut(), retainedNonRat, world.setup().totalLemmings - world.spawned(),
+        // PROVISIONAL Nuke completion policy: finish its replacement/animation
+        // sequence before the result delay can expire, even at timeout or on
+        // a rat-only population. Ordinary completion/Bomber paths are unchanged.
+        const bool nukeDraining = world.nukeRequested() && retainedNonRat > 0;
+        end_.afterSimulationSlice(nukeDraining ? 0.0 : segmentSeconds,
+            {world.timedOut() && !nukeDraining, retainedNonRat, world.remainingToRelease(),
              world.saved(), world.setup().saveTarget});
         // The existing completion stop also ends the remaining updates and passes.
         if (end_.phase() == LevelEndPhase::Results) return false;
@@ -157,12 +177,13 @@ bool RuntimeSimState::advance(sim::World& world, double elapsedSeconds, bool tra
       if (trackCompletion) {
         int retainedNonRat = 0;
         for (const auto& lemming : world.lemmings())
-          if (lemming.alive() && lemming.sheetType != 3) ++retainedNonRat;
+          if (lemming.alive() && (world.nukeRequested() || lemming.sheetType != 3)) ++retainedNonRat;
         // DERIVED ordinary-population adapter. Native5098 is selected-type
-        // unreleased hatch population, not an active-actor count. Nuke and
-        // selected-type/preplaced population generalization remain separate.
-        end_.afterSimulationSlice(1.0 / world.rules().ticksPerSecond,
-            {world.timedOut(), retainedNonRat, world.setup().totalLemmings - world.spawned(),
+        // unreleased hatch population, not an active-actor count. Nuke cancels
+        // it without falsifying spawned/dead/saved counters.
+        const bool nukeDraining = world.nukeRequested() && retainedNonRat > 0;
+        end_.afterSimulationSlice(nukeDraining ? 0.0 : 1.0 / world.rules().ticksPerSecond,
+            {world.timedOut() && !nukeDraining, retainedNonRat, world.remainingToRelease(),
              world.saved(), world.setup().saveTarget});
       }
     }

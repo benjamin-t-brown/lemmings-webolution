@@ -54,12 +54,14 @@ void send(Command c) {
 app::PickBox box(const app::ActorSpritePlacement& p) {
   return {int(p.left),int(p.top),int(p.right),int(p.bottom)};
 }
-// Independent equal-priority oracle, using the displayed samples and camera
-// target. Require multiple eligible walkers and no other candidate category.
+// V7 displayed-centre oracle replaces the old terrain-target expectation.
+// This historical feedback comparison uses a crowd point where both policies
+// agree so its frozen pre-feedback main still assigns the same actor. The new
+// pick_nearest routes independently demonstrate policy disagreements.
 bool overlap(const app::LevelFrameView& f,int& x,int& y,std::size_t& expected,int& n) {
   for (y=45;y<420;y+=2) for(x=110;x<620;x+=2) {
     const app::PickBox cursor{x-16,y-16,x+16,y+16};
-    n=0; bool allWalkers=true; double best=INFINITY;
+    n=0; bool allWalkers=true; double best=INFINITY,oldBest=INFINITY;std::size_t oldExpected=0;
     for(const auto& a:f.actors) {
       const auto& l=f.world.lemmings()[a.index];
       if(!app::pickBoxOverlaps(box(a.placement),cursor) || !l.active() || l.canClimb) continue;
@@ -67,10 +69,13 @@ bool overlap(const app::LevelFrameView& f,int& x,int& y,std::size_t& expected,in
       const auto supported=app::firstLevelClimberSupport(l,sim::Skill::Climber,f.world.terrain());
       if(supported && !*supported) continue;
       ++n;
-      double d=0;for(int i=0;i<3;++i) d+=(a.drawnSample[i]-f.cameraPickReference[i])*(a.drawnSample[i]-f.cameraPickReference[i]);
+      double oldD=0;for(int i=0;i<3;++i) oldD+=(a.drawnSample[i]-f.cameraPickReference[i])*(a.drawnSample[i]-f.cameraPickReference[i]);
+      if(oldD<oldBest){oldBest=oldD;oldExpected=a.index;}
+      const double dx=(a.placement.left+a.placement.right)/2-x,dy=(a.placement.top+a.placement.bottom)/2-y;
+      const double d=dx*dx+dy*dy;
       if(d<best) { best=d; expected=a.index; }
     }
-    if(allWalkers && n>=2) return true;
+    if(allWalkers && n>=2 && expected==oldExpected) return true;
   }
   return false;
 }

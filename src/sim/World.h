@@ -20,6 +20,7 @@
 
 #include "Terrain.h"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -95,6 +96,9 @@ struct Lemming {
   // primed; 0 means the fuse has already run out, which is how a second bomb
   // is refused.
   int fuseMs = -1;
+  // Nuke replacement owns the Bomber animation until its crater/removal.
+  // Kept separate so ordinary Bomber/hazard/exit rules remain unchanged.
+  bool nukeExploding = false;
 
   // SpeedPad FASTER boost. MEASURED round 17: parallel state 0x004B0A38
   // (type 0x10) enter 0x0041688C sets lemming+0x50=2 and a 5.0 s timer;
@@ -505,6 +509,7 @@ struct LevelSetup {
   // Remaining skill-panel counts, indexed like Skill. -1 means unlimited
   // (hand-built test levels). Retail .LVL loads fill these from the trailer.
   std::array<int, 8> skills{-1, -1, -1, -1, -1, -1, -1, -1};
+  int nukeStock = 1; // Retail loader supplies serialized values_27d0[9].
 };
 
 // lever-gates-impl-001: the lever message fan-out, shared by the load stage and the runtime
@@ -1239,6 +1244,9 @@ public:
   int spawned() const { return spawned_; }
   int saved() const { return saved_; }
   int dead() const { return dead_; }
+  int remainingToRelease() const { return nukeRequested_ ? 0 : std::max(0, setup_.totalLemmings - spawned_); }
+  bool nukeRequested() const { return nukeRequested_; }
+  int nukeCountdownMs() const { return nukeCountdownMs_; }
   int activeCount() const;
 
   bool finished() const;
@@ -1250,7 +1258,8 @@ public:
   // The lemming nearest a point that a click should affect, if any.
   std::optional<std::size_t> pick(int x, int y, int radius = 4) const;
 
-  // Set every remaining lemming's fuse, as the nuke does.
+  // Cancel hatches, count down five seconds, then replace live states oldest
+  // first with the existing Bomber explosion. Repeated requests are inert.
   void nuke();
 
   // Insert one lemming already at a cell and in a state. Not spawn: spawn
@@ -1282,6 +1291,7 @@ private:
   void stepBuilder(Lemming& l);
   void stepShrugger(Lemming& l);
   void stepExploder(Lemming& l);
+  void stepNuke(int elapsedMs, bool tickBoundary);
   void stepBasher(Lemming& l);
   void stepMiner(Lemming& l);
   void stepDigger(Lemming& l);
@@ -1346,6 +1356,9 @@ private:
   int spawned_ = 0;
   int saved_ = 0;
   int dead_ = 0;
+  bool nukeRequested_ = false;
+  int nukeCountdownMs_ = 0;
+  std::size_t nukeCursor_ = 0;
   int sinceSpawn_ = 0;
   // New real-seconds release model (phase D1e), only touched when
   // setup_.releaseIntervalSeconds > 0.0 -- see LevelSetup's own comment.

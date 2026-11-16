@@ -4,6 +4,28 @@
 
 namespace webo::app {
 
+void RuntimeNukeInput::press(int x, int y) {
+  pressed_ = runtimeSkillPanelIndex(x, y) == 9;
+  if (!pressed_) armed_ = false;
+}
+
+void RuntimeNukeInput::release(int x, int y, unsigned int timestampMs, sim::World& world) {
+  const bool plate = pressed_ && runtimeSkillPanelIndex(x, y) == 9;
+  pressed_ = false;
+  if (!plate || world.nukeRequested() || world.setup().nukeStock <= 0) {
+    armed_ = false;
+    return;
+  }
+  if (armed_ && timestampMs - lastReleaseMs_ < 500) {
+    world.nuke();
+    armed_ = false;
+  } else {
+    lastReleaseMs_ = timestampMs;
+    armed_ = true;
+  }
+}
+
+
 sim::Skill RuntimeSkillSelection::selectedSkill() const {
   // Keep this mapping explicit: physical plate order is a separate contract.
   constexpr sim::Skill skills[] = {

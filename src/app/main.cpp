@@ -8,6 +8,7 @@
 //
 //   --frontend       explicitly enter the connected frontend with other options
 //   --direct-level   request the previous bare-launch injected-walker diagnostic
+//   --window-scale <1|2|3> integer presentation only; ordinary interactive default 2
 //   --level <id>     level to load (default MM_CLIMB_002)
 //   --native         render at the original's 640x480
 //   --camera <json>  camera state params (the A1 fixture/params format)
@@ -60,7 +61,7 @@
 //                     under a 32x32 cursor box centered on the click. Hover and
 //                     click share the same bounded eligibility/ranking path.
 //                     Counts and selected plate update; icon poses remain the C1
-//                     fixture. Fast-forward/Armageddon commands remain unsupported.
+//                     fixture. Runtime command controls use the connected panel path.
 //
 // No live game and no captured arena data are used. Everything comes from the
 // install named by WEBOLUTION_GAME_DIR (default Lemmings Revolution/ from repo root).
@@ -169,6 +170,9 @@ struct Args {
   bool highDetailTiles = true;
   std::string gameDir;
   int frames = 0;
+  bool framesSpecified = false;
+  int windowScale = 0;  // omitted: ordinary interactive 2x, automation 1x
+  bool invalidWindowScale = false;
   bool help = false;
   bool map = false;
   bool frontend = false;
@@ -196,13 +200,13 @@ struct Args {
 Args parseArgs(int argc, char** argv) {
   Args a;
   // Portable CLI policy, not a recovered original startup sequence. Only a
-  // bare invocation, game-directory options or --no-audio acquire the frontend
+  // bare invocation, game-directory, --window-scale or --no-audio acquire the frontend
   // default. Other tokens (including ignored unknown options) keep diagnostic
   // routing; an explicit --frontend remains authoritative regardless of order.
   bool defaultFrontend = true;
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
-    if (arg != "--game-dir" && arg != "--no-audio") defaultFrontend = false;
+    if (arg != "--game-dir" && arg != "--no-audio" && arg != "--window-scale") defaultFrontend = false;
     const auto next = [&]() -> std::string { return i + 1 < argc ? argv[++i] : std::string{}; };
     if (arg == "--help" || arg == "-h") a.help = true;
     if (arg == "--map") a.map = true;
@@ -213,7 +217,12 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--native") a.native = true;
     else if (arg == "--shot") a.shot = next();
     else if (arg == "--window-shot") a.windowShot = next();
-    else if (arg == "--frames") a.frames = std::atoi(next().c_str());
+    else if (arg == "--frames") { a.framesSpecified = true; a.frames = std::atoi(next().c_str()); }
+    else if (arg == "--window-scale") {
+      const auto value = next();
+      if (value == "1" || value == "2" || value == "3") a.windowScale = value[0] - '0';
+      else a.invalidWindowScale = true;
+    }
     else if (arg == "--camera") a.camera = next();
     else if (arg == "--geom") a.geom = next();
     else if (arg == "--tiles") a.tiles = next();
@@ -259,18 +268,28 @@ Args parseArgs(int argc, char** argv) {
   return a;
 }
 
+int windowScale(const Args& args, bool observing) {
+  // PROVISIONAL clone UI policy for V9. Diagnostic captures, bounded runs and
+  // observer-driven automation retain their existing presentation unless the
+  // caller explicitly chooses a scale. The raster and CPU outputs never scale.
+  if (args.windowScale) return args.windowScale;
+  return args.framesSpecified || !args.shot.empty() || args.map || observing ? 1 : 2;
+}
+
 void printHelp() {
   std::puts("webolution [--game-dir PATH] [--frontend | --direct-level | --level ID | --map] [options]\n"
-            "No options, or only --game-dir PATH, starts the connected frontend.\n"
+            "No options, or only --game-dir/--no-audio/--window-scale, starts the connected frontend.\n"
             "Any other option keeps its diagnostic route unless --frontend is explicit.\n"
             "--direct-level opens the previous MM_CLIMB_002 injected-walker diagnostic.\n"
+            "--window-scale 1|2|3 chooses crisp integer window scaling (ordinary play: 2).\n"
+            "Bounded runs, map diagnostics and observers default to 1; CPU screenshots keep their resolution.\n"
             "Window: right mouse + NUMPAD4/6 revolves; mouse drag revolves/elevates;\n"
             "SPACE or CTRL zooms; BACKSPACE flips. Default geometry is route.\n"
             "--shot renders one headless frame; --frames N runs N window frames\n"
             "(use SDL_VIDEODRIVER=dummy for a headless smoke run).\n"
             "--window-shot PNG with --frames N saves the final presented window frame.\n"
             "--sim draws live skill counts; click the first eight plates or use keys 1-8\n"
-            "to select a skill. Fast-forward/Armageddon buttons are not implemented.\n"
+            "to select a skill. Double-click Nuke to end releases and explode the remaining lemmings.\n"
             "--frontend starts New Game -> Continue? -> map -> a simulated retail level.\n"
             "Use RETURN at the first two screens, then click an unlocked map node.\n"
             "New Game, Play Current Game and Quit are connected; other menu actions\n"
@@ -319,38 +338,39 @@ app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
 
 // Shared SOURCE hover/click adapter after skill-panel routing. The cursor is a 32x32
 // box centered on the window click (sprite size named in Pick.h at
-// 0x0045578C); pickBoxOverlaps applies the +/-4 adjustment itself. The window
-// and the raster are both 640x480, so the click is in the placement's pixel
-// space. Raw terrain samples and the displayed frame's controller target
-// supply distance; RuntimePick supplies supported state priorities/exclusions.
+// 0x0045578C); pickBoxOverlaps applies the +/-4 adjustment itself. Presentation
+// maps the pointer to the raster's 640x480 placement coordinates.
+// PROVISIONAL playable-v1 policy: rank by
+// displayed body-box centre distance to the cursor dot, retaining the existing
+// visibility, stock, support and skill exclusions. Exact ties keep World order.
 // Full native visibility, facing and applicability are still incomplete.
 std::optional<std::size_t> hoveredActor(const sim::World& world, const app::TubeScene& scene,
                         const app::SceneOptions& options, const AssetLibrary& library,
                         const app::CameraBasis& camera, const app::Raster& sceneRaster,
-                        const std::array<double, 3>& pickReference,
-                         int x, int y, sim::Skill skill, bool firstLevelSupport) {
+                        int x, int y, sim::Skill skill, bool firstLevelSupport) {
   // SOURCE stock gate shared by both consumers; -1 remains unlimited.
   if (world.setup().skills[static_cast<std::size_t>(skill)] == 0) return std::nullopt;
   const auto boxes = scene.injectedWalkerScreenBoxes(camera, options, library, sceneRaster);
-  std::vector<app::PickCandidate> candidates;
+  std::vector<app::ScreenPickCandidate> candidates;
   std::size_t walker = 0;
   const auto& lemmings = world.lemmings();
   for (std::size_t i = 0; i < lemmings.size(); ++i) {
     if (!lemmings[i].alive())
       continue;
     if (walker < boxes.size() && boxes[walker] && walker < options.injectedWalkers.size()) {
-      const auto& sample = options.injectedWalkers[walker];
+      const auto& placement = *boxes[walker];
       const auto support = firstLevelSupport ?
           app::firstLevelClimberSupport(lemmings[i], skill, world.terrain()) : std::nullopt;
-      candidates.push_back(app::runtimePickCandidate(
+      candidates.push_back({
           reinterpret_cast<void*>(static_cast<std::uintptr_t>(i)),
-          pickBoxFromPlacement(*boxes[walker]), lemmings[i], skill,
-          {sample.plus8X, sample.plus8Y, sample.plus8Z}, pickReference, support));
+          pickBoxFromPlacement(placement),
+          app::passesKnownPickExclusions(lemmings[i], skill) && support.value_or(true),
+          {(placement.left + placement.right) * 0.5,
+           (placement.top + placement.bottom) * 0.5}});
     }
     ++walker;
   }
-  const app::PickBox cursor{x - 16, y - 16, x + 16, y + 16};
-  const app::PickCandidate* hit = app::pickHoveredLemming(candidates, cursor);
+  const auto* hit = app::pickNearestScreenLemming(candidates, x, y);
   if (!hit) return std::nullopt;
   return static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(hit->id));
 }
@@ -368,6 +388,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                             std::optional<app::LevelOutcome>& completed, LegDisposition& disposition) {
   Args args = parseArgs(argc, argv);
   if (args.help) { printHelp(); return 0; }
+  if (args.invalidWindowScale) { std::fprintf(stderr, "--window-scale requires 1, 2 or 3\n"); return 1; }
+  const int scale = windowScale(args, bool(observer) || bool(levelObserver));
   if (!std::isfinite(runOptions.frameSeconds) || runOptions.frameSeconds < 0 ||
       (runOptions.frameSeconds > 0 && args.frames <= 0)) {
     std::fprintf(stderr, "test frame clock requires finite positive seconds and --frames\n");
@@ -440,21 +462,18 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       return 0;
     }
 #if WEBOLUTION_HAVE_SDL2
-    SDL_SetMainReady();
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
-      std::fprintf(stderr, "SDL: %s\n", SDL_GetError()); return 1;
+    app::SdlWindow presentation(scale);
+    if (auto ready = presentation.ensure("Lemmings Webolution — conditional map base layer (SOURCE)"); !ready) {
+      std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
     }
-    SDL_Window* window = SDL_CreateWindow("Lemmings Webolution — conditional map base layer (SOURCE)",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
-    if (!window) { std::fprintf(stderr, "SDL window: %s\n", SDL_GetError()); SDL_Quit(); return 1; }
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-    if (!renderer) { std::fprintf(stderr, "SDL renderer: %s\n", SDL_GetError()); SDL_DestroyWindow(window); SDL_Quit(); return 1; }
+    auto* renderer = presentation.renderer();
     SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, 640, 480);
     if (!texture || SDL_UpdateTexture(texture, nullptr, map->image().rgba.data(), 640*4) != 0) {
       std::fprintf(stderr, "SDL map texture: %s\n", SDL_GetError());
       if (texture) SDL_DestroyTexture(texture);
-      SDL_DestroyRenderer(renderer); SDL_DestroyWindow(window); SDL_Quit(); return 1;
+      return 1;
     }
+    SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
     bool running = true;
     do {
       SDL_Event event; while (SDL_PollEvent(&event)) if (event.type == SDL_QUIT ||
@@ -462,7 +481,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       SDL_RenderClear(renderer); SDL_RenderCopy(renderer, texture, nullptr, nullptr); SDL_RenderPresent(renderer);
       if (args.frames > 0) running = false;
     } while (running);
-    SDL_DestroyTexture(texture); SDL_DestroyRenderer(renderer); SDL_DestroyWindow(window); SDL_Quit();
+    SDL_DestroyTexture(texture);
     return 0;
 #else
     std::fprintf(stderr, "SDL2 unavailable: map window mode is not built (use --shot for headless rendering)\n");
@@ -883,7 +902,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // Frontend runs already started the adapter in runApplication (idempotent);
   // direct-level runs start it here, still once per process.
   if (cues) cues->start(*library, runOptions.enableAudio && !args.noAudio);
-  app::SdlWindow localWindow;
+  app::SdlWindow localWindow(scale);
   auto& presentation = sharedWindow ? *sharedWindow : localWindow;
   if (auto ready = presentation.ensure(
       "Lemmings Webolution — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip"); !ready) {
@@ -894,6 +913,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       SDL_CreateTexture(presenter, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 640, 480), SDL_DestroyTexture);
   SDL_Texture* texture = ownedTexture.get();
   if (!texture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); return 1; }
+  if (SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest) != 0) {
+    std::fprintf(stderr, "SDL texture scale: %s\n", SDL_GetError()); return 1;
+  }
 
   params.width = 640; params.height = 480; params.aspect = 4.0 / 3.0;
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
@@ -972,6 +994,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   }
   // SOURCE input adapter: retained C1 geometry with live counts/selection.
   app::RuntimeSkillSelection skillSelection;
+  app::RuntimeNukeInput nukeInput;
   std::optional<Image> finalWindowFrame;
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
   auto displayedPickReference = controls.pickReference();
@@ -987,6 +1010,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
   const auto resetMenuInput = [&] {
+    nukeInput.reset();
     fastForwardGestureUsed = false;
     rightDown = false; pending.clear(); fixedClock = app::FixedCameraClock{};
     SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -1026,8 +1050,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     menuDismissedThisFrame = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+      presentation.gameCoordinates(event);
       if (event.type == SDL_QUIT) { disposition = LegDisposition::Exit; running = false; break; }
       else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+        nukeInput.reset();
         fastForwardGestureUsed = false;
         focused = false; rightDown = false; pending.clear();
         SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -1062,17 +1088,23 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         }
         if (!running) break;
       } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
+        nukeInput.reset();
         if (focused) { rightDown = true; SDL_SetRelativeMouseMode(SDL_TRUE); }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
         rightDown = false; SDL_SetRelativeMouseMode(SDL_FALSE);
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
         fastForwardGestureUsed = false;
+        if (args.sim && world && focused && !rightDown) {
+          pointerX = event.button.x; pointerY = event.button.y;
+          nukeInput.release(pointerX, pointerY, event.button.timestamp, *world);
+        } else nukeInput.reset();
       } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
                  event.button.button == SDL_BUTTON_LEFT) {
         fastForwardGestureUsed = false;
         // Consume panel clicks before actor picking, including command plates.
         if (focused && !rightDown) {
           pointerX = event.button.x; pointerY = event.button.y;
+          nukeInput.press(pointerX, pointerY);
           // PROVISIONAL P17 toggle policy; see RuntimeSimState. No stock or
           // actor-skill selection change, preserving the traced plate contract.
           if (app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward) {
@@ -1088,7 +1120,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
               windowSceneCurrent = true;
             }
             const auto hit = hoveredActor(*world, *scene, options, *library,
-                displayedCamera, windowRaster, displayedPickReference,
+                displayedCamera, windowRaster,
                 pointerX, pointerY, skillSelection.selectedSkill(),
                 args.level == "MM_CLIMB_002");
             const bool assigned = hit && world->assign(*hit, skillSelection.selectedSkill());
@@ -1103,7 +1135,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         }
       } else if (event.type == SDL_MOUSEMOTION) {
         if (focused) {
-          pending.mouse(event.motion.xrel, event.motion.yrel);
+          pending.mouse(double(event.motion.xrel) / presentation.scale(),
+                        double(event.motion.yrel) / presentation.scale());
           if (!rightDown) {
             pointerX = event.motion.x; pointerY = event.motion.y;
             // Retain drag-onto activation (0x455AFF), once per gesture under
@@ -1292,7 +1325,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
           const auto hover = canHover ?
               hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
-                  displayedPickReference, pointerX, pointerY, skillSelection.selectedSkill(),
+                  pointerX, pointerY, skillSelection.selectedSkill(),
                   args.level == "MM_CLIMB_002") : std::nullopt;
           std::optional<std::size_t> markedActor;
           if (hover) {
@@ -1303,7 +1336,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           }
           hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
               std::vector<app::HatchHoverTarget>{};
-          for (auto& h : hatches) h.remaining = app::hatchRemaining(world->setup().totalLemmings,
+          for (auto& h : hatches) h.remaining = world->nukeRequested() ? 0 : app::hatchRemaining(world->setup().totalLemmings,
               world->spawned(), world->setup().entrances.size(), h.index);
           // Actor selection keeps precedence. Hatch feedback never enters the
           // skill-picking path or changes the existing software cursor family.
@@ -1312,6 +1345,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
                                      &*panelIconAnimation);
           app::drawRuntimeHud(image, *runtimeFont, *world, false);
+          app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
           // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
           if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
                           [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
@@ -1422,6 +1456,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver observer,
                             LevelFrameObserver levelObserver, ApplicationRunOptions options) {
   const auto args = parseArgs(argc, argv);
+  if (args.invalidWindowScale) { std::fprintf(stderr, "--window-scale requires 1, 2 or 3\n"); return 1; }
   sceneryRandom().begin();  // main-loop entry seed (0x0045D06C analogue)
   std::optional<app::LevelOutcome> completed;
   LegDisposition disposition = LegDisposition::Exit;
@@ -1457,7 +1492,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   playback.start(*library, options.enableAudio && !args.noAudio);
   // Own the window and renderer across menu, levels, retries and results. Legs
   // borrow them and own only their texture; no video shutdown between pages.
-  SdlWindow presentation;
+  SdlWindow presentation(windowScale(args, bool(observer) || bool(levelObserver)));
   auto* sharedWindow = &presentation;
 #else
   SdlWindow* sharedWindow = nullptr;

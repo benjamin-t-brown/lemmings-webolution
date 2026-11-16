@@ -12,12 +12,28 @@ int runtimeSkillPanelIndex(int x, int y);
 
 // The two command plates after the eight skill plates. READ 0x455AFF: hover
 // index 8 with mouse button 0 down is the fast-forward plate. Index 9 is
-// Armageddon; its action is deliberately not implemented (parked decision).
+// Armageddon; exact original command timing remains parked.
 enum class RuntimePanelCommand { None, FastForward, Armageddon };
 
 // Reports which command plate, if any, covers the window point. Uses
 // runtimeSkillPanelIndex for geometry, so hit testing is shared with clicks.
 RuntimePanelCommand runtimeSkillPanelCommand(int x, int y);
+
+// Player adapter for the release-pair gesture traced at 0x483B5D/0x454725.
+// PROVISIONAL: require two complete clicks on this plate within <500 ms,
+// excluding the original's ambiguous first-release timestamp-zero case.
+class RuntimeNukeInput {
+ public:
+  void press(int x, int y);
+  void release(int x, int y, unsigned int timestampMs, sim::World& world);
+  void reset() { pressed_ = armed_ = false; }
+  bool armed() const { return armed_; }
+ private:
+  bool pressed_ = false, armed_ = false;
+  unsigned int lastReleaseMs_ = 0;
+};
+void drawRuntimeNukeFeedback(Image& image, const Image& font,
+                             const sim::World& world, bool armed);
 
 // Runtime selection/input policy. READ evidence establishes a positive-stock
 // gate for selecting skill plates. Keyboard selection remains a SOURCE adapter;

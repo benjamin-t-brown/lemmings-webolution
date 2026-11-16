@@ -13,6 +13,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - ui-sounds-001: **ready** — Add UI and assignment sounds; move Let's Go to first spawn
 - basher-occlusion-001: **ready** — Occlusion pass: bashers in walls, turn-around at walls, feet through bridges
 - bash-particles-001: **ready** — Show debris particles while bashing
+- builder-brick-anim-001: **ready** — Show the brick growing out of the builder's pack
 - exit-balloon-bob-001: **ready** — Make exit balloons bob slowly
 
 ## Recently completed queue entries

@@ -19083,6 +19083,26 @@
       ]
     },
     {
+      "id": "builder-brick-anim-001",
+      "title": "Show the brick growing out of the builder's pack",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 9 Y14: while a builder lays bricks, the lemming plays the animation of pulling a brick out of its pack, but no brick is seen: in the original the brick appears at the pack and grows in scale as it is pulled out, before it is placed on the map. In the clone the brick only appears once it is part of the bridge. Find from static evidence and the builder animation data how the original draws the in-hand brick (model or sprite, attachment point per animation frame, scale ramp, the frame on which it becomes the placed brick) and draw it through the production actor render path, with the same occlusion as the lemming carrying it. The moment the brick becomes solid terrain must not change. Presentation only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Build (MM_BUILD) each brick is visible in the builder's hands, growing from the pack during the pull-out animation, and is placed where the bridge brick then appears with no gap or double-draw; this holds for both facings and at fast-forward.",
+        "Brick source, attachment and scale timing are cited to static evidence or labelled provisional.",
+        "Bridge timing is unchanged: all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "exit-balloon-bob-001",
       "title": "Make exit balloons bob slowly",
       "status": "ready",

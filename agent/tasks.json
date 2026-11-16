@@ -17882,25 +17882,6 @@
       }
     },
     {
-      "id": "bomber-skill-particles-001",
-      "title": "Show explosion particles for the Bomber skill",
-      "status": "ready",
-      "depends_on": [
-        "frontend-window-quit-001"
-      ],
-      "requires_original_execution": false,
-      "verification": "smoke",
-      "stop_after_review": false,
-      "kind": "implementation",
-      "user_authorized": true,
-      "scope": "Playtest 7 W4: an exploding lemming shows particles when Armageddon (Nuke all) is used but not when the Bomber skill is assigned to a lemming in ordinary play. death-particles-001 (docs/scratch/death-particles-001.md) was accepted on a scripted Bomber image, so its driver does not take the path a player takes. Start from the recorded human attempts docs/playtest/replays/2026-11-15-playtest-7/MM_BOMB-*.replay and MM_BLOCK_BOMB_A-*.replay, which assign Bombers through the real input path: find why the bomber burst and block debris are not emitted or not drawn there (assignment route, countdown expiry path, camera/depth, frame at which the actor is removed) while the Nuke path works, and fix the production path so both behave the same. Presentation only: the simulation outcome must not change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
-      "acceptance": [
-        "On MM_BOMB, a Bomber assigned by clicking a lemming in ordinary play shows the lemming pieces and block debris that Armageddon already shows; the report names the cause of the difference.",
-        "The MM_BOMB and MM_BLOCK_BOMB_A playtest-7 replays still reproduce their recorded results.",
-        "The smoke profile passes and the report ends with a what-to-check note."
-      ]
-    },
-    {
       "id": "exit-jump-anim-001",
       "title": "Animate lemmings jumping into the balloon",
       "status": "ready",

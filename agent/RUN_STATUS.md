@@ -9,6 +9,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- letsgo-voice-with-text-001: **ready** — Play the Let's Go voice when the Let's Go text first appears
 - steel-blast-dig-tilt-001: **ready** — Explosions and dig tilt must leave metal terrain alone
 - work-sounds-001: **ready** — Explosion, miner and digger sounds
 - exit-tribe-001: **ready** — Water lemmings and normal lemmings use only their own exit
@@ -41,11 +42,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-5c9c0df3b80843838c52359b25f1b78f/result.json`
+- Result: `build/agent-runs/loop-7ed2b7470fd14f5cb86a27e5bdd282cf/result.json`
 - Status: **blocked**
-- Duration: 0h 48m 05s
-- Completed in this invocation: crab-water-surface-001, multi-hatch-simultaneous-001, actor-occlusion-002
-- Reason: plan failed; inspect the saved logs
+- Duration: 0h 00m 00s
+- Completed in this invocation: none
+- Reason: PermissionError: [WinError 5] Access is denied: 'C:\\progs\\lemmings-webolution\\agent\\tasks.json.tmp' -> 'C:\\progs\\lemmings-webolution\\agent\\tasks.json'
 
 ## Documentation handoff
 

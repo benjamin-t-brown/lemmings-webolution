@@ -20416,6 +20416,26 @@
       }
     },
     {
+      "id": "letsgo-voice-with-text-001",
+      "title": "Play the Let's Go voice when the Let's Go text first appears",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A12 (user, 2026-11-16): the Letsgo voice should play when the Let's Go text first appears, not when the lemmings spawn. This supersedes playtest 9 Y13 as the lead applied it; letsgo-text-nuke-ohno-001 restored the text to its level-load presentation but left the voice on the first hatch release. Move the voice trigger to the first frame on which the restored Let's Go text is drawn, once per level attempt (entry and Retry), not repeated by pause, fast-forward or later hatches, and silent paths (replay, audio disabled) unaffected. Do not change the text. Audio trigger only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On entering or retrying any level the Letsgo voice starts on the frame the Let's Go text first appears and plays once; nothing plays at first hatch release.",
+        "The Let's Go text presentation is unchanged from commit d84e1f8, and test_levelreturn.cpp is unchanged and passes.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "steel-blast-dig-tilt-001",
       "title": "Explosions and dig tilt must leave metal terrain alone",
       "status": "ready",

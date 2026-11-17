@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 17 of 102.
+under docs/playtest/replays/. Won so far: 19 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -28,9 +28,9 @@ under docs/playtest/replays/. Won so far: 17 of 102.
 | 14 | MM_BUILD_BLOCK_A | Build and Block | ok | playtest 8 | pass |  |
 | 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok | playtest 9 | retired (Y6 fix) | playtest 9 Y1 (switch animation), Y2 (pipe depth) |
 | 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok | playtest 9 | retired (Y6 fix) |  |
-| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok |  |  | playtest 9 Y10 (lemmings seen through wall when turning) |
-| 18 | MM_E2_4SKILLS | The Abyss | ok |  |  |  |
-| 19 | E19_KF_2 | Kriss Kross | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |
+| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok | playtest 10 | pass | playtest 10 Z1 (clip into circular object) |
+| 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10 | pass | playtest 10 Z5 (fall into hole does not kill) |
+| 19 | E19_KF_2 | Kriss Kross | ok |  |  | playtest 10 Z6 (hatches not simultaneous), Z7 (crab kills water lemmings on the surface) |
 | 20 | MM_E1_4SKILLS | Sergeant Bash | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 21 | E20_mg_1 | The Crowded House | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |
 | 22 | MM_ALL_8_001 | One Way Ticket | ok |  |  |  |

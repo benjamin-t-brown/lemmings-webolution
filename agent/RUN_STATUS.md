@@ -9,6 +9,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- letsgo-text-nuke-ohno-001: **ready** — Restore the earlier Let's Go text; no Oh No on nuke
+- fall-out-death-001: **ready** — Kill lemmings that fall into the hole on The Abyss
+- crab-water-surface-001: **ready** — Crabs must not kill water lemmings walking on the surface above
+- multi-hatch-simultaneous-001: **ready** — Release from all hatches simultaneously
+- actor-occlusion-002: **ready** — Occlusion: round object on Loggerheads; lemming-versus-lemming order
 
 ## Recently completed queue entries
 

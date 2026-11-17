@@ -19743,6 +19743,109 @@
         "log": "build\\agent-runs\\20261117T003037-46016-c45dfbea\\verification.log",
         "verified_content": "784670f4461e883b216d01ab55b12abf7dc74d9379cdd6969046cb8e1232dd97"
       }
+    },
+    {
+      "id": "letsgo-text-nuke-ohno-001",
+      "title": "Restore the earlier Let's Go text; no Oh No on nuke",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 10 Z3 and Z4. Z3: ui-sounds-001 moved the Let's Go text to first spawn at full size and dropped the pre-spawn shrinking lead-in; the user says the text looked more correct before. Restore the text presentation exactly as it was at commit 9a39257 (level-load countdown, shrink, retirement), including the two test_levelreturn.cpp first-Retry-frame expectations that ui-sounds-001 changed, which return to their 9a39257 form. Keep the Letsgo voice where the user asked for it in playtest 9 Y13: once per attempt when the first hatch begins releasing. Text and voice are therefore no longer driven by one latch; say in the report how far apart they now are. Legacy tests that ui-sounds-001 retired for asserting the old text may be restored from git if cheap, otherwise leave them retired. Z4: when the player nukes, the Ohno voice plays; it should not. src/audio/CuePlayback.cpp already cites a guard byte at 0x004CBB40 that suppresses Ohno in the original; establish statically whether that byte is the nuke state and suppress Ohno for nuke-triggered bombers accordingly (the explosion sound stays). A single Bomber skill still says Oh No. Presentation and audio only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Entering or retrying a level shows the Let's Go text as it did at commit 9a39257, and the Letsgo voice plays once when the first hatch begins releasing.",
+        "test_levelreturn.cpp matches its 9a39257 expectations for the Retry frames and passes.",
+        "Nuking plays no Ohno voice for any lemming while explosions still sound; assigning one Bomber still plays Ohno; the guard evidence is cited or the choice labelled provisional.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "fall-out-death-001",
+      "title": "Kill lemmings that fall into the hole on The Abyss",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 10 Z5 on The Abyss (map node 18, MM_E2_4SKILLS): there is an empty hole where a lemming fell down and did not die when it should have. The user's recordings are build/playtest/replays/MM_E2_4SKILLS-1794876708170960000-2.replay (retried) and docs/playtest/replays/2026-11-16-playtest-10/MM_E2_4SKILLS-1794876758706780100-3.replay (win); step through them headlessly to find the lemming that enters the hole and what the simulation then does with it (lands on something below, wraps, stays a faller forever, walks on). Establish from the level data and static evidence what the bottom of that hole is in the original (open bottom of the cylinder, kill zone, long-fall splat height) and make the clone kill the lemming as the evidence shows, with the death counted and the usual death presentation. Check the same rule on other levels with open pits so that no currently safe landing becomes fatal. Simulation change authorized as a playtest defect fix; label provisional choices. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the cell where the recorded lemming entered the hole, what the clone did with it, and the rule now applied; on The Abyss a lemming falling into that hole dies and is counted dead.",
+        "The rule is cited to static evidence or labelled provisional, and levels whose outcome changes in the 102-level sweep are listed.",
+        "All promoted playtest replays still reproduce their results, or any that change are listed with the step and reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "crab-water-surface-001",
+      "title": "Crabs must not kill water lemmings walking on the surface above",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 10 Z7 on Kriss Kross (map node 19, E19_KF_2): water lemmings walking across a full tank are killed by the crab beneath them; they should not be. crab-hazard-001 added the crab with a provisional contact rule. Using the user's recordings build/playtest/replays/E19_KF_2-1794876874744373400-4.replay and E19_KF_2-1794877146847683900-1.replay, find the deaths, the lemming and crab cells and the fluid level at that moment. Establish from static evidence how the original tests crab contact (crab position on the tank floor versus a lemming at the water surface, vertical extent, lemming tribe) and narrow the clone's rule so a lemming walking on the surface above a crab is safe while one that reaches the crab itself (drained tank, or at the crab's own cell) still dies as on Seafood Sarnie. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Kriss Kross a water lemming crossing the full tank above the crab survives; the report gives the recorded death cells and the corrected contact rule.",
+        "On Seafood Sarnie (node 15) a lemming that walks into the crab still dies.",
+        "The rule is cited to static evidence or labelled provisional; all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "multi-hatch-simultaneous-001",
+      "title": "Release from all hatches simultaneously",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 10 Z6 on Kriss Kross (map node 19, E19_KF_2, two hatches): the hatches should release lemmings simultaneously; the clone alternates hatches against one cadence. This supplies the observation that multi-hatch-release-001 lacked (that task stays blocked; its removed attempt and review are under build/lead/multi-hatch-release-001-attempt1/ and it regressed M20_MT_1, node 50, to 45 of 53 released). Implement: on each release tick every hatch that still has lemmings to release drops one at the same moment, so a two-hatch level releases two per tick. Read the retained attempt and the static evidence on per-hatch counts first; settle how the level's total is divided between hatches and when a hatch stops, and make sure every multi-hatch level (33 in the sweep) releases its full total within the time limit, M20_MT_1, M06_KF_1 (node 11) and E10_KF_1 (node 91) in particular. The hatch-click rate stays shared across hatches unless the evidence gives per-hatch rates cheaply. This changes simulation timing on multi-hatch levels, so the promoted M06_KF_1 replay is expected to diverge: report the step, do not weaken the replay check, and the lead will retire that recording. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Kriss Kross both hatches release a lemming on the same tick until each has released its share, and the level total is released.",
+        "Every multi-hatch level in the sweep releases its full total within its time limit; M20_MT_1, M06_KF_1 and E10_KF_1 are reported with released counts.",
+        "The division of the total between hatches is cited to static evidence or labelled provisional.",
+        "Single-hatch promoted replays still reproduce their results; any multi-hatch recording that diverges is listed with the step.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "actor-occlusion-002",
+      "title": "Occlusion: round object on Loggerheads; lemming-versus-lemming order",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 10 Z1 and Z2, remaining after basher-occlusion-001 (read docs/scratch/basher-occlusion-001.md first; its upright-plane actor occlusion stays). Z1: on Lems at Loggerheads (map node 17, MM_E1_3_SKILLS) lemmings visibly clip into a circular object when they walk up to it and turn around. Identify the object from the level data (a round terrain piece or a model), compare where the simulation turns the lemming with where the object's drawn surface is, and fix whichever is wrong: the sprite's depth or footprint against a curved surface, or the drawn object against its collision cells. Z2: lemming sprites nearer the centre of the cylinder sometimes appear in front of sprites nearer the outside. Trace how actors are ordered or depth-tested against each other (draw order, depth written by a sprite, ties at equal depth) and make the lemming nearer the camera win consistently at every rotation, including lemmings in different lanes at the same column and overlapping groups. Also cover the builder's in-hand brick, debris and death particles against other lemmings if they share the path. Presentation only: no simulation change. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Lems at Loggerheads a lemming turning at the round object no longer intersects it from any rotation; the object and the cause are named.",
+        "With lemmings in an outer and an inner lane overlapping on screen, the one nearer the camera is drawn in front at every rotation, with no flicker between them; the ordering rule is stated.",
+        "Hover and click boxes are unchanged (the clicktoassign smoke test passes unmodified).",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

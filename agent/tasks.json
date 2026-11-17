@@ -22341,6 +22341,27 @@
         "log": "build\\agent-runs\\20261117T174618-19536-7244bc87\\verification.log",
         "verified_content": "e0d7f21bc865ff986c10917211fe7da8868236f4492c4656ce374844cbd1edab"
       }
+    },
+    {
+      "id": "digger-outward-001",
+      "title": "Diggers face outward from the cylinder",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 12 B3, clarified by the user on 2026-11-17: a digger should face outward from the cylinder, not always toward the camera. When the camera is centred on the digger it faces the camera; when the digger is at the side of the cylinder it is seen turned, facing outward from the cylinder. digger-facing-001 implemented a fixed front view 4 in every rotation, which is the misreading. asset-census-001 (docs/scratch/asset-census-001.md, digger paragraph, and docs/scratch/digger-facing-001.md) found the original's path: the digger's direction is set to phase 0.75 at 4159B4 -> 4683E9, then the view is chosen per frame from the camera at 42EEF2, using the 12 Hi side-view rows the clone leaves unused. Implement that: the digger keeps an outward-facing direction and its sprite view is selected from the camera angle exactly as for walkers, so at the cylinder's sides the side or three-quarter views show. Keep the blocker's eight-view turning from digger-facing-001. Presentation only. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Dig, a digger at the centre of the view faces the camera; rotating so it moves to the left or right edge shows it turned to face outward from the cylinder, through the installed side and three-quarter views with no snapping.",
+        "The facing and view selection are cited to the static addresses above or labelled provisional.",
+        "The blocker keeps its eight-view turning; walking direction is restored when digging ends.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

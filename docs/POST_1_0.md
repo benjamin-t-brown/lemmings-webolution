@@ -27,3 +27,6 @@ Order below is the lead's suggestion, not a commitment.
 - New simulation inputs must stay recordable, so playtest replays keep working.
 - If cursor lag or the fast-forward control gets in the way of finishing v1 playtests, either
   can be pulled forward as an ordinary playtest defect.
+
+- Occlusion when a lemming falls close to a surface (playtest 11 A4). The user sees the same clipping in
+  the original, so it is not a 1.0 defect; a candidate for the renderer work above.

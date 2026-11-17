@@ -20414,6 +20414,149 @@
         "log": "build\\agent-runs\\20261117T025212-40668-848984d4\\verification.log",
         "verified_content": "4508c9259d6ebd2f4d0e067757928c184165601e1344e2777a8b91aae26f4aa4"
       }
+    },
+    {
+      "id": "steel-blast-dig-tilt-001",
+      "title": "Explosions and dig tilt must leave metal terrain alone",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A1 and A10. A1: a lemming that explodes (Bomber skill or nuke) destroys metal surfaces in the clone; it must not. Trace the crater path in World (bomber explosion and nuke) and make it skip steel cells exactly as basher, miner and digger already refuse steel, in both simulation and the rendered terrain. A10 on The Crowded House (map node 21, E20_mg_1; the user's attempts are build/playtest/replays/E20_MG_1-*.replay): when a lemming digs on snow, adjacent terrain is tilted towards the dig. The tilt of ordinary terrain is right; metal terrain next to the dig must not be tilted. Find the code that slopes or reshapes neighbouring cells around a dig (and any other excavation that reshapes neighbours) and exclude steel cells from it, in collision and in the drawn mesh. Check from static evidence whether the original exempts any other material and report it. Simulation change authorized as a playtest defect fix. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "A Bomber or nuked lemming exploding beside or on steel leaves every steel cell intact in collision and on screen, while ordinary terrain is still cratered; the report names a level and cell where this can be seen.",
+        "On The Crowded House a dig beside metal terrain leaves the metal cell's shape unchanged while snow or ordinary neighbours still tilt; the reshaping code path is named.",
+        "Any promoted recording that diverges because a recorded explosion or dig touched steel is listed with its step.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "work-sounds-001",
+      "title": "Explosion, miner and digger sounds",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A2, A8, A11. A2: an exploding lemming is silent; the user expects the explosion sound, for a single Bomber and for each lemming of a nuke (the Ohno voice stays suppressed on nuke, as letsgo-text-nuke-ohno-001 established). src/audio/CuePlayback.cpp currently discards the Explode cue, and the smoke test cueplayback asserts that silence. The lead authorizes changing exactly those cueplayback assertions that require explosion silence so that they require the explosion sample instead; this is a correction of an expectation that encodes the demonstrated defect, permitted under AGENTS.md Project lead direction. Quote the before and after assertion lines in the report; change no other smoke assertion or timeout. Many lemmings exploding on one frame during a nuke must not clip or stack into noise: limit overlapping instances sensibly and label the limit provisional. A8: a miner is silent; it should make its work sound on each stroke the way the basher does. A11: a digger is silent; it should make its work sound on each stroke (reported on The Crowded House, node 21). Find the installed samples and static trigger sites for all three and play them through the production mixer path used by the basher sound. Audio only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "A single Bomber plays the explosion sample when it explodes, and a nuke plays explosion sounds without Ohno and without distortion from stacking; sample and trigger are cited to static evidence or labelled provisional.",
+        "A miner and a digger each make their work sound on every successful stroke and stop when they stop; samples and triggers are cited or labelled provisional.",
+        "Only the cueplayback assertions that required explosion silence changed, quoted before and after; every other smoke assertion is untouched and passes.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "exit-tribe-001",
+      "title": "Water lemmings and normal lemmings use only their own exit",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A7 on Kriss Kross (map node 19, E19_KF_2): water lemmings leave through the normal balloon and normal lemmings through the water exit; neither should. Establish from the level data and static evidence how exits and hatches carry a tribe (the level has two hatches and, per the sweep, two exits; pipe-render-001 already identified water-lemming exit artwork) and how the original tests a lemming against an exit. Make an exit accept only lemmings of its own tribe; a lemming of the other tribe walks past or through it as the evidence shows, and is not counted saved. Check every installed level that mixes tribes or has a water exit, and confirm with the 102-level sweep data that no level loses its only usable exit. The user's attempt is build/playtest/replays/E19_KF_2-1794889005988486200-6.replay. Simulation change authorized as a playtest defect fix. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Kriss Kross a water lemming reaching the normal balloon is not saved and carries on, and likewise a normal lemming at the water exit; each is saved at its own exit.",
+        "The tribe of each hatch and exit is cited to level data or static evidence; levels with mixed tribes or water exits are listed with their exits, and none is left without a usable exit for a tribe it releases.",
+        "Any promoted recording that diverges is listed with its step and reason (Introducing - Water Lemmings, MM_W_012, in particular must still be winnable).",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "basher-two-hit-001",
+      "title": "Basher removes each wall piece in two hits, bottom half first",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A9, observed by the user against the original on Sergeant Bash (map node 20, MM_E1_4SKILLS): every basher punch plays the bash sound and throws particles, but it takes two hits to remove one piece of wall; the piece is split in two, the bottom part is removed by the first hit and the top part by the second. The clone removes the whole piece in one bite. Establish from static evidence how the original stores and removes the two halves of a terrain cell under a basher (partial cell shapes, which half first, when the basher advances) and implement it in World::stepBasher, the terrain collision and the rendered mesh, with sound and debris on every punch. Keep the basher's overall tunnel shape and stopping rules (steel, open air, one-way) otherwise unchanged, and say how the time to cross one cell changes. This touches parked basher timing; it is authorized as a playtest defect fix and is not a fidelity claim. It will change simulation timing wherever a basher is used, so promoted recordings that use a basher are expected to diverge: list each with its step. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Bash (MM_BASH_002) each punch makes the sound and debris; the first punch on a wall piece removes its bottom half, the second its top half, visibly and in collision, and the basher then advances.",
+        "The half-cell mechanism is cited to static evidence or labelled provisional, and the change in time per cell is stated.",
+        "Steel, open-air stop and other basher rules behave as before; the sweep still passes.",
+        "Promoted recordings that diverge are listed with step and reason; recordings without a basher still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "nuke-countdown-text-001",
+      "title": "Show the nuke countdown as big text across the centre",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A3: after the player nukes, the countdown should be shown in big text covering the centre of the screen. Establish from static evidence and installed assets how the original draws the nuke countdown (font or sprite digits, size, position, which values and for how long) and draw it through the production HUD text path used by the Let's Go text. Presentation only: the nuke's timing does not change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "After pressing nuke on any level, a large countdown is drawn across the centre of the level view, counts down in step with the lemmings' fuses and disappears when they explode; pause holds it.",
+        "Glyph source, size and position are cited to static evidence or labelled provisional.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "debris-3d-001",
+      "title": "Make bash, mine and dig debris 3D rotating pieces",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A6: the debris added by bash-particles-001 for basher, miner and digger is drawn as flat 2D rectangles; the user says it should be 3D rotating particles. Read docs/scratch/bash-particles-001.md, then establish from static evidence what the original emits (mesh or shaded chunk, size, tumble, texture source, count, lifetime) and replace the flat chips with small 3D pieces that tumble as they fall, textured from the terrain being cut, depth-tested like other actors. Presentation only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Bash, Just Mine and Just Dig the debris pieces are visibly three-dimensional and rotate as they fall; they are occluded by nearer terrain and lemmings.",
+        "Shape, motion and count are cited to static evidence or labelled provisional.",
+        "Frame time with several workers cutting at once is reported and not materially worse than before.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "frame-rate-001",
+      "title": "Find and fix what keeps level play under 60 fps",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 11 A5: the user still sees performance problems in level play and expects 60 fps or better on their hardware. Measure first, on the release build (build/cmake/gcc-release, the playtest configuration) with the window presented normally: frame time split into simulation, scene build, rasterization, actor and particle drawing, HUD, and present, on Just Climb (light), Sergeant Bash (node 20, deathroller), Kriss Kross (node 19, fluid, two hatches, 30 lemmings) and The Crowded House (node 21), at rest, while rotating, and at fast-forward. The actor occlusion work of basher-occlusion-001 and actor-occlusion-002 and the debris and brick drawing are recent and should be measured specifically. Report the numbers, then fix the largest costs without changing what is drawn or simulated: avoid recomputing static geometry and depth every frame, cache what only changes on rotation or terrain edits, remove per-pixel work that can be per-span, and use threads only if the measurement shows rasterization is the bound and it can be done deterministically. Also check frame pacing (vsync, sleep granularity, the fixed-step loop) for stutter that is not raw cost. Do not start the OpenGL renderer; that is deferred (docs/POST_1_0.md). Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report gives before and after frame-time breakdowns for the four named levels at rest, rotating and at fast-forward, measured on the release build, with the method stated.",
+        "After the change, level play on those levels averages at or under 16.6 ms a frame on the measuring machine, or the report states exactly what remains and why it could not be removed in this task.",
+        "Rendered output is unchanged apart from documented exceptions, and simulation is untouched: all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

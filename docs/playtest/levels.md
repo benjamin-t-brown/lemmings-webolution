@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 19 of 102.
+under docs/playtest/replays/. Won so far: 20 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -22,17 +22,17 @@ under docs/playtest/replays/. Won so far: 19 of 102.
 | 8 | MM_W_012 | Introducing - Water Lemmings | ok | playtest 7 | pass |  |
 | 9 | MM_Block_Bomb_A | Block And Bomb | ok | playtest 7 | pass |  |
 | 10 | MM_BASH_MINE_WLR1 | Bash and Mine | ok | playtest 7 | pass |  |
-| 11 | m06_kf_1 | Sometimes up..sometimes down. | ok | playtest 7 | retired (Z6 fix) |  |
+| 11 | m06_kf_1 | Sometimes up..sometimes down. | ok | playtest 7, 11 | pass |  |
 | 12 | MM_BASH_DIG_001_A | Bash and Dig | ok | playtest 8 | pass |  |
 | 13 | MM_FLOAT_CLIMB2 | Float and Climb | ok | playtest 8 | retired (Z6 fix) |  |
 | 14 | MM_BUILD_BLOCK_A | Build and Block | ok | playtest 8 | pass |  |
 | 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok | playtest 9 | retired (Y6 fix) |  |
 | 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok | playtest 9 | retired (Y6 fix) |  |
-| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok | playtest 10 | pass | Z1 fixed in queue run 2026-11-16, not yet seen by a person |
-| 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10 | retired (Z5 fix) | Z5 fixed in queue run 2026-11-16, not yet seen by a person |
-| 19 | E19_KF_2 | Kriss Kross | ok |  |  | playtest 10 Z6, Z7 fixed in queue run 2026-11-16, not yet seen by a person |
-| 20 | MM_E1_4SKILLS | Sergeant Bash | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |
-| 21 | E20_mg_1 | The Crowded House | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |
+| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok | playtest 10 | pass |  |
+| 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10, 11 | pass |  |
+| 19 | E19_KF_2 | Kriss Kross | ok |  |  | playtest 11 A7 (water and normal lemmings use each other's exit) |
+| 20 | MM_E1_4SKILLS | Sergeant Bash | ok | playtest 11 | pass | playtest 11 A8 (miner silent), A9 (basher two-hit) |
+| 21 | E20_mg_1 | The Crowded House | ok |  |  | playtest 11 A10 (dig tilts metal terrain), A11 (dig silent) |
 | 22 | MM_ALL_8_001 | One Way Ticket | ok |  |  |  |
 | 23 | MM_E1_5_Skills | Swings Both Ways | ok |  |  |  |
 | 24 | MM_ALL_8_002 | Wandering Free | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |

@@ -9,6 +9,13 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- steel-blast-dig-tilt-001: **ready** — Explosions and dig tilt must leave metal terrain alone
+- work-sounds-001: **ready** — Explosion, miner and digger sounds
+- exit-tribe-001: **ready** — Water lemmings and normal lemmings use only their own exit
+- basher-two-hit-001: **ready** — Basher removes each wall piece in two hits, bottom half first
+- nuke-countdown-text-001: **ready** — Show the nuke countdown as big text across the centre
+- debris-3d-001: **ready** — Make bash, mine and dig debris 3D rotating pieces
+- frame-rate-001: **ready** — Find and fix what keeps level play under 60 fps
 
 ## Recently completed queue entries
 

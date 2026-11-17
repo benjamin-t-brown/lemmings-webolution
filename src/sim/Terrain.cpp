@@ -27,7 +27,8 @@ std::size_t Terrain::index(int x, int y) const {
 Material Terrain::at(int x, int y) const {
   if (cells_.empty())
     return Material::Empty;
-  // Above the world is open sky; below it is solid, so nothing falls out.
+  // Above the world is open sky; below it is a solid probe sentinel.
+  // World::stepFaller loses open-bottom falls before consulting that sentinel.
   if (y < 0)
     return Material::Empty;
   if (y >= height_)

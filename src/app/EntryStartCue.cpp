@@ -48,12 +48,6 @@ std::uint8_t clampByte(int v) { return static_cast<std::uint8_t>(std::clamp(v, 0
 
 EntryStartCue::EntryStartCue(bool introEnabled) : seconds_(introEnabled ? 3.5 : 1.5) {}
 
-EntryStartCue EntryStartCue::atFirstRelease() {
-  EntryStartCue cue(false);
-  cue.seconds_ = 0.5;
-  return cue;
-}
-
 void EntryStartCue::advanceBeforeFrame(double seconds, bool playing) {
   if (!active_ || !playing || !std::isfinite(seconds) || seconds < 0.0)
     return;

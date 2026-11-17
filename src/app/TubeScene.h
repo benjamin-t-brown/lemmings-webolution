@@ -149,7 +149,8 @@ class TubeScene {
               const AssetLibrary* composeAssets = nullptr) const;
 
   // Actor pass after all scenery/terrain/fluid passes. render() also calls this
-  // for standalone scene consumers. Does not change scene depth.
+  // for standalone scene consumers. Resets/populates Raster's separate actor
+  // coverage, shared with particles and highlight; does not change scene depth.
   void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
                            const SceneOptions& options, const AssetLibrary& lib) const;
 

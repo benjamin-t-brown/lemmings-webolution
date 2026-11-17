@@ -295,10 +295,9 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
   LevelSetup& s = report.setup;
   s.terrain = Terrain::fromCollisionGrid(*grid);
 
-  // One Entrance per hatch, in stream order -- World::spawn() already
-  // round-robins setup.entrances (World.cpp, unchanged here). Only the
-  // first hatch's own rate/min/max drives the one shared release-timing
-  // model; see RetailLevelReport and this header's "what is lost" note.
+  // One Entrance per hatch, with its stored population in stream order.
+  // Playable-v1 deliberately keeps the first hatch's shared release cadence:
+  // every nonempty hatch emits on the same tick (playtest 10 Z6).
   const int kTicksPerSecond = World::Rules{}.ticksPerSecond;  // MEASURED, World.h
   for (const auto& h : objs->hatches) {
     const auto [cx, cy] = webo::hatchSpawnCell(h, grid->width, grid->height);
@@ -307,6 +306,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     e.y = cy;
     e.source = Entrance::Source::HatchWords;
     e.sheetType = h.type;
+    e.releaseCount = h.count;
     e.direction = h.direction;
     e.alternateDirection = h.alternateDirection;
     s.entrances.push_back(e);
@@ -344,6 +344,26 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
   s.totalLemmings = static_cast<int>(info->totalLemmings);
   s.saveTarget = static_cast<int>(info->saveTarget);
   s.timeLimitTicks = static_cast<int>(info->timeLimitSeconds) * kTicksPerSecond;
+
+  report.initialSharedRate = primary.clampedRate;
+  if (s.entrances.size() > 1 && info->timeLimitSeconds > 0) {
+    int largestQuota = 0;
+    for (const auto& e : s.entrances) largestQuota = std::max(largestQuota, e.releaseCount);
+    // PROVISIONAL playable-v1 capacity floor: VH21_JC stores 1/49 at rate 1
+    // (5 seconds), which cannot empty in 210 seconds. Preserve those populations
+    // and select the slowest allowed shared table rate that fits. Reserve five
+    // level seconds for ordinary connected entry (4.5-second cue / 2.8-second
+    // doors), plus two update periods for arm/final-release sampling at 5 Hz.
+    // This only changes the initial rate, not player bounds or an in-flight clock.
+    const double startup = std::max(5.0, s.releaseArmSeconds) + s.releaseFirstCountdownSeconds +
+                           2.0 / kTicksPerSecond;
+    while (report.initialSharedRate < primary.rateMax && largestQuota > 1 &&
+           startup + (largestQuota - 1) * rateTable->secondsPerLemming(report.initialSharedRate) >=
+               info->timeLimitSeconds)
+      ++report.initialSharedRate;
+    s.releaseIntervalSeconds = rateTable->secondsPerLemming(report.initialSharedRate);
+    s.releaseIntervalTicks = rateTable->intervalTicks(report.initialSharedRate, kTicksPerSecond);
+  }
 
   for (const auto& pose : objs->exits) {
     const ExitTrigger box = webo::exitTriggerFromPose(pose, grid->width, grid->height);

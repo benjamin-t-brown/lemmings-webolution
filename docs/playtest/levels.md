@@ -22,15 +22,15 @@ under docs/playtest/replays/. Won so far: 19 of 102.
 | 8 | MM_W_012 | Introducing - Water Lemmings | ok | playtest 7 | pass |  |
 | 9 | MM_Block_Bomb_A | Block And Bomb | ok | playtest 7 | pass |  |
 | 10 | MM_BASH_MINE_WLR1 | Bash and Mine | ok | playtest 7 | pass |  |
-| 11 | m06_kf_1 | Sometimes up..sometimes down. | ok | playtest 7 | pass |  |
+| 11 | m06_kf_1 | Sometimes up..sometimes down. | ok | playtest 7 | retired (Z6 fix) |  |
 | 12 | MM_BASH_DIG_001_A | Bash and Dig | ok | playtest 8 | pass |  |
-| 13 | MM_FLOAT_CLIMB2 | Float and Climb | ok | playtest 8 | pass |  |
+| 13 | MM_FLOAT_CLIMB2 | Float and Climb | ok | playtest 8 | retired (Z6 fix) |  |
 | 14 | MM_BUILD_BLOCK_A | Build and Block | ok | playtest 8 | pass |  |
-| 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok | playtest 9 | retired (Y6 fix) | playtest 9 Y1 (switch animation), Y2 (pipe depth) |
+| 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok | playtest 9 | retired (Y6 fix) |  |
 | 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok | playtest 9 | retired (Y6 fix) |  |
-| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok | playtest 10 | pass | playtest 10 Z1 (clip into circular object) |
-| 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10 | pass | playtest 10 Z5 (fall into hole does not kill) |
-| 19 | E19_KF_2 | Kriss Kross | ok |  |  | playtest 10 Z6 (hatches not simultaneous), Z7 (crab kills water lemmings on the surface) |
+| 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok | playtest 10 | pass | Z1 fixed in queue run 2026-11-16, not yet seen by a person |
+| 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10 | retired (Z5 fix) | Z5 fixed in queue run 2026-11-16, not yet seen by a person |
+| 19 | E19_KF_2 | Kriss Kross | ok |  |  | playtest 10 Z6, Z7 fixed in queue run 2026-11-16, not yet seen by a person |
 | 20 | MM_E1_4SKILLS | Sergeant Bash | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 21 | E20_mg_1 | The Crowded House | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |
 | 22 | MM_ALL_8_001 | One Way Ticket | ok |  |  |  |

@@ -93,6 +93,56 @@ void units() {
   check(!reloaded.setup().crabs[0].attacking && reloaded.setup().crabs[0].animationSeconds == 0,
         "reload starts with rest animation and no attack latch");
 }
+// Fast legacy coverage for fractional surface/contact boundaries. This guards
+// the integer-coordinate adapter without adding a scripted per-level route.
+void surfaceContact() {
+  for (int kind : {0, 2}) {
+    auto s = fixture();
+    FluidGate g;
+    g.kind = kind; g.minX = 110; g.maxX = 125;
+    g.minY = 9; g.height = g.high = 7.5;
+    s.gates.push_back(g);
+    auto water = actor(116, 16);
+    water.sheetType = kind == 0 ? 1 : 2;
+    World above(s);
+    above.place(water); above.advanceElapsedMs(0);
+    check(above.dead() == 0 && above.lemmings()[0].active() &&
+          !above.setup().crabs[0].attacking, "matching fractional surface above box is safe");
+
+    auto edge = s; edge.gates[0].height = edge.gates[0].high = 7.0;
+    World touching(edge);
+    touching.place(water); touching.advanceElapsedMs(0);
+    check(touching.dead() == 1, "surface on the closed box edge still touches crab");
+
+    World floor(s);
+    auto atCrab = water; atCrab.y = actor(116, 9).y;
+    // A walker placed underwater is lifted by attachFluidHazard before
+    // contact. A stationary actor lets this check reach the crab itself.
+    atCrab.state = State::Blocker;
+    floor.place(atCrab); floor.advanceElapsedMs(0);
+    check(floor.dead() == 1, "matching tribe at crab's own cell is not immune");
+
+    auto dry = s; dry.gates[0].height = 0; dry.gates[0].request = 1;
+    World drained(dry);
+    drained.place(water); drained.advanceElapsedMs(0);
+    check(drained.dead() == 1, "drained tank retains ordinary crab contact");
+
+    auto away = s; away.gates[0].minX = 120;
+    World outside(away);
+    outside.place(water); outside.advanceElapsedMs(0);
+    check(outside.dead() == 1, "nearby fluid cannot lift a point outside its span");
+
+    World ordinary(s);
+    auto otherTribe = water; otherTribe.sheetType = 0;
+    ordinary.place(otherTribe); ordinary.advanceElapsedMs(0);
+    check(ordinary.dead() == 1, "other tribes receive no surface adapter exemption");
+
+    World inverted(s);
+    water.verticalDir = -1;
+    inverted.place(water); inverted.advanceElapsedMs(0);
+    check(inverted.dead() == 1, "inverted actor is not supported by the fluid surface");
+  }
+}
 void installed(const AssetLibrary& lib) {
   const auto table = loadLevelTable(lib);
   check(bool(table), "read installed map"); if (!table) return;
@@ -157,6 +207,7 @@ void installed(const AssetLibrary& lib) {
 }
 int main() {
   units();
+  surfaceContact();
   if (const char* dir = std::getenv("WEBOLUTION_GAME_DIR")) {
     const std::filesystem::path root(dir);
     auto lib = AssetLibrary::open(root/"lemmings.box", root/"patch.box");

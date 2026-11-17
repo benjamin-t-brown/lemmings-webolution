@@ -18,20 +18,13 @@
 // sweep.txt` for which (if any) retail levels actually hit that path --
 // round 1's own corpus probe found none.
 //
-// What is lost, by construction of `LevelSetup` itself (not a new loss this
-// file introduces): `LevelSetup` carries exactly one
-// `releaseArmSeconds`/`releaseFirstCountdownSeconds`/`releaseIntervalSeconds`
-// triple, but 33 of the 102 retail levels have more than one hatch, and
-// `World::spawn()` already round-robins every `Entrance` pushed here against
-// that one shared accumulator (`World.cpp`, unchanged by this file). So a
-// multi-hatch level gets every hatch's own spawn *position* (one `Entrance`
-// per hatch, in stream order) but only the *first* hatch's own release
-// cadence -- every other hatch's own `rate`/`rateMin`/`rateMax` is still
-// read and reported (`RetailLevelReport::hatches`) but not wired into the
-// sim. `totalLemmings` is read from `LevelInfo` (not summed from the hatch
-// words) because round 1's own corpus probe found the two always agree
-// (sum(hatch.count) == LevelInfo.totalLemmings on all 102 levels) and
-// `LevelInfo` is the source the brief's acceptance criterion names.
+// Playable-v1 release policy (playtest 10 Z6): every nonempty hatch emits
+// one lemming on each shared release tick. Entrances retain the stored per-hatch
+// counts; their sum equals LevelInfo.totalLemmings on all 102 installed levels.
+// LevelInfo remains the authoritative total. The shared interval/rate control
+// starts from the first hatch, raised only if its largest quota cannot fit the
+// time limit. Original per-hatch intervals and door phases remain outside this
+// provisional simultaneous scheduler.
 
 #pragma once
 
@@ -48,10 +41,8 @@ class AssetLibrary;
 
 namespace webo::sim {
 
-// One hatch's own numbers, kept because `LevelSetup` has room for only one
-// release interval (see this header's own top comment). Not used by
-// `World` directly; this is what `loadRetailLevelReport` and the corpus
-// sweep report instead of silently dropping it.
+// Each stored hatch's numbers. Count also reaches Entrance::releaseCount;
+// secondary intervals are reported but the playable-v1 cadence stays shared.
 struct RetailHatchSummary {
   int count = 0;
   int x = 0;
@@ -69,6 +60,7 @@ struct RetailHatchSummary {
 // file's own test) that want more than the one `LevelSetup` can carry.
 struct RetailLevelReport {
   LevelSetup setup;
+  int initialSharedRate = 1; // Effective shared rate, including the provisional capacity floor.
   // Every hatch record found, in stream order. hatches.front() is the one
   // whose rate/min/max drove setup.releaseIntervalSeconds et al.
   std::vector<RetailHatchSummary> hatches;
@@ -86,7 +78,7 @@ struct RetailLevelReport {
 //     release timing (releaseArmSeconds/releaseFirstCountdownSeconds/
 //     releaseIntervalSeconds, see World.h) from the *first* hatch's own
 //     rate word, clamped into its own min/max, looked up in RELEASERATE.PC
-//     -- see this header's own "what is lost" note for multi-hatch levels
+//     -- see this header's provisional shared-cadence policy
 //   - every Exit*.a3d placement via exitTriggerFromPose
 //   - every teleport.a3d / speedup_two_way.a3d / lever.a3d placement via
 //     their own trigger functions (teleports paired i <-> i+n/2, the

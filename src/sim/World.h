@@ -71,7 +71,7 @@ enum class Facing : std::int8_t { Left = -1, Right = 1 };
 // mixer's job. Drained with takeCues() after each tick (or after assign).
 enum class SoundCue : std::uint8_t {
   Assign,   // a skill stuck -- Action (0x4556B5); refusals emit no cue
-  OhNo,     // a bomber fuse was lit -- Ohno
+  OhNo,     // a bomber fuse ended outside Nuke -- Ohno
   Explode,  // the fuse ran out -- Explode
   Splat,    // landed too hard -- Splat
   Exit,     // reached the exit -- Yippee
@@ -178,13 +178,15 @@ struct Entrance {
   enum class Source : std::uint8_t { EntranceModel, HatchWords };
   Source source = Source::EntranceModel;
   // Stored hatch +0xB4/+0xB6; direction becomes the next birth's direction.
-  // Keep these in the former padding before sheetType: frozen pre-task source
-  // demonstrations retain the same existing field offsets and record size.
+  // Direction fields occupy the padding before sheetType.
   bool alternateDirection = false;
   std::int16_t direction = 1;
   // Hatch type word → [lemming+0x4c]. MEASURED round 29: from HatchRecord.type
   // (hatch+0xB0). 1 = LemmingsWater, 2 = LemmingsAcid.
   int sheetType = 0;
+  // Stored hatch +0x98, decremented per birth (0x425B72..0x425BCB).
+  // -1 lets hand-built setups divide the level total evenly in stream order.
+  int releaseCount = -1;
 };
 // Save trigger. MEASURED, round 11: the original's exit object keeps an AABB
 // at +0x48..+0x70 and tests the lemming's raw (X,Y,Z) with 0x00430BA1
@@ -1079,7 +1081,7 @@ public:
     // ticks of walkSpeed.
     int bomberFuseMs = 5000;
     // What happens at the end of the fuse is NOT the explosion. The 5000 ms
-    // event plays `Ohno` (`0x00414435`, gated on the byte at `0x004CBB40`,
+    // event plays `Ohno` (`0x00414443`, gated on the byte at `0x004CBB40`,
     // which reads 0x00 in play -- see the note below) and installs the
     // "flapper" state, vtable `0x004B0A58`, whose enter `0x0041695C` starts
     // the animation `explode`. Only when that strip finishes
@@ -1096,14 +1098,13 @@ public:
     // ticksPerSecond` -- one second early by construction -- and our crater
     // landed on the same tick as the cue. Both moved.
     //
-    // The gate byte. `0x004CBB40` is in `.data`'s uninitialised tail: that
-    // section's virtual size is 0x1185B8 and its raw size is 0x7000, so the
-    // file has no byte for it and the loader zero-fills it. The static read's
-    // "0xFF in the image" was a read of the file at that offset, which is
-    // past the section's raw data. Live, on two levels, before and after five
-    // bombs, it read 0x00 -- and `test edx, edx / jne` at 0x00414426 means
-    // zero is the arm, not the mute. Nothing in `.text` stores it, so the
-    // play is never skipped and there is no quirk here to preserve.
+    // Correction (letsgo-text-nuke-ohno-001): the gate is the nuke request,
+    // level base 0x004C6A08 + 0x5138 == 0x004CBB40. Request 0x00444A98
+    // writes it through the receiver; replay event 7 writes the absolute byte
+    // at 0x00457017. The old claim "nothing stores it" missed both paths.
+    // The ordinary-bomb live observations above only established zero before
+    // Nuke. World::cue now mutes OhNo while nukeRequested_ is set; fuse,
+    // explosion animation, crater and removal behavior are unchanged.
     //
     // There is no `explosionRadius` any more. The footprint is a stored
     // 7 x 7 bitmap; see Terrain::clearExplosion. MEASURED: six blasts, 75
@@ -1325,6 +1326,11 @@ public:
   }
 
   int spawned() const { return spawned_; }
+  int spawnedFromEntrance(std::size_t index) const { return spawnedByEntrance_.at(index); }
+  int remainingFromEntrance(std::size_t index) const {
+    return nukeRequested_ ? 0 : std::max(0, setup_.entrances.at(index).releaseCount -
+                                             spawnedByEntrance_.at(index));
+  }
   int saved() const { return saved_; }
   int dead() const { return dead_; }
   int remainingToRelease() const { return nukeRequested_ ? 0 : std::max(0, setup_.totalLemmings - spawned_); }
@@ -1373,6 +1379,7 @@ private:
   // Lemming::stepBudgetSeconds. -1.0 (every existing call site) means "a
   // full tick's dt," the old behaviour.
   void spawn(double budgetSeconds = -1.0);
+  void spawnFromEntrance(std::size_t index, double budgetSeconds);
   void step(Lemming& l);
   void stepFaller(Lemming& l);
   void stepBounce(Lemming& l);
@@ -1463,7 +1470,7 @@ private:
   double releaseElapsedSeconds_ = 0.0;  // real seconds since construction
   bool releaseArmed_ = false;
   double releaseCountdown_ = 0.0;
-  std::size_t nextEntrance_ = 0;
+  std::vector<int> spawnedByEntrance_;
   std::vector<SoundCue> cues_;
   DeathObserver deathObserver_;
   TerrainCutObserver terrainCutObserver_;

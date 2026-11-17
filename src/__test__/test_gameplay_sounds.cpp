@@ -1,4 +1,4 @@
-// Small synthetic units for playtest 9 Y3/Y5/Y12, plus optional read-only
+// Small synthetic units for playtest 9 Y3/Y5/Y12 and playtest 10 Z4, plus read-only
 // installed sample decoding. No gameplay route, save or audio device.
 #include "app/RuntimeHud.h"
 #include "assets/Box.h"
@@ -144,6 +144,32 @@ void assignmentFeedback() {
     }
   }
 }
+// Legacy regression: audio suppression must not alter the existing Bomber or
+// Nuke removal path, including a fuse that was already lit when Nuke began.
+void nukeVoice() {
+  for (bool prelit : {false, true}) {
+    sim::World world(floor());
+    for (int x : {16, 60}) {
+      sim::Lemming actor;
+      actor.x = x; actor.y = 79; actor.state = sim::State::Walker;
+      world.place(actor);
+    }
+    if (prelit) check(world.assign(0, sim::Skill::Bomber), "pre-nuke Bomber accepted");
+    world.takeCues(); // Assignment is separate feedback.
+    world.nuke();
+    int ohno = 0, explosions = 0;
+    for (int tick = 0; tick < 60; ++tick) {
+      world.tick();
+      for (auto cue : world.takeCues()) {
+        ohno += cue == sim::SoundCue::OhNo;
+        explosions += cue == sim::SoundCue::Explode;
+      }
+    }
+    check(ohno == 0, "Nuke mutes every OhNo, including an already lit fuse");
+    check(explosions == 2 && world.dead() == 2,
+          "both actors still explode and die through the existing path");
+  }
+}
 } // namespace
 
 int main() {
@@ -151,6 +177,7 @@ int main() {
     for (bool buffered : {false, true}) builder(fastForward, buffered);
   basher(true, false); basher(false, false); basher(true, true);
   assignmentFeedback();
+  nukeVoice();
   if (failures) return EXIT_FAILURE;
   std::cout << "PASS: last-three warnings, successful bash bites, pause, fast-forward and drains\n";
 }

@@ -19747,7 +19747,7 @@
     {
       "id": "letsgo-text-nuke-ohno-001",
       "title": "Restore the earlier Let's Go text; no Oh No on nuke",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19756,19 +19756,142 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 10 Z3 and Z4. Z3: ui-sounds-001 moved the Let's Go text to first spawn at full size and dropped the pre-spawn shrinking lead-in; the user says the text looked more correct before. Restore the text presentation exactly as it was at commit 9a39257 (level-load countdown, shrink, retirement), including the two test_levelreturn.cpp first-Retry-frame expectations that ui-sounds-001 changed, which return to their 9a39257 form. Keep the Letsgo voice where the user asked for it in playtest 9 Y13: once per attempt when the first hatch begins releasing. Text and voice are therefore no longer driven by one latch; say in the report how far apart they now are. Legacy tests that ui-sounds-001 retired for asserting the old text may be restored from git if cheap, otherwise leave them retired. Z4: when the player nukes, the Ohno voice plays; it should not. src/audio/CuePlayback.cpp already cites a guard byte at 0x004CBB40 that suppresses Ohno in the original; establish statically whether that byte is the nuke state and suppress Ohno for nuke-triggered bombers accordingly (the explosion sound stays). A single Bomber skill still says Oh No. Presentation and audio only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "scope": "Playtest 10 Z3 and Z4. Z3: ui-sounds-001 moved the Let's Go text to first spawn at full size and dropped the pre-spawn shrinking lead-in; the user says the text looked more correct before. Restore the text presentation exactly as it was at commit 9a39257 (level-load countdown, shrink, retirement), including the two test_levelreturn.cpp first-Retry-frame expectations that ui-sounds-001 changed, which return to their 9a39257 form. Keep the Letsgo voice where the user asked for it in playtest 9 Y13: once per attempt when the first hatch begins releasing. Text and voice are therefore no longer driven by one latch; say in the report how far apart they now are. Legacy tests that ui-sounds-001 retired for asserting the old text may be restored from git if cheap, otherwise leave them retired. Z4: when the player nukes, the Ohno voice plays; it should not. src/audio/CuePlayback.cpp already cites a guard byte at 0x004CBB40 that suppresses Ohno in the original; establish statically whether that byte is the nuke state and suppress Ohno for nuke-triggered bombers accordingly (explosion audio is not part of this task). A single Bomber skill still says Oh No. Presentation and audio only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
         "Entering or retrying a level shows the Let's Go text as it did at commit 9a39257, and the Letsgo voice plays once when the first hatch begins releasing.",
         "test_levelreturn.cpp matches its 9a39257 expectations for the Retry frames and passes.",
-        "Nuking plays no Ohno voice for any lemming while explosions still sound; assigning one Bomber still plays Ohno; the guard evidence is cited or the choice labelled provisional.",
+        "Nuking plays no Ohno voice for any lemming; assigning one Bomber still plays Ohno; explosion audio is left exactly as it was before this task (the clone has never played an explosion sound, and adding one is out of scope); the guard evidence is cited or the choice labelled provisional.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T010343-32152-7652f89c",
+      "started": "2026-11-17T01:03:43.408801+00:00",
+      "finished": "2026-11-17T01:20:16.029765+00:00",
+      "last_run": "build/agent-runs/20261117T010343-32152-7652f89c",
+      "review": {
+        "decision": "accept",
+        "reason": "All five corrected criteria are supported. Explosion audio remains unchanged; the lead correction supersedes the report\u2019s obsolete explosion-approval discussion. Retained verification covers unchanged production/test content. Human playtest confirmation and original-game fidelity remain unproved.",
+        "checks": [
+          {
+            "criterion": "Entering or retrying a level shows the Let's Go text as it did at commit 9a39257, and the Letsgo voice plays once when the first hatch begins releasing.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/EntryStartCue.cpp",
+                "detail": "Independent git comparison against 9a39257 shows no differences: restores entry/Retry countdown seeds, quadratic shrink, additive phase and retirement below -1 second."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Creates the text clock at level entry and advances it before simulation. The independent firstReleasePending latch plays LevelStart once when spawned()>0. Replacing the identical entryDelay clock preserves the release predicate."
+              },
+              {
+                "path": "docs/scratch/letsgo-text-nuke-ohno-001.md",
+                "detail": "Documents installed MM_CLIMB_002/MM_BOMB observations and the source-traced voice request: 1.4 seconds after text retirement on entry, 1.7 seconds afterward on Retry, with quantization/pause/speed limitations."
+              },
+              {
+                "path": "build/letsgo-text-nuke-ohno-001/restored.log",
+                "detail": "All five restored legacy checks pass, covering entry text, menus, ordinary entry, fast-forward and Retry."
+              }
+            ]
+          },
+          {
+            "criterion": "test_levelreturn.cpp matches its 9a39257 expectations for the Retry frames and passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/__test__/test_levelreturn.cpp",
+                "detail": "Independent git comparison against 9a39257 shows no differences. Both first-Retry-frame expectations require entryCueSeconds==-0.5 and a present additive cue frame."
+              },
+              {
+                "path": "build/agent-runs/20261117T010343-32152-7652f89c/verification.log",
+                "detail": "Supervisor smoke verification records levelreturn passing in 34.02 seconds."
+              }
+            ]
+          },
+          {
+            "criterion": "Nuking plays no Ohno voice for any lemming; assigning one Bomber still plays Ohno; explosion audio is left exactly as it was before this task (the clone has never played an explosion sound, and adding one is out of scope); the guard evidence is cited or the choice labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::cue drops only OhNo while nukeRequested_ is set, covering Nuke attachments and previously primed Bombers. Ordinary Bomber emission, explosion events and simulation transitions remain unchanged."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "The diff changes only the Ohno evidence comment. Explode remains unrouted, preserving exactly the pre-task explosion silence."
+              },
+              {
+                "path": "build/letsgo-text-nuke-ohno-001/static/ohno-inst.json",
+                "detail": "Retained Ghidra instructions for registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f read guard 0x004CBB40 at 0x00414420; branch 0x00414428 bypasses Ohno playback at 0x00414443 when nonzero."
+              },
+              {
+                "path": "build/letsgo-text-nuke-ohno-001/static/final-static-2.json",
+                "detail": "Instructions show helper 0x00444A98 setting receiver+0x5138 at 0x00444AB1. Level base 0x004C6A08 plus 0x5138 equals guard address 0x004CBB40."
+              },
+              {
+                "path": "docs/scratch/gameplay-commands-research-001.md",
+                "detail": "Accepted command research traces the Nuke UI path to 0x00444A98 and identifies game+0x5138 as its request byte, establishing the helper\u2019s meaning independently of the address arithmetic."
+              },
+              {
+                "path": "src/__test__/test_gameplay_sounds.cpp",
+                "detail": "Legacy regression covers unprimed and prelit Nuke cases: no OhNo, with both explosion events and deaths retained."
+              },
+              {
+                "path": "src/__test__/test_cueplayback.cpp",
+                "detail": "Unchanged smoke assertions require one Ohno request for an ordinary Bomber and no Explode playback. The retained focused log and supervisor verification show these checks passing."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/letsgo-text-nuke-ohno-001/replays.json",
+                "detail": "Records commands, individual log paths and zero exits for all 17 active promoted recordings. Every result is PASS with won=1 and completed=1; independently inspected individual logs agree."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active coverage as .replay files and retains the reasons for two earlier retirements. The current inventory contains exactly the 17 active files covered by the results."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T010343-32152-7652f89c/verification.log",
+                "detail": "Supervisor smoke passes all 95 main tests and all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T010343-32152-7652f89c/result.json",
+                "detail": "Records verification exit zero and verified_content fce4bcfe19f6b646c31e6d6a64f31ff745da27eda4fb1bce7e6f16c65fbcc132, matching the supplied review context."
+              },
+              {
+                "path": "build/agent-runs/loop-ec2bc38b5bff4331b992f80cc048234c/0001-review-7d798c/before-source-hashes.json",
+                "detail": "Comparison with the worker\u2019s after-source-hashes manifest finds only queue/status changes; production and test content remain unchanged since verification."
+              },
+              {
+                "path": "docs/scratch/letsgo-text-nuke-ohno-001.md",
+                "detail": "Ends with a what-to-check note naming MM_CLIMB_002 entry/Retry and MM_BOMB ordinary Bomber/Nuke actions and expected results. Its obsolete explosion-approval statement is superseded by the explicit lead correction in agent/tasks.json."
+              }
+            ]
+          }
+        ]
+      },
+      "lead_note": "2026-11-16: the lead wrote \"while explosions still sound\" wrongly assuming the clone played an explosion sound. It does not, and the protected cueplayback smoke assertions stay as they are. The criterion is corrected; no explosion audio is wanted from this task.",
+      "accepted_at": "2026-11-17T01:46:28.974825+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T010343-32152-7652f89c\\verification.log",
+        "verified_content": "fce4bcfe19f6b646c31e6d6a64f31ff745da27eda4fb1bce7e6f16c65fbcc132"
+      }
     },
     {
       "id": "fall-out-death-001",
       "title": "Kill lemmings that fall into the hole on The Abyss",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19783,12 +19906,92 @@
         "The rule is cited to static evidence or labelled provisional, and levels whose outcome changes in the 102-level sweep are listed.",
         "All promoted playtest replays still reproduce their results, or any that change are listed with the step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T014629-4628-d6494987",
+      "started": "2026-11-17T01:46:29.326187+00:00",
+      "finished": "2026-11-17T02:06:41.653630+00:00",
+      "last_run": "build/agent-runs/20261117T014629-4628-d6494987",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the source, retained replay traces and supervisor verification. The intended replay divergence is documented. Exact boundary placement remains explicitly provisional; human playability and original fidelity are not claimed.",
+        "checks": [
+          {
+            "criterion": "The report names the cell where the recorded lemming entered the hole, what the clone did with it, and the rule now applied; on The Abyss a lemming falling into that hole dies and is counted dead.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/fall-out-death-001.md",
+                "detail": "Identifies actor 0 entering (99,63) at step 1133 and previously becoming a bottom-row Walker instead of dying. Explains the steel-sentinel cause and production call path."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepFaller now detects the upright open-bottom boundary before landing probes, enters Splatter, increments dead_ once, emits Splat and invokes the existing death observer. Actual last-row support still lands at height-2."
+              },
+              {
+                "path": "build/fall-out-death-001/MM_E2_4SKILLS-1794876758706780100-3.replay.csv",
+                "detail": "Actor 0 becomes Splatter at (99,95), step 1195, with dead=1; it retires to Dead at step 1243 without another counted death."
+              }
+            ]
+          },
+          {
+            "criterion": "The rule is cited to static evidence or labelled provisional, and levels whose outcome changes in the 102-level sweep are listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/fall-out-death-001/static/excerpts.txt",
+                "detail": "Retained pseudocode and instructions agree: 0x4164CE\u20130x4164FC check vertical bounds; 0x4164FE\u20130x41653A construct and attach the loss state before trampoline, landing and Floater exemptions."
+              },
+              {
+                "path": "docs/scratch/fall-out-death-001.md",
+                "detail": "Explicitly labels integer-grid boundary placement provisional and retains the registered reference identity and native-coordinate limitations."
+              },
+              {
+                "path": "build/fall-out-death-001/sweep-changes.txt",
+                "detail": "Lists all changed sweep counters/states: M11_KF_1, M21_KF_1, H15_MT_1, VH13_KF_1 and MM_H_003. The last also becomes world_finished; the report preserves unchanged saved counts and sweep classifications."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results, or any that change are listed with the step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/fall-out-death-001/replays.json",
+                "detail": "Records commands, exits and results for all 17 promoted recordings: 16 pass; The Abyss diverges at step 1195 because the corrected death changes dead from 0 to 1. The separate retry passes unchanged."
+              },
+              {
+                "path": "docs/scratch/fall-out-death-001.md",
+                "detail": "Lists each replay result and explains the intended divergence. Clearly distinguishes diagnostic continuation to 12/10 saved from a strict replay PASS and states recordings were preserved."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T014629-4628-d6494987/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including the 102-level sweep, and all 84 recovery tests; git diff --check also completes."
+              },
+              {
+                "path": "docs/scratch/fall-out-death-001.md",
+                "detail": "Ends with The Abyss, the Floater action at hole (99,63), and expected ordinary death presentation with one loss. Also calls for confirming survival on a real lower platform."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T02:08:43.257358+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T014629-4628-d6494987\\verification.log",
+        "verified_content": "a4d7f4d9cead99425aef867dc7b9d81e51348aabf9f6878912fb019bad0c3876"
+      }
     },
     {
       "id": "crab-water-surface-001",
       "title": "Crabs must not kill water lemmings walking on the surface above",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19803,12 +20006,189 @@
         "On Seafood Sarnie (node 15) a lemming that walks into the crab still dies.",
         "The rule is cited to static evidence or labelled provisional; all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261117T022503-4628-95e4668c",
+      "started": "2026-11-17T02:25:03.965235+00:00",
+      "finished": "2026-11-17T02:29:14.767779+00:00",
+      "last_run": "build/agent-runs/20261117T022503-4628-95e4668c",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The crab correction and smoke gate are supported, but one still-promoted replay diverges. Have the lead reconcile The Abyss recording under the existing retirement policy and update the report. Preserve the recording, accepted death fix and replay assertions.",
+        "checks": [
+          {
+            "criterion": "On Kriss Kross a water lemming crossing the full tank above the crab survives; the report gives the recorded death cells and the corrected contact rule.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/crab-water-surface-001.md",
+                "detail": "Records deaths at steps 525 and 704, both at cell (156,50), with water surface 45.5 above the crab\u2019s closed Y range 38..45. Explains the production call path and fractional-surface correction."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepCrabs reconstructs the matching fluid surface fraction before testing the unchanged closed contact boxes; 45.5 therefore lies above the crab."
+              },
+              {
+                "path": "build/crab-water-surface-001/corrected-contact-diagnostic.log",
+                "detail": "At the first former death, step 525, actor 0 remains active at (156,50), with actual dead=0 instead of recorded dead=1."
+              }
+            ]
+          },
+          {
+            "criterion": "On Seafood Sarnie (node 15) a lemming that walks into the crab still dies.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Zero-height fluid disables the surface adapter. Direct contact retains closed-box testing, Dead transition, one loss increment and the death observer."
+              },
+              {
+                "path": "src/__test__/test_crab.cpp",
+                "detail": "Retains Seafood Sarnie\u2019s installed contact-origin assertion at (110,9,0), closed-volume checks and added drained-tank/direct-contact checks."
+              },
+              {
+                "path": "build/crab-water-surface-001/passing-crab-ctest.log",
+                "detail": "The legacy crab logic/data test passes in 0.31 seconds. Natural contact remains for the user\u2019s playtest, as permitted by the review rules."
+              }
+            ]
+          },
+          {
+            "criterion": "The rule is cited to static evidence or labelled provisional; all promoted playtest replays still reproduce their results.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/crab-water-surface-001/static/collect_asm.json",
+                "detail": "For registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, instructions at 0x430F93..0x430FA1 pass actor+8 to the contact predicate."
+              },
+              {
+                "path": "build/crab-water-surface-001/static/contact_asm.json",
+                "detail": "0x430C9C tests translated double-coordinate bounds inclusively, consistent with retained pseudocode. The report explicitly labels fractional surface reconstruction provisional."
+              },
+              {
+                "path": "build/crab-water-surface-001/replay-results.tsv",
+                "detail": "Only 16 of 17 promoted recordings pass. MM_E2_4SKILLS-1794876758706780100-3.replay exits 1 at step 1195: expected dead=0, actual dead=1. This predates the crab change but still prevents the exact criterion passing."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines promoted recordings as active .replay files and provides lead-owned retirement for recordings dependent on intentionally corrected defects. The Abyss recording has not been retired."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T020843-4628-7d6dfe2b/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/crab-water-surface-001.md",
+                "detail": "Ends with Kriss Kross full-tank crossing and Seafood Sarnie drained-pool contact instructions, including expected survival and death behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The crab correction and smoke gate are supported, but one still-promoted replay diverges. Have the lead reconcile The Abyss recording under the existing retirement policy and update the report. Preserve the recording, accepted death fix and replay assertions.",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported. The lead retired The Abyss recording under the existing policy; all 16 remaining promoted recordings have retained strict PASS results. Latest supervisor smoke verification passes. Human confirmation and original fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Kriss Kross a water lemming crossing the full tank above the crab survives; the report gives the recorded death cells and the corrected contact rule.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/crab-water-surface-001.md",
+                "detail": "Records deaths at steps 525 and 704, both at (156,50), with fluid surface 45.5 above the crab's closed original-Y range 38..45. Gives the crab placement, fluid dimensions and production call path."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepCrabs reconstructs the matching fluid surface fraction before applying unchanged closed contact bounds. Thus surface Y=45.5 avoids the crab's maximum Y=45."
+              },
+              {
+                "path": "build/crab-water-surface-001/corrected-contact-diagnostic.log",
+                "detail": "At former death step 525, water actor 0 remains active at (156,50); actual dead=0 versus recorded dead=1."
+              }
+            ]
+          },
+          {
+            "criterion": "On Seafood Sarnie (node 15) a lemming that walks into the crab still dies.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Zero-height fluid disables the surface adapter. Direct closed-box contact still transitions the actor to Dead, increments losses once, notifies the death observer and starts the crab attack."
+              },
+              {
+                "path": "src/__test__/test_crab.cpp",
+                "detail": "Retains Seafood Sarnie's installed contact origin (110,9,0), closed-volume checks and attack accounting. Added checks cover drained-fluid contact and matching-tribe contact at the crab floor."
+              },
+              {
+                "path": "build/crab-water-surface-001/passing-crab-ctest.log",
+                "detail": "The legacy crab logic/data test passes in 0.31 seconds. Natural gameplay confirmation remains for the user's playtest."
+              }
+            ]
+          },
+          {
+            "criterion": "The rule is cited to static evidence or labelled provisional; all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/crab-water-surface-001/static/collect_asm.json",
+                "detail": "For registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, instructions at 0x430F93..0x430FA1 pass actor+8 to contact predicate 0x430C9C."
+              },
+              {
+                "path": "build/crab-water-surface-001/static/contact_asm.json",
+                "detail": "Instructions at 0x430D15..0x430D23 and 0x430D8C..0x430D9A compare double-coordinate Y bounds inclusively, consistent with retained pseudocode."
+              },
+              {
+                "path": "docs/scratch/crab-water-surface-001.md",
+                "detail": "Explicitly labels fractional surface reconstruction, acid consistency and radial placement provisional; makes no original-fidelity claim."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines promoted recordings as active .replay files and records lead retirement of The Abyss for its intentional step-1195 divergence after fall-out-death-001."
+              },
+              {
+                "path": "build/crab-water-surface-001/replay-results.tsv",
+                "detail": "Every one of the 16 currently promoted recordings has exit 0, PASS, won=1 and completed=1. The sole former promoted failure is now retired; the report's earlier 16/17 blocker description predates that completed retirement."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-16-playtest-10/MM_E2_4SKILLS-1794876758706780100-3.replay.retired",
+                "detail": "The retired recording remains present, retaining its human-win provenance rather than being deleted or rewritten."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-5c9c0df3b80843838c52359b25f1b78f/0001-verify-6111a8/verification.log",
+                "detail": "Latest supervisor verification passes all 95 main smoke tests and all 84 recovery tests using registered UCRT64 tools."
+              },
+              {
+                "path": "docs/scratch/crab-water-surface-001.md",
+                "detail": "Ends with level/action/expected-result instructions: cross Kriss Kross's full tank safely above the crab; drain Seafood Sarnie's pool and expect direct contact to cause one death and a crab attack."
+              }
+            ]
+          }
+        ]
+      },
+      "lead_note": "2026-11-16: the lead retired The Abyss recording (docs/playtest/replays/README.md, Retired recordings); it diverged at step 1195 by design after fall-out-death-001. The replay criterion covers the remaining .replay files.",
+      "accepted_at": "2026-11-17T02:34:46.254270+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-5c9c0df3b80843838c52359b25f1b78f/0001-verify-6111a8/verification.log",
+        "verified_content": "0e57811a78d464a22f874c2e1d7371570ef443bd10aae5b84f20531cdabcb6ac"
+      }
     },
     {
       "id": "multi-hatch-simultaneous-001",
       "title": "Release from all hatches simultaneously",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19817,19 +20197,109 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 10 Z6 on Kriss Kross (map node 19, E19_KF_2, two hatches): the hatches should release lemmings simultaneously; the clone alternates hatches against one cadence. This supplies the observation that multi-hatch-release-001 lacked (that task stays blocked; its removed attempt and review are under build/lead/multi-hatch-release-001-attempt1/ and it regressed M20_MT_1, node 50, to 45 of 53 released). Implement: on each release tick every hatch that still has lemmings to release drops one at the same moment, so a two-hatch level releases two per tick. Read the retained attempt and the static evidence on per-hatch counts first; settle how the level's total is divided between hatches and when a hatch stops, and make sure every multi-hatch level (33 in the sweep) releases its full total within the time limit, M20_MT_1, M06_KF_1 (node 11) and E10_KF_1 (node 91) in particular. The hatch-click rate stays shared across hatches unless the evidence gives per-hatch rates cheaply. This changes simulation timing on multi-hatch levels, so the promoted M06_KF_1 replay is expected to diverge: report the step, do not weaken the replay check, and the lead will retire that recording. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "scope": "Playtest 10 Z6 on Kriss Kross (map node 19, E19_KF_2, two hatches): the hatches should release lemmings simultaneously; the clone alternates hatches against one cadence. This supplies the observation that multi-hatch-release-001 lacked (that task stays blocked; its removed attempt and review are under build/lead/multi-hatch-release-001-attempt1/ and it regressed M20_MT_1, node 50, to 45 of 53 released). Implement: on each release tick every hatch that still has lemmings to release drops one at the same moment, so a two-hatch level releases two per tick. Read the retained attempt and the static evidence on per-hatch counts first; settle how the level's total is divided between hatches and when a hatch stops, and make sure every multi-hatch level (33 in the sweep) releases its full total within the time limit, M20_MT_1, M06_KF_1 (node 11) and E10_KF_1 (node 91) in particular. The hatch-click rate stays shared across hatches unless the evidence gives per-hatch rates cheaply. This changes simulation timing on multi-hatch levels, so the promoted M06_KF_1 replay is expected to diverge: report the step, do not weaken the replay check, and the lead will retire that recording. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result. Replay policy (lead, 2026-11-16): a promoted recording that diverges only because of this task's intended fix, or was already listed as diverging by an earlier accepted task, does not block acceptance. Name it with the step and reason in the report; the lead retires it afterwards. Never edit, rename or weaken a recording or the replay check yourself.",
       "acceptance": [
         "On Kriss Kross both hatches release a lemming on the same tick until each has released its share, and the level total is released.",
         "Every multi-hatch level in the sweep releases its full total within its time limit; M20_MT_1, M06_KF_1 and E10_KF_1 are reported with released counts.",
         "The division of the total between hatches is cited to static evidence or labelled provisional.",
         "Single-hatch promoted replays still reproduce their results; any multi-hatch recording that diverges is listed with the step.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T023446-40668-ee245909",
+      "started": "2026-11-17T02:34:46.612142+00:00",
+      "finished": "2026-11-17T02:49:42.419609+00:00",
+      "last_run": "build/agent-runs/20261117T023446-40668-ee245909",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria are supported by the production diff, retained census and replay results, and supervisor smoke verification. Shared cadence and VH21_JC's initial rate adjustment are explicitly provisional. Acceptance does not establish original-game fidelity or human playability.",
+        "checks": [
+          {
+            "criterion": "On Kriss Kross both hatches release a lemming on the same tick until each has released its share, and the level total is released.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepRelease calls spawn once per shared release tick. spawn visits every nonempty entrance with the same first-fall budget; spawnFromEntrance increments that entrance's counter and preserves the level-total cap."
+              },
+              {
+                "path": "build/multi-hatch-simultaneous-001/final-ctest-details.log",
+                "detail": "The passing census checks every nonempty hatch participates in each batch. E19_KF_2 releases its stored 15+15 quotas: 30/30 by 46.8 seconds directly and 50.94 seconds with the five-second entry gate."
+              }
+            ]
+          },
+          {
+            "criterion": "Every multi-hatch level in the sweep releases its full total within its time limit; M20_MT_1, M06_KF_1 and E10_KF_1 are reported with released counts.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/multi-hatch-simultaneous-001/final-census.csv",
+                "detail": "All 33 levels release their full totals in three scheduler configurations. With the entry gate, M20_MT_1 releases 53/53 by 40.16 seconds, M06_KF_1 releases 100/100 by 123.38 seconds, and E10_KF_1 releases 50/50 by 101.34 seconds, within their respective limits."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Stored hatch quotas reach Entrance.releaseCount. A documented provisional calculation raises only VH21_JC's initial shared rate from 1 to 4 within its existing bounds; its census result is 50/50 by 206.02 seconds against 210 seconds."
+              }
+            ]
+          },
+          {
+            "criterion": "The division of the total between hatches is cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/native-009-structured-hatch-records.md",
+                "detail": "Maps the structured hatch reader at 0x425E50/0x425F02 to the stored count word at hatch +0x98; the production loader now forwards that field."
+              },
+              {
+                "path": "build/multi-hatch-release-001/static/0x00425A95-instructions.json",
+                "detail": "For reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained instructions test the signed +0x98 count at 0x425B72..0x425B7B and decrement it at 0x425BBD..0x425BCB, supporting per-hatch exhaustion."
+              },
+              {
+                "path": "docs/scratch/multi-hatch-simultaneous-001.md",
+                "detail": "Distinguishes stored retail quotas from provisional fallback division for hand-built setups, simultaneous insertion order, shared cadence and the VH21_JC default-rate policy."
+              }
+            ]
+          },
+          {
+            "criterion": "Single-hatch promoted replays still reproduce their results; any multi-hatch recording that diverges is listed with the step.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/multi-hatch-simultaneous-001/final-replays/results.json",
+                "detail": "All 14 single-hatch recordings pass with exit 0, won=1 and completed=1. M06_KF_1 diverges at step 175 and MM_FLOAT_CLIMB2 at step 163: both expect one birth and observe two at clock 5836 ms."
+              },
+              {
+                "path": "docs/scratch/multi-hatch-simultaneous-001.md",
+                "detail": "Names both recordings, steps and intended first-simultaneous-release cause. Leaves recordings and strict replay checks unchanged; lead retirement remains the handoff."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T023446-40668-ee245909/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests and all 84 recovery tests using registered UCRT64 tools. The run result records verification exit 0."
+              },
+              {
+                "path": "docs/scratch/multi-hatch-simultaneous-001.md",
+                "detail": "Ends with a what-to-check note covering synchronized Kriss Kross births and shared-rate clicks, independent quota exhaustion on M20_MT_1, and VH21_JC's initial rate 4/full release."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T02:52:12.315805+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T023446-40668-ee245909\\verification.log",
+        "verified_content": "6b518bf0a81f32b60eb83762c44a689cf41871d0788bc198078f2a5dfee6b256"
+      }
     },
     {
       "id": "actor-occlusion-002",
       "title": "Occlusion: round object on Loggerheads; lemming-versus-lemming order",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19838,14 +20308,112 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Playtest 10 Z1 and Z2, remaining after basher-occlusion-001 (read docs/scratch/basher-occlusion-001.md first; its upright-plane actor occlusion stays). Z1: on Lems at Loggerheads (map node 17, MM_E1_3_SKILLS) lemmings visibly clip into a circular object when they walk up to it and turn around. Identify the object from the level data (a round terrain piece or a model), compare where the simulation turns the lemming with where the object's drawn surface is, and fix whichever is wrong: the sprite's depth or footprint against a curved surface, or the drawn object against its collision cells. Z2: lemming sprites nearer the centre of the cylinder sometimes appear in front of sprites nearer the outside. Trace how actors are ordered or depth-tested against each other (draw order, depth written by a sprite, ties at equal depth) and make the lemming nearer the camera win consistently at every rotation, including lemmings in different lanes at the same column and overlapping groups. Also cover the builder's in-hand brick, debris and death particles against other lemmings if they share the path. Presentation only: no simulation change. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "scope": "Playtest 10 Z1 and Z2, remaining after basher-occlusion-001 (read docs/scratch/basher-occlusion-001.md first; its upright-plane actor occlusion stays). Z1: on Lems at Loggerheads (map node 17, MM_E1_3_SKILLS) lemmings visibly clip into a circular object when they walk up to it and turn around. Identify the object from the level data (a round terrain piece or a model), compare where the simulation turns the lemming with where the object's drawn surface is, and fix whichever is wrong: the sprite's depth or footprint against a curved surface, or the drawn object against its collision cells. Z2: lemming sprites nearer the centre of the cylinder sometimes appear in front of sprites nearer the outside. Trace how actors are ordered or depth-tested against each other (draw order, depth written by a sprite, ties at equal depth) and make the lemming nearer the camera win consistently at every rotation, including lemmings in different lanes at the same column and overlapping groups. Also cover the builder's in-hand brick, debris and death particles against other lemmings if they share the path. Presentation only: no simulation change. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result. Replay policy (lead, 2026-11-16): a promoted recording that diverges only because of this task's intended fix, or was already listed as diverging by an earlier accepted task, does not block acceptance. Name it with the step and reason in the report; the lead retires it afterwards. Never edit, rename or weaken a recording or the replay check yourself.",
       "acceptance": [
         "On Lems at Loggerheads a lemming turning at the round object no longer intersects it from any rotation; the object and the cause are named.",
         "With lemmings in an outer and an inner lane overlapping on screen, the one nearer the camera is drawn in front at every rotation, with no flicker between them; the ordering rule is stated.",
         "Hover and click boxes are unchanged (the clicktoassign smoke test passes unmodified).",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T025212-40668-848984d4",
+      "started": "2026-11-17T02:52:12.681390+00:00",
+      "finished": "2026-11-17T03:16:22.615236+00:00",
+      "last_run": "build/agent-runs/20261117T025212-40668-848984d4",
+      "review": {
+        "decision": "accept",
+        "reason": "Independent read-only inspection supports all five criteria under the assigned replay exception and playtest-confirmation rules. No builds, tests, original execution or delegation were performed in this review. Human appearance confirmation and original depth fidelity remain unresolved.",
+        "checks": [
+          {
+            "criterion": "On Lems at Loggerheads a lemming turning at the round object no longer intersects it from any rotation; the object and the cause are named.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/actor-occlusion-002.md",
+                "detail": "Identifies the round objects as collision-derived sawn log-end terrain in MM_E1_3_SKILLS. Explains that the upright sprite plane can extend inside neighbouring solid cells, sometimes with the turning origin already on an obstructed column. Labels footprint exclusion provisional and discloses that a fully covered figure can disappear."
+              },
+              {
+                "path": "build/actor-occlusion-002/level-dump.txt",
+                "detail": "Retains the installed collision contour, surface vertices and scene-node census supporting terrain identification rather than a separate obstacle model."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The production preparation path applies clipBodyFootprint before scene-depth clipping. ActorOcclusion.h maps each opaque texel's upright-plane intersection into polygonal cylinder cells and excludes solid/door occupancy independently of camera rotation. Simulation, actor anchors and terrain geometry remain unchanged."
+              }
+            ]
+          },
+          {
+            "criterion": "With lemmings in an outer and an inner lane overlapping on screen, the one nearer the camera is drawn in front at every rotation, with no flicker between them; the ordering rule is stated.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/ActorDepth.h",
+                "detail": "Separate per-pixel coverage selects smaller physical view Z, with exact ties resolved by the lowest submission index. Coverage resets each actor pass and frame, preventing stale ownership."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Bodies submit upright-plane depths after scenery clipping; parallel planes are processed far-to-near by horizontal camera distance. Carried bricks retain mesh depth against other actors, particles share coverage, and highlights check ownership. Scenery depth and picking remain separate."
+              },
+              {
+                "path": "build/actor-occlusion-002/focused-3.xml",
+                "detail": "Retained passing legacy check covers 96 views and 2,873 overlapping pixels across both lanes and three actors, list reversal, carried meshes, particle rejection and coverage reset. This supplements the source review; it is not original-fidelity evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "Hover and click boxes are unchanged (the clicktoassign smoke test passes unmodified).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "injectedWalkerScreenBoxes still requests PlacementOnly preparation and returns the original sprite placement without footprint or actor-coverage filtering. Inspection found no changes to test_clicktoassign.cpp or the smoke tier list."
+              },
+              {
+                "path": "build/agent-runs/20261117T025212-40668-848984d4/verification.log",
+                "detail": "Supervisor verification records the unchanged clicktoassign smoke test passing in 0.08 seconds."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-occlusion-002/replays-final/results.json",
+                "detail": "Covers all 16 active promoted recordings: 14 return exit 0, PASS, won=1 and completed=1. M06_KF_1 diverges at step 175 and MM_FLOAT_CLIMB2 at step 163; both expect one birth and observe two at clock 5836 ms."
+              },
+              {
+                "path": "agent/tasks.json",
+                "detail": "The accepted multi-hatch-simultaneous-001 review records those same two divergences and their simultaneous-release cause. They qualify under this task's explicit exception for divergences documented by an earlier accepted task."
+              },
+              {
+                "path": "docs/scratch/actor-occlusion-002.md",
+                "detail": "Names both exceptional recordings, exact steps and inherited cause, leaving retirement to the lead. The task-only changes do not modify recordings or replay checks."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T025212-40668-848984d4/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests and 84 recovery tests, followed by git diff --check. The run result records verification exit 0 and the supplied verified-content fingerprint."
+              },
+              {
+                "path": "docs/scratch/actor-occlusion-002.md",
+                "detail": "Ends with level/action/expected-result instructions for Loggerheads round-log contact and overlapping lanes, plus carried-brick and particle checks on Just Build, Just Bash and Just Bomb. Its pending-verification wording describes worker handoff; the subsequent supervisor log supplies the completed gate."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T03:19:07.719388+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T025212-40668-848984d4\\verification.log",
+        "verified_content": "4508c9259d6ebd2f4d0e067757928c184165601e1344e2777a8b91aae26f4aa4"
+      }
     }
   ]
 }

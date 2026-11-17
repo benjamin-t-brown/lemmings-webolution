@@ -31,6 +31,7 @@ void Raster::clear(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
     color_.rgb[i + 2] = b;
   }
   std::fill(depth_.begin(), depth_.end(), std::numeric_limits<double>::infinity());
+  actorDepth_.clear();
 }
 
 void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,

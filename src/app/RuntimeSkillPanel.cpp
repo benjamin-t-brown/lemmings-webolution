@@ -1,6 +1,7 @@
 #include "app/RuntimeSkillPanel.h"
 #include "assets/Box.h"
 #include "assets/LevelObjects.h"
+#include "sim/RetailLevel.h"
 
 #include <algorithm>
 #include <cmath>
@@ -9,10 +10,10 @@ namespace webo::app {
 
 std::expected<RuntimeReleaseRateControl, std::string> RuntimeReleaseRateControl::create(
     const AssetLibrary& library, std::string_view levelId) {
-  auto bytes = library.read("COMPILED\\" + std::string(levelId) + ".LVL");
+  auto report = sim::loadRetailLevelReport(library, levelId);
   auto rates = loadReleaseRateTable(library);
-  if (!bytes || !rates) return std::unexpected(!bytes ? bytes.error() : rates.error());
-  const auto hatches = readHatchRecords(*bytes);
+  if (!report || !rates) return std::unexpected(!report ? report.error() : rates.error());
+  const auto& hatches = report->hatches;
   if (hatches.empty()) return std::unexpected("release control: no hatch record");
   RuntimeReleaseRateControl control;
   for (const auto& hatch : hatches) {
@@ -21,10 +22,9 @@ std::expected<RuntimeReleaseRateControl, std::string> RuntimeReleaseRateControl:
     control.limits_.push_back({hatch.rateMin, hatch.rateMax});
   }
   control.rates_ = std::move(*rates);
-  const auto& hatch = hatches.front();
-  control.current_ = std::clamp(hatch.rate, hatch.rateMin, hatch.rateMax);
-  // Loading is deliberately read-only: no player input must leave the accepted
-  // RetailLevel timing path bit-for-bit unchanged, including first release.
+  // Use the loader's effective initial rate so hover/input also reflect its
+  // provisional multi-hatch capacity floor. Loading never advances World.
+  control.current_ = report->initialSharedRate;
   return control;
 }
 

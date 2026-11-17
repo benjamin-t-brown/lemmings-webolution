@@ -1023,9 +1023,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::RuntimeReleaseRateControl> releaseControl;
   std::optional<app::SkillPanelIconAnimation> panelIconAnimation;
   std::optional<app::RuntimeCursor> runtimeCursor;
-  // Keep the accepted entry countdown as a release-only gate. The visible
-  // cue gets its own clock so moving it cannot change hatch/simulation timing.
-  std::optional<app::EntryStartCue> entryDelay;
   std::optional<app::EntryStartCue> entryCue;
   std::optional<app::LevelStartSequence> levelStart;
   double hatchOpeningProgress = 0.0;
@@ -1059,7 +1056,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         return 1;
       }
       entryCueText = (*strings)[71]; // READ45CAEA pushes hex47: Let's Go!, not Continue/name.
-      entryDelay.emplace(persistentFrontend->levelIntroEnabled());
+      entryCue.emplace(persistentFrontend->levelIntroEnabled());
       double doorSeconds = 0.0;
       if (entranceExitPresentation)
         for (const auto& hatch : entranceExitPresentation->entrances)
@@ -1368,9 +1365,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       updated = true;
     }
     bool simTicked = false;
-    // Preserve the old pre-simulation entry delay exactly. Y13's visible cue
-    // starts separately at first release and then uses unscaled frame time.
-    if (entryDelay) entryDelay->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
+    // READ45CC09: title clock updates after input, before simulation/drawing.
+    // Playtest 10 Z3 restores the load-time countdown independently of the voice.
     if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
     if (levelStart) levelStart->advance(elapsed, focused && !runtimeSim.paused());
     if (args.sim && world) {
@@ -1385,19 +1381,16 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       const auto afterUpdate = [&] {
         // Y13: observe the first actual release, never level load. This per-leg
         // latch cannot repeat on later hatches, pause or fast-forward passes.
-        // Start readable text in this same update, after the old release gate
-        // has allowed spawning. Neither presentation nor audio controls it.
         if (firstReleasePending && world->spawned() > 0) {
           firstReleasePending = false;
-          if (entryDelay) entryCue.emplace(app::EntryStartCue::atFirstRelease());
           if (cues) cues->play(sim::SoundCue::LevelStart);
         }
         drainCues(); lemmingMotion.observe(*world);
         scene->advanceDeathParticles(world->levelClockMs());
       };
-      // The gate also covers fast-forward passes. Only the retained startup
-      // delay gates release; the first-spawn presentation cannot reclose it.
-      const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryDelay && entryDelay->active());
+      // The restored text clock is identical to the former release-only delay;
+      // keep the accepted release predicate, including fast-forward passes.
+      const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryCue && entryCue->active());
       simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, afterUpdate,
                                             ownedClock ? 0 : app::RuntimeSimState::kStallCapMs, releaseEnabled);
       if (recorder && simTicked) recorder->advanced(*world, runtimeSim, releaseEnabled);
@@ -1498,8 +1491,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
               std::vector<app::HatchHoverTarget>{};
           for (auto& h : hatches) {
-            h.remaining = world->nukeRequested() ? 0 : app::hatchRemaining(world->setup().totalLemmings,
-                world->spawned(), world->setup().entrances.size(), h.index);
+            h.remaining = world->remainingFromEntrance(h.index);
             h.rate = releaseControl ? releaseControl->current() : 0;
           }
           // Actor selection keeps precedence, matching hatchAtPointer input.

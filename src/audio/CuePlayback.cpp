@@ -20,9 +20,9 @@ constexpr CueRoute kRoutes[] = {
      "at 0x004556B5; refused assignments bypass this call"},
     {sim::SoundCue::OhNo, "Ohno",
      "old/docs/scratch/phase3-round7.md 'When Ohno plays': helper step 0x00414370 "
-     "plays Ohno at 0x00414420 when guard byte [0x004CBB40]==0; "
-     "phase3-round7-live.md measured the gate byte 0x00 and the play at the end "
-     "of the 5000 ms fuse"},
+     "tests [0x004CBB40] at 0x00414420 and plays Ohno at 0x00414443 if zero; "
+     "docs/scratch/letsgo-text-nuke-ohno-001.md identifies that byte as "
+     "level+0x5138, the nuke request; ordinary bombs play at fuse end"},
     // The sim names this moment Splat, but the retail `Splat` cue (DAT_004E32D4)
     // has zero play references. The fall death plays FallSplat.
     {sim::SoundCue::Splat, "FallSplat",

@@ -63,8 +63,22 @@ World::World(LevelSetup setup) : World(std::move(setup), Rules{}) {}
 
 World::World(LevelSetup setup, Rules rules) : setup_(std::move(setup)), rules_(rules) {
   lemmings_.reserve(static_cast<std::size_t>(std::max(0, setup_.totalLemmings)));
-
-
+  spawnedByEntrance_.resize(setup_.entrances.size(), 0);
+  int unassigned = setup_.totalLemmings;
+  int unspecified = 0;
+  for (const auto& e : setup_.entrances) {
+    if (e.releaseCount < 0) ++unspecified;
+    else unassigned -= e.releaseCount;
+  }
+  // Provisional fallback for hand-built setups only. Retail quotas come from
+  // the stored hatch words, including uneven populations such as 3/50.
+  for (auto& e : setup_.entrances) {
+    if (e.releaseCount < 0) {
+      e.releaseCount = (std::max(0, unassigned) + unspecified - 1) / unspecified;
+      unassigned -= e.releaseCount;
+      --unspecified;
+    }
+  }
   sinceSpawn_ = rules_.walkSpeed > 0 ? setup_.releaseIntervalTicks : 0;
 }
 
@@ -91,11 +105,19 @@ void World::place(Lemming lemming) {
 }
 
 void World::spawn(double budgetSeconds) {
+  // Playtest 10 Z6: a release tick serves every nonempty hatch. The shared
+  // countdown and first-fall budget are identical for this entire batch.
+  // Stream order breaks simultaneous actor-index ties provisionally.
+  for (std::size_t i = 0; i < setup_.entrances.size(); ++i) {
+    if (remainingFromEntrance(i) > 0)
+      spawnFromEntrance(i, budgetSeconds);
+  }
+}
+
+void World::spawnFromEntrance(std::size_t entranceIndex, double budgetSeconds) {
   if (spawned_ >= setup_.totalLemmings || setup_.entrances.empty())
     return;
-  const std::size_t entranceIndex = nextEntrance_ % setup_.entrances.size();
   Entrance& e = setup_.entrances[entranceIndex];
-  nextEntrance_ = (nextEntrance_ + 1) % setup_.entrances.size();
 
   Lemming l;
   l.x = setup_.terrain.wrapX(e.x);
@@ -125,6 +147,7 @@ void World::spawn(double budgetSeconds) {
   }
   lemmings_.push_back(l);
   ++spawned_;
+  ++spawnedByEntrance_[entranceIndex];
 }
 void World::stampBlockerField(const Lemming& l) {
   // 40E2D7 multiplies the row offset by actor+44; 40E19A does the
@@ -504,13 +527,17 @@ void World::stepFaller(Lemming& l) {
       ++l.fallDistance;
     }
 
-    if (v < 0 && (l.y < 0 || l.y >= setup_.terrain.height())) {
+    const int height = setup_.terrain.height();
+    if (l.y < 0 || l.y >= height || (v > 0 && l.y == height - 1)) {
       // READ 4164CE..41653A: vertical bounds precede landing and attach the
-      // same type-1A loss as an excessive fall; distance/gravity do not exempt
-      // it. PROVISIONAL feet/raw-origin adapter: lose at the first cell outside
-      // this Y-down grid. Native raw Y/bias/clamp differs (40DF50, 42F22E).
+      // same type-1A loss as an excessive fall; float/distance/gravity do not
+      // exempt it. PROVISIONAL feet/raw-origin adapter: upright loses at the
+      // bottom row, before Terrain::at's out-of-grid Steel can land it on an
+      // imaginary floor. Real support in the last row lands at height-2 and
+      // remains safe. Preserve inverted's first-outside-cell boundary.
+      // Native raw Y/bias/clamp differs (40DF50, 42F22E).
       // Keep the existing clone splat lifetime/counting, without fall retiming.
-      l.y = std::clamp(l.y, 0, std::max(0, setup_.terrain.height() - 1));
+      l.y = std::clamp(l.y, 0, std::max(0, height - 1));
       l.state = State::Splatter;
       l.frame = 0;
       l.stepBudgetSeconds = 0.0;
@@ -1369,10 +1396,31 @@ void World::stepCrabs(double dt) {
     bool killed = false;
     for (Lemming& l : lemmings_) {
       if (!l.active()) continue;
-      // PROVISIONAL coordinate adapter: integer feet, radial lane 0, as with
-      // the other clone contacts. Original 0x430F4D uses the actor's 3D point.
-      const std::array<double, 3> point{double(l.x),
+      // 0x430F4D -> 0x430C9C tests the actor's double-precision 3D point.
+      // PROVISIONAL adapter: retain the mean surface fraction discarded by
+      // attachFluidHazard's integer feet. E19_KF_2 has surface Y=45.5 above
+      // the crab's closed Y=38..45 box; rounding to 45 invents contact.
+      // This is geometry, not tribe immunity: a surface inside the box, a
+      // drained tank, or an actor down at the crab still allows a kill.
+      std::array<double, 3> point{double(l.x),
           double(setup_.terrain.height() - 1 - l.y), 0.0};
+      const int width = setup_.terrain.width();
+      if (l.verticalDir > 0 && width > 0) {
+        for (const FluidGate& g : setup_.gates) {
+          if (!(g.height > 0.0) || !((g.kind == 0 && l.sheetType == 1) ||
+              (g.kind == 2 && l.sheetType == 2))) continue;
+          const double surface = g.minY + g.height;
+          if (point[1] < g.minY || point[1] != std::floor(surface)) continue;
+          double span = g.maxX - g.minX;
+          if (span < 0.0) span += width;
+          double dx = std::fmod(l.x - g.minX, double(width));
+          if (dx < 0.0) dx += width;
+          if (dx < span) {
+            point[1] = surface;
+            break;
+          }
+        }
+      }
       const bool contact = std::any_of(crab.volumes.begin(), crab.volumes.end(),
           [&](const Crab::Volume& box) {
             for (std::size_t axis = 0; axis < 3; ++axis)
@@ -1824,8 +1872,10 @@ void World::stepNuke(int elapsedMs, bool tickBoundary) {
 }
 
 void World::cue(SoundCue c) {
-
-
+  // 0x414420..0x414443: suppress Ohno while the nuke request byte is set.
+  // 0x4C6A08 + 0x5138 == 0x4CBB40; see letsgo-text-nuke-ohno-001.md.
+  // This also mutes an ordinary fuse ending after Nuke, without changing it.
+  if (c == SoundCue::OhNo && nukeRequested_) return;
 
   if (c == SoundCue::OhNo || c == SoundCue::Explode) {
     if (std::find(cues_.begin(), cues_.end(), c) != cues_.end())

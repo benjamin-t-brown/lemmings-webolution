@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "app/ActorDepth.h"
+
 #include <array>
 #include <cstdint>
 #include <vector>
@@ -49,6 +51,8 @@ class Raster {
   Framebuffer& mutableFramebuffer() { return color_; }
   const std::vector<double>& depthBuffer() const { return depth_; }
   std::vector<double>& mutableDepthBuffer() { return depth_; }
+  const ActorDepth& actorDepth() const { return actorDepth_; }
+  ActorDepth& mutableActorDepth() { return actorDepth_; }
   std::size_t drawnTriangles() const { return triangles_; }
   std::size_t drawnPixels() const { return pixels_; }
 
@@ -58,6 +62,7 @@ class Raster {
   bool depthEnabled_ = true;
   Framebuffer color_;
   std::vector<double> depth_;
+  ActorDepth actorDepth_;
   std::size_t triangles_ = 0;
   std::size_t pixels_ = 0;
 };

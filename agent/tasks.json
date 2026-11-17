@@ -22150,7 +22150,7 @@
     {
       "id": "asset-census-001",
       "title": "Census of installed game assets the clone never uses",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22165,7 +22165,182 @@
         "Each unused asset has the original's use, cited to a static address, or is classed as apparently unused by the original too, with the reason.",
         "Unused assets the original uses are ranked by player impact with affected levels and map nodes, and grouped into proposed fix tasks with difficulty and model recommendations.",
         "No production source change; the smoke profile passes."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261117T174618-19536-7244bc87",
+      "started": "2026-11-17T17:46:18.480539+00:00",
+      "finished": "2026-11-17T18:21:04.604449+00:00",
+      "last_run": "build/agent-runs/20261117T174618-19536-7244bc87",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The census and ranked proposals are substantial, and smoke verification passes. Acceptance still needs corrected clone-use classifications and resolved original-use attribution. The claim that original diggers always use the front facing also contradicts retained accepted evidence.",
+        "checks": [
+          {
+            "criterion": "Every installed asset of the kinds listed is enumerated with a used or unused verdict for the clone, and used ones cite a clone call site; the CSV is written under build/asset-census-001/ and its row count stated.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/asset-census-001/assets.csv",
+                "detail": "Independently counted 17,736 data rows, matching the report. However, Entity4347ec.models_1c8_1cc is marked unused despite a production consumer. WorldGeometryPrefix.first_integer_array is marked used but cites Cylinder.cpp, LightMap.cpp and CollisionGrid.cpp rather than its actual LevelIndex.cpp consumer."
+              },
+              {
+                "path": "src/assets/LevelObjects.cpp",
+                "detail": "readTeleportLinks checks both models_1c8_1cc entries through isPadModel at line 220; their names determine which serialized records become teleport links. This is production semantic use, even though rendering their geometry remains omitted. Correct the field verdict and cite this consumer."
+              },
+              {
+                "path": "src/assets/LevelIndex.cpp",
+                "detail": "Line 147 projects world.first_integer_array into lvl.grid0. Correct its census call site and audit the manually assigned field contracts for similar attribution errors."
+              }
+            ]
+          },
+          {
+            "criterion": "Each unused asset has the original's use, cited to a static address, or is classed as apparently unused by the original too, with the reason.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/asset-census-001/assets.csv",
+                "detail": "1,523 clone-unused rows retain original_verdict=read_only: 1,351 localized strings, 146 fields, 15 textures, eight alpha planes and three language tables. These include unresolved candidates rather than established uses or supported apparently-unused classifications. For example, ^SPLASH.BMP explicitly says its exact visible trigger needs a final targeted lookup."
+              },
+              {
+                "path": "docs/scratch/asset-census-001.md",
+                "detail": "The limitations section expressly identifies read_only rows as remaining output-attribution limits for criterion 2. Complete those classifications with targeted static evidence or supported negative reasoning; do not relabel unknown behavior as dead content merely to pass."
+              },
+              {
+                "path": "build/asset-census-001/classify.py",
+                "detail": "The digger-facing branch classifies unused side views as stored_variant and asserts that the original also fixes the front view, citing 0x00415472. That assertion needs correction."
+              },
+              {
+                "path": "docs/scratch/digger-facing-001.md",
+                "detail": "Accepted retained analysis establishes native entry 0x004159B4 setting phase 0.75 through 0x004683E9 and camera-dependent selection through actor render 0x0042EEF2. It explicitly states that always choosing view 4 is provisional clone behavior, not a fixed-front original policy. Reconcile the census classifications and conclusions with this evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "Unused assets the original uses are ranked by player impact with affected levels and map nodes, and grouped into proposed fix tasks with difficulty and model recommendations.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/asset-census-001/proposed-tasks.csv",
+                "detail": "Contains 18 ranked proposals with scope, complete affected node/level lists, earliest node, winning impact, static evidence, difficulty, recommended model and model rationale. Gates rank first across 52 levels from node 25; rats rank second across 17 levels from node 28. Winning dependencies are appropriately labeled as inference."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "The registry construction registers entities_424187 through addOther, supporting the reported absence of an active crossing-count gate implementation."
+              },
+              {
+                "path": "build/asset-census-001/static/instructions-00423749.json",
+                "detail": "Retained instructions independently support the gate audio attribution: 0x00423822 loads sound handle 0x004E32F0. The accompanying retained pseudocode shows crossing checks and delayed request/commit behavior, supporting the high-impact gate proposal without claiming runtime fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "No production source change; the smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-b3e075a83290495d8dc80ab0f4f47811/0002-review-acd000/before-diff.txt",
+                "detail": "The inspection snapshot contains no production source changes. Independent read-only git inspection likewise found no diff under src, decomp-lemmings, cmake or CMakeLists.txt."
+              },
+              {
+                "path": "build/agent-runs/20261117T170339-19536-66c19450/verification.log",
+                "detail": "Supervisor verification records 95/95 main smoke tests and 84/84 recovery tests passing, followed by git diff --check. No builds or tests were run during this review. These results establish the source verification gate, not original-game fidelity."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The census and ranked proposals are substantial, and smoke verification passes. Acceptance still needs corrected clone-use classifications and resolved original-use attribution. The claim that original diggers always use the front facing also contradicts retained accepted evidence.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves the prior classification and attribution findings. The census, ranked proposals and supervisor smoke result satisfy all four criteria. Acceptance establishes the research deliverable, not original-game fidelity or permission to implement proposed fixes.",
+        "checks": [
+          {
+            "criterion": "Every installed asset of the kinds listed is enumerated with a used or unused verdict for the clone, and used ones cite a clone call site; the CSV is written under build/asset-census-001/ and its row count stated.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/asset-census-001/assets.csv",
+                "detail": "Independently counted 17,736 rows: 12,287 used and 5,449 unused. Coverage includes 10,661 base archive entries, 311 patch entries, 63 loose files, sprite facings, models, model animations, localized slots, fields and object kinds. Loose-file identities match the installed directory. Every used row has a citation; all 85 distinct cited source locations resolve."
+              },
+              {
+                "path": "docs/scratch/asset-census-001.md",
+                "detail": "States the row count and coverage breakdown, defines partial use of packed/shared assets, and distinguishes semantic model use from omitted geometry."
+              },
+              {
+                "path": "src/assets/LevelObjects.cpp",
+                "detail": "Line 220 consumes models_1c8_1cc names to admit teleport links, matching the corrected used verdict. The first matching name short-circuits the second test; the census separately retains unused second-FX geometry and identities."
+              },
+              {
+                "path": "src/assets/LevelIndex.cpp",
+                "detail": "Line 147 moves world.first_integer_array into lvl.grid0, matching the corrected citation. The accompanying field-contract audit covers all 270 schema rows."
+              }
+            ]
+          },
+          {
+            "criterion": "Each unused asset has the original's use, cited to a static address, or is classed as apparently unused by the original too, with the reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/asset-census-001/assets.csv",
+                "detail": "No read_only verdict remains. Clone-unused rows distinguish original uses, supported apparently-unused findings, dormant installed routes, replaced copies and installation/tool artifacts, with addresses and explanations."
+              },
+              {
+                "path": "build/asset-census-001/revision-evidence.md",
+                "detail": "Documents targeted positive traces and bounded negative searches, including five-language loading at 0x00486670, empty installed tutorial-widget lists, unused caret-texture dependencies and scalar-field audit limits. It explicitly avoids treating limited negative searches as proof of globally dead content."
+              },
+              {
+                "path": "build/asset-census-001/static/revision-instructions-0043FA93.json",
+                "detail": "Instructions independently corroborate the glow output trace: 0x0043FABE loads texture +0x134, 0x0043FACA resolves it, 0x0043FAD1 binds it, and 0x0043FAE6/0x0043FAF1 submit two triangles. Companion retained instructions establish receiver +0x190 flowing through global 0x004C602C."
+              },
+              {
+                "path": "build/asset-census-001/static/revision-instructions-00408227.json",
+                "detail": "0x004082AF pushes slot 0 before the 0x004082B6 call to 0x0043B31E, supporting the positive ~splat attribution. The retained caller audit identifies this producer only, supporting the separately bounded ~splat2 negative."
+              },
+              {
+                "path": "docs/scratch/digger-facing-001.md",
+                "detail": "The revised census agrees with accepted evidence: entry 0x004159B4 sets phase 0.75 through 0x004683E9, followed by camera-dependent selection at 0x0042EEF2. Twelve unused Hi side-facing rows are now native-used; fixed view 4 remains explicitly provisional clone policy."
+              }
+            ]
+          },
+          {
+            "criterion": "Unused assets the original uses are ranked by player impact with affected levels and map nodes, and grouped into proposed fix tasks with difficulty and model recommendations.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/asset-census-001/proposed-tasks.csv",
+                "detail": "Contains 19 ranked proposals with scope, affected levels/nodes, earliest node, winning impact, static evidence, difficulty, recommended model and rationale. Gates rank first across 52 levels from node 25; rats rank second across 17 levels from node 28. Winning impact is identified as inference."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Counter gates are registered through addOther rather than active gate state, supporting the first proposal. The retained source inspection also supports omitted placed-rat integration."
+              },
+              {
+                "path": "docs/scratch/asset-census-001.md",
+                "detail": "Summarizes priorities, links complete route lists and separates deliberate accepted digger policy, optional quality variants and dormant content from actionable gameplay omissions. Proposals require lead selection and do not reopen parked work."
+              }
+            ]
+          },
+          {
+            "criterion": "No production source change; the smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-b3e075a83290495d8dc80ab0f4f47811/0004-review-110598/before-diff.txt",
+                "detail": "The inspection snapshot contains no production source change. Independent read-only git inspection likewise found only existing control/log edits and the new research report."
+              },
+              {
+                "path": "build/agent-runs/20261117T174618-19536-7244bc87/verification.log",
+                "detail": "The new supervisor verification records 95/95 main smoke tests and 84/84 recovery tests passing, followed by git diff --check. This supersedes the report's worker-exit pending-verification note. No builds, tests or original execution were performed during this review."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T18:23:54.430712+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T174618-19536-7244bc87\\verification.log",
+        "verified_content": "e0d7f21bc865ff986c10917211fe7da8868236f4492c4656ce374844cbd1edab"
+      }
     }
   ]
 }

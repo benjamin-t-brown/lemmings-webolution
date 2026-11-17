@@ -9,14 +9,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- asset-census-001: **ready** — Census of installed game assets the clone never uses
 
 ## Recently completed queue entries
 
-- frame-rate-001: Find and fix what keeps level play under 60 fps
-  Accepted: 2026-11-17T07:33:35.801031+00:00
-  Verification evidence: `build/agent-runs/20261117T072239-15712-ebde9df5/verification.log`
-  Verification evidence: `build\agent-runs\20261117T072239-15712-ebde9df5\verification.log`
 - acid-lever-drain-001: Make the One Way Ticket switch drain the acid tank
   Accepted: 2026-11-17T16:14:59.301049+00:00
   Verification evidence: `build/agent-runs/20261117T160130-46052-4cab9097/verification.log`
@@ -33,13 +28,17 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-17T17:01:30.083097+00:00
   Verification evidence: `build/agent-runs/20261117T163932-46052-e8344d8c/verification.log`
   Verification evidence: `build\agent-runs\20261117T163932-46052-e8344d8c\verification.log`
+- asset-census-001: Census of installed game assets the clone never uses
+  Accepted: 2026-11-17T18:23:54.430712+00:00
+  Verification evidence: `build/agent-runs/20261117T174618-19536-7244bc87/verification.log`
+  Verification evidence: `build\agent-runs\20261117T174618-19536-7244bc87\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-ea42683b15b342dcac460ec129f914c9/result.json`
+- Result: `build/agent-runs/loop-b3e075a83290495d8dc80ab0f4f47811/result.json`
 - Status: **blocked**
-- Duration: 1h 00m 01s
-- Completed in this invocation: acid-lever-drain-001, actor-zoom-scale-001, digger-facing-001, positional-audio-001
+- Duration: 1h 20m 16s
+- Completed in this invocation: asset-census-001
 - Reason: plan failed; inspect the saved logs
 
 ## Documentation handoff

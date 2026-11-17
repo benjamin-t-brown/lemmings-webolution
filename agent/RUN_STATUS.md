@@ -9,14 +9,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- digger-outward-001: **ready** — Diggers face outward from the cylinder
 
 ## Recently completed queue entries
 
-- acid-lever-drain-001: Make the One Way Ticket switch drain the acid tank
-  Accepted: 2026-11-17T16:14:59.301049+00:00
-  Verification evidence: `build/agent-runs/20261117T160130-46052-4cab9097/verification.log`
-  Verification evidence: `build\agent-runs\20261117T160130-46052-4cab9097\verification.log`
 - actor-zoom-scale-001: Scale lemmings with the camera zoom
   Accepted: 2026-11-17T16:26:56.511424+00:00
   Verification evidence: `build/agent-runs/20261117T161459-46052-1219c5c4/verification.log`
@@ -33,13 +28,17 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-17T18:23:54.430712+00:00
   Verification evidence: `build/agent-runs/20261117T174618-19536-7244bc87/verification.log`
   Verification evidence: `build\agent-runs\20261117T174618-19536-7244bc87\verification.log`
+- digger-outward-001: Diggers face outward from the cylinder
+  Accepted: 2026-11-17T20:09:19.989973+00:00
+  Verification evidence: `build/agent-runs/20261117T195728-15108-5627269a/verification.log`
+  Verification evidence: `build\agent-runs\20261117T195728-15108-5627269a\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-b3e075a83290495d8dc80ab0f4f47811/result.json`
+- Result: `build/agent-runs/loop-9a682cc6eacd43c8af3ab520ae3cfb95/result.json`
 - Status: **blocked**
-- Duration: 1h 20m 16s
-- Completed in this invocation: asset-census-001
+- Duration: 0h 11m 53s
+- Completed in this invocation: digger-outward-001
 - Reason: plan failed; inspect the saved logs
 
 ## Documentation handoff

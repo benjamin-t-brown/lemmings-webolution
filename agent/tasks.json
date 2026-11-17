@@ -22345,7 +22345,7 @@
     {
       "id": "digger-outward-001",
       "title": "Diggers face outward from the cylinder",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22361,7 +22361,101 @@
         "The blocker keeps its eight-view turning; walking direction is restored when digging ends.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T195728-15108-5627269a",
+      "started": "2026-11-17T19:57:29.150404+00:00",
+      "finished": "2026-11-17T20:07:12.771436+00:00",
+      "last_run": "build/agent-runs/20261117T195728-15108-5627269a",
+      "review": {
+        "decision": "accept",
+        "reason": "The production path, retained static evidence, all 19 promoted replay results and supervisor smoke verification cover every criterion. Provisional alignment choices are explicit. Human playtest confirmation and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Just Dig, a digger at the centre of the view faces the camera; rotating so it moves to the left or right edge shows it turned to face outward from the cylinder, through the installed side and three-quarter views with no snapping.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "prepareInjectedWalker removes the fixed front-view override. Diggers use a normalized cylinder tangent independent of walking facing, phase 0.75 and a documented sector alignment before the shared camera-dependent chooser. Drawing and picking share this preparation. The continuous radial reference avoids changes from faceted walking tangents."
+              },
+              {
+                "path": "build/digger-outward-001/outward-orientation.csv",
+                "detail": "Both walking facings produce the same ordered front/three-quarter/side sequence over camera offsets -64 through 64, with opposite-side mirroring and no facing reversal."
+              },
+              {
+                "path": "build/digger-outward-001/draw.log",
+                "detail": "Retained synthetic inspection reports 60 cases and zero failures using installed Just Dig geometry and production drawing/picking: centre view 4, three-quarter view 3 and side view 2 across three tribes, both walking facings and both gravities. Human confirmation remains the next playtest."
+              }
+            ]
+          },
+          {
+            "criterion": "The facing and view selection are cited to the static addresses above or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/digger-facing-001/static-evidence.json",
+                "detail": "Retained instructions show 0x4159CA/0x4159CF pushing binary64 0.75 before 0x4159DA calls 0x4683E9; 0x4683F6/0x4683FF store controller +0x1D8/+0x1DC. Actor rendering sets the basis at 0x42EF9F and calls the chooser at 0x42EFD8. Reference SHA-256 is 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f."
+              },
+              {
+                "path": "build/digger-outward-001/static-evidence.json",
+                "detail": "Instructions corroborate phase consumption at 0x468456..0x468462, rotated basis construction, camera-vector normalization at 0x46857F, five-view branching at 0x46861E and front index 4 at 0x4686DF. These are static findings, not runtime fidelity evidence."
+              },
+              {
+                "path": "docs/scratch/digger-outward-001.md",
+                "detail": "Explicitly labels the smooth cylinder tangent and additional 3/64-turn alignment as provisional clone choices, separately from the traced phase and chooser."
+              }
+            ]
+          },
+          {
+            "criterion": "The blocker keeps its eight-view turning; walking direction is restored when digging ends.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The blocker retains phase 0.25 and the unchanged generic chooser. The dig-specific basis applies only to the dig clip. Each adapter sample starts with default phase zero and copies simulation facing without modifying it, restoring ordinary walking selection after digging."
+              },
+              {
+                "path": "src/app/LemmingAnim.cpp",
+                "detail": "Animation state changes immediately select the new state's clip; Walker selects walk and Blocker selects block. No dig orientation is stored in the animation tracker."
+              },
+              {
+                "path": "build/digger-outward-001/inspect-draw.cpp",
+                "detail": "The retained inspector checks fresh Walker and Blocker samples for preserved facing and phases zero and 0.25 respectively; draw.log reports zero failures."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/digger-outward-001/replays.log",
+                "detail": "Lists all 19 current promoted recordings, matching the repository's .replay inventory. Every recording reports PASS, won=1, completed=1 and exit 0; the log ends FAILURES 0. Just Dig finishes at step 1014 with 19/10 saved. No divergence or retirement was required."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T195728-15108-5627269a/verification.log",
+                "detail": "Supervisor verification records 95/95 main smoke tests and 84/84 recovery tests passing, followed by git diff --check. This supersedes the report's worker-exit pending-verification note."
+              },
+              {
+                "path": "docs/scratch/digger-outward-001.md",
+                "detail": "Ends with a what-to-check note naming Just Dig/MM_DIG_000, assigning Digger and rotating through centre and side views, expected walking-direction restoration, and a blocker rotation check on MM_BUILD_BLOCK_A."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T20:09:19.989973+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T195728-15108-5627269a\\verification.log",
+        "verified_content": "bd4ccc0158a3b2fa6e94a8b66cdf22665e3fae1b06e813c60fb2756aea09587a"
+      }
     }
   ]
 }

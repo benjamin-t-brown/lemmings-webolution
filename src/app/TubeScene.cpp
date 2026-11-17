@@ -473,7 +473,21 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
       pose.modelPosition[1] - camera.eyeWorld[1],
       pose.modelPosition[2] - camera.eyeWorld[2],
   };
-  const gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
+  gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
+  double phase = options.composeActorPhase + injected.rotationPhase;
+  if (walkSprite->name == "dig") {
+    // Playtest 12 B3 clarification: face outward, regardless of walk direction.
+    // PROVISIONAL reference: use the smooth cylinder tangent rather than the
+    // facing-dependent, faceted walking tangent. Native entry 4159B4 supplies
+    // phase 0.75; the shared chooser still selects the view from the camera.
+    const double radius = std::hypot(pose.modelPosition[0], pose.modelPosition[2]);
+    if (radius > 0.0)
+      basisVec = {-pose.modelPosition[2] / radius, 0.0, pose.modelPosition[0] / radius};
+    // Centre the installed front view's angular sector on the outward normal.
+    // The shared five-view chooser's front sector spans 33.75 degrees, ending
+    // at phase 0.75's normal; half that sector is 3/64 of a turn.
+    phase += 3.0 / 64.0;
+  }
   const std::size_t temporalIndex =
       static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
   if (temporalIndex >= walkSprite->animations.size())
@@ -483,15 +497,8 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   if (dirCount == 0)
     return std::nullopt;
 
-  const auto scores = gfx::spriteViewScores(cameraToActor, basisVec,
-      options.composeActorPhase + injected.rotationPhase);
+  const auto scores = gfx::spriteViewScores(cameraToActor, basisVec, phase);
   auto selection = gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
-  // Playtest 12 B3: dig direction 4 is the installed camera-facing image.
-  // PROVISIONAL clone presentation: keep it front-facing at every camera yaw.
-  // Native 4159B4 instead sets phase 0.75 (415995 resets it on leave), which
-  // still feeds the directional chooser. Do not change the actor's walk facing.
-  if (walkSprite->name == "dig" && dirCount == 5)
-    selection = {4, false};
   if (injected.forcedViewIndex >= 0)
     selection.index = static_cast<std::size_t>(injected.forcedViewIndex);
   if (injected.forcedMirror >= 0)
@@ -1585,6 +1592,10 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
       // 40E0DF/40E12D resets it. A fresh render sample restores zero on leave.
       if (lemming.state == sim::State::Blocker)
         walker.rotationPhase = 0.25;
+      // READ 4159B4/4159DA -> 4683E9: dig entry sets phase 0.75;
+      // 415995/4159A9 resets it. Simulation walking facing stays untouched.
+      if (lemming.state == sim::State::Digger)
+        walker.rotationPhase = 0.75;
       if (lemming.state == sim::State::Builder) {
         walker.builderPhase = builderPresentationPhase(world, lemming);
         walker.builderX = lemming.x;

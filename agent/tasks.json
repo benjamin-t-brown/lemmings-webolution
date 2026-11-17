@@ -22146,6 +22146,26 @@
         "log": "build\\agent-runs\\20261117T163932-46052-e8344d8c\\verification.log",
         "verified_content": "57b03ce1e59b68fcd208559abe50ff6de4dd0a717c732fd4eeccdd979390adb3"
       }
+    },
+    {
+      "id": "asset-census-001",
+      "title": "Census of installed game assets the clone never uses",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "research",
+      "user_authorized": true,
+      "scope": "User-authorized (2026-11-17) one-task research census, an explicit exception to production-change requirements. Purpose: find whole classes of missing behavior before the user reaches them in playtests. The level-object census done while scoping playtest 8 (six unsimulated object kinds on 47 levels) is the model. Playtest defects since then that a census would likely have caught: diggers using a side sprite instead of the camera-facing one (playtest 12 B3), silent miner, digger and explosion (playtest 11), and the crab, pressure pad and pipes (playtest 8). Do: (1) enumerate every asset in the installed data under Lemmings Revolution/ (lemmings.box, patch.box and loose files): sound samples, animation sequences and their facings, models and their animations, textures, fonts and HUD art, level object kinds, level fields, and localized strings with gameplay meaning. (2) For each, determine whether the clone's production code loads and uses it, by tracing the clone source and, where it helps, instrumenting a temporary build or the existing 102-level sweep; give the call site for used assets. (3) For each unused asset, use the static REA profile to find whether and where the original uses it (call site address and what triggers it), and from level data which installed levels it appears on or matters for, with map node numbers. (4) Rank the unused assets that the original visibly or audibly uses by player impact (how many levels, how early on the map, whether it blocks winning) and group them into proposed fix tasks, each with title, scope sketch, affected levels, the evidence, and a difficulty and model recommendation. Also list assets that look unused by the original too, separately. Write the full table as CSV under build/asset-census-001/ and a concise ranked report under docs/scratch/asset-census-001.md. Do not implement fixes: no production source change in this task. Do not queue tasks; the lead queues from the report. Static analysis only: no original execution. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Every installed asset of the kinds listed is enumerated with a used or unused verdict for the clone, and used ones cite a clone call site; the CSV is written under build/asset-census-001/ and its row count stated.",
+        "Each unused asset has the original's use, cited to a static address, or is classed as apparently unused by the original too, with the reason.",
+        "Unused assets the original uses are ranked by player impact with affected levels and map nodes, and grouped into proposed fix tasks with difficulty and model recommendations.",
+        "No production source change; the smoke profile passes."
+      ]
     }
   ]
 }

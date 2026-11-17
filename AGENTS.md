@@ -160,6 +160,8 @@ criteria, the gate ledger and every park above are unchanged, and a clone win is
 fidelity evidence. This is not approval for original execution or for any observation
 task. The user then authorized level-sweep-001 (all-level clone smoke sweep) as one
 observation task; further assessments still need explicit user authorization.
+The user authorized asset-census-001 (2026-11-17) as one research task: a census of installed
+assets the clone never uses, ranked into proposed fix tasks. It changes no production code.
 
 ## Original-game execution: interactive sessions only
 User approved (2026-11-12) running the original game, with hooks, debugger, capture or

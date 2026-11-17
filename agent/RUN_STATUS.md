@@ -9,6 +9,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- acid-lever-drain-001: **ready** — Make the One Way Ticket switch drain the acid tank
+- actor-zoom-scale-001: **ready** — Scale lemmings with the camera zoom
+- digger-facing-001: **ready** — Draw diggers with the camera-facing sprite
+- positional-audio-001: **ready** — Pan and attenuate level sounds by where they happen on screen
 
 ## Recently completed queue entries
 

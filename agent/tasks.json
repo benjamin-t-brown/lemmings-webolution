@@ -21668,6 +21668,88 @@
         "log": "build\\agent-runs\\20261117T072239-15712-ebde9df5\\verification.log",
         "verified_content": "be4cc1679b462083a457f532e9ca851d770ea43e35b0ccef02524153e410d6d9"
       }
+    },
+    {
+      "id": "acid-lever-drain-001",
+      "title": "Make the One Way Ticket switch drain the acid tank",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 12 B2 on One Way Ticket (map node 22, MM_ALL_8_001): operating the switch does not drain the acid tank. The level data names lever.a3dx1 and pipe_drainage.a3dx1. Levers already drain water on MM_W_012 and pressure pads drain on Seafood Sarnie (read docs/scratch/pressure-pad-drain-001.md and the lever reports), so trace why this level's lever does not reach its tank: link parsing, the receiver zone mask, acid as a fluid kind distinct from water, or the drain direction. The user's attempt is build/playtest/replays/MM_ALL_8_001-1794930260246912900-8.replay; step it headlessly to the lever operation. Fix the link so the acid level falls as the evidence shows and lemmings can then cross where it drained, and check every other installed level with an acid tank and a lever or pad for the same fault. Simulation change authorized as a playtest defect fix. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On One Way Ticket, operating the switch drains the acid tank visibly and in simulation, and a lemming can then pass where the acid was; the cause is named.",
+        "Other levels with acid and a lever or pad are listed with whether they drain; the water levers on MM_W_012 and the pad on Seafood Sarnie still work.",
+        "The link and drain behavior is cited to level data or static evidence, or labelled provisional.",
+        "Any promoted recording that diverges is listed with step and reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "actor-zoom-scale-001",
+      "title": "Scale lemmings with the camera zoom",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 12 B1: when the player zooms in, the terrain grows but lemmings stay the same size on screen. Trace how the production actor path sizes sprites (fixed pixel size, projection of a world-space height, a clamp) and make lemming sprites, their highlight and hover box, the builder's carried brick, debris and death particles scale with the camera exactly as terrain at the same depth does. Keep the size at the default zoom unchanged. Use static evidence for how the original projects actor billboards where it exists; otherwise label the choice provisional. Hover and click must keep working at every zoom: the clicktoassign smoke test stays unmodified and passes. Presentation only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Zooming in and out on Just Climb makes lemmings grow and shrink in proportion to the terrain around them, with the default-zoom size unchanged.",
+        "Hover highlight and click picking follow the scaled sprite at every zoom; occlusion stays correct.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "digger-facing-001",
+      "title": "Draw diggers with the camera-facing sprite",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 12 B3: a lemming that is digging (straight down) should be drawn with the sprite that faces the camera; the clone draws it with a side-facing sprite. Establish from the installed animation data and static evidence which sequence and facing the original uses for the digger (and check whether any other state, such as blocker, shrugger or the explosion countdown, also uses a front-facing sequence the clone does not), and draw it so through the production actor path. Presentation only. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Dig (MM_DIG_000) a digger faces the camera at every rotation while digging, and returns to its walking facing afterwards.",
+        "The sequence is cited to animation data or static evidence; any other front-facing state found is listed and either fixed the same way or reported.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "positional-audio-001",
+      "title": "Pan and attenuate level sounds by where they happen on screen",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 12 B4: level sounds play centred at full volume wherever the event is. Sounds from a lemming or object on the left of the view should play on the left, on the right on the right, and from the back side of the cylinder more quietly. Establish from static evidence how the original positions sounds (DirectSound pan and volume from screen x or world angle, distance or facing attenuation) and apply it in the production mixer path to every positioned cue: dig, mine, bash, builder bricks, explosion, splat, drown, exits, crab and other hazards, levers and pads. UI sounds and the Let's Go voice stay centred. Position is taken from the event's world location projected through the current camera at the moment it plays; label any curve the evidence does not settle as provisional. Audio only: no simulation change. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "A lemming digging at the left edge of the view sounds from the left, at the right edge from the right, and on the far side of the cylinder audibly quieter than one facing the camera; UI sounds and Let's Go stay centred.",
+        "The pan and volume rule is cited to static evidence or labelled provisional, and every positioned cue is listed.",
+        "Rotating the camera while a sound plays does not click or jump in volume.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

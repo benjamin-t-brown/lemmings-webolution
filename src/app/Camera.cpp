@@ -221,6 +221,15 @@ CameraBasis buildCamera(const CameraParams& p) {
     out.worldToView[9 + i] = -s;
   }
 
+  if (n != 0) {
+    // Undo only the zoom translation. Yaw, pitch and the intro's extra eye
+    // distance are common to both cameras; elevation applies only at zoom 1.
+    const double dy = (p.levelEyeHeight + p.heightBias) * (1.0 - 1.0 / scale) - p.elevation;
+    const double dz = -p.eyeDistance * (1.0 - 1.0 / scale);
+    for (int j = 0; j < 3; ++j)
+      out.defaultZoomDepthOffset -= pose[j][2] * (yaw[j][1] * dy + yaw[j][2] * dz);
+  }
+
   const double thetaTurns = p.angleDegrees / p.angleUnitsPerTurn;
   const double halfAngle = p.lensPi * thetaTurns;
   const double g = 1.0 / (2.0 * std::tan(halfAngle));

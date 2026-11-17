@@ -44,6 +44,9 @@ ActorProjectionInput actorProjectionInput(const CameraBasis& camera);
 // view transform to the native lens vector, uniformly scaled by 0.3 with Z
 // coefficient 0.3/width.
 // The semantic-input overload accepts that lensed transform directly.
+// CameraBasis additionally scales the resulting rectangle about its origin by
+// the terrain's zoom depth ratio. Default-zoom placement and semantic-input
+// native fixtures retain the recovered fixed-pixel arithmetic unchanged.
 std::expected<ActorSpritePlacement, std::string> actorSpritePlacement(
     const webo::SpriteFrame& frame, const std::array<double, 3>& worldPosition,
     const CameraBasis& camera, bool horizontalMirror, int scaleDelta = -1);

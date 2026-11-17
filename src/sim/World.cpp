@@ -234,12 +234,13 @@ Lever* World::leverAt(const Lemming& l) {
 }
 
 double FluidGate::rateFor(int kind) {
-  // Startup writer 0x00428848: kind 0 -> 2.0 at 0x004BF6F8, kind 1 -> 0.5 at 0x004BF740
-  // (row stride 0x48). Preserve the accepted kind-0/1 height machine. fluid-kinds-001
-  // traces kind 2's rate too, but adds its rendering without expanding height/zone rules.
+  // Startup writer 0x00428848, row stride 0x48: water 2.0 at 0x004BF6F8,
+  // lava 0.5 at 0x004BF740, acid 1.0 at 0x004BF788 (0x4289B1..0x4289BB).
+  // The shared ramp reads this table for every kind (0x42B42F..0x42B44E).
   switch (kind) {
     case 0: return 2.0;
     case 1: return 0.5;
+    case 2: return 1.0;
     default: return 0.0;
   }
 }
@@ -423,7 +424,7 @@ void World::explode(Lemming& l) {
   setup_.terrain.clearExplosion(l.x, l.y);
   l.state = State::Dead;
   ++dead_;
-  cue(SoundCue::Explode);
+  cue(SoundCue::Explode, &l);
   if (deathObserver_) {
     const auto end = std::remove_if(occupied.begin(), occupied.begin() + count,
         [&](const auto& cell) { return setup_.terrain.at(cell[0], cell[1]) != Material::Empty; });
@@ -545,7 +546,7 @@ void World::stepFaller(Lemming& l) {
       l.frame = 0;
       l.stepBudgetSeconds = 0.0;
       ++dead_;
-      cue(SoundCue::Splat);
+      cue(SoundCue::Splat, &l);
       if (deathObserver_) deathObserver_(l, false, {});
       return;
     }
@@ -557,6 +558,7 @@ void World::stepFaller(Lemming& l) {
     // 0x40 on MM_CLIMB_002 attached drown mid-fall when under=(col,floor)
     // before the walk land (`measure_water.py`). Ahead of trampoline/splat.
     if (setup_.terrain.waterHazard(l.x, l.y + v)) {
+      cueSample("Bubble", l); // provisional: entry rather than later sinking bubble
       l.state = State::Drown;
       l.frame = 0;
       return;
@@ -578,7 +580,7 @@ void World::stepFaller(Lemming& l) {
           l.fallDistance > rules_.splatDistance) {
         l.state = State::Splatter;
         ++dead_;
-        cue(SoundCue::Splat);
+        cue(SoundCue::Splat, &l);
         if (deathObserver_) deathObserver_(l, false, {});
         return;
       }
@@ -715,6 +717,7 @@ bool World::attachFluidHazard(Lemming& l) {
       continue;
     }
     leaveBlocker(l);
+    cueSample(g.kind == 1 ? "Die" : "Bubble", l); // provisional bubble entry; lava Die is traced
     l.state = State::Drown;
     l.frame = 0;
     l.stepBudgetSeconds = 0.0;
@@ -961,7 +964,7 @@ void World::stepBuilder(Lemming& l) {
   // 0x40FF54..0x40FF73: Chink with the PRE-decrement count 3, 2 or 1.
   // Keep the accepted hybrid brick timing; attach only an audio event.
   if (l.bricksLeft > 0 && l.bricksLeft < 4)
-    cue(SoundCue::BuilderWarning);
+    cue(SoundCue::BuilderWarning, &l);
   --l.bricksLeft;
   if (l.bricksLeft <= 0) {
     l.state = State::Shrugger;
@@ -1045,10 +1048,10 @@ void World::stepBasher(Lemming& l) {
   const int cutX = dir > 0 ? x0 : x0 - rules_.basherReach + 1;
   if (lowerPunch && clearSkillBox(l, cutX, l.y - lowerHeight + 1,
                                   rules_.basherReach, lowerHeight) > 0)
-    cue(SoundCue::Bash);
+    cue(SoundCue::Bash, &l);
   if (upperPunch && clearSkillBox(l, cutX, top, rules_.basherReach,
                                   rules_.basherHeight - lowerHeight) > 0)
-    cue(SoundCue::Bash);
+    cue(SoundCue::Bash, &l);
 
   // 40C6E8 commits the column at 92%, after both punches. Keep the same
   // 1440 ms cycle (one column per cycle), grace count and support probe.
@@ -1098,7 +1101,7 @@ void World::stepMiner(Lemming& l) {
     }
   // 0x418D21..0x418D39: successful miner subpass -1 plays Mine.
   // Provisional clone cadence: one request per stroke that clears terrain.
-  if (removed != 0) cue(SoundCue::Work);
+  if (removed != 0) cue(SoundCue::Work, &l);
   l.x = setup_.terrain.wrapX(l.x + dir);
   l.y += 1;
 
@@ -1131,7 +1134,7 @@ void World::stepDigger(Lemming& l) {
   const std::size_t removed = clearSkillBox(l, l.x - half, digY,
                                            rules_.diggerWidth, rules_.diggerDepth);
   // 0x415D69..0x415D81: the successful dig callback plays Mine.
-  if (removed != 0) cue(SoundCue::Work);
+  if (removed != 0) cue(SoundCue::Work, &l);
   l.y += v * rules_.diggerDepth;
 
   if (removed == 0 || !solidAt(l.x, l.y + v)) {
@@ -1177,7 +1180,7 @@ void World::step(Lemming& l) {
 
 
       l.fuseMs = 0;
-      cue(SoundCue::OhNo);
+      cue(SoundCue::OhNo, &l);
 
 
 
@@ -1212,6 +1215,7 @@ void World::step(Lemming& l) {
   {
     const int v = l.verticalDir >= 0 ? 1 : -1;
     if (setup_.terrain.waterHazard(l.x, l.y + v)) {
+      cueSample("Bubble", l); // provisional entry cue, independent of drown lifetime
       l.state = State::Drown;
       l.frame = 0;
       return;
@@ -1221,7 +1225,7 @@ void World::step(Lemming& l) {
   if (l.state != State::Blocker && atExit(l)) {
     l.state = State::Exited;
     ++saved_;
-    cue(SoundCue::Exit);
+    cue(SoundCue::Exit, &l);
     return;
   }
 
@@ -1245,6 +1249,7 @@ void World::step(Lemming& l) {
   if (l.state == State::Walker) {
     if (speedPadAt(l)) {
       if (!l.speedPadLatched) {
+        cueSample("SpeedPad", l);
         l.fasterMs = rules_.fasterMs;
         l.speedPadLatched = true;
       }
@@ -1262,6 +1267,7 @@ void World::step(Lemming& l) {
   if (l.state == State::Walker && !explicitUpdate_) {
     if (Lever* lev = leverAt(l)) {
       // 0x00436E6A: +0xb8 := pull facing (±1).
+      cueSample("Lever", l);
       lev->state = static_cast<int>(l.facing);
     }
   }
@@ -1453,6 +1459,7 @@ void World::stepCrabs(double dt) {
       l.frame = 0;
       ++dead_;
       if (deathObserver_) deathObserver_(l, false, {});
+      cueSample(crab.attackSound, l);
       killed = true;
     }
     if (killed) {
@@ -1606,6 +1613,7 @@ void World::stepNamedHazards(double dt) {
         if (!l.active() || (hazard.allContacts ? !contact(l) : int(i)!=hazard.pendingVictim)) continue;
         leaveBlocker(l); l.state = State::Dead; l.frame = 0; ++dead_;
         if (hazard.particles && deathObserver_) deathObserver_(l, false, {});
+        cueSample(hazard.attackSound, l);
         killed = true;
       }
       hazard.pendingVictim = -1;
@@ -1635,6 +1643,7 @@ void World::stepGadgetContacts(double dt) {
     }
     if (contact && lev.cooldownRemaining <= 0.0) {
       // 0x00436E6A: +0xb8 := pull facing, then the matching serialized list is sent.
+      cueSample("Lever", *contact);
       activateLeverFace(setup_, lev, static_cast<int>(contact->facing));
       lev.cooldownRemaining = lev.cooldownSeconds;
     }
@@ -1655,6 +1664,7 @@ void World::stepGadgetContacts(double dt) {
       if (dx < 0.0) dx += setup_.terrain.width();
       if (dx > span || row < pad.min[1] || row > pad.max[1])
         continue;
+      cueSample("Lever", l); // provisional pad click; original 0x431950 has no SFX call
       pad.state = 1;  // 0x431984..0x4319A7: latch before fan-out, once.
       dispatchLeverMessages(setup_, pad.messages);
       break;
@@ -1758,7 +1768,7 @@ bool World::assign(std::size_t index, Skill skill) {
   auto take = [&] {
     if (stock > 0)
       --stock;
-    cue(SoundCue::Assign);
+    cue(SoundCue::Assign); // UI success feedback stays centred, like Changeop
     return true;
   };
 
@@ -1881,27 +1891,46 @@ void World::stepNuke(int elapsedMs, bool tickBoundary) {
     l.nukeExploding = true;
     l.state = State::Exploder;
     l.frame = -1;
-    cue(SoundCue::OhNo);
+    cue(SoundCue::OhNo, &l);
     break;
   }
 }
 
-void World::cue(SoundCue c) {
+void World::cue(SoundCue c, const Lemming* source) {
   // 0x414420..0x414443: suppress Ohno while the nuke request byte is set.
   // 0x4C6A08 + 0x5138 == 0x4CBB40; see letsgo-text-nuke-ohno-001.md.
   // This also mutes an ordinary fuse ending after Nuke, without changing it.
   if (c == SoundCue::OhNo && nukeRequested_) return;
 
   if (c == SoundCue::OhNo || c == SoundCue::Explode) {
-    if (std::find(cues_.begin(), cues_.end(), c) != cues_.end())
+    if (std::any_of(cues_.begin(), cues_.end(), [c](const SoundEvent& e) {
+          return e.sample.empty() && e.cue == c;
+        }))
       return;
   }
-  cues_.push_back(c);
+  SoundEvent event{c, {}, {}};
+  if (source) event.position = std::array<double, 3>{double(source->x), double(source->y), 0.75};
+  cues_.push_back(std::move(event));
+}
+
+void World::cueSample(std::string_view sample, const Lemming& source) {
+  if (sample.empty()) return;
+  cues_.push_back({std::nullopt, std::string(sample),
+                  std::array<double, 3>{double(source.x), double(source.y), 0.75}});
+}
+
+std::vector<SoundEvent> World::takeSoundEvents() {
+  std::vector<SoundEvent> out;
+  out.swap(cues_);
+  return out;
 }
 
 std::vector<SoundCue> World::takeCues() {
   std::vector<SoundCue> out;
-  out.swap(cues_);
+  // Compatibility sink for simulation-only diagnostics. Production drains
+  // the full events, including serialized object samples, via takeSoundEvents.
+  for (const SoundEvent& event : takeSoundEvents())
+    if (event.cue) out.push_back(*event.cue);
   return out;
 }
 

@@ -13,9 +13,11 @@ namespace webo::audio {
 class OverlapMix {
 public:
   // One interleaved frame (mono or stereo), with the voice's existing gain.
-  void add(std::span<const std::int16_t> frame, float volume) {
+  void add(std::span<const std::int16_t> frame, float volume,
+           float left = 1.0f, float right = 1.0f) {
     for (std::size_t c = 0; c < frame.size(); ++c)
-      sum_[c] += static_cast<double>(frame[c]) * volume;
+      sum_[c] += static_cast<double>(frame[c]) * volume *
+          (frame.size() == 1 ? (left + right)*0.5f : (c == 0 ? left : right));
     ++voices_;
   }
 

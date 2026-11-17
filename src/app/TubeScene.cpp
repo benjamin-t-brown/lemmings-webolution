@@ -221,6 +221,13 @@ void TubeScene::rewirePoseLevel() const {
   self->poseLevel_.cylinderTemplate = &poseCylinderTemplate_;
 }
 
+std::array<double, 3> TubeScene::soundWorldPosition(
+    const std::array<double, 3>& position, int terrainHeight) const {
+  rewirePoseLevel();
+  return actorPoseFromCylinderSample(poseLevel_,
+      {position[0], terrainHeight - 1.0 - position[1], position[2]}, 1).modelPosition;
+}
+
 const TubeScene::Tile* TubeScene::findTile(bool outer, int column, int row) const {
   const auto& block = outer ? outer_ : inner_;
   for (const auto& t : block)
@@ -479,6 +486,12 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   const auto scores = gfx::spriteViewScores(cameraToActor, basisVec,
       options.composeActorPhase + injected.rotationPhase);
   auto selection = gfx::selectSpriteView(scores[0], scores[1], dirCount, false);
+  // Playtest 12 B3: dig direction 4 is the installed camera-facing image.
+  // PROVISIONAL clone presentation: keep it front-facing at every camera yaw.
+  // Native 4159B4 instead sets phase 0.75 (415995 resets it on leave), which
+  // still feeds the directional chooser. Do not change the actor's walk facing.
+  if (walkSprite->name == "dig" && dirCount == 5)
+    selection = {4, false};
   if (injected.forcedViewIndex >= 0)
     selection.index = static_cast<std::size_t>(injected.forcedViewIndex);
   if (injected.forcedMirror >= 0)
@@ -992,7 +1005,12 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
     std::array<double, 4> projected;
     if (!project(camera, {pose.modelPosition[0], pose.modelPosition[1], pose.modelPosition[2]}, projected))
       continue;
-    const double r = std::clamp(camera.focalY * p.size / projected[2], 0.6, 5.0);
+    // Preserve the zoom-0 chip clamp, then scale like terrain. Clamping after
+    // zoom would pin small/large particles to a fixed screen size again.
+    const double referenceDepth = projected[2] + camera.defaultZoomDepthOffset;
+    if (!(referenceDepth > 0.0)) continue;
+    const double r = std::clamp(camera.focalY * p.size / referenceDepth, 0.6, 5.0) *
+                     camera.zoomScaleAtDepth(projected[2]);
     // Physical view Z, matching body planes and body-piece sprites. The old
     // 0.64-unit chip pull could paint a farther chip over a nearer lemming.
     const double z = projected[2];
@@ -1563,6 +1581,10 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
       walker.clip = pose.clip;
       walker.walkTemporalIndex = pose.temporalIndex;
       walker.drownSeconds = pose.drownSeconds;
+      // READ 40E20C/40E247: block entry sets controller phase to 0.25;
+      // 40E0DF/40E12D resets it. A fresh render sample restores zero on leave.
+      if (lemming.state == sim::State::Blocker)
+        walker.rotationPhase = 0.25;
       if (lemming.state == sim::State::Builder) {
         walker.builderPhase = builderPresentationPhase(world, lemming);
         walker.builderX = lemming.x;

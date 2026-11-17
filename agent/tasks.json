@@ -21672,7 +21672,7 @@
     {
       "id": "acid-lever-drain-001",
       "title": "Make the One Way Ticket switch drain the acid tank",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -21688,12 +21688,126 @@
         "The link and drain behavior is cited to level data or static evidence, or labelled provisional.",
         "Any promoted recording that diverges is listed with step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T160130-46052-4cab9097",
+      "started": "2026-11-17T16:01:31.303319+00:00",
+      "finished": "2026-11-17T16:12:52.349447+00:00",
+      "last_run": "build/agent-runs/20261117T160130-46052-4cab9097",
+      "review": {
+        "decision": "accept",
+        "reason": "The scoped fix is supported by the production call path, retained static instructions, replay observations and passing smoke verification. Human confirmation of visible draining and crossing remains for the next playtest, as required by the playtest-defect review policy. This is not an original-fidelity pass.",
+        "checks": [
+          {
+            "criterion": "On One Way Ticket, operating the switch drains the acid tank visibly and in simulation, and a lemming can then pass where the acid was; the cause is named.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The production change adds the missing kind-2 rate of 1.0. Existing contact dispatch sets request 1; updateSegment steps the receiver with shared elapsed time. groundAt and attachFluidHazard consume live height and skip empty receivers, removing fluid support and drowning contact after draining."
+              },
+              {
+                "path": "build/acid-lever-drain-001/observed-attempt-before.log",
+                "detail": "The unchanged human recording operates the lever at step 3374, clock 43206 ms. Request becomes 1 and delivered becomes 1, but height remains 25.75 through the abandoned attempt, confirming the missing rate rather than a broken link."
+              },
+              {
+                "path": "build/acid-lever-drain-001/observed-attempt-after.log",
+                "detail": "The same operation produces height 25.735, then 24.939 at 44002 ms, 0.933 at 68008 ms and 0 with done=1 at 69004 ms. This establishes simulation draining, not a natural crossing or win."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "prepareScene supplies each live receiver height to BackdropScene::FluidGateState."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "renderFluid applies that state to the existing acid model; applyFluidState positions its surface vertices using live height. This source trace supports visible lowering without requiring new image evidence under the current review rules."
+              },
+              {
+                "path": "src/__test__/test_fluidgate.cpp",
+                "detail": "Supplementary legacy fixtures check wet versus drained contact and an ordinary walker surviving across a drained footprint. They do not claim installed-level playability."
+              }
+            ]
+          },
+          {
+            "criterion": "Other levels with acid and a lever or pad are listed with whether they drain; the water levers on MM_W_012 and the pad on Seafood Sarnie still work.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/acid-lever-drain-001.md",
+                "detail": "Lists all six acid levels with levers or pads. One Way Ticket, Wheelbarrows of Doom and Bridges have acid drain links; the other three target non-fluid objects. Also lists the three acid levels without controls and preserves Bridges' serialized low of 1."
+              },
+              {
+                "path": "build/acid-lever-drain-001/census-after.txt",
+                "detail": "Installed-loader/contact fixtures corroborate the listed links and endpoints. MM_W_012's four levers still raise their 16 receivers from 0 to 24.5; Seafood Sarnie's pad delivers five messages and lowers all five receivers from 10.5 to 0. The report correctly explains that MM_W_012 fills rather than drains."
+              }
+            ]
+          },
+          {
+            "criterion": "The link and drain behavior is cited to level data or static evidence, or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/acid-lever-drain-001/census-after.txt",
+                "detail": "One Way Ticket's lever 0 plus list contains target 1, type 5; target 1 is kind 2 with high 25.75 and low 0. Production loading and ID resolution retain these fields."
+              },
+              {
+                "path": "build/fluid-kinds-001/static/0x428848-instructions.json",
+                "detail": "Independently inspected retained instructions: 0x4289B1 stores low dword 0 at 0x4BF788 and 0x4289BB stores high dword 0x3FF00000 at 0x4BF78C, establishing double 1.0 for kind 2."
+              },
+              {
+                "path": "build/fluid-kinds-001/static/0x42B24D-instructions.json",
+                "detail": "0x42B42F\u20130x42B44E indexes 0x4BF6F8 by kind times 0x48, multiplies by dt and subtracts from live height. The preceding kind checks bypass zone clearing for acid, supporting preservation of its existing no-paint behavior."
+              },
+              {
+                "path": "docs/scratch/acid-lever-drain-001.md",
+                "detail": "Records the registered reference SHA-256, dispatch addresses and production path. Distinguishes serialized data, static evidence and clone observations, and retains provisional contact, timing and depth limitations."
+              }
+            ]
+          },
+          {
+            "criterion": "Any promoted recording that diverges is listed with step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/acid-lever-drain-001/replays.json",
+                "detail": "Matches all 19 active promoted recordings; each returns exit 0, PASS, won=1 and completed=1. Inspected individual logs corroborate these results. The separate abandoned One Way Ticket attempt passes at step 7564 with saved=0/40, won=0 and completed=0."
+              },
+              {
+                "path": "docs/scratch/acid-lever-drain-001.md",
+                "detail": "Explicitly reports no promoted divergence and no retirement required. Recordings and replay checks remain unchanged."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T160130-46052-4cab9097/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T160130-46052-4cab9097/result.json",
+                "detail": "Records verification exit 0 and verified_content 9b2f5d10383a4aedec5d8afb5b43b36dd2970c75e733c24de6a930afa37751ea, matching the supplied review identity."
+              },
+              {
+                "path": "docs/scratch/acid-lever-drain-001.md",
+                "detail": "Ends with One Way Ticket's switch location and pulling direction, approximately 26 shared simulation seconds to empty, expected visible lowering and surviving crossing, retry restoration, and checks for the other linked acid levels and water controls."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T16:14:59.301049+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T160130-46052-4cab9097\\verification.log",
+        "verified_content": "9b2f5d10383a4aedec5d8afb5b43b36dd2970c75e733c24de6a930afa37751ea"
+      }
     },
     {
       "id": "actor-zoom-scale-001",
       "title": "Scale lemmings with the camera zoom",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -21708,12 +21822,100 @@
         "Hover highlight and click picking follow the scaled sprite at every zoom; occlusion stays correct.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T161459-46052-1219c5c4",
+      "started": "2026-11-17T16:14:59.654162+00:00",
+      "finished": "2026-11-17T16:24:48.369055+00:00",
+      "last_run": "build/agent-runs/20261117T161459-46052-1219c5c4",
+      "review": {
+        "decision": "accept",
+        "reason": "The production call path, diff, replay logs and supervisor smoke result support all four criteria under the playtest-defect review policy. Human confirmation remains for the next playtest. The scaling policy is explicitly provisional and establishes no original-game fidelity pass.",
+        "checks": [
+          {
+            "criterion": "Zooming in and out on Just Climb makes lemmings grow and shrink in proportion to the terrain around them, with the default-zoom size unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/Camera.cpp",
+                "detail": "buildCamera computes the view-depth translation to the default-zoom camera, retaining the current yaw and intro phase and undoing zoom-only elevation. The resulting reference/current depth ratio matches terrain magnification."
+              },
+              {
+                "path": "src/app/ActorSprite.cpp",
+                "detail": "The production CameraBasis overload scales all rectangle offsets about the projected origin by that depth ratio. At default zoom it returns the previous placement directly, preserving native arithmetic and rounding."
+              },
+              {
+                "path": "build/actor-zoom-scale-001/focused.xml",
+                "detail": "Retained actor_zoom results pass 864 depth/mirror cases, including independent reference-camera construction, default-size preservation, both gravities and raster bounds. These supplement the production trace rather than establish human playability."
+              },
+              {
+                "path": "build/actor-zoom-scale-001/static/evidence.json",
+                "detail": "Retained Ghidra instructions corroborate origin projection at 0x43CC89, reciprocal depth at 0x43CCFE and sprite submission at 0x43CD4E. The global scale subtraction at 0x47A7CD\u20130x47A7D8 and half/double extent branches support the report's distinction between recovered native sizing and provisional clone depth-ratio scaling."
+              }
+            ]
+          },
+          {
+            "criterion": "Hover highlight and click picking follow the scaled sprite at every zoom; occlusion stays correct.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Drawing, drawHoveredWalker and injectedWalkerScreenBoxes share prepareInjectedWalker and its scaled actorSpritePlacement. Gravity reflection follows scaling. Scene/pipe clipping, body-footprint masking and actor-depth ownership consume the resulting pixels while physical origin depth remains unchanged. Carried bricks and cut debris already project world-space meshes; body pieces share sprite scaling, and death-chip clamping now occurs before zoom magnification."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "hoveredActor derives pick rectangles and body centres from injectedWalkerScreenBoxes. Ordinary hover and click assignment share this adapter and the displayed camera, so both follow the scaled placement."
+              },
+              {
+                "path": "build/actor-zoom-scale-001/focused.log",
+                "detail": "All five focused checks pass, including unmodified clicktoassign, actorsprite, builder_brick, debris_3d and actor_zoom. The scoped diff changes no existing picking assertions or occlusion policy."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-zoom-scale-001/replay-results.json",
+                "detail": "The manifest covers all 19 active promoted .replay files. Each records exit 0, PASS, won=1 and completed=1; individual retained logs corroborate the results. Just Climb passes at step 1252 with saved=10/1, and The Crowded House passes at step 12810 with saved=7/5."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promoted recordings as .replay files and documents earlier retired recordings. The current diff contains no recording changes, renames or replay-check weakening."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T161459-46052-1219c5c4/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests, including clicktoassign and the installed-level sweep, plus 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T161459-46052-1219c5c4/result.json",
+                "detail": "Records verification exit 0 and verified_content e1759a3124c6e55f207b755bcaabf5177a2c7d75f1e316b85057cdd82f32bae3, matching the supplied review identity."
+              },
+              {
+                "path": "docs/scratch/actor-zoom-scale-001.md",
+                "detail": "Ends with Just Climb zoom, rotation, elevation, hover and click actions and their expected sizing/occlusion results, followed by builder-brick and particle checks. It distinguishes source and regression evidence from pending human confirmation and unresolved original fidelity."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T16:26:56.511424+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T161459-46052-1219c5c4\\verification.log",
+        "verified_content": "e1759a3124c6e55f207b755bcaabf5177a2c7d75f1e316b85057cdd82f32bae3"
+      }
     },
     {
       "id": "digger-facing-001",
       "title": "Draw diggers with the camera-facing sprite",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -21728,12 +21930,96 @@
         "The sequence is cited to animation data or static evidence; any other front-facing state found is listed and either fixed the same way or reported.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T162656-46052-3997f21b",
+      "started": "2026-11-17T16:26:56.869400+00:00",
+      "finished": "2026-11-17T16:37:41.731557+00:00",
+      "last_run": "build/agent-runs/20261117T162656-46052-3997f21b",
+      "review": {
+        "decision": "accept",
+        "reason": "The production path, retained animation/static evidence, replay results and supervisor smoke log cover all criteria. Fixed front-facing digging is explicitly provisional clone presentation, not an original-fidelity claim. Human confirmation remains for the next playtest.",
+        "checks": [
+          {
+            "criterion": "On Just Dig (MM_DIG_000) a digger faces the camera at every rotation while digging, and returns to its walking facing afterwards.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "prepareInjectedWalker unconditionally selects unmirrored direction 4 for five-direction dig entries, independent of camera rotation. The adapter preserves simulation facing; changing to walk removes the override. Drawing, hover and picking share this preparation."
+              },
+              {
+                "path": "src/app/LemmingAnim.cpp",
+                "detail": "Maps Digger to dig and Walker to walk, resetting the animation entry when state changes. The production main loop advances this tracker before constructing actor samples."
+              },
+              {
+                "path": "build/digger-facing-001/focused.log",
+                "detail": "The retained actoranimstate_units run passes. Its added coverage exercises 96 yaw/tribe/facing/gravity draw-and-pick cases and adjacent digger/walker samples; this supplements the source trace."
+              }
+            ]
+          },
+          {
+            "criterion": "The sequence is cited to animation data or static evidence; any other front-facing state found is listed and either fixed the same way or reported.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/digger-facing-001/directions.png",
+                "detail": "The retained installed-asset sheet visibly identifies dig direction 4 as the front image, alongside blocker, shrug and explosion views. The accompanying asset inventory records five directions across all six dig resources."
+              },
+              {
+                "path": "build/digger-facing-001/static-evidence.json",
+                "detail": "Registered-reference Ghidra instructions confirm dig selection at 0x4159BD\u20130x4159C5, phase 0.75 at 0x4159CA\u20130x4159DA, and reset on leave at 0x41599C\u20130x4159A9. Blocker entry passes phase 0.25 at 0x40E237\u20130x40E247 and leave resets it at 0x40E120\u20130x40E12D. These support the report's distinction between native directional selection and the provisional fixed-front dig policy."
+              },
+              {
+                "path": "docs/scratch/digger-facing-001.md",
+                "detail": "Lists blocker\u2019s implemented quarter-turn phase, the already front-facing singleton shrug sequence, explosion\u2019s five-direction sequence with no established forced-front rule, the unchanged job strip during countdown, and the existing exit phase. It records binary identity, addresses and unresolved native all-angle appearance."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/digger-facing-001/replays.log",
+                "detail": "Covers all 19 active promoted recordings, each reporting PASS, won=1 and completed=1, ending with Failures: 0. Just Dig passes at step 1014 with saved=19/10; blocker routes also pass."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promoted recordings as .replay files and documents previously retired recordings. The current diff changes no recordings or replay checks."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T162656-46052-3997f21b/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including installed-level sweep chunks and clicktoassign, plus all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T162656-46052-3997f21b/result.json",
+                "detail": "Records verification exit code 0 and verified_content be0efd82b4deb880ae972cbfc26341cc2f11a66d53d60fd6fb588ffe454b65be, matching the supplied review identity."
+              },
+              {
+                "path": "docs/scratch/digger-facing-001.md",
+                "detail": "Ends with Just Dig actions and expected results: assign Digger, rotate and zoom while digging, then confirm walking facing returns. It also specifies the blocker rotation check on MM_BUILD_BLOCK_A. Its worker-time pending-smoke statement is superseded by the supervisor log."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T16:39:32.852706+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T162656-46052-3997f21b\\verification.log",
+        "verified_content": "be0efd82b4deb880ae972cbfc26341cc2f11a66d53d60fd6fb588ffe454b65be"
+      }
     },
     {
       "id": "positional-audio-001",
       "title": "Pan and attenuate level sounds by where they happen on screen",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -21749,7 +22035,117 @@
         "Rotating the camera while a sound plays does not click or jump in volume.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T163932-46052-e8344d8c",
+      "started": "2026-11-17T16:39:33.223465+00:00",
+      "finished": "2026-11-17T16:59:02.978239+00:00",
+      "last_run": "build/agent-runs/20261117T163932-46052-e8344d8c",
+      "review": {
+        "decision": "accept",
+        "reason": "The production call path, provisional policy, replay results and supervisor smoke log cover all five criteria. Human listening remains the next playtest confirmation; this acceptance does not establish original-game audio fidelity.",
+        "checks": [
+          {
+            "criterion": "A lemming digging at the left edge of the view sounds from the left, at the right edge from the right, and on the far side of the cylinder audibly quieter than one facing the camera; UI sounds and Let's Go stay centred.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Successful dig strokes emit positioned Work events, snapshotting the actor's terrain coordinates before subsequent movement. Other existing positioned typed cues receive the same location payload."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "drainCues builds the current camera and resolves each event through TubeScene::soundWorldPosition and spatialSoundGains before playback."
+              },
+              {
+                "path": "src/audio/SpatialSound.h",
+                "detail": "Projected screen X determines left/right channel attenuation. Horizontal camera-to-source alignment gives front gain 1 and back gain 0.25, with continuous interpolation."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Positioned events pass stereo gains to the mixer; Assign and LevelStart explicitly receive centred gains, and UI clicks use centred defaults."
+              },
+              {
+                "path": "build/positional-audio-001/focused-5.log",
+                "detail": "All five focused checks pass, including positional_sound's projection, PCM channel gains, positioned event routing and centred UI/Let's Go checks. This supports the source trace without claiming human listening."
+              }
+            ]
+          },
+          {
+            "criterion": "The pan and volume rule is cited to static evidence or labelled provisional, and every positioned cue is listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/positional-audio-001.md",
+                "detail": "Explicitly labels screen-X panning, radial attenuation, fixed one-shot gains and contacting-actor object locations provisional. Lists dig/mine/bash, builder warnings, explosions, Ohno, splats, exits, water/acid/lava, levers, pressure/speed pads, crabs and named hazards, including silent or unsupported cases."
+              },
+              {
+                "path": "build/positional-audio-001/static/instructions-0x4375f0.json",
+                "detail": "Retained Ghidra instructions for registered EXE SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f confirm transformed-depth attenuation at 0x437616\u20130x437723, X-based pan arithmetic at 0x43772A\u20130x437751 and setter calls at 0x43776C/0x4377C2. The report distinguishes this native arithmetic from the clone curve."
+              },
+              {
+                "path": "build/positional-audio-001/static/named-kill-instructions.json",
+                "detail": "At 0x43310E the original checks sound field +0x1CC; 0x433134 calls the actor-positioned sound wrapper 0x44535B. This supports serialized hazard sound routing, without establishing runtime fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "Rotating the camera while a sound plays does not click or jump in volume.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Mixer::play stores stereo gains in each voice. Mixer::fill uses those stored values for additive and averaged exit voices; camera changes do not retune an active voice. Existing restart behavior remains unchanged."
+              },
+              {
+                "path": "src/__test__/test_positional_sound.cpp",
+                "detail": "The PCM check renders across callback boundaries, computes changed camera gains between renders and verifies identical existing tails for Add, Average and RestartPlaying policies."
+              },
+              {
+                "path": "build/positional-audio-001/focused-5.log",
+                "detail": "The retained positional_sound execution passes these stable-tail PCM assertions. The report explicitly documents snapshot behavior as a clone policy."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/positional-audio-001/replays.json",
+                "detail": "Records commands and results for all 19 active promoted recordings, each with exit 0, PASS, won=1 and completed=1. Includes E20_MG_1 at step 12810, saved=7/5, and MM_DIG_000 at step 1014, saved=19/10."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promoted recordings as .replay files and preserves previously retired recordings with their reasons. The task changes no recordings or replay checks."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T163932-46052-e8344d8c/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including installed-level sweep coverage and clicktoassign, plus all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T163932-46052-e8344d8c/result.json",
+                "detail": "Records verification exit code 0 and verified_content 57b03ce1e59b68fcd208559abe50ff6de4dd0a717c732fd4eeccdd979390adb3, matching the supplied review identity."
+              },
+              {
+                "path": "docs/scratch/positional-audio-001.md",
+                "detail": "Ends with levels, actions and expected listening results for digging around E20_MG_1, miner/blast/hazard sounds, lever/pad contacts and centred UI/Let's Go. Its worker-time pending-smoke statement is superseded by the supervisor log."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T17:01:30.083097+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T163932-46052-e8344d8c\\verification.log",
+        "verified_content": "57b03ce1e59b68fcd208559abe50ff6de4dd0a717c732fd4eeccdd979390adb3"
+      }
     }
   ]
 }

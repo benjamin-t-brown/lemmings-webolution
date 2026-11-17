@@ -72,6 +72,14 @@ struct CameraBasis {
   // bucket centre with `0x43c990 -> fsub 0.5, fmul 32.0`. Same expression as
   // the A1 fixture's `selector`, which drives the pass bounds there.
   double selectorTurns = 0.0;
+  // View-Z translation from this camera to zoom 0 at the same yaw/intro phase.
+  // PROVISIONAL sprite presentation: preserve the zoom-0 pixel size, then
+  // magnify offsets by the same depth ratio as terrain at the sprite origin.
+  // Zero at default zoom, including throughout the opening camera movement.
+  double defaultZoomDepthOffset = 0.0;
+  double zoomScaleAtDepth(double viewDepth) const {
+    return (viewDepth + defaultZoomDepthOffset) / viewDepth;
+  }
 };
 
 struct BillboardCameraChain {

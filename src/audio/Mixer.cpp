@@ -141,7 +141,7 @@ bool Mixer::has(std::string_view cue) const {
   return found;
 }
 
-void Mixer::play(std::string_view cue, float volume, Overlap overlap) {
+void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGains gains) {
   if (!ready() || volume <= 0.0f || sfxVolume_ <= 0.0f)
     return;
 
@@ -183,7 +183,9 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap) {
       }
     }
     const float v = std::clamp(volume, 0.0f, 1.0f) * sfxVolume_;
-    voices_.push_back(Voice{&it->second, 0, v, false, false, overlap});
+    gains.left = std::clamp(gains.left, 0.0f, 1.0f);
+    gains.right = std::clamp(gains.right, 0.0f, 1.0f);
+    voices_.push_back(Voice{&it->second, 0, v, false, false, overlap, gains});
   }
   SDL_UnlockAudioDevice(device_);
 }
@@ -275,7 +277,9 @@ void Mixer::fill(std::int16_t* out, int frames) {
       }
       for (std::size_t c = 0; c < ch; ++c) {
         const double s =
-            static_cast<double>(samples[v.cursor * ch + c]) * static_cast<double>(v.volume);
+            static_cast<double>(samples[v.cursor * ch + c]) * static_cast<double>(v.volume) *
+            (ch == 1 ? (v.gains.left + v.gains.right)*0.5f :
+                       (c == 0 ? v.gains.left : v.gains.right));
         const double mixed = static_cast<double>(out[static_cast<std::size_t>(f) * ch + c]) + s;
         out[static_cast<std::size_t>(f) * ch + c] =
             static_cast<std::int16_t>(std::clamp(mixed, -32768.0, 32767.0));
@@ -298,7 +302,8 @@ void Mixer::fill(std::int16_t* out, int frames) {
       const auto& samples = v.clip->samples;
       if (v.cursor >= samples.size() / ch)
         continue;
-      mix.add(std::span<const std::int16_t>(samples).subspan(v.cursor * ch, ch), v.volume);
+      mix.add(std::span<const std::int16_t>(samples).subspan(v.cursor * ch, ch), v.volume,
+              v.gains.left, v.gains.right);
       ++v.cursor;
     }
     mix.mixInto(std::span<std::int16_t>(out + static_cast<std::size_t>(f) * ch, ch));

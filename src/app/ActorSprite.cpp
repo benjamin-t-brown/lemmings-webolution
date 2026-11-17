@@ -37,7 +37,21 @@ std::expected<ActorSpritePlacement, std::string> actorSpritePlacement(
   if (scaleDelta < -1 || scaleDelta > 1)
     return std::unexpected("actor sprite: unsupported native scale delta");
   const auto projection = actorProjectionInput(camera);
-  return actorSpritePlacement(frame, worldPosition, projection, horizontalMirror, scaleDelta);
+  auto placement = actorSpritePlacement(frame, worldPosition, projection, horizontalMirror, scaleDelta);
+  if (!placement || camera.defaultZoomDepthOffset == 0.0)
+    return placement;
+  const double scale = camera.zoomScaleAtDepth(actorPhysicalDepth(*placement, camera.width));
+  if (!(scale > 0.0) || !std::isfinite(scale))
+    return std::unexpected("actor sprite: invalid zoom reference depth");
+  // PROVISIONAL playable-v1 policy (playtest 12 B1). Native 47A75D uses
+  // global half/full/double pixel extents. Match terrain magnification at this
+  // depth instead, preserving its zoom-0 rectangle and the traced origin bias.
+  // Drawing, highlight and picking all consume this same placement.
+  placement->left = nativeFloat(placement->originX + (placement->left - placement->originX) * scale);
+  placement->right = nativeFloat(placement->originX + (placement->right - placement->originX) * scale);
+  placement->top = nativeFloat(placement->originY + (placement->top - placement->originY) * scale);
+  placement->bottom = nativeFloat(placement->originY + (placement->bottom - placement->originY) * scale);
+  return placement;
 }
 
 std::expected<ActorSpritePlacement, std::string> actorSpritePlacement(

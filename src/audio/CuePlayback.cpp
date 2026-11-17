@@ -84,6 +84,7 @@ void CuePlayback::start(const AssetLibrary& library, bool openDevice) {
   if (disabled_ || started_)
     return;
   started_ = true;
+  library_ = &library;
   if (!openDevice)
     return;
 
@@ -101,6 +102,10 @@ void CuePlayback::start(const AssetLibrary& library, bool openDevice) {
 }
 
 void CuePlayback::play(sim::SoundCue cue) {
+  play(cue, {});
+}
+
+void CuePlayback::play(sim::SoundCue cue, StereoGains gains) {
   ++drained_;
   if (disabled_)
     return;
@@ -118,7 +123,7 @@ void CuePlayback::play(sim::SoundCue cue) {
       (cue == sim::SoundCue::Work || cue == sim::SoundCue::BuilderWarning ||
        cue == sim::SoundCue::Explode) ?
           Mixer::Overlap::RestartPlaying : Mixer::Overlap::Add;
-  playName(*name, overlap);
+  playName(*name, overlap, gains);
 }
 
 void CuePlayback::playUiClick() {
@@ -126,15 +131,34 @@ void CuePlayback::playUiClick() {
   if (!disabled_) playName("Changeop", Mixer::Overlap::SkipPlaying);
 }
 
-void CuePlayback::playName(std::string_view name, Mixer::Overlap overlap) {
+void CuePlayback::playName(std::string_view name, Mixer::Overlap overlap, StereoGains gains) {
   ++routed_;
   if (observer_) observer_(name);
-  if (mixer_.ready() && mixer_.has(name)) mixer_.play(name, 1.0f, overlap);
+  if (mixer_.ready()) {
+    // Object samples load once on first use. Remember failures too.
+    if (!mixer_.has(name) && library_ && attemptedSamples_.insert(std::string(name)).second) {
+      if (auto loaded = mixer_.loadFrom(*library_, name); !loaded)
+        report(std::format("audio: cue {} unavailable ({}); it will be silent", name, loaded.error()));
+    }
+    if (mixer_.has(name)) mixer_.play(name, 1.0f, overlap, gains);
+  }
 }
 
 void CuePlayback::drain(sim::World& world) {
-  for (const sim::SoundCue cue : world.takeCues())
-    play(cue);
+  drain(world, {});
+}
+
+void CuePlayback::drain(sim::World& world, const PositionResolver& position) {
+  for (const sim::SoundEvent& event : world.takeSoundEvents()) {
+    const auto gains = event.position && position ? position(*event.position) : StereoGains{};
+    if (event.cue) {
+      play(*event.cue, (event.cue == sim::SoundCue::LevelStart || event.cue == sim::SoundCue::Assign)
+                         ? StereoGains{} : gains);
+    } else {
+      ++drained_;
+      if (!disabled_) playName(event.sample, Mixer::Overlap::Add, gains);
+    }
+  }
 }
 
 }  // namespace webo::audio

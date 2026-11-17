@@ -81,6 +81,14 @@ enum class SoundCue : std::uint8_t {
   Work = Bash, // a successful bash, mine or dig stroke removed terrain
 };
 
+// Audio-only snapshot in terrain coordinates; never used by simulation.
+// sample is nonempty for serialized object sounds and supplemental effects.
+struct SoundEvent {
+  std::optional<SoundCue> cue;
+  std::string sample;
+  std::optional<std::array<double, 3>> position; // X, terrain feet Y, radial slab
+};
+
 struct Lemming {
   int x = 0;
   int y = 0;               // the lemming's feet
@@ -333,7 +341,8 @@ struct FluidGate {
   bool animated = false;
   static constexpr double kWavePeriod = 2.0;  // kind-0 measured period (fluid research 6.2 item 3)
 
-  // Rate table 0x004BF6F8 + kind * 0x48 (startup writer 0x00428848): kind 0 = 2.0, kind 1 = 0.5.
+  // Rate table 0x004BF6F8 + kind * 0x48 (startup writer 0x00428848):
+  // kind 0 = 2.0, kind 1 = 0.5, kind 2 = 1.0.
   static double rateFor(int kind);
   bool paintsZonePlane() const { return kind == 0; }
   // Reader 0x0042ACAC load pass: request 1 -> height = low and CLEAR the AABB; else
@@ -494,6 +503,7 @@ struct Crab {
   double restDuration = 1.0, attackDuration = 1.0;
   bool attacking = false;
   double animationSeconds = 0.0;
+  std::string attackSound;
 };
 
 // Named STAT/DYNA hazards: 0x4333D2 / 0x42576F. Patrol segments are
@@ -524,6 +534,7 @@ struct NamedHazard {
   bool allContacts = true, attacking = false, particles = true;
   int pendingVictim = -1;
   double animationSeconds = 0, restDuration = 1, attackDuration = 0;
+  std::string attackSound;
 
   void advancePatrol(double dt, Terrain&);
 };
@@ -1368,8 +1379,10 @@ public:
   // measured cell instead of that drop.
   void place(Lemming lemming);
 
-  // Pending sound cues since the last drain. Cleared by the call.
+  // Both calls consume the same audio buffer. takeCues is the legacy typed
+  // diagnostic sink; it discards named samples. Production takes full events.
   std::vector<SoundCue> takeCues();
+  std::vector<SoundEvent> takeSoundEvents();
 
   // Read-only presentation notification at the existing death transition.
   // Removed cells are reported from the actual blast result, never predicted.
@@ -1385,7 +1398,8 @@ public:
 
 private:
   std::size_t clearSkillBox(const Lemming&, int x, int y, int width, int height);
-  void cue(SoundCue c);
+  void cue(SoundCue c, const Lemming* source = nullptr);
+  void cueSample(std::string_view sample, const Lemming& source);
   // D1n: optional real-seconds budget for the new lemming's first fall
   // call, under the opt-in continuous stepper clock -- see
   // Lemming::stepBudgetSeconds. -1.0 (every existing call site) means "a
@@ -1483,7 +1497,7 @@ private:
   bool releaseArmed_ = false;
   double releaseCountdown_ = 0.0;
   std::vector<int> spawnedByEntrance_;
-  std::vector<SoundCue> cues_;
+  std::vector<SoundEvent> cues_;
   DeathObserver deathObserver_;
   TerrainCutObserver terrainCutObserver_;
 };

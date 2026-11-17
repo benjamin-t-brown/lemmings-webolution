@@ -317,9 +317,10 @@ void printHelp() {
             "FallSplat), Yippee (saved at the exit), Letsgo (first Let's Go text frame), Mine (work strokes),\n"
             "Explode (blast), Chink (last three builder bricks), and Action (successful assignment). Changeop plays\n"
             "on skill/Nuke selection and provisionally on pause, speed and hatch-rate controls.\n"
-            "Other events, frontend/map buttons and music remain silent. Skill cadence\n"
-            "and repeated-SFX overlap are provisional. Cue routing\n"
-            "only: no claim of native sample timing, volume, mixing or resampling. A missing audio\n"
+            "Fluid entry, lever/pad activation and stored hazard attack samples also play.\n"
+            "Level effects pan by screen position and fade on the cylinder's back side; UI and Letsgo stay centred.\n"
+            "Gain curves, supplemental triggers and repeated-SFX overlap are provisional.\n"
+            "No claim of native audio fidelity. A missing audio\n"
             "device or WAV is reported on stderr and the game continues. --no-audio disables sound.");
 }
 
@@ -1049,11 +1050,15 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   bool fastForwardGestureUsed = false;
   bool entryVoicePending = true;
   const auto uiClick = [&] { if (cues) cues->playUiClick(); };
-  // Sim cues are taken after every World::tick() and after every successful
-  // skill assignment, then routed through the single cue table. The sim's
-  // emission logic and timing are untouched.
+  // Audio events are taken after each simulation update and successful skill
+  // assignment. Snapshot the current camera; active one-shots keep their gains.
   const std::function<void()> drainCues = [&] {
-    if (cues && world) cues->drain(*world);
+    if (cues && world) {
+      const auto camera = app::buildCamera(cameraIntro.pose(controls.camera()));
+      cues->drain(*world, [&](const std::array<double, 3>& position) {
+        return audio::spatialSoundGains(camera, scene->soundWorldPosition(position, terrainHeight));
+      });
+    }
   };
   std::optional<Image> runtimeFont;
   app::LemmingAnimTracker lemmingAnim;

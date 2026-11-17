@@ -16,6 +16,7 @@
 #pragma once
 
 #include "assets/Wav.h"
+#include "audio/SpatialSound.h"
 
 #include <cstdint>
 #include <expected>
@@ -61,7 +62,8 @@ public:
   std::expected<void, std::string> loadFrom(const AssetLibrary& lib, std::string_view cue);
 
   bool has(std::string_view cue) const;
-  void play(std::string_view cue, float volume = 1.0f, Overlap overlap = Overlap::Add);
+  void play(std::string_view cue, float volume = 1.0f, Overlap overlap = Overlap::Add,
+            StereoGains gains = {});
 
   // Looping bed (menu / in-level music). One music voice at a time.
   std::expected<void, std::string> loadMusicFrom(const AssetLibrary& lib, std::string_view cue);
@@ -77,6 +79,7 @@ public:
 
 private:
   friend struct WorkSoundTestAccess;
+  friend struct PositionalSoundTestAccess;
   struct Clip {
     std::vector<std::int16_t> samples;  // interleaved, mix format
   };
@@ -88,6 +91,7 @@ private:
     bool loop = false;
     bool music = false;
     Overlap overlap = Overlap::Add;
+    StereoGains gains{};
   };
 
   static void callback(void* userdata, std::uint8_t* stream, int len);

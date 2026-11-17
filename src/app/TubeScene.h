@@ -139,6 +139,10 @@ struct SceneOptions {
 
 class TubeScene {
  public:
+  // Same cylinder interpolation used by visible actors. Input is the event's
+  // snapshotted terrain feet location; no actor lookup after death/teleport.
+  std::array<double, 3> soundWorldPosition(const std::array<double, 3>& position,
+                                           int terrainHeight) const;
   static std::expected<TubeScene, std::string> build(const AssetLibrary& lib,
                                                      const CylinderMesh& mesh,
                                                      std::span<const std::byte> levelBytes,

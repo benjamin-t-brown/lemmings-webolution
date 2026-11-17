@@ -193,6 +193,11 @@ endif()
 
 # pad-pipe-presentation-001: removed legacy pressurepad (required immediate beam disappearance).
 
+add_executable(test_fluidgate src/__test__/test_fluidgate.cpp)
+target_link_libraries(test_fluidgate PRIVATE webolution_objects)
+add_test(NAME fluidgate COMMAND test_fluidgate)
+set_tests_properties(fluidgate PROPERTIES TIMEOUT 15)
+
 add_executable(test_box src/__test__/test_box.cpp)
 target_link_libraries(test_box PRIVATE webolution_objects)
 add_test(NAME box COMMAND test_box)
@@ -1491,6 +1496,11 @@ add_executable(test_debris_3d src/__test__/test_debris_3d.cpp src/app/Raster.cpp
 target_link_libraries(test_debris_3d PRIVATE webolution_objects)
 add_test(NAME debris_3d COMMAND test_debris_3d)
 
+# Camera-relative sprite magnification invariants; deliberately legacy.
+add_executable(test_actor_zoom src/__test__/test_actor_zoom.cpp)
+target_link_libraries(test_actor_zoom PRIVATE webolution_app webolution_objects)
+add_test(NAME actor_zoom COMMAND test_actor_zoom)
+
 add_executable(test_crab src/__test__/test_crab.cpp)
 target_link_libraries(test_crab PRIVATE webolution_app webolution_objects)
 add_test(NAME crab COMMAND test_crab)
@@ -1550,6 +1560,15 @@ if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
   add_executable(test_basher_two_hit src/__test__/test_basher_two_hit.cpp)
   target_link_libraries(test_basher_two_hit PRIVATE webolution_app webolution_objects)
   add_test(NAME basher_two_hit COMMAND test_basher_two_hit "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_HAVE_SDL2)
+  # Short PCM/projection invariants, intentionally legacy.
+  add_executable(test_positional_sound src/__test__/test_positional_sound.cpp)
+  target_link_libraries(test_positional_sound PRIVATE webolution_app webolution_objects)
+  add_test(NAME positional_sound COMMAND test_positional_sound)
+  set_tests_properties(positional_sound PROPERTIES ENVIRONMENT
+    "SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 endif()
 
 include(cmake/test_tiers.cmake)

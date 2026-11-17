@@ -19,8 +19,10 @@
 //        | pause <dir>
 #include "app/AppEntry.h"
 #include "app/LemmingAnim.h"
+#include "app/TubeScene.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
+#include "assets/LevelIndex.h"
 #include "assets/Png.h"
 #include "assets/Sprite.h"
 #include "sim/RetailLevel.h"
@@ -69,6 +71,95 @@ void save(const fs::path& path, const Image& img) {
 
 // ---------------------------------------------------------------------------------------------------------------
 // units
+
+// Seconds-long presentation unit, not a scripted level route. Exercise the
+// production draw and pick preparation with installed Just Dig geometry/assets.
+void frontViewUnits(const AssetLibrary& lib, const SpriteSheet& sheet) {
+  auto setup = sim::loadRetailLevel(lib, "MM_DIG_000");
+  expect(bool(setup), "front view: load Just Dig");
+  if (!setup) return;
+  std::string level;
+  for (const auto& name : levelFileNames(lib))
+    if (name.find("MM_DIG_000.LVL") != std::string::npos) { level = name; break; }
+  auto blob = lib.read(level);
+  expect(bool(blob), "front view: read Just Dig geometry");
+  if (!blob) return;
+  auto mesh = findCylinderMesh(*blob);
+  auto index = indexLevel(*blob);
+  expect(bool(mesh) && bool(index), "front view: index Just Dig");
+  if (!mesh || !index) return;
+  auto scene = app::TubeScene::build(lib, *mesh, *blob, index->grid0, true);
+  expect(bool(scene), "front view: build Just Dig scene");
+  if (!scene) return;
+
+  sim::World world(*setup);
+  sim::Lemming actor;
+  actor.x = 47; actor.y = 20; actor.state = sim::State::Digger;
+  actor.facing = sim::Facing::Left;
+  world.place(actor);
+  app::LemmingAnimTracker tracker;
+  tracker.advance(world, sheet, 0);
+  auto walkers = app::injectedWalkersFromWorld(world, world.terrain().height(), &tracker);
+  expect(walkers.size() == 1 && std::string(walkers[0].clip) == "dig" && walkers[0].facing == -1,
+         "Digger adapter preserves walk facing and selects dig");
+  if (walkers.size() != 1) return;
+  app::SceneOptions options;
+  options.injectedWalkers = walkers;
+  options.injectedWalkers[0].plus8Y = 32;
+  // Isolate direction selection from terrain/depth/submission visibility.
+  options.composeSkipActorVisibility = true;
+  app::CameraParams params;
+  params.width = 320; params.height = 240; params.cx = 159; params.cy = 119;
+  params.levelEyeHeight = 48;
+  int samples = 0;
+  for (int yaw = 0; yaw < 256; yaw += 32)
+    for (int species = 0; species < 3; ++species)
+      for (int facing : {-1, 1})
+        for (int gravity : {-1, 1}) {
+          params.yawUnits = yaw;
+          const auto camera = app::buildCamera(params);
+          auto& w = options.injectedWalkers[0];
+          w.sheetType = species; w.facing = facing; w.verticalDir = gravity;
+          w.walkTemporalIndex = (yaw / 32) % 2 ? 19 : 9;
+          w.forcedViewIndex = -1; w.forcedMirror = -1;
+          app::Raster actual(320, 240), expected(320, 240);
+          actual.clear(23, 29, 31); expected.clear(23, 29, 31);
+          const auto background = actual.framebuffer().rgb;
+          scene->drawInjectedWalkers(actual, camera, options, lib);
+          const auto boxes = scene->injectedWalkerScreenBoxes(camera, options, lib);
+          w.forcedViewIndex = 4; w.forcedMirror = 0;
+          scene->drawInjectedWalkers(expected, camera, options, lib);
+          const auto front = scene->injectedWalkerScreenBoxes(camera, options, lib);
+          expect(actual.framebuffer().rgb == expected.framebuffer().rgb,
+                 "dig always draws the unmirrored installed front image");
+          expect(boxes.size() == 1 && boxes[0] && front.size() == 1 && front[0],
+                 "dig has a production pick rectangle");
+          if (boxes.size() == 1 && boxes[0] && front.size() == 1 && front[0])
+            expect(boxes[0]->left == front[0]->left && boxes[0]->right == front[0]->right &&
+                   boxes[0]->top == front[0]->top && boxes[0]->bottom == front[0]->bottom,
+                   "pick uses the same front view as drawing");
+          expect(actual.framebuffer().rgb != background, "front image draws visible pixels");
+          ++samples;
+        }
+  // Adjacent state samples guard the stateless adapter: no dig override or
+  // phase may persist into walking. No simulation route is constructed here.
+  sim::World walkingWorld(*setup);
+  actor.state = sim::State::Walker;
+  walkingWorld.place(actor);
+  tracker.advance(walkingWorld, sheet, 0);
+  walkers = app::injectedWalkersFromWorld(walkingWorld, walkingWorld.terrain().height(), &tracker);
+  expect(walkers.size() == 1 && std::string(walkers[0].clip) == "walk" && walkers[0].facing == -1 &&
+         walkers[0].forcedViewIndex == -1 && walkers[0].forcedMirror == -1 && walkers[0].rotationPhase == 0,
+         "leaving dig restores directional selection without changing walk facing");
+  sim::World blockerWorld(*setup);
+  actor.state = sim::State::Blocker;
+  blockerWorld.place(actor);
+  tracker.advance(blockerWorld, sheet, 0);
+  walkers = app::injectedWalkersFromWorld(blockerWorld, blockerWorld.terrain().height(), &tracker);
+  expect(walkers.size() == 1 && walkers[0].rotationPhase == 0.25 && walkers[0].facing == -1,
+         "blocker uses the statically evidenced quarter-turn phase");
+  std::cout << "front view: " << samples << " yaw/tribe/facing/gravity draw and pick cases\n";
+}
 
 int unitsMain(const fs::path& outDir, const fs::path& gameDir) {
   auto lib = AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
@@ -180,6 +271,7 @@ int unitsMain(const fs::path& outDir, const fs::path& gameDir) {
     seen.insert(idx);
   }
   expect(seen.size() == 12, "two seconds of walking visits all 12 walk entries (saw " + std::to_string(seen.size()) + ")");
+  frontViewUnits(*lib, *sheet);
   if (g_failures) return 1;
   std::cout << "PASS: actoranimstate units\n";
   return 0;

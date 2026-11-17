@@ -451,6 +451,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
           return std::unexpected(file + ": unsupported crab behavior/volumes");
         Crab crab;
         crab.entityIndex = i;
+        crab.attackSound = e.names[3]; // 0x4333D2: fourth name -> sound +0x1CC
         crab.enabled = e.flag_38;
         for (std::size_t axis = 0; axis < 3; ++axis)
           crab.boxOrigin[axis] = std::bit_cast<double>(e.double_bits_48_60[axis]);
@@ -516,6 +517,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
             e.triple_arrays[0].size() != e.triple_arrays[1].size())
           throw std::invalid_argument("unsupported named hazard contract");
         NamedHazard h;
+        h.attackSound = e.names[3]; // same named-entity sound field
         h.kind = *kind; h.entityIndex = i; h.id = e.id; h.enabled = e.flag_38;
         h.moving = e.type == "DYNA";
         h.allContacts = e.flag_1d1;

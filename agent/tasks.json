@@ -22456,6 +22456,165 @@
         "log": "build\\agent-runs\\20261117T195728-15108-5627269a\\verification.log",
         "verified_content": "bd4ccc0158a3b2fa6e94a8b66cdf22665e3fae1b06e813c60fb2756aea09587a"
       }
+    },
+    {
+      "id": "counter-gates-001",
+      "title": "Implement the crossing-count gates and their counters",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 1 (docs/scratch/asset-census-001.md; full row in build/asset-census-001/proposed-tasks.csv and evidence under build/asset-census-001/static/). 231 crossing-count gates on 52 installed levels are parsed and registered as Other (src/sim/RetailLevel.cpp:83) with no state or update, so they are neither drawn nor simulated. The first a player meets is node 25, MM_ALL_8_003, The Iron Curtain; the user is about to reach it. Decode the gate entity (reader 424187) into active gate state; implement the update and crossing count (423749/423858), the counter draw (423E69), the collision animation (4270DC) and the collision stamp and clear (427554 OR 403, 4275D4 AND FBFC); connect lever, pad and sensor messages to it through the existing registry; play the existing Rumble sample where the evidence places it. This is a separate class from the accepted fluid receivers. Define a provisional player-facing policy only where the static arithmetic stays unresolved, and label it. Simulation change authorized: the census found these are missing puzzle rules. Run the 102-level sweep and list levels whose sweep outcome changes. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On The Iron Curtain (node 25) the gate and its counter are visible, the counter changes as lemmings cross, and the barrier and collision change with it; operating the switch affects the gate as the evidence shows.",
+        "Gate state, counting, collision and messages are cited to the static addresses or labelled provisional; the 52 levels are listed with their gate counts, and sweep outcome changes are listed.",
+        "Any promoted recording that diverges is listed with step and reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "evil-rats-001",
+      "title": "Simulate and draw the placed evil rats",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 2. 45 evil rats are placed on 17 installed levels, first at node 28, E11_KF_1, Escape to victory; the clone has no consumer of the levels' subclass_actors, so none exists in play. Load them into a separate population that never counts toward release, saved or dead totals and never uses an exit; keep each rat's stored position, facing, capabilities and initial state. Implement movement and the contact attack (448550 -> 448630, vtable 4B0F6C, reader 4265E8, attack 426414, victim removed at 408ECC), rat deaths if the evidence has them, and draw the EvilRatHi clips (installed sheet type 3) through the production actor path, with the same occlusion, zoom scaling and positional sound as lemmings. Label provisional choices. Simulation change authorized: missing lethal actors. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Escape to victory (node 28) the rats are visible, move as the evidence shows, and a rat's attack removes a lemming that contacts it, counted dead; rats never count as released or saved and never exit.",
+        "Behavior is cited to the static addresses or labelled provisional; the 17 levels are listed with their rat counts.",
+        "Any promoted recording that diverges is listed with step and reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "refusal-sounds-001",
+      "title": "Play the metal refusal sounds for bash, mine and dig",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 5. When a basher or digger is refused by metal or one-way terrain the original plays Scrape (40C139, 415B33), and a refused miner plays MineMetal (418AC2); the clone is silent. Emit them on the existing refusal branches and play them through the existing positioned one-shot mixer path (positional-audio-001). No change to skill footprints, outcomes or clocks. Audio only. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Mine (node 5) a miner reaching metal plays the metal clang once as it is refused, and a basher or digger refused by metal or one-way terrain plays Scrape; positioned like other level sounds.",
+        "Samples and triggers are cited to the static addresses; refusal behavior is unchanged and all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "music-001",
+      "title": "Play the installed frontend and level music",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 10. 13 music WAVs are installed and the mixer can already load and play music, but no production code calls it, so the clone has no music. Connect the frontend and level lifecycle to Mixer loadMusicFrom/playMusic: the frontend track (498DE8 pointer table 4C42FC; 486BD8 mode 0) and in-level music (loader 4432C1 mode 1). Establish from static evidence how the original picks a level's track; if it is not settled, use a provisional policy (for example a fixed track per level) and label it. Music loops, continues across pause, restarts or continues on Retry as the evidence shows, and sits under the sound effects at a sensible volume. Audio only. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Music plays in the frontend and the map and in level play, looping, beneath the sound effects, with the track choice cited to static evidence or labelled provisional.",
+        "Pause, Retry, returning to the map and running with audio disabled behave sensibly and are stated; no sound effect is lost or delayed by the music.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "gadget-models-001",
+      "title": "Draw teleporters and speed pads with their animation",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 3. Teleporters (18 levels) and speed pads (9 levels) already work in the simulation but are not drawn: BackdropScene omits both render owners, leaving 178 model clips unused. The first is node 38, MM_TELE_003, The Lone Ranger; a speed pad first appears on node 49. Admit the entities_4347ec base and FX model roots and tagged type-4 roots, and play the authored teleport, teleport_fx and speedup_two_way event and UV clips from the existing simulation state (4347EC sets clips, 43540C/435467 activate, 432742 speed), so a player can see where each gadget is and when it fires. Add only the serialized nonempty teleport samples (two levels). Presentation only: no simulation change. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On The Lone Ranger (node 38) both teleporters are visible at their stored places and animate when a lemming enters one and arrives at the other; on node 49 the speed pad is visible before a lemming touches it and animates on contact.",
+        "Models, clips and triggers are cited to the static addresses or labelled provisional; the 22 levels are listed.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "occupancy-sensors-001",
+      "title": "Connect the occupancy sensors to the gadgets they trigger",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 4. Seven tagged type-2 occupancy sensors on node 55 (M12_MT_1, Booby trap.) and node 80 (H08_MT_1, T is for Teamwork.) are registered as Other and do nothing; their enter and leave messages may be required to win. Implement them from their stored volumes, state and message-list pairs: the occupancy count (43725A), the cooldown (4339FC) and message dispatch (437285/43729A -> 4372AF -> 433AC0) to the existing registry, so the receivers (gates, fluids, others) respond. Draw art only if a real visible draw is established. Simulation change authorized. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On nodes 55 and 80 a lemming entering and leaving each sensor volume sends the authored messages and the linked receivers respond; the report traces one chain end to end per level.",
+        "Behavior is cited to the static addresses or labelled provisional.",
+        "Any promoted recording that diverges is listed with step and reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "miner-axe-001",
+      "title": "Draw the miner's axe effect",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 8, correcting earlier research that called the axe a HUD element. Miner construction reaches 496E40 (418E5B -> 4194F0 -> 496E39 binds 4E331C; 419780 advances 496C84); vtable 4B0B88+4 = 4196C0 calls 493761, which submits a live child model draw. Use that traced draw to add the installed Axe effect to mining through the production actor path, keeping the miner pose, terrain removal and refusal unchanged, with the same occlusion and zoom scaling. Label provisional motion or phase. Presentation only. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Mine (node 5) a miner shows the installed axe effect in step with its strokes, at every rotation and zoom, with pose, terrain removal and refusal unchanged.",
+        "The draw path and timing are cited to the static addresses or labelled provisional.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "explosion-decal-001",
+      "title": "Leave the scorch mark where a lemming explodes",
+      "status": "ready",
+      "depends_on": [
+        "hatch-click-rate-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "asset-census-001 rank 9. An explosion in the original leaves a surface mark: 4082B6 calls 43B31E with index 0 (~splat, first in texture table 5 on all 102 levels), which passes the texture through 424290, 441E26/43FCAA and 43FA93 to two triangles, and 43B419 fades and deletes the records. The clone draws no mark. Add a bounded surface decal at the explosion, drawn on the terrain surface with the clone's depth policy and faded and removed as the evidence shows; if the original's lifetime depends on a cheat branch (20 or 3 seconds), choose the normal-play value and label it. Do not use ~splat2. Terrain and crater outcomes are unchanged. Presentation only. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On Just Bomb (node 2) an exploding lemming leaves the installed surface mark at the crater, which fades and disappears; a nuke leaves one per explosion without a slowdown.",
+        "Texture, placement and lifetime are cited to the static addresses or labelled provisional.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

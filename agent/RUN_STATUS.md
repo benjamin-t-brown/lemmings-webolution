@@ -9,6 +9,14 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- counter-gates-001: **ready** — Implement the crossing-count gates and their counters
+- evil-rats-001: **ready** — Simulate and draw the placed evil rats
+- refusal-sounds-001: **ready** — Play the metal refusal sounds for bash, mine and dig
+- music-001: **ready** — Play the installed frontend and level music
+- gadget-models-001: **ready** — Draw teleporters and speed pads with their animation
+- occupancy-sensors-001: **ready** — Connect the occupancy sensors to the gadgets they trigger
+- miner-axe-001: **ready** — Draw the miner's axe effect
+- explosion-decal-001: **ready** — Leave the scorch mark where a lemming explodes
 
 ## Recently completed queue entries
 

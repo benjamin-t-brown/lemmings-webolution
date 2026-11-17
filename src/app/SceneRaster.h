@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <span>
 
 namespace webo::app {
 
@@ -52,6 +53,9 @@ struct SceneRasterOptions {
   SceneAlphaOperation alphaOperation;
   double sampleOffsetX;
   double sampleOffsetY;
+  // Optional accepted depth stores, used by pipe occlusion. Unlike an observer
+  // this is ordinary raster output, partitioned with the framebuffer rows.
+  std::span<double> depthOutput{};
 };
 
 // Opt-in diagnostic only. The caller supplies a fixed, tightly-packed mask;
@@ -75,6 +79,9 @@ struct SceneRgbaFramebuffer {
   int width = 0;
   int height = 0;
   std::vector<std::uint8_t> rgba;
+  // Production RGB destination. Destination alpha never affects RGB blending;
+  // diagnostic observers retain the RGBA path so their alpha events stay exact.
+  std::span<std::uint8_t> rgb{};
 };
 
 // Software conventions, not asserted native D3D measurements:

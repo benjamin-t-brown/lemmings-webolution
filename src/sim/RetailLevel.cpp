@@ -365,9 +365,24 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     s.releaseIntervalTicks = rateTable->intervalTicks(report.initialSharedRate, kTicksPerSecond);
   }
 
-  for (const auto& pose : objs->exits) {
-    const ExitTrigger box = webo::exitTriggerFromPose(pose, grid->width, grid->height);
-    s.exits.push_back({box.x, box.y, box.width, box.height});
+  // 0x426C6B reads exit +0x98 immediately after the spatial base. Keep
+  // that tribe, including type 4 (any), rather than inferring it from artwork.
+  // Both lists follow stream order; refuse an uncorrelated list instead of
+  // silently giving an exit the wrong tribe. Trigger geometry stays unchanged.
+  try {
+    const auto decoded = lemmings::read_compiled_level(
+        {reinterpret_cast<const std::uint8_t*>(blob->data()), blob->size()}, false);
+    const auto& exits = decoded.gadgets.entities_426c6b;
+    if (exits.size() != objs->exits.size())
+      return std::unexpected(std::format("{}: {} exit records vs {} exit placements", file,
+                                         exits.size(), objs->exits.size()));
+    for (std::size_t i = 0; i < exits.size(); ++i) {
+      const ExitTrigger box = webo::exitTriggerFromPose(objs->exits[i], grid->width, grid->height);
+      s.exits.push_back({box.x, box.y, box.width, box.height,
+                         static_cast<int>(exits[i].value_98)});
+    }
+  } catch (const std::invalid_argument& error) {
+    return std::unexpected(std::format("{}: serialized exits: {}", file, error.what()));
   }
 
   // Each pad's destination is the pad whose serialized id equals this pad's

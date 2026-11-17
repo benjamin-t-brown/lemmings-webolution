@@ -11,7 +11,8 @@
 namespace webo::app::profile {
 using Clock = std::chrono::steady_clock;
 enum Cost { Other, Simulation, Preparation, TextureDecode, BackdropRaster,
-            TubeRaster, Actors, FluidRaster, Hud, Upload, Copy, Present, Idle, Count };
+            TubeRaster, Actors, FluidRaster, Hud, Upload, Copy, Present, Idle,
+            BodyFootprint, BuilderBrick, Particles, Count };
 struct State {
   std::array<double, Count> ms{};
   Cost cost = Other;
@@ -54,7 +55,7 @@ class Run {
       if (!file_) { std::perror("frame profile"); return; }
       std::fseek(file_, 0, SEEK_END);
       if (std::ftell(file_) == 0) std::fprintf(file_,
-        "level,frame,alive,total_ms,other_ms,simulation_ms,preparation_ms,texture_decode_ms,backdrop_raster_ms,tube_raster_ms,actors_ms,fluid_raster_ms,hud_ms,upload_ms,copy_ms,present_ms,idle_ms\n");
+        "level,frame,alive,total_ms,other_ms,simulation_ms,preparation_ms,texture_decode_ms,backdrop_raster_ms,tube_raster_ms,actors_ms,fluid_raster_ms,hud_ms,upload_ms,copy_ms,present_ms,idle_ms,body_footprint_ms,builder_brick_ms,particles_ms\n");
     }
   }
   ~Run() { if (file_) std::fclose(file_); }

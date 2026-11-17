@@ -93,6 +93,7 @@ public:
   std::size_t routed() const { return routed_; }    // routed cues requested
 
 private:
+  friend struct WorkSoundTestAccess;
   void playName(std::string_view name, Mixer::Overlap overlap);
   void report(const std::string& message) const;
 

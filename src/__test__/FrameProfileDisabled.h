@@ -4,8 +4,8 @@
 #include <cstddef>
 namespace webo::app::profile {
 enum Cost { Other, Simulation, Preparation, TextureDecode, BackdropRaster,
-            TubeRaster, Actors, FluidRaster, Hud, Upload, Copy, Present, Idle, Count };
-struct State { Cost sceneRaster = BackdropRaster; };
+            TubeRaster, Actors, FluidRaster, Hud, Upload, Copy, Present, Idle, BodyFootprint, BuilderBrick, Particles, Count };
+struct State { Cost cost = Other; Cost sceneRaster = BackdropRaster; };
 inline constexpr State* active = nullptr;
 struct Scope { explicit Scope(Cost) {} void stop() {} };
 struct ScenePass { explicit ScenePass(Cost) {} };

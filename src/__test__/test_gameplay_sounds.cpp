@@ -101,6 +101,51 @@ void basher(bool solid, bool steel) {
   check(world.takeCues().empty(), "no persistent or looping bash cue");
 }
 
+// Event/terrain coupling is easy to lose when changing a skill's clear path:
+// every successful stroke requests Mine once, never per cell or on refusal.
+void excavation(bool miner, bool solid, bool steel, bool fastForward) {
+  auto setup = floor();
+  if (!solid)
+    setup.terrain.clearBox(0, 80, 128, 16);
+  if (steel)
+    for (int y = 80; y < 96; ++y)
+      for (int x = 0; x < 128; ++x) setup.terrain.set(x, y, sim::Material::Steel);
+  sim::World world(setup);
+  sim::Lemming actor;
+  actor.x = 16; actor.y = 79;
+  actor.state = miner ? sim::State::Miner : sim::State::Digger;
+  world.place(actor);
+  app::RuntimeSimState runtime;
+  if (fastForward) runtime.latchFastForward();
+  audio::CuePlayback playback;
+  int sounds = 0, strokes = 0;
+  playback.setObserver([&](std::string_view name) {
+    if (name == "Mine") ++sounds;
+  });
+  auto version = world.terrain().version();
+  const auto afterUpdate = [&] {
+    const bool removed = world.terrain().version() != version;
+    const auto cues = world.takeCues();
+    const auto count = std::count(cues.begin(), cues.end(), sim::SoundCue::Work);
+    check(count == (removed ? 1 : 0),
+          "mine/dig emits exactly one work cue per successful stroke, none otherwise");
+    strokes += removed;
+    for (auto cue : cues) playback.play(cue);
+    version = world.terrain().version();
+  };
+  runtime.togglePause();
+  check(!runtime.advanceElapsed(world, 4.0, false, afterUpdate), "paused work emits no strokes");
+  check(world.takeCues().empty(), "paused mine/dig queues no sound");
+  runtime.resume();
+  for (int frame = 0; frame < 2000; ++frame)
+    runtime.advanceElapsed(world, 0.02, false, afterUpdate);
+  check(solid && !steel ? strokes > 1 : strokes == 0,
+        "mine/dig repeats on earth, stays silent on empty/steel strokes");
+  check(sounds == strokes, "each successful mine/dig stroke routes the Mine sample");
+  playback.drain(world);
+  check(sounds == strokes, "no looping or deferred Mine after work stops");
+}
+
 // This legacy unit protects the accepted/refused distinction independently of
 // input picking: a future skill change must not turn a refusal into an Action.
 void assignmentFeedback() {
@@ -157,17 +202,24 @@ void nukeVoice() {
     if (prelit) check(world.assign(0, sim::Skill::Bomber), "pre-nuke Bomber accepted");
     world.takeCues(); // Assignment is separate feedback.
     world.nuke();
+    audio::CuePlayback playback;
+    std::vector<std::string> heard;
+    playback.setObserver([&](std::string_view name) { heard.emplace_back(name); });
     int ohno = 0, explosions = 0;
     for (int tick = 0; tick < 60; ++tick) {
       world.tick();
       for (auto cue : world.takeCues()) {
         ohno += cue == sim::SoundCue::OhNo;
         explosions += cue == sim::SoundCue::Explode;
+        playback.play(cue);
       }
     }
     check(ohno == 0, "Nuke mutes every OhNo, including an already lit fuse");
     check(explosions == 2 && world.dead() == 2,
           "both actors still explode and die through the existing path");
+    check(std::count(heard.begin(), heard.end(), "Explode") == 2 &&
+          std::count(heard.begin(), heard.end(), "Ohno") == 0,
+          "each nuke blast routes Explode without Ohno, including a prelit bomber");
   }
 }
 } // namespace
@@ -176,8 +228,14 @@ int main() {
   for (bool fastForward : {false, true})
     for (bool buffered : {false, true}) builder(fastForward, buffered);
   basher(true, false); basher(false, false); basher(true, true);
+  for (bool miner : {false, true})
+    for (bool fastForward : {false, true}) {
+      excavation(miner, true, false, fastForward);
+      excavation(miner, false, false, fastForward);
+      excavation(miner, true, true, fastForward);
+    }
   assignmentFeedback();
   nukeVoice();
   if (failures) return EXIT_FAILURE;
-  std::cout << "PASS: last-three warnings, successful bash bites, pause, fast-forward and drains\n";
+  std::cout << "PASS: warnings, work strokes, nuke sounds, pause, fast-forward and drains\n";
 }

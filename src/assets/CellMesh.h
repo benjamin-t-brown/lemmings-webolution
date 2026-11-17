@@ -146,6 +146,9 @@ std::expected<CellMeshes, std::string> buildCellMeshes(
 // choice. The key table must answer every vertex the cells ask for;
 // `surfaceVertexCount` bounds the indices as in the full build. The quad totals
 // are recounted.
+// Playable-v1 rebuilds partition solid runs at steel boundaries, so a new
+// ordinary excavation face cannot reshape an unchanged steel region. This
+// protection is provisional; the load-time merge rule remains unchanged.
 std::expected<void, std::string> rebuildCellMeshCells(
     CellMeshes& meshes, std::span<const std::uint32_t> keyTable,
     std::span<const std::array<std::int32_t, 3>> doorRecords, const CollisionGrid& grid,

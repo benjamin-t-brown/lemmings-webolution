@@ -171,6 +171,9 @@ void World::leaveBlocker(Lemming& l) {
 
 bool World::atExit(const Lemming& l) const {
   for (const Exit& e : setup_.exits) {
+    // A mismatched tribe skips the save transition and continues its state.
+    if (!e.accepts(l.sheetType))
+      continue;
     const int dx = setup_.terrain.wrapX(l.x - e.x + setup_.terrain.width() / 2) -
                    setup_.terrain.width() / 2;
     const int dy = l.y - e.y;
@@ -999,17 +1002,19 @@ std::size_t World::clearSkillBox(const Lemming& l, int x, int y, int width, int 
 }
 
 void World::stepBasher(Lemming& l) {
-  if (!bitesThisTick(l.frame, msPerTick(), rules_.basherCycleMs, rules_.basherBitePercent))
+  const bool lowerPunch = bitesThisTick(l.frame, msPerTick(), rules_.basherCycleMs,
+                                        rules_.basherBitePercent);
+  const bool upperPunch = bitesThisTick(l.frame, msPerTick(), rules_.basherCycleMs, 60);
+  const bool advance = bitesThisTick(l.frame, msPerTick(), rules_.basherCycleMs, 92);
+  if (!lowerPunch && !upperPunch && !advance)
     return;
   const int dir = static_cast<int>(l.facing);
-
-
   const int x0 = l.x + dir;
-
-
   const int top = l.y - (rules_.basherHeight - 1);
 
-
+  // Preserve the existing whole-footprint refusal and open-air rules. In
+  // particular, the upper half left by the first punch is still collision
+  // terrain; it must neither be mistaken for a new wall nor end this cycle.
   bool anySolid = false, anySteel = false;
   for (int dy = 0; dy < rules_.basherHeight; ++dy)
     for (int dx = 0; dx < rules_.basherReach; ++dx) {
@@ -1020,28 +1025,35 @@ void World::stepBasher(Lemming& l) {
         anySolid = true;
     }
 
-  if (anySteel) {
+  if ((lowerPunch || upperPunch) && anySteel) {
     turn(l);
     l.state = State::Walker;
     return;
   }
-  // basher-fix-001: an empty leading column ends the bash only once the grace cycles are spent
-  // (0x0040C6E8 / 0x0040C357 `+0x44 == 2 && +0x41 == 0`, see Rules::basherGraceCycles). Until then
-  // the swing finds nothing and the lemming still advances a column per cycle. Before this the
-  // first empty bite sent the lemming back to Walker in the tick it was assigned (playtest P1).
-  if (!anySolid && l.bashCycles >= rules_.basherGraceCycles) {
+  if (lowerPunch && !anySolid && l.bashCycles >= rules_.basherGraceCycles) {
     l.state = State::Walker;
     return;
   }
 
-  if (anySolid) {
-    clearSkillBox(l, dir > 0 ? x0 : x0 - rules_.basherReach + 1, top,
-                  rules_.basherReach, rules_.basherHeight);
-    // 0x40C0AF's destructible-cell arm plays Mine (0x4E32E8) at 0x40C32F.
-    // PROVISIONAL: one sound per successful hybrid bite; the original tests
-    // individual cells/subpasses. Empty swings and refusal stay silent here.
+  // 40BBA0 registers rows 0/1 at 12/16%, then 3/2 at 60/64%.
+  // 40C0AF zeroes ordinary grid cells (40C16D), with debris and Mine for
+  // subpasses 0 and 3. A wall piece is four rows, not a packed half-cell.
+  // PROVISIONAL 5 Hz adapter: coalesce each punch's two nearby row writes
+  // at its first record. Both collision and the mesh see the surviving half
+  // through the ordinary Terrain::set/version -> TubeScene::syncTerrain path.
+  const int lowerHeight = (rules_.basherHeight + 1) / 2;
+  const int cutX = dir > 0 ? x0 : x0 - rules_.basherReach + 1;
+  if (lowerPunch && clearSkillBox(l, cutX, l.y - lowerHeight + 1,
+                                  rules_.basherReach, lowerHeight) > 0)
     cue(SoundCue::Bash);
-  }
+  if (upperPunch && clearSkillBox(l, cutX, top, rules_.basherReach,
+                                  rules_.basherHeight - lowerHeight) > 0)
+    cue(SoundCue::Bash);
+
+  // 40C6E8 commits the column at 92%, after both punches. Keep the same
+  // 1440 ms cycle (one column per cycle), grace count and support probe.
+  if (!advance)
+    return;
   l.x = setup_.terrain.wrapX(l.x + dir);
   if (l.bashCycles < rules_.basherGraceCycles)
     ++l.bashCycles;
@@ -1077,15 +1089,16 @@ void World::stepMiner(Lemming& l) {
       }
     }
 
+  std::size_t removed = 0;
   for (int dx = 1; dx <= rules_.minerReach; ++dx)
     for (int arg = -1; arg <= 3; ++arg) {
       if (arg == 2 && dx == 1)
         continue;
-      clearSkillBox(l, l.x + dx * dir, l.y - arg, 1, 1);
+      removed += clearSkillBox(l, l.x + dx * dir, l.y - arg, 1, 1);
     }
-
-
-
+  // 0x418D21..0x418D39: successful miner subpass -1 plays Mine.
+  // Provisional clone cadence: one request per stroke that clears terrain.
+  if (removed != 0) cue(SoundCue::Work);
   l.x = setup_.terrain.wrapX(l.x + dir);
   l.y += 1;
 
@@ -1117,6 +1130,8 @@ void World::stepDigger(Lemming& l) {
 
   const std::size_t removed = clearSkillBox(l, l.x - half, digY,
                                            rules_.diggerWidth, rules_.diggerDepth);
+  // 0x415D69..0x415D81: the successful dig callback plays Mine.
+  if (removed != 0) cue(SoundCue::Work);
   l.y += v * rules_.diggerDepth;
 
   if (removed == 0 || !solidAt(l.x, l.y + v)) {

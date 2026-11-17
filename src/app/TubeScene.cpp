@@ -1,4 +1,5 @@
 #include "app/FrameProfile.h"
+#include "assets/TextureCache.h"
 #include "TubeScene.h"
 #include "app/ActorVisibility.h"
 
@@ -280,6 +281,11 @@ enum class ActorPreparation { ClippedSprite, PlacementOnly };
 struct PreparedInjectedWalker {
   webo::SpriteFrame frame;
   webo::Image texture;
+  // Borrow only from the owning application leg's immutable decoded cache.
+  // Prepared walkers never escape a draw/pick call; standalone consumers own
+  // their image as before. unordered_map insertions preserve image references.
+  const webo::Image* borrowedTexture = nullptr;
+  const webo::Image& sheet() const { return borrowedTexture ? *borrowedTexture : texture; }
   ActorSpritePlacement placement{};
   ActorSpritePlacement composedPlacement{}; // body plus render-only attachment
   bool mirrored = false;
@@ -326,6 +332,7 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
     const SceneOptions::InjectedNativeWalker& w, const Texture& texture,
     const std::array<std::uint8_t, 3>& tint, const std::array<double, 2>& pack,
     std::vector<double>& attachmentDepth) {
+  profile::Scope profileBrick(profile::BuilderBrick);
   const auto shape = builderBrickShape(w.builderPhase);
   if (shape.scale <= 0.0 || w.builderLength <= 0) return;
   const double x0 = w.builderX + (w.facing > 0 ? 1 : -w.builderLength);
@@ -391,6 +398,7 @@ void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
 void clipBodyFootprint(Image& body, const ActorSpritePlacement& p,
     const ActorOcclusionPlane& plane, const CameraBasis& camera,
     const CylinderMesh& mesh, const CollisionGrid& collision) {
+  profile::Scope profileFootprint(profile::BodyFootprint);
   for (int y = std::max(0, int(std::ceil(p.top)));
        y < std::min(body.height, int(std::ceil(p.bottom))); ++y)
     for (int x = std::max(0, int(std::ceil(p.left)));
@@ -479,9 +487,20 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     return std::nullopt;
 
   const auto& frame = temporal.frames[selection.index];
-  auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
-  if (!texture)
-    return std::nullopt;
+  const auto asset = sheetAssetName(frame.sheet);
+  const Image* borrowedTexture = nullptr;
+  if (auto* cache = activeTextureCache; cache && cache->library == &lib) {
+    if (const auto found = cache->images.find(asset); found != cache->images.end()) {
+      borrowedTexture = &found->second;
+      ++cache->hits;
+    }
+  }
+  Image texture;
+  if (!borrowedTexture) {
+    auto loaded = loadTexture(lib, asset);
+    if (!loaded) return std::nullopt;
+    texture = std::move(*loaded);
+  }
 
   const std::array<double, 3> worldPosition{pose.modelPosition[0], pose.modelPosition[1],
                                             pose.modelPosition[2]};
@@ -498,7 +517,8 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
 
   PreparedInjectedWalker prepared;
   prepared.frame = frame;
-  prepared.texture = std::move(*texture);
+  prepared.texture = std::move(texture);
+  prepared.borrowedTexture = borrowedTexture;
   prepared.placement = *placement;
   prepared.composedPlacement = *placement;
   prepared.mirrored = selection.mirrored;
@@ -517,7 +537,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     const ActorOcclusionPlane plane(camera, worldPosition);
     if (brickTexture)
       drawBuilderBrick(sprite, prepared.composedPlacement, poseLevel, camera, injected,
-          *brickTexture, tint, builderPackAnchor(frame, prepared.texture, *placement,
+          *brickTexture, tint, builderPackAnchor(frame, prepared.sheet(), *placement,
                                                 selection.mirrored, prepared.inverted),
           prepared.attachmentDepth);
     // Keep the carried mesh beneath the hands, with its own physical depth
@@ -528,7 +548,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
       std::fill(body.rgba.begin(), body.rgba.end(), 0);
     }
     auto& bodyTarget = brickTexture ? body : sprite;
-    if (!drawActorSprite(bodyTarget, frame, prepared.texture, *placement, selection.mirrored, tint,
+    if (!drawActorSprite(bodyTarget, frame, prepared.sheet(), *placement, selection.mirrored, tint,
                          true, prepared.inverted)) return std::nullopt;
     if (sceneClip && footprintMesh && footprintGrid)
       clipBodyFootprint(bodyTarget, *placement, plane, camera, *footprintMesh, *footprintGrid);
@@ -622,7 +642,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
       Image figure = std::move(prepared->clippedSprite);
       std::fill(figure.rgba.begin(), figure.rgba.end(), 0);
       const auto grey = std::uint8_t(std::clamp(it->drownBrightness, 0.0, 1.0) * 255.0);
-      if (!drawActorSprite(figure, prepared->frame, prepared->texture, prepared->placement,
+      if (!drawActorSprite(figure, prepared->frame, prepared->sheet(), prepared->placement,
           prepared->mirrored, {grey, grey, grey}, true, prepared->inverted)) continue;
       const auto pose = actorPoseFromCylinderSample(poseLevel_,
           {it->plus8X, it->plus8Y, it->plus8Z}, it->facing);
@@ -693,7 +713,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
         }
       continue;
     }
-    if (!app::drawActorSprite(overlay, prepared->frame, prepared->texture, prepared->placement,
+    if (!app::drawActorSprite(overlay, prepared->frame, prepared->sheet(), prepared->placement,
                               prepared->mirrored, prepared->tint, true, prepared->inverted)
              .has_value())
       continue;
@@ -710,17 +730,20 @@ void TubeScene::advanceDeathParticles(std::uint64_t clockMs) {
   });
 }
 
+std::uint32_t TubeScene::terrainDebrisMaterial(
+    const std::array<int, 2>& cell, int terrainHeight) const {
+  const int row = terrainHeight - 1 - cell[1];
+  return cellMesh_.buckets > unsigned(cell[0] / 8) &&
+      cellMesh_.bands > unsigned(row / 16) ?
+      cellMesh_.at(cell[0] / 8, row / 16)->material :
+      std::uint32_t(cell[0] / 32 + cell[1] / 32 * 8);
+}
+
 std::array<std::uint8_t, 3> TubeScene::terrainDebrisColour(
     const std::array<int, 2>& cell, int terrainHeight) const {
   const int row = terrainHeight - 1 - cell[1];
   std::array<std::uint8_t, 3> colour{128, 104, 72};
-  // PROVISIONAL chips sample their destroyed block's installed OUT texture.
-  // The exact original fragment model/UV selection (40C960) is unresolved.
-  // Reuse the cell renderer's material descriptor and reversed tile rows.
-  const auto material = cellMesh_.buckets > unsigned(cell[0] / 8) &&
-      cellMesh_.bands > unsigned(row / 16) ?
-      cellMesh_.at(cell[0] / 8, row / 16)->material :
-      std::uint32_t(cell[0] / 32 + cell[1] / 32 * 8);
+  const auto material = terrainDebrisMaterial(cell, terrainHeight);
   if (const auto* tile = findTile(true, material % 8, material / 8);
       tile && !tile->texture.empty()) {
     const auto& t = tile->texture;
@@ -740,8 +763,9 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
   const int gravityDir = lemming.verticalDir < 0 ? -1 : 1;
   const int facing = static_cast<int>(lemming.facing);
   // READ: bash 40C1C5 (subpasses 0/3), mine 418B69 (rows -1/+1),
-  // dig 415BE8 all construct 40C960; 40C9FE..40CA03 creates four fragments.
-  // PROVISIONAL: four texture-coloured chips per actually removed hybrid cell,
+  // dig 415BE8 all construct 40C960. Correction to bash-particles-001:
+  // 40DBF0 selects velocity callback 4, not count; 40C9B5 configures 12 slots.
+  // PROVISIONAL: retain four chunks per actually removed hybrid cell,
   // thrown back from the work face (Digger fans both ways). No native subpass
   // clock or physics is transplanted. Life overlaps successive 1.2..1.5s bites;
   // deterministic gravity-only arcs use no simulation RNG or collision.
@@ -764,6 +788,18 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
       p.size = 0.65 + (i % 2) * 0.2;
       p.colour = colour;
       p.verticalDir = gravityDir;
+      p.terrainChunk = true;
+      p.terrainMaterial = terrainDebrisMaterial(cell, terrainHeight);
+      const int row = terrainHeight - 1 - cell[1];
+      const double u = ((cell[0] & 31) + (i & 1) * 0.5) / 32.0;
+      const double v = (32.0 - (row & 31) - (i >> 1) * 0.5) / 32.0;
+      p.terrainUv = {u, v - 0.5 / 32.0, u + 0.5 / 32.0, v};
+      // Deterministic variation is presentation-only; never consume World RNG.
+      const unsigned seed = unsigned(cell[0]) * 73u + unsigned(cell[1]) * 151u + i * 47u;
+      p.rotation = {(seed & 255u) * (2.0 * std::numbers::pi / 256.0),
+                    ((seed >> 3) & 255u) * (2.0 * std::numbers::pi / 256.0)};
+      p.angularVelocity = {(i & 1 ? -1 : 1) * (2.5 + (seed % 7u) * 0.4),
+                           (i & 2 ? -1 : 1) * (3.0 + (seed % 5u) * 0.5)};
       deathParticles_.push_back(p);
     }
   }
@@ -848,6 +884,7 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
 
 void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
                                    const AssetLibrary& lib) const {
+  profile::Scope profileParticles(profile::Particles);
   // No allocations, asset reads, depth copies or scans on an empty frame.
   if (deathParticles_.empty() || !havePoseLevel_) return;
   rewirePoseLevel();
@@ -869,6 +906,56 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
     if (sample.y < 0 || sample.y >= poseLevel_.gridHeight ||
         !actorSubmissionVisible(sample.x, sample.z, true, bounds)) continue;
     const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, 1);
+    if (p.terrainChunk) {
+      // Rigid rotation in model units: rotating the slab parameter itself
+      // would stretch the piece because one slab is the whole tube thickness.
+      const Vec3 tangent{pose.basis[0], pose.basis[1], pose.basis[2]};
+      const Vec3 radial{-tangent.z, 0, tangent.x};
+      const auto offsets = p.chunkOffsets(deathClockMs_);
+      std::array<Vec3, 8> model;
+      std::array<std::array<double, 4>, 8> projected;
+      bool visible = true;
+      for (int j = 0; j < 8; ++j) {
+        const auto& d = offsets[j];
+        model[j] = {pose.modelPosition[0] + tangent.x*d[0] + radial.x*d[2],
+                    pose.modelPosition[1] + d[1],
+                    pose.modelPosition[2] + tangent.z*d[0] + radial.z*d[2]};
+        visible &= project(camera, model[j], projected[j]);
+      }
+      if (!visible) continue;
+      const auto* tile = findTile(true, p.terrainMaterial % 8, p.terrainMaterial / 8);
+      // Missing artwork retains the existing earthy fallback, now on a mesh.
+      Texture fallback;
+      if (!tile || tile->texture.empty())
+        fallback = Texture{1, 1, {p.colour[0], p.colour[1], p.colour[2]}};
+      const auto& texture = tile && !tile->texture.empty() ? tile->texture : fallback;
+      const auto& u = p.terrainUv;
+      const std::array<std::array<double, 2>, 4> uv{{{u[0],u[1]},{u[0],u[3]},
+                                                   {u[2],u[3]},{u[2],u[1]}}};
+      constexpr int faces[6][4]{{0,2,3,1},{4,5,7,6},{0,1,5,4},
+                               {2,6,7,3},{0,4,6,2},{1,3,7,5}};
+      for (const auto& face : faces) {
+        const auto& a = model[face[0]];
+        const auto& b = model[face[1]];
+        const auto& c = model[face[2]];
+        const Vec3 ab{b.x-a.x,b.y-a.y,b.z-a.z}, ac{c.x-a.x,c.y-a.y,c.z-a.z};
+        const Vec3 n{ab.y*ac.z-ab.z*ac.y,ab.z*ac.x-ab.x*ac.z,ab.x*ac.y-ab.y*ac.x};
+        const double length = std::sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
+        // Provisional fixed ambient/directional light makes tumbling legible.
+        const double shade = 0.5 + 0.5 * std::max(0.0,(-0.3*n.x+0.8*n.y-0.5*n.z) /
+                                                    std::max(length,1e-12));
+        for (const auto& ids : {std::array{0,1,2},std::array{0,2,3}}) {
+          std::array<std::array<double,4>,3> triangle;
+          std::array<std::array<double,2>,3> texcoords;
+          for (int k = 0; k < 3; ++k) {
+            triangle[k] = projected[face[ids[k]]];
+            texcoords[k] = uv[ids[k]];
+          }
+          raster.triangle(triangle,texcoords,texture,{shade,shade,shade},owner);
+        }
+      }
+      continue;
+    }
     if (p.piece >= 0 && std::size_t(p.piece) < deathSprites_.sprites.size()) {
       const auto& clip = deathSprites_.sprites[p.piece];
       if (!clip.animations.empty()) {
@@ -1064,6 +1151,8 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       int band = static_cast<int>(std::floor(quad.v[0].y / std::max(1e-9, mesh_.ringSpacing())));
       band = std::clamp(band, 0, bands - 1);
       const Tile* tile = findTile(quad.outerFacing, step / stepsPerCol, band / bandsPerRow);
+      if (tile == nullptr)
+        continue;
       std::array<std::array<double, 2>, 4> uv = {{{0, 0}, {0, 1}, {1, 1}, {1, 0}}};
       const std::array<double, 3> mod = {1.0, 1.0, 1.0};
       for (const auto& ids : {std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3}}) {
@@ -1073,7 +1162,8 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
           p[i] = projected[ids[i]];
           t[i] = uv[ids[i]];
         }
-        raster.triangle(p, t, tile ? tile->texture : Texture{}, mod);
+        // Deferred raster commands borrow this scene-owned texture through flush.
+        raster.triangle(p, t, tile->texture, mod);
       }
     }
   };
@@ -1393,7 +1483,16 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain) {
           const std::size_t key = static_cast<std::size_t>(layer) + (x + y * 0x101) * 2;
           if (key >= editKeys_.size() || editKeys_[key] != 0xFFFFFFFFu)
             continue;
-          const auto v = cylinderTemplateVertex(mesh_, x, y, layer, h);
+          // Ordinary excavation keeps its accepted provisional shaping. A
+          // corner belonging to steel must stay on the unchanged cylinder:
+          // 43D2B8 clamps with coordinate height world+28 (112), not the
+          // collision height (96), which collapses rows 80..96 onto row 80.
+          bool steelCorner = false;
+          for (int cy = y - 1; cy <= y; ++cy)
+            for (int cx = x - 1; cx <= x; ++cx)
+              steelCorner |= (collision_.at(cx, cy) & kCellIndestructible) != 0;
+          const int coordinateHeight = steelCorner ? static_cast<int>(mesh_.faceCount) : h;
+          const auto v = cylinderTemplateVertex(mesh_, x, y, layer, coordinateHeight);
           if (!v)
             continue;
           editKeys_[key] = static_cast<std::uint32_t>(mesh_.surface.size());

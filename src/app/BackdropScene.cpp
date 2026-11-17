@@ -1,3 +1,4 @@
+#include "app/RasterRows.h"
 #include "app/FrameProfile.h"
 #include "app/BackdropScene.h"
 #include "app/ExitBalloon.h"
@@ -47,7 +48,7 @@ void collectEyes(const SceneNode& n,const Matrix& parent,const Matrix& context,s
 // Kinds 4 and 5 share the facing predicate (0x46AE20 / 0x46AFA0, fluid research 6.3 B).
 bool passesKind5(const SceneMeshRecordSource& rec,const std::map<std::size_t,std::array<double,3>>& eyes){if((rec.kind!=4&&rec.kind!=5)||rec.corners.empty())return true;const auto it=eyes.find(rec.nodeSourceOffset);if(it==eyes.end())return false;const auto&e=it->second;const auto&v=rec.corners.front().localPosition;const auto&n=rec.corners.front().localNormal;const double facing=(e[0]-v[0])*n[0]+(e[1]-v[1])*n[1]+(e[2]-v[2])*n[2];return facing>0;}
 SceneRasterOptions options(bool alpha,bool blend,bool depthWrite=true){return {SceneFilter::Linear,SceneAddress::Wrap,alpha?SceneAlphaFunction::StrictGreater:SceneAlphaFunction::Disabled,0xef,blend,SceneBlendFactor::SrcAlpha,SceneBlendFactor::InvSrcAlpha,SceneDepthFunction::Less,depthWrite,SceneShade::Gouraud,SceneRgbOperation::Modulate,SceneAlphaOperation::Modulate,0.5,0.5};}
-SceneRgbaImage rgba(const Image& im){return {im.width,im.height,im.rgba};}// texture_name_flags (decomp-lemmings/src/texture_creation.cpp:21, 0x00472xxx name rule): the
+SceneRgbaImage rgba(Image&& im){return {im.width,im.height,std::move(im.rgba)};}// texture_name_flags (decomp-lemmings/src/texture_creation.cpp:21, 0x00472xxx name rule): the
 // first character of the basename selects the flag. Flags 1 and 2 share the `flags & 3` row of
 // 0x0047261F that the sprite render state below implements.
 std::uint32_t spriteTextureFlags(const std::string& sheet){
@@ -808,11 +809,12 @@ void BackdropScene::applyFluidState(SceneNode& g,const FluidRecord& rec,const Fl
 void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,BackdropStats& stats,SceneRasterObserver* observer) const {
  profile::ScenePass profilePass(profile::FluidRaster);
  if(!hasFluidState_||fluidRoots_.empty())return;
- SceneRgbaFramebuffer fb;fb.width=camera.width;fb.height=camera.height;fb.rgba.resize(target.framebuffer().rgb.size()/3*4);
+ SceneRgbaFramebuffer fb;fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
  const auto before=rgb;
- for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
+ if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
  const SceneRgbaImage white{1,1,{255,255,255,255}};
+ detail::RasterCommandBatch batch(camera.height, !observer);
  const auto context=predicateContext(camera);
  const auto scale=buildBillboardCameraChain(camera).projectionTransform[10];
  // Named provisional depth policy (see FluidDepthPolicy); the software projection bias below is the
@@ -860,22 +862,33 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
    }
    stats.fluidSubmissions.push_back(sub);
  }
- for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
+ {
+   profile::Scope rasterTime(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
+   for (const auto& error : batch.flush()) {
+     --stats.meshTriangles; ++stats.rejected; ++stats.rasterRejected;
+     stats.diagnostics.push_back(error);
+     std::fprintf(stderr, "backdrop: raster rejected: %s\n", error.c_str());
+   }
+ }
+ if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
  for(std::size_t i=0,n=rgb.size()/3;i<n;++i)if(rgb[3*i]!=before[3*i]||rgb[3*i+1]!=before[3*i+1]||rgb[3*i+2]!=before[3*i+2])++stats.fluidPixelsChanged;
 }
-void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer) const {
+void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer,std::vector<double>* depthOutput) const {
  if(stage==Stage::FluidGate){renderFluid(target,camera,stats,observer);return;}
+ if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(),
+       [&](const auto& root) { return root.source.stage == stage; })) return;
  // SceneRaster and legacy Raster share the same linear view-depth units here;
  // the choice is conditional software integration, not an effective-D3D claim.
- SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;fb.rgba.resize(target.framebuffer().rgb.size()/3*4);
+ SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
  const auto initialDepth=depth;
- for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
+ if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
  // Resolve diagnostic identities through owned-tree ancestry too; offsets
  // identify source records but never select their rendering stage.
  std::map<std::size_t,const RootSource*> nodeOwners;
  std::map<std::size_t,double> nodeBias;
  for(const auto& root:roots_){
+   if (root.source.stage != stage) continue;
    const auto own=[&](const auto& self,const SceneNode& n)->void{
      nodeOwners.emplace(n.sourceOffset,&root.source);
      nodeBias.emplace(n.sourceOffset,root.projectionBias);
@@ -889,14 +902,15 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    stats.diagnostics.push_back(message);
    std::fprintf(stderr,"backdrop: %s\n",message.c_str());
  };
- std::map<std::string,SceneRgbaImage> textures;
+ std::map<std::string,SceneRgbaImage> textures, spriteTextures;
  const auto getTexture=[&](const std::string& name,std::size_t node,std::size_t source)->const SceneRgbaImage*{
    if(name.empty()) return nullptr;
    auto it=textures.find(name);if(it!=textures.end())return &it->second;
    auto img=loadTexture(lib,"TEXTURES\\"+name+".BMP");if(!img){++stats.missingTextures;diagnose(describe(node,source)+"missing texture "+name+": "+img.error());return nullptr;}
-   return &textures.emplace(name,rgba(*img)).first->second;
+   return &textures.emplace(name,rgba(std::move(*img))).first->second;
  };
  const SceneRgbaImage white{1,1,{255,255,255,255}};
+ detail::RasterCommandBatch batch(camera.height, !observer);
   const auto context=predicateContext(camera);
   const auto meshProjectionScale=buildBillboardCameraChain(camera).projectionTransform[10];
   std::map<std::size_t,std::array<double,3>> eyes;
@@ -909,7 +923,20 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     // Primary retains the all-root census. Later passes need only their own
     // roots: they previously rebuilt and discarded the entire primary mesh.
     // Local facing predicates depend only on ancestors inside the owned root.
-    if (stage != Stage::Primary && owned.source.stage != stage) continue;
+    if (owned.source.stage != stage) {
+      if (stage == Stage::Primary) {
+        // Keep the all-root census without transforming/copying records that
+        // this stage never submits. Animation changes values, never topology.
+        const auto count = [&](const auto& self, const SceneNode& n) -> std::size_t {
+          std::size_t total = 0;
+          if (n.type == 1) for (const auto& mesh : n.meshes) total += mesh.records.size();
+          for (const auto& child : n.children) total += self(self, child);
+          return total;
+        };
+        stats.meshRecords += count(count, root);
+      }
+      continue;
+    }
     collectEyes(root, identity(), context, eyes);
     auto records = buildSceneMeshSource(root, identity(), camera.worldToView);
     if (!records) {
@@ -928,7 +955,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
   }
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
     if((rec.kind==4||rec.kind==5)&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}
-    const auto state=options(false,rec.blendSelector==1);
+    auto state=options(false,rec.blendSelector==1);
+    if (depthOutput) state.depthOutput = *depthOutput;
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
        auto adapted=adaptPackedSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],meshProjectionScale,nodeBias.at(rec.nodeSourceOffset),{a[2],a[3],a[4],a[5]},a[0],a[1]);
@@ -953,8 +981,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    // quad, can only be chosen when the node is actually drawn.
    std::map<std::size_t,PendingSprite> pendingSprites;
    collectBillboards(chain,[&](const RootSource& source,const SceneBillboardSource& b){if(source.stage!=stage)return;if(source.stage==Stage::Secondary)secondaryBillboards.emplace(b.sourceOffset,b);else if(source.stage==Stage::Primary)primaryBillboards.push_back(b);else legacyBillboards.push_back(b);},[&](const std::string& message){stats.diagnostics.push_back(message);std::fprintf(stderr,"backdrop: %s\n",message.c_str());},
-     [&](const RootSource& source,const SceneNode& n,const BillboardSourceInputs& in){if(source.stage==Stage::Secondary)pendingSprites.emplace(n.sourceOffset,PendingSprite{&n,in});});
-   std::map<std::string,SceneRgbaImage> spriteTextures;
+     [&](const RootSource& source,const SceneNode& n,const BillboardSourceInputs& in){if(source.stage==Stage::Secondary)pendingSprites.emplace(n.sourceOffset,PendingSprite{&n,in});}, stage);
+
    const auto drawSprite=[&](const PendingSprite& ps){
     const SceneNode& n=*ps.node;
     const auto info=sprites_.find(n.sourceOffset);if(info==sprites_.end())return;
@@ -979,7 +1007,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     if(cached==spriteTextures.end()){
       auto img=loadTexture(lib,asset);
       if(!img){++stats.missingTextures;sub.reason="missing texture "+asset;diagnose(describe(n.sourceOffset,n.sourceOffset)+"missing texture "+asset+": "+img.error());finish();return;}
-      cached=spriteTextures.emplace(asset,rgba(*img)).first;
+      cached=spriteTextures.emplace(asset,rgba(std::move(*img))).first;
     }
     ++stats.sprites;
     const auto state=spriteOptions(quad->blendSelector);
@@ -1004,7 +1032,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     // C3r's accepted normal-constructor census identifies all 17 retained type-2
     // resources as caret leaves => flags 8. Apply that conditional row here;
     // this is not a claim about cache hits or effective native device state.
-    const auto st=conditionalCaretFlags8Policy(options(true,b.blendSelector==1));
+    auto st=conditionalCaretFlags8Policy(options(true,b.blendSelector==1));
+    if (depthOutput) st.depthOutput = *depthOutput;
       std::uint64_t bi=0;for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){SceneRasterObserver tagged;if(observer){tagged=*observer;tagged.source=b.sourceOffset;tagged.triangle=bi;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st,observer?&tagged:nullptr);if(r)++stats.meshTriangles;else {++stats.rejected;++stats.rasterRejected;diagnose(describe(b.sourceOffset,b.sourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}++bi;}};
    const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;
    if(stage==Stage::Primary)stats.stageBillboards+=primaryBillboards.size();
@@ -1016,14 +1045,23 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     else if(item.type==2){auto it=secondaryBillboards.find(item.nodeSourceOffset);if(it!=secondaryBillboards.end())drawBillboard(it->second);
       else{auto sp=pendingSprites.find(item.nodeSourceOffset);if(sp!=pendingSprites.end())drawSprite(sp->second);}}
   },dispatchOptions());
- for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
+ {
+   profile::Scope rasterTime(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
+   for (const auto& error : batch.flush()) {
+     --stats.meshTriangles; ++stats.rejected; ++stats.rasterRejected;
+     stats.diagnostics.push_back(error);
+     std::fprintf(stderr, "backdrop: raster rejected: %s\n", error.c_str());
+   }
+ }
+ if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
   for(std::size_t i=0;i<depth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
 }
 void BackdropScene::collectBillboards(const BillboardSourceInputs& chain,
     const std::function<void(const RootSource&,const SceneBillboardSource&)>& visitor,
     const std::function<void(const std::string&)>& error,
-    const SpriteVisitor& sprite) const {
+    const SpriteVisitor& sprite, std::optional<Stage> stage) const {
  for(const auto& owned:roots_){
+   if (stage && owned.source.stage != *stage) continue;
    const auto walk=[&](const auto& self,const SceneNode& n,const Matrix& ancestors)->void{
      if(n.type==2){auto in=chain;in.parentCamera=multiply(chain.parentCamera,affine(ancestors));
        if(n.type2.branch!=0){

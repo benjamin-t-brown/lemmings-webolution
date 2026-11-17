@@ -30,9 +30,9 @@ under docs/playtest/replays/. Won so far: 20 of 102.
 | 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok | playtest 9 | retired (Y6 fix) |  |
 | 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok | playtest 10 | pass |  |
 | 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10, 11 | pass |  |
-| 19 | E19_KF_2 | Kriss Kross | ok |  |  | playtest 11 A7 (water and normal lemmings use each other's exit) |
-| 20 | MM_E1_4SKILLS | Sergeant Bash | ok | playtest 11 | pass | playtest 11 A8 (miner silent), A9 (basher two-hit) |
-| 21 | E20_mg_1 | The Crowded House | ok |  |  | playtest 11 A10 (dig tilts metal terrain), A11 (dig silent) |
+| 19 | E19_KF_2 | Kriss Kross | ok |  |  | playtest 11 A7 fixed in queue run 2026-11-17, not yet seen by a person |
+| 20 | MM_E1_4SKILLS | Sergeant Bash | ok | playtest 11 | pass | A8, A9 fixed in queue run 2026-11-17, not yet seen by a person |
+| 21 | E20_mg_1 | The Crowded House | ok |  |  | playtest 11 A10, A11 fixed in queue run 2026-11-17, not yet seen by a person |
 | 22 | MM_ALL_8_001 | One Way Ticket | ok |  |  |  |
 | 23 | MM_E1_5_Skills | Swings Both Ways | ok |  |  |  |
 | 24 | MM_ALL_8_002 | Wandering Free | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |

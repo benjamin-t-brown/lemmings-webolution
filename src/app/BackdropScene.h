@@ -178,7 +178,8 @@ class BackdropScene {
   static std::expected<BackdropScene,std::string> build(const AssetLibrary&, std::span<const std::byte> level, std::string_view levelId);
   void render(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&) const;
   void renderStage(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&, Stage,
-                  SceneRasterObserver* observer = nullptr) const;
+                  SceneRasterObserver* observer = nullptr,
+                  std::vector<double>* depthOutput = nullptr) const;
   // Runs the production parsed-tree traversal; explicit inputs are a fixture seam.
   void visitBillboards(const BillboardSourceInputs& cameraChain,
                        const std::function<void(const SceneBillboardSource&)>& visitor) const;
@@ -278,7 +279,7 @@ class BackdropScene {
   void collectBillboards(const BillboardSourceInputs&,
       const std::function<void(const RootSource&, const SceneBillboardSource&)>&,
       const std::function<void(const std::string&)>& error,
-      const SpriteVisitor& sprite = {}) const;
+      const SpriteVisitor& sprite = {}, std::optional<Stage> stage = std::nullopt) const;
 };
 }
 }

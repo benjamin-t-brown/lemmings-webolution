@@ -66,16 +66,15 @@ void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h) 
 
 void drawRuntimeNukeFeedback(Image& image, const Image& font, const sim::World& world, bool armed) {
   if (!armed && !world.nukeRequested()) return;
-  // PROVISIONAL control feedback: gold outline, confirmation hint and the
-  // shared level-clock countdown. Native confirmation/overlay pixels unread.
+  // PROVISIONAL control feedback: gold outline and confirmation/status hint.
+  // The large countdown is composed with the level's Let's Go text in main.
   for (int y = 372; y < std::min(404, image.height); ++y)
     for (int x = 18; x < std::min(90, image.width); ++x)
       if (x < 20 || x >= 88 || y < 374 || y >= 402) {
         const auto p = (std::size_t(y) * image.width + x) * 4;
         image.rgba[p] = 255; image.rgba[p+1] = 220; image.rgba[p+2] = 64;
       }
-  const std::string text = !world.nukeRequested() ? "CLICK AGAIN" :
-      world.nukeCountdownMs() > 0 ? "NUKE " + std::to_string((world.nukeCountdownMs()+999)/1000) : "NUKE";
+  const std::string text = !world.nukeRequested() ? "CLICK AGAIN" : "NUKE";
   const shell::HudLine line{text, 100, 380, {255,220,64}};
   shell::drawHud(image, font, std::span(&line, 1), shell::fontCells());
 }

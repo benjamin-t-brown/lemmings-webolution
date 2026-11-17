@@ -36,7 +36,7 @@ public:
   // the existing additive mix. The policy is provisional, not retail mixing.
   // SkipPlaying is an additive one-shot, suppressed while the same clip is
   // still audible. No delayed requests or looping voice are created.
-  // RestartPlaying preserves every warning's attack without stacking tails.
+  // RestartPlaying starts each work/warning attack without stacking tails.
   enum class Overlap { Add, Average, SkipPlaying, RestartPlaying };
 
   Mixer() = default;
@@ -76,6 +76,7 @@ public:
   void stopAll();
 
 private:
+  friend struct WorkSoundTestAccess;
   struct Clip {
     std::vector<std::int16_t> samples;  // interleaved, mix format
   };

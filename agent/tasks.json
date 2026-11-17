@@ -20418,7 +20418,7 @@
     {
       "id": "letsgo-voice-with-text-001",
       "title": "Play the Let's Go voice when the Let's Go text first appears",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20433,12 +20433,88 @@
         "The Let's Go text presentation is unchanged from commit d84e1f8, and test_levelreturn.cpp is unchanged and passes.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T043356-15712-ec02e6d7",
+      "started": "2026-11-17T04:33:56.648969+00:00",
+      "finished": "2026-11-17T04:40:12.753953+00:00",
+      "last_run": "build/agent-runs/20261117T043356-15712-ec02e6d7",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the source diff and retained verification. The voice request now shares the first text-draw branch, with a per-attempt latch. Human listening remains the next playtest confirmation; original-game fidelity is not established.",
+        "checks": [
+          {
+            "criterion": "On entering or retrying any level the Letsgo voice starts on the frame the Let's Go text first appears and plays once; nothing plays at first hatch release.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "entryVoicePending is initialized for each runApplicationLeg, including Retry. The first materialized cueFrame calls drawEntryStartCue and immediately requests LevelStart, consuming the latch. The spawned()>0 trigger is removed, and no other production LevelStart request remains. Pause, fast-forward and later hatches cannot retrigger it. Replay returns before playback construction; --no-audio disables routing."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "LevelStart routes to Letsgo through playName and Mixer::play. Disabled playback returns without routing. Original pre-release playback evidence is distinguished from the provisional, user-requested clone text alignment."
+              }
+            ]
+          },
+          {
+            "criterion": "The Let's Go text presentation is unchanged from commit d84e1f8, and test_levelreturn.cpp is unchanged and passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/EntryStartCue.cpp",
+                "detail": "Independent git comparison against d84e1f8 shows no differences in this implementation or its header. Entry/Retry countdowns, shrink geometry, blending and retirement remain unchanged. The main.cpp comparison preserves the text inputs, clock advancement, draw call and overlay order."
+              },
+              {
+                "path": "src/__test__/test_levelreturn.cpp",
+                "detail": "Independent git comparison against d84e1f8 shows no differences."
+              },
+              {
+                "path": "build/agent-runs/20261117T043356-15712-ec02e6d7/verification.log",
+                "detail": "Supervisor smoke verification records levelreturn passing in 35.13 seconds, entrystartcue in 0.01 seconds and cueplayback in 0.17 seconds."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/letsgo-voice-with-text-001/replays.json",
+                "detail": "Records commands and individual logs for all 17 active promoted recordings. Each exits 0 with PASS, won=1 and completed=1; individual replay logs independently confirm these results."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active recordings as .replay files and documents previously retired recordings. Repository enumeration matches the 17 recorded runs; the task changes no recording or replay checker. These results establish simulation regression coverage, not audible synchronization."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T043356-15712-ec02e6d7/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests, with zero failures."
+              },
+              {
+                "path": "docs/scratch/letsgo-voice-with-text-001.md",
+                "detail": "Ends with a what-to-check note naming MM_CLIMB_002 entry/Retry, pause and fast-forward, M06_KF_1 later releases, and --no-audio, with expected results. It documents the production path, provisional alignment, limitations and two-line handoff. Its pending-smoke wording predates the successful supervisor run."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T04:41:35.045261+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T043356-15712-ec02e6d7\\verification.log",
+        "verified_content": "e4430ae1436085148ee4a1c94dd1e53f4fe3d69fdf61b08c10dc935b5192c86f"
+      }
     },
     {
       "id": "steel-blast-dig-tilt-001",
       "title": "Explosions and dig tilt must leave metal terrain alone",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20453,12 +20529,112 @@
         "On The Crowded House a dig beside metal terrain leaves the metal cell's shape unchanged while snow or ordinary neighbours still tilt; the reshaping code path is named.",
         "Any promoted recording that diverges because a recorded explosion or dig touched steel is listed with its step.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T044135-15712-af68e7ea",
+      "started": "2026-11-17T04:41:35.399845+00:00",
+      "finished": "2026-11-17T04:57:35.953240+00:00",
+      "last_run": "build/agent-runs/20261117T044135-15712-af68e7ea",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained checks, replay results and supervisor smoke verification. The material-specific mesh policy is explicitly provisional; human playtest confirmation and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "A Bomber or nuked lemming exploding beside or on steel leaves every steel cell intact in collision and on screen, while ordinary terrain is still cratered; the report names a level and cell where this can be seen.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Bomber and Nuke both reach stepExploder -> explode -> Terrain::clearExplosion."
+              },
+              {
+                "path": "src/sim/Terrain.cpp",
+                "detail": "clearExplosion already skips Material::Steel while clearing ordinary cells. No simulation change was needed."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "syncTerrain preserves unchanged steel collision words and generates missing steel-adjacent corners using the cylinder coordinate height, preventing the former top-band collapse."
+              },
+              {
+                "path": "docs/scratch/steel-blast-dig-tilt-001.md",
+                "detail": "Names The Crowded House, E20_MG_1, steel file cell (141,81), clone cell (141,14), and gives Bomber/Nuke actions and expected visible behavior."
+              },
+              {
+                "path": "build/steel-blast-dig-tilt-001/focused-final.xml",
+                "detail": "Retained passing checks cover Bomber/Nuke steel collision with ordinary cratering and the installed level's rebuilt steel face. These supplement source review rather than establish human visual acceptance."
+              }
+            ]
+          },
+          {
+            "criterion": "On The Crowded House a dig beside metal terrain leaves the metal cell's shape unchanged while snow or ordinary neighbours still tilt; the reshaping code path is named.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/assets/CellMesh.cpp",
+                "detail": "Runtime rebuilds partition vertical runs and horizontal merges at steel boundaries. Full mixed blocks retain their wall flags; load-time meshing remains unchanged."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Missing corners incident to steel use mesh_.faceCount as coordinate height; ordinary corners retain the previous shaping. Existing stored vertices are preserved."
+              },
+              {
+                "path": "docs/scratch/steel-blast-dig-tilt-001.md",
+                "detail": "Names the shared path through syncTerrain, cylinderTemplateVertex, rebuildCellMeshCells and Builder::partLists/mesh0/mesh4. Explains why file row 81 formerly became Y=80 and now remains Y=81 beside steel."
+              },
+              {
+                "path": "build/steel-blast-dig-tilt-001/focused-final.xml",
+                "detail": "The installed dig check passes steel collision preservation, the unchanged steel face, the protected Y=81 side corner and retained ordinary shaping."
+              },
+              {
+                "path": "build/steel-blast-dig-tilt-001/static/crosscheck.txt",
+                "detail": "Retained instructions show blast exemptions for steel at 0x43F61B/0x43F620, water-zone mask 0x200 at 0x43F62B/0x43F633 and blocker mask 0x800 at 0x43F63E/0x43F645. The report explicitly records the existing water-zone omission without expanding this fix."
+              }
+            ]
+          },
+          {
+            "criterion": "Any promoted recording that diverges because a recorded explosion or dig touched steel is listed with its step.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/steel-blast-dig-tilt-001/replays.json",
+                "detail": "Lists all 17 active promoted recordings with exact commands, completion steps and individual logs. Every run exits 0 with PASS, won=1 and completed=1; no divergence requires retirement."
+              },
+              {
+                "path": "docs/scratch/steel-blast-dig-tilt-001.md",
+                "detail": "Explicitly reports no divergence or retirement request and distinguishes unpromoted Crowded House attempts from promoted regression recordings."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T044135-15712-af68e7ea/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests and all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T044135-15712-af68e7ea/result.json",
+                "detail": "Records verification exit code 0 and verified_content e942bc2cfea102a701fbc1e8d683e3d7e2e1ddd831c4a45fbf4525f5fc649bd6, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/steel-blast-dig-tilt-001.md",
+                "detail": "Ends with a what-to-check note specifying The Crowded House, the upper snow shelf beside steel columns 141..143, dig/Bomber/Nuke actions and expected intact metal with ordinary excavation."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T04:59:30.874761+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T044135-15712-af68e7ea\\verification.log",
+        "verified_content": "e942bc2cfea102a701fbc1e8d683e3d7e2e1ddd831c4a45fbf4525f5fc649bd6"
+      }
     },
     {
       "id": "work-sounds-001",
       "title": "Explosion, miner and digger sounds",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20474,12 +20650,239 @@
         "Only the cueplayback assertions that required explosion silence changed, quoted before and after; every other smoke assertion is untouched and passes.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261117T051111-15712-c30ce772",
+      "started": "2026-11-17T05:11:11.343838+00:00",
+      "finished": "2026-11-17T05:17:50.649511+00:00",
+      "last_run": "build/agent-runs/20261117T051111-15712-c30ce772",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Work sounds do not play on every successful stroke: SkipPlaying discards requests during fast-forward and overlapping excavation. Use a bounded audio policy that preserves each stroke's attack without changing simulation. The other criteria pass.",
+        "checks": [
+          {
+            "criterion": "A single Bomber plays the explosion sample when it explodes, and a nuke plays explosion sounds without Ohno and without distortion from stacking; sample and trigger are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "explode emits Explode; cue suppresses OhNo during Nuke and coalesces buffered explosions."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Routes Explode to the installed sample using RestartPlaying. Mixer::play removes existing voices of that clip before starting another, preventing summed explosion tails."
+              },
+              {
+                "path": "build/work-sounds-001/static/crosscheck.txt",
+                "detail": "Retained instructions show Explode registration at 0x45E570..0x45E582 and playback of handle 0x4E32C0 at 0x40821C. The report labels the clone trigger and single-voice overlap policy provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "A miner and a digger each make their work sound on every successful stroke and stop when they stop; samples and triggers are cited or labelled provisional.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepMiner and stepDigger correctly emit Work only when terrain removal succeeds, but emission alone does not ensure playback."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Line 116 applies SkipPlaying to every Work cue. The observer runs at line 129 before Mixer::play, so observer counts include discarded requests."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Lines 151\u2013161 return without starting a voice whenever the Mine clip is already playing. This suppresses successful strokes from concurrent workers and repeated fast-forward strokes."
+              },
+              {
+                "path": "build/work-sounds-001/focused.log",
+                "detail": "Installed MINE.WAV lasts 0.621134 seconds. RuntimeHud.h defines seven fast-forward passes, while World.h defines 1.2-second digger and 1.5-second miner cycles; fast-forward strokes can therefore recur before the sample finishes."
+              },
+              {
+                "path": "src/__test__/test_gameplay_sounds.cpp",
+                "detail": "excavation counts observer notifications without starting the playback device. Its passing sounds==strokes assertion cannot detect the production mixer's dropped strokes."
+              },
+              {
+                "path": "docs/scratch/work-sounds-001.md",
+                "detail": "Explicitly acknowledges discarded overlapping-worker and fast-forward requests. Labelling this provisional does not satisfy the exact every-successful-stroke requirement."
+              }
+            ]
+          },
+          {
+            "criterion": "Only the cueplayback assertions that required explosion silence changed, quoted before and after; every other smoke assertion is untouched and passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/work-sounds-001/task-only.patch",
+                "detail": "Smoke assertion changes are confined to the explosion-dependent route count, unrouted status and Bomber silence expectation. The unrelated Chink prohibition remains; EXPLODE.WAV is added to the fixture."
+              },
+              {
+                "path": "docs/scratch/work-sounds-001.md",
+                "detail": "Quotes the before and after assertion lines, including routes.size()==7 becoming 8 and the Explode prohibition becoming a one-blast expectation."
+              },
+              {
+                "path": "build/agent-runs/20261117T045930-15712-4a3becdc/verification.log",
+                "detail": "All 95 main smoke tests passed, including cueplayback."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/work-sounds-001/replays.json",
+                "detail": "Records commands and individual logs for all 17 active promoted recordings, matching the current replay inventory. Every result has exit code 0, PASS, won=1 and completed=1; no new divergence is reported."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T045930-15712-4a3becdc/verification.log",
+                "detail": "Supervisor verification passed 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T045930-15712-4a3becdc/result.json",
+                "detail": "Records verifier exit code 0 and verified_content matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/work-sounds-001.md",
+                "detail": "Ends with level/action/expected-result checks for Bomber and Nuke on MM_BOMB, mining on Sergeant Bash, and digging on The Crowded House."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Work sounds do not play on every successful stroke: SkipPlaying discards requests during fast-forward and overlapping excavation. Use a bounded audio policy that preserves each stroke's attack without changing simulation. The other criteria pass.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves the prior dropped-stroke defect with bounded sample restarts. All five criteria are supported by source, retained PCM results, replay logs and supervisor verification. Human listening and original mixing fidelity remain unverified.",
+        "checks": [
+          {
+            "criterion": "A single Bomber plays the explosion sample when it explodes, and a nuke plays explosion sounds without Ohno and without distortion from stacking; sample and trigger are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "explode emits Explode. World::cue suppresses OhNo during Nuke and coalesces buffered explosion cues."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Routes Explode to the installed Explode sample using RestartPlaying."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "RestartPlaying removes existing voices for the same clip under the device lock before starting a fresh voice, preventing summed explosion tails."
+              },
+              {
+                "path": "build/work-sounds-001/static/crosscheck.txt",
+                "detail": "Retained instructions show Explode registration at 0x45E570..0x45E582 and playback of handle 0x4E32C0 at 0x40821C."
+              },
+              {
+                "path": "docs/scratch/work-sounds-001.md",
+                "detail": "Identifies SOUNDS\\EXPLODE.WAV and explicitly labels the clone blast trigger and single-voice restart policy provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "A miner and a digger each make their work sound on every successful stroke and stop when they stop; samples and triggers are cited or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepMiner and stepDigger emit Work only when their existing terrain-clear operations remove cells. Work cues are not coalesced; refusal and stopped work generate no further requests."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Work routes to Mine with RestartPlaying, replacing the prior SkipPlaying policy that discarded overlapping and fast-forward strokes."
+              },
+              {
+                "path": "src/__test__/test_work_sound.cpp",
+                "detail": "Exercises production CuePlayback, Mixer::play and Mixer::fill. Checks fresh sample-zero PCM at overlapping-worker and fast-forward intervals, bounded burst playback, preservation of another effect, and silence after the final one-shot."
+              },
+              {
+                "path": "build/work-sounds-001/revision/focused.xml",
+                "detail": "Records passing gameplay_sounds and work_sound tests; captured output confirms installed Mine PCM was checked with zero failures."
+              },
+              {
+                "path": "build/work-sounds-001/static/crosscheck.txt",
+                "detail": "Mine registration stores the handle at receiver+0x1C8E0. Miner playback occurs at 0x418D39 after successful clearing; digger playback occurs at 0x415D81."
+              },
+              {
+                "path": "docs/scratch/work-sounds-001.md",
+                "detail": "Identifies SOUNDS\\MINE.WAV and labels hybrid stroke cadence and overlap policy provisional. Discloses truncated tails and shared attacks for requests within one callback interval."
+              }
+            ]
+          },
+          {
+            "criterion": "Only the cueplayback assertions that required explosion silence changed, quoted before and after; every other smoke assertion is untouched and passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/work-sounds-001/task-only.patch",
+                "detail": "Smoke assertion changes are confined to explosion-dependent route count, unrouted status and Bomber silence expectations. The unrelated Chink prohibition remains; EXPLODE.WAV is added to the fixture."
+              },
+              {
+                "path": "build/work-sounds-001/revision/revision-only.patch",
+                "detail": "The revision changes the Work overlap policy and adds a legacy PCM unit with narrow test access. It changes no existing smoke assertion, registration or timeout."
+              },
+              {
+                "path": "docs/scratch/work-sounds-001.md",
+                "detail": "Quotes the complete before/after assertion lines, including seven routes becoming eight and explosion silence becoming a one-blast expectation."
+              },
+              {
+                "path": "build/agent-runs/20261117T051111-15712-c30ce772/verification.log",
+                "detail": "All 95 main smoke tests pass, including cueplayback."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/work-sounds-001/revision/replays.json",
+                "detail": "Lists all 17 active promoted recordings with exact commands and individual logs. Each returns exit code 0, PASS, won=1 and completed=1; the individual retained logs corroborate these results."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active recordings as .replay files and documents earlier lead-approved retirements. The current active inventory matches the 17 revision results; this task changes no recordings."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T051111-15712-c30ce772/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T051111-15712-c30ce772/result.json",
+                "detail": "Records verifier exit code 0 and verified_content d11c5502135f6bb54c33ed9bdf0c154c59510272382cd9eafb78b4a5ec7d6b8f, matching the review context."
+              },
+              {
+                "path": "docs/scratch/work-sounds-001.md",
+                "detail": "Ends with level/action/expected-result checks for Bomber and Nuke on MM_BOMB, mining on Sergeant Bash and digging on The Crowded House. Its pending-smoke wording predates the completed supervisor verification."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T05:19:31.137546+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T051111-15712-c30ce772\\verification.log",
+        "verified_content": "d11c5502135f6bb54c33ed9bdf0c154c59510272382cd9eafb78b4a5ec7d6b8f"
+      }
     },
     {
       "id": "exit-tribe-001",
       "title": "Water lemmings and normal lemmings use only their own exit",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20494,12 +20897,112 @@
         "The tribe of each hatch and exit is cited to level data or static evidence; levels with mixed tribes or water exits are listed with their exits, and none is left without a usable exit for a tribe it releases.",
         "Any promoted recording that diverges is listed with its step and reason (Introducing - Water Lemmings, MM_W_012, in particular must still be winnable).",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T051931-15712-08edf03a",
+      "started": "2026-11-17T05:19:31.502032+00:00",
+      "finished": "2026-11-17T05:34:29.137091+00:00",
+      "last_run": "build/agent-runs/20261117T051931-15712-08edf03a",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production diff, retained static evidence, installed-level census, replay results and supervisor smoke pass. Human playtest confirmation remains pending; this does not establish original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "On Kriss Kross a water lemming reaching the normal balloon is not saved and carries on, and likewise a normal lemming at the water exit; each is saved at its own exit.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.h",
+                "detail": "Exit::accepts requires matching sheetType or exit type 4, and excludes actor type 3."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::atExit skips incompatible exits. World::step changes state to Exited, increments saved_ and emits the exit cue only after a compatible overlap; rejected actors continue their existing state."
+              },
+              {
+                "path": "build/exit-tribe-001/static/query-2.json",
+                "detail": "For registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, instructions at 0x426B79\u20130x426B91 compare actor +0x4C with exit +0x98, accepting equality or exit type 4. Mismatch advances to the next actor at 0x426C4B; 0x426BB7 excludes type 3."
+              },
+              {
+                "path": "build/exit-tribe-001/kriss-kross-attempt.log",
+                "detail": "The unchanged human attempt diverges at step 1194: expected 26/1/0 spawned/saved/dead becomes 26/0/0 at the same clock and phase, consistent with rejecting the former wrong-tribe save."
+              }
+            ]
+          },
+          {
+            "criterion": "The tribe of each hatch and exit is cited to level data or static evidence; levels with mixed tribes or water exits are listed with their exits, and none is left without a usable exit for a tribe it releases.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Hatch types populate Entrance.sheetType. Serialized Entity426c6b.value_98 now populates Exit.sheetType in stream order, with count disagreement or decoder failure reported as a load error."
+              },
+              {
+                "path": "build/exit-tribe-001/static/query-4.json",
+                "detail": "Instructions at 0x426D0C and 0x426D14 read the serialized word and store it at exit +0x98, corroborating the recovered reader."
+              },
+              {
+                "path": "build/exit-tribe-001/coverage.csv",
+                "detail": "Contains all 102 levels with hatch tribes/populations, exit tribes/boxes/models and sweep counts. Every row has usable=1. Kriss Kross releases 15 water and 15 normal actors, with water exit (50,89) and normal exit (76,89)."
+              },
+              {
+                "path": "build/exit-tribe-001/census-and-units.log",
+                "detail": "Reports 102 levels, 111 exits and zero failures. The corresponding test checks serialized type propagation, exit-box correlation and a compatible exit for every nonempty hatch."
+              },
+              {
+                "path": "docs/scratch/exit-tribe-001.md",
+                "detail": "Lists all 21 relevant levels and their exits: 13 mixed-tribe levels and 14 water-exit levels, with six overlapping. Explicitly distinguishes tribe compatibility from geometric reachability or all-level winnability."
+              }
+            ]
+          },
+          {
+            "criterion": "Any promoted recording that diverges is listed with its step and reason (Introducing - Water Lemmings, MM_W_012, in particular must still be winnable).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-tribe-001/replay-summary.json",
+                "detail": "Lists all 17 active promoted recordings with exit code 0, PASS, won=1 and completed=1. No promoted recording diverged."
+              },
+              {
+                "path": "build/exit-tribe-001/MM_W_012-1794811181667577800-9.log",
+                "detail": "Introducing - Water Lemmings completes its existing recorded human route at step 1742, saving 16 against a requirement of 10."
+              },
+              {
+                "path": "docs/scratch/exit-tribe-001.md",
+                "detail": "Reports each promoted result and separately identifies the unpromoted Kriss Kross divergence at step 1194, explaining the rejected wrong-tribe save. No recording was changed or retired."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T051931-15712-08edf03a/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests; diff checking also succeeds."
+              },
+              {
+                "path": "build/agent-runs/20261117T051931-15712-08edf03a/result.json",
+                "detail": "Records verifier exit code 0 for verified content b50890aa8edbb83a4213104189a69b3c364b5773ff1caacb6972aa4cdb0aed56, matching the review context."
+              },
+              {
+                "path": "docs/scratch/exit-tribe-001.md",
+                "detail": "Ends with concrete checks for Kriss Kross wrong-tribe pass-through and matching-tribe saves, followed by the usual MM_W_012 winning route. Its pending-verification wording describes worker handoff; the later supervisor log establishes the pass."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T05:36:20.158378+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T051931-15712-08edf03a\\verification.log",
+        "verified_content": "b50890aa8edbb83a4213104189a69b3c364b5773ff1caacb6972aa4cdb0aed56"
+      }
     },
     {
       "id": "basher-two-hit-001",
       "title": "Basher removes each wall piece in two hits, bottom half first",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20515,12 +21018,130 @@
         "Steel, open-air stop and other basher rules behave as before; the sweep still passes.",
         "Promoted recordings that diverge are listed with step and reason; recordings without a basher still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T053620-15712-3ef8f1d4",
+      "started": "2026-11-17T05:36:20.536076+00:00",
+      "finished": "2026-11-17T05:47:22.287161+00:00",
+      "last_run": "build/agent-runs/20261117T053620-15712-3ef8f1d4",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria are supported by the production call path, retained static evidence, replay results and supervisor smoke log. Acceptance is scoped to this clone fix; human confirmation and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Just Bash (MM_BASH_002) each punch makes the sound and debris; the first punch on a wall piece removes its bottom half, the second its top half, visibly and in collision, and the basher then advances.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepBasher clears the lower two rows at 12%, the upper two at 60%, and advances at 92%. Each successful punch invokes clearSkillBox's terrain-cut observer and queues Bash."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production observer calls emitTerrainDebris; frame preparation calls syncTerrain, propagating each punch's surviving collision rows into the rendered mesh."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Bash shares the Work/Mine route. RestartPlaying starts a fresh attack for each request instead of suppressing the second punch."
+              },
+              {
+                "path": "src/__test__/test_basher_two_hit.cpp",
+                "detail": "Retained checks cover per-punch cues/debris, both seam directions and delayed advance. The installed MM_BASH_002 check verifies lower-then-upper removal at column 152, rows 52\u201355, with updated collision and mesh after each punch."
+              },
+              {
+                "path": "build/basher-two-hit-001/focused.log",
+                "detail": "All four focused checks passed, including basher_two_hit, world, gameplay_sounds and terrain_debris."
+              }
+            ]
+          },
+          {
+            "criterion": "The half-cell mechanism is cited to static evidence or labelled provisional, and the change in time per cell is stated.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-two-hit-001/static/40bba0-instructions.json",
+                "detail": "For reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained instructions corroborate callbacks with row arguments 0/1/3/2 at 12/16/60/64%, and the 92% commit callback at 0x40BF3F\u20130x40BF55."
+              },
+              {
+                "path": "build/basher-two-hit-001/static/40c0af-1.json",
+                "detail": "0x40C16D zeroes the addressed ordinary grid cell; 0x40C18C requests rebuilding. Subpasses 0/3 select debris and the Mine play call at 0x40C32F. This supports splitting a four-row wall slice through ordinary cell removal."
+              },
+              {
+                "path": "build/basher-two-hit-001/static/40c6e8-instructions.json",
+                "detail": "0x40C70F\u20130x40C73C adds facing, wraps/truncates and stores actor X, corroborating the later column advance."
+              },
+              {
+                "path": "docs/scratch/basher-two-hit-001.md",
+                "detail": "Explicitly labels paired-row coalescing and 5 Hz sampling provisional. States that steady crossing remains 1440 ms per column, while upper-half removal shifts to 60% and advance shifts from 12% to 92%; original animation alignment remains unproven."
+              }
+            ]
+          },
+          {
+            "criterion": "Steel, open-air stop and other basher rules behave as before; the sweep still passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-two-hit-001/task-only.patch",
+                "detail": "Preserves the whole-footprint steel preflight, lower-punch air/grace decision, tunnel footprint, grace count and post-advance support probe. No one-way importer behavior changes."
+              },
+              {
+                "path": "src/__test__/test_world.cpp",
+                "detail": "Existing steel refusal, short-of-wall grace, sustained-air stop and tunnel-boundary assertions remain. The cadence expectation changes directly address the demonstrated whole-bite defect and additionally assert bottom-first survival and deferred advance."
+              },
+              {
+                "path": "docs/scratch/basher-two-hit-001.md",
+                "detail": "Discloses the unchanged overhang approximation, missing imported directional bash/mine flags and unproven inverted behavior; it does not claim these fidelity gaps were resolved."
+              },
+              {
+                "path": "build/agent-runs/20261117T053620-15712-3ef8f1d4/verification.log",
+                "detail": "World and all 17 installed-level sweep chunks passed within the 95-test main smoke run."
+              }
+            ]
+          },
+          {
+            "criterion": "Promoted recordings that diverge are listed with step and reason; recordings without a basher still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-two-hit-001/replays.json",
+                "detail": "Records exact commands and results for all 17 active promoted recordings: every run exited zero with PASS, won=1 and completed=1. Four contain accepted Basher assignments; the remaining thirteen contain none."
+              },
+              {
+                "path": "docs/scratch/basher-two-hit-001.md",
+                "detail": "Lists all replay final steps and outcomes, identifies the four Basher recordings and assignment steps, and explicitly reports no divergences or retirements. Notes that passing checkpoints do not observe every terrain cut."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T053620-15712-3ef8f1d4/verification.log",
+                "detail": "Supervisor verification passed 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T053620-15712-3ef8f1d4/result.json",
+                "detail": "Records verifier exit code zero and verified content 503b72ddc8ed5f953b879720e4779e57091ac65710ac41b5348ed9b84937a024."
+              },
+              {
+                "path": "docs/scratch/basher-two-hit-001.md",
+                "detail": "Ends with a what-to-check note naming Just Bash/MM_BASH_002 and Sergeant Bash/MM_E1_4SKILLS, the Basher assignment action, and expected sound, chips, bottom-first removal, later advance and preserved stopping behavior. Its pending-supervisor wording reflects the report's pre-verification handoff."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T05:50:00.265967+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T053620-15712-3ef8f1d4\\verification.log",
+        "verified_content": "503b72ddc8ed5f953b879720e4779e57091ac65710ac41b5348ed9b84937a024"
+      }
     },
     {
       "id": "nuke-countdown-text-001",
       "title": "Show the nuke countdown as big text across the centre",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20535,12 +21156,108 @@
         "Glyph source, size and position are cited to static evidence or labelled provisional.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T055000-15712-e6acd6fd",
+      "started": "2026-11-17T05:50:00.627759+00:00",
+      "finished": "2026-11-17T06:00:20.508537+00:00",
+      "last_run": "build/agent-runs/20261117T055000-15712-e6acd6fd",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained static evidence, replay results and supervisor smoke verification. Provisional presentation choices are explicit; human playability and original-game fidelity are not claimed.",
+        "checks": [
+          {
+            "criterion": "After pressing nuke on any level, a large countdown is drawn across the centre of the level view, counts down in step with the lemmings' fuses and disappears when they explode; pause holds it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The shared level HUD reads nukeCountdownMs(), displays ceil(remainingMs/1000) through drawEntryStartCue, and stops drawing at zero. Each digit expands around (325,246), reaching 160x206 logical pixels halfway through its second. There is no level-specific restriction or separate presentation clock."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::nuke initializes the existing 5000 ms countdown. stepNuke spends simulation elapsed time and starts the existing staggered Exploder phase after expiry. This task leaves that timing unchanged."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "RuntimeSimState::advanceElapsed returns before advancing World while paused. Consequently both the displayed digit and its expansion hold; fast-forward follows the existing simulation passes."
+              },
+              {
+                "path": "src/app/EntryStartCue.cpp",
+                "detail": "drawEntryStartCue stretches the selected font glyph into the supplied rectangle and composites it additively above the scene, using the same production path as Let's Go."
+              }
+            ]
+          },
+          {
+            "criterion": "Glyph source, size and position are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/nuke-countdown-text-001/static/update-instructions.json",
+                "detail": "Retained Ghidra instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show countdown subtraction at 0x413F50..0x413F58, decimal formatting and blank-six handling at 0x414009..0x414020, font construction at 0x414034..0x41403B, and growth calculation at 0x414040..0x414067."
+              },
+              {
+                "path": "decomp-lemmings/docs/evidence/world_entity_pass.asm",
+                "detail": "0x4426BF..0x4426C9 constructs the five-second overlay; 0x44279A..0x4427B2 supplies anchor (320,240) with the centred flag."
+              },
+              {
+                "path": "build/nuke-countdown-text-001/static/anchor-instructions.json",
+                "detail": "0x414178 and 0x414187 add (5,6) to the centred anchor."
+              },
+              {
+                "path": "build/nuke-countdown-text-001/static/layout-instructions.json",
+                "detail": "0x4141AB..0x4141C2 converts growth to horizontal and vertical expansion; 0x414209..0x414244 establishes the centred rectangle, and 0x414284..0x414297 requests additive mode 3."
+              },
+              {
+                "path": "docs/scratch/nuke-countdown-text-001.md",
+                "detail": "Connects the installed ^FONT.BMP and existing 13x29 digit cells to the compositor. Explicitly labels the fixed native-mode factor, integer-ms digit boundaries and software rendering limitations provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/nuke-countdown-text-001/replays.json",
+                "detail": "Records all 17 active promoted replay files, exact commands and outputs. Every run exited zero with PASS, won=1 and completed=1; the listed files match the active repository recordings."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active .replay files as the regression set and documents previously retired recordings. No recording was changed or retired by this task."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T055000-15712-e6acd6fd/verification.log",
+                "detail": "Supervisor verification passed all 95 main smoke tests and all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T055000-15712-e6acd6fd/result.json",
+                "detail": "Records verification exit code 0 and verified_content e954891c589f6c820b305b16226bc9d9a40b72771d136a82a5215966d6961c7e, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/nuke-countdown-text-001.md",
+                "detail": "Ends with a what-to-check note naming MM_CLIMB_002 and MM_BOMB, double-click Nuke, expanding 5..1 digits, disappearance at the explosion wave, pause/resume, fast-forward and Retry behavior. Its worker-time pending-verification statement is superseded by the subsequent supervisor pass."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T06:02:33.768075+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T055000-15712-e6acd6fd\\verification.log",
+        "verified_content": "e954891c589f6c820b305b16226bc9d9a40b72771d136a82a5215966d6961c7e"
+      }
     },
     {
       "id": "debris-3d-001",
       "title": "Make bash, mine and dig debris 3D rotating pieces",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20556,12 +21273,207 @@
         "Frame time with several workers cutting at once is reported and not materially worse than before.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261117T061800-15712-8a5c6f9c",
+      "started": "2026-11-17T06:18:00.799332+00:00",
+      "finished": "2026-11-17T06:29:43.684363+00:00",
+      "last_run": "build/agent-runs/20261117T061800-15712-8a5c6f9c",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The implementation, provisional evidence labels, promoted replays and smoke gate are supported. The explicit performance criterion is unmet: no rendered frame-time comparison with several simultaneous cutters is reported. Add comparable before/after measurements and identify the level, workload and rendering settings; address any material regression without reopening parked timing work.",
+        "checks": [
+          {
+            "criterion": "On Just Bash, Just Mine and Just Dig the debris pieces are visibly three-dimensional and rotate as they fall; they are occluded by nearer terrain and lemmings.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The terrain-cut observer connects successful cuts to emitTerrainDebris. The gameplay-clock callback advances particles, and renderFrame draws them after completed scenery and actors."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Basher, Miner and Digger debris uses eight projected vertices and twelve textured, shaded triangles per piece. Chunk faces test scenery depth and share actor coverage with lemmings."
+              },
+              {
+                "path": "src/app/DeathParticles.h",
+                "detail": "chunkOffsets applies two age-driven rotations to rigid cuboid vertices; position retains falling ballistic motion. This supports the production behavior at source-review level; human appearance confirmation remains pending."
+              },
+              {
+                "path": "src/app/Raster.cpp",
+                "detail": "Actor-owned triangles reject fragments behind scenery or nearer actor coverage and submit their physical depth without changing scenery depth."
+              }
+            ]
+          },
+          {
+            "criterion": "Shape, motion and count are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/debris-3d-001/static/evidence.json",
+                "detail": "Retained Ghidra evidence identifies the registered reference hash. Instructions at 40C9B5/40C9BA configure twelve slots; 40DBFD/40DC04 select a callback rather than a count. Geometry at 495F97 distinguishes eight-vertex/six-face and four-vertex/one-face pieces, while 495E80/495EAA update two angles."
+              },
+              {
+                "path": "docs/scratch/debris-3d-001.md",
+                "detail": "Explicitly corrects the earlier four-fragment interpretation and labels clone density, dimensions, angular rates, UV selection, lighting and lifetime behavior provisional. Static findings are distinguished from runtime fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "Frame time with several workers cutting at once is reported and not materially worse than before.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/debris-3d-001.md",
+                "detail": "Reports focused-test duration and headless replay results, but no frame-time measurement, simultaneous-worker workload or before/after comparison."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Each chip now requires eight vertex projections and twelve textured triangles. Bounded particle storage and an empty-list early return do not establish performance during simultaneous cutting."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/debris-3d-001/replays.json",
+                "detail": "Contains seventeen runs matching the seventeen currently promoted .replay files. Every run records exit zero, PASS, won=1 and completed=1; all seventeen referenced individual logs exist and corroborate the results. These establish simulation regression results, not rendered appearance."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines promoted recordings and documents historical retirements. The task reports no new divergence or retirement."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T060233-15712-483aefaf/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests and all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T060233-15712-483aefaf/result.json",
+                "detail": "Records verification exit zero and verified content 8d7b6257095cdaa2c4ba30503a3ddf7e89e32e8fb8607275fce34683848fecca."
+              },
+              {
+                "path": "docs/scratch/debris-3d-001.md",
+                "detail": "Ends with a what-to-check note naming Just Bash, Just Mine and Just Dig, the cutting actions, expected textured tumbling pieces, foreground occlusion, pause and fast-forward behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The implementation, provisional evidence labels, promoted replays and smoke gate are supported. The explicit performance criterion is unmet: no rendered frame-time comparison with several simultaneous cutters is reported. Add comparable before/after measurements and identify the level, workload and rendering settings; address any material regression without reopening parked timing work.",
+      "review": {
+        "decision": "accept",
+        "reason": "All five review criteria are supported. The performance revision resolves the prior finding with reproducible rendered comparisons showing about 0.30\u20131.02% added mean scene time. Human appearance confirmation remains for the next playtest; original fidelity is not established.",
+        "checks": [
+          {
+            "criterion": "On Just Bash, Just Mine and Just Dig the debris pieces are visibly three-dimensional and rotate as they fall; they are occluded by nearer terrain and lemmings.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Connects successful terrain cuts to emitTerrainDebris, advances particles with the gameplay clock, and draws them after scenery and lemmings."
+              },
+              {
+                "path": "src/app/DeathParticles.h",
+                "detail": "chunkOffsets rotates eight rigid cuboid vertices around two axes as particle age advances; position supplies ballistic falling motion."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Skill debris renders as twelve terrain-textured, shaded triangles per piece. Inspected retained framebuffers for all three target levels show solid pieces with distinct faces."
+              },
+              {
+                "path": "src/app/Raster.cpp",
+                "detail": "Actor-owned chunk triangles reject fragments behind scenery and nearer shared actor coverage, retain per-face depth, and leave scenery depth unchanged."
+              }
+            ]
+          },
+          {
+            "criterion": "Shape, motion and count are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/debris-3d-001/static/evidence.json",
+                "detail": "Identifies registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f and Ghidra 12.1.4. Retained instructions confirm twelve slots at 0x40C9B5/0x40C9BA, callback selection at 0x40DBFD/0x40DC04, eight-vertex/six-face versus four-vertex/one-face geometry at 0x495FBD\u20130x49601A, and two angle updates at 0x495E80/0x495EAA."
+              },
+              {
+                "path": "docs/scratch/debris-3d-001.md",
+                "detail": "Corrects the earlier four-fragment interpretation and explicitly labels clone density, dimensions, angular rates, UV selection, lighting and lifetime provisional. Static findings remain distinct from original runtime fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "Frame time with several workers cutting at once is reported and not materially worse than before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/debris-3d-001/performance/bench.cpp",
+                "detail": "Eight placed workers cut installed terrain through the production World observer and emitter. Alternating paired measurements compare the retained flat rendering branch against production 3D rendering on identical snapshots, including complete CPU scene rendering."
+              },
+              {
+                "path": "build/debris-3d-001/performance/workload.txt",
+                "detail": "Records eight actual cutters on each target level and Sergeant Bash, with 96, 188, 96 and 88 live particles respectively."
+              },
+              {
+                "path": "build/debris-3d-001/performance/samples.csv",
+                "detail": "Contains 2,880 measured frames across four levels, both zooms and both rendering modes. Independently aggregated means match summary.json: added mean scene time is 0.206\u20130.662 ms, approximately 0.30\u20131.02%."
+              },
+              {
+                "path": "build/debris-3d-001/performance/README.md",
+                "detail": "Documents hardware, compiler, 640\u00d7480 rendering settings, warm-up and sampling procedure. Clearly limits the comparison to synthetic rendered snapshots, excluding simulation, HUD and SDL presentation; it does not claim end-to-end FPS or a historical baseline executable."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/debris-3d-001/replays.json",
+                "detail": "Its seventeen entries exactly match the current promoted replay filenames. Every entry records exit zero, PASS, won=1 and completed=1; all seventeen individual logs were read and corroborate those results. Production source is unchanged by the performance revision."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines promoted recordings and preserves previously documented retirements. This task introduces no divergence or recording changes; replay wins establish simulation regression results."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T061800-15712-8a5c6f9c/verification.log",
+                "detail": "Latest supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T061800-15712-8a5c6f9c/result.json",
+                "detail": "Records verification exit zero and verified_content 095c08c057babe46a8ecc4d73e40d7cead0be2aecf46254ec5535173d4626bc7, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/debris-3d-001.md",
+                "detail": "Ends with a what-to-check note naming Sergeant Bash, Just Bash, Just Mine and Just Dig, cutting actions, textured tumbling pieces, foreground occlusion, pause, fast-forward and expiry."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T06:32:48.879272+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T061800-15712-8a5c6f9c\\verification.log",
+        "verified_content": "095c08c057babe46a8ecc4d73e40d7cead0be2aecf46254ec5535173d4626bc7"
+      }
     },
     {
       "id": "frame-rate-001",
       "title": "Find and fix what keeps level play under 60 fps",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -20576,7 +21488,186 @@
         "After the change, level play on those levels averages at or under 16.6 ms a frame on the measuring machine, or the report states exactly what remains and why it could not be removed in this task.",
         "Rendered output is unchanged apart from documented exceptions, and simulation is untouched: all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261117T072239-15712-ebde9df5",
+      "started": "2026-11-17T07:22:39.470549+00:00",
+      "finished": "2026-11-17T07:30:11.058306+00:00",
+      "last_run": "build/agent-runs/20261117T072239-15712-ebde9df5",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Measurements, promoted replays and smoke verification are supported. Fix the deferred texture lifetime regression before acceptance: --geom wall+surface queues references to temporary Texture objects destroyed before batch.flush(), causing use-after-free. Pass stable scene-owned textures or retain ownership through the flush. This finding is source-traced; no runtime reproduction was performed during this read-only review.",
+        "checks": [
+          {
+            "criterion": "The report gives before and after frame-time breakdowns for the four named levels at rest, rotating and at fast-forward, measured on the release build, with the method stated.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/frame-rate-001.md",
+                "detail": "Provides all twelve before/after breakdowns, hardware, Release configuration, window and raster sizes, timing categories, warmup exclusion, sampling interval and private-save policy."
+              },
+              {
+                "path": "build/frame-rate-001/measure.cpp",
+                "detail": "Calls the production application with a shown window, controlled simulation budgets and camera/fast-forward inputs. build_measure.py and measure.rsp link the gcc-release production objects using -O3 -DNDEBUG."
+              },
+              {
+                "path": "build/frame-rate-001/before-summary.json",
+                "detail": "Retains baseline results for all four installed resources and three modes; final-reviewed-summary.json retains the corresponding final measurements."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, level play on those levels averages at or under 16.6 ms a frame on the measuring machine, or the report states exactly what remains and why it could not be removed in this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/frame-rate-001/final-reviewed-summary.json",
+                "detail": "Independently aggregated frames 30\u2013229 from all twelve final-reviewed CSVs. Each contains 200 measured frames; means match the summary and range from 5.884827 to 15.950776 ms."
+              },
+              {
+                "path": "build/frame-rate-001/wall-summary.json",
+                "detail": "The additional production-wall-clock runs report means of 5.720736\u201315.885841 ms across the same twelve cases."
+              },
+              {
+                "path": "docs/scratch/frame-rate-001.md",
+                "detail": "Discloses Kriss Kross rotation spikes, dense-builder scratch allocation/copy costs, synthetic stress limitations and why broader actor scratch changes remain outside this optimization."
+              }
+            ]
+          },
+          {
+            "criterion": "Rendered output is unchanged apart from documented exceptions, and simulation is untouched: all promoted playtest replays still reproduce their results.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "At line 1163, drawSurface passes tile ? tile->texture : Texture{} to Raster::triangle. This conditional produces a temporary Texture even when tile exists; its lifetime ends after the call."
+              },
+              {
+                "path": "src/app/Raster.cpp",
+                "detail": "At line 82, drawRows captures texture by reference. Lines 146\u2013150 now queue that closure during a command batch, allowing the reference to outlive the temporary passed by drawSurface."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Line 596 exposes wall+surface through --geom. Lines 831\u2013846 allow this mode into the tube-cache batch and flush only after TubeScene::render returns, when the temporary textures have already been destroyed. This introduces possible corruption or crashes without a documented rendering exception."
+              },
+              {
+                "path": "build/frame-rate-001/replay-results.json",
+                "detail": "All seventeen entries match the active promoted replay filenames. Their individual retained logs corroborate exit zero, PASS, won=1 and completed=1. The task-specific main.cpp diff changes rendering rather than simulation, but these headless replays do not cover the surface-rendering lifetime defect."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T063248-15712-db585079/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T063248-15712-db585079/result.json",
+                "detail": "Records verification exit zero and verified_content ed21dcbbd305a68e2dbcdfee2c8f7cad6361de78bf3bb4564194b50bd08ac0e9, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/frame-rate-001.md",
+                "detail": "Ends with a what-to-check note naming the four levels, play/rotation/zoom/fast-forward and skill actions, expected unchanged rendering and occlusion, and documented performance spikes."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Measurements, promoted replays and smoke verification are supported. Fix the deferred texture lifetime regression before acceptance: --geom wall+surface queues references to temporary Texture objects destroyed before batch.flush(), causing use-after-free. Pass stable scene-owned textures or retain ownership through the flush. This finding is source-traced; no runtime reproduction was performed during this read-only review.",
+      "review": {
+        "decision": "accept",
+        "reason": "The deferred texture lifetime defect is fixed. Retained measurements support all twelve averages below 16.6 ms; all 17 active promoted replays and revised-content smoke verification pass. Documented rotation spikes and dense-drawing limits remain. This accepts the scoped optimization, not original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "The report gives before and after frame-time breakdowns for the four named levels at rest, rotating and at fast-forward, measured on the release build, with the method stated.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/frame-rate-001.md",
+                "detail": "Contains all twelve before/after breakdowns, hardware, Release flags, window/raster dimensions, timing categories, sampling interval, warmup exclusion and private-save policy. Explicitly distinguishes retained measurements from the later surface-only correction."
+              },
+              {
+                "path": "build/frame-rate-001/measure.cpp",
+                "detail": "Calls the production application with a normally presented window, identical controlled simulation budgets, camera-drag inputs and fast-forward input. Wall-clock mode removes replacement frame timing."
+              },
+              {
+                "path": "build/frame-rate-001/build_measure.py",
+                "detail": "Links gcc-release production objects with registered GCC using -O3 -DNDEBUG. Retained measurement logs identify Windows video, direct3d11 presentation, vsync disabled and a 144 Hz display."
+              }
+            ]
+          },
+          {
+            "criterion": "After the change, level play on those levels averages at or under 16.6 ms a frame on the measuring machine, or the report states exactly what remains and why it could not be removed in this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/frame-rate-001/final-reviewed-summary.json",
+                "detail": "Independently recalculated frames 30\u2013229 from each corresponding CSV: all twelve contain 200 samples, match the summary and average 5.884827\u201315.950776 ms."
+              },
+              {
+                "path": "build/frame-rate-001/wall-summary.json",
+                "detail": "Additional production-wall-clock measurements cover the same twelve cases and report averages of 5.720736\u201315.885841 ms."
+              },
+              {
+                "path": "docs/scratch/frame-rate-001.md",
+                "detail": "Discloses Kriss Kross rotation spikes and remaining full-frame actor/brick scratch costs. Explains why broader scratch-lifetime changes were deferred and limits the 60-fps claim to the measured ordinary modes."
+              }
+            ]
+          },
+          {
+            "criterion": "Rendered output is unchanged apart from documented exceptions, and simulation is untouched: all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "drawSurface now skips missing tiles and passes tile->texture directly. Scene-owned tile storage survives the caller's batch flush, removing the previously identified temporary-texture use-after-free without changing valid surface geometry or sampling."
+              },
+              {
+                "path": "src/app/Raster.h",
+                "detail": "Documents borrowed texture lifetime and deletes the rvalue-texture overload, preventing the conditional-temporary call from returning."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Task-specific comparison against retained entry source confines changes to rendering caches and pipe-depth output. Exact camera/terrain invalidation preserves live animated stages; simulation and fixed-step behavior are unchanged."
+              },
+              {
+                "path": "src/__test__/test_raster_rows.cpp",
+                "detail": "Checks serial/batched RGB and depth equality, pipe-depth stores, opaque merge ties and texture argument lifetimes. Source inspection confirms disjoint worker rows preserve per-pixel submission order."
+              },
+              {
+                "path": "build/frame-rate-001/revision-002/replay-results.json",
+                "detail": "Matches all 17 active promoted .replay files. Individual retained logs corroborate PASS, won=1 and completed=1; every revised Release run exits zero. No recording was changed or retired."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T072239-15712-ebde9df5/verification.log",
+                "detail": "Supervisor verification passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261117T072239-15712-ebde9df5/result.json",
+                "detail": "Records verification exit zero and verified_content be4cc1679b462083a457f532e9ca851d770ea43e35b0ccef02524153e410d6d9, matching this review's supplied content identity."
+              },
+              {
+                "path": "docs/scratch/frame-rate-001.md",
+                "detail": "Ends with the four named levels, play/rotation/zoom/fast-forward and skill actions, expected rendering/occlusion preservation, documented performance spikes, and the corrected wall+surface diagnostic check."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T07:33:35.801031+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T072239-15712-ebde9df5\\verification.log",
+        "verified_content": "be4cc1679b462083a457f532e9ca851d770ea43e35b0ccef02524153e410d6d9"
+      }
     }
   ]
 }

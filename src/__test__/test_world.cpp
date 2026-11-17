@@ -1611,7 +1611,7 @@ void testDigFootprintAndCadence() {
 }
 
 void testBashFootprintAndCadence() {
-  std::cout << "a basher takes one column, four rows, every 7 or 8 ticks\n";
+  std::cout << "a basher takes a four-row column in two punches, then advances\n";
   LevelSetup s = flatLevel();
   s.terrain.fillBox(120, 50, 10, 30, Material::Earth);
   World w(s);
@@ -1626,6 +1626,20 @@ void testBashFootprintAndCadence() {
   std::size_t prev = w.terrain().solidCells();
   for (int t = 0; t < 46; ++t) {
     w.tick();
+    if (t == 0) {
+      check(!w.terrain().solid(x0 + dir, y0) && !w.terrain().solid(x0 + dir, y0 - 1),
+            "the first punch removes the bottom half");
+      check(w.terrain().solid(x0 + dir, y0 - 2) && w.terrain().solid(x0 + dir, y0 - 3),
+            "the first punch leaves the top half solid");
+      check(w.lemmings()[0].x == x0, "the basher waits for its second punch");
+    }
+    if (t == 4) {
+      check(!w.terrain().solid(x0 + dir, y0 - 2) && !w.terrain().solid(x0 + dir, y0 - 3),
+            "the second punch removes the top half");
+      check(w.lemmings()[0].x == x0, "advance waits for the 92-percent commit");
+    }
+    if (t == 6)
+      check(w.lemmings()[0].x == x0 + dir, "the cleared column commits after both punches");
     const std::size_t now = w.terrain().solidCells();
     if (now < prev) {
       at.push_back(t);
@@ -1634,26 +1648,26 @@ void testBashFootprintAndCadence() {
     prev = now;
   }
 
-  check(took.size() >= 6, std::format("at least six cycles bashed ({} seen)", took.size()));
-  bool allFour = !took.empty();
+  check(took.size() >= 12, std::format("at least six two-punch cycles bashed ({} hits seen)", took.size()));
+  bool allTwo = !took.empty();
   for (int n : took)
-    allFour = allFour && n == 4;
-  check(allFour, std::format("every cycle took 4 cells (first four: {}, {}, {}, {})",
+    allTwo = allTwo && n == 2;
+  check(allTwo, std::format("each punch took 2 cells (first four: {}, {}, {}, {})",
                              took.size() > 0 ? took[0] : -1, took.size() > 1 ? took[1] : -1,
                              took.size() > 2 ? took[2] : -1, took.size() > 3 ? took[3] : -1));
 
   // 1.440 s of animation against a 200 ms tick is 7.2 ticks, which cannot be
   // one integer. Sampled, the gaps run 8, 7, 7, 7, 7 -- 36 ticks for five
   // cycles, the 7.2 the original measures, rather than a rounded 7 or 8.
-  if (at.size() >= 6) {
+  if (at.size() >= 12) {
     const int want[] = {8, 7, 7, 7, 7};
     bool gapsMatch = true;
     for (int k = 0; k < 5; ++k)
-      gapsMatch = gapsMatch && at[k + 1] - at[k] == want[k];
+      gapsMatch = gapsMatch && at[(k + 1) * 2] - at[k * 2] == want[k];
     check(gapsMatch,
-          std::format("bash gaps 8,7,7,7,7 (were {},{},{},{},{})", at[1] - at[0],
-                      at[2] - at[1], at[3] - at[2], at[4] - at[3], at[5] - at[4]));
-    check(at[5] - at[0] == 36, std::format("five cycles span 36 ticks (was {})", at[5] - at[0]));
+          std::format("lower-punch gaps 8,7,7,7,7 (were {},{},{},{},{})", at[2] - at[0],
+                      at[4] - at[2], at[6] - at[4], at[8] - at[6], at[10] - at[8]));
+    check(at[10] - at[0] == 36, std::format("five cycles span 36 ticks (was {})", at[10] - at[0]));
   }
 
   // One column per cycle, four rows deep from the feet row upward, and the

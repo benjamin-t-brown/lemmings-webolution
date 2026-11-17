@@ -1,5 +1,6 @@
 #include "app/FrameProfile.h"
 #include "app/SceneRaster.h"
+#include "app/RasterRows.h"
 
 #include <algorithm>
 #include <cmath>
@@ -98,11 +99,15 @@ std::expected<void, std::string> rasterizeSceneTriangle(
     const SceneRgbaImage& texture, const std::array<SceneRasterVertex, 3>& p,
     const SceneRasterOptions& o, const SceneRasterObserver* observer) {
   profile::Scope profileRaster(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
-  if (!dimensionsValid(target.width, target.height, 4, target.rgba.size()) ||
+  const bool rgb = !target.rgb.empty();
+  if (!(rgb ? dimensionsValid(target.width, target.height, 3, target.rgb.size()) :
+              dimensionsValid(target.width, target.height, 4, target.rgba.size())) ||
       depth.size() != static_cast<std::size_t>(target.width) * target.height)
     return std::unexpected("invalid target image/depth dimensions or storage");
-  if (observer && (!observer->mask || observer->mask->size() != depth.size() || !observer->accepted))
+  if (observer && (rgb || !observer->mask || observer->mask->size() != depth.size() || !observer->accepted))
     return std::unexpected("invalid masked raster observer");
+  if (!o.depthOutput.empty() && o.depthOutput.size() != depth.size())
+    return std::unexpected("invalid depth output dimensions");
   if (!dimensionsValid(texture.width, texture.height, 4, texture.rgba.size()))
     return std::unexpected("invalid RGBA8 texture dimensions or storage");
   if ((o.filter != SceneFilter::Point && o.filter != SceneFilter::Linear) ||
@@ -140,52 +145,69 @@ std::expected<void, std::string> rasterizeSceneTriangle(
   const int xmax = static_cast<int>(std::min(double(target.width - 1), std::floor(maxX - o.sampleOffsetX)));
   const int ymin = static_cast<int>(std::max(0.0, std::ceil(minY - o.sampleOffsetY)));
   const int ymax = static_cast<int>(std::min(double(target.height - 1), std::floor(maxY - o.sampleOffsetY)));
-  for (int y = ymin; y <= ymax; ++y) for (int x = xmin; x <= xmax; ++x) {
-    const double sx = x + o.sampleOffsetX, sy = y + o.sampleOffsetY;
-    const double w0 = ((b.screenX - sx) * (c.screenY - sy) - (b.screenY - sy) * (c.screenX - sx)) / area;
-    const double w1 = ((c.screenX - sx) * (a.screenY - sy) - (c.screenY - sy) * (a.screenX - sx)) / area;
-    const double w2 = 1.0 - w0 - w1;
-    if (std::min({w0, w1, w2}) < 0) continue;
-    const double q = w0*a.rhw + w1*b.rhw + w2*c.rhw;
-    if (!(q > 0) || !std::isfinite(q)) continue;
-    const double z = w0*a.screenZ + w1*b.screenZ + w2*c.screenZ;
-    const std::size_t pos = static_cast<std::size_t>(y) * target.width + x;
-    if (!depthPass(o.depthFunction, z, depth[pos])) continue;
-    const double u = (w0*a.u*a.rhw + w1*b.u*b.rhw + w2*c.u*c.rhw) / q;
-    const double v = (w0*a.v*a.rhw + w1*b.v*b.rhw + w2*c.v*c.rhw) / q;
-    if (!std::isfinite(u) || !std::isfinite(v) || std::abs(u) > 1.0e6 || std::abs(v) > 1.0e6)
-      return std::unexpected("interpolated UV outside supported range");
-    const auto texel = sample(texture, u, v, o.filter, o.address);
-    std::array<double, 4> diffuse = a.diffuse;
-    if (o.shade == SceneShade::Gouraud)
-      for (int k=0;k<4;++k) diffuse[k] = (w0*a.diffuse[k]*a.rhw + w1*b.diffuse[k]*b.rhw + w2*c.diffuse[k]*c.rhw) / q;
-    std::array<double, 4> src{};
-    for (int k=0;k<3;++k) src[k] = texel[k] * diffuse[k] / 255.0;
-    src[3] = o.alphaOperation == SceneAlphaOperation::SelectTexture ? texel[3] : texel[3] * diffuse[3] / 255.0;
-    if (o.alphaFunction == SceneAlphaFunction::StrictGreater && !(src[3] > o.alphaReference)) continue;
-    // Mask membership precedes all diagnostic event construction/storage.
-    const bool observe = observer && (*observer->mask)[pos] != 0;
-    SceneRasterWriteEvent event{};
-    if (observe) {
-      event.source=observer->source; event.triangle=observer->triangle; event.pixel=pos;
-      for (int k=0;k<4;++k) event.colorBefore[k]=target.rgba[pos*4+k];
-      event.depthBefore=depth[pos];
+  const auto drawRows = [&target, &depth, &texture, p, o, observer, area, xmin, xmax, rgb](int first, int last) -> std::expected<void, std::string> {
+    const auto& a = p[0]; const auto& b = p[1]; const auto& c = p[2];
+    for (int y = first; y <= last; ++y) for (int x = xmin; x <= xmax; ++x) {
+      const double sx = x + o.sampleOffsetX, sy = y + o.sampleOffsetY;
+      const double w0 = ((b.screenX - sx) * (c.screenY - sy) - (b.screenY - sy) * (c.screenX - sx)) / area;
+      const double w1 = ((c.screenX - sx) * (a.screenY - sy) - (c.screenY - sy) * (a.screenX - sx)) / area;
+      const double w2 = 1.0 - w0 - w1;
+      if (std::min({w0, w1, w2}) < 0) continue;
+      const double q = w0*a.rhw + w1*b.rhw + w2*c.rhw;
+      if (!(q > 0) || !std::isfinite(q)) continue;
+      const double z = w0*a.screenZ + w1*b.screenZ + w2*c.screenZ;
+      const std::size_t pos = static_cast<std::size_t>(y) * target.width + x;
+      if (!depthPass(o.depthFunction, z, depth[pos])) continue;
+      const double u = (w0*a.u*a.rhw + w1*b.u*b.rhw + w2*c.u*c.rhw) / q;
+      const double v = (w0*a.v*a.rhw + w1*b.v*b.rhw + w2*c.v*c.rhw) / q;
+      if (!std::isfinite(u) || !std::isfinite(v) || std::abs(u) > 1.0e6 || std::abs(v) > 1.0e6)
+        return std::unexpected("interpolated UV outside supported range");
+      const auto texel = sample(texture, u, v, o.filter, o.address);
+      std::array<double, 4> diffuse = a.diffuse;
+      if (o.shade == SceneShade::Gouraud)
+        for (int k=0;k<4;++k) diffuse[k] = (w0*a.diffuse[k]*a.rhw + w1*b.diffuse[k]*b.rhw + w2*c.diffuse[k]*c.rhw) / q;
+      std::array<double, 4> src{};
+      for (int k=0;k<3;++k) src[k] = texel[k] * diffuse[k] / 255.0;
+      src[3] = o.alphaOperation == SceneAlphaOperation::SelectTexture ? texel[3] : texel[3] * diffuse[3] / 255.0;
+      if (o.alphaFunction == SceneAlphaFunction::StrictGreater && !(src[3] > o.alphaReference)) continue;
+      // Mask membership precedes all diagnostic event construction/storage.
+      const bool observe = observer && (*observer->mask)[pos] != 0;
+      SceneRasterWriteEvent event{};
+      if (observe) {
+        event.source=observer->source; event.triangle=observer->triangle; event.pixel=pos;
+        for (int k=0;k<4;++k) event.colorBefore[k]=target.rgba[pos*4+k];
+        event.depthBefore=depth[pos];
+      }
+      const int channels = rgb ? 3 : 4;
+      auto* color = rgb ? target.rgb.data() : target.rgba.data();
+      const auto at = pos * channels;
+      for (int k=0;k<channels;++k) {
+        const double out = o.blendEnabled
+            ? src[k] * factorValue(o.sourceBlend, src[3]) + color[at+k] * factorValue(o.destinationBlend, src[3])
+            : src[k];
+        color[at+k] = unorm8(out);
+      }
+      if (o.depthWrite) {
+        depth[pos] = z;
+        if (!o.depthOutput.empty()) o.depthOutput[pos] = z;
+      }
+      if (observe) {
+        for (int k=0;k<4;++k) event.colorAfter[k]=target.rgba[at+k];
+        event.depthAfter=depth[pos]; event.depthAssigned=o.depthWrite;
+        observer->accepted(event);
+      }
     }
-    const auto at = pos * 4;
-    for (int k=0;k<4;++k) {
-      const double out = o.blendEnabled
-          ? src[k] * factorValue(o.sourceBlend, src[3]) + target.rgba[at+k] * factorValue(o.destinationBlend, src[3])
-          : src[k];
-      target.rgba[at+k] = unorm8(out);
-    }
-    if (o.depthWrite) depth[pos] = z;
-    if (observe) {
-      for (int k=0;k<4;++k) event.colorAfter[k]=target.rgba[at+k];
-      event.depthAfter=depth[pos]; event.depthAssigned=o.depthWrite;
-      observer->accepted(event);
-    }
+    return {};
+  };
+  if (!observer && detail::commandBatch) {
+    detail::commandBatch->add([drawRows, ymin, ymax](int first, int last, std::size_t&, std::string& error) {
+      const auto result = drawRows(std::max(first, ymin), std::min(last, ymax));
+      if (!result) error = result.error();
+    });
+    return {};
   }
-  return {};
+  // Observers retain synchronous, ordered callbacks on the calling thread.
+  return drawRows(ymin, ymax);
 }
 
 }  // namespace webo::app

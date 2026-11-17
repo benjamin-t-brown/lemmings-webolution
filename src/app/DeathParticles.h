@@ -3,6 +3,7 @@
 #include "app/ActorPose.h"
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 
 namespace webo::app {
@@ -17,6 +18,31 @@ struct DeathParticle {
   std::array<std::uint8_t, 3> colour{255, 255, 255};
   int piece = -1; // BITS.SPR clip index; -1 is a coloured chip/droplet
   int verticalDir = 1;
+  // Skill debris only. Material/UVs are captured at the cut, so a later
+  // terrain edit cannot change an airborne fragment's texture.
+  bool terrainChunk = false;
+  std::uint32_t terrainMaterial = 0;
+  std::array<double, 4> terrainUv{}; // left, top, right, bottom
+  std::array<double, 2> rotation{}, angularVelocity{};
+
+  // Provisional rigid chunk in a local orthonormal tangent/up/radial frame.
+  // Two age-driven angles follow the native 495E2C/495EBA presentation path;
+  // exact native shapes, random rates and shrink envelope are not reproduced.
+  std::array<std::array<double, 3>, 8> chunkOffsets(std::uint64_t clockMs) const {
+    const double t = (clockMs - bornMs) / 1000.0;
+    const double a = rotation[0] + angularVelocity[0] * t;
+    const double b = rotation[1] + angularVelocity[1] * t;
+    const double ca = std::cos(a), sa = std::sin(a), cb = std::cos(b), sb = std::sin(b);
+    std::array<std::array<double, 3>, 8> out;
+    for (int i = 0; i < 8; ++i) {
+      const double x = ((i & 1) ? 1 : -1) * size;
+      const double y = ((i & 2) ? 1 : -1) * size * 0.65;
+      const double z = ((i & 4) ? 1 : -1) * size * 0.55;
+      const double ry = ca * y - sa * z, rz = sa * y + ca * z;
+      out[i] = {cb * x + sb * rz, ry, -sb * x + cb * rz};
+    }
+    return out;
+  }
 
   ActorTerrainSample position(std::uint64_t clockMs) const {
     const double t = (clockMs - bornMs) / 1000.0;

@@ -209,6 +209,12 @@ add_executable(test_sceneraster src/__test__/test_sceneraster.cpp src/app/SceneR
 target_include_directories(test_sceneraster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME sceneraster COMMAND test_sceneraster)
 
+# frame-rate-001: exact row-batch ordering, depth stores and opaque layer merge.
+add_executable(test_raster_rows src/__test__/test_raster_rows.cpp src/app/Raster.cpp src/app/SceneRaster.cpp)
+target_include_directories(test_raster_rows PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_options(test_raster_rows PRIVATE -UNDEBUG)
+add_test(NAME raster_rows COMMAND test_raster_rows)
+
 add_executable(test_sceneclip src/__test__/test_sceneclip.cpp src/app/SceneClip.cpp)
 target_include_directories(test_sceneclip PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME sceneclip COMMAND test_sceneclip)
@@ -742,6 +748,13 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   target_link_libraries(test_gameplay_sounds PRIVATE webolution_app webolution_objects)
   add_test(NAME gameplay_sounds COMMAND test_gameplay_sounds)
   set_tests_properties(gameplay_sounds PROPERTIES TIMEOUT 10)
+  # Playtest 11 A8/A11: actual PCM attacks survive overlapping work requests.
+  # Legacy unit; dummy device paused while the production mixer is stepped.
+  add_executable(test_work_sound src/__test__/test_work_sound.cpp)
+  target_link_libraries(test_work_sound PRIVATE webolution_objects)
+  add_test(NAME work_sound COMMAND test_work_sound)
+  set_tests_properties(work_sound PROPERTIES TIMEOUT 10
+    ENVIRONMENT "SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   set(AUDIO_DEMO_SOURCES ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM AUDIO_DEMO_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp")
   add_library(audio_demo_app STATIC ${AUDIO_DEMO_SOURCES}
@@ -1473,6 +1486,11 @@ add_executable(test_terrain_debris src/__test__/test_terrain_debris.cpp)
 target_link_libraries(test_terrain_debris PRIVATE webolution_app webolution_objects)
 add_test(NAME terrain_debris COMMAND test_terrain_debris)
 
+# Rigid rotation and per-face actor depth invariants; deliberately legacy.
+add_executable(test_debris_3d src/__test__/test_debris_3d.cpp src/app/Raster.cpp)
+target_link_libraries(test_debris_3d PRIVATE webolution_objects)
+add_test(NAME debris_3d COMMAND test_debris_3d)
+
 add_executable(test_crab src/__test__/test_crab.cpp)
 target_link_libraries(test_crab PRIVATE webolution_app webolution_objects)
 add_test(NAME crab COMMAND test_crab)
@@ -1511,6 +1529,27 @@ if(BUILD_TESTING)
   add_executable(test_multi_hatch_simultaneous src/__test__/test_multi_hatch_simultaneous.cpp)
   target_link_libraries(test_multi_hatch_simultaneous PRIVATE webolution_app webolution_objects)
   add_test(NAME multi_hatch_simultaneous COMMAND test_multi_hatch_simultaneous "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short collision/mesh invariants, intentionally legacy; no gameplay route.
+  add_executable(test_steel_terrain src/__test__/test_steel_terrain.cpp)
+  target_link_libraries(test_steel_terrain PRIVATE webolution_app webolution_objects)
+  add_test(NAME steel_terrain COMMAND test_steel_terrain "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short tribe/AABB/corpus invariants, intentionally legacy; no gameplay route.
+  add_executable(test_exit_tribe src/__test__/test_exit_tribe.cpp)
+  target_link_libraries(test_exit_tribe PRIVATE webolution_objects)
+  add_test(NAME exit_tribe COMMAND test_exit_tribe "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Seconds-long collision/mesh/event invariant, intentionally legacy.
+  add_executable(test_basher_two_hit src/__test__/test_basher_two_hit.cpp)
+  target_link_libraries(test_basher_two_hit PRIVATE webolution_app webolution_objects)
+  add_test(NAME basher_two_hit COMMAND test_basher_two_hit "${WEBOLUTION_GAME_DIR}")
 endif()
 
 include(cmake/test_tiers.cmake)

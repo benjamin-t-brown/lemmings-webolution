@@ -3,6 +3,7 @@
 #include "assets/Box.h"
 #include "sim/World.h"
 
+#include <array>
 #include <cstdio>
 #include <format>
 #include <iterator>
@@ -23,6 +24,10 @@ constexpr CueRoute kRoutes[] = {
      "tests [0x004CBB40] at 0x00414420 and plays Ohno at 0x00414443 if zero; "
      "docs/scratch/letsgo-text-nuke-ohno-001.md identifies that byte as "
      "level+0x5138, the nuke request; ordinary bombs play at fuse end"},
+    {sim::SoundCue::Explode, "Explode",
+     "docs/scratch/work-sounds-001.md: 0x0045E570..0x0045E582 registers Explode "
+     "as 0x004E32C0; helper 0x004081FC loads it at 0x00408205 and plays at "
+     "0x0040821C; provisional clone trigger is the existing completed blast cue"},
     // The sim names this moment Splat, but the retail `Splat` cue (DAT_004E32D4)
     // has zero play references. The fall death plays FallSplat.
     {sim::SoundCue::Splat, "FallSplat",
@@ -36,22 +41,20 @@ constexpr CueRoute kRoutes[] = {
     {sim::SoundCue::LevelStart, "Letsgo",
      "docs/scratch/gameplay-sounds-001.md: hatch step 0x00425A95 tests its "
      "+0xAE latch, plays Letsgo handle 0x004E32B4 at 0x00425ADB before hatch "
-     "opening/release; player-requested clone point: first hatch spawn"},
-    {sim::SoundCue::Bash, "Mine",
+     "opening/release; docs/scratch/letsgo-voice-with-text-001.md: player-requested "
+     "clone point is the first drawn Let's Go text frame (playtest 11 A12)"},
+    {sim::SoundCue::Work, "Mine",
      "docs/scratch/gameplay-sounds-001.md: destructible-cell arm 0x0040C0AF "
      "loads Mine handle 0x004E32E8 at 0x0040C317 and plays at 0x0040C32F; "
-     "provisional clone cadence: once per successful hybrid bash bite"},
+     "docs/scratch/work-sounds-001.md: miner success plays at 0x00418D39, "
+     "digger success at 0x00415D81; provisional once per successful hybrid stroke"},
     {sim::SoundCue::BuilderWarning, "Chink",
      "docs/scratch/gameplay-sounds-001.md: 0x0040FF54 tests bricks < 4, "
      "0x0040FF5C loads Chink handle 0x004E32BC, 0x0040FF73 plays it before "
      "the brick counter decrement at 0x0040FF93"},
 };
 
-// Chink belongs to the last three builder bricks; assignment uses Action.
-// Explode remains outside the routed scope.
-constexpr sim::SoundCue kUnrouted[] = {
-    sim::SoundCue::Explode,  // Explode -- no retained play site
-};
+constexpr std::array<sim::SoundCue, 0> kUnrouted{};
 
 static_assert(std::size(kRoutes) + std::size(kUnrouted) ==
                   static_cast<std::size_t>(sim::SoundCue::BuilderWarning) + 1,
@@ -104,12 +107,17 @@ void CuePlayback::play(sim::SoundCue cue) {
   const auto name = routedCueName(cue);
   if (!name)
     return;
-  // Provisional overlap: exit cheers average; successful bash/assignment
-  // clips finish before another of the same sample can start; each warning
-  // starts afresh. None queues requests during fast-forward/group arrivals.
+  // Provisional overlap: exit cheers average; assignment clips finish before
+  // another can start. Each successful work stroke and warning starts afresh,
+  // replacing the previous tail rather than dropping fast-forward/worker hits.
+  // Explode also restarts: at most one explosion voice, with a fresh attack
+  // for each blast and no summed explosion tails in a nuke.
+  // None queues requests during fast-forward/group arrivals.
   const auto overlap = cue == sim::SoundCue::Exit ? Mixer::Overlap::Average :
-      (cue == sim::SoundCue::Bash || cue == sim::SoundCue::Assign) ? Mixer::Overlap::SkipPlaying :
-      cue == sim::SoundCue::BuilderWarning ? Mixer::Overlap::RestartPlaying : Mixer::Overlap::Add;
+      cue == sim::SoundCue::Assign ? Mixer::Overlap::SkipPlaying :
+      (cue == sim::SoundCue::Work || cue == sim::SoundCue::BuilderWarning ||
+       cue == sim::SoundCue::Explode) ?
+          Mixer::Overlap::RestartPlaying : Mixer::Overlap::Add;
   playName(*name, overlap);
 }
 

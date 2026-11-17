@@ -76,8 +76,9 @@ enum class SoundCue : std::uint8_t {
   Splat,    // landed too hard -- Splat
   Exit,     // reached the exit -- Yippee
   LevelStart, // first hatch spawn -- Letsgo (presentation only)
-  Bash,     // a bash bite removed terrain -- Mine
+  Bash,     // retained name for the common excavation cue -- Mine
   BuilderWarning, // a builder spends brick 3, 2 or 1 -- Chink
+  Work = Bash, // a successful bash, mine or dig stroke removed terrain
 };
 
 struct Lemming {
@@ -196,7 +197,19 @@ struct Entrance {
 // when x âˆˆ [x, x+width] and y âˆˆ [y, y+height] â€” closed, matching the
 // original's fcomp, not a half-open rectangle. See
 // docs/scratch/phase3-round11-exit.md.
-struct Exit { int x = 0; int y = 0; int width = 2; int height = 3; };
+struct Exit {
+  int x = 0;
+  int y = 0;
+  int width = 2;
+  int height = 3;
+  // Serialized exit +0x98 (0x426C6B); compare with lemming +0x4C at
+  // 0x426B79..0x426BBB. 0 normal, 1 water, 2 acid, 4 any tribe.
+  int sheetType = 0;
+
+  bool accepts(int type) const {
+    return type != 3 && (sheetType == type || sheetType == 4);
+  }
+};
 
 // One teleport pad. MEASURED round 16: object vtable 0x004B1250, AABB via
 // 0x00430BA1; partner at object+0x260. x/y/width/height are Terrain Y-down
@@ -927,10 +940,9 @@ public:
     // stepper compares against each record's stored frame. Read live out of
     // the record lists: bash frames 12, 16, 60, 64 (row offsets 0, 1, 3, 2);
     // dig 25 (the bite) and 30 (the Y step); mine 12, 12, 16, 16, 20 (args
-    // 3, 2, 1, 0, -1). We fire a whole cycle's removal on the tick that
-    // covers the first of them -- the later ones are 50-370 ms behind it,
-    // inside the same 200 ms tick or the next, and nothing in this
-    // simulation looks at the terrain between them.
+    // 3, 2, 1, 0, -1). Basher now groups 12/16 into the lower punch and
+    // 60/64 into the upper punch, then advances at 92 (basher-two-hit-001).
+    // Mine/dig retain their existing whole-bite hybrid sampling.
     int basherBitePercent = 12;
     int diggerBitePercent = 25;
     int minerBitePercent = 12;
@@ -961,10 +973,10 @@ public:
     // test after its first record (arg 0, 12%). The helper sets +0x41 only when it clears a nonzero
     // cell. So the first two cycles swing and advance a column each even through open air; from the
     // third cycle on, a cycle that removed nothing ends the bash with the lemming facing as before.
-    // The clone samples one whole cycle per tick (see bitesThisTick), so it tests all basherHeight
-    // rows of the leading column at once where the original's 12% record sees only the feet row.
-    // PROVISIONAL difference. Settled by an original observation of a Basher assigned two or three
-    // cells short of a wall and of one assigned beside an overhang.
+    // The clone still preflights all basherHeight rows at the lower punch,
+    // preserving its accepted open-air/refusal rule; the original's 12%
+    // stop sees only the feet row. PROVISIONAL overhang difference. Cuts are
+    // now two punches and the column commits at 92%, as the traced records.
     int basherGraceCycles = 2;
     // dig   three cells, `trunc(X) - 1 .. + 1`, in the row below the feet,
     //       then Y steps one cell down. Four diggers on MM_DIG_000 cleared

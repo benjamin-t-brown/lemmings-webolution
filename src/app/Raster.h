@@ -40,12 +40,28 @@ class Raster {
 
   void clear(std::uint8_t r, std::uint8_t g, std::uint8_t b);
   void setDepthEnabled(bool on) { depthEnabled_ = on; }
+  // Merge an opaque, depth-tested geometry layer rendered against infinity.
+  // Equal depth keeps the earlier destination, as in triangle().
+  void compositeOpaque(const Raster& layer);
+  // Cached layers reuse storage but count only their current geometry build.
+  void resetDrawCounts() { triangles_ = pixels_ = 0; }
 
   // p[i] = {screenX, screenY, viewDepth - context, 1 / viewDepth}.
   // uv[i] = texture coordinates in tile units (wrapped at sample time).
+  // An actor owner uses the shared actor coverage after the strict scenery
+  // test, retaining per-face physical depth without writing scenery depth.
+  // An active RasterCommandBatch borrows texture; keep it alive and unchanged
+  // until the batch is flushed. Scene geometry uses its owning Tile's texture.
   void triangle(const std::array<std::array<double, 4>, 3>& p,
                 const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
-                const std::array<double, 3>& modulate);
+                const std::array<double, 3>& modulate,
+                std::size_t actorOwner = ActorDepth::noOwner);
+  // Reject temporaries even in synchronous calls so the same caller is safe
+  // when enclosed in a deferred batch.
+  void triangle(const std::array<std::array<double, 4>, 3>& p,
+                const std::array<std::array<double, 2>, 3>& uv, const Texture&& texture,
+                const std::array<double, 3>& modulate,
+                std::size_t actorOwner = ActorDepth::noOwner) = delete;
 
   const Framebuffer& framebuffer() const { return color_; }
   Framebuffer& mutableFramebuffer() { return color_; }

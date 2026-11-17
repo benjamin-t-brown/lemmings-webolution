@@ -157,7 +157,7 @@ class TubeScene {
   void emitDeathParticles(const sim::Lemming&, bool explosion,
       std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
       int terrainHeight, const AssetLibrary&);
-  // Skill chips share death debris's clock, lifetime storage and depth pass.
+  // Skill chunks share death debris's clock, lifetime storage and depth pass.
   void emitTerrainDebris(const sim::Lemming&, std::span<const std::array<int, 2>> removedCells,
                         std::uint64_t clockMs, int terrainHeight);
   void advanceDeathParticles(std::uint64_t clockMs);
@@ -206,6 +206,7 @@ class TubeScene {
   std::size_t terrainUnresolved() const { return terrainUnresolved_; }
   const std::string& terrainError() const { return terrainError_; }
   const CellMeshes& cellMeshes() const { return cellMesh_; }
+  const CylinderMesh& terrainMesh() const { return mesh_; }
   const CollisionGrid& collisionGrid() const { return collision_; }
 
   // actor+4C selects ordinary / water / acid; nullptr if that sheet is absent.
@@ -235,6 +236,8 @@ class TubeScene {
   const Texture* builderBrickTexture(const SceneOptions::InjectedNativeWalker&) const;
   std::array<std::uint8_t, 3> terrainDebrisColour(const std::array<int, 2>& cell,
                                                 int terrainHeight) const;
+  std::uint32_t terrainDebrisMaterial(const std::array<int, 2>& cell,
+                                    int terrainHeight) const;
   void rewirePoseLevel() const;
   CylinderMesh mesh_;
   CylinderMesh poseCylinderTemplate_;

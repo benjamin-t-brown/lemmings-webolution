@@ -38,6 +38,7 @@ struct Part {
   int y_end = 0;
   bool merged = false;
   bool door = false;
+  bool steel = false;
 };
 
 struct Record {
@@ -58,8 +59,9 @@ struct Gap {
 
 class Builder {
  public:
-  Builder(std::span<const std::uint32_t> table, const CollisionGrid& grid)
-      : table_(table), grid_(grid) {
+  Builder(std::span<const std::uint32_t> table, const CollisionGrid& grid,
+          bool preserveSteel = false)
+      : table_(table), grid_(grid), preserveSteel_(preserveSteel) {
     touched_.assign(table.size(), 0);
     for (std::size_t i = 0; i < table.size(); ++i)
       if (table[i] != 0xFFFFFFFFu)
@@ -116,6 +118,8 @@ class Builder {
           Part p;
           p.y_start = y0 + c;
           p.door = (cell(x0 + r, y0 + c) & kDoor) != 0;
+          p.steel = preserveSteel_ && !p.door &&
+                    (cell(x0 + r, y0 + c) & kCellIndestructible) != 0;
           if (!p.door) {
             for (;;) {
               ++c;
@@ -123,6 +127,8 @@ class Builder {
                 break;
               const std::uint32_t cc = cell(x0 + r, y0 + c);
               if ((cc & kSolid) == 0 || (cc & kDoor) != 0)
+                break;
+              if (preserveSteel_ && ((cc & kCellIndestructible) != 0) != p.steel)
                 break;
             }
           } else {
@@ -155,7 +161,8 @@ class Builder {
                 auto& later = lists[r2];
                 while (j < later.size() && !(later[j].y_start == rec.y_start &&
                                              later[j].y_end == rec.y_end &&
-                                             later[j].door == rec.door))
+                                             later[j].door == rec.door &&
+                                             later[j].steel == rec.steel))
                   ++j;
                 if (j < later.size())
                   later[j].merged = true;
@@ -352,6 +359,14 @@ class Builder {
     if (recs.size() == 1 && recs[0].y_end == y0 + 0xF && recs[0].y_start == y0 &&
         recs[0].x0 == x0 && recs[0].x1 == x0 + 7)
       return false;
+    // Runtime material partitions must not turn a full solid block into an
+    // open block merely because it contains both earth and steel.
+    if (preserveSteel_) {
+      for (int x = x0; x < x0 + kColumnsPerBucket; ++x)
+        for (int y = y0; y < y0 + kRowsPerBand; ++y)
+          if (!solidNoDoor(x, y)) return true;
+      return false;
+    }
     return true;
   }
 
@@ -490,6 +505,7 @@ class Builder {
 
   std::span<const std::uint32_t> table_;
   const CollisionGrid& grid_;
+  bool preserveSteel_ = false;
   std::vector<char> touched_;
   std::size_t keySlots_ = 0;
   std::size_t unresolved_ = 0;
@@ -586,7 +602,9 @@ std::expected<void, std::string> rebuildCellMeshCells(
   if (meshes.cells.empty() || meshes.bands == 0 || grid.height <= 0 ||
       grid.height / kRowsPerBand != static_cast<int>(meshes.bands))
     return std::unexpected("cell mesh: rebuild does not match the built mesh");
-  Builder builder(keyTable, grid);
+  // PROVISIONAL playable-v1 steel protection: never stretch an ordinary cut
+  // face across a steel region. Load-time meshing keeps the traced merge rule.
+  Builder builder(keyTable, grid, true);
   builder.setRecords(doorRecords);
   const int bands = static_cast<int>(meshes.bands);
   for (const auto& [bucket, band] : cells) {

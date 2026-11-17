@@ -126,7 +126,7 @@ void record(audio::CuePlayback& playback, std::vector<std::string>& heard) {
 void testTable() {
   std::cout << "cue table\n";
   const auto routes = audio::cueRoutes();
-  check(routes.size() == 7, "seven cues have retained play-site evidence (playtest 9 Y3-Y5/Y12)");
+  check(routes.size() == 8, "eight cues have retained play-site evidence (including Explode, playtest 11 A2)");
 
   // Literal retail names, not values produced by another recovered invocation.
   check(audio::routedCueName(sim::SoundCue::OhNo) == std::optional<std::string_view>("Ohno"),
@@ -145,9 +145,9 @@ void testTable() {
         "last bricks route to Chink (playtest 9 Y5)");
   check(audio::routedCueName(sim::SoundCue::Assign) == std::optional<std::string_view>("Action"),
         "successful assignment routes to Action (playtest 9 Y12)");
-  for (sim::SoundCue unevidenced : {sim::SoundCue::Explode})
-    check(!audio::routedCueName(unevidenced).has_value(), "no retained play site => unrouted");
-  check(audio::unroutedCues().size() == 1, "Explode remains unknown");
+  check(audio::routedCueName(sim::SoundCue::Explode) == std::optional<std::string_view>("Explode"),
+        "Explode routes to its explosion sample (playtest 11 A2)");
+  check(audio::unroutedCues().empty(), "Explode is now evidenced and routed");
 
   for (const auto& route : routes) {
     check(!route.evidence.empty() && route.evidence.find("0x") != std::string_view::npos,
@@ -165,7 +165,7 @@ void testTable() {
   const auto path = writeBox("table", {{"SOUNDS\\OHNO.WAV", wav}, {"SOUNDS\\FALLSPLAT.WAV", wav},
                                       {"SOUNDS\\YIPPEE.WAV", wav}, {"SOUNDS\\LETSGO.WAV", wav},
                                       {"SOUNDS\\MINE.WAV", wav}, {"SOUNDS\\CHINK.WAV", wav},
-                                      {"SOUNDS\\ACTION.WAV", wav}});
+                                      {"SOUNDS\\ACTION.WAV", wav}, {"SOUNDS\\EXPLODE.WAV", wav}});
   {
     auto lib = AssetLibrary::open(path);
     check(lib.has_value(), "synthetic archive opens");
@@ -308,7 +308,7 @@ sim::LevelSetup flatLevel(int floorY) {
 void testWorldCues() {
   std::cout << "world cues through the adapter\n";
 
-  {  // bomber fuse on a synthetic world: Ohno, and nothing else is played
+  {  // bomber fuse on a synthetic world: Ohno, then Explode
     sim::LevelSetup s = flatLevel(80);
     sim::World w(s);
     for (int i = 0; i < 30; ++i) w.tick();
@@ -323,9 +323,11 @@ void testWorldCues() {
       playback.drain(w);
     }
     check(std::count(heard.begin(), heard.end(), "Ohno") == 1, "the bomber fuse plays Ohno once");
+    check(std::count(heard.begin(), heard.end(), "Explode") == 1,
+          "the bomber blast plays Explode once");
     check(std::none_of(heard.begin(), heard.end(),
-                       [](const std::string& n) { return n == "Explode" || n == "Chink"; }),
-          "Explode and Chink are not played");
+                       [](const std::string& n) { return n == "Chink"; }),
+          "Chink is not played");
   }
 
   {  // long fall on a synthetic world: FallSplat, never Splat

@@ -1,4 +1,5 @@
 #include "app/FrameProfile.h"
+#include "app/RasterRows.h"
 #include "app/FrameConsumption.h"
 #include "app/Replay.hpp"
 // Lemmings Webolution -- 3D-first entry point.
@@ -311,12 +312,12 @@ void printHelp() {
             "--map [--map-flags FILE] [--shot PNG] renders the conditional 640x480 map base layer;\n"
             "FILE is exactly 102 signed decimal int32 flags, whitespace-separated. Omitted flags are\n"
             "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.\n"
-            "Sound: the simulated level plays seven cues with retained static play-site evidence:\n"
+            "Sound: the simulated level plays eight cues with retained static play-site evidence:\n"
             "Ohno (bomber fuse end) and FallSplat (long-fall splat; the sim's Splat is mapped to\n"
-            "FallSplat), Yippee (saved at the exit), Letsgo (first hatch spawn), Mine (bashing),\n"
-            "Chink (last three builder bricks), and Action (successful assignment). Changeop plays\n"
+            "FallSplat), Yippee (saved at the exit), Letsgo (first Let's Go text frame), Mine (work strokes),\n"
+            "Explode (blast), Chink (last three builder bricks), and Action (successful assignment). Changeop plays\n"
             "on skill/Nuke selection and provisionally on pause, speed and hatch-rate controls.\n"
-            "Explode, other events, frontend/map buttons and music remain silent. Skill cadence\n"
+            "Other events, frontend/map buttons and music remain silent. Skill cadence\n"
             "and repeated-SFX overlap are provisional. Cue routing\n"
             "only: no claim of native sample timing, volume, mixing or resampling. A missing audio\n"
             "device or WAV is reported on stderr and the game continues. --no-audio disables sound.");
@@ -764,7 +765,19 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   if (backdrop) backdrop->visitRoots([&](const auto& source, const auto&) {
     hasPipes |= source.stage == app::BackdropScene::Stage::FluidPipe;
   });
-  std::vector<std::uint8_t> pipeDepthMask;
+  // Primary is the immutable paired-primary tree. Doors, balloons, hazards,
+  // levers, pads and gravity are LegacyUnattributed; fluids and secondary
+  // sprite animation retain their original, uncached submission stages.
+  std::optional<app::Raster> primaryCache, tubeCache;
+  std::optional<app::CameraBasis> primaryPose, tubePose;
+  app::BackdropStats primaryStats;
+  std::size_t tubeTerrainRevision = 0;
+  const auto sameCamera = [](const app::CameraBasis& a, const app::CameraBasis& b) {
+    return a.worldToView == b.worldToView && a.projectionVector == b.projectionVector &&
+        a.inverseProjectionVector == b.inverseProjectionVector && a.eyeWorld == b.eyeWorld &&
+        a.focalX == b.focalX && a.focalY == b.focalY && a.width == b.width &&
+        a.height == b.height && a.cx == b.cx && a.cy == b.cy && a.selectorTurns == b.selectorTurns;
+  };
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target, bool scenePrepared = false) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
     const auto frameCamera = app::buildCamera(frameParams);
@@ -797,27 +810,53 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         [](const auto& l) { return l.drownFluidKind >= 0; });
     std::vector<double> afterFluidDepth;
     app::scheduleSceneFrame(
-          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::Primary,c3Diagnostic?&observer:nullptr); },
+          [&] {
+            if (!backdrop) return;
+            if (!c3Diagnostic && primaryCache && sameCamera(*primaryPose, frameCamera)) {
+              target = *primaryCache;
+              backdropStats = primaryStats;
+            } else {
+              backdrop->renderStage(target, frameCamera, *library, backdropStats,
+                  app::BackdropScene::Stage::Primary, c3Diagnostic ? &observer : nullptr);
+              if (!c3Diagnostic) {
+                primaryCache = target; primaryPose = frameCamera; primaryStats = backdropStats;
+              }
+            }
+          },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
-         [&] { scene->render(target, frameCamera, geometryOptions, &*library); },
+         [&] {
+           // Tube materials are opaque and triangle() keeps strictly nearer Z.
+           // Cache the independently rendered nearest tube fragment, then merge
+           // against the animated legacy stage at exactly the old tube slot.
+           if (!geometryOptions.depthTest || geometryOptions.flat || geometryOptions.composeActorsBeforeRoute || c3Diagnostic) {
+             scene->render(target, frameCamera, geometryOptions, &*library);
+             return;
+           }
+           const auto revision = scene->terrainBlocksRebuilt();
+           if (!tubeCache || tubeTerrainRevision != revision || !sameCamera(*tubePose, frameCamera)) {
+             if (!tubeCache || tubeCache->framebuffer().width != frameCamera.width ||
+                 tubeCache->framebuffer().height != frameCamera.height)
+               tubeCache.emplace(frameCamera.width, frameCamera.height);
+             tubeCache->clear(0, 0, 0);
+             tubeCache->resetDrawCounts();
+             {
+               app::detail::RasterCommandBatch batch(frameCamera.height);
+               scene->render(*tubeCache, frameCamera, geometryOptions, &*library);
+               app::profile::Scope rasterTime(app::profile::TubeRaster);
+               batch.flush();
+             }
+             tubePose = frameCamera; tubeTerrainRevision = revision;
+           }
+           target.compositeOpaque(*tubeCache);
+         },
          [&] {
            // 0x4418C2: draw all receiver pipes after the tube and before water.
            // Include their opaque depth in the drowning-actor scenery snapshot.
            if (backdrop) {
-             app::SceneRasterObserver pipeObserver;
-             if (hasPipes) {
-               // Preserve actual accepted pipe fragments separately: later
-               // water can replace their depth. Figures test these with the
-               // same upright, unbiased depth as terrain (Y2, Y9-Y11).
+             if (hasPipes)
                pipeSceneDepth.assign(target.depthBuffer().size(), std::numeric_limits<double>::infinity());
-               pipeDepthMask.assign(pipeSceneDepth.size(), 1);
-               pipeObserver.mask = &pipeDepthMask;
-               pipeObserver.accepted = [&](const app::SceneRasterWriteEvent& e) {
-                 if (e.depthAssigned) pipeSceneDepth[e.pixel] = e.depthAfter;
-               };
-             }
              backdrop->renderStage(target, frameCamera, *library, backdropStats,
-                 app::BackdropScene::Stage::FluidPipe, hasPipes ? &pipeObserver : nullptr);
+                 app::BackdropScene::Stage::FluidPipe, nullptr, hasPipes ? &pipeSceneDepth : nullptr);
              if (hasPipes) options.pipeSceneDepth = pipeSceneDepth;
            }
            if (fluidDrowning) fluidDrownSceneDepth = target.depthBuffer();
@@ -1008,7 +1047,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // One toggle per left-button gesture, including dragging onto plate 8.
   // Motion after a click must not undo the click's speed choice.
   bool fastForwardGestureUsed = false;
-  bool firstReleasePending = true;
+  bool entryVoicePending = true;
   const auto uiClick = [&] { if (cues) cues->playUiClick(); };
   // Sim cues are taken after every World::tick() and after every successful
   // skill assignment, then routed through the single cue table. The sim's
@@ -1379,12 +1418,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       // using the existing World clock. This never supplies time to simulation.
       lemmingMotion.observe(*world);
       const auto afterUpdate = [&] {
-        // Y13: observe the first actual release, never level load. This per-leg
-        // latch cannot repeat on later hatches, pause or fast-forward passes.
-        if (firstReleasePending && world->spawned() > 0) {
-          firstReleasePending = false;
-          if (cues) cues->play(sim::SoundCue::LevelStart);
-        }
         drainCues(); lemmingMotion.observe(*world);
         scene->advanceDeathParticles(world->levelClockMs());
       };
@@ -1515,7 +1548,32 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             }
             app::drawBomberCountdowns(image, *runtimeFont, *world, fuseActors, windowRaster.mutableDepthBuffer());
           }
-          if (cueFrame) app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
+          if (cueFrame) {
+            app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
+            // A12 supersedes Y13: request Letsgo on the first drawn text frame.
+            // Each entry/Retry owns this latch, including silent attempts; neither
+            // simulation passes nor later pause/menu redraws can retrigger it.
+            if (entryVoicePending) {
+              entryVoicePending = false;
+              if (cues) cues->play(sim::SoundCue::LevelStart);
+              view.audioCuesDrained = cues ? cues->drained() : 0;
+              view.audioCuesRouted = cues ? cues->routed() : 0;
+            }
+          }
+          if (const int remainingMs = world->nukeCountdownMs(); remainingMs > 0) {
+            // A3: 44279A..4427B2 anchors the nuke digit at (320,240), centred;
+            // 414132 adds (5,6). 413F15/41419F expand it during each second;
+            // PROVISIONAL 640x480 adapter: fix the native mode factor to zero:
+            // dx=trunc(150*phase), dy=trunc(195*phase), additive ^Font text.
+            // PROVISIONAL boundary adapter: ceil the existing integer-ms timer
+            // to 5..1 (no native blank '6' at t=5 or extra digit at exact seconds).
+            // Reading World alone keeps pause, speed and explosion timing intact.
+            const int digit = (remainingMs + 999) / 1000;
+            const int phaseMs = digit * 1000 - remainingMs;
+            const int dx = 150 * phaseMs / 1000, dy = 195 * phaseMs / 1000;
+            const app::EntryCueFrame countdown{{320 - dx, 240 - dy, 330 + dx, 252 + dy}, true};
+            app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), countdown);
+          }
           if (levelMenu) levelMenu->draw(image);
           const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;

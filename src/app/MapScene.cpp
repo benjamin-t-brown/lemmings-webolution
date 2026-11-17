@@ -6,6 +6,7 @@
 #include "shell/HudText.h"
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <fstream>
 #include <limits>
 #include <sstream>
@@ -314,6 +315,10 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
   }
   scene.mask_=std::move(mask->pixels); scene.maskBackground_=mask->background;
   std::array<std::int32_t,102> state{}; state.fill(1); state[0]=state[1]=state[2]=3;
+  // Clone playtest aid, not original behaviour: WEBOLUTION_UNLOCK_ALL=1 (set by
+  // scripts/Play-Clone.ps1) shows every unfinished node as available so any level
+  // can be entered while the save keeps completion only for levels actually won.
+  if(const char* unlock=std::getenv("WEBOLUTION_UNLOCK_ALL"); unlock && unlock[0]=='1') state.fill(3);
   for(std::size_t i=0;i<102;++i) if(flags[i]!=0) {
     state[i]=2; for(int link: {kRecords[i][2],kRecords[i][3]})
       if(link!=kLinkEnd && link>=0 && link<102) state[static_cast<std::size_t>(link)]=3;

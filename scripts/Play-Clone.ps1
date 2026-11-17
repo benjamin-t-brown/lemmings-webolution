@@ -25,8 +25,11 @@ try {
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
     $env:LOCALAPPDATA = $PlayData
+    # Every unfinished level stays enterable (yellow); only won levels show complete.
+    $env:WEBOLUTION_UNLOCK_ALL = '1'
     & (Join-Path $PSScriptRoot 'Invoke-Ucrt64.ps1') "build/cmake/gcc-release/webolution.exe --game-dir 'Lemmings Revolution' --record build/playtest/replays"
 } finally {
     $env:LOCALAPPDATA = Split-Path -Parent (Split-Path -Parent $NormalSave)
+    Remove-Item Env:WEBOLUTION_UNLOCK_ALL -ErrorAction SilentlyContinue
     Pop-Location
 }

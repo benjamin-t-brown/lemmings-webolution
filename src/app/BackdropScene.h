@@ -190,12 +190,14 @@ class BackdropScene {
        const std::function<void(const SecondaryDispatchItem&)>& visitor) const;
   void visitRoots(const std::function<void(const RootSource&, const SceneNode&)>& visitor) const;
   // P9-P11 presentation only. The caller derives progress from the existing
-  // release arm clock and departure time from the existing pending end timer.
+  // release arm clock, departure time from the existing pending end timer,
+  // and balloon bob from the same level clock used by exiting actors.
   // Absolute samples make pause, retry and repeated draws deterministic.
   // Build presentation data once from the same bytes passed to build(); it
   // belongs to this scene and is discarded when the application reloads it.
   std::expected<EntranceExitPresentation,std::string> entranceExitPresentation(std::span<const std::byte> level) const;
-  void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress, double departureSeconds);
+  void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress,
+                                  double departureSeconds, double levelSeconds = 0.0);
   std::expected<LeverPresentation,std::string> leverPresentation(std::span<const std::byte> level) const;
   void setLeverFaces(const LeverPresentation&, std::span<const std::pair<int,int>> idFaces);
   std::expected<PressurePadPresentation,std::string> pressurePadPresentation(std::span<const std::byte> level) const;

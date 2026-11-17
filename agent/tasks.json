@@ -18820,7 +18820,7 @@
     {
       "id": "gameplay-sounds-001",
       "title": "Add the Let's Go, bashing and last-bricks sounds",
-      "status": "needs_review",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -18925,8 +18925,8 @@
       },
       "last_failure": "The audio implementation and smoke verification are supported, but the exact replay criterion remains unmet: 15 recordings pass and two diverge. Both divergences were previously accepted for the shrug fix, so they are not new audio regressions. The coordinator must explicitly reconcile those inherited exceptions before this criterion can pass; preserve the recordings, replay validation and accepted shrug behavior.",
       "review": {
-        "decision": "blocked",
-        "reason": "The audio implementation and current smoke run are supported, but the all-replays criterion remains unmet: fifteen recordings pass and two stop at inherited, accepted shrug-assignment divergences. The report-only revision confirms that coordinator reconciliation is still required. Another worker retry cannot resolve this authority dependency; preserve the recordings, replay validation and accepted shrug behavior.",
+        "decision": "accept",
+        "reason": "All four criteria are supported within the explicitly provisional audio scope. The lead reconciled the inherited replay exceptions by preserving and retiring the two defect-dependent recordings; all fifteen active recordings pass. The later Y13 startup-timing refinement remains queued as ui-sounds-001. This does not establish original-game fidelity.",
         "checks": [
           {
             "criterion": "Starting any level plays the Let's Go sample once at the point the evidence shows (or a labelled provisional point).",
@@ -18934,11 +18934,11 @@
             "evidence": [
               {
                 "path": "src/app/main.cpp",
-                "detail": "runApplicationLeg initializes a per-level latch and requests LevelStart on the first focused, unpaused gameplay frame, outside fast-forward passes. Retry and subsequent level legs receive fresh latches."
+                "detail": "runApplicationLeg creates a fresh levelStartSoundPending latch and requests LevelStart on the first focused, unpaused gameplay frame. The latch is consumed outside fast-forward passes; retry and subsequent level legs receive fresh latches."
               },
               {
                 "path": "src/audio/CuePlayback.cpp",
-                "detail": "LevelStart routes to Letsgo through the existing asset-loading and Mixer path. Disabled or unavailable audio does not accumulate deferred requests."
+                "detail": "LevelStart maps to Letsgo through the existing asset-loading and Mixer path. Disabled or unavailable audio accumulates no deferred playback requests."
               },
               {
                 "path": "build/gameplay-sounds-001/static/start-instructions.json",
@@ -18946,7 +18946,7 @@
               },
               {
                 "path": "docs/scratch/gameplay-sounds-001.md",
-                "detail": "Explicitly labels the first active clone frame provisional; exact retail startup phase and global guard semantics remain unreconstructed."
+                "detail": "Explicitly labels the first active clone frame provisional and leaves exact retail startup phase and guard semantics unresolved."
               }
             ]
           },
@@ -18956,45 +18956,45 @@
             "evidence": [
               {
                 "path": "src/sim/World.cpp",
-                "detail": "stepBasher emits Bash after successful terrain clearing, excluding empty swings and steel refusal. stepBuilder emits BuilderWarning before decrementing remaining counts 3, 2 and 1. The changes add audio events without changing simulation timing or state transitions."
+                "detail": "stepBasher emits Bash after successful terrain clearing, excluding empty swings and steel refusal. stepBuilder emits BuilderWarning before decrementing remaining counts 3, 2 and 1. The audio additions preserve simulation timing and state transitions."
               },
               {
                 "path": "build/gameplay-sounds-001/static/bash-sound-instructions.json",
-                "detail": "The destructible-cell branch clears nonzero terrain, admits effects subpasses 0/3, loads Mine handle 0x4E32E8 at 0x40C317 and calls playback at 0x40C32F. The report explicitly labels the clone's once-per-successful-bite cadence provisional."
+                "detail": "The destructible-cell effects branch loads Mine handle 0x4E32E8 at 0x40C317 and calls playback at 0x40C32F. The report labels the clone's once-per-successful-bite cadence provisional."
               },
               {
                 "path": "build/gameplay-sounds-001/static/builder-instructions.json",
-                "detail": "0x40FF54 compares the pre-decrement counter with 4; JGE skips playback. Otherwise 0x40FF5C loads Chink handle 0x4E32BC, 0x40FF73 plays it and 0x40FF93 stores the decremented count."
+                "detail": "0x40FF54 compares the pre-decrement counter with 4 and JGE skips playback. Otherwise 0x40FF5C loads Chink handle 0x4E32BC, 0x40FF73 plays it and 0x40FF93 stores the decremented count."
               },
               {
                 "path": "build/gameplay-sounds-001/targeted-tests-final.log",
-                "detail": "Production decoding resolves Letsgo, Mine and Chink from installed base lemmings.box. Supplemental gameplay_sounds checks pass last-three event multiplicity and successful versus empty/steel bash cases; these are source-test results, not original-runtime fidelity evidence."
+                "detail": "Production decoding resolves Letsgo, Mine and Chink from installed base lemmings.box. Supplemental checks pass exact last-three event multiplicity and successful versus empty/steel bash cases; these are source-test results."
               }
             ]
           },
           {
             "criterion": "Fast-forward and pause do not stack or loop the sounds; all promoted playtest replays still reproduce their results.",
-            "passed": false,
+            "passed": true,
             "evidence": [
               {
                 "path": "src/audio/Mixer.cpp",
-                "detail": "SkipPlaying discards overlapping Mine requests; RestartPlaying removes the existing Chink voice before starting another. Playback creates non-looping voices without a delayed queue."
+                "detail": "SkipPlaying discards overlapping Mine requests; RestartPlaying replaces any existing Chink voice. Both create non-looping one-shots without delayed queues."
               },
               {
                 "path": "src/app/RuntimeHud.cpp",
-                "detail": "advanceElapsed returns immediately while paused and invokes the cue-draining callback after simulation updates within fast-forward passes. This supports the no-backlog behavior."
+                "detail": "advanceElapsed returns immediately while paused and invokes the cue-draining callback after simulation updates within fast-forward passes, preventing accumulated skill-event playback."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "The lead explicitly retired MM_BLOCK_BUILD_BASH and MM_E4_4_SKILLS because their refused shrug clicks now succeed by design. Both recordings remain preserved as .replay.retired; active promotion covers the fifteen remaining .replay files. Lost coverage for the two levels is acknowledged."
+              },
+              {
+                "path": "agent/tasks.json",
+                "detail": "gameplay-sounds-001's lead_note explicitly reconciles the prior review blocker and confirms that the replay criterion covers the fifteen remaining active recordings."
               },
               {
                 "path": "build/gameplay-sounds-001/replays-final.json",
-                "detail": "Accounts for all 17 promoted recordings: fifteen report PASS, won=1 and completed=1. MM_BLOCK_BUILD_BASH stops at step 2850 on actor 3 assignment acceptance; MM_E4_4_SKILLS stops at step 2075 on actor 2 assignment acceptance. Their final results are not reproduced."
-              },
-              {
-                "path": "build/agent-runs/loop-981e969dfbe149c6bfa22cd1bafb5fbc/0004-review-b017fc/decision.json",
-                "detail": "The accepted shrug review explicitly allowed these two changed recordings under its criterion permitting explained divergences. That establishes inherited intended behavior, but does not waive this task's unqualified criterion."
-              },
-              {
-                "path": "docs/scratch/gameplay-sounds-001.md",
-                "detail": "The revision explicitly acknowledges the criterion remains unmet, identifies both conflicting recorded commands and leaves later outcomes unverified. It records coordinator reconciliation as a dependency rather than changing recordings, validation or accepted shrug behavior."
+                "detail": "Every currently active recording has exit 0, PASS, won=1 and completed=1. The two historical divergences remain recorded separately and are not presented as reproduced wins."
               }
             ]
           },
@@ -19003,27 +19003,29 @@
             "passed": true,
             "evidence": [
               {
-                "path": "build/agent-runs/20261116T175542-11176-c3a24e69/verification.log",
-                "detail": "The current supervisor run passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check."
-              },
-              {
-                "path": "build/agent-runs/20261116T175542-11176-c3a24e69/result.json",
-                "detail": "Records verifier exit 0 and verified_content b77d8a341d888a93baf4da8a8494079690783d528eeea9e8a5e704805905cfc2, matching the supplied review context."
+                "path": "build/agent-runs/loop-9a2b724d2e064578a165f5b198b6b9b0/0001-verify-4496c6/verification.log",
+                "detail": "The supplied current verification run passes 95/95 main smoke tests and 84/84 recovery tests, followed by git diff --check without reported errors."
               },
               {
                 "path": "docs/scratch/gameplay-sounds-001.md",
-                "detail": "Ends with level/action/expected-result checks for MM_CLIMB_002 entry and retry, MM_BASH_002 bashing, and MM_BUILD's final three bricks, including pause and fast-forward. Human listening and original fidelity remain explicitly unproved."
+                "detail": "Ends with level, action and expected-result checks for MM_CLIMB_002 entry/retry, MM_BASH_002 bashing and MM_BUILD's final three bricks, including pause and fast-forward. Its earlier coordinator-blocker wording is superseded by the retained lead reconciliation."
               }
             ]
           }
         ]
       },
-      "lead_note": "2026-11-16: the lead retired the two playtest-9 recordings that encode the Y6 refused click (docs/playtest/replays/README.md, Retired recordings). The replay criterion now covers the 15 remaining .replay files, all of which pass on the lead's release build."
+      "lead_note": "2026-11-16: the lead retired the two playtest-9 recordings that encode the Y6 refused click (docs/playtest/replays/README.md, Retired recordings). The replay criterion now covers the 15 remaining .replay files, all of which pass on the lead's release build.",
+      "accepted_at": "2026-11-16T20:35:06.943841+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-9a2b724d2e064578a165f5b198b6b9b0/0001-verify-4496c6/verification.log",
+        "verified_content": "b20ed0ede2473d98fdb04dcab4b1f5be3dd6ec3e32c605d6aff5a0a8c09a4f7e"
+      }
     },
     {
       "id": "ui-sounds-001",
       "title": "Add UI and assignment sounds; move Let's Go to first spawn",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19038,12 +19040,223 @@
         "Selecting a skill and each other panel button makes its sound, and assigning a skill to a lemming makes the assignment sound; samples and triggers are cited to static evidence or labelled provisional, and buttons with no evidence are listed.",
         "Holding or repeating clicks does not stack sounds into noise; all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261116T204700-1620-d14520ad",
+      "started": "2026-11-16T20:47:00.613873+00:00",
+      "finished": "2026-11-16T20:59:30.615295+00:00",
+      "last_run": "build/agent-runs/20261116T204700-1620-d14520ad",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Criterion 1 remains unmet: Let's Go now plays at first spawn, but the text has already finished. Synchronize the text and sound at first release while preserving simulation/release timing, then refresh verification. The other three criteria are supported. This does not establish original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "Let's Go plays once per level attempt at the moment the first hatch begins releasing, together with the Let's Go text; not at level load, not again after pause, fast-forward or a later hatch.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg creates a fresh levelStartSoundPending latch and consumes it in afterUpdate when world.spawned() becomes positive. This supports once-per-attempt playback without repeats from pause, fast-forward or later hatches. However, releaseEnabled still depends on entryCue being inactive."
+              },
+              {
+                "path": "src/app/LevelStartSequence.h",
+                "detail": "releaseEnabled requires !cueActive and completion of the door animation. Consequently, ordinary release cannot begin while the existing Let's Go text is active."
+              },
+              {
+                "path": "src/app/EntryStartCue.cpp",
+                "detail": "The text frame exists only while active; advanceBeforeFrame retires it when seconds_ falls below -1. Together with the release gate, this proves the text and first-spawn sound cannot coincide."
+              },
+              {
+                "path": "docs/scratch/ui-sounds-001.md",
+                "detail": "Explicitly acknowledges the unresolved text synchronization requirement. The needed revision is presentation synchronization without changing simulation or hatch cadence."
+              }
+            ]
+          },
+          {
+            "criterion": "Selecting a skill and each other panel button makes its sound, and assigning a skill to a lemming makes the assignment sound; samples and triggers are cited to static evidence or labelled provisional, and buttons with no evidence are listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Requests Changeop for available skill selection by mouse or number key, stocked Nuke presses, pause/resume, fast-forward activation and hatch-rate presses/repeats. Assignment immediately drains World cues through CuePlayback."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Routes Assign to Action, loads Action and Changeop through the production AssetLibrary/Mixer path, and provides playUiClick for Changeop."
+              },
+              {
+                "path": "build/ui-sounds-001/static/assignment-instructions.json",
+                "detail": "Retained Ghidra instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f show acceptance failure bypassing playback at 0x4556A2, Action handle 0x4E32FC loaded at 0x4556AA, and playback called at 0x4556B5."
+              },
+              {
+                "path": "build/ui-sounds-001/static/selection-instructions-2.json",
+                "detail": "0x45ACF0 checks nonzero stock; the mode-2 branch loads Changeop handle 0x4E32D0 at 0x45AD05 and calls playback at 0x45AD11."
+              },
+              {
+                "path": "docs/scratch/ui-sounds-001.md",
+                "detail": "Labels pause, speed, hatch-rate feedback and overlap choices provisional; lists unevidenced frontend/map/menu buttons that remain silent and documents silent refused assignments. It preserves the original selection-mode limitation."
+              },
+              {
+                "path": "build/ui-sounds-001/focused.log",
+                "detail": "Records successful production decoding of installed ACTION.WAV and CHANGEOP.WAV from lemmings.box, plus passing accepted/refused assignment checks."
+              }
+            ]
+          },
+          {
+            "criterion": "Holding or repeating clicks does not stack sounds into noise; all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Both UI Changeop and assignment Action use Mixer::Overlap::SkipPlaying."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "SkipPlaying checks existing voices under the audio-device lock and discards overlapping requests for the same clip. Playback creates non-looping one-shots without a deferred queue."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Held hatch changes request at most one sound per rendered frame and only when the resulting rate changes; key auto-repeat is excluded and fast-forward activation is limited to once per gesture."
+              },
+              {
+                "path": "build/ui-sounds-001/replays.json",
+                "detail": "Contains results for all fifteen active promoted recordings, each with exit_code 0, PASS, won=1 and completed=1."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promotion as .replay files and records the lead's prior retirement of the two defect-dependent shrug recordings. Those preserved historical recordings are correctly excluded."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T203507-1620-0f37d269/verification.log",
+                "detail": "The supplied supervisor verification passes 95/95 main smoke tests, including the installed-level sweep, and 84/84 recovery tests, followed by git diff --check without reported errors."
+              },
+              {
+                "path": "docs/scratch/ui-sounds-001.md",
+                "detail": "Ends with level/action/expected-result checks for MM_CLIMB_002 entry, retry and assignment, and MM_BUILD panel controls and held hatch clicks. Its earlier pending-verification wording predates the supplied successful supervisor run."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Criterion 1 remains unmet: Let's Go now plays at first spawn, but the text has already finished. Synchronize the text and sound at first release while preserving simulation/release timing, then refresh verification. The other three criteria are supported. This does not establish original-game fidelity.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves the text/sound mismatch while preserving the release gate. All four criteria are supported by source, retained replay results and refreshed supervisor verification. Provisional audio/presentation choices remain documented; human listening and original-game fidelity remain unproved.",
+        "checks": [
+          {
+            "criterion": "Let's Go plays once per level attempt at the moment the first hatch begins releasing, together with the Let's Go text; not at level load, not again after pause, fast-forward or a later hatch.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg initializes firstReleasePending for each attempt. afterUpdate consumes it only when world.spawned() becomes positive, creating the text cue and requesting LevelStart in the same update. Pause, fast-forward passes and later hatches cannot reset that latch; Retry creates a fresh leg."
+              },
+              {
+                "path": "src/app/EntryStartCue.cpp",
+                "detail": "atFirstRelease starts at 0.5 seconds, immediately producing the readable base rectangle. Subsequent frame-time advancement retires the presentation below -1 second."
+              },
+              {
+                "path": "src/app/LevelStartSequence.h",
+                "detail": "Release still requires completion of the retained startup delay and door duration. main.cpp supplies entryDelay, preserving the prior countdown independently of the new visible cue."
+              },
+              {
+                "path": "build/ui-sounds-001/revision-2/legacy-output/build/hatch-timing-001/after/MM_CLIMB_002/frames.csv",
+                "detail": "The retained clone trace has spawned=0 and cue_visible=0 through frame 61. Frame 62 records the first spawn together with cue_visible=1 and cue_seconds=0.5. This supports presentation synchronization; audible output is source-traced."
+              }
+            ]
+          },
+          {
+            "criterion": "Selecting a skill and each other panel button makes its sound, and assigning a skill to a lemming makes the assignment sound; samples and triggers are cited to static evidence or labelled provisional, and buttons with no evidence are listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Requests Changeop for available skill selection by mouse or number key, stocked Nuke presses, pause/resume, fast-forward activation and hatch-rate input. Actor assignments immediately drain World cues through the production audio adapter."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Routes successful Assign to Action and UI feedback to Changeop. Both samples load through Mixer::loadFrom and the installed AssetLibrary overlay."
+              },
+              {
+                "path": "build/ui-sounds-001/static/assignment-instructions.json",
+                "detail": "Retained Ghidra instructions identify reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Refusal branches past playback at 0x4556A2; success loads handle 0x4E32FC at 0x4556AA and calls playback at 0x4556B5."
+              },
+              {
+                "path": "build/ui-sounds-001/static/selection-instructions-2.json",
+                "detail": "Instructions check nonzero stock at 0x45ACF0 and mode 2 at 0x45ACFA, then load Changeop handle 0x4E32D0 at 0x45AD05 and call playback at 0x45AD11. The report retains the unresolved mode interpretation."
+              },
+              {
+                "path": "build/ui-sounds-001/focused.log",
+                "detail": "Records production decoding of installed SOUNDS\\ACTION.WAV and SOUNDS\\CHANGEOP.WAV from lemmings.box, with successful accepted/refused assignment checks."
+              },
+              {
+                "path": "docs/scratch/ui-sounds-001.md",
+                "detail": "Labels pause, speed, hatch-rate feedback and presentation/overlap choices provisional. Lists frontend, confirmation, results, map and unsupported Options buttons that remain silent without established samples; documents the evidenced silent refusal branch."
+              }
+            ]
+          },
+          {
+            "criterion": "Holding or repeating clicks does not stack sounds into noise; all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "UI Changeop and assignment Action both use Mixer::Overlap::SkipPlaying."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "SkipPlaying checks active voices under the audio-device lock and discards overlapping requests for the same clip. Playback uses non-looping one-shots without a deferred request queue."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Held hatch changes request at most one click per rendered frame and only when the rate changes. Keyboard auto-repeat is excluded, and fast-forward activation is limited to once per gesture."
+              },
+              {
+                "path": "build/ui-sounds-001/revision-2/replays.json",
+                "detail": "Lists all fifteen active promoted recordings with exact commands and individual logs. Every revised-build replay returned exit_code=0, PASS, won=1 and completed=1; the individual retained logs corroborate those results."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promotion as .replay files and preserves the lead's prior retirement reasons for the two defect-dependent shrug recordings. The revision results cover every active recording."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T204700-1620-d14520ad/verification.log",
+                "detail": "Refreshed supervisor verification passes 95/95 main smoke tests, including the installed-level sweep, and 84/84 recovery tests. It finishes with git diff --check without reported errors."
+              },
+              {
+                "path": "build/agent-runs/20261116T204700-1620-d14520ad/result.json",
+                "detail": "Records successful supervisor verification and verified_content 792d4798a933aeea8e8471824ad45f3c705bfb9acbff842ab830b533b8049739, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/ui-sounds-001.md",
+                "detail": "Ends with level/action/expected-result checks for MM_CLIMB_002 entry, Retry and assignment, M06_KF_1 later hatches, and MM_BUILD controls and held clicks. Its pending-verification wording predates the supplied successful supervisor run."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T21:02:03.191807+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T204700-1620-d14520ad\\verification.log",
+        "verified_content": "792d4798a933aeea8e8471824ad45f3c705bfb9acbff842ab830b533b8049739"
+      }
     },
     {
       "id": "basher-occlusion-001",
       "title": "Occlusion pass: bashers in walls, turn-around at walls, feet through bridges",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19060,12 +19273,140 @@
         "The side-on pass over the other states and the z-fighting check are reported with level, rotation and result; remaining defects are listed, not hidden.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261116T233514-46016-01e79e9a",
+      "started": "2026-11-16T23:35:14.439958+00:00",
+      "finished": "2026-11-16T23:43:14.993620+00:00",
+      "last_run": "build/agent-runs/20261116T233514-46016-01e79e9a",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-16: the first attempt finished its work (docs/scratch/basher-occlusion-001.md) but the supervisor skipped verification because the worker transcript held a transient reconnect error. The lead's smoke run on the resulting tree (build/lead/smoke-verify-5.log) fails one smoke test: clicktoassign, \"each alive lemming has a screen box\" (ticks=25, lemming 0 walker at cell (44,63), lemming 1 faller at cell (32,57)). injectedWalkerScreenBoxes now returns no box for an alive lemming, so that lemming could not be hovered or clicked. Keep the existing work; do not start over. Find which part of the occlusion change drops the box, and separate drawing occlusion from picking: an alive lemming keeps its screen box under the rule the test asserts. The smoke test and its assertions are protected and must pass unchanged. Run the smoke profile yourself once before exiting."
+      },
+      "review": {
+        "decision": "accept",
+        "reason": "The production change addresses the shared depth cause, and the revision preserves picking boxes without exposing hidden bodies or highlights. All six criteria are supported by retained evidence. Supervisor smoke passes; human playtest confirmation and original depth fidelity remain outstanding.",
+        "checks": [
+          {
+            "criterion": "On Just Bash (MM_BASH_002), with the cylinder rotated so the basher is at the side of the view, the basher inside the wall is hidden by the wall in front of it, at depths near the outer face and near the cylinder centre; it remains visible through the tunnel opening and when facing the camera.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-occlusion-001/upright-bash/inspection.csv",
+                "detail": "Records the natural layer-0.25 tunnel basher and explicitly supplemental layer-0.75 pose across 12 rotations. Both are fully covered at -90 degrees; front and exposed opening views retain visible fragments."
+              },
+              {
+                "path": "build/basher-occlusion-001/upright-bash/bash-tunnel-sheet.png",
+                "detail": "Independently inspected masked/raw pairs show foreground walls covering the inner-lane basher while the tunnel opening exposes its body. The ceiling legitimately covers the taller sprite's upper portion."
+              },
+              {
+                "path": "build/basher-occlusion-001/upright-bash/bash-outer-supplement-sheet.png",
+                "detail": "Independently inspected outer-lane pairs show the same wall coverage and exposed opening behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "On Lems at Loggerheads (node 17) a lemming turning at a wall is not visible through that wall from any rotation, and on a builder bridge viewed side-on no feet show through the bricks; lemmings on top of the bridge stay fully visible.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-occlusion-001/upright-wall/wall-turn-sheet.png",
+                "detail": "Inspected 12 masked/raw rotation pairs for the recorded Loggerheads turn. Covering walls remove the sprite; the exposed -90-degree view preserves all 122 raw pixels."
+              },
+              {
+                "path": "build/basher-occlusion-001/upright-bridge/bridge-walker-sheet.png",
+                "detail": "Inspected bridge-walker pairs show brick faces masking below-top feet while exposed bodies remain visible. Other foreground structures correctly cover actors."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "All ordinary figures use the same unbiased per-pixel plane comparison against rendered scene depth, without state or facing exceptions. The rule applies continuously with camera rotation."
+              }
+            ]
+          },
+          {
+            "criterion": "The cause is traced through the production depth path and stated; miner and digger are covered by the same fix or reported.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/basher-occlusion-001.md",
+                "detail": "Traces renderFrame, terrain synchronization, scene passes, actor pose, placement and clipping. Explains the former constant-origin depth and 4.64-world-unit foreground pull, template radii and actor lanes. Reports Just Mine and Just Dig excavation observations and labels the replacement provisional."
+              },
+              {
+                "path": "src/app/ActorOcclusion.h",
+                "detail": "Computes physical view Z from each pixel-centre ray intersecting an upright plane through the actual actor position. No foreground allowance or actor depth writes are introduced."
+              },
+              {
+                "path": "src/app/ActorSprite.h",
+                "detail": "actorPhysicalDepth now reverses the normalized projection bias rather than adding a contact allowance."
+              },
+              {
+                "path": "build/basher-occlusion-001/static/submit-instructions.json",
+                "detail": "Retained registered-reference instructions confirm the origin gate at 0x43CC94/0x43CC9A, subtraction at 0x43CCB5, depth setup at 0x43CCCA and submission at 0x43CD4E. These support the traced software path, not original hardware depth fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "The side-on pass over the other states and the z-fighting check are reported with level, rotation and result; remaining defects are listed, not hidden.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/basher-occlusion-001.md",
+                "detail": "Reports level, snapshot, rotations and results for walker, builder, blocker, climber, floater, faller, exiting, miner and digger. Covers terrain, bridges, MM_W_012 fluid and supplemental pipe overlaps. Explicitly discloses ceiling coverage, absent natural pipe overlap and moving-camera, animation-frame, zoom and elevation coverage gaps."
+              },
+              {
+                "path": "build/basher-occlusion-001/inspection-summary.json",
+                "detail": "Indexes 480 sampled views, all reproduced identically on paused redraw. This supports the reported repeat-frame stability result, with dynamic flicker coverage explicitly limited in the report."
+              },
+              {
+                "path": "build/basher-occlusion-001/final-climb/climb-sheet.png",
+                "detail": "Independently inspected pairs preserve exposed climbers and cover them behind walls."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/basher-occlusion-001/revision-002/replays/results.json",
+                "detail": "Contains post-revision commands, exit codes and log paths for all 15 active promoted recordings. Every command exits 0; inspected individual logs report PASS, won=1 and completed=1, with the saved counts listed in the report."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Documents the two previously retired Y6 recordings and their intentional divergence. They remain historical wins and are correctly excluded from active replay coverage."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T233514-46016-01e79e9a/verification.log",
+                "detail": "Post-worker supervisor verification reports 95/95 main smoke and 84/84 recovery tests passing, including unchanged clicktoassign and levelvisibility, followed by git diff --check."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "PlacementOnly preparation preserves picking rectangles without pixel clipping; drawing and hover highlights retain ClippedSprite preparation and scene-depth masking."
+              },
+              {
+                "path": "docs/scratch/basher-occlusion-001.md",
+                "detail": "Ends with level/action/expected-result checks for Just Bash, Loggerheads, Just Build, excavation states, climbing/floating, fluid/pipe coverage and the revised picking behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T23:45:36.161457+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T233514-46016-01e79e9a\\verification.log",
+        "verified_content": "72643bbe87cd6bac1fe3489c40bbdb3e7e52e09bc93b808f39a8fc8af70af36e"
+      }
     },
     {
       "id": "bash-particles-001",
       "title": "Show debris particles while bashing",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19080,12 +19421,104 @@
         "Miner and digger are either given their particles or reported with the evidence found.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T234536-46016-089a2247",
+      "started": "2026-11-16T23:45:36.551178+00:00",
+      "finished": "2026-11-16T23:56:14.435882+00:00",
+      "last_run": "build/agent-runs/20261116T234536-46016-089a2247",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained static evidence, promoted replay results and supervisor smoke verification. Appearance remains explicitly provisional; human playtest confirmation and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Just Bash (MM_BASH_002) a basher throws visible debris particles from the wall face for as long as it is cutting; appearance is cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "clearSkillBox preserves the existing terrain-clear calls and reports only previously occupied, nonsteel cells actually removed. stepBasher invokes it on successful bites before movement; empty swings and refusals emit nothing."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg installs the terrain-cut observer before startup ticks, forwards removals to emitTerrainDebris, advances particles using the gameplay clock, and draws them after completed scenery and actors."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "emitTerrainDebris creates four terrain-coloured chips at each removed cell, throwing them backward from the work face. Lifetimes of 1.6\u20131.9 seconds overlap successive default basher bites. The existing particle pass projects and draws chips with completed-scene depth testing."
+              },
+              {
+                "path": "docs/scratch/bash-particles-001.md",
+                "detail": "Identifies playtest 9 Y7 and Just Bash, MM_BASH_002, as the affected route. Explicitly labels density, geometry, anchoring, colour selection, motion, lifetime and slab choice provisional, and reserves visible confirmation for the next human playtest."
+              }
+            ]
+          },
+          {
+            "criterion": "Miner and digger are either given their particles or reported with the evidence found.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/bash-particles-001/static/evidence.json",
+                "detail": "Retained Ghidra pseudocode and instructions identify the registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Miner clears a cell at 0x418B29 and calls debris constructor 0x40C960 at 0x418B69 for rows -1/+1. Digger clears its row at 0x415B84 and calls the same constructor at 0x415BE8. Constructor instructions push four at 0x40C9FE before calling 0x40DBF0 at 0x40CA03. These support emission, not runtime appearance fidelity."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepMiner and stepDigger route their existing cuts through clearSkillBox without changing cut footprints, refusal logic, movement or timing."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Both skills use the shared debris renderer; miner chips throw against facing and digger chips fan in both directions, with gravity reversed for inverted actors."
+              },
+              {
+                "path": "docs/scratch/bash-particles-001.md",
+                "detail": "Reports the miner/digger evidence and explicitly documents that native digger emission can occur on an empty row while this provisional clone presentation requires actual terrain removal."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/bash-particles-001/replays.json",
+                "detail": "Records individual commands, output logs and exit codes for all 15 current promoted recordings. Every run returned exit 0, PASS, won=1 and completed=1, including MM_BASH_002 at 10/10, MM_MINE at 20/10 and MM_DIG_000 at 19/10. The individual retained logs agree with the manifest."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines promoted recordings as the current .replay files and documents the two previously retired playtest-9 recordings and their intentional builder-assignment divergence. The inspected inventory contains 15 promoted files; none was changed by this task. Headless replay results establish simulation regression coverage, not rendered particle appearance."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T234536-46016-089a2247/verification.log",
+                "detail": "Supervisor verification uses the registered UCRT64 toolchain and smoke label. All 95 main smoke tests passed, including the installed-level sweep, followed by all 84 recovery tests; git diff --check also completed."
+              },
+              {
+                "path": "build/agent-runs/20261116T234536-46016-089a2247/result.json",
+                "detail": "Records supervisor verification exit code 0 and verified_content 9d5ae743814aa9bb129dcc0a3ebdde0a68b540a663a8c44cdc6afb93aaa5fa0f, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/bash-particles-001.md",
+                "detail": "Ends with a what-to-check note naming Just Bash, Just Mine and Just Dig, the cutting actions, expected chips, expiry, foreground occlusion and pause/fast-forward behavior. Its pending-smoke statement describes worker-exit status; the subsequent supervisor log supplies the completed gate."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-16T23:58:45.291318+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T234536-46016-089a2247\\verification.log",
+        "verified_content": "9d5ae743814aa9bb129dcc0a3ebdde0a68b540a663a8c44cdc6afb93aaa5fa0f"
+      }
     },
     {
       "id": "builder-brick-anim-001",
       "title": "Show the brick growing out of the builder's pack",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19100,12 +19533,100 @@
         "Brick source, attachment and scale timing are cited to static evidence or labelled provisional.",
         "Bridge timing is unchanged: all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261116T235845-46016-d0990c17",
+      "started": "2026-11-16T23:58:45.662985+00:00",
+      "finished": "2026-11-17T00:16:27.130988+00:00",
+      "last_run": "build/agent-runs/20261116T235845-46016-d0990c17",
+      "review": {
+        "decision": "accept",
+        "reason": "The presentation change, static/provisional evidence, replay results and supervisor smoke gate cover all four criteria. Human playtest remains the final visual confirmation; this does not establish original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "On Just Build (MM_BUILD) each brick is visible in the builder's hands, growing from the pack during the pull-out animation, and is placed where the bridge brick then appears with no gap or double-draw; this holds for both facings and at fast-forward.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The production adapter synchronizes the build sprite and carried mesh to builderPresentationPhase. drawBuilderBrick grows the mesh from the directional pack anchor toward the forthcoming terrain footprint for either facing. Brick and body share scratch composition and ActorOcclusionPlane clipping; syncTerrain updates the placed terrain before actor drawing."
+              },
+              {
+                "path": "src/app/BuilderBrick.h",
+                "detail": "The phase derives from confirmed simulation frames, remaining bricks and existing placement rules. The carried mesh disappears on the placement update, including after grouped fast-forward updates; reading the phase does not mutate simulation."
+              },
+              {
+                "path": "src/__test__/test_builder_brick.cpp",
+                "detail": "Supplemental checks cover all twelve placement handoffs in both directions, grouped fast-forward sampling, stable paused reads, installed MM_BUILD assets and shared body/pipe occlusion. These support the source review rather than establish human playability."
+              },
+              {
+                "path": "build/builder-brick-anim-001/focused.log",
+                "detail": "Retained execution passed builder_brick and actor_occlusion_plane, with zero failures."
+              }
+            ]
+          },
+          {
+            "criterion": "Brick source, attachment and scale timing are cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-brick-anim-001/static/evidence.json",
+                "detail": "Retains Ghidra evidence for registered SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Pseudocode and instructions at 0x410302 establish the 0.12\u20130.78-second visibility window; 0x410486 submits the separate model; 0x410C0E constructs its mesh; 0x4105B0 and 0x4104B6 describe interpolation and procedural offsets."
+              },
+              {
+                "path": "docs/scratch/builder-brick-anim-001.md",
+                "detail": "Separates static findings from the clone implementation and explicitly labels the cuboid, red-pack anchor/fallback, simplified travel, material treatment and phase stretching as provisional. It preserves the unresolved original depth and timing limitations."
+              }
+            ]
+          },
+          {
+            "criterion": "Bridge timing is unchanged: all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-brick-anim-001/task-only.patch",
+                "detail": "The task changes rendering, its presentation helper and a legacy test registration. It does not change World::stepBuilder, terrain writes or simulation timing."
+              },
+              {
+                "path": "build/builder-brick-anim-001/final-replays.json",
+                "detail": "Records commands and individual log paths for all 15 currently promoted .replay files. Every result has exit_code 0, PASS, won=1 and completed=1, including MM_BUILD and MM_BUILD_BLOCK_A."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Documents the two previously retired recordings and their earlier builder-assignment divergence, explaining their exclusion from the promoted replay set."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261116T235845-46016-d0990c17/verification.log",
+                "detail": "Supervisor verification reports 95/95 main smoke tests and 84/84 recovery tests passing, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261116T235845-46016-d0990c17/result.json",
+                "detail": "Records verification exit_code 0 and verified_content e30a8f11c138d65d6281dd47df474909fb590c4ed5464fe461071f7d1888a41f, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/builder-brick-anim-001.md",
+                "detail": "Ends with a Just Build (MM_BUILD) check: assign Builder in both facings, watch several bricks at normal speed and fast-forward, and expect growth from the pack followed by a terrain handoff without missing or doubled bricks. Pause and rotated occlusion checks are also specified."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T00:19:49.519636+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261116T235845-46016-d0990c17\\verification.log",
+        "verified_content": "e30a8f11c138d65d6281dd47df474909fb590c4ed5464fe461071f7d1888a41f"
+      }
     },
     {
       "id": "exit-balloon-bob-001",
       "title": "Make exit balloons bob slowly",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -19120,7 +19641,108 @@
         "Lemmings still jump into the basket and are counted at the same moment as before.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261117T003037-46016-c45dfbea",
+      "started": "2026-11-17T00:30:37.786479+00:00",
+      "finished": "2026-11-17T00:36:24.148686+00:00",
+      "last_run": "build/agent-runs/20261117T003037-46016-c45dfbea",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261117T001949-46016-ff78a88a/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production diff, retained static evidence, replay logs and supervisor smoke result. Human visual confirmation remains pending; this acceptance does not establish original-game fidelity.",
+        "checks": [
+          {
+            "criterion": "On Just Climb (MM_CLIMB_002) the exit balloon bobs slowly and continuously, including while paused state is handled as the evidence shows; motion is cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-balloon-bob-001/static/exit-update-asm.json",
+                "detail": "Instructions at 0x4268CA\u20130x426901 advance phase by dt*0.5. At 0x426AC0\u20130x426B09 the waiting exit receives base Y plus half the sine sample, then forwards its logical position to the whole model."
+              },
+              {
+                "path": "build/exit-balloon-bob-001/static/0x426D90-asm.json",
+                "detail": "0x426D93\u20130x426DA4 doubles phase, multiplies by stored pi and calls the sine helper, supporting the approximately two-second period."
+              },
+              {
+                "path": "build/exit-balloon-bob-001/static/0x45CFF9-asm.json",
+                "detail": "The pause/non-play branch at 0x45DAEF\u20130x45DB08 reaches 0x45DD63\u20130x45DD76, passing zero dt to the level update. Paused bob therefore freezes."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Production gameplay supplies World::levelClockMs() to setEntranceExitPresentation after simulation updates. RuntimeSimState preserves this clock while paused."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "setEntranceExitPresentation samples the shared sine, translates the complete exit root through the existing coordinate mapping and restores its stored matrix before each sample, avoiding cumulative drift."
+              },
+              {
+                "path": "docs/scratch/exit-balloon-bob-001.md",
+                "detail": "Documents amplitude, period and pause evidence; explicitly labels zero initial phase, clone-clock adaptation, jump blending and continued departure bob as provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "Lemmings still jump into the basket and are counted at the same moment as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "The existing one-second exit jump receives the same current bob as the basket, blended from zero at contact toward the basket offset. The Y-down correction preserves the model's bob direction for either actor gravity."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Exit tails retain fall-strip rendering, type/gravity, quarter-turn phase and independent lifetimes after the live actor prefix."
+              },
+              {
+                "path": "build/exit-balloon-bob-001/task-only.patch",
+                "detail": "Production edits are confined to presentation. World exit recognition, saved increment, cue emission and result timing are unchanged."
+              },
+              {
+                "path": "build/exit-balloon-bob-001/retry-20261117T003037/focused.log",
+                "detail": "The supplemental exit_jump check passes in 0.07 seconds, covering shared model/jump offsets, unchanged immediate saves/cues, pause, expiry and fixed triggers. This is logic evidence, not natural gameplay observation."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/exit-balloon-bob-001/retry-20261117T003037/replay-results.json",
+                "detail": "Records commands and individual logs for all 15 promoted recordings: twelve playtest-7 and three playtest-8 routes. Every run returns exit 0, PASS, won=1 and completed=1, with unchanged reported saved totals."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines promoted coverage as active .replay files and documents the two previously retired playtest-9 recordings. The retained inventory matches the 15 executed recordings; this task changes no replay."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T003037-46016-c45dfbea/verification.log",
+                "detail": "Supervisor verification passes all 95 main smoke tests, including frontendentry and the installed-level sweep, plus all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "src/__test__/HatchEntryFixture.h",
+                "detail": "The retry updates the stationary-balloon expectation to sample bob at admitted frame milliseconds. It preserves existing full-frame assertions, tolerances, timeouts and registrations."
+              },
+              {
+                "path": "docs/scratch/exit-balloon-bob-001.md",
+                "detail": "Retains the initial smoke failure and retry explanation, then ends with level/action/expected-result instructions for Just Climb: watch the whole balloon bob, assign Climbers, check basket arrivals/counts, pause/resume, fast-forward and departure continuity."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T00:38:44.614062+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T003037-46016-c45dfbea\\verification.log",
+        "verified_content": "784670f4461e883b216d01ab55b12abf7dc74d9379cdd6969046cb8e1232dd97"
+      }
     }
   ]
 }

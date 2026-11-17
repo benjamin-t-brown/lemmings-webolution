@@ -1,10 +1,14 @@
-// Small synthetic units for playtest 9 Y3/Y5. No installed route, save or device.
+// Small synthetic units for playtest 9 Y3/Y5/Y12, plus optional read-only
+// installed sample decoding. No gameplay route, save or audio device.
 #include "app/RuntimeHud.h"
+#include "assets/Box.h"
+#include "assets/Wav.h"
 #include "audio/CuePlayback.h"
 #include "sim/World.h"
 
 #include <algorithm>
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <vector>
 
@@ -30,7 +34,7 @@ void builder(bool fastForward, bool buffered) {
   actor.x = 16; actor.y = 79; actor.state = sim::State::Walker;
   world.place(actor);
   check(world.assign(0, sim::Skill::Builder), "builder assignment succeeds");
-  world.takeCues(); // assignment stays silent, distinct from last-brick Chink
+  world.takeCues(); // discard Action, distinct from last-brick Chink
   app::RuntimeSimState runtime;
   if (fastForward) runtime.latchFastForward();
   audio::CuePlayback playback;
@@ -96,12 +100,57 @@ void basher(bool solid, bool steel) {
         "successful bites repeat; empty swings and steel refusals make no Mine sound");
   check(world.takeCues().empty(), "no persistent or looping bash cue");
 }
+
+// This legacy unit protects the accepted/refused distinction independently of
+// input picking: a future skill change must not turn a refusal into an Action.
+void assignmentFeedback() {
+  sim::World world(floor());
+  sim::Lemming actor;
+  actor.x = 16; actor.y = 79; actor.state = sim::State::Walker;
+  world.place(actor);
+  audio::CuePlayback playback;
+  std::vector<std::string> heard;
+  playback.setObserver([&](std::string_view name) { heard.emplace_back(name); });
+  check(world.assign(0, sim::Skill::Climber), "new climber accepted");
+  playback.drain(world);
+  check(heard == std::vector<std::string>{"Action"}, "accepted skill requests Action once");
+  check(!world.assign(0, sim::Skill::Climber), "duplicate climber refused");
+  check(!world.assign(99, sim::Skill::Builder), "missing actor refused");
+  playback.drain(world);
+  check(heard.size() == 1, "refusals and repeated drains stay silent");
+  playback.playUiClick();
+  check(heard == std::vector<std::string>{"Action", "Changeop"}, "UI click uses Changeop");
+  playback.disable();
+  playback.playUiClick();
+  check(world.assign(0, sim::Skill::Floater), "disabled audio never blocks assignment");
+  playback.drain(world);
+  check(heard.size() == 2 && world.takeCues().empty(), "disabled UI/assignment audio stays drained");
+
+  if (const char* dir = std::getenv("WEBOLUTION_GAME_DIR")) {
+    const auto root = std::filesystem::path(dir);
+    auto lib = AssetLibrary::open(root / "lemmings.box", root / "patch.box");
+    check(lib.has_value(), "installed overlay opens read-only");
+    if (lib) for (const char* name : {"Action", "Changeop"}) {
+      const auto entry = soundAssetName(name);
+      auto sound = loadSound(*lib, entry);
+      check(sound.has_value(), "installed UI/assignment sample decodes");
+      if (sound) {
+        const auto bytes = lib->read(entry);
+        std::cout << entry << " bytes=" << (bytes ? bytes->size() : 0)
+                  << " rate=" << sound->sampleRate << " channels=" << sound->channels
+                  << " frames=" << sound->frameCount() << " seconds=" << sound->seconds()
+                  << " source=" << (lib->patch() && lib->patch()->contains(entry) ? "patch.box" : "lemmings.box") << '\n';
+      }
+    }
+  }
+}
 } // namespace
 
 int main() {
   for (bool fastForward : {false, true})
     for (bool buffered : {false, true}) builder(fastForward, buffered);
   basher(true, false); basher(false, false); basher(true, true);
+  assignmentFeedback();
   if (failures) return EXIT_FAILURE;
   std::cout << "PASS: last-three warnings, successful bash bites, pause, fast-forward and drains\n";
 }

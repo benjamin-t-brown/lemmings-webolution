@@ -25,6 +25,10 @@ class EntryStartCue {
  public:
   explicit EntryStartCue(bool introEnabled = true);
 
+  // Provisional playable-v1 presentation: start at the readable base rectangle
+  // on first release. The original entry countdown remains the hatch gate.
+  static EntryStartCue atFirstRelease();
+
   // The caller supplies frame time, not simulation time. Invalid/negative
   // deltas are ignored. Non-playing states freeze the clock but may still draw.
   void advanceBeforeFrame(double seconds, bool playing);

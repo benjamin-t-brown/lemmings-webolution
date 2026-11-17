@@ -242,9 +242,11 @@ int main() {
       }
       if (t.stage == 6) {
         t.retrySeen = true;
+        // Y13: Retry retains its startup/release delay; Let's Go is now hidden
+        // until first spawn, rather than already additive on this first frame.
         if (f.cameraIntroActive || (f.frame == 0 &&
             (world.tickCount() != 10 || world.saved() != 0 || f.endPhase != app::LevelEndPhase::Running ||
-             f.entryCueSeconds != -0.5 || !f.entryCueFrame || !f.entryCueFrame->additive))) {
+             world.spawned() != 0 || f.entryCueSeconds != 0.0 || f.entryCueFrame))) {
           t.fail("retry replayed camera intro or reused old simulation/end state"); pushQuit(); return;
         }
         if (t.pendingMenuStage == 0 && f.endPhase == app::LevelEndPhase::Pending) {
@@ -407,8 +409,9 @@ int main() {
       }
       if (loss.stage == 3 && f.endPhase == app::LevelEndPhase::Pending && w.timedOut()) loss.pending7 = true;
       if (loss.stage == 4) {
+        // Y13: no first-release text while the fresh hatch is still gated.
         if (f.frame == 0 && (w.tickCount() != 10 || w.saved() != 0 || f.endPhase != app::LevelEndPhase::Running ||
-                             f.cameraIntroActive || f.entryCueSeconds != -0.5 || !f.entryCueFrame || !f.entryCueFrame->additive)) {
+                             f.cameraIntroActive || w.spawned() != 0 || f.entryCueSeconds != 0.0 || f.entryCueFrame)) {
           loss.fail("Retry did not restart stock world with intro disabled"); pushQuit(); return;
         }
         if (w.timedOut() && f.endPhase == app::LevelEndPhase::Pending) loss.pending9 = true;

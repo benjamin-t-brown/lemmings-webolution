@@ -1,5 +1,6 @@
 #include "app/FrameProfile.h"
 #include "app/BackdropScene.h"
+#include "app/ExitBalloon.h"
 #include "app/Raster.h"
 #include "app/SceneBillboardSource.h"
 #include "app/SceneMeshSource.h"
@@ -659,15 +660,16 @@ std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitP
  }
  return presentation;
 }
-void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& presentation,double openingProgress,double departureSeconds) {
- if(!std::isfinite(openingProgress)||!std::isfinite(departureSeconds))return;
+void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& presentation,double openingProgress,double departureSeconds,double levelSeconds) {
+ if(!std::isfinite(openingProgress)||!std::isfinite(departureSeconds)||!std::isfinite(levelSeconds))return;
  for(const auto& entrance:presentation.entrances)
    applyHatchAnimation(roots_[entrance.root].node,entrance.animation,openingProgress);
  for(const auto& exit:presentation.exits) {
    auto& matrix=roots_[exit.root].node.matrix;
    matrix=exit.matrix;
    const double time=std::max(0.0,departureSeconds);
-   if(time==0.0)continue;
+   const double bob=exitBalloonBob(levelSeconds);
+   if(time==0.0&&bob==0.0)continue;
    // READ 0x426A0C..0x426A95: logical X += dt*0.5, Y += dt*5,
    // radial BLEND += dt*0.5; X wraps at 256 (0x4231DE). The blend is
    // not a world-space distance: the installed lattice converts it into
@@ -675,15 +677,17 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
    // Model slot+8 (0x451668 -> 0x4658D6 -> 0x43D56C) maps this triple.
    auto position=exit.cylinderPosition;
    position[0]=std::fmod(position[0]+0.5*time,256.0);
-   position[1]+=5.0*time;
+   position[1]+=5.0*time+bob;
    position[2]+=0.5*time;
    const lemmings::WorldCoordinateMesh mesh{presentation.exitCoordinateHeight,presentation.exitCoordinateRows};
    const auto start=lemmings::map_world_coordinates(mesh,exit.cylinderPosition);
    const auto moved=lemmings::map_world_coordinates(mesh,position);
    for(std::size_t j=0;j<3;++j)matrix[9+j]+=moved[j]-start[j];
    // PROVISIONAL presentation adapter: turn the stored model with its radial
-   // heading, preserving its scale/tilt. Native tangent heading and phase-
-   // dependent 0.02 bob/roll are not reproduced. Path rates above are traced,
+   // heading, preserving its scale/tilt. Native tangent heading and departure
+   // 0.02 rotations are not reproduced. Continue the idle bob during departure
+   // to preserve continuity at the accepted global Pending trigger (provisional).
+   // Path rates above are traced,
    // not fitted to the recording. Keep the accepted global Pending trigger
    // and results timer; per-type departure/removal remains outside this fix.
    const double angle=std::atan2(moved[2],moved[0])-std::atan2(start[2],start[0]);

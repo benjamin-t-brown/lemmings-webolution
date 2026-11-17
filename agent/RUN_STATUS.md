@@ -9,43 +9,37 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- gameplay-sounds-001: **needs_review** — Add the Let's Go, bashing and last-bricks sounds
-- ui-sounds-001: **ready** — Add UI and assignment sounds; move Let's Go to first spawn
-- basher-occlusion-001: **ready** — Occlusion pass: bashers in walls, turn-around at walls, feet through bridges
-- bash-particles-001: **ready** — Show debris particles while bashing
-- builder-brick-anim-001: **ready** — Show the brick growing out of the builder's pack
-- exit-balloon-bob-001: **ready** — Make exit balloons bob slowly
 
 ## Recently completed queue entries
 
-- moving-hazards-001: Show and simulate deathrollers, buzzsaws, scorpions and robins
-  Accepted: 2026-11-16T08:45:57.306375+00:00
-  Verification evidence: `build/agent-runs/20261116T081355-26408-6cafc0b2/verification.log`
-  Verification evidence: `build\agent-runs\20261116T081355-26408-6cafc0b2\verification.log`
-- exit-jump-anim-001: Animate lemmings jumping into the balloon
-  Accepted: 2026-11-16T09:10:25.135774+00:00
-  Verification evidence: `build/agent-runs/20261116T084557-26408-1109dcaf/verification.log`
-  Verification evidence: `build\agent-runs\20261116T084557-26408-1109dcaf\verification.log`
-- hatch-click-rate-001: Change a hatch's release rate by clicking the hatch
-  Accepted: 2026-11-16T09:23:56.247766+00:00
-  Verification evidence: `build/agent-runs/20261116T091025-26408-df7972d8/verification.log`
-  Verification evidence: `build\agent-runs\20261116T091025-26408-df7972d8\verification.log`
-- pad-pipe-presentation-001: Animate the beam switch and put lemmings behind the tank pipe
-  Accepted: 2026-11-16T17:29:03.339376+00:00
-  Verification evidence: `build/agent-runs/20261116T171342-11176-1b06c5a5/verification.log`
-  Verification evidence: `build\agent-runs\20261116T171342-11176-1b06c5a5\verification.log`
-- builder-shrug-assign-001: Let a shrugging builder be hovered and given a new job
-  Accepted: 2026-11-16T17:39:10.956613+00:00
-  Verification evidence: `build/agent-runs/20261116T172903-11176-81f01ca9/verification.log`
-  Verification evidence: `build\agent-runs\20261116T172903-11176-81f01ca9\verification.log`
+- ui-sounds-001: Add UI and assignment sounds; move Let's Go to first spawn
+  Accepted: 2026-11-16T21:02:03.191807+00:00
+  Verification evidence: `build/agent-runs/20261116T204700-1620-d14520ad/verification.log`
+  Verification evidence: `build\agent-runs\20261116T204700-1620-d14520ad\verification.log`
+- basher-occlusion-001: Occlusion pass: bashers in walls, turn-around at walls, feet through bridges
+  Accepted: 2026-11-16T23:45:36.161457+00:00
+  Verification evidence: `build/agent-runs/20261116T233514-46016-01e79e9a/verification.log`
+  Verification evidence: `build\agent-runs\20261116T233514-46016-01e79e9a\verification.log`
+- bash-particles-001: Show debris particles while bashing
+  Accepted: 2026-11-16T23:58:45.291318+00:00
+  Verification evidence: `build/agent-runs/20261116T234536-46016-089a2247/verification.log`
+  Verification evidence: `build\agent-runs\20261116T234536-46016-089a2247\verification.log`
+- builder-brick-anim-001: Show the brick growing out of the builder's pack
+  Accepted: 2026-11-17T00:19:49.519636+00:00
+  Verification evidence: `build/agent-runs/20261116T235845-46016-d0990c17/verification.log`
+  Verification evidence: `build\agent-runs\20261116T235845-46016-d0990c17\verification.log`
+- exit-balloon-bob-001: Make exit balloons bob slowly
+  Accepted: 2026-11-17T00:38:44.614062+00:00
+  Verification evidence: `build/agent-runs/20261117T003037-46016-c45dfbea/verification.log`
+  Verification evidence: `build\agent-runs\20261117T003037-46016-c45dfbea\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-981e969dfbe149c6bfa22cd1bafb5fbc/result.json`
+- Result: `build/agent-runs/loop-e180d140b32b49c3b30eaaa3a58976ca/result.json`
 - Status: **blocked**
-- Duration: 0h 46m 55s
-- Completed in this invocation: pad-pipe-presentation-001, builder-shrug-assign-001
-- Reason: The audio implementation and current smoke run are supported, but the all-replays criterion remains unmet: fifteen recordings pass and two stop at inherited, accepted shrug-assignment divergences. The report-only revision confirms that coordinator reconciliation is still required. Another worker retry cannot resolve this authority dependency; preserve the recordings, replay validation and accepted shrug behavior.
+- Duration: 1h 03m 32s
+- Completed in this invocation: basher-occlusion-001, bash-particles-001, builder-brick-anim-001, exit-balloon-bob-001
+- Reason: plan failed; inspect the saved logs
 
 ## Documentation handoff
 

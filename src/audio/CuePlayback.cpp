@@ -14,6 +14,10 @@ namespace {
 // justifies it (exe SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f).
 // Cue strings are packed at 0x004C0C7C (docs/lessons/hud-and-panel.md).
 constexpr CueRoute kRoutes[] = {
+    {sim::SoundCue::Assign, "Action",
+     "docs/scratch/ui-sounds-001.md: assignment 0x00455657 tests the candidate "
+     "and acceptance, loads Action handle 0x004E32FC at 0x004556AA and plays "
+     "at 0x004556B5; refused assignments bypass this call"},
     {sim::SoundCue::OhNo, "Ohno",
      "old/docs/scratch/phase3-round7.md 'When Ohno plays': helper step 0x00414370 "
      "plays Ohno at 0x00414420 when guard byte [0x004CBB40]==0; "
@@ -32,7 +36,7 @@ constexpr CueRoute kRoutes[] = {
     {sim::SoundCue::LevelStart, "Letsgo",
      "docs/scratch/gameplay-sounds-001.md: hatch step 0x00425A95 tests its "
      "+0xAE latch, plays Letsgo handle 0x004E32B4 at 0x00425ADB before hatch "
-     "opening/release; provisional clone point: first active gameplay frame"},
+     "opening/release; player-requested clone point: first hatch spawn"},
     {sim::SoundCue::Bash, "Mine",
      "docs/scratch/gameplay-sounds-001.md: destructible-cell arm 0x0040C0AF "
      "loads Mine handle 0x004E32E8 at 0x0040C317 and plays at 0x0040C32F; "
@@ -43,10 +47,9 @@ constexpr CueRoute kRoutes[] = {
      "the brick counter decrement at 0x0040FF93"},
 };
 
-// No assignment play site: Chink belongs to the last three builder bricks,
-// not every skill assignment. Explode remains outside the routed scope.
+// Chink belongs to the last three builder bricks; assignment uses Action.
+// Explode remains outside the routed scope.
 constexpr sim::SoundCue kUnrouted[] = {
-    sim::SoundCue::Assign,   // no retained assignment play site
     sim::SoundCue::Explode,  // Explode -- no retained play site
 };
 
@@ -90,6 +93,8 @@ void CuePlayback::start(const AssetLibrary& library, bool openDevice) {
       report(std::format("audio: cue {} unavailable ({}); it will be silent", route.name,
                          loaded.error()));
   }
+  if (auto loaded = mixer_.loadFrom(library, "Changeop"); !loaded)
+    report(std::format("audio: cue Changeop unavailable ({}); it will be silent", loaded.error()));
 }
 
 void CuePlayback::play(sim::SoundCue cue) {
@@ -99,21 +104,24 @@ void CuePlayback::play(sim::SoundCue cue) {
   const auto name = routedCueName(cue);
   if (!name)
     return;
+  // Provisional overlap: exit cheers average; successful bash/assignment
+  // clips finish before another of the same sample can start; each warning
+  // starts afresh. None queues requests during fast-forward/group arrivals.
+  const auto overlap = cue == sim::SoundCue::Exit ? Mixer::Overlap::Average :
+      (cue == sim::SoundCue::Bash || cue == sim::SoundCue::Assign) ? Mixer::Overlap::SkipPlaying :
+      cue == sim::SoundCue::BuilderWarning ? Mixer::Overlap::RestartPlaying : Mixer::Overlap::Add;
+  playName(*name, overlap);
+}
+
+void CuePlayback::playUiClick() {
+  ++drained_;
+  if (!disabled_) playName("Changeop", Mixer::Overlap::SkipPlaying);
+}
+
+void CuePlayback::playName(std::string_view name, Mixer::Overlap overlap) {
   ++routed_;
-  if (observer_)
-    observer_(*name);
-  if (mixer_.ready() && mixer_.has(*name)) {
-    // Provisional clone policy: average overlapping exit cheers to avoid
-    // clipping. Retail sample/call site are traced; retail mixing is unknown.
-    // PROVISIONAL: bash clips finish before another can start; each warning
-    // starts afresh (its tail may be cut). Neither stacks or queues a backlog
-    // during fast-forward/group assignments. Normal brick spacing exceeds
-    // Chink's 0.137 s duration, so all three play in full at normal speed.
-    const auto overlap = cue == sim::SoundCue::Exit ? Mixer::Overlap::Average :
-        cue == sim::SoundCue::Bash ? Mixer::Overlap::SkipPlaying :
-        cue == sim::SoundCue::BuilderWarning ? Mixer::Overlap::RestartPlaying : Mixer::Overlap::Add;
-    mixer_.play(*name, 1.0f, overlap);
-  }
+  if (observer_) observer_(name);
+  if (mixer_.ready() && mixer_.has(name)) mixer_.play(name, 1.0f, overlap);
 }
 
 void CuePlayback::drain(sim::World& world) {

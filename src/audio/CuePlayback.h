@@ -3,9 +3,9 @@
 //
 // The simulation only says what happened (sim::SoundCue); this adapter owns the
 // single table that decides which retail cue, if any, each of those moments is
-// allowed to play. An entry is routed ONLY when a retained static play-site
-// read exists for the retail cue name. Everything else stays unrouted and
-// silent -- it is not guessed from classic Lemmings. See
+// allowed to play. Simulation routes cite retained static play-site reads.
+// UI feedback also permits explicitly provisional uses of the selection click.
+// See docs/scratch/ui-sounds-001.md and
 // docs/scratch/native-022-sound-cue-routing.md for the evidence table.
 //
 // This is cue routing only. It makes no claim about native sample timing,
@@ -79,6 +79,10 @@ public:
   // Routes one sim cue. Unrouted cues are counted and ignored.
   void play(sim::SoundCue cue);
 
+  // Changeop selection feedback (0x45AD11). Also used provisionally for
+  // pause, speed and hatch-rate controls; no looping or queued repeats.
+  void playUiClick();
+
   // Takes every pending cue from the World and plays each in order.
   void drain(sim::World& world);
 
@@ -89,6 +93,7 @@ public:
   std::size_t routed() const { return routed_; }    // routed cues requested
 
 private:
+  void playName(std::string_view name, Mixer::Overlap overlap);
   void report(const std::string& message) const;
 
   Mixer mixer_;

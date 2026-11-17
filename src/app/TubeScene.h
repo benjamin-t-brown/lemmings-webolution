@@ -113,13 +113,17 @@ struct SceneOptions {
     int drownFluidKind = -1;  // -1 keeps static-cell drowning on its existing path
     double drownSurfaceY = 0.0, drownBrightness = 1.0;
     double rotationPhase = 0.0;  // exit enter 418027 sets controller phase to 0.25
+    // Y14: render-only carried mesh. Negative outside Builder; the target is
+    // the upcoming solid cells in Y-up coordinates, independent of motion lag.
+    double builderPhase = -1.0;
+    int builderX = 0, builderY = 0, builderLength = 2;
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
   // U2: opaque scenery depth with the fluid pass excluded, only for the
   // additive submerged figure/effects. Normal actors use the completed depth.
   std::span<const double> fluidDrownSceneDepth;
-  // Y2: only pipe fragments that passed scene depth. Test these without the
-  // provisional terrain-contact allowance, for both drawing and picking.
+  // Y2: only pipe fragments that passed scene depth, retained before fluid can
+  // replace their depth. Figures use the same unbiased plane for every surface.
   std::span<const double> pipeSceneDepth;
   bool composeActorsBeforeRoute = false;
   // Diagnostic (A6d9): composite overlay with legacy `a != 0` replace instead of A4y `> 0xEF`.
@@ -152,20 +156,23 @@ class TubeScene {
   void emitDeathParticles(const sim::Lemming&, bool explosion,
       std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
       int terrainHeight, const AssetLibrary&);
+  // Skill chips share death debris's clock, lifetime storage and depth pass.
+  void emitTerrainDebris(const sim::Lemming&, std::span<const std::array<int, 2>> removedCells,
+                        std::uint64_t clockMs, int terrainHeight);
   void advanceDeathParticles(std::uint64_t clockMs);
   void drawDeathParticles(Raster&, const CameraBasis&, const AssetLibrary&) const;
   std::size_t deathParticleCount() const { return deathParticles_.size(); }
 
   // Redraw only the selected actor silhouette, using the same preparation and
-  // scene-depth mask as drawing/picking. Never changes picking or scene depth.
+  // scene-depth mask as drawing. Never changes picking or scene depth.
   bool drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis&,
                          const SceneOptions&, const AssetLibrary&, const Raster&) const;
 
   // Read-only screen box for each `options.injectedWalkers` entry, in that
   // vector's order (forward). Each placement is the one `drawInjectedWalkers`
   // would pass to `drawActorSprite` for that walker; nullopt when that walker
-  // is skipped or fully depth-occluded. Sprites use the same scene-depth
-  // mask as drawing. Without a rendered frame, a tube-only depth pass is used.
+  // is skipped by submission, asset or projection checks. Scene-depth
+  // occlusion affects drawing/highlight only; fully covered actors keep boxes.
   //
   // `injectedWalkersFromWorld` emits one walker per alive lemming, in
   // `World::lemmings()` order. While every lemming is alive the returned
@@ -175,9 +182,8 @@ class TubeScene {
   // only consumes the live prefix, so these tails cannot be picked.
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const;
-  // Production passes the completed frame explicitly so picking uses exactly
-  // the scene depth that clipped its sprites; the three-argument diagnostic
-  // overload above constructs a fresh tube-only depth pass.
+  // Production passes the completed frame explicitly. Its dimensions must match
+  // the camera; its pixel depths do not determine picking eligibility.
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib,
       const Raster& sceneRaster) const;
@@ -225,6 +231,9 @@ class TubeScene {
   };
 
   const Tile* findTile(bool outer, int column, int row) const;
+  const Texture* builderBrickTexture(const SceneOptions::InjectedNativeWalker&) const;
+  std::array<std::uint8_t, 3> terrainDebrisColour(const std::array<int, 2>& cell,
+                                                int terrainHeight) const;
   void rewirePoseLevel() const;
   CylinderMesh mesh_;
   CylinderMesh poseCylinderTemplate_;

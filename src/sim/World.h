@@ -70,12 +70,12 @@ enum class Facing : std::int8_t { Left = -1, Right = 1 };
 // names: it only says *what happened*. Mapping each cue onto a `.WAV` is the
 // mixer's job. Drained with takeCues() after each tick (or after assign).
 enum class SoundCue : std::uint8_t {
-  Assign,   // a skill stuck (no evidenced sample for assignment)
+  Assign,   // a skill stuck -- Action (0x4556B5); refusals emit no cue
   OhNo,     // a bomber fuse was lit -- Ohno
   Explode,  // the fuse ran out -- Explode
   Splat,    // landed too hard -- Splat
   Exit,     // reached the exit -- Yippee
-  LevelStart, // first active level frame -- Letsgo
+  LevelStart, // first hatch spawn -- Letsgo (presentation only)
   Bash,     // a bash bite removed terrain -- Mine
   BuilderWarning, // a builder spends brick 3, 2 or 1 -- Chink
 };
@@ -1359,7 +1359,14 @@ public:
                                            std::span<const std::array<int, 2>>)>;
   void setDeathObserver(DeathObserver observer) { deathObserver_ = std::move(observer); }
 
+  // Presentation only, after a skill's existing clearBox and before movement.
+  // Empty swings/refusals report nothing; cells are actual removals, X wrapped.
+  using TerrainCutObserver = std::function<void(const Lemming&,
+      std::span<const std::array<int, 2>>)>;
+  void setTerrainCutObserver(TerrainCutObserver observer) { terrainCutObserver_ = std::move(observer); }
+
 private:
+  std::size_t clearSkillBox(const Lemming&, int x, int y, int width, int height);
   void cue(SoundCue c);
   // D1n: optional real-seconds budget for the new lemming's first fall
   // call, under the opt-in continuous stepper clock -- see
@@ -1459,6 +1466,7 @@ private:
   std::size_t nextEntrance_ = 0;
   std::vector<SoundCue> cues_;
   DeathObserver deathObserver_;
+  TerrainCutObserver terrainCutObserver_;
 };
 
 }  // namespace webo::sim

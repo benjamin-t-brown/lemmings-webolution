@@ -21,14 +21,13 @@ struct ActorSpritePlacement {
   double bottom = 0.0;
 };
 
-// Decode the existing 0x43CCB5/43CDA0 normalized 0.0003 actor bias to the
-// physical view-Z units used by Raster and SceneDepth. At width 640 this is
-// 0.64 world units toward the camera. R3 adds a PROVISIONAL 4-world-unit
-// contact allowance for the flat SPR billboard overlapping its supporting
-// wall/tunnel surface in the installed clone contact views.
-// Retained submit instructions do not establish original device depth state.
+// Recover physical origin view Z for scene occlusion. The traced normalized
+// 0.0003 bias remains in sprite projection/placement, but is undone here:
+// pulling comparison depth toward the camera exposes actors through thin
+// walls and bridge floors (playtest 9 Y9-Y11). No contact allowance.
+// This is provisional clone presentation, not original device depth policy.
 inline double actorPhysicalDepth(const ActorSpritePlacement& p, int viewportWidth) {
-  return p.depth * viewportWidth / 0.3 - 4.0;
+  return (p.depth + 0.0003) * viewportWidth / 0.3;
 }
 
 // A lensed view-space input for the actor draw path. Its x/y/z operands are

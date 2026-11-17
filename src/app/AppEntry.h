@@ -47,6 +47,7 @@ struct LevelFrameView {
   LevelEndPhase endPhase = LevelEndPhase::Running;
   double endTimerSeconds = 7.0;
   bool cameraIntroActive = false;
+  // First-release presentation clock; zero with no frame before any spawn.
   double entryCueSeconds = 0.0;
   std::optional<EntryCueFrame> entryCueFrame;
   bool levelMenuOpen = false;

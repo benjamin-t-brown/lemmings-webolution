@@ -45,7 +45,12 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   // R2 corrects connected entry's compressed door expectation. Direct-level
   // diagnostics retain the old arm mapping. Zero-time control stays identical.
   const double arm = connectedEntry ? 2.799999952316284 : world.setup().releaseArmSeconds;
-  backdrop.setEntranceExitPresentation(effects, arm > 0 ? openingMs / 1000.0 / arm : 1, 0);
+  // Y8: this expectation formerly encoded the static exit-balloon defect.
+  // Sample its bob at the entry frame's admitted whole milliseconds, while
+  // doors retain their independent sub-ms clock. Zero-time controls stay exact.
+  const double levelSeconds = std::floor(openingMs + 1e-6) / 1000.0;
+  backdrop.setEntranceExitPresentation(effects, arm > 0 ? openingMs / 1000.0 / arm : 1, 0,
+                                      levelSeconds);
   app::SceneOptions options;
   options.drawCellRoute = true;
   options.drawWall = options.drawOuter = options.drawInner = false;

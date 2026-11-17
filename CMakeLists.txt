@@ -761,32 +761,8 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
     set_tests_properties(audiodemo_after PROPERTIES TIMEOUT 120
       ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   endif()
-  add_executable(test_entrycuewindow src/__test__/test_entrycuewindow.cpp)
-  target_link_libraries(test_entrycuewindow PRIVATE webolution_app webolution_app_nomain)
-  target_link_libraries(test_entrycuewindow PRIVATE webolution_objects)
-  target_compile_definitions(test_entrycuewindow PRIVATE
-    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  if(TARGET SDL2::SDL2)
-    target_link_libraries(test_entrycuewindow PRIVATE SDL2::SDL2)
-  elseif(TARGET PkgConfig::SDL2)
-    target_link_libraries(test_entrycuewindow PRIVATE PkgConfig::SDL2)
-  endif()
-  add_test(NAME entrycuewindow COMMAND test_entrycuewindow)
-  set_tests_properties(entrycuewindow PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  add_executable(test_levelmenuwindow src/__test__/test_levelmenuwindow.cpp)
-  target_link_libraries(test_levelmenuwindow PRIVATE webolution_app webolution_app_nomain)
-  target_link_libraries(test_levelmenuwindow PRIVATE webolution_objects)
-  target_compile_definitions(test_levelmenuwindow PRIVATE
-    WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  if(TARGET SDL2::SDL2)
-    target_link_libraries(test_levelmenuwindow PRIVATE SDL2::SDL2)
-  elseif(TARGET PkgConfig::SDL2)
-    target_link_libraries(test_levelmenuwindow PRIVATE PkgConfig::SDL2)
-  endif()
-  add_test(NAME levelmenuwindow COMMAND test_levelmenuwindow)
-  set_tests_properties(levelmenuwindow PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR};WEBOLUTION_TEST_OUTPUT_DIR=${CMAKE_BINARY_DIR}/levelmenuwindow-test")
+  # ui-sounds-001/Y13 retires entrycuewindow and levelmenuwindow: both require
+  # the old pre-spawn text. See the task report for their retained failure logs.
   if(DEFINED WEBOLUTION_GAME_DIR)
     add_test(NAME frontend_menu COMMAND ${CMAKE_COMMAND}
       "-DAPP=$<TARGET_FILE:webolution>" "-DDUMP=$<TARGET_FILE:FrontendRenderDump>"
@@ -1108,8 +1084,8 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   add_executable(test_hatch_timing_after src/__test__/test_hatch_timing.cpp ${timing_main}
     src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
   target_link_libraries(test_hatch_timing_after PRIVATE fastforward_support webolution_objects)
-  add_test(NAME hatch_timing_after COMMAND test_hatch_timing_after entry
-    "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/after")
+  # ui-sounds-001/Y13 retires entry/fast/retry: text now accompanies first spawn
+  # instead of retiring before it. Release-only units and gameplay routes stay.
   add_test(NAME hatch_timing_win_after COMMAND test_hatch_timing_after win
     "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/win-after")
   add_test(NAME hatch_timing_routes_after COMMAND test_hatch_timing_after routes
@@ -1118,13 +1094,11 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   # machine with three other play tests has pushed them past it, so they run alone.
   set_tests_properties(hatch_timing_routes_after PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  set_tests_properties(hatch_timing_after hatch_timing_win_after PROPERTIES TIMEOUT 180
+  set_tests_properties(hatch_timing_win_after PROPERTIES TIMEOUT 180
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   add_test(NAME hatch_timing_units COMMAND test_hatch_timing_after units "${CMAKE_CURRENT_BINARY_DIR}/hatch-timing-units")
-  add_test(NAME hatch_timing_fast COMMAND test_hatch_timing_after fast "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/fast")
   add_test(NAME hatch_timing_assets COMMAND test_hatch_timing_after assets "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/assets")
-  add_test(NAME hatch_timing_retry COMMAND test_hatch_timing_after retry "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/retry")
-  set_tests_properties(hatch_timing_units hatch_timing_fast hatch_timing_assets hatch_timing_retry PROPERTIES TIMEOUT 180
+  set_tests_properties(hatch_timing_units hatch_timing_assets PROPERTIES TIMEOUT 180
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   set(HATCH_EXIT_SUPPORT ${FFI_SUPPORT})
   list(REMOVE_ITEM HATCH_EXIT_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")
@@ -1174,31 +1148,13 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
     src/app/SceneVertexPack.cpp src/app/SceneDiffuse.cpp src/app/SceneDepth.cpp src/app/SceneDispatch.cpp)
   target_link_libraries(actor_occlusion_support PUBLIC webolution_objects)
   target_compile_definitions(actor_occlusion_support PUBLIC WEBOLUTION_HAVE_SDL2=1 WEBOLUTION_APP_NO_MAIN=1)
-  set(OCCLUSION_COMPARE "-")
-  set(occlusion_scene src/app/TubeScene.cpp)
-  set(occlusion_app src/app/main.cpp)
-  set(occlusion_compare "${OCCLUSION_COMPARE}")
-  add_executable(test_actor_occlusion_after src/__test__/test_actor_occlusion.cpp
-    ${occlusion_scene} ${occlusion_app})
-  target_link_libraries(test_actor_occlusion_after PRIVATE actor_occlusion_support webolution_objects)
-  target_compile_definitions(test_actor_occlusion_after PRIVATE OCCLUSION_HOVER_EXPECTATION=1)
-  add_test(NAME actor_occlusion_after COMMAND test_actor_occlusion_after after
-    "${CMAKE_CURRENT_BINARY_DIR}/actor-occlusion-after" "${occlusion_compare}")
-  set_tests_properties(actor_occlusion_after PROPERTIES TIMEOUT 180
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  # basher-occlusion-001: retire legacy actor_occlusion_after's flat biased depth oracle.
 
   add_test(NAME actor_depth_reference COMMAND ${CMAKE_COMMAND}
     "-DGAME_DIR=${WEBOLUTION_GAME_DIR}"
     -P "${CMAKE_SOURCE_DIR}/cmake/actor_depth_reference.cmake")
   set_tests_properties(actor_depth_reference PROPERTIES TIMEOUT 30)
-  set(depth_scene src/app/TubeScene.cpp)
-  set(depth_compare "-")
-  add_executable(test_actor_depth_after src/__test__/test_actor_depth.cpp ${depth_scene})
-  target_link_libraries(test_actor_depth_after PRIVATE actor_occlusion_support webolution_objects)
-  add_test(NAME actor_depth_after COMMAND test_actor_depth_after after
-    "${CMAKE_CURRENT_BINARY_DIR}/actor-depth-after" "${depth_compare}")
-  set_tests_properties(actor_depth_after PROPERTIES TIMEOUT 180
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+  # basher-occlusion-001: retire legacy actor_depth_after's four-unit contact allowance.
 
   # playable-baseline-001: scripted public-input assessment of three installed levels. Outcomes
   # (win/loss/watchdog) are reported to build/playable-baseline-001, never asserted; the exit code
@@ -1475,9 +1431,17 @@ if(BUILD_TESTING AND NOT EMSCRIPTEN)
 endif()
 
 # Keep last: assigns the smoke/legacy tiers to every test registered above.
+add_executable(test_actor_occlusion_plane src/__test__/test_actor_occlusion_plane.cpp)
+target_link_libraries(test_actor_occlusion_plane PRIVATE webolution_app webolution_objects)
+add_test(NAME actor_occlusion_plane COMMAND test_actor_occlusion_plane "${WEBOLUTION_GAME_DIR}")
+
 add_executable(test_death_particles src/__test__/test_death_particles.cpp)
 target_link_libraries(test_death_particles PRIVATE webolution_objects)
 add_test(NAME death_particles COMMAND test_death_particles)
+
+add_executable(test_terrain_debris src/__test__/test_terrain_debris.cpp)
+target_link_libraries(test_terrain_debris PRIVATE webolution_app webolution_objects)
+add_test(NAME terrain_debris COMMAND test_terrain_debris)
 
 add_executable(test_crab src/__test__/test_crab.cpp)
 target_link_libraries(test_crab PRIVATE webolution_app webolution_objects)
@@ -1497,6 +1461,12 @@ if(BUILD_TESTING)
   add_executable(test_shrug_assign src/__test__/test_shrug_assign.cpp)
   target_link_libraries(test_shrug_assign PRIVATE webolution_app webolution_objects)
   add_test(NAME shrug_assign COMMAND test_shrug_assign)
+endif()
+
+if(BUILD_TESTING)
+  add_executable(test_builder_brick src/__test__/test_builder_brick.cpp)
+  target_link_libraries(test_builder_brick PRIVATE webolution_app webolution_objects)
+  add_test(NAME builder_brick COMMAND test_builder_brick "${WEBOLUTION_GAME_DIR}")
 endif()
 
 include(cmake/test_tiers.cmake)

@@ -311,11 +311,13 @@ void printHelp() {
             "--map [--map-flags FILE] [--shot PNG] renders the conditional 640x480 map base layer;\n"
             "FILE is exactly 102 signed decimal int32 flags, whitespace-separated. Omitted flags are\n"
             "all-zero SOURCE fixture data. No selection, title, cursor, save adapter or map controls.\n"
-            "Sound: the simulated level plays six cues with retained static play-site evidence:\n"
+            "Sound: the simulated level plays seven cues with retained static play-site evidence:\n"
             "Ohno (bomber fuse end) and FallSplat (long-fall splat; the sim's Splat is mapped to\n"
-            "FallSplat), Yippee (saved at the exit), Letsgo (level start), Mine (bashing), and\n"
-            "Chink (last three builder bricks). Assignment, Explode, other events, menus and music\n"
-            "remain silent. Entry/skill cadence and repeated-SFX overlap are provisional. Cue routing\n"
+            "FallSplat), Yippee (saved at the exit), Letsgo (first hatch spawn), Mine (bashing),\n"
+            "Chink (last three builder bricks), and Action (successful assignment). Changeop plays\n"
+            "on skill/Nuke selection and provisionally on pause, speed and hatch-rate controls.\n"
+            "Explode, other events, frontend/map buttons and music remain silent. Skill cadence\n"
+            "and repeated-SFX overlap are provisional. Cue routing\n"
             "only: no claim of native sample timing, volume, mixing or resampling. A missing audio\n"
             "device or WAV is reported on stderr and the game continues. --no-audio disables sound.");
 }
@@ -680,6 +682,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       scene->emitDeathParticles(lemming, explosion, removed, world->levelClockMs(),
                                 world->terrain().height(), *library);
     });
+    world->setTerrainCutObserver([&](const sim::Lemming& lemming,
+        std::span<const std::array<int, 2>> removed) {
+      scene->emitTerrainDebris(lemming, removed, world->levelClockMs(), world->terrain().height());
+    });
     for (int i = 0; i < args.simTicks; ++i)
       world->tick();
     scene->advanceDeathParticles(world->levelClockMs());
@@ -801,8 +807,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
              app::SceneRasterObserver pipeObserver;
              if (hasPipes) {
                // Preserve actual accepted pipe fragments separately: later
-               // water can replace their depth. Only supporting terrain gets
-               // the actor's provisional four-unit contact allowance (Y2).
+               // water can replace their depth. Figures test these with the
+               // same upright, unbiased depth as terrain (Y2, Y9-Y11).
                pipeSceneDepth.assign(target.depthBuffer().size(), std::numeric_limits<double>::infinity());
                pipeDepthMask.assign(pipeSceneDepth.size(), 1);
                pipeObserver.mask = &pipeDepthMask;
@@ -1002,7 +1008,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // One toggle per left-button gesture, including dragging onto plate 8.
   // Motion after a click must not undo the click's speed choice.
   bool fastForwardGestureUsed = false;
-  bool levelStartSoundPending = true;
+  bool firstReleasePending = true;
+  const auto uiClick = [&] { if (cues) cues->playUiClick(); };
   // Sim cues are taken after every World::tick() and after every successful
   // skill assignment, then routed through the single cue table. The sim's
   // emission logic and timing are untouched.
@@ -1016,6 +1023,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::RuntimeReleaseRateControl> releaseControl;
   std::optional<app::SkillPanelIconAnimation> panelIconAnimation;
   std::optional<app::RuntimeCursor> runtimeCursor;
+  // Keep the accepted entry countdown as a release-only gate. The visible
+  // cue gets its own clock so moving it cannot change hatch/simulation timing.
+  std::optional<app::EntryStartCue> entryDelay;
   std::optional<app::EntryStartCue> entryCue;
   std::optional<app::LevelStartSequence> levelStart;
   double hatchOpeningProgress = 0.0;
@@ -1049,7 +1059,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         return 1;
       }
       entryCueText = (*strings)[71]; // READ45CAEA pushes hex47: Let's Go!, not Continue/name.
-      entryCue.emplace(persistentFrontend->levelIntroEnabled());
+      entryDelay.emplace(persistentFrontend->levelIntroEnabled());
       double doorSeconds = 0.0;
       if (entranceExitPresentation)
         for (const auto& hatch : entranceExitPresentation->entrances)
@@ -1120,6 +1130,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         persistentFrontend->openLevelMenu() != shell::Outcome::Handled) return;
     levelMenu->open();
     if (!runtimeSim.paused()) runtimeSim.togglePause();
+    uiClick(); // PROVISIONAL pause feedback; simulation/menu policy is unchanged.
     resetMenuInput();
   };
   bool menuDismissedThisFrame = false;
@@ -1130,6 +1141,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         if (persistentFrontend)
           (void)persistentFrontend->closeLevelMenu(false);
         runtimeSim.resume(); resetMenuInput();
+        uiClick();
         menuDismissedThisFrame = true; break;
       case app::LevelMenuAction::Retry:
         disposition = LegDisposition::RetryLevel; running = false; break;
@@ -1193,6 +1205,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                  releaseControl->press(hatchAtPointer(event.button.x, event.button.y), event.button.button, *world)) {
         pointerX = event.button.x; pointerY = event.button.y;
         nukeInput.reset();
+        uiClick(); // Initial hatch press only; held changes are coalesced below.
       } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
         nukeInput.reset();
         if (releaseControl) releaseControl->reset();
@@ -1219,9 +1232,15 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           if (app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward) {
             runtimeSim.toggleFastForward();
             fastForwardGestureUsed = true;
+            uiClick(); // PROVISIONAL: original plate 8 has no play call.
           }
+          const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
+          const auto panelCounts = app::runtimeSkillPanelCounts(*world);
+          if ((panelIndex >= 0 && panelIndex < 8 && panelCounts[panelIndex] > 0) ||
+              (panelIndex == 9 && world->setup().nukeStock > 0 && !world->nukeRequested()))
+            uiClick(); // 0x45AC5C selects stocked skills and Nuke via Changeop.
           if (!skillSelection.consumePanelClick(pointerX, pointerY,
-                                                app::runtimeSkillPanelCounts(*world))) {
+                                                panelCounts)) {
             // A click consumes the previous frame's exact scene depth even if
             // its observer did not inspect pixels. No simulation advances here.
             if (!windowSceneCurrent) {
@@ -1260,6 +1279,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                 app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward) {
               runtimeSim.toggleFastForward();
               fastForwardGestureUsed = true;
+              uiClick();
             }
           }
         }
@@ -1272,6 +1292,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           if (args.sim && world && runtimeSim.paused()) {
             runtimeSim.resume();
             previous = SDL_GetPerformanceCounter();
+            uiClick();
           } else if (levelMenu) openMenu();
           else running = false; // Preserve standalone diagnostic Escape-close.
         }
@@ -1281,6 +1302,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         if (args.sim && world && focused && key == SDL_SCANCODE_P) {
           runtimeSim.togglePause();
           previous = SDL_GetPerformanceCounter();
+          uiClick();
         }
         if (args.sim && world && focused) {
           int selected = -1;
@@ -1296,6 +1318,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             default: break;
           }
           if (skillSelection.selectAvailableIndex(selected, app::runtimeSkillPanelCounts(*world))) {
+            uiClick();
             std::fprintf(stderr,
                          "click-to-assign: skill %s (SOURCE input adapter)\n",
                          std::string(sim::skillName(skillSelection.selectedSkill())).c_str());
@@ -1327,8 +1350,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       panelIconAnimation->advanceIcons(focused && !menuOpen() ? elapsed : 0.0,
                                  skillSelection.selectedIndex(), hover);
     }
-    if (releaseControl && releaseControl->holding() && focused && !menuOpen())
+    if (releaseControl && releaseControl->holding() && focused && !menuOpen()) {
+      const int previousRate = releaseControl->current();
       releaseControl->advance(elapsed, hatchAtPointer(pointerX, pointerY), *world);
+      // One request per rendered frame, even if a long frame catches up several
+      // repeats. SkipPlaying discards overlap; nothing accumulates while held.
+      if (releaseControl->current() != previousRate) uiClick();
+    }
     recordCommands();
     fixedClock.advance(elapsed);
     bool updated = false;
@@ -1340,16 +1368,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       updated = true;
     }
     bool simTicked = false;
-    // 0x425ADB: a one-shot Letsgo before the hatch opening/release path.
-    // PROVISIONAL clone point: first focused, unpaused gameplay frame,
-    // including direct level entry. This latch is per level leg, outside
-    // fast-forward passes, and advances independently of device availability.
-    if (args.sim && world && levelStartSoundPending && focused && !runtimeSim.paused()) {
-      levelStartSoundPending = false;
-      if (cues) cues->play(sim::SoundCue::LevelStart);
-    }
-    // READ45CC09: title clock updates after input, before simulation/drawing.
-    // Unlike CameraIntro's pose, this frame uses the decremented title clock.
+    // Preserve the old pre-simulation entry delay exactly. Y13's visible cue
+    // starts separately at first release and then uses unscaled frame time.
+    if (entryDelay) entryDelay->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
     if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
     if (levelStart) levelStart->advance(elapsed, focused && !runtimeSim.paused());
     if (args.sim && world) {
@@ -1362,12 +1383,21 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       // using the existing World clock. This never supplies time to simulation.
       lemmingMotion.observe(*world);
       const auto afterUpdate = [&] {
+        // Y13: observe the first actual release, never level load. This per-leg
+        // latch cannot repeat on later hatches, pause or fast-forward passes.
+        // Start readable text in this same update, after the old release gate
+        // has allowed spawning. Neither presentation nor audio controls it.
+        if (firstReleasePending && world->spawned() > 0) {
+          firstReleasePending = false;
+          if (entryDelay) entryCue.emplace(app::EntryStartCue::atFirstRelease());
+          if (cues) cues->play(sim::SoundCue::LevelStart);
+        }
         drainCues(); lemmingMotion.observe(*world);
         scene->advanceDeathParticles(world->levelClockMs());
       };
-      // The gate also covers fast-forward passes and the initial hidden cue
-      // phase. A paused/menu/focus-lost cue cannot be outrun by the hatch.
-      const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryCue && entryCue->active());
+      // The gate also covers fast-forward passes. Only the retained startup
+      // delay gates release; the first-spawn presentation cannot reclose it.
+      const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryDelay && entryDelay->active());
       simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, afterUpdate,
                                             ownedClock ? 0 : app::RuntimeSimState::kStallCapMs, releaseEnabled);
       if (recorder && simTicked) recorder->advanced(*world, runtimeSim, releaseEnabled);
@@ -1393,7 +1423,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             (arm > 0 ? world->levelClockMs()/1000.0/arm : 1.0);
         const auto& end = runtimeSim.endTransition();
         backdrop->setEntranceExitPresentation(*entranceExitPresentation, hatchOpeningProgress,
-            end.phase() == app::LevelEndPhase::Pending ? 7.0-end.timerSeconds() : 0.0);
+            end.phase() == app::LevelEndPhase::Pending ? 7.0-end.timerSeconds() : 0.0,
+            world->levelClockMs() / 1000.0);
       }
       if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
         const auto& result = *runtimeSim.endTransition().snapshot();

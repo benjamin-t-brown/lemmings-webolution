@@ -951,6 +951,26 @@ void World::stepShrugger(Lemming& l) {
   }
 }
 
+std::size_t World::clearSkillBox(const Lemming& l, int x, int y, int width, int height) {
+  // Snapshot only the small existing cut footprint, and only with a renderer
+  // listening. Keep the original clearBox's stencil, ordering and return value.
+  if (!terrainCutObserver_) return setup_.terrain.clearBox(x, y, width, height);
+  std::vector<std::array<int, 2>> cells;
+  for (int cy = std::max(0, y); cy < std::min(y + height, setup_.terrain.height()); ++cy)
+    for (int dx = 0; dx < std::min(width, setup_.terrain.width()); ++dx) {
+      const int cx = setup_.terrain.wrapX(x + dx);
+      const auto material = setup_.terrain.at(cx, cy);
+      if (material != Material::Empty && material != Material::Steel)
+        cells.push_back({cx, cy});
+    }
+  const auto removed = setup_.terrain.clearBox(x, y, width, height);
+  std::erase_if(cells, [&](const auto& cell) {
+    return setup_.terrain.at(cell[0], cell[1]) != Material::Empty;
+  });
+  if (!cells.empty()) terrainCutObserver_(l, cells);
+  return removed;
+}
+
 void World::stepBasher(Lemming& l) {
   if (!bitesThisTick(l.frame, msPerTick(), rules_.basherCycleMs, rules_.basherBitePercent))
     return;
@@ -988,8 +1008,8 @@ void World::stepBasher(Lemming& l) {
   }
 
   if (anySolid) {
-    setup_.terrain.clearBox(dir > 0 ? x0 : x0 - rules_.basherReach + 1, top,
-                            rules_.basherReach, rules_.basherHeight);
+    clearSkillBox(l, dir > 0 ? x0 : x0 - rules_.basherReach + 1, top,
+                  rules_.basherReach, rules_.basherHeight);
     // 0x40C0AF's destructible-cell arm plays Mine (0x4E32E8) at 0x40C32F.
     // PROVISIONAL: one sound per successful hybrid bite; the original tests
     // individual cells/subpasses. Empty swings and refusal stay silent here.
@@ -1034,7 +1054,7 @@ void World::stepMiner(Lemming& l) {
     for (int arg = -1; arg <= 3; ++arg) {
       if (arg == 2 && dx == 1)
         continue;
-      setup_.terrain.clearBox(l.x + dx * dir, l.y - arg, 1, 1);
+      clearSkillBox(l, l.x + dx * dir, l.y - arg, 1, 1);
     }
 
 
@@ -1068,9 +1088,8 @@ void World::stepDigger(Lemming& l) {
     }
   }
 
-  const std::size_t removed = setup_.terrain.clearBox(l.x - half, digY,
-                                                      rules_.diggerWidth,
-                                                      rules_.diggerDepth);
+  const std::size_t removed = clearSkillBox(l, l.x - half, digY,
+                                           rules_.diggerWidth, rules_.diggerDepth);
   l.y += v * rules_.diggerDepth;
 
   if (removed == 0 || !solidAt(l.x, l.y + v)) {

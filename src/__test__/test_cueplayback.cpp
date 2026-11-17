@@ -126,7 +126,7 @@ void record(audio::CuePlayback& playback, std::vector<std::string>& heard) {
 void testTable() {
   std::cout << "cue table\n";
   const auto routes = audio::cueRoutes();
-  check(routes.size() == 6, "six cues have retained play-site evidence (playtest 9 Y3-Y5)");
+  check(routes.size() == 7, "seven cues have retained play-site evidence (playtest 9 Y3-Y5/Y12)");
 
   // Literal retail names, not values produced by another recovered invocation.
   check(audio::routedCueName(sim::SoundCue::OhNo) == std::optional<std::string_view>("Ohno"),
@@ -143,10 +143,11 @@ void testTable() {
         "successful bashing routes to Mine (playtest 9 Y3)");
   check(audio::routedCueName(sim::SoundCue::BuilderWarning) == std::optional<std::string_view>("Chink"),
         "last bricks route to Chink (playtest 9 Y5)");
-  for (sim::SoundCue unevidenced :
-       {sim::SoundCue::Assign, sim::SoundCue::Explode})
+  check(audio::routedCueName(sim::SoundCue::Assign) == std::optional<std::string_view>("Action"),
+        "successful assignment routes to Action (playtest 9 Y12)");
+  for (sim::SoundCue unevidenced : {sim::SoundCue::Explode})
     check(!audio::routedCueName(unevidenced).has_value(), "no retained play site => unrouted");
-  check(audio::unroutedCues().size() == 2, "Assign and Explode are listed as unknown");
+  check(audio::unroutedCues().size() == 1, "Explode remains unknown");
 
   for (const auto& route : routes) {
     check(!route.evidence.empty() && route.evidence.find("0x") != std::string_view::npos,
@@ -163,7 +164,8 @@ void testTable() {
   const std::string wav = makeWav();
   const auto path = writeBox("table", {{"SOUNDS\\OHNO.WAV", wav}, {"SOUNDS\\FALLSPLAT.WAV", wav},
                                       {"SOUNDS\\YIPPEE.WAV", wav}, {"SOUNDS\\LETSGO.WAV", wav},
-                                      {"SOUNDS\\MINE.WAV", wav}, {"SOUNDS\\CHINK.WAV", wav}});
+                                      {"SOUNDS\\MINE.WAV", wav}, {"SOUNDS\\CHINK.WAV", wav},
+                                      {"SOUNDS\\ACTION.WAV", wav}});
   {
     auto lib = AssetLibrary::open(path);
     check(lib.has_value(), "synthetic archive opens");
@@ -238,9 +240,9 @@ void testDegrade() {
       playback.play(sim::SoundCue::OhNo);
       playback.play(sim::SoundCue::Splat);  // WAV missing: still routed, silently skipped
       playback.play(sim::SoundCue::Assign);
-      check((heard == std::vector<std::string>{"Ohno", "FallSplat"}),
-            "routed cues reach the sink by literal name; the unrouted Assign does not");
-      check(playback.drained() == 3 && playback.routed() == 2, "drained and routed counts");
+      check((heard == std::vector<std::string>{"Ohno", "FallSplat", "Action"}),
+            "routed cues reach the sink by literal name, including assignment (Y12)");
+      check(playback.drained() == 3 && playback.routed() == 3, "drained and routed counts");
     }
 
     {  // no device requested (the default for every test that does not opt in)
@@ -315,7 +317,7 @@ void testWorldCues() {
     record(playback, heard);
     check(w.assign(0, sim::Skill::Bomber), "bomber assigns");
     playback.drain(w);
-    check(heard.empty(), "the assign cue (Chink) has no retained play site and stays silent");
+    check(heard == std::vector<std::string>{"Action"}, "successful assignment plays Action (Y12)");
     for (int i = 0; i < 40; ++i) {
       w.tick();
       playback.drain(w);

@@ -2,8 +2,12 @@
 // independent exit clocks. Synthetic contacts, not a gameplay/replay route.
 #include "app/LemmingAnim.h"
 #include "app/LemmingMotion.h"
+#include "app/BackdropScene.h"
+#include "app/RuntimeHud.h"
 #include "app/TubeScene.h"
 #include "assets/Box.h"
+#include "assets/LevelIndex.h"
+#include "sim/RetailLevel.h"
 #include "sim/World.h"
 
 #include <cmath>
@@ -117,6 +121,102 @@ int main(int argc, char** argv) {
   check(draw.size() == 1 && world.saved() == 4 && world.takeCues().size() == 1,
       "tail expiry creates no extra saves or cues");
   check(app::injectedWalkersFromWorld(world, 112).size() == 1, "diagnostic without tracker retains live-only behavior");
+  // Y8: keep the model and the exit-tail adapter coupled. These installed
+  // asset samples/synthetic contacts are short logic checks, not play routes.
+  const auto levelNames = levelFileNames(*library);
+  for (const char* id : {"MM_CLIMB_002", "MM_W_012", "M06_KF_1"}) {
+    std::string name;
+    for (const auto& n : levelNames) if (n.find(std::string(id) + ".LVL") != std::string::npos) name = n;
+    auto bytes = library->read(name);
+    check(bool(bytes), "installed bob level exists");
+    if (!bytes) continue;
+    auto backdrop = app::BackdropScene::build(*library, *bytes, name);
+    check(bool(backdrop), "installed bob scene loads");
+    if (!backdrop) continue;
+    const auto presentation = backdrop->entranceExitPresentation(*bytes);
+    check(presentation && !presentation->exits.empty(), "installed exit is bound");
+    if (!presentation || presentation->exits.empty()) continue;
+    const auto matrices = [&] {
+      std::vector<std::array<double, 12>> out;
+      backdrop->visitRoots([&](const auto& source, const auto& node) {
+        if (source.owner == "entities_426c6b") out.push_back(node.matrix);
+      });
+      return out;
+    };
+    backdrop->setEntranceExitPresentation(*presentation, 1, 0, 0);
+    const auto base = matrices();
+    for (const auto& [time, offset] : {std::pair{0.5, 0.5}, {1.0, 0.0}, {1.5, -0.5}, {2.0, 0.0}}) {
+      backdrop->setEntranceExitPresentation(*presentation, 1, 0, time);
+      const auto bobbed = matrices();
+      for (std::size_t e = 0; e < base.size(); ++e) {
+        check(std::abs(bobbed[e][10] - base[e][10] - offset) < 1e-6,
+            "whole basket/model has half-unit bob and two-second period");
+        check(std::abs(bobbed[e][9] - base[e][9]) < 1e-6 &&
+              std::abs(bobbed[e][11] - base[e][11]) < 1e-6,
+            "idle bob preserves horizontal placement");
+      }
+    }
+    auto installed = sim::loadRetailLevel(*library, id);
+    check(installed && !installed->exits.empty(), "installed simulation trigger loads");
+    if (!installed || installed->exits.empty()) continue;
+    installed->totalLemmings = 0;
+    const auto trigger = installed->exits.front();
+    sim::World arrivals(*installed);
+    sim::Lemming a;
+    a.x = trigger.x + trigger.width / 2; a.y = trigger.y;
+    a.state = sim::State::Walker;
+    arrivals.place(a);
+    a.verticalDir = -1; arrivals.place(a);
+    app::LemmingMotionTracker tails;
+    app::RuntimeSimState clock;
+    tails.observe(arrivals);
+    const auto observe = [&] { tails.observe(arrivals); };
+    // Exit recognition stays on the accepted bookkeeping tick. No jump or bob
+    // sample is allowed to defer its save/cue until presentation completion.
+    arrivals.tick(); observe();
+    check(arrivals.saved() == 2 && arrivals.takeCues().size() == 2,
+        "bobbing does not defer saves or cues until jump completion");
+    for (int step = 0; step < 99; ++step) {
+      clock.advanceElapsed(arrivals, .01, false, observe);
+      const double age = tails.exitSeconds(0, arrivals);
+      const double dy = trigger.y - 8.0 - a.y, dz = 1.5 - .75;
+      const double dx = trigger.x + trigger.width * .5 - a.x;
+      const double lift = std::sqrt(dx*dx + dy*dy + dz*dz)*age - 12.5*age*age;
+      backdrop->setEntranceExitPresentation(*presentation, 1, 0, arrivals.levelClockMs()/1000.0);
+      const double modelBob = matrices().front()[10] - base.front()[10];
+      for (std::size_t actor : {0u, 1u}) {
+        const auto p = tails.positionOf(actor, arrivals);
+        const int gravity = arrivals.lemmings()[actor].verticalDir;
+        check(std::abs(p.y - (a.y - gravity*lift + dy*.01) + modelBob*age) < 1e-6,
+            "upright/inverted tails converge on the same displayed basket bob");
+      }
+    }
+    const auto held = tails.positionOf(0, arrivals);
+    const auto heldMatrix = matrices();
+    clock.togglePause();
+    clock.advanceElapsed(arrivals, 5, false, observe);
+    backdrop->setEntranceExitPresentation(*presentation, 1, 0, arrivals.levelClockMs()/1000.0);
+    check(near(tails.positionOf(0, arrivals).y, held.y) && matrices() == heldMatrix,
+        "pause freezes basket and jump on the same clock");
+    clock.resume(); clock.toggleFastForward();
+    const auto was = arrivals.levelClockMs();
+    clock.advanceElapsed(arrivals, .01, false, observe);
+    check(arrivals.levelClockMs() == was + 10*app::RuntimeSimState::kFastForwardPasses &&
+          tails.exitSeconds(0, arrivals) < 0 && arrivals.saved() == 2 && arrivals.takeCues().empty(),
+        "fast-forward advances presentation expiry with no extra save/cue");
+    check(arrivals.setup().exits.front().x == trigger.x && arrivals.setup().exits.front().y == trigger.y,
+        "all render samples leave the simulation trigger fixed");
+    // Sampling departure at an arbitrary bob phase must not snap back to base.
+    backdrop->setEntranceExitPresentation(*presentation, 1, 0, .5);
+    const auto beforeDeparture = matrices();
+    backdrop->setEntranceExitPresentation(*presentation, 1, 1e-8, .50000001);
+    const auto departing = matrices();
+    for (std::size_t e = 0; e < departing.size(); ++e)
+      for (int c = 9; c < 12; ++c)
+        check(std::abs(beforeDeparture[e][c] - departing[e][c]) < 1e-5,
+            "departure starts continuously from the displayed bob");
+    std::cout << id << ": bob, jump alignment, pause, fast-forward, fixed trigger PASS\n";
+  }
   std::cout << (failures ? "FAIL" : "PASS") << ": exit jump lifetime, indexing, sheets, gravity and accounting\n";
   return failures ? 1 : 0;
 }

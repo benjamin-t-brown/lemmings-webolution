@@ -23466,6 +23466,68 @@
         "log": "build\\agent-runs\\20261118T025649-55108-f3ec0c55\\verification.log",
         "verified_content": "0b29a5087a3945476dc7878accbd7c11e38faba78ccf417c34c3c0c7e7672507"
       }
+    },
+    {
+      "id": "zoom-cursor-001",
+      "title": "Space zoom goes toward the visible cursor",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C1: pressing Space (or Ctrl) to zoom in does not zoom toward the cursor; the result seems random. Source trace by the lead: src/app/main.cpp queues pending.zoom() on SDL_SCANCODE_SPACE/CTRL; CameraController::update (src/app/CameraInput.cpp) then sets elevation from its own cursorY_ and nudges yaw at most 30 units from cursorX_. cursorX_/cursorY_ are a virtual cursor integrated from raw relative mouse motion at 2.0x / 2.4x and clamped to the screen, so they drift away from the visible pointer (main.cpp pointerX/pointerY, which picking and the skill panel use). Fix: zoom must use the visible pointer, and zooming in must bring the terrain under the pointer into view at the zoomed scale: the point under the pointer should stay under (or very near) the pointer after the zoom-in. Use the existing projection/pick path to find that point rather than a new heuristic. Zooming back out keeps its current behavior. Keep the zoom input recordable if it affects the simulation (it should not). Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-17-playtest-13.md. Where this departs from the traced original input mapping, say so in the report and label the new behavior provisional; the user's playtest is the authority for this change. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all of them and report each result. If an existing legacy or smoke test asserts the old behavior, a legacy test may be removed with a one-line reason; a smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "On any level, moving the visible pointer over a lemming or terrain feature and pressing Space zooms in with that feature still under or very near the pointer, at the left, centre and right of the view and near the top and bottom.",
+        "Zoom no longer depends on the integrated virtual cursor; the production call path from the key press to the camera change is named in the report.",
+        "Zooming out and right-drag rotation behave as before.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "drag-yaw-reverse-001",
+      "title": "Right-drag left/right turns the cylinder the other way",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C2: dragging with the right mouse button turns the cylinder the wrong way. The user chose to reverse left/right only; up/down drag stays exactly as it is. Source trace: CameraController::update (src/app/CameraInput.cpp) applies `camera_.yawUnits -= (10.0 / 24.0) * in.mouseDx` while grabbed, and moves pickReference_[0] by the same yaw change. Reverse the sign of the mouse contribution to yaw only, keeping its gain, the pick reference tracking and NUMPAD4/6 rotation unchanged. Do not add an option; a player-selectable invert option is recorded in docs/POST_1_0.md for after 1.0. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-17-playtest-13.md. Where this departs from the traced original input mapping, say so in the report and label the new behavior provisional; the user's playtest is the authority for this change. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all of them and report each result. If an existing legacy or smoke test asserts the old behavior, a legacy test may be removed with a one-line reason; a smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "With the right mouse button held, dragging the mouse right turns the cylinder the opposite way to before at the same speed; dragging up/down tilts exactly as before.",
+        "NUMPAD4/6 rotation and picking after a drag still select the lemming under the pointer.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "fastforward-hold-001",
+      "title": "Fast-forward is held, not toggled",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C3: fast-forward should be a hold-to-speed-up button, not a toggle. Source trace: src/app/main.cpp calls runtimeSim.toggleFastForward() on a left press over RuntimePanelCommand::FastForward and on a drag onto it (fastForwardGestureUsed), under the PROVISIONAL P17 toggle policy (RuntimeHud.h). Change it so fast-forward is on while the left button is held on the fast-forward plate and turns off on release, and also turns off if the pointer leaves the plate while held, the window loses focus, the level menu opens or the level ends. Keep drag-onto activation if it still makes sense as a hold. Pause must still work while held. Keep the replay format unchanged: the recorder already writes an 'f' row whenever runtime.fastForward() changes, so holds and releases replay as state changes. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-17-playtest-13.md. Where this departs from the traced original input mapping, say so in the report and label the new behavior provisional; the user's playtest is the authority for this change. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all of them and report each result. If an existing legacy or smoke test asserts the old behavior, a legacy test may be removed with a one-line reason; a smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Holding the left mouse button on the fast-forward plate speeds the level up; releasing it, moving off the plate, losing focus or opening the menu returns to normal speed.",
+        "A single click no longer leaves fast-forward on.",
+        "Recordings made with the new behavior replay; existing promoted recordings still reproduce.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

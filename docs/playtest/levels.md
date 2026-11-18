@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 22 of 102.
+under docs/playtest/replays/. Won so far: 23 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ under docs/playtest/replays/. Won so far: 22 of 102.
 | 19 | E19_KF_2 | Kriss Kross | ok | playtest 12 | pass |  |
 | 20 | MM_E1_4SKILLS | Sergeant Bash | ok | playtest 11 | pass |  |
 | 21 | E20_mg_1 | The Crowded House | ok | playtest 12 | pass |  |
-| 22 | MM_ALL_8_001 | One Way Ticket | ok |  |  | playtest 12 B2 fixed in queue run 2026-11-17, not yet seen by a person |
+| 22 | MM_ALL_8_001 | One Way Ticket | ok | playtest 13 | pass |  |
 | 23 | MM_E1_5_Skills | Swings Both Ways | ok |  |  |  |
 | 24 | MM_ALL_8_002 | Wandering Free | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 25 | MM_ALL_8_003 | The Iron Curtain | ok |  |  |  |

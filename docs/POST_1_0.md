@@ -30,3 +30,5 @@ Order below is the lead's suggestion, not a commitment.
 
 - Occlusion when a lemming falls close to a surface (playtest 11 A4). The user sees the same clipping in
   the original, so it is not a 1.0 defect; a candidate for the renderer work above.
+- An option to invert the right-drag camera direction (playtest 13 C2). 1.0 reverses left/right
+  drag by the user's choice; the option would let a player pick either way, per axis.

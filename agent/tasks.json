@@ -23528,6 +23528,27 @@
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "actor-light-lookup-001",
+      "title": "Lemming light uses terrain position, not 3D model position",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C4: on One Way Ticket (node 22, MM_ALL_8_001), early in the level while lemmings walk back and forth near the reverse-bash zone, lemmings above a certain height are coloured correctly and below it they are darker. Source trace by the lead: TubeScene.cpp prepareInjectedWalker calls actorLightTintAt(light, worldPosition[0], worldPosition[1]) where worldPosition is pose.modelPosition, the interpolated 3D cylinder-mesh position, and the miner-axe path (TubeScene.cpp, p.minerAxe) does the same with pose.modelPosition. The original's lookup is 0x403F40(0x4C6A10, ftol(actor+0x08), ftol(actor+0x10)): the actor's TERRAIN X and Y, idx = y*128 + (x & 0xFF)/2 (docs/lessons/actor-rendering.md, A4o/A4p; src/assets/LightMap.h). Those are the +8 sample the clone already carries (injected.plus8X / plus8Y, file-row Y; see ActorPose terrainSampleFromLemming). The earlier A4 checks passed only because every MM_CLIMB_002 sample was on map byte 0. One Way Ticket's map has authored shadow bands under ledges (entries 0-12, a grey ramp 152..61), so a wrong index shows. Fix every actor light lookup (walkers and all skill/state sprites, the miner axe, and any other caller of actorLightTintAt) to use the terrain X and file-row Y the original uses, and check both gravities. Keep the palette, modulate and alpha rules unchanged. Difficulty: routine. Recommended model: Sonnet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-17-playtest-13.md. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings under docs/playtest/replays/ and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Every actor light lookup indexes the light map with the actor's terrain X and file-row Y, citing 0x403F40 and actor+0x08/+0x10; no caller passes a 3D model position.",
+        "On One Way Ticket, a lemming's brightness follows the level's authored light map: darker only inside the shadow bands under ledges, with no brightness change that depends on camera rotation or a fixed screen height.",
+        "The miner axe and all skill/state sprites use the same lookup, in both gravities.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

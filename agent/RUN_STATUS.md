@@ -10,6 +10,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - climber-topout-001: **ready** — Make Mine a Large One: a climber stops at the top of its wall instead of passing through
+- web-perf-001: **ready** — Browser build: smooth camera rotation, unbroken music, bounded console output
 
 ## Recently completed queue entries
 

@@ -25540,6 +25540,27 @@
         "Climbing on the levels already won is unchanged; all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "web-perf-001",
+      "title": "Browser build: smooth camera rotation, unbroken music, bounded console output",
+      "status": "ready",
+      "depends_on": [
+        "climber-topout-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 16 F3 and F4 (browser build from emscripten-build-001, served by scripts/serve-web.py in a desktop browser). F3: while the camera rotates, both during the level-entry intro (CameraIntro) and when the player rotates the cylinder, the frame rate drops sharply and the music constantly clips. F4: so much is written to the browser console that the tab crashes. Static starting points (lead, not measured): the web build rasterizes on one thread (src/app/RasterRows.h run() under __EMSCRIPTEN__) where native uses up to 16 workers; it links with -sASYNCIFY and no -pthread or -msimd128 (CMakeLists.txt, EMSCRIPTEN block); SDL audio opens with want.samples = 1024 (src/audio/Mixer.cpp) and is serviced from the main thread, so long frames starve it; src/web/webolution.html routes printErr to console.error. F4: identify from a captured run what is printed per frame or per event (for example stderr diagnostics in main.cpp such as click-to-assign, CuePlayback::report, SDL or Emscripten warnings) and make the web build's console output bounded: nothing per frame, each repeated warning at most once. Native output stays as it is unless a line is per-frame noise on both. F3: measure web frame time during intro rotation and player rotation on at least Just Climb and Make Mine a Large One (for example WEBOLUTION_FRAME_PROFILE under the registered node, or a timing harness on the same render path), find the dominant cost, and make rotation smooth and the music continuous in a desktop browser. Candidate remedies, choose from measurement: pthreads for RasterRows (scripts/serve-web.py already sends COOP/COEP) with pixels identical to the single-thread path, -O3 and -msimd128, replacing Asyncify with emscripten_set_main_loop if it costs, and an audio buffer or audio path that survives a slow frame. Web-only changes go behind __EMSCRIPTEN__ or CMake EMSCRIPTEN; native behavior, pixels, smoke and replays must stay unchanged. Report before/after frame times per scenario and the web build commands; the browser itself is checked in the user's playtest. Difficulty: difficult. Recommended model: Opus. Reason: threading, audio and main-loop changes in the Emscripten build with an unchanged native path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names what flooded the console and the web build no longer prints anything per frame; repeated warnings appear at most once.",
+        "The report gives measured web frame times before and after for intro rotation and player rotation on Just Climb and Make Mine a Large One, names the dominant cost, and the after times support smooth rotation.",
+        "Music and cues keep playing without gaps through a slow frame in the web build, by design argument and any measurement available outside a browser.",
+        "The native build's behavior and pixels are unchanged; all promoted playtest replays still reproduce on both the native and the web build.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

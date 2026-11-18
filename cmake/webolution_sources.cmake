@@ -44,6 +44,7 @@ set(WEBOLUTION_SOURCES
   # save -- original-layout SavedGame.dat codec (pure) and storage adapter
   src/save/SavedGame.cpp
   src/save/SaveStore.cpp
+  src/save/SoundSettings.cpp
 
 )
 
@@ -128,6 +129,7 @@ set(WEBOLUTION_GFX_SOURCES
   src/app/TubeScene.cpp
   src/app/MapScene.cpp
   src/app/FrontendSession.cpp
+  src/app/SoundMenu.cpp
   src/app/ResultsScene.cpp
   src/app/FrontendWindow.cpp
   src/shell/Frontend.cpp

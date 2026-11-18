@@ -32,7 +32,7 @@
 namespace webo::shell {
 
 // Dialog is the in-level menu: READ48F4E0, selector1F; one captured page node.
-enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog, Results };
+enum class Screen : std::uint8_t { Menu, Confirm, Map, Level, Dialog, Results, SoundOptions };
 
 enum class Key : std::uint8_t { Return, Esc, P, O, MapNodeClick };
 
@@ -95,6 +95,8 @@ class Frontend {
   Outcome openLevelMenu();
   Outcome closeLevelMenu(bool paused);
   Outcome retryLevelMenu();
+  Outcome openSoundOptions();
+  Outcome returnFromSoundOptions();
   // Shared menu/Confirm focus; page construction/return starts at row0.
   void setHighlight(int highlight) { highlight_ = highlight; }
   // Level back to the map; the triggering input is unobserved, so it is a method.

@@ -42,12 +42,10 @@ class ActorOcclusionPlane {
 
   std::array<double, 3> worldAt(const CameraBasis& camera, double x, double y) const {
     const double z = depthAt(x, y);
-    const double vx = (x - camera.cx) / camera.focalX;
-    const double vy = -(y - camera.cy) / camera.focalY;
-    const auto& m = camera.worldToView;
+    const auto ray = camera.worldRay(x, y);
     std::array<double, 3> world;
     for (int k = 0; k < 3; ++k)
-      world[k] = camera.eyeWorld[k] + z * (m[k * 3] * vx + m[k * 3 + 1] * vy + m[k * 3 + 2]);
+      world[k] = camera.eyeWorld[k] + z * ray[k];
     return world;
   }
 

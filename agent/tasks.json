@@ -23470,7 +23470,7 @@
     {
       "id": "zoom-cursor-001",
       "title": "Space zoom goes toward the visible cursor",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23486,12 +23486,203 @@
         "Zooming out and right-drag rotation behave as before.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261118T064457-49048-e0a44025",
+      "started": "2026-11-18T06:44:58.063601+00:00",
+      "finished": "2026-11-18T06:50:53.086108+00:00",
+      "last_run": "build/agent-runs/20261118T064457-49048-e0a44025",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "An out-of-range zoom anchor shifts both right-drag elevation limits for the rest of that zoom session. Preserve the original limits for continued dragging while allowing the anchored pose to enter the range without snapping. All 20 promoted replays and supervisor smoke passed.",
+        "checks": [
+          {
+            "criterion": "On any level, moving the visible pointer over a lemming or terrain feature and pressing Space zooms in with that feature still under or very near the pointer, at the left, centre and right of the view and near the top and bottom.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/playtest/2026-11-17-playtest-13.md",
+                "detail": "C1 records the user's report on One Way Ticket that Space appeared to zoom toward a random point."
+              },
+              {
+                "path": "src/app/Camera.cpp",
+                "detail": "cursorZoomPose reconstructs the point on the displayed pixel ray and solves the zoomed eye offsets so the point projects back to that pixel. The calculation uses the active camera and depth and has no level-specific offsets."
+              },
+              {
+                "path": "build/zoom-cursor-001/probe.log",
+                "detail": "All 54 terrain samples across nine viewport regions and three yaw positions per level reprojected within 0.001 pixel on One Way Ticket and MM_CLIMB_002. The redrawn depth differed by at most 0.109 world units."
+              },
+              {
+                "path": "build/zoom-cursor-001/actor-probe.log",
+                "detail": "Eight visible injected lemming poses across the same two installed levels retained a visible actor pixel within one pixel of the anchor. Human playtest confirmation remains pending."
+              }
+            ]
+          },
+          {
+            "criterion": "Zoom no longer depends on the integrated virtual cursor; the production call path from the key press to the camera change is named in the report.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg converts SDL input to game coordinates. Space and either Ctrl key call zoomAtPointer, which samples the displayed actor or scenery depth at pointerX and pointerY and queues the resulting pose for the next fixed camera step."
+              },
+              {
+                "path": "src/app/CameraInput.cpp",
+                "detail": "CameraController::update applies the supplied pose or a neutral fallback. Neither branch reads the integrated cursor coordinates."
+              },
+              {
+                "path": "docs/scratch/zoom-cursor-001.md",
+                "detail": "The report traces the SDL key event through zoomAtPointer, cursorZoomPose, PendingCameraEvents::zoom, CameraController::update and buildCamera. It labels the new input mapping provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "Zooming out and right-drag rotation behave as before.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/CameraInput.cpp",
+                "detail": "Zoom-out still toggles the scale and retains yaw, and horizontal right-drag retains its direction and gain. Lines 52 and 83 shift both vertical right-drag limits after an out-of-range anchor. For an anchor at 67.5, the previous range of \u221210.5 to 47.5 becomes 9.5 to 67.5, so the previous lower endpoint cannot be reached by dragging."
+              },
+              {
+                "path": "src/__test__/test_camerainput.cpp",
+                "detail": "The new out-of-range case checks a horizontal drag and one small vertical drag. It does not exercise the original opposite endpoint after an out-of-range anchor."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/zoom-cursor-001/replays.log",
+                "detail": "The logged filenames match all 20 active .replay files. Each returned exit 0, PASS, won=1 and completed=1. One Way Ticket reproduced 46 of 40 required at step 13812."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "The promotion policy defines active recordings as .replay files and documents the separate .replay.retired inventory."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T062133-49048-d9d552a2/verification.log",
+                "detail": "Supervisor verification records 95 of 95 main smoke tests and 84 of 84 recovery tests passing, including camerainput and the installed-level sweep."
+              },
+              {
+                "path": "docs/scratch/zoom-cursor-001.md",
+                "detail": "The final note names One Way Ticket and gives the pointer positions, Space or Ctrl action, expected feature retention, zoom-out check and right-drag check."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "An out-of-range zoom anchor shifts both right-drag elevation limits for the rest of that zoom session. Preserve the original limits for continued dragging while allowing the anchored pose to enter the range without snapping. All 20 promoted replays and supervisor smoke passed.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revised clamp lets an out-of-range zoom anchor move inward at the normal drag rate and restores both original elevation limits on re-entry. All 20 promoted replays and the current supervisor smoke run passed. Human confirmation of cursor anchoring remains pending.",
+        "checks": [
+          {
+            "criterion": "On any level, moving the visible pointer over a lemming or terrain feature and pressing Space zooms in with that feature still under or very near the pointer, at the left, centre and right of the view and near the top and bottom.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/playtest/2026-11-17-playtest-13.md",
+                "detail": "C1 records the original clone defect on One Way Ticket, where Space appeared to zoom toward a random point."
+              },
+              {
+                "path": "src/app/Camera.cpp",
+                "detail": "The calculation reconstructs the point on the displayed pixel ray and solves for eye offsets that put it back on the same pixel after zooming. It uses the active camera and rendered depth on every level."
+              },
+              {
+                "path": "build/zoom-cursor-001/probe.log",
+                "detail": "All 54 terrain samples across left, centre, right, top and bottom regions on One Way Ticket and MM_CLIMB_002 reprojected within 0.001 pixel. The redrawn depth differed by at most 0.109 world units."
+              },
+              {
+                "path": "build/zoom-cursor-001/actor-probe.log",
+                "detail": "Eight offscreen samples with injected lemmings on the same two installed levels retained a visible actor pixel within one pixel of the anchor."
+              }
+            ]
+          },
+          {
+            "criterion": "Zoom no longer depends on the integrated virtual cursor; the production call path from the key press to the camera change is named in the report.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Space and either Ctrl key call zoomAtPointer, which takes actor or scenery depth at the same logical pointer coordinates used by click and hover handling."
+              },
+              {
+                "path": "src/app/CameraInput.cpp",
+                "detail": "The fixed camera update applies the queued offsets or the neutral fallback on zoom-in. Neither uses the integrated cursor coordinates."
+              },
+              {
+                "path": "docs/scratch/zoom-cursor-001.md",
+                "detail": "The report follows the SDL key event through zoomAtPointer, cursorZoomPose, PendingCameraEvents::zoom, CameraController::update and buildCamera. It marks the new mapping as provisional clone behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "Zooming out and right-drag rotation behave as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/CameraInput.cpp",
+                "detail": "Zoom-out still selects zoom zero and retains yaw. Right-drag retains its yaw direction and gain and its zoomed elevation gain. Outside the elevation range, the temporary bound follows the current elevation inward. Once the camera re-enters the range, both original bounds apply."
+              },
+              {
+                "path": "build/zoom-cursor-001/review-revision/drag-probe.log",
+                "detail": "The revised controller probe passes from both 67.5 and \u221230.5, crossing inward and reaching both original limits of \u221210.5 and 47.5."
+              },
+              {
+                "path": "src/__test__/test_camerainput.cpp",
+                "detail": "The camera input test checks that zoom-out retains yaw and that a horizontal right-drag preserves an out-of-range anchor's elevation."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/zoom-cursor-001/review-revision/replays.log",
+                "detail": "The revised-build log matches the complete inventory of 20 active recordings. Each exited 0 with PASS, won=1 and completed=1. One Way Ticket reproduced 46 of 40 required at step 13812."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "The promotion policy defines the active inventory as files ending in .replay and separately lists retired recordings."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T064457-49048-e0a44025/verification.log",
+                "detail": "The current supervisor run passed 95 of 95 main smoke tests, including camerainput and the installed-level sweep, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/zoom-cursor-001.md",
+                "detail": "The report's final note names One Way Ticket and specifies where to place the pointer, which key to press, what feature retention to expect, and how to check drag limits and zoom-out. Its pending-smoke wording predates the supervisor result."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T06:53:46.187169+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T064457-49048-e0a44025\\verification.log",
+        "verified_content": "61c0a3e9e021b243063463ca6d5ce609a42db9c5dba53f8de4e0b532f97813be"
+      }
     },
     {
       "id": "drag-yaw-reverse-001",
       "title": "Right-drag left/right turns the cylinder the other way",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23506,12 +23697,88 @@
         "NUMPAD4/6 rotation and picking after a drag still select the lemming under the pointer.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T065346-49048-efd4cc28",
+      "started": "2026-11-18T06:53:46.600312+00:00",
+      "finished": "2026-11-18T06:58:51.840165+00:00",
+      "last_run": "build/agent-runs/20261118T065346-49048-efd4cc28",
+      "review": {
+        "decision": "accept",
+        "reason": "The task diff reverses horizontal right-drag at the same gain. The production input and picking paths support the requested behavior, all 20 promoted recordings reproduced, and supervisor smoke passed. The reversal is a provisional clone control choice. Live drag feel and post-drag picking remain for the next human playtest on One Way Ticket.",
+        "checks": [
+          {
+            "criterion": "With the right mouse button held, dragging the mouse right turns the cylinder the opposite way to before at the same speed; dragging up/down tilts exactly as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/drag-yaw-reverse-001/incoming/CameraInput.cpp",
+                "detail": "The pre-task snapshot includes the accepted cursor-zoom work. Compared with the current source, the sole production edit is changing subtraction to addition for horizontal mouse yaw. Both zoom levels retain their vertical formulas and bounds."
+              },
+              {
+                "path": "src/__test__/test_camerainput.cpp",
+                "detail": "A grabbed mouse delta of +12 now moves yaw from 30 to 35 instead of 25, confirming the opposite direction and the same five-unit change. The vertical assertions retain their expected values."
+              },
+              {
+                "path": "docs/scratch/phase-a1-control-mapping.md",
+                "detail": "The retained reference measurements give a negative horizontal drag gain, with operands at 0x004C0398 and 0x004C0388. The task report identifies the positive clone gain as provisional and based on the user's playtest."
+              }
+            ]
+          },
+          {
+            "criterion": "NUMPAD4/6 rotation and picking after a drag still select the lemming under the pointer.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/CameraInput.cpp",
+                "detail": "Grabbed NUMPAD4 and NUMPAD6 still add and subtract the same step, with Shift tripling it. The wrapped pick reference still follows the actual yaw delta, including mouse movement."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The fixed-step loop applies the drag through CameraController, then builds the displayed camera from the updated pose. After release, hover and skill assignment use that displayed camera and matching scene depth to resolve the lemming beneath the pointer. This is source-path evidence. The report leaves live confirmation to the human playtest."
+              },
+              {
+                "path": "src/__test__/test_camerainput.cpp",
+                "detail": "The camera test retains keypad and yaw-wrap coverage and expects the zoomed pick reference to move from 32 to 37 for a +12 mouse delta, matching the new displayed yaw delta."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/drag-yaw-reverse-001/replays.log",
+                "detail": "The logged filenames match all 20 active .replay files. Each exited 0 with PASS, won=1 and completed=1, and the result lines match the prior accepted run. One Way Ticket reproduced 46 of 40 required at step 13812. The private save directory stayed empty."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T065346-49048-efd4cc28/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including camerainput, the frontend-to-save round trip and the installed-level sweep, plus all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/drag-yaw-reverse-001.md",
+                "detail": "The final note names One Way Ticket and specifies the expected horizontal drag response, tilt at both zoom levels, keypad directions and skill assignment after releasing the right mouse button."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T07:00:57.577846+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T065346-49048-efd4cc28\\verification.log",
+        "verified_content": "9fa97c0ed52dd4b2d38b6febdaaf2afdc7cca88737ed6cfabe14e9d14cd5c16a"
+      }
     },
     {
       "id": "fastforward-hold-001",
       "title": "Fast-forward is held, not toggled",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23527,12 +23794,98 @@
         "Recordings made with the new behavior replay; existing promoted recordings still reproduce.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T070057-49048-c296b957",
+      "started": "2026-11-18T07:00:57.946680+00:00",
+      "finished": "2026-11-18T07:12:13.869179+00:00",
+      "last_run": "build/agent-runs/20261118T070057-49048-c296b957",
+      "review": {
+        "decision": "accept",
+        "reason": "The production input path implements Playtest 13 C3, the replay format still carries both speed transitions, all 20 promoted wins reproduced, and supervisor smoke passed. The next One Way Ticket playtest will confirm desktop interaction and produce a fresh hold recording. The hold is a provisional clone policy.",
+        "checks": [
+          {
+            "criterion": "Holding the left mouse button on the fast-forward plate speeds the level up; releasing it, moving off the plate, losing focus or opening the menu returns to normal speed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/playtest/2026-11-17-playtest-13.md",
+                "detail": "C3 records the requested hold behavior on the One Way Ticket playtest route."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The SDL handler enables fast-forward on a left press over plate 8 and reevaluates the hit area on motion while held. Release, focus loss and menu opening clear the hold. Moving off clears speed, and dragging back can enable it during the same press. The level exit also clears the hold."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "The production elapsed-time update uses seven simulation passes when fast-forward is active and one when inactive. The pause check runs before either, so P still freezes simulation during a hold."
+              }
+            ]
+          },
+          {
+            "criterion": "A single click no longer leaves fast-forward on.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Button-down over plate 8 enables speed and button-up clears both the speed flag and the held-button state. If both events arrive in one event batch, the simulation update sees normal speed."
+              }
+            ]
+          },
+          {
+            "criterion": "Recordings made with the new behavior replay; existing promoted recordings still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level loop records speed changes after each input event, before the next simulation budget. It also records a final clear, if needed, after the last budget and before writing the result."
+              },
+              {
+                "path": "src/app/Replay.hpp",
+                "detail": "Version 1 serializes each effective speed edge as an f row with value 1 or 0. The decoder applies those edges in order at the recorded step, including a press and release in the same step. The source trace establishes compatibility for the new input behavior. A fresh desktop round trip remains for the next playtest."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-17-playtest-13/MM_ALL_8_001-1794981681312003700-7.replay",
+                "detail": "The existing One Way Ticket recording contains both speed edges, including enable at step 1431 and disable at step 1508. The retained replay run reproduced its 46/40 win at step 13812."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/fastforward-hold-001/run-20261118-000615-243/promoted-replays.log",
+                "detail": "The 20 logged paths match every current promoted .replay file. Each run reported PASS, won=1, completed=1 and exit=0. No recording required retirement."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T070057-49048-c296b957/verification.log",
+                "detail": "The supervisor passed 95 of 95 main smoke tests, including fastforward_units and the installed-level sweep, and 84 of 84 recovery tests. This supersedes the worker report's pending verification status."
+              },
+              {
+                "path": "docs/scratch/fastforward-hold-001.md",
+                "detail": "The report ends with a One Way Ticket what-to-check note covering the speed and plate outline during a hold, release, pointer exit, focus loss, menu opening, a tap, drag reentry, pause and a fresh level after Results."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T07:15:26.748162+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T070057-49048-c296b957\\verification.log",
+        "verified_content": "4c121a78291bd8b1a288a0e018eb325fa89e90fed36d8569148c38dac469b141"
+      }
     },
     {
       "id": "actor-light-lookup-001",
       "title": "Lemming light uses terrain position, not 3D model position",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23548,12 +23901,106 @@
         "The miner axe and all skill/state sprites use the same lookup, in both gravities.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T071526-49048-8b2a27da",
+      "started": "2026-11-18T07:15:27.119875+00:00",
+      "finished": "2026-11-18T07:38:14.446618+00:00",
+      "last_run": "build/agent-runs/20261118T071526-49048-8b2a27da",
+      "review": {
+        "decision": "accept",
+        "reason": "The production call paths and retained evidence support all five criteria. All 20 promoted replays reproduced, and the supervisor passed 95/95 main smoke tests and 84/84 recovery tests. Human confirmation on One Way Ticket remains the next playtest step. Exact native axe lighting remains open, and the offline A4f pixel scorer could not run because Pillow was unavailable.",
+        "checks": [
+          {
+            "criterion": "Every actor light lookup indexes the light map with the actor's terrain X and file-row Y, citing 0x403F40 and actor+0x08/+0x10; no caller passes a 3D model position.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "decomp-lemmings/docs/evidence/actor_finalization.asm",
+                "detail": "For the registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, 0x42E632 and 0x42E63E load actor+0x10 and actor+0x08 for conversion before the call to 0x403F40 at 0x42E64C. The lookup masks and halves X, then 0x403FC0 adds 128 times the file row."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The body lookup passes plus8.x and plus8.y, which the live adapter supplies as terrain X and file-row Y. The axe lookup passes its current terrain sample. Both paths use model coordinates separately for placement and view selection."
+              },
+              {
+                "path": "src/tools/actorfixture.cpp",
+                "detail": "The remaining caller requires explicit terrain X and file-row Y for light-map mode and uses the separate model coordinates for projection."
+              }
+            ]
+          },
+          {
+            "criterion": "On One Way Ticket, a lemming's brightness follows the level's authored light map: darker only inside the shadow bands under ledges, with no brightness change that depends on camera rotation or a fixed screen height.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/playtest/2026-11-17-playtest-13.md",
+                "detail": "C4 records the apparent height cutoff on the opening walk near the reverse-bash zone."
+              },
+              {
+                "path": "build/actor-light-lookup-001/level-light-near-zone.log",
+                "detail": "The installed MM_ALL_8_001 map has different entries on the same file row. At row 51, X 66 is inside the darker band and X 68 is in the adjacent bright gap."
+              },
+              {
+                "path": "build/actor-light-lookup-001/inspect-light.log",
+                "detail": "The retained clone draw check reports grey 107 and 152 at those cells. The former model lookup selected the same cell for both. All 48 isolated body draws matched the authored tint across three camera yaws."
+              }
+            ]
+          },
+          {
+            "criterion": "The miner axe and all skill/state sprites use the same lookup, in both gravities.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "All selected lemming clips reach the same terrain lookup in prepareInjectedWalker. The axe calls the same helper with its wrapped terrain X and current file row. Gravity changes sprite placement and flipping. The submerged additive pass retains its existing fluid-brightness rule."
+              },
+              {
+                "path": "build/actor-light-lookup-001/inspect-light.log",
+                "detail": "The retained framebuffer check covers walk, bash, mine and dig and separately verifies the axe at two light cells in both gravities. The shared source path establishes coverage for the remaining clips."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/actor-light-lookup-001/replays.log",
+                "detail": "The logged paths match all 20 active .replay files under docs/playtest/replays. Each records PASS, exit 0, won=1 and completed=1. One Way Ticket finished at step 13812 with 46 saved against 40 needed."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T071526-49048-8b2a27da/verification.log",
+                "detail": "The supervisor ran the smoke tier, including the installed-level sweep. The log records 95/95 main smoke tests and 84/84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261118T071526-49048-8b2a27da/result.json",
+                "detail": "Verification exited 0 and records the supplied verified-content fingerprint."
+              },
+              {
+                "path": "docs/scratch/actor-light-lookup-001.md",
+                "detail": "The final note tells the player to watch opening walkers near the reverse-bash zone on One Way Ticket, check that they darken and brighten at the band edges, and right-drag to confirm stable shade at a fixed terrain position."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T07:41:23.428182+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T071526-49048-8b2a27da\\verification.log",
+        "verified_content": "683eaa935282e2c7163ad5a803b6c414c2c1f176a25a85b80ef130e506e34741"
+      }
     },
     {
       "id": "oneway-backdrop-001",
       "title": "One Way Ticket backdrop: water plane and sky instead of black surfaces",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23569,12 +24016,251 @@
         "Other installed levels sharing the affected backdrop roots or materials are listed, and two of them are rendered before and after without regression.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261118T162057-26368-7fcfcedf",
+      "started": "2026-11-18T16:20:57.372376+00:00",
+      "finished": "2026-11-18T16:31:52.797716+00:00",
+      "last_run": "build/agent-runs/20261118T162057-26368-7fcfcedf",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Four of five criteria pass. One Way Ticket\u2019s opening render restores the green water and corrects the misplaced rock, but the exposed sky is black. The supplied reference also shows black sky. The lead needs to resolve that discrepancy with the explicit dark-blue requirement before acceptance.",
+        "checks": [
+          {
+            "criterion": "The roots/materials producing One Way Ticket's black surfaces and misplaced rock are identified by name, with the cause traced in the production call path and cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/before/attribution.txt",
+                "detail": "The primary null2 root at asset offset 0x5D3C2 owns the misplaced slab, attributed to transBraiseOuter8 with Rock03. The secondary null2 root at 0x9CAB9 owns transWater1_cutme with WaterRef01, which accounted for 124,220 dark pixels in the backdrop-only diagnostic."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg loads the backdrop through BackdropScene::build and schedules its primary and secondary stages on either side of the tube render."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "build applies the serialized mirror flags to the mine roots before mesh and billboard processing. renderStage passes selector 2 as additive ONE/ONE blending to the scene rasterizer, so the nearly black WaterRef01 texels no longer overwrite the underlying water."
+              },
+              {
+                "path": "build/oneway-backdrop-001/rea/load-instructions.json",
+                "detail": "In the registered x86 reference with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the two holder flag branches call 0x4381F0 with scale (1,1,-1) at 0x437DBD and 0x437E56."
+              },
+              {
+                "path": "build/oneway-backdrop-001/rea/mirror-instructions.json",
+                "detail": "The instructions at 0x438264 through 0x438291 apply the Z scale to the three doubles at matrix offsets 0x30, 0x38, and 0x40."
+              },
+              {
+                "path": "build/oneway-backdrop-001/rea/blend.json",
+                "detail": "The selector-2 branch at 0x414DC1 through 0x414DEA requests ONE for both blend factors. The worker report separately identifies depth, filtering, and the alpha-test threshold as conditional clone choices."
+              }
+            ]
+          },
+          {
+            "criterion": "A clone render of One Way Ticket at level start shows the green water plane under the cylinder and a dark blue sky, with no large black surfaces, matching the reference screenshot's layout and colours closely.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/after/MM_ALL_8_001-start.png",
+                "detail": "The opening render shows green water and a reflection beneath the cylinder, with the mound, crystals, and bridge on the right. The large black water surfaces are gone. The exposed sky is black."
+              },
+              {
+                "path": "docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg",
+                "detail": "The supplied reference closely matches the corrected scenery layout and also shows black exposed sky at the upper right."
+              },
+              {
+                "path": "build/oneway-backdrop-001/pixels.txt",
+                "detail": "The reference JPEG and after-render both sample RGB (0,0,0) at normalized sky coordinates (624,6) and (620,31)."
+              },
+              {
+                "path": "build/oneway-backdrop-001/rea/frame-loop.json",
+                "detail": "The retained instructions pass zero to the clear-color setter at 0x45D905 through 0x45D90C and call the clear routine at 0x45DADA. This is consistent with the supplied screenshot."
+              }
+            ]
+          },
+          {
+            "criterion": "Other installed levels sharing the affected backdrop roots or materials are listed, and two of them are rendered before and after without regression.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/shared-backdrops.csv",
+                "detail": "The census lists One Way Ticket and 70 other installed levels sharing the mine backdrop, both mirror flags, and the WaterRef01 and WaterRef02 material references."
+              },
+              {
+                "path": "build/oneway-backdrop-001/before/MM_DIG_000-start.png",
+                "detail": "The opening view of Just Dig shows black foreground around the zigzag route."
+              },
+              {
+                "path": "build/oneway-backdrop-001/after/MM_DIG_000-start.png",
+                "detail": "At the same pose, green water and reflections replace the dark foreground. The zigzag route, hatch, and balloon remain visible."
+              },
+              {
+                "path": "build/oneway-backdrop-001/before/MM_BOMB-start.png",
+                "detail": "Bomber\u2019s opening view provides the baseline for the route, hatch, balloon, and dark foreground."
+              },
+              {
+                "path": "build/oneway-backdrop-001/after/MM_BOMB-start.png",
+                "detail": "At the same pose, the water and reflected scenery are visible. The route, hatch, and balloon remain visible. Neither pair shows a new visual regression at the inspected pose."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/replays.tsv",
+                "detail": "The 20 rows match the 20 promoted .replay files. Each result matches its retained invocation log and records exit 0, PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/oneway-backdrop-001/replays/MM_ALL_8_001-1794981681312003700-7.log",
+                "detail": "The direct replay invocation reproduces One Way Ticket\u2019s recorded win at step 13812 with 46 saved against 40 required."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-8a26fce99099478a9dd5a0d1ebfff7de/0001-verify-922ab8/verification.log",
+                "detail": "The supervisor run records 95 of 95 main smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/oneway-backdrop-001.md",
+                "detail": "The report ends with a what-to-check note for node 22. It asks the playtester to let the opening camera settle, look for continuous green water and the right-side scenery, then rotate the cylinder to check that the water stays beneath the route."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Four of five criteria pass. One Way Ticket\u2019s opening render restores the green water and corrects the misplaced rock, but the exposed sky is black. The supplied reference also shows black sky. The lead needs to resolve that discrepancy with the explicit dark-blue requirement before acceptance.",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria pass. One Way Ticket\u2019s opening shows continuous green water and a dark navy sky, with the displaced rock corrected. The navy is a provisional clone choice documented against the black sky in the reference. The two shared-backdrop comparisons show no new visible regression at their opening poses, all 20 promoted replays reproduce their recorded wins, and the supervisor smoke gate passed for the revision. The report\u2019s pending status predates that gate.",
+        "checks": [
+          {
+            "criterion": "The roots/materials producing One Way Ticket's black surfaces and misplaced rock are identified by name, with the cause traced in the production call path and cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/before/attribution.txt",
+                "detail": "The backdrop-only diagnostic attributes 124,220 dark pixels to WaterRef01 on transWater1_cutme under the secondary null2 at asset offset 0x9CAB9. It attributes the misplaced slab to Rock03 on transBraiseOuter8 under the primary null2 at 0x5D3C2."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg builds BackdropScene from the resolved level and schedules the primary and secondary stages around the tube. Its provisional sky fill runs after scene compositing, touches only black pixels at clear depth, and is scoped to MM_ALL_8_001 with the backdrop enabled."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "BackdropScene::build applies the serialized holder mirror flags to the mine root matrices before collecting meshes and billboards. renderStage submits WaterRef01 with selector 2 and ONE/ONE blending, so its dark texels contribute additively to the existing water."
+              },
+              {
+                "path": "build/oneway-backdrop-001/rea/load-instructions.json",
+                "detail": "The registered x86 reference with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f calls the root scaling routine at 0x437DBD and 0x437E56 with scale (1,1,-1) when the respective holder flags are set."
+              },
+              {
+                "path": "build/oneway-backdrop-001/rea/mirror-instructions.json",
+                "detail": "Instructions at 0x438264 through 0x438291 multiply matrix doubles at offsets 0x30, 0x38, and 0x40 by the Z scale. These are the three entries negated by the clone."
+              },
+              {
+                "path": "build/oneway-backdrop-001/rea/blend.json",
+                "detail": "The selector-2 branch at 0x414DC1 through 0x414DEA sets both Direct3D blend factors to ONE. The report labels the clone depth, filtering, and key threshold choices as conditional."
+              }
+            ]
+          },
+          {
+            "criterion": "A clone render of One Way Ticket at level start shows the green water plane under the cylinder and a dark blue sky, with no large black surfaces, matching the reference screenshot's layout and colours closely.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/sky-revision-final/openings/MM_ALL_8_001-start.png",
+                "detail": "The opening frame shows continuous green water beneath the cylinder, a cylinder reflection, and the sandy mound, pink crystals, and bridge on the right. The large black surfaces are gone and the exposed sky is dark navy."
+              },
+              {
+                "path": "docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg",
+                "detail": "The corrected frame closely matches the reference\u2019s scenery placement and green water. The exposed reference sky is black, so the clone\u2019s dark navy is a deliberate colour difference."
+              },
+              {
+                "path": "build/oneway-backdrop-001/sky-revision-final/pixel-check.txt",
+                "detail": "The sky revision turns 5,220 black pixels to RGB (4,8,24). The water sample at (628,308) stays RGB (15,67,39), close to the reference sample of (18,64,36)."
+              },
+              {
+                "path": "build/oneway-backdrop-001/sky-revision-rea.json",
+                "detail": "The retained instructions pass zero to the clear-colour setter at 0x45D905 through 0x45D90C. The clear routine reads the stored colour at 0x470ECC and passes it to the device call at 0x470EF0, supporting the report\u2019s distinction between the black reference clear and the provisional clone sky."
+              }
+            ]
+          },
+          {
+            "criterion": "Other installed levels sharing the affected backdrop roots or materials are listed, and two of them are rendered before and after without regression.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/shared-backdrops.csv",
+                "detail": "The census lists One Way Ticket and 70 other installed levels with the same paired null2 mine roots, both mirror flags set, one WaterRef01 reference, and nine WaterRef02 references. The shared correction applies to all 71 levels. The navy sky is specific to One Way Ticket."
+              },
+              {
+                "path": "build/oneway-backdrop-001/before/MM_DIG_000-start.png",
+                "detail": "Just Dig\u2019s baseline shows dark foreground behind its zigzag route, hatch, and balloon."
+              },
+              {
+                "path": "build/oneway-backdrop-001/sky-revision-final/openings/MM_DIG_000-start.png",
+                "detail": "The matched opening pose shows water and reflections in the foreground. The route, hatch, and balloon remain visible."
+              },
+              {
+                "path": "build/oneway-backdrop-001/before/MM_BOMB-start.png",
+                "detail": "Bomber\u2019s baseline shows the route, hatch, and balloon against dark foreground surfaces."
+              },
+              {
+                "path": "build/oneway-backdrop-001/sky-revision-final/openings/MM_BOMB-start.png",
+                "detail": "The matched opening pose shows water, crystals, and torches. The route, hatch, and balloon remain visible. Neither compared opening shows a new visible regression."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/oneway-backdrop-001/sky-revision-final/replays.tsv",
+                "detail": "The 20 rows match the 20 promoted recordings. Each row agrees with its direct replay invocation log and records exit 0, PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/oneway-backdrop-001/sky-revision-final/replays/MM_ALL_8_001-1794981681312003700-7.log",
+                "detail": "One Way Ticket reproduces the recorded win at step 13812 with 46 saved against 40 required."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T162057-26368-7fcfcedf/verification.log",
+                "detail": "The supervisor logs 95 of 95 main smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261118T162057-26368-7fcfcedf/after-source-hashes.json",
+                "detail": "The recorded hashes for main.cpp, BackdropScene.cpp, and the scratch report match the files inspected in this review."
+              },
+              {
+                "path": "docs/scratch/oneway-backdrop-001.md",
+                "detail": "The report ends with a what-to-check note for node 22. It asks the playtester to let the opening camera settle, check the green water, reflection, right-side scenery, and navy sky, then rotate the cylinder and confirm the water stays beneath the route."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T16:34:27.118698+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T162057-26368-7fcfcedf\\verification.log",
+        "verified_content": "361e5eb6b693f781df72ca91b0adba0adb43b4f7df67c233613ad7ce3ea8cc40"
+      }
     },
     {
       "id": "hud-icons-001",
       "title": "HUD shows the installed out, saved and time icons",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23589,12 +24275,93 @@
         "Counter and clock values and the existing panel behave as before.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261118T164404-26368-b5a3355c",
+      "started": "2026-11-18T16:44:04.553417+00:00",
+      "finished": "2026-11-18T16:50:24.639136+00:00",
+      "last_run": "build/agent-runs/20261118T164404-26368-b5a3355c",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261118T163427-26368-d36d20e1/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported for Playtest 13 C6. The ordinary One Way Ticket HUD matches the reference icon placement, all 20 promoted replays passed, and the supervisor smoke gate passed. The report records provisional alpha blending and defers the alternate stopwatch branch and the +shadow_new preview.",
+        "checks": [
+          {
+            "criterion": "In an ordinary level the out, saved and time icons are drawn beside their counters and above the clock, matching the reference screenshot's placement.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg",
+                "detail": "The user-supplied reference shows the lemming and saved balloon to the left of their respective counters and the stopwatch centered above the clock."
+              },
+              {
+                "path": "build/hud-icons-001/retry/static-evidence.json",
+                "detail": "For the registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the instructions at 0x44CB3E, 0x44CB8D and 0x44CBDC agree with the decompiled setup at 0x44CA7B. They establish the rectangles at (557, 15) sized 26\u00d732, (560, 53) sized 20\u00d732 and (579, 395) sized 26\u00d732."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The normal simulation window loads the installed ^OUT, ^SAVED and ^TIME textures once per level entry and composites them at the three recovered rectangles before drawing the HUD text."
+              },
+              {
+                "path": "build/hud-icons-001/one-way-ticket-window.png",
+                "detail": "The retained One Way Ticket window frame visibly matches the reference placement of all three icons. The retry pixel comparison recorded 1,004 opaque texels matching the decoded installed art at those coordinates."
+              }
+            ]
+          },
+          {
+            "criterion": "Counter and clock values and the existing panel behave as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The icon blits sit between the existing skill-panel draw and the existing drawRuntimeHud call. The task diff adds no panel input or simulation changes."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "The HUD still derives out from spawned minus saved and dead, saved from the World saved count, and seconds remaining from ticks divided by tick rate. The same layout and glyph calls format and draw the values."
+              },
+              {
+                "path": "build/hud-icons-001/retry/pixel-comparison.log",
+                "detail": "The three icon blits account for all 1,425 changed pixels in each of the two earlier frontend entry frame comparisons. The final smoke log records passing hudtext, runtimehud, skillpanel and runtimeskillpanel tests."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hud-icons-001/retry/replays.tsv",
+                "detail": "The table covers all 20 active .replay files under docs/playtest/replays. Each linked invocation log matches its row and records exit 0, PASS, won=1 and completed=1. One Way Ticket completed at step 13812 with 46 saved against a target of 40."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T164404-26368-b5a3355c/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests and 84 of 84 recovery tests passing. The smoke run includes the installed-level sweep and frontendentry."
+              },
+              {
+                "path": "docs/scratch/hud-icons-001.md",
+                "detail": "The worker handoff records smoke as pending at handoff. The report ends by asking the reader to open One Way Ticket, check icon placement, watch the out count and clock update, save a lemming, and confirm that skill selection still responds."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T16:52:47.170044+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T164404-26368-b5a3355c\\verification.log",
+        "verified_content": "2b3902ab67feae68b766020a79207e42d377bc9d3d6100ff1e88e2551362a39c"
+      }
     },
     {
       "id": "hover-cursor-001",
       "title": "Hovering a lemming shows the original's bracket cursor with its letter",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23605,17 +24372,213 @@
       "user_authorized": true,
       "scope": "Playtest 13 C7: in the original, hovering a lemming shows green corner brackets around it with a letter beside them (\"E\" in the reference screenshot), and hovering the hatch shows its remaining count in white above it (\"50\"). hover-feedback-001 implemented provisional looks instead: half-strength additive lemming brightness, and gold corner brackets plus the number on the hatch (docs/scratch/hover-feedback-001.md). asset-census-001 proposal 14 found six authored cursor images the clone never loads, including directional and hatch/exit cursor states. Establish from static evidence what the bracket cursor is (which installed images, when it appears, what the letter means, for example a state, skill or direction code) and draw it for the hovered lemming in place of the provisional brightness. Make the hatch hover match the reference (white count above the hatch; brackets only if the original shows them). Picking rules and simulation are unchanged. Difficulty: difficult. Recommended model: Opus (the letter's meaning needs static tracing); the user's run backend overrides. Reference: docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg (original, user screenshot, level start) beside one_way_ticket_web.jpg (clone, same view); docs/playtest/reference/original-2026-11-14/ has more original frames (s2-sheet.png, s2-buildblock.png show the hover look). Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence: docs/playtest/2026-11-17-playtest-13.md (C6-C8, seen by the lead in the user's screenshots and queued at the user's request). Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest look that matches the reference screenshot and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "Hovering a lemming shows corner brackets and a letter like the reference screenshot, with the brackets and letter cited to installed images and static evidence or labelled provisional, and the letter's meaning stated.",
+        "Hovering a lemming shows the installed lemming cursor (green corner brackets, yellow centre dot) and hovering the hatch shows the entrance cursor (brackets with the white E), each cited to installed images and static evidence or labelled provisional, and the E's meaning stated.",
         "Hovering the hatch shows its remaining count like the reference screenshot.",
         "Exactly one lemming is marked at a time, and picking still selects the marked lemming.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T165247-26368-34da0d4f",
+      "started": "2026-11-18T16:52:47.668421+00:00",
+      "finished": "2026-11-18T17:10:40.055422+00:00",
+      "last_run": "build/agent-runs/20261118T165247-26368-34da0d4f",
+      "review": {
+        "decision": "accept",
+        "reason": "Playtest 13 C7 meets all five corrected criteria. On One Way Ticket, the yellow dot identifies the hovered lemming and the white E identifies the entrance. All 20 promoted replays and the supervisor smoke gate passed. Exact native cursor filtering remains provisional, and human playtest confirmation is pending.",
+        "checks": [
+          {
+            "criterion": "Hovering a lemming shows the installed lemming cursor (green corner brackets, yellow centre dot) and hovering the hatch shows the entrance cursor (brackets with the white E), each cited to installed images and static evidence or labelled provisional, and the E's meaning stated.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hover-cursor-001/cursors/TEXTURES/_CURLEM.png",
+                "detail": "The decoded installed lemming bitmap shows four green corner brackets around a yellow centre dot."
+              },
+              {
+                "path": "build/hover-cursor-001/cursors/TEXTURES/_CURENT.png",
+                "detail": "The decoded installed entrance bitmap contains the green brackets and white E in its pixels. E means entrance."
+              },
+              {
+                "path": "build/hover-cursor-001/evidence.md",
+                "detail": "For the registered EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained instructions select state 4 for an ordinary actor at 0x4553C5 and state 9 for an entrance at 0x455378. The binder branches at 0x45625F and 0x4562CD connect those states to the registered _curLem and _curEnt sprites, respectively."
+              },
+              {
+                "path": "src/app/RuntimeCursor.cpp",
+                "detail": "RuntimeCursor loads both installed resources and draws the selected image centred on the pointer. The 28\u00d728 entrance bitmap is scaled to the instruction-backed 32\u00d732 quad. The report labels the sampling choice provisional."
+              },
+              {
+                "path": "docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg",
+                "detail": "The original screenshot places the bracketed E below the hatch. The visible walker stands to its left, outside the brackets."
+              }
+            ]
+          },
+          {
+            "criterion": "Hovering the hatch shows its remaining count like the reference screenshot.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hover-cursor-001/one-way-ticket-hatch.png",
+                "detail": "The retained One Way Ticket clone frame shows a single white 50 centred above the hatch, with the entrance cursor at the pointer."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Each frame supplies World::remainingFromEntrance for each hatch. An ordinary hatch hover passes the selected hatch to drawHatchHover."
+              },
+              {
+                "path": "src/sim/World.h",
+                "detail": "remainingFromEntrance subtracts that entrance\u2019s spawned population from its release count, so the label decreases as lemmings leave that hatch."
+              },
+              {
+                "path": "docs/scratch/hover-cursor-001.md",
+                "detail": "The report distinguishes appearance from value. The original formatter reads the release-rate field at 0x454B95. The clone displays the requested remaining population."
+              }
+            ]
+          },
+          {
+            "criterion": "Exactly one lemming is marked at a time, and picking still selects the marked lemming.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "hoveredActor returns one eligible index. The frame draws one cursor and records that index as markedActor for lemming hover. Left-click uses the same picker with the displayed camera, raster, pointer and selected skill, then passes the resulting index to World::assign."
+              },
+              {
+                "path": "src/__test__/test_leveloverlap.cpp",
+                "detail": "The overlap check identifies the closest eligible walker even when another appears first in world order. It verifies that clicking gives Climber to that walker alone and consumes one skill. The supervisor smoke log records this check passing."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hover-cursor-001/replays.tsv",
+                "detail": "The ledger covers all 20 promoted recordings under docs/playtest/replays. Every entry records exit 0, and each corresponding run log reports PASS, won=1 and completed=1."
+              },
+              {
+                "path": "build/hover-cursor-001/replays/2026-11-17-playtest-13-MM_ALL_8_001-1794981681312003700-7.log",
+                "detail": "The affected One Way Ticket recording completed at step 13812 with 46 saved against a target of 40."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-520ad15ccb37472f8b2af72387298bdf/0001-verify-2d01dd/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests and 84 of 84 recovery tests passing, including the installed-level sweep and leveloverlap."
+              },
+              {
+                "path": "docs/scratch/hover-cursor-001.md",
+                "detail": "The report ends with a One Way Ticket check. Hover the hatch to see the E and a decreasing white count, then hover a separate walker with Climber selected to see the yellow dot. Clicking should give that walker Climber."
+              }
+            ]
+          }
+        ]
+      },
+      "scope_revision_history": [
+        {
+          "at": "2026-11-18T17:13:24.218206+00:00",
+          "by": "project lead",
+          "change": "Criterion 1 corrected by the lead, who wrote it from playtest 13's reference screenshot and misread it: the bracketed E there is on the hatch, with the lemming standing to its left. The worker traced the E to the entrance cursor and the lemming cursor to a yellow-dot image, and the blocked review confirmed the rest passed. Status blocked -> needs_review for a fresh review of the same attempt. Previous text: Hovering a lemming shows corner brackets and a letter like the reference screenshot, with the brackets and letter cited to installed images and static evidence or labelled provisional, and the letter's meaning stated."
+        }
+      ],
+      "review_history": [
+        {
+          "decision": "blocked",
+          "reason": "The lemming-letter criterion needs a user decision. The reference screenshot and static trace place the E on the entrance cursor, while the installed lemming cursor has a yellow dot. The implementation follows that evidence, so the exact criterion remains unmet. The hatch presentation, picking, promoted replays, and smoke gate pass.",
+          "checks": [
+            {
+              "criterion": "Hovering a lemming shows corner brackets and a letter like the reference screenshot, with the brackets and letter cited to installed images and static evidence or labelled provisional, and the letter's meaning stated.",
+              "passed": false,
+              "evidence": [
+                {
+                  "path": "docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg",
+                  "detail": "The E cursor is centered below the hatch. The nearby walker is visibly to its left, outside the brackets."
+                },
+                {
+                  "path": "build/hover-cursor-001/evidence.md",
+                  "detail": "For the registered EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained instructions select state 9 at 0x455378 for the entrance and bind its sprite at 0x4562CD. The ordinary actor branch selects state 4 at 0x4553C5 and binds its sprite at 0x45625F. The installed _CURENT.BMP contains a white E for entrance. The installed _CURLEM.BMP contains green corners and a yellow dot."
+                },
+                {
+                  "path": "src/app/RuntimeCursor.cpp",
+                  "detail": "The renderer draws the installed _CURLEM artwork for actor hover and _CURENT for hatch hover. Ordinary lemming hover therefore has brackets and a dot, leaving the required letter absent."
+                }
+              ]
+            },
+            {
+              "criterion": "Hovering the hatch shows its remaining count like the reference screenshot.",
+              "passed": true,
+              "evidence": [
+                {
+                  "path": "build/hover-cursor-001/one-way-ticket-hatch.png",
+                  "detail": "The retained One Way Ticket clone frame shows a single white 50 above the hatch and the green entrance cursor. The old gold mesh outline is absent."
+                },
+                {
+                  "path": "src/app/main.cpp",
+                  "detail": "The production hover path passes World::remainingFromEntrance to drawHatchHover, so the clone label tracks the unreleased population."
+                },
+                {
+                  "path": "build/hover-cursor-001/static/draw-instructions.json",
+                  "detail": "The original formatter reads hatch field +0xA0 at 0x454B95. The retained release-rate trace identifies that field as the rate, so the screenshot establishes the label's appearance while the clone supplies the requested remaining count."
+                }
+              ]
+            },
+            {
+              "criterion": "Exactly one lemming is marked at a time, and picking still selects the marked lemming.",
+              "passed": true,
+              "evidence": [
+                {
+                  "path": "src/app/main.cpp",
+                  "detail": "hoveredActor returns one nearest eligible index. The frame draws one cursor and records that index as markedActor for lemming hover. Left-click calls the same picker with the displayed scene and passes its result to World::assign."
+                },
+                {
+                  "path": "src/__test__/test_leveloverlap.cpp",
+                  "detail": "The overlap test checks that the closest eligible walker is hovered, that clicking assigns Climber only to that walker, and that a subsequent click can select the next eligible walker. The supervisor log records a pass."
+                }
+              ]
+            },
+            {
+              "criterion": "All promoted playtest replays still reproduce their results.",
+              "passed": true,
+              "evidence": [
+                {
+                  "path": "build/hover-cursor-001/replays.tsv",
+                  "detail": "The ledger covers all 20 recordings under docs/playtest/replays. Each entry matches its individual log and records exit 0, PASS, won=1, and completed=1. One Way Ticket saved 46 against a target of 40 at step 13812."
+                }
+              ]
+            },
+            {
+              "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+              "passed": true,
+              "evidence": [
+                {
+                  "path": "build/agent-runs/20261118T165247-26368-34da0d4f/verification.log",
+                  "detail": "The supervisor recorded 95 of 95 main smoke tests and 84 of 84 recovery tests passing, including every installed-level sweep chunk and the sweep report."
+                },
+                {
+                  "path": "docs/scratch/hover-cursor-001.md",
+                  "detail": "The report ends with a One Way Ticket playtest note covering the hatch count, the separate walker's bracket-and-dot cursor, and the expected Climber assignment."
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "accepted_at": "2026-11-18T17:18:07.047209+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-520ad15ccb37472f8b2af72387298bdf/0001-verify-2d01dd/verification.log",
+        "verified_content": "4091388b81574ee74732a1b0d247877341f617f75cdac0bf6e9bc4fc8a55217d"
+      }
     },
     {
       "id": "skill-plate-bg-001",
       "title": "Skill panel plates have their dark rounded backgrounds",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "digger-outward-001"
       ],
@@ -23628,6 +24591,502 @@
       "acceptance": [
         "Each skill, fast-forward and nuke entry is drawn on a dark rounded plate like the reference screenshot, with the selected entry still outlined.",
         "Panel hit areas, counts and icon animation behave as before.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T171807-22608-dc5b4a04",
+      "started": "2026-11-18T17:18:07.583783+00:00",
+      "finished": "2026-11-18T17:26:00.704053+00:00",
+      "last_run": "build/agent-runs/20261118T171807-22608-dc5b4a04",
+      "review": {
+        "decision": "accept",
+        "reason": "One Way Ticket shows all ten dark rounded plates and the white selection outline after the C5 backdrop correction. The existing panel renderer already draws the installed art once per entry, so C8 required no production edit. All 20 promoted replays and the supervisor smoke profile passed.",
+        "checks": [
+          {
+            "criterion": "Each skill, fast-forward and nuke entry is drawn on a dark rounded plate like the reference screenshot, with the selected entry still outlined.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/skill-plate-bg-001/gameplay.png",
+                "detail": "The current clone frame shows a separate dark rounded plate behind each of the eight skills, the fast-forward arrows and the nuke icon. The selected Climber has a white rim."
+              },
+              {
+                "path": "docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg",
+                "detail": "The user's original frame shows the same ten-row arrangement, translucent dark interiors and white Climber outline."
+              },
+              {
+                "path": "src/app/SkillPanel.cpp",
+                "detail": "RetailSkillPanel::draw composites the installed ^TAB art for indices 0 through 9, then overlays ^TAB_SELECTED at the selected index before drawing counts and icons."
+              },
+              {
+                "path": "build/skill-plate-bg-001/rea.json",
+                "detail": "For the registered x86 EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained instructions show ten base submissions at 0x45B66A, the enabled selection submission at 0x45B6B5, nonzero counts at 0x45B6FA and icons at 0x45B784. This supports the draw order. Exact edge filtering remains provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "Panel hit areas, counts and icon animation behave as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/RuntimeSkillPanel.cpp",
+                "detail": "Hit testing uses ten 72\u00d732 rectangles beginning at (18,12), with eight-pixel gaps. Rows 8 and 9 map to fast-forward and Armageddon. The draw adapter passes world skill counts, selection, speed state and icon animation to the panel."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The gameplay loop advances icons using elapsed UI time, the selected index and the hovered row. It passes that same animation state to drawRuntimeSkillPanel. This task made no production changes to that path."
+              },
+              {
+                "path": "build/skill-plate-bg-001/panel-tests.log",
+                "detail": "Both focused tests, skillpanel and runtimeskillpanel, passed. Animation continuity is supported by the unchanged production path. The retained opening frame shows a single instant."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/skill-plate-bg-001/replays.tsv",
+                "detail": "The result table covers all 20 recording paths under docs/playtest/replays. Every row records exit 0, PASS, won=1 and completed=1."
+              },
+              {
+                "path": "build/skill-plate-bg-001/replays/2026-11-17-playtest-13/MM_ALL_8_001-1794981681312003700-7.replay.log",
+                "detail": "The One Way Ticket replay used the installed game directory and a private save location. It reproduced the win at step 13812 with 46 saved against 40 required."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T171807-22608-dc5b4a04/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including the installed-level sweep and its report, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/skill-plate-bg-001.md",
+                "detail": "The report ends its two-line handoff with a separate playtest note. On One Way Ticket, hover and select Builder to check its animation and white outline, then hold and release fast-forward to check that its outline follows the hold and all ten plates stay visible."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T17:27:30.542402+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T171807-22608-dc5b4a04\\verification.log",
+        "verified_content": "5d3a3fa5ac41962de34497e2485ac0e8876ff095fe82670fa93184f4cd8f9f79"
+      }
+    },
+    {
+      "id": "options-menu-001",
+      "title": "Options opens the sound settings screen from both menus",
+      "status": "done",
+      "depends_on": [],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 14 D2: Options does nothing from the main menu or the in-level menu. Not a regression: the clone never implemented it. Main menu: src/app/FrontendSession.cpp click() and keyboard activation only act on rows 0, 1 and 4 (New Game, Play Current Game, Quit); row 3 is label 3, Options (src/shell/MenuRender.h kLabelIndices, READ 0x4C4214). In-level menu: src/app/LevelMenu.cpp LevelMenuAction::UnsupportedOptions is drawn and consumed without opening anything. Retained static evidence (docs/scratch/in-level-menu.md, docs/lessons/frontend.md): the in-level Options row goes to sound settings, frontend state 9, and the empty fifth row to control settings, state 19; O while the menu is open closes it to paused (45D575). Trace with static REA what the main-menu Options row opens (the same sound screen, or a hub), what screen 9 shows (installed art, labels, controls such as music and effects volume), how it is navigated and closed, where it returns to from each caller, and where the original stores those settings (SavedGame.dat field, registry or another file). Then implement it: Options opens that screen from both menus, its controls change the clone's Mixer music and effects volumes live (src/audio/Mixer.h setMusicVolume/setSfxVolume; today CuePlayback fixes music at 0.3 and effects at 1.0), Back returns to the caller (in-level: the menu or paused state the trace shows), and the values persist across restarts. Persist in the clone's own SavedGame.dat only if the original-format codec has a traced field for them, preserving every other field; otherwise use a small clone settings file beside it, labelled provisional. Never write the installed game's save or settings. Report what control settings (state 19) and any other Options pages contain, but do not implement them; a later task can add the post-1.0 invert-drag option there (docs/POST_1_0.md). Where static evidence is insufficient, choose the simplest look and behavior that match the retained frontend style and label it provisional. Difficulty: difficult. Recommended model: Opus. Reason: new frontend state across two callers plus persistence; the screen's contents are not yet traced. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Playtest defects'. Evidence: docs/playtest/2026-11-18-playtest-14.md (D2). No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the traced screen contents, the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended change does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md 'Verification'): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: screen, action, expected result.",
+      "acceptance": [
+        "The report states, from static evidence or labelled provisional, what the main-menu and in-level Options rows open, what that screen contains, how it is closed and where each caller returns to, and where the original stores its values.",
+        "Options opens that screen from the main menu and from the in-level menu, and closing it returns to the caller as traced.",
+        "The screen's music and effects controls change the clone's playback volume immediately, and the chosen values are still in effect after the clone is restarted, without writing the installed game's save or settings or losing any other saved progress.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T194925-37156-cfadc6b5",
+      "started": "2026-11-18T19:49:25.766263+00:00",
+      "finished": "2026-11-18T20:09:34.053451+00:00",
+      "last_run": "build/agent-runs/20261118T194925-37156-cfadc6b5",
+      "review": {
+        "decision": "accept",
+        "reason": "Both Options rows open the sound screen and return to the traced caller. The production audio and save paths support live volume changes and reload accepted values at startup. All 21 promoted replays and the supervisor smoke gate passed. Restart behavior was verified from the startup code and a sidecar reopen test. Physical audio output and the next human playtest remain unverified.",
+        "checks": [
+          {
+            "criterion": "The report states, from static evidence or labelled provisional, what the main-menu and in-level Options rows open, what that screen contains, how it is closed and where each caller returns to, and where the original stores its values.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/options-menu-001.md",
+                "detail": "The report identifies the reference executable by SHA-256, describes page 9's Music, SFX and Accept Changes And Exit controls, and distinguishes it from the Audio/Game Options hub and control-settings page. It documents Accept, cancel and in-level O, and labels the clone sidecar provisional because original persistence across launches remains unestablished."
+              },
+              {
+                "path": "build/options-menu-001/asm-48ed89.json",
+                "detail": "At 0x48EE59 the main-menu handler compares the selected widget with row 3. At 0x48EE6A and 0x48EE6C it pushes return selector 7 and destination 9."
+              },
+              {
+                "path": "build/options-menu-001/asm-48f558.json",
+                "detail": "The in-level handler compares the Options widget at 0x48F610 and pushes return selector 0x1F and destination 9 at 0x48F617 and 0x48F619. The adjacent fifth widget selects 0x19."
+              },
+              {
+                "path": "build/options-menu-001/sound-events-asm.json",
+                "detail": "The Accept branch retrieves the stored return selector at 0x48E98C and dispatches it at 0x48E99E. The handled common-event branch restores the two entry values through the audio setters at 0x48E913 and 0x48E928."
+              },
+              {
+                "path": "build/options-menu-001/asm-498890.json",
+                "detail": "The audio-manager constructor initializes doubles at offsets +0x1E0 and +0x1E8 to 1.0. This supports the report's process-memory storage claim."
+              }
+            ]
+          },
+          {
+            "criterion": "Options opens that screen from the main menu and from the in-level menu, and closing it returns to the caller as traced.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "A main-menu click focuses the hit row and invokes the same action as Return. On the sound screen, Accept keeps the edits and Escape restores the entry values before returning."
+              },
+              {
+                "path": "src/shell/Frontend.cpp",
+                "detail": "Main-menu row 3 opens SoundOptions with Music focused. Page replacement preserves the caller's UI mode, so returning selects Dialog for the in-level caller and Menu for the main-menu caller."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The level event loop sends the Options action to the shared editor and draws it over the suspended scene. Accept and Escape reopen the level menu with Resume focused. O closes the menu directly and leaves gameplay paused, matching the traced 0x45D575 route."
+              }
+            ]
+          },
+          {
+            "criterion": "The screen's music and effects controls change the clone's playback volume immediately, and the chosen values are still in effect after the clone is restarted, without writing the installed game's save or settings or losing any other saved progress.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Ordinary startup loads SoundSettings.dat from the clone's LocalAppData directory and applies both gains before opening playback. The shared editor's preview callback updates that same playback instance and requests Changeop for SFX feedback."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "The audio callback applies the current gains when mixing music, additive effects and averaged effects. Changes reach active voices on the next audio buffer, and a music track started muted keeps its playhead."
+              },
+              {
+                "path": "src/save/SaveStore.cpp",
+                "detail": "The file sink guards against targets inside the installed game directory and replaces the destination only after writing and flushing a sibling temporary file."
+              },
+              {
+                "path": "build/options-menu-001/final-focused-checks.log",
+                "detail": "The PCM checks passed with SDL's dummy audio driver. The private sidecar test reopened both chosen values and compared all 1,504 bytes of the separate progress image successfully."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/options-menu-001/promoted-replays.log",
+                "detail": "The log covers all 21 promoted recordings. Each exited 0 with won=1 and completed=1. The Playtest 14 Swings Both Ways recording reproduced 16/16 saved at step 12,922."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-d9865d7bae6b4976b9561289cb0da004/0001-verify-52c391/verification.log",
+                "detail": "The supervisor recorded 95/95 main smoke tests passing, including the level sweep and its report, followed by 84/84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/options-menu-001.md",
+                "detail": "The final note asks the playtester to accept a mix from the main menu and check it after restart, then cancel a different mix on Swings Both Ways and verify the prior balance, Resume focus and O-to-pause behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T20:17:19.958975+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-d9865d7bae6b4976b9561289cb0da004/0001-verify-52c391/verification.log",
+        "verified_content": "01daaa9d6083404d75e33a5ac699feb51d13acddfad70e212ad2cc8930683d77"
+      }
+    },
+    {
+      "id": "menu-hover-001",
+      "title": "Hovering a frontend menu row highlights it",
+      "status": "done",
+      "depends_on": [
+        "options-menu-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 14 D6: moving the mouse over the main menu does not highlight the row under the pointer. Not a regression: in the committed code src/app/FrontendWindow.cpp passes motion to FrontendSession::setPointer, which only stores the position; the row highlight (state_ setHighlight) changes only on click (FrontendSession::click) and UP/DOWN (moveMenuFocus). Map nodes already react to hover. Trace with static REA how the original's shared frontend row builder (main menu selector 7, READ 0x4C4214 labels; the confirm, results and in-level menus; and the sound options screen added by options-menu-001) responds to the pointer: whether hovering a row focuses it, whether it plays a sound, and which rows are hit-testable (strict content bounds, docs/scratch/in-level-menu.md). Then make hover focus the row under the pointer on every frontend menu that the trace covers, using the same hit boxes as clicks, with keyboard focus continuing to work. Where static evidence is insufficient, choose the simplest behavior consistent with the click hit boxes and label it provisional. Builds on options-menu-001's frontend input changes; do not rework them. Difficulty: routine. Recommended model: Sonnet. Reason: an established input path with existing hit boxes. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Playtest defects'. Evidence: docs/playtest/2026-11-18-playtest-14.md (D6). No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: promoted recordings must reproduce unchanged. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md 'Verification'): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: screen, action, expected result.",
+      "acceptance": [
+        "The report states, from static evidence or labelled provisional, how the original's frontend menus respond to the pointer, including any hover sound.",
+        "On the main menu, moving the pointer over a row highlights that row using the same hit box as a click, and the other frontend menus the trace covers behave the same way.",
+        "Keyboard focus and clicking behave as before.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T201720-10288-b5c7df9d",
+      "started": "2026-11-18T20:17:20.507114+00:00",
+      "finished": "2026-11-18T20:29:13.186251+00:00",
+      "last_run": "build/agent-runs/20261118T201720-10288-b5c7df9d",
+      "review": {
+        "decision": "accept",
+        "reason": "The change resolves Playtest 14 D6. Pointer motion highlights the row under the cursor without activating it, and keyboard navigation retains focus while the pointer is still. All 21 promoted replays and the supervisor smoke profile passed. The original-game findings are static, and human playtest acceptance remains pending.",
+        "checks": [
+          {
+            "criterion": "The report states, from static evidence or labelled provisional, how the original's frontend menus respond to the pointer, including any hover sound.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/menu-hover-001.md",
+                "detail": "The report identifies the registered executable by SHA-256 and covers the main, confirmation, results, in-level and sound menus. It documents silent hover on the traced label path, labels the sound-arrow highlight mapping provisional, and leaves stationary-pointer precedence unverified."
+              },
+              {
+                "path": "build/menu-hover-001/asm-poll.json",
+                "detail": "The instructions pick a widget at 0x48F9D3, branch past the focus call on a miss at 0x48F9DF, and focus a hit at 0x48F9E8 before checking the button at 0x48F9F0."
+              },
+              {
+                "path": "build/menu-hover-001/asm-486860.json",
+                "detail": "The JLE and JGE branches at 0x48686F, 0x48687A, 0x48688A and 0x48689B reject all four rectangle edges, corroborating the report\u2019s strict native hit bounds."
+              },
+              {
+                "path": "build/menu-hover-001/callbacks.json",
+                "detail": "The label focus callbacks at 0x489DC8 and 0x489DDE request a visual refresh. The panel setter at 0x489ADC selects orange for focus and red otherwise."
+              },
+              {
+                "path": "build/menu-hover-001/asm-48896a.json",
+                "detail": "The directional navigation branch calls the sound wrapper at 0x488A25. This supports the report\u2019s distinction between directional feedback and silent pointer focus."
+              }
+            ]
+          },
+          {
+            "criterion": "On the main menu, moving the pointer over a row highlights that row using the same hit box as a click, and the other frontend menus the trace covers behave the same way.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrontendWindow.cpp",
+                "detail": "Focused SDL motion and left-button presses use the same converted game coordinates. Motion calls hoverMenu, while a left press calls click."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Hover and click both use menuPanelAt with the same main-menu and confirmation rectangles. All five main rows can highlight, including Language Selection, whose activation remains unsupported. The renderer reads the resulting focus, and a miss preserves it."
+              },
+              {
+                "path": "src/app/ResultsScene.cpp",
+                "detail": "Results hover and click both resolve through rowAt. The cached image redraws when focus changes. The visible choices are Continue on a win and Retry, Continue and Quit on a loss."
+              },
+              {
+                "path": "src/app/LevelMenu.cpp",
+                "detail": "The four in-level actions use containsStrict for both hover and click. The focused index determines which row is drawn highlighted."
+              },
+              {
+                "path": "src/app/SoundMenu.cpp",
+                "detail": "SoundMenu::hit resolves the two volume labels, their arrows and Accept. Both sound-menu input paths use that result, and the renderer highlights the owning row."
+              }
+            ]
+          },
+          {
+            "criterion": "Keyboard focus and clicking behave as before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/menu-hover-001/implementation.diff",
+                "detail": "The task adds a motion branch alongside the existing key and button branches. The shared rectangle lookup preserves the prior click bounds, confirmation choices, results actions and unsupported Language Selection click."
+              },
+              {
+                "path": "src/__test__/test_frontendwindow.cpp",
+                "detail": "The SDL check sends Up followed by motion to Play Current Game. It requires row 1 to highlight immediately, keeps the menu open through right-click and unfocused input, and requires the subsequent focused left click to open the map."
+              },
+              {
+                "path": "build/menu-hover-001/focused.log",
+                "detail": "The retained frontendsession, frontendwindow and results runs all passed, including the existing keyboard traversal, confirmation and click checks."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/menu-hover-001/promoted-replays.log",
+                "detail": "The logged filenames match all 21 active .replay files. Each returned exit 0 with PASS, won=1 and completed=1. The Playtest 14 Swings Both Ways recording reproduced 16/16 saved at step 12922."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T201720-10288-b5c7df9d/verification.log",
+                "detail": "The supervisor recorded 95/95 main smoke tests passing, including frontendwindow and the 102-level sweep, followed by 84/84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/menu-hover-001.md",
+                "detail": "The closing note asks the tester to hover Options and expect a silent orange highlight, hold the pointer still and press Up to focus Language Selection, then hover and click Continue after a Swings Both Ways win to return to the map."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T20:31:23.892349+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T201720-10288-b5c7df9d\\verification.log",
+        "verified_content": "f1e982e433958141c801882536967145397627e8c501b38d84e0b6bbe5c74e39"
+      }
+    },
+    {
+      "id": "frame-rate-144-001",
+      "title": "Raise level play toward 144 fps",
+      "status": "done",
+      "depends_on": [],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User request (2026-11-18, recorded in docs/playtest/2026-11-18-playtest-14.md D5): raise level play to 144 fps, the user's display rate, which is a frame budget of 6.94 ms. Starting point: frame-rate-001 (docs/scratch/frame-rate-001.md, harness and CSVs under build/frame-rate-001/) measured Release -O3 means of 5.9-10.0 ms at rest and fast-forward but 11.0-16.0 ms while rotating (Kriss Kross rotation p95 18.3 ms), because rotation invalidates the exact-camera primary and tube caches: rotating frames pay Build/copies 2.8-4.6 ms and Raster 4.9-6.6 ms, and every frame pays Actors 1.8-3.5 ms and HUD about 0.63 ms. Vsync is off and frames are not capped. First re-measure the current tree with the retained harness (same Release build, --window-scale 2, the same four levels and rest/rotate/fast modes, frames 30-229) plus One Way Ticket (MM_ALL_8_001), whose backdrop changed in oneway-backdrop-001, and report mean, p95 and max per mode. Then reduce frame cost toward 6.94 ms in the slowest modes, in measured order of cost: for example parallelizing the remaining single-threaded stages (scene build/copies, actors, HUD), cheaper cache invalidation or reprojection under rotation, and avoiding full-frame copies and conversions. Every change must keep the rendered image identical to the current clone (same pixels and depth for the same inputs), keep simulation, timing, input, audio and replays unchanged, and keep the retained provisional depth and draw-order policies. Do not reduce resolution, skip or interpolate frames, drop effects or animation, or change vsync or frame pacing; report a pacing recommendation instead (for example a 144 Hz cap or vsync) for the user to decide. A GPU scene renderer is out of scope: if the measurements show 6.94 ms cannot be reached in rotation on the CPU path, stop at the best safe improvement and report what remains, with the stage costs, and what a GPU path would have to cover. Difficulty: difficult. Recommended model: Opus. Reason: multi-stage performance work on a threaded software rasterizer where output must stay pixel-identical. Playable v1 polish at the user's explicit request; not a playtest defect and not fidelity evidence. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Measurement harness files stay under build/; do not register new tests for timing. Short report under docs/scratch/ with before/after tables, the production call path of each change, limitations and a two-line handoff. Finish needs_review. Replay policy: promoted recordings must reproduce unchanged; this task changes no gameplay. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md 'Verification'): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report gives before and after mean, p95 and max frame times for rest, rotate and fast-forward on the four frame-rate-001 levels and One Way Ticket, measured the same way on the same Release build settings.",
+        "Every mode's mean is at or under 6.94 ms, or the report shows with stage costs why the remaining modes cannot reach it on the CPU path and what a GPU path would need to cover; no mode is slower than before.",
+        "The rendered frames are unchanged: the report shows how pixel and depth identity was checked against the pre-task renderer for each changed stage, and simulation, input, audio, vsync and pacing are unchanged.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T203123-10288-0565d47c",
+      "started": "2026-11-18T20:31:24.355385+00:00",
+      "finished": "2026-11-18T21:06:45.749348+00:00",
+      "last_run": "build/agent-runs/20261118T203123-10288-0565d47c",
+      "review": {
+        "decision": "accept",
+        "reason": "All 15 measured modes improved and met the 6.94 ms mean budget. Kriss Kross rotation was the slowest at 6.401 ms mean, with 32 of 200 frames over budget. The same-input renderer comparisons, all 21 promoted replays, and the supervisor smoke and recovery suites support acceptance.",
+        "checks": [
+          {
+            "criterion": "The report gives before and after mean, p95 and max frame times for rest, rotate and fast-forward on the four frame-rate-001 levels and One Way Ticket, measured the same way on the same Release build settings.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/frame-rate-144-001.md",
+                "detail": "The table covers Just Climb, Sergeant Bash, Kriss Kross, The Crowded House and One Way Ticket in all three modes. I recalculated the mean, nearest-rank p95 and maximum from frames 30\u2013229 in all 30 retained CSVs and confirmed the reported values to their displayed precision."
+              },
+              {
+                "path": "build/frame-rate-144-001/measure.cpp",
+                "detail": "Both measurements use the same application entry point, 180 initial simulation ticks, 240 frames, fixed 1/60-second input, window scale 2 and disabled audio. Rotation supplies eight drag pixels per frame. Fast-forward holds plate 8."
+              },
+              {
+                "path": "build/frame-rate-144-001/build_measure.py",
+                "detail": "The harness links production objects from the gcc-release build and uses the registered MinGW-w64 compiler with C++23, -O3 and -DNDEBUG."
+              }
+            ]
+          },
+          {
+            "criterion": "Every mode's mean is at or under 6.94 ms, or the report shows with stage costs why the remaining modes cannot reach it on the CPU path and what a GPU path would need to cover; no mode is slower than before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/frame-rate-144-001/timing-inventory.json",
+                "detail": "All 15 final means are below their paired baselines. They range from 2.283 ms for Just Climb fast-forward to 6.401 ms for Kriss Kross rotation."
+              },
+              {
+                "path": "build/frame-rate-144-001/review-E19_KF_2-rotate.csv",
+                "detail": "The slowest mode improved from 17.592 ms mean. Its final p95 was 7.279 ms and its maximum was 7.693 ms. It accounted for all 32 over-budget frames in the 3,000-frame final sample."
+              }
+            ]
+          },
+          {
+            "criterion": "The rendered frames are unchanged: the report shows how pixel and depth identity was checked against the pre-task renderer for each changed stage, and simulation, input, audio, vsync and pacing are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/frame-rate-144-001/entry-sample_layers/stages.csv",
+                "detail": "The pre-task renderer records RGB, bitwise scene depth, actor depth and ownership after eight stages, using the separate opaque tube layer. The sample covers five installed levels, two zooms and two debris presentations."
+              },
+              {
+                "path": "build/frame-rate-144-001/review-sample_layers/stages.csv",
+                "detail": "I compared all 160 stage records with the pre-task file. Every field matched, including the direct tube draw against live scenery, secondary scenery, actors with carried bricks, and debris."
+              },
+              {
+                "path": "build/frame-rate-144-001/review-composed-frames.json",
+                "detail": "All 75 application-state records matched. Of 30 composed images, 18 were byte-identical. The 12 differing images came from independently seeded scenery runs on Kriss Kross and One Way Ticket. Every differing pixel lay within an actual scenery-sprite write."
+              },
+              {
+                "path": "build/frame-rate-144-001/review-sample_frames/E19_KF_2-rotate/run.log",
+                "detail": "The SDL RGBX32 masks place red, green and blue in the first three bytes and ignore the fourth, matching the old RGB24 packing. The composed-image audit sampled before SDL upload. Frame 81 included a drowning actor."
+              },
+              {
+                "path": "build/frame-rate-144-001/task-only.patch",
+                "detail": "The production changes concern rendering and texture upload. The diff preserves the simulation clock, event handling, audio path, renderer configuration and present cadence. Audible playback was outside the benchmark."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/frame-rate-144-001/review-replay-results.json",
+                "detail": "The manifest covers all 21 active .replay files. Each Release executable invocation exited 0, and its retained log reports PASS, won=1 and completed=1. Kriss Kross reproduced 24/20 saved at step 6034 and One Way Ticket reproduced 46/40 at step 13812."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T203123-10288-0565d47c/verification.log",
+                "detail": "The supervisor recorded 95/95 main smoke tests passing, including the installed-level sweep and its report, followed by 84/84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/frame-rate-144-001.md",
+                "detail": "The closing note asks the playtester to rotate, stop, reverse and hold fast-forward on Kriss Kross, then rotate and zoom on One Way Ticket. It names the expected motion, scenery stability, actor occlusion and HUD appearance, and flags occasional late frames on Kriss Kross."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T21:09:55.991771+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T203123-10288-0565d47c\\verification.log",
+        "verified_content": "7f41198e95fc7d6481f3876f9cd918defddce3d257d49674673c04e1a2bfa0b6"
+      }
+    },
+    {
+      "id": "large-one-scenery-001",
+      "title": "Make Mine a Large One: scenery no longer hides the lemmings",
+      "status": "ready",
+      "depends_on": [],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 15 E1: at the start of Make Mine a Large One (E18_KF_2, map node 26), part of the scenery sits between the camera and the play area and breaks occlusion, so no lemmings are visible; the user could not play the level. The user's attempts are build/playtest/replays/E18_KF_2-*.replay (four, all quit from the start). Reproduce the connected-entry view (main.cpp: readSelectedHatchCamera yaw, zoom 0, CameraIntro, levelEyeHeight from the cylinder rows) and identify from clone framebuffer/depth output which backdrop records (BackdropScene) cover the view and why lemmings are hidden: for example a record the original culls, hides or fades near the camera, a missing near-plane or camera-distance rejection, a wrong predicate or root selection for this level, a wrong entry pose, or actor depth/occlusion against scenery. Trace the original's handling with static REA (start from retained evidence on backdrop record predicates, scenery depth and actor occlusion under docs/scratch/) and fix the production path so the entry view and normal play show the lemmings as the original would. Check that the change does not alter other levels' scenery, in particular the frame-rate-001 levels and One Way Ticket, beyond the defect. Where static evidence is insufficient, choose the narrowest rule that fixes the demonstrated view and label it provisional. Difficulty: difficult. Recommended model: Opus. Reason: scenery selection and depth interplay with retained provisional policies. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Playtest defects'. Evidence: docs/playtest/2026-11-18-playtest-15.md (E1). No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: promoted recordings must reproduce unchanged. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md 'Verification'): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level or screen, action, expected result.",
+      "acceptance": [
+        "The report identifies the scenery records that cover the entry view of Make Mine a Large One and the cause, from clone framebuffer/depth output and static evidence or labelled provisional.",
+        "From the connected-entry camera, the lemmings are visible and correctly occluded from the first release, and stay visible in normal play.",
+        "Other levels' scenery is unchanged beyond the defect; the report says how this was checked.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "level-menu-cursor-001",
+      "title": "In-level menu shows the pressed cursor while a button is held",
+      "status": "ready",
+      "depends_on": [],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 15 E2: with the in-level menu open (Escape during a level), pressing a mouse button does not switch to the smaller pressed cursor that the main menu shows. The frontend selects CursorState::MouseDown (TEXTURES\\_curMseDwn.BMP) while either button is held (src/app/RuntimeCursor.cpp frontendCursorState, FrontendSession); the in-level menu and its sound options page draw the cursor through the level path and do not. Confirm with static REA that the original's in-level menu uses the same frontend cursor rule (selector 0x4C4214 pages, cursor policy around 0x456316, docs/scratch/in-level-menu.md), then make the cursor show the pressed artwork while a button is held on every in-level menu page, and the normal menu cursor otherwise, without changing gameplay cursor states (lemming, grab, entrance, exit) once the menu closes. Difficulty: routine. Recommended model: Sonnet. Reason: an existing cursor state and artwork applied to one more screen. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Playtest defects'. Evidence: docs/playtest/2026-11-18-playtest-15.md (E2). No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: promoted recordings must reproduce unchanged. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md 'Verification'): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level or screen, action, expected result.",
+      "acceptance": [
+        "The report states from static evidence, or labelled provisional, which cursor the original's in-level menu shows while a button is held.",
+        "With the in-level menu or its sound page open, holding either mouse button shows the pressed cursor and releasing restores the menu cursor.",
+        "Gameplay cursor states after the menu closes are unchanged.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ]

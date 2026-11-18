@@ -793,7 +793,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // levers, pads and gravity are LegacyUnattributed; fluids and secondary
   // sprite animation retain their original, uncached submission stages.
   std::optional<app::Raster> primaryCache, tubeCache;
-  std::optional<app::CameraBasis> primaryPose, tubePose;
+  std::optional<app::CameraBasis> primaryPose, tubePose, previousCamera;
   app::BackdropStats primaryStats;
   std::size_t tubeTerrainRevision = 0;
   const auto sameCamera = [](const app::CameraBasis& a, const app::CameraBasis& b) {
@@ -802,15 +802,21 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         a.focalX == b.focalX && a.focalY == b.focalY && a.width == b.width &&
         a.height == b.height && a.cx == b.cx && a.cy == b.cy && a.selectorTurns == b.selectorTurns;
   };
+  const bool darkBlueSky = backdrop && resolvedLevel->id == "MM_ALL_8_001";
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target, bool scenePrepared = false) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
     const auto frameCamera = app::buildCamera(frameParams);
-    target.clear(0, 0, 0);
     app::BackdropStats backdropStats;
     app::SceneRasterObserver observer;
     std::vector<std::uint8_t> c3Mask;
     std::ofstream c3Out;
     const bool c3Diagnostic=!args.c3WriteMask.empty()||!args.c3WriteEvents.empty();
+    const bool primaryHit = !c3Diagnostic && primaryCache && sameCamera(*primaryPose, frameCamera);
+    // While rotating, rasterize straight into the live buffers. Populate the
+    // exact-pose caches when a pose repeats. Existing exact hits remain valid.
+    const bool cachePose = !previousCamera || sameCamera(*previousCamera, frameCamera);
+    previousCamera = frameCamera;
+    if (!primaryHit) target.clear(0, 0, 0);
     if(c3Diagnostic){
       if(args.c3WriteMask.empty()||args.c3WriteEvents.empty()||frameCamera.width!=640||frameCamera.height!=480){std::fprintf(stderr,"C3 diagnostic requires both paths and a 640x480 frame\n");std::exit(2);}
       std::ifstream mf(args.c3WriteMask,std::ios::binary);c3Mask.assign(std::istreambuf_iterator<char>(mf),{});
@@ -836,13 +842,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     app::scheduleSceneFrame(
           [&] {
             if (!backdrop) return;
-            if (!c3Diagnostic && primaryCache && sameCamera(*primaryPose, frameCamera)) {
+            if (primaryHit) {
               target = *primaryCache;
               backdropStats = primaryStats;
             } else {
               backdrop->renderStage(target, frameCamera, *library, backdropStats,
                   app::BackdropScene::Stage::Primary, c3Diagnostic ? &observer : nullptr);
-              if (!c3Diagnostic) {
+              if (!c3Diagnostic && cachePose) {
                 primaryCache = target; primaryPose = frameCamera; primaryStats = backdropStats;
               }
             }
@@ -857,18 +863,23 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
              return;
            }
            const auto revision = scene->terrainBlocksRebuilt() + scene->counterGateRevision();
+           const auto renderTube = [&](app::Raster& destination) {
+             app::detail::RasterCommandBatch batch(frameCamera.height);
+             scene->render(destination, frameCamera, geometryOptions, &*library);
+             app::profile::Scope rasterTime(app::profile::TubeRaster);
+             batch.flush();
+           };
            if (!tubeCache || tubeTerrainRevision != revision || !sameCamera(*tubePose, frameCamera)) {
+             if (!cachePose) {
+               renderTube(target);
+               return;
+             }
              if (!tubeCache || tubeCache->framebuffer().width != frameCamera.width ||
                  tubeCache->framebuffer().height != frameCamera.height)
                tubeCache.emplace(frameCamera.width, frameCamera.height);
              tubeCache->clear(0, 0, 0);
              tubeCache->resetDrawCounts();
-             {
-               app::detail::RasterCommandBatch batch(frameCamera.height);
-               scene->render(*tubeCache, frameCamera, geometryOptions, &*library);
-               app::profile::Scope rasterTime(app::profile::TubeRaster);
-               batch.flush();
-             }
+             renderTube(*tubeCache);
              tubePose = frameCamera; tubeTerrainRevision = revision;
            }
            target.compositeOpaque(*tubeCache);
@@ -903,6 +914,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                app::ScopedFrameConsumption::observing() ? &spriteCoverage : nullptr);
            if (world) scene->renderCounterGates(target, frameCamera, *library, world->setup().counterGates);
          });
+    if (darkBlueSky) {
+      // Provisional Playtest 13 C5 sky. Fill uncovered pixels after the water
+      // blends against the retail black clear.
+      auto& rgb = target.mutableFramebuffer().rgb;
+      const auto& depth = target.depthBuffer();
+      for (std::size_t p = 0; p < depth.size(); ++p) {
+        if (depth[p] != std::numeric_limits<double>::infinity()) continue;
+        const std::size_t i = 3 * p;
+        if (rgb[i] != 0 || rgb[i + 1] != 0 || rgb[i + 2] != 0) continue;
+        rgb[i] = 4;
+        rgb[i + 1] = 8;
+        rgb[i + 2] = 24;
+      }
+    }
     if (fluidDrowning) {
       // U2 PROVISIONAL: additive drowning is visible through its water, while
       // all opaque scenery (including the later secondary pass) still hides it.
@@ -1046,8 +1071,19 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
   }
   SDL_Renderer* presenter = presentation.renderer();
+  // The composed HUD image already has RGB in its first three bytes.
+  // RGBX ignores its fourth byte exactly as the former RGB24 upload did.
+  bool uploadRgbx = args.sim && world;
+  const auto makeTexture = [&](Uint32 format) {
+    return SDL_CreateTexture(presenter, format, SDL_TEXTUREACCESS_STREAMING, 640, 480);
+  };
   std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> ownedTexture(
-      SDL_CreateTexture(presenter, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, 640, 480), SDL_DestroyTexture);
+      makeTexture(uploadRgbx ? SDL_PIXELFORMAT_RGBX32 : SDL_PIXELFORMAT_RGB24), SDL_DestroyTexture);
+  if (!ownedTexture && uploadRgbx) {
+    uploadRgbx = false;
+    ownedTexture.reset(makeTexture(SDL_PIXELFORMAT_RGB24));
+  }
+  std::vector<std::uint8_t> rgbFallback;
   SDL_Texture* texture = ownedTexture.get();
   if (!texture) { std::fprintf(stderr, "SDL texture: %s\n", SDL_GetError()); return 1; }
   if (SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest) != 0) {
@@ -1058,10 +1094,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
                                  static_cast<int>(params.levelEyeHeight));
   app::Raster windowRaster(640, 480);
-  bool running = true, rightDown = false, focused = true;
-  // SOURCE SDL pointer adapter, deliberately separate from the native-style
-  // relative cursor inside CameraController. Hover and clicks use this same
-  // window coordinate; right-drag freezes it. Camera arithmetic is unchanged.
+  bool running = true, leftDown = false, rightDown = false, focused = true;
+  // The logical SDL pointer drives hover, clicks and zoom. Right-drag freezes it.
   int pointerX = 320, pointerY = 240;
   app::PendingCameraEvents pending;
   int rendered = 0;
@@ -1073,9 +1107,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // only active when --sim was given. Natural frontend entry resets the World
   // to tick0; a direct-level diagnostic may seed it with --sim-ticks.
   app::RuntimeSimState runtimeSim;
-  // One toggle per left-button gesture, including dragging onto plate 8.
-  // Motion after a click must not undo the click's speed choice.
-  bool fastForwardGestureUsed = false;
   bool entryVoicePending = true;
   const auto uiClick = [&] { if (cues) cues->playUiClick(); };
   // Audio events are taken after each simulation update and successful skill
@@ -1101,6 +1132,17 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
     });
   }
+  struct HudIcon {
+    const char* asset;
+    app::SkillIconPlacement placement;
+  };
+  // The 640x480 HUD quads set up at 0x44CB3E, 0x44CB8D and 0x44CBDC.
+  constexpr std::array hudIcons{
+      HudIcon{"TEXTURES\\^OUT.BMP", {557, 15, 0, 0, 26, 32}},
+      HudIcon{"TEXTURES\\^SAVED.BMP", {560, 53, 0, 0, 20, 32}},
+      HudIcon{"TEXTURES\\^TIME.BMP", {579, 395, 0, 0, 26, 32}},
+  };
+  std::array<Image, hudIcons.size()> runtimeHudIcons;
   std::optional<Image> runtimeFont;
   app::LemmingAnimTracker lemmingAnim;
   app::LemmingMotionTracker lemmingMotion;
@@ -1123,6 +1165,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       return 1;
     }
     runtimeFont = std::move(*loadedFont);
+    for (std::size_t i = 0; i < hudIcons.size(); ++i) {
+      auto icon = loadTexture(*library, hudIcons[i].asset);
+      if (icon) runtimeHudIcons[i] = std::move(*icon);
+      else std::fprintf(stderr, "runtime HUD icon: %s\n", icon.error().c_str());
+    }
     auto loadedRelease = app::RuntimeReleaseRateControl::create(*library, args.level);
     if (!loadedRelease) {
       std::fprintf(stderr, "release control: %s\n", loadedRelease.error().c_str());
@@ -1183,6 +1230,33 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   const int previousCursorVisibility = SDL_ShowCursor(SDL_QUERY);
   if (runtimeCursor) SDL_ShowCursor(SDL_DISABLE);
   const auto menuOpen = [&] { return levelMenu && levelMenu->isOpen(); };
+  const auto cancelFastForwardHold = [&] {
+    leftDown = false;
+    runtimeSim.setFastForward(false);
+  };
+  const auto updateFastForwardHold = [&] {
+    // PROVISIONAL Playtest 13 C3: plate 8 is a hold, including drag-onto.
+    const bool active = leftDown &&
+        app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward;
+    if (active && !runtimeSim.fastForward()) uiClick(); // Original plate 8 has no play call.
+    runtimeSim.setFastForward(active);
+  };
+  const auto zoomAtPointer = [&]() -> std::optional<app::CameraZoomPose> {
+    if (controls.camera().zoomShift != 0 || rendered == 0 ||
+        pointerX < 0 || pointerX >= displayedCamera.width ||
+        pointerY < 0 || pointerY >= displayedCamera.height ||
+        (runtimePanel && app::runtimeSkillPanelIndex(pointerX, pointerY) >= 0))
+      return std::nullopt;
+    if (!windowSceneCurrent) {
+      displayedCamera = renderFrame(displayedScenePose, windowRaster, true);
+      windowSceneCurrent = true;
+    }
+    const auto pixel = std::size_t(pointerY) * displayedCamera.width + pointerX;
+    const double actorDepth = windowRaster.actorDepth().depthAt(pixel);
+    const double depth = std::isfinite(actorDepth) ? actorDepth : windowRaster.depthBuffer()[pixel];
+    return app::cursorZoomPose(displayedCamera, cameraIntro.pose(controls.camera()),
+        pointerX + 0.5, pointerY + 0.5, depth);
+  };
   // Clicks and held input use the same displayed hatch geometry and actor
   // precedence as hover. A hatch right-click is consumed before camera grab.
   const auto hatchAtPointer = [&](int x, int y) -> std::optional<std::size_t> {
@@ -1202,7 +1276,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   const auto resetMenuInput = [&] {
     nukeInput.reset();
     if (releaseControl) releaseControl->reset();
-    fastForwardGestureUsed = false;
+    cancelFastForwardHold();
     rightDown = false; pending.clear(); fixedClock = app::FixedCameraClock{};
     SDL_SetRelativeMouseMode(SDL_FALSE);
     previous = SDL_GetPerformanceCounter();
@@ -1229,7 +1303,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         disposition = LegDisposition::RetryLevel; running = false; break;
       case app::LevelMenuAction::MapQuit:
         disposition = LegDisposition::ReturnToMap; running = false; break;
-      default: break; // Unsupported Options and misses are consumed, never gameplay clicks.
+      case app::LevelMenuAction::SoundOptions:
+        persistentFrontend->openSoundOptions();
+        break;
+      case app::LevelMenuAction::None: break;
     }
   };
   app::profile::Run frameProfile;
@@ -1248,11 +1325,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
         nukeInput.reset();
         if (releaseControl) releaseControl->reset();
-        fastForwardGestureUsed = false;
+        cancelFastForwardHold();
         focused = false; rightDown = false; pending.clear();
         SDL_SetRelativeMouseMode(SDL_FALSE);
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
         focused = true;
+      } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_LEAVE) {
+        runtimeSim.setFastForward(false);
       } else if (menuDismissedThisFrame) {
         // SOURCE event-batch ownership: a dismissal must not let already-queued
         // menu clicks/keys fall through into gameplay. Still service close/focus.
@@ -1261,7 +1340,24 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         // Own ALL input while the menu is open, including misses, unsupported
         // rows and gameplay keys. No skill assignment, zoom or relative grab.
         if (!focused) continue;
-        if (event.type == SDL_MOUSEMOTION) {
+        if (event.type == SDL_KEYDOWN && !event.key.repeat && event.key.keysym.scancode == SDL_SCANCODE_O) {
+          // READ45D575: O closes all UI2 pages directly to paused UI1.
+          levelMenu->close();
+          (void)persistentFrontend->closeLevelMenu(true);
+          resetMenuInput();
+          menuDismissedThisFrame = true;
+        } else if (persistentFrontend->screen() == shell::Screen::SoundOptions) {
+          if (event.type == SDL_MOUSEMOTION) {
+            pointerX = event.motion.x; pointerY = event.motion.y;
+          } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+            pointerX = event.button.x; pointerY = event.button.y;
+          }
+          app::handleSoundOptionsInput(*persistentFrontend, event);
+          if (persistentFrontend->screen() == shell::Screen::Dialog) {
+            levelMenu->open(); // caller 1F is rebuilt with Resume focused
+            menuDismissedThisFrame = true;
+          }
+        } else if (event.type == SDL_MOUSEMOTION) {
           pointerX = event.motion.x; pointerY = event.motion.y;
           levelMenu->hover(pointerX, pointerY);
         } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
@@ -1271,14 +1367,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           const auto key = event.key.keysym.scancode;
           if (key == SDL_SCANCODE_ESCAPE) activateMenu(app::LevelMenuAction::Resume);
           else if (key == SDL_SCANCODE_RETURN) activateMenu(levelMenu->focusedAction());
-          else if (key == SDL_SCANCODE_O) {
-            // READ45D575: O-close is NOT Resume; it returns to UI1 paused.
-            levelMenu->close();
-            if (persistentFrontend)
-              (void)persistentFrontend->closeLevelMenu(true);
-            resetMenuInput();
-            menuDismissedThisFrame = true;
-          }
+          else if (key == SDL_SCANCODE_UP || key == SDL_SCANCODE_DOWN)
+            levelMenu->moveFocus(key == SDL_SCANCODE_UP ? -1 : 1);
         }
         if (!running) break;
       } else if (focused && !rightDown && releaseControl &&
@@ -1286,36 +1376,38 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                  (event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT) &&
                  releaseControl->press(hatchAtPointer(event.button.x, event.button.y), event.button.button, *world)) {
         pointerX = event.button.x; pointerY = event.button.y;
+        if (event.button.button == SDL_BUTTON_LEFT) leftDown = true;
+        updateFastForwardHold();
         nukeInput.reset();
         uiClick(); // Initial hatch press only; held changes are coalesced below.
       } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
         nukeInput.reset();
         if (releaseControl) releaseControl->reset();
+        cancelFastForwardHold();
         if (focused) { rightDown = true; SDL_SetRelativeMouseMode(SDL_TRUE); }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
         if (releaseControl) releaseControl->release(event.button.button);
         rightDown = false; SDL_SetRelativeMouseMode(SDL_FALSE);
+        // SDL moves its own cursor through the drag and restores it there. Put
+        // it back on the frozen pointer so motion continues from that spot.
+        const int scale = presentation.scale();
+        SDL_WarpMouseInWindow(SDL_RenderGetWindow(presenter),
+                              pointerX * scale + scale / 2, pointerY * scale + scale / 2);
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
         if (releaseControl) releaseControl->release(event.button.button);
-        fastForwardGestureUsed = false;
+        cancelFastForwardHold();
         if (args.sim && world && focused && !rightDown) {
           pointerX = event.button.x; pointerY = event.button.y;
           nukeInput.release(pointerX, pointerY, event.button.timestamp, *world);
         } else nukeInput.reset();
       } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
                  event.button.button == SDL_BUTTON_LEFT) {
-        fastForwardGestureUsed = false;
         // Consume panel clicks before actor picking, including command plates.
         if (focused && !rightDown) {
+          leftDown = true;
           pointerX = event.button.x; pointerY = event.button.y;
           nukeInput.press(pointerX, pointerY);
-          // PROVISIONAL P17 toggle policy; see RuntimeSimState. No stock or
-          // actor-skill selection change, preserving the traced plate contract.
-          if (app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward) {
-            runtimeSim.toggleFastForward();
-            fastForwardGestureUsed = true;
-            uiClick(); // PROVISIONAL: original plate 8 has no play call.
-          }
+          updateFastForwardHold();
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
           const auto panelCounts = app::runtimeSkillPanelCounts(*world);
           if ((panelIndex >= 0 && panelIndex < 8 && panelCounts[panelIndex] > 0) ||
@@ -1354,20 +1446,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             pointerX = event.motion.x; pointerY = event.motion.y;
             if (releaseControl && releaseControl->holding())
               releaseControl->advance(0.0, hatchAtPointer(pointerX, pointerY), *world);
-            // Retain drag-onto activation (0x455AFF), once per gesture under
-            // the provisional toggle policy. Hover without a button is inert.
-            if (args.sim && world && (event.motion.state & SDL_BUTTON_LMASK) &&
-                !fastForwardGestureUsed &&
-                app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward) {
-              runtimeSim.toggleFastForward();
-              fastForwardGestureUsed = true;
-              uiClick();
-            }
+            leftDown = leftDown && (event.motion.state & SDL_BUTTON_LMASK);
+            updateFastForwardHold();
           }
         }
       } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
         const auto key = event.key.keysym.scancode;
-        if (focused && (key == SDL_SCANCODE_SPACE || key == SDL_SCANCODE_LCTRL || key == SDL_SCANCODE_RCTRL)) pending.zoom();
+        if (focused && (key == SDL_SCANCODE_SPACE || key == SDL_SCANCODE_LCTRL || key == SDL_SCANCODE_RCTRL))
+          pending.zoom(zoomAtPointer());
         if (focused && key == SDL_SCANCODE_BACKSPACE) pending.flip();
         if (key == SDL_SCANCODE_ESCAPE) {
           if (persistentFrontend && !focused) continue;
@@ -1445,8 +1531,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     while (fixedClock.takeStep()) {
       input = pending.consumeInto(input);
       controls.update(input, app::FixedCameraClock::stepSeconds);
-      input.mouseDx = input.mouseDy = 0.0;
-      input.zoomPressed = input.backspacePressed = false;
       updated = true;
     }
     bool simTicked = false;
@@ -1526,7 +1610,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       // Native pose is evaluated at the old intro clock before its increment;
       // pause freezes the opening move independently of camera input updates.
       cameraIntro.advanceAfterFrame(elapsed, runtimeSim.paused());
-      std::vector<std::uint8_t> presentedRgb;
       Image image;
       std::vector<app::LevelActorView> actors;
       std::vector<app::HatchHoverTarget> hatches;
@@ -1560,24 +1643,21 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
               hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
                   pointerX, pointerY, skillSelection.selectedSkill(),
                   args.level == "MM_CLIMB_002") : std::nullopt;
-          std::optional<std::size_t> markedActor;
-          if (hover) {
-            std::size_t walker = 0;
-            for (std::size_t i = 0; i < *hover; ++i) if (world->lemmings()[i].alive()) ++walker;
-            if (scene->drawHoveredWalker(image, walker, displayedCamera, options, *library, windowRaster))
-              markedActor = hover;
-          }
           hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
               std::vector<app::HatchHoverTarget>{};
-          for (auto& h : hatches) {
+          for (auto& h : hatches)
             h.remaining = world->remainingFromEntrance(h.index);
-            h.rate = releaseControl ? releaseControl->current() : 0;
-          }
           // Actor selection keeps precedence, matching hatchAtPointer input.
           const auto hatchHover = canHover && !hover ? app::hoveredHatch(hatches, pointerX, pointerY) : std::nullopt;
-          if (hatchHover) app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover]);
+          if (hatchHover) {
+            const auto adjustingRate = releaseControl && releaseControl->holding()
+                ? std::optional{releaseControl->current()} : std::nullopt;
+            app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover], adjustingRate);
+          }
           app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
                                      &*panelIconAnimation);
+          for (std::size_t i = 0; i < hudIcons.size(); ++i)
+            app::compositeIconRegion(image, runtimeHudIcons[i], hudIcons[i].placement);
           app::drawRuntimeHud(image, *runtimeFont, *world, false);
           app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
           // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
@@ -1620,12 +1700,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             const app::EntryCueFrame countdown{{320 - dx, 240 - dy, 330 + dx, 252 + dy}, true};
             app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), countdown);
           }
-          if (levelMenu) levelMenu->draw(image);
+          if (menuOpen() && persistentFrontend->screen() == shell::Screen::SoundOptions)
+            image = persistentFrontend->renderSoundOptions(image);
+          else if (levelMenu) levelMenu->draw(image);
           const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
           const auto cursorState = menuOpen() ? (focused ? app::CursorState::NoLemming : app::CursorState::Hidden) :
               app::runtimeCursorState(focused, rightDown, hover.has_value(),
-                  runtimeSim.paused(), panelIndex, panelAvailability);
+                  runtimeSim.paused(), panelIndex, panelAvailability, hatchHover.has_value());
           runtimeCursor->draw(image, cursorState, pointerX, pointerY);
           // READ45E2B5/45E342: cue is below the later cursor and pause caption.
           if (runtimeSim.paused() && !menuOpen()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
@@ -1646,7 +1728,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           view.actors = actors;
           view.hoveredActor = hover;
           view.cursorState = cursorState;
-          view.markedActor = markedActor;
+          view.markedActor = cursorState == app::CursorState::Lemming ? hover : std::nullopt;
           view.hoveredHatch = hatchHover ? std::optional<std::size_t>{hatches[*hatchHover].index} : std::nullopt;
           view.hatches = hatches;
         }
@@ -1674,24 +1756,27 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       if (windowSceneCurrent) {
         const void* pixels = windowRaster.framebuffer().rgb.data();
         if (pendingView) {
-          app::profile::Scope profileHud(app::profile::Hud);
-          presentedRgb.resize(static_cast<std::size_t>(image.width) * image.height * 3);
-          for (std::size_t i = 0, n = static_cast<std::size_t>(image.width) * image.height; i < n; ++i) {
-            presentedRgb[i * 3] = image.rgba[i * 4];
-            presentedRgb[i * 3 + 1] = image.rgba[i * 4 + 1];
-            presentedRgb[i * 3 + 2] = image.rgba[i * 4 + 2];
-          }
-          pixels = presentedRgb.data();
           if (finalShot) finalWindowFrame = std::move(image);
+          const auto& composed = finalShot ? *finalWindowFrame : image;
+          pixels = composed.rgba.data();
+          if (!uploadRgbx) {
+            rgbFallback.resize(composed.pixelCount() * 3);
+            for (std::size_t i = 0; i < composed.pixelCount(); ++i)
+              std::copy_n(composed.rgba.data()+i*4, 3, rgbFallback.data()+i*3);
+            pixels = rgbFallback.data();
+          }
         }
         if (finalShot && !finalWindowFrame) finalWindowFrame = toImage(windowRaster.framebuffer());
-        { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * 3); }
+        { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * (uploadRgbx ? 4 : 3)); }
         { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); }
         { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
       }
       ++rendered;
     } else { app::profile::Scope scope(app::profile::Idle); SDL_Delay(1); }
   }
+  // End this level's hold after recording the last simulation budget.
+  cancelFastForwardHold();
+  recordCommands();
   SDL_SetRelativeMouseMode(SDL_FALSE);
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);
   if (recorder) {
@@ -1745,8 +1830,23 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   // One cue adapter, hence one Mixer and one device, for the whole process:
   // it outlives every frontend and gameplay leg below.
   audio::CuePlayback* cues = nullptr;
+  save::SoundSettings sound;
+  std::shared_ptr<save::SaveSink> soundFile;
+  if (options.useDefaultSaveStore && !options.saveStore && !args.help && args.shot.empty()) {
+    if (auto base = save::localAppDataDirectory()) {
+      const auto path = save::soundSettingsPathUnder(*base);
+      soundFile = std::make_shared<save::FileSaveSink>(path, args.gameDir);
+      if (auto loaded = save::SoundSettings::load(*soundFile); loaded)
+        sound = *loaded;
+      else
+        std::fprintf(stderr, "sound settings: %s (using defaults)\n", loaded.error().c_str());
+    } else {
+      std::fprintf(stderr, "sound settings: %s (memory only)\n", base.error().c_str());
+    }
+  }
 #if WEBOLUTION_HAVE_SDL2
   audio::CuePlayback playback;
+  playback.setVolumes(sound.music / 100.0f, sound.sfx / 100.0f);
   if (args.noAudio) playback.disable();
   if (options.cueObserver) playback.setObserver(options.cueObserver);
   cues = &playback;
@@ -1769,7 +1869,12 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   }
   auto session = FrontendSession::create(*library, store);
   if (!session) { std::fprintf(stderr, "frontend: %s\n", session.error().c_str()); return 1; }
+  std::function<void(save::SoundSettings, bool)> preview;
 #if WEBOLUTION_HAVE_SDL2
+  preview = [&playback](save::SoundSettings levels, bool previewSfx) {
+    playback.setVolumes(levels.music / 100.0f, levels.sfx / 100.0f);
+    if (previewSfx) playback.playUiClick(); // 48EB0B: Changeop
+  };
   // Device failure, a missing WAV or no audio backend only print a diagnostic.
   playback.start(*library, options.enableAudio && !args.noAudio);
   // Own the window and renderer across menu, levels, retries and results. Legs
@@ -1779,6 +1884,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
 #else
   SdlWindow* sharedWindow = nullptr;
 #endif
+  session->configureSound(sound, std::move(soundFile), std::move(preview));
   // Keep this session alive across level/results/map/retry legs. Every level
   // still uses the same loader and SDL runtime; no recursive app invocation.
   for (;;) {

@@ -57,7 +57,7 @@ using DiagnosticSink = std::function<void(const std::string&)>;
 
 class CuePlayback {
 public:
-  CuePlayback() = default;
+  CuePlayback();
   CuePlayback(const CuePlayback&) = delete;
   CuePlayback& operator=(const CuePlayback&) = delete;
 
@@ -76,6 +76,10 @@ public:
   void start(const AssetLibrary& library, bool openDevice);
   bool started() const { return started_; }
   bool deviceReady() const { return mixer_.ready(); }
+  void setVolumes(float music, float sfx) {
+    mixer_.setMusicVolume(music);
+    mixer_.setSfxVolume(sfx);
+  }
 
   // Routes one sim cue. Unrouted cues are counted and ignored.
   void play(sim::SoundCue cue);
@@ -89,7 +93,7 @@ public:
 
   // Frontend/map share lemming01 without restarting between pages. Each level
   // load (including Retry) starts a fresh random lemming02..13 bed. Selection
-  // follows 0x498DE8; the clone RNG and 30% music bus gain are provisional.
+  // follows 0x498DE8; the clone RNG and default 30% music gain are provisional.
   // Pause and focus changes leave the callback running at normal playback speed.
   // Music never enters the SFX observer/counters or the simulation RNG.
   void playFrontendMusic();

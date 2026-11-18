@@ -21,6 +21,7 @@ Outcome Frontend::beginFrontend(Screen page) {
   switch (page) {
     case Screen::Menu:
     case Screen::Confirm:
+    case Screen::SoundOptions:
     case Screen::Map:
       dispatchMode_ = kUiFrontend;
       break;
@@ -37,7 +38,7 @@ Outcome Frontend::beginFrontend(Screen page) {
 }
 
 Outcome Frontend::replacePage(Screen page) {
-  if (!rootOwned_ || page == Screen::Level || page == Screen::Dialog)
+  if (!rootOwned_ || page == Screen::Level)
     return Outcome::Ignored;
   ++counter_;
   screen_ = page;
@@ -57,6 +58,7 @@ Outcome Frontend::press(Key key, int holdFrames) {
       if (key == Key::Return) {
         if (highlight_ == 0) return replacePage(Screen::Confirm);
         if (highlight_ == 1) return replacePage(Screen::Map);
+        if (highlight_ == 3) return openSoundOptions();
         if (highlight_ == 4) {
           // READ48EE41..48EE4C: activating row pointer [menu+50] sets
           // application exit byte4E3581. Results/level-menu Quit are separate.
@@ -98,6 +100,10 @@ Outcome Frontend::press(Key key, int holdFrames) {
       return Outcome::Unobserved;
     case Screen::Dialog:
       if (key == Key::O) return closeLevelMenu(true);
+      return Outcome::Unobserved;
+    case Screen::SoundOptions:
+      if (key == Key::Esc) return returnFromSoundOptions();
+      if (key == Key::O && dispatchMode_ == kUiDialog) return closeLevelMenu(true);
       return Outcome::Unobserved;
     case Screen::Results:
       // Native initial hidden-row focus repair remains unresolved. No invented
@@ -141,6 +147,7 @@ std::uint32_t Frontend::nodeVtable() const {
     case Screen::Map: return kVtableMap;
     case Screen::Level: return 0;
     case Screen::Dialog: return kVtableDialog;
+    case Screen::SoundOptions: return 0x4B24A8;
     case Screen::Results: return resultsWon_ ? kVtableWinResults : kVtableLossResults;
   }
   return 0;
@@ -151,6 +158,7 @@ Outcome Frontend::showResults(bool success) {
   // READ45DF25/45E0A9: full initialization, unlike Continue's page replacement.
   paused_ = false;
   resultsWon_ = success;
+  highlight_ = -1; // The shared builder's initial row is hidden on both results pages.
   return beginFrontend(Screen::Results);
 }
 
@@ -189,12 +197,27 @@ Outcome Frontend::openLevelMenu() {
 }
 
 Outcome Frontend::closeLevelMenu(bool paused) {
-  if (screen_ != Screen::Dialog || !rootOwned_) return Outcome::Ignored;
+  if ((screen_ != Screen::Dialog && !(screen_ == Screen::SoundOptions && dispatchMode_ == kUiDialog))
+      || !rootOwned_) return Outcome::Ignored;
   if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
   screen_ = Screen::Level;
   paused_ = paused;
   dispatchMode_ = paused ? kUiPaused : kUiLevel;
   return Outcome::Handled;
+}
+
+Outcome Frontend::openSoundOptions() {
+  if (screen_ != Screen::Menu && screen_ != Screen::Dialog) return Outcome::Ignored;
+  highlight_ = 0; // 48E810..48E821 focuses Music.
+  return replacePage(Screen::SoundOptions);
+}
+
+Outcome Frontend::returnFromSoundOptions() {
+  if (screen_ != Screen::SoundOptions) return Outcome::Ignored;
+  highlight_ = 0;
+  // 48EE6A / 48F617 pass selector 7 / 1F as page+24. Dispatch mode
+  // survives page replacement (including a main menu reached from results).
+  return replacePage(dispatchMode_ == kUiDialog ? Screen::Dialog : Screen::Menu);
 }
 
 Outcome Frontend::retryLevelMenu() {

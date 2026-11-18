@@ -5,6 +5,8 @@
 
 namespace webo::app {
 namespace {
+constexpr double minElevation = -10.5;
+constexpr double maxElevation = 47.5;
 double clamp(double v, double lo, double hi) { return std::max(lo, std::min(hi, v)); }
 double wrapYaw(double v) {
   while (v >= 256.0) v -= 256.0;
@@ -42,13 +44,9 @@ void CameraController::update(const CameraInput& in, double dt) {
   if (in.zoomPressed && in.uiAllowsCamera && in.uiState == 0) {
     camera_.zoomShift = camera_.zoomShift == 0 ? 1 : 0;
     if (camera_.zoomShift != 0) {
-      camera_.elevation = clamp(47.5 - 58.0 * ((cursorY_ - 130.0) / 220.0), -10.5, 47.5);
-      const double edgeRatio = (cursorX_ - 320.0) / 90.0;
-      if (std::abs(edgeRatio) >= 0.1) {
-        const double nudge = 30.0 * clamp(edgeRatio, -1.0, 1.0);
-        camera_.yawUnits += nudge;
-        pickReference_[0] = wrapTargetYaw(pickReference_[0] + nudge);
-      }
+      const auto pose = in.zoomPose.value_or(CameraZoomPose{0.0, 18.5});
+      camera_.zoomLateralOffset = pose.lateralOffset;
+      camera_.elevation = pose.elevation;
     }
   }
 
@@ -72,13 +70,17 @@ void CameraController::update(const CameraInput& in, double dt) {
     const double step = in.leftShift ? 3.0 : 1.0;
     if (in.numpad4) camera_.yawUnits += step;
     if (in.numpad6) camera_.yawUnits -= step;
-    camera_.yawUnits -= (10.0 / 24.0) * in.mouseDx;
+    camera_.yawUnits += (10.0 / 24.0) * in.mouseDx;
     pickReference_[0] = wrapTargetYaw(pickReference_[0] + (camera_.yawUnits - previousYaw));
     if (camera_.zoomShift == 0) {
       displayedElevation_ -= 0.5 * in.mouseDy;
       pickReference_[1] -= 0.5 * in.mouseDy;
     } else {
-      camera_.elevation = clamp(camera_.elevation + 1.5 * in.mouseDy, -10.5, 47.5);
+      const double elevation = camera_.elevation;
+      // An anchor outside the drag limits can move back toward the range at
+      // the usual speed. Its current elevation is the temporary outer limit.
+      camera_.elevation = clamp(elevation + 1.5 * in.mouseDy,
+          std::min(minElevation, elevation), std::max(maxElevation, elevation));
       displayedElevation_ -= 0.125 * in.mouseDy;
       pickReference_[1] -= 0.125 * in.mouseDy;
     }

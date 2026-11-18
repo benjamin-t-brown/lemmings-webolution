@@ -26,7 +26,7 @@ bool validFactor(SceneBlendFactor f) {
 std::uint8_t unorm8(double v) {
   if (!(v > 0.0)) return 0;
   if (v >= 255.0) return 255;
-  return static_cast<std::uint8_t>(std::floor(v + 0.5));
+  return static_cast<std::uint8_t>(v + 0.5);
 }
 
 int addressIndex(std::int64_t i, int n, SceneAddress mode) {
@@ -200,7 +200,14 @@ std::expected<void, std::string> rasterizeSceneTriangle(
     return {};
   };
   if (!observer && detail::commandBatch) {
-    detail::commandBatch->add([drawRows, ymin, ymax](int first, int last, std::size_t&, std::string& error) {
+    // Nonnegative barycentric weights interpolate UV as a weighted average.
+    // In this ordinary range the positive denominator and all products are
+    // finite, with ample margin from the sampler's +/-1e6 rejection limit.
+    // Keep partial-write behavior even for valid but extreme API inputs.
+    if (std::ranges::any_of(p, [](const auto& v) {
+      return v.rhw < 1e-10 || v.rhw > 1e10 || std::abs(v.u) > 1e5 || std::abs(v.v) > 1e5;
+    })) detail::commandBatch->preserveErrorRanges();
+    detail::commandBatch->add(ymin, ymax, [drawRows, ymin, ymax](int first, int last, std::size_t&, std::string& error) {
       const auto result = drawRows(std::max(first, ymin), std::min(last, ymax));
       if (!result) error = result.error();
     });

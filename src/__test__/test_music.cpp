@@ -75,6 +75,20 @@ void mixAndLoop() {
   mixer.play("effect");
   check(Access::voices(mixer).size() == 33 && Access::voices(mixer)[0].music,
         "overflow keeps the bed and the existing bounded SFX capacity");
+
+  mixer.stopAll();
+  mixer.setMusicVolume(0.0f);
+  mixer.playMusic("bed", 0.5f);
+  check(Access::render(mixer, 1)[0] == 0, "new bed starts muted");
+  mixer.setMusicVolume(0.5f);
+  check(Access::render(mixer, 1)[0] == -250, "unmuting preserves the playhead and voice gain");
+  mixer.stopMusic();
+  mixer.play("effect", 0.5f);
+  mixer.play("effect", 1.0f, audio::Mixer::Overlap::Average);
+  mixer.setSfxVolume(0.0f);
+  check(Access::render(mixer, 1)[0] == 0, "mute silences additive and averaged SFX tails");
+  mixer.setSfxVolume(0.5f);
+  check(Access::render(mixer, 1)[0] == 2250, "both active SFX tails follow the live bus gain");
 }
 
 void failuresAndDisabled() {

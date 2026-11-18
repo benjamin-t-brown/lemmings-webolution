@@ -4,6 +4,7 @@
 #include "app/LevelOutcome.h"
 #include "app/ResultsScene.h"
 #include "app/RuntimeCursor.h"
+#include "app/SoundMenu.h"
 #include "save/SaveStore.h"
 #include "save/SavedGame.h"
 #include "shell/Frontend.h"
@@ -11,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <expected>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -27,7 +29,7 @@ namespace webo::app {
 // winning completeLevel saves after the in-memory commit, and New Game Yes writes
 // the zero image. Without a store (tests) nothing touches disk. Results
 // Continue/retry/Quit preserve this owned progress. Main-menu clicks support New
-// Game, Play Current Game and Quit; other actions remain unimplemented. Main-menu
+// Game, Play Current Game, Options and Quit. Main-menu
 // UP/DOWN is an SDL adapter, not a claim about physical DirectInput bindings.
 class FrontendSession {
  public:
@@ -67,11 +69,19 @@ class FrontendSession {
   shell::Screen screen() const { return state_.screen(); }
   int constructionCounter() const { return state_.counter(); }
   shell::Outcome pressReturn();
+  void hoverMenu(int x, int y);
   bool moveMenuFocus(int direction);
   int menuFocus() const { return state_.highlight(); }
   bool quitRequested() const { return state_.quitRequested(); }
   shell::Outcome openLevelMenu();
   shell::Outcome closeLevelMenu(bool paused);
+  void configureSound(save::SoundSettings levels, std::shared_ptr<save::SaveSink> file,
+                      std::function<void(save::SoundSettings, bool previewSfx)> preview);
+  shell::Outcome openSoundOptions();
+  shell::Outcome closeSoundOptions(bool accept);
+  bool adjustSound(int direction);
+  void hoverSound(int x, int y);
+  Image renderSoundOptions(const Image& backdrop) const;
   bool click(int x, int y);
   bool clickMap(int x, int y);
   const std::optional<std::string>& selectedLevel() const { return selectedLevel_; }
@@ -89,6 +99,14 @@ class FrontendSession {
   shell::Outcome confirmChoice(bool yes);
   Image renderMapImage(const MapScene& map) const;
   shell::Frontend state_;
+  SoundMenu soundMenu_;
+  save::SoundSettings acceptedSound_, editingSound_;
+  std::shared_ptr<save::SaveSink> soundFile_;
+  std::function<void(save::SoundSettings, bool)> previewSound_;
+  bool soundWritePending_ = false;
+  mutable Image soundImage_;
+  int soundBaseY() const { return state_.uiState() == shell::kUiDialog ? 100 : 320; }
+  void finishSoundEdit(bool accept);
   // A render cache, not a second focus owner: page replacement can reset the
   // model's highlight without passing through directional input.
   mutable Image menu_;

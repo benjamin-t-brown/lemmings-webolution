@@ -1,25 +1,25 @@
 #pragma once
 
-#include <array>
+#include <algorithm>
+#include <atomic>
 #include <condition_variable>
-#include <deque>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace webo::app::detail {
 
-inline constexpr unsigned kRasterStripes = 8;
-
 // Synchronous row partitioning: every pixel has one writer; the caller waits
-// for all ranges. Workers never touch scene state, assets, RNG, observers or
-// simulation. The caller participates in the last range.
+// for all ranges. The caller also takes work.
 class RasterRows {
  public:
-  RasterRows() {
+  RasterRows() : workers_(std::clamp(std::thread::hardware_concurrency(), 1u, 16u) - 1),
+                 errors_(workers_.size() + 1) {
     try {
       for (unsigned i = 0; i < workers_.size(); ++i)
         workers_[i] = std::thread([this, i] {
@@ -45,13 +45,13 @@ class RasterRows {
     std::function<void(unsigned)> job(std::forward<F>(function));
     {
       std::lock_guard lock(mutex_);
-      errors_.fill(nullptr);
+      std::fill(errors_.begin(), errors_.end(), nullptr);
       job_ = &job;
-      remaining_ = kRasterStripes - 1;
+      remaining_ = size() - 1;
       ++generation_;
     }
     ready_.notify_all();
-    invoke(kRasterStripes - 1);
+    invoke(size() - 1);
     {
       std::unique_lock lock(mutex_);
       done_.wait(lock, [&] { return remaining_ == 0; });
@@ -60,6 +60,7 @@ class RasterRows {
     for (const auto& error : errors_) if (error) std::rethrow_exception(error);
   }
  private:
+  unsigned size() const { return static_cast<unsigned>(errors_.size()); }
   void stop() {
     { std::lock_guard lock(mutex_); stopping_ = true; }
     ready_.notify_all();
@@ -68,8 +69,8 @@ class RasterRows {
   void invoke(unsigned i) {
     try { (*job_)(i); } catch (...) { errors_[i] = std::current_exception(); }
   }
-  std::array<std::thread, kRasterStripes - 1> workers_;
-  std::array<std::exception_ptr, kRasterStripes> errors_{};
+  std::vector<std::thread> workers_;
+  std::vector<std::exception_ptr> errors_;
   std::mutex mutex_;
   std::condition_variable ready_, done_;
   std::function<void(unsigned)>* job_ = nullptr;
@@ -83,8 +84,9 @@ inline RasterRows& rasterRows() {
 }
 
 // A stage can defer its validated triangles while its texture storage remains
-// alive. Each worker visits the complete command list in submission order, but
-// owns disjoint framebuffer rows. A single barrier replaces per-triangle waits.
+// alive. Bin by clipped Y extent, preserving submission order within each band.
+// Short bands let idle cores take rows from a more heavily covered part of the
+// image. Only the caller reduces draw counts and errors after the barrier.
 class RasterCommandBatch;
 inline thread_local RasterCommandBatch* commandBatch = nullptr;
 class RasterCommandBatch {
@@ -96,39 +98,84 @@ class RasterCommandBatch {
     if (enabled_) commandBatch = this;
   }
   ~RasterCommandBatch() { if (enabled_) commandBatch = previous_; }
-  void add(Draw draw, Finish finish = {}) {
-    commands_.push_back({std::move(draw), std::move(finish), {}, {}});
+  void add(int ymin, int ymax, Draw draw, Finish finish = {}) {
+    commands_.push_back({ymin, ymax, std::move(draw), std::move(finish)});
   }
+  // On extreme inputs the scene sampler can reject UV partway through a
+  // triangle. Preserve the old eight independent error/early-return ranges.
+  void preserveErrorRanges() { legacyRanges_ = true; }
   std::vector<std::string> flush() {
+    return flush([](int, int, auto draw) { draw(); });
+  }
+  // A stage may measure its disjoint destination rows around the actual draw.
+  // The callback executes on the worker that owns the band.
+  template<class DrawBand>
+  std::vector<std::string> flush(DrawBand drawBand) {
     if (commands_.empty()) return {};
-    rasterRows().run([&](unsigned i) {
-      const int first = height_*i/kRasterStripes, last = height_*(i+1)/kRasterStripes-1;
-      for (auto& command : commands_)
-        command.draw(first, last, command.pixels[i], command.errors[i]);
+    constexpr int bandHeight = 8;
+    const int count = legacyRanges_ ? 8 : (height_ - 1) / bandHeight + 1;
+    struct Entry { std::size_t command, pixels = 0; };
+    struct Band {
+      std::vector<Entry> entries;
+      std::vector<std::pair<std::size_t, std::string>> errors;
+    };
+    std::vector<Band> bands(count);
+    const auto bandOf = [&](int y) {
+      return legacyRanges_ ? int(((std::int64_t(y) + 1) * 8 - 1) / height_) : y / bandHeight;
+    };
+    for (std::size_t i = 0; i < commands_.size(); ++i) {
+      const int first = std::max(0, commands_[i].ymin);
+      const int last = std::min(height_ - 1, commands_[i].ymax);
+      if (first > last) continue;
+      for (int b = bandOf(first); b <= bandOf(last); ++b)
+        bands[b].entries.push_back({i});
+    }
+    std::atomic<int> next{};
+    rasterRows().run([&](unsigned) {
+      for (;;) {
+        const int b = next.fetch_add(1, std::memory_order_relaxed);
+        if (b >= count) break;
+        const int first = legacyRanges_ ? int(std::int64_t(height_) * b / 8) : b * bandHeight;
+        const int last = legacyRanges_ ? int(std::int64_t(height_) * (b+1) / 8) - 1 :
+            std::min(height_ - 1, first + bandHeight - 1);
+        auto& band = bands[b];
+        if (band.entries.empty()) continue;
+        drawBand(first, last, [&] {
+          for (auto& entry : band.entries) {
+            std::string error;
+            commands_[entry.command].draw(first, last, entry.pixels, error);
+            if (!error.empty()) band.errors.emplace_back(entry.command, std::move(error));
+          }
+        });
+      }
     });
+    for (const auto& band : bands) {
+      for (const auto& entry : band.entries) commands_[entry.command].pixels += entry.pixels;
+      for (const auto& [i, error] : band.errors)
+        if (commands_[i].error.empty()) commands_[i].error = error;
+    }
     std::vector<std::string> errors;
     for (auto& command : commands_) {
-      std::size_t pixels = 0;
-      for (auto count : command.pixels) pixels += count;
-      if (command.finish) command.finish(pixels);
-      for (const auto& error : command.errors) if (!error.empty()) {
-        errors.push_back(error); break;
-      }
+      if (command.finish) command.finish(command.pixels);
+      if (!command.error.empty()) errors.push_back(std::move(command.error));
     }
     commands_.clear();
+    legacyRanges_ = false;
     return errors;
   }
  private:
   struct Command {
+    int ymin, ymax;
     Draw draw;
     Finish finish;
-    std::array<std::size_t, kRasterStripes> pixels;
-    std::array<std::string, kRasterStripes> errors;
+    std::size_t pixels = 0;
+    std::string error{};
   };
   int height_;
   RasterCommandBatch* previous_;
   bool enabled_;
-  std::deque<Command> commands_;
+  bool legacyRanges_ = false;
+  std::vector<Command> commands_;
 };
 
 } // namespace webo::app::detail

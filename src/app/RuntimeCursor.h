@@ -7,10 +7,10 @@
 
 namespace webo::app {
 
-// Bounded gameplay adapter: actor/no-actor, skill plates, and right-drag only.
-// No inferred entrance/exit markers, facing filters or gameplay MouseDown lifecycle.
+// Gameplay adapter for actor and hatch hits, skill plates, and right-drag.
 CursorState runtimeCursorState(bool focused, bool grabbed, bool actorHit,
-                               bool paused, int panelIndex, int panelAvailability);
+                               bool paused, int panelIndex, int panelAvailability,
+                               bool hatchHit = false);
 
 // READ453BF6..453D98: frontend flag selects1 normally or10 for either held
 // button, then skips gameplay hit/Grab policy. Focus hiding and SDL button
@@ -23,8 +23,8 @@ class RuntimeCursor {
   void draw(Image& target, CursorState state, int x, int y) const;
 
  private:
-  // Whole 32x32 bitmap resources, not temporal frames.
-  std::array<Image, 4> images_;
+  // Whole cursor images at the 32x32 draw extent.
+  std::array<Image, 5> images_;
 };
 
 } // namespace webo::app

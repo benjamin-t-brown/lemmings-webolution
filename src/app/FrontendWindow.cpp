@@ -30,6 +30,22 @@ std::string sdlError(const char* action) {
 }
 }  // namespace
 
+void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event) {
+  if (event.type == SDL_MOUSEMOTION) {
+    session.hoverSound(event.motion.x, event.motion.y);
+  } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+    session.click(event.button.x, event.button.y);
+  } else if (event.type == SDL_KEYDOWN) {
+    const auto key = event.key.keysym.sym;
+    if (key == SDLK_LEFT || key == SDLK_RIGHT) session.adjustSound(key == SDLK_LEFT ? -1 : 1);
+    else if (!event.key.repeat) {
+      if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
+      else if (key == SDLK_RETURN) session.pressReturn();
+      else if (key == SDLK_ESCAPE) session.closeSoundOptions(false);
+    }
+  }
+}
+
 std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     FrontendSession& session, const FrontendWindowOptions& options,
     FrontendWindowObserver observer, SdlWindow* sharedWindow) {
@@ -71,21 +87,25 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
         } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
           session.setFocused(true);
         }
-      } else if (session.focused() && event.type == SDL_MOUSEMOTION) {
-        session.setPointer(event.motion.x, event.motion.y);
-      } else if (session.focused() && event.type == SDL_KEYDOWN && !event.key.repeat &&
-                 event.key.keysym.sym == SDLK_RETURN) {
-        session.pressReturn();
-      } else if (session.focused() && event.type == SDL_KEYDOWN && !event.key.repeat &&
-                 (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_DOWN)) {
-        session.moveMenuFocus(event.key.keysym.sym == SDLK_UP ? -1 : 1);
-      } else if (session.focused() && (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)) {
-        session.setPointer(event.button.x, event.button.y);
-        const bool down = event.type == SDL_MOUSEBUTTONDOWN;
-        if (event.button.button == SDL_BUTTON_LEFT) session.setButtons(down, session.rightHeld());
-        else if (event.button.button == SDL_BUTTON_RIGHT) session.setButtons(session.leftHeld(), down);
-        if (down && event.button.button == SDL_BUTTON_LEFT)
+      } else if (session.focused()) {
+        if (event.type == SDL_MOUSEMOTION) session.setPointer(event.motion.x, event.motion.y);
+        if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+          session.setPointer(event.button.x, event.button.y);
+          const bool down = event.type == SDL_MOUSEBUTTONDOWN;
+          if (event.button.button == SDL_BUTTON_LEFT) session.setButtons(down, session.rightHeld());
+          else if (event.button.button == SDL_BUTTON_RIGHT) session.setButtons(session.leftHeld(), down);
+        }
+        if (session.screen() == shell::Screen::SoundOptions) {
+          handleSoundOptionsInput(session, event);
+        } else if (event.type == SDL_MOUSEMOTION) {
+          session.hoverMenu(session.pointerX(), session.pointerY());
+        } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
           session.click(session.pointerX(), session.pointerY());
+        } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
+          const auto key = event.key.keysym.sym;
+          if (key == SDLK_RETURN) session.pressReturn();
+          else if (key == SDLK_UP || key == SDLK_DOWN) session.moveMenuFocus(key == SDLK_UP ? -1 : 1);
+        }
       }
       if (session.selectedLevel()) return session.selectedLevel();
       if (session.quitRequested()) return std::optional<std::string>{};

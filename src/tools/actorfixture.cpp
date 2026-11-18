@@ -36,8 +36,9 @@ int main(int argc, char** argv) {
   };
   if (get("--game-dir").empty() || get("--out").empty()) {
     std::cerr << "usage: actorfixture --game-dir DIR --out PNG --action-index N "
-                 "--temporal N --direction N --mirror 0|1 --x X --y Y --z Z "
-                 "[--level COMPILED\\\\MM_CLIMB_002.LVL] [--tint R,G,B] [--no-light-lookup] [--no-alpha-test]\n";
+                 "--temporal N --direction N --mirror 0|1 --x MODEL_X --y MODEL_Y --z MODEL_Z "
+                 "[--level COMPILED\\\\MM_CLIMB_002.LVL] [--no-alpha-test] "
+                 "(--terrain-x X --file-row-y Y | --tint R,G,B | --no-light-lookup)\n";
     return 2;
   }
   try {
@@ -88,16 +89,20 @@ int main(int argc, char** argv) {
             static_cast<std::uint8_t>(std::stoi(part));
       tintSource = "cli_tint";
     } else if (args.find("--no-light-lookup") == args.end()) {
+      if (get("--terrain-x").empty() || get("--file-row-y").empty())
+        throw std::runtime_error("light-map lookup requires --terrain-x and --file-row-y");
+      const double terrainX = std::stod(get("--terrain-x"));
+      const double fileRowY = std::stod(get("--file-row-y"));
       const std::string levelName =
           get("--level", "COMPILED\\MM_CLIMB_002.LVL");
       auto light = webo::loadActorLightMap(*library, levelName);
       if (!light)
         throw std::runtime_error(light.error());
-      mapIndex = webo::actorLightMapIndex(position[0], position[1]);
+      mapIndex = webo::actorLightMapIndex(terrainX, fileRowY);
       if (mapIndex < 0 || static_cast<std::size_t>(mapIndex) >= light->map.size())
         throw std::runtime_error(std::format("light map index {} out of range", mapIndex));
       mapByte = light->map[static_cast<std::size_t>(mapIndex)];
-      auto tint = webo::actorLightTintAt(*light, position[0], position[1]);
+      auto tint = webo::actorLightTintAt(*light, terrainX, fileRowY);
       if (!tint)
         throw std::runtime_error(tint.error());
       vertexRgb = *tint;

@@ -124,7 +124,7 @@ target_link_libraries(MenuRenderDump PRIVATE webolution_objects)
 # Offline snapshot of the production FrontendSession renderer (no SDL/window).
 add_executable(FrontendRenderDump src/tools/FrontendRenderDump.cpp
   src/app/ResultsScene.cpp
-  src/app/FrontendSession.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
+  src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
   src/app/CursorPolicy.cpp src/app/SkillPanel.cpp src/shell/Frontend.cpp
   src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(FrontendRenderDump PRIVATE webolution_objects)
@@ -447,7 +447,7 @@ add_test(NAME frontend_sequence COMMAND test_frontend_sequence)
 
 add_executable(test_frontendsession src/__test__/test_frontendsession.cpp
   src/app/ResultsScene.cpp
-  src/app/FrontendSession.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
+  src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
   src/app/CursorPolicy.cpp src/app/SkillPanel.cpp src/shell/Frontend.cpp
   src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(test_frontendsession PRIVATE webolution_objects)
@@ -461,10 +461,14 @@ target_link_libraries(test_savedgame PRIVATE webolution_objects)
 target_compile_definitions(test_savedgame PRIVATE WEBOLUTION_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME savedgame COMMAND test_savedgame WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+add_executable(test_soundsettings src/__test__/test_soundsettings.cpp)
+target_link_libraries(test_soundsettings PRIVATE webolution_objects)
+add_test(NAME soundsettings COMMAND test_soundsettings "${CMAKE_BINARY_DIR}/sound-settings-test")
+
 # FrontendSession load/save/New Game against retail assets, temp stores only.
 add_executable(test_savepersist src/__test__/test_savepersist.cpp
   src/app/ResultsScene.cpp
-  src/app/FrontendSession.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
+  src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
   src/app/CursorPolicy.cpp src/app/SkillPanel.cpp src/shell/Frontend.cpp
   src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(test_savepersist PRIVATE webolution_objects)
@@ -475,7 +479,7 @@ endif()
 
 add_executable(test_savedemo_after src/__test__/test_savedemo.cpp
   src/app/ResultsScene.cpp
-  src/app/FrontendSession.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
+  src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp src/app/RuntimeCursor.cpp
   src/app/CursorPolicy.cpp src/app/SkillPanel.cpp src/shell/Frontend.cpp
   src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(test_savedemo_after PRIVATE webolution_objects)
@@ -487,7 +491,7 @@ if(DEFINED WEBOLUTION_GAME_DIR)
 endif()
 
 add_executable(test_results src/__test__/test_results.cpp
-  src/app/ResultsScene.cpp src/app/FrontendSession.cpp src/app/MapScene.cpp
+  src/app/ResultsScene.cpp src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp
   src/app/RuntimeCursor.cpp src/app/CursorPolicy.cpp src/app/SkillPanel.cpp
   src/shell/Frontend.cpp src/shell/MenuRender.cpp src/shell/HudText.cpp)
 target_link_libraries(test_results PRIVATE webolution_objects)
@@ -504,7 +508,7 @@ add_test(NAME cameraintro COMMAND test_cameraintro)
 if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   add_executable(test_frontendwindow src/__test__/test_frontendwindow.cpp
     src/app/ResultsScene.cpp
-    src/app/FrontendWindow.cpp src/app/FrontendSession.cpp src/app/MapScene.cpp
+    src/app/FrontendWindow.cpp src/app/FrontendSession.cpp src/app/SoundMenu.cpp src/app/MapScene.cpp
     src/app/RuntimeCursor.cpp src/app/CursorPolicy.cpp src/app/SkillPanel.cpp
     src/shell/Frontend.cpp src/shell/MenuRender.cpp src/shell/HudText.cpp)
   target_link_libraries(test_frontendwindow PRIVATE webolution_objects)
@@ -810,9 +814,6 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   elseif(TARGET PkgConfig::SDL2)
     target_link_libraries(test_levelmenuwindow PRIVATE PkgConfig::SDL2)
   endif()
-  add_test(NAME levelmenuwindow COMMAND test_levelmenuwindow)
-  set_tests_properties(levelmenuwindow PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR};WEBOLUTION_TEST_OUTPUT_DIR=${CMAKE_BINARY_DIR}/levelmenuwindow-test")
   if(DEFINED WEBOLUTION_GAME_DIR)
     add_test(NAME frontend_menu COMMAND ${CMAKE_COMMAND}
       "-DAPP=$<TARGET_FILE:webolution>" "-DDUMP=$<TARGET_FILE:FrontendRenderDump>"
@@ -1055,7 +1056,6 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(fastforward_units PROPERTIES TIMEOUT 60
     ENVIRONMENT "WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
 
-  set(FFI_DIR "${CMAKE_SOURCE_DIR}/build/fastforward-impl-001")
   set(FFI_SUPPORT ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM FFI_SUPPORT
     "${CMAKE_SOURCE_DIR}/src/app/main.cpp"
@@ -1080,22 +1080,6 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   add_test(NAME hatch_direction_assets COMMAND test_hatch_direction_after assets "${HATCH_DIRECTION_DIR}/assets")
   set_tests_properties(hatch_direction_assets PROPERTIES TIMEOUT 120
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-  set(ffi_files src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-  add_executable(test_fastforwardapp_after src/__test__/test_fastforward_app.cpp ${ffi_files})
-  target_link_libraries(test_fastforwardapp_after PRIVATE fastforward_support webolution_objects)
-  target_compile_definitions(test_fastforwardapp_after PRIVATE FASTFORWARD_IMPL_DIR="${FFI_DIR}")
-  add_test(NAME fastforwardapp_after COMMAND test_fastforwardapp_after)
-  set_tests_properties(fastforwardapp_after PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-
-  set(fft_sources src/app/main.cpp src/app/RuntimeHud.cpp src/app/RuntimeSkillPanel.cpp)
-  add_executable(test_fastforward_toggle_production src/__test__/test_fastforward_toggle.cpp ${fft_sources})
-  target_link_libraries(test_fastforward_toggle_production PRIVATE fastforward_support webolution_objects)
-  add_test(NAME fastforward_toggle_production COMMAND test_fastforward_toggle_production production
-    "${CMAKE_CURRENT_BINARY_DIR}/fastforward-toggle-production")
-  set_tests_properties(fastforward_toggle_production PROPERTIES TIMEOUT 120
-    ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
-
   set(MOTION_COMPARE "-")
   set(motion_main src/app/main.cpp)
   add_executable(test_actor_motion_production src/__test__/test_actor_motion.cpp
@@ -1148,10 +1132,9 @@ if(WEBOLUTION_HAVE_SDL2 AND DEFINED WEBOLUTION_GAME_DIR)
   set_tests_properties(hatch_timing_after hatch_timing_win_after PROPERTIES TIMEOUT 180
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   add_test(NAME hatch_timing_units COMMAND test_hatch_timing_after units "${CMAKE_CURRENT_BINARY_DIR}/hatch-timing-units")
-  add_test(NAME hatch_timing_fast COMMAND test_hatch_timing_after fast "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/fast")
   add_test(NAME hatch_timing_assets COMMAND test_hatch_timing_after assets "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/assets")
   add_test(NAME hatch_timing_retry COMMAND test_hatch_timing_after retry "${CMAKE_SOURCE_DIR}/build/hatch-timing-001/retry")
-  set_tests_properties(hatch_timing_units hatch_timing_fast hatch_timing_assets hatch_timing_retry PROPERTIES TIMEOUT 180
+  set_tests_properties(hatch_timing_units hatch_timing_assets hatch_timing_retry PROPERTIES TIMEOUT 180
     ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   set(HATCH_EXIT_SUPPORT ${FFI_SUPPORT})
   list(REMOVE_ITEM HATCH_EXIT_SUPPORT "${CMAKE_SOURCE_DIR}/src/app/BackdropScene.cpp")

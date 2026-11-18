@@ -200,7 +200,7 @@ CameraBasis buildCamera(const CameraParams& p) {
     }
 
   const double eyeLocal[3] = {
-      0.0,
+      n != 0 ? p.zoomLateralOffset : 0.0,
       (p.levelEyeHeight + p.heightBias) / scale + (n != 0 ? p.elevation : 0.0),
       localZ};
   // The raw pose builder applies yaw to the local eye vector (not transpose(yaw)).
@@ -222,8 +222,8 @@ CameraBasis buildCamera(const CameraParams& p) {
   }
 
   if (n != 0) {
-    // Undo only the zoom translation. Yaw, pitch and the intro's extra eye
-    // distance are common to both cameras; elevation applies only at zoom 1.
+    // Undo only the zoom translation along view Z. The lateral offset is
+    // perpendicular to view Z; yaw, pitch and intro distance are common.
     const double dy = (p.levelEyeHeight + p.heightBias) * (1.0 - 1.0 / scale) - p.elevation;
     const double dz = -p.eyeDistance * (1.0 - 1.0 / scale);
     for (int j = 0; j < 3; ++j)
@@ -238,6 +238,33 @@ CameraBasis buildCamera(const CameraParams& p) {
   out.focalX = (g / p.aspect) / (1.0 / p.width);
   out.focalY = (g * p.height / p.width) / (1.0 / p.width);
   return out;
+}
+
+std::optional<CameraZoomPose> cursorZoomPose(const CameraBasis& displayed,
+    CameraParams zoomBase, double screenX, double screenY, double viewDepth) {
+  if (!(viewDepth > 0.0) || !std::isfinite(viewDepth)) return std::nullopt;
+  const auto displayedRay = displayed.worldRay(screenX, screenY);
+  zoomBase.zoomShift = 1;
+  zoomBase.zoomLateralOffset = 0.0;
+  zoomBase.elevation = 0.0;
+  const auto zoomed = buildCamera(zoomBase);
+  const auto ray = zoomed.worldRay(screenX, screenY);
+  std::array<double, 3> toAnchor;
+  for (int i = 0; i < 3; ++i)
+    toAnchor[i] = displayed.eyeWorld[i] + viewDepth * displayedRay[i] - zoomed.eyeWorld[i];
+
+  // Keep the zoomed eye's forward position and solve for its lateral and
+  // vertical offsets. With a settled view, this moves the eye along the
+  // original pixel ray and preserves the sightline through terrain openings.
+  const double rightX = zoomed.worldToView[0], rightZ = zoomed.worldToView[6];
+  const auto forward = [&](const std::array<double, 3>& v) {
+    return -rightZ * v[0] + rightX * v[2];
+  };
+  const double depth = forward(toAnchor) / forward(ray);
+  if (!(depth > 0.0) || !std::isfinite(depth)) return std::nullopt;
+  return CameraZoomPose{
+      rightX * (toAnchor[0] - depth * ray[0]) + rightZ * (toAnchor[2] - depth * ray[2]),
+      toAnchor[1] - depth * ray[1]};
 }
 
 BillboardCameraChain buildBillboardCameraChain(const CameraBasis& camera) {

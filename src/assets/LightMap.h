@@ -15,7 +15,7 @@ class AssetLibrary;
 
 // Per-level light map and RGB palette stored immediately after the
 // collision grid (`u32 12288, u8[12288]` then 256 x {f64 R, G, B} with no
-// prefix). Indexed by actor world position; see actorLightMapIndex.
+// prefix). Indexed by actor terrain X and file-row Y; see actorLightMapIndex.
 struct ActorLightMap {
   static constexpr std::size_t kMapBytes = 12288;
   static constexpr std::size_t kPaletteBytes = 6144;
@@ -35,9 +35,10 @@ struct ActorLightMap {
   std::size_t histogram(std::uint8_t value) const;
 };
 
-// Native index at 0x403F40 / 0x403FC0: trunc(Y), trunc(X), then
+// 0x403F40 / 0x403FC0 take terrainX from actor+0x08 and fileRowY from actor+0x10.
+// With a = trunc(terrainX), b = trunc(fileRowY), the index is
 // `(b << 8) / 2 + (a & 0xFF) / 2` with C signed truncating division.
-int actorLightMapIndex(double worldX, double worldY);
+int actorLightMapIndex(double terrainX, double fileRowY);
 
 std::expected<ActorLightMap, std::string> findActorLightMap(std::span<const std::byte> levelBytes);
 
@@ -46,7 +47,7 @@ std::expected<ActorLightMap, std::string> loadActorLightMap(const AssetLibrary&,
 
 // Bounds-checked lookup; the native path does not guard idx.
 std::expected<std::array<std::uint8_t, 3>, std::string> actorLightTintAt(
-    const ActorLightMap& light, double worldX, double worldY);
+    const ActorLightMap& light, double terrainX, double fileRowY);
 
 // D3D-style MODULATE on RGB; alpha is copied unchanged. This is the RGB stage
 // only; the alpha test below is separate (A4u).

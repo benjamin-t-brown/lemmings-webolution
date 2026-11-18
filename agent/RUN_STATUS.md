@@ -12,34 +12,32 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Recently completed queue entries
 
-- music-001: Play the installed frontend and level music
-  Accepted: 2026-11-18T01:12:45.634073+00:00
-  Verification evidence: `build/agent-runs/20261118T010116-34136-cac56b1c/verification.log`
-  Verification evidence: `build\agent-runs\20261118T010116-34136-cac56b1c\verification.log`
-- gadget-models-001: Draw teleporters and speed pads with their animation
-  Accepted: 2026-11-18T01:34:19.529474+00:00
-  Verification evidence: `build/agent-runs/20261118T011245-34136-2c1b0618/verification.log`
-  Verification evidence: `build\agent-runs\20261118T011245-34136-2c1b0618\verification.log`
-- occupancy-sensors-001: Connect the occupancy sensors to the gadgets they trigger
-  Accepted: 2026-11-18T01:51:21.265879+00:00
-  Verification evidence: `build/agent-runs/20261118T013419-34136-74dc1585/verification.log`
-  Verification evidence: `build\agent-runs\20261118T013419-34136-74dc1585\verification.log`
-- miner-axe-001: Draw the miner's axe effect
-  Accepted: 2026-11-18T02:36:14.210500+00:00
-  Verification evidence: `build/agent-runs/20261118T022755-34136-91175e7c/verification.log`
-  Verification evidence: `build\agent-runs\20261118T022755-34136-91175e7c\verification.log`
-- explosion-decal-001: Leave the scorch mark where a lemming explodes
-  Accepted: 2026-11-18T03:10:23.531112+00:00
-  Verification evidence: `build/agent-runs/20261118T025649-55108-f3ec0c55/verification.log`
-  Verification evidence: `build\agent-runs\20261118T025649-55108-f3ec0c55\verification.log`
+- hover-cursor-001: Hovering a lemming shows the original's bracket cursor with its letter
+  Accepted: 2026-11-18T17:18:07.047209+00:00
+  Verification evidence: `build/agent-runs/loop-520ad15ccb37472f8b2af72387298bdf/0001-verify-2d01dd/verification.log`
+- skill-plate-bg-001: Skill panel plates have their dark rounded backgrounds
+  Accepted: 2026-11-18T17:27:30.542402+00:00
+  Verification evidence: `build/agent-runs/20261118T171807-22608-dc5b4a04/verification.log`
+  Verification evidence: `build\agent-runs\20261118T171807-22608-dc5b4a04\verification.log`
+- options-menu-001: Options opens the sound settings screen from both menus
+  Accepted: 2026-11-18T20:17:19.958975+00:00
+  Verification evidence: `build/agent-runs/loop-d9865d7bae6b4976b9561289cb0da004/0001-verify-52c391/verification.log`
+- menu-hover-001: Hovering a frontend menu row highlights it
+  Accepted: 2026-11-18T20:31:23.892349+00:00
+  Verification evidence: `build/agent-runs/20261118T201720-10288-b5c7df9d/verification.log`
+  Verification evidence: `build\agent-runs\20261118T201720-10288-b5c7df9d\verification.log`
+- frame-rate-144-001: Raise level play toward 144 fps
+  Accepted: 2026-11-18T21:09:55.991771+00:00
+  Verification evidence: `build/agent-runs/20261118T203123-10288-0565d47c/verification.log`
+  Verification evidence: `build\agent-runs\20261118T203123-10288-0565d47c\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-0f62f6be7dd44a6f943cbeb0538406d3/result.json`
-- Status: **blocked**
-- Duration: 0h 13m 36s
-- Completed in this invocation: explosion-decal-001
-- Reason: plan failed; inspect the saved logs
+- Result: `build/agent-runs/loop-bac9d326394147c99c12bca52b968ea2/result.json`
+- Status: **cancelled**
+- Duration: 0h 00m 12s
+- Completed in this invocation: none
+- Reason: Keyboard interrupt
 
 ## Documentation handoff
 

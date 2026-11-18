@@ -4,6 +4,8 @@
 #include "assets/Bitmap.h"
 
 #include <array>
+#include <string>
+#include <vector>
 
 namespace webo::app {
 
@@ -15,11 +17,15 @@ class ResultsScene {
  public:
   static std::expected<ResultsScene, std::string> build(
       const AssetLibrary& library, const LevelOutcome& outcome);
-  const Image& image() const { return image_; }
+  const Image& image(int highlight = -1) const;
+  int rowAt(int x, int y) const;
   ResultAction actionAt(int x, int y) const;
 
  private:
-  Image image_;
+  Image backdrop_, font_;
+  std::vector<std::string> labels_;
+  mutable Image image_;
+  mutable int imageHighlight_ = -1;
   std::array<std::array<int, 4>, 3> boxes_{};
   std::array<ResultAction, 3> actions_{};
 };

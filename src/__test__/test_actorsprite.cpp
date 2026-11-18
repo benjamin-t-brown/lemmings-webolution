@@ -127,8 +127,9 @@ int main() {
   require(!webo::app::actorSpritePlacement(tiny, world, nativeProjection, false, 2).has_value(),
           "unsupported scale delta rejected");
 
-  require(webo::actorLightMapIndex(world[0], world[1]) == 4196,
-          "A4f fixture world X/Y maps to index 4196");
+  // Captured actor+0x08/+0x10 for both A4f frames.
+  require(webo::actorLightMapIndex(59.68486785888672, 32.0) == 4125,
+          "A4f fixture terrain X and file-row Y map to index 4125");
   require(webo::actorLightMapIndex(-57.0, 32.0) == 4195,
           "truncated X=-57 maps to index 4195");
   require(webo::actorLightMapIndex(-0.25, 32.0) == webo::actorLightMapIndex(0.0, 32.0),

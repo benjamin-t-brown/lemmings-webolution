@@ -4,9 +4,12 @@
 #include "shell/HudText.h"
 #include "shell/MenuRender.h"
 
-#include <vector>
+#include <utility>
 
 namespace webo::app {
+namespace {
+constexpr int firstVisibleRowY = 349;
+}
 
 std::expected<ResultsScene, std::string> ResultsScene::build(
     const AssetLibrary& library, const LevelOutcome& outcome) {
@@ -24,22 +27,20 @@ std::expected<ResultsScene, std::string> ResultsScene::build(
   // Native row0 is an empty widget whose draw bit is cleared. Start at row1
   // rather than painting a blank panel, and don't guess repaired focus.
   shell::MenuParams buttons;
-  buttons.baseY = 349;
-  buttons.highlight = -1;
-  std::vector<std::string> labels;
+  buttons.baseY = firstVisibleRowY;
   if (outcome.success) {
-    labels.emplace_back((*strings)[47]);
+    result.labels_.emplace_back((*strings)[47]);
     result.actions_[0] = ResultAction::Continue;
   } else {
-    labels = {std::string((*strings)[48]), std::string((*strings)[47]), std::string((*strings)[43])};
+    result.labels_ = {std::string((*strings)[48]), std::string((*strings)[47]), std::string((*strings)[43])};
     result.actions_ = {ResultAction::Retry, ResultAction::Continue, ResultAction::Quit};
   }
-  result.image_ = shell::renderMainMenu(*background, *font, labels, buttons, cells);
-  for (std::size_t i = 0; i < labels.size(); ++i) {
-    const int left = shell::labelLeft(labels[i], cells, 640);
+  for (std::size_t i = 0; i < result.labels_.size(); ++i) {
+    const auto& label = result.labels_[i];
+    const int left = shell::labelLeft(label, cells, 640);
     const int top = buttons.baseY + static_cast<int>(i) * buttons.rowStep + buttons.panelTop;
     result.boxes_[i] = {left - buttons.panelPadX, top,
-        left + shell::textWidth(labels[i], cells) + buttons.panelPadX, top + buttons.panelHeight};
+        left + shell::textWidth(label, cells) + buttons.panelPadX, top + buttons.panelHeight};
   }
   std::vector<shell::HudLine> lines;
   const auto addLine = [&](const std::string& text, int y) {
@@ -57,16 +58,30 @@ std::expected<ResultsScene, std::string> ResultsScene::build(
   } while (start <= title.size());
   addLine(std::string((*strings)[121]) + " " + std::to_string(outcome.required), 280);
   addLine(std::string((*strings)[122]) + " " + std::to_string(outcome.saved), 310);
-  shell::drawHud(result.image_, *font, lines, cells);
+  result.backdrop_ = std::move(*background);
+  result.font_ = std::move(*font);
+  shell::drawHud(result.backdrop_, result.font_, lines, cells);
   return result;
 }
 
-ResultAction ResultsScene::actionAt(int x, int y) const {
-  for (std::size_t i = 0; i < boxes_.size(); ++i) {
-    const auto& b = boxes_[i];
-    if (x >= b[0] && y >= b[1] && x < b[2] && y < b[3]) return actions_[i];
+const Image& ResultsScene::image(int highlight) const {
+  if (image_.rgba.empty() || highlight != imageHighlight_) {
+    shell::MenuParams buttons;
+    buttons.baseY = firstVisibleRowY;
+    buttons.highlight = highlight;
+    image_ = shell::renderMainMenu(backdrop_, font_, labels_, buttons, shell::fontCells());
+    imageHighlight_ = highlight;
   }
-  return ResultAction::None;
+  return image_;
+}
+
+int ResultsScene::rowAt(int x, int y) const {
+  return shell::menuPanelAt(boxes_, x, y);
+}
+
+ResultAction ResultsScene::actionAt(int x, int y) const {
+  const int row = rowAt(x, y);
+  return row < 0 ? ResultAction::None : actions_[row];
 }
 
 } // namespace webo::app

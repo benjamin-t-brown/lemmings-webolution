@@ -15,6 +15,7 @@
 #include "sim/World.h"
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <bit>
 #include <map>
 #include <cmath>
@@ -25,6 +26,29 @@
 
 namespace webo::app {
 namespace {
+// Snapshot only rows where this stage has triangles. The same worker copies,
+// draws and compares each band, so overlapping triangles count a pixel once.
+template<int Channels, class T>
+std::vector<std::string> flushCountingChanges(detail::RasterCommandBatch& batch,
+    const std::vector<T>& buffer, int width, std::size_t& total) {
+  std::atomic<std::size_t> changed{};
+  auto errors = batch.flush([&](int first, int last, auto draw) {
+    const auto start = buffer.begin() + std::size_t(first) * width * Channels;
+    const auto end = buffer.begin() + std::size_t(last + 1) * width * Channels;
+    thread_local std::vector<T> before;
+    before.assign(start, end);
+    draw();
+    std::size_t count = 0;
+    for (std::size_t i = 0; i < before.size(); i += Channels) {
+      if constexpr (Channels == 1) count += start[i] != before[i];
+      else count += !std::equal(before.data()+i, before.data()+i+Channels, &start[i]);
+    }
+    changed.fetch_add(count, std::memory_order_relaxed);
+  });
+  total += changed.load(std::memory_order_relaxed);
+  return errors;
+}
+
 std::string context(std::string_view level, const BackdropScene::RootSource& root,
                     std::size_t offset) {
  return std::format("{} {} {}[{}] source=0x{:x}: ", level,
@@ -38,6 +62,12 @@ std::array<double,12> identity(){return {1,0,0,0,1,0,0,0,1,0,0,0};}
 BillboardAffine3x4 affine(const std::array<double,12>& m){return {{{m[0],m[3],m[6],m[9],m[1],m[4],m[7],m[10],m[2],m[5],m[8],m[11]}}};}
 using Matrix=std::array<double,12>;
 Matrix compose(const Matrix&a,const Matrix&b){Matrix o{};for(int i=0;i<3;++i){for(int j=0;j<3;++j)for(int k=0;k<3;++k)o[3*i+j]+=a[3*i+k]*b[3*k+j];o[9+i]=b[9+i];for(int k=0;k<3;++k)o[9+i]+=a[9+k]*b[3*k+i];}return o;}
+constexpr std::string_view mineBackdropMaterials = "Models\\bg_mine01\\";
+bool hasMineBackdropMaterials(const SceneNode& node) {
+  return std::ranges::any_of(node.materials, [](const SceneMaterial& material) {
+    return material.name.starts_with(mineBackdropMaterials);
+  }) || std::ranges::any_of(node.children, hasMineBackdropMaterials);
+}
 BillboardAffine3x4 multiply(const BillboardAffine3x4&a,const BillboardAffine3x4&b){BillboardAffine3x4 o;for(int r=0;r<3;++r){for(int c=0;c<3;++c)for(int k=0;k<3;++k)o.values[4*r+c]+=a.values[4*r+k]*b.values[4*k+c];o.values[4*r+3]=a.values[4*r+3];for(int k=0;k<3;++k)o.values[4*r+3]+=a.values[4*r+k]*b.values[4*k+3];}return o;}
 std::array<double,3> eyeLocal(const Matrix&m){double a=m[0],b=m[1],c=m[2],d=m[3],e=m[4],f=m[5],g=m[6],h=m[7],i=m[8];double det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);if(std::abs(det)<1e-15)return {NAN,NAN,NAN};double q=1/det;double inv[9]={(e*i-f*h)*q,(c*h-b*i)*q,(b*f-c*e)*q,(f*g-d*i)*q,(a*i-c*g)*q,(c*d-a*f)*q,(d*h-e*g)*q,(b*g-a*h)*q,(a*e-b*d)*q};std::array<double,3> out{};for(int j=0;j<3;++j)for(int k=0;k<3;++k)out[j]-=m[9+k]*inv[3*k+j];return out;}
 Matrix nativeAffine(const BillboardAffine3x4& a){return {a.values[0],a.values[4],a.values[8],a.values[1],a.values[5],a.values[9],a.values[2],a.values[6],a.values[10],a.values[3],a.values[7],a.values[11]};}
@@ -49,22 +79,35 @@ void collectEyes(const SceneNode& n,const Matrix& parent,const Matrix& context,s
 // Kinds 4 and 5 share the facing predicate (0x46AE20 / 0x46AFA0, fluid research 6.3 B).
 bool passesKind5(const SceneMeshRecordSource& rec,const std::map<std::size_t,std::array<double,3>>& eyes){if((rec.kind!=4&&rec.kind!=5)||rec.corners.empty())return true;const auto it=eyes.find(rec.nodeSourceOffset);if(it==eyes.end())return false;const auto&e=it->second;const auto&v=rec.corners.front().localPosition;const auto&n=rec.corners.front().localNormal;const double facing=(e[0]-v[0])*n[0]+(e[1]-v[1])*n[1]+(e[2]-v[2])*n[2];return facing>0;}
 SceneRasterOptions options(bool alpha,bool blend,bool depthWrite=true){return {SceneFilter::Linear,SceneAddress::Wrap,alpha?SceneAlphaFunction::StrictGreater:SceneAlphaFunction::Disabled,0xef,blend,SceneBlendFactor::SrcAlpha,SceneBlendFactor::InvSrcAlpha,SceneDepthFunction::Less,depthWrite,SceneShade::Gouraud,SceneRgbOperation::Modulate,SceneAlphaOperation::Modulate,0.5,0.5};}
-SceneRgbaImage rgba(Image&& im){return {im.width,im.height,std::move(im.rgba)};}// texture_name_flags (decomp-lemmings/src/texture_creation.cpp:21, 0x00472xxx name rule): the
-// first character of the basename selects the flag. Flags 1 and 2 share the `flags & 3` row of
-// 0x0047261F that the sprite render state below implements.
-std::uint32_t spriteTextureFlags(const std::string& sheet){
- const auto slash=sheet.find_last_of('\\');
- const char c=sheet.empty()?'\0':sheet[slash==std::string::npos?0:slash+1];
- switch(c){case '_':return 1;case '$':return 2;case '~':return 4;case '^':return 8;case '+':return 16;default:return 0;}
+SceneRgbaImage rgba(Image&& im){return {im.width,im.height,std::move(im.rgba)};}
+
+// 0x474485 selects texture flags from the first character of the basename.
+std::uint32_t textureNameFlags(std::string_view name) {
+  const auto slash = name.find_last_of('\\');
+  if (slash != std::string_view::npos) name.remove_prefix(slash + 1);
+  if (name.empty()) return 0;
+  switch (name.front()) {
+    case '_': return 1;
+    case '$': return 2;
+    case '~': return 4;
+    case '^': return 8;
+    case '+': return 16;
+    default: return 0;
+  }
 }
-// Blend table 0x00414D80 keyed by the node's trailing selector (first dword of the sub-object).
+// 0x414D80 uses the same blend selector for mesh materials and sprite nodes.
+SceneRasterOptions blendOptions(bool alphaTest, std::uint32_t selector) {
+  auto state = options(alphaTest, selector != 0);
+  if (selector == 2) state.sourceBlend = SceneBlendFactor::One;
+  if (selector == 2 || selector == 3) state.destinationBlend = SceneBlendFactor::One;
+  return state;
+}
+
 SceneRasterOptions spriteOptions(std::uint32_t selector){
- auto o=options(true,selector!=0);
+ auto o=blendOptions(true,selector);
  // Conditional, labelled: texture flags 1 => `flags & 3` row of 0x0047261F: SELECTARG1 alpha,
  // alpha test GREATER with reference 0xEF (options() default); RGB modulates white diffuse.
  o.alphaOperation=SceneAlphaOperation::SelectTexture;
- if(selector==2){o.sourceBlend=SceneBlendFactor::One;o.destinationBlend=SceneBlendFactor::One;}
- else if(selector==3){o.sourceBlend=SceneBlendFactor::SrcAlpha;o.destinationBlend=SceneBlendFactor::One;}
  return o;
 }
 }
@@ -124,7 +167,7 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
      for(std::size_t i=0;i<clip.animations.size();++i){
        const auto& frames=clip.animations[i].frames;
        if(frames.size()!=1)return reject(std::format("clip {} temporal entry {} has {} directional images; multi-image selection (0x00418350/0x00480AC8) is not implemented",clipIndex,i,frames.size()));
-       if((spriteTextureFlags(frames[0].sheet)&3)==0)return reject("texture '"+frames[0].sheet+"' flags row is not implemented");
+       if((textureNameFlags(frames[0].sheet)&3)==0)return reject("texture '"+frames[0].sheet+"' flags row is not implemented");
        if(!lib.contains(sheetAssetName(frames[0].sheet)))return reject("error: texture "+sheetAssetName(frames[0].sheet)+" is missing");
      }
      SpriteNode node;node.sheetName=name;node.clip=clipIndex;node.mirror=n->type2.branchWords[0]!=0;
@@ -132,13 +175,17 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    }
    return {};
  };
- const auto add=[&](RootSource source,bool marker,double projectionBias=0.0)->std::expected<void,Failure>{
+ const auto add=[&](RootSource source,bool marker,double projectionBias=0.0,bool mirror=false)->std::expected<void,Failure>{
    const auto& e=source.extent;
    const auto label=context(levelId,source,e.typed_root_begin);
    if(!marker)return std::unexpected(Failure{false,label+"Object 09 marker mismatch"});
    auto parsed=readSceneNode(bytes,e.typed_root_begin);
    if(!parsed)return formFailure(label,parsed.error());
    if(parsed->endOffset!=e.tree_end)return std::unexpected(Failure{false,label+"recursive tree end differs from serialized reader"});
+   // 0x437DBD / 0x437E56: the paired holder flag negates the root's Z basis.
+   // Scope the presentation change to the shared mine backdrop.
+   if(mirror && hasMineBackdropMaterials(parsed->root))
+     for (std::size_t i : {6, 7, 8}) parsed->root.matrix[i] = -parsed->root.matrix[i];
    // Secondary slot8 admission (scene-nested-impl-001, contract: docs/scratch/scene-nested-research-001.md
    // sections 1 and 3). Structural, never by level ID: the root is type 0, every node is type 0, 1 or 2,
    // and only type-0/type-1 nodes may own children (type-1 owners: 0x0046C55D draws own meshes, then
@@ -176,10 +223,10 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    return {};
  };
  const auto extract=[&]()->std::expected<void,Failure>{
-   auto ok=add({Stage::Primary,"paired-primary",0,level.objects.source_extent},level.objects.marker_matches);
+   auto ok=add({Stage::Primary,"paired-primary",0,level.objects.source_extent},level.objects.marker_matches,0.0,level.objects.first_flag);
    if(!ok)return ok;
    if(level.objects.second_object_source_extent){
-     ok=add({Stage::Secondary,"paired-secondary",0,*level.objects.second_object_source_extent},level.objects.second_object_marker_matches);
+     ok=add({Stage::Secondary,"paired-secondary",0,*level.objects.second_object_source_extent},level.objects.second_object_marker_matches,0.0,level.objects.second_object_first_flag);
      if(!ok)return ok;
    }
    ok=models(level.gadgets.entities_425e50,"entities_425e50");
@@ -975,7 +1022,7 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
  if(!hasFluidState_||fluidRoots_.empty())return;
  SceneRgbaFramebuffer fb;fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
- const auto before=rgb;
+ const auto before = observer ? rgb : std::vector<std::uint8_t>{};
  if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
  const SceneRgbaImage white{1,1,{255,255,255,255}};
  detail::RasterCommandBatch batch(camera.height, !observer);
@@ -1028,14 +1075,14 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
  }
  {
    profile::Scope rasterTime(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
-   for (const auto& error : batch.flush()) {
+   for (const auto& error : flushCountingChanges<3>(batch, rgb, camera.width, stats.fluidPixelsChanged)) {
      --stats.meshTriangles; ++stats.rejected; ++stats.rasterRejected;
      stats.diagnostics.push_back(error);
      std::fprintf(stderr, "backdrop: raster rejected: %s\n", error.c_str());
    }
  }
  if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
- for(std::size_t i=0,n=rgb.size()/3;i<n;++i)if(rgb[3*i]!=before[3*i]||rgb[3*i+1]!=before[3*i+1]||rgb[3*i+2]!=before[3*i+2])++stats.fluidPixelsChanged;
+ for(std::size_t i=0,n=before.size()/3;i<n;++i)if(rgb[3*i]!=before[3*i]||rgb[3*i+1]!=before[3*i+1]||rgb[3*i+2]!=before[3*i+2])++stats.fluidPixelsChanged;
 }
 void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer,std::vector<double>* depthOutput) const {
  if(stage==Stage::FluidGate){renderFluid(target,camera,stats,observer);return;}
@@ -1045,7 +1092,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
  // the choice is conditional software integration, not an effective-D3D claim.
  SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
- const auto initialDepth=depth;
+ const auto initialDepth = observer ? depth : std::vector<double>{};
  if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
  // Resolve diagnostic identities through owned-tree ancestry too; offsets
  // identify source records but never select their rendering stage.
@@ -1120,6 +1167,12 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
     if((rec.kind==4||rec.kind==5)&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}
     auto state=options(false,rec.blendSelector==1);
+    if (rec.materialName.starts_with(mineBackdropMaterials)) {
+      const auto flags = textureNameFlags(rec.materialName);
+      state = blendOptions((flags & 3) != 0, rec.blendSelector);
+      // 0x47261F: ~ and + modulate alpha. Other mine textures select texture alpha.
+      if ((flags & (4 | 16)) == 0) state.alphaOperation = SceneAlphaOperation::SelectTexture;
+    }
     if (depthOutput) state.depthOutput = *depthOutput;
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
@@ -1211,14 +1264,14 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
   },dispatchOptions());
  {
    profile::Scope rasterTime(profile::active ? profile::active->sceneRaster : profile::BackdropRaster);
-   for (const auto& error : batch.flush()) {
+   for (const auto& error : flushCountingChanges<1>(batch, depth, camera.width, stats.pixels)) {
      --stats.meshTriangles; ++stats.rejected; ++stats.rasterRejected;
      stats.diagnostics.push_back(error);
      std::fprintf(stderr, "backdrop: raster rejected: %s\n", error.c_str());
    }
  }
  if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){rgb[3*i]=fb.rgba[4*i];rgb[3*i+1]=fb.rgba[4*i+1];rgb[3*i+2]=fb.rgba[4*i+2];}
-  for(std::size_t i=0;i<depth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
+  for(std::size_t i=0;i<initialDepth.size();++i)if(depth[i]!=initialDepth[i])++stats.pixels;
 }
 void BackdropScene::collectBillboards(const BillboardSourceInputs& chain,
     const std::function<void(const RootSource&,const SceneBillboardSource&)>& visitor,

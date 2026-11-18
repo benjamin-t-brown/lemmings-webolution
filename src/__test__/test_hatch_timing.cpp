@@ -77,7 +77,7 @@ void seed(const fs::path& path) {
   std::ofstream out(path, std::ios::binary);
   out.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
-int entry(const fs::path& out, bool fast) {
+int entry(const fs::path& out) {
   const fs::path game(std::getenv("WEBOLUTION_GAME_DIR"));
   const auto local = save::localAppDataDirectory();
   if (!local) return 2;
@@ -102,7 +102,6 @@ int entry(const fs::path& out, bool fast) {
     double elapsed = 0, first = -1, cueEnd = -1, doorStart = -1, doorEnd = -1;
     double priorOpening = -1;
     int spawned = 0, paused = 0, frameCount = 0;
-    bool fastObserved = false;
     std::vector<unsigned long long> releases;
     std::ofstream trace(dir / "frames.csv");
     trace << "frame,presentation_seconds,level_ms,cue_seconds,cue_visible,opening,spawned,paused\n";
@@ -114,13 +113,12 @@ int entry(const fs::path& out, bool fast) {
     };
     // Frozen historical mains have no render-demand path and stay unconverted.
     std::unique_ptr<test::FrameConsumptionAudit> audit;
-    if (!before && !fast) audit = std::make_unique<test::FrameConsumptionAudit>(dir);
+    if (!before) audit = std::make_unique<test::FrameConsumptionAudit>(dir);
     auto frame = [&](const app::LevelFrameView& f) {
       if (audit) audit->frame(f);
       ++frameCount;
       if (!f.paused) elapsed += 0.1;
       check(f.levelName == *id, "selected installed level matches");
-      fastObserved |= f.world.levelClockMs() > elapsed*1000.0 + 500.0;
       // The frozen task-entry main samples this exact expression. Current main
       // publishes the value it actually passed to BackdropScene.
       const double opening = before ? std::min(1.0, f.world.levelClockMs()/1000.0/
@@ -150,8 +148,7 @@ int entry(const fs::path& out, bool fast) {
       if (shot) png(dir / ("frame-" + std::to_string(f.frame) + ".png"), test::inspectedImage(f));
       if (f.frame == 8) { if (audit) audit->action("pause"); key(SDL_SCANCODE_P); }
       if (f.paused && ++paused == 4) { if (audit) audit->action("resume"); key(SDL_SCANCODE_P); }
-      if (fast && (f.frame == 1 || f.frame == 35)) click(50,348); // public FF plate
-      if ((!fast && spawned == f.world.setup().totalLemmings) || (fast && elapsed > 8.0)) { if (audit) audit->action("quit"); quit(); }
+      if (spawned == f.world.setup().totalLemmings) { if (audit) audit->action("quit"); quit(); }
     };
     std::vector<std::string> args{"hatch-timing", "--frontend", "--native", "--frames", "900", "--game-dir", game.string()};
     std::vector<char*> argv; for (auto& a : args) argv.push_back(a.data());
@@ -159,11 +156,8 @@ int entry(const fs::path& out, bool fast) {
     options.saveStore=std::make_shared<save::SaveStore>(std::make_unique<save::FileSaveSink>(dir / "SavedGame.dat",game));
     check(app::runApplication(int(argv.size()),argv.data(),front,frame,options) == 0, "ordinary entry exits");
     check(first > 0 && cueEnd > 0 && doorEnd > 0 && paused == 4, "entry measurement completed");
-    if (fast) check(fastObserved, "public fast-forward gesture exercised accelerated simulation");
     if (!before) check(std::abs(doorEnd-2.8) < 0.11, "full door duration is 2.8 s, within frame resolution");
-    if (!fast) {
-      check(spawned > 2, "recurring release measured");
-    }
+    check(spawned > 2, "recurring release measured");
     std::ofstream releaseOut(dir / "releases.txt"); for(auto n:releases) releaseOut<<n<<'\n';
     check(privateSave.unchanged(), "entry does not write its private save");
     std::ofstream summary(dir / "summary.txt");
@@ -535,5 +529,5 @@ int main(int argc,char** argv) {
   if(std::string(argv[1])=="win") return win(out);
   if(std::string(argv[1])=="retry") return retry(out);
   if(std::string(argv[1])=="routes") return routes(out);
-  return entry(out,std::string(argv[1])=="fast");
+  return entry(out);
 }

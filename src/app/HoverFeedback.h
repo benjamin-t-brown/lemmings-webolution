@@ -13,11 +13,11 @@ struct HatchHoverTarget {
   std::size_t index = 0;
   int left = 0, top = 0, right = 0, bottom = 0;
   int remaining = 0;
-  int rate = 0; // Effective shared rate; zero omits the rate label in diagnostics.
 };
 
 int hatchRemaining(int total, int spawned, std::size_t hatchCount, std::size_t index);
 std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget>, int x, int y);
-void drawHatchHover(Image&, const Image& font, const HatchHoverTarget&);
+void drawHatchHover(Image&, const Image& font, const HatchHoverTarget&,
+                    std::optional<int> adjustingRate = std::nullopt);
 
 } // namespace webo::app

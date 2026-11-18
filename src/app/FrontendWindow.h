@@ -7,6 +7,8 @@
 #include <optional>
 #include <string>
 
+union SDL_Event;
+
 namespace webo::app {
 
 class SdlWindow;
@@ -19,6 +21,9 @@ struct FrontendWindowOptions {
 };
 
 using FrontendWindowObserver = std::function<void(const FrontendSession&, int)>;
+
+// Shared SDL input adapter while either caller owns sound page 9.
+void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event);
 
 // SDL is a SOURCE input adapter only; it does not establish native physical-input binding.
 // A selected level is returned immediately and is left for the caller to render/capture.

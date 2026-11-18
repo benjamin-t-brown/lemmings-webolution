@@ -109,6 +109,12 @@ webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet
                            std::span<const std::string> labels, const MenuParams& params,
                            std::span<const GlyphCell> cells);
 
+// Clone click targets use half-open panel bounds (left, top, right, bottom).
+// Hover uses the same rectangles. A miss leaves the current focus alone.
+int menuPanelAt(std::span<const std::array<int, 4>> boxes, int x, int y);
+
 inline constexpr std::array<int, 5> kLabelIndices{125, 126, 120, 3, 43};  // READ 0x4C4214
+
+void drawVolumeMeter(Image& frame, int top, int percent);
 
 }  // namespace webo::shell

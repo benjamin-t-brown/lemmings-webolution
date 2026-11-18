@@ -11,7 +11,7 @@ namespace {
 
 constexpr std::array<LevelMenuAction, 4> kActions{
     LevelMenuAction::Resume, LevelMenuAction::Retry,
-    LevelMenuAction::MapQuit, LevelMenuAction::UnsupportedOptions};
+    LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions};
 constexpr std::array<std::size_t, 4> kLabelIndices{44, 48, 43, 3};
 
 bool containsStrict(int x, int y, std::size_t row,
@@ -46,6 +46,14 @@ void LevelMenu::open() {
 }
 
 void LevelMenu::close() { open_ = false; }
+
+void LevelMenu::moveFocus(int direction) {
+  if (!open_ || (direction != -1 && direction != 1)) return;
+  // SDL traversal includes the four labelled actions; the empty fifth
+  // selector is outside the playable menu.
+  constexpr int rows = static_cast<int>(kActions.size());
+  focusedIndex_ = (focusedIndex_ + rows + direction) % rows;
+}
 
 void LevelMenu::hover(int x, int y) {
   if (!open_) return;

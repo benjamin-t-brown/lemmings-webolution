@@ -69,13 +69,10 @@ class RuntimeSimState {
   // advanceElapsed applies the shared 100 ms clamp for the real wall clock.
   static constexpr int kFastForwardPasses = 7;
   bool fastForward() const { return fastForward_; }
-  // Explicit enable retained for deterministic fixtures and legacy callers.
-  void latchFastForward() { fastForward_ = true; }
-  // PROVISIONAL player policy (P17): another plate-8 gesture returns to normal
-  // speed. Static 0x455AFF only sets input+0x20; retained reset paths do not
-  // settle how a player cancels it in the original. Pause keeps this mode;
-  // constructing a new per-level state clears it. Pass timing is unchanged.
-  void toggleFastForward() { fastForward_ = !fastForward_; }
+  void setFastForward(bool active) { fastForward_ = active; }
+  // Retained for replay decoding and deterministic fixtures.
+  void latchFastForward() { setFastForward(true); }
+  void toggleFastForward() { setFastForward(!fastForward_); }
 
  private:
   SimClock clock_;

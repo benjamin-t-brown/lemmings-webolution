@@ -40,16 +40,19 @@ int main() {
   check(oneSecondSteps == 144, "one real second produces 144 fixed updates");
 
   PendingCameraEvents pending;
-  pending.mouse(2, 3); pending.zoom();
+  pending.mouse(2, 3); pending.zoom(CameraZoomPose{9.0, 25.0});
   // A render poll below 1/144 s does not consume the queue.
   CameraInput held; held.numpad4 = true;
   const CameraInput consumed = pending.consumeInto(held);
   near(consumed.mouseDx, 2.0, "sub-step mouse event retained until fixed update");
   near(consumed.mouseDy, 3.0, "sub-step mouse y retained until fixed update");
   check(consumed.zoomPressed, "sub-step zoom edge retained until fixed update");
+  check(consumed.zoomPose && consumed.zoomPose->lateralOffset == 9.0 &&
+        consumed.zoomPose->elevation == 25.0, "pending zoom retains the pose picked at the key press");
   // Catch-up updates consume one-shot events once, then retain only held keys.
   const CameraInput catchup = pending.consumeInto(held);
-  check(!catchup.zoomPressed && catchup.mouseDx == 0.0, "catch-up does not replay consumed one-shot input");
+  check(!catchup.zoomPressed && !catchup.zoomPose && catchup.mouseDx == 0.0,
+        "catch-up does not replay consumed one-shot input");
   check(catchup.numpad4, "held key remains active on catch-up update");
 
   CameraParams p;
@@ -88,7 +91,7 @@ int main() {
     CameraParams mixedParams = p; mixedParams.yawUnits = 188;
     CameraController mixed(mixedParams);
     CameraInput mixedInput; mixedInput.backspacePressed = true;
-    mixedInput.rightMouseDown = true; mixedInput.mouseDx = 144;
+    mixedInput.rightMouseDown = true; mixedInput.mouseDx = -144;
     mixed.update(mixedInput, 0.384);
     near(mixed.pickReference()[0], 0,
          "flip target wraps before subsequent grab delta, not one aggregate wrap");
@@ -102,7 +105,7 @@ int main() {
     near(zoomTarget.pickReference()[1], 47, "zoom1 target height uses one eighth per dy");
     zoom.mouseDy = 0; zoom.mouseDx = 12;
     zoomTarget.update(zoom);
-    near(zoomTarget.pickReference()[0], 27, "raw target follows grabbed yaw input");
+    near(zoomTarget.pickReference()[0], 37, "raw target follows grabbed yaw input");
     CameraParams animated = p; animated.introActive = true; animated.introSeconds = 2;
     CameraController introTarget(animated);
     near(introTarget.pickReference()[0], 32, "intro animation never enters target yaw");
@@ -117,14 +120,14 @@ int main() {
   near(c.camera().yawUnits, 30.0, "LSHIFT multiplies NUMPAD6 by three");
   in.numpad6 = false; in.leftShift = false; in.mouseDx = 12; in.mouseDy = 4;
   c.update(in);
-  near(c.camera().yawUnits, 25.0, "grabbed mouse dx gain 10/24");
+  near(c.camera().yawUnits, 35.0, "positive grabbed mouse dx adds yaw at 10/24");
   near(c.camera().elevation, 0.0, "zoom zero leaves applied elevation unchanged");
   near(c.displayedElevation(), -2.0, "zoom zero displayed elevation -0.5 per dy");
 
   in.mouseDx = in.mouseDy = 0; in.rightMouseDown = false; in.numpad4 = true;
   c.update(in);
   near(c.cursorX(), 315.2, "free NUMPAD4 moves cursor left by 4.8");
-  near(c.camera().yawUnits, 25.0, "free key does not rotate camera");
+  near(c.camera().yawUnits, 35.0, "free key does not rotate camera");
   in.numpad4 = false; in.mouseDx = 3; in.mouseDy = 5;
   c.update(in);
   near(c.cursorX(), 321.2, "free mouse x uses 2 per dx");
@@ -134,19 +137,20 @@ int main() {
   near(c.cursorX(), 326.0, "free NUMPAD6 moves cursor right by 4.8");
 
   in.numpad6 = false; in.zoomPressed = true;
+  in.zoomPose = CameraZoomPose{0.0, 20.0};
   c.update(in);
   check(c.camera().zoomShift == 1, "zoom key toggles 0 to 1");
-  near(c.camera().elevation, 47.5 - 58.0 * (122.0 / 220.0), "zoom elevation formula at cursor y 252");
-  near(c.camera().yawUnits, 25.0, "zoom edge nudge is zero inside deadzone");
+  near(c.camera().elevation, 20.0, "zoom uses the picked eye elevation");
+  near(c.camera().yawUnits, 35.0, "zoom keeps the view direction");
   in.zoomPressed = false; in.rightMouseDown = true; in.mouseDy = 2;
   c.update(in);
-  near(c.camera().elevation, 47.5 - 58.0 * (122.0 / 220.0) + 3.0, "zoom one applies +1.5 per mouse dy");
+  near(c.camera().elevation, 23.0, "zoom one applies +1.5 per mouse dy");
   near(c.displayedElevation(), -2.25, "zoom one displayed elevation -0.125 per dy");
 
   in.mouseDy = 0; in.uiState = 2; in.zoomPressed = true;
   c.update(in);
   check(c.camera().zoomShift == 1, "ui gate blocks zoom");
-  near(c.camera().yawUnits, 25.0, "ui gate blocks camera updates");
+  near(c.camera().yawUnits, 35.0, "ui gate blocks camera updates");
 
   CameraController flip(p);
   CameraInput key; key.backspacePressed = true;
@@ -185,53 +189,33 @@ int main() {
   near(pausedFlip.camera().yawUnits, 32.0 + 128.0 * ((2.0 - pausedA) * pausedA),
        "flip resumes from its pre-pause elapsed time");
 
-  CameraController nudge(p);
-  CameraInput cursor; cursor.mouseDx = 100;
-  nudge.update(cursor);
-  cursor.mouseDx = 0; cursor.zoomPressed = true;
-  nudge.update(cursor);
-  near(nudge.camera().yawUnits, 62.0, "edge nudge clamps at +30");
-  CameraController deadzone(p);
-  cursor.zoomPressed = false; cursor.mouseDx = 0.9;
-  deadzone.update(cursor);
-  cursor.mouseDx = 0; cursor.zoomPressed = true;
-  deadzone.update(cursor);
-  near(deadzone.camera().yawUnits, 32.0, "edge nudge is zero inside 0.1 deadzone");
-  cursor.zoomPressed = false;
-  deadzone.update(cursor);
-  cursor.zoomPressed = true;
-  deadzone.update(cursor);
-  near(deadzone.camera().yawUnits, 32.0, "zoom exit does not apply entering edge nudge");
+  CameraController noHit(p);
+  CameraInput cursor; cursor.mouseDx = 100; cursor.mouseDy = -100;
+  noHit.update(cursor);
+  cursor = {}; cursor.zoomPressed = true;
+  noHit.update(cursor);
+  near(noHit.camera().zoomLateralOffset, 0.0, "zoom without a hit has no lateral offset");
+  near(noHit.camera().elevation, 18.5, "zoom without a hit uses neutral elevation");
 
   CameraController zoomTransitions(p);
   CameraInput zoomInput; zoomInput.mouseDx = 90.0;
   zoomTransitions.update(zoomInput);
   zoomInput.mouseDx = 0.0; zoomInput.zoomPressed = true;
+  zoomInput.zoomPose = CameraZoomPose{-12.0, 37.0};
   zoomTransitions.update(zoomInput);
   check(zoomTransitions.camera().zoomShift == 1, "off-center zoom transition enters zoom one");
-  near(zoomTransitions.camera().yawUnits, 62.0, "off-center zoom entry applies one edge nudge");
-  near(zoomTransitions.camera().elevation, 18.5, "zoom entry uses current cursor elevation");
+  near(zoomTransitions.camera().zoomLateralOffset, -12.0,
+       "zoom uses the picked lateral offset despite virtual cursor drift");
+  near(zoomTransitions.pickReference()[0], 32.0, "zoom translation preserves target yaw");
+  near(zoomTransitions.camera().elevation, 37.0, "zoom entry uses the picked elevation");
   zoomInput.zoomPressed = false; zoomInput.mouseDy = 10.0;
   zoomTransitions.update(zoomInput);
   zoomInput.mouseDy = 0.0; zoomInput.zoomPressed = true;
+  zoomInput.zoomPose = CameraZoomPose{22.0, 14.0};
   zoomTransitions.update(zoomInput);
   check(zoomTransitions.camera().zoomShift == 0, "off-center zoom transition exits zoom one");
-  near(zoomTransitions.camera().yawUnits, 62.0, "zoom exit does not repeat edge nudge");
-  near(zoomTransitions.camera().elevation, 18.5, "zoom exit does not rewrite elevation from moved cursor");
-
-  for (const auto [dx, expected, name] : {std::tuple{4.5, 35.0, "positive edge threshold includes boundary"},
-                                          std::tuple{-4.5, 29.0, "negative edge threshold includes boundary"}}) {
-    CameraController boundary(p);
-    CameraInput move; move.mouseDx = dx; boundary.update(move);
-    move.mouseDx = 0; move.zoomPressed = true; boundary.update(move);
-    near(boundary.camera().yawUnits, expected, name);
-  }
-  for (const double dx : {4.495, -4.495}) {
-    CameraController outside(p);
-    CameraInput move; move.mouseDx = dx; outside.update(move);
-    move.mouseDx = 0; move.zoomPressed = true; outside.update(move);
-    near(outside.camera().yawUnits, 32.0, "edge nudge remains zero just inside either deadzone edge");
-  }
+  near(zoomTransitions.camera().yawUnits, 32.0, "zoom exit retains yaw");
+  near(zoomTransitions.camera().elevation, 37.0, "zoom exit retains elevation");
 
   CameraParams edgeParams; edgeParams.yawUnits = 255.5;
   CameraController edges(edgeParams);
@@ -250,15 +234,25 @@ int main() {
   near(edges.cursorX(), 639.0, "free cursor clamps x to viewport maximum");
   near(edges.cursorY(), 479.0, "free cursor clamps y to viewport maximum");
 
-  for (const auto [dy, expected, name] : {std::tuple{-1000.0, 47.5, "zoom-entry elevation upper clamp"},
-                                          std::tuple{1000.0, -10.5, "zoom-entry elevation lower clamp"}}) {
+  for (const auto [dy, expected] : {std::tuple{1000.0, 47.5}, std::tuple{-1000.0, -10.5}}) {
     CameraController elevationClamp(p);
-    CameraInput move; move.mouseDy = dy; elevationClamp.update(move);
-    move.mouseDy = 0; move.zoomPressed = true; elevationClamp.update(move);
-    near(elevationClamp.camera().elevation, expected, name);
-    move.zoomPressed = false; move.rightMouseDown = true; move.mouseDy = expected > 0 ? 1000.0 : -1000.0;
+    CameraInput move; move.zoomPressed = true; elevationClamp.update(move);
+    move.zoomPressed = false; move.rightMouseDown = true; move.mouseDy = dy;
     elevationClamp.update(move);
     near(elevationClamp.camera().elevation, expected, "zoom-one mouse elevation clamp");
+
+    CameraController outsideRange(p);
+    const double elevation = expected + 0.02 * dy;
+    move = {}; move.zoomPressed = true; move.zoomPose = CameraZoomPose{0.0, elevation};
+    outsideRange.update(move);
+    near(outsideRange.camera().elevation, elevation, "zoom preserves an anchor beyond the drag limits");
+    move = {}; move.rightMouseDown = true; move.mouseDx = 10.0;
+    outsideRange.update(move);
+    near(outsideRange.camera().elevation, elevation, "horizontal drag does not snap anchored elevation");
+    move.mouseDx = 0.0; move.mouseDy = -0.004 * dy;
+    outsideRange.update(move);
+    near(outsideRange.camera().elevation, elevation + 1.5 * move.mouseDy,
+         "vertical drag retains its gain from an out-of-range anchor");
   }
   std::puts("CameraInput: all checks passed");
   return 0;

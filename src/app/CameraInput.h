@@ -4,14 +4,14 @@
 
 namespace webo::app {
 
-// SDL-free port of the accepted A1 input mapping. Mouse deltas describe one
-// simulation update; PendingCameraEvents clears them when that update consumes them.
+// SDL-free camera input. Mouse deltas describe one fixed camera update.
 struct CameraInput {
   bool numpad4 = false;
   bool numpad6 = false;
   bool leftShift = false;
   bool backspacePressed = false;
   bool zoomPressed = false;
+  std::optional<CameraZoomPose> zoomPose;
   bool rightMouseDown = false;
   bool uiAllowsCamera = true;
   int uiState = 0;
@@ -22,18 +22,27 @@ struct CameraInput {
 class PendingCameraEvents {
  public:
   void mouse(double dx, double dy) { dx_ += dx; dy_ += dy; }
-  void zoom() { zoom_ = true; }
+  void zoom(std::optional<CameraZoomPose> pose = std::nullopt) {
+    zoom_ = true;
+    zoomPose_ = pose;
+  }
   void flip() { flip_ = true; }
-  void clear() { dx_ = dy_ = 0.0; zoom_ = flip_ = false; }
+  void clear() {
+    dx_ = dy_ = 0.0;
+    zoom_ = flip_ = false;
+    zoomPose_.reset();
+  }
   CameraInput consumeInto(CameraInput input) {
     input.mouseDx = dx_; input.mouseDy = dy_;
     input.zoomPressed = zoom_; input.backspacePressed = flip_;
+    input.zoomPose = zoomPose_;
     clear();
     return input;
   }
  private:
   double dx_ = 0.0, dy_ = 0.0;
   bool zoom_ = false, flip_ = false;
+  std::optional<CameraZoomPose> zoomPose_;
 };
 
 class FixedCameraClock {

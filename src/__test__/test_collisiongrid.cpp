@@ -644,13 +644,16 @@ void testActorLightMap(const webo::AssetLibrary& lib) {
   check(blob->size() >= kPaletteOffset + webo::ActorLightMap::kPaletteBytes,
         "palette fits after offset 350607");
 
-  const int idxFixture = webo::actorLightMapIndex(-56.99833297729492, 32.0);
+  // A4f actor+0x08/+0x10, before projection onto the cylinder.
+  constexpr double fixtureTerrainX = 59.68486785888672;
+  constexpr double fixtureFileRowY = 32.0;
+  const int idxFixture = webo::actorLightMapIndex(fixtureTerrainX, fixtureFileRowY);
   const int idxMinus57 = webo::actorLightMapIndex(-57.0, 32.0);
-  check(idxFixture == 4196, std::format("A4f fixture index is 4196 (got {})", idxFixture));
+  check(idxFixture == 4125, std::format("A4f fixture index is 4125 (got {})", idxFixture));
   check(idxMinus57 == 4195, std::format("X=-57 index is 4195 (got {})", idxMinus57));
   check(light->map[static_cast<std::size_t>(idxFixture)] == 0, "fixture map byte is 0");
   check(light->map[static_cast<std::size_t>(idxMinus57)] == 0, "X=-57 map byte is 0");
-  const auto fixtureTint = webo::actorLightTintAt(*light, -56.99833297729492, 32.0);
+  const auto fixtureTint = webo::actorLightTintAt(*light, fixtureTerrainX, fixtureFileRowY);
   check(fixtureTint.has_value() && (*fixtureTint)[0] == 152 && (*fixtureTint)[1] == 152 &&
             (*fixtureTint)[2] == 152,
         "fixture lookup RGB is 152");
@@ -676,11 +679,12 @@ void testActorLightMap(const webo::AssetLibrary& lib) {
       break;
     }
     check(row >= 0 && xLow >= 0 && xLow <= 255, "derived row/X for byte-12 cell");
-    const double worldX = static_cast<double>(xLow);
-    check(webo::actorLightMapIndex(worldX, static_cast<double>(row)) ==
+    const double terrainX = static_cast<double>(xLow);
+    const double fileRowY = static_cast<double>(row);
+    check(webo::actorLightMapIndex(terrainX, fileRowY) ==
               static_cast<int>(nonzeroIndex),
           "constructed X/Y hits the byte-12 map cell");
-    const auto tint = webo::actorLightTintAt(*light, worldX, static_cast<double>(row));
+    const auto tint = webo::actorLightTintAt(*light, terrainX, fileRowY);
     check(tint.has_value(), "non-zero map cell resolves through the palette");
     if (tint)
       check((*tint)[0] == 61 && (*tint)[1] == 61 && (*tint)[2] == 61,

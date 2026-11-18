@@ -13,7 +13,6 @@
 #include "assets/Cylinder.h"
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
-#include "assets/LevelObjects.h"
 #include "sim/RetailLevel.h"
 
 #include <cmath>
@@ -75,17 +74,14 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   // R6: the ordinary window's initial pointer is centered on this hatch.
   // Keep the historical headless closed control unchanged by opting in only
   // for expected window frames. Full-frame equality assertions remain exact.
+  bool overHatch = false;
   if (hoverFeedback) {
     auto hatches = backdrop.hatchHoverTargets(camera, raster);
     if (const auto hit = app::hoveredHatch(hatches, image.width/2, image.height/2)) {
       auto& h = hatches[*hit];
-      h.remaining = app::hatchRemaining(world.setup().totalLemmings, world.spawned(),
-          world.setup().entrances.size(), h.index);
-      // W3: the visible rate now belongs to hatch hover; the panel has no RATE box.
-      const auto records = readHatchRecords(bytes);
-      if (records.empty()) throw std::runtime_error("entry fixture has no hatch");
-      h.rate = std::clamp(records.front().rate, records.front().rateMin, records.front().rateMax);
+      h.remaining = world.remainingFromEntrance(h.index);
       app::drawHatchHover(image, font, h);
+      overHatch = true;
     }
   }
   const auto panel = require(app::RetailSkillPanel::create(library, levelName));
@@ -94,9 +90,22 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   // explicit UI time; retain the zero-time control and exact full-frame checks.
   icons.advanceIcons(panelSeconds, 0, -1);
   panel.draw(image, panel.initialCounts(), 0, false, &icons);
+  // Playtest 13 C6: the expected window frame includes the three HUD icons.
+  // In this fixture, direct window samples request hover feedback and the
+  // direct headless control requests neither connected entry nor hover.
+  if (connectedEntry || hoverFeedback) {
+    app::compositeIconRegion(image, require(loadTexture(library, "TEXTURES\\^OUT.BMP")),
+                             {557, 15, 0, 0, 26, 32});
+    app::compositeIconRegion(image, require(loadTexture(library, "TEXTURES\\^SAVED.BMP")),
+                             {560, 53, 0, 0, 20, 32});
+    app::compositeIconRegion(image, require(loadTexture(library, "TEXTURES\\^TIME.BMP")),
+                             {579, 395, 0, 0, 26, 32});
+  }
   app::drawRuntimeHud(image, font, world, false);
   const auto cursor = require(app::RuntimeCursor::load(library));
-  cursor.draw(image, app::CursorState::NoLemming, image.width / 2, image.height / 2);
+  // C7: initial hatch hover displays the installed entrance cursor.
+  cursor.draw(image, overHatch ? app::CursorState::Entrance : app::CursorState::NoLemming,
+              image.width / 2, image.height / 2);
   return image;
 }
 }  // namespace webo::test

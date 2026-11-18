@@ -88,7 +88,7 @@ int main() {
   }};
   const std::array<LevelMenuAction, 4> actions{{
       LevelMenuAction::Resume, LevelMenuAction::Retry,
-      LevelMenuAction::MapQuit, LevelMenuAction::UnsupportedOptions,
+      LevelMenuAction::MapQuit, LevelMenuAction::SoundOptions,
   }};
   for (std::size_t i = 0; i < rects.size(); ++i) {
     const auto& r = rects[i];
@@ -110,8 +110,8 @@ int main() {
   check(menu.focusedIndex() == 1 && menu.focusedAction() == LevelMenuAction::Retry,
         "miss preserves prior focus");
   menu.hover(320, 200);
-  check(menu.focusedIndex() == 3 && menu.focusedAction() == LevelMenuAction::UnsupportedOptions,
-        "Options is focused but explicitly unsupported");
+  check(menu.focusedIndex() == 3 && menu.focusedAction() == LevelMenuAction::SoundOptions,
+        "focused Options requests sound settings");
 
   Image frame = before;
   menu.draw(frame);

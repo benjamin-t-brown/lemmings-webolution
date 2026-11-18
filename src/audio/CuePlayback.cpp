@@ -75,6 +75,8 @@ std::optional<std::string_view> routedCueName(sim::SoundCue cue) {
 
 std::span<const sim::SoundCue> unroutedCues() { return kUnrouted; }
 
+CuePlayback::CuePlayback() { mixer_.setMusicVolume(0.3f); }
+
 void CuePlayback::report(const std::string& message) const {
   if (diagnostic_)
     diagnostic_(message);
@@ -94,8 +96,6 @@ void CuePlayback::start(const AssetLibrary& library, bool openDevice) {
     report(std::format("audio: {}; continuing silently", opened.error()));
     return;
   }
-  // Provisional player balance: leave the existing SFX bus at full volume.
-  mixer_.setMusicVolume(0.3f);
   for (const CueRoute& route : kRoutes) {
     if (auto loaded = mixer_.loadFrom(library, route.name); !loaded)
       report(std::format("audio: cue {} unavailable ({}); it will be silent", route.name,

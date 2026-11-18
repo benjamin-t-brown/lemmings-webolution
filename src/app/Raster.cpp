@@ -27,10 +27,14 @@ Raster::Raster(int width, int height)
 }
 
 void Raster::clear(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
-  for (std::size_t i = 0; i < color_.rgb.size(); i += 3) {
-    color_.rgb[i] = r;
-    color_.rgb[i + 1] = g;
-    color_.rgb[i + 2] = b;
+  if (r == g && r == b) {
+    std::fill(color_.rgb.begin(), color_.rgb.end(), r);
+  } else {
+    for (std::size_t i = 0; i < color_.rgb.size(); i += 3) {
+      color_.rgb[i] = r;
+      color_.rgb[i + 1] = g;
+      color_.rgb[i + 2] = b;
+    }
   }
   std::fill(depth_.begin(), depth_.end(), std::numeric_limits<double>::infinity());
   actorDepth_.clear();
@@ -144,7 +148,7 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
     return count;
   };
   if (actorOwner == ActorDepth::noOwner && detail::commandBatch) {
-    detail::commandBatch->add([drawRows, ymin, ymax](int first, int last, std::size_t& pixels, std::string&) {
+    detail::commandBatch->add(ymin, ymax, [drawRows, ymin, ymax](int first, int last, std::size_t& pixels, std::string&) {
       pixels = drawRows(std::max(first, ymin), std::min(last, ymax));
     }, [this](std::size_t pixels) { pixels_ += pixels; ++triangles_; });
     return;

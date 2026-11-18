@@ -74,17 +74,16 @@ int main() {
     check(world.tickCount() == 14, "latched 0.4 s: 7 passes x 2 ticks = 14");
     state.advance(world, 0.4); state.advance(world, 0.4);
     check(world.tickCount() == 42, "three latched frames of 0.4 s = 42 ticks");
-    state.latchFastForward();  // explicit enable remains idempotent; player input uses toggle
+    state.setFastForward(true);  // Repeated updates while held keep fast-forward active.
     check(state.fastForward(), "second explicit enable does not toggle off");
     check(state.advance(world, 0.4) && world.tickCount() == 56, "still fast after explicit enable");
-    // P17 supersedes the old second-press latch expectation: public input can
-    // cancel speed, then enable it again, without changing the seven-pass budget.
-    state.toggleFastForward();
-    check(!state.fastForward(), "second player gesture turns fast-forward off");
-    check(state.advance(world, 0.4) && world.tickCount() == 58, "normal budget after toggling off");
-    state.toggleFastForward();
-    check(state.fastForward(), "third player gesture turns fast-forward on again");
-    check(state.advance(world, 0.4) && world.tickCount() == 72, "seven-pass budget after toggling on again");
+    // Playtest 13 C3: release clears speed and a new hold enables it again.
+    state.setFastForward(false);
+    check(!state.fastForward(), "release turns fast-forward off");
+    check(state.advance(world, 0.4) && world.tickCount() == 58, "normal budget after release");
+    state.setFastForward(true);
+    check(state.fastForward(), "another hold turns fast-forward on again");
+    check(state.advance(world, 0.4) && world.tickCount() == 72, "seven-pass budget after another hold");
   }
   {
     // 0.5 s: passes owe 2,3,2,3,2,3,2 = 17 ticks (3.5 s = 17.5 steps; 0.1 s carried), then

@@ -27,23 +27,11 @@ std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> target
   return std::nullopt;
 }
 
-void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h) {
-  // PROVISIONAL hatch highlight: four gold corner brackets. Static 454A85
-  // evidences integer text (rate field +A0), not a remaining-count display or
-  // the final original hatch highlight appearance. Keep the accepted remaining
-  // count and add the effective release rate above it, using the same font.
-  const auto pixel = [&](int x, int y) {
-    if (x < 0 || y < 0 || x >= image.width || y >= image.height) return;
-    const auto at = (std::size_t(y) * image.width + x) * 4;
-    image.rgba[at] = 255; image.rgba[at+1] = 232; image.rgba[at+2] = 96;
-  };
-  for (int d = 0; d < 6; ++d) for (int edge = 0; edge < 2; ++edge) {
-    const int x = edge ? h.right + 2 : h.left - 3;
-    const int sign = edge ? -1 : 1;
-    pixel(x + sign*d, h.top-3); pixel(x + sign*d, h.bottom+2);
-    pixel(x, h.top-3+d); pixel(x, h.bottom+2-d);
-  }
+void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
+                    std::optional<int> adjustingRate) {
   const auto cells = shell::fontCells();
+  // C7 displays the clone's remaining population. The original's format
+  // argument at 0x454B95 is the release rate.
   shell::HudLine line{shell::counterText(h.remaining), 0, 0, {255,255,255}};
   const int width = shell::textWidth(line.text, cells);
   // READ 454C34..454C64: centered on projected hatch, y - (44 << mode).
@@ -52,8 +40,9 @@ void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h) 
   line.x = std::clamp((h.left+h.right-width)/2, 0, std::max(0, image.width-width));
   line.y = std::clamp((h.top+h.bottom)/2 - 44, 0, std::max(0, image.height-shell::kLineHeight));
   shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
-  if (h.rate > 0) {
-    line.text = "RATE " + std::to_string(h.rate);
+  // Keep the rate visible while the player holds a hatch button to adjust it.
+  if (adjustingRate) {
+    line.text = "RATE " + std::to_string(*adjustingRate);
     const int rateWidth = shell::textWidth(line.text, cells);
     line.x = std::clamp((h.left+h.right-rateWidth)/2, 0, std::max(0, image.width-rateWidth));
     // Put the second label below the count if the upper edge has no room.

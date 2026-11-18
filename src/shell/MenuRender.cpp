@@ -73,6 +73,14 @@ int labelLeft(std::string_view text, std::span<const GlyphCell> cells, int xWord
   return halveSigned(xWord) - halveSigned(textWidth(text, cells));
 }
 
+int menuPanelAt(std::span<const std::array<int, 4>> boxes, int x, int y) {
+  for (std::size_t row = 0; row < boxes.size(); ++row) {
+    const auto& [left, top, right, bottom] = boxes[row];
+    if (left <= x && x < right && top <= y && y < bottom) return static_cast<int>(row);
+  }
+  return -1;
+}
+
 webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet,
                            std::span<const std::string> labels, const MenuParams& params,
                            std::span<const GlyphCell> cells) {
@@ -121,6 +129,17 @@ webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet
     }
   }
   return out;
+}
+
+void drawVolumeMeter(Image& frame, int top, int percent) {
+  // 48E84C / 490D46: truncate gain * 255, then round to a 16-segment count.
+  const int lit = (std::clamp(percent, 0, 100) * 255 / 100 + 8) / 16;
+  for (int i = 0; i < 16; ++i) {
+    const int left = (frame.width - 16 * 11) / 2 + i * 11;
+    fillRect(frame, left, top, left + 8, top + 10,
+             i < lit ? std::array<std::uint8_t, 3>{0, 255, 0}
+                     : std::array<std::uint8_t, 3>{255, 0, 0});
+  }
 }
 
 }  // namespace webo::shell

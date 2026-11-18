@@ -245,7 +245,7 @@ int main() {
                      !current.selectedLevel() && softwareCursorActive();
           clickOk &= current.screen() == (frame < 5 ? Screen::Menu : Screen::Map) &&
                      current.constructionCounter() == counter + (frame < 5 ? 0 : 1) &&
-                     current.menuFocus() == (frame == 0 ? 0 : frame < 5 ? 4 : 1);
+                     current.menuFocus() == (frame == 0 ? 0 : 1);
           if (frame == 0) {
             clickOk &= key(SDLK_UP) && motion(320, 363, 0, 0);
           } else if (frame == 1) {

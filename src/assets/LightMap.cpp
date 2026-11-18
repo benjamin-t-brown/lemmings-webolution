@@ -51,9 +51,9 @@ std::uint8_t paletteChannel(double value) {
 
 }  // namespace
 
-int actorLightMapIndex(double worldX, double worldY) {
-  const int a = static_cast<int>(std::trunc(worldX));
-  const int b = static_cast<int>(std::trunc(worldY));
+int actorLightMapIndex(double terrainX, double fileRowY) {
+  const int a = static_cast<int>(std::trunc(terrainX));
+  const int b = static_cast<int>(std::trunc(fileRowY));
   return (b << 8) / 2 + (a & 0xFF) / 2;
 }
 
@@ -190,10 +190,10 @@ std::expected<ActorLightMap, std::string> loadActorLightMap(const AssetLibrary& 
 }
 
 std::expected<std::array<std::uint8_t, 3>, std::string> actorLightTintAt(
-    const ActorLightMap& light, double worldX, double worldY) {
+    const ActorLightMap& light, double terrainX, double fileRowY) {
   if (light.map.size() != ActorLightMap::kMapBytes)
     return std::unexpected("actor light map: map storage is not loaded");
-  const int idx = actorLightMapIndex(worldX, worldY);
+  const int idx = actorLightMapIndex(terrainX, fileRowY);
   if (idx < 0 || static_cast<std::size_t>(idx) >= light.map.size())
     return std::unexpected(std::format("actor light map: index {} out of range", idx));
   const std::uint8_t entry = light.map[static_cast<std::size_t>(idx)];

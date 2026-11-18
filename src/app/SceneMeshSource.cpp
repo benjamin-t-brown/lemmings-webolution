@@ -1,7 +1,6 @@
 #include "app/SceneMeshSource.h"
 
 #include <format>
-#include <unordered_map>
 
 namespace webo {
 namespace {
@@ -39,6 +38,10 @@ std::expected<void, std::string> visit(
   const Matrix world = compose(node.matrix, parent);
   const Matrix toView = compose(world, view);
   if (node.type == 1) {
+    // The serialized vertex index already indexes positions. Only indices
+    // assigned by this record are read back, so the table needs no per-face
+    // clear. Repeated corners keep the last corner's attributes.
+    std::vector<const SceneCorner*> winner(node.positions.size());
     for (const auto& block : node.meshes) {
       if (block.kind != 4 && block.kind != 5 && block.kind != 6 && block.kind != 7)
         return std::unexpected(std::format("unsupported hand-built mesh kind {} at 0x{:x}", block.kind, block.sourceOffset));
@@ -48,11 +51,10 @@ std::expected<void, std::string> visit(
       for (const auto& record : block.records) {
         if (record.normalIndex >= node.normals.size())
           return std::unexpected(std::format("normal index {} outside node normals at 0x{:x}", record.normalIndex, record.sourceOffset));
-        std::unordered_map<std::uint32_t, Attributes> winner;
         for (const auto& c : record.corners) {
           if (c.vertexIndex >= node.positions.size())
             return std::unexpected(std::format("vertex index {} outside node positions at 0x{:x}", c.vertexIndex, c.sourceOffset));
-          winner[c.vertexIndex] = attrs(c);
+          winner[c.vertexIndex] = &c;
         }
         SceneMeshRecordSource out;
         out.nodeSourceOffset = node.sourceOffset;
@@ -73,7 +75,7 @@ std::expected<void, std::string> visit(
           corner.localNormal = node.normals[record.normalIndex];
           corner.normalIndex = record.normalIndex;
           corner.sourceAttributes = attrs(c);
-          corner.attributes = winner.at(c.vertexIndex);
+          corner.attributes = attrs(*winner[c.vertexIndex]);
           out.corners.push_back(corner);
         }
         result.push_back(std::move(out));

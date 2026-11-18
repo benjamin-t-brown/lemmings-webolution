@@ -177,16 +177,11 @@ class TubeScene {
   void drawExplosionDecals(Raster&, const CameraBasis&) const;
   std::size_t explosionDecalCount() const { return explosionDecals_.size(); }
 
-  // Redraw only the selected actor silhouette, using the same preparation and
-  // scene-depth mask as drawing. Never changes picking or scene depth.
-  bool drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis&,
-                         const SceneOptions&, const AssetLibrary&, const Raster&) const;
-
   // Read-only screen box for each `options.injectedWalkers` entry, in that
   // vector's order (forward). Each placement is the one `drawInjectedWalkers`
   // would pass to `drawActorSprite` for that walker; nullopt when that walker
   // is skipped by submission, asset or projection checks. Scene-depth
-  // occlusion affects drawing/highlight only; fully covered actors keep boxes.
+  // occlusion affects drawing; fully covered actors can keep boxes.
   //
   // `injectedWalkersFromWorld` emits one walker per alive lemming, in
   // `World::lemmings()` order. While every lemming is alive the returned

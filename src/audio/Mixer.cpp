@@ -182,7 +182,7 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
         }
       }
     }
-    const float v = std::clamp(volume, 0.0f, 1.0f) * sfxVolume_;
+    const float v = std::clamp(volume, 0.0f, 1.0f);
     gains.left = std::clamp(gains.left, 0.0f, 1.0f);
     gains.right = std::clamp(gains.right, 0.0f, 1.0f);
     voices_.push_back(Voice{&it->second, 0, v, false, false, overlap, gains});
@@ -206,8 +206,9 @@ void Mixer::playMusic(std::string_view cue, float volume) {
                                [](const Voice& v) { return v.music; }),
                 voices_.end());
   const auto it = clips_.find(upperCue(cue));
-  if (it != clips_.end() && !it->second.samples.empty() && musicVolume_ > 0.0f) {
-    const float v = std::clamp(volume, 0.0f, 1.0f) * musicVolume_;
+  if (it != clips_.end() && !it->second.samples.empty()) {
+    // A bed selected while muted keeps its playhead for a later live unmute.
+    const float v = std::clamp(volume, 0.0f, 1.0f);
     voices_.push_back(Voice{&it->second, 0, v, true, true});
   }
   SDL_UnlockAudioDevice(device_);
@@ -224,18 +225,15 @@ void Mixer::stopMusic() {
 }
 
 void Mixer::setMusicVolume(float volume) {
+  if (ready()) SDL_LockAudioDevice(device_);
   musicVolume_ = std::clamp(volume, 0.0f, 1.0f);
-  if (!ready())
-    return;
-  SDL_LockAudioDevice(device_);
-  for (Voice& v : voices_)
-    if (v.music)
-      v.volume = musicVolume_;
-  SDL_UnlockAudioDevice(device_);
+  if (ready()) SDL_UnlockAudioDevice(device_);
 }
 
 void Mixer::setSfxVolume(float volume) {
+  if (ready()) SDL_LockAudioDevice(device_);
   sfxVolume_ = std::clamp(volume, 0.0f, 1.0f);
+  if (ready()) SDL_UnlockAudioDevice(device_);
 }
 
 void Mixer::stopAll() {
@@ -266,6 +264,7 @@ void Mixer::fill(std::int16_t* out, int frames) {
       continue;
     const auto& samples = v.clip->samples;
     const std::size_t totalFrames = samples.size() / ch;
+    const float gain = v.volume * (v.music ? musicVolume_ : sfxVolume_);
     if (totalFrames == 0)
       continue;
     for (int f = 0; f < frames; ++f) {
@@ -277,7 +276,7 @@ void Mixer::fill(std::int16_t* out, int frames) {
       }
       for (std::size_t c = 0; c < ch; ++c) {
         const double s =
-            static_cast<double>(samples[v.cursor * ch + c]) * static_cast<double>(v.volume) *
+            static_cast<double>(samples[v.cursor * ch + c]) * static_cast<double>(gain) *
             (ch == 1 ? (v.gains.left + v.gains.right)*0.5f :
                        (c == 0 ? v.gains.left : v.gains.right));
         const double mixed = static_cast<double>(out[static_cast<std::size_t>(f) * ch + c]) + s;
@@ -302,7 +301,7 @@ void Mixer::fill(std::int16_t* out, int frames) {
       const auto& samples = v.clip->samples;
       if (v.cursor >= samples.size() / ch)
         continue;
-      mix.add(std::span<const std::int16_t>(samples).subspan(v.cursor * ch, ch), v.volume,
+      mix.add(std::span<const std::int16_t>(samples).subspan(v.cursor * ch, ch), v.volume * sfxVolume_,
               v.gains.left, v.gains.right);
       ++v.cursor;
     }

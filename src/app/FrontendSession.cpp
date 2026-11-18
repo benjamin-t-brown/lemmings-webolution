@@ -53,6 +53,9 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
     return std::unexpected("frontend requires native-size backgrounds and UK strings through 129");
 
   FrontendSession result;
+  auto sound = SoundMenu::load(library, *strings);
+  if (!sound) return std::unexpected(sound.error());
+  result.soundMenu_ = std::move(*sound);
   const auto& cells = shell::fontCells();
   for (const auto index : shell::kLabelIndices)
     result.menuLabels_.emplace_back((*strings)[index]);
@@ -179,7 +182,10 @@ const Image& FrontendSession::image() const {
         confirmImageFocus_ = menuFocus();
       }
       return confirm_;
-    case shell::Screen::Results: return results_->image();
+    case shell::Screen::SoundOptions:
+      soundImage_ = renderSoundOptions(menuBackdrop_);
+      return soundImage_;
+    case shell::Screen::Results: return results_->image(menuFocus());
     default: return mapImage_; // Level/Dialog composition belongs to the level renderer.
   }
 }
@@ -199,6 +205,11 @@ Image FrontendSession::composeFrame() const {
 }
 
 shell::Outcome FrontendSession::pressReturn() {
+  if (screen() == shell::Screen::SoundOptions) {
+    if (menuFocus() == 2) return closeSoundOptions(true);
+    adjustSound(-1);
+    return shell::Outcome::Handled;
+  }
   // The native shared builder focuses the sole footer row. SDL Return invokes
   // its recovered semantic action; physical Return binding was not remeasured.
   if (screen() == shell::Screen::Map) return state_.activateMapFooter();
@@ -208,8 +219,12 @@ shell::Outcome FrontendSession::pressReturn() {
 }
 
 bool FrontendSession::moveMenuFocus(int direction) {
-  if ((screen() != shell::Screen::Menu && screen() != shell::Screen::Confirm) ||
-      (direction != -1 && direction != 1)) return false;
+  if (direction != -1 && direction != 1) return false;
+  if (screen() == shell::Screen::SoundOptions) {
+    state_.setHighlight((menuFocus() + direction + 3) % 3);
+    return true;
+  }
+  if (screen() != shell::Screen::Menu && screen() != shell::Screen::Confirm) return false;
   if (screen() == shell::Screen::Confirm) {
     // READ488A92/4891BB: both links of the two-row ring point to the other choice.
     state_.setHighlight((menuFocus() + direction + 2) % 2);
@@ -225,30 +240,94 @@ shell::Outcome FrontendSession::openLevelMenu() {
 }
 
 shell::Outcome FrontendSession::closeLevelMenu(bool paused) {
+  if (screen() == shell::Screen::SoundOptions && state_.uiState() == shell::kUiDialog)
+    finishSoundEdit(true); // O tears down UI2 directly and keeps the live values.
   return state_.closeLevelMenu(paused);
 }
 
-bool FrontendSession::click(int x, int y) {
-  // SOURCE SDL adapter: hit the rendered panels, not a recovered native menu
-  // mouse predicate. Main-menu activation reuses the existing semantic route.
-  if (screen() == shell::Screen::Menu) {
-    for (std::size_t row = 0; row < menuBoxes_.size(); ++row) {
-      if (row != 0 && row != 1 && row != 4) continue; // unsupported actions retain their old input policy
-      const auto& box = menuBoxes_[row];
-      if (x >= box[0] && x < box[2] && y >= box[1] && y < box[3]) {
-        state_.setHighlight(static_cast<int>(row));
-        return pressReturn() == shell::Outcome::Handled;
-      }
+void FrontendSession::configureSound(save::SoundSettings levels, std::shared_ptr<save::SaveSink> file,
+                                     std::function<void(save::SoundSettings, bool)> preview) {
+  acceptedSound_ = editingSound_ = levels;
+  soundFile_ = std::move(file);
+  previewSound_ = std::move(preview);
+}
+
+shell::Outcome FrontendSession::openSoundOptions() {
+  return state_.openSoundOptions();
+}
+
+void FrontendSession::finishSoundEdit(bool accept) {
+  if (!accept) {
+    editingSound_ = acceptedSound_;
+    if (previewSound_) previewSound_(editingSound_, false);
+    return;
+  }
+  soundWritePending_ |= acceptedSound_ != editingSound_;
+  acceptedSound_ = editingSound_;
+  if (soundWritePending_ && soundFile_) {
+    if (auto written = acceptedSound_.save(*soundFile_); !written) {
+      std::fprintf(stderr, "sound settings: %s (kept in memory)\n", written.error().c_str());
+    } else {
+      soundWritePending_ = false;
     }
-    return false;
+  }
+}
+
+shell::Outcome FrontendSession::closeSoundOptions(bool accept) {
+  if (screen() != shell::Screen::SoundOptions) return shell::Outcome::Ignored;
+  finishSoundEdit(accept);
+  return state_.returnFromSoundOptions();
+}
+
+bool FrontendSession::adjustSound(int direction) {
+  if (screen() != shell::Screen::SoundOptions || menuFocus() >= 2 ||
+      (direction != -1 && direction != 1)) return false;
+  const bool sfx = menuFocus() == 1;
+  int& percent = sfx ? editingSound_.sfx : editingSound_.music;
+  // Provisional SDL increment: one displayed segment per click or key press.
+  const int step = std::clamp((percent * 16 + 50) / 100 + direction, 0, 16);
+  percent = (step * 100 + 8) / 16;
+  if (previewSound_) previewSound_(editingSound_, sfx);
+  return true;
+}
+
+void FrontendSession::hoverSound(int x, int y) {
+  if (screen() == shell::Screen::SoundOptions)
+    if (auto hit = soundMenu_.hit(x, y, soundBaseY())) state_.setHighlight(hit->row);
+}
+
+Image FrontendSession::renderSoundOptions(const Image& backdrop) const {
+  return soundMenu_.render(backdrop, font_, soundBaseY(), menuFocus(), editingSound_);
+}
+
+void FrontendSession::hoverMenu(int x, int y) {
+  int row;
+  switch (screen()) {
+    case shell::Screen::Menu: row = shell::menuPanelAt(menuBoxes_, x, y); break;
+    case shell::Screen::Confirm: row = shell::menuPanelAt(confirmBoxes_, x, y); break;
+    case shell::Screen::Results: row = results_->rowAt(x, y); break;
+    default: return;
+  }
+  if (row >= 0) state_.setHighlight(row);
+}
+
+bool FrontendSession::click(int x, int y) {
+  if (screen() == shell::Screen::Menu) {
+    const int row = shell::menuPanelAt(menuBoxes_, x, y);
+    if (row < 0 || row == 2) return false; // Row 2 can take focus; its page is unsupported.
+    state_.setHighlight(row);
+    return pressReturn() == shell::Outcome::Handled;
+  }
+  if (screen() == shell::Screen::SoundOptions) {
+    const auto hit = soundMenu_.hit(x, y, soundBaseY());
+    if (!hit) return false;
+    state_.setHighlight(hit->row);
+    if (hit->row == 2) return closeSoundOptions(true) == shell::Outcome::Handled;
+    return adjustSound(hit->direction);
   }
   if (screen() == shell::Screen::Confirm) {
-    for (int i = 0; i < 2; ++i) {
-      const auto& box = confirmBoxes_[i];
-      if (x >= box[0] && x < box[2] && y >= box[1] && y < box[3])
-        return confirmChoice(i == 0) == shell::Outcome::Handled;
-    }
-    return false;
+    const int row = shell::menuPanelAt(confirmBoxes_, x, y);
+    return row >= 0 && confirmChoice(row == 0) == shell::Outcome::Handled;
   }
   if (screen() == shell::Screen::Map && x >= mapFooterBox_[0] && x < mapFooterBox_[2] &&
       y >= mapFooterBox_[1] && y < mapFooterBox_[3])

@@ -12,7 +12,7 @@ class AssetLibrary;
 
 namespace webo::app {
 
-enum class LevelMenuAction { None, Resume, Retry, MapQuit, UnsupportedOptions };
+enum class LevelMenuAction { None, Resume, Retry, MapQuit, SoundOptions };
 
 // The four labelled UI2 rows. The native fifth, empty selector-19 widget is
 // intentionally unsupported: its draw/raster behaviour is not established.
@@ -24,6 +24,7 @@ class LevelMenu {
   void close();
   bool isOpen() const { return open_; }
   void hover(int x, int y);
+  void moveFocus(int direction);
   LevelMenuAction actionAt(int x, int y) const;
   LevelMenuAction focusedAction() const;
   int focusedIndex() const { return focusedIndex_; }

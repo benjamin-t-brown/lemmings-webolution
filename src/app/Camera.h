@@ -15,6 +15,7 @@
 
 #include <array>
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace webo::app {
@@ -38,6 +39,7 @@ struct CameraParams {
   double lensPi = 3.1415927410125732;
   double angleUnitsPerTurn = 360.0;
   double elevation = 0.0;
+  double zoomLateralOffset = 0.0;  // camera-local eye X, used only when zoomed
   // Explicit opening-pose state; defaults preserve the settled canonical view.
   bool introActive = false;
   double introSeconds = 0.0;
@@ -80,6 +82,19 @@ struct CameraBasis {
   double zoomScaleAtDepth(double viewDepth) const {
     return (viewDepth + defaultZoomDepthOffset) / viewDepth;
   }
+  std::array<double, 3> worldRay(double screenX, double screenY) const {
+    const double x = (screenX - cx) / focalX;
+    const double y = (cy - screenY) / focalY;
+    const auto& m = worldToView;
+    return {m[0] * x + m[1] * y + m[2],
+            m[3] * x + m[4] * y + m[5],
+            m[6] * x + m[7] * y + m[8]};
+  }
+};
+
+struct CameraZoomPose {
+  double lateralOffset;
+  double elevation;
 };
 
 struct BillboardCameraChain {
@@ -97,6 +112,11 @@ bool loadCameraParams(const std::filesystem::path& path, CameraParams& out, std:
 double resolvedYawUnits(const CameraParams& p);
 
 CameraBasis buildCamera(const CameraParams& p);
+// Provisional clone input: preserve the displayed point at the given pixel
+// and view depth when switching to zoom 1. zoomBase supplies the next pose's
+// intro phase, if any. A missing or unreachable depth leaves zoom unanchored.
+std::optional<CameraZoomPose> cursorZoomPose(const CameraBasis& displayed,
+    CameraParams zoomBase, double screenX, double screenY, double viewDepth);
 BillboardCameraChain buildBillboardCameraChain(const CameraBasis& camera);
 
 }  // namespace webo::app

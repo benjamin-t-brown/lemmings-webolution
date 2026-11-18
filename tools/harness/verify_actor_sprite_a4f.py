@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import struct
 import subprocess
 from pathlib import Path
 
@@ -92,6 +93,13 @@ def main() -> int:
         ]
         if args.no_light_lookup:
             command.append("--no-light-lookup")
+        else:
+            source_position = row.get("actor_source_position_bytes")
+            if source_position is None:
+                parser.error(f"{label}: the retained report lacks terrain coordinates for the light-map lookup")
+            terrain_x, file_row_y, _ = struct.unpack(
+                "<3d", bytes.fromhex(source_position))
+            command.extend(["--terrain-x", repr(terrain_x), "--file-row-y", repr(file_row_y)])
         if args.no_alpha_test:
             command.append("--no-alpha-test")
         completed = subprocess.run(command, check=True, capture_output=True, text=True, env=env)

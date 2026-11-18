@@ -9,7 +9,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- climber-topout-001: **ready** — Make Mine a Large One: a climber stops at the top of its wall instead of passing through
+- climber-topout-001: **ready** — Make Mine a Large One: a climber hits the ceiling and falls back instead of passing through
 - web-perf-001: **ready** — Browser build: smooth camera rotation, unbroken music, bounded console output
 
 ## Recently completed queue entries
@@ -37,11 +37,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-b7386e30c5dd4cba85dfa80ed42fae2d/result.json`
-- Status: **blocked**
-- Duration: 0h 52m 29s
-- Completed in this invocation: large-one-scenery-001, level-menu-cursor-001, emscripten-build-001
-- Reason: Both Playtest 15 defects have accepted production fixes. The next dependency is a human retry of Make Mine a Large One (E18_KF_2, node 26) from the map. The player should be able to see the first lemming drop and walk along the steel ledge, then follow it while rotating the cylinder. All four recorded attempts predate the waterfall fix. The ledger records 26 of 102 levels won by a person. A new playtest finding or an explicitly selected implementation is needed to schedule further work.
+- Result: `build/agent-runs/loop-c99f37853608425aa9a16636fad42ddc/result.json`
+- Status: **interrupted**
+- Duration: 0h 00m 59s
+- Completed in this invocation: none
+- Reason: Worker stopped; inspect build/agent-runs/20261118T234046-47480-0b053869
 
 ## Documentation handoff
 

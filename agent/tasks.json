@@ -23549,6 +23549,27 @@
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "oneway-backdrop-001",
+      "title": "One Way Ticket backdrop: water plane and sky instead of black surfaces",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C5: on One Way Ticket (node 22, MM_ALL_8_001) the background is clearly wrong at the start of the level, with large black surfaces. Reference: docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg (the original, user screenshot) and one_way_ticket_web.jpg (the clone, same view). In the original the cylinder stands in a wide green/teal water plane that fills the lower half of the view, under a dark blue sky, with pink/purple crystals and a sandy mound to the right. In the clone most of that area is black; a few green water patches, a purple rock slab and crystals appear at odd positions. The lead's headless render (`webolution --game-dir \"Lemmings Revolution\" --level MM_ALL_8_001 --shot out.png`) shows a large dark wavy-textured slab behind the cylinder, likely the water surface drawn black, and a floating purple rock slab; it reports `backdrop: enabled=1 roots=6 records=2104 triangles=2076 billboards=1 null-materials=0 missing-named-textures=0 predicate-rejected=480 rejected=198`. So textures are found; suspect per-root transforms/placement, material render state (lighting/vertex colour, blend, alpha or texture stage producing black), the sky/clear colour, or the predicate/rejection rules dropping the real water plane. Start from BackdropScene::build and the accepted scenery/fluid reports in docs/STATUS.md; find which roots and materials make the black surfaces and the misplaced rock, trace what the original does with them from retained static evidence and the static REA profile, and fix the production path so this level's backdrop matches the reference in layout and colour. Then list which other installed levels use the same backdrop roots/materials and say whether the fix applies to them; render two of them to check they did not regress. Label any provisional render-state choice. This is the visible-fluid/backdrop rendering area; it does not reopen the parked depth-fidelity question beyond what this level needs. Difficulty: difficult. Recommended model: Opus (cross-system render-state ambiguity); the user's run backend overrides. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: docs/playtest/2026-11-17-playtest-13.md. Source-built clone framebuffer/image output is allowed; no original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations, before/after clone renders of the same camera kept under build/, and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The roots/materials producing One Way Ticket's black surfaces and misplaced rock are identified by name, with the cause traced in the production call path and cited to static evidence or labelled provisional.",
+        "A clone render of One Way Ticket at level start shows the green water plane under the cylinder and a dark blue sky, with no large black surfaces, matching the reference screenshot's layout and colours closely.",
+        "Other installed levels sharing the affected backdrop roots or materials are listed, and two of them are rendered before and after without regression.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

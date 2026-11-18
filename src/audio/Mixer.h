@@ -80,6 +80,7 @@ public:
 private:
   friend struct WorkSoundTestAccess;
   friend struct PositionalSoundTestAccess;
+  friend struct MusicTestAccess;
   struct Clip {
     std::vector<std::int16_t> samples;  // interleaved, mix format
   };

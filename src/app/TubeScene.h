@@ -22,6 +22,7 @@
 #include "app/Camera.h"
 #include "app/DeathParticles.h"
 #include "app/Raster.h"
+#include "app/SceneRaster.h"
 #include "assets/CellMesh.h"
 #include "assets/CollisionGrid.h"
 #include "assets/Cylinder.h"
@@ -117,6 +118,9 @@ struct SceneOptions {
     // the upcoming solid cells in Y-up coordinates, independent of motion lag.
     double builderPhase = -1.0;
     int builderX = 0, builderY = 0, builderLength = 2;
+    // Rat clocks use the selected installed clip's own length/rate.
+    double clipSeconds = -1.0;
+    bool clipLoops = true;
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
   // U2: opaque scenery depth with the fluid pass excluded, only for the
@@ -160,13 +164,18 @@ class TubeScene {
 
   void emitDeathParticles(const sim::Lemming&, bool explosion,
       std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
-      int terrainHeight, const AssetLibrary&);
+      int terrainHeight, const AssetLibrary&, bool nukeActive = false);
   // Skill chunks share death debris's clock, lifetime storage and depth pass.
   void emitTerrainDebris(const sim::Lemming&, std::span<const std::array<int, 2>> removedCells,
                         std::uint64_t clockMs, int terrainHeight);
+  void emitMinerAxe(const sim::Lemming&, std::uint64_t clockMs, int terrainHeight);
   void advanceDeathParticles(std::uint64_t clockMs);
   void drawDeathParticles(Raster&, const CameraBasis&, const AssetLibrary&) const;
   std::size_t deathParticleCount() const { return deathParticles_.size(); }
+  // Dynamic surface pass, after scenery and before actors; never cache with
+  // the opaque tube. Shares the level clock with the death presentation.
+  void drawExplosionDecals(Raster&, const CameraBasis&) const;
+  std::size_t explosionDecalCount() const { return explosionDecals_.size(); }
 
   // Redraw only the selected actor silhouette, using the same preparation and
   // scene-depth mask as drawing. Never changes picking or scene depth.
@@ -185,6 +194,7 @@ class TubeScene {
   // lemming has no live walker. When motion tracking is supplied, still-visible
   // exit jumps are appended AFTER all live walkers; hover/skill/countdown code
   // only consumes the live prefix, so these tails cannot be picked.
+  // Placed rats follow those tails and also remain outside the pickable prefix.
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const;
   // Production passes the completed frame explicitly. Its dimensions must match
@@ -203,7 +213,11 @@ class TubeScene {
   // blocks the changed cells touch, padded by one cell, with the per-cell rule
   // (rebuildCellMeshCells). The `--geom route` / `cellmesh` banks follow; the constant
   // lattice skin (`--geom wall`) is not edited.
-  void syncTerrain(const sim::Terrain& terrain);
+  void syncTerrain(const sim::Terrain& terrain, std::span<const sim::CounterGate> gates = {});
+  void syncCounterGates(std::span<const sim::CounterGate> gates);
+  void renderCounterGates(Raster&, const CameraBasis&, const AssetLibrary&,
+                         std::span<const sim::CounterGate> gates);
+  std::uint64_t counterGateRevision() const { return counterGateRevision_; }
   std::size_t terrainCellsChanged() const { return terrainCellsChanged_; }
   std::size_t terrainBlocksRebuilt() const { return terrainBlocksRebuilt_; }
   std::size_t terrainVerticesAdded() const { return terrainVerticesAdded_; }
@@ -213,10 +227,10 @@ class TubeScene {
   const CylinderMesh& terrainMesh() const { return mesh_; }
   const CollisionGrid& collisionGrid() const { return collision_; }
 
-  // actor+4C selects ordinary / water / acid; nullptr if that sheet is absent.
+  // actor+4C selects ordinary / water / acid / evil rat; nullptr if absent.
   // Trackers read per-type strip lengths (special flip: 15, ordinary: 14).
   const SpriteSheet* lemmingSprites(int type = 0) const {
-    return type >= 0 && type < 3 && haveLemmingSprites_[type] ? &lemmingSprites_[type] : nullptr;
+    return type >= 0 && type < 4 && haveLemmingSprites_[type] ? &lemmingSprites_[type] : nullptr;
   }
 
   std::size_t outerTiles() const { return outerTileCount_; }
@@ -243,6 +257,21 @@ class TubeScene {
   std::uint32_t terrainDebrisMaterial(const std::array<int, 2>& cell,
                                     int terrainHeight) const;
   void rewirePoseLevel() const;
+  void emitExplosionDecal(const sim::Lemming&, std::uint64_t clockMs, int terrainHeight,
+                          bool nukeActive);
+  struct ExplosionDecal {
+    struct Patch {
+      std::array<Vec3, 4> corners;
+      std::array<std::array<double, 2>, 4> uv;
+    };
+    std::uint64_t bornMs = 0;
+    std::uint64_t lifetimeMs = 0;
+    // An 8x8 rectangle crosses at most one 8-column and one 16-row seam.
+    std::array<Patch, 4> patches{};
+    std::size_t patchCount = 0;
+  };
+  SceneRgbaImage explosionTexture_;
+  std::vector<ExplosionDecal> explosionDecals_;
   CylinderMesh mesh_;
   CylinderMesh poseCylinderTemplate_;
   std::vector<std::uint32_t> poseGrid0_;
@@ -250,9 +279,10 @@ class TubeScene {
   ActorPoseLevel poseLevel_{};
   bool havePoseLevel_ = false;
   ActorLightMap actorLight_;
-  std::array<SpriteSheet, 3> lemmingSprites_;
-  std::array<bool, 3> haveLemmingSprites_{};
+  std::array<SpriteSheet, 4> lemmingSprites_;
+  std::array<bool, 4> haveLemmingSprites_{};
   SpriteSheet bubbleSprites_;
+  SpriteSheet axeSprites_;
   std::vector<DeathParticle> deathParticles_;
   SpriteSheet deathSprites_;
   bool deathSpritesLoaded_ = false;
@@ -298,6 +328,14 @@ class TubeScene {
   std::size_t terrainVerticesAdded_ = 0;
   std::size_t terrainUnresolved_ = 0;
   std::string terrainError_;
+  // World+0x43C triples map the gate's cylinder coordinates to mutable
+  // surface-pool indices (0x43A1C6). Keep these distinct from grid0 keys.
+  std::vector<std::array<std::int32_t, 3>> counterGateCoordinates_;
+  std::vector<double> counterGateFractions_;
+  std::uint64_t counterGateRevision_ = 0;
+  std::size_t counterGateMeshedBlocks_ = static_cast<std::size_t>(-1);
+  std::array<SceneRgbaImage, 11> counterTextures_;
+  bool counterTexturesLoaded_ = false;
 
   // The stored `f64` cylinder extent (0.36), the walker's pass-bound fraction.
   double cylinderExtent_ = 0.36;
@@ -315,9 +353,10 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
 // collision grid, which `webolution`'s `main.cpp` guarantees by construction).
 //
 // The live prefix contains only `Lemming::alive()` actors. With motion tracking,
-// one-second, noninteractive exit tails are appended after that prefix.
+// one-second, noninteractive exit tails are appended after that prefix. Placed
+// rats follow the tails and use their own clip clocks in the same sprite pass.
 //
-// Without `anim` every entry draws "walk" at temporal index 0 (the D3b behaviour, kept for
+// Without `anim` every rescue entry draws "walk" at temporal index 0 (the D3b behaviour, kept for
 // the fixtures that build walkers without a clock). With `anim` (actor-anim-001) each entry
 // takes the clip and temporal index the tracker holds for its lemming (app/LemmingAnim.h).
 // With `motion` (P7), confirmed terrain coordinates are interpolated in the

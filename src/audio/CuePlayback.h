@@ -84,6 +84,17 @@ public:
   // pause, speed and hatch-rate controls; no looping or queued repeats.
   void playUiClick();
 
+  // Serialized gadget sample, empty names intentionally silent (0x4347EC).
+  void playGadgetSample(std::string_view name, StereoGains gains = {});
+
+  // Frontend/map share lemming01 without restarting between pages. Each level
+  // load (including Retry) starts a fresh random lemming02..13 bed. Selection
+  // follows 0x498DE8; the clone RNG and 30% music bus gain are provisional.
+  // Pause and focus changes leave the callback running at normal playback speed.
+  // Music never enters the SFX observer/counters or the simulation RNG.
+  void playFrontendMusic();
+  void playLevelMusic();
+
   // Takes every pending cue from the World and plays each in order.
   void drain(sim::World& world);
   using PositionResolver = std::function<StereoGains(const std::array<double, 3>&)>;
@@ -98,13 +109,17 @@ public:
 private:
   friend struct WorkSoundTestAccess;
   friend struct PositionalSoundTestAccess;
+  friend struct MusicTestAccess;
   void play(sim::SoundCue cue, StereoGains gains);
   void playName(std::string_view name, Mixer::Overlap overlap, StereoGains gains = {});
   void report(const std::string& message) const;
+  void playMusic(std::string_view name, bool restart);
 
   Mixer mixer_;
   const AssetLibrary* library_ = nullptr; // caller owns it through playback lifetime
   std::unordered_set<std::string> attemptedSamples_;
+  std::unordered_set<std::string> attemptedMusic_;
+  std::string currentMusic_;
   CueObserver observer_;
   DiagnosticSink diagnostic_;
   bool disabled_ = false;

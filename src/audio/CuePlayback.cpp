@@ -4,9 +4,11 @@
 #include "sim/World.h"
 
 #include <array>
+#include <chrono>
 #include <cstdio>
 #include <format>
 #include <iterator>
+#include <random>
 
 namespace webo::audio {
 namespace {
@@ -92,6 +94,8 @@ void CuePlayback::start(const AssetLibrary& library, bool openDevice) {
     report(std::format("audio: {}; continuing silently", opened.error()));
     return;
   }
+  // Provisional player balance: leave the existing SFX bus at full volume.
+  mixer_.setMusicVolume(0.3f);
   for (const CueRoute& route : kRoutes) {
     if (auto loaded = mixer_.loadFrom(library, route.name); !loaded)
       report(std::format("audio: cue {} unavailable ({}); it will be silent", route.name,
@@ -129,6 +133,41 @@ void CuePlayback::play(sim::SoundCue cue, StereoGains gains) {
 void CuePlayback::playUiClick() {
   ++drained_;
   if (!disabled_) playName("Changeop", Mixer::Overlap::SkipPlaying);
+}
+
+void CuePlayback::playGadgetSample(std::string_view name, StereoGains gains) {
+  if (name.empty() || disabled_) return;
+  ++drained_;
+  playName(name, Mixer::Overlap::SkipPlaying, gains);
+}
+
+void CuePlayback::playFrontendMusic() {
+  playMusic("lemming01", false);
+}
+
+void CuePlayback::playLevelMusic() {
+  if (disabled_ || !mixer_.ready()) return;
+  // Native 0x498E13..29 uses trunc(rand()/32767 * 12 + 1) as a
+  // zero-based table index. Use an independent, bounded uniform draw here;
+  // do not reproduce its rare out-of-table endpoint or consume world RNG.
+  static std::mt19937 random(static_cast<std::mt19937::result_type>(
+      std::chrono::steady_clock::now().time_since_epoch().count()));
+  const int track = std::uniform_int_distribution<int>(2, 13)(random);
+  playMusic(std::format("lemming{:02}", track), true);
+}
+
+void CuePlayback::playMusic(std::string_view name, bool restart) {
+  if (disabled_ || !mixer_.ready() || !library_) return;
+  if (!restart && currentMusic_ == name) return;
+  // Loading/resampling is outside the callback lock, between scenes, never
+  // in a sim update. Cache successes and failures across every app leg.
+  if (attemptedMusic_.insert(std::string(name)).second) {
+    if (auto loaded = mixer_.loadMusicFrom(*library_, name); !loaded)
+      report(std::format("audio: music {} unavailable ({}); it will be silent", name,
+                         loaded.error()));
+  }
+  mixer_.playMusic(name); // replaces only music, preserving every SFX tail
+  currentMusic_ = name;
 }
 
 void CuePlayback::playName(std::string_view name, Mixer::Overlap overlap, StereoGains gains) {

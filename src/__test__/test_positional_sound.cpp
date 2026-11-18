@@ -129,6 +129,73 @@ void pcm() {
   auto click=Access::render(mixer,1); assert(click[0]==10000 && click[1]==10000);
 }
 
+// A refusal can touch several protected cells; emit one positioned one-shot,
+// without changing the cut, movement or existing transition out of the skill.
+void refusalSounds() {
+  audio::CuePlayback playback;
+  auto& mixer = Access::mixer(playback);
+  assert(mixer.open()); Access::pause(mixer);
+  Sound tone{22050, 1, std::vector<std::int16_t>(22050, 10000)};
+  assert(mixer.load("Scrape", tone)); assert(mixer.load("MineMetal", tone));
+  for (const auto state : {sim::State::Basher, sim::State::Miner, sim::State::Digger})
+    for (const auto facing : {sim::Facing::Left, sim::Facing::Right})
+      for (const bool directional : {false, true}) {
+        if (directional && state != sim::State::Digger) continue;
+        for (const int v : {1, -1}) {
+          if (v == -1 && state != sim::State::Digger) continue;
+          sim::LevelSetup setup;
+          setup.terrain = sim::Terrain(128, 96);
+          setup.totalLemmings = 0;
+          // Multiple refusing cells, including the horizontal cylinder seam.
+          const int x = facing == sim::Facing::Left ? 0 : 127;
+          const int y = 40;
+          for (int dx = -4; dx <= 4; ++dx)
+            for (int dy = -4; dy <= 4; ++dy) {
+              setup.terrain.set(x + dx, y + dy,
+                  directional ? sim::Material::Earth : sim::Material::Steel);
+              if (directional) {
+                if (v > 0) setup.terrain.setNoDigUpright(x + dx, y + dy, true);
+                else setup.terrain.setNoDigInverted(x + dx, y + dy, true);
+              }
+            }
+          sim::World world(std::move(setup));
+          sim::Lemming actor;
+          actor.x = x; actor.y = y; actor.state = state;
+          actor.facing = facing; actor.verticalDir = v;
+          world.place(actor);
+          const auto version = world.terrain().version();
+          int requests = 0, positions = 0;
+          playback.setObserver([&](std::string_view name) {
+            assert(name == (state == sim::State::Miner ? "MineMetal" : "Scrape"));
+            ++requests;
+          });
+          const auto position = [&](const std::array<double, 3>& p) {
+            assert(p[0] == x && p[1] == y && p[2] == 0.75);
+            ++positions;
+            return audio::StereoGains{0.25f, 1.0f};
+          };
+          mixer.stopAll();
+          for (int tick = 0; tick < 16 && world.lemmings()[0].state == state; ++tick) {
+            world.tick();
+            playback.drain(world, position);
+          }
+          const auto& stopped = world.lemmings()[0];
+          assert(stopped.state == sim::State::Walker);
+          assert(stopped.x == x && stopped.y == y && stopped.verticalDir == v);
+          assert(stopped.facing == (state == sim::State::Digger ? facing :
+              facing == sim::Facing::Left ? sim::Facing::Right : sim::Facing::Left));
+          assert(world.terrain().version() == version);
+          assert(requests == 1 && positions == 1);
+          const auto pcm = Access::render(mixer, 1);
+          assert(pcm[0] == 2500 && pcm[1] == 10000);
+          playback.drain(world, position);
+          world.tick(); playback.drain(world, position);
+          assert(requests == 1 && positions == 1);
+          assert(world.takeSoundEvents().empty());
+        }
+      }
+}
+
 void installed(const AssetLibrary& lib) {
   for (const char* name : {"MM_BLOCK_BUILD_BASH", "E20_MG_1", "MM_ALL_8_001", "MM_W_012",
                            "MM_E1_4SKILLS", "SHOW_KF3", "E10_KF_2"}) {
@@ -148,11 +215,17 @@ void installed(const AssetLibrary& lib) {
     auto sound=loadSound(lib,soundAssetName(name)); assert(sound && !sound->empty());
     std::cout << name << " decoded frames=" << sound->frameCount() << '\n';
   }
+  for (const char* name : {"Scrape", "MineMetal"}) {
+    const auto entry = soundAssetName(name);
+    auto sound = loadSound(lib, entry); assert(sound && !sound->empty());
+    std::cout << entry << " rate=" << sound->sampleRate << " channels=" << sound->channels
+              << " frames=" << sound->frameCount() << " seconds=" << sound->seconds() << '\n';
+  }
 }
 
 int main() {
   SDL_SetMainReady(); SDL_SetHintWithPriority(SDL_HINT_AUDIODRIVER,"dummy",SDL_HINT_OVERRIDE);
-  projection(); pcm();
+  projection(); pcm(); refusalSounds();
   if (const char* directory=std::getenv("WEBOLUTION_GAME_DIR")) {
     const std::filesystem::path root(directory);
     auto lib=AssetLibrary::open(root/"lemmings.box",root/"patch.box"); assert(lib);

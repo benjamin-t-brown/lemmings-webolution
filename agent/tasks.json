@@ -22460,7 +22460,7 @@
     {
       "id": "counter-gates-001",
       "title": "Implement the crossing-count gates and their counters",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22471,16 +22471,137 @@
       "user_authorized": true,
       "scope": "asset-census-001 rank 1 (docs/scratch/asset-census-001.md; full row in build/asset-census-001/proposed-tasks.csv and evidence under build/asset-census-001/static/). 231 crossing-count gates on 52 installed levels are parsed and registered as Other (src/sim/RetailLevel.cpp:83) with no state or update, so they are neither drawn nor simulated. The first a player meets is node 25, MM_ALL_8_003, The Iron Curtain; the user is about to reach it. Decode the gate entity (reader 424187) into active gate state; implement the update and crossing count (423749/423858), the counter draw (423E69), the collision animation (4270DC) and the collision stamp and clear (427554 OR 403, 4275D4 AND FBFC); connect lever, pad and sensor messages to it through the existing registry; play the existing Rumble sample where the evidence places it. This is a separate class from the accepted fluid receivers. Define a provisional player-facing policy only where the static arithmetic stays unresolved, and label it. Simulation change authorized: the census found these are missing puzzle rules. Run the 102-level sweep and list levels whose sweep outcome changes. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "On The Iron Curtain (node 25) the gate and its counter are visible, the counter changes as lemmings cross, and the barrier and collision change with it; operating the switch affects the gate as the evidence shows.",
+        "On The Iron Curtain (node 25) the switch-operated gate is visible, starts as stored, and operating the switch moves the barrier and its collision as the evidence shows (this level has no authored counter). On Lock In (node 43, M16_MG_1), the first level with a quota gate, the counter is visible, changes as lemmings cross, and the barrier and collision change with it.",
         "Gate state, counting, collision and messages are cited to the static addresses or labelled provisional; the 52 levels are listed with their gate counts, and sweep outcome changes are listed.",
         "Any promoted recording that diverges is listed with step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T201109-42372-31a36448",
+      "started": "2026-11-17T20:11:09.990655+00:00",
+      "finished": "2026-11-17T20:51:31.963660+00:00",
+      "last_run": "build/agent-runs/20261117T201109-42372-31a36448",
+      "review": {
+        "decision": "accept",
+        "reason": "All corrected criteria are supported by the production call paths, retained evidence and passing supervisor smoke verification. The prior counter-location blocker is resolved. Human playability and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On The Iron Curtain (node 25) the switch-operated gate is visible, starts as stored, and operating the switch moves the barrier and its collision as the evidence shows (this level has no authored counter). On Lock In (node 43, M16_MG_1), the first level with a quota gate, the counter is visible, changes as lemmings cross, and the barrier and collision change with it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/counter-gates-001/gate-entities.csv",
+                "detail": "Node 25 stores a mode-0 gate with request 2 and no quota counter. Node 43 stores a mode-2 gate with request 1 and quota 10. The implementation preserves these distinct initial states."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "linkLevelGates constructs CounterGate state from serialized fields, registers message targets, initializes collision and preserves lever load-face dispatch."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Lever contact dispatches open/close messages through the registry. updateSegment calls stepCounterGates after movement and gadget contacts; crossings update count, quota schedules closure, and animation commits collision changes."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Preserves gate topology and movable vertex indices, synchronizes barrier vertices from live progress, and renders remaining quota using the installed panel and digit textures."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The ordinary application frame synchronizes gate geometry, invalidates cached tube rendering during animation and draws counters from live World state."
+              },
+              {
+                "path": "build/counter-gates-001/iron-curtain-initial.png",
+                "detail": "Directly inspected retained clone image shows the striped barrier. Interaction is supported by the production call path, not claimed as observed human play."
+              },
+              {
+                "path": "build/counter-gates-001/lock-in-initial.png",
+                "detail": "Directly inspected retained clone image shows the quota panel displaying 10."
+              },
+              {
+                "path": "src/__test__/test_counter_gates.cpp",
+                "detail": "Supplementary checks cover crossing counts, delayed collision closure, message dispatch, quota reset, installed node-25 vertex movement and changing node-43 counter pixels. These are bounded source tests, not natural-play evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "Gate state, counting, collision and messages are cited to the static addresses or labelled provisional; the 52 levels are listed with their gate counts, and sweep outcome changes are listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/counter-gates-001/static/crosscheck.md",
+                "detail": "Retains reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f and contracts for reader 0x424187, requests 0x423719/0x423731, update/count 0x423749/0x423858, draw 0x423E69, animation 0x4270DC and collision 0x427554/0x4275D4."
+              },
+              {
+                "path": "build/counter-gates-001/static/update-instructions.json",
+                "detail": "Independently inspected retained instructions confirm animation precedes counting, modes 1/2 count while the committed request is open, opening resets count, and changed commits play the Rumble handle only after a nonzero prior state."
+              },
+              {
+                "path": "build/counter-gates-001/static/animation-instructions.json",
+                "detail": "Retained instructions confirm dt-scaled animation, strict endpoint overshoot before collision stamp/clear, and closing-contact actor marking."
+              },
+              {
+                "path": "docs/scratch/counter-gates-001.md",
+                "detail": "Traces loading, messages, simulation, rendering and audio. Explicitly labels swept integer crossing adaptation, clearance estimates, update priority, counter presentation and death presentation as provisional; preserves timing and fidelity limitations."
+              },
+              {
+                "path": "build/counter-gates-001/gate-counts.csv",
+                "detail": "Independently counted 52 level rows totaling 231 gates: 209 switch-only gates and 22 quota gates."
+              },
+              {
+                "path": "build/counter-gates-001/sweep-changes.json",
+                "detail": "Lists exact before/after state changes for nodes 43, 44, 65, 69, 80, 87, 88 and 98. The report identifies the retained entry baseline and distinguishes idle sweep results from wins."
+              },
+              {
+                "path": "build/counter-gates-001/sweep-final/matrix.csv",
+                "detail": "Contains 102 completed installed-level sweep records."
+              }
+            ]
+          },
+          {
+            "criterion": "Any promoted recording that diverges is listed with step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/counter-gates-001/affected-replays.json",
+                "detail": "Records an empty affected selection. Independently inspected promoted replay headers and the installed gate list: none of those levels contains a new gate; the added sensors occur on later levels as well."
+              },
+              {
+                "path": "docs/scratch/counter-gates-001.md",
+                "detail": "Explains why no affected replay required execution, reports no divergence and states recordings were left untouched."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T201109-42372-31a36448/verification.log",
+                "detail": "Supervisor verification passed 95/95 main smoke tests, including the installed-level sweep, and 84/84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/loop-09d31334fcab4efab0a02fd0c91bdca3/0001-review-805f40/before-source-hashes.json",
+                "detail": "Comparison with the worker's verified after-source manifest shows only queue and generated run-status changes; production content remains the verified content."
+              },
+              {
+                "path": "docs/scratch/counter-gates-001.md",
+                "detail": "Ends with level/action/expected-result instructions for The Iron Curtain switch and Lock In quota counter. Its pending-supervisor-verification statement predates the successful retained smoke log."
+              }
+            ]
+          }
+        ]
+      },
+      "lead_note": "2026-11-17: the lead took \"node 25 has a counter\" from the census summary without checking; the worker showed The Iron Curtain has a switch-only gate and the first quota counter is on Lock In (node 43). The criterion is corrected to that; no counter is wanted on node 25.",
+      "accepted_at": "2026-11-17T20:57:29.708493+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T201109-42372-31a36448\\verification.log",
+        "verified_content": "3bca95c604eff86fbf3797c92263708ef2e11c03953a90c095a90ce27b0ed7f4"
+      }
     },
     {
       "id": "evil-rats-001",
       "title": "Simulate and draw the placed evil rats",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22495,12 +22616,108 @@
         "Behavior is cited to the static addresses or labelled provisional; the 17 levels are listed with their rat counts.",
         "Any promoted recording that diverges is listed with step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T205729-18648-3edc57f1",
+      "started": "2026-11-17T20:57:30.081599+00:00",
+      "finished": "2026-11-17T21:16:24.495739+00:00",
+      "last_run": "build/agent-runs/20261117T205729-18648-3edc57f1",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained static evidence and supervisor verification. Acceptance covers the playable-clone implementation; human playability and original-game fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Escape to victory (node 28) the rats are visible, move as the evidence shows, and a rat's attack removes a lemming that contacts it, counted dead; rats never count as released or saved and never exit.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Loads placed subclass actors into LevelSetup::rats, preserving position, facing, gravity, capabilities and initial flip. Node 28 contains two rats."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "tick/updateSegment call stepRats, which uses shared movement steppers, claims contacting rescue actors and removes each victim with one dead-count increment when the punch completes. Rat deaths suppress rescue loss increments; release and completion use the separate rescue population."
+              },
+              {
+                "path": "src/sim/World.h",
+                "detail": "Rats occupy a separate collection. Exit::accepts explicitly excludes sheet type 3, including exits accepting every rescue tribe."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Loads EVILRATHI.SPR as sheet type 3 and appends rats to the shared actor rendering path, retaining camera-facing selection, lighting, scaling and occlusion."
+              },
+              {
+                "path": "build/evil-rats-001/escape-facing.png",
+                "detail": "Directly inspected retained clone image: both rats are visible on Escape to victory's upper walkway. This demonstrates initial rendering, not observed movement or contact."
+              },
+              {
+                "path": "build/evil-rats-001/final-ctest-detail.log",
+                "detail": "Retains passing contact, single-victim ownership, attack completion, accounting, exit exclusion and rat-death invariants, plus installed placement checks. These supplement the source review."
+              }
+            ]
+          },
+          {
+            "criterion": "Behavior is cited to the static addresses or labelled provisional; the 17 levels are listed with their rat counts.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/evil-rats-001.md",
+                "detail": "Lists all 17 installed levels and counts totaling 45. Identifies the reference hash, construction/read/update addresses, and explicitly provisional contact ordering, movement quantization, punch selection, timing and death presentation."
+              },
+              {
+                "path": "build/evil-rats-001/static/attack-instructions.json",
+                "detail": "Independently inspected instructions: 426449 checks support; 426477 requires no pending victim; 4264A0 excludes type 3; 4264E9/4264F2 retain and mark the victim; 42657A..4265B6 select and start a punch."
+              },
+              {
+                "path": "build/evil-rats-001/static/contact-instructions.json",
+                "detail": "42FAD7 instructions corroborate closed \u00b11 X/Y contact comparisons without facing, gravity or Z comparisons."
+              },
+              {
+                "path": "build/evil-rats-001/static/completion-instructions.json",
+                "detail": "408F0A tests animation completion; 408F39..408F67 remove the retained victim; 408F6F clears ownership; 408F7C restores walking."
+              }
+            ]
+          },
+          {
+            "criterion": "Any promoted recording that diverges is listed with step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/evil-rats-001/replay-selection.json",
+                "detail": "Lists all 19 active promoted recordings and compares their level IDs with the 17 rat-bearing levels. The affected set is empty."
+              },
+              {
+                "path": "docs/scratch/evil-rats-001.md",
+                "detail": "Explicitly reports zero affected promoted recordings, so no required replay run, divergence step or retirement request applies."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T205729-18648-3edc57f1/verification.log",
+                "detail": "Supervisor smoke verification passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests; final diff checking also completed."
+              },
+              {
+                "path": "docs/scratch/evil-rats-001.md",
+                "detail": "Ends with a what-to-check note naming node 28, the upper walkway, movement and obstacle turns, lethal contact, accounting, exit exclusion, rotation and zoom."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T21:19:20.139603+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T205729-18648-3edc57f1\\verification.log",
+        "verified_content": "2d5a0ef100e709cbd7bd6dc8bb67f6346f3efeb9745e580d68ccb2d1231c478c"
+      }
     },
     {
       "id": "refusal-sounds-001",
       "title": "Play the metal refusal sounds for bash, mine and dig",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22514,12 +22731,78 @@
         "On Just Mine (node 5) a miner reaching metal plays the metal clang once as it is refused, and a basher or digger refused by metal or one-way terrain plays Scrape; positioned like other level sounds.",
         "Samples and triggers are cited to the static addresses; refusal behavior is unchanged and all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261117T211920-18648-3117ca7d",
+      "started": "2026-11-17T21:19:20.567660+00:00",
+      "finished": "2026-11-17T21:25:37.041632+00:00",
+      "last_run": "build/agent-runs/20261117T211920-18648-3117ca7d",
+      "review": {
+        "decision": "accept",
+        "reason": "The audio-only change covers the existing refusal exits, preserves gameplay behavior, and passes replay and smoke verification. Human listening remains pending; original audio fidelity and the pre-existing bash/mine one-way import omission remain unresolved.",
+        "checks": [
+          {
+            "criterion": "On Just Mine (node 5) a miner reaching metal plays the metal clang once as it is refused, and a basher or digger refused by metal or one-way terrain plays Scrape; positioned like other level sounds.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepMiner emits MineMetal before its steel-refusal exit; stepBasher emits Scrape before its steel-refusal exit; stepDigger emits Scrape before steel or directional refusal. Each immediately leaves the skill, preventing repeated emissions. cueSample records the actor's position."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Named sample events use the existing positioned one-shot path, loading installed samples on first use and passing resolved stereo gains to Mixer. main.cpp supplies the ordinary camera/cylinder position resolver."
+              },
+              {
+                "path": "build/refusal-sounds-001/focused.log",
+                "detail": "Both focused checks passed. The inspected positional test asserts one request despite multiple refusing cells, both facings, upright/inverted digger directional refusal, and asymmetric PCM gains. Installed Scrape and MineMetal samples decoded successfully."
+              }
+            ]
+          },
+          {
+            "criterion": "Samples and triggers are cited to the static addresses; refusal behavior is unchanged and all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/refusal-sounds-001/static/crosscheck.txt",
+                "detail": "Retained Ghidra instructions show Scrape loads/plays at 0x40C139/0x40C148 and 0x415B33/0x415B4A, and MineMetal at 0x418AC2/0x418ADA. Registration stores at 0x45E5B2 and 0x45E68A resolve to globals 0x4E32C8 and 0x4E32EC; the report identifies the registered reference SHA-256."
+              },
+              {
+                "path": "build/refusal-sounds-001/entry/src/sim/World.cpp",
+                "detail": "Independent comparison with current World.cpp shows only three cueSample calls and their comments added. Refusal predicates, terrain operations, turns, transitions and clocks are unchanged."
+              },
+              {
+                "path": "build/refusal-sounds-001/replays.json",
+                "detail": "Contains results for all 19 active promoted recordings, including MM_MINE, MM_BASH_002 and MM_DIG_000. Every recording exited zero with PASS, won=1 and completed=1; no divergence or retirement was needed."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261117T211920-18648-3117ca7d/verification.log",
+                "detail": "Supervisor verification passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests. Final git diff --check completed."
+              },
+              {
+                "path": "docs/scratch/refusal-sounds-001.md",
+                "detail": "Ends with a what-to-check note naming Just Mine node 5, Just Bash node 6 and Just Dig node 7, the refusal actions, expected one-shot samples, positional listening checks and preserved refusal outcomes."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-17T21:27:09.782020+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261117T211920-18648-3117ca7d\\verification.log",
+        "verified_content": "a9036a35af3cf56b8154d70fb82761d2c571f4acb314e5748a72af11f7674573"
+      }
     },
     {
       "id": "music-001",
       "title": "Play the installed frontend and level music",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22534,12 +22817,112 @@
         "Pause, Retry, returning to the map and running with audio disabled behave sensibly and are stated; no sound effect is lost or delayed by the music.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261118T010116-34136-cac56b1c",
+      "started": "2026-11-18T01:01:16.676914+00:00",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-17: attempt 1 was killed with its controller when the host ran low on memory, about six minutes into implementation; it produced no report. Its partial edits are still in the working tree (likely src/__test__/test_music.cpp and parts of src/audio/Mixer.*, CuePlayback.*, src/app/main.cpp, CMakeLists.txt), mixed with the accepted counter-gates-001, evil-rats-001 and refusal-sounds-001 changes, which must be preserved. Inspect what is there, keep what is sound, and complete the task."
+      },
+      "finished": "2026-11-18T01:10:52.652362+00:00",
+      "last_run": "build/agent-runs/20261118T010116-34136-cac56b1c",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call paths and retained verification results. Human listening remains pending; this accepts the clone integration without claiming original audio fidelity. No files were edited or executables run during review.",
+        "checks": [
+          {
+            "criterion": "Music plays in the frontend and the map and in level play, looping, beneath the sound effects, with the track choice cited to static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The persistent CuePlayback starts frontend music before frontend presentation, also covers diagnostic map mode, and selects level music before level presentation."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Frontend uses lemming01; level entry selects lemming02..13 through an independent RNG. Music gain is explicitly provisional at 30%, leaving SFX gain unchanged."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "playMusic creates one looping music voice; fill wraps its PCM cursor independently of simulation updates."
+              },
+              {
+                "path": "build/music-001/resume-20261117/static-crosscheck.txt",
+                "detail": "Cross-checked against retained Ghidra packets: frontend 0x486C53..0x486C5A passes mode 0; loader 0x444392..0x444399 passes mode 1. Instructions at 0x498E13..0x498E37 use RNG, constants 12 and 1, and table 0x4C42FC. The report labels bounded selection and unverified lifecycle behavior as clone policies."
+              },
+              {
+                "path": "build/music-001/resume-20261117/focused.xml",
+                "detail": "The music check passed with nonzero production-decoded PCM from all 13 installed tracks. This establishes software output, not physical audibility."
+              }
+            ]
+          },
+          {
+            "criterion": "Pause, Retry, returning to the map and running with audio disabled behave sensibly and are stated; no sound effect is lost or delayed by the music.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/music-001.md",
+                "detail": "States pause/focus continuity, fresh level-track playback on Retry, frontend-track restart on return, silent disabled-audio behavior, and missing-device/asset handling. Native lifecycle parity is explicitly unproven."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Retry retains selectedLevel and skips the frontend music switch; map/results reentry selects frontend music. Audio disabling occurs before playback starts."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Music switching removes only music voices. Music is excluded from the 32 additive SFX slots; existing effect cursors and overlap policies are preserved. Decoding occurs outside the callback lock."
+              },
+              {
+                "path": "src/__test__/test_music.cpp",
+                "detail": "Checks immediate full-gain SFX attack over music, preserved effect tails/cursors, all 32 SFX slots, looping, switching, cached restart and device-free disabled behavior. Retained focused results report zero failures."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/music-001/resume-20261117/replays.json",
+                "detail": "Lists individual commands and results for all 19 active promoted recordings: every exit code is zero with PASS, won=1 and completed=1. The individual retained logs agree; no divergence or retirement was needed."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active recordings as .replay files and documents earlier retirements. The active inventory matches the 19 reported runs; replay results establish simulation regression coverage, not music audibility."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T010116-34136-cac56b1c/verification.log",
+                "detail": "Supervisor verification passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests, then completed git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261118T010116-34136-cac56b1c/result.json",
+                "detail": "Records verification exit code zero and verified_content fa55b669a3baaf9704d424d00676aa9a15cc20a089af73af220738c05236899e, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/music-001.md",
+                "detail": "Ends with a what-to-check note for frontend \u2192 map \u2192 node 0 / MM_CLIMB_002 / Just Climb, specifying expected music/SFX balance, pause continuity, Retry restart, map return and --no-audio behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T01:12:45.634073+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T010116-34136-cac56b1c\\verification.log",
+        "verified_content": "fa55b669a3baaf9704d424d00676aa9a15cc20a089af73af220738c05236899e"
+      }
     },
     {
       "id": "gadget-models-001",
       "title": "Draw teleporters and speed pads with their animation",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22554,12 +22937,104 @@
         "Models, clips and triggers are cited to the static addresses or labelled provisional; the 22 levels are listed.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T011245-34136-2c1b0618",
+      "started": "2026-11-18T01:12:46.043309+00:00",
+      "finished": "2026-11-18T01:31:32.225529+00:00",
+      "last_run": "build/agent-runs/20261118T011245-34136-2c1b0618",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production call path, retained evidence and supervisor verification. Installed-data corrections are documented: node 38 has four teleporters, and only node 46 has nonempty teleport sample names. Human playtest confirmation remains pending; this acceptance establishes clone integration, not original-game fidelity. Review made no edits and ran no executables.",
+        "checks": [
+          {
+            "criterion": "On The Lone Ranger (node 38) both teleporters are visible at their stored places and animate when a lemming enters one and arrives at the other; on node 49 the speed pad is visible before a lemming touches it and animates on contact.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "build admits every serialized teleport base, both FX owners and tagged type-4 speed models using stored placement and projection bias. gadgetPresentation binds their authored clips to simulation indices. animateGadgets loops base rings, hides unused FX and holds the speed panel visible at its initial UV sample; triggerGadget enables departure/arrival FX and starts speed animation."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Notifications occur at the existing teleport departure, destination registration and speed activation branches. The task diff adds presentation callbacks without changing movement, pairing, countdowns, latches or speed effects."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The ordinary window-play path attaches the observer to triggerGadget. prepareScene samples animation using World::levelClockMs before rendering, preserving pause and fast-forward behavior. Each application leg constructs fresh presentation state."
+              },
+              {
+                "path": "build/gadget-models-001/related-tests-final.log",
+                "detail": "All five focused checks passed, including gadget_models. Its source checks all 178 model bindings against installed simulation placements and verifies departure, destination and speed notification edges. These are bounded source checks, not observed natural contacts."
+              },
+              {
+                "path": "docs/scratch/gadget-models-001.md",
+                "detail": "Documents all four node-38 teleporter positions, retained initial clone images, provisional FX lifetime and the pending human contact check. The correction covers both linked pairs instead of omitting two installed teleporters."
+              }
+            ]
+          },
+          {
+            "criterion": "Models, clips and triggers are cited to the static addresses or labelled provisional; the 22 levels are listed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/gadget-models-001.md",
+                "detail": "Lists all 22 affected nodes and installed IDs with teleport/speed counts. Records the registered EXE SHA-256, Ghidra version and profile digest. Explicitly labels FX placement adaptation, five-second feedback tail, speed playback policy, shared phase and spatial audio limits provisional."
+              },
+              {
+                "path": "build/gadget-models-001/static/crosscheck.md",
+                "detail": "Retains instruction operands for constructor 0x4347EC, enabled FX draw 0x434AAF, contact branches within 0x434B0F, speed contact 0x432742 and activation 0x432632. Animation traces identify 0x47CDE7 spin records, 0x476EE0 axis dispatch and 0x476A80 UV sampling; retained instruction packets support these distinctions from pseudocode."
+              },
+              {
+                "path": "build/asset-census-001/models.csv",
+                "detail": "Independently retained census rows identify four node-38 teleport base owners, entities_4347ec[0..3], supporting the report's correction to the task's two-teleporter wording."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/gadget-models-001/replays/results.json",
+                "detail": "Contains individual results for all 19 active promoted recordings: every return code is zero with PASS, won=1 and completed=1. The corresponding individual logs agree, including final step and saved/required counts."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promoted recordings as .replay files and preserves earlier retirements. The inspected active inventory matches the 19 reported runs; this task changed no recordings or replay checks."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T011245-34136-2c1b0618/verification.log",
+                "detail": "Supervisor verification passed all 95 main smoke tests, including every installed-level sweep chunk, and all 84 recovery tests. git diff --check completed without an error."
+              },
+              {
+                "path": "build/agent-runs/20261118T011245-34136-2c1b0618/result.json",
+                "detail": "Records verification exit code zero and verified_content 4a1f114393a3e7db03f6267e93da13794f33c68b27de7d393b14f186c27765b7, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/gadget-models-001.md",
+                "detail": "Ends with a what-to-check note naming nodes 38, 49 and 46, the entry/arrival/contact actions, expected visible feedback and serialized sounds, plus pause, fast-forward and Retry expectations. Its smoke-pending statement describes the worker handoff; the subsequent supervisor log establishes the pass."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T01:34:19.529474+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T011245-34136-2c1b0618\\verification.log",
+        "verified_content": "4a1f114393a3e7db03f6267e93da13794f33c68b27de7d393b14f186c27765b7"
+      }
     },
     {
       "id": "occupancy-sensors-001",
       "title": "Connect the occupancy sensors to the gadgets they trigger",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22574,12 +23049,100 @@
         "Behavior is cited to the static addresses or labelled provisional.",
         "Any promoted recording that diverges is listed with step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T013419-34136-74dc1585",
+      "started": "2026-11-18T01:34:19.949882+00:00",
+      "finished": "2026-11-18T01:49:18.797812+00:00",
+      "last_run": "build/agent-runs/20261118T013419-34136-74dc1585",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported by the production source, retained static evidence and supervisor verification. The report correctly distinguishes installed-data checks from natural gameplay and original fidelity, which remain unverified.",
+        "checks": [
+          {
+            "criterion": "On nodes 55 and 80 a lemming entering and leaving each sensor volume sends the authored messages and the linked receivers respond; the report traces one chain end to end per level.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/occupancy-sensors-001.md",
+                "detail": "Lists all seven volumes and traces node 55 sensor 4 through gate 8 opening, and node 80 sensor 33 through gates 35 and 17 closing. Explains that every installed empty list is empty, so departure changes sensor state after cooldown without reversing the gates."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Registers type-2 sensors in construction order and loads their enable flag, state, bounds, cooldown and ordered message lists."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Both elapsed updates and legacy tick reach stepOccupancySensor. Contact and cooldown select state-dependent lists; dispatchLeverMessages resolves gate requests; stepCounterGates commits animation targets and updates collision."
+              },
+              {
+                "path": "build/occupancy-sensors-001/focused.xml",
+                "detail": "Records passing sensor invariants and all nine authored sends across the seven installed sensors. The reviewed test source also checks departure without messages and latched receivers; these are isolated checks, not played routes."
+              }
+            ]
+          },
+          {
+            "criterion": "Behavior is cited to the static addresses or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/counter-gates-001/static/sensor-update-instructions.json",
+                "detail": "Retained instructions at 0x4339FC establish initial-cooldown testing, delayed empty dispatch, unconditional contact detection and cooldown reload. The implementation follows this ordering."
+              },
+              {
+                "path": "build/asset-census-001/static/revision-instructions-0043725a.json",
+                "detail": "0x437264 calls 0x430C33 and 0x43726C stores its returned pointer at +0xA4, supporting the report's correction from occupancy count to first overlapping actor."
+              },
+              {
+                "path": "build/occupancy-sensors-001/static/crosscheck.md",
+                "detail": "Indexes instruction evidence for state/list dispatch at 0x4372AF, enable/disable at 0x41DC00/0x41DC20 and update eligibility at 0x41CBA0. Retains the registered reference SHA-256 and Ghidra profile."
+              },
+              {
+                "path": "docs/scratch/occupancy-sensors-001.md",
+                "detail": "Explicitly labels integer feet, radial lane zero, wrapped X, actor filtering/order, stable identities and legacy integration as provisional adapters. Makes no original timing, pixel or playability claim."
+              }
+            ]
+          },
+          {
+            "criterion": "Any promoted recording that diverges is listed with step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/occupancy-sensors-001/replays.json",
+                "detail": "Inventories all 19 promoted recordings; none targets M12_MT_1 or H08_MT_1. Independent file enumeration agrees, so no affected replay or divergence requires reporting."
+              },
+              {
+                "path": "docs/scratch/occupancy-sensors-001.md",
+                "detail": "States that no affected recording was available, reports no divergence or retirement, and preserves recordings and replay checks."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T013419-34136-74dc1585/verification.log",
+                "detail": "Supervisor verification selected the smoke tier and passed all 95 main tests and all 84 recovery tests, followed by git diff --check."
+              },
+              {
+                "path": "docs/scratch/occupancy-sensors-001.md",
+                "detail": "Ends with level-specific actions and expected results: node 55 barriers open and remain open after departure; node 80 barriers close and remain closed. Also identifies retry reset and existing pause/fast-forward behavior."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T01:51:21.265879+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T013419-34136-74dc1585\\verification.log",
+        "verified_content": "47fd87f7382c8589619264a13661d42dbc2f6345bf679abe2a6dbb771ff0a7d6"
+      }
     },
     {
       "id": "miner-axe-001",
       "title": "Draw the miner's axe effect",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22590,16 +23153,200 @@
       "user_authorized": true,
       "scope": "asset-census-001 rank 8, correcting earlier research that called the axe a HUD element. Miner construction reaches 496E40 (418E5B -> 4194F0 -> 496E39 binds 4E331C; 419780 advances 496C84); vtable 4B0B88+4 = 4196C0 calls 493761, which submits a live child model draw. Use that traced draw to add the installed Axe effect to mining through the production actor path, keeping the miner pose, terrain removal and refusal unchanged, with the same occlusion and zoom scaling. Label provisional motion or phase. Presentation only. Difficulty: difficult. Recommended model: Opus; run uses the Codex override. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "On Just Mine (node 5) a miner shows the installed axe effect in step with its strokes, at every rotation and zoom, with pose, terrain removal and refusal unchanged.",
+        "On Just Mine (node 5) a miner refused by metal throws the installed axe, which tumbles away at every rotation and zoom while the lemming turns as before; ordinary mining strokes keep the held pickaxe in the mine images with no added tool; pose, terrain removal and refusal are unchanged.",
         "The draw path and timing are cited to the static addresses or labelled provisional.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261118T022755-34136-91175e7c",
+      "started": "2026-11-18T02:27:56.183576+00:00",
+      "finished": "2026-11-18T02:30:43.101443+00:00",
+      "last_run": "build/agent-runs/20261118T022755-34136-91175e7c",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Criterion 1 remains unresolved: this implementation emits an axe only on steel refusal, while the acceptance requires an effect accompanying mining strokes. Retained instructions support the refusal interpretation, and the report explicitly declines to claim the criterion. The coordinator must reconcile this concrete scope conflict before acceptance; adding a duplicate looping axe merely to satisfy the wording is not justified. Replays and smoke pass.",
+        "checks": [
+          {
+            "criterion": "On Just Mine (node 5) a miner shows the installed axe effect in step with its strokes, at every rotation and zoom, with pose, terrain removal and refusal unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::stepMiner invokes minerRefusalObserver_ only inside the Steel branch, before the existing turn and Walker transition. Successful mining never emits the new effect; terrain-removal logic remains unchanged."
+              },
+              {
+                "path": "docs/scratch/miner-axe-001.md",
+                "detail": "The scope-correction paragraph explicitly states that ordinary-stroke acceptance is not claimed. The implemented behavior and final check note instead describe one thrown axe on metal refusal."
+              },
+              {
+                "path": "build/miner-axe-001/static/ins4188F6.json",
+                "detail": "Instructions set refusal byte -0x28 at 0x418ADF, test it at 0x418D75..0x418D7F, and skip construction when clear. The refusal path passes count 1 to 0x4194F0 at 0x418E53..0x418E5B. This supports the reported correction but does not satisfy the unchanged stroke criterion."
+              }
+            ]
+          },
+          {
+            "criterion": "The draw path and timing are cited to the static addresses or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-axe-001/static/ins496E39.json",
+                "detail": "0x496E40 loads resource handle 0x4E331C and 0x496E49 calls the binding helper, corroborating the installed Axe resource binding."
+              },
+              {
+                "path": "build/miner-axe-001/static/ins4196C0.json",
+                "detail": "The retained draw instructions test child lifetime at +0x30 and call 0x493761 at 0x419760, supporting the live child draw attribution."
+              },
+              {
+                "path": "docs/scratch/miner-axe-001.md",
+                "detail": "Records the registered EXE hash, construction/draw/update addresses, traced 4.5-second lifetime, and explicitly provisional launch motion, gravity, 60-ms strip phase and spin adaptation. Distinguishes static findings, synthetic checks and pending human confirmation."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "emitMinerAxe snapshots the refused miner; drawDeathParticles selects installed directional frames and uses shared placement, lighting, gravity and occlusion helpers. Comments identify static anchors and provisional animation adaptation."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-axe-001/replays.json",
+                "detail": "Contains commands and individual results for all 19 active promoted recordings. Independent enumeration matched the manifest with no missing files. Every result has returncode 0, PASS, won=1 and completed=1; MM_MINE finishes at step 1137 with 20/10 saved."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promoted recordings as .replay files and separately documents historical retirements. No additional retirement or divergence is claimed for this task."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T015121-34136-29804968/verification.log",
+                "detail": "Supervisor verification reports 95/95 main smoke tests and 84/84 recovery tests passing, including the installed-level sweep, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261118T015121-34136-29804968/result.json",
+                "detail": "Records verification exit_code 0 and verified_content 0edd175a92af5c46386048e44bee7a03782c70066e32307894d25f0c07dc3e78, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/miner-axe-001.md",
+                "detail": "Ends with a Just Mine/node 5 what-to-check note covering metal refusal, thrown axe, rotation, both zooms, occlusion, pause, fast-forward and Retry. Its earlier pending-smoke statement predates the successful supervisor verification."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Criterion 1 remains unresolved: this implementation emits an axe only on steel refusal, while the acceptance requires an effect accompanying mining strokes. Retained instructions support the refusal interpretation, and the report explicitly declines to claim the criterion. The coordinator must reconcile this concrete scope conflict before acceptance; adding a duplicate looping axe merely to satisfy the wording is not justified. Replays and smoke pass.",
+      "review": {
+        "decision": "accept",
+        "reason": "The lead\u2019s revised refusal-only criterion resolves the previous scope conflict. The production path, retained static evidence, all 19 promoted replays and supervisor smoke results support acceptance. Motion remains explicitly provisional; human confirmation and original fidelity remain unproven.",
+        "checks": [
+          {
+            "criterion": "On Just Mine (node 5) a miner refused by metal throws the installed axe, which tumbles away at every rotation and zoom while the lemming turns as before; ordinary mining strokes keep the held pickaxe in the mine images with no added tool; pose, terrain removal and refusal are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::stepMiner notifies minerRefusalObserver_ only in the existing Steel branch, before the unchanged turn and Walker transition. Successful mining retains its existing terrain-removal and movement path without emitting an axe."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Ordinary frontend selection enables simulation and installs the refusal observer, which calls emitMinerAxe. Existing level-clock updates advance the particles, and the completed scene/actor render path draws them."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "Loads installed AXE.SPR, snapshots pre-turn facing and gravity, and applies ballistic displacement plus animated directional frames. Shared view selection, mirroring, placement, zoom, lighting and scene/actor occlusion support camera rotation and both zooms."
+              },
+              {
+                "path": "build/miner-axe-001/task-only.patch",
+                "detail": "Isolates the presentation changes from incoming edits. The miner simulation change is the observer notification; pose selection, terrain removal, refusal conditions and turning remain unchanged."
+              },
+              {
+                "path": "build/miner-axe-001/mine-frame10.png",
+                "detail": "Retained installed mining-frame image visibly includes the held pickaxe, supporting the decision to add no tool during ordinary strokes."
+              },
+              {
+                "path": "build/miner-axe-001/focused-ctest.xml",
+                "detail": "Retains a passing supplemental legacy check covering one pre-turn refusal event, unchanged gameplay outcomes, no successful-mining event, 320 view/facing/gravity/zoom/phase cases, occlusion and expiry. These synthetic checks do not establish natural playability."
+              }
+            ]
+          },
+          {
+            "criterion": "The draw path and timing are cited to the static addresses or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-axe-001/static/ins4188F6.json",
+                "detail": "Retained instructions set refusal byte -0x28 at 0x418ADF, test it at 0x418D75..0x418D7F and bypass construction when clear. The refusal path pushes count 1 at 0x418E53 and calls 0x4194F0 at 0x418E5B. Lifetime arguments at 0x418EC9..0x418EDA encode 4.5 seconds and zero variation."
+              },
+              {
+                "path": "build/miner-axe-001/static/ins496E39.json",
+                "detail": "0x496E40 loads resource handle 0x4E331C and 0x496E49 calls the binding helper, corroborating the installed Axe binding."
+              },
+              {
+                "path": "build/miner-axe-001/static/ins4196C0.json",
+                "detail": "The retained draw instructions test child lifetime at +0x30 and call 0x493761 at 0x419760, supporting the live-child draw attribution."
+              },
+              {
+                "path": "docs/scratch/miner-axe-001.md",
+                "detail": "Records reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, construction/draw/update addresses and the production call path. Explicitly labels clone launch motion, gravity, 60-ms phase and spin adaptation provisional, without claiming original runtime fidelity."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-axe-001/replays.json",
+                "detail": "Independent recursive enumeration matched all 19 active promoted .replay files to retained results, with none missing. Every result records exit 0, PASS, won=1 and completed=1. MM_MINE completes at step 1137 with 20/10 saved."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "Defines active promoted recordings as .replay files and separately documents historical retirements. This task claims no new divergence or retirement."
+              },
+              {
+                "path": "build/agent-runs/loop-c4ad8b0dc774462ea726d20a984e5fa1/0001-review-049aaa/before-source-hashes.json",
+                "detail": "Compared with the implementation and verified follow-up manifests: production source, tests and recordings remain unchanged. Differences are confined to the report and controller metadata, supporting reuse of the retained replay results."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T022755-34136-91175e7c/verification.log",
+                "detail": "Supervisor verification records 95/95 main smoke tests and 84/84 recovery tests passing, including the installed-level sweep, followed by git diff --check."
+              },
+              {
+                "path": "build/agent-runs/20261118T022755-34136-91175e7c/result.json",
+                "detail": "Records verification exit code 0 and verified_content 2b7e06bd9442f68e77c9f93b9335f0c24992e2498737c86555ce8fadca154890, matching the supplied review context."
+              },
+              {
+                "path": "docs/scratch/miner-axe-001.md",
+                "detail": "Ends with a Just Mine/node 5 what-to-check note: mine into metal, observe one tumbling axe and unchanged turn/terrain, rotate and use both zooms, check occlusion, pause, fast-forward and Retry, and confirm ordinary strokes retain their held pickaxe without an added tool."
+              }
+            ]
+          }
+        ]
+      },
+      "lead_note": "2026-11-17: the lead wrote \"in step with its strokes\" from the census summary. The worker traced the Axe child to the steel-refusal branch only (418AC0, 496E40); the criterion now matches that evidence. No looping axe over ordinary strokes is wanted.",
+      "accepted_at": "2026-11-18T02:36:14.210500+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T022755-34136-91175e7c\\verification.log",
+        "verified_content": "2b7e06bd9442f68e77c9f93b9335f0c24992e2498737c86555ce8fadca154890"
+      }
     },
     {
       "id": "explosion-decal-001",
       "title": "Leave the scorch mark where a lemming explodes",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "hatch-click-rate-001"
       ],
@@ -22614,7 +23361,111 @@
         "Texture, placement and lifetime are cited to the static addresses or labelled provisional.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261118T025649-55108-f3ec0c55",
+      "started": "2026-11-18T02:56:49.996543+00:00",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-17: attempt 1 was killed with its controller when the host ran low on memory, about ten minutes into implementation; it produced no report. Its partial edits are still in the working tree (unknown extent; compare with the accepted reports ), mixed with seven accepted census tasks (counter-gates, evil-rats, refusal-sounds, music, gadget-models, occupancy-sensors, miner-axe), which must be preserved. Inspect what is there, keep what is sound, and complete the task."
+      },
+      "finished": "2026-11-18T03:06:04.165935+00:00",
+      "last_run": "build/agent-runs/20261118T025649-55108-f3ec0c55",
+      "review": {
+        "decision": "accept",
+        "reason": "The production path connects Bomber and Nuke explosions to the installed decal. All 19 promoted replays reproduced their wins, and the supervisor smoke profile passed. The retained benchmark measured the decal pass in isolation. Visibility and whole-frame responsiveness during ordinary play remain for the human playtest described in the report.",
+        "checks": [
+          {
+            "criterion": "On Just Bomb (node 2) an exploding lemming leaves the installed surface mark at the crater, which fades and disappears; a nuke leaves one per explosion without a slowdown.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The Bomber and Nuke paths reach World::explode, which applies the existing crater edit and then emits one explosion notification."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production observer passes the blast position, clock and Nuke flag to the scene. The frame path syncs edited terrain and draws decals after scenery and before actors."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The scene loads fifth-table slot 0 once and caches up to four surface patches per explosion. Marks fade on the existing level clock and expire after 20 seconds in ordinary play or three seconds during Nuke. The draw pass uses cached geometry and performs no asset reads."
+              },
+              {
+                "path": "build/explosion-decal-001/20261118T025649-55108-f3ec0c55/focused-ctest.xml",
+                "detail": "The retained legacy test passed. It exercised installed Just Bomb terrain, fade, expiry, occlusion and one mark per synthetic blast. Drawing 101 live marks took 2.768 ms for the test camera."
+              },
+              {
+                "path": "build/explosion-decal-001/installed-crater.png",
+                "detail": "The retained synthetic render shows the green mark on the exposed Just Bomb surface."
+              }
+            ]
+          },
+          {
+            "criterion": "Texture, placement and lifetime are cited to the static addresses or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/asset-census-001/static/revision-instructions-00408227.json",
+                "detail": "The pinned executable adjusts the actor position and pushes selector zero at 0x4082AF before calling 0x43B31E at 0x4082B6. The census identifies slot zero as ~splat."
+              },
+              {
+                "path": "build/explosion-decal-001/static/ins3.json",
+                "detail": "Four corner calls to 0x43D56C establish the cylinder mapping. The call to 0x43FB14 at 0x440037 binds the texture."
+              },
+              {
+                "path": "build/explosion-decal-001/static/ins0.json",
+                "detail": "The instructions at 0x43B384\u20130x43B39E select 20 seconds by default and three seconds when the flag at 0x4CBB40 is set."
+              },
+              {
+                "path": "build/letsgo-text-nuke-ohno-001/static/dispatch-inst.json",
+                "detail": "The Nuke replay handler sets 0x4CBB40 at 0x457017, corroborating the shorter lifetime's attribution to Nuke."
+              },
+              {
+                "path": "build/explosion-decal-001/static/ins1.json",
+                "detail": "The instructions at 0x43B419 use remaining and initial life to update both triangles and delete expired records."
+              },
+              {
+                "path": "docs/scratch/explosion-decal-001.md",
+                "detail": "The report records the reference identity and labels the clone's depth policy, bias conversion, texture addressing, coordinate adapter and storage cap as provisional."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/explosion-decal-001/20261118T025649-55108-f3ec0c55/replays.json",
+                "detail": "The file list matches all 19 promoted recordings. Every command exited 0 and reported PASS, won=1 and completed=1. Just Bomb finished at step 954 with 17 saved against 10 required."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T025649-55108-f3ec0c55/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the installed-level sweep and frontend round trip, and all 84 recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261118T025649-55108-f3ec0c55/result.json",
+                "detail": "The verifier exited 0 with the supplied verified-content fingerprint. Its result supersedes the worker report's pending smoke status."
+              },
+              {
+                "path": "docs/scratch/explosion-decal-001.md",
+                "detail": "The report ends with a Just Bomb playtest note covering Bomber placement, fade, expiry, camera changes, Retry, and Nuke marks and responsiveness."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T03:10:23.531112+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T025649-55108-f3ec0c55\\verification.log",
+        "verified_content": "0b29a5087a3945476dc7878accbd7c11e38faba78ccf417c34c3c0c7e7672507"
+      }
     }
   ]
 }

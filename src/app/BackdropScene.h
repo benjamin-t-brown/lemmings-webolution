@@ -101,6 +101,27 @@ struct GravityPresentation {
   struct Binding { std::size_t root; double duration; std::vector<Track> tracks; };
   std::vector<Binding> bindings;
 };
+// Per-leg gadget presentation. Clip clocks use the existing level clock;
+// simulation contacts only notify this owner and never depend on its state.
+struct GadgetPresentation {
+  struct Spin { std::size_t node; unsigned axis; double turnsPerSecond; };
+  struct Clip {
+    HatchAnimation transforms;
+    std::vector<PressurePadPresentation::UvTrack> uv;
+    std::vector<Spin> spins;
+  };
+  struct Binding {
+    std::size_t root, simIndex;
+    bool teleport;
+    int fxSide = -1; // -1 = base, 0/1 = the two authored FX owners
+    SceneNode original;
+    Clip clip;
+    std::array<std::string,2> samples;
+    double triggeredAt = -std::numeric_limits<double>::infinity();
+    double activeUntil = -std::numeric_limits<double>::infinity();
+  };
+  std::vector<Binding> bindings;
+};
 struct BackdropStats {
   std::size_t roots=0, meshRecords=0, stageMeshRecords=0, meshTriangles=0,
       nullMaterials=0, nullMaterialTriangles=0, billboards=0, stageBillboards=0,
@@ -209,6 +230,11 @@ class BackdropScene {
   void setNamedHazardStates(const NamedHazardPresentation&, std::span<const sim::NamedHazard>);
   std::expected<GravityPresentation,std::string> gravityPresentation(std::span<const std::byte> level) const;
   void animateGravity(const GravityPresentation&);
+  std::expected<GadgetPresentation,std::string> gadgetPresentation(std::span<const std::byte> level) const;
+  // Returns only the selected serialized sample (departure/arrival).
+  std::string triggerGadget(GadgetPresentation&, bool teleport, std::size_t simIndex,
+                            bool arrival, int facing, double levelSeconds);
+  void animateGadgets(const GadgetPresentation&, double levelSeconds);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
   // Runtime override of the per-node visibility byte +0x110 for Secondary nodes (the original toggles
   // it only for "cutme" type-1 nodes, 0x45DA0D). A hidden node and its subtree are not dispatched.
@@ -248,7 +274,7 @@ class BackdropScene {
   };
   static SceneryTelemetry& telemetry();
  private:
-  struct OwnedRoot { RootSource source; SceneNode node; double projectionBias = 0.0; };
+  struct OwnedRoot { RootSource source; SceneNode node; double projectionBias = 0.0; bool visible = true; };
   struct SpriteNode {
     std::string sheetName;  // registry name -> SPRITES\<name>.SPR
     std::size_t clip = 0;

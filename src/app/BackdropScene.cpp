@@ -11,6 +11,7 @@
 #include "app/SceneDispatch.h"
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
+#include "assets/LevelObjects.h"
 #include "sim/World.h"
 #include <algorithm>
 #include <array>
@@ -198,14 +199,30 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
  // Use the same mesh/billboard depth path as other placed scenery.
  for(std::size_t i=0;i<level.gadgets.tagged_entities.size();++i){
    const auto& gadget=level.gadgets.tagged_entities[i];
-   if(gadget.type!=0&&gadget.type!=1&&gadget.type!=3)continue;
+   if(gadget.type!=0&&gadget.type!=1&&gadget.type!=3&&gadget.type!=4)continue;
    const auto& model=gadget.model;
    if(!model||model->type!=0||!model->object){
      s.diagnostics_.push_back(std::format("{} tagged type {}[{}]: unsupported model",levelId,gadget.type,i));
      continue;
    }
-   auto added=add({Stage::LegacyUnattributed,gadget.type==0?"tagged-pressure-pad":gadget.type==3?"tagged-gravity":"tagged-lever",i,model->object->source_extent},model->object->marker_matches);
+   auto added=add({Stage::LegacyUnattributed,gadget.type==0?"tagged-pressure-pad":gadget.type==3?"tagged-gravity":gadget.type==4?"tagged-speed-pad":"tagged-lever",i,model->object->source_extent},model->object->marker_matches,
+       gadget.type==4?std::bit_cast<double>(model->double_bits[2]):0.0);
    if(!added)return std::unexpected(added.error().message);
+ }
+ // 4347EC owns a base and two separately enabled FX models (434AAF).
+ for(std::size_t i=0;i<level.gadgets.entities_4347ec.size();++i){
+   const auto& entity=level.gadgets.entities_4347ec[i];
+   const lemmings::LevelModel* models[]{entity.model?&*entity.model:nullptr,
+       &entity.models_1c8_1cc[0],&entity.models_1c8_1cc[1]};
+   for(int role=0;role<3;++role){
+     const auto* model=models[role];
+     if(!model||model->type!=0||!model->object)
+       return std::unexpected(std::string(levelId)+": unsupported teleport model");
+     auto added=add({Stage::LegacyUnattributed,role==0?"teleport-base":role==1?"teleport-fx-0":"teleport-fx-1",
+         i,model->object->source_extent},model->object->marker_matches,std::bit_cast<double>(model->double_bits[2]));
+     if(!added)return std::unexpected(added.error().message);
+     if(role) s.roots_.back().visible=false;
+   }
  }
  // The installed Crab.a3d models belong to named STAT entities, not scenery
  // or fluid receivers. Keep their stored cylinder placement and scene depth.
@@ -367,6 +384,153 @@ void BackdropScene::animateGravity(const GravityPresentation& presentation){
      // READ 476FB0/476A80: interval fraction, then base + fraction*delta.
      const double u=key.u+t*key.du,v=key.v+t*key.dv;
      for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+u;uv.v=c.v+v;}
+   }
+ }
+}
+std::expected<GadgetPresentation,std::string> BackdropScene::gadgetPresentation(std::span<const std::byte> bytes) const {
+ GadgetPresentation result;
+ if(std::none_of(roots_.begin(),roots_.end(),[](const auto& r){return r.source.owner.starts_with("teleport-")||r.source.owner=="tagged-speed-pad";}))return result;
+ try {
+   const auto level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
+   auto links=readTeleportLinks(bytes);
+   if(!links)throw std::invalid_argument(links.error());
+   std::string diagnostic;
+   const auto partners=resolveTeleportPartners(*links,diagnostic);
+   std::vector<std::size_t> teleIndices(partners.size(),std::numeric_limits<std::size_t>::max());
+   std::size_t next=0;
+   for(std::size_t i=0;i<partners.size();++i)if(partners[i]>=0)teleIndices[i]=next++;
+   for(std::size_t i=0;i<roots_.size();++i){
+     const auto& owned=roots_[i];
+     const bool teleport=owned.source.owner.starts_with("teleport-");
+     if(!teleport&&owned.source.owner!="tagged-speed-pad")continue;
+     GadgetPresentation::Binding b{};
+     b.root=i;b.teleport=teleport;b.original=owned.node;
+     const lemmings::LevelModel* model=nullptr;
+     if(teleport){
+       const auto& e=level.gadgets.entities_4347ec.at(owned.source.entityIndex);
+       b.simIndex=teleIndices.at(owned.source.entityIndex);
+       b.samples={e.names[2],e.names[3]};
+       if(owned.source.owner=="teleport-base")model=&*e.model;
+       else {
+         b.fxSide=owned.source.owner=="teleport-fx-0"?0:1;
+         model=&e.models_1c8_1cc[b.fxSide];
+         // 43540C/435467 move FX to the owning entity and set heading
+         // (+30 + .5 - side*.5). PROVISIONAL matrix adapter: reuse the
+         // placed base's scale/tilt; side zero reverses its tangent heading.
+         for(const auto& base:roots_)if(base.source.owner=="teleport-base"&&base.source.entityIndex==owned.source.entityIndex){
+           b.original.matrix=base.node.matrix;
+           if(b.fxSide==0)for(int row:{0,2})for(int j=0;j<3;++j)b.original.matrix[3*row+j]*=-1;
+           break;
+         }
+       }
+     }else{
+       const auto& e=level.gadgets.tagged_entities.at(owned.source.entityIndex);
+       model=&*e.model;b.simIndex=0;
+       for(std::size_t j=0;j<owned.source.entityIndex;++j)
+         if(level.gadgets.tagged_entities[j].type==4)++b.simIndex;
+     }
+     const std::string name=teleport?(b.fxSide<0?"teleport":"teleport_fx"):"speedup_two_way";
+     const auto& clips=model->object->auxiliary_records;
+     const auto clip=std::find_if(clips.begin(),clips.end(),[&](const auto& c){return c.name==name;});
+     if(clip==clips.end())throw std::invalid_argument("missing gadget clip "+name);
+     const auto& raw=clip->serialized_bytes;std::size_t at=0;
+     const auto integer=[&](std::size_t n){
+       if(at>raw.size()||n>raw.size()-at)throw std::invalid_argument("truncated gadget clip");
+       std::uint64_t v=0;for(std::size_t k=0;k<n;++k)v|=std::uint64_t(raw[at++])<<(8*k);return v;
+     };
+     const auto number=[&](){double v=std::bit_cast<double>(integer(8));if(!std::isfinite(v))throw std::invalid_argument("nonfinite gadget key");return v;};
+     number();const auto transforms=integer(4);
+     if(transforms>raw.size()/8)throw std::invalid_argument("invalid gadget transforms");
+     for(std::size_t t=0;t<transforms;++t){integer(4);const auto keys=integer(4);if(keys>(raw.size()-at)/89)throw std::invalid_argument("invalid gadget keys");at+=keys*89;}
+     std::vector<std::uint8_t> transformBytes(raw.begin(),raw.begin()+at);transformBytes.insert(transformBytes.end(),8,0);
+     auto animation=readHatchAnimation(transformBytes);
+     if(!animation)throw std::invalid_argument(animation.error());
+     b.clip.transforms=std::move(*animation);
+     std::vector<const SceneNode*> nodes;
+     const auto collect=[&](auto& self,const SceneNode& n)->void{nodes.push_back(&n);for(const auto& c:n.children)self(self,c);};collect(collect,b.original);
+     for(const auto& t:b.clip.transforms.tracks)if(t.node>=nodes.size())throw std::invalid_argument("gadget transform outside tree");
+     const auto tracks=integer(4);if(tracks>raw.size()/16)throw std::invalid_argument("invalid gadget UV tracks");
+     for(std::size_t t=0;t<tracks;++t){
+       if(integer(4)!=0)throw std::invalid_argument("unsupported gadget UV kind");
+       PressurePadPresentation::UvTrack track;
+       const auto keys=integer(4);if(!keys||keys>(raw.size()-at)/40)throw std::invalid_argument("invalid gadget UV keys");
+       double previous=0;
+       for(std::size_t k=0;k<keys;++k){PressurePadPresentation::UvKey key{number(),number(),number(),number(),number()};if(key.end<previous)throw std::invalid_argument("unordered gadget UV keys");previous=key.end;track.keys.push_back(key);}
+       if(previous<b.clip.transforms.duration)throw std::invalid_argument("gadget UV duration");
+       const auto material=integer(4),targets=integer(4);if(targets>(raw.size()-at)/4)throw std::invalid_argument("invalid gadget UV targets");
+       for(std::size_t k=0;k<targets;++k){
+         const auto node=integer(4);if(node>=nodes.size())throw std::invalid_argument("gadget UV outside tree");
+         for(std::size_t m=0;m<nodes[node]->meshes.size();++m){const auto& mesh=nodes[node]->meshes[m];if(mesh.materialSlot!=material)continue;
+           for(std::size_t r=0;r<mesh.records.size();++r)for(std::size_t c=0;c<mesh.records[r].corners.size();++c){const auto& uv=mesh.records[r].corners[c];track.corners.push_back({std::size_t(node),m,r,c,uv.u,uv.v});}
+         }
+       }
+       if(integer(4)!=0||track.corners.empty())throw std::invalid_argument("unsupported gadget UV targets");
+       b.clip.uv.push_back(std::move(track));
+     }
+     const auto spins=integer(4);if(spins>(raw.size()-at)/16)throw std::invalid_argument("invalid gadget spins");
+     for(std::size_t k=0;k<spins;++k){
+       const auto node=integer(4),axis=integer(4);const double speed=number();
+       if(node>=nodes.size()||axis>2)throw std::invalid_argument("gadget spin outside tree");
+       b.clip.spins.push_back({std::size_t(node),unsigned(axis),speed});
+     }
+     result.bindings.push_back(std::move(b));
+   }
+ }catch(const std::exception& e){return std::unexpected(std::string("gadget presentation: ")+e.what());}
+ return result;
+}
+std::string BackdropScene::triggerGadget(GadgetPresentation& presentation,bool teleport,
+    std::size_t index,bool arrival,int facing,double seconds){
+ if(!std::isfinite(seconds))return {};
+ std::string sample;
+ for(auto& b:presentation.bindings){
+   if(b.teleport!=teleport||b.simIndex!=index)continue;
+   if(b.fxSide<0){
+     b.triggeredAt=seconds;
+     if(teleport)sample=b.samples[arrival?1:0];
+   }else{
+     // 4355xx uses the entry side; 4350xx uses the preserved arrival face.
+     const int side=arrival?(facing==1?1:0):(facing==1?0:1);
+     if(b.fxSide!=side)continue;
+     if(seconds>=b.activeUntil)b.triggeredAt=seconds;
+     // PROVISIONAL finite tail: one authored FX cycle after the last use,
+     // instead of reproducing native per-side occupied-actor counters.
+     b.activeUntil=seconds+b.clip.transforms.duration;
+   }
+ }
+ return sample;
+}
+void BackdropScene::animateGadgets(const GadgetPresentation& presentation,double seconds){
+ if(!std::isfinite(seconds))return;
+ for(const auto& b:presentation.bindings){
+   auto& owned=roots_.at(b.root);owned.node=b.original;
+   owned.visible=b.fxSide<0||seconds<b.activeUntil;
+   if(!owned.visible)continue;
+   const double duration=b.clip.transforms.duration;
+   // Base rings loop while idle (4347EC selects clip 0 with loop=1).
+   // Speed pads freeze at clip zero until contact, then play one full cycle;
+   // restart on the next use. This contact-feedback policy is provisional.
+   const double elapsed=b.fxSide<0&&b.teleport?seconds:std::max(0.0,seconds-b.triggeredAt);
+   const double time=!b.teleport?(!std::isfinite(b.triggeredAt)?0.0:std::min(duration,elapsed)):
+       std::fmod(elapsed,duration);
+   applyHatchAnimation(owned.node,b.clip.transforms,time/duration);
+   std::vector<SceneNode*> nodes;
+   const auto collect=[&](auto& self,SceneNode& n)->void{nodes.push_back(&n);for(auto& c:n.children)self(self,c);};collect(collect,owned.node);
+   for(const auto& track:b.clip.uv){
+     std::size_t k=0;while(k+1<track.keys.size()&&time>track.keys[k].end)++k;
+     const auto& key=track.keys[k];const double start=k?track.keys[k-1].end:0;
+     const double fraction=key.end>start?std::clamp((time-start)/(key.end-start),0.0,1.0):0;
+     for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+key.u+fraction*key.du;uv.v=c.v+key.v+fraction*key.dv;}
+   }
+   for(const auto& spin:b.clip.spins){
+     const double angle=time*spin.turnsPerSecond*2*3.1415927410125732;
+     const double c=std::cos(angle),s=std::sin(angle);
+     // 476EE0 dispatches 0 -> 481D10 (Y), 1 -> 481E26 (X),
+     // 2 -> 481F3C (Z); serialized axis is not a Cartesian index.
+     const std::array<double,9> rotation=spin.axis==0?
+         std::array<double,9>{c,0,s,0,1,0,-s,0,c}:spin.axis==1?
+         std::array<double,9>{1,0,0,0,c,-s,0,s,c}:
+         std::array<double,9>{c,-s,0,s,c,0,0,0,1};
+     std::copy(rotation.begin(),rotation.end(),nodes[spin.node]->matrix.begin());
    }
  }
 }
@@ -923,7 +1087,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     // Primary retains the all-root census. Later passes need only their own
     // roots: they previously rebuilt and discarded the entire primary mesh.
     // Local facing predicates depend only on ancestors inside the owned root.
-    if (owned.source.stage != stage) {
+    if (owned.source.stage != stage || !owned.visible) {
       if (stage == Stage::Primary) {
         // Keep the all-root census without transforming/copying records that
         // this stage never submits. Animation changes values, never topology.

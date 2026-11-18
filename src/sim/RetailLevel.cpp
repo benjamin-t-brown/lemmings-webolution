@@ -5,6 +5,7 @@
 #include "assets/GameData.h"
 #include "assets/LevelIndex.h"
 #include "assets/LevelObjects.h"
+#include "assets/Sprite.h"
 #include "lemmings/compiled_level.hpp"
 
 #include <algorithm>
@@ -80,7 +81,24 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
   addOther(g.entities_425e50, "entities_425e50");
   addOther(g.entities_426c6b, "entities_426c6b");
   addOther(g.spatial_entities, "spatial_entities");
-  addOther(g.entities_424187, "entities_424187");
+  for (const auto& e : g.entities_424187) {
+    CounterGate gate;
+    gate.id = e.id;
+    const auto v = [&](int i) { return static_cast<std::int32_t>(e.values[i]); };
+    gate.left = v(0); gate.right = v(1); gate.top = v(2); gate.bottom = v(3);
+    gate.mode = v(4); gate.request = v(5); gate.quota = v(6);
+    // Mode 0 never consumes these fields (0x423749). Do not interpret the
+    // stored debug-fill bit patterns as coordinates or a direction.
+    if (gate.hasCounter()) {
+      gate.counterX = v(7); gate.counterY = v(8); gate.direction = v(9);
+    }
+    gate.position = {std::bit_cast<double>(e.double_bits[0]),
+                     maskHeight - 1.0 - std::bit_cast<double>(e.double_bits[1]),
+                     std::bit_cast<double>(e.double_bits[2])};
+    s.objectIds[e.id] = {ObjectClass::CounterGate, static_cast<int>(s.counterGates.size()),
+                         "entities_424187"};
+    s.counterGates.push_back(gate);
+  }
   for (const auto& e : g.entities_42acac) {
     FluidGate gate;
     gate.id = e.id;
@@ -101,7 +119,14 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
   addOther(g.entities_4347ec, "entities_4347ec");
   addOther(g.basic_4342bf, "basic_4342bf");
   addOther(g.spatial_41e038, "spatial_41e038");
-  addOther(g.tagged_entities, "tagged_entities");
+  // Register in construction order, before named entities can replace an id.
+  // The sensor payloads are filled below, alongside the other tagged contacts.
+  std::size_t sensorIndex = 0;
+  for (const auto& t : g.tagged_entities) {
+    s.objectIds[t.id] = t.type == 2
+        ? ObjectRef{ObjectClass::OccupancySensor, static_cast<int>(sensorIndex++), "tagged_entities"}
+        : ObjectRef{ObjectClass::Other, -1, "tagged_entities"};
+  }
   for (std::size_t entity = 0; entity < g.named_entities.size(); ++entity) {
     const auto& e = g.named_entities[entity];
     s.objectIds[e.id] = {ObjectClass::Other, -1, "named_entities"};
@@ -141,12 +166,33 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
     }
   }
 
+  // 0x42421D -> 0x42727C, after reader fluid masks, before lever load-face sends.
+  for (auto& gate : s.counterGates) gate.initialise(s.terrain);
+
   // Build type-0 pads from their serialized volumes and single message lists
   // (0x431B30). Pair each tagged type-1 record (a lever) with its placed lever. The record carries the same
   // pose as the lever.a3d placement; the pairing is by that pose through the production box
   // transform and never by file order. A record that matches no unclaimed lever stays unlinked.
   std::vector<bool> claimed(s.levers.size(), false);
   for (const auto& t : g.tagged_entities) {
+    if (t.type == 2) {
+      OccupancySensor sensor;
+      sensor.id = t.id;
+      sensor.enabled = t.flag_38;
+      sensor.state = static_cast<std::int32_t>(t.values[0]);
+      sensor.cooldownSeconds = std::bit_cast<double>(t.double_98);
+      for (std::size_t axis = 0; axis < 3; ++axis) {
+        sensor.min[axis] = std::bit_cast<double>(t.double_bits_48_60[axis]);
+        sensor.max[axis] = std::bit_cast<double>(t.double_bits_48_60[axis + 3]);
+      }
+      for (const auto& r : t.record_arrays[0])
+        sensor.occupied.push_back({static_cast<std::int32_t>(r[0]), r[1], r[2], r[3]});
+      for (const auto& r : t.record_arrays[1])
+        sensor.empty.push_back({static_cast<std::int32_t>(r[0]), r[1], r[2], r[3]});
+      s.gadgetContactOrder.push_back({false, s.occupancySensors.size(), true});
+      s.occupancySensors.push_back(std::move(sensor));
+      continue;
+    }
     if (t.type == 0) {
       PressurePad pad;
       pad.id = t.id;
@@ -294,6 +340,56 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
   RetailLevelReport report;
   LevelSetup& s = report.setup;
   s.terrain = Terrain::fromCollisionGrid(*grid);
+
+  // 4265E8 reads the shared actor then the initial gravity-flip flag.
+  // 42FB5F always creates a faller; +48/+49 are climb/float capabilities.
+  try {
+    const auto decoded = lemmings::read_compiled_level(
+        {reinterpret_cast<const std::uint8_t*>(blob->data()), blob->size()}, false);
+    if (!decoded.entities.subclass_actors.empty()) {
+      const auto sprites = loadSpriteSheet(lib, "SPRITES\\EVILRATHI.SPR");
+      if (!sprites) return std::unexpected(file + ": rat sprites: " + sprites.error());
+      const auto duration = [&](const char* name) {
+        const auto* clip = sprites->find(name);
+        if (!clip || clip->animations.empty() || !std::isfinite(clip->rate) || clip->rate <= 0)
+          throw std::invalid_argument("missing/invalid rat clip");
+        return 0.06 * clip->animations.size() / clip->rate; // 468833
+      };
+      for (const auto& e : decoded.entities.subclass_actors) {
+        EvilRat rat;
+        for (unsigned axis = 0; axis < 3; ++axis) {
+          rat.initialPosition[axis] = std::bit_cast<double>(e.position_bits[axis]);
+          if (!std::isfinite(rat.initialPosition[axis]))
+            throw std::invalid_argument("nonfinite rat position");
+        }
+        if (e.value_4c != 3 || (e.values_40_44[0] != 1 && e.values_40_44[0] != UINT32_MAX) ||
+            (e.values_40_44[1] != 1 && e.values_40_44[1] != UINT32_MAX) ||
+            rat.initialPosition[0] < 0 || rat.initialPosition[0] >= grid->width ||
+            rat.initialPosition[1] < 0 || rat.initialPosition[1] >= grid->height ||
+            std::floor(rat.initialPosition[0]) != rat.initialPosition[0] ||
+            std::floor(rat.initialPosition[1]) != rat.initialPosition[1])
+          throw std::invalid_argument("unsupported rat placement");
+        rat.id = e.id;
+        rat.storedFlag38 = e.flag_38; // not an actor-update enable bit (426414/42E2BF)
+        rat.renderEnabled = e.flag_28;
+        rat.actor.x = int(rat.initialPosition[0]);
+        rat.actor.y = grid->height - 1 - int(rat.initialPosition[1]);
+        rat.actor.facing = e.values_40_44[0] == 1 ? Facing::Right : Facing::Left;
+        rat.actor.verticalDir = e.values_40_44[1] == 1 ? 1 : -1;
+        rat.actor.sheetType = 3;
+        rat.actor.canClimb = e.flags_370_48_49_4a[1];
+        rat.actor.canFloat = e.flags_370_48_49_4a[2];
+        rat.initialFlip = e.subclass_flag_3a4;
+        rat.lane = rat.initialPosition[2];
+        constexpr const char* punches[]{"punch0", "punch1", "punch2", "punch3"};
+        for (unsigned i = 0; i < 4; ++i) rat.punchDurations[i] = duration(punches[i]);
+        rat.openDuration = duration("umbopen");
+        s.rats.push_back(rat);
+      }
+    }
+  } catch (const std::invalid_argument& e) {
+    return std::unexpected(file + ": rat records: " + e.what());
+  }
 
   // One Entrance per hatch, with its stored population in stream order.
   // Playable-v1 deliberately keeps the first hatch's shared release cadence:

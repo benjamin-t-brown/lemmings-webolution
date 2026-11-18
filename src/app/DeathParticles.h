@@ -18,6 +18,8 @@ struct DeathParticle {
   std::array<std::uint8_t, 3> colour{255, 255, 255};
   int piece = -1; // BITS.SPR clip index; -1 is a coloured chip/droplet
   int verticalDir = 1;
+  bool minerAxe = false; // installed Axe child, separate from BITS/debris
+  int facing = 1;       // snapshotted before refusal turns the miner
   // Skill debris only. Material/UVs are captured at the cut, so a later
   // terrain edit cannot change an airborne fragment's texture.
   bool terrainChunk = false;

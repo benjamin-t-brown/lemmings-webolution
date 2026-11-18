@@ -316,6 +316,42 @@ void FluidGate::stepHeight(double dt, Terrain& terrain) {
   }
 }
 
+bool CounterGate::containsCell(int x, int y, int width) const {
+  if (width <= 0 || y < bottom || y >= top) return false;
+  const int dx = ((x - left) % width + width) % width;
+  return dx < right - left;
+}
+
+void CounterGate::paintCollision(Terrain& terrain, bool closed) {
+  if (terrain.width() <= 0 || terrain.height() <= 0) { collisionClosed = closed; return; }
+  // 0x427554 / 0x4275D4: exclusive bounds; X wraps and Y clamps.
+  for (int x = left; x < right; ++x)
+    for (int row = bottom; row < top; ++row)
+      terrain.setGateCollision(x, terrain.height() - 1 - std::clamp(row, 0, terrain.height() - 1), closed);
+  collisionClosed = closed;
+}
+
+void CounterGate::initialise(Terrain& terrain) {
+  target = progress = request == 1 ? 0.0 : 1.0;
+  previousRequest = 0; count = 0; delay = 0.0;
+  paintCollision(terrain, request != 1);
+}
+
+void CounterGate::animate(double dt, Terrain& terrain) {
+  // 0x4270DC and f64 0x4BF6D0 = 3.0. Equality does NOT stamp yet.
+  if (progress < target) {
+    progress += dt * 3.0;
+    if (progress > target) { progress = target; paintCollision(terrain, true); }
+  } else if (progress > target) {
+    progress -= dt * 3.0;
+    if (progress < target) { progress = target; paintCollision(terrain, false); }
+  }
+}
+
+double CounterGate::surfaceFraction() const {
+  return progress <= target ? 1.0 - (1.0 - progress) * (1.0 - progress) : progress * progress;
+}
+
 void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& list) {
   for (const LeverMessage& m : list) {
     // 0x00433B2E: only `elem+4 >= 0` is a list lookup; an empty slot is skipped.
@@ -329,6 +365,25 @@ void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& l
       continue;
     }
     const ObjectRef& ref = it->second;
+    if (ref.cls == ObjectClass::OccupancySensor && ref.index >= 0 &&
+        static_cast<std::size_t>(ref.index) < setup.occupancySensors.size()) {
+      if (m.type == 4 || m.type == 5) {
+        // Sensor vt 0x4B12B4: +4/+8 are base 0x41DC00/20, not its
+        // occupied/empty arms (+0x20/+0x24). Disabling freezes the cooldown.
+        setup.occupancySensors[static_cast<std::size_t>(ref.index)].enabled = m.type == 4;
+        ++setup.leverStats.delivered;
+      } else ++setup.leverStats.unsupported;
+      continue;
+    }
+    if (ref.cls == ObjectClass::CounterGate && ref.index >= 0 &&
+        static_cast<std::size_t>(ref.index) < setup.counterGates.size()) {
+      if (m.type == 4 || m.type == 5) {
+        // vt+4 0x423719 opens; vt+8 0x423731 closes. vt+C is a no-op.
+        setup.counterGates[static_cast<std::size_t>(ref.index)].request = m.type == 4 ? 1 : 2;
+        ++setup.leverStats.delivered;
+      } else ++setup.leverStats.unsupported;
+      continue;
+    }
     if (ref.cls == ObjectClass::NamedHazard && ref.index >= 0 &&
         static_cast<std::size_t>(ref.index) < setup.namedHazards.size()) {
       auto& hazard = setup.namedHazards[static_cast<std::size_t>(ref.index)];
@@ -404,7 +459,10 @@ void World::stepTeleporting(Lemming& l) {
     if (insideTeleport(setup_.terrain, setup_.teleports[i], l) &&
         std::find(l.teleportPadsLatched.begin(), l.teleportPadsLatched.end(), i) ==
             l.teleportPadsLatched.end())
+    {
       l.teleportPadsLatched.push_back(i);
+      if (gadgetObserver_) gadgetObserver_(GadgetUse::TeleportArrival, i, l);
+    }
   }
   l.state = State::Walker;
   l.frame = 0;
@@ -423,7 +481,7 @@ void World::explode(Lemming& l) {
   }
   setup_.terrain.clearExplosion(l.x, l.y);
   l.state = State::Dead;
-  ++dead_;
+  if (l.sheetType != 3) ++dead_;
   cue(SoundCue::Explode, &l);
   if (deathObserver_) {
     const auto end = std::remove_if(occupied.begin(), occupied.begin() + count,
@@ -545,7 +603,7 @@ void World::stepFaller(Lemming& l) {
       l.state = State::Splatter;
       l.frame = 0;
       l.stepBudgetSeconds = 0.0;
-      ++dead_;
+      if (l.sheetType != 3) ++dead_;
       cue(SoundCue::Splat, &l);
       if (deathObserver_) deathObserver_(l, false, {});
       return;
@@ -579,7 +637,7 @@ void World::stepFaller(Lemming& l) {
       if (!floating && !zoneExempt &&
           l.fallDistance > rules_.splatDistance) {
         l.state = State::Splatter;
-        ++dead_;
+        if (l.sheetType != 3) ++dead_;
         cue(SoundCue::Splat, &l);
         if (deathObserver_) deathObserver_(l, false, {});
         return;
@@ -649,7 +707,7 @@ void World::stepDrown(Lemming& l) {
   // the same discrete length (10 ticks).
   if (l.frame >= rules_.drownMs) {
     l.state = State::Dead;
-    ++dead_;
+    if (l.sheetType != 3) ++dead_;
   }
 }
 
@@ -1029,6 +1087,8 @@ void World::stepBasher(Lemming& l) {
     }
 
   if ((lowerPunch || upperPunch) && anySteel) {
+    // 0x40C139..0x40C148: Scrape on the protected-cell refusal arm.
+    cueSample("Scrape", l);
     turn(l);
     l.state = State::Walker;
     return;
@@ -1086,6 +1146,9 @@ void World::stepMiner(Lemming& l) {
       const int cx = l.x + dx * dir;
       const int cy = l.y - arg;
       if (setup_.terrain.at(cx, cy) == Material::Steel) {
+        // 0x418AC2..0x418ADA: MineMetal, distinct from successful Mine.
+        cueSample("MineMetal", l);
+        if (minerRefusalObserver_) minerRefusalObserver_(l);
         turn(l);
         l.state = State::Walker;
         return;
@@ -1126,6 +1189,8 @@ void World::stepDigger(Lemming& l) {
     const int cx = setup_.terrain.wrapX(l.x + dx);
     if (setup_.terrain.at(cx, digY) == Material::Steel ||
         setup_.terrain.digRefused(cx, digY, v)) {
+      // 0x415B33..0x415B4A: Scrape for steel or directional refusal.
+      cueSample("Scrape", l);
       l.state = State::Walker;
       return;
     }
@@ -1144,6 +1209,8 @@ void World::stepDigger(Lemming& l) {
 }
 
 void World::step(Lemming& l) {
+  if (l.ratVictim) return;
+  if (consumeGateCrush(l)) return;
   if (!l.alive())
     return;
 
@@ -1234,6 +1301,8 @@ void World::step(Lemming& l) {
   // than walking out. Mutate-alone: delete this arm and testTeleportPad fails.
   if (l.state == State::Walker) {
     if (const Teleport* pad = teleportAt(l)) {
+      if (gadgetObserver_) gadgetObserver_(GadgetUse::TeleportDeparture,
+          static_cast<std::size_t>(pad - setup_.teleports.data()), l);
       l.teleportPadsLatched.push_back(static_cast<std::size_t>(pad - setup_.teleports.data()));
       l.state = State::Teleporting;
       l.frame = 0;
@@ -1247,8 +1316,10 @@ void World::step(Lemming& l) {
   // mirrors object+0xb8 — one FASTER attach per visit. Mutate-alone: delete
   // this arm and testSpeedPadFaster fails.
   if (l.state == State::Walker) {
-    if (speedPadAt(l)) {
+    if (const SpeedPad* pad = speedPadAt(l)) {
       if (!l.speedPadLatched) {
+        if (gadgetObserver_) gadgetObserver_(GadgetUse::SpeedPad,
+            static_cast<std::size_t>(pad - setup_.speedPads.data()), l);
         cueSample("SpeedPad", l);
         l.fasterMs = rules_.fasterMs;
         l.speedPadLatched = true;
@@ -1365,8 +1436,18 @@ void World::tick(bool continueHatchesAfterTimeout) {
   stepNuke(msPerTick(), true);
   stepRelease(tickDtSeconds(), true, continueHatchesAfterTimeout);
 
+  const auto gateBefore = gateMotionSamples();
+
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     step(lemmings_[i]);
+
+  stepRats(tickDtSeconds(), true);
+
+  // The diagnostic/compatibility tick entry must not silently omit sensors.
+  // Keep the legacy per-actor lever arm unchanged; only sensors join here.
+  for (auto& sensor : setup_.occupancySensors)
+    stepOccupancySensor(sensor, tickDtSeconds());
+  stepCounterGates(tickDtSeconds(), gateBefore);
 
   stepCrabs(tickDtSeconds());
   stepNamedHazards(tickDtSeconds());
@@ -1377,6 +1458,8 @@ void World::tick(bool continueHatchesAfterTimeout) {
 }
 
 void World::stepElapsed(Lemming& l, bool tickBoundary) {
+  if (l.ratVictim) return;
+  if (consumeGateCrush(l)) return;
   if (tickBoundary) {
     step(l);
     return;
@@ -1401,6 +1484,97 @@ void World::stepElapsed(Lemming& l, bool tickBoundary) {
   }
 }
 
+std::vector<Lemming*> World::hazardActors() {
+  std::vector<Lemming*> out;
+  out.reserve(lemmings_.size() + setup_.rats.size());
+  for (auto& l : lemmings_) out.push_back(&l);
+  for (auto& rat : setup_.rats) out.push_back(&rat.actor);
+  return out;
+}
+
+int World::hazardActorId(const Lemming* actor) const {
+  for (std::size_t i = 0; i < setup_.rats.size(); ++i)
+    if (actor == &setup_.rats[i].actor) return -2 - int(i);
+  return int(actor - lemmings_.data());
+}
+
+void World::finishRatAttack(EvilRat& rat) {
+  if (rat.pendingVictim < 0) return;
+  auto& victim = lemmings_.at(std::size_t(rat.pendingVictim));
+  if (victim.alive()) {
+    leaveBlocker(victim);
+    victim.state = State::Dead;
+    ++dead_;
+  }
+  victim.ratVictim = false;
+  rat.pendingVictim = -1;
+  rat.actor.state = State::Walker; // 408F79 -> 42F8B9
+  rat.actor.frame = 0;
+  rat.actor.stepBudgetSeconds = 0;
+  rat.animationSeconds = 0;
+}
+
+void World::stepRats(double dt, bool tickBoundary) {
+  for (auto& rat : setup_.rats) {
+    auto& l = rat.actor;
+    // Closing gates and ordinary loss transitions can remove a rat too.
+    if (consumeGateCrush(l) || !l.active()) {
+      const auto state = l.state;
+      finishRatAttack(rat);
+      l.state = state;
+      if (l.alive()) {
+        if (explicitUpdate_) stepElapsed(l, tickBoundary); else step(l);
+      }
+      continue;
+    }
+    if (rat.pendingVictim >= 0) {
+      rat.animationSeconds += dt;
+      // 408ECC waits for controller completion; durations come from EvilRatHi.
+      if (rat.animationSeconds > rat.punchDurations[rat.punch]) finishRatAttack(rat);
+      continue;
+    }
+    // Original 426414 tests support before calling the common actor update.
+    if (groundAt(l.x, l.y + l.verticalDir, l.verticalDir)) {
+      for (std::size_t i = 0; i < lemmings_.size(); ++i) {
+        auto& victim = lemmings_[i];
+        if (!victim.active() || victim.sheetType == 3) continue;
+        const int dx = setup_.terrain.wrapX(victim.x - l.x + setup_.terrain.width()/2) -
+                       setup_.terrain.width()/2;
+        // 42FAD7: closed +/-1 X/Y contact, no facing/gravity/Z restriction.
+        if (std::abs(dx) > 1 || std::abs(victim.y - l.y) > 1) continue;
+        leaveBlocker(victim);
+        victim.ratVictim = true;
+        rat.pendingVictim = int(i);
+        // PROVISIONAL deterministic selection instead of the original RNG *4.
+        rat.punch = rat.attacks++ % 4;
+        rat.animationSeconds = 0;
+        l.stepBudgetSeconds = 0;
+        // 42E340 -> 416BF0 launches the claimed victim's debris figure.
+        cueSample("Die", victim);
+        if (deathObserver_) {
+          auto figure = victim; figure.state = State::Dead;
+          deathObserver_(figure, false, {});
+        }
+        break;
+      }
+      if (rat.pendingVictim >= 0) continue;
+    }
+    const auto before = l.state;
+    if (rat.initialFlip && dt > 0) {
+      // 4265E8 -> 40BAC0 -> 40BB26/42F5E3; no installed rat sets it.
+      l.verticalDir = -l.verticalDir;
+      rat.initialFlip = false;
+    }
+    if (explicitUpdate_) stepElapsed(l, tickBoundary); else step(l);
+    rat.animationSeconds = before == l.state ? rat.animationSeconds + dt : 0.0;
+    if (l.state == State::Walker) {
+      const double target = l.facing == Facing::Left ? 0.25 : 0.75;
+      // Same provisional one-slab-unit/second presentation lane as lemmings.
+      rat.lane += std::clamp(target - rat.lane, -dt, dt);
+    }
+  }
+}
+
 void World::stepCrabs(double dt) {
   for (Crab& crab : setup_.crabs) {
     if (!crab.enabled) continue;
@@ -1415,7 +1589,8 @@ void World::stepCrabs(double dt) {
       crab.animationSeconds = std::fmod(crab.animationSeconds, crab.restDuration);
     }
     bool killed = false;
-    for (Lemming& l : lemmings_) {
+    for (Lemming* actor : hazardActors()) {
+      Lemming& l = *actor;
       if (!l.active()) continue;
       // 0x430F4D -> 0x430C9C tests the actor's double-precision 3D point.
       // PROVISIONAL adapter: retain the mean surface fraction discarded by
@@ -1457,7 +1632,7 @@ void World::stepCrabs(double dt) {
       leaveBlocker(l);
       l.state = State::Dead;
       l.frame = 0;
-      ++dead_;
+      if (l.sheetType != 3) ++dead_;
       if (deathObserver_) deathObserver_(l, false, {});
       cueSample(crab.attackSound, l);
       killed = true;
@@ -1601,17 +1776,18 @@ void World::stepNamedHazards(double dt) {
       });
     };
     // +0x1D1=0 retains the first victim's id until the current clip ends;
-    // it does not retest that victim's position. IDs are clone stable indices.
-    if (!hazard.allContacts && !hazard.attacking && hazard.pendingVictim < 0) {
-      for (std::size_t i=0; i<lemmings_.size(); ++i)
-        if (lemmings_[i].active() && contact(lemmings_[i])) { hazard.pendingVictim = int(i); break; }
+    // it does not retest that victim's position. Negative IDs encode rats,
+    // independent of later hatch births extending the rescue population.
+    if (!hazard.allContacts && !hazard.attacking && hazard.pendingVictim == -1) {
+      for (auto* actor : hazardActors())
+        if (actor->active() && contact(*actor)) { hazard.pendingVictim = hazardActorId(actor); break; }
     }
     bool killed = false;
     if (!hazard.attacking && (hazard.allContacts || finished)) {
-      for (std::size_t i=0; i<lemmings_.size(); ++i) {
-        auto& l = lemmings_[i];
-        if (!l.active() || (hazard.allContacts ? !contact(l) : int(i)!=hazard.pendingVictim)) continue;
-        leaveBlocker(l); l.state = State::Dead; l.frame = 0; ++dead_;
+      for (auto* actor : hazardActors()) {
+        auto& l = *actor;
+        if (!l.active() || (hazard.allContacts ? !contact(l) : hazardActorId(actor)!=hazard.pendingVictim)) continue;
+        leaveBlocker(l); l.state = State::Dead; l.frame = 0; if (l.sheetType != 3) ++dead_;
         if (hazard.particles && deathObserver_) deathObserver_(l, false, {});
         cueSample(hazard.attackSound, l);
         killed = true;
@@ -1625,6 +1801,139 @@ void World::stepNamedHazards(double dt) {
   }
 }
 
+bool World::consumeGateCrush(Lemming& l) {
+  if (!l.gateCrushed || !l.alive()) return false;
+  l.gateCrushed = false;
+  leaveBlocker(l);
+  // 0x42E340 -> 0x416BF0 / type 0x25 -> 0x416C49 removes the actor
+  // and launches a debris figure. Provisional presentation: reuse the clone
+  // death particles rather than inventing a new animation/state clock.
+  if (deathObserver_) deathObserver_(l, false, {});
+  l.state = State::Dead;
+  if (l.sheetType != 3) ++dead_;
+  return true;
+}
+
+std::vector<World::GateMotion> World::gateMotionSamples() const {
+  std::vector<GateMotion> out;
+  if (setup_.counterGates.empty()) return out;
+  out.reserve(lemmings_.size() + setup_.rats.size());
+  for (const auto& l : lemmings_) out.push_back({l.x, l.y, l.state, l.active()});
+  // 423858 scans the common actor list without a species filter.
+  for (const auto& rat : setup_.rats) {
+    const auto& l = rat.actor;
+    out.push_back({l.x, l.y, l.state, l.active() && rat.pendingVictim < 0});
+  }
+  return out;
+}
+
+void World::stepCounterGates(double dt, std::span<const GateMotion> before) {
+  const int width = setup_.terrain.width(), height = setup_.terrain.height();
+  if (width <= 0 || height <= 0) return;
+  for (auto& gate : setup_.counterGates) {
+    gate.animate(dt, setup_.terrain); // 0x423749 calls 0x4270DC first
+    if (gate.progress < gate.target) {
+      for (auto* actor : hazardActors()) {
+        auto& l = *actor;
+        // 0x427654 uses a closed volume for the closing-contact flag.
+        const int row = height - 1 - l.y;
+        const int dx = setup_.terrain.wrapX(l.x - gate.left);
+        if (l.alive() && row >= gate.bottom && row <= gate.top && dx <= gate.right - gate.left)
+          l.gateCrushed = true;
+      }
+    }
+    if (gate.hasCounter() && gate.previousRequest == 1) {
+      for (std::size_t i = 0; i < before.size(); ++i) {
+        const auto& p = before[i];
+        const auto& l = i < lemmings_.size() ? lemmings_[i] : setup_.rats[i - lemmings_.size()].actor;
+        if (!p.active || !l.active() || p.state == State::Teleporting || l.state == State::Teleporting)
+          continue;
+        int sign = 0;
+        double distance = 0.0, speed = 5.0;
+        if (gate.mode == 2) {
+          const int row = height - 1 - l.y;
+          if (row < gate.bottom || row >= gate.top) continue;
+          // PROVISIONAL integer-lattice adapter for 0x423858's dt*5 entry
+          // strips: test swept entry edges once, never a stationary point.
+          const int dx = setup_.terrain.wrapX(l.x - p.x + width / 2) - width / 2;
+          const int end = p.x + dx;
+          for (int shift : {-width, 0, width}) {
+            const int left = gate.left + shift, right = gate.right + shift;
+            if (dx > 0 && p.x < left && end >= left) {
+              sign = 1; distance = right - end + 0.2; break;
+            }
+            if (dx < 0 && p.x >= right && end < right) {
+              sign = -1; distance = end - left + 0.2; break;
+            }
+          }
+        } else {
+          const int oldRow = height - 1 - p.y, row = height - 1 - l.y;
+          if (!gate.containsCell(l.x, gate.bottom, width)) continue;
+          if (row > oldRow && oldRow < gate.bottom && row >= gate.bottom) {
+            sign = 1; distance = gate.top - row + 0.2;
+          } else if (row < oldRow && oldRow >= gate.top && row < gate.top) {
+            sign = -1; distance = row - gate.bottom + 0.2;
+          }
+          // Original uses actor vertical-speed helpers 0x416038/82.
+          // Provisional: derive it from actual clone movement in this segment.
+          if (dt > 0.0) speed = std::max(1.0, std::abs(row - oldRow) / dt);
+        }
+        if (!sign) continue;
+        gate.count += (gate.direction == 0 || gate.direction == sign) ? 1 : -1;
+        if (gate.count == gate.quota) gate.delay = std::max(0.0, distance) / speed;
+      }
+      if (gate.count >= gate.quota) gate.request = 2;
+    }
+    if (gate.request != gate.previousRequest) {
+      gate.delay -= dt;
+      if (gate.delay <= 0.0) {
+        if (gate.request == 1) { gate.count = 0; gate.target = 0.0; }
+        else gate.target = 1.0;
+        if (gate.previousRequest != 0) cues_.push_back({{}, "Rumble", gate.position});
+        gate.previousRequest = gate.request;
+      }
+    }
+  }
+}
+
+void World::stepOccupancySensor(OccupancySensor& sensor, double dt) {
+  if (!sensor.enabled) return; // 0x4423D2 -> 0x41CBA0 checks base +0x38
+  const auto send = [&](int state) {
+    if (sensor.state == state) return;
+    sensor.state = state; // 0x4372AF: state first, then its message list
+    dispatchLeverMessages(setup_, state == 1 ? sensor.occupied : sensor.empty);
+  };
+  // 0x4339FC: empty is called only if the cooldown STARTS non-positive.
+  // Crossing zero during the decrement does not send empty until next update.
+  if (sensor.cooldownRemaining <= 0.0) {
+    send(2);
+    sensor.contactActor = -1;
+  } else sensor.cooldownRemaining -= dt;
+
+  // 0x43725A -> 0x430C33 scans even while cooling down, caching the first
+  // overlap. Use the clone's feet point, Y-up and radial lane 0, as for pads.
+  sensor.contactActor = -1;
+  if (setup_.terrain.width() > 0) {
+    for (const auto* actor : hazardActors()) {
+      const auto& l = *actor;
+      if (!l.alive() || l.ratVictim || sensor.min[2] > 0.0 || sensor.max[2] < 0.0) continue;
+      const double row = setup_.terrain.height() - 1 - l.y;
+      double span = sensor.max[0] - sensor.min[0];
+      if (span < 0.0) span += setup_.terrain.width();
+      double dx = std::fmod(l.x - sensor.min[0], double(setup_.terrain.width()));
+      if (dx < 0.0) dx += setup_.terrain.width();
+      if (dx > span || row < sensor.min[1] || row > sensor.max[1]) continue;
+      sensor.contactActor = hazardActorId(actor);
+      break;
+    }
+  }
+  if (sensor.contactActor != -1 && sensor.cooldownRemaining <= 0.0) {
+    send(1);
+    sensor.contactActor = -1; // 0x433A90 clears the cached actor after activation
+    sensor.cooldownRemaining = sensor.cooldownSeconds;
+  }
+}
+
 void World::stepGadgetContacts(double dt) {
   // 0x4423D2 / lever step: `cooldown -= dt` while positive, then the contact test, then
   // activation only if the cooldown is <= 0 after that decrement (installed cooldown 0.0).
@@ -1634,9 +1943,10 @@ void World::stepGadgetContacts(double dt) {
     if (lev.cooldownRemaining > 0.0)
       lev.cooldownRemaining -= dt;
     const Lemming* contact = nullptr;
-    for (const Lemming& l : lemmings_) {
+    for (const auto* actor : hazardActors()) {
+      const auto& l = *actor;
       // Same eligibility as the legacy arm: a live walker, then the AABB + facing filter.
-      if (l.alive() && l.state == State::Walker && leverAccepts(lev, l)) {
+      if (l.alive() && !l.ratVictim && l.state == State::Walker && leverAccepts(lev, l)) {
         contact = &l;
         break;
       }
@@ -1651,11 +1961,12 @@ void World::stepGadgetContacts(double dt) {
   const auto padContact = [&](PressurePad& pad) {
     if (pad.state == 1 || setup_.terrain.width() <= 0)
       return;
-    for (const Lemming& l : lemmings_) {
+    for (const auto* actor : hazardActors()) {
+      const auto& l = *actor;
       // 0x431A59 scans the actor list, unlike a lever's facing predicate.
       // Clone actors have integer feet and no radial lane: use that same
       // feet point as other gadgets. All installed pad Z ranges include 0.
-      if (!l.alive() || pad.min[2] > 0.0 || pad.max[2] < 0.0)
+      if (!l.alive() || l.ratVictim || pad.min[2] > 0.0 || pad.max[2] < 0.0)
         continue;
       const double row = setup_.terrain.height() - 1 - l.y;
       double span = pad.max[0] - pad.min[0];
@@ -1674,9 +1985,11 @@ void World::stepGadgetContacts(double dt) {
     // Hand-built setups predate the serialized order list.
     for (Lever& lev : setup_.levers) leverContact(lev);
     for (PressurePad& pad : setup_.pressurePads) padContact(pad);
+    for (auto& sensor : setup_.occupancySensors) stepOccupancySensor(sensor, dt);
   } else {
     for (const auto& ref : setup_.gadgetContactOrder) {
-      if (ref.pressurePad) padContact(setup_.pressurePads.at(ref.index));
+      if (ref.sensor) stepOccupancySensor(setup_.occupancySensors.at(ref.index), dt);
+      else if (ref.pressurePad) padContact(setup_.pressurePads.at(ref.index));
       else leverContact(setup_.levers.at(ref.index));
     }
   }
@@ -1693,9 +2006,12 @@ void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool 
 
   stepNuke(segmentMs, tickBoundary);
   if (releaseEnabled) stepRelease(dt, tickBoundary, continueHatchesAfterTimeout);
+  const auto gateBefore = gateMotionSamples();
   for (std::size_t i = 0; i < lemmings_.size(); ++i)
     stepElapsed(lemmings_[i], tickBoundary);
+  stepRats(dt, tickBoundary);
   stepGadgetContacts(dt);
+  stepCounterGates(dt, gateBefore);
   // 0x4423D2 order: lemmings -> tagged triggers -> receivers (+0x1F70). A request written by a contact
   // above reaches its gate in this same update and its first raise step uses this segment's dt,
   // including a zero-length one. There is no separate gate clock.

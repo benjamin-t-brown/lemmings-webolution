@@ -9,44 +9,36 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- counter-gates-001: **ready** — Implement the crossing-count gates and their counters
-- evil-rats-001: **ready** — Simulate and draw the placed evil rats
-- refusal-sounds-001: **ready** — Play the metal refusal sounds for bash, mine and dig
-- music-001: **ready** — Play the installed frontend and level music
-- gadget-models-001: **ready** — Draw teleporters and speed pads with their animation
-- occupancy-sensors-001: **ready** — Connect the occupancy sensors to the gadgets they trigger
-- miner-axe-001: **ready** — Draw the miner's axe effect
-- explosion-decal-001: **ready** — Leave the scorch mark where a lemming explodes
 
 ## Recently completed queue entries
 
-- actor-zoom-scale-001: Scale lemmings with the camera zoom
-  Accepted: 2026-11-17T16:26:56.511424+00:00
-  Verification evidence: `build/agent-runs/20261117T161459-46052-1219c5c4/verification.log`
-  Verification evidence: `build\agent-runs\20261117T161459-46052-1219c5c4\verification.log`
-- digger-facing-001: Draw diggers with the camera-facing sprite
-  Accepted: 2026-11-17T16:39:32.852706+00:00
-  Verification evidence: `build/agent-runs/20261117T162656-46052-3997f21b/verification.log`
-  Verification evidence: `build\agent-runs\20261117T162656-46052-3997f21b\verification.log`
-- positional-audio-001: Pan and attenuate level sounds by where they happen on screen
-  Accepted: 2026-11-17T17:01:30.083097+00:00
-  Verification evidence: `build/agent-runs/20261117T163932-46052-e8344d8c/verification.log`
-  Verification evidence: `build\agent-runs\20261117T163932-46052-e8344d8c\verification.log`
-- asset-census-001: Census of installed game assets the clone never uses
-  Accepted: 2026-11-17T18:23:54.430712+00:00
-  Verification evidence: `build/agent-runs/20261117T174618-19536-7244bc87/verification.log`
-  Verification evidence: `build\agent-runs\20261117T174618-19536-7244bc87\verification.log`
-- digger-outward-001: Diggers face outward from the cylinder
-  Accepted: 2026-11-17T20:09:19.989973+00:00
-  Verification evidence: `build/agent-runs/20261117T195728-15108-5627269a/verification.log`
-  Verification evidence: `build\agent-runs\20261117T195728-15108-5627269a\verification.log`
+- music-001: Play the installed frontend and level music
+  Accepted: 2026-11-18T01:12:45.634073+00:00
+  Verification evidence: `build/agent-runs/20261118T010116-34136-cac56b1c/verification.log`
+  Verification evidence: `build\agent-runs\20261118T010116-34136-cac56b1c\verification.log`
+- gadget-models-001: Draw teleporters and speed pads with their animation
+  Accepted: 2026-11-18T01:34:19.529474+00:00
+  Verification evidence: `build/agent-runs/20261118T011245-34136-2c1b0618/verification.log`
+  Verification evidence: `build\agent-runs\20261118T011245-34136-2c1b0618\verification.log`
+- occupancy-sensors-001: Connect the occupancy sensors to the gadgets they trigger
+  Accepted: 2026-11-18T01:51:21.265879+00:00
+  Verification evidence: `build/agent-runs/20261118T013419-34136-74dc1585/verification.log`
+  Verification evidence: `build\agent-runs\20261118T013419-34136-74dc1585\verification.log`
+- miner-axe-001: Draw the miner's axe effect
+  Accepted: 2026-11-18T02:36:14.210500+00:00
+  Verification evidence: `build/agent-runs/20261118T022755-34136-91175e7c/verification.log`
+  Verification evidence: `build\agent-runs\20261118T022755-34136-91175e7c\verification.log`
+- explosion-decal-001: Leave the scorch mark where a lemming explodes
+  Accepted: 2026-11-18T03:10:23.531112+00:00
+  Verification evidence: `build/agent-runs/20261118T025649-55108-f3ec0c55/verification.log`
+  Verification evidence: `build\agent-runs\20261118T025649-55108-f3ec0c55\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-9a682cc6eacd43c8af3ab520ae3cfb95/result.json`
+- Result: `build/agent-runs/loop-0f62f6be7dd44a6f943cbeb0538406d3/result.json`
 - Status: **blocked**
-- Duration: 0h 11m 53s
-- Completed in this invocation: digger-outward-001
+- Duration: 0h 13m 36s
+- Completed in this invocation: explosion-decal-001
 - Reason: plan failed; inspect the saved logs
 
 ## Documentation handoff

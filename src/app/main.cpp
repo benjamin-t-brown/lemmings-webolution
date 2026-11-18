@@ -29,7 +29,7 @@
 //   --tile-detail    hi | low  (the cylinder skin's archive variant; hi is
 //                    what the retained originals were captured with)
 //   --no-depth       disable the software depth test (diagnostic)
-//   --no-audio       do not open an audio device or route gameplay sound cues
+//   --no-audio       do not open an audio device or play music/sound cues
 //   --flat           debug: unwrap the skin to 2D instead of the 3D view
 //   --sim            tick a sim::World (D3a's loadRetailLevel) instead of the
 //                     fixed injected-walker fixtures, and draw its live
@@ -318,6 +318,7 @@ void printHelp() {
             "Explode (blast), Chink (last three builder bricks), and Action (successful assignment). Changeop plays\n"
             "on skill/Nuke selection and provisionally on pause, speed and hatch-rate controls.\n"
             "Fluid entry, lever/pad activation and stored hazard attack samples also play.\n"
+            "Music loops in the frontend/map and levels, continues through pause, and restarts on Retry.\n"
             "Level effects pan by screen position and fade on the cylinder's back side; UI and Letsgo stay centred.\n"
             "Gain curves, supplemental triggers and repeated-SFX overlap are provisional.\n"
             "No claim of native audio fidelity. A missing audio\n"
@@ -446,6 +447,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       return 0;
     }
+    // Retry retains selectedLevel and skips the frontend window. Keep its
+    // level bed until the new level starts; do not briefly play menu music.
+#if WEBOLUTION_HAVE_SDL2
+    if (cues && !frontend->selectedLevel()) cues->playFrontendMusic();
+#endif
     auto selected = app::runFrontendWindow(*frontend, {args.frames, args.windowShot}, std::move(observer), sharedWindow);
     if (!selected) { std::fprintf(stderr, "frontend: %s\n", selected.error().c_str()); return 1; }
     if (!*selected) return 0; // closed or reached the requested frontend frame cap
@@ -477,6 +483,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       return 0;
     }
 #if WEBOLUTION_HAVE_SDL2
+    if (cues) {
+      cues->start(*library, runOptions.enableAudio && !args.noAudio);
+      cues->playFrontendMusic();
+    }
     app::SdlWindow presentation(scale);
     if (auto ready = presentation.ensure("Lemmings Webolution — conditional map base layer (SOURCE)"); !ready) {
       std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
@@ -544,6 +554,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::CrabPresentation> crabPresentation;
   std::optional<app::NamedHazardPresentation> namedHazardPresentation;
   std::optional<app::GravityPresentation> gravityPresentation;
+  std::optional<app::GadgetPresentation> gadgetPresentation;
   if (!args.sceneOff) {
     auto built = app::BackdropScene::build(*library, *blob, args.level);
     if (built) {
@@ -566,6 +577,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       auto gravity = backdrop->gravityPresentation(*blob);
       if (gravity) gravityPresentation.emplace(std::move(*gravity));
       else std::fprintf(stderr, "%s\n", gravity.error().c_str());
+      auto gadgets = backdrop->gadgetPresentation(*blob);
+      if (gadgets) {
+        gadgetPresentation.emplace(std::move(*gadgets));
+        backdrop->animateGadgets(*gadgetPresentation, 0.0);
+      } else { std::fprintf(stderr, "%s\n", gadgets.error().c_str()); return 1; }
       // Play start (0x004451E5 analogue): reseed from the application clock before the
       // first scenery draw of this level.
       backdrop->setRandom(&sceneryRandom().rng);
@@ -682,11 +698,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     world->setDeathObserver([&](const sim::Lemming& lemming, bool explosion,
         std::span<const std::array<int, 2>> removed) {
       scene->emitDeathParticles(lemming, explosion, removed, world->levelClockMs(),
-                                world->terrain().height(), *library);
+                                world->terrain().height(), *library, world->nukeRequested());
     });
     world->setTerrainCutObserver([&](const sim::Lemming& lemming,
         std::span<const std::array<int, 2>> removed) {
       scene->emitTerrainDebris(lemming, removed, world->levelClockMs(), world->terrain().height());
+    });
+    world->setMinerRefusalObserver([&](const sim::Lemming& lemming) {
+      scene->emitMinerAxe(lemming, world->levelClockMs(), world->terrain().height());
     });
     for (int i = 0; i < args.simTicks; ++i)
       world->tick();
@@ -744,6 +763,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       backdrop->setFluidState(std::move(fluid));
       if (crabPresentation) backdrop->setCrabStates(*crabPresentation, world->setup().crabs);
       if (namedHazardPresentation) backdrop->setNamedHazardStates(*namedHazardPresentation, world->setup().namedHazards);
+      if (gadgetPresentation) backdrop->animateGadgets(*gadgetPresentation, world->levelClockMs()/1000.0);
       if (leverPresentation) {
         std::vector<std::pair<int,int>> faces;
         for (const auto& lever : world->setup().levers)
@@ -759,7 +779,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     }
     // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
     // the terrain version moved since the last frame.
-    if (world && !args.noTerrainSync) scene->syncTerrain(world->terrain());
+    if (world && !args.noTerrainSync) {
+      scene->syncTerrain(world->terrain(), world->setup().counterGates);
+      scene->syncCounterGates(world->setup().counterGates);
+    }
   };
   std::vector<double> fluidDrownSceneDepth, pipeSceneDepth;
   bool hasPipes = false;
@@ -833,7 +856,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
              scene->render(target, frameCamera, geometryOptions, &*library);
              return;
            }
-           const auto revision = scene->terrainBlocksRebuilt();
+           const auto revision = scene->terrainBlocksRebuilt() + scene->counterGateRevision();
            if (!tubeCache || tubeTerrainRevision != revision || !sameCamera(*tubePose, frameCamera)) {
              if (!tubeCache || tubeCache->framebuffer().width != frameCamera.width ||
                  tubeCache->framebuffer().height != frameCamera.height)
@@ -878,6 +901,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
            if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
                app::BackdropScene::Stage::Secondary,
                app::ScopedFrameConsumption::observing() ? &spriteCoverage : nullptr);
+           if (world) scene->renderCounterGates(target, frameCamera, *library, world->setup().counterGates);
          });
     if (fluidDrowning) {
       // U2 PROVISIONAL: additive drowning is visible through its water, while
@@ -889,6 +913,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       options.fluidDrownSceneDepth = fluidDrownSceneDepth;
     }
     // R3: actors test against completed scenery, fluids and edited terrain.
+    scene->drawExplosionDecals(target, frameCamera);
     if (options.drawCellRoute && !options.composeActorsBeforeRoute)
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
     scene->drawDeathParticles(target, frameCamera, *library);
@@ -1010,7 +1035,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 #if WEBOLUTION_HAVE_SDL2
   // Frontend runs already started the adapter in runApplication (idempotent);
   // direct-level runs start it here, still once per process.
-  if (cues) cues->start(*library, runOptions.enableAudio && !args.noAudio);
+  if (cues) {
+    cues->start(*library, runOptions.enableAudio && !args.noAudio);
+    cues->playLevelMusic();
+  }
   app::SdlWindow localWindow(scale);
   auto& presentation = sharedWindow ? *sharedWindow : localWindow;
   if (auto ready = presentation.ensure(
@@ -1060,6 +1088,19 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       });
     }
   };
+  if (world && backdrop && gadgetPresentation) {
+    world->setGadgetObserver([&](sim::World::GadgetUse use, std::size_t index, const sim::Lemming& actor) {
+      const bool teleport = use != sim::World::GadgetUse::SpeedPad;
+      const auto sample = backdrop->triggerGadget(*gadgetPresentation, teleport, index,
+          use == sim::World::GadgetUse::TeleportArrival, static_cast<int>(actor.facing),
+          world->levelClockMs()/1000.0);
+      if (cues && !sample.empty()) {
+        const auto camera = app::buildCamera(cameraIntro.pose(controls.camera()));
+        const std::array<double,3> position{double(actor.x), double(terrainHeight-1-actor.y), .75};
+        cues->playGadgetSample(sample, audio::spatialSoundGains(camera, scene->soundWorldPosition(position, terrainHeight)));
+      }
+    });
+  }
   std::optional<Image> runtimeFont;
   app::LemmingAnimTracker lemmingAnim;
   app::LemmingMotionTracker lemmingMotion;

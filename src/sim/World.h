@@ -168,8 +168,29 @@ struct Lemming {
   // stepWalker.
   double stepBudgetSeconds = 0.0;
 
+  // Closing terrain gates raise actor+0x5D (0x4270DC). Consumed on the
+  // next actor update, like the original forced transition (0x42E340).
+  bool gateCrushed = false;
+  // Rat +3A0 retains this actor until its punch finishes (426414/408ECC).
+  bool ratVictim = false;
+
   bool alive() const { return state != State::Exited && state != State::Dead; }
-  bool active() const { return alive() && state != State::Splatter; }
+  bool active() const { return alive() && state != State::Splatter && !ratVictim; }
+};
+
+// Placed subclass actors (448550 -> 448630), outside the rescue population.
+struct EvilRat {
+  Lemming actor;
+  std::int16_t id = 0;
+  std::array<double, 3> initialPosition{};
+  bool storedFlag38 = false, renderEnabled = true;
+  bool initialFlip = false;
+  int pendingVictim = -1;
+  unsigned punch = 0, attacks = 0;
+  std::array<double, 4> punchDurations{0.48, 0.48, 0.48, 0.48};
+  double animationSeconds = 0.0;
+  double openDuration = 0.48;
+  double lane = 0.5;
 };
 
 // Where lemmings arrive and leave. Positions are in terrain cells.
@@ -305,10 +326,48 @@ struct PressurePad {
   std::vector<LeverMessage> messages;
 };
 
+// Tagged type 2: 0x43725A occupancy -> 0x437285/29A -> 0x4372AF.
+// Shares the existing registry with levers/pads; no separate gate link table.
+struct OccupancySensor {
+  int id = -1, state = 0;
+  bool enabled = true; // base +0x38; vt+4/vt+8 enable/disable updates
+  // +0xA4 is the FIRST overlapping actor pointer, not a population count.
+  // Clone identity: lemming index or -2-rat index; -1 means no contact.
+  int contactActor = -1;
+  std::array<double, 3> min{}, max{};
+  double cooldownSeconds = 0.0, cooldownRemaining = 0.0;
+  std::vector<LeverMessage> occupied, empty;
+};
+
 // The original updates tagged objects in stream order before fluid receivers.
 struct GadgetContactRef {
   bool pressurePad = false;
   std::size_t index = 0;
+  bool sensor = false;
+};
+
+// The movable TERRAIN gate (vt 0x4B0F00), not a FluidGate. 0x424187
+// reads [left,right,top,bottom,mode,request,quota,counterX,counterY,direction].
+// Mode 0 is switch-only: its counter fields are inactive (often CDCDCDCD).
+// Mode 1 counts vertical crossings, mode 2 horizontal crossings.
+struct CounterGate {
+  int id = -1;
+  int left = 0, right = 0, top = 0, bottom = 0; // original Y up, half-open
+  int mode = 0, request = 2, previousRequest = 0;
+  int quota = 0, count = 0, counterX = 0, counterY = 0, direction = 0;
+  double delay = 0.0;                         // +0xF0
+  double target = 1.0, progress = 1.0;        // +0x90 / +0x98; 0 open, 1 closed
+  bool collisionClosed = true;
+  std::array<double, 3> position{};             // audio snapshot, terrain Y down
+  bool hasCounter() const { return mode == 1 || mode == 2; }
+  int remaining() const { return std::clamp(quota - count, 0, 99); }
+  bool containsCell(int x, int originalY, int width) const;
+  void initialise(Terrain&);
+  void paintCollision(Terrain&, bool closed);
+  // 0x4270DC: advance at 3/sec; stamp/clear only after overshooting an end.
+  void animate(double dt, Terrain&);
+  // 0x426FEC: opening squares p; closing uses 1-(1-p)^2.
+  double surfaceFraction() const;
 };
 
 // lever-gates-impl-001: the fluid-zone receiver of vtable 0x004B1020 (ctor 0x00428680, reader
@@ -360,18 +419,18 @@ struct FluidGate {
 
 // What a lever message resolved to. The id table follows the base reader (0x00423310): every
 // constructed actor of ANY collection is stored at list[id] and a later construction wins.
-// Gates and the admitted named hazards have traced message semantics. Other
+// Gates, sensors and the admitted named hazards have traced message semantics. Other
 // classes stay diagnosed and are never interpreted as one of these targets.
-enum class ObjectClass : std::uint8_t { Gate, Other, NamedHazard };
+enum class ObjectClass : std::uint8_t { Gate, Other, NamedHazard, CounterGate, OccupancySensor };
 struct ObjectRef {
   ObjectClass cls = ObjectClass::Other;
-  int index = -1;                  // index into gates or namedHazards, by cls
+  int index = -1;                  // index into the class's LevelSetup collection
   const char* collection = "";    // loader collection name, for diagnostics
 };
 
 // Bookkeeping of the lever message fan-out (diagnostic and test visibility).
 struct LeverDispatchStats {
-  std::uint64_t delivered = 0;     // supported message applied to a gate/hazard
+  std::uint64_t delivered = 0;     // supported message applied to a gate/hazard/sensor
   std::uint64_t unresolved = 0;    // id slot empty (0x00433B2E skips it)
   std::uint64_t unsupported = 0;   // type 0/other types, special ids, non-gate targets
 };
@@ -416,16 +475,12 @@ inline constexpr bool kWitchGadgetInRetail = false;
 // docs/scratch/phase3-round22-forcef.md. Mutate-alone: set true.
 inline constexpr bool kForceFGadgetInRetail = false;
 
-// Axe sheet. READ round 23: string 0x004C0D6C registered via sprite
-// registrar FUN_00446040 (not SFX FUN_0041d7d0) to object+0x1c914 /
-// DAT_004E331C; store disp 0x0045E7D7; preload 0x0045EBEB; unload-family
-// 0x0045EEDC / 0x0045EEF7. Sole absolute ref: 0x00496E40 mov eax,
-// [DAT_004E331C] â†’ call FUN_00496d5b inside FUN_00496e39 (UI sprite bind
-// from FUN_004194f0 / level-UI init FUN_004188f6) â€” not SFX play helpers
-// FUN_0044535b / FUN_0044521b. SPRITES\AXE.SPR + TEXTURES\SHEETS\$AXE0.BMP;
-// no axe.a3d; no SOUNDS\AXE.WAV. LVL "Axe" hits are embedded name tables.
-// No lemming object/AABB/cell-bit/parallel-state path.
-// docs/scratch/phase3-round23-axe.md. Mutate-alone: set true.
+// Axe has no independent simulation gadget/AABB/cell-bit path. Correction
+// to round 23's UI-only attribution: miner refusal 418D75..418E5B constructs
+// a render-only child; 4194F0 -> 496E40 binds 4E331C (SPRITES/AXE.SPR),
+// and 4196C0 -> 493761 submits its draw. See asset-census-001 and
+// docs/scratch/miner-axe-001.md. The false flag is only about simulation;
+// the installed sprite effect is now drawn through TubeScene.
 inline constexpr bool kAxeGadgetInRetail = false;
 
 // Bubble cue. READ round 24: string 0x004C0C9C registered to
@@ -547,8 +602,11 @@ struct LevelSetup {
   std::vector<SpeedPad> speedPads;
   std::vector<Lever> levers;
   std::vector<PressurePad> pressurePads;
+  std::vector<OccupancySensor> occupancySensors;
+  std::vector<CounterGate> counterGates;
   std::vector<Crab> crabs;
   std::vector<NamedHazard> namedHazards;
+  std::vector<EvilRat> rats;
   std::vector<GadgetContactRef> gadgetContactOrder;
   // lever-gates-impl-001: world/level-owned receiver state (a reload builds a new LevelSetup,
   // so gate request/done/armed/height all restart). `objectIds` is the base-id lookup used by
@@ -1335,6 +1393,7 @@ public:
   const Terrain& terrain() const { return setup_.terrain; }
   Terrain& terrain() { return setup_.terrain; }
   const std::vector<Lemming>& lemmings() const { return lemmings_; }
+  const std::vector<EvilRat>& rats() const { return setup_.rats; }
   const LevelSetup& setup() const { return setup_; }
   const Rules& rules() const { return rules_; }
 
@@ -1395,6 +1454,14 @@ public:
   using TerrainCutObserver = std::function<void(const Lemming&,
       std::span<const std::array<int, 2>>)>;
   void setTerrainCutObserver(TerrainCutObserver observer) { terrainCutObserver_ = std::move(observer); }
+  // Presentation notification before a refused miner turns; no gameplay result.
+  using MinerRefusalObserver = std::function<void(const Lemming&)>;
+  void setMinerRefusalObserver(MinerRefusalObserver observer) { minerRefusalObserver_ = std::move(observer); }
+
+  // Presentation notification at existing contacts; never changes gadget rules.
+  enum class GadgetUse { TeleportDeparture, TeleportArrival, SpeedPad };
+  using GadgetObserver = std::function<void(GadgetUse, std::size_t, const Lemming&)>;
+  void setGadgetObserver(GadgetObserver observer) { gadgetObserver_ = std::move(observer); }
 
 private:
   std::size_t clearSkillBox(const Lemming&, int x, int y, int width, int height);
@@ -1443,10 +1510,22 @@ private:
   // Explicit-path lemming step: the full per-tick step on a tick-boundary update, otherwise
   // only the continuous fall/walk movement with this update's dt.
   void stepElapsed(Lemming& l, bool tickBoundary);
-  // Tagged lever/pad contacts AFTER every lemming moved, before receivers (0x4423D2).
+  // Tagged lever/pad/sensor contacts AFTER every lemming moved, before receivers (0x4423D2).
   void stepGadgetContacts(double dt);
+  void stepOccupancySensor(OccupancySensor& sensor, double dt);
+  // Movement samples keep integer-lattice crossings edge-triggered; standing
+  // still in the original's dt*speed strip must not spend a quota repeatedly.
+  struct GateMotion { int x, y; State state; bool active; };
+  std::vector<GateMotion> gateMotionSamples() const;
+  void stepCounterGates(double dt, std::span<const GateMotion> before);
+  bool consumeGateCrush(Lemming&);
   void stepCrabs(double dt);
   void stepNamedHazards(double dt);
+  void stepRats(double dt, bool tickBoundary);
+  void finishRatAttack(EvilRat& rat);
+  // Stable hazard identities: lemming index, or -2-rat index (-1 is none).
+  std::vector<Lemming*> hazardActors();
+  int hazardActorId(const Lemming* actor) const;
   // The facing/state filter of 0x00436D30 for one lever and one lemming.
   bool leverAccepts(const Lever& lev, const Lemming& l) const;
   // How far a floater still falls at `fallSpeed` after its umbrella opens:
@@ -1500,6 +1579,8 @@ private:
   std::vector<SoundEvent> cues_;
   DeathObserver deathObserver_;
   TerrainCutObserver terrainCutObserver_;
+  MinerRefusalObserver minerRefusalObserver_;
+  GadgetObserver gadgetObserver_;
 };
 
 }  // namespace webo::sim

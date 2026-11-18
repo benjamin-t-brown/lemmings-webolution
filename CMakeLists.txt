@@ -249,6 +249,7 @@ add_test(NAME scenebillboardsource COMMAND test_scenebillboardsource)
 add_executable(test_actorcompose
   src/__test__/test_actorcompose.cpp
   src/app/TubeScene.cpp
+  src/app/SceneRaster.cpp
   src/app/Camera.cpp
   src/app/Raster.cpp
   src/app/ActorSprite.cpp
@@ -759,6 +760,13 @@ if(WEBOLUTION_HAVE_SDL2 AND NOT EMSCRIPTEN)
   target_link_libraries(test_work_sound PRIVATE webolution_objects)
   add_test(NAME work_sound COMMAND test_work_sound)
   set_tests_properties(work_sound PROPERTIES TIMEOUT 10
+    ENVIRONMENT "SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+
+  # Short looping, scene-switch and SFX coexistence invariants; legacy.
+  add_executable(test_music src/__test__/test_music.cpp)
+  target_link_libraries(test_music PRIVATE webolution_objects)
+  add_test(NAME music COMMAND test_music)
+  set_tests_properties(music PROPERTIES TIMEOUT 20
     ENVIRONMENT "SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
   set(AUDIO_DEMO_SOURCES ${WEBOLUTION_GFX_SOURCES})
   list(REMOVE_ITEM AUDIO_DEMO_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/app/main.cpp")
@@ -1398,6 +1406,7 @@ add_test(NAME actorvisibility COMMAND test_actorvisibility)
 add_executable(test_clicktoassign
   src/__test__/test_clicktoassign.cpp
   src/app/TubeScene.cpp
+  src/app/SceneRaster.cpp
   src/app/Camera.cpp
   src/app/Raster.cpp
   src/app/ActorSprite.cpp
@@ -1569,6 +1578,48 @@ if(BUILD_TESTING AND WEBOLUTION_HAVE_SDL2)
   add_test(NAME positional_sound COMMAND test_positional_sound)
   set_tests_properties(positional_sound PROPERTIES ENVIRONMENT
     "SDL_AUDIODRIVER=dummy;WEBOLUTION_GAME_DIR=${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short gate state, crossing, collision and installed-layout invariants; legacy.
+  add_executable(test_counter_gates src/__test__/test_counter_gates.cpp)
+  target_link_libraries(test_counter_gates PRIVATE webolution_app webolution_objects)
+  add_test(NAME counter_gates COMMAND test_counter_gates "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short rat contact ownership and rescue-accounting invariants; legacy.
+  add_executable(test_evil_rats src/__test__/test_evil_rats.cpp)
+  target_link_libraries(test_evil_rats PRIVATE webolution_app webolution_objects)
+  add_test(NAME evil_rats COMMAND test_evil_rats "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short gadget clip/notification invariants, intentionally legacy.
+  add_executable(test_gadget_models src/__test__/test_gadget_models.cpp)
+  target_link_libraries(test_gadget_models PRIVATE webolution_app webolution_objects)
+  add_test(NAME gadget_models COMMAND test_gadget_models "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short occupancy/cooldown/message invariants, intentionally legacy.
+  add_executable(test_occupancy_sensors src/__test__/test_occupancy_sensors.cpp)
+  target_link_libraries(test_occupancy_sensors PRIVATE webolution_objects)
+  add_test(NAME occupancy_sensors COMMAND test_occupancy_sensors "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short actor-child view/occlusion invariants, intentionally legacy.
+  add_executable(test_miner_axe src/__test__/test_miner_axe.cpp)
+  target_link_libraries(test_miner_axe PRIVATE webolution_app webolution_objects)
+  add_test(NAME miner_axe COMMAND test_miner_axe "${WEBOLUTION_GAME_DIR}")
+endif()
+
+if(BUILD_TESTING AND WEBOLUTION_GAME_DIR)
+  # Short surface-decal lifecycle/occlusion invariants; intentionally legacy.
+  add_executable(test_explosion_decal src/__test__/test_explosion_decal.cpp)
+  target_link_libraries(test_explosion_decal PRIVATE webolution_app webolution_objects)
+  add_test(NAME explosion_decal COMMAND test_explosion_decal "${WEBOLUTION_GAME_DIR}")
 endif()
 
 include(cmake/test_tiers.cmake)

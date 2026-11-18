@@ -173,7 +173,7 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
     // and do not let those new voices steal slots from existing effects.
     constexpr int kMaxVoices = 32;
     const auto additiveVoices = std::count_if(voices_.begin(), voices_.end(),
-        [](const Voice& v) { return v.overlap == Overlap::Add; });
+        [](const Voice& v) { return !v.music && v.overlap == Overlap::Add; });
     if (overlap == Overlap::Add && additiveVoices >= kMaxVoices) {
       for (auto vit = voices_.begin(); vit != voices_.end(); ++vit) {
         if (!vit->music && vit->overlap == Overlap::Add) {

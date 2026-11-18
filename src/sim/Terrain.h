@@ -51,6 +51,9 @@ public:
   bool solid(int x, int y) const { return isSolid(at(x, y)); }
 
   void set(int x, int y, Material m);
+  // Gate OR 0x403 / AND 0xFFFFFBFC. Other flag planes remain intact;
+  // imported residual words retain their original landability on clear.
+  void setGateCollision(int x, int y, bool closed);
 
   // Counts every `set`, which is how every clear/fill/crater reaches `cells_`. The
   // level renderer compares it with the last value it drew to skip frames on which
@@ -219,6 +222,7 @@ private:
   int height_ = 0;
   std::uint64_t version_ = 0;
   std::vector<Material> cells_;
+  std::vector<std::uint32_t> gateResidualWords_;
   // One byte per cell, non-zero where a blocker's field is stamped. Allocated
   // lazily: a level with no blocker on it costs nothing.
   std::vector<std::uint8_t> blocker_;

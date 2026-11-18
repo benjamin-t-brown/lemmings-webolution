@@ -43,6 +43,15 @@ void Terrain::set(int x, int y, Material m) {
   ++version_;
 }
 
+void Terrain::setGateCollision(int x, int y, bool closed) {
+  if (cells_.empty() || y < 0 || y >= height_) return;
+  const auto word = gateResidualWords_.empty() ? 0u : gateResidualWords_[index(x, y)];
+  // 0x80 inhibits landability even after OR 0x403, as in CollisionGrid::solid.
+  const auto material = (word & kCellNotLandable) ? Material::Empty :
+      closed ? Material::Steel : word ? Material::Earth : Material::Empty;
+  if (at(x, y) != material) set(x, y, material);
+}
+
 bool Terrain::blockerField(int x, int y) const {
   if (blocker_.empty() || y < 0 || y >= height_)
     return false;
@@ -373,10 +382,12 @@ Terrain Terrain::fromCollisionGrid(const CollisionGrid& grid) {
   // retail mask and those coordinates share one axis. Hand-built test
   // terrains are untouched.
   Terrain t(grid.width, grid.height);
+  t.gateResidualWords_.resize(static_cast<std::size_t>(grid.width) * grid.height);
   for (int y = 0; y < grid.height; ++y) {
     const int destY = grid.height - 1 - y;
     for (int x = 0; x < grid.width; ++x) {
       const std::uint32_t word = grid.at(x, y);
+      t.gateResidualWords_[t.index(x, destY)] = word & ~0x403u;
       // Round 9: 0x8000 is the anti-grav pad bit (kCellFlag0x8000). It can
       // sit on a solid cell (typical pad word 0x8003) or, rarely, alone; the
       // walk probe tests the bit, not solidity of that word beyond the

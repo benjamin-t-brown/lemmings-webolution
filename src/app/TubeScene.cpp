@@ -16,6 +16,7 @@
 #include "assets/SurfaceMesh.h"
 #include "gfx/SpriteView.h"
 #include "gfx/TilePosition.h"
+#include "lemmings/compiled_level.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -71,6 +72,62 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     if (scene.collision_.cylinderExtent > 0.0)
       scene.cylinderExtent_ = scene.collision_.cylinderExtent;
   }
+  if (!levelBytes.empty()) try {
+    const auto level = lemmings::read_compiled_level(
+        {reinterpret_cast<const std::uint8_t*>(levelBytes.data()), levelBytes.size()}, false);
+    // 4082B6 -> 43B31E selects index 0 of the fifth name table. The second
+    // entry (~splat2) has no traced producer; never substitute it.
+    if (!level.prefix.fifth_names.empty()) {
+      const auto name = levelTextureAssetName(level.prefix.fifth_names.front());
+      if (auto image = loadTexture(lib, name))
+        scene.explosionTexture_ = {image->width, image->height, std::move(image->rgba)};
+      else scene.missing_.push_back(name + ": " + image.error());
+    }
+    for (const auto& t : level.world.integer_triples)
+      scene.counterGateCoordinates_.push_back({static_cast<int>(t[0]), static_cast<int>(t[1]), static_cast<int>(t[2])});
+    const auto points = [](int first, int last, int stride) {
+      std::vector<int> out{first};
+      for (int p = (first / stride + 1) * stride; p < last; p += stride) out.push_back(p);
+      if (last != first) out.push_back(last);
+      return out;
+    };
+    // 0x42727C -> 0x43A1C6: gate initialisation resolves each (x,y,pool-index)
+    // record, creating one only when absent. Gate-bearing installed levels
+    // already contain these records; earlier no-gate samples had none.
+    for (const auto& e : level.gadgets.entities_424187) {
+      const int left = static_cast<int>(e.values[0]), right = static_cast<int>(e.values[1]);
+      const int top = static_cast<int>(e.values[2]), bottom = static_cast<int>(e.values[3]);
+      for (const int x : points(left, right, 8)) for (const int y : points(bottom, top, 16)) {
+        const int cx = x & 255;
+        auto it = std::find_if(scene.counterGateCoordinates_.begin(), scene.counterGateCoordinates_.end(),
+            [&](const auto& t) { return t[0] == cx && t[1] == y; });
+        std::int32_t index;
+        if (it != scene.counterGateCoordinates_.end()) index = (*it)[2];
+        else {
+          const auto v = cylinderTemplateVertex(mesh, cx, y, 1, static_cast<int>(mesh.faceCount));
+          if (!v) continue;
+          index = static_cast<std::int32_t>(scene.mesh_.surface.size());
+          scene.mesh_.surface.push_back(*v);
+          scene.counterGateCoordinates_.push_back({cx, y, index});
+          // The clone's mesh key at the cylinder's right edge is 256.
+          // Alias it to the same movable vertex as wrapped column zero.
+        }
+        if (cx == 0 && std::none_of(scene.counterGateCoordinates_.begin(), scene.counterGateCoordinates_.end(),
+            [&](const auto& t) { return t[0] == 256 && t[1] == y; }))
+          scene.counterGateCoordinates_.push_back({256, y, index});
+      }
+      // Keep the gate topology even when its live collision is clear. At
+      // progress zero these faces retract onto the inner cylinder.
+      for (int x = left; x < right; ++x) for (int y = bottom; y < top; ++y) {
+        if (y >= 0 && y < scene.collision_.height && scene.haveCollision_)
+          scene.collision_.cells[static_cast<std::size_t>(y) * scene.collision_.width + (x & 255)] |= 0x403u;
+      }
+    }
+  } catch (const std::invalid_argument& e) {
+    // TubeScene also admits partial diagnostic inputs. RetailLevel is the
+    // production format authority; do not impose a new admission rule here.
+    scene.missing_.push_back(std::string("gate coordinates: ") + e.what());
+  }
 
   const auto loadBlock = [&](const std::vector<std::string>& names, bool outer,
                              std::vector<Tile>& into, std::size_t& count) {
@@ -104,7 +161,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
   // The per-cell mesh the engine builds at level load. A failure is not a scene
   // failure: it means this level's stored key table does not answer the rule.
   if (scene.haveCollision_ && !grid0.empty()) {
-    if (auto built = buildCellMeshes(grid0, {}, scene.collision_, mesh.surface.size())) {
+    if (auto built = buildCellMeshes(grid0, scene.counterGateCoordinates_, scene.collision_, scene.mesh_.surface.size())) {
       scene.cellMesh_ = std::move(*built);
     } else {
       scene.missing_.push_back(std::format("cell mesh: {}", built.error()));
@@ -193,8 +250,8 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
   // READ: loader 4437F6..44389D registers these categories in this order;
   // constructor 42DF75..42DF89 binds 4E335C[sheetType] to actor+128.
   constexpr const char* names[]{"SPRITES\\LEMMINGSHI.SPR", "SPRITES\\LEMMINGSWATERHI.SPR",
-                                "SPRITES\\LEMMINGSACIDHI.SPR"};
-  for (int type = 0; type < 3; ++type) {
+                                "SPRITES\\LEMMINGSACIDHI.SPR", "SPRITES\\EVILRATHI.SPR"};
+  for (int type = 0; type < 4; ++type) {
     if (auto sprites = loadSpriteSheet(lib, names[type])) {
       scene.lemmingSprites_[type] = std::move(*sprites);
       scene.haveLemmingSprites_[type] = true;
@@ -207,6 +264,9 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
 
   if (auto bubbles = loadSpriteSheet(lib, "SPRITES\\BUBBLES.SPR"))
     scene.bubbleSprites_ = std::move(*bubbles);
+  // READ 496E40 binds 4E331C; 4196C0 -> 493761 submits the live child.
+  if (auto axe = loadSpriteSheet(lib, "SPRITES\\AXE.SPR"))
+    scene.axeSprites_ = std::move(*axe);
 
   scene.rewirePoseLevel();
   return scene;
@@ -488,8 +548,21 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     // at phase 0.75's normal; half that sector is 3/64 of a turn.
     phase += 3.0 / 64.0;
   }
-  const std::size_t temporalIndex =
-      static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
+  std::size_t temporalIndex = static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
+  if (injected.clipSeconds >= 0.0) {
+    ActorAnimClockState clock;
+    clock.loopAtEnd = injected.clipLoops;
+    const double duration = 0.06 * walkSprite->animations.size() / walkSprite->rate;
+    double seconds = injected.clipSeconds;
+    if (duration > 0.0 && std::isfinite(duration)) {
+      if (clock.loopAtEnd && seconds > duration) {
+        seconds = std::fmod(seconds, duration);
+        if (seconds == 0.0) seconds = duration;
+      } else if (!clock.loopAtEnd) seconds = std::min(seconds, duration + 0.06);
+    }
+    temporalIndex = advanceActorAnimClock(clock,
+        {int(walkSprite->animations.size()), walkSprite->rate}, seconds).temporalIndex;
+  }
   if (temporalIndex >= walkSprite->animations.size())
     return std::nullopt;
   const auto& temporal = walkSprite->animations[temporalIndex];
@@ -743,11 +816,132 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
 }
 
 void TubeScene::advanceDeathParticles(std::uint64_t clockMs) {
-  if (deathParticles_.empty()) return;
   deathClockMs_ = clockMs;
+  std::erase_if(explosionDecals_, [&](const ExplosionDecal& d) {
+    return clockMs >= d.bornMs && clockMs - d.bornMs >= d.lifetimeMs;
+  });
   std::erase_if(deathParticles_, [&](const DeathParticle& p) {
     return clockMs >= p.bornMs && (clockMs - p.bornMs) / 1000.0 >= p.lifetime;
   });
+}
+
+void TubeScene::emitExplosionDecal(const sim::Lemming& lemming,
+    std::uint64_t clockMs, int terrainHeight, bool nukeActive) {
+  if (explosionTexture_.rgba.empty() || !havePoseLevel_) return;
+  rewirePoseLevel();
+  const auto origin = terrainSampleFromLemming(lemming, terrainHeight);
+  // 408227 adds (1,1.5); 43B31E uses (-5.5,-4.5)..(2.5,3.5).
+  constexpr double size = 8.0;
+  const double left = origin.x - 4.5, bottom = origin.y - 3.0;
+  const double right = left + size, top = bottom + size;
+  const double clippedBottom = std::max(0.0, bottom);
+  const double clippedTop = std::min(double(mesh_.faceCount), top);
+  if (clippedBottom >= clippedTop) return;
+  const auto split = [](double lo, double hi, int stride) {
+    const double seam = (std::floor(lo / stride) + 1) * stride;
+    return std::array{lo, std::min(seam, hi), hi};
+  };
+  const auto xs = split(left, right, 8);
+  const auto ys = split(clippedBottom, clippedTop, 16);
+  ExplosionDecal decal;
+  decal.bornMs = clockMs;
+  // 43B31E reads the level's Nuke flag (4CBB40, set at 444AB1).
+  // Sampling it at creation preserves the lifetime of marks already drawn.
+  decal.lifetimeMs = nukeActive ? 3000 : 20000;
+  for (std::size_t y = 1; y < ys.size(); ++y) {
+    if (ys[y] == ys[y - 1]) continue;
+    for (std::size_t x = 1; x < xs.size(); ++x) {
+      if (xs[x] == xs[x - 1]) continue;
+      auto& patch = decal.patches[decal.patchCount++];
+      const std::array<std::array<double, 2>, 4> corners{{
+          {xs[x - 1], ys[y - 1]}, {xs[x - 1], ys[y]},
+          {xs[x], ys[y]}, {xs[x], ys[y - 1]}}};
+      for (std::size_t i = 0; i < corners.size(); ++i) {
+        // 43FCAA -> 43D56C maps to the cylinder template at Z=0 (inner
+        // shell), split at 8x16 seams by 441E26. No terrain is modified.
+        const auto [column, row] = corners[i];
+        const double wrappedColumn = column - std::floor(column / 256.0) * 256.0;
+        const auto p = actorPoseFromCylinderSample(poseLevel_, {wrappedColumn, row, 0}, 1);
+        patch.corners[i] = {p.modelPosition[0], p.modelPosition[1], p.modelPosition[2]};
+        patch.uv[i] = {(column - left) / size, (top - row) / size};
+      }
+    }
+  }
+  // PROVISIONAL clone cap, in whole marks rather than the native shared
+  // 128-segment pool (441B17). One per explosion even during a full nuke;
+  // no asset reads or geometry construction in the frame pass.
+  constexpr std::size_t maxDecals = 256;
+  if (explosionDecals_.size() == maxDecals) explosionDecals_.erase(explosionDecals_.begin());
+  explosionDecals_.push_back(decal);
+}
+
+void TubeScene::drawExplosionDecals(Raster& raster, const CameraBasis& camera) const {
+  if (explosionDecals_.empty()) return;
+  SceneRgbaFramebuffer fb;
+  fb.width = camera.width;
+  fb.height = camera.height;
+  fb.rgb = raster.mutableFramebuffer().rgb;
+  // 424290 mode 2 -> 44026F -> 414D80: ONE/ONE. ~ texture flags disable
+  // alpha test (47261F). PROVISIONAL clone Less/no-write surface policy:
+  // scenery occludes the mark; faded/black texels never occlude later actors.
+  const SceneRasterOptions options{SceneFilter::Linear, SceneAddress::Clamp,
+      SceneAlphaFunction::Disabled, 0, true, SceneBlendFactor::One,
+      SceneBlendFactor::One, SceneDepthFunction::Less, false,
+      SceneShade::Flat, SceneRgbOperation::Modulate, SceneAlphaOperation::SelectTexture, 0.5, 0.5};
+  for (const auto& decal : explosionDecals_) {
+    const auto age = deathClockMs_ >= decal.bornMs ? deathClockMs_ - decal.bornMs : 0;
+    if (age >= decal.lifetimeMs) continue;
+    // 43B419 gives every vertex the same RGB = 32 * remaining / initial.
+    const double fade = 32.0 * (decal.lifetimeMs - age) / decal.lifetimeMs;
+    for (std::size_t q = 0; q < decal.patchCount; ++q) {
+      const auto& patch = decal.patches[q];
+      std::array<SceneRasterVertex, 4> v;
+      bool visible = true;
+      for (std::size_t i = 0; i < v.size(); ++i) {
+        std::array<double, 4> p;
+        if (!project(camera, patch.corners[i], p)) {
+          visible = false;
+          break;
+        }
+        // 43FA93 temporarily adds 4B15B8 to software bias. Its conversion
+        // to clone view-depth units is provisional; separate coplanar skin.
+        v[i] = {p[0], p[1], p[2] - 0.0012, p[3], {fade, fade, fade, 255},
+                patch.uv[i][0], patch.uv[i][1]};
+      }
+      if (!visible) continue;
+      for (const auto ids : {std::array<int,3>{0,1,2}, std::array<int,3>{0,2,3}})
+        (void)rasterizeSceneTriangle(fb, raster.mutableDepthBuffer(), explosionTexture_,
+            {v[ids[0]],v[ids[1]],v[ids[2]]}, options);
+    }
+  }
+}
+
+void TubeScene::emitMinerAxe(const sim::Lemming& lemming,
+    std::uint64_t clockMs, int terrainHeight) {
+  // READ 418D75..418E5B constructs one Axe only after a protected-cell
+  // refusal. Normal mine SPR frames already include the held pickaxe.
+  if (axeSprites_.find("axe") == nullptr) return;
+  advanceDeathParticles(clockMs);
+  deathClockMs_ = clockMs;
+  constexpr std::size_t maxParticles = 4096;
+  if (deathParticles_.size() >= maxParticles) deathParticles_.erase(deathParticles_.begin());
+  DeathParticle p;
+  p.origin = terrainSampleFromLemming(lemming, terrainHeight);
+  p.verticalDir = lemming.verticalDir < 0 ? -1 : 1;
+  p.facing = int(lemming.facing);
+  // PROVISIONAL clone-local ballistic adapter. Native 49356B uses random
+  // (6*r, 12+5*r, 6*r) transformed by the emitter basis; 419C50 advances
+  // position/velocity. Do not transplant its model units into terrain cells.
+  p.origin.y += p.verticalDir;
+  p.vx = p.facing * 3.0;
+  p.vy = p.verticalDir * 12.0;
+  p.gravity = -p.verticalDir * 32.0;
+  p.bornMs = clockMs;
+  // 418EC9..418EDA -> 419590 sets base life 4.5, variation 0;
+  // 419B70 stores it in child+30, 419C50 subtracts elapsed seconds.
+  p.lifetime = 4.5;
+  p.minerAxe = true;
+  deathParticles_.push_back(p);
 }
 
 std::uint32_t TubeScene::terrainDebrisMaterial(
@@ -827,9 +1021,9 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
 
 void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
     std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
-    int terrainHeight, const AssetLibrary& lib) {
+    int terrainHeight, const AssetLibrary& lib, bool nukeActive) {
   advanceDeathParticles(clockMs);
-  deathClockMs_ = clockMs;
+  if (explosion) emitExplosionDecal(lemming, clockMs, terrainHeight, nukeActive);
   if (!deathSpritesLoaded_) {
     deathSpritesLoaded_ = true;
     if (auto bits = loadSpriteSheet(lib, "SPRITES\\BITS.SPR")) deathSprites_ = std::move(*bits);
@@ -925,7 +1119,7 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
     if (sample.x < 0) sample.x += 256.0;
     if (sample.y < 0 || sample.y >= poseLevel_.gridHeight ||
         !actorSubmissionVisible(sample.x, sample.z, true, bounds)) continue;
-    const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, 1);
+    const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, p.facing);
     if (p.terrainChunk) {
       // Rigid rotation in model units: rotating the slab parameter itself
       // would stretch the piece because one slab is the whole tube thickness.
@@ -976,23 +1170,58 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
       }
       continue;
     }
-    if (p.piece >= 0 && std::size_t(p.piece) < deathSprites_.sprites.size()) {
-      const auto& clip = deathSprites_.sprites[p.piece];
+    const Sprite* particleClip = p.minerAxe ? axeSprites_.find("axe") :
+        (p.piece >= 0 && std::size_t(p.piece) < deathSprites_.sprites.size() ?
+            &deathSprites_.sprites[p.piece] : nullptr);
+    if (particleClip) {
+      const auto& clip = *particleClip;
       if (!clip.animations.empty()) {
         // PROVISIONAL: use stored strip rate when positive, otherwise 12 fps.
         const double rate = clip.rate > 0 && std::isfinite(clip.rate) ? clip.rate : 12.0;
-        const auto index = std::size_t((deathClockMs_ - p.bornMs) / 1000.0 * rate) % clip.animations.size();
+        const double seconds = (deathClockMs_ - p.bornMs) / 1000.0;
+        // Axe uses the recovered 60 ms controller strip clock (419780 ->
+        // 496C84). Phase/spin-axis adaptation is provisional; debris retains
+        // its accepted rate policy. Both use the existing level clock.
+        const auto index = std::size_t(seconds * rate / (p.minerAxe ? .06 : 1.0)) %
+            clip.animations.size();
         const auto& entry = clip.animations[index];
         if (!entry.frames.empty()) {
-          const auto& frame = entry.frames.front();
+          gfx::SpriteViewSelection selection{};
+          if (p.minerAxe) {
+            const auto scores = gfx::spriteViewScores(
+                {pose.modelPosition[0]-camera.eyeWorld[0],pose.modelPosition[1]-camera.eyeWorld[1],
+                 pose.modelPosition[2]-camera.eyeWorld[2]},
+                {pose.basis[0],pose.basis[1],pose.basis[2]},0.0);
+            selection = gfx::selectSpriteView(scores[0],scores[1],entry.frames.size(),false);
+          }
+          if (selection.index >= entry.frames.size()) continue;
+          auto frame = entry.frames[selection.index];
           auto texture = loadTexture(lib, sheetAssetName(frame.sheet));
-          auto box = actorSpritePlacement(frame, pose.modelPosition, camera, false, -1);
+          auto box = actorSpritePlacement(frame, pose.modelPosition, camera, selection.mirrored, -1);
           if (texture && box) {
             *box = actorSpriteGravityPlacement(*box, p.verticalDir);
+            if (p.minerAxe && (frame.uRight > 1.0 || frame.uBottom > 1.0)) {
+              // 16/40 installed AXE.SPR directional records retain pixel UVs;
+              // the other 24 are normalized. Convert only those raw records
+              // using the decoded atlas, not a 31..56-as-0..1 clamped edge.
+              frame.uLeft = double(frame.left) / texture->width;
+              frame.uRight = double(frame.right) / texture->width;
+              frame.uTop = double(frame.top) / texture->height;
+              frame.uBottom = double(frame.bottom) / texture->height;
+            }
             std::fill(overlay.rgba.begin(), overlay.rgba.end(), 0);
-            if (drawActorSprite(overlay, frame, *texture, *box, false, p.colour, true,
-                                p.verticalDir < 0) &&
-                clipActorToScene(overlay, *box, depth)) {
+            auto colour = p.colour;
+            if (p.minerAxe) {
+              if (auto light = actorLightTintAt(actorLight_,pose.modelPosition[0],pose.modelPosition[1]))
+                colour = *light;
+            }
+            const ActorOcclusionPlane plane(camera,pose.modelPosition);
+            const auto drawn = drawActorSprite(overlay, frame, *texture, *box,
+                selection.mirrored, colour, true, p.verticalDir < 0);
+            if (drawn &&
+                clipActorToScene(overlay, *box, depth, p.minerAxe ? &plane : nullptr)) {
+              if (p.minerAxe && haveCollision_)
+                clipBodyFootprint(overlay,*box,plane,camera,mesh_,collision_);
               const double z = actorPhysicalDepth(*box,camera.width);
               for (int y = std::max(0,int(std::ceil(box->top)));
                    y < std::min(buffer.height,int(std::ceil(box->bottom))); ++y)
@@ -1000,7 +1229,8 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
                      x < std::min(buffer.width,int(std::ceil(box->right))); ++x) {
                   const auto at = std::size_t(y)*buffer.width+x;
                   auto& alpha = overlay.rgba[at*4+3];
-                  if (actorSpriteAlphaTestPasses(alpha) && !actors.submit(at,z,owner)) alpha=0;
+                  const double pixelZ = p.minerAxe ? plane.depthAt(x+.5,y+.5) : z;
+                  if (actorSpriteAlphaTestPasses(alpha) && !actors.submit(at,pixelZ,owner)) alpha=0;
                 }
               compositeActorOverlay(raster, overlay, false);
             }
@@ -1009,6 +1239,7 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
         }
       }
     }
+    if (p.minerAxe) continue; // missing art is not a generic coloured debris chip
     std::array<double, 4> projected;
     if (!project(camera, {pose.modelPosition[0], pose.modelPosition[1], pose.modelPosition[2]}, projected))
       continue;
@@ -1452,7 +1683,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
 //     brick is drawn with its block's tile material, and the frame on which the original
 //     redraws. What would settle it: an original capture of a bomber crater and a builder
 //     staircase compared with the clone frame (not run here).
-void TubeScene::syncTerrain(const sim::Terrain& terrain) {
+void TubeScene::syncTerrain(const sim::Terrain& terrain, std::span<const sim::CounterGate> gates) {
   if (terrainFailed_ || !haveCollision_ || cellMesh_.cells.empty() || poseGrid0_.empty() ||
       terrain.empty() || terrain.width() != collision_.width ||
       terrain.height() != collision_.height)
@@ -1476,13 +1707,20 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain) {
   std::size_t changed = 0;
   for (int y = 0; y < h; ++y) {
     for (int x = 0; x < w; ++x) {
-      const bool now = terrain.solid(x, h - 1 - y);
+      bool now = terrain.solid(x, h - 1 - y);
+      const bool gateCell = std::any_of(gates.begin(), gates.end(),
+          [&](const auto& g) { return g.containsCell(x, y, w); });
+      // Gates move the existing surface pool, independently of the collision
+      // mask (0x42727C/0x426FEC). Keep their closed topology so opening can
+      // retract it to the inner cylinder instead of deleting/re-creating it.
+      if (gateCell) now = !(collision_.at(x, y) & kCellNotLandable);
       std::uint8_t& was = meshedSolid_[static_cast<std::size_t>(y) * w + x];
       if (now == (was != 0))
         continue;
       was = now ? 1 : 0;
       ++changed;
-      collision_.cells[static_cast<std::size_t>(y) * w + x] = now ? kCellSolid : 0u;
+      collision_.cells[static_cast<std::size_t>(y) * w + x] =
+          gateCell ? (collision_.at(x, y) | 0x403u) : now ? kCellSolid : 0u;
       // A block's gap lists read its neighbours, so the cells around the edit are queued too.
       for (int dy = -1; dy <= 1; ++dy)
         for (int dx = -1; dx <= 1; ++dx) {
@@ -1527,7 +1765,7 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain) {
   }
 
   const std::vector<std::pair<int, int>> blocks(dirty.begin(), dirty.end());
-  if (auto status = rebuildCellMeshCells(cellMesh_, editKeys_, {}, collision_,
+  if (auto status = rebuildCellMeshCells(cellMesh_, editKeys_, counterGateCoordinates_, collision_,
                                          mesh_.surface.size(), blocks);
       !status) {
     terrainError_ = status.error();
@@ -1537,6 +1775,83 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain) {
   terrainUnresolved_ = cellMesh_.rebuildUnresolved;
   terrainCellsChanged_ += changed;
   terrainBlocksRebuilt_ += blocks.size();
+}
+
+void TubeScene::syncCounterGates(std::span<const sim::CounterGate> gates) {
+  if (gates.empty()) return;
+  std::vector<double> fractions;
+  for (const auto& g : gates) fractions.push_back(g.surfaceFraction());
+  if (fractions == counterGateFractions_ && counterGateMeshedBlocks_ == terrainBlocksRebuilt_) return;
+  counterGateFractions_ = fractions;
+  counterGateMeshedBlocks_ = terrainBlocksRebuilt_;
+  ++counterGateRevision_;
+  for (std::size_t i = 0; i < gates.size(); ++i) {
+    const auto& g = gates[i];
+    const auto inside = [&](int x, int y) {
+      return y >= g.bottom && y <= g.top &&
+          collision_.width > 0 && (x - g.left + collision_.width) % collision_.width <= g.right - g.left;
+    };
+    const auto place = [&](std::uint32_t index, int x, int y) {
+      if (index >= mesh_.surface.size() || !inside(x, y)) return;
+      const auto a = cylinderTemplateVertex(mesh_, x, y, 0, static_cast<int>(mesh_.faceCount));
+      const auto b = cylinderTemplateVertex(mesh_, x, y, 1, static_cast<int>(mesh_.faceCount));
+      if (!a || !b) return;
+      mesh_.surface[index] = {a->x + (b->x - a->x) * fractions[i],
+                              a->y + (b->y - a->y) * fractions[i],
+                              a->z + (b->z - a->z) * fractions[i]};
+    };
+    // The original binds these exact extra-vertex indices. They can alias
+    // keys used by several faces: mutate the shared vertex, not a decal.
+    for (const auto& t : counterGateCoordinates_)
+      place(t[2], static_cast<int>(t[0]), static_cast<int>(t[1]));
+  }
+}
+
+void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
+    const AssetLibrary& lib, std::span<const sim::CounterGate> gates) {
+  if (std::none_of(gates.begin(), gates.end(), [](const auto& g) { return g.hasCounter(); })) return;
+  if (!counterTexturesLoaded_) {
+    counterTexturesLoaded_ = true;
+    for (int i = 0; i < 11; ++i) {
+      const auto name = i == 10 ? std::string("TEXTURES\\^LIMIT_PANEL.BMP") :
+                                std::format("TEXTURES\\_LIMIT{}.BMP", i);
+      if (auto image = loadTexture(lib, name))
+        counterTextures_[i] = {image->width, image->height, std::move(image->rgba)};
+      else missing_.push_back(name + ": " + image.error());
+    }
+  }
+  rewirePoseLevel();
+  SceneRgbaFramebuffer fb;
+  fb.width = camera.width; fb.height = camera.height; fb.rgb = raster.mutableFramebuffer().rgb;
+  const SceneRasterOptions options{SceneFilter::Linear, SceneAddress::Clamp,
+      SceneAlphaFunction::StrictGreater, 0, true, SceneBlendFactor::SrcAlpha,
+      SceneBlendFactor::InvSrcAlpha, SceneDepthFunction::Less, true,
+      SceneShade::Gouraud, SceneRgbOperation::Modulate, SceneAlphaOperation::SelectTexture, 0.5, 0.5};
+  const auto quad = [&](double x, double y, double w, double h, int texture, double slab) {
+    const auto& image = counterTextures_[texture];
+    if (image.rgba.empty()) return;
+    std::array<SceneRasterVertex, 4> v;
+    const std::array<std::array<double, 2>, 4> uv{{{0,1},{1,1},{1,0},{0,0}}};
+    for (int i = 0; i < 4; ++i) {
+      const auto at = actorPoseFromCylinderSample(poseLevel_,
+          {x + (i == 1 || i == 2 ? w : 0.0), y + (i >= 2 ? h : 0.0), slab}, 1);
+      std::array<double, 4> p;
+      if (!project(camera, {at.modelPosition[0], at.modelPosition[1], at.modelPosition[2]}, p)) return;
+      // PROVISIONAL clone decal separation. The original's inherited device
+      // depth state is unproved; offset the cylinder slab slightly outward.
+      v[i] = {p[0], p[1], p[2], p[3], {255,255,255,255}, uv[i][0], uv[i][1]};
+    }
+    for (const auto ids : {std::array<int,3>{0,1,2}, std::array<int,3>{0,2,3}})
+      (void)rasterizeSceneTriangle(fb, raster.mutableDepthBuffer(), image,
+          {v[ids[0]],v[ids[1]],v[ids[2]]}, options);
+  };
+  for (const auto& g : gates) {
+    if (!g.hasCounter()) continue;
+    // 0x423E69: panel 8.2x6.1; digits 2.1x3.5 separated by 2.7.
+    quad(g.counterX, g.counterY - 1.3, 8.2, 6.1, 10, 1.005);
+    quad(g.counterX + 1.3, g.counterY + 0.35, 2.1, 3.5, g.remaining() / 10, 1.01);
+    quad(g.counterX + 4.0, g.counterY + 0.35, 2.1, 3.5, g.remaining() % 10, 1.01);
+  }
 }
 
 std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers() {
@@ -1567,7 +1882,7 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     SceneOptions::InjectedNativeWalker walker;
     // READ 40B4AF hides the intact actor on splat entry. Retain its vector
     // slot so screen-box/hover indices for other live actors stay aligned.
-    walker.renderEnabled = lemming.state != sim::State::Splatter;
+    walker.renderEnabled = lemming.state != sim::State::Splatter && !lemming.ratVictim;
     walker.plus8X = sample.x;
     walker.plus8Y = sample.y;
     walker.plus8Z = sample.z;
@@ -1648,6 +1963,34 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     jumper.rotationPhase = 0.25;  // 418017..418027 -> 4683E9
     if (anim) jumper.walkTemporalIndex = anim->poseOf(i).temporalIndex;
     out.push_back(jumper);
+  }
+  // Append outside the live rescue prefix and exit tails: rats draw through
+  // the identical sprite/lighting/occlusion/zoom path but cannot be skill picks.
+  constexpr const char* punches[]{"punch0", "punch1", "punch2", "punch3"};
+  for (const auto& rat : world.rats()) {
+    const auto& l = rat.actor;
+    if (!l.alive()) continue;
+    SceneOptions::InjectedNativeWalker w;
+    w.plus8X = l.x;
+    w.plus8Y = terrainHeight - 1.0 - l.y;
+    w.plus8Z = rat.lane;
+    w.facing = int(l.facing);
+    w.verticalDir = l.verticalDir;
+    w.sheetType = 3;
+    w.renderEnabled = rat.renderEnabled && l.state != sim::State::Splatter;
+    w.clip = lemmingClipName(l);
+    w.clipSeconds = rat.animationSeconds;
+    w.clipLoops = lemmingClipLoops(w.clip);
+    if (l.state == sim::State::Floater && rat.animationSeconds > rat.openDuration) {
+      w.clip = "float";
+      w.clipSeconds -= rat.openDuration;
+      w.clipLoops = true;
+    }
+    if (rat.pendingVictim >= 0) {
+      w.clip = punches[rat.punch];
+      w.clipLoops = false;
+    }
+    out.push_back(w);
   }
   return out;
 }

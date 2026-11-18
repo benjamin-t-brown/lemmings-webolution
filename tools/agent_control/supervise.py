@@ -164,35 +164,28 @@ def command_for(backend, registry, run_dir, *, read_only=False, schema=None, tas
     return command
 
 
-def make_prompt(task, minutes):
+def make_prompt(task, minutes, backend):
+    """AGENTS.md carries the rules; this adds the task and per-run mechanics only."""
     instructions = (ROOT / 'AGENTS.md').read_text(encoding='utf-8')
-    return (f'{instructions}\n\nAssigned task:\n{json.dumps(task, indent=2)}\n\n'
-            f'Complete only this task. Worker budget is {minutes:.1f} minutes; '
-            'The supervisor runs mandatory verification after you exit with its own budget. Never run the original game, copied '
-            'original instructions, hooks, install tools, debugger or capture. '
-            'Do not spawn agents or background work. Do not edit the queue, '
-            'supervisor, verifier, tool registry, permissions or shared instructions. '
-            'Do not commit, push, reset, clean or stash. If permissions/auth/tools '
-            'are missing, stop with the blocker. Read existing evidence first. '
-            'End with changed files, evidence, checks, unknowns and next action. '
-            'Claude and Codex implementation workers and explicitly authorized research workers have the rea_static MCP profile. Start from accepted research and existing code; use targeted static lookups to resolve questions within the assigned implementation. Substantial unresolved dependencies still require a concrete blocker, not an unbounded research detour. '
-            'It exposes static analysis of the registered reference only; use open_binary with its absolute path and provider_id ghidra, then targeted decompilation/xrefs/instruction reads. '
-            'Opening analysis may start Ghidra/Java, never the target game. Save returned evidence and verify pseudocode against instructions. '
-            'Call close_binary without arguments when finished. Runtime, debugger, capture and metadata mutation tools are unavailable. '
-            'Claude workers have Bash access for these exact commands: '
+    bash = ('Claude workers have Bash for these exact commands, run verbatim and separately from the '
+            'repo root with no pipes, echo or wrappers: '
             'git --no-pager show --no-ext-diff --no-textconv HEAD:src/app/main.cpp; '
             'python tools/agent_control/verify.py --profile smoke (or main, recovery or all). '
-            'Run commands verbatim and separately from repo root; do not append echo, status checks, pipes or wrappers. For verifier Bash calls set timeout=600000 and run_in_background=false so results are available before reporting. The gate is the smoke profile; '
-            'do not add before/after replay fixtures, frozen-source builds, identity checks or per-task play routes. '
-            'Add a test only for logic a later change could silently break, keep it to a few seconds, and leave it in the legacy tier. '
-            'Use file tools to retain git-show output under the task build directory. '
-            'The supervisor owns the mandatory full verification run after your exit. Do not duplicate '
-            'the full suite merely to finish your report. Run a permitted profile during development '
-            'only when it resolves a concrete implementation question; if the client backgrounds or '
-            'kills it, record that limitation and do not restart the same suite in this invocation. '
-            'Report verification as pending supervisor execution when applicable, and cite completed '
-            'runs by their exact path rather than calling one current. Do not repeatedly retry a denied '
-            'command or claim unexecuted demonstrations passed.\n')
+            'For verifier calls set timeout=600000 and run_in_background=false. '
+            if backend == 'claude' else '')
+    return (f'{instructions}\n\nAssigned task:\n{json.dumps(task, indent=2)}\n\n'
+            f'Complete only this task. Worker budget is {minutes:.1f} minutes. '
+            'After you exit the supervisor runs the smoke gate with its own budget: report it as '
+            'pending and do not run it just to finish the report. Run a profile during development '
+            'only to answer a concrete question; if it is killed or backgrounded, record that and do '
+            'not restart it. Cite completed runs by exact path. Do not retry a denied command or claim '
+            'unrun checks passed. If permissions, auth or tools are missing, stop with the blocker. '
+            'rea_static: open_binary with the registered reference\'s absolute path and provider_id '
+            'ghidra, then targeted decompilation, xrefs and instruction reads; call close_binary '
+            'without arguments when finished. Opening it may start Ghidra/Java, never the game. '
+            + bash +
+            'Save git-show output under the task build directory with file tools. '
+            'End with changed files, evidence, checks, unknowns and next action.\n')
 
 
 def successful_transcript(backend, path):
@@ -315,7 +308,7 @@ def main(argv=None, *, lease=None, result_sink=None, overall_deadline=float("inf
         run_dir.mkdir()
         capture(run_dir, 'before', registry)
         prompt_file = run_dir / 'prompt.txt'
-        prompt_file.write_text(make_prompt(task, worker_seconds / 60), encoding='utf-8')
+        prompt_file.write_text(make_prompt(task, worker_seconds / 60, args.backend), encoding='utf-8')
         task.update(status='in_progress', run_id=run_id, started=utc())
         atomic_json(QUEUE, queue)
         expected_queue = QUEUE.read_bytes()

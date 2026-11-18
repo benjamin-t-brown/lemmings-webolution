@@ -76,7 +76,7 @@ Models and effort are pinned in `tools.windows.json` under `agent_models`:
 
 | Backend | Model ID | Effort |
 | --- | --- | --- |
-| Codex | `gpt-6.2-sol` | `high` |
+| Codex | `gpt-6.2-astra` | `high` |
 | Claude | `claude-sonnet-5-5` | `high` |
 
 These apply to implementation, planning and review, including single-task runs.
@@ -259,7 +259,8 @@ The visible-fluid milestone was accepted on2026-11-12. Its launcher now returns
 without launching work because all three tasks are done. Original depth fidelity
 remains open. The next documented priority is safe test parallelism and shorter
 verification cycles; see IMPLEMENTATION_PLAN.md. It is not yet queued or enabled.
-Current defaults remain12 compile jobs /1 test job; no model pins changed.
+Defaults then were 12 compile jobs / 1 test job; verify.py now defaults to 8 / 4
+(test-parallel-isolation-001).
 
 ## Prepared test-parallelism run
 Preview: `python tools/agent_control/run_test_parallelism.py`

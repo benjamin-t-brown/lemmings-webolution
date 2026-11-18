@@ -23,10 +23,14 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
     if (auto loaded = store->load()) {
       loadedImage = *loaded;
     } else {
+#ifdef __EMSCRIPTEN__
+      return std::unexpected("cannot load saved progress: " + loaded.error());
+#else
       loadError = loaded.error();
       std::fprintf(stderr,
                    "save: %s; starting with empty progress (the file is left untouched until a "
                    "later save succeeds)\n", loadError->c_str());
+#endif
     }
   }
   const auto loadedFlags = loadedImage.nodeFlags(MapScene::nodeMapping());

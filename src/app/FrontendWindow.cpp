@@ -2,6 +2,9 @@
 
 #include "assets/Png.h"
 #include <memory>
+#ifdef __EMSCRIPTEN__
+#include "web/Browser.h"
+#endif
 
 #ifndef WEBOLUTION_HAVE_SDL2
 #define WEBOLUTION_HAVE_SDL2 0
@@ -29,6 +32,17 @@ std::string sdlError(const char* action) {
   return std::string(action) + ": " + SDL_GetError();
 }
 }  // namespace
+
+void updateFrontendCursorInput(FrontendSession& session, const SDL_Event& event) {
+  if (event.type == SDL_WINDOWEVENT) {
+    if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) session.setFocused(false);
+    else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) session.setFocused(true);
+  } else if (session.focused() && (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)) {
+    const bool down = event.type == SDL_MOUSEBUTTONDOWN;
+    if (event.button.button == SDL_BUTTON_LEFT) session.setButtons(down, session.rightHeld());
+    else if (event.button.button == SDL_BUTTON_RIGHT) session.setButtons(session.leftHeld(), down);
+  }
+}
 
 void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event) {
   if (event.type == SDL_MOUSEMOTION) {
@@ -81,20 +95,11 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     while (SDL_PollEvent(&event)) {
       presentation.gameCoordinates(event);
       if (event.type == SDL_QUIT) { running = false; break; }
-      if (event.type == SDL_WINDOWEVENT) {
-        if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-          session.setFocused(false);
-        } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-          session.setFocused(true);
-        }
-      } else if (session.focused()) {
+      updateFrontendCursorInput(session, event);
+      if (session.focused()) {
         if (event.type == SDL_MOUSEMOTION) session.setPointer(event.motion.x, event.motion.y);
-        if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+        if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
           session.setPointer(event.button.x, event.button.y);
-          const bool down = event.type == SDL_MOUSEBUTTONDOWN;
-          if (event.button.button == SDL_BUTTON_LEFT) session.setButtons(down, session.rightHeld());
-          else if (event.button.button == SDL_BUTTON_RIGHT) session.setButtons(session.leftHeld(), down);
-        }
         if (session.screen() == shell::Screen::SoundOptions) {
           handleSoundOptionsInput(session, event);
         } else if (event.type == SDL_MOUSEMOTION) {
@@ -125,7 +130,11 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     const int frame = frames++;
     if (observer) observer(session, frame);
     if (options.maxFrames > 0 && frames >= options.maxFrames) break;
+#ifdef __EMSCRIPTEN__
+    web::nextFrame();
+#else
     SDL_Delay(1);
+#endif
   }
 
   if (!running && !options.finalFramePath.empty())

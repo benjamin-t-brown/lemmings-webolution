@@ -54,7 +54,7 @@ def utc():
 
 def atomic_json(path, data):
     temporary = path.with_suffix(path.suffix + '.tmp')
-    temporary.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+    temporary.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8', newline='\n')
     os.replace(temporary, path)
 
 

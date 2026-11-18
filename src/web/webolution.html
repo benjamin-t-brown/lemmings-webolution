@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lemmings Webolution</title>
+<style>
+  :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+  body { margin: 0; min-height: 100vh; display: grid; place-content: center; background: #141414; }
+  main { display: grid; justify-items: center; gap: 1rem; }
+  button { padding: .6rem 1.4rem; font: inherit; cursor: pointer; }
+  canvas { width: min(100vw, 133.33vh, 1280px); height: auto; image-rendering: pixelated; }
+  canvas:focus { outline: none; }
+  [hidden] { display: none; }
+</style>
+<main>
+  <output id="status" role="status">Loading game…</output>
+  <button id="start" type="button" hidden>Start game</button>
+  <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Lemmings Webolution" hidden></canvas>
+</main>
+<script>
+  const statusLine = document.querySelector('#status');
+  const startButton = document.querySelector('#start');
+  const canvas = document.querySelector('#canvas');
+  let lastDiagnostic = '';
+  canvas.addEventListener('contextmenu', event => event.preventDefault());
+  function message(text) {
+    statusLine.hidden = false;
+    statusLine.textContent = text;
+  }
+  async function prepare() {
+    const { FS, IDBFS } = Module;
+    FS.mkdir('/store');
+    FS.mount(IDBFS, {}, '/store');
+    await new Promise((resolve, reject) =>
+      FS.syncfs(true, error => error ? reject(error) : resolve()));
+
+    FS.mkdir('/game');
+    for (const name of ['lemmings.box', 'patch.box']) {
+      message('Loading ' + name + '…');
+      const response = await fetch('/game/' + name);
+      if (!response.ok) throw new Error(name + ' — HTTP ' + response.status);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      FS.writeFile('/game/' + name, bytes, {canOwn: true});
+      FS.chmod('/game/' + name, 0o444);
+    }
+    statusLine.hidden = true;
+    startButton.hidden = false;
+    startButton.focus();
+    startButton.onclick = async () => {
+      startButton.hidden = true;
+      canvas.hidden = false;
+      canvas.focus();
+      try {
+        // Ordinary no-option startup. Open SDL audio in this gesture and hold
+        // the save lock across Asyncify suspensions until main really returns.
+        const code = await Module.ccall('main', 'number', ['number', 'number'], [0, 0], {async: true});
+        if (code === 0) message('Game closed. Reload to play again.');
+        else message(lastDiagnostic || 'Game exited with code ' + code + '.');
+      } catch (error) {
+        message('Game stopped. ' + error);
+      } finally {
+        releaseStore();
+      }
+    };
+  }
+  let releaseStore;
+  var Module = {
+    canvas, noInitialRun: true,
+    preRun() {
+      // libc snapshots the environment on first use, including in constructors.
+      Module.ENV.XDG_DATA_HOME = '/store';
+      Module.ENV.WEBOLUTION_GAME_DIR = '/game';
+      Module.ENV.SDL_EMSCRIPTEN_ASYNCIFY = '0'; // The game yields once per frame.
+    },
+    async onRuntimeInitialized() {
+      try {
+        // A second tab must not reconcile a stale IDBFS tree over this one.
+        await navigator.locks.request('webolution-save', {ifAvailable: true}, async lock => {
+          if (!lock) throw new Error('Close the other game tab and reload.');
+          const finished = new Promise(resolve => { releaseStore = resolve; });
+          await prepare();
+          await finished;
+        });
+      } catch (error) { message('Cannot start game. ' + error); }
+    },
+    printErr(text) {
+      console.error(text);
+      lastDiagnostic = text;
+      if (/^(save:|sound settings:)/.test(text)) message(text);
+    },
+    onAbort(reason) { message('Game stopped. ' + reason); releaseStore?.(); }
+  };
+</script>
+<script src="webolution.js" onerror="message('Could not load webolution.js.')"></script>
+</html>

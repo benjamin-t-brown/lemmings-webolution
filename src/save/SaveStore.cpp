@@ -4,6 +4,10 @@
 #include <fstream>
 #include <system_error>
 
+#ifdef __EMSCRIPTEN__
+#include "web/Browser.h"
+#endif
+
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -35,7 +39,10 @@ std::wstring comparisonKey(const fs::path& path) {
 }
 
 std::expected<void, std::string> replaceFile(const fs::path& from, const fs::path& to) {
-#ifdef _WIN32
+#ifdef __EMSCRIPTEN__
+  if (!web::replaceSave(from.c_str(), to.c_str()))
+    return std::unexpected("cannot persist " + to.string());
+#elif defined(_WIN32)
   if (!MoveFileExW(from.c_str(), to.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
     return std::unexpected("cannot replace " + to.string() + " (Windows error " +
                            std::to_string(GetLastError()) + ")");

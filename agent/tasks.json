@@ -25056,7 +25056,7 @@
     {
       "id": "large-one-scenery-001",
       "title": "Make Mine a Large One: scenery no longer hides the lemmings",
-      "status": "ready",
+      "status": "done",
       "depends_on": [],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -25070,12 +25070,114 @@
         "Other levels' scenery is unchanged beyond the defect; the report says how this was checked.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T213944-50424-c4947f5f",
+      "started": "2026-11-18T21:39:45.278112+00:00",
+      "finished": "2026-11-18T21:55:40.079888+00:00",
+      "last_run": "build/agent-runs/20261118T213944-50424-c4947f5f",
+      "review": {
+        "decision": "accept",
+        "reason": "The renderer now rejects the back of the mine waterfall before it writes depth over the opening hatch. Retained clone frames show the first lemming at release and confirm that nearer geometry still occludes actors after rotation. All five criteria pass. Human playability remains for the next playtest, and original-game frame fidelity remains unverified.",
+        "checks": [
+          {
+            "criterion": "The report identifies the scenery records that cover the entry view of Make Mine a Large One and the cause, from clone framebuffer/depth output and static evidence or labelled provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/large-one-scenery-001.md",
+                "detail": "The report traces Playtest 15 E1 at node 26 to three kind-7 waterfall records in the secondary null2 holder. It identifies their LVL offsets and the missing facing test in BackdropScene::renderStage."
+              },
+              {
+                "path": "build/large-one-scenery-001/baseline/E18_KF_2.txt",
+                "detail": "Records 0xA016C, 0xA039A and 0xA4F06 owned 190,974 depth pixels across the intro view. At first release, 0xA016C alone blocked all 97 actor pixels. Its facing dot was \u22124.93678, and its depth at the actor center was 58.7234 against the actor\u2019s 324.349."
+              },
+              {
+                "path": "build/large-one-scenery-001/rea/read_function_instructions-0x46B2A0.json",
+                "detail": "For the registered x86 EXE, SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the ordinary handler compares the dot product at 0x46B2FA and skips the polygon emission call at 0x46B30D unless the result is positive. This agrees with the retained pseudocode."
+              },
+              {
+                "path": "build/large-one-scenery-001/rea/read_function_instructions-0x46B350.json",
+                "detail": "The clipped handler independently shows the same test at 0x46B3AA and conditional emission at 0x46B3BD."
+              }
+            ]
+          },
+          {
+            "criterion": "From the connected-entry camera, the lemmings are visible and correctly occluded from the first release, and stay visible in normal play.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Connected entry reads the selected hatch yaw, resets zoom and takes eye height from the loaded terrain. The production frame draws live actors against completed scene depth."
+              },
+              {
+                "path": "build/large-one-scenery-001/corrected/E18_KF_2.txt",
+                "detail": "At yaw 70, zoom 0 and 96 rows, all 97 first-release pixels drew at 5.810 s. The actor remained visible on landing (102 pixels), while walking (110), after rotation (109) and after zoom (681)."
+              },
+              {
+                "path": "build/large-one-scenery-001/corrected/E18_KF_2-release.png",
+                "detail": "The first-release framebuffer visibly shows the lemming emerging beneath the green arrow in the hatch, above the steel ledge."
+              },
+              {
+                "path": "build/large-one-scenery-001/continued/second-release.txt",
+                "detail": "At the second release both actors drew fully at entry yaw, with 121 and 106 body pixels. At yaw 6, nearer geometry hid all 119 potential pixels of the first actor while 128 of 131 pixels of the second remained visible."
+              }
+            ]
+          },
+          {
+            "criterion": "Other levels' scenery is unchanged beyond the defect; the report says how this was checked.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The new kind-7 branch requires the exact authored material Models\\bg_mine01\\^WaterFall01 and rejects its back face before rasterization. The existing kind-4 and kind-5 facing calculation is preserved."
+              },
+              {
+                "path": "build/large-one-scenery-001/view-comparisons.tsv",
+                "detail": "All 40 control comparisons recorded zero changed RGB pixels and zero changed depth pixels. They cover eight poses each for Just Climb, Sergeant Bash, Kriss Kross, The Crowded House and One Way Ticket. The target level showed the expected depth change at entry and release."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/large-one-scenery-001/replays.tsv",
+                "detail": "The 23 rows match the 23 promoted recording paths. Every row records PASS, won=1 and completed=1, with the completion step, saved count and individual log path."
+              },
+              {
+                "path": "build/large-one-scenery-001/replays/MM_ALL_8_003-1795036800055905400-5.log",
+                "detail": "The Release executable replayed the Iron Curtain recording through step 18,207, reproduced 21 saved against 20 needed and exited 0."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T213944-50424-c4947f5f/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including the installed-level sweep and its report, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/large-one-scenery-001.md",
+                "detail": "After the two-line handoff, the final note directs the player to enter node 26, watch the first fall and walk, then rotate and zoom through the next release to check near-side visibility and occlusion behind solid scenery."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T21:57:24.202268+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T213944-50424-c4947f5f\\verification.log",
+        "verified_content": "4a20159f4b2c399e9eb83f8520c88cb6a1596c17c0c9704061813502d8ae88a7"
+      }
     },
     {
       "id": "level-menu-cursor-001",
       "title": "In-level menu shows the pressed cursor while a button is held",
-      "status": "ready",
+      "status": "done",
       "depends_on": [],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -25089,7 +25191,335 @@
         "Gameplay cursor states after the menu closes are unchanged.",
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261118T215724-50424-ded5f21d",
+      "started": "2026-11-18T21:57:24.648208+00:00",
+      "finished": "2026-11-18T22:06:34.813586+00:00",
+      "last_run": "build/agent-runs/20261118T215724-50424-ded5f21d",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria are supported. The Escape menu and its sound page use the pressed artwork until the last mouse button is released. All 23 promoted replays reproduced their results, and the supervisor smoke gate passed. Visual confirmation on Wandering Free remains for the next human playtest.",
+        "checks": [
+          {
+            "criterion": "The report states from static evidence, or labelled provisional, which cursor the original's in-level menu shows while a button is held.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/level-menu-cursor-001.md",
+                "detail": "The report identifies state 10 (_curMseDwn) while either button is held and state 1 (_curNoLem) when both are up. It explicitly limits the finding to static artwork selection."
+              },
+              {
+                "path": "build/level-menu-cursor-001/static-evidence.json",
+                "detail": "Retained Ghidra instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f trace Escape to frontend page 0x1F and Options to page 9. The branches at 0x453D4A and 0x453D60 agree with the pseudocode: either held field selects 10 at 0x453D68, and both clear select 1 at 0x453D77."
+              }
+            ]
+          },
+          {
+            "criterion": "With the in-level menu or its sound page open, holding either mouse button shows the pressed cursor and releasing restores the menu cursor.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrontendWindow.cpp",
+                "detail": "updateFrontendCursorInput updates the left and right buttons independently. Releasing one preserves the other button's held state."
+              },
+              {
+                "path": "src/app/FrontendSession.h",
+                "detail": "cursorState() passes leftHeld_ || rightHeld_ to the frontend cursor selector. Focus loss clears both holds."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg updates the session before dispatching page actions. After drawing either the level menu or Sound Options, it draws the session cursor at the event coordinates."
+              },
+              {
+                "path": "src/app/RuntimeCursor.cpp",
+                "detail": "For a focused menu, frontendCursorState selects MouseDown for a hold and NoLemming on release. RuntimeCursor::draw composites the corresponding loaded bitmap."
+              }
+            ]
+          },
+          {
+            "criterion": "Gameplay cursor states after the menu closes are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Closing the menu returns cursor selection to runtimeCursorState with the existing focus, right-drag, actor hit, pause, skill-panel and hatch hit inputs. The dismissal guard consumes remaining menu events in that SDL batch before they can trigger gameplay actions."
+              },
+              {
+                "path": "src/app/RuntimeCursor.cpp",
+                "detail": "The gameplay selector still delegates to selectCursorState using gameplay grab and hit-test inputs. The frontend button flags are used only by the separate frontend selector."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/level-menu-cursor-001/replays.tsv",
+                "detail": "The index covers all 23 recording paths under docs/playtest/replays. Each corresponding log records PASS, won=1, completed=1 and exit 0."
+              },
+              {
+                "path": "build/level-menu-cursor-001/replays/MM_ALL_8_002-1795036669843432200-4.log",
+                "detail": "The Wandering Free recording completed at step 18659 with 19 saved against 10 required. The log records the release executable, exact replay path and task-private LocalAppData."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T215724-50424-ded5f21d/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passing, including all level-sweep chunks and their report, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/level-menu-cursor-001.md",
+                "detail": "The final note names Wandering Free and asks the tester to hold each button, overlap the holds, and release them one at a time on both pages. It gives the expected last-release transition and identifies lemming, hatch and right-drag checks after Resume."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T22:08:00.011990+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T215724-50424-ded5f21d\\verification.log",
+        "verified_content": "925c6e070a28e9560af782a172999dc58a4ce7a375a04008748155677f23687a"
+      }
+    },
+    {
+      "id": "emscripten-build-001",
+      "title": "WebAssembly build playable in a local browser",
+      "status": "done",
+      "depends_on": [],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User request (2026-11-18): add a WebAssembly build of the clone with the installed Emscripten SDK at C:/progs/emsdk (registered as tools.emsdk, emcc 5.0.3). Activate it with emsdk_env.sh/.ps1 first (setting only EM_CONFIG fails), and use the registered CMake and Ninja. The repo already has the emscripten-release preset, `make -C src js` and NOT EMSCRIPTEN guards. A lead trial build on 2026-11-18 failed on: SDL headers (-sUSE_SDL=2 not applied to compiles, so fakesdl/SDL.h errors in SdlWindow.hpp/SdlShutdown.hpp) and clang rejecting constexpr std::sin in src/tools/lrtool.cpp:202-203; tool and test executables should be left out of the web build. Make the emscripten-release preset build webolution (html/js/wasm under build/cmake/emscripten-release) and make it playable in a desktop browser served locally: a browser main loop (emscripten_set_main_loop or Asyncify, minimal restructuring of runApplication), the RasterRows worker threads (pthreads with a local server sending COOP/COEP headers, or a single-thread path for the web build, with identical pixels either way), audio start after the first user gesture, and saves (SavedGame.dat and sound settings) through an IDBFS-backed store using the existing codec and injectable store, never resetting or silently importing. Game data: the original assets (lemmings.box is 308 MB, patch.box 8 MB) must never enter version control or any committed output; load them from the user's local install at build or run time (for example a build/-only preload or fetch package) and say which and why. Add a small local serve script under scripts/ with the needed headers. The native Windows build, its behavior, smoke and replays must stay unchanged; web-only code sits behind __EMSCRIPTEN__ or CMake EMSCRIPTEN. Verification: the web build compiles and links; run the promoted playtest replays through the WebAssembly build under the registered node (for example a node/NODERAWFS variant of --replay) and report each result against the native result; the browser itself is checked in the user's playtest. Do not change the verifier; report the web build commands. Difficulty: difficult. Recommended model: Opus. Reason: main loop, threading, file system and asset loading all change shape for the browser while native behavior must stay identical. Playable v1 at the user's explicit request; not fidelity evidence. No original execution, debugger, hooks or capture. Do not install tools or download Emscripten ports; use what is cached. Use a private temporary save path for tests; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the build and serve commands, the production call paths changed, limitations and a two-line handoff. Finish needs_review. Replay policy: promoted recordings must reproduce unchanged. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md 'Verification'): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. End the report with a what-to-check note: how to build and serve, which URL to open, and what to try (start a level, play, save, reload).",
+      "acceptance": [
+        "cmake --preset emscripten-release and its build produce webolution html/js/wasm with the registered emsdk, and the report gives the exact commands.",
+        "The report explains how the browser build runs its main loop, threads, audio, saves and asset loading, and no original asset enters version control or committed output.",
+        "All promoted playtest replays reproduce their native results when run through the WebAssembly build under node, and still pass natively.",
+        "The native Windows build and its behavior are unchanged; the smoke profile passes.",
+        "The report ends with a what-to-check note for serving and playing in a browser."
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261118T222731-50424-b66bbb26",
+      "started": "2026-11-18T22:27:31.603331+00:00",
+      "finished": "2026-11-18T22:29:33.374351+00:00",
+      "last_run": "build/agent-runs/20261118T222731-50424-b66bbb26",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The local web build succeeded, all 23 promoted replays matched, and the supervisor smoke gate passed. One required build input is missing from the deliverable. Git ignores `src/web/node-mount.js`, which CMake requires to link the game. Add a file-specific ignore exception or rename the input and update CMake so the documented commands also work from a fresh checkout.",
+        "checks": [
+          {
+            "criterion": "cmake --preset emscripten-release and its build produce webolution html/js/wasm with the registered emsdk, and the report gives the exact commands.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/emscripten-build-001.md",
+                "detail": "The report gives the SDK activation, frozen-cache setting, registered CMake and Ninja paths, configure preset, and build command."
+              },
+              {
+                "path": "build/emscripten-build-001/server.log",
+                "detail": "The local build produced all three artifacts. The server returned HTTP 200 for the 3,871-byte HTML, 210,112-byte JavaScript, and 3,305,261-byte Wasm files."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "Lines 123\u2013125 pass src/web/node-mount.js to Emscripten through --pre-js and declare it as a link dependency. A checkout missing this file cannot link webolution."
+              },
+              {
+                "path": ".gitignore",
+                "detail": "The *.js rule covers the hand-written linker input. Read-only Git status with ignored files included identifies src/web/node-mount.js as ignored."
+              },
+              {
+                "path": "build/agent-runs/20261118T220800-50424-e6c25e58/after-status.txt",
+                "detail": "The worker\u2019s final file list includes Browser.cpp, Browser.h, and webolution.html under src/web. It omits node-mount.js."
+              }
+            ]
+          },
+          {
+            "criterion": "The report explains how the browser build runs its main loop, threads, audio, saves and asset loading, and no original asset enters version control or committed output.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/emscripten-build-001.md",
+                "detail": "The report traces frame yielding, single-thread rasterization, gesture-triggered SDL audio, progress and sound persistence, and runtime archive loading. It reserves audible output, input, frame pacing, and actual IndexedDB reload for the human browser playtest."
+              },
+              {
+                "path": "src/web/webolution.html",
+                "detail": "Startup acquires an origin lock, populates IDBFS, fetches both archives into /game, and enables Start. The click handler calls the ordinary game entry point."
+              },
+              {
+                "path": "src/web/Browser.cpp",
+                "detail": "The frame yield awaits requestAnimationFrame. Save replacement waits for FS.syncfs and restores the previous in-memory file if synchronization fails."
+              },
+              {
+                "path": "src/app/RasterRows.h",
+                "detail": "The Wasm branch uses one caller to drain the existing raster bands, preserving draw order within each band and the final error reduction."
+              },
+              {
+                "path": "scripts/serve-web.py",
+                "detail": "The loopback server reads lemmings.box and patch.box directly from the local installation. Its allowlist exposes those two archives and the three web artifacts. The build requires no archive copies or embedded asset package."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays reproduce their native results when run through the WebAssembly build under node, and still pass natively.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/emscripten-build-001/compare.py",
+                "detail": "The retained comparison enumerates every promoted *.replay and invokes both the Windows executable and the generated webolution.js with the registered Node 22.16.0 executable."
+              },
+              {
+                "path": "build/emscripten-build-001/replays.tsv",
+                "detail": "All 23 promoted recordings have paired zero exits, identical final steps and saved/required counts, and PASS with won=1 and completed=1 on both targets."
+              }
+            ]
+          },
+          {
+            "criterion": "The native Windows build and its behavior are unchanged; the smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T220800-50424-e6c25e58/before-diff.txt",
+                "detail": "Comparison with the current source shows the cursor and scenery edits predated this task. The added frame, raster, and persistence paths use Emscripten guards."
+              },
+              {
+                "path": "build/emscripten-build-001/native-build-final.log",
+                "detail": "The registered GCC release build compiled the affected application sources and linked webolution.exe."
+              },
+              {
+                "path": "build/agent-runs/20261118T220800-50424-e6c25e58/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including the level-sweep chunks and report, followed by 84 of 84 recovery tests passing."
+              }
+            ]
+          },
+          {
+            "criterion": "The report ends with a what-to-check note for serving and playing in a browser.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/emscripten-build-001.md",
+                "detail": "The final note points to the build and serve commands and http://127.0.0.1:8000/. It asks the player to change a sound setting, win Just Climb, listen for cues, reload the same URL, and confirm both the win and volume persisted."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The local web build succeeded, all 23 promoted replays matched, and the supervisor smoke gate passed. One required build input is missing from the deliverable. Git ignores `src/web/node-mount.js`, which CMake requires to link the game. Add a file-specific ignore exception or rename the input and update CMake so the documented commands also work from a fresh checkout.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves the missing linker input. The registered SDK produced all three web artifacts, all 23 promoted replays matched their native results, and the supervisor smoke gate passed. Browser input, audible playback, frame pacing, and persistence across a real browser reload remain for the user\u2019s playtest.",
+        "checks": [
+          {
+            "criterion": "cmake --preset emscripten-release and its build produce webolution html/js/wasm with the registered emsdk, and the report gives the exact commands.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/emscripten-build-001.md",
+                "detail": "The report gives the exact UCRT64 Bash commands to activate the SDK, enable its frozen cache, configure with the registered CMake and Ninja, and build the emscripten-release preset."
+              },
+              {
+                "path": "build/cmake/emscripten-release/CMakeCache.txt",
+                "detail": "The configured build uses the Emscripten toolchain under C:/progs/emsdk and Ninja at C:/progs/msys2/ucrt64/bin/ninja.exe."
+              },
+              {
+                "path": "build/emscripten-build-001/web-distribution.log",
+                "detail": "CMake generated the emscripten-release build and linked webolution.js."
+              },
+              {
+                "path": "build/emscripten-build-001/server.log",
+                "detail": "The server returned HTTP 200 for webolution.html, webolution.js, and webolution.wasm. The Wasm response used application/wasm."
+              },
+              {
+                "path": "build/emscripten-build-001/source-inclusion.txt",
+                "detail": "The file-specific ignore exception makes the required src/web/node-mount.js linker input visible to Git. The generated JavaScript and Wasm remain ignored."
+              }
+            ]
+          },
+          {
+            "criterion": "The report explains how the browser build runs its main loop, threads, audio, saves and asset loading, and no original asset enters version control or committed output.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/emscripten-build-001.md",
+                "detail": "The report traces the frame loops, raster work, SDL audio startup, progress and sound-setting writes, and archive loading. It identifies which behaviors still require a desktop-browser playtest."
+              },
+              {
+                "path": "src/web/webolution.html",
+                "detail": "Startup acquires an origin lock, loads IDBFS and fetches both local archives before enabling Start. The Start handler calls the normal game entry point from the user gesture."
+              },
+              {
+                "path": "src/web/Browser.cpp",
+                "detail": "Asyncify yields to requestAnimationFrame. Save replacement awaits FS.syncfs and restores the previous in-memory file if synchronization fails."
+              },
+              {
+                "path": "src/app/RasterRows.h",
+                "detail": "The Wasm branch runs the existing band-draining loop on one caller, preserving the per-band draw order. Windows retains its worker pool."
+              },
+              {
+                "path": "scripts/serve-web.py",
+                "detail": "The loopback server serves lemmings.box and patch.box directly from the local installation at runtime. Its other routes serve the three build artifacts, and the installed save has no route."
+              },
+              {
+                "path": "build/emscripten-build-001/source-inclusion.txt",
+                "detail": "Git\u2019s ignore checks cover both installed archives and the generated distribution under build/. The new exception applies only to the hand-written JavaScript linker input."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays reproduce their native results when run through the WebAssembly build under node, and still pass natively.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/emscripten-build-001/compare.py",
+                "detail": "The comparison enumerates every promoted *.replay and runs each recording against the Windows executable and webolution.js under the registered Node 22.16.0. It compares exit codes and complete result lines."
+              },
+              {
+                "path": "build/emscripten-build-001/replays.tsv",
+                "detail": "All 23 recordings have paired zero exits, matching final steps and saved/required counts, and PASS with won=1 and completed=1 on both targets."
+              }
+            ]
+          },
+          {
+            "criterion": "The native Windows build and its behavior are unchanged; the smoke profile passes.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261118T220800-50424-e6c25e58/before-diff.txt",
+                "detail": "The original worker snapshot places the cursor and scenery changes before this task. The web task\u2019s frame, raster, save, and build changes are guarded by __EMSCRIPTEN__ or CMake EMSCRIPTEN."
+              },
+              {
+                "path": "build/emscripten-build-001/native-build-final.log",
+                "detail": "The native GCC release build compiled the affected application sources and linked webolution.exe."
+              },
+              {
+                "path": "build/agent-runs/20261118T222731-50424-b66bbb26/verification.log",
+                "detail": "For this revision, the supervisor recorded 95 of 95 main smoke tests passing, including the level-sweep chunks and report, followed by 84 of 84 recovery tests passing."
+              }
+            ]
+          },
+          {
+            "criterion": "The report ends with a what-to-check note for serving and playing in a browser.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/emscripten-build-001.md",
+                "detail": "The final note points to the build and serve commands and directs the player to http://127.0.0.1:8000/. It asks them to change a sound setting, win Just Climb, listen for cues, reload the same URL, and confirm that both the win and volume persisted."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-18T22:30:49.633223+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261118T222731-50424-b66bbb26\\verification.log",
+        "verified_content": "36b6f52c0261699955b055744fbcf1dbc0aa02a4d595557fef464c97f7e210dd"
+      }
     }
   ]
 }

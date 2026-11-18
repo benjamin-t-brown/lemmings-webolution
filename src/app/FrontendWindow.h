@@ -22,6 +22,9 @@ struct FrontendWindowOptions {
 
 using FrontendWindowObserver = std::function<void(const FrontendSession&, int)>;
 
+// Observe focus and button transitions before dispatching actions on either menu path.
+void updateFrontendCursorInput(FrontendSession& session, const SDL_Event& event);
+
 // Shared SDL input adapter while either caller owns sound page 9.
 void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event);
 

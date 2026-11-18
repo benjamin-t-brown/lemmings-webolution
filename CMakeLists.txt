@@ -16,6 +16,10 @@ endif()
 
 include(cmake/webolution_sources.cmake)
 
+if(EMSCRIPTEN)
+  add_compile_options(-fexceptions)
+endif()
+
 add_library(webolution_texture_decoder STATIC ${WEBOLUTION_TEXTURE_DECODER_SOURCES})
 target_include_directories(webolution_texture_decoder PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/decomp-lemmings/include)
@@ -70,10 +74,12 @@ endif()
 
 # Production audio: the mixer and the cue adapter are compiled into the shared
 # object library, so SDL2 reaches every executable that links it. Emscripten
-# supplies SDL2 through -sUSE_SDL=2 and is a later phase.
+# supplies SDL2 headers and its port library through -sUSE_SDL=2.
 if(WEBOLUTION_HAVE_SDL2)
   target_sources(webolution_objects PRIVATE ${WEBOLUTION_AUDIO_SOURCES})
-  if(NOT EMSCRIPTEN)
+  if(EMSCRIPTEN)
+    target_compile_options(webolution_objects PUBLIC -sUSE_SDL=2)
+  else()
     if(TARGET SDL2::SDL2)
       target_link_libraries(webolution_objects PUBLIC SDL2::SDL2)
     elseif(TARGET PkgConfig::SDL2)
@@ -103,6 +109,26 @@ if(WEBOLUTION_HAVE_SDL2)
   endif()
   else()
   target_compile_definitions(webolution PRIVATE WEBOLUTION_HAVE_SDL2=0)
+endif()
+
+if(EMSCRIPTEN)
+  set(web_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/web")
+  target_sources(webolution PRIVATE "${web_dir}/Browser.cpp")
+  set_target_properties(webolution PROPERTIES SUFFIX ".js")
+  target_link_options(webolution PRIVATE
+    -fexceptions -sUSE_SDL=2 -sASYNCIFY -sASYNCIFY_STACK_SIZE=262144
+    -sSTACK_SIZE=4194304 -sALLOW_MEMORY_GROWTH -sENVIRONMENT=web,node
+    -sEXIT_RUNTIME=1 -lidbfs.js -lnodefs.js
+    -sEXPORTED_FUNCTIONS=_main -sEXPORTED_RUNTIME_METHODS=ccall,FS,IDBFS,ENV
+    --pre-js "${web_dir}/node-mount.js")
+  set_property(TARGET webolution APPEND PROPERTY LINK_DEPENDS
+    "${web_dir}/node-mount.js" "${web_dir}/webolution.html")
+  add_custom_command(TARGET webolution POST_BUILD
+    BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/webolution.wasm" "${CMAKE_CURRENT_BINARY_DIR}/webolution.html"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${web_dir}/webolution.html" "${CMAKE_CURRENT_BINARY_DIR}/webolution.html"
+    VERBATIM)
+  return() # The browser distribution contains only the game.
 endif()
 
 # ---- tools ----------------------------------------------------------------
@@ -891,6 +917,10 @@ add_test(NAME backdropscene COMMAND test_backdropscene WORKING_DIRECTORY ${CMAKE
 
 set(SCENE_ADMISSION_DIR "${CMAKE_SOURCE_DIR}/build/scene-admission-001")
 if(DEFINED WEBOLUTION_GAME_DIR)
+  add_executable(test_waterfall_facing src/__test__/test_waterfall_facing.cpp)
+  target_link_libraries(test_waterfall_facing PRIVATE webolution_app webolution_objects)
+  add_test(NAME waterfall_facing COMMAND test_waterfall_facing "${WEBOLUTION_GAME_DIR}")
+
   add_executable(test_sceneadmission_census
     src/__test__/test_sceneadmission_census.cpp
     src/app/SceneBillboardSource.cpp

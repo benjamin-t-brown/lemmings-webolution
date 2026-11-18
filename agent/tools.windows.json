@@ -83,6 +83,13 @@
       "path": "C:/Users/bbrown/AppData/Roaming/npm/node_modules/rea-agents/scripts/rea.mjs",
       "version": "6.5.0",
       "purpose": "connected MCP; Ghidra reported available, no target analysis run during setup"
+    },
+    "emsdk": {
+      "path": "C:/progs/emsdk/upstream/emscripten/emcc.bat",
+      "version": "5.0.3",
+      "activate": "source C:/progs/emsdk/emsdk_env.sh (bash) or C:/progs/emsdk/emsdk_env.ps1",
+      "node": "C:/progs/emsdk/node/22.16.0_64bit/bin/node.exe",
+      "purpose": "WebAssembly build; SDL2 2.32.10 port already cached, do not download ports"
     }
   },
   "runtime_bin": "C:/progs/msys2/ucrt64/bin",

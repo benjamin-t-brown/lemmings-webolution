@@ -12,6 +12,10 @@ target_link_libraries(webolution_app PUBLIC webolution_objects)
 target_compile_definitions(webolution_app PRIVATE
   WEBOLUTION_HAVE_SDL2=$<BOOL:${WEBOLUTION_HAVE_SDL2}>)
 
+if(EMSCRIPTEN)
+  return() # Only the native test drivers need a second copy of main.
+endif()
+
 add_library(webolution_app_nomain OBJECT "${CMAKE_SOURCE_DIR}/src/app/main.cpp")
 target_link_libraries(webolution_app_nomain PUBLIC webolution_objects)
 target_compile_definitions(webolution_app_nomain PRIVATE

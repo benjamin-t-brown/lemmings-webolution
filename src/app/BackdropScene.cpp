@@ -76,8 +76,20 @@ Matrix nativeAffine(const BillboardAffine3x4& a){return {a.values[0],a.values[4]
 // SceneNode row-vector layout before composing the predicate context.
 Matrix predicateContext(const CameraBasis& camera){const auto chain=buildBillboardCameraChain(camera);return compose(nativeAffine(BillboardAffine3x4{chain.parentCamera}),nativeAffine(BillboardAffine3x4{chain.sourceTransform}));}
 void collectEyes(const SceneNode& n,const Matrix& parent,const Matrix& context,std::map<std::size_t,std::array<double,3>>& out){auto m=compose(n.matrix,parent);out[n.sourceOffset]=eyeLocal(compose(m,context));for(auto&c:n.children)collectEyes(c,m,context,out);}
-// Kinds 4 and 5 share the facing predicate (0x46AE20 / 0x46AFA0, fluid research 6.3 B).
-bool passesKind5(const SceneMeshRecordSource& rec,const std::map<std::size_t,std::array<double,3>>& eyes){if((rec.kind!=4&&rec.kind!=5)||rec.corners.empty())return true;const auto it=eyes.find(rec.nodeSourceOffset);if(it==eyes.end())return false;const auto&e=it->second;const auto&v=rec.corners.front().localPosition;const auto&n=rec.corners.front().localNormal;const double facing=(e[0]-v[0])*n[0]+(e[1]-v[1])*n[1]+(e[2]-v[2])*n[2];return facing>0;}
+bool passesFacingPredicate(const SceneMeshRecordSource& rec,
+                           const std::map<std::size_t, std::array<double, 3>>& eyes) {
+  // Kinds 4/5 (0x46AE20/0x46AFA0) and both kind-7 emitters
+  // (0x46B2A0/0x46B350) use the authored normal and first indexed vertex.
+  // Limit the kind-7 change to the mine waterfall quads identified in playtest 15.
+  const bool mineWaterfall = rec.kind == 7 && rec.materialName == R"(Models\bg_mine01\^WaterFall01)";
+  if ((rec.kind != 4 && rec.kind != 5 && !mineWaterfall) || rec.corners.empty()) return true;
+  const auto eye = eyes.find(rec.nodeSourceOffset);
+  if (eye == eyes.end()) return false;
+  const auto& e = eye->second;
+  const auto& v = rec.corners.front().localPosition;
+  const auto& n = rec.corners.front().localNormal;
+  return (e[0] - v[0]) * n[0] + (e[1] - v[1]) * n[1] + (e[2] - v[2]) * n[2] > 0;
+}
 SceneRasterOptions options(bool alpha,bool blend,bool depthWrite=true){return {SceneFilter::Linear,SceneAddress::Wrap,alpha?SceneAlphaFunction::StrictGreater:SceneAlphaFunction::Disabled,0xef,blend,SceneBlendFactor::SrcAlpha,SceneBlendFactor::InvSrcAlpha,SceneDepthFunction::Less,depthWrite,SceneShade::Gouraud,SceneRgbOperation::Modulate,SceneAlphaOperation::Modulate,0.5,0.5};}
 SceneRgbaImage rgba(Image&& im){return {im.width,im.height,std::move(im.rgba)};}
 
@@ -928,7 +940,7 @@ std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
    // PROVISIONAL rectangular hit area rather than native model-origin +/-20;
    // a 0.5 world-unit tolerance covers raster depth conversion/rounding.
    for (const auto& record : *records) {
-     if (!passesKind5(record, eyes)) continue;
+     if (!passesFacingPredicate(record, eyes)) continue;
      for (std::size_t k = 1; k+1 < record.corners.size(); ++k) {
        const std::size_t ids[]{0,k,k+1};
        double sx[3], sy[3], z[3]; bool valid = true;
@@ -1050,7 +1062,7 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
    BackdropStats::FluidSubmission sub;sub.entityIndex=root.record.entityIndex;sub.height=state.height;sub.raw=!state.animated;sub.records=records->size();
    for(const auto& rec:*records){
      if(observer&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);
-     if(!passesKind5(rec,eyes)){++stats.predicateRejected;++sub.predicateRejected;continue;}
+     if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;++sub.predicateRejected;continue;}
      const auto opts=optionsFor(rec.blendSelector==1);
      for(std::size_t k=1;k+1<rec.corners.size();++k){
        std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
@@ -1165,7 +1177,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     }
   }
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
-    if((rec.kind==4||rec.kind==5)&&!passesKind5(rec,eyes)){++stats.predicateRejected;return;}
+    if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;return;}
     auto state=options(false,rec.blendSelector==1);
     if (rec.materialName.starts_with(mineBackdropMaterials)) {
       const auto flags = textureNameFlags(rec.materialName);
@@ -1329,7 +1341,7 @@ void BackdropScene::visitKind5Predicates(const CameraBasis& camera,const std::fu
   for(const auto& root:roots_)collectEyes(root.node,identity(),context,eyes);
   for(const auto& root:roots_){auto records=buildSceneMeshSource(root.node,identity(),camera.worldToView);
     if(!records){std::fprintf(stderr,"backdrop: %s%s\n",webo::app::context(levelId_,root.source,root.node.sourceOffset).c_str(),records.error().c_str());continue;}
-    for(const auto& rec:*records)if(rec.kind==5&&!rec.corners.empty())visitor(rec.recordSourceOffset,passesKind5(rec,eyes));}
+    for(const auto& rec:*records)if(rec.kind==5&&!rec.corners.empty())visitor(rec.recordSourceOffset,passesFacingPredicate(rec,eyes));}
 }
 void BackdropScene::visitSecondaryDispatch(const CameraBasis& camera,const std::function<void(const SecondaryDispatchItem&)>& visitor) const {
  const auto root=std::find_if(roots_.begin(),roots_.end(),[](const auto& n){return n.source.stage==Stage::Secondary;});if(root==roots_.end())return;

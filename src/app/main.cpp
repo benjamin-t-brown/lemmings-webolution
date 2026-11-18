@@ -131,6 +131,9 @@
 #include <SDL.h>
 #include "app/SdlWindow.hpp"
 #endif
+#ifdef __EMSCRIPTEN__
+#include "web/Browser.h"
+#endif
 
 namespace fs = std::filesystem;
 using namespace webo;
@@ -501,6 +504,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
     bool running = true;
     do {
+#ifdef __EMSCRIPTEN__
+      web::nextFrame();
+#endif
       SDL_Event event; while (SDL_PollEvent(&event)) if (event.type == SDL_QUIT ||
           (event.type == SDL_KEYDOWN && event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) running = false;
       SDL_RenderClear(renderer); SDL_RenderCopy(renderer, texture, nullptr, nullptr); SDL_RenderPresent(renderer);
@@ -1316,11 +1322,16 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         rendererInfo.name, rendererInfo.flags, bool(rendererInfo.flags & SDL_RENDERER_SOFTWARE),
         bool(rendererInfo.flags & SDL_RENDERER_PRESENTVSYNC));
   while (running && (args.frames <= 0 || rendered < args.frames)) {
+#ifdef __EMSCRIPTEN__
+    web::nextFrame();
+#endif
     app::profile::Run::Frame measuredFrame(frameProfile, args.level.c_str(), rendered, options.injectedWalkers.size());
     menuDismissedThisFrame = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       presentation.gameCoordinates(event);
+      // A hold can span Escape or a page change, including its consumed event batch.
+      if (persistentFrontend) app::updateFrontendCursorInput(*persistentFrontend, event);
       if (event.type == SDL_QUIT) { disposition = LegDisposition::Exit; running = false; break; }
       else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
         nukeInput.reset();
@@ -1340,6 +1351,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         // Own ALL input while the menu is open, including misses, unsupported
         // rows and gameplay keys. No skill assignment, zoom or relative grab.
         if (!focused) continue;
+        if (event.type == SDL_MOUSEMOTION) {
+          pointerX = event.motion.x; pointerY = event.motion.y;
+        } else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+          pointerX = event.button.x; pointerY = event.button.y;
+        }
         if (event.type == SDL_KEYDOWN && !event.key.repeat && event.key.keysym.scancode == SDL_SCANCODE_O) {
           // READ45D575: O closes all UI2 pages directly to paused UI1.
           levelMenu->close();
@@ -1347,21 +1363,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           resetMenuInput();
           menuDismissedThisFrame = true;
         } else if (persistentFrontend->screen() == shell::Screen::SoundOptions) {
-          if (event.type == SDL_MOUSEMOTION) {
-            pointerX = event.motion.x; pointerY = event.motion.y;
-          } else if (event.type == SDL_MOUSEBUTTONDOWN) {
-            pointerX = event.button.x; pointerY = event.button.y;
-          }
           app::handleSoundOptionsInput(*persistentFrontend, event);
           if (persistentFrontend->screen() == shell::Screen::Dialog) {
             levelMenu->open(); // caller 1F is rebuilt with Resume focused
             menuDismissedThisFrame = true;
           }
         } else if (event.type == SDL_MOUSEMOTION) {
-          pointerX = event.motion.x; pointerY = event.motion.y;
           levelMenu->hover(pointerX, pointerY);
         } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-          pointerX = event.button.x; pointerY = event.button.y;
           activateMenu(levelMenu->actionAt(pointerX, pointerY));
         } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
           const auto key = event.key.keysym.scancode;
@@ -1705,7 +1714,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           else if (levelMenu) levelMenu->draw(image);
           const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
-          const auto cursorState = menuOpen() ? (focused ? app::CursorState::NoLemming : app::CursorState::Hidden) :
+          const auto cursorState = menuOpen() ? persistentFrontend->cursorState() :
               app::runtimeCursorState(focused, rightDown, hover.has_value(),
                   runtimeSim.paused(), panelIndex, panelAvailability, hatchHover.has_value());
           runtimeCursor->draw(image, cursorState, pointerX, pointerY);
@@ -1772,7 +1781,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
       }
       ++rendered;
-    } else { app::profile::Scope scope(app::profile::Idle); SDL_Delay(1); }
+    }
+#ifndef __EMSCRIPTEN__
+    else { app::profile::Scope scope(app::profile::Idle); SDL_Delay(1); }
+#endif
   }
   // End this level's hold after recording the last simulation budget.
   cancelFastForwardHold();
@@ -1838,8 +1850,14 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
       soundFile = std::make_shared<save::FileSaveSink>(path, args.gameDir);
       if (auto loaded = save::SoundSettings::load(*soundFile); loaded)
         sound = *loaded;
-      else
+      else {
+#ifdef __EMSCRIPTEN__
+        std::fprintf(stderr, "sound settings: %s\n", loaded.error().c_str());
+        return 1;
+#else
         std::fprintf(stderr, "sound settings: %s (using defaults)\n", loaded.error().c_str());
+#endif
+      }
     } else {
       std::fprintf(stderr, "sound settings: %s (memory only)\n", base.error().c_str());
     }

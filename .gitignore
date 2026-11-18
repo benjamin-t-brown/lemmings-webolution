@@ -11,6 +11,7 @@ compile_commands.json
 *.wasm
 *.dSYM
 *.js
+!/src/web/node-mount.js
 *.data
 __pycache__/
 .DS_Store

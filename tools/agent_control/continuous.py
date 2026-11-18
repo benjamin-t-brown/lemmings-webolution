@@ -47,6 +47,30 @@ def schema_with_criteria(schema, criteria):
     return bound
 
 
+DONE_SUMMARY_FIELDS = ('id', 'title', 'status', 'kind', 'depends_on', 'accepted_at')
+
+
+def prompt_queue(queue):
+    """The queue as a planner/completion prompt sees it: open tasks in full, done ones summarized.
+
+    The full records stay in agent/tasks.json, which read-only passes can open. Pasting every
+    accepted task's review evidence exceeded the Codex input limit (2.6M of 1,048,576 chars).
+    """
+    tasks = []
+    for task in queue['tasks']:
+        if task.get('status') != 'done':
+            tasks.append(task)
+            continue
+        summary = {key: task[key] for key in DONE_SUMMARY_FIELDS if key in task}
+        reason = (task.get('review') or {}).get('reason')
+        if reason:
+            summary['review_reason'] = reason if len(reason) <= 300 else reason[:297] + '...'
+        tasks.append(summary)
+    return {**queue, 'tasks': tasks,
+            'note': 'Done tasks are summarized; read agent/tasks.json for their full scope, '
+                    'acceptance and review evidence.'}
+
+
 class StopLoop(RuntimeError):
     def __init__(self, status, reason):
         self.status = status
@@ -468,7 +492,8 @@ class Controller:
                        'Worker stopped; inspect ' + task.get('last_run', 'run logs'))
 
     def plan(self):
-        proposal = self.ask('plan', {'queue': self.queue, 'completion_criteria': self.criteria,
+        proposal = self.ask('plan', {'queue': prompt_queue(self.queue),
+                                     'completion_criteria': self.criteria,
                                      'plan': 'agent/IMPLEMENTATION_PLAN.md'}, PLAN)
         if proposal['decision'] == 'blocked':
             raise StopLoop('blocked', proposal['reason'])
@@ -482,7 +507,7 @@ class Controller:
         verification = self.verify('all')
         review = self.ask('review_completion', {'completion_criteria': self.criteria,
                                                'proposal': proposal, 'verification': verification,
-                                               'queue': self.queue}, REVIEW)
+                                               'queue': prompt_queue(self.queue)}, REVIEW)
         if review['decision'] != 'accept':
             if review['decision'] == 'blocked':
                 raise StopLoop('blocked', 'Completion review: ' + review['reason'])

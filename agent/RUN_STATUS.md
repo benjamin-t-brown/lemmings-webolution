@@ -9,6 +9,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- climber-topout-001: **ready** — Make Mine a Large One: a climber stops at the top of its wall instead of passing through
 
 ## Recently completed queue entries
 

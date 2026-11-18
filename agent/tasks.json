@@ -25520,6 +25520,26 @@
         "log": "build\\agent-runs\\20261118T222731-50424-b66bbb26\\verification.log",
         "verified_content": "36b6f52c0261699955b055744fbcf1dbc0aa02a4d595557fef464c97f7e210dd"
       }
+    },
+    {
+      "id": "climber-topout-001",
+      "title": "Make Mine a Large One: a climber stops at the top of its wall instead of passing through",
+      "status": "ready",
+      "depends_on": [
+        "emscripten-build-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 16 F1: on Make Mine a Large One (E18_KF_2, map node 26) the user cannot complete the level because a lemming given Climber climbs a wall to the top, glitches through the wall and dies on the other side, when it should stop at (hoist onto) the top. The user's attempts are build/playtest/replays/E18_KF_2-1795044400292762200-1.replay (Climber assigned to lemming 0 at tick 1539, column 90 row 48) and E18_KF_2-1795044489816902700-2.replay (Climber assigned to lemming 1 at tick 1879, column 83 row 48); replay them through the clone and trace the climber's state, position and the terrain around the top of its wall, tick by tick, from the climb through the hoist to the death. The production path is World::stepClimber (climb move, ceiling probe, single-column top-out probe at climberTopOut) and World::stepHoister (hoistLift, then Walker) in src/sim/World.cpp, followed by the walker step and fall/death handling. Establish which step lets the lemming end up beyond the wall: for example the top-out probe firing below the real top of a thick or stepped wall, the hoist lifting into terrain instead of onto the top surface, a wrapped column or facing error, the walker step after the hoist, or terrain materials (steel, scenery collision) the probes do not treat as solid. Use the retained static evidence cited in stepClimber (0x004137CA, 0x004139BF, 0x00413a53, 0x00413b50, 0x00417D6F) and static REA where needed. Fix the production path so a climber that reaches the top of this wall hoists onto it and walks on, as the original would, without changing climbing on the levels already won. If the wall is genuinely thin and the original would also walk off the far side, say so with evidence instead of changing behavior. Difficulty: difficult. Recommended model: Opus. Reason: climber/hoister rules carry retained static evidence and the replay set exercises them. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report traces the user's climber in both replays from the climb to its death and names the step and cause, from clone traces and static evidence or labelled provisional.",
+        "On Make Mine a Large One a climber that reaches the top of that wall stops there and walks on along the top instead of passing through, or the report shows with evidence that the original does the same as the clone.",
+        "Climbing on the levels already won is unchanged; all promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

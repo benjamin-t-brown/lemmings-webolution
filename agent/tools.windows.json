@@ -2,7 +2,7 @@
   "schema_version": 1,
   "agent_models": {
     "codex": {
-      "model": "gpt-6.1-sol",
+      "model": "gpt-6.2-sol",
       "effort": "high"
     },
     "claude": {

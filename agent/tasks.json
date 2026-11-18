@@ -23570,6 +23570,67 @@
         "All promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "hud-icons-001",
+      "title": "HUD shows the installed out, saved and time icons",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C6: the original's HUD shows a lemming icon beside the lemmings-out counter, a saved icon beside the saved counter and a stopwatch icon above the level clock; the clone shows bare numbers. asset-census-001 proposal 13 (build/asset-census-001/proposed-tasks.csv, docs/scratch/asset-census-001.md) found the installed ^out, ^saved and ^time icons unused by the clone, along with the +shadow_new skill-placement preview. Draw the three icons in the ordinary level HUD at the original's positions and sizes, keeping the counter and clock text values unchanged. Leave the +shadow_new preview out unless its use is fully traced; if left out, say so. Difficulty: routine. Recommended model: Sonnet. Reference: docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg (original, user screenshot, level start) beside one_way_ticket_web.jpg (clone, same view); docs/playtest/reference/original-2026-11-14/ has more original frames (s2-sheet.png, s2-buildblock.png show the hover look). Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence: docs/playtest/2026-11-17-playtest-13.md (C6-C8, seen by the lead in the user's screenshots and queued at the user's request). Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest look that matches the reference screenshot and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "In an ordinary level the out, saved and time icons are drawn beside their counters and above the clock, matching the reference screenshot's placement.",
+        "Counter and clock values and the existing panel behave as before.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "hover-cursor-001",
+      "title": "Hovering a lemming shows the original's bracket cursor with its letter",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C7: in the original, hovering a lemming shows green corner brackets around it with a letter beside them (\"E\" in the reference screenshot), and hovering the hatch shows its remaining count in white above it (\"50\"). hover-feedback-001 implemented provisional looks instead: half-strength additive lemming brightness, and gold corner brackets plus the number on the hatch (docs/scratch/hover-feedback-001.md). asset-census-001 proposal 14 found six authored cursor images the clone never loads, including directional and hatch/exit cursor states. Establish from static evidence what the bracket cursor is (which installed images, when it appears, what the letter means, for example a state, skill or direction code) and draw it for the hovered lemming in place of the provisional brightness. Make the hatch hover match the reference (white count above the hatch; brackets only if the original shows them). Picking rules and simulation are unchanged. Difficulty: difficult. Recommended model: Opus (the letter's meaning needs static tracing); the user's run backend overrides. Reference: docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg (original, user screenshot, level start) beside one_way_ticket_web.jpg (clone, same view); docs/playtest/reference/original-2026-11-14/ has more original frames (s2-sheet.png, s2-buildblock.png show the hover look). Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence: docs/playtest/2026-11-17-playtest-13.md (C6-C8, seen by the lead in the user's screenshots and queued at the user's request). Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest look that matches the reference screenshot and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Hovering a lemming shows corner brackets and a letter like the reference screenshot, with the brackets and letter cited to installed images and static evidence or labelled provisional, and the letter's meaning stated.",
+        "Hovering the hatch shows its remaining count like the reference screenshot.",
+        "Exactly one lemming is marked at a time, and picking still selects the marked lemming.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "skill-plate-bg-001",
+      "title": "Skill panel plates have their dark rounded backgrounds",
+      "status": "ready",
+      "depends_on": [
+        "digger-outward-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 13 C8: in the original, every skill-panel entry sits on a dark rounded plate, with the selected one also outlined in white; the clone draws the icons and counts on the bare scene, with only the selected outline. Find the installed plate art and the original's draw (retained evidence in docs/lessons/hud-and-panel.md, the panel-icon-anim-001 and fastforward reports, static REA) and draw the plate behind every entry, including the fast-forward and nuke plates, with the same hit areas and icon animation. Difficulty: routine. Recommended model: Sonnet. Reference: docs/playtest/reference/playtest-13/one_way_ticket_orig.jpg (original, user screenshot, level start) beside one_way_ticket_web.jpg (clone, same view); docs/playtest/reference/original-2026-11-14/ has more original frames (s2-sheet.png, s2-buildblock.png show the hover look). Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence: docs/playtest/2026-11-17-playtest-13.md (C6-C8, seen by the lead in the user's screenshots and queued at the user's request). Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest look that matches the reference screenshot and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. Run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on all promoted recordings and report each result. A smoke test expectation may be corrected only where it encodes this demonstrated defect, with before/after justification. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "Each skill, fast-forward and nuke entry is drawn on a dark rounded plate like the reference screenshot, with the selected entry still outlined.",
+        "Panel hit areas, counts and icon animation behave as before.",
+        "All promoted playtest replays still reproduce their results.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

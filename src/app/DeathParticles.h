@@ -5,6 +5,8 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <numbers>
+#include <optional>
 
 namespace webo::app {
 
@@ -20,12 +22,18 @@ struct DeathParticle {
   int verticalDir = 1;
   bool minerAxe = false; // installed Axe child, separate from BITS/debris
   int facing = 1;       // snapshotted before refusal turns the miner
-  // Skill debris only. Material/UVs are captured at the cut, so a later
-  // terrain edit cannot change an airborne fragment's texture.
-  bool terrainChunk = false;
-  std::uint32_t terrainMaterial = 0;
+  // Terrain fragments retain the material/UVs of the cell that was removed.
+  // Solid-colour flecks have no material.
+  std::optional<std::uint32_t> terrainMaterial;
   std::array<double, 4> terrainUv{}; // left, top, right, bottom
   std::array<double, 2> rotation{}, angularVelocity{};
+
+  void setChunkSpin(unsigned seed, int index) {
+    constexpr double turn = 2.0 * std::numbers::pi;
+    rotation = {(seed & 255u) * (turn / 256.0), ((seed >> 3) & 255u) * (turn / 256.0)};
+    angularVelocity = {(index & 1 ? -1 : 1) * (2.5 + (seed % 7u) * 0.4),
+                       (index & 2 ? -1 : 1) * (3.0 + (seed % 5u) * 0.5)};
+  }
 
   // Provisional rigid chunk in a local orthonormal tangent/up/radial frame.
   // Two age-driven angles follow the native 495E2C/495EBA presentation path;

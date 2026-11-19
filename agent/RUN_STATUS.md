@@ -9,41 +9,37 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- rat-victim-fling-001: **ready** — A lemming hit by a rat is flung off the cylinder, tumbling as it falls, instead of vanishing
-- rat-attack-sound-001: **ready** — Rat attacks play the original's sounds
-- web-audio-latency-001: **ready** — Browser build: sound effects play promptly without bringing back music clipping
-- explosion-pieces-3d-001: **ready** — Exploding lemmings burst into 3D pieces instead of flat red squares
 
 ## Recently completed queue entries
 
-- rat-motion-smoothing-001: Evil rats move smoothly like lemmings instead of jittering
-  Accepted: 2026-11-19T17:14:02.268307+00:00
-  Verification evidence: `build/agent-runs/20261119T170144-57312-8306213f/verification.log`
-  Verification evidence: `build\agent-runs\20261119T170144-57312-8306213f\verification.log`
-- rat-drown-001: Evil rats that reach water drown and are removed instead of staying forever
-  Accepted: 2026-11-19T17:35:01.062846+00:00
-  Verification evidence: `build/agent-runs/20261119T171402-57312-3c72d1e4/verification.log`
-  Verification evidence: `build\agent-runs\20261119T171402-57312-3c72d1e4\verification.log`
-- lane-spawn-blocker-001: Lemmings spawn in the centre lane and lerp out; blockers stand in the centre
-  Accepted: 2026-11-19T18:23:49.748429+00:00
-  Verification evidence: `build/agent-runs/20261119T175916-57312-b2794182/verification.log`
-  Verification evidence: `build\agent-runs\20261119T175916-57312-b2794182\verification.log`
-- digger-lane-facing-001: Diggers face outward on the outer lane and toward the cylinder on the inner lane
-  Accepted: 2026-11-19T18:34:43.115375+00:00
-  Verification evidence: `build/agent-runs/20261119T182349-27936-01e13e6e/verification.log`
-  Verification evidence: `build\agent-runs\20261119T182349-27936-01e13e6e\verification.log`
 - balloon-gyrate-001: The departing exit balloon's basket circles slightly as it flies away
   Accepted: 2026-11-19T18:54:25.058840+00:00
   Verification evidence: `build/agent-runs/20261119T184537-27936-1dac8d35/verification.log`
   Verification evidence: `build\agent-runs\20261119T184537-27936-1dac8d35\verification.log`
+- rat-victim-fling-001: A lemming hit by a rat is flung off the cylinder, tumbling as it falls, instead of vanishing
+  Accepted: 2026-11-19T19:38:24.923459+00:00
+  Verification evidence: `build/agent-runs/20261119T191806-53088-599ee3bb/verification.log`
+  Verification evidence: `build\agent-runs\20261119T191806-53088-599ee3bb\verification.log`
+- rat-attack-sound-001: Rat attacks play the original's sounds
+  Accepted: 2026-11-19T19:52:52.138910+00:00
+  Verification evidence: `build/agent-runs/20261119T193825-53088-c0825729/verification.log`
+  Verification evidence: `build\agent-runs\20261119T193825-53088-c0825729\verification.log`
+- web-audio-latency-001: Browser build: sound effects play promptly without bringing back music clipping
+  Accepted: 2026-11-19T20:47:01.627243+00:00
+  Verification evidence: `build/agent-runs/20261119T202320-53088-19f10b13/verification.log`
+  Verification evidence: `build\agent-runs\20261119T202320-53088-19f10b13\verification.log`
+- explosion-pieces-3d-001: Exploding lemmings burst into 3D pieces instead of flat red squares
+  Accepted: 2026-11-19T21:10:14.606608+00:00
+  Verification evidence: `build/agent-runs/20261119T204701-53088-f205d677/verification.log`
+  Verification evidence: `build\agent-runs\20261119T204701-53088-f205d677\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-b4ff86d771ca4961816e055b6616de3e/result.json`
+- Result: `build/agent-runs/loop-316074c6922e4f53a7d138168bb8bb75/result.json`
 - Status: **blocked**
-- Duration: 0h 35m 44s
-- Completed in this invocation: lane-spawn-blocker-001, digger-lane-facing-001, balloon-gyrate-001
-- Reason: The next dependency is a human playtest on the accepted build. Playtest 19 recorded 0 of 40 required saves on Escape to Victory (E11_KF_1, node 28) before the accepted seam and rat fixes. The ledger identifies no further failure on that route. Now You're Stalking’s remaining seam is explicitly parked until the player can identify its location. Replaying node 28 through Results and checking progress after restart can confirm the route or identify the next production defect. This pass inspected so
+- Duration: 1h 54m 35s
+- Completed in this invocation: rat-victim-fling-001, rat-attack-sound-001, web-audio-latency-001, explosion-pieces-3d-001
+- Reason: All four Playtest 20 fixes passed independent review. The next playable-v1 dependency is human play on the accepted build. The ledger records wins on 29 of 102 levels, and node 29, Let's Play 'Catch', is the first without a recorded human win. A demonstrated failure on that route would establish the next production scope. The remaining Now You're Stalking seam is explicitly parked until the player identifies its location. The retained trace already narrows a future fix to the affected tile or ge
 
 ## Documentation handoff
 

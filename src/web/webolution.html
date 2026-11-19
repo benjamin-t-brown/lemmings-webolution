@@ -58,7 +58,7 @@
       canvas.hidden = false;
       canvas.focus();
       try {
-        // Ordinary no-option startup. Open SDL audio in this gesture and hold
+        // Ordinary no-option startup. Open browser audio in this gesture and hold
         // the save lock across Asyncify suspensions until main really returns.
         const code = await Module.ccall('main', 'number', ['number', 'number'], [0, 0], {async: true});
         if (code === 0) message('Game closed. Reload to play again.');

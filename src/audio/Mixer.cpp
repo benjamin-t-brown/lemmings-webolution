@@ -1,6 +1,10 @@
 #include "Mixer.h"
 
 #include "assets/Box.h"
+
+#include <utility>
+
+#ifndef __EMSCRIPTEN__
 #include "audio/OverlapMix.h"
 
 #include <SDL.h>
@@ -8,11 +12,11 @@
 #include <algorithm>
 #include <cstring>
 #include <format>
+#endif
 
 namespace webo::audio {
-namespace {
 
-std::string upperCue(std::string_view cue) {
+std::string Mixer::cueKey(std::string_view cue) {
   std::string out(cue);
   for (char& c : out)
     if (c >= 'a' && c <= 'z')
@@ -20,10 +24,41 @@ std::string upperCue(std::string_view cue) {
   return out;
 }
 
-}  // namespace
-
 Mixer::~Mixer() { close(); }
 
+std::expected<void, std::string> Mixer::load(std::string_view cue, const Sound& source) {
+  if (!ready())
+    return std::unexpected("mixer: not open");
+  if (source.empty())
+    return std::unexpected("mixer: empty sound");
+
+  int clipChannels = channels_;
+#ifdef __EMSCRIPTEN__
+  // Web Audio can fan out mono at playback. All installed music is mono,
+  // so this keeps the float AudioBuffer cache the size of the old stereo PCM.
+  if (source.channels == 1) clipChannels = 1;
+#endif
+  Sound mixed = resampleTo(source, sampleRate_, clipChannels);
+  if (mixed.empty())
+    return std::unexpected("mixer: resample produced nothing");
+  return storeClip(cueKey(cue), std::move(mixed));
+}
+
+std::expected<void, std::string> Mixer::loadFrom(const AssetLibrary& lib, std::string_view cue) {
+  auto sound = loadSound(lib, soundAssetName(cue));
+  if (!sound)
+    return std::unexpected(sound.error());
+  return load(cue, *sound);
+}
+
+std::expected<void, std::string> Mixer::loadMusicFrom(const AssetLibrary& lib, std::string_view cue) {
+  auto sound = loadSound(lib, musicAssetName(cue));
+  if (!sound)
+    return std::unexpected(sound.error());
+  return load(cue, *sound);
+}
+
+#ifndef __EMSCRIPTEN__
 std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   if (device_)
     close();
@@ -43,13 +78,7 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   want.freq = sampleRate;
   want.format = AUDIO_S16SYS;
   want.channels = static_cast<std::uint8_t>(channels);
-#ifdef __EMSCRIPTEN__
-  // SDL's Web Audio ScriptProcessor delivers one block per main-thread event.
-  // At a 48 kHz device rate this leaves 85 ms for a late rotation frame.
-  want.samples = 4096;
-#else
   want.samples = 1024;
-#endif
   want.callback = callback;
   want.userdata = this;
 
@@ -103,20 +132,7 @@ void Mixer::close() {
   releaseSubsystem();
 }
 
-std::expected<void, std::string> Mixer::load(std::string_view cue, const Sound& source) {
-  if (!ready())
-    return std::unexpected("mixer: not open");
-  if (source.empty())
-    return std::unexpected("mixer: empty sound");
-
-  Sound mixed = resampleTo(source, sampleRate_, channels_);
-  if (mixed.empty())
-    return std::unexpected("mixer: resample produced nothing");
-
-  const std::string key = upperCue(cue);
-  Clip clip;
-  clip.samples = std::move(mixed.samples);
-
+std::expected<void, std::string> Mixer::storeClip(std::string key, Sound clip) {
   SDL_LockAudioDevice(device_);
   // Drop voices that still point at the clip we are about to replace -- the
   // pointer would otherwise dangle the moment the map entry is overwritten.
@@ -126,23 +142,16 @@ std::expected<void, std::string> Mixer::load(std::string_view cue, const Sound& 
                                  [dying](const Voice& v) { return v.clip == dying; }),
                   voices_.end());
   }
-  clips_[key] = std::move(clip);
+  clips_[std::move(key)] = Clip{std::move(clip.samples)};
   SDL_UnlockAudioDevice(device_);
   return {};
-}
-
-std::expected<void, std::string> Mixer::loadFrom(const AssetLibrary& lib, std::string_view cue) {
-  auto sound = loadSound(lib, soundAssetName(cue));
-  if (!sound)
-    return std::unexpected(sound.error());
-  return load(cue, *sound);
 }
 
 bool Mixer::has(std::string_view cue) const {
   if (!ready())
     return false;
   SDL_LockAudioDevice(device_);
-  const bool found = clips_.contains(upperCue(cue));
+  const bool found = clips_.contains(cueKey(cue));
   SDL_UnlockAudioDevice(device_);
   return found;
 }
@@ -152,7 +161,7 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
     return;
 
   SDL_LockAudioDevice(device_);
-  const auto it = clips_.find(upperCue(cue));
+  const auto it = clips_.find(cueKey(cue));
   if (it != clips_.end() && !it->second.samples.empty()) {
     if (overlap == Overlap::SkipPlaying) {
       const Clip* clip = &it->second;
@@ -177,10 +186,9 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
     // Exit cheers own a separate bus: one short voice per saved actor. Do not
     // cut earlier cheers off when a whole group reaches the exit together,
     // and do not let those new voices steal slots from existing effects.
-    constexpr int kMaxVoices = 32;
     const auto additiveVoices = std::count_if(voices_.begin(), voices_.end(),
         [](const Voice& v) { return !v.music && v.overlap == Overlap::Add; });
-    if (overlap == Overlap::Add && additiveVoices >= kMaxVoices) {
+    if (overlap == Overlap::Add && additiveVoices >= kMaxAdditiveVoices) {
       for (auto vit = voices_.begin(); vit != voices_.end(); ++vit) {
         if (!vit->music && vit->overlap == Overlap::Add) {
           voices_.erase(vit);
@@ -196,14 +204,6 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
   SDL_UnlockAudioDevice(device_);
 }
 
-std::expected<void, std::string> Mixer::loadMusicFrom(const AssetLibrary& lib,
-                                                      std::string_view cue) {
-  auto sound = loadSound(lib, musicAssetName(cue));
-  if (!sound)
-    return std::unexpected(sound.error());
-  return load(cue, *sound);
-}
-
 void Mixer::playMusic(std::string_view cue, float volume) {
   if (!ready())
     return;
@@ -211,7 +211,7 @@ void Mixer::playMusic(std::string_view cue, float volume) {
   voices_.erase(std::remove_if(voices_.begin(), voices_.end(),
                                [](const Voice& v) { return v.music; }),
                 voices_.end());
-  const auto it = clips_.find(upperCue(cue));
+  const auto it = clips_.find(cueKey(cue));
   if (it != clips_.end() && !it->second.samples.empty()) {
     // A bed selected while muted keeps its playhead for a later live unmute.
     const float v = std::clamp(volume, 0.0f, 1.0f);
@@ -324,5 +324,6 @@ void Mixer::fill(std::int16_t* out, int frames) {
                                }),
                 voices_.end());
 }
+#endif
 
 }  // namespace webo::audio

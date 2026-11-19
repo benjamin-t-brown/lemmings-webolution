@@ -1,17 +1,16 @@
-// SDL2 sound playback for the retail `.WAV` cues.
+// Sound playback for the retail `.WAV` cues.
 //
 // The decoder lives in assets/Wav and stays free of SDL: it turns archive
-// entries into signed 16-bit PCM at whatever rate they arrived. This mixer
-// owns the device, resamples every loaded cue to one output format once, and
-// mixes concurrent voices in the audio callback.
+// entries into signed 16-bit PCM at whatever rate they arrived. Clips are
+// converted to the mix format on load. Desktop uses an SDL audio callback.
+// The browser schedules the clips directly on its Web Audio rendering clock.
 //
 // Opening the device is optional. The game shell treats failure the same way
 // it treats missing sprites -- stderr and keep going -- so a headless CI box
 // without an audio backend is not a hard error.
 //
-// Threading: play() is called from the main thread; the callback runs on
-// SDL's audio thread. Shared state is guarded with SDL_LockAudioDevice, which
-// is the simplest correct answer and cheap at the rates these cues need.
+// The game calls play() on the main thread. Desktop's SDL callback shares
+// the voice state under SDL_LockAudioDevice. Web Audio owns its rendered PCM.
 
 #pragma once
 
@@ -45,13 +44,15 @@ public:
   Mixer(const Mixer&) = delete;
   Mixer& operator=(const Mixer&) = delete;
 
-  // Opens the default output device. sampleRate/channels are the mix format;
-  // every cue is resampled to them on load. 22050 stereo matches the plurality
-  // of the retail files, so most loads are a channel fan-out rather than a
-  // rate conversion.
+  // Opens the default output device. Clips use sampleRate/channels on load.
+  // The browser renders them at the Web Audio device's own rate.
   std::expected<void, std::string> open(int sampleRate = 22050, int channels = 2);
   void close();
+#ifdef __EMSCRIPTEN__
+  bool ready() const { return webReady_; }
+#else
   bool ready() const { return device_ != 0; }
+#endif
 
   int sampleRate() const { return sampleRate_; }
   int channels() const { return channels_; }
@@ -78,6 +79,13 @@ public:
   void stopAll();
 
 private:
+  static std::string cueKey(std::string_view cue);
+  std::expected<void, std::string> storeClip(std::string key, Sound clip);
+  static constexpr int kMaxAdditiveVoices = 32;
+
+#ifdef __EMSCRIPTEN__
+  bool webReady_ = false;
+#else
   friend struct WorkSoundTestAccess;
   friend struct PositionalSoundTestAccess;
   friend struct MusicTestAccess;
@@ -101,13 +109,13 @@ private:
 
   std::uint32_t device_ = 0;
   bool ownsAudioSubsystem_ = false;
+  std::unordered_map<std::string, Clip> clips_;
+  std::vector<Voice> voices_;
+#endif
   int sampleRate_ = 0;
   int channels_ = 0;
   float musicVolume_ = 0.6f;
   float sfxVolume_ = 1.0f;
-
-  std::unordered_map<std::string, Clip> clips_;
-  std::vector<Voice> voices_;
 };
 
 }  // namespace webo::audio

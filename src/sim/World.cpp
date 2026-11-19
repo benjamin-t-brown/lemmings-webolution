@@ -1581,12 +1581,10 @@ void World::stepRats(double dt, bool tickBoundary) {
         rat.punch = rat.attacks++ % 4;
         rat.animationSeconds = 0;
         l.stepBudgetSeconds = 0;
-        // 42E340 -> 416BF0 launches the claimed victim's debris figure.
-        cueSample("Die", victim);
-        if (deathObserver_) {
-          auto figure = victim; figure.state = State::Dead;
-          deathObserver_(figure, false, {});
-        }
+        // 42E349..42E360 plays the victim's Ohno before the flying figure.
+        // This sample is per victim, independent of the bomber's fuse cue.
+        cueSample("Ohno", victim);
+        if (forcedDeathObserver_) forcedDeathObserver_(victim);
         break;
       }
       if (rat.pendingVictim >= 0) continue;
@@ -1837,10 +1835,8 @@ bool World::consumeGateCrush(Lemming& l) {
   if (!l.gateCrushed || !l.alive()) return false;
   l.gateCrushed = false;
   leaveBlocker(l);
-  // 0x42E340 -> 0x416BF0 / type 0x25 -> 0x416C49 removes the actor
-  // and launches a debris figure. Provisional presentation: reuse the clone
-  // death particles rather than inventing a new animation/state clock.
-  if (deathObserver_) deathObserver_(l, false, {});
+  // 427266 writes the same forced flag consumed by 42E340 -> 416BF0/416C49.
+  if (forcedDeathObserver_) forcedDeathObserver_(l);
   l.state = State::Dead;
   if (l.sheetType != 3) ++dead_;
   return true;

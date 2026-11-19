@@ -1453,6 +1453,12 @@ public:
                                            std::span<const std::array<int, 2>>)>;
   void setDeathObserver(DeathObserver observer) { deathObserver_ = std::move(observer); }
 
+  // Rat contact and closing gates both request the forced death figure.
+  using ForcedDeathObserver = std::function<void(const Lemming&)>;
+  void setForcedDeathObserver(ForcedDeathObserver observer) {
+    forcedDeathObserver_ = std::move(observer);
+  }
+
   // Presentation only, after a skill's existing clearBox and before movement.
   // Empty swings/refusals report nothing; cells are actual removals, X wrapped.
   using TerrainCutObserver = std::function<void(const Lemming&,
@@ -1582,6 +1588,7 @@ private:
   std::vector<int> spawnedByEntrance_;
   std::vector<SoundEvent> cues_;
   DeathObserver deathObserver_;
+  ForcedDeathObserver forcedDeathObserver_;
   TerrainCutObserver terrainCutObserver_;
   MinerRefusalObserver minerRefusalObserver_;
   GadgetObserver gadgetObserver_;

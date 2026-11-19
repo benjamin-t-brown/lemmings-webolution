@@ -113,6 +113,7 @@ endif()
 
 if(EMSCRIPTEN)
   set(web_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/web")
+  target_sources(webolution_objects PRIVATE "${web_dir}/WebMixer.cpp")
   target_sources(webolution PRIVATE "${web_dir}/Browser.cpp")
   set_target_properties(webolution PROPERTIES SUFFIX ".js")
   target_link_options(webolution PRIVATE
@@ -124,9 +125,10 @@ if(EMSCRIPTEN)
     -sSTACK_SIZE=4194304 -sALLOW_MEMORY_GROWTH -sENVIRONMENT=web,worker,node
     -sEXIT_RUNTIME=1 -lidbfs.js -lnodefs.js
     -sEXPORTED_FUNCTIONS=_main -sEXPORTED_RUNTIME_METHODS=ccall,FS,IDBFS,ENV
-    --pre-js "${web_dir}/node-mount.js")
+    --pre-js "${web_dir}/node-mount.js"
+    "--js-library=${web_dir}/web-audio.js")
   set_property(TARGET webolution APPEND PROPERTY LINK_DEPENDS
-    "${web_dir}/node-mount.js" "${web_dir}/webolution.html")
+    "${web_dir}/node-mount.js" "${web_dir}/webolution.html" "${web_dir}/web-audio.js")
   add_custom_command(TARGET webolution POST_BUILD
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/webolution.wasm" "${CMAKE_CURRENT_BINARY_DIR}/webolution.html"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different

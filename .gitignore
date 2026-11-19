@@ -12,6 +12,7 @@ compile_commands.json
 *.dSYM
 *.js
 !/src/web/node-mount.js
+!/src/web/web-audio.js
 *.data
 __pycache__/
 .DS_Store

@@ -4,6 +4,7 @@
 #include "app/MapScene.h"
 #include "app/TubeScene.h"
 #include "assets/Box.h"
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <filesystem>
@@ -71,14 +72,17 @@ int main(int argc, char** argv) {
     auto drawn = app::injectedWalkersFromWorld(w, 64);
     assert(drawn.size() == 3 && !drawn[0].renderEnabled);
     assert(drawn.back().sheetType == 3 && std::string(drawn.back().clip) == "punch0");
+    const auto cues = w.takeSoundEvents();
+    const std::array<double, 3> victimPosition{double(10 + dx), double(59 + dy), 0.75};
+    assert(cues.size() == 1 && !cues[0].cue && cues[0].sample == "Ohno" &&
+           cues[0].position == victimPosition);
     for (int i = 0; i < 10; ++i) w.advanceElapsedMs(0);
     assert(w.dead() == 0);
     w.advanceElapsedMs(481);
     assert(w.dead() == 1 && w.lemmings()[0].state == State::Dead);
     assert(!w.lemmings()[0].ratVictim && w.rats()[0].pendingVictim == -1);
     assert(w.spawned() == 0 && w.saved() == 0);
-    const auto cues = w.takeSoundEvents();
-    assert(!cues.empty() && cues[0].sample == "Die" && cues[0].position);
+    assert(w.takeSoundEvents().empty());
   }
   World outside(fixture()); outside.place(victim(12)); outside.advanceElapsedMs(0);
   assert(outside.rats()[0].pendingVictim == -1);

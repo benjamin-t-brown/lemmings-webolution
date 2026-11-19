@@ -94,7 +94,7 @@ public:
   // Frontend/map share lemming01 without restarting between pages. Each level
   // load (including Retry) starts a fresh random lemming02..13 bed. Selection
   // follows 0x498DE8; the clone RNG and default 30% music gain are provisional.
-  // Pause and focus changes leave the callback running at normal playback speed.
+  // Pause and focus changes leave the music running at normal playback speed.
   // Music never enters the SFX observer/counters or the simulation RNG.
   void playFrontendMusic();
   void playLevelMusic();

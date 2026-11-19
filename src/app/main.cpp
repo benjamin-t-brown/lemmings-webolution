@@ -702,6 +702,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // the fixed injected-walker fixtures above -- but only when --sim/--sim-ticks
   // is given. Every pre-existing command line (no --sim) leaves
   // options.injectedWalkers exactly as the blocks above already set it.
+  app::LemmingMotionTracker lemmingMotion;
   std::optional<sim::World> world;
   int terrainHeight = 0;
   if (args.sim) {
@@ -720,6 +721,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         std::span<const std::array<int, 2>> removed) {
       scene->emitDeathParticles(lemming, explosion, removed, world->levelClockMs(),
                                 world->terrain().height(), *library, world->nukeRequested());
+    });
+    world->setForcedDeathObserver([&](const sim::Lemming& victim) {
+      auto sample = terrainSampleFromLemming(victim, world->terrain().height());
+      const auto& lemmings = world->lemmings();
+      const auto lemming = std::ranges::find_if(lemmings, [&](const auto& l) { return &l == &victim; });
+      if (lemming != lemmings.end()) {
+        sample.z = lemmingMotion.positionOf(lemming - lemmings.begin(), *world).z;
+      } else {
+        const auto& rats = world->rats();
+        const auto rat = std::ranges::find_if(rats, [&](const auto& r) { return &r.actor == &victim; });
+        if (rat != rats.end())
+          sample.z = lemmingMotion.ratPositionOf(rat - rats.begin(), *world).z;
+      }
+      scene->emitForcedDeathFlight(victim, sample, world->levelClockMs());
     });
     world->setTerrainCutObserver([&](const sim::Lemming& lemming,
         std::span<const std::array<int, 2>> removed) {
@@ -963,7 +978,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     scene->drawExplosionDecals(target, frameCamera);
     if (options.drawCellRoute && !options.composeActorsBeforeRoute)
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
-    scene->drawDeathParticles(target, frameCamera, *library);
+    scene->drawDeathParticles(target, frameCamera, *library, options.pipeSceneDepth);
 #ifndef __EMSCRIPTEN__
     if (logLevelDetails && !args.sceneOff) {
       std::fprintf(stderr, "backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu "
@@ -1179,7 +1194,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::array<Image, hudIcons.size()> runtimeHudIcons;
   std::optional<Image> runtimeFont;
   app::LemmingAnimTracker lemmingAnim;
-  app::LemmingMotionTracker lemmingMotion;
   std::optional<app::RetailSkillPanel> runtimePanel;
   std::optional<app::RuntimeReleaseRateControl> releaseControl;
   std::optional<app::SkillPanelIconAnimation> panelIconAnimation;
@@ -1352,12 +1366,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     std::fprintf(stderr, "presenter: %s flags=0x%x software=%d vsync=%d; simulation frames do not sleep\n",
         rendererInfo.name, rendererInfo.flags, bool(rendererInfo.flags & SDL_RENDERER_SOFTWARE),
         bool(rendererInfo.flags & SDL_RENDERER_PRESENTVSYNC));
-  while (running && (args.frames <= 0 || rendered < args.frames)) {
-#ifdef __EMSCRIPTEN__
-    web::nextFrame();
-#endif
-    app::profile::Run::Frame measuredFrame(frameProfile, args.level.c_str(), rendered, options.injectedWalkers.size());
-    menuDismissedThisFrame = false;
+  const auto processLevelEvents = [&] {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       presentation.gameCoordinates(event);
@@ -1538,6 +1547,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
       recordCommands();
     }
+  };
+  while (running && (args.frames <= 0 || rendered < args.frames)) {
+    menuDismissedThisFrame = false;
+#ifdef __EMSCRIPTEN__
+    if (args.sim && world) {
+      // A click can use the already displayed scene while the next frame is pending.
+      while (running && !web::waitForLevelFrameOrClick()) processLevelEvents();
+      if (!running) break;
+    } else {
+      web::nextFrame();
+    }
+#endif
+    app::profile::Run::Frame measuredFrame(frameProfile, args.level.c_str(), rendered, options.injectedWalkers.size());
+    processLevelEvents();
     if (!running) break; // Do not compose or observe another frame after close.
     app::profile::Scope profileSim(app::profile::Simulation);
     const Uint8* keys = SDL_GetKeyboardState(nullptr);

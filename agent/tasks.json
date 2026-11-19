@@ -28777,7 +28777,7 @@
     {
       "id": "rat-victim-fling-001",
       "title": "A lemming hit by a rat is flung off the cylinder, tumbling as it falls, instead of vanishing",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -28792,12 +28792,108 @@
         "In Escape to Victory a lemming killed by a rat is drawn being flung away from the cylinder and falling while it rotates, then removed, instead of vanishing into debris; clone framebuffer frames under build/ show the sequence.",
         "Death timing, counts, rat behaviour and other death presentations not tied to the same evidence are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T191806-53088-599ee3bb",
+      "started": "2026-11-19T19:18:07.302404+00:00",
+      "finished": "2026-11-19T19:35:35.119121+00:00",
+      "last_run": "build/agent-runs/20261119T191806-53088-599ee3bb",
+      "review": {
+        "decision": "accept",
+        "reason": "All four criteria are supported. The retained clone frames show Playtest 20 K2 resolved, both affected promoted replays reproduce, and the supervisor smoke profile passed. The flight parameters are documented as provisional. Original runtime fidelity remains unverified.",
+        "checks": [
+          {
+            "criterion": "The report traces the original's flying figure (416BF0, 416C49 and what they call) and states its sprite or model, launch, spin, gravity and lifetime, citing addresses, or labels choices provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rat-victim-fling-001.md",
+                "detail": "Identifies the registered EXE by SHA-256 and documents the victim-type fall or cartwheel sprite, cylinder-relative launch, upward kick, signed spin, gravity and lifetime. It labels the clone's deterministic parameters provisional."
+              },
+              {
+                "path": "build/rat-victim-fling-001/static/entry.json",
+                "detail": "The retained instructions and pseudocode show 42E340 testing actor flag +5D, 42E360 playing the death handle, and 42E382 calling 416BF0. The 416C49 body calls 416ED0, samples the cylinder twice through 43D56C, subtracts the positions through 401830 and creates the transient through 432080."
+              },
+              {
+                "path": "build/rat-victim-fling-001/static/crosscheck.md",
+                "detail": "Connects vtable slot 4B0A7C to 416C49, sprite selection to 496BB3, spin to 496D5B and 496C84, gravity to 4178B0, and the nominal two-to-six-second lifetime to 4177D0. It distinguishes sprite expiry through 432383 and 4172A0 from the rat controller's victim removal."
+              }
+            ]
+          },
+          {
+            "criterion": "In Escape to Victory a lemming killed by a rat is drawn being flung away from the cylinder and falling while it rotates, then removed, instead of vanishing into debris; clone framebuffer frames under build/ show the sequence.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-victim-fling-001/escape-fling.log",
+                "detail": "Identifies the observed level as E11_KF_1 and records the contact with victim 14 and the matching framebuffer timestamps."
+              },
+              {
+                "path": "build/rat-victim-fling-001/escape-fling/age-0250.png",
+                "detail": "An intact, inverted lemming is visible beside the attacking rat as it leaves the walkway."
+              },
+              {
+                "path": "build/rat-victim-fling-001/escape-fling/age-1350.png",
+                "detail": "The first victim is below and away from the walkway in a different cartwheel pose."
+              },
+              {
+                "path": "build/rat-victim-fling-001/escape-expiry/age-3984.png",
+                "detail": "The first victim's sprite remains visible low in the wide view just before expiry."
+              },
+              {
+                "path": "build/rat-victim-fling-001/escape-expiry/age-4000.png",
+                "detail": "The next frame shows that sprite gone. The expiry log records the same death count on both frames."
+              }
+            ]
+          },
+          {
+            "criterion": "Death timing, counts, rat behaviour and other death presentations not tied to the same evidence are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-victim-fling-001/task-source.diff",
+                "detail": "Rat contact and gate crush switch presentation observers. Contact selection, punch progression, victim removal, count updates, and generic death-particle producers retain their existing paths. The clone observation records the first victim being counted once, 484 ms after contact."
+              },
+              {
+                "path": "build/rat-victim-fling-001/static/crosscheck.md",
+                "detail": "The rat at 4264F2 and closing gate at 427266 write the same forced-death flag. Splat and explosion construct separate body-piece effects."
+              },
+              {
+                "path": "build/rat-victim-fling-001/replay-selection.json",
+                "detail": "Accounts for all 24 promoted recordings. The two routes containing a changed trigger were rerun as scoped. Escape to Victory passed at step 28060 with 43/40 saved, and The Iron Curtain passed at step 18207 with 21/20 saved. Both returned exit zero with won=1 and completed=1. The other 22 routes use neither changed trigger."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T191806-53088-599ee3bb/verification.log",
+                "detail": "The supervisor recorded 95 main smoke tests passing, including the installed-level sweep, and 84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261119T191806-53088-599ee3bb/result.json",
+                "detail": "Records verification exit code zero and the verified content digest supplied for this review."
+              },
+              {
+                "path": "docs/scratch/rat-victim-fling-001.md",
+                "detail": "The worker's pending-smoke handoff is followed by the final what-to-check note. It names Escape to Victory, asks the player to let a lemming reach a rat and watch from the side, and describes the expected tumble, expiry and single count decrement at punch completion."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T19:38:24.923459+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T191806-53088-599ee3bb\\verification.log",
+        "verified_content": "a845d97d0b8ef2c9d10986697a83433f4c184567b618eb61e53a0d8eba958841"
+      }
     },
     {
       "id": "rat-attack-sound-001",
       "title": "Rat attacks play the original's sounds",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -28812,12 +28908,96 @@
         "The clone plays those samples at those moments in Escape to Victory, shown by a clone sound-event trace under build/; lemming sounds elsewhere are unchanged.",
         "All promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T193825-53088-c0825729",
+      "started": "2026-11-19T19:38:25.362593+00:00",
+      "finished": "2026-11-19T19:49:51.097228+00:00",
+      "last_run": "build/agent-runs/20261119T193825-53088-c0825729",
+      "review": {
+        "decision": "accept",
+        "reason": "The rat-hit path now plays one positional Ohno as the victim is flung. The Escape to Victory trace shows 25 matching contacts and cue requests, all 24 promoted replays reproduce, and the supervisor smoke profile passed. The exact within-update offset and audible playback onset remain unmeasured.",
+        "checks": [
+          {
+            "criterion": "The report lists each sound the original plays during a rat attack and kill, with the sample name, bank index, trigger point and static address, or labels a choice provisional, and states what the clone played before.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rat-attack-sound-001.md",
+                "detail": "The Playtest 20 K1 report names the prior contact cue as Die, bank 11, and the original forced-death cue as SOUNDS\\OHNO.WAV, bank 7. It gives addresses for punch selection and advance, victim launch and flight, punch completion, and ordinary dry patrol, with no separate sound found on those paths."
+              },
+              {
+                "path": "build/rat-attack-sound-001/static/attacks.json",
+                "detail": "The instructions and pseudocode agree that 0x4264F2 sets the victim flag and 0x42657A\u20130x4265B6 selects the punch animation. The victim update reads handle 0x4E32CC at 0x42E349, submits it with the victim ID at 0x42E360, constructs the forced-death state at 0x42E382, and clears the flag at 0x42E3BC."
+              },
+              {
+                "path": "build/rat-attack-sound-001/static/bank.json",
+                "detail": "The registered EXE bytes at 0x4C0CAC spell Ohno. The startup registration at 0x45E5B8\u20130x45E5CA stores its bank handle in the field read by the victim update. The registration order gives Ohno index 7 and Die index 11."
+              }
+            ]
+          },
+          {
+            "criterion": "The clone plays those samples at those moments in Escape to Victory, shown by a clone sound-event trace under build/; lemming sounds elsewhere are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-attack-sound-001/escape-sound-events.log",
+                "detail": "The installed E11_KF_1 run records 25 contacts and exactly 25 routed Ohno requests on the matching frames across both rats and all four punch variants. All 25 removal frames have zero cue requests. The installed WAV decoded and the SDL dummy device was ready."
+              },
+              {
+                "path": "build/rat-attack-sound-001/task-source.diff",
+                "detail": "The sole production audio change replaces Die with Ohno in World::stepRats immediately before the existing flight notification. It uses the same victim position and named-sample path. Other lemming cue producers, including the bomber's typed OhNo path, are unchanged."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "The existing drain resolves the event position to gains and sends named samples through playName to Mixer::play when the clip and device are ready. The trace observes routing at playName with dummy audio."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-attack-sound-001/replay-results.tsv",
+                "detail": "The manifest matches all 24 current .replay files under docs/playtest/replays. Every corresponding log records exit 0, PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/rat-attack-sound-001/replays/E11_KF_1-1795115359121043200-1.replay.log",
+                "detail": "The affected Escape to Victory recording reproduced at step 28,060 with 43 saved against a target of 40."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T193825-53088-c0825729/verification.log",
+                "detail": "The supervisor log shows 95 of 95 main smoke tests passed, including all level sweep chunks and the aggregate report, followed by 84 of 84 recovery tests passed."
+              },
+              {
+                "path": "build/agent-runs/20261119T193825-53088-c0825729/result.json",
+                "detail": "Verification exited 0 and recorded the same verified-content hash supplied for this review."
+              },
+              {
+                "path": "docs/scratch/rat-attack-sound-001.md",
+                "detail": "The report ends with a two-line handoff and a what-to-check note. In Escape to Victory, let a lemming reach either rat and listen for one Oh no as the victim is flung, with no further attack cue during the fall or punch completion."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T19:52:52.138910+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T193825-53088-c0825729\\verification.log",
+        "verified_content": "86a8da449d1e636db6e89e242f7cc7c5d939402748530f7d66f954a077909837"
+      }
     },
     {
       "id": "web-audio-latency-001",
       "title": "Browser build: sound effects play promptly without bringing back music clipping",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -28832,12 +29012,183 @@
         "Click-to-sound latency on the web build is under about 50 ms in that measurement, and the music signal remains continuous through the rotation stall model web-perf-001 used (or a stricter one).",
         "Desktop audio and all promoted playtest replays are unchanged; the design adds no pthread dependence.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T202320-53088-19f10b13",
+      "started": "2026-11-19T20:23:21.174770+00:00",
+      "finished": "2026-11-19T20:44:52.284573+00:00",
+      "last_run": "build/agent-runs/20261119T202320-53088-19f10b13",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Measure the production Climber click path through actor selection and ground the Web Audio output latency used in the total. The retained Node run shows a substantial improvement through cue playback and continuous music through the rotation model. Its under-50 ms result starts with a preselected actor and adds an assumed 20 ms for output.",
+        "checks": [
+          {
+            "criterion": "The report measures input-to-sound latency on the web path before and after, stage by stage, from clone instrumentation (Node or headless Emscripten runs are acceptable), and states the device buffer and design chosen and why.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/web-audio-latency-001.md",
+                "detail": "The report documents the move from 4,096-frame SDL callbacks to an interactive Web Audio context with no application-managed device buffer. It explains why browser-scheduled sources and the guarded 50 ms trim of the quiet Action lead-in were chosen."
+              },
+              {
+                "path": "build/web-audio-latency-001/probe.cpp",
+                "detail": "The probe pushes a coordinate-free SDL mouse event and assigns a Climber to an actor selected before the trial. Its poll-to-World time omits the production click handling and picking work."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production path translates event coordinates, checks hatch and panel routing, and resolves hoveredActor before World::assign and drainCues. The report needs a measured stage covering that path."
+              },
+              {
+                "path": "build/web-audio-latency-001/rea-assignment.json",
+                "detail": "Retained instructions for the registered x86 reference show the failed-assignment branch at 0x004556A2 bypassing the Action handle load at 0x004556AA and playback call at 0x004556B5 to 0x0044521B. This supports cue routing. It supplies no latency measurement."
+              }
+            ]
+          },
+          {
+            "criterion": "Click-to-sound latency on the web build is under about 50 ms in that measurement, and the music signal remains continuous through the rotation stall model web-perf-001 used (or a stricter one).",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/web-audio-latency-001/latency-summary.json",
+                "detail": "The modeled median fell from 310.66 to 30.32 ms. The final maximum was 38.94 ms at the onset threshold and 41.58 ms at the stronger attack threshold. That leaves 8.42 ms below 50 ms at the stronger threshold for omitted input work or output latency above the assumption."
+              },
+              {
+                "path": "build/web-audio-latency-001/node-probe.cjs",
+                "detail": "The probe adds fixed values of 10 ms for base latency and 10 ms for device latency. It supplies no browser measurement or bound for those values. Node remains suitable for the review if the report includes the production input stage and grounds the modeled output budget."
+              },
+              {
+                "path": "build/web-audio-latency-001/after-node.log",
+                "detail": "The modeled music bed stayed at 0.15 with zero drops through 51.03 ms and 67.00 ms stalls and all 49,648 sample frames of a 60-frame rotation run."
+              },
+              {
+                "path": "build/web-perf-001/device-audio.log",
+                "detail": "The earlier stall-and-refill model ran for 50.37 ms. The new continuity checks exceed that duration and satisfy the stall portion of this criterion."
+              }
+            ]
+          },
+          {
+            "criterion": "Desktop audio and all promoted playtest replays are unchanged; the design adds no pthread dependence.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "The desktop path retains the 1,024-frame SDL device request, callback mixing, and voice policies. Shared clip preparation still resamples desktop clips to the device format. The mono-storage optimization is Emscripten-only."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "The Emscripten branch adds the web mixer and JavaScript audio library. The existing pthread flags and renderer pool are unchanged. Playback uses browser audio nodes and adds no pthread calls or workers."
+              },
+              {
+                "path": "build/web-audio-latency-001/replays.tsv",
+                "detail": "The inventory covers all 24 currently promoted recordings. Each returned exit code zero and PASS with won=1 and completed=1 on Windows and Wasm, with matching final steps and saved counts. The replay directory has no working-tree changes."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T195252-53088-26367d4d/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/web-audio-latency-001.md",
+                "detail": "The final note tells the player to open Just Climb with music enabled, listen through the entry turn and right-drag, then release and assign Climber. It specifies continuous music and a prompt Action click as the expected result."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Measure the production Climber click path through actor selection and ground the Web Audio output latency used in the total. The retained Node run shows a substantial improvement through cue playback and continuous music through the rotation model. Its under-50 ms result starts with a preselected actor and adds an assumed 20 ms for output.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revised instrumentation covers the production Climber click path in Just Climb. The Windows packet-paced model estimates 48.33 ms median onset and 49.04 ms median attack, with a 55.59 ms maximum attack. Music stayed continuous through the stricter stall model, all 24 promoted replays reproduced, and the current smoke gate passed.",
+        "checks": [
+          {
+            "criterion": "The report measures input-to-sound latency on the web path before and after, stage by stage, from clone instrumentation (Node or headless Emscripten runs are acceptable), and states the device buffer and design chosen and why.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/web-audio-latency-001/picking-node.cjs",
+                "detail": "Coordinate-bearing canvas events enter SDL's Emscripten mouse callbacks. The Wasm probe times coordinate translation, hatch and panel routing, actor picking, World assignment, cue routing, and source start. Each web variant completed 21 Climber assignments to the intended actors."
+              },
+              {
+                "path": "build/web-audio-latency-001/compare-picking.py",
+                "detail": "The baseline combines measured frame-polled input stages with 32 retained SDL mixer and callback trials. The final estimate combines instrumented input and source timing with a measured WASAPI endpoint queue of up to 32 ms and a 10 ms service packet. The separate packet-paced model sweeps callback phase and graph carry."
+              },
+              {
+                "path": "docs/scratch/web-audio-latency-001.md",
+                "detail": "The report explains replacing the 4,096-frame SDL buffer with browser-managed interactive Web Audio, waking the SDL loop on canvas presses, and trimming 53 ms of quiet Action lead-in under a PCM peak guard. It records that the retained Chrome run stopped at GPU startup, so browser output timing is estimated."
+              },
+              {
+                "path": "build/web-audio-latency-001/rea-assignment.json",
+                "detail": "On the registered x86 EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained Ghidra pseudocode agrees with the branch at 0x004556A2 that skips the Action handle load at 0x004556AA and playback call at 0x004556B5 to 0x0044521B when assignment fails. This corroborates cue routing."
+              }
+            ]
+          },
+          {
+            "criterion": "Click-to-sound latency on the web build is under about 50 ms in that measurement, and the music signal remains continuous through the rotation stall model web-perf-001 used (or a stricter one).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/web-audio-latency-001/picking-latency-summary.json",
+                "detail": "With the measured endpoint budget, median estimated onset falls from 332.79 ms to 43.92 ms and the final maximum is 44.98 ms. The packet-paced model puts median onset at 48.33 ms and median attack at 49.04 ms. The modeled tail reaches 54.89 ms for onset and 55.59 ms for attack."
+              },
+              {
+                "path": "build/web-audio-latency-001/revision-rotation-node.log",
+                "detail": "The modeled music signal stayed at 0.15 with zero drops through 51.02 ms and 67.00 ms standalone stalls and all 49,648 sample frames of the 60-frame rotation run."
+              },
+              {
+                "path": "build/web-perf-001/device-audio.log",
+                "detail": "The prior rotation audio model used a 50.37 ms stall and refill. Both standalone stalls in the revised probe exceed that duration."
+              }
+            ]
+          },
+          {
+            "criterion": "Desktop audio and all promoted playtest replays are unchanged; the design adds no pthread dependence.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Desktop retains the 1,024-frame SDL device request, load-time resampling to the device format, callback mixing, and existing voice policies. Mono storage and Action trimming are confined to the web backend."
+              },
+              {
+                "path": "src/web/web-audio.js",
+                "detail": "One-shot cues and looping music use browser-scheduled audio nodes. The playback path adds no pthread calls or application workers. The existing renderer pthread configuration stays in place."
+              },
+              {
+                "path": "build/web-audio-latency-001/revision-replays.tsv",
+                "detail": "The inventory matches all 24 promoted recordings. Every recording returned exit code zero and PASS with won=1 and completed=1 on Windows and Wasm. Final steps and saved counts match both across targets and against the preceding run."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T202320-53088-19f10b13/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing for this revision."
+              },
+              {
+                "path": "docs/scratch/web-audio-latency-001.md",
+                "detail": "The final note asks the player to open Just Climb with music on, listen through the entry turn and a right-drag, then release and assign Climber. It specifies continuous music and a prompt Action click as the expected result."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T20:47:01.627243+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T202320-53088-19f10b13\\verification.log",
+        "verified_content": "0d556eaa36f9e759196effc9f6be0e3eb205072f0c8553d7d2ee62659b913390"
+      }
     },
     {
       "id": "explosion-pieces-3d-001",
       "title": "Exploding lemmings burst into 3D pieces instead of flat red squares",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -28852,7 +29203,91 @@
         "A bomber explosion draws 3D pieces that tumble and fall with depth testing, and no flat red squares, shown in clone framebuffer frames under build/ on desktop and the Emscripten build.",
         "Crater cells, death timing and counts are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T204701-53088-f205d677",
+      "started": "2026-11-19T20:47:02.141970+00:00",
+      "finished": "2026-11-19T21:07:33.503179+00:00",
+      "last_run": "build/agent-runs/20261119T204701-53088-f205d677",
+      "review": {
+        "decision": "accept",
+        "reason": "All four acceptance criteria are supported by the retained evidence. The desktop and Emscripten framebuffer sequences show tumbling, falling pieces with scene and actor occlusion. All 24 promoted recordings reproduced on both targets, and supervisor smoke passed. The Emscripten framebuffer probe ran under Node. The reference findings are static, and the clone\u2019s visual adaptations are provisional.",
+        "checks": [
+          {
+            "criterion": "The report states what the original emits for a lemming explosion (pieces, textures or colours, counts, launch, tumble, lifetime) with static addresses, or labels choices provisional, and names the clone path that drew flat red squares.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/explosion-pieces-3d-001.md",
+                "detail": "Links playtest 20 K4 to the old TubeScene::drawDeathParticles square fallback. Describes the six Bits sprites, twelve terrain slots per eligible site, and 100 red points with their launch, rotation, gravity, and lifetime. Identifies the clone\u2019s tumbling red flecks as provisional and documents the fall-splat and separate rat-victim paths."
+              },
+              {
+                "path": "build/explosion-pieces-3d-001/static/instructions.json",
+                "detail": "The registered x86 reference instructions show six body children at 0x40833C, twelve terrain slots at 0x40C9B5, 100 red points at 0x43F901, and a point-list submission at 0x492F51\u20130x492F66. The velocity update at 0x4027A4\u20130x4027B5 matches the retained 0x4026E0 pseudocode."
+              }
+            ]
+          },
+          {
+            "criterion": "A bomber explosion draws 3D pieces that tumble and fall with depth testing, and no flat red squares, shown in clone framebuffer frames under build/ on desktop and the Emscripten build.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/explosion-pieces-3d-001/desktop-frames/age-230.png",
+                "detail": "At 255 ms in Just Bomb, the desktop framebuffer shows differently oriented, shaded red solids and textured crater fragments above the cut ledge."
+              },
+              {
+                "path": "build/explosion-pieces-3d-001/wasm-frames/age-820.png",
+                "detail": "At 843 ms, the Emscripten framebuffer shows rotated fragments below the ledge after the burst spreads."
+              },
+              {
+                "path": "build/explosion-pieces-3d-001/desktop-frames.log",
+                "detail": "Records 1,248 particle triangles at 255 ms. The nearer scene-depth and actor-depth probes each suppress every burst pixel, and the draw leaves scene depth intact."
+              },
+              {
+                "path": "build/explosion-pieces-3d-001/wasm-frames.log",
+                "detail": "The Emscripten probe reproduces the desktop triangle count, both depth checks, and complete expiry by 1,645 ms."
+              }
+            ]
+          },
+          {
+            "criterion": "Crater cells, death timing and counts are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/explosion-pieces-3d-001/task-only.patch",
+                "detail": "The task diff is confined to presentation. World::stepExploder and World::explode still own timing, crater clearing, and the death increment before the rendering observer receives the removed cells."
+              },
+              {
+                "path": "build/explosion-pieces-3d-001/frame-probe.cpp",
+                "detail": "Checks recorded clock and counts through the first Just Bomb burst and checks that every reported crater cell is empty when the observer runs. Both frame logs record step 391 at 13,621 ms, 15 cleared cells, and one death."
+              },
+              {
+                "path": "build/explosion-pieces-3d-001/replays.json",
+                "detail": "Matches all 24 active promoted replay paths. Each linked desktop and Wasm command log records exit 0 and PASS with won=1 and completed=1, including Just Bomb at step 954 with 17/10 saved."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T204701-53088-f205d677/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including the level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/explosion-pieces-3d-001.md",
+                "detail": "The worker handoff records smoke as pending before supervisor verification. The report ends by asking the playtester to assign Bomber on a wooden ledge in Just Bomb and check the tumbling fragments, foreground occlusion, opened ledge, and single count drop."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T21:10:14.606608+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T204701-53088-f205d677\\verification.log",
+        "verified_content": "84d7e3349e8eb97edb52a2e1821ffed33ad9c10907d2da0358d88f983121ad86"
+      }
     }
   ]
 }

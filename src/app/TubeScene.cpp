@@ -6,6 +6,7 @@
 #include "app/ActorSprite.h"
 #include "app/ActorOcclusion.h"
 #include "app/BuilderBrick.h"
+#include "app/CrtRand.h"
 #include "app/LemmingAnim.h"
 #include "app/LemmingMotion.h"
 #include "assets/Bitmap.h"
@@ -28,6 +29,8 @@
 
 namespace webo::app {
 namespace {
+
+constexpr std::uint64_t kForcedDeathFlightLifetimeMs = 4000;
 
 Texture toTexture(const Image& image) {
   Texture t;
@@ -526,8 +529,9 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     const TubePassBounds& bounds, std::span<const double> depth,
     Image* spriteTarget = nullptr,
     const Texture* brickTexture = nullptr,
-    const CylinderMesh* footprintMesh = nullptr, const CollisionGrid* footprintGrid = nullptr) {
-  if (!options.composeSkipActorVisibility &&
+    const CylinderMesh* footprintMesh = nullptr, const CollisionGrid* footprintGrid = nullptr,
+    const ActorPoseResult* airbornePose = nullptr) {
+  if (!airbornePose && !options.composeSkipActorVisibility &&
       !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
     return std::nullopt;
   // actor-anim-001: the walker's own clip; the walk clip when the sheet lacks it.
@@ -539,7 +543,9 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
 
   ActorTerrainSample plus8{injected.plus8X, injected.plus8Y, injected.plus8Z};
   ActorPoseResult pose;
-  if (options.composeSkipActorPose) {
+  if (airbornePose) {
+    pose = *airbornePose;
+  } else if (options.composeSkipActorPose) {
     pose.modelPosition = {plus8.x, plus8.y, plus8.z};
     pose.basis = {1.0, 0.0, 0.0};
   } else {
@@ -864,6 +870,25 @@ void TubeScene::advanceDeathParticles(std::uint64_t clockMs) {
   std::erase_if(deathParticles_, [&](const DeathParticle& p) {
     return clockMs >= p.bornMs && (clockMs - p.bornMs) / 1000.0 >= p.lifetime;
   });
+  std::erase_if(forcedDeathFlights_, [&](const ForcedDeathFlight& flight) {
+    return clockMs >= flight.bornMs && clockMs - flight.bornMs >= kForcedDeathFlightLifetimeMs;
+  });
+}
+
+void TubeScene::emitForcedDeathFlight(const sim::Lemming& actor, ActorTerrainSample sample,
+                                      std::uint64_t clockMs) {
+  if (!havePoseLevel_) return;
+  rewirePoseLevel();
+  const int facing = static_cast<int>(actor.facing);
+  const auto launch = actorPoseFromCylinderSample(poseLevel_, sample, facing);
+  // 416C49 uses a cylinder-space offset for its direction. Use the central
+  // values of the Y/Z offsets and the upward kick from 493473.
+  const auto target = actorPoseFromCylinderSample(poseLevel_,
+      {sample.x, sample.y + 1.5, sample.z + 2.0}, facing);
+  const auto& p = launch.modelPosition;
+  const auto& q = target.modelPosition;
+  forcedDeathFlights_.push_back({sample, launch, {q[0] - p[0], q[1] - p[1] + 10.0, q[2] - p[2]},
+                                 clockMs, actor.sheetType, facing});
 }
 
 void TubeScene::emitExplosionDecal(const sim::Lemming& lemming,
@@ -994,21 +1019,13 @@ std::uint32_t TubeScene::terrainDebrisMaterial(
       std::uint32_t(cell[0] / 32 + cell[1] / 32 * 8);
 }
 
-std::array<std::uint8_t, 3> TubeScene::terrainDebrisColour(
-    const std::array<int, 2>& cell, int terrainHeight) const {
-  const int row = terrainHeight - 1 - cell[1];
-  std::array<std::uint8_t, 3> colour{128, 104, 72};
-  const auto material = terrainDebrisMaterial(cell, terrainHeight);
-  if (const auto* tile = findTile(true, material % 8, material / 8);
-      tile && !tile->texture.empty()) {
-    const auto& t = tile->texture;
-    const int px = int(((cell[0] & 31) + 0.5) * t.width / 32);
-    const int py = int((31.5 - (row & 31)) * t.height / 32);
-    const auto at = (std::size_t(py) * t.width + px) * 3;
-    std::copy_n(t.rgb.begin() + at, 3, colour.begin());
-  }
-  return colour;
+static std::array<double, 4> terrainChunkUv(int x, int row, int index) {
+  const double u = ((x & 31) + (index & 1) * 0.5) / 32.0;
+  const double v = (32.0 - (row & 31) - (index >> 1) * 0.5) / 32.0;
+  return {u, v - 0.5 / 32.0, u + 0.5 / 32.0, v};
 }
+
+static constexpr std::array<std::uint8_t, 3> kTerrainChunkFallback{128, 104, 72};
 
 void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
     std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs, int terrainHeight) {
@@ -1021,18 +1038,18 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
   // dig 415BE8 all construct 40C960. Correction to bash-particles-001:
   // 40DBF0 selects velocity callback 4, not count; 40C9B5 configures 12 slots.
   // PROVISIONAL: retain four chunks per actually removed hybrid cell,
-  // thrown back from the work face (Digger fans both ways). No native subpass
-  // clock or physics is transplanted. Life overlaps successive 1.2..1.5s bites;
-  // deterministic gravity-only arcs use no simulation RNG or collision.
+  // thrown back from the work face (Digger fans both ways). Deterministic
+  // gravity-only arcs use no simulation RNG or collision.
   for (const auto& cell : removedCells) {
     constexpr std::size_t maxParticles = 4096;
     if (deathParticles_.size() > maxParticles - 4)
       deathParticles_.erase(deathParticles_.begin(), deathParticles_.begin() +
           (deathParticles_.size() - (maxParticles - 4)));
-    const auto colour = terrainDebrisColour(cell, terrainHeight);
+    const auto material = terrainDebrisMaterial(cell, terrainHeight);
+    const int row = terrainHeight - 1 - cell[1];
     for (int i = 0; i < 4; ++i) {
       DeathParticle p;
-      p.origin = {double(cell[0]), double(terrainHeight - 1 - cell[1]) + 0.5,
+      p.origin = {double(cell[0]), double(row) + 0.5,
                   gravityDir < 0 ? 0.55 : 0.75};
       p.vx = lemming.state == sim::State::Digger ? (i - 1.5) * 3.0 : -facing * (3.0 + i);
       p.vy = gravityDir * (9.0 + i * 1.5);
@@ -1041,20 +1058,13 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
       p.bornMs = clockMs;
       p.lifetime = 1.6 + i * 0.1;
       p.size = 0.65 + (i % 2) * 0.2;
-      p.colour = colour;
+      p.colour = kTerrainChunkFallback;
       p.verticalDir = gravityDir;
-      p.terrainChunk = true;
-      p.terrainMaterial = terrainDebrisMaterial(cell, terrainHeight);
-      const int row = terrainHeight - 1 - cell[1];
-      const double u = ((cell[0] & 31) + (i & 1) * 0.5) / 32.0;
-      const double v = (32.0 - (row & 31) - (i >> 1) * 0.5) / 32.0;
-      p.terrainUv = {u, v - 0.5 / 32.0, u + 0.5 / 32.0, v};
+      p.terrainMaterial = material;
+      p.terrainUv = terrainChunkUv(cell[0], row, i);
       // Deterministic variation is presentation-only; never consume World RNG.
       const unsigned seed = unsigned(cell[0]) * 73u + unsigned(cell[1]) * 151u + i * 47u;
-      p.rotation = {(seed & 255u) * (2.0 * std::numbers::pi / 256.0),
-                    ((seed >> 3) & 255u) * (2.0 * std::numbers::pi / 256.0)};
-      p.angularVelocity = {(i & 1 ? -1 : 1) * (2.5 + (seed % 7u) * 0.4),
-                           (i & 2 ? -1 : 1) * (3.0 + (seed % 5u) * 0.5)};
+      p.setChunkSpin(seed, i);
       deathParticles_.push_back(p);
     }
   }
@@ -1070,8 +1080,7 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
     if (auto bits = loadSpriteSheet(lib, "SPRITES\\BITS.SPR")) deathSprites_ = std::move(*bits);
   }
   // READ: 408227 creates six actor pieces; 40B3EC does the same on splat.
-  // 401C50 selects piece indices 0,1,2,2,3,3. BITS.SPR/$LemBits0 is the
-  // installed piece artwork. Its binding and animation sampling are provisional.
+  // 401C50 selects Bits clips 0,1,2,2,3,3 for normal lemmings.
   // PROVISIONAL physics throughout: deterministic terrain-coordinate ballistics,
   // gravity 32 units/s^2, no collision/bounce, finite 0.55..1.6 second life.
   // No World RNG, state, counters, timers or terrain are written here.
@@ -1079,25 +1088,30 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
                                          lemming.verticalDir < 0 ? 0.55 : 0.75);
   const int gravityDir = lemming.verticalDir < 0 ? -1 : 1;
   origin.y += gravityDir * (explosion ? 3.0 : 1.0);
-  const auto add = [&](ActorTerrainSample at, int index, int count, bool piece,
-                       std::array<std::uint8_t, 3> colour, double life, double size,
-                       double spread, double rise) {
-    // Deterministic radial fans do not consume simulation/scenery randomness.
+  const auto fan = [&](int index, int count, double spread, double rise) {
     const double angle = (index + 0.5) * 2.0 * std::numbers::pi / count;
+    return std::array{std::cos(angle) * spread, gravityDir * (rise + std::sin(angle) * rise * 0.35),
+                      std::sin(angle * 3.0) * 0.10};
+  };
+  const auto add = [&](ActorTerrainSample at, int index, int clip,
+                       std::array<std::uint8_t, 3> colour, double life, double size,
+                       const std::array<double, 3>& velocity) -> DeathParticle& {
     DeathParticle p;
     p.origin = at;
-    p.vx = std::cos(angle) * spread;
-    p.vy = gravityDir * (rise + std::sin(angle) * rise * 0.35);
-    p.vz = std::sin(angle * 3.0) * 0.10;
+    p.vx = velocity[0];
+    p.vy = velocity[1];
+    p.vz = velocity[2];
     p.gravity = -gravityDir * 32.0;
     p.bornMs = clockMs;
     p.lifetime = life;
     p.size = size;
     p.colour = colour;
-    constexpr int clips[]{0, 1, 2, 2, 3, 3};
-    p.piece = piece ? clips[index % 6] : -1;
+    p.piece = clip;
     p.verticalDir = gravityDir;
+    const unsigned seed = unsigned(int(at.x)) * 73u + unsigned(int(at.y)) * 151u + index * 47u;
+    p.setChunkSpin(seed, index);
     deathParticles_.push_back(p);
+    return deathParticles_.back();
   };
   // Bound presentation memory under repeated Nuke/retry stress. At capacity
   // evict oldest particles only; every new death still gets its complete burst.
@@ -1105,28 +1119,49 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
   if (deathParticles_.size() > maxParticles - 160)
     deathParticles_.erase(deathParticles_.begin(), deathParticles_.begin() +
         (deathParticles_.size() - (maxParticles - 160)));
+  constexpr int clips[]{0, 1, 2, 2, 3, 3};
   for (int i = 0; i < 6; ++i)
-    add(origin, i, 6, true, {255,255,255}, 1.6, 2.0, explosion ? 15.0 : 12.0,
-        explosion ? 17.0 : 10.0);
-  // READ 43F510: count 100 and RGB(255,32,32). READ 40B3EC:
-  // count 10, RGB doubles (255,127,127). Size/motion/life are provisional;
-  // plain coloured chips stand in for the unrecovered particle renderer.
+    add(origin, i, clips[i], {255, 255, 255}, 1.6, 2.0,
+        fan(i, 6, explosion ? 15.0 : 12.0, explosion ? 17.0 : 10.0));
+  // READ 43F510/40B3EC and 492E33: the 100 red blast particles and
+  // 10 pink splat particles share a point-list renderer. Use small tumbling
+  // solid flecks as a provisional clone presentation for both bursts.
   const int count = explosion ? 100 : 10;
-  for (int i = 0; i < count; ++i)
-    add(origin, i, count, false, explosion ? std::array<std::uint8_t,3>{255,32,32} :
-        std::array<std::uint8_t,3>{255,127,127}, 0.55 + (i % 7) * 0.07,
-        0.45, 8.0 + (i % 11), explosion ? 12.0 : 5.0);
+  // The blast scatters in three axes. Keep the generator local to this burst
+  // so camera, scenery and simulation cannot affect its launch or palette.
+  CrtRand burstRandom(std::uint32_t(clockMs) ^ (unsigned(lemming.x) * 73u + unsigned(lemming.y) * 151u));
+  for (int i = 0; i < count; ++i) {
+    std::array<double, 3> velocity;
+    std::array<std::uint8_t, 3> colour;
+    if (explosion) {
+      velocity = {36.0 * (burstRandom.unit() - .5),
+                  gravityDir * (5.0 + 14.0 * burstRandom.unit()),
+                  0.32 * (burstRandom.unit() - .5)};
+      colour = {std::uint8_t(96.0 + 159.0 * burstRandom.unit()),
+                std::uint8_t(16.0 + 16.0 * burstRandom.unit()),
+                std::uint8_t(16.0 + 16.0 * burstRandom.unit())};
+    } else {
+      velocity = fan(i, count, 8.0 + (i % 11), 5.0);
+      colour = {255, 127, 127};
+    }
+    add(origin, i, -1, colour, 0.55 + (i % 7) * 0.07, 0.33 + (i % 4) * 0.07, velocity);
+  }
 
   if (!explosion || removedCells.empty()) return;
   const auto debris = [&](const std::array<int, 2>& cell) {
     const int row = terrainHeight - 1 - cell[1];
-    const auto colour = terrainDebrisColour(cell, terrainHeight);
-    for (int i = 0; i < 4; ++i)
-      add({double(cell[0]), double(row), origin.z}, i, 4, false, colour,
-          1.2 + i * 0.1, 1.4, 9.0 + i, 12.0);
+    const auto material = terrainDebrisMaterial(cell, terrainHeight);
+    for (int i = 0; i < 4; ++i) {
+      auto& p = add({double(cell[0]), double(row), origin.z}, i, -1,
+          kTerrainChunkFallback, 1.2 + i * 0.1, 0.85 + (i % 2) * 0.20,
+          fan(i, 4, 9.0 + i, 12.0));
+      p.terrainMaterial = material;
+      p.terrainUv = terrainChunkUv(cell[0], row, i);
+    }
   };
   bool emitted = false;
-  // READ 43F510: four fragments at eligible 4x4-aligned removed cells.
+  // READ 43F510: emit at eligible 4x4-aligned sites. Four fragments per
+  // removed cell is the existing clone density; 40DBF0's 4 is a mode.
   for (const auto& cell : removedCells)
     if ((cell[0] & 3) == 0 && ((terrainHeight - 1 - cell[1]) & 3) == 0) {
       debris(cell);
@@ -1138,10 +1173,10 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
 }
 
 void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
-                                   const AssetLibrary& lib) const {
+                                   const AssetLibrary& lib, std::span<const double> pipeDepth) const {
   profile::Scope profileParticles(profile::Particles);
   // No allocations, asset reads, depth copies or scans on an empty frame.
-  if (deathParticles_.empty() || !havePoseLevel_) return;
+  if ((deathParticles_.empty() && forcedDeathFlights_.empty()) || !havePoseLevel_) return;
   rewirePoseLevel();
   auto& buffer = raster.mutableFramebuffer();
   const auto& depth = raster.depthBuffer();
@@ -1161,56 +1196,6 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
     if (sample.y < 0 || sample.y >= poseLevel_.gridHeight ||
         !actorSubmissionVisible(sample.x, sample.z, true, bounds)) continue;
     const auto pose = actorPoseFromCylinderSample(poseLevel_, sample, p.facing);
-    if (p.terrainChunk) {
-      // Rigid rotation in model units: rotating the slab parameter itself
-      // would stretch the piece because one slab is the whole tube thickness.
-      const Vec3 tangent{pose.basis[0], pose.basis[1], pose.basis[2]};
-      const Vec3 radial{-tangent.z, 0, tangent.x};
-      const auto offsets = p.chunkOffsets(deathClockMs_);
-      std::array<Vec3, 8> model;
-      std::array<std::array<double, 4>, 8> projected;
-      bool visible = true;
-      for (int j = 0; j < 8; ++j) {
-        const auto& d = offsets[j];
-        model[j] = {pose.modelPosition[0] + tangent.x*d[0] + radial.x*d[2],
-                    pose.modelPosition[1] + d[1],
-                    pose.modelPosition[2] + tangent.z*d[0] + radial.z*d[2]};
-        visible &= project(camera, model[j], projected[j]);
-      }
-      if (!visible) continue;
-      const auto* tile = findTile(true, p.terrainMaterial % 8, p.terrainMaterial / 8);
-      // Missing artwork retains the existing earthy fallback, now on a mesh.
-      Texture fallback;
-      if (!tile || tile->texture.empty())
-        fallback = Texture{1, 1, {p.colour[0], p.colour[1], p.colour[2]}};
-      const auto& texture = tile && !tile->texture.empty() ? tile->texture : fallback;
-      const auto& u = p.terrainUv;
-      const std::array<std::array<double, 2>, 4> uv{{{u[0],u[1]},{u[0],u[3]},
-                                                   {u[2],u[3]},{u[2],u[1]}}};
-      constexpr int faces[6][4]{{0,2,3,1},{4,5,7,6},{0,1,5,4},
-                               {2,6,7,3},{0,4,6,2},{1,3,7,5}};
-      for (const auto& face : faces) {
-        const auto& a = model[face[0]];
-        const auto& b = model[face[1]];
-        const auto& c = model[face[2]];
-        const Vec3 ab{b.x-a.x,b.y-a.y,b.z-a.z}, ac{c.x-a.x,c.y-a.y,c.z-a.z};
-        const Vec3 n{ab.y*ac.z-ab.z*ac.y,ab.z*ac.x-ab.x*ac.z,ab.x*ac.y-ab.y*ac.x};
-        const double length = std::sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
-        // Provisional fixed ambient/directional light makes tumbling legible.
-        const double shade = 0.5 + 0.5 * std::max(0.0,(-0.3*n.x+0.8*n.y-0.5*n.z) /
-                                                    std::max(length,1e-12));
-        for (const auto& ids : {std::array{0,1,2},std::array{0,2,3}}) {
-          std::array<std::array<double,4>,3> triangle;
-          std::array<std::array<double,2>,3> texcoords;
-          for (int k = 0; k < 3; ++k) {
-            triangle[k] = projected[face[ids[k]]];
-            texcoords[k] = uv[ids[k]];
-          }
-          raster.triangle(triangle,texcoords,texture,{shade,shade,shade},owner);
-        }
-      }
-      continue;
-    }
     const Sprite* particleClip = p.minerAxe ? axeSprites_.find("axe") :
         (p.piece >= 0 && std::size_t(p.piece) < deathSprites_.sprites.size() ?
             &deathSprites_.sprites[p.piece] : nullptr);
@@ -1280,26 +1265,99 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
         }
       }
     }
-    if (p.minerAxe) continue; // missing art is not a generic coloured debris chip
-    std::array<double, 4> projected;
-    if (!project(camera, {pose.modelPosition[0], pose.modelPosition[1], pose.modelPosition[2]}, projected))
-      continue;
-    // Preserve the zoom-0 chip clamp, then scale like terrain. Clamping after
-    // zoom would pin small/large particles to a fixed screen size again.
-    const double referenceDepth = projected[2] + camera.defaultZoomDepthOffset;
-    if (!(referenceDepth > 0.0)) continue;
-    const double r = std::clamp(camera.focalY * p.size / referenceDepth, 0.6, 5.0) *
-                     camera.zoomScaleAtDepth(projected[2]);
-    // Physical view Z, matching body planes and body-piece sprites. The old
-    // 0.64-unit chip pull could paint a farther chip over a nearer lemming.
-    const double z = projected[2];
-    for (int y = std::max(0, int(std::ceil(projected[1] - r)));
-         y < std::min(buffer.height, int(std::ceil(projected[1] + r))); ++y)
-      for (int x = std::max(0, int(std::ceil(projected[0] - r)));
-           x < std::min(buffer.width, int(std::ceil(projected[0] + r))); ++x) {
-        const auto at = std::size_t(y) * buffer.width + x;
-        if (z < depth[at] && actors.submit(at,z,owner))
-          std::copy(p.colour.begin(), p.colour.end(), buffer.rgb.begin()+at*3);
+    if (p.minerAxe) continue; // The axe requires its sprite art.
+
+    // Rigid rotation in model units: rotating the slab parameter itself
+    // would stretch the piece because one slab is the whole tube thickness.
+    const Vec3 tangent{pose.basis[0], pose.basis[1], pose.basis[2]};
+    const Vec3 radial{-tangent.z, 0, tangent.x};
+    const auto offsets = p.chunkOffsets(deathClockMs_);
+    std::array<Vec3, 8> model;
+    std::array<std::array<double, 4>, 8> projected;
+    bool visible = true;
+    for (int j = 0; j < 8; ++j) {
+      const auto& d = offsets[j];
+      model[j] = {pose.modelPosition[0] + tangent.x*d[0] + radial.x*d[2],
+                  pose.modelPosition[1] + d[1],
+                  pose.modelPosition[2] + tangent.z*d[0] + radial.z*d[2]};
+      visible &= project(camera, model[j], projected[j]);
+    }
+    if (!visible) continue;
+    const auto* tile = p.terrainMaterial
+        ? findTile(true, *p.terrainMaterial % 8, *p.terrainMaterial / 8)
+        : nullptr;
+    const bool textured = tile && !tile->texture.empty();
+    static const Texture white{1, 1, {255, 255, 255}};
+    const auto& texture = textured ? tile->texture : white;
+    const auto tint = textured ? std::array{1.0, 1.0, 1.0}
+        : std::array{p.colour[0] / 255.0, p.colour[1] / 255.0, p.colour[2] / 255.0};
+    const auto& u = p.terrainUv;
+    const std::array<std::array<double, 2>, 4> uv{{{u[0],u[1]},{u[0],u[3]},
+                                                 {u[2],u[3]},{u[2],u[1]}}};
+    constexpr int faces[6][4]{{0,2,3,1},{4,5,7,6},{0,1,5,4},
+                             {2,6,7,3},{0,4,6,2},{1,3,7,5}};
+    for (const auto& face : faces) {
+      const auto& a = model[face[0]];
+      const auto& b = model[face[1]];
+      const auto& c = model[face[2]];
+      const Vec3 ab{b.x-a.x,b.y-a.y,b.z-a.z}, ac{c.x-a.x,c.y-a.y,c.z-a.z};
+      const Vec3 n{ab.y*ac.z-ab.z*ac.y,ab.z*ac.x-ab.x*ac.z,ab.x*ac.y-ab.y*ac.x};
+      const double length = std::sqrt(n.x*n.x+n.y*n.y+n.z*n.z);
+      // Provisional fixed ambient/directional light makes tumbling legible.
+      const double shade = 0.5 + 0.5 * std::max(0.0,(-0.3*n.x+0.8*n.y-0.5*n.z) /
+                                                  std::max(length,1e-12));
+      for (const auto& ids : {std::array{0,1,2},std::array{0,2,3}}) {
+        std::array<std::array<double,4>,3> triangle;
+        std::array<std::array<double,2>,3> texcoords;
+        for (int k = 0; k < 3; ++k) {
+          triangle[k] = projected[face[ids[k]]];
+          texcoords[k] = uv[ids[k]];
+        }
+        raster.triangle(triangle, texcoords, texture,
+                        {shade * tint[0], shade * tint[1], shade * tint[2]}, owner);
+      }
+    }
+  }
+
+  SceneOptions flightOptions;
+  flightOptions.pipeSceneDepth = pipeDepth;
+  for (std::size_t i = 0; i < forcedDeathFlights_.size(); ++i) {
+    const auto& flight = forcedDeathFlights_[i];
+    const auto* sprites = lemmingSprites(flight.sheetType);
+    if (!sprites || deathClockMs_ < flight.bornMs) continue;
+    const double seconds = (deathClockMs_ - flight.bornMs) / 1000.0;
+    auto pose = flight.launchPose;
+    for (std::size_t axis = 0; axis < flight.velocity.size(); ++axis)
+      pose.modelPosition[axis] += flight.velocity[axis] * seconds;
+    // Provisional continuous approximation of 4178B0's per-update -1400*dt²
+    // velocity change, using 60 Hz as a reference. World gravity is always down.
+    pose.modelPosition[1] -= 0.5 * (1400.0 / 60.0) * seconds * seconds;
+
+    SceneOptions::InjectedNativeWalker sprite;
+    sprite.plus8X = flight.sample.x;
+    sprite.plus8Y = flight.sample.y;
+    sprite.plus8Z = flight.sample.z;
+    sprite.facing = flight.facing;
+    // Use the existing cartwheel strip for a readable tumble. The signed
+    // view rotation is a deterministic stand-in for 496C84's random phase rate.
+    sprite.clip = "cartwheel";
+    sprite.clipSeconds = seconds;
+    sprite.clipLoops = true;
+    sprite.rotationPhase = 2.0 * flight.facing * seconds;
+    const auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
+        flightOptions, sprite, lib, bounds, depth, &overlay,
+        nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr, &pose);
+    if (!prepared) continue;
+    const ActorOcclusionPlane plane(camera, pose.modelPosition);
+    const auto rect = spriteRect(overlay, prepared->placement);
+    const auto owner = ActorDepth::noOwner / 2 + deathParticles_.size() + i;
+    for (int y = rect.top; y < rect.bottom; ++y)
+      for (int x = rect.left; x < rect.right; ++x) {
+        const auto pixel = std::size_t(y) * buffer.width + x;
+        const auto* rgba = overlay.rgba.data() + pixel * 4;
+        if (actorSpriteAlphaTestPasses(rgba[3]) &&
+            actors.submit(pixel, plane.depthAt(x + .5, y + .5), owner))
+          std::copy_n(rgba, 3, buffer.rgb.data() + pixel * 3);
       }
   }
 }

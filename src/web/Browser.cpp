@@ -10,6 +10,31 @@ EM_ASYNC_JS(void, waitForFrame, (), {
 
 void nextFrame() { waitForFrame(); }
 
+EM_ASYNC_JS(int, waitForLevelInput, (), {
+  let wait = Module['levelFrameWait'];
+  if (!wait) {
+    wait = {};
+    Module['levelFrameWait'] = wait;
+    const canvas = Module['canvas'];
+    const click = event => {
+      if (event.button !== 0 || !wait.resume) return;
+      const resume = wait.resume;
+      wait.resume = null;
+      // The promise continuation polls SDL after the DOM event has dispatched.
+      resume(0);
+    };
+    canvas.addEventListener('mousedown', click);
+    requestAnimationFrame(() => {
+      canvas.removeEventListener('mousedown', click);
+      Module['levelFrameWait'] = null;
+      wait.resume?.(1);
+    });
+  }
+  return await new Promise(resolve => { wait.resume = resolve; });
+});
+
+bool waitForLevelFrameOrClick() { return waitForLevelInput() != 0; }
+
 // IDBFS compares mtimes during sync. Make even same-millisecond replacements
 // distinguishable. If the transaction fails, restore the prior in-memory file
 // so a later write to the other sidecar cannot accidentally publish this one.

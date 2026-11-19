@@ -174,8 +174,10 @@ class TubeScene {
   void emitTerrainDebris(const sim::Lemming&, std::span<const std::array<int, 2>> removedCells,
                         std::uint64_t clockMs, int terrainHeight);
   void emitMinerAxe(const sim::Lemming&, std::uint64_t clockMs, int terrainHeight);
+  void emitForcedDeathFlight(const sim::Lemming&, ActorTerrainSample, std::uint64_t clockMs);
   void advanceDeathParticles(std::uint64_t clockMs);
-  void drawDeathParticles(Raster&, const CameraBasis&, const AssetLibrary&) const;
+  void drawDeathParticles(Raster&, const CameraBasis&, const AssetLibrary&,
+                          std::span<const double> pipeDepth = {}) const;
   std::size_t deathParticleCount() const { return deathParticles_.size(); }
   // Dynamic surface pass, after scenery and before actors; never cache with
   // the opaque tube. Shares the level clock with the death presentation.
@@ -253,8 +255,6 @@ class TubeScene {
 
   const Tile* findTile(bool outer, int column, int row) const;
   const Texture* builderBrickTexture(const SceneOptions::InjectedNativeWalker&) const;
-  std::array<std::uint8_t, 3> terrainDebrisColour(const std::array<int, 2>& cell,
-                                                int terrainHeight) const;
   std::uint32_t terrainDebrisMaterial(const std::array<int, 2>& cell,
                                     int terrainHeight) const;
   void rewirePoseLevel() const;
@@ -285,6 +285,15 @@ class TubeScene {
   SpriteSheet bubbleSprites_;
   SpriteSheet axeSprites_;
   std::vector<DeathParticle> deathParticles_;
+  struct ForcedDeathFlight {
+    ActorTerrainSample sample;
+    ActorPoseResult launchPose;
+    std::array<double, 3> velocity;
+    std::uint64_t bornMs;
+    int sheetType;
+    int facing;
+  };
+  std::vector<ForcedDeathFlight> forcedDeathFlights_;
   SpriteSheet deathSprites_;
   bool deathSpritesLoaded_ = false;
   std::uint64_t deathClockMs_ = 0;

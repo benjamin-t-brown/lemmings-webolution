@@ -111,3 +111,16 @@ For each workload record three warm runs, mean, median, nearest-rank p95, p99, m
 
 The lead can review the plan now. The next production decision is whether to authorize phase 1 after the playable-v1 milestone.
 
+
+### User answers (2026-11-18)
+- **4 Rollout:** GL is the default on both platforms, and the renderer must not rely on threads, so
+  the web build can later drop pthreads, SharedArrayBuffer and the COOP/COEP and secure-context
+  requirement. The software renderer stays as reference and fallback. Higher internal resolution is
+  not yet decided.
+- **2 Parity:** the exact, one-byte and boundary-review rules are accepted for now and may be refined
+  once real comparisons exist.
+- **3 Hardware:** the user's main Windows machine plus a budget 2022 ThinkPad running Linux as the
+  low-end reference. Exact GPUs, browsers and vsync are recorded when the performance phase runs.
+- **1 W1/A4:** open; the user will report the level and camera position when the clipping case recurs
+  in play.
+Implementation still waits for playable v1 unless the user pulls phases forward.

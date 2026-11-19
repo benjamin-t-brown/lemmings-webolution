@@ -28773,6 +28773,86 @@
         "log": "build\\agent-runs\\20261119T184537-27936-1dac8d35\\verification.log",
         "verified_content": "8833214e885c1f037fc6bdcde0b747360b447dda2993641a000a1cee0c10ae3b"
       }
+    },
+    {
+      "id": "rat-victim-fling-001",
+      "title": "A lemming hit by a rat is flung off the cylinder, tumbling as it falls, instead of vanishing",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 20 K2: when an evil rat attacks a lemming in Escape to Victory (E11_KF_1, node 28), the clone obliterates the victim (it becomes invisible with provisional death debris; evil-rats-001, docs/scratch/evil-rats-001.md: 'Death figures reuse existing lemming pieces, not a reconstructed rat-specific flying figure'). The user expects the victim to be flung off the cylinder and fall away rotating: the same outcome, a different visualization. Static leads already retained: 42E2BF consumes the forced +5D through 416BF0, which plays the death handle and creates the 416C49 flying figure; 408ECC/408F0A..408F67 removes the victim on controller completion. Trace 416C49 (its sprite or mesh, launch direction and speed relative to the cylinder and camera, spin, gravity, lifetime, depth/occlusion, when it is removed) and draw that flying figure through the production actor/particle path in place of the debris for rat kills. Check whether other deaths in the original use the same flying figure and report them; change only those the evidence ties to it. Presentation only: who dies, when, the counts and rat behaviour are unchanged. Difficulty: difficult. Recommended model: Opus. Reason: an unreconstructed presentation object with launch, spin and occlusion. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report traces the original's flying figure (416BF0, 416C49 and what they call) and states its sprite or model, launch, spin, gravity and lifetime, citing addresses, or labels choices provisional.",
+        "In Escape to Victory a lemming killed by a rat is drawn being flung away from the cylinder and falling while it rotates, then removed, instead of vanishing into debris; clone framebuffer frames under build/ show the sequence.",
+        "Death timing, counts, rat behaviour and other death presentations not tied to the same evidence are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "rat-attack-sound-001",
+      "title": "Rat attacks play the original's sounds",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 20 K1: when rats hit lemmings the user is not sure the correct sound effect plays. evil-rats-001 routes 'Victim Die and common rat loss sounds' through World::cueSample/cue -> SoundEvent -> CuePlayback/Mixer. From static evidence list every sound the original plays during a rat attack and kill: punch swings (426414, 42657A..4265B6 choose a punch%d clip; check for a sound per punch or per hit), the victim's death handle at 416BF0, any rat squeak or idle sound, and the flying figure (416C49) if it has one. For each, name the sample (by its installed sound name and bank index) and when it triggers. Compare with what the clone plays today and correct the production cue path so the clone plays the same samples at the same moments, keeping positional-audio policy. If rat-victim-fling-001 has already changed the kill presentation, keep its sounds consistent. Difficulty: routine. Recommended model: Sonnet. Reason: identify sound handles on an already-traced path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report lists each sound the original plays during a rat attack and kill, with the sample name, bank index, trigger point and static address, or labels a choice provisional, and states what the clone played before.",
+        "The clone plays those samples at those moments in Escape to Victory, shown by a clone sound-event trace under build/; lemming sounds elsewhere are unchanged.",
+        "All promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "web-audio-latency-001",
+      "title": "Browser build: sound effects play promptly without bringing back music clipping",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 20 K3: in the browser build, sound effects are delayed: assigning a Climber plays the click roughly 100-300 ms after the click. web-perf-001 (docs/scratch/web-perf-001.md) raised the web audio device to 4096 frames (85.33 ms per SDL Web Audio callback at 48 kHz) to stop the music clipping during camera rotation (playtest 16 F3, confirmed fixed by the user). Measure the whole web cue path from input event to the sample reaching the output: SDL event to World/UI cue, cue queue to Mixer, Mixer to SDL's Web Audio callback and buffer, and Web Audio's own output latency. Find a design that brings click-to-sound under about 50 ms while keeping the music unbroken during rotation: for example a smaller device buffer now that rasterising is faster, mixing one-shot cues into the next callback instead of behind queued audio, or a short lead buffer only for the music bed. Do not rely on more pthreads (the user decided the renderer will drop thread reliance; see docs/OPENGL_PLAN.md user answers). Desktop audio is unchanged. Difficulty: difficult. Recommended model: Opus. Reason: a latency/underrun trade-off across SDL's Emscripten audio backend. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report measures input-to-sound latency on the web path before and after, stage by stage, from clone instrumentation (Node or headless Emscripten runs are acceptable), and states the device buffer and design chosen and why.",
+        "Click-to-sound latency on the web build is under about 50 ms in that measurement, and the music signal remains continuous through the rotation stall model web-perf-001 used (or a stricter one).",
+        "Desktop audio and all promoted playtest replays are unchanged; the design adds no pthread dependence.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "explosion-pieces-3d-001",
+      "title": "Exploding lemmings burst into 3D pieces instead of flat red squares",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 20 K4: when a lemming explodes (Bomber), the particles are cheesy flat red squares that the user believes are wrong; they should be 3D pieces, not 2D billboards. death-particles-001 (docs/scratch/death-particles-001.md) added bomber explosion and splat pieces; debris-3d-001 (docs/scratch/debris-3d-001.md) later made bash/mine/dig debris small tumbling 3D pieces textured from the cut terrain, but the explosion path still draws flat chips. From static evidence establish what the original emits when a lemming explodes: the lemming's own body pieces (meshes or sprite shards), terrain chunks from the crater, flame or smoke, their colours/textures, counts, launch, tumble, gravity and lifetime. Replace the flat red squares with that, reusing the debris-3d-001 3D piece path where it fits, depth-tested like other actors. Check the fall-death splat and the rat-victim pieces for the same flat chips and report them; change them only where the evidence is the same. Presentation only: who dies, crater cells and timing are unchanged. Difficulty: difficult. Recommended model: Opus. Reason: an emitter's assets and motion must be traced, then rendered in 3D. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report states what the original emits for a lemming explosion (pieces, textures or colours, counts, launch, tumble, lifetime) with static addresses, or labels choices provisional, and names the clone path that drew flat red squares.",
+        "A bomber explosion draws 3D pieces that tumble and fall with depth testing, and no flat red squares, shown in clone framebuffer frames under build/ on desktop and the Emscripten build.",
+        "Crater cells, death timing and counts are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

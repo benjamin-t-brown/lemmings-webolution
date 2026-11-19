@@ -9,6 +9,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- rat-victim-fling-001: **ready** — A lemming hit by a rat is flung off the cylinder, tumbling as it falls, instead of vanishing
+- rat-attack-sound-001: **ready** — Rat attacks play the original's sounds
+- web-audio-latency-001: **ready** — Browser build: sound effects play promptly without bringing back music clipping
+- explosion-pieces-3d-001: **ready** — Exploding lemmings burst into 3D pieces instead of flat red squares
 
 ## Recently completed queue entries
 

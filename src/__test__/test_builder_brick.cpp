@@ -15,12 +15,52 @@
 using namespace webo;
 using namespace webo::app;
 
+void checkBuilderHeadroom(int facing) {
+  using namespace sim;
+  Lemming builder;
+  builder.x = facing > 0 ? 14 : 1;
+  builder.y = 20;
+  builder.facing = facing > 0 ? Facing::Right : Facing::Left;
+  builder.state = State::Builder;
+
+  const auto placeBrick = [&](int bricks, int ceilingOffset) {
+    LevelSetup setup;
+    setup.terrain = Terrain(16, 32);
+    setup.terrain.set(builder.x + ceilingOffset * facing, builder.y - 4, Material::Earth);
+    World world(std::move(setup));
+    Lemming actor = builder;
+    actor.bricksLeft = bricks;
+    world.place(actor);
+    for (int i = 0; i < 4; ++i)
+      world.tick();
+    return world;
+  };
+
+  const World above = placeBrick(2, 1);
+  assert(above.lemmings()[0].state == State::Builder);
+  const World ahead = placeBrick(2, 2);
+  const auto& stopped = ahead.lemmings()[0];
+  assert(stopped.state == State::Walker && stopped.facing != builder.facing);
+  assert(stopped.x == builder.x + facing && stopped.y == builder.y - 1 && stopped.bricksLeft == 1);
+
+  World finished = placeBrick(1, 2);
+  assert(finished.lemmings()[0].state == State::Shrugger);
+  for (int i = 0; i < 6 && finished.lemmings()[0].state == State::Shrugger; ++i)
+    finished.tick();
+  assert(finished.lemmings()[0].state == State::Walker);
+  finished.tick();
+  const auto& walked = finished.lemmings()[0];
+  assert(walked.facing == builder.facing && walked.state == State::Walker);
+  assert(walked.x == finished.terrain().wrapX(builder.x + 2 * facing) && walked.y == builder.y - 1);
+}
+
 int main(int argc, char** argv) {
   assert(builderBrickShape(-1).scale == 0 && builderBrickShape(0.9).scale == 0);
   assert(builderBrickShape(2.0/16).scale > 0);
   assert(builderBrickShape(13.0/16).scale == 0);
   assert(builderBrickShape(0.7).scale > builderBrickShape(0.3).scale);
   for (int facing : {-1, 1}) {
+    checkBuilderHeadroom(facing);
     sim::LevelSetup setup;
     setup.terrain = sim::Terrain(256, 96);
     setup.totalLemmings = 0;

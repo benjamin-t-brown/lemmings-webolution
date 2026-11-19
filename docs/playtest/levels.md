@@ -29,7 +29,7 @@ under docs/playtest/replays/. Won so far: 27 of 102.
 | 15 | MM_BLOCK_BUILD_BASH | Seafood Sarnie | ok | playtest 9 | retired (Y6 fix) |  |
 | 16 | MM_E4_4_SKILLS | A Long and Lonely Road | ok | playtest 9 | retired (Y6 fix) |  |
 | 17 | MM_E1_3_SKILLS | Lems at Loggerheads | ok | playtest 10 | pass |  |
-| 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10, 11 | pass |  |
+| 18 | MM_E2_4SKILLS | The Abyss | ok | playtest 10, 11 | retired (G1 fix) |  |
 | 19 | E19_KF_2 | Kriss Kross | ok | playtest 12 | pass |  |
 | 20 | MM_E1_4SKILLS | Sergeant Bash | ok | playtest 11 | pass |  |
 | 21 | E20_mg_1 | The Crowded House | ok | playtest 12 | pass |  |
@@ -37,7 +37,7 @@ under docs/playtest/replays/. Won so far: 27 of 102.
 | 23 | MM_E1_5_Skills | Swings Both Ways | ok | playtest 14 | pass |  |
 | 24 | MM_ALL_8_002 | Wandering Free | ok | playtest 15 | pass | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 25 | MM_ALL_8_003 | The Iron Curtain | ok | playtest 15 | pass |  |
-| 26 | E18_KF_2 | Make Mine a Large One | ok | playtest 17 | pass | playtest 17 G1 builder end turn, G2 miner through staircase |
+| 26 | E18_KF_2 | Make Mine a Large One | ok | playtest 17 | retired (G1 fix) | playtest 17 G1, G2 fixed, awaiting playtest |
 | 27 | E22_KF_1 | Now you're stalking | ok |  |  |  |
 | 28 | E11_KF_1 | Escape to victory | ok |  |  |  |
 | 29 | e06_kf_1 | Lets play 'catch'. | ok |  |  |  |

@@ -25949,7 +25949,7 @@
     {
       "id": "hover-lemming-highlight-001",
       "title": "Hovered lemming is highlighted again alongside the bracket cursor",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "opengl-plan-001"
       ],
@@ -25964,12 +25964,167 @@
         "Hovering a lemming highlights exactly the lemming a click would assign, with the bracket cursor still shown; nothing is highlighted off a lemming, over the hatch, with a menu open or when the selected skill is unavailable.",
         "The highlight follows the drawn lemming's placement, flip and occlusion and does not change picking or scene depth; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T044845-13224-f14f70a4",
+      "started": "2026-11-19T04:48:45.886187+00:00",
+      "finished": "2026-11-19T04:58:14.988537+00:00",
+      "last_run": "build/agent-runs/20261119T044845-13224-f14f70a4",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The redraw can highlight a lemming that would reject the next click. In the promoted MM_FLOAT recording, a second Floater click resolves to actor 4 but is refused while Floater stock remains. Gate the redraw on whether the resolved actor can receive the skill while preserving the picker and recorded click behavior.",
+        "checks": [
+          {
+            "criterion": "The report cites the original's additive redraw (454ACA..454B5C) and says how the restored highlight follows it, or labels the choice provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/hover-lemming-highlight-001.md",
+                "detail": "Identifies the registered executable by SHA-256, cites the additive redraw and explains that the clone uses neutral RGB 255 and its existing actor coverage as a provisional depth rule."
+              },
+              {
+                "path": "build/hover-lemming-highlight-001/static/rea-0.json",
+                "detail": "The retained instructions agree with the decompilation. The redraw copies the body descriptor at actor +0x128, selects material 2, supplies three equal color operands, calls the quad Z setter at 43CDA0 and submits at 454B5C."
+              },
+              {
+                "path": "build/hover-lemming-highlight-001/static/blend.json",
+                "detail": "The selector-2 branch at 414DBB..414DEA sets both blend factors to ONE."
+              }
+            ]
+          },
+          {
+            "criterion": "Hovering a lemming highlights exactly the lemming a click would assign, with the bracket cursor still shown; nothing is highlighted off a lemming, over the hatch, with a menu open or when the selected skill is unavailable.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Frame composition draws the body for a shared picker hit before drawing the bracket cursor. Menu, panel, grab, window and zero-stock gates suppress the redraw as applicable, and hatch hover keeps its existing precedence rule. A click still calls World::assign after resolving the same hit, while the redraw has no equivalent assignment eligibility check."
+              },
+              {
+                "path": "src/app/RuntimePick.cpp",
+                "detail": "For Floater, passesKnownPickExclusions accepts any active lemming, including one that already has the ability."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::assign rejects Floater when the resolved lemming already has canFloat, even when stock remains."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-15-playtest-7/MM_FLOAT-1794810843788532100-3.replay",
+                "detail": "The installed Floater route records a successful assignment to actor 4 at step 571 and a rejected repeat click on the same actor at step 681. Later Floater assignments succeed. The recording establishes the click behavior, and the source trace shows why the redraw can still mark that actor."
+              }
+            ]
+          },
+          {
+            "criterion": "The highlight follows the drawn lemming's placement, flip and occlusion and does not change picking or scene depth; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The redraw uses the normal body preparation, including the type-specific sheet, animation frame, facing, gravity flip and terrain and scenery clipping. It adds RGB only where the completed actor layer contains the selected body at its rendered depth. The raster is read through a const reference and only the presentation image is written."
+              },
+              {
+                "path": "build/hover-lemming-highlight-001/replays.tsv",
+                "detail": "The ledger matches all 24 active promoted recordings. Each retained log reports PASS, won=1 and completed=1. Make Mine a Large One finished at step 11258 with 29 of 25 required saved. These results cover simulation regression."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T043348-13224-f772ff92/verification.log",
+                "detail": "The supervisor passed 95 of 95 main smoke tests, including all level-sweep chunks and the sweep report, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/hover-lemming-highlight-001.md",
+                "detail": "The final note names Make Mine a Large One and gives the expected bracket, body highlight and hatch behavior when hovering eligible lemmings, moving away, hovering the hatch, opening the menu and exhausting stock."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The redraw can highlight a lemming that would reject the next click. In the promoted MM_FLOAT recording, a second Floater click resolves to actor 4 but is refused while Floater stock remains. Gate the redraw on whether the resolved actor can receive the skill while preserving the picker and recorded click behavior.",
+      "review": {
+        "decision": "accept",
+        "reason": "The body highlight now uses the same eligibility check as skill assignment. The bracket and hatch behavior remain tied to the existing picker. All 24 promoted replays reproduced, and the supervisor smoke profile passed. The clone\u2019s depth rule is provisional, and the visual result awaits the next human playtest.",
+        "checks": [
+          {
+            "criterion": "The report cites the original's additive redraw (454ACA..454B5C) and says how the restored highlight follows it, or labels the choice provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/hover-lemming-highlight-001/review-revision/redraw-instructions.json",
+                "detail": "The retained Ghidra instructions for the registered executable agree with the decompilation. They copy the picked actor\u2019s body descriptor at +0x128, select material 2, pass three equal color values, set quad Z through 43CDA0 and submit at 454B5C."
+              },
+              {
+                "path": "build/hover-lemming-highlight-001/static/blend.json",
+                "detail": "The selector-2 branch at 414DBB..414DEA sets both blend factors to ONE, supporting the additive redraw."
+              },
+              {
+                "path": "docs/scratch/hover-lemming-highlight-001.md",
+                "detail": "The report identifies the executable by SHA-256, explains the clone\u2019s neutral RGB 255 addition and labels its use of completed scene coverage provisional. The original\u2019s effective device depth state remains unresolved."
+              }
+            ]
+          },
+          {
+            "criterion": "Hovering a lemming highlights exactly the lemming a click would assign, with the bracket cursor still shown; nothing is highlighted off a lemming, over the hatch, with a menu open or when the selected skill is unavailable.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Click and frame composition resolve the same picker. The redraw requires a hit, an in-window pointer and a successful eligibility check. Focus loss, a menu, camera grab, the skill panel and zero stock suppress the actor hover. Hatch feedback retains its existing precedence when the picker resolves the hatch, and the bracket is composed separately."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::assign and the redraw share the read-only World::canAssign predicate. It rejects a repeat Floater with stock remaining, as well as other invalid assignments, before any body redraw."
+              },
+              {
+                "path": "docs/playtest/replays/2026-11-15-playtest-7/MM_FLOAT-1794810843788532100-3.replay",
+                "detail": "Just Float records an accepted Floater assignment to actor 4 at step 571 and a refused repeat at step 681. The revised source gates the body highlight on that same eligibility result while preserving the recorded click target."
+              }
+            ]
+          },
+          {
+            "criterion": "The highlight follows the drawn lemming's placement, flip and occlusion and does not change picking or scene depth; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The redraw reuses the normal body preparation for the type-specific sheet, animation frame, facing, gravity flip and terrain and scenery clipping. It adds RGB only at pixels owned by the selected body at its rendered depth. The raster is read through a const reference and only the presentation image is written."
+              },
+              {
+                "path": "build/hover-lemming-highlight-001/review-revision/replays.tsv",
+                "detail": "The revised ledger matches all 24 active promoted recordings. Each linked log reports PASS, won=1 and completed=1. Just Float finished at step 978 and Make Mine a Large One at step 11258. These results verify simulation regression coverage."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T044845-13224-f14f70a4/verification.log",
+                "detail": "The supervisor passed 95 of 95 main smoke tests, including the level sweep and its report, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/hover-lemming-highlight-001.md",
+                "detail": "The final note gives the level, action and expected result for the repeat-Floater case in Just Float and for recipient selection, hatch hover, menu and exhausted stock in Make Mine a Large One."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T05:00:24.164216+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T044845-13224-f14f70a4\\verification.log",
+        "verified_content": "ad31db04aa575b8ae9c7bddf14ca5a3422850547ef7b20b0382281b6beb314ad"
+      }
     },
     {
       "id": "miner-staircase-stop-001",
       "title": "A miner that reaches a brick staircase along its diagonal stops instead of mining air",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "opengl-plan-001"
       ],
@@ -25984,12 +26139,179 @@
         "Replaying the same input, the miner stops at the brick staircase instead of mining to the bottom; the report says what it does next and why.",
         "Mining on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T051012-13224-e4d69da4",
+      "started": "2026-11-19T05:10:12.937689+00:00",
+      "finished": "2026-11-19T05:15:25.148760+00:00",
+      "last_run": "build/agent-runs/20261119T051012-13224-e4d69da4",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The clone fix stops the reported miner at the staircase, all 24 promoted replays pass, and supervisor smoke passes. Revise the report to cite the original's available static stop rule and explain that the clone's Built-support condition is a narrower provisional choice. The static findings do not establish the exact original trajectory on this level.",
+        "checks": [
+          {
+            "criterion": "The report traces the reported miner from step 5861 to where it stops, names why the clone keeps mining through the staircase, and cites the original's stop rule from static evidence or labels it provisional.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/miner-staircase-stop-001.md",
+                "detail": "The report identifies playtest 17 G2, Make Mine a Large One (E18_KF_2, node 26), and the first Miner assignment at step 5861. It explains that the old clone advanced after an empty cut because Built counted as landing support. It labels the clone rule provisional but leaves the original's empty-cut exit unresolved despite available static evidence."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/first-miner-ticks.tsv",
+                "detail": "The 256 hybrid-tick rows begin at the first mining tick after assignment and record state, facing, position, stroke probes, cut cells, and materials. Step 7739 removed zero cells and advanced onto Built support. Steel at (91,49) stopped and turned the miner at step 8777."
+              },
+              {
+                "path": "build/miner-axe-001/static/ins4188F6.json",
+                "detail": "Cross-checked against the retained pseudocode for registered SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Instruction 0x4189A2 resets the per-subpass clear flag and 0x418B22 sets it when a cell is cleared. At 0x418D57\u20130x418D62 a clear flag of zero and argument -1 enter the exit path. Without a refusal, 0x418D7F jumps to the state-selection call at 0x419008. This branch has no Built-support test."
+              },
+              {
+                "path": "decomp-lemmings/docs/evidence/actor_landing.md",
+                "detail": "Targeted Ghidra pseudocode and instructions independently confirm that 0x42F8B9 calls the walking-state constructor 0x41BD60 at 0x42F8F4 and attaches the state at 0x42F91F. Instruction evidence ID ev_95032fe56ef2b98266181e763007e8fc008444829c09a7f22bbf899228c10a9c."
+              },
+              {
+                "path": "old/docs/scratch/phase3-round6.md",
+                "detail": "Targeted Ghidra pseudocode and instructions confirm the Builder reads the same collision grid and ORs in 0x1 at 0x4101F8 before storing at 0x4101FE. A brick stamped into an empty cell therefore counts as a clearable nonzero cell if a Miner subpass probes it. Instruction evidence ID ev_770bbb985e86da4d9175633bb85f6b09cc787f2a6620f5699b7133133adbd8d5."
+              }
+            ]
+          },
+          {
+            "criterion": "Replaying the same input, the miner stops at the brick staircase instead of mining to the bottom; the report says what it does next and why.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-staircase-stop-001/first-miner-after.log",
+                "detail": "On the recorded G2 input, the empty stroke at 76,600 ms changes lemming 0 to Walker at (114,26), still facing left. At 76,726 ms it walks onto (113,27) above Built terrain and continues down the stairs."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::stepMiner returns in Walker state before advancing when zero cells are removed and the diagonal landing has Built support. The report maps the transition to step 7739 and explains how World::stepWalker uses its normal one-cell descent probe at step 7742."
+              }
+            ]
+          },
+          {
+            "criterion": "Mining on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-staircase-stop-001/task-source.diff",
+                "detail": "The isolated task diff limits the behavior change to empty strokes with Built support at the diagonal landing. The cut footprint, steel refusal, and existing movement in all other cases remain the same."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/replays.tsv",
+                "detail": "All 24 active promoted files are represented and pass with won=1 and completed=1, including six recordings with accepted Miner assignments. The promoted Make Mine a Large One recording passes at step 11258 with 29/25 saved."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/replays/E18_KF_2-1795061453769866500-2.replay.log",
+                "detail": "The report names the unpromoted G2 attempt's intended divergence at step 9566. The next Miner assignment expects the Walker at (130,14) and finds it at (115,25) after the earlier staircase transition."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T050024-13224-f1e14a9e/verification.log",
+                "detail": "Supervisor verification records 95 of 95 main smoke tests, including the level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/miner-staircase-stop-001.md",
+                "detail": "After the two-line handoff, the report ends by asking the player to align a left-facing Miner with a staircase on Make Mine a Large One and check that it stops mining and walks down the intact bricks."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The clone fix stops the reported miner at the staircase, all 24 promoted replays pass, and supervisor smoke passes. Revise the report to cite the original's available static stop rule and explain that the clone's Built-support condition is a narrower provisional choice. The static findings do not establish the exact original trajectory on this level.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revised report cites the original\u2019s static Miner exit rule and identifies the clone\u2019s narrower Built-support rule as provisional. The reported Miner stops and walks down the bricks, all 24 promoted replays reproduce, and the latest supervisor smoke run passes. The original\u2019s exact trajectory on this level remains unverified. The next acceptance step is the user\u2019s playtest.",
+        "checks": [
+          {
+            "criterion": "The report traces the reported miner from step 5861 to where it stops, names why the clone keeps mining through the staircase, and cites the original's stop rule from static evidence or labels it provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/miner-staircase-stop-001.md",
+                "detail": "Identifies playtest 17 G2 on Make Mine a Large One, E18_KF_2, node 26. It traces lemming 0 from the leftward Miner assignment at step 5861 and explains that the old clone advanced after empty strokes because Built counted as solid landing support."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/first-miner-ticks.tsv",
+                "detail": "Records 256 hybrid ticks with position, facing, floor and forward probes, and cut materials. At step 7739 all nine cut probes were Empty and the landing had Built support. The old clone made 22 empty advances before Steel at (91,49) turned the actor and ended mining at step 8777."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/static-review/miner-instructions.json",
+                "detail": "Cross-checked against the retained Ghidra pseudocode for registered SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. The clear flag resets at 0x4189A2 and is set at 0x418B22. A zero flag with subpass argument -1 enters the exit at 0x418D57\u20130x418D62. With no refusal, 0x418D7F branches to the path that calls the walking-state selector at 0x419008. This exit has no Built-support test."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/static-review/walker-instructions.json",
+                "detail": "Selector 0x42F8B9 calls the walking-state constructor 0x41BD60 at 0x42F8F4 and attaches the state at 0x42F91F."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/static-review/builder-instructions.json",
+                "detail": "The Builder ORs 0x1 into the shared collision-grid cell at 0x4101F8 and stores it at 0x4101FE. A brick stamped into an empty cell passes the Miner\u2019s material checks at 0x418AAB\u20130x418B16 if probed."
+              }
+            ]
+          },
+          {
+            "criterion": "Replaying the same input, the miner stops at the brick staircase instead of mining to the bottom; the report says what it does next and why.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-staircase-stop-001/first-miner-after.log",
+                "detail": "On the recorded G2 input, lemming 0 becomes a left-facing Walker at (114,26) at 76,600 ms. At 76,726 ms it reaches (113,27) and continues down the staircase on Built support."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::stepMiner returns as Walker before the diagonal advance when the cut removes zero cells and the proposed landing has Built support. The report maps this transition to step 7739 and the normal Walker descent probe to step 7742."
+              }
+            ]
+          },
+          {
+            "criterion": "Mining on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/miner-staircase-stop-001/task-source.diff",
+                "detail": "The task changes only the empty-stroke case with Built directly beneath the diagonal landing. The cut footprint, steel refusal, and other movement paths are preserved."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/replays.tsv",
+                "detail": "The results cover all 24 active promoted replay files. Every recording passes with won=1 and completed=1, including the six with accepted Miner assignments. The promoted Make Mine a Large One win saves 29/25 at step 11258."
+              },
+              {
+                "path": "build/miner-staircase-stop-001/replays/E18_KF_2-1795061453769866500-2.replay.log",
+                "detail": "The report names the intended divergence in the unpromoted G2 attempt at step 9566. The next Miner assignment expects the Walker at (130,14) and finds it at (115,25) after the earlier staircase transition."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T051012-13224-e4d69da4/verification.log",
+                "detail": "The latest supervisor run passes all 95 main smoke tests, including the level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/miner-staircase-stop-001.md",
+                "detail": "The report ends with a two-line handoff and a playtest note. On Make Mine a Large One, align a left-facing Miner with its staircase and check that it stops mining and walks down the intact bricks facing left."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T05:17:23.568278+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T051012-13224-e4d69da4\\verification.log",
+        "verified_content": "21bd86835f500c4d5c9671fde086f2aa1f5c0e1140690de7c1a73870eac961ab"
+      }
     },
     {
       "id": "builder-end-turn-001",
       "title": "A builder that finishes its bricks walks on when the way forward is clear",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "opengl-plan-001"
       ],
@@ -26004,12 +26326,100 @@
         "The report cites the original's end-of-build rule from static evidence or labels it provisional, and either fixes a deviation in the production path or shows that the traced builds already follow it.",
         "Building on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T051723-13224-b74cf29c",
+      "started": "2026-11-19T05:17:24.095409+00:00",
+      "finished": "2026-11-19T05:32:08.126135+00:00",
+      "last_run": "build/agent-runs/20261119T051723-13224-b74cf29c",
+      "review": {
+        "decision": "accept",
+        "reason": "The four build traces show that both open staircases reached Shrugger facing right and were reassigned before walking. Both chained builds hit the earth wall. Static evidence supports the forward headroom correction, the supervisor smoke profile passed, and both promoted replay divergences are covered by the task\u2019s intended-divergence exception. The original\u2019s runtime behavior on these routes remains unverified.",
+        "checks": [
+          {
+            "criterion": "The report traces every build in both recordings from the last brick to the next walker moves and says whether and why each builder turned.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/builder-end-turn-001.md",
+                "detail": "The four rows cover every Builder assignment in attempts 2 and 4. They record facing, brick placement, cells ahead and above, and the exit state. For the two interrupted shrugs, the report identifies the reassignment and labels the forward Walker steps as source predictions."
+              },
+              {
+                "path": "build/builder-end-turn-001/attempt-2-builder-trace.log",
+                "detail": "The first build enters Shrugger facing right at (104,36) at step 2776 and is reassigned at 2789. The second hits Earth at (114,26), turns left at 3879, steps into a fall at 3894, and resumes walking down the staircase after landing."
+              },
+              {
+                "path": "build/builder-end-turn-001/attempt-4-builder-trace.log",
+                "detail": "The first build enters Shrugger facing right at (105,36) at step 2530 and is reassigned at 2548. The second hits Earth at (114,27), turns left at 3761, steps into a fall at 3789, and resumes walking down the staircase after landing."
+              }
+            ]
+          },
+          {
+            "criterion": "The report cites the original's end-of-build rule from static evidence or labels it provisional, and either fixes a deviation in the production path or shows that the traced builds already follow it.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-end-turn-001/static/rea-evidence.json",
+                "detail": "Ghidra pseudocode and instructions for the registered x86 reference, SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, agree on branch order. The raised foot probe at 0x40FE77 can refuse before decrement. A successful final advance takes the Shrug branch at 0x40FF96 and skips the head probe. With bricks remaining, 0x410067 adds facing to the biased head X and an occupied cell triggers the turn at 0x41009E. The shrug completion branch attaches Walker at 0x41AC06 with the current facing."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The task changes the nonfinal probe in World::stepBuilder from the advanced foot column to one column ahead. The raised foot check, final-brick Shrugger branch, and Walker handoff retain their existing order."
+              },
+              {
+                "path": "build/builder-end-turn-001/installed-grid.tsv",
+                "detail": "The installed E18_KF_2 grid shows air in the old probe column and Earth at the corrected probe locations (114,24) and (114,25). The fixed clone traces linked from the report show the earlier reversals at steps 3767 and 3618 and the next two downhill Walker moves in each attempt."
+              }
+            ]
+          },
+          {
+            "criterion": "Building on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/builder-end-turn-001/replays.tsv",
+                "detail": "The release CLI reproduced 22 of the 24 promoted recordings, including Just Build. The remaining recordings are the two intended divergences identified in the report. The task scope allows these exceptions."
+              },
+              {
+                "path": "build/builder-end-turn-001/replays/E18_KF_2-1795061588721901800-4.replay.log",
+                "detail": "Make Mine a Large One first diverges at step 5394. The earlier Builder reversal leaves lemming 0 at (120,14) when the recorded Miner assignment expects (126,14)."
+              },
+              {
+                "path": "build/builder-end-turn-001/abyss-fixed.log",
+                "detail": "In The Abyss, actor 10 turns at step 1467 when the corrected probe finds steel at (152,37). That actor then becomes the 13th save at step 1622, when the promoted recording expects 12."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T051723-13224-b74cf29c/verification.log",
+                "detail": "The supervisor log records 95 passing smoke tests, including the installed-level sweep, and 84 passing recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261119T051723-13224-b74cf29c/result.json",
+                "detail": "The supervisor recorded verifier exit code 0 and the supplied verified-content digest."
+              },
+              {
+                "path": "docs/scratch/builder-end-turn-001.md",
+                "detail": "The report ends with a two-line handoff followed by a Make Mine a Large One check. Let the open staircase finish and expect a forward step after the shrug. On a separate attempt, build into the earth wall and expect a turn followed by a walk down the stairs."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T05:34:44.489967+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T051723-13224-b74cf29c\\verification.log",
+        "verified_content": "2087d2a01317abf6e8986da9d05564af78ae471ad3d5f6964c9362ff8116bbc1"
+      }
     },
     {
       "id": "unlock-all-option-001",
       "title": "Options toggle: unlock all levels (unbeaten ones shown as available)",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "opengl-plan-001"
       ],
@@ -26020,11 +26430,118 @@
       "user_authorized": true,
       "scope": "User request (2026-11-18, after the playtest 17 browser check): add an 'Unlock all levels' option to the Options menu, so every level can be entered while levels not yet beaten stay marked as available (yellow) until won, exactly like the user's current desktop setup. This is a clone convenience, not original behavior; label it so in code and the report. Today the same display exists only as an environment variable: MapScene (src/app/MapScene.cpp, the state array built from save flags) fills every node with state 3 when WEBOLUTION_UNLOCK_ALL=1, which scripts/Play-Clone.ps1 sets; completion flags for won levels then override to state 2 and their links. The browser build cannot set it. Add a persisted boolean beside the existing clone settings (src/save/SoundSettings, the file beside SavedGame.dat that options-menu-001 introduced, IDBFS-backed in the web build), defaulting to off, loaded and saved through the same injectable store with the existing write-failure policy (keep the prior good file; never reset or silently import). Add a toggle row to the Options menu (SoundMenu / FrontendSession) in the menus where Options is offered, using the existing menu rendering, hover, keyboard and click handling, with accept/cancel behaving like the sound settings. The map uses the setting (environment variable OR option) when it is built and refreshes when the option changes, without writing any completion flag to SavedGame.dat: turning it off again shows the save's real progress. Keep WEBOLUTION_UNLOCK_ALL working for Play-Clone.ps1. Native and web builds both get the option; old settings files without the field still load. Difficulty: routine. Recommended model: Sonnet. Reason: one persisted flag through existing settings, menu and map paths. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts (and a browser reload) through the clone settings file, defaults to off, and older settings files still load.",
+        "The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts through the clone settings file (on the web through the existing IDBFS sync path, shown by source; the browser reload itself is confirmed at the user's next playtest, not by an automated browser run), defaults to off, and older settings files still load.",
         "With it on, every map node can be entered and unbeaten levels show as available (yellow) while won levels keep their completed marking; with it off the map shows the save's real progress.",
         "SavedGame.dat completion data is never changed by the option; WEBOLUTION_UNLOCK_ALL still works; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T053444-13224-71b60df4",
+      "started": "2026-11-19T05:34:44.938938+00:00",
+      "finished": "2026-11-19T05:49:44.224750+00:00",
+      "last_run": "build/agent-runs/20261119T053444-13224-71b60df4",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261119T053444-13224-71b60df4",
+          "review": {
+            "decision": "blocked",
+            "reason": "Acceptance requires a successful browser reload check and lead disposition of two still-promoted recordings that diverge under the accepted Builder fix. The retained browser run ended before initialization, and both actions fall outside this read-only review.",
+            "checks": [
+              {
+                "criterion": "The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts (and a browser reload) through the clone settings file, defaults to off, and older settings files still load.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "src/app/SoundMenu.cpp",
+                    "detail": "The shared Options menu renders the On and Off labels and provides a click target for the toggle in both builds."
+                  },
+                  {
+                    "path": "src/save/SoundSettings.cpp",
+                    "detail": "A missing sidecar uses defaults. Version 1 retains both volumes and loads the toggle as Off. Version 2 writes and reads the toggle alongside the volumes."
+                  },
+                  {
+                    "path": "build/unlock-all-option-001/frontend-probe.log",
+                    "detail": "The native probe exercised mouse and keyboard input, Accept and Escape, and settings readback after recreating the session. It also confirmed that a failed write preserved the prior file and a later Accept retried the write."
+                  },
+                  {
+                    "path": "src/web/webolution.html",
+                    "detail": "Browser startup mounts IDBFS at /store and loads its contents before starting the shared application. The existing write path in src/web/Browser.cpp syncs the settings file back to IDBFS."
+                  },
+                  {
+                    "path": "build/unlock-all-option-001/browser-process.log",
+                    "detail": "Headless Chrome terminated after repeated GPU subprocess failures. The retained run provides no observation of the toggle or its persistence after a browser reload."
+                  }
+                ]
+              },
+              {
+                "criterion": "With it on, every map node can be entered and unbeaten levels show as available (yellow) while won levels keep their completed marking; with it off the map shows the save's real progress.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "src/app/MapScene.cpp",
+                    "detail": "Unlocking seeds all 102 nodes with state 3, which selects the yellow available sprite and permits picking. The completion pass sets won nodes to state 2. All outgoing links point forward, so they cannot overwrite an earlier node's completed state. Off restores the three starting nodes plus availability derived from the saved flags."
+                  },
+                  {
+                    "path": "src/app/FrontendSession.cpp",
+                    "detail": "Loading an enabled setting or accepting a changed toggle rebuilds the map image and selection states from the session's real completion flags. A subsequent win uses the same refresh path."
+                  },
+                  {
+                    "path": "build/unlock-all-option-001/frontend-probe.log",
+                    "detail": "The native probe resolved all 102 node masks to level IDs, selected Make Mine a Large One (E18_KF_2), preserved seeded wins, and confirmed that turning the setting off restored the prior map states and blocked entry to node 26."
+                  },
+                  {
+                    "path": "build/unlock-all-option-001/rea-map-instructions.json",
+                    "detail": "Retained static instructions for the registered x86 reference corroborate the normal completion rule. Routine 0x49B647 tests the saved DWORD at 0x49B6FF and writes completed state 2 at 0x49B719. The all-level toggle is clone behavior."
+                  }
+                ]
+              },
+              {
+                "criterion": "SavedGame.dat completion data is never changed by the option; WEBOLUTION_UNLOCK_ALL still works; all promoted playtest replays still reproduce.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "src/app/FrontendSession.cpp",
+                    "detail": "Accept writes through the settings sink. The map refresh reads completion flags and updates presentation and picking. The option path never calls progress persistence."
+                  },
+                  {
+                    "path": "build/unlock-all-option-001/frontend-probe.log",
+                    "detail": "The probe confirmed byte-for-byte preservation of its private SavedGame.dat and all 102 nodes enterable with WEBOLUTION_UNLOCK_ALL=1 and the persisted option Off."
+                  },
+                  {
+                    "path": "build/unlock-all-option-001/promoted-replays.tsv",
+                    "detail": "Native and Wasm each reproduced 22 of 24 promoted recordings. The Abyss diverged at step 1622 with 13 saves where the recording expects 12. Make Mine a Large One diverged at step 5394 with the Miner target at (120,14) where the recording expects (126,14)."
+                  },
+                  {
+                    "path": "docs/scratch/builder-end-turn-001.md",
+                    "detail": "The earlier Builder review evidence records both divergences at the same steps and traces them to the changed Builder turn. Both files remain promoted under the replay directory's active .replay convention."
+                  }
+                ]
+              },
+              {
+                "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261119T053444-13224-71b60df4/verification.log",
+                    "detail": "The supervisor log records 95 of 95 main smoke tests passing, including the installed-level sweep and its aggregate report, plus 84 of 84 recovery tests passing."
+                  },
+                  {
+                    "path": "build/agent-runs/20261119T053444-13224-71b60df4/result.json",
+                    "detail": "The verifier exited with code 0 and recorded the content fingerprint supplied for this review."
+                  },
+                  {
+                    "path": "docs/scratch/unlock-all-option-001.md",
+                    "detail": "The last paragraph names Make Mine a Large One and gives the browser enable, accept, reload, and disable steps. It specifies the expected yellow and enterable node 26, preserved completed markings, and restored save progression after turning the option off."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "Acceptance requires a successful browser reload check and lead disposition of two still-promoted recordings that diverge under the accepted Builder fix. The retained browser run ended before initialization, and both actions fall outside this read-only review."
+        }
+      ],
+      "lead_note": " 2026-11-18: the first review blocked on (a) no browser reload observation, because headless Chrome failed before initialization, and (b) two promoted recordings diverging under the accepted builder-end-turn-001 fix. Lead disposition: (b) both recordings retired by design in docs/playtest/replays/README.md, so criterion 3 now covers the 22 remaining .replay files, which the worker reproduced; (a) per AGENTS.md, playtest fixes are accepted at the user's next playtest, so criterion 1 now asks for the web persistence path by source and leaves the reload to the playtest. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 1: The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts (and a browser reload) through the clone settings file, defaults to off, and older settings files still load."
     }
   ]
 }

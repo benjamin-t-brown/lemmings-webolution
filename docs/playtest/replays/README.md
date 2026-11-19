@@ -28,3 +28,9 @@ but is no longer replayed, and "all promoted replays reproduce" means the `.repl
   (Float and Climb): both levels have two hatches. Playtest 10 Z6 (multi-hatch-simultaneous-001)
   makes every hatch release on the same tick, so each recording diverges at its second release
   (steps 175 and 163) by design. Both passed on the builds they were recorded on. Retired 2026-11-16.
+- 2026-11-16-playtest-11/MM_E2_4SKILLS (The Abyss) and 2026-11-18-playtest-17/E18_KF_2 (Make Mine a
+  Large One): playtest 17 G1 (builder-end-turn-001) moves the Builder's head probe one column ahead,
+  so a builder facing a wall turns one stroke earlier. The Abyss diverges at step 1622 (13 saved where
+  the recording expects 12); Make Mine a Large One diverges at step 5394, where the Miner click finds
+  its actor at (120,14) instead of (126,14). Both passed on the builds they were recorded on. Retired
+  2026-11-18; the levels need a fresh winning recording to regain replay coverage.

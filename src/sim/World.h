@@ -1423,6 +1423,8 @@ public:
   bool finished() const;
   bool won() const { return saved_ >= setup_.saveTarget; }
 
+  // Check skill assignment against the current actor and stock without changing either.
+  bool canAssign(std::size_t lemmingIndex, Skill skill) const;
   // Apply a skill to a lemming. Returns false when it cannot be applied, which
   // is a legitimate outcome rather than an error.
   bool assign(std::size_t lemmingIndex, Skill skill);

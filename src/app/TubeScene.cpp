@@ -1296,6 +1296,44 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
   }
 }
 
+bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis& camera,
+    const SceneOptions& options, const AssetLibrary& lib, const Raster& sceneRaster) const {
+  if (walker >= options.injectedWalkers.size() || !havePoseLevel_ ||
+      target.width != camera.width || target.height != camera.height)
+    return false;
+  const auto& injected = options.injectedWalkers[walker];
+  const auto* sprites = lemmingSprites(injected.sheetType);
+  if (!sprites) return false;
+  rewirePoseLevel();
+
+  // 454ACA..454B5C copies the body quad and uses ONE/ONE with neutral RGB 255.
+  // Keep the clone's physical depth and body mask for the late redraw.
+  Image sprite;
+  const auto bounds = tubePassBounds(camera.selectorTurns, cylinderExtent_);
+  const auto prepared = prepareInjectedWalker(poseLevel_, *sprites, ActorLightMap{}, camera,
+      options, injected, lib, bounds, sceneRaster.depthBuffer(), &sprite,
+      nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr);
+  if (!prepared || sprite.rgba.empty()) return false;
+
+  const ActorOcclusionPlane plane(camera, prepared->worldPosition);
+  const auto& actorDepth = sceneRaster.actorDepth();
+  const auto rect = spriteRect(sprite, prepared->placement);
+  bool marked = false;
+  for (int y = rect.top; y < rect.bottom; ++y) {
+    for (int x = rect.left; x < rect.right; ++x) {
+      const auto pixel = std::size_t(y) * sprite.width + x;
+      const auto at = pixel * 4;
+      if (!actorSpriteAlphaTestPasses(sprite.rgba[at + 3]) ||
+          !actorDepth.owns(pixel, walker) ||
+          actorDepth.depthAt(pixel) != plane.depthAt(x + .5, y + .5)) continue;
+      for (int c = 0; c < 3; ++c)
+        target.rgba[at + c] = std::min(255, target.rgba[at + c] + sprite.rgba[at + c]);
+      marked = true;
+    }
+  }
+  return marked;
+}
+
 std::vector<std::optional<ActorSpritePlacement>> TubeScene::injectedWalkerScreenBoxes(
     const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const {
   Raster sceneRaster(camera.width, camera.height);

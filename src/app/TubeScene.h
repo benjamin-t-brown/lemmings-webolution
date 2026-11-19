@@ -162,6 +162,11 @@ class TubeScene {
   void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
                            const SceneOptions& options, const AssetLibrary& lib) const;
 
+  // Add the selected body sprite only where it owns the completed actor layer.
+  bool drawHoveredWalker(Image& target, std::size_t walker, const CameraBasis& camera,
+                         const SceneOptions& options, const AssetLibrary& lib,
+                         const Raster& sceneRaster) const;
+
   void emitDeathParticles(const sim::Lemming&, bool explosion,
       std::span<const std::array<int, 2>> removedCells, std::uint64_t clockMs,
       int terrainHeight, const AssetLibrary&, bool nukeActive = false);

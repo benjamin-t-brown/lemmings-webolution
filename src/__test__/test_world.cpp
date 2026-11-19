@@ -1909,7 +1909,9 @@ void testBuilderRefusesAtAWall() {
     dir = static_cast<int>(probe.lemmings()[0].facing);
   }
   LevelSetup s = flatLevel();
-  s.terrain.fillBox(x0 + 4 * dir, y0 - 10, 1, 11, Material::Earth);
+  // Keep the wall below the third brick's forward head probe at y0 - 6,
+  // so this fixture exercises the fourth brick's step-into probe.
+  s.terrain.fillBox(x0 + 4 * dir, y0 - 4, 1, 5, Material::Earth);
   World w(s);
   runFor(w, 60);
   check(w.lemmings()[0].x == x0 && w.lemmings()[0].y == y0,

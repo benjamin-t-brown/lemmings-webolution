@@ -19,6 +19,7 @@
 #include <limits>
 #include <map>
 #include <sstream>
+#include <utility>
 using namespace webo;
 namespace fs = std::filesystem;
 namespace {
@@ -53,6 +54,25 @@ void send(Command c) {
 }
 app::PickBox box(const app::ActorSpritePlacement& p) {
   return {int(p.left),int(p.top),int(p.right),int(p.bottom)};
+}
+bool bodyBrightened(const app::LevelFrameView& f, const Image& unmarked,
+                    const Image& bracket, const app::ActorSpritePlacement& body) {
+  for (int y = std::max(0, int(std::ceil(body.top)));
+       y < std::min(f.image.height, int(std::ceil(body.bottom))); ++y) {
+    for (int x = std::max(0, int(std::ceil(body.left)));
+         x < std::min(f.image.width, int(std::ceil(body.right))); ++x) {
+      const int cx = x - (f.cursorX - bracket.width / 2);
+      const int cy = y - (f.cursorY - bracket.height / 2);
+      if (cx >= 0 && cx < bracket.width && cy >= 0 && cy < bracket.height &&
+          bracket.rgba[(std::size_t(cy) * bracket.width + cx) * 4 + 3] != 0) continue;
+      const auto at = (std::size_t(y) * f.image.width + x) * 4;
+      const auto* lit = f.image.rgba.data() + at;
+      const auto* base = unmarked.rgba.data() + at;
+      if (lit[0] >= base[0] && lit[1] >= base[1] && lit[2] >= base[2] &&
+          !std::equal(lit, lit + 3, base)) return true;
+    }
+  }
+  return false;
 }
 // V7 displayed-centre oracle replaces the old terrain-target expectation.
 // This historical feedback comparison uses a crowd point where both policies
@@ -95,6 +115,9 @@ void image(const fs::path& out,const std::string& name,const app::LevelFrameView
 int route(const std::string& mode,const fs::path& out) {
   fs::create_directories(out);
   const fs::path game(std::getenv("WEBOLUTION_GAME_DIR"));
+  auto lib=AssetLibrary::open(game/"lemmings.box",game/"patch.box");if(!lib)return 2;
+  const auto bracket = loadTexture(*lib, "TEXTURES\\_CURLEM.BMP");
+  if (!bracket) return 2;
   auto local=save::localAppDataDirectory(); if(!local)return 2;
   Saved normal(save::cloneSavePathUnder(*local)),installed(game/"SavedGame.dat");
   save::SavedGame seed; for(auto& r:seed.records)r.c=1;
@@ -124,6 +147,7 @@ int route(const std::string& mode,const fs::path& out) {
   };
   int x=0,y=0,stock=0,n=0;std::size_t expected=0;int captures=0,offFrame=-1,firstRemaining=-1;
   int lastRemaining=-1; bool clicked=false; int observed=0;
+  Image unmarkedActorFrame;
   auto frame=[&](const app::LevelFrameView& f){
     ++observed;
     int remaining=-1;
@@ -140,11 +164,16 @@ int route(const std::string& mode,const fs::path& out) {
       if(f.frame==0) {command(f.frame,{'k',SDL_SCANCODE_P});command(f.frame,{'m',630,470});}
       else if(f.frame==1) {
         check(f.paused,"paused public actor route");shot(f,"empty",'n');
+        unmarkedActorFrame = f.image;
         check(overlap(f,x,y,expected,n),"installed MM_CLIMB_002 has at least two overlapping eligible walkers");
         stock=f.world.setup().skills[0];command(f.frame,{'m',x,y});
       } else if(f.frame==2 || f.frame==5) {
         check(f.hoveredActor==expected && f.markedActor==expected,"overlap marking agrees with independent nearest-walker oracle");
-        for(const auto& a:f.actors)if(a.index==expected)shot(f,f.frame==2?"overlap":"reentered",'a',int(std::floor(a.placement.left)),int(std::floor(a.placement.top)),int(std::ceil(a.placement.right)),int(std::ceil(a.placement.bottom)));
+        for (const auto& a : f.actors) if (a.index == expected) {
+          check(bodyBrightened(f, unmarkedActorFrame, *bracket, a.placement),
+                "selected body brightens outside the opaque cursor pixels");
+          shot(f,f.frame==2?"overlap":"reentered",'a',int(std::floor(a.placement.left)),int(std::floor(a.placement.top)),int(std::ceil(a.placement.right)),int(std::ceil(a.placement.bottom)));
+        }
         if(f.frame==2)command(f.frame,{'m',630,470});
         else {command(f.frame,{'c',x,y});clicked=true;}
       } else if(f.frame==3) {
@@ -181,7 +210,6 @@ int route(const std::string& mode,const fs::path& out) {
       if(f.frame==400){check(false,"hatch hover/count route watchdog");command(f.frame,{'q'});}
     }
   };
-  auto lib=AssetLibrary::open(game/"lemmings.box",game/"patch.box");if(!lib)return 2;
   std::array<int32_t,102> flags{};flags.fill(1);auto map=app::MapScene::build(*lib,flags);if(!map)return 2;
   int mx=-1,my=-1;
   for(int yy=0;yy<480&&mx<0;++yy)for(int xx=0;xx<640;++xx)if(map->pickNode(xx,yy)==0){mx=xx;my=yy;break;}
@@ -262,6 +290,22 @@ int compare(const fs::path& root) {
   return failures?1:0;
 }
 int units() {
+  // A repeat Floater is still a pick, even though the next click would be refused.
+  constexpr auto floater = sim::Skill::Floater;
+  constexpr auto slot = static_cast<std::size_t>(floater);
+  sim::LevelSetup setup;
+  setup.skills[slot] = 2;
+  sim::World world(std::move(setup));
+  world.place(sim::Lemming{});
+  check(world.canAssign(0, floater), "initial Floater is eligible for highlighting");
+  check(world.setup().skills[slot] == 2 && !world.lemmings()[0].canFloat && world.takeCues().empty(),
+        "checking highlight eligibility leaves the world and audio unchanged");
+  check(world.assign(0, floater), "first Floater click succeeds");
+  check(world.setup().skills[slot] == 1 && app::passesKnownPickExclusions(world.lemmings()[0], floater),
+        "the repeat click can resolve to the same actor with stock remaining");
+  check(!world.canAssign(0, floater) && !world.assign(0, floater) && world.setup().skills[slot] == 1,
+        "a repeat Floater is ineligible for highlighting and refused without spending stock");
+
   // Uneven global totals, all release prefixes, every hatch: future allocation
   // independently enumerated from the unchanged round-robin World contract.
   for(int count=1;count<=8;++count)for(int total=0;total<25;++total)for(int spawned=0;spawned<=total;++spawned)

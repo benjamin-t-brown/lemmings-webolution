@@ -1032,7 +1032,9 @@ void World::stepBuilder(Lemming& l) {
     l.frame = 0;
     return;
   }
-  if (solidAt(l.x, l.y - rules_.lemmingHeight)) {
+  // 0x410032..0x41009E probes one column ahead at head height after
+  // advancing. The last spent brick enters the shrug before this probe.
+  if (solidAt(l.x + dir, l.y - rules_.lemmingHeight)) {
     turn(l);
     l.state = State::Walker;
     l.frame = 0;
@@ -1168,7 +1170,14 @@ void World::stepMiner(Lemming& l) {
   // 0x418D21..0x418D39: successful miner subpass -1 plays Mine.
   // Provisional clone cadence: one request per stroke that clears terrain.
   if (removed != 0) cue(SoundCue::Work, &l);
-  l.x = setup_.terrain.wrapX(l.x + dir);
+  const int nextX = setup_.terrain.wrapX(l.x + dir);
+  // Provisional: let the walker step down onto a built stair after an empty stroke.
+  if (removed == 0 && setup_.terrain.at(nextX, l.y + 2) == Material::Built) {
+    l.state = State::Walker;
+    l.frame = 0;
+    return;
+  }
+  l.x = nextX;
   l.y += 1;
 
   if (!solidAt(l.x, l.y + 1)) {
@@ -2073,18 +2082,43 @@ void World::advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterT
   run(remaining);
 }
 
-bool World::assign(std::size_t index, Skill skill) {
-  if (index >= lemmings_.size())
+bool World::canAssign(std::size_t index, Skill skill) const {
+  const auto slot = static_cast<std::size_t>(skill);
+  if (index >= lemmings_.size() || slot >= setup_.skills.size() || setup_.skills[slot] == 0)
     return false;
-  Lemming& l = lemmings_[index];
+  const Lemming& l = lemmings_[index];
   if (!l.active())
     return false;
-
-  int& stock = setup_.skills[static_cast<std::size_t>(skill)];
-  if (stock == 0)
+  switch (skill) {
+    case Skill::Climber: return !l.canClimb;
+    case Skill::Floater: return !l.canFloat;
+    case Skill::Bomber: return l.fuseMs < 0;
+    default: break;
+  }
+  // A spent builder can take another walking job without waiting for its shrug.
+  // Native shrug category 0x1D (0x41AB4B) is not excluded by 0x4183D3.
+  if (l.state != State::Walker && l.state != State::Shrugger &&
+      l.state != State::Builder && l.state != State::Basher &&
+      l.state != State::Miner && l.state != State::Digger && l.state != State::Blocker)
     return false;
+  return skill != Skill::Blocker || groundAt(l.x, l.y + l.verticalDir, l.verticalDir);
+}
 
+bool World::assign(std::size_t index, Skill skill) {
+  const auto slot = static_cast<std::size_t>(skill);
+  if (!canAssign(index, skill)) {
+    // An unsupported Blocker reassignment used to clear and restore the field.
+    if (skill == Skill::Blocker && index < lemmings_.size() && setup_.skills[slot] != 0) {
+      const Lemming& l = lemmings_[index];
+      if (l.active() && l.state == State::Blocker)
+        stampBlockerField(l);
+    }
+    return false;
+  }
+
+  Lemming& l = lemmings_[index];
   auto take = [&] {
+    int& stock = setup_.skills[slot];
     if (stock > 0)
       --stock;
     cue(SoundCue::Assign); // UI success feedback stays centred, like Changeop
@@ -2092,52 +2126,16 @@ bool World::assign(std::size_t index, Skill skill) {
   };
 
   switch (skill) {
-    case Skill::Climber:
-      if (l.canClimb)
-        return false;
-      l.canClimb = true;
-      return take();
-    case Skill::Floater:
-      if (l.canFloat)
-        return false;
-      l.canFloat = true;
-      return take();
-    case Skill::Bomber:
-
-
-
-
-
-      if (l.fuseMs >= 0)
-        return false;
-      l.fuseMs = rules_.bomberFuseMs;
-      return take();
-    default:
-      break;
+    case Skill::Climber: l.canClimb = true; return take();
+    case Skill::Floater: l.canFloat = true; return take();
+    case Skill::Bomber: l.fuseMs = rules_.bomberFuseMs; return take();
+    default: break;
   }
-
-
-
-  // A spent builder can take another walking job without waiting for its shrug.
-  // Native shrug category 0x1D (0x41AB4B) is not excluded by 0x4183D3.
-  if (l.state != State::Walker && l.state != State::Shrugger &&
-      l.state != State::Builder && l.state != State::Basher &&
-      l.state != State::Miner && l.state != State::Digger && l.state != State::Blocker)
-    return false;
-
-
-
 
   leaveBlocker(l);
 
   switch (skill) {
     case Skill::Blocker:
-      if (!groundAt(l.x, l.y + l.verticalDir, l.verticalDir)) {
-
-        if (l.state == State::Blocker)
-          stampBlockerField(l);
-        return false;
-      }
       l.state = State::Blocker;
       stampBlockerField(l);
       break;

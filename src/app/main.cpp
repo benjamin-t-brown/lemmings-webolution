@@ -1231,6 +1231,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   // Preserve the original initial input contract. Only an actually discarded
   // loop frame invalidates depth and requires a later click to refresh it.
   bool windowSceneCurrent = true;
+  bool pointerInWindow = true;
   // First-draw sprite latches consume RNG in dispatch order. Until every sprite
   // has latched, retain every full draw (including permanently hidden nodes).
   // Skipping must not defer a latch or change the wall-clock seeding policy.
@@ -1344,7 +1345,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
         focused = true;
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_LEAVE) {
+        pointerInWindow = false;
         runtimeSim.setFastForward(false);
+      } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_ENTER) {
+        pointerInWindow = true;
       } else if (menuDismissedThisFrame) {
         // SOURCE event-batch ownership: a dismissal must not let already-queued
         // menu clicks/keys fall through into gameplay. Still service close/focus.
@@ -1650,10 +1654,20 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           image = toImage(windowRaster.framebuffer());
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
           const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
+          const auto selectedSkill = skillSelection.selectedSkill();
           const auto hover = canHover ?
               hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
-                  pointerX, pointerY, skillSelection.selectedSkill(),
-                  args.level == "MM_CLIMB_002") : std::nullopt;
+                  pointerX, pointerY, selectedSkill, args.level == "MM_CLIMB_002") : std::nullopt;
+          // The picker can resolve a refused click. Only a skill recipient gets the body redraw.
+          if (hover && pointerInWindow && pointerX >= 0 && pointerX < image.width &&
+              pointerY >= 0 && pointerY < image.height && world->canAssign(*hover, selectedSkill)) {
+            // Injected walkers contain the live actors in World order.
+            const auto& lemmings = world->lemmings();
+            const auto walker = std::count_if(lemmings.begin(), lemmings.begin() + *hover,
+                                              [](const sim::Lemming& l) { return l.alive(); });
+            if (scene->drawHoveredWalker(image, walker, displayedCamera, options, *library, windowRaster))
+              view.markedActor = hover;
+          }
           hatches = backdrop ? backdrop->hatchHoverTargets(displayedCamera, windowRaster) :
               std::vector<app::HatchHoverTarget>{};
           for (auto& h : hatches)
@@ -1739,7 +1753,6 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           view.actors = actors;
           view.hoveredActor = hover;
           view.cursorState = cursorState;
-          view.markedActor = cursorState == app::CursorState::Lemming ? hover : std::nullopt;
           view.hoveredHatch = hatchHover ? std::optional<std::size_t>{hatches[*hatchHover].index} : std::nullopt;
           view.hatches = hatches;
         }

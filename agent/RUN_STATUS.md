@@ -9,7 +9,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- rat-hit-sound-002: **ready** — A lemming punched off by a rat plays the original's sound, not Ohno
+- rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
 - rat-fling-spin-random-001: **ready** — Lemmings punched off by rats tumble with a random spin direction and rate
 - flipper-effect-blend-001: **ready** — Gravity flipper effects are drawn with the original's transparency instead of opaque
 - flipper-sound-001: **ready** — Gravity flippers play the original's sound when they flip a lemming
@@ -40,11 +40,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-23adbb10d5504ab29fd5cfe9e6271308/result.json`
-- Status: **cancelled**
-- Duration: 0h 00m 20s
+- Result: `build/agent-runs/loop-aaed4bc34dc643ccaf411fc611c3e79a/result.json`
+- Status: **blocked**
+- Duration: 0h 13m 58s
 - Completed in this invocation: none
-- Reason: Keyboard interrupt
+- Reason: The registered reference resolves the rat-hit cue to SOUNDS\OHNO.WAV on the traced path. Playtest 21 L1 reports a different audible cue, and the retained evidence identifies no replacement. The task correctly stopped at that evidence boundary.
 
 ## Documentation handoff
 

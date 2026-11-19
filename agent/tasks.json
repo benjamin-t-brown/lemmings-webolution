@@ -29292,7 +29292,7 @@
     {
       "id": "rat-hit-sound-002",
       "title": "A lemming punched off by a rat plays the original's sound, not Ohno",
-      "status": "ready",
+      "status": "blocked",
       "depends_on": [
         "explosion-pieces-3d-001"
       ],
@@ -29307,7 +29307,95 @@
         "If no static or data evidence identifies a sample other than Ohno, the task stops blocked with that evidence and the candidates found, instead of choosing a sound.",
         "Otherwise the clone plays the identified sample(s) at those moments in Escape to Victory, shown by a clone sound-event trace under build/; the bomber Ohno and other lemming sounds are unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T233132-41056-afdaed9a",
+      "started": "2026-11-19T23:31:32.512648+00:00",
+      "finished": "2026-11-19T23:42:50.928121+00:00",
+      "last_run": "build/agent-runs/20261119T233132-41056-afdaed9a",
+      "blocker": "The registered reference resolves the rat-hit cue to SOUNDS\\OHNO.WAV on the traced path. Playtest 21 L1 reports a different audible cue, and the retained evidence identifies no replacement. The task correctly stopped at that evidence boundary.",
+      "review": {
+        "decision": "blocked",
+        "reason": "The registered reference resolves the rat-hit cue to SOUNDS\\OHNO.WAV on the traced path. Playtest 21 L1 reports a different audible cue, and the retained evidence identifies no replacement. The task correctly stopped at that evidence boundary.",
+        "checks": [
+          {
+            "criterion": "The report names the sample(s) the original plays when a rat hits a lemming, with the trigger point, the static path that resolves the sample (bank registration, load and play addresses or the data record that names it) and how this reconciles with the 42E349 read of slot 4E32CC.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rat-hit-sound-002.md",
+                "detail": "Names SOUNDS\\OHNO.WAV as the statically resolved cue in Escape to Victory (E11_KF_1, node 28) and distinguishes the traced playback request from audible output."
+              },
+              {
+                "path": "build/rat-hit-sound-002/static/rat-and-flight.json",
+                "detail": "The retained instructions show the rat setting victim flag +5D at 4264F2. The victim reads it at 42E340, reads handle 4E32CC at 42E349, and calls 44535B with that handle and the victim ID at 42E360 before creating the flying figure."
+              },
+              {
+                "path": "build/rat-hit-sound-002/static/bank-registration.json",
+                "detail": "Bytes at 4C0CAC decode to Ohno. At 45E5B8\u201345E5CA, 41D7D0 registers that name in bank 58CB90 and startup stores the returned index at 4C6A08 + 1C8C4 = 4E32CC. The startup acquire at 45EA01 holds the entry until the shutdown release at 45F078."
+              },
+              {
+                "path": "build/rat-hit-sound-002/static/level-load.json",
+                "detail": "The level loader at 445A10 calls 449790. Its instructions preserve an occupied entry with a nonzero cache reference count. The loader skips duplicate names and fills inactive entries, preserving the retained Ohno binding."
+              },
+              {
+                "path": "build/rat-hit-sound-002/static/sample-load-and-play.json",
+                "detail": "4453C3 fetches the sample through 404CC0. On a cache miss, 406A20 dispatches to 499840 and 4741E0, and 497B5D\u2013497B8C formats and opens Sounds\\%s.wav. The hit path calls 497F39 at 445421 to request playback."
+              }
+            ]
+          },
+          {
+            "criterion": "If no static or data evidence identifies a sample other than Ohno, the task stops blocked with that evidence and the candidates found, instead of choosing a sound.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-hit-sound-002/sample-inventory.log",
+                "detail": "The base archive contains SOUNDS\\OHNO.WAV and the patch contains zero WAVs. DEATHROLL occurs in the level sound table at +0x3E43 alongside common entries such as Die, Splat, and FallSplat. The scoped name scan found no length-prefixed MOUSEPRE, THUD, THUNK, BANG, or OING in the level or either rat sprite."
+              },
+              {
+                "path": "build/rat-hit-sound-002/static/crosscheck.md",
+                "detail": "Records the two placed rats, the parsed punch clips, and the traced launch, flight, and expiry paths. Those paths supply no second cue or dispatch linking DEATHROLL to a rat hit."
+              },
+              {
+                "path": "docs/scratch/rat-hit-sound-002.md",
+                "detail": "The report records the evidence blocker and leaves Playtest 21 L1 open without selecting a substitute."
+              }
+            ]
+          },
+          {
+            "criterion": "Otherwise the clone plays the identified sample(s) at those moments in Escape to Victory, shown by a clone sound-event trace under build/; the bomber Ohno and other lemming sounds are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The conditional implementation branch was never reached. World::stepRats still queues Ohno immediately before notifying the forced-death observer."
+              },
+              {
+                "path": "build/rat-attack-sound-001/escape-sound-events.log",
+                "detail": "The prior task's Escape to Victory trace records 25 rat contacts with matching Ohno requests. It documents the existing clone behavior. This pass produced no replacement-cue trace."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T233132-41056-afdaed9a/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the level sweep, and all 84 recovery tests. This log contains no promoted replay run."
+              },
+              {
+                "path": "build/rat-attack-sound-001/replay-results.tsv",
+                "detail": "The prior task recorded 24 promoted replay passes, including Escape to Victory at step 28060 with 43/40 saved. Those results predate the 25th promotion recorded in docs/playtest/2026-11-19-playtest-21.md."
+              },
+              {
+                "path": "docs/scratch/rat-hit-sound-002.md",
+                "detail": "The report ends with a check for the cue at fling and at figure expiry in Escape to Victory. It records that the worker ran no promoted replays and still lists smoke as pending. The supervisor log supplies the completed smoke result."
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "rat-fling-spin-random-001",

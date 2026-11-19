@@ -12,6 +12,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - hover-lemming-highlight-001: **ready** — Hovered lemming is highlighted again alongside the bracket cursor
 - miner-staircase-stop-001: **ready** — A miner that reaches a brick staircase along its diagonal stops instead of mining air
 - builder-end-turn-001: **ready** — A builder that finishes its bricks walks on when the way forward is clear
+- unlock-all-option-001: **ready** — Options toggle: unlock all levels (unbeaten ones shown as available)
 
 ## Recently completed queue entries
 

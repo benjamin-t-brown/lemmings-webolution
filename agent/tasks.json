@@ -26005,6 +26005,26 @@
         "Building on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "unlock-all-option-001",
+      "title": "Options toggle: unlock all levels (unbeaten ones shown as available)",
+      "status": "ready",
+      "depends_on": [
+        "opengl-plan-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User request (2026-11-18, after the playtest 17 browser check): add an 'Unlock all levels' option to the Options menu, so every level can be entered while levels not yet beaten stay marked as available (yellow) until won, exactly like the user's current desktop setup. This is a clone convenience, not original behavior; label it so in code and the report. Today the same display exists only as an environment variable: MapScene (src/app/MapScene.cpp, the state array built from save flags) fills every node with state 3 when WEBOLUTION_UNLOCK_ALL=1, which scripts/Play-Clone.ps1 sets; completion flags for won levels then override to state 2 and their links. The browser build cannot set it. Add a persisted boolean beside the existing clone settings (src/save/SoundSettings, the file beside SavedGame.dat that options-menu-001 introduced, IDBFS-backed in the web build), defaulting to off, loaded and saved through the same injectable store with the existing write-failure policy (keep the prior good file; never reset or silently import). Add a toggle row to the Options menu (SoundMenu / FrontendSession) in the menus where Options is offered, using the existing menu rendering, hover, keyboard and click handling, with accept/cancel behaving like the sound settings. The map uses the setting (environment variable OR option) when it is built and refreshes when the option changes, without writing any completion flag to SavedGame.dat: turning it off again shows the save's real progress. Keep WEBOLUTION_UNLOCK_ALL working for Play-Clone.ps1. Native and web builds both get the option; old settings files without the field still load. Difficulty: routine. Recommended model: Sonnet. Reason: one persisted flag through existing settings, menu and map paths. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts (and a browser reload) through the clone settings file, defaults to off, and older settings files still load.",
+        "With it on, every map node can be entered and unbeaten levels show as available (yellow) while won levels keep their completed marking; with it off the map shows the save's real progress.",
+        "SavedGame.dat completion data is never changed by the option; WEBOLUTION_UNLOCK_ALL still works; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

@@ -27516,7 +27516,7 @@
     {
       "id": "escape-seams-001",
       "title": "Tube seams in Escape to Victory (and those left in Now You're Stalking) are closed",
-      "status": "needs_review",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -27788,12 +27788,140 @@
           "blocker": "Both Escape to Victory seams are gone in the retained desktop and Emscripten framebuffers. The required interactive browser check awaits the user's playtest. The Chrome attempt timed out before loading the game. The residual Now You're Stalking seam is tracked separately as J1b."
         }
       ],
-      "lead_note": " 2026-11-19: the first review passed the Escape to Victory fix, the unchanged simulation/picking/occlusion and smoke, and blocked only because the residual Now You're Stalking seam had no location and could not be reproduced. The lead moved that residual to playtest 19 J1b in the ledger, awaiting the user's surface and camera angle; criteria 1 and 2 now cover Escape to Victory plus no regression on Stalking. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criteria 1-2: The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label. || The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression. 2026-11-19 (second): the review blocked only on the interactive browser check that the lead's own criterion 2 wording named. Human checks belong to the playtest (AGENTS.md Verification), so criterion 2 now names only clone framebuffers. The work is unchanged. Returned to needs_review. Previous criterion 2: The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone on desktop and in the browser build (browser framebuffers, interactive browser check at the user's playtest); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression."
+      "lead_note": " 2026-11-19: the first review passed the Escape to Victory fix, the unchanged simulation/picking/occlusion and smoke, and blocked only because the residual Now You're Stalking seam had no location and could not be reproduced. The lead moved that residual to playtest 19 J1b in the ledger, awaiting the user's surface and camera angle; criteria 1 and 2 now cover Escape to Victory plus no regression on Stalking. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criteria 1-2: The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label. || The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression. 2026-11-19 (second): the review blocked only on the interactive browser check that the lead's own criterion 2 wording named. Human checks belong to the playtest (AGENTS.md Verification), so criterion 2 now names only clone framebuffers. The work is unchanged. Returned to needs_review. Previous criterion 2: The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone on desktop and in the browser build (browser framebuffers, interactive browser check at the user's playtest); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression.",
+      "review": {
+        "decision": "accept",
+        "reason": "The retained desktop and Node-rendered Emscripten framebuffers show both reported Escape to Victory seams are gone. The sampled rotation, Stalking comparisons, and level spot checks show no rendering regression. All 23 promoted replays reproduced on both builds, and supervisor smoke passed. Playtest 19 J1b tracks the unlocated Stalking seam separately.",
+        "checks": [
+          {
+            "criterion": "The report shows each Escape to Victory seam (clone framebuffer images with camera positions under build/), classifies it by cause and names the production path changed, with static evidence or a provisional label. For Now You're Stalking it records the views checked; a residual seam there without a reported location is out of scope and tracked in the playtest ledger.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/escape-seams-001/E11-spawn-detail.png",
+                "detail": "The paired crops show the vertical hairline in the bark behind the hatch before the change and continuous bark afterward."
+              },
+              {
+                "path": "build/escape-seams-001/E11-band-detail.png",
+                "detail": "The paired crops show the horizontal bleed line crossing wood and steel before the change and its removal afterward. The riveted panel borders remain visible."
+              },
+              {
+                "path": "build/escape-seams-001/after-desktop-frames/E11_KF_1-settled.json",
+                "detail": "Records the 640\u00d7480 camera for both close-ups, with a yaw offset of 191/256 turns and eye distance 377.516."
+              },
+              {
+                "path": "build/escape-seams-001/route-pixels.log",
+                "detail": "The spawn line samples across opposite edges of an inner-shell tile at column 64. The horizontal line samples rows 127 and 0 of the outer-shell tiles along row 32. Clamping removes those opposite-edge taps at the same depth."
+              },
+              {
+                "path": "build/escape-seams-001/rea-open.json",
+                "detail": "Identifies the registered x86 reference executable by SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f."
+              },
+              {
+                "path": "build/escape-seams-001/rea-walker-instructions.json",
+                "detail": "The instructions agree with the retained pseudocode. The terrain walker calls 0x470FAF with 1 at 0x43A6BB before its four terrain draws and with 0 at 0x43A908 afterward."
+              },
+              {
+                "path": "build/escape-seams-001/rea-address-instructions.json",
+                "detail": "The setter selects clamp value 3 for a nonzero argument and wrap value 1 for zero at 0x470FB8\u20130x470FD8, then passes the value for stage 0 address state 0x0C."
+              },
+              {
+                "path": "docs/scratch/escape-seams-001.md",
+                "detail": "Traces tile selection in TubeScene::build through TubeScene::render and drawRouteQuad to Raster::triangle. It labels the asset-family scope provisional and records Stalking's entry, settled, 16 yaw, and four tilted views."
+              },
+              {
+                "path": "docs/playtest/2026-11-19-playtest-19.md",
+                "detail": "J1 identifies the two Escape to Victory seams. J1b tracks the residual Now You're Stalking seam pending a reported location."
+              }
+            ]
+          },
+          {
+            "criterion": "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone in clone framebuffers from the desktop build and the Emscripten build (rendered headless or under Node; no live browser run is required); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/escape-seams-001/after-wasm-frames/E11_KF_1-settled.log",
+                "detail": "Records Node running the Emscripten artifact and writing the 640\u00d7480 framebuffer at the matched hatch camera."
+              },
+              {
+                "path": "build/escape-seams-001/after-wasm-frames/E11_KF_1-settled.png",
+                "detail": "The bark behind the hatch and the wood and steel below it are continuous at the reported seam locations."
+              },
+              {
+                "path": "build/escape-seams-001/after-desktop-E11_KF_1-rotation-tube.png",
+                "detail": "Sixteen desktop poses at 22.5-degree intervals span a full turn and show no new gaps at the sampled joins."
+              },
+              {
+                "path": "build/escape-seams-001/after-wasm-E11_KF_1-rotation-tube.png",
+                "detail": "The corresponding Emscripten rotation shows continuous surfaces at the same sampled joins."
+              },
+              {
+                "path": "build/escape-seams-001/E22-arrow-detail.png",
+                "detail": "The paired Stalking crops preserve the previously corrected arrow faces and rail."
+              },
+              {
+                "path": "build/escape-seams-001/frame-metrics.tsv",
+                "detail": "Escape's entry and settled frames match across builds. All 44 Stalking desktop views match before and after, and 42 match Emscripten pixel for pixel. The two cross-platform differences occur at yaw 96/256. The MM_CLIMB_002 spot check matches across builds."
+              },
+              {
+                "path": "build/escape-seams-001/check-summary.log",
+                "detail": "The difference bounds for MM_DIG_000 and E19_KF_2 fall at flame sprites in the retained frames. The spot-checked tube surfaces show no regression."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-ce3a9e7fc7de497c9dc2a9e5130491a1/0001-review-ab17ec/before-diff.txt",
+                "detail": "The sole production change adds the E11_KF_1 tile family to the existing clamp selection. The diff contains no changes to simulation, picking, or actor occlusion code."
+              },
+              {
+                "path": "src/app/Raster.cpp",
+                "detail": "The sampler address mode affects RGB taps after coverage, depth, and actor visibility checks. Both modes use the same depth write and actor ownership submission."
+              },
+              {
+                "path": "build/escape-seams-001/check-summary.log",
+                "detail": "All 44 paired tube depth buffers are byte-identical, confirming that the sampled depth used for actor occlusion was preserved."
+              },
+              {
+                "path": "build/escape-seams-001/after-desktop-replays/results.tsv",
+                "detail": "The results cover all 23 active promoted recordings. Every recording returns exit 0 with PASS, won=1, and completed=1. Stalking completes at step 24402 with 49/49 saved."
+              },
+              {
+                "path": "build/escape-seams-001/after-wasm-replays/results.tsv",
+                "detail": "The same 23 recordings pass under Node with matching completion steps and saved counts."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-ce3a9e7fc7de497c9dc2a9e5130491a1/0001-verify-790e8d/verification.log",
+                "detail": "The supervisor ran the smoke profile and recorded 95 of 95 main tests passing, including the level sweep and actor composition checks, plus 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/escape-seams-001.md",
+                "detail": "The final note names both level nodes, where to turn the camera, and the expected appearance of the bark, wood, steel, arrow faces, and rail."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T16:50:54.905108+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-ce3a9e7fc7de497c9dc2a9e5130491a1/0001-verify-790e8d/verification.log",
+        "verified_content": "c3758cef05b6f4afb36750f301dc13765890af8b6b8bdf645818996f73ae25eb"
+      }
     },
     {
       "id": "rat-motion-smoothing-001",
       "title": "Evil rats move smoothly like lemmings instead of jittering",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -27808,12 +27936,183 @@
         "In Escape to Victory the rats move smoothly at normal speed and in fast-forward, snap correctly on turns or teleport-like jumps, and stay still when paused; lemming motion is unchanged.",
         "Rat simulation, attacks, counts and picking are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T170144-57312-8306213f",
+      "started": "2026-11-19T17:01:45.102695+00:00",
+      "finished": "2026-11-19T17:12:08.370334+00:00",
+      "last_run": "build/agent-runs/20261119T170144-57312-8306213f",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The source trace supports the rat smoothing change, and the supervisor smoke profile passed. The remaining acceptance gap is visible motion in Escape to Victory. Record the clone playtest observations at normal speed, in fast-forward, through a turn, and while paused, with lemming motion checked in the same session.",
+        "checks": [
+          {
+            "criterion": "The report names the jitter's cause in the rat draw path and how the rats now reuse the lemmings' smoothing, citing static evidence or labelling choices provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rat-motion-smoothing-001.md",
+                "detail": "Identifies Playtest 19 J5 on node 28 and traces the jitter to integer rat feet passed directly to the draw path. It explains the shared position buffer, the retained rat lane, and the provisional interpolation and punch positioning."
+              },
+              {
+                "path": "build/rat-motion-smoothing-001/static/rea.json",
+                "detail": "Identifies the reference by SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. Ghidra instructions show the rat constructor calling the common constructor at 0x44863A, which sets the lane flag at 0x42DDD5. The shared walk calls 0x42F977 at 0x41BF53. The instructions agree with the pseudocode's facing-dependent approach and crossing clamp."
+              }
+            ]
+          },
+          {
+            "criterion": "In Escape to Victory the rats move smoothly at normal speed and in fast-forward, snap correctly on turns or teleport-like jumps, and stay still when paused; lemming motion is unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "Both populations use the shared X/Y sampler and discontinuity guard. The rat entries retain their own lane and pin to confirmed contact during a punch. The lemming interpolation, lane arithmetic, and exit-tail behavior are equivalent to the pre-task code."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "The elapsed-time path invokes the observation callback after each update segment in every fast-forward pass and returns before advancing the world when paused. This supports the expected behavior at source level."
+              },
+              {
+                "path": "build/level-sweep-001/chunk-004/node-028/result.txt",
+                "detail": "The installed route rendered successfully in the smoke sweep using one simulated second per rendered frame. That cadence does not establish visible smoothness, turn snapping, or pause behavior."
+              },
+              {
+                "path": "docs/scratch/rat-motion-smoothing-001.md",
+                "detail": "The report explicitly leaves visible motion confirmation to the human playtest. It contains no observations from the updated clone for those cases."
+              }
+            ]
+          },
+          {
+            "criterion": "Rat simulation, attacks, counts and picking are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-motion-smoothing-001/task-only.diff",
+                "detail": "The production edits are confined to the presentation tracker and rat sprite coordinates. The tracker reads the world through const references, and rat entries still follow the live rescue prefix used by picking."
+              },
+              {
+                "path": "src/app/Replay.hpp",
+                "detail": "Headless replay advances World and checks recorded actor indices, assignment outcomes, counts, and completion without invoking the changed presentation path."
+              },
+              {
+                "path": "build/rat-motion-smoothing-001/replay-selection.json",
+                "detail": "Lists all 23 promoted recordings and finds zero on the 17 installed rat levels. The task's affected-route replay rule required no new runs."
+              },
+              {
+                "path": "build/escape-seams-001/after-desktop-replays/results.tsv",
+                "detail": "The retained incoming desktop run recorded PASS, won=1, and completed=1 for all 23 promoted recordings."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T165054-57312-475d4659/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including the 102-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/rat-motion-smoothing-001.md",
+                "detail": "The final note identifies Escape to Victory, node 28, and gives the actions and expected results for normal speed, fast-forward, turning, pause, and lemming motion."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The source trace supports the rat smoothing change, and the supervisor smoke profile passed. The remaining acceptance gap is visible motion in Escape to Victory. Record the clone playtest observations at normal speed, in fast-forward, through a turn, and while paused, with lemming motion checked in the same session.",
+      "review": {
+        "decision": "accept",
+        "reason": "The retained Escape to Victory frames resolve the previous review gap at a fixed 60 Hz frame cadence. Both rats move between confirmed cells at normal speed and in fast-forward, a rat snaps cleanly on reversal, and both hold still during pause. The source diff preserves lemming motion and gameplay behavior, and the current supervisor smoke run passed. Teleport-like jumps were checked in source, and desktop wall-clock presentation remains for the user's playtest.",
+        "checks": [
+          {
+            "criterion": "The report names the jitter's cause in the rat draw path and how the rats now reuse the lemmings' smoothing, citing static evidence or labelling choices provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rat-motion-smoothing-001.md",
+                "detail": "Identifies Playtest 19 J5 on Escape to Victory, node 28, and traces the jitter to integer rat feet passed directly to the renderer. It explains the shared X/Y buffer, the retained rat lane, and the provisional interpolation and punch positioning."
+              },
+              {
+                "path": "build/rat-motion-smoothing-001/static/rea.json",
+                "detail": "Identifies the registered reference by SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. The retained instructions show the rat constructor calling the common constructor at 0x44863A, the constructor setting the lane flag at 0x42DDD5, and the shared walker calling 0x42F977 at 0x41BF53. The lane helper's facing branch, add and subtract operations, and crossing clamps agree with the retained pseudocode."
+              }
+            ]
+          },
+          {
+            "criterion": "In Escape to Victory the rats move smoothly at normal speed and in fast-forward, snap correctly on turns or teleport-like jumps, and stay still when paused; lemming motion is unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-motion-smoothing-001/escape-turn-view/run.log",
+                "detail": "Records a successful 480-frame native clone run on the installed E11_KF_1 route with a fixed 1/60-second frame input."
+              },
+              {
+                "path": "build/rat-motion-smoothing-001/escape-turn-view/rat-pixels.tsv",
+                "detail": "Both glove markers advance while their confirmed X cells hold across normal-speed frames 174\u2013181 and during the fast-forward hold. The second rat switches from right to left between frames 399 and 400."
+              },
+              {
+                "path": "build/rat-motion-smoothing-001/escape-turn-view/turn-detail.png",
+                "detail": "Consecutive rendered frames show the rat reverse on the lower walkway and emerge from brief wall occlusion heading left."
+              },
+              {
+                "path": "build/rat-motion-smoothing-001/escape-turn-view/frame-summary.txt",
+                "detail": "The level clock holds at 5,216 ms during frames 313\u2013342 and the crop containing both rats stays pixel-identical. The first lemming holds its drawn pose and animation frame, then resumes fractional movement before its confirmed cell changes."
+              },
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "A facing change, teleport entry or arrival, or a displacement beyond the guard clears the shared position history and seeds it with the current confirmed position. The rescue lemming lane arithmetic, position sampling, and exit-tail calculation are equivalent to the earlier code."
+              }
+            ]
+          },
+          {
+            "criterion": "Rat simulation, attacks, counts and picking are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-motion-smoothing-001/task-only.diff",
+                "detail": "The scoped change reads the world through const references and changes rat sprite coordinates. It preserves punch clip selection and keeps rat draw entries after the live rescue prefix used for picking."
+              },
+              {
+                "path": "src/app/Replay.hpp",
+                "detail": "Headless replay advances the world and checks recorded actor indices, assignment outcomes, counts, and completion independently of the changed presentation path."
+              },
+              {
+                "path": "build/rat-motion-smoothing-001/replay-selection.json",
+                "detail": "None of the 23 promoted recordings uses any of the 17 installed rat levels, so the affected-route replay rule called for zero fresh runs."
+              },
+              {
+                "path": "build/escape-seams-001/after-desktop-replays/results.tsv",
+                "detail": "The retained incoming desktop run records PASS, won=1, and completed=1 for all 23 promoted recordings."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T170144-57312-8306213f/verification.log",
+                "detail": "The current supervisor run passed all 95 main smoke tests, including the 102-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/rat-motion-smoothing-001.md",
+                "detail": "The report ends with a desktop check for Escape to Victory, node 28, covering normal speed, fast-forward, turns, pause and resume, and lemming motion."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T17:14:02.268307+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T170144-57312-8306213f\\verification.log",
+        "verified_content": "12f954d19239b4ffa4b504386f72be4af3bc7b2407707f49aaa7e2e4c6e88891"
+      }
     },
     {
       "id": "rat-drown-001",
       "title": "Evil rats that reach water drown and are removed instead of staying forever",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -27828,12 +28127,108 @@
         "In Escape to Victory a rat that reaches water plays its drown animation and is then removed; acid or other fluids behave consistently; lemming drowning, rescue counts and rat attacks are unchanged.",
         "Rat deaths never change saved, dead or released totals; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T171402-57312-3c72d1e4",
+      "started": "2026-11-19T17:14:02.698576+00:00",
+      "finished": "2026-11-19T17:32:05.297179+00:00",
+      "last_run": "build/agent-runs/20261119T171402-57312-3c72d1e4",
+      "review": {
+        "decision": "accept",
+        "reason": "The fix prevents a punch from interrupting an active rat drown. Both rats finished drowning in the installed Escape to Victory trace, and supervisor smoke passed. The trace establishes one interruption and reset in the prior clone. The original pool timing and the visible result in the next human playtest remain unverified.",
+        "checks": [
+          {
+            "criterion": "The report names where the rat drown path stopped, with the clone trace, and cites the original's static evidence for a rat entering water (or labels a choice provisional).",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rat-drown-001.md",
+                "detail": "Names Playtest 19 J8 on Escape to Victory, node 28 / E11_KF_1. Identifies the attack branch in World::stepRats as the interruption and labels the clone's explicit Drown attack guard provisional."
+              },
+              {
+                "path": "build/rat-drown-001/clone-entry-E11_KF_1-1795105239624473600-1.log",
+                "detail": "The installed level has zero terrain 0x40 cells. Rat 1 entered live water at 60,391 ms, reached 1,000 ms on its drown timer, then claimed lemming 8 and drew punch1 at step 20,083. Punch completion restored Walker at step 20,200, and water contact restarted Drown at zero on the next step."
+              },
+              {
+                "path": "build/rat-drown-001/static/crosscheck.md",
+                "detail": "Identifies the registered x86 reference by SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. The shared walker associates a fluid receiver at 0x41CA0A/0x41CA7E. The species checks at 0x41C321\u20130x41C36F send sheet 3 to fluid-death state 0x23, whose entry at 0x404261 starts drown. The return at 0x40492C leads through the common updater to list removal at 0x442CAE. The separate terrain 0x40 monitor at 0x415386 and its 0x4B0570 vtable are traced separately."
+              }
+            ]
+          },
+          {
+            "criterion": "In Escape to Victory a rat that reaches water plays its drown animation and is then removed; acid or other fluids behave consistently; lemming drowning, rescue counts and rat attacks are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Both World::tick and updateSegment reach stepRats. The added Drown guard skips the attack scan so the shared stepper advances the death timer. The attack scan still runs for other eligible states, and finishRatAttack still resolves a claimed lemming."
+              },
+              {
+                "path": "build/rat-drown-001/clone-final-E11_KF_1-1795105239624473600-1.log",
+                "detail": "The probe loaded the installed 12-entry EvilRatHi drown clip. In the no-input continuation from first water contact, both rats submitted the drown clip with advancing animation time, reached Dead at 62,204 and 65,403 ms respectively, and disappeared from the draw list."
+              },
+              {
+                "path": "build/rat-drown-001/fluid-checks.log",
+                "detail": "Terrain 0x40, live water, lava and acid each produced a rat drown clip followed by removal. A nearby lemming survived each rat drown. In separate runs, an ordinary lemming drown counted one death for each hazard, and a dry rat attack counted one lemming death before the rat resumed walking."
+              }
+            ]
+          },
+          {
+            "criterion": "Rat deaths never change saved, dead or released totals; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "stepDrown sets the actor to Dead and increments the death total only for sheets other than 3. Release accounting is in the hatch spawn path, and exit eligibility excludes rats."
+              },
+              {
+                "path": "build/rat-drown-001/clone-final-E11_KF_1-1795105239624473600-1.log",
+                "detail": "Released, saved and dead totals stayed at 14/0/4 across rat 1's removal and 14/0/5 across rat 0's removal. The lemming death between the two removals was recorded separately."
+              },
+              {
+                "path": "build/rat-drown-001/promoted-selection.json",
+                "detail": "The 23 entries match the current promoted replay files. None uses any of the 17 installed levels with rats, so none can execute the changed per-rat branch."
+              },
+              {
+                "path": "build/escape-seams-001/after-desktop-replays/results.tsv",
+                "detail": "The retained desktop baseline covers that same set of 23 recordings. Every entry exited zero with PASS, won=1 and completed=1. This check uses the retained passes and the task's replay applicability rule."
+              },
+              {
+                "path": "build/rat-drown-001/final-replays.json",
+                "detail": "Four unpromoted Escape attempts passed. The fifth diverged at step 20,200 with four lemming deaths instead of five because the drowning rat no longer finished the punch."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T171402-57312-3c72d1e4/verification.log",
+                "detail": "Supervisor verification passed 95 of 95 main smoke tests, including the 102-level sweep, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261119T171402-57312-3c72d1e4/result.json",
+                "detail": "Records verification exit code 0 and the verified-content identifier supplied for this review."
+              },
+              {
+                "path": "docs/scratch/rat-drown-001.md",
+                "detail": "Ends with a two-line handoff and a what-to-check note for Escape to Victory, node 28. Assign a Miner around X=167 to open a drop toward X=170 and watch for a rat to finish its drown animation and disappear with a lemming nearby."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T17:35:01.062846+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T171402-57312-3c72d1e4\\verification.log",
+        "verified_content": "9ea60802b99374ee921d2323d15117964c11148013bc85999bce987dc15a3ee6"
+      }
     },
     {
       "id": "lane-spawn-blocker-001",
       "title": "Lemmings spawn in the centre lane and lerp out; blockers stand in the centre",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -27845,10 +28240,173 @@
       "scope": "Playtest 19 J3 and J7, user-stated rules. Lemmings are drawn at a lane depth across the walkway: LemmingMotionTracker (src/app/LemmingMotion.cpp, walkingLane, READ 0x42F93C / 0x42F977) puts left-facing walkers at 0.25 and right-facing at 0.75 and approaches the target gradually. Today a new lemming starts at 0.75 (the !e.valid branch) and non-walker states keep their last lane. J3: a lemming leaving the hatch should appear in the centre (0.5) and then lerp to its side lane according to its movement direction, using the existing approach rate. J7: a blocker should always stand in the centre (0.5) regardless of the direction it was walking when it started blocking; it should move there smoothly with the same approach, and if released (e.g. its ground removed) return to its walking lane the same way. Check static evidence for the original's initial lane and the blocker's lane (0x42F93C/0x42F977 and the blocker state) and cite it; where the evidence differs from the user's rule, implement the user's rule and record the difference. Keep the exit-jump lane logic (dz toward 1.5) unchanged. Presentation only. Difficulty: routine. Recommended model: Sonnet. Reason: two small rules in one existing tracker. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
         "The report cites the static evidence for the initial and blocker lanes and states where the user's rule differs, if it does.",
-        "A lemming leaving the hatch is first drawn at the centre lane and moves smoothly to the lane for its direction; a blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged.",
+        "A lemming leaving a hatch that is in view is first drawn at the centre lane (including its first frame in fast-forward) and moves smoothly to the lane for its direction; a lemming released while off camera may already be off centre when it first appears, as in the original, where the lane (actor+0x18) advances every update regardless of drawing. A blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged.",
         "Simulation, picking and occlusion rules are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T175916-57312-b2794182",
+      "started": "2026-11-19T17:59:17.053790+00:00",
+      "finished": "2026-11-19T18:07:03.612532+00:00",
+      "last_run": "build/agent-runs/20261119T175916-57312-b2794182",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The revision keeps an on-camera hatchling centred through its first fast-forward frame, but presenting any frame clears the latch for every hatchling. If the camera culls a hatchling at release, it can reach its side lane before it is first drawn. Clear the latch per actor when the presented frame draws that actor, using the existing visibility and occlusion rules. All 23 promoted replays reproduced and supervisor smoke passed.",
+        "checks": [
+          {
+            "criterion": "The report cites the static evidence for the initial and blocker lanes and states where the user's rule differs, if it does.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lane-spawn-blocker-001/first-render/rea-static.json",
+                "detail": "For the registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the instructions at 0x42DE6F\u20130x42DE89 pass binary64 0.5 as the third coordinate, consistent with constructor pseudocode and the coordinate copy at 0x4230F9. The blocker call at 0x40E053 reaches 0x42EDCD, whose instructions and pseudocode move actor+0x18 toward 0.5 by 0.1 times the update argument and clamp from either side."
+              },
+              {
+                "path": "docs/scratch/lane-spawn-blocker-001.md",
+                "detail": "The report cites the hatch constructor, walking approach and blocker update. It records that the midpoint targets agree with the requested rule and identifies the first presented sample, shared level-time rate and fixed falling depth as provisional clone choices."
+              }
+            ]
+          },
+          {
+            "criterion": "A lemming leaving the hatch is first drawn at the centre lane and moves smoothly to the lane for its direction; a blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "The pending latch returns 0.5 across repeated observations, but frameDrawn at line 95 clears it for every pending entry without receiving draw results. Walking then advances toward 0.25 or 0.75 and can settle after 250 level ms. Blockers clamp toward 0.5 from either direction, other live states hold their tracked depth, and the exit jump retains its 1.5 target."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The app samples actors after all fast-forward passes. At lines 1808\u20131825, the completed window frame is presented and frameDrawn is called even if a particular hatchling was culled."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "prepareInjectedWalker rejects actors outside the camera's angular bounds at lines 530\u2013532. On Just Climb (MM_CLIMB_002), turning away from the hatch across release and returning after the hatchling has walked for 250 level ms exposes the gap by source tracing. Frames presented while the hatchling is culled consume its centre sample before the renderer draws it."
+              },
+              {
+                "path": "src/__test__/test_walker_lane.cpp",
+                "detail": "The legacy fixture checks a centred sample after seven fast-forward passes and a 0.02 step on the next 20 ms update. It calls frameDrawn directly, so it does not cover a presented frame that culled the hatchling. The retained build log records compilation of the fixture."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation, picking and occlusion rules are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The lane task's World change sets releasedFromHatch during spawn. Its consumers are in the presentation tracker. The separate rat simulation edit was already present before this revision."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The existing live-actor adapter feeds the tracker's plus8Z through the shared pose, picking and occlusion path. The lane revision changes the depth supplied to those rules."
+              },
+              {
+                "path": "build/lane-spawn-blocker-001/first-render/replays/results.tsv",
+                "detail": "The 23 rows match the 23 active promoted .replay paths exactly. Every recording returned exit code 0 with PASS, won=1 and completed=1, including Now you're stalking, Just Block and Block and Bomb."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T175916-57312-b2794182/verification.log",
+                "detail": "The current revision's supervisor run passed all 95 main smoke tests, including the installed-level sweep and its report, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/lane-spawn-blocker-001.md",
+                "detail": "The report ends with a two-line handoff and playtest actions and expected results for fast-forward hatch release in Now you're stalking, blocking from both directions in Just Block, and blocker support loss in Block and Bomb."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The revision keeps an on-camera hatchling centred through its first fast-forward frame, but presenting any frame clears the latch for every hatchling. If the camera culls a hatchling at release, it can reach its side lane before it is first drawn. Clear the latch per actor when the presented frame draws that actor, using the existing visibility and occlusion rules. All 23 promoted replays reproduced and supervisor smoke passed.",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261119T175916-57312-b2794182",
+          "review": null,
+          "review_feedback": {
+            "decision": "revise",
+            "reason": "The revision keeps an on-camera hatchling centred through its first fast-forward frame, but presenting any frame clears the latch for every hatchling. If the camera culls a hatchling at release, it can reach its side lane before it is first drawn. Clear the latch per actor when the presented frame draws that actor, using the existing visibility and occlusion rules. All 23 promoted replays reproduced and supervisor smoke passed.",
+            "checks": [
+              {
+                "criterion": "The report cites the static evidence for the initial and blocker lanes and states where the user's rule differs, if it does.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/lane-spawn-blocker-001/first-render/rea-static.json",
+                    "detail": "For the registered reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the instructions at 0x42DE6F\u20130x42DE89 pass binary64 0.5 as the third coordinate, consistent with constructor pseudocode and the coordinate copy at 0x4230F9. The blocker call at 0x40E053 reaches 0x42EDCD, whose instructions and pseudocode move actor+0x18 toward 0.5 by 0.1 times the update argument and clamp from either side."
+                  },
+                  {
+                    "path": "docs/scratch/lane-spawn-blocker-001.md",
+                    "detail": "The report cites the hatch constructor, walking approach and blocker update. It records that the midpoint targets agree with the requested rule and identifies the first presented sample, shared level-time rate and fixed falling depth as provisional clone choices."
+                  }
+                ]
+              },
+              {
+                "criterion": "A lemming leaving the hatch is first drawn at the centre lane and moves smoothly to the lane for its direction; a blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "src/app/LemmingMotion.cpp",
+                    "detail": "The pending latch returns 0.5 across repeated observations, but frameDrawn at line 95 clears it for every pending entry without receiving draw results. Walking then advances toward 0.25 or 0.75 and can settle after 250 level ms. Blockers clamp toward 0.5 from either direction, other live states hold their tracked depth, and the exit jump retains its 1.5 target."
+                  },
+                  {
+                    "path": "src/app/main.cpp",
+                    "detail": "The app samples actors after all fast-forward passes. At lines 1808\u20131825, the completed window frame is presented and frameDrawn is called even if a particular hatchling was culled."
+                  },
+                  {
+                    "path": "src/app/TubeScene.cpp",
+                    "detail": "prepareInjectedWalker rejects actors outside the camera's angular bounds at lines 530\u2013532. On Just Climb (MM_CLIMB_002), turning away from the hatch across release and returning after the hatchling has walked for 250 level ms exposes the gap by source tracing. Frames presented while the hatchling is culled consume its centre sample before the renderer draws it."
+                  },
+                  {
+                    "path": "src/__test__/test_walker_lane.cpp",
+                    "detail": "The legacy fixture checks a centred sample after seven fast-forward passes and a 0.02 step on the next 20 ms update. It calls frameDrawn directly, so it does not cover a presented frame that culled the hatchling. The retained build log records compilation of the fixture."
+                  }
+                ]
+              },
+              {
+                "criterion": "Simulation, picking and occlusion rules are unchanged; all promoted playtest replays still reproduce.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "src/sim/World.cpp",
+                    "detail": "The lane task's World change sets releasedFromHatch during spawn. Its consumers are in the presentation tracker. The separate rat simulation edit was already present before this revision."
+                  },
+                  {
+                    "path": "src/app/TubeScene.cpp",
+                    "detail": "The existing live-actor adapter feeds the tracker's plus8Z through the shared pose, picking and occlusion path. The lane revision changes the depth supplied to those rules."
+                  },
+                  {
+                    "path": "build/lane-spawn-blocker-001/first-render/replays/results.tsv",
+                    "detail": "The 23 rows match the 23 active promoted .replay paths exactly. Every recording returned exit code 0 with PASS, won=1 and completed=1, including Now you're stalking, Just Block and Block and Bomb."
+                  }
+                ]
+              },
+              {
+                "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261119T175916-57312-b2794182/verification.log",
+                    "detail": "The current revision's supervisor run passed all 95 main smoke tests, including the installed-level sweep and its report, and all 84 recovery tests."
+                  },
+                  {
+                    "path": "docs/scratch/lane-spawn-blocker-001.md",
+                    "detail": "The report ends with a two-line handoff and playtest actions and expected results for fast-forward hatch release in Now you're stalking, blocking from both directions in Just Block, and blocker support loss in Block and Bomb."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "Attempt limit: The revision keeps an on-camera hatchling centred through its first fast-forward frame, but presenting any frame clears the latch for every hatchling. If the camera culls a hatchling at release, it can reach its side lane before it is first drawn. Clear the latch per actor when the presented frame draws that actor, using the existing visibility and occlusion rules. All 23 promoted replays reproduced and supervisor smoke passed."
+        }
+      ],
+      "lead_note": " 2026-11-19: blocked at the attempt limit. Each review passed the evidence, blocker rule, replays and smoke and asked for one more first-frame edge case; the last was a hatchling culled at release. The original keeps the lane in actor state (+0x18) updated every update, so an off-camera hatchling is off centre when first seen there too. Criterion 2 now covers a hatch in view, which is the user's request; the work is unchanged. Returned to needs_review. Previous criterion 2: A lemming leaving the hatch is first drawn at the centre lane and moves smoothly to the lane for its direction; a blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged. Lead also set loop_attempts 3 -> 2 so one further revision cannot halt the loop before digger-lane-facing-001 and balloon-gyrate-001; the three attempts are recorded in prior_reviews and run logs."
     },
     {
       "id": "digger-lane-facing-001",

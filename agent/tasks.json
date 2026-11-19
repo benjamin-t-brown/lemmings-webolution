@@ -27689,6 +27689,26 @@
       ]
     },
     {
+      "id": "rat-drown-001",
+      "title": "Evil rats that reach water drown and are removed instead of staying forever",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 19 J8: in Escape to Victory (E11_KF_1, node 28) the evil rats do not drown in water; they stay there forever. evil-rats-001 (docs/scratch/evil-rats-001.md) says rats reuse walking, falling, fluids and the installed drown clip, with rat deaths suppressing rescue-loss counts, but a rat in water never finishes. Reproduce it from the clone (a short source-built probe or trace on the installed level, private save; the user's recordings are build/playtest/replays/E11_KF_1-*.replay) and find where the rat path stops: water cell (Terrain bit 0x40) not detected for the rat population, Drown not entered, the Drown timer (Rules::drownMs) not advanced for rats, or completion not removing a rat because the removal only handles rescue actors. Establish from static evidence what the original does with a rat in water (drown vtable 0x004B0570 via 0x00415386/0x004154D8, shared or rat-specific death path, sound, whether it is removed from the actor list) and fix the production World path so a rat in water drowns with its drown animation and is removed, without counting toward saved, dead or released totals. Check acid and other fluids the same way. Difficulty: routine. Recommended model: Sonnet. Reason: an existing death path not completing for a second population; the relevant addresses are retained. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names where the rat drown path stopped, with the clone trace, and cites the original's static evidence for a rat entering water (or labels a choice provisional).",
+        "In Escape to Victory a rat that reaches water plays its drown animation and is then removed; acid or other fluids behave consistently; lemming drowning, rescue counts and rat attacks are unchanged.",
+        "Rat deaths never change saved, dead or released totals; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "lane-spawn-blocker-001",
       "title": "Lemmings spawn in the centre lane and lerp out; blockers stand in the centre",
       "status": "ready",

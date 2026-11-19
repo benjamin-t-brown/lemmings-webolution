@@ -11,6 +11,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - escape-seams-001: **needs_review** — Tube seams in Escape to Victory (and those left in Now You're Stalking) are closed
 - rat-motion-smoothing-001: **ready** — Evil rats move smoothly like lemmings instead of jittering
+- rat-drown-001: **ready** — Evil rats that reach water drown and are removed instead of staying forever
 - lane-spawn-blocker-001: **ready** — Lemmings spawn in the centre lane and lerp out; blockers stand in the centre
 - digger-lane-facing-001: **ready** — Diggers face outward on the outer lane and toward the cylinder on the inner lane
 - balloon-gyrate-001: **ready** — The departing exit balloon's basket circles slightly as it flies away
@@ -39,11 +40,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-bb510f07d9504cfe938593558fe170f5/result.json`
-- Status: **blocked**
-- Duration: 0h 50m 19s
-- Completed in this invocation: basher-one-way-001, native-log-quiet-001
-- Reason: The Escape to Victory fix is verified. The remaining Playtest 19 J1 seam in Now You're Stalking could not be identified from the report or reproduced in the retained views. A screenshot or a description of the affected surface and camera angle is needed to classify it. The browser-build evidence covers Emscripten framebuffers rendered under Node. Chrome timed out before loading the game.
+- Result: `build/agent-runs/loop-87b9d786459541d1a090a14afa8b1a2c/result.json`
+- Status: **cancelled**
+- Duration: 0h 00m 01s
+- Completed in this invocation: none
+- Reason: Keyboard interrupt
 
 ## Documentation handoff
 

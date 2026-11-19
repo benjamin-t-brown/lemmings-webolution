@@ -1078,9 +1078,8 @@ void World::stepBasher(Lemming& l) {
   const int x0 = l.x + dir;
   const int top = l.y - (rules_.basherHeight - 1);
 
-  // Preserve the existing whole-footprint refusal and open-air rules. In
-  // particular, the upper half left by the first punch is still collision
-  // terrain; it must neither be mistaken for a new wall nor end this cycle.
+  // Steel and the open-air check still use the whole footprint. The upper
+  // half left by the first punch still counts as solid.
   bool anySolid = false, anySteel = false;
   for (int dy = 0; dy < rules_.basherHeight; ++dy)
     for (int dx = 0; dx < rules_.basherReach; ++dx) {
@@ -1091,18 +1090,6 @@ void World::stepBasher(Lemming& l) {
         anySolid = true;
     }
 
-  if ((lowerPunch || upperPunch) && anySteel) {
-    // 0x40C139..0x40C148: Scrape on the protected-cell refusal arm.
-    cueSample("Scrape", l);
-    turn(l);
-    l.state = State::Walker;
-    return;
-  }
-  if (lowerPunch && !anySolid && l.bashCycles >= rules_.basherGraceCycles) {
-    l.state = State::Walker;
-    return;
-  }
-
   // 40BBA0 registers rows 0/1 at 12/16%, then 3/2 at 60/64%.
   // 40C0AF zeroes ordinary grid cells (40C16D), with debris and Mine for
   // subpasses 0 and 3. A wall piece is four rows, not a packed half-cell.
@@ -1111,12 +1098,43 @@ void World::stepBasher(Lemming& l) {
   // through the ordinary Terrain::set/version -> TubeScene::syncTerrain path.
   const int lowerHeight = (rules_.basherHeight + 1) / 2;
   const int cutX = dir > 0 ? x0 : x0 - rules_.basherReach + 1;
-  if (lowerPunch && clearSkillBox(l, cutX, l.y - lowerHeight + 1,
-                                  rules_.basherReach, lowerHeight) > 0)
-    cue(SoundCue::Bash, &l);
-  if (upperPunch && clearSkillBox(l, cutX, top, rules_.basherReach,
-                                  rules_.basherHeight - lowerHeight) > 0)
-    cue(SoundCue::Bash, &l);
+  const auto punchRefused = [&](int y, int height) {
+    for (int dy = 0; dy < height; ++dy)
+      for (int dx = 0; dx < rules_.basherReach; ++dx)
+        if (setup_.terrain.bashRefused(cutX + dx, y + dy, dir))
+          return true;
+    return false;
+  };
+  struct Punch {
+    bool scheduled;
+    int y;
+    int height;
+    bool stopInAir;
+  };
+  const Punch punches[] = {
+      {lowerPunch, l.y - lowerHeight + 1, lowerHeight,
+       !anySolid && l.bashCycles >= rules_.basherGraceCycles},
+      {upperPunch, top, rules_.basherHeight - lowerHeight, false},
+  };
+  for (const auto& punch : punches) {
+    if (!punch.scheduled)
+      continue;
+    // PROVISIONAL: any directional refusal stops the whole coalesced punch
+    // before it clears a cell. The original checks one row cell per callback.
+    if (anySteel || punchRefused(punch.y, punch.height)) {
+      // 0x40C139..0x40C148: Scrape on the protected-cell refusal arm.
+      cueSample("Scrape", l);
+      turn(l);
+      l.state = State::Walker;
+      return;
+    }
+    if (punch.stopInAir) {
+      l.state = State::Walker;
+      return;
+    }
+    if (clearSkillBox(l, cutX, punch.y, rules_.basherReach, punch.height) > 0)
+      cue(SoundCue::Bash, &l);
+  }
 
   // 40C6E8 commits the column at 92%, after both punches. Keep the same
   // 1440 ms cycle (one column per cycle), grace count and support probe.

@@ -27072,7 +27072,7 @@
       ],
       "requires_original_execution": false,
       "verification": "smoke",
-      "status": "needs_review",
+      "status": "done",
       "planning_required": false,
       "loop_attempts": 1,
       "run_id": "20261119T081052-33336-c5ddf73f",
@@ -27190,12 +27190,142 @@
           "blocker": "The production review and supervisor smoke gate pass. Acceptance is blocked on the next human playtest of node 27. The ledger has no post-fix observation of either facing mask, the audible refusal, the visible opening, or any remaining route blocker."
         }
       ],
-      "lead_note": " 2026-11-19: the first review passed the production path and the smoke gate and blocked only criterion 2, which required a human playtest result no reviewer can supply. Per AGENTS.md Verification, a playtest fix is accepted at the user's next playtest; criterion 2 now asks for the exact playtest positions and expected results. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 2: On the next human playtest, enter node 27 from the map and assign a Basher at an arrow wall. A forbidden approach leaves the wall intact, plays one Scrape, and turns the worker back. A permitted approach opens a visible passage bottom first, then top. Use the installed cells to check both facing masks. Record the actual playtest result and any remaining route blocker."
+      "lead_note": " 2026-11-19: the first review passed the production path and the smoke gate and blocked only criterion 2, which required a human playtest result no reviewer can supply. Per AGENTS.md Verification, a playtest fix is accepted at the user's next playtest; criterion 2 now asks for the exact playtest positions and expected results. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 2: On the next human playtest, enter node 27 from the map and assign a Basher at an arrow wall. A forbidden approach leaves the wall intact, plays one Scrape, and turns the worker back. A permitted approach opens a visible passage bottom first, then top. Use the installed cells to check both facing masks. Record the actual playtest result and any remaining route blocker.",
+      "review": {
+        "decision": "accept",
+        "reason": "All five review criteria pass. The live node 27 path applies directional Basher refusal and preserves the existing two-punch cut. The supervisor passed all 95 main smoke checks and all 84 recovery checks. Playtest 19 recorded a 49/49 win on the patched clone and explicitly left the one-way Basher behavior pending human confirmation.",
+        "checks": [
+          {
+            "criterion": "Trace the ordinary map-to-world path for node 27 and retain evidence tying representative installed 0x05 and 0x09 solid cells to their expected refusal facings. Distinguish the source-traced defect from the player's report of rendering seams.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/MapScene.cpp",
+                "detail": "The installed map table maps zero-based node 27 to group 1, slot 1. MapScene::build resolves that entry to its installed level ID."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "A successful map click uses pickNode and levelForNode to store the selected node and level ID. The frontend window returns that selection to the application."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "runApplicationLeg takes the selected ID, enables simulation, loads it through loadRetailLevel and constructs the live World."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "loadRetailLevel delegates to loadRetailLevelReport, which resolves the installed archive member, decodes its collision grid and calls Terrain::fromCollisionGrid."
+              },
+              {
+                "path": "build/basher-one-way-001/installed-route-probe.log",
+                "detail": "The installed loaders resolve node 27 to COMPILED\\E22_KF_1.LVL. File cell (160, 29) becomes terrain cell (160, 66) and carries solid word 0x05, which refuses right. File cell (189, 29) becomes terrain cell (189, 66) and carries solid word 0x09, which refuses left. Each permits the opposite facing."
+              },
+              {
+                "path": "docs/playtest/2026-11-18-playtest-18.md",
+                "detail": "Playtest 18 H2 records visible seams concentrated on the arrow blocks. The follow-up source trace separately established that the clone could bash through them from either side."
+              }
+            ]
+          },
+          {
+            "criterion": "The report gives exact playtest positions on node 27 for a forbidden and a permitted Basher approach to each facing mask (0x05 and 0x09), and the expected result of each (forbidden: wall intact, one Scrape, turn back; permitted: a visible passage, bottom first then top). The human result is recorded at the user's next playtest, not required for review.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/basher-one-way-001.md",
+                "detail": "At file feet Y 29 above the steel rail, the report directs the player to face right from X 158 into the 0x05 wall at X 159 and left from X 205 into the 0x09 wall at X 204. Each should leave the wall intact, play one Scrape and turn the lemming back. From the central gap, face left from X 175 into the 0x05 wall at X 174 or right from X 188 into the 0x09 wall at X 189. Each should open a visible passage bottom first, then top."
+              },
+              {
+                "path": "build/basher-one-way-001/installed-route-probe.log",
+                "detail": "All four contacts have clear standing space above support at file row 28 and four wall rows carrying the stated arrow word. File feet Y 29 is terrain Y 66."
+              }
+            ]
+          },
+          {
+            "criterion": "The production diff preserves ordinary two-hit cutting, steel refusal, and the existing skill cadence. A cleared cell carries no stale direction flag into a replacement brick. Any new regression check stays short and legacy.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "Ordinary earth still cuts lower rows at 12% and upper rows at 60% of the 1440 ms cycle, followed by the 92% advance. Each scheduled punch still checks the full footprint for steel and uses the same Scrape, turn and Walker transition. Builder placement uses Terrain::set."
+              },
+              {
+                "path": "src/sim/Terrain.cpp",
+                "detail": "clearBox empties each cut cell through Terrain::set, which clears its live direction bits and increments the terrain version. Placing Material::Built through the same setter also clears those bits."
+              },
+              {
+                "path": "src/__test__/test_basher_two_hit.cpp",
+                "detail": "The existing test adds four small in-memory cases covering both masks, both facings, lower and upper refusal, one Scrape on refusal and reuse of a cleared cell. Each added case takes at most five World ticks."
+              },
+              {
+                "path": "build/agent-native/main/CTestTestfile.cmake",
+                "detail": "The supervisor's generated registration labels basher_two_hit legacy. Execution of the expanded test is deferred to milestone sign-off."
+              }
+            ]
+          },
+          {
+            "criterion": "The supervisor smoke gate passes, including the installed-level sweep and the recovery suite. Use private clone saves for any worker verification and record human confirmation as pending until it occurs.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-bb510f07d9504cfe938593558fe170f5/0001-verify-548373/verification.log",
+                "detail": "The supervisor passed 95 of 95 main smoke checks, including all 17 installed-level sweep chunks and levelsweep_report, and 84 of 84 recovery checks."
+              },
+              {
+                "path": "build/level-sweep-001/report-summary.txt",
+                "detail": "The installed-level sweep report contains all 102 expected records."
+              },
+              {
+                "path": "build/basher-one-way-001/installed-cell-probe.cpp",
+                "detail": "The worker probe reads installed archives and calls the map and level loaders. It opens no save."
+              },
+              {
+                "path": "docs/playtest/2026-11-19-playtest-19.md",
+                "detail": "The ledger records a 49/49 win on the patched clone and explicitly lists basher-one-way-001 as still unchecked."
+              }
+            ]
+          },
+          {
+            "criterion": "Production implementation changes in src/sim/Terrain.cpp, src/sim/World.cpp deliver this runtime behavior: Today a Basher can cut a solid arrow-wall cell from either direction. After the fix, a punch that encounters a cell protected against its current facing leaves the wall intact and takes the existing audible refusal and turnaround path. From the permitted direction, the Basher still cuts bottom then top, and the existing terrain mesh update makes the opening visible.. Independent review must trace the real call path and before/after behavior; test-only changes, dead code, comments or build registration alone do not satisfy this criterion.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The live skill panel selects the command and an actor click calls World::assign. The game loop advances the World via RuntimeSimState::advanceElapsed, drains sound events after updates and synchronizes terrain before drawing."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "RuntimeSimState::advanceElapsed calls World::advanceElapsedMsWithReleaseGate. On a tick boundary World::stepElapsed calls World::step, which dispatches an assigned Basher to World::stepBasher."
+              },
+              {
+                "path": "build/basher-one-way-001/task-only.patch",
+                "detail": "The old importer classified both arrow words as Earth and retained the arrow bits only in the gate baseline. The old Basher could cut either word because its refusal check only inspected steel. The production diff imports the active masks and checks the rows of each scheduled punch before clearSkillBox. A match queues one Scrape, reverses facing and returns to Walker before writing terrain. A permitted punch still calls clearSkillBox in lower-then-upper order. Whole-punch refusal is explicitly provisional, and a successful lower punch stays cleared if the upper punch later refuses."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "CuePlayback::drain takes the positioned Scrape event from the live World and sends the named sample to the existing mixer when audio is enabled."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "syncTerrain detects the version increment from a permitted cut, converts simulation rows back to collision rows, updates changed solid cells and rebuilds the affected mesh blocks and their neighbors."
+              },
+              {
+                "path": "build/basher-one-way-001/static/helper-instructions.json",
+                "detail": "For the registered x86 EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained instructions agree with the retained pseudocode. The mask defaults to 0x04 at 0x40C0DC, switches to 0x08 for facing -1 at 0x40C0EC and is tested at 0x40C104\u20130x40C109. The refusal arm loads the Scrape handle at 0x40C139, calls playback at 0x40C148 and returns refusal. The permitted arm zeroes the cell at 0x40C16D."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T08:52:58.974963+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-bb510f07d9504cfe938593558fe170f5/0001-verify-548373/verification.log",
+        "verified_content": "ebaf6ae72ce44759600f5af666e5c7393353bdbaf652d3aae33891e5b52112f3"
+      }
     },
     {
       "id": "native-log-quiet-001",
       "title": "The native game no longer floods the console with routine logs",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -27210,12 +27340,183 @@
         "A normal native level run prints only startup identity and genuine warnings or errors; the gated diagnostics still appear when opted in; replay CLI and level-sweep output are unchanged.",
         "All promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T090845-54888-bdf5dcda",
+      "started": "2026-11-19T09:08:45.989669+00:00",
+      "finished": "2026-11-19T09:13:30.857298+00:00",
+      "last_run": "build/agent-runs/20261119T090845-54888-bdf5dcda",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Native play is quiet by default, all 23 promoted replays reproduce, and supervisor smoke passed. The change also drops backdrop diagnostics from the level sweep\u2019s published log tail. Preserve those diagnostics on the sweep path and document that consumer in the report.",
+        "checks": [
+          {
+            "criterion": "The report lists each recurring native log line before the change, its source, and whether it was kept, removed or gated (and behind what), and confirms nothing that tests or tools parse was removed.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/native-log-quiet-001.md",
+                "detail": "The report inventories the observed and source-traced messages and documents WEBOLUTION_NATIVE_DIAGNOSTICS=1. Its consumer audit identifies the sweep\u2019s sim summary filter but omits the sweep\u2019s capture and publication of backdrop lines."
+              },
+              {
+                "path": "src/__test__/test_levelsweep.cpp",
+                "detail": "At lines 529\u2013539, interestingLog skips the sim summary and keeps the last six other lines. Line 567 saves that tail, and lines 633\u2013677 publish it as p_child_log_tail in matrix.csv for successful and failed runs alike."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The sweep\u2019s level observer enables setup details, but the backdrop counter at lines 968\u2013975 requires the environment opt-in even when that observer is present."
+              },
+              {
+                "path": "build/native-log-quiet-001/rea-seed.json",
+                "detail": "Retained Ghidra pseudocode and instructions substantiate the report\u2019s seed-path finding. Call sites 0x0045D06C and 0x004451E5 reach 0x00447580, which scales the argument at 0x00447586, converts it at 0x0044758C, and calls the RNG seeder at 0x00447592. This evidence establishes the seed path only."
+              }
+            ]
+          },
+          {
+            "criterion": "A normal native level run prints only startup identity and genuine warnings or errors; the gated diagnostics still appear when opted in; replay CLI and level-sweep output are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/native-log-quiet-001/checks.tsv",
+                "detail": "Three installed levels each completed 120 default frames with one stdout line and empty stderr. The opt-in MM_DIG_000 run emitted the backdrop counters and setup diagnostics. Separate runs retained the corrupt-save warning and unknown-level error."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The replay branch returns through replayLevel before the new startup identity, preserving the replay CLI output format."
+              },
+              {
+                "path": "build/counter-gates-001/sweep-final/chunk-004/node-027/parent.txt",
+                "detail": "The earlier retained sweep output for Now You\u2019re Stalking includes three backdrop counter lines in child_log_tail."
+              },
+              {
+                "path": "build/level-sweep-001/chunk-004/node-027/parent.txt",
+                "detail": "The supervisor sweep for this task records only presenter and geometry lines in the same field. The report schema is intact, but the published diagnostic content changed."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/native-log-quiet-001/replays.tsv",
+                "detail": "The 23 recorded paths match the 23 promoted .replay files. Each run exited 0, and its retained stderr ends with PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/native-log-quiet-001/replay-23.stderr.log",
+                "detail": "The newest promoted win, Now You\u2019re Stalking, reproduced at step 24,402 with 49 of 49 saved."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T085259-54888-9aa14814/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passed, including all sweep chunks and the report, and 84 of 84 recovery tests passed."
+              },
+              {
+                "path": "build/level-sweep-001/report-summary.txt",
+                "detail": "The sweep produced all 102 expected level records."
+              },
+              {
+                "path": "docs/scratch/native-log-quiet-001.md",
+                "detail": "The report ends with a check for Now You\u2019re Stalking, node 27. It specifies rotating the camera, selecting a skill, and retrying, with one startup line expected by default and diagnostics visible after relaunch with the opt-in."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Native play is quiet by default, all 23 promoted replays reproduce, and supervisor smoke passed. The change also drops backdrop diagnostics from the level sweep\u2019s published log tail. Preserve those diagnostics on the sweep path and document that consumer in the report.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision restores backdrop diagnostics in the level sweep\u2019s published log while keeping normal native play quiet. All 23 promoted replays reproduced, and the supervisor smoke profile passed.",
+        "checks": [
+          {
+            "criterion": "The report lists each recurring native log line before the change, its source, and whether it was kept, removed or gated (and behind what), and confirms nothing that tests or tools parse was removed.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/native-log-quiet-001.md",
+                "detail": "The inventory identifies the observed and source-traced emitters, documents WEBOLUTION_NATIVE_DIAGNOSTICS=1, and explains the observer, profiler, and explicit diagnostic paths. The revised consumer audit traces the sweep from child.log through child_log_tail to p_child_log_tail in matrix.csv."
+              },
+              {
+                "path": "src/__test__/test_levelsweep.cpp",
+                "detail": "The sweep passes a level observer to runApplication. The parent still filters the simulation summary, keeps up to six other lines, and publishes the resulting tail in the CSV."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The observer enables the backdrop counters and setup diagnostics. The map-entry text remains available to the level-selection test, explicit --sim-ticks retains the simulation messages, and the HUD text parsed by tools/harness/score_c2_hud.py is still emitted on the HUD diagnostic path."
+              },
+              {
+                "path": "build/native-log-quiet-001/rea-seed.json",
+                "detail": "The retained Ghidra record for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f supports the report\u2019s seed-path claim. Calls at 0x0045D06C and 0x004451E5 reach 0x00447580, which scales the input at 0x00447586, converts it at 0x0044758C, and calls the RNG seeder at 0x00447592."
+              }
+            ]
+          },
+          {
+            "criterion": "A normal native level run prints only startup identity and genuine warnings or errors; the gated diagnostics still appear when opted in; replay CLI and level-sweep output are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/native-log-quiet-001/revision/checks.tsv",
+                "detail": "Three default 120-frame installed-level runs and a frontend startup each emitted one stdout line and zero stderr lines. The opt-in MM_DIG_000 run restored 121 backdrop counters, the first-draw RNG state, and setup diagnostics. The corrupt-save and unknown-level cases retained their warning and error."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The replay CLI dispatches to replayLevel before native startup logging. All 23 retained runs had empty stdout and kept the same stderr format and outcome lines, with the running executable identity reflecting the revised build."
+              },
+              {
+                "path": "build/level-sweep-001/matrix.csv",
+                "detail": "The supervisor published 102 rows with the historical CSV header and the same per-node backdrop counter counts. Node 27\u2019s published tail includes all three counters and matches the historical tail exactly."
+              },
+              {
+                "path": "build/counter-gates-001/sweep-final/matrix.csv",
+                "detail": "The retained 102-row sweep provides the comparison for the CSV header and per-node backdrop counter counts."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/native-log-quiet-001/revision/replays.tsv",
+                "detail": "The listed paths match all 23 current promoted .replay files. Each command exited zero, and each raw stderr capture ends with PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/native-log-quiet-001/revision/replay-23.stderr.log",
+                "detail": "Now You\u2019re Stalking reproduced at step 24,402 with 49 of 49 saved."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T090845-54888-bdf5dcda/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passed, including all sweep chunks and the sweep report, and 84 of 84 recovery tests passed."
+              },
+              {
+                "path": "docs/scratch/native-log-quiet-001.md",
+                "detail": "The closing note names Now You\u2019re Stalking, node 27, and asks the player to rotate the camera, select a skill, and retry. It expects one startup line during default play and diagnostic output after relaunch with WEBOLUTION_NATIVE_DIAGNOSTICS=1."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T09:15:55.901738+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T090845-54888-bdf5dcda\\verification.log",
+        "verified_content": "deb223b3385d247364b114862ded088c31742ccb07619a14356bf4cea72768e1"
+      }
     },
     {
       "id": "escape-seams-001",
       "title": "Tube seams in Escape to Victory (and those left in Now You're Stalking) are closed",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -27226,11 +27527,146 @@
       "user_authorized": true,
       "scope": "Playtest 19 J1: after stalking-seams-001 (a sampling fix on the arrow faces and rail; docs/scratch/stalking-seams-001.md) the user still sees seams in Now You're Stalking (E22_KF_1, node 27; location not given) and obvious ones in Escape to Victory (E11_KF_1, node 28): (a) a vertical seam through the spawn area, on the cylinder background behind the hatch (the hatch box itself has no seam); (b) a horizontal seam across the big metal blocks below the spawn and the wood to the left of them, running all the way around the cylinder. A seam that runs all the way around suggests a band/row boundary; a vertical one suggests an angular bucket, texture wrap (u=0/1) or block-column boundary. Render both levels from the clone (framebuffer output) at the entry camera and several yaw/pitch positions, locate each seam, and classify its cause: mesh vertices not shared or rounded differently across bands, buckets or cell blocks, T-junctions, UV/texel-edge bleeding or wrap, raster edge/fill rule, depth fighting between the tube and backdrop. Compare with the original's static evidence where retained and fix the production cause so the surfaces are continuous on both levels; check that the stalking-seams-001 fix still holds. Do not change simulation, picking or actor occlusion. Difficulty: difficult. Recommended model: Opus. Reason: geometry/raster cause across two levels, one fix already partial. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label.",
-        "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression.",
+        "The report shows each Escape to Victory seam (clone framebuffer images with camera positions under build/), classifies it by cause and names the production path changed, with static evidence or a provisional label. For Now You're Stalking it records the views checked; a residual seam there without a reported location is out of scope and tracked in the playtest ledger.",
+        "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone on desktop and in the browser build (browser framebuffers, interactive browser check at the user's playtest); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression.",
         "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T091556-54888-0deef0f6",
+      "started": "2026-11-19T09:15:56.394348+00:00",
+      "finished": "2026-11-19T09:35:06.564292+00:00",
+      "last_run": "build/agent-runs/20261119T091556-54888-0deef0f6",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261119T091556-54888-0deef0f6",
+          "review": {
+            "decision": "blocked",
+            "reason": "The Escape to Victory fix is verified. The remaining Playtest 19 J1 seam in Now You're Stalking could not be identified from the report or reproduced in the retained views. A screenshot or a description of the affected surface and camera angle is needed to classify it. The browser-build evidence covers Emscripten framebuffers rendered under Node. Chrome timed out before loading the game.",
+            "checks": [
+              {
+                "criterion": "The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "docs/playtest/2026-11-19-playtest-19.md",
+                    "detail": "J1 locates both Escape to Victory seams. It gives no surface, location, or camera angle for the residual seam in Now You're Stalking."
+                  },
+                  {
+                    "path": "build/escape-seams-001/route-pixels.log",
+                    "detail": "Traces the Escape spawn line to a wrapped bilinear tap at inner column 64 and the wood and steel line to wrapped taps at outer row 32. For Stalking, the samples trace the bark join to tiles on quads with shared vertices and the steel join to texel rows 95\u201396 within one quad. Neither is tied to the J1 observation."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-desktop-frames/E11_KF_1-settled.json",
+                    "detail": "Records the 640\u00d7480 camera used for the Escape seam close-ups, with yaw offset 191/256 and eye distance 377.516."
+                  },
+                  {
+                    "path": "docs/scratch/escape-seams-001.md",
+                    "detail": "Links the matched captures and camera files, traces TubeScene::build through drawRouteQuad to Raster::triangle, and labels the asset-family scope provisional. It explicitly leaves the residual Stalking report unresolved."
+                  },
+                  {
+                    "path": "build/escape-seams-001/rea-walker-instructions.json",
+                    "detail": "For the registered executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the instructions agree with retained pseudocode. The walker passes 1 to 0x470FAF at 0x43A6BB before the four terrain calls and passes 0 at 0x43A908 afterward."
+                  },
+                  {
+                    "path": "build/escape-seams-001/rea-address-instructions.json",
+                    "detail": "The setter at 0x470FB8\u20130x470FD8 selects clamp value 3 for a nonzero argument and wrap value 1 for zero, then submits stage 0 address state 0x0C. This establishes the requested static state."
+                  }
+                ]
+              },
+              {
+                "criterion": "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/escape-seams-001/E11-spawn-detail.png",
+                    "detail": "The matched crop shows the vertical hairline behind the hatch in the upper image. The lower image shows continuous bark at that position."
+                  },
+                  {
+                    "path": "build/escape-seams-001/E11-band-detail.png",
+                    "detail": "The matched crop shows the thin line crossing wood and steel before the change. The line disappears afterward and the riveted panel borders remain visible."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-desktop-E11_KF_1-rotation-tube.png",
+                    "detail": "Sixteen desktop poses at 22.5-degree increments cover a full turn. The sampled solid joins show no new gaps."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-wasm-E11_KF_1-rotation-tube.png",
+                    "detail": "The same rotation from the Emscripten artifact shows continuous solid joins at the checked poses."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-desktop-E22_KF_1-rotation-tube.png",
+                    "detail": "The sampled full turn shows continuous solid joins. The previously corrected arrow and rail hairlines do not appear."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-wasm-E22_KF_1-rotation-tube.png",
+                    "detail": "The corresponding Emscripten rotation shows the same solid joins at the checked poses, with the painted shading and authored openings visible."
+                  },
+                  {
+                    "path": "build/escape-seams-001/frame-metrics.tsv",
+                    "detail": "The Escape entry and settled frames match across targets. Stalking has zero desktop RGB changes across all 44 captures. The spot check for MM_CLIMB_002 matches, and differences on MM_DIG_000 and E19_KF_2 are confined to flame sprites."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-wasm-frames/E11_KF_1-settled.log",
+                    "detail": "Records the Emscripten webolution.js artifact running under Node and writing the 640\u00d7480 framebuffer for the settled hatch camera."
+                  },
+                  {
+                    "path": "build/escape-seams-001/chrome-bounded/E11_KF_1-settled.http.log",
+                    "detail": "Chrome fetched the check page and timed out before requesting the loader. Interactive browser presentation remains unverified."
+                  }
+                ]
+              },
+              {
+                "criterion": "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261119T091556-54888-0deef0f6/after-diff.txt",
+                    "detail": "Compared with the run's before snapshot, the sole production change is the tile-address selection in TubeScene.cpp. The simulation edits were already present before the run."
+                  },
+                  {
+                    "path": "src/app/Raster.cpp",
+                    "detail": "The address mode changes RGB taps after coverage and depth acceptance. Triangle coverage, the depth write, and actor ownership submission use the same inputs."
+                  },
+                  {
+                    "path": "build/escape-seams-001/check-summary.log",
+                    "detail": "All 44 paired tube depth buffers are byte-identical, supporting preservation of the tube depth used for actor occlusion."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-desktop-replays/results.tsv",
+                    "detail": "All 23 files match the promoted replay inventory and return exit 0 with PASS, won=1, and completed=1. Stalking finishes at step 24402 with 49/49 saved."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-wasm-replays/results.tsv",
+                    "detail": "The same 23 recordings pass under Node/Wasm with matching final steps and saved counts."
+                  }
+                ]
+              },
+              {
+                "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261119T091556-54888-0deef0f6/verification.log",
+                    "detail": "Supervisor verification passed all 95 main smoke tests, including the level sweep and actor composition checks, and all 84 recovery tests."
+                  },
+                  {
+                    "path": "build/agent-runs/20261119T091556-54888-0deef0f6/result.json",
+                    "detail": "The supervisor records verification exit code 0 and the verified content identifier e35fd18edb8d306c33498e31ca5ee70fa768518ec80c92c7c3c690630fe7617a."
+                  },
+                  {
+                    "path": "docs/scratch/escape-seams-001.md",
+                    "detail": "The final note gives both level nodes, the camera actions, and the expected results at the bark, wood, steel, arrows, and rail. It asks the playtester to record the surface and angle if a line appears."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "The Escape to Victory fix is verified. The remaining Playtest 19 J1 seam in Now You're Stalking could not be identified from the report or reproduced in the retained views. A screenshot or a description of the affected surface and camera angle is needed to classify it. The browser-build evidence covers Emscripten framebuffers rendered under Node. Chrome timed out before loading the game."
+        }
+      ],
+      "lead_note": " 2026-11-19: the first review passed the Escape to Victory fix, the unchanged simulation/picking/occlusion and smoke, and blocked only because the residual Now You're Stalking seam had no location and could not be reproduced. The lead moved that residual to playtest 19 J1b in the ledger, awaiting the user's surface and camera angle; criteria 1 and 2 now cover Escape to Victory plus no regression on Stalking. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criteria 1-2: The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label. || The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression."
     },
     {
       "id": "rat-motion-smoothing-001",

@@ -71,7 +71,7 @@ class ReplayRecorder {
  public:
   static std::expected<ReplayRecorder, std::string> create(
       const std::filesystem::path& directory, std::string level, bool connected,
-      int initialTicks, int initialRate) {
+      int initialTicks, int initialRate, bool logPath = true) {
     std::error_code ec;
     std::filesystem::create_directories(directory, ec);
     if (ec) return std::unexpected("cannot create replay directory: " + ec.message());
@@ -90,7 +90,7 @@ class ReplayRecorder {
     recorder.output_.flush();
     if (!recorder.output_) return std::unexpected("cannot write replay header");
     recorder.rate_ = initialRate;
-    std::cerr << "record: " << recorder.path_.string() << '\n';
+    if (logPath) std::cerr << "record: " << recorder.path_.string() << '\n';
     return recorder;
   }
 

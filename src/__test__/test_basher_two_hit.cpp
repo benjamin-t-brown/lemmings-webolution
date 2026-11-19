@@ -58,6 +58,59 @@ void punches(int facing) {
   }
 }
 
+void oneWayPunch(int refusedFacing, bool upper) {
+  const int protectedY = upper ? 3 : 5;
+  CollisionGrid grid;
+  grid.width = grid.height = 8;
+  grid.cells.resize(64);
+  const auto stamp = [&](int x, int y, std::uint32_t word) {
+    grid.cells[(7 - y) * grid.width + x] = word;
+  };
+  for (int x = 0; x < grid.width; ++x)
+    stamp(x, 6, kCellSolid);
+  for (int y = 2; y <= 5; ++y)
+    stamp(0, y, kCellSolid);
+  stamp(0, protectedY, kCellSolid | (refusedFacing > 0 ? kCellNoBashRight : kCellNoBashLeft));
+
+  for (int facing : {-1, 1}) {
+    sim::LevelSetup setup;
+    setup.totalLemmings = 0;
+    setup.terrain = sim::Terrain::fromCollisionGrid(grid);
+    sim::World world(setup);
+    sim::Lemming actor;
+    actor.x = facing > 0 ? 7 : 1;
+    actor.y = 5;
+    actor.state = sim::State::Walker;
+    actor.facing = facing > 0 ? sim::Facing::Right : sim::Facing::Left;
+    world.place(actor);
+    assert(world.assign(0, sim::Skill::Basher));
+    world.takeSoundEvents();
+
+    const bool refused = facing == refusedFacing;
+    const int lastTick = refused && !upper ? 0 : 4;
+    for (int tick = 0; tick <= lastTick; ++tick) {
+      world.tick();
+      const auto events = world.takeSoundEvents();
+      assert(events.size() == ((tick == 0 || tick == 4) ? 1u : 0u));
+      if (refused && tick == lastTick)
+        assert(events.front().sample == "Scrape");
+      else if (tick == 0 || tick == 4)
+        assert(events.front().cue == sim::SoundCue::Bash);
+    }
+    assert(world.lemmings()[0].x == actor.x);
+    assert(world.lemmings()[0].state == (refused ? sim::State::Walker : sim::State::Basher));
+    assert(static_cast<int>(world.lemmings()[0].facing) == (refused ? -facing : facing));
+    for (int y = 2; y <= 5; ++y)
+      assert(world.terrain().solid(0, y) == (refused && (!upper || y <= 3)));
+
+    assert(world.terrain().bashRefused(0, protectedY, refusedFacing) == refused);
+    if (!refused) {
+      world.terrain().set(0, protectedY, sim::Material::Built);
+      assert(!world.terrain().bashRefused(0, protectedY, refusedFacing));
+    }
+  }
+}
+
 void installedMesh(const std::filesystem::path& dir) {
   auto lib = AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
   assert(lib);
@@ -115,6 +168,8 @@ int main(int argc, char** argv) {
   assert(argc == 2);
   punches(1);
   punches(-1);
+  oneWayPunch(1, false);
+  oneWayPunch(-1, true);
   installedMesh(argv[1]);
   std::cout << "PASS: two punches, cues/debris, seam mirrors, deferred advance and installed mesh\n";
 }

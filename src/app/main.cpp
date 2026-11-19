@@ -124,6 +124,7 @@
 #include <optional>
 #include <regex>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #if WEBOLUTION_HAVE_SDL2
@@ -193,6 +194,7 @@ struct Args {
   bool sceneOff = false;
   std::string walkers;
   bool sim = false;
+  bool simTicksSpecified = false;
   int simTicks = 0;
   int hudTicks = -1;
   std::string hudColour;
@@ -254,7 +256,10 @@ Args parseArgs(int argc, char** argv) {
     else if (arg == "--scene-off") a.sceneOff = true;
     else if (arg == "--walkers") a.walkers = next();
     else if (arg == "--sim") a.sim = true;
-    else if (arg == "--sim-ticks") { a.sim = true; a.simTicks = std::atoi(next().c_str()); }
+    else if (arg == "--sim-ticks") {
+      a.sim = a.simTicksSpecified = true;
+      a.simTicks = std::atoi(next().c_str());
+    }
     else if (arg == "--hud-ticks") a.hudTicks = std::atoi(next().c_str());
     else if (arg == "--hud-out") a.hudOut = std::atoi(next().c_str());
     else if (arg == "--hud-colour") a.hudColour = next();
@@ -408,7 +413,16 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   Args args = parseArgs(argc, argv);
   if (args.help) { printHelp(); return 0; }
   if (args.invalidWindowScale) { std::fprintf(stderr, "--window-scale requires 1, 2 or 3\n"); return 1; }
-  const int scale = windowScale(args, bool(observer) || bool(levelObserver));
+  const bool observing = bool(observer) || bool(levelObserver);
+  const int scale = windowScale(args, observing);
+#ifdef __EMSCRIPTEN__
+  const bool logLevelDetails = true;
+#else
+  const char* diagnosticSetting = std::getenv("WEBOLUTION_NATIVE_DIAGNOSTICS");
+  const bool verbose = diagnosticSetting && std::string_view(diagnosticSetting) == "1";
+  // Keep diagnostics for observer-driven tools, including the sweep's child-log tail.
+  const bool logLevelDetails = verbose || observing;
+#endif
   if (!std::isfinite(runOptions.frameSeconds) || runOptions.frameSeconds < 0 ||
       (runOptions.frameSeconds > 0 && args.frames <= 0)) {
     std::fprintf(stderr, "test frame clock requires finite positive seconds and --frames\n");
@@ -461,7 +475,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     args.level = **selected;
     args.sim = true;
     args.simTicks = 0;
-    std::fprintf(stderr, "frontend: entering %s from map (SOURCE SDL adapter)\n", args.level.c_str());
+    if (logLevelDetails)
+      std::fprintf(stderr, "frontend: entering %s from map (SOURCE SDL adapter)\n", args.level.c_str());
   }
 
   // B3j: explicit source-fixture map display. This early branch deliberately
@@ -722,18 +737,19 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     if (args.frontend && args.camera.empty()) params.levelEyeHeight = terrainHeight;
     options.injectedWalkers = app::injectedWalkersFromWorld(*world, terrainHeight);
 
-    const auto& lemmings = world->lemmings();
-    std::size_t liveCount = 0;
-    for (const auto& l : lemmings)
-      if (l.alive()) ++liveCount;
-    std::fprintf(stderr, "sim: tick=%d lemmings=%zu live=%zu spawned=%d saved=%d dead=%d\n",
-                args.simTicks, lemmings.size(), liveCount, world->spawned(), world->saved(),
-                world->dead());
-    for (std::size_t i = 0; i < lemmings.size(); ++i) {
-      const sim::Lemming& l = lemmings[i];
-      std::fprintf(stderr, "sim: lemming %zu cell=(%d,%d) facing=%d state=%s alive=%d\n", i,
-                  l.x, l.y, static_cast<int>(l.facing),
-                  std::string(sim::stateName(l.state)).c_str(), l.alive() ? 1 : 0);
+    if (logLevelDetails || args.simTicksSpecified) {
+      const auto& lemmings = world->lemmings();
+      const auto liveCount = static_cast<std::size_t>(std::ranges::count_if(
+          lemmings, [](const sim::Lemming& lemming) { return lemming.alive(); }));
+      std::fprintf(stderr, "sim: tick=%d lemmings=%zu live=%zu spawned=%d saved=%d dead=%d\n",
+                   args.simTicks, lemmings.size(), liveCount, world->spawned(), world->saved(),
+                   world->dead());
+      for (std::size_t i = 0; i < lemmings.size(); ++i) {
+        const sim::Lemming& l = lemmings[i];
+        std::fprintf(stderr, "sim: lemming %zu cell=(%d,%d) facing=%d state=%s alive=%d\n", i,
+                     l.x, l.y, static_cast<int>(l.facing),
+                     std::string(sim::stateName(l.state)).c_str(), l.alive() ? 1 : 0);
+      }
     }
   }
 
@@ -949,9 +965,17 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
     scene->drawDeathParticles(target, frameCamera, *library);
 #ifndef __EMSCRIPTEN__
-    if (!args.sceneOff) std::fprintf(stderr,"backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu null-materials=%zu null-triangles=%zu predicate-rejected=%zu missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",backdrop.has_value(),backdropStats.roots,backdropStats.meshRecords,backdropStats.meshTriangles,backdropStats.billboards,backdropStats.nullMaterials,backdropStats.nullMaterialTriangles,backdropStats.predicateRejected,backdropStats.missingTextures,backdropStats.rejected,backdropStats.pixels);
+    if (logLevelDetails && !args.sceneOff) {
+      std::fprintf(stderr, "backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu "
+                   "null-materials=%zu null-triangles=%zu predicate-rejected=%zu "
+                   "missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",
+                   backdrop.has_value(), backdropStats.roots, backdropStats.meshRecords,
+                   backdropStats.meshTriangles, backdropStats.billboards, backdropStats.nullMaterials,
+                   backdropStats.nullMaterialTriangles, backdropStats.predicateRejected,
+                   backdropStats.missingTextures, backdropStats.rejected, backdropStats.pixels);
+    }
 #endif
-    if (backdrop && !spriteSeedReported && backdrop->firstSpriteDrawRandomState()) {
+    if (logLevelDetails && backdrop && !spriteSeedReported && backdrop->firstSpriteDrawRandomState()) {
       spriteSeedReported = true;
       std::fprintf(stderr, "backdrop: sprite scenery generator state at first draw = 0x%08x "
                    "(seeded from the application clock; flame phases are not reproducible)\n",
@@ -962,16 +986,18 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   app::Raster raster(params.width, params.height);
   const auto camera = renderFrame(params, raster);
 
-  std::printf(
-      "level=%s mesh=%ux%u surface=%zu grid0=%zu outerTiles=%zu innerTiles=%zu "
-      "surf=%zu poly=%zu cellmesh=%zu+%zu inner=%zu triangles=%zu pixels=%zu camera=%dx%d "
-      "yaw=%.4f selector=%.6f\n",
-      args.level.c_str(), mesh->angularSteps, mesh->ringCount, mesh->surface.size(),
-      index ? index->grid0.size() : 0, scene->outerTiles(), scene->innerTiles(),
-      scene->surfaceQuads(), scene->polyListRecords(), scene->cellMesh0Quads(),
-      scene->cellMesh4Quads(), scene->cellInnerQuads(), raster.drawnTriangles(),
-      raster.drawnPixels(), camera.width, camera.height, app::resolvedYawUnits(params),
-      camera.selectorTurns);
+  if (logLevelDetails) {
+    std::printf(
+        "level=%s mesh=%ux%u surface=%zu grid0=%zu outerTiles=%zu innerTiles=%zu "
+        "surf=%zu poly=%zu cellmesh=%zu+%zu inner=%zu triangles=%zu pixels=%zu camera=%dx%d "
+        "yaw=%.4f selector=%.6f\n",
+        args.level.c_str(), mesh->angularSteps, mesh->ringCount, mesh->surface.size(),
+        index ? index->grid0.size() : 0, scene->outerTiles(), scene->innerTiles(),
+        scene->surfaceQuads(), scene->polyListRecords(), scene->cellMesh0Quads(),
+        scene->cellMesh4Quads(), scene->cellInnerQuads(), raster.drawnTriangles(),
+        raster.drawnPixels(), camera.width, camera.height, app::resolvedYawUnits(params),
+        camera.selectorTurns);
+  }
   for (const auto& missing : scene->missingTiles())
     std::fprintf(stderr, "tile: %s\n", missing.c_str());
 
@@ -1216,7 +1242,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   std::optional<app::ReplayRecorder> recorder;
   if (!args.recordDir.empty() && world && releaseControl) {
     auto made = app::ReplayRecorder::create(args.recordDir, args.level, persistentFrontend != nullptr,
-                                           args.simTicks, releaseControl->current());
+                                           args.simTicks, releaseControl->current(), logLevelDetails);
     if (made) recorder.emplace(std::move(*made));
     else std::fprintf(stderr, "record: %s; playing without recording\n", made.error().c_str());
   }
@@ -1319,8 +1345,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     }
   };
   app::profile::Run frameProfile;
+  const char* profilePath = std::getenv("WEBOLUTION_FRAME_PROFILE");
   SDL_RendererInfo rendererInfo{};
-  if (SDL_GetRendererInfo(presenter, &rendererInfo) == 0)
+  if ((logLevelDetails || (profilePath && *profilePath)) &&
+      SDL_GetRendererInfo(presenter, &rendererInfo) == 0)
     std::fprintf(stderr, "presenter: %s flags=0x%x software=%d vsync=%d; simulation frames do not sleep\n",
         rendererInfo.name, rendererInfo.flags, bool(rendererInfo.flags & SDL_RENDERER_SOFTWARE),
         bool(rendererInfo.flags & SDL_RENDERER_PRESENTVSYNC));
@@ -1502,9 +1530,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           }
           if (skillSelection.selectAvailableIndex(selected, app::runtimeSkillPanelCounts(*world))) {
             uiClick();
-            std::fprintf(stderr,
-                         "click-to-assign: skill %s (SOURCE input adapter)\n",
-                         std::string(sim::skillName(skillSelection.selectedSkill())).c_str());
+            if (logLevelDetails)
+              std::fprintf(stderr, "click-to-assign: skill %s (SOURCE input adapter)\n",
+                           std::string(sim::skillName(skillSelection.selectedSkill())).c_str());
           }
         }
       }
@@ -1812,7 +1840,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         disposition == LegDisposition::ReturnToMap ? "map" : "closed/frame-limit";
     if (auto written = recorder->finish(*world, runtimeSim, reason); !written)
       std::fprintf(stderr, "record: %s; replay remains incomplete\n", written.error().c_str());
-    else std::fprintf(stderr, "record: saved %s\n", written->string().c_str());
+    else if (logLevelDetails) std::fprintf(stderr, "record: saved %s\n", written->string().c_str());
   }
   if (!args.windowShot.empty() && disposition == LegDisposition::Exit) {
     if (!finalWindowFrame) {
@@ -1848,6 +1876,12 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
       ((!args.frontend && !args.sim) || args.map || !args.shot.empty() || args.simTicks < 0 || args.simTicks > 1000000)) {
     std::fprintf(stderr, "--record requires frontend play or --level ID --sim, without --map/--shot\n"); return 1;
   }
+#if !defined(__EMSCRIPTEN__) && !defined(WEBOLUTION_APP_NO_MAIN)
+  if (!args.help && !args.map && args.shot.empty()) {
+    std::puts("Lemmings Webolution (native)");
+    std::fflush(stdout);
+  }
+#endif
   // Read the clone image once before any gameplay clock starts. Attempt setup
   // later uses this cached identity and never hashes inside a measured frame.
   if (!args.recordDir.empty()) (void)app::replayBuildIdentity();

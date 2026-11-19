@@ -39,17 +39,24 @@ Material Terrain::at(int x, int y) const {
 void Terrain::set(int x, int y, Material m) {
   if (cells_.empty() || y < 0 || y >= height_)
     return;
-  cells_[index(x, y)] = m;
+  const auto cell = index(x, y);
+  cells_[cell] = m;
+  if (!bashRefusalFlags_.empty())
+    bashRefusalFlags_[cell] = 0;
   ++version_;
 }
 
 void Terrain::setGateCollision(int x, int y, bool closed) {
   if (cells_.empty() || y < 0 || y >= height_) return;
-  const auto word = gateResidualWords_.empty() ? 0u : gateResidualWords_[index(x, y)];
+  const auto cell = index(x, y);
+  const auto word = gateResidualWords_.empty() ? 0u : gateResidualWords_[cell];
   // 0x80 inhibits landability even after OR 0x403, as in CollisionGrid::solid.
   const auto material = (word & kCellNotLandable) ? Material::Empty :
       closed ? Material::Steel : word ? Material::Earth : Material::Empty;
-  if (at(x, y) != material) set(x, y, material);
+  if (cells_[cell] != material) {
+    cells_[cell] = material;
+    ++version_;
+  }
 }
 
 bool Terrain::blockerField(int x, int y) const {
@@ -100,6 +107,13 @@ std::size_t Terrain::antiGravCells() const {
     if (b)
       ++n;
   return n;
+}
+
+bool Terrain::bashRefused(int x, int y, int facing) const {
+  if (bashRefusalFlags_.empty() || y < 0 || y >= height_)
+    return false;
+  const auto mask = facing < 0 ? kCellNoBashLeft : kCellNoBashRight;
+  return (bashRefusalFlags_[index(x, y)] & mask) != 0;
 }
 
 bool Terrain::noDigUpright(int x, int y) const {
@@ -387,7 +401,14 @@ Terrain Terrain::fromCollisionGrid(const CollisionGrid& grid) {
     const int destY = grid.height - 1 - y;
     for (int x = 0; x < grid.width; ++x) {
       const std::uint32_t word = grid.at(x, y);
-      t.gateResidualWords_[t.index(x, destY)] = word & ~0x403u;
+      const auto cell = t.index(x, destY);
+      t.gateResidualWords_[cell] = word & ~0x403u;
+      const auto bashFlags = word & (kCellNoBashRight | kCellNoBashLeft);
+      if (bashFlags != 0) {
+        if (t.bashRefusalFlags_.empty())
+          t.bashRefusalFlags_.resize(t.cells_.size());
+        t.bashRefusalFlags_[cell] = static_cast<std::uint8_t>(bashFlags);
+      }
       // Round 9: 0x8000 is the anti-grav pad bit (kCellFlag0x8000). It can
       // sit on a solid cell (typical pad word 0x8003) or, rarely, alone; the
       // walk probe tests the bit, not solidity of that word beyond the
@@ -412,9 +433,7 @@ Terrain Terrain::fromCollisionGrid(const CollisionGrid& grid) {
         t.setZoneAcid(x, destY, true);
       if (!grid.solid(x, y))
         continue;
-      t.cells_[t.index(x, destY)] = (word & kCellIndestructible)
-                                        ? Material::Steel
-                                        : Material::Earth;
+      t.cells_[cell] = (word & kCellIndestructible) ? Material::Steel : Material::Earth;
     }
   }
   return t;

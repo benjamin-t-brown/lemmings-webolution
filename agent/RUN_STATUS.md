@@ -9,9 +9,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- basher-one-way-001: **needs_review** — Make the Basher respect the one-way arrow walls on Now You're Stalking
-- native-log-quiet-001: **ready** — The native game no longer floods the console with routine logs
-- escape-seams-001: **ready** — Tube seams in Escape to Victory (and those left in Now You're Stalking) are closed
+- escape-seams-001: **needs_review** — Tube seams in Escape to Victory (and those left in Now You're Stalking) are closed
 - rat-motion-smoothing-001: **ready** — Evil rats move smoothly like lemmings instead of jittering
 - lane-spawn-blocker-001: **ready** — Lemmings spawn in the centre lane and lerp out; blockers stand in the centre
 - digger-lane-facing-001: **ready** — Diggers face outward on the outer lane and toward the cylinder on the inner lane
@@ -19,13 +17,6 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Recently completed queue entries
 
-- builder-end-turn-001: A builder that finishes its bricks walks on when the way forward is clear
-  Accepted: 2026-11-19T05:34:44.489967+00:00
-  Verification evidence: `build/agent-runs/20261119T051723-13224-b74cf29c/verification.log`
-  Verification evidence: `build\agent-runs\20261119T051723-13224-b74cf29c\verification.log`
-- unlock-all-option-001: Options toggle: unlock all levels (unbeaten ones shown as available)
-  Accepted: 2026-11-19T06:48:43.669603+00:00
-  Verification evidence: `build/agent-runs/loop-685857b22f7440b5927bc5604b4733d4/0001-verify-31a5b9/verification.log`
 - lantern-glow-001: Background lanterns in Now You're Stalking glow instead of drawing as black billboards
   Accepted: 2026-11-19T07:07:38.705121+00:00
   Verification evidence: `build/agent-runs/20261119T064843-33336-c246a753/verification.log`
@@ -38,14 +29,21 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-19T08:07:13.835916+00:00
   Verification evidence: `build/agent-runs/20261119T074958-33336-8b631798/verification.log`
   Verification evidence: `build\agent-runs\20261119T074958-33336-8b631798\verification.log`
+- basher-one-way-001: Make the Basher respect the one-way arrow walls on Now You're Stalking
+  Accepted: 2026-11-19T08:52:58.974963+00:00
+  Verification evidence: `build/agent-runs/loop-bb510f07d9504cfe938593558fe170f5/0001-verify-548373/verification.log`
+- native-log-quiet-001: The native game no longer floods the console with routine logs
+  Accepted: 2026-11-19T09:15:55.901738+00:00
+  Verification evidence: `build/agent-runs/20261119T090845-54888-bdf5dcda/verification.log`
+  Verification evidence: `build\agent-runs\20261119T090845-54888-bdf5dcda\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-685857b22f7440b5927bc5604b4733d4/result.json`
+- Result: `build/agent-runs/loop-bb510f07d9504cfe938593558fe170f5/result.json`
 - Status: **blocked**
-- Duration: 1h 41m 18s
-- Completed in this invocation: unlock-all-option-001, lantern-glow-001, entry-backdrop-rect-001, stalking-seams-001
-- Reason: The production review and supervisor smoke gate pass. Acceptance is blocked on the next human playtest of node 27. The ledger has no post-fix observation of either facing mask, the audible refusal, the visible opening, or any remaining route blocker.
+- Duration: 0h 50m 19s
+- Completed in this invocation: basher-one-way-001, native-log-quiet-001
+- Reason: The Escape to Victory fix is verified. The remaining Playtest 19 J1 seam in Now You're Stalking could not be identified from the report or reproduced in the retained views. A screenshot or a description of the affected surface and camera angle is needed to classify it. The browser-build evidence covers Emscripten framebuffers rendered under Node. Chrome timed out before loading the game.
 
 ## Documentation handoff
 

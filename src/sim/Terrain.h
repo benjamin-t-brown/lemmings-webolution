@@ -50,6 +50,7 @@ public:
   Material at(int x, int y) const;
   bool solid(int x, int y) const { return isSolid(at(x, y)); }
 
+  // Replacing a cell's material also clears its authored Basher refusal bits.
   void set(int x, int y, Material m);
   // Gate OR 0x403 / AND 0xFFFFFBFC. Other flag planes remain intact;
   // imported residual words retain their original landability on clear.
@@ -88,6 +89,9 @@ public:
   bool antiGrav(int x, int y) const;
   void setAntiGrav(int x, int y, bool on);
   std::size_t antiGravCells() const;
+
+  // Directional refusal for a Basher facing right (+1) or left (-1).
+  bool bashRefused(int x, int y, int facing) const;
 
   // Dig directional refuse bits. MEASURED round 5 (upright half) + round 30
   // (inverted half): dig bite 0x00415A43 builds mask 0x10, or 0x20 when
@@ -223,6 +227,8 @@ private:
   std::uint64_t version_ = 0;
   std::vector<Material> cells_;
   std::vector<std::uint32_t> gateResidualWords_;
+  // Authored 0x04 / 0x08 bits on the live cells. Allocated on first import.
+  std::vector<std::uint8_t> bashRefusalFlags_;
   // One byte per cell, non-zero where a blocker's field is stamped. Allocated
   // lazily: a level with no blocker on it costs nothing.
   std::vector<std::uint8_t> blocker_;

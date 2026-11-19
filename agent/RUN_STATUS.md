@@ -10,6 +10,12 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - basher-one-way-001: **needs_review** — Make the Basher respect the one-way arrow walls on Now You're Stalking
+- native-log-quiet-001: **ready** — The native game no longer floods the console with routine logs
+- escape-seams-001: **ready** — Tube seams in Escape to Victory (and those left in Now You're Stalking) are closed
+- rat-motion-smoothing-001: **ready** — Evil rats move smoothly like lemmings instead of jittering
+- lane-spawn-blocker-001: **ready** — Lemmings spawn in the centre lane and lerp out; blockers stand in the centre
+- digger-lane-facing-001: **ready** — Diggers face outward on the outer lane and toward the cylinder on the inner lane
+- balloon-gyrate-001: **ready** — The departing exit balloon's basket circles slightly as it flies away
 
 ## Recently completed queue entries
 

@@ -27191,6 +27191,126 @@
         }
       ],
       "lead_note": " 2026-11-19: the first review passed the production path and the smoke gate and blocked only criterion 2, which required a human playtest result no reviewer can supply. Per AGENTS.md Verification, a playtest fix is accepted at the user's next playtest; criterion 2 now asks for the exact playtest positions and expected results. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 2: On the next human playtest, enter node 27 from the map and assign a Basher at an arrow wall. A forbidden approach leaves the wall intact, plays one Scrape, and turns the worker back. A permitted approach opens a visible passage bottom first, then top. Use the installed cells to check both facing masks. Record the actual playtest result and any remaining route blocker."
+    },
+    {
+      "id": "native-log-quiet-001",
+      "title": "The native game no longer floods the console with routine logs",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 19 J2: running the native clone prints a flood of logs to the console that do not look important. web-perf-001 (docs/scratch/web-perf-001.md) already removed the per-draw backdrop stats line and bounded the browser console; the native build still prints routine per-frame, per-level or per-asset diagnostics. Run the native release clone through a normal level (headless or snapshot entry points, private save) and capture its stdout/stderr; classify each recurring line. Keep warnings and errors that indicate a real fault, one-line startup identity, and anything a test, verify.py, the replay CLI or a documented tool parses (search tools/, cmake/, scripts/ and src/__test__ before removing a line). Remove or gate routine lines behind an opt-in environment variable or debug flag, documented in the report. Do not change any replay/sweep output format. Difficulty: routine. Recommended model: Sonnet. Reason: log classification and gating, no behavior change. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report lists each recurring native log line before the change, its source, and whether it was kept, removed or gated (and behind what), and confirms nothing that tests or tools parse was removed.",
+        "A normal native level run prints only startup identity and genuine warnings or errors; the gated diagnostics still appear when opted in; replay CLI and level-sweep output are unchanged.",
+        "All promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "escape-seams-001",
+      "title": "Tube seams in Escape to Victory (and those left in Now You're Stalking) are closed",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 19 J1: after stalking-seams-001 (a sampling fix on the arrow faces and rail; docs/scratch/stalking-seams-001.md) the user still sees seams in Now You're Stalking (E22_KF_1, node 27; location not given) and obvious ones in Escape to Victory (E11_KF_1, node 28): (a) a vertical seam through the spawn area, on the cylinder background behind the hatch (the hatch box itself has no seam); (b) a horizontal seam across the big metal blocks below the spawn and the wood to the left of them, running all the way around the cylinder. A seam that runs all the way around suggests a band/row boundary; a vertical one suggests an angular bucket, texture wrap (u=0/1) or block-column boundary. Render both levels from the clone (framebuffer output) at the entry camera and several yaw/pitch positions, locate each seam, and classify its cause: mesh vertices not shared or rounded differently across bands, buckets or cell blocks, T-junctions, UV/texel-edge bleeding or wrap, raster edge/fill rule, depth fighting between the tube and backdrop. Compare with the original's static evidence where retained and fix the production cause so the surfaces are continuous on both levels; check that the stalking-seams-001 fix still holds. Do not change simulation, picking or actor occlusion. Difficulty: difficult. Recommended model: Opus. Reason: geometry/raster cause across two levels, one fix already partial. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label.",
+        "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression.",
+        "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "rat-motion-smoothing-001",
+      "title": "Evil rats move smoothly like lemmings instead of jittering",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 19 J5: the rats in Escape to Victory (E11_KF_1, node 28; first level with evil rats, evil-rats-001) jitter as they move; lemmings do not, because their drawn position goes through LemmingMotionTracker (src/app/LemmingMotion.cpp: interpolation between simulation updates, discontinuity guard, lane smoothing). The rat population does not use it. Give the rats the same presentation smoothing through the production actor path (a shared tracker or the same logic for the rat population), with the same discontinuity snapping, fast-forward and pause handling, and the rat's own lane/depth rule (from static evidence or labelled provisional). Presentation only: rat simulation, attack contact, counts and picking are unchanged. Difficulty: routine. Recommended model: Sonnet. Reason: reuse of an existing, accepted smoothing path for a second population. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the jitter's cause in the rat draw path and how the rats now reuse the lemmings' smoothing, citing static evidence or labelling choices provisional.",
+        "In Escape to Victory the rats move smoothly at normal speed and in fast-forward, snap correctly on turns or teleport-like jumps, and stay still when paused; lemming motion is unchanged.",
+        "Rat simulation, attacks, counts and picking are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "lane-spawn-blocker-001",
+      "title": "Lemmings spawn in the centre lane and lerp out; blockers stand in the centre",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 19 J3 and J7, user-stated rules. Lemmings are drawn at a lane depth across the walkway: LemmingMotionTracker (src/app/LemmingMotion.cpp, walkingLane, READ 0x42F93C / 0x42F977) puts left-facing walkers at 0.25 and right-facing at 0.75 and approaches the target gradually. Today a new lemming starts at 0.75 (the !e.valid branch) and non-walker states keep their last lane. J3: a lemming leaving the hatch should appear in the centre (0.5) and then lerp to its side lane according to its movement direction, using the existing approach rate. J7: a blocker should always stand in the centre (0.5) regardless of the direction it was walking when it started blocking; it should move there smoothly with the same approach, and if released (e.g. its ground removed) return to its walking lane the same way. Check static evidence for the original's initial lane and the blocker's lane (0x42F93C/0x42F977 and the blocker state) and cite it; where the evidence differs from the user's rule, implement the user's rule and record the difference. Keep the exit-jump lane logic (dz toward 1.5) unchanged. Presentation only. Difficulty: routine. Recommended model: Sonnet. Reason: two small rules in one existing tracker. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report cites the static evidence for the initial and blocker lanes and states where the user's rule differs, if it does.",
+        "A lemming leaving the hatch is first drawn at the centre lane and moves smoothly to the lane for its direction; a blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged.",
+        "Simulation, picking and occlusion rules are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "digger-lane-facing-001",
+      "title": "Diggers face outward on the outer lane and toward the cylinder on the inner lane",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 19 J6, a user-stated rule that refines digger-outward-001 (docs/scratch/digger-outward-001.md: the digger's direction is set to phase 0.75 at 4159B4 -> 4683E9 and the view chosen per frame from the camera at 42EEF2, so today every digger faces outward from the cylinder). Rule: a digger on the outside of the cylinder (outer lane, it was walking right) faces forward/outward as now; a digger on the inside (inner lane, it was walking left) faces toward the cylinder. Lanes come from LemmingMotionTracker (walkingLane: left 0.25, right 0.75). Re-check the original's evidence at 4159B4/4683E9/42EEF2 for whether the phase depends on the prior facing or lane, cite it, and where it differs from the user's rule implement the user's rule and record the difference. Keep the per-frame camera-dependent view selection, so a digger still turns as the cylinder rotates. Presentation only. Difficulty: routine. Recommended model: Sonnet. Reason: one facing rule on an accepted, located path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report re-reads the digger's direction evidence (4159B4, 4683E9, 42EEF2), says whether the original depends on prior facing or lane, and states where the user's rule differs.",
+        "A digger that was walking right faces outward from the cylinder and one that was walking left faces toward the cylinder, at every rotation, with the view still changing as the camera turns; other states are unchanged.",
+        "Simulation and picking are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "balloon-gyrate-001",
+      "title": "The departing exit balloon's basket circles slightly as it flies away",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 19 J4: when all lemmings are in the exit balloon it moves linearly away from the cylinder; the user confirms that path is correct but expects a gyrating motion, the basket moving in a small circle as it departs. Related accepted work: exit-balloon-path-001 (departure path), exit-balloon-bob-001 (idle bob), hatch-exit-presentation-001; production code in src/app/ExitBalloon.h and its callers. From static evidence find whether the original adds a circular or sway component to the departing balloon or basket (amplitude, period, phase, whether rope/balloon follow) and implement it on top of the existing linear departure, keeping that path, its duration and the camera/results timing unchanged. If no evidence is found, implement a small provisional circle (labelled) whose size and period read as gentle. Presentation only. Difficulty: routine. Recommended model: Sonnet. Reason: an additive term on an accepted path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report cites the original's evidence for the departing balloon's sway or labels the circle's radius and period provisional.",
+        "At level end the balloon still leaves along the same linear path and duration, with the basket moving in a small circle as it goes; the idle bob and the jump-in landing are unchanged.",
+        "All promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

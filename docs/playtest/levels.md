@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 27 of 102.
+under docs/playtest/replays/. Won so far: 28 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -38,8 +38,8 @@ under docs/playtest/replays/. Won so far: 27 of 102.
 | 24 | MM_ALL_8_002 | Wandering Free | ok | playtest 15 | pass | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 25 | MM_ALL_8_003 | The Iron Curtain | ok | playtest 15 | pass |  |
 | 26 | E18_KF_2 | Make Mine a Large One | ok | playtest 17 | retired (G1 fix) | playtest 17 G1, G2 fixed, awaiting playtest |
-| 27 | E22_KF_1 | Now you're stalking | ok |  |  | playtest 18 H1 lanterns black, H2 arrow-block seams, H3 entry blue rectangle |
-| 28 | E11_KF_1 | Escape to victory | ok |  |  |  |
+| 27 | E22_KF_1 | Now you're stalking | ok | playtest 19 | pass | playtest 19 J1 seams remain |
+| 28 | E11_KF_1 | Escape to victory | ok |  |  | playtest 19 J1 seams, J5 rat jitter |
 | 29 | e06_kf_1 | Lets play 'catch'. | ok |  |  |  |
 | 30 | M08_KF_1 | 2 sides to every story | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 31 | E16_KF_1 | Wood you believe it? | ok |  |  |  |

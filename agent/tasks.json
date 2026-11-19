@@ -25818,6 +25818,27 @@
         "log": "build\\agent-runs\\20261119T000859-55692-63676261\\verification.log",
         "verified_content": "63807bacc667e3b484eedec695501397429abd8b4f6b035fd2386ac0bf8b9408"
       }
+    },
+    {
+      "id": "opengl-plan-001",
+      "title": "Master plan for converting the renderer to OpenGL",
+      "status": "ready",
+      "depends_on": [
+        "web-perf-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": true,
+      "kind": "research",
+      "user_authorized": true,
+      "scope": "User request (2026-11-18): write a master plan for converting the clone's renderer from the software rasterizer to OpenGL. This pulls the docs/POST_1_0.md item 'OpenGL renderer' forward for planning only: the deliverable is a plan, not an implementation, and no production source, build, test or tool file changes in this task. Write the plan as docs/OPENGL_PLAN.md and a short report under docs/scratch/opengl-plan-001.md. The plan must rest on the current code, not assumptions: inventory the rendering pipeline as it stands with file and function references, including the scene path (runApplicationLeg -> renderFrame -> scheduleSceneFrame, TubeScene, BackdropScene, RasterCommandBatch/RasterRows bands and threads, the depth buffer and its provisional depth policies, per-pixel actor occlusion against scene depth (ActorDepth/ActorOcclusion), actor sprites and the light-map lookup, billboards, fluid surfaces, particles and decals), the 2D layers (RuntimeHud, skill panel, captions, frontend/menu/map scenes, cursors), texture decoding and palettes, the SDL presenter and window scaling, the Emscripten build (pthreads, WebGL availability), and the replay and smoke tests that render. For each, say what an OpenGL (desktop GL 3.3 core via the existing plain SDL2 + opengl32, and WebGL2/GLES3 for Emscripten from one shader source) version needs, which behaviors are hard to reproduce on the GPU (exact depth and clipping, texture sampling and filtering, palette or blend effects, per-pixel occlusion, readback for tests), and the known defects it is expected to remove (for example playtest 7 W1 z clipping). Propose an architecture: the renderer boundary, keeping the software path as the reference and as a fallback selectable at run time, and how pixel or tolerance comparisons between the two paths become the parity check. Break the work into ordered phases, each a queueable task with scope, visible acceptance, risk, Difficulty (routine/difficult/exceptional) and Recommended model (Sonnet/Opus/Fable) with a reason, and state which phases must wait for playable v1. Include performance targets (native 144 fps, browser rotation) and how they would be measured, and the open questions the user must decide. Static inspection of the clone source and retained docs is the evidence; static REA only if the original's renderer behavior is needed for a parity question. Difficulty: difficult. Recommended model: Opus. Reason: a cross-cutting plan that must be grounded in many rendering modules. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "docs/OPENGL_PLAN.md inventories the current rendering pipeline with file and function references covering the scene, actors and occlusion, 2D layers, textures, presenter, Emscripten build and rendering tests.",
+        "The plan proposes a renderer boundary that keeps the software renderer as reference and run-time fallback, and a parity check between the two paths.",
+        "The plan breaks the conversion into ordered phases, each with scope, visible acceptance, risk, Difficulty and Recommended model, and states which wait for playable v1.",
+        "The plan names the GPU-hard behaviors, performance targets with how they are measured, and open questions for the user.",
+        "No production source, build, test or tool file is changed; the smoke profile passes and the report ends with a two-line handoff."
+      ]
     }
   ]
 }

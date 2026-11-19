@@ -9,6 +9,8 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- rat-hit-sound-002: **ready** — A lemming punched off by a rat plays the original's sound, not Ohno
+- rat-fling-spin-random-001: **ready** — Lemmings punched off by rats tumble with a random spin direction and rate
 
 ## Recently completed queue entries
 
@@ -35,11 +37,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-316074c6922e4f53a7d138168bb8bb75/result.json`
-- Status: **blocked**
-- Duration: 1h 54m 35s
-- Completed in this invocation: rat-victim-fling-001, rat-attack-sound-001, web-audio-latency-001, explosion-pieces-3d-001
-- Reason: All four Playtest 20 fixes passed independent review. The next playable-v1 dependency is human play on the accepted build. The ledger records wins on 29 of 102 levels, and node 29, Let's Play 'Catch', is the first without a recorded human win. A demonstrated failure on that route would establish the next production scope. The remaining Now You're Stalking seam is explicitly parked until the player identifies its location. The retained trace already narrows a future fix to the affected tile or ge
+- Result: `build/agent-runs/loop-23adbb10d5504ab29fd5cfe9e6271308/result.json`
+- Status: **cancelled**
+- Duration: 0h 00m 20s
+- Completed in this invocation: none
+- Reason: Keyboard interrupt
 
 ## Documentation handoff
 

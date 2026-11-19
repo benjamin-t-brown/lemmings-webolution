@@ -29288,6 +29288,46 @@
         "log": "build\\agent-runs\\20261119T204701-53088-f205d677\\verification.log",
         "verified_content": "84d7e3349e8eb97edb52a2e1821ffed33ad9c10907d2da0358d88f983121ad86"
       }
+    },
+    {
+      "id": "rat-hit-sound-002",
+      "title": "A lemming punched off by a rat plays the original's sound, not Ohno",
+      "status": "ready",
+      "depends_on": [
+        "explosion-pieces-3d-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 21 L1: rat-attack-sound-001 (docs/scratch/rat-attack-sound-001.md) made the clone play `Ohno` (SOUNDS\\OHNO.WAV) once when a rat punches a lemming off the cylinder in Escape to Victory (E11_KF_1, node 28). The user, who knows the original, says Ohno is not the sound that plays there. Re-derive from the binary and the installed data what the original actually plays when a rat hits a lemming, and make the clone play that. Lead notes from a partial static look (verify, do not trust): 42E340..42E360 reads handle 4E32CC (= 4C6A08 + 1C8C4) and passes it as the sample to 44535B -> 404CC0(58CB90) -> 497F39; 45E51F registers the name at 4C0CAC ('Ohno') into that slot via 41D7D0. But 41D7D0 does not compare names: it reuses the first bank entry whose byte +84 is zero or appends, so the slot-to-sample binding depends on what is already in bank 58CB90 and on how entries are later loaded by name ('Sounds\\%s.wav' at 4C00F8 via 444629 and 4C42EC via 497B5D). Check whether level, theme or sprite loading registers or replaces bank entries before or after 45E51F (the installed level files carry their own sound-name lists), whether the rat's punch%d clips in SPRITES\\EVILRATHI.SPR / EVILRATLO.SPR or the 416BF0/416C49 flying figure carry their own sound, and which installed WAVs are only reachable from data (e.g. MOUSEPRE, THUD, THUNK, BANG, OING, DEATHROLL are not named in the EXE). Also check whether the hit and the fall/expiry have separate sounds. Keep rat-victim-fling-001's presentation, timing and counts unchanged. Difficulty: difficult. Recommended model: Opus. Reason: the obvious static path gives the answer the user has ruled out; the binding must be traced through the bank and data. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the sample(s) the original plays when a rat hits a lemming, with the trigger point, the static path that resolves the sample (bank registration, load and play addresses or the data record that names it) and how this reconciles with the 42E349 read of slot 4E32CC.",
+        "If no static or data evidence identifies a sample other than Ohno, the task stops blocked with that evidence and the candidates found, instead of choosing a sound.",
+        "Otherwise the clone plays the identified sample(s) at those moments in Escape to Victory, shown by a clone sound-event trace under build/; the bomber Ohno and other lemming sounds are unchanged.",
+        "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "rat-fling-spin-random-001",
+      "title": "Lemmings punched off by rats tumble with a random spin direction and rate",
+      "status": "ready",
+      "depends_on": [
+        "explosion-pieces-3d-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 21 L2: lemmings punched off the cylinder by rats (rat-victim-fling-001, docs/scratch/rat-victim-fling-001.md) all rotate the same way at the same rate; in the original the spin is randomized. rat-victim-fling-001 already retained the evidence: 496D5B/496C84 apply a signed random view-phase rate 16*U^3 to the flying figure and advance its strip, but the clone chose a provisional fixed two view turns per second signed by facing. Re-read 496D5B/496C84 (the random source, the distribution of U and its sign, the units of the rate and how it maps to the drawn rotation) and give each flying figure its own random spin direction and rate as the original does. The random draw is presentation only: it must not consume or perturb the simulation RNG, so recorded replays and the sweep stay identical. Keep launch, gravity, lifetime, occlusion and sounds unchanged. Difficulty: routine. Recommended model: Sonnet. Reason: replace one provisional constant with the retained formula. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report cites 496D5B/496C84 for the spin distribution, sign and units, or labels any remaining choice provisional.",
+        "Several rat victims in Escape to Victory spin with differing directions and rates drawn from that distribution, shown by clone framebuffer frames or a per-figure spin trace under build/; launch, fall, lifetime and occlusion are unchanged.",
+        "Simulation RNG and counts are untouched; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

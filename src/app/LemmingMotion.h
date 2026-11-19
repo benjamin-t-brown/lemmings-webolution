@@ -27,12 +27,17 @@ struct LemmingDrawPosition {
 class LemmingMotionTracker {
  public:
   // Call before advancing and after EACH World update, including fast-forward
-  // passes. Identity is the stable append-only World::lemmings() index.
+  // passes. Lemmings and placed rats each use their own stable World indices.
   void observe(const sim::World& world);
   LemmingDrawPosition positionOf(std::size_t index, const sim::World& world) const;
+  // Call after presenting a window frame, once all readers used its lane samples.
+  void frameDrawn();
+  LemmingDrawPosition ratPositionOf(std::size_t index, const sim::World& world) const;
   // Presentation only: saved actors retain a one-second jump, without becoming
   // alive/assignable again. Negative outside that interval. Uses level time.
   double exitSeconds(std::size_t index, const sim::World& world) const;
+  // Presentation only: center the departing basket during exit landings.
+  double exitBalloonSwayScale(const sim::World& world) const;
 
  private:
   struct Point {
@@ -47,11 +52,18 @@ class LemmingMotionTracker {
     std::uint64_t observedMs = 0;
     // Q1: keep radial presentation separate from the discontinuity-reset X/Y path.
     double laneZ = 0.75;
+    bool firstHatchDrawPending = false;
     double exitStepSeconds = 0.0;
     std::uint64_t exitUpdatedMs = 0;
     std::deque<Point> path;
   };
+  static void observePosition(Entry& entry, const sim::Lemming& actor,
+                              const sim::World& world, bool snapToCurrent);
+  static LemmingDrawPosition samplePosition(const std::vector<Entry>& entries,
+      std::size_t index, const sim::World& world, LemmingDrawPosition confirmed);
+
   std::vector<Entry> entries_;
+  std::vector<Entry> ratEntries_;
 };
 
 }  // namespace webo::app

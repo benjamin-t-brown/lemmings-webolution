@@ -123,6 +123,7 @@ void World::spawnFromEntrance(std::size_t entranceIndex, double budgetSeconds) {
   l.x = setup_.terrain.wrapX(e.x);
   l.y = e.y;
   l.state = State::Faller;
+  l.releasedFromHatch = true;
   // Round 29: hatch+0xB0 -> [lemming+0x4c] at 0x0042E05F.
   l.sheetType = e.sheetType;
   // 0x42DFDD initializes +0x40=1; 0x425C6E..0x425C7D reverses it only
@@ -1563,8 +1564,9 @@ void World::stepRats(double dt, bool tickBoundary) {
       if (rat.animationSeconds > rat.punchDurations[rat.punch]) finishRatAttack(rat);
       continue;
     }
-    // Original 426414 tests support before calling the common actor update.
-    if (groundAt(l.x, l.y + l.verticalDir, l.verticalDir)) {
+    // The clone's ground probe includes fluid surfaces. A drowning rat must
+    // reach stepDrown without a punch replacing its state and resetting its timer.
+    if (l.state != State::Drown && groundAt(l.x, l.y + l.verticalDir, l.verticalDir)) {
       for (std::size_t i = 0; i < lemmings_.size(); ++i) {
         auto& victim = lemmings_[i];
         if (!victim.active() || victim.sheetType == 3) continue;

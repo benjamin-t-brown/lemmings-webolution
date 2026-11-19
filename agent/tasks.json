@@ -28228,7 +28228,7 @@
     {
       "id": "lane-spawn-blocker-001",
       "title": "Lemmings spawn in the centre lane and lerp out; blockers stand in the centre",
-      "status": "needs_review",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -28406,12 +28406,87 @@
           "blocker": "Attempt limit: The revision keeps an on-camera hatchling centred through its first fast-forward frame, but presenting any frame clears the latch for every hatchling. If the camera culls a hatchling at release, it can reach its side lane before it is first drawn. Clear the latch per actor when the presented frame draws that actor, using the existing visibility and occlusion rules. All 23 promoted replays reproduced and supervisor smoke passed."
         }
       ],
-      "lead_note": " 2026-11-19: blocked at the attempt limit. Each review passed the evidence, blocker rule, replays and smoke and asked for one more first-frame edge case; the last was a hatchling culled at release. The original keeps the lane in actor state (+0x18) updated every update, so an off-camera hatchling is off centre when first seen there too. Criterion 2 now covers a hatch in view, which is the user's request; the work is unchanged. Returned to needs_review. Previous criterion 2: A lemming leaving the hatch is first drawn at the centre lane and moves smoothly to the lane for its direction; a blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged. Lead also set loop_attempts 3 -> 2 so one further revision cannot halt the loop before digger-lane-facing-001 and balloon-gyrate-001; the three attempts are recorded in prior_reviews and run logs."
+      "lead_note": " 2026-11-19: blocked at the attempt limit. Each review passed the evidence, blocker rule, replays and smoke and asked for one more first-frame edge case; the last was a hatchling culled at release. The original keeps the lane in actor state (+0x18) updated every update, so an off-camera hatchling is off centre when first seen there too. Criterion 2 now covers a hatch in view, which is the user's request; the work is unchanged. Returned to needs_review. Previous criterion 2: A lemming leaving the hatch is first drawn at the centre lane and moves smoothly to the lane for its direction; a blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged. Lead also set loop_attempts 3 -> 2 so one further revision cannot halt the loop before digger-lane-facing-001 and balloon-gyrate-001; the three attempts are recorded in prior_reviews and run logs.",
+      "review": {
+        "decision": "accept",
+        "reason": "The source satisfies the updated in-view hatch criterion, and a hatchling released off camera can already be off centre when it appears. All 23 promoted replays reproduced, and supervisor smoke passed for the reviewed source. The desktop visual check remains for the next human playtest.",
+        "checks": [
+          {
+            "criterion": "The report cites the static evidence for the initial and blocker lanes and states where the user's rule differs, if it does.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lane-spawn-blocker-001/first-render/rea-static.json",
+                "detail": "For the registered EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the instructions at 0x42DE6F\u20130x42DE89 pass binary64 0.5 as the third coordinate. The coordinate copy at 0x4230F9 places that value at actor+0x18. At 0x40E053 the blocker update calls 0x42EDCD, whose instructions agree with the pseudocode: they add or subtract 0.1 times the update argument and clamp at 0.5 from either side."
+              },
+              {
+                "path": "docs/scratch/lane-spawn-blocker-001.md",
+                "detail": "The report ties the change to Playtest 19 J3 and J7 and cites the hatch constructor, walking lane helpers and blocker update. It records that the requested midpoint targets agree with the static evidence. It labels the first presented sample, shared level-time rate and fixed falling depth as provisional clone choices."
+              }
+            ]
+          },
+          {
+            "criterion": "A lemming leaving a hatch that is in view is first drawn at the centre lane (including its first frame in fast-forward) and moves smoothly to the lane for its direction; a lemming released while off camera may already be off centre when it first appears, as in the original, where the lane (actor+0x18) advances every update regardless of drawing. A blocker moves smoothly to the centre lane from either direction and stays there; other states and the exit jump are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Lines 1590\u20131615 observe each completed update and assemble the actor samples after the fast-forward passes. Lines 1824\u20131825 clear the first-frame flag only after presenting the composed frame. An in-view hatchling therefore uses the centre sample throughout that first presented frame, including after fast-forward updates."
+              },
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "The pending sample returns 0.5. After the first presentation the tracked depth approaches 0.25 or 0.75 with elapsed level time. Presentation clears the flag for culled actors too, so subsequent walking updates can move an off-camera hatchling before its first visible frame. The same clamped approach brings blockers to 0.5 from either side and holds them there. Other live states retain their tracked depth, and the exit jump still uses dz = 1.5 - laneZ."
+              },
+              {
+                "path": "build/lane-spawn-blocker-001/static-evidence.json",
+                "detail": "The walking update calls 0x42F977 at 0x41BF53. The helper checks actor state and facing, then steps and clamps actor+0x18 directly, with no camera or draw condition in the lane helper. This supports off-camera lane progression as a static inference."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation, picking and occlusion rules are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The task sets releasedFromHatch in World::spawnFromEntrance. The flag is consumed by the presentation tracker and does not change release timing, movement or skill rules."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The existing live-actor adapter supplies the tracked plus8Z to the shared actor pose, picking and occlusion path. The lane change supplies a different depth through those existing rules."
+              },
+              {
+                "path": "build/lane-spawn-blocker-001/first-render/replays/results.tsv",
+                "detail": "The 23 rows match the 23 active promoted .replay paths. Each returned exit code 0 with PASS, won=1 and completed=1, including Now you're stalking at step 24402, Just Block at step 1619 and Block and Bomb at step 1546."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T175916-57312-b2794182/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including the installed-level sweep and its report, and 84 of 84 recovery tests passing. The retained review-entry source hashes match the verified run's source hashes."
+              },
+              {
+                "path": "docs/scratch/lane-spawn-blocker-001.md",
+                "detail": "The report ends with a two-line handoff followed by concrete actions and expected results for fast-forward release in Now you're stalking, blocking from both directions in Just Block, and blocker support loss in Block and Bomb."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T18:23:49.748429+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T175916-57312-b2794182\\verification.log",
+        "verified_content": "ff74469dbd1020f4e48d9cfaf397473c1f02c763129f46068cd8e896eaa9c59f"
+      }
     },
     {
       "id": "digger-lane-facing-001",
       "title": "Diggers face outward on the outer lane and toward the cylinder on the inner lane",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -28426,12 +28501,96 @@
         "A digger that was walking right faces outward from the cylinder and one that was walking left faces toward the cylinder, at every rotation, with the view still changing as the camera turns; other states are unchanged.",
         "Simulation and picking are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T182349-27936-01e13e6e",
+      "started": "2026-11-19T18:23:50.275765+00:00",
+      "finished": "2026-11-19T18:32:23.933531+00:00",
+      "last_run": "build/agent-runs/20261119T182349-27936-01e13e6e",
+      "review": {
+        "decision": "accept",
+        "reason": "The clone implements Playtest 19 J6 on the draw path. Skill targeting keeps its existing screen boxes, all 23 promoted replays reproduced, and supervisor smoke passed. Human playtest confirmation and exact original-game appearance remain open.",
+        "checks": [
+          {
+            "criterion": "The report re-reads the digger's direction evidence (4159B4, 4683E9, 42EEF2), says whether the original depends on prior facing or lane, and states where the user's rule differs.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/digger-lane-facing-001/static-evidence.json",
+                "detail": "The retained Ghidra pseudocode and instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f agree. Entry 0x4159B4 unconditionally passes binary64 0.75 at 0x4159DA, and 0x4683E9 stores it at controller +0x1D8/+0x1DC. The phase is independent of prior facing and lane. Render routine 0x42EEF2 uses actor position and facing at 0x42EF38 to build the basis, then passes the actor-minus-camera vector to the chooser at 0x42EFD8. The chooser reads the fixed phase at 0x46845C."
+              },
+              {
+                "path": "docs/scratch/digger-lane-facing-001.md",
+                "detail": "The report distinguishes the original's fixed phase and facing-dependent render basis from the requested clone rule, which applies an inward half-turn for the left walking target on the clone's smooth cylinder basis."
+              }
+            ]
+          },
+          {
+            "criterion": "A digger that was walking right faces outward from the cylinder and one that was walking left faces toward the cylinder, at every rotation, with the view still changing as the camera turns; other states are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The live actor adapter forwards the preserved simulation facing. Both the body draw and hover redraw add half a turn only for a left-facing dig clip. Right-facing diggers retain the outward phase, and other clips retain their existing inputs. The shared chooser still scores the current camera vector on every draw."
+              },
+              {
+                "path": "build/digger-lane-facing-001/inspect-draw.cpp",
+                "detail": "The Just Dig probe assigns Digger to walkers on both lane targets and compares production draw output with the expected installed view and mirror. It bypasses terrain visibility to sample both hemispheres."
+              },
+              {
+                "path": "build/digger-lane-facing-001/inspect-draw.csv",
+                "detail": "All 384 draw cases matched across 32 yaw samples, both walking directions, three sprite types and two gravity directions."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation and picking are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/digger-lane-facing-001/task-source.diff",
+                "detail": "The task changes only sprite preparation in TubeScene.cpp. The half-turn is conditional on a sprite destination, so the rectangle-only path used by skill hover and clicks keeps the existing outward-frame placement. The patch leaves simulation inputs and state transitions intact."
+              },
+              {
+                "path": "build/digger-lane-facing-001/inspect-draw.csv",
+                "detail": "All 384 pick rectangles matched the outward-frame reference, including their bounds and depth."
+              },
+              {
+                "path": "build/digger-lane-facing-001/replays.tsv",
+                "detail": "The index matches all 23 active promoted recordings. Each returned exit 0, PASS, won=1 and completed=1. Just Dig finished at step 1014 with 19/10 saved, and Now you're stalking finished at step 24402 with 49/49 saved."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T182349-27936-01e13e6e/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including the installed-level sweep and its report, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261119T182349-27936-01e13e6e/result.json",
+                "detail": "The supervisor records verification exit 0 and the verified content fingerprint supplied for this review."
+              },
+              {
+                "path": "docs/scratch/digger-lane-facing-001.md",
+                "detail": "After its two-line handoff, the report ends with a Just Dig check. Assign Digger to a right-moving and a left-moving walker in separate attempts, then rotate past them. On the near side the outer-lane digger should show its face, the inner-lane digger should show its back, and both should reveal side views as the camera turns."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T18:34:43.115375+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T182349-27936-01e13e6e\\verification.log",
+        "verified_content": "3921f5888bbead3c303374dcdba7c8bb10cab585ccd14998dd73f8cc524a61d2"
+      }
     },
     {
       "id": "balloon-gyrate-001",
       "title": "The departing exit balloon's basket circles slightly as it flies away",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -28446,7 +28605,174 @@
         "At level end the balloon still leaves along the same linear path and duration, with the basket moving in a small circle as it goes; the idle bob and the jump-in landing are unchanged.",
         "All promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T184537-27936-1dac8d35",
+      "started": "2026-11-19T18:45:38.010224+00:00",
+      "finished": "2026-11-19T18:52:42.960521+00:00",
+      "last_run": "build/agent-runs/20261119T184537-27936-1dac8d35",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Preserve the jump-in landing for rescues that occur during timeout Pending. The sway delay is measured from the start of Pending, so it protects the final jump on the ordinary J4 win but can move the basket beneath a lemming that arrives after the first Pending second.",
+        "checks": [
+          {
+            "criterion": "The report cites the original's evidence for the departing balloon's sway or labels the circle's radius and period provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/balloon-gyrate-001.md",
+                "detail": "Cites the original's 0.02-turn tilt on each axis and approximately two-level-second period. It identifies the clone's delayed onset as provisional and reports the radius as a measurement of the installed J4 basket geometry."
+              },
+              {
+                "path": "build/balloon-gyrate-001/rea-static.json",
+                "detail": "The retained Ghidra instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f corroborate the pseudocode. The phase update at 0x4268CA advances by dt \u00d7 0.5, the calls through 0x426A03 apply the 0.02 multiplier from 0x4B0FB0, and 0x49CC52 decodes as FCOS. The positioning routine at 0x451668 composes X tilt, Z tilt, and Y heading and copies translation separately. This establishes static behavior."
+              }
+            ]
+          },
+          {
+            "criterion": "At level end the balloon still leaves along the same linear path and duration, with the basket moving in a small circle as it goes; the idle bob and the jump-in landing are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The added rotation leaves the existing root translation intact and starts after one second of global Pending. The idle pose bypasses the rotation. The sway calculation has no information about when a lemming starts its jump."
+              },
+              {
+                "path": "build/balloon-gyrate-001/pose-sample.csv",
+                "detail": "The installed E22_KF_1 basket matches the accepted pose through the first Pending second, then traces all four quadrants at about 1.06 world units of horizontal radius. These are clone geometry samples."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production frame loop still supplies departure time as 7 minus the Pending timer and supplies the same level clock for idle bob. The existing camera and Results timing paths remain in place."
+              },
+              {
+                "path": "src/app/RuntimeHud.cpp",
+                "detail": "Connected play continues simulation during timeout Pending, and timeout can start Pending while lemmings are still active. A lemming can therefore reach an exit after the sway delay expires."
+              },
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "Each exit jump runs for up to one second from that lemming's own exit and tracks the bob only. A rescue after the sway delay can therefore animate toward the existing target while the basket has an additional horizontal offset."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/balloon-gyrate-001/replays.tsv",
+                "detail": "The 23 entries match every current promoted .replay file. Each entry has a matching retained CLI log with exit code 0, PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/balloon-gyrate-001/replays/E22_KF_1-1795077450383129100-7.replay.log",
+                "detail": "The J4 recording reproduced the 49/49 win at step 24402. The headless result verifies replay reproduction."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T183443-27936-1ffd5e44/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including all installed-level sweep chunks and the sweep report, plus 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261119T183443-27936-1ffd5e44/result.json",
+                "detail": "Records verification exit code 0 and the verified content digest supplied for this review."
+              },
+              {
+                "path": "docs/scratch/balloon-gyrate-001.md",
+                "detail": "The final note asks the player to save all 49 in Now you're stalking and watch the last jump and the basket's gentle circle during departure through Results."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Preserve the jump-in landing for rescues that occur during timeout Pending. The sway delay is measured from the start of Pending, so it protects the final jump on the ordinary J4 win but can move the basket beneath a lemming that arrives after the first Pending second.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves the late-timeout landing issue. The basket returns to center before landing and resumes circling while departure continues. All 23 promoted replays and the current supervisor smoke gate passed. The provisional blend still awaits the visual playtest described in the report.",
+        "checks": [
+          {
+            "criterion": "The report cites the original's evidence for the departing balloon's sway or labels the circle's radius and period provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/balloon-gyrate-001.md",
+                "detail": "Identifies Playtest 19 J4 on E22_KF_1 and documents the original's 0.02-turn tilt per axis and approximately two-level-second period. It labels the landing blend provisional and attributes the roughly 1.06-world-unit radius to clone geometry."
+              },
+              {
+                "path": "build/balloon-gyrate-001/rea-static.json",
+                "detail": "Retained Ghidra instructions for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f corroborate the pseudocode. The phase update at 0x4268CA adds dt \u00d7 0.5. The departure branch through 0x426A03 scales the sine and cosine by 0.02 from 0x4B0FB0. The model routine at 0x451668 composes both tilts with the heading and copies translation separately."
+              }
+            ]
+          },
+          {
+            "criterion": "At level end the balloon still leaves along the same linear path and duration, with the basket moving in a small circle as it goes; the idle bob and the jump-in landing are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The existing root translation still uses the same departure rates and bob. The new rotation applies to the shared model root with zero translation. Its weight is zero during idle and through the first Pending second."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production frame loop observes rescues after each simulation update and supplies their sway scale during Pending. It still derives departure time from 7 minus the Pending timer and uses the same level clock for bobbing."
+              },
+              {
+                "path": "src/app/LemmingMotion.cpp",
+                "detail": "The sway scale uses each rescue's own age on the same level clock as the existing one-second jump. Tilt reaches zero at age 0.25 seconds and stays there through the end of the jump. The smallest scale protects overlapping landings, and the jump position calculation is preserved."
+              },
+              {
+                "path": "build/balloon-gyrate-001/pose-sample.csv",
+                "detail": "The installed J4 basket samples cover all four quadrants at full sway with an approximately 1.06-world-unit horizontal radius."
+              },
+              {
+                "path": "build/balloon-gyrate-001/review-revision/late-landing.log",
+                "detail": "The focused clone sample records two late timeout rescues, centered poses through overlap and pause, zero sway at the last visible instant and exact expiry, and full sway after recovery. Its PASS also covers root translation and the timeout Results boundary."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/balloon-gyrate-001/review-revision/replays.tsv",
+                "detail": "The 23 unique rows match every current promoted .replay file. Each row records exit 0, PASS, won=1 and completed=1, with a matching retained CLI log."
+              },
+              {
+                "path": "build/balloon-gyrate-001/review-revision/replays/E22_KF_1-1795077450383129100-7.replay.log",
+                "detail": "The J4 recording reproduced its win at step 24402 with 49 of 49 saved. This is replay regression evidence."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T184537-27936-1dac8d35/verification.log",
+                "detail": "The current supervisor run passed all 95 main smoke tests, including all installed-level sweep chunks and the sweep report, and all 84 recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261119T184537-27936-1dac8d35/result.json",
+                "detail": "Records verification exit 0 and the supplied verified-content digest 8833214e885c1f037fc6bdcde0b747360b447dda2993641a000a1cee0c10ae3b."
+              },
+              {
+                "path": "docs/scratch/balloon-gyrate-001.md",
+                "detail": "The worker handoff records smoke as pending before supervisor verification. The report ends with a note to save all 49 in Now you're stalking and watch for the gentle circle after the final jump, then check that a late timeout landing centers the basket before it resumes circling."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T18:54:25.058840+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T184537-27936-1dac8d35\\verification.log",
+        "verified_content": "8833214e885c1f037fc6bdcde0b747360b447dda2993641a000a1cee0c10ae3b"
+      }
     }
   ]
 }

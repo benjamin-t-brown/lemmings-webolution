@@ -5,6 +5,17 @@
 
 namespace webo::app {
 
+inline constexpr double kExitJumpSeconds = 1.0;
+inline constexpr double kExitBalloonSwayBlendSeconds = 0.25;
+
+// Float-rounded pi from 0x4B0F88.
+inline constexpr double kExitBalloonPi = 3.1415927410125732;
+
+// Phase advances by 0.5 cycles per level second.
+inline double exitBalloonPhaseRadians(double levelSeconds) {
+  return std::max(0.0, levelSeconds) * kExitBalloonPi;
+}
+
 // READ 0x4268CA..0x426901, 0x426AC0..0x426AE6, 0x426D90:
 // phase += dt*0.5; logical Y = baseY + sin(phase*2*pi)*0.5.
 // The stored pi is float-rounded. Period is approximately two level seconds,
@@ -13,7 +24,7 @@ namespace webo::app {
 // the original load-time random phase (0x426D31). Use the existing level clock:
 // pause freezes it and fast-forward advances it, without changing simulation.
 inline double exitBalloonBob(double levelSeconds) {
-  return 0.5 * std::sin(std::max(0.0, levelSeconds) * 3.1415927410125732);
+  return 0.5 * std::sin(exitBalloonPhaseRadians(levelSeconds));
 }
 
 }  // namespace webo::app

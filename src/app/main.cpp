@@ -1621,9 +1621,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         hatchOpeningProgress = levelStart ? levelStart->openingProgress() :
             (arm > 0 ? world->levelClockMs()/1000.0/arm : 1.0);
         const auto& end = runtimeSim.endTransition();
+        const bool departing = end.phase() == app::LevelEndPhase::Pending;
         backdrop->setEntranceExitPresentation(*entranceExitPresentation, hatchOpeningProgress,
-            end.phase() == app::LevelEndPhase::Pending ? 7.0-end.timerSeconds() : 0.0,
-            world->levelClockMs() / 1000.0);
+            departing ? 7.0 - end.timerSeconds() : 0.0, world->levelClockMs() / 1000.0,
+            departing ? lemmingMotion.exitBalloonSwayScale(*world) : 1.0);
       }
       if (persistentFrontend && runtimeSim.endTransition().snapshot()) {
         const auto& result = *runtimeSim.endTransition().snapshot();
@@ -1822,6 +1823,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         { app::profile::Scope scope(app::profile::Upload); SDL_UpdateTexture(texture, nullptr, pixels, 640 * (uploadRgbx ? 4 : 3)); }
         { app::profile::Scope scope(app::profile::Copy); SDL_RenderClear(presenter); SDL_RenderCopy(presenter, texture, nullptr, nullptr); }
         { app::profile::Scope scope(app::profile::Present); SDL_RenderPresent(presenter); }
+        lemmingMotion.frameDrawn();
       }
       ++rendered;
     }

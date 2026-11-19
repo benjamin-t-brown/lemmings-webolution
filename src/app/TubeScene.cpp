@@ -151,10 +151,11 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
         scene.missing_.push_back(std::format("{}: {}", name, image.error()));
         continue;
       }
-      // Playtest 18 H2 verified edge bleed on this installed tube skin.
-      // The original terrain walker requests clamp at 0x43A6BB.
-      const auto routeAddress = assetName.starts_with(R"(TEXTURES\CYLINDER\E22_KF_1\)")
-          ? SceneAddress::Clamp : SceneAddress::Wrap;
+      // 0x43A6BB clamps terrain sampling. Scope the clone's change to the
+      // tube skins with edge bleed reported in playtests 18 H2 and 19 J1.
+      const bool clampRoute = assetName.starts_with(R"(TEXTURES\CYLINDER\E22_KF_1\)") ||
+                              assetName.starts_with(R"(TEXTURES\CYLINDER\E11_KF_1\)");
+      const auto routeAddress = clampRoute ? SceneAddress::Clamp : SceneAddress::Wrap;
       into.push_back(Tile{toTexture(*image), pos.column, pos.row, routeAddress});
       ++count;
     }
@@ -523,7 +524,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     const CameraBasis& camera, const SceneOptions& options,
     const SceneOptions::InjectedNativeWalker& injected, const AssetLibrary& lib,
     const TubePassBounds& bounds, std::span<const double> depth,
-    Image* clippedSprite = nullptr,
+    Image* spriteTarget = nullptr,
     const Texture* brickTexture = nullptr,
     const CylinderMesh* footprintMesh = nullptr, const CollisionGrid* footprintGrid = nullptr) {
   if (!options.composeSkipActorVisibility &&
@@ -553,7 +554,6 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
   double phase = options.composeActorPhase + injected.rotationPhase;
   if (walkSprite->name == "dig") {
-    // Playtest 12 B3 clarification: face outward, regardless of walk direction.
     // PROVISIONAL reference: use the smooth cylinder tangent rather than the
     // facing-dependent, faceted walking tangent. Native entry 4159B4 supplies
     // phase 0.75; the shared chooser still selects the view from the camera.
@@ -564,6 +564,10 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
     // The shared five-view chooser's front sector spans 33.75 degrees, ending
     // at phase 0.75's normal; half that sector is 3/64 of a turn.
     phase += 3.0 / 64.0;
+    // Playtest 19 J6: left walkers head for the inner lane. Turn their dig pose
+    // toward the cylinder. Keep the original clone rectangle for screen picking.
+    if (spriteTarget && injected.facing == static_cast<int>(sim::Facing::Left))
+      phase += 0.5;
   }
   std::size_t temporalIndex = static_cast<std::size_t>(std::max(0, injected.walkTemporalIndex));
   if (injected.clipSeconds >= 0.0) {
@@ -639,8 +643,8 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   // Keep the explicit visibility diagnostic able to reveal rejected actors,
   // including actors hidden by scene depth. Production never sets this flag.
   const bool sceneClip = !options.composeSkipActorVisibility && !options.composeSkipActorPose;
-  if (clippedSprite && (sceneClip || brickTexture)) {
-    auto& sprite = *clippedSprite;
+  if (spriteTarget && (sceneClip || brickTexture)) {
+    auto& sprite = *spriteTarget;
     sprite.width = camera.width;
     sprite.height = camera.height;
     sprite.alpha = AlphaMode::Embedded;
@@ -2001,13 +2005,17 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
   // Append outside the live rescue prefix and exit tails: rats draw through
   // the identical sprite/lighting/occlusion/zoom path but cannot be skill picks.
   constexpr const char* punches[]{"punch0", "punch1", "punch2", "punch3"};
-  for (const auto& rat : world.rats()) {
+  const auto& rats = world.rats();
+  for (std::size_t i = 0; i < rats.size(); ++i) {
+    const auto& rat = rats[i];
     const auto& l = rat.actor;
     if (!l.alive()) continue;
+    const auto drawn = motion ? motion->ratPositionOf(i, world) :
+        LemmingDrawPosition{static_cast<double>(l.x), static_cast<double>(l.y), rat.lane};
     SceneOptions::InjectedNativeWalker w;
-    w.plus8X = l.x;
-    w.plus8Y = terrainHeight - 1.0 - l.y;
-    w.plus8Z = rat.lane;
+    w.plus8X = drawn.x;
+    w.plus8Y = terrainHeight - 1.0 - drawn.y;
+    w.plus8Z = drawn.z;
     w.facing = int(l.facing);
     w.verticalDir = l.verticalDir;
     w.sheetType = 3;

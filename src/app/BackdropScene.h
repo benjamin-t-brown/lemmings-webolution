@@ -219,7 +219,8 @@ class BackdropScene {
   // belongs to this scene and is discarded when the application reloads it.
   std::expected<EntranceExitPresentation,std::string> entranceExitPresentation(std::span<const std::byte> level) const;
   void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress,
-                                  double departureSeconds, double levelSeconds = 0.0);
+                                  double departureSeconds, double levelSeconds = 0.0,
+                                  double swayScale = 1.0);
   std::expected<LeverPresentation,std::string> leverPresentation(std::span<const std::byte> level) const;
   void setLeverFaces(const LeverPresentation&, std::span<const std::pair<int,int>> idFaces);
   std::expected<PressurePadPresentation,std::string> pressurePadPresentation(std::span<const std::byte> level) const;

@@ -46,6 +46,75 @@ std::string state(const sim::World& w) {
 }
 void png(const fs::path& p,const Image& im) {check(writePng(p,im).has_value(),"write clone PNG");}
 #ifndef LANE_BASELINE
+void hatchAndBlockerLane(sim::Facing facing, bool landsOnRelease) {
+  sim::LevelSetup setup;
+  setup.terrain = sim::Terrain(256, 160);
+  setup.totalLemmings = 1;
+  setup.continuousStepperClock = true;
+  setup.terrain.fillBox(0, 80, 256, 1, sim::Material::Earth);
+  setup.terrain.fillBox(0, 90, 256, 20, sim::Material::Earth);
+  setup.entrances.push_back({.x = 128, .y = landsOnRelease ? 76 : 70,
+                             .direction = static_cast<std::int16_t>(facing)});
+  sim::World world(setup);
+
+  app::LemmingMotionTracker tracker;
+  const auto lane = [&] { return tracker.positionOf(0, world).z; };
+  const auto state = [&] { return world.lemmings()[0].state; };
+  const auto advance = [&] {
+    world.advanceElapsedMs(20, false, [&](double) { tracker.observe(world); return true; });
+  };
+  tracker.observe(world);
+  world.advanceElapsedMs(200);
+  check(world.lemmings().size() == 1, "hatch releases one lemming");
+  if (world.lemmings().empty()) return;
+  check(state() == (landsOnRelease ? sim::State::Walker : sim::State::Faller),
+        "first observation covers both a fall and an immediate landing");
+  check(near(lane(), 0.5), "unobserved hatchling is centred");
+  tracker.observe(world);
+  if (landsOnRelease) {
+    const int landedX = world.lemmings()[0].x;
+    app::RuntimeSimState fast;
+    fast.toggleFastForward();
+    fast.advanceElapsed(world, 0.02, false, [&] { tracker.observe(world); });
+    check(world.lemmings()[0].x != landedX, "fast-forward walks before the first draw");
+    check(near(lane(), 0.5), "the first draw stays centred after fast-forward");
+  }
+  tracker.frameDrawn();
+  for (int i = 0; i < 100 && state() == sim::State::Faller; ++i) {
+    check(near(lane(), 0.5), "hatchling holds the centre during its fall");
+    advance();
+  }
+  check(state() == sim::State::Walker && near(lane(), 0.5), "first landing is centred");
+
+  const double direction = static_cast<int>(facing);
+  const double side = 0.5 + 0.25 * direction;
+  advance();
+  check(near(lane(), 0.5 + 0.02 * direction), "walking eases out from the centre");
+  for (int i = 0; i < 12; ++i) advance();
+  check(near(lane(), side), "walker reaches its side before blocking");
+
+  check(world.assign(0, sim::Skill::Blocker), "blocker assignment succeeds");
+  tracker.observe(world);
+  check(near(lane(), side), "blocker assignment preserves lane at the transition");
+  advance();
+  check(near(lane(), side - 0.02 * direction), "first blocker update eases inward");
+  tracker.observe(world);
+  check(near(lane(), side - 0.02 * direction), "same-clock observation holds blocker lane");
+  for (int i = 0; i < 20; ++i) advance();
+  check(state() == sim::State::Blocker && near(lane(), 0.5), "blocker settles at the centre");
+
+  world.terrain().clearBox(0, 80, 256, 1);
+  for (int i = 0; i < 100 && state() != sim::State::Walker; ++i) {
+    check(near(lane(), 0.5), "released blocker holds its lane through the fall");
+    advance();
+  }
+  check(state() == sim::State::Walker && near(lane(), 0.5), "released blocker lands at the centre");
+  advance();
+  check(near(lane(), 0.5 + 0.02 * direction), "released blocker eases back toward its side");
+  for (int i = 0; i < 12; ++i) advance();
+  check(near(lane(), side), "released blocker reaches its walking lane");
+}
+
 void units(const fs::path& out) {
   fs::create_directories(out);
   std::ofstream trace(out/"turns.csv");trace<<"ms,facing,z\n";
@@ -56,7 +125,7 @@ void units(const fs::path& out) {
     setup.terrain.fillBox(20,0,1,140,sim::Material::Steel);
     sim::World w(setup),control(setup);sim::Lemming l;l.x=31;l.y=139;l.state=sim::State::Walker;l.facing=facing;
     w.place(l);control.place(l);app::LemmingMotionTracker t;t.observe(w);
-    check(near(t.positionOf(0,w).z,facing==sim::Facing::Left?0.25:0.75),"initial facing selects evidenced lane");
+    check(near(t.positionOf(0,w).z,facing==sim::Facing::Left?0.25:0.75),"placed walker starts in its facing lane");
     double prior=t.positionOf(0,w).z;auto oldFacing=facing;bool turned=false,intermediate=false,arrived=false;
     for(int n=0;n<250;++n) {
       w.advanceElapsedMs(20,false,[&](double){t.observe(w);return true;});control.advanceElapsedMs(20);
@@ -76,6 +145,8 @@ void units(const fs::path& out) {
     app::RuntimeSimState fast;fast.toggleFastForward();const auto before=w.levelClockMs();
     fast.advanceElapsed(w,0.02,false,[&]{t.observe(w);});
     check(w.levelClockMs()==before+140,"fast-forward uses unchanged seven-pass level time");
+    hatchAndBlockerLane(facing, false);
+    hatchAndBlockerLane(facing, true);
   }
   // A narrow corridor turns again before completing a crossing. Track the
   // confirmed facing, not an old end-to-end animation that would keep sliding.

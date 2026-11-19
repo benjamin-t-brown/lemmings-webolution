@@ -173,6 +173,8 @@ struct Lemming {
   bool gateCrushed = false;
   // Rat +3A0 retains this actor until its punch finishes (426414/408ECC).
   bool ratVictim = false;
+  // Presentation source for the initial lane, even if the first update lands.
+  bool releasedFromHatch = false;
 
   bool alive() const { return state != State::Exited && state != State::Dead; }
   bool active() const { return alive() && state != State::Splatter && !ratVictim; }

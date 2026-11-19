@@ -886,20 +886,25 @@ std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitP
  }
  return presentation;
 }
-void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& presentation,double openingProgress,double departureSeconds,double levelSeconds) {
- if(!std::isfinite(openingProgress)||!std::isfinite(departureSeconds)||!std::isfinite(levelSeconds))return;
+void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& presentation,
+    double openingProgress, double departureSeconds, double levelSeconds, double swayScale) {
+ if(!std::isfinite(openingProgress)||!std::isfinite(departureSeconds)||!std::isfinite(levelSeconds)||
+    !std::isfinite(swayScale))return;
+ const double time = std::max(0.0, departureSeconds);
+ const double bob = exitBalloonBob(levelSeconds);
+ // Provisional onset for the ordinary final rescue. The caller also damps
+ // sway around individual landings, including rescues late in Pending.
+ const double departureRamp = (time - kExitJumpSeconds) / kExitBalloonSwayBlendSeconds;
+ const double swayWeight = std::clamp(std::min(departureRamp, swayScale), 0.0, 1.0);
  for(const auto& entrance:presentation.entrances)
    applyHatchAnimation(roots_[entrance.root].node,entrance.animation,openingProgress);
  for(const auto& exit:presentation.exits) {
    auto& matrix=roots_[exit.root].node.matrix;
    matrix=exit.matrix;
-   const double time=std::max(0.0,departureSeconds);
-   const double bob=exitBalloonBob(levelSeconds);
    if(time==0.0&&bob==0.0)continue;
    // READ 0x426A0C..0x426A95: logical X += dt*0.5, Y += dt*5,
-   // radial BLEND += dt*0.5; X wraps at 256 (0x4231DE). The blend is
-   // not a world-space distance: the installed lattice converts it into
-   // the large outward motion missing from the former Y-only departure.
+   // radial blend += dt*0.5; X wraps at 256 (0x4231DE). The installed
+   // lattice converts the blend into the root's outward motion.
    // Model slot+8 (0x451668 -> 0x4658D6 -> 0x43D56C) maps this triple.
    auto position=exit.cylinderPosition;
    position[0]=std::fmod(position[0]+0.5*time,256.0);
@@ -910,18 +915,29 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
    const auto moved=lemmings::map_world_coordinates(mesh,position);
    for(std::size_t j=0;j<3;++j)matrix[9+j]+=moved[j]-start[j];
    // PROVISIONAL presentation adapter: turn the stored model with its radial
-   // heading, preserving its scale/tilt. Native tangent heading and departure
-   // 0.02 rotations are not reproduced. Continue the idle bob during departure
-   // to preserve continuity at the accepted global Pending trigger (provisional).
-   // Path rates above are traced,
-   // not fitted to the recording. Keep the accepted global Pending trigger
-   // and results timer; per-type departure/removal remains outside this fix.
+   // heading, preserving its scale/tilt. Continue the idle bob during
+   // departure for continuity at the existing global Pending trigger.
    const double angle=std::atan2(moved[2],moved[0])-std::atan2(start[2],start[0]);
    const double c=std::cos(angle),s=std::sin(angle);
    for(std::size_t row=0;row<3;++row){
      const double x=exit.matrix[3*row],z=exit.matrix[3*row+2];
      matrix[3*row]=c*x-s*z;matrix[3*row+2]=s*x+c*z;
    }
+
+   if (swayWeight == 0.0) continue;
+
+   // READ 0x426993..0x426A03 and 0x451668. The whole model tilts by
+   // 0.02*cos(phase) turns about X, then 0.02*sin(phase) turns about Z,
+   // before applying its heading. Translation is independent of the tilt.
+   const double phase = exitBalloonPhaseRadians(levelSeconds);
+   const double amplitude = (0.02 * 2.0 * kExitBalloonPi) * swayWeight;
+   const double xTilt = amplitude * std::cos(phase);
+   const double zTilt = amplitude * std::sin(phase);
+   const double cx = std::cos(xTilt), sx = std::sin(xTilt);
+   const double cz = std::cos(zTilt), sz = std::sin(zTilt);
+   const Matrix rotateX{1, 0, 0, 0, cx, -sx, 0, sx, cx, 0, 0, 0};
+   const Matrix rotateZ{cz, -sz, 0, sz, cz, 0, 0, 0, 1, 0, 0, 0};
+   matrix = compose(compose(rotateX, rotateZ), matrix);
  }
 }
 std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(

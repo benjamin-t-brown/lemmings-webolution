@@ -8,6 +8,8 @@
 #include <cmath>
 #include <filesystem>
 #include <iostream>
+#include <string_view>
+#include <utility>
 
 using namespace webo;
 using namespace webo::sim;
@@ -28,6 +30,28 @@ static LevelSetup fixture(int x = 10) {
 static Lemming victim(int x, int y = 59) {
   Lemming l; l.x = x; l.y = y; l.state = State::Walker;
   return l;
+}
+
+static void checkUninterruptedRatDrowning(LevelSetup setup) {
+  World world(std::move(setup));
+  world.tick();
+  assert(world.rats()[0].actor.state == State::Drown);
+  world.place(victim(11));
+  world.advanceElapsedMs(0);
+  assert(world.rats()[0].pendingVictim == -1 && !world.lemmings()[0].ratVictim);
+
+  const int duration = world.rules().drownMs;
+  world.advanceElapsedMs(duration - 1);
+  assert(world.rats()[0].actor.state == State::Drown);
+  const auto actors = app::injectedWalkersFromWorld(world, world.terrain().height());
+  assert(actors.size() == 2 && actors.back().sheetType == 3 && actors.back().renderEnabled);
+  assert(actors.back().clip == std::string_view("drown") && actors.back().clipSeconds > 0.0);
+
+  world.advanceElapsedMs(1);
+  assert(world.rats()[0].actor.state == State::Dead);
+  assert(app::injectedWalkersFromWorld(world, world.terrain().height()).size() == 1);
+  assert(world.lemmings()[0].alive());
+  assert(world.spawned() == 0 && world.dead() == 0 && world.saved() == 0);
 }
 
 int main(int argc, char** argv) {
@@ -76,9 +100,19 @@ int main(int argc, char** argv) {
   s = fixture(); s.rats[0].actor.gateCrushed = true;
   World crushed(s); crushed.advanceElapsedMs(100);
   assert(crushed.rats()[0].actor.state == State::Dead && crushed.dead() == 0);
-  s = fixture(); s.rats[0].actor.state = State::Drown;
-  World drowned(s); drowned.advanceElapsedMs(2200);
-  assert(drowned.rats()[0].actor.state == State::Dead && drowned.dead() == 0);
+  s = fixture();
+  s.terrain.setWaterHazard(10, 60, true);
+  checkUninterruptedRatDrowning(s);
+  for (int kind : {0, 1, 2}) {
+    s = fixture();
+    FluidGate gate;
+    gate.kind = kind;
+    gate.minX = 10; gate.maxX = 11;
+    gate.height = gate.high = 4.5;
+    gate.done = gate.request;
+    s.gates.push_back(gate);
+    checkUninterruptedRatDrowning(s);
+  }
   s = fixture(); s.terrain = Terrain(256,64); s.rats[0].actor.state = State::Faller;
   s.rats[0].actor.canFloat = false;
   World fallen(s); fallen.advanceElapsedMs(3000);

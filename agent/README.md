@@ -76,7 +76,7 @@ Models and effort are pinned in `tools.windows.json` under `agent_models`:
 
 | Backend | Model ID | Effort |
 | --- | --- | --- |
-| Codex | `gpt-6.2-astra` | `high` |
+| Codex | `gpt-6.2-sol` | `high` |
 | Claude | `claude-sonnet-5-5` | `high` |
 
 These apply to implementation, planning and review, including single-task runs.

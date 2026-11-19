@@ -25822,7 +25822,7 @@
     {
       "id": "opengl-plan-001",
       "title": "Master plan for converting the renderer to OpenGL",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "web-perf-001"
       ],
@@ -25838,7 +25838,113 @@
         "The plan breaks the conversion into ordered phases, each with scope, visible acceptance, risk, Difficulty and Recommended model, and states which wait for playable v1.",
         "The plan names the GPU-hard behaviors, performance targets with how they are measured, and open questions for the user.",
         "No production source, build, test or tool file is changed; the smoke profile passes and the report ends with a two-line handoff."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T004236-56504-542eac06",
+      "started": "2026-11-19T00:42:36.484216+00:00",
+      "finished": "2026-11-19T00:53:55.795479+00:00",
+      "last_run": "build/agent-runs/20261119T004236-56504-542eac06",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria pass. The plan traces the current renderer, defines how to compare both backends on the same frame, and defers implementation until playable v1 and user approval. The supervisor recorded 95 passing smoke tests and 84 passing recovery tests. GPU parity, browser frame pacing, and any remaining W1 clipping defect still require future observation.",
+        "checks": [
+          {
+            "criterion": "docs/OPENGL_PLAN.md inventories the current rendering pipeline with file and function references covering the scene, actors and occlusion, 2D layers, textures, presenter, Emscripten build and rendering tests.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/OPENGL_PLAN.md",
+                "detail": "The inventory pairs each stage with its source functions and the behavior the GPU must preserve. Coverage includes mesh and billboard submission, raster bands and threads, fluid depth, actor lighting and occlusion, decals and particles, texture decoding and palettes, HUD and frontend composition, SDL scaling, browser context creation, and rendering tests."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The renderFrame call to scheduleSceneFrame confirms the documented order. Pipes precede fluid, secondary scenery and counter gates precede decals, and actors precede death particles. Window materialization then draws the HUD, cues, menu, cursor and pause caption. The replay branch enters replayLevel before window setup."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "prepareInjectedWalker obtains the actor tint and projected placement. clipBodyFootprint and clipActorToScene apply terrain and scene-depth rejection. The drowning path selects separate depth inputs, which explains why the plan preserves more than the final scene depth."
+              },
+              {
+                "path": "CMakeLists.txt",
+                "detail": "The active web target links SDL2, Asyncify and pthreads, preloads up to seven workers, and copies webolution.html. The plan correctly identifies an explicit WebGL2 context as future implementation work."
+              },
+              {
+                "path": "cmake/test_tiers.cmake",
+                "detail": "The smoke list confirms the cited raster, clipping, sprite, map, HUD and window tests. It also registers 17 installed-level sweep chunks and the aggregate report."
+              }
+            ]
+          },
+          {
+            "criterion": "The plan proposes a renderer boundary that keeps the software renderer as reference and run-time fallback, and a parity check between the two paths.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/OPENGL_PLAN.md",
+                "detail": "Both backends consume one prepared frame, so comparison cannot advance simulation, consume first-draw randomness twice, or replay a cue. The plan keeps software selectable at startup and available after GL initialization failure. It compares logical pixels before scaling, requires exact masks and input decisions, proposes a one-byte tolerance for filtered interiors, and examines edge coverage and depth winners separately."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "hatchHoverTargets tests projected hatch pixels against completed scene depth with a 0.5 world-unit tolerance to derive visible bounds. The plan therefore compares hatch rectangles as well as pixels, covering a difference that could change player input."
+              }
+            ]
+          },
+          {
+            "criterion": "The plan breaks the conversion into ordered phases, each with scope, visible acceptance, risk, Difficulty and Recommended model, and states which wait for playable v1.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/OPENGL_PLAN.md",
+                "detail": "The phase table identifies phase 0 as planning and defers phases 1\u20139 until playable-v1 sign-off and user approval. Each row supplies scope, visible acceptance, risk, difficulty, model and rationale. For example, phase 3 checks an edited hole in Just Dig, and phase 5 checks actor overlap, hatch hover and pointer zoom before ordinary GL play is enabled."
+              }
+            ]
+          },
+          {
+            "criterion": "The plan names the GPU-hard behaviors, performance targets with how they are measured, and open questions for the user.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/OPENGL_PLAN.md",
+                "detail": "The plan addresses affine comparison depth versus perspective texture attributes, near-plane rejection, shared edges, filtering and blend rounding, actor ownership ties, and portable readback. It specifies a 6.944 ms native p95 budget at 144 Hz and proposes a 16.67 ms warm browser p95 at 60 Hz, with actual presentation intervals and sound checked during rotation. User decisions cover the W1 pose, A4 appearance, tolerances, reference hardware and rollout."
+              },
+              {
+                "path": "docs/scratch/frame-rate-144-001.md",
+                "detail": "The retained native run measured Kriss Kross rotation at 6.401 ms mean and 7.279 ms p95. This supports the plan\u2019s use of tail frame time alongside average throughput."
+              },
+              {
+                "path": "docs/scratch/web-perf-001.md",
+                "detail": "The retained web measurements cover Wasm scene rendering in Node. The plan correctly calls for a separate foreground browser run with entry rotation, right-drag and audio to establish presented-frame pacing."
+              }
+            ]
+          },
+          {
+            "criterion": "No production source, build, test or tool file is changed; the smoke profile passes and the report ends with a two-line handoff.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T004236-56504-542eac06/before-source-hashes.json",
+                "detail": "The worker-start snapshot provides the comparison baseline for production, build, test and tool files."
+              },
+              {
+                "path": "build/agent-runs/20261119T004236-56504-542eac06/after-source-hashes.json",
+                "detail": "Comparison with the start snapshot shows the two requested Markdown additions and the controller\u2019s task-start bookkeeping. All production, build, test and tool file hashes match."
+              },
+              {
+                "path": "build/agent-runs/20261119T004236-56504-542eac06/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests and 84 of 84 recovery tests passing, with zero failures in either suite."
+              },
+              {
+                "path": "docs/scratch/opengl-plan-001.md",
+                "detail": "The final two lines give the worker handoff and a concrete future play check. In Kriss Kross, rotate past the tank and hover the front hatch, checking actor, water and pipe layering, hatch response, and smooth rotation with sound."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T00:55:31.339565+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T004236-56504-542eac06\\verification.log",
+        "verified_content": "eeaf5c958e503f0897b414254df87203f6ecd7c12039666a699ab83496a59108"
+      }
     }
   ]
 }

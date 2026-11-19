@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 29 of 102.
+under docs/playtest/replays/. Won so far: 30 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -40,8 +40,8 @@ under docs/playtest/replays/. Won so far: 29 of 102.
 | 26 | E18_KF_2 | Make Mine a Large One | ok | playtest 17 | retired (G1 fix) | playtest 17 G1, G2 fixed, awaiting playtest |
 | 27 | E22_KF_1 | Now you're stalking | ok | playtest 19 | pass | playtest 19 J1 seams remain |
 | 28 | E11_KF_1 | Escape to victory | ok | playtest 20 | pass | playtest 20 K1 rat sound, K2 rat victim fling |
-| 29 | e06_kf_1 | Lets play 'catch'. | ok |  |  |  |
-| 30 | M08_KF_1 | 2 sides to every story | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |
+| 29 | e06_kf_1 | Lets play 'catch'. | ok | playtest 21 | pass |  |
+| 30 | M08_KF_1 | 2 sides to every story | ok |  |  | playtest 21 L3 flipper effect opaque, L4 flipper sound missing |
 | 31 | E16_KF_1 | Wood you believe it? | ok |  |  |  |
 | 32 | M08_mg_1 | Wheelbarrows of Doom | ok |  |  |  |
 | 33 | M11_KF_1 | Designed with love | ok |  |  | implemented 2026-11-16, not yet seen by a person: pressure pad |

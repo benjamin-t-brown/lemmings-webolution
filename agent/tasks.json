@@ -29328,6 +29328,64 @@
         "Simulation RNG and counts are untouched; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "flipper-effect-blend-001",
+      "title": "Gravity flipper effects are drawn with the original's transparency instead of opaque",
+      "status": "ready",
+      "depends_on": [
+        "rat-fling-spin-random-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 21 L3: on 2 sides to every story (M08_KF_1, node 30) the gravity flippers' effects have no transparency, so they look wrong. gravity-gadgets-001 (docs/scratch/gravity-gadgets-001.md) added the placed type-3 gadget models (Object 09 trees) to the LegacyUnattributed scenery stage, drawn by scheduleSceneFrame 'with ordinary scenery depth', with UV-scrolling coils on material 0 of nodes (2,4) and (1,5) from the anti_grav auxiliary payload. Find how the original draws those materials: the material/texture flags in the serialized model and the texture's alpha source (.alf alpha map, colour-key or additive), the blend and depth-write state the original selects for them (trace the model draw path from the 41D2B0 gadget and the shared material setup), and draw the flipper effect with that blending through the production scenery path, keeping the UV animation. Check other scenery using the same material flags and report them; change them only where the evidence is the same. Presentation only. Difficulty: routine. Recommended model: Sonnet. Reason: one material's blend state on an accepted draw path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report cites the material flags, alpha source and blend/depth state the original uses for the flipper effect, with static addresses or model fields, or labels choices provisional, and names the clone path that drew it opaque.",
+        "On 2 sides to every story the flipper effect is drawn with that transparency and still scrolls, shown by clone framebuffer frames before and after under build/; the flipper's gameplay and other scenery not tied to the same evidence are unchanged.",
+        "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "flipper-sound-001",
+      "title": "Gravity flippers play the original's sound when they flip a lemming",
+      "status": "ready",
+      "depends_on": [
+        "rat-fling-spin-random-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 21 L4: on 2 sides to every story (M08_KF_1, node 30) the gravity flippers play no sound when they flip lemmings. gravity-gadgets-001 left 'contact-driven sound/activation' unobserved. Static leads (lead's partial look, verify): the gadget constructor is 41D2B0 and its reader 41D730 obtains `AntiGrav`; within the same class 41D384 calls the sample lookup 404CC0 at 41D4BF and 41D590 calls the positional play wrapper 44535B; 45E51F registers `AntiGrav` (4C0D04) into slot 4C6A08+1C8EC, and the installed archive also holds SOUNDS\\ANTIGRAV.WAV, AGRISE.WAV and AGFALL.WAV. Establish which sample(s) the original plays when a flipper flips a lemming (and whether there is a separate sound for flipping back, for the flipper animating or for an inverted lemming's fall), the trigger and any once-per-lemming or cooldown guard, and play them through the production World cue path (cueSample/cue -> SoundEvent -> CuePlayback/Mixer) with the existing positional policy. Difficulty: routine. Recommended model: Sonnet. Reason: identify and route a sound on a located gadget path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names each flipper sound with its sample, trigger, guard and static address (41D384/41D590 or wherever the evidence leads), or labels a choice provisional.",
+        "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
+        "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "nuke-icon-additive-001",
+      "title": "The nuke panel icon is drawn without its black background",
+      "status": "ready",
+      "depends_on": [
+        "rat-fling-spin-random-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 21 L5: the nuke icon in the in-level panel has a black background, which looks wrong. panel-icon-anim-001 (docs/scratch/panel-icon-anim-001.md) records plate 9 (command / armageddon) as coming from SPRITES\\ADDITIVEICONS.SPR (13 temporal entries); hud-icons-001 says the clone uses its standard straight-alpha compositor. A sprite sheet named additive is most likely drawn with additive blending, where black adds nothing. Confirm from static evidence how the original draws ADDITIVEICONS sprites (the blend mode selected for that sheet or sprite set in 45E51F's registration at +1C910 and the panel draw path) and draw the nuke icon that way in RuntimeSkillPanel/RuntimeHud, keeping its animation, armed/disabled states and hit area. Check every other ADDITIVEICONS user (panel, HUD, cursors) and fix them the same way. Desktop and browser. Difficulty: routine. Recommended model: Sonnet. Reason: one blend mode on a known sheet. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report cites the original's blend mode for ADDITIVEICONS with static addresses, or labels it provisional, and lists every clone draw that uses that sheet.",
+        "The nuke icon shows no black background in the panel at rest, armed and after use, shown by clone framebuffer crops before and after under build/; other panel icons are unchanged.",
+        "Nuke input and behaviour are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

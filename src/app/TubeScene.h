@@ -248,6 +248,7 @@ class TubeScene {
     Texture texture;
     int column = 0;
     int row = 0;
+    SceneAddress routeAddress = SceneAddress::Wrap;
   };
 
   const Tile* findTile(bool outer, int column, int row) const;

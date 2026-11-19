@@ -3,7 +3,7 @@
 // Deliberately a straight port of the accepted A2 fixture's inner loop
 // (tools/harness/render_tube_fixture.py, triangle()): screen-space linear
 // depth with a smaller-is-nearer keep test, perspective-correct UVs via 1/z,
-// bilinear sampling with wrap. It is not a device-state model: no blend state,
+// bilinear sampling with per-draw addressing. It is not a device-state model: no blend state,
 // no scissor, no guard band, no mip selection. The A2 note already limits the
 // pass to the fixed ROI and to the declared software depth ordering.
 //
@@ -13,6 +13,7 @@
 #pragma once
 
 #include "app/ActorDepth.h"
+#include "app/SceneRaster.h"
 
 #include <array>
 #include <cstdint>
@@ -47,7 +48,7 @@ class Raster {
   void resetDrawCounts() { triangles_ = pixels_ = 0; }
 
   // p[i] = {screenX, screenY, viewDepth - context, 1 / viewDepth}.
-  // uv[i] = texture coordinates in tile units (wrapped at sample time).
+  // uv[i] = texture coordinates in tile units.
   // An actor owner uses the shared actor coverage after the strict scenery
   // test, retaining per-face physical depth without writing scenery depth.
   // An active RasterCommandBatch borrows texture; keep it alive and unchanged
@@ -55,13 +56,15 @@ class Raster {
   void triangle(const std::array<std::array<double, 4>, 3>& p,
                 const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
                 const std::array<double, 3>& modulate,
-                std::size_t actorOwner = ActorDepth::noOwner);
+                std::size_t actorOwner = ActorDepth::noOwner,
+                SceneAddress address = SceneAddress::Wrap);
   // Reject temporaries even in synchronous calls so the same caller is safe
   // when enclosed in a deferred batch.
   void triangle(const std::array<std::array<double, 4>, 3>& p,
                 const std::array<std::array<double, 2>, 3>& uv, const Texture&& texture,
                 const std::array<double, 3>& modulate,
-                std::size_t actorOwner = ActorDepth::noOwner) = delete;
+                std::size_t actorOwner = ActorDepth::noOwner,
+                SceneAddress address = SceneAddress::Wrap) = delete;
 
   const Framebuffer& framebuffer() const { return color_; }
   Framebuffer& mutableFramebuffer() { return color_; }

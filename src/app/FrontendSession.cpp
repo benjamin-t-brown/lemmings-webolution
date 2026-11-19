@@ -34,18 +34,13 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
     }
   }
   const auto loadedFlags = loadedImage.nodeFlags(MapScene::nodeMapping());
-  const bool anyLoaded = std::any_of(loadedFlags.begin(), loadedFlags.end(),
-                                     [](std::int32_t flag) { return flag != 0; });
 
   auto logo = loadTexture(library, "TEXTURES\\MAIN_LOGO.BMP");
   auto background = loadTexture(library, "TEXTURES\\SMALL_BACK.BMP");
   auto font = loadTexture(library, "TEXTURES\\^FONT.BMP");
   auto strings = loadStrings(library, "UK");
-  // The zero-flag map stays the New Game reset target even when progress loads.
-  auto zeroMap = MapScene::build(library, {});
-  auto map = (anyLoaded && zeroMap) ? MapScene::build(library, loadedFlags) : zeroMap;
+  auto map = MapScene::build(library, loadedFlags);
   auto cursor = RuntimeCursor::load(library);
-  if (!zeroMap) return std::unexpected(zeroMap.error());
   if (!logo) return std::unexpected(logo.error());
   if (!background) return std::unexpected(background.error());
   if (!font) return std::unexpected(font.error());
@@ -104,9 +99,6 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   footer.baseY = 440;
   const std::array<std::string, 1> footerLabels{std::string((*strings)[127])};
   result.mapImage_ = shell::renderMainMenu(map->image(), *font, footerLabels, footer, cells);
-  const Image initialMapImage = anyLoaded
-      ? shell::renderMainMenu(zeroMap->image(), *font, footerLabels, footer, cells)
-      : result.mapImage_;
   const int footerLeft = shell::labelLeft(footerLabels[0], cells, footer.xWord);
   const int footerTop = footer.baseY + footer.panelTop;
   result.mapFooterBox_ = {footerLeft - footer.panelPadX, footerTop,
@@ -116,8 +108,6 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
   result.cursor_ = std::move(*cursor);
   result.font_ = std::move(*font);
   result.mapFooterLabel_ = footerLabels[0];
-  result.initialMap_ = *zeroMap;
-  result.initialMapImage_ = initialMapImage;
   result.completionFlags_ = loadedFlags;
   result.store_ = std::move(store);
   result.savedGame_ = loadedImage;
@@ -137,11 +127,12 @@ void FrontendSession::persist() {
   }
 }
 
-Image FrontendSession::renderMapImage(const MapScene& map) const {
+void FrontendSession::refreshMap() {
+  map_.setProgress(completionFlags_, acceptedSound_.unlockAllLevels);
   shell::MenuParams footer;
   footer.baseY = 440;
   const std::array<std::string, 1> labels{mapFooterLabel_};
-  return shell::renderMainMenu(map.image(), font_, labels, footer, shell::fontCells());
+  mapImage_ = shell::renderMainMenu(map_.image(), font_, labels, footer, shell::fontCells());
 }
 
 shell::Outcome FrontendSession::confirmChoice(bool yes) {
@@ -151,8 +142,7 @@ shell::Outcome FrontendSession::confirmChoice(bool yes) {
     // store (0x49BCF4 reset 0x45F883, then 0x49BCFE write 0x45F94D; the reset
     // zeroes the flag and every A/B/C). Never touch the installed save.
     completionFlags_.fill(0);
-    map_ = initialMap_;
-    mapImage_ = initialMapImage_;
+    refreshMap();
     selectedNode_.reset(); selectedLevel_.reset(); outcome_.reset();
     results_.reset();
     savedGame_ = save::SavedGame{};
@@ -210,8 +200,11 @@ Image FrontendSession::composeFrame() const {
 
 shell::Outcome FrontendSession::pressReturn() {
   if (screen() == shell::Screen::SoundOptions) {
-    if (menuFocus() == 2) return closeSoundOptions(true);
-    adjustSound(-1);
+    if (menuFocus() == SoundMenu::Accept) return closeSoundOptions(true);
+    if (menuFocus() == SoundMenu::UnlockAll)
+      editingSound_.unlockAllLevels = !editingSound_.unlockAllLevels;
+    else
+      adjustSound(-1);
     return shell::Outcome::Handled;
   }
   // The native shared builder focuses the sole footer row. SDL Return invokes
@@ -225,7 +218,8 @@ shell::Outcome FrontendSession::pressReturn() {
 bool FrontendSession::moveMenuFocus(int direction) {
   if (direction != -1 && direction != 1) return false;
   if (screen() == shell::Screen::SoundOptions) {
-    state_.setHighlight((menuFocus() + direction + 3) % 3);
+    constexpr int rows = SoundMenu::RowCount;
+    state_.setHighlight((menuFocus() + direction + rows) % rows);
     return true;
   }
   if (screen() != shell::Screen::Menu && screen() != shell::Screen::Confirm) return false;
@@ -251,9 +245,16 @@ shell::Outcome FrontendSession::closeLevelMenu(bool paused) {
 
 void FrontendSession::configureSound(save::SoundSettings levels, std::shared_ptr<save::SaveSink> file,
                                      std::function<void(save::SoundSettings, bool)> preview) {
+  const bool unlockChanged = acceptedSound_.unlockAllLevels != levels.unlockAllLevels;
   acceptedSound_ = editingSound_ = levels;
   soundFile_ = std::move(file);
   previewSound_ = std::move(preview);
+  if (unlockChanged) refreshMap();
+}
+
+int FrontendSession::soundBaseY() const {
+  // The extra clone row moves the main-menu page up while keeping Accept at y=436.
+  return state_.uiState() == shell::kUiDialog ? 100 : 320 - 2 * shell::kLineHeight;
 }
 
 shell::Outcome FrontendSession::openSoundOptions() {
@@ -267,7 +268,9 @@ void FrontendSession::finishSoundEdit(bool accept) {
     return;
   }
   soundWritePending_ |= acceptedSound_ != editingSound_;
+  const bool unlockChanged = acceptedSound_.unlockAllLevels != editingSound_.unlockAllLevels;
   acceptedSound_ = editingSound_;
+  if (unlockChanged) refreshMap();
   if (soundWritePending_ && soundFile_) {
     if (auto written = acceptedSound_.save(*soundFile_); !written) {
       std::fprintf(stderr, "sound settings: %s (kept in memory)\n", written.error().c_str());
@@ -284,9 +287,13 @@ shell::Outcome FrontendSession::closeSoundOptions(bool accept) {
 }
 
 bool FrontendSession::adjustSound(int direction) {
-  if (screen() != shell::Screen::SoundOptions || menuFocus() >= 2 ||
+  if (screen() != shell::Screen::SoundOptions || menuFocus() == SoundMenu::Accept ||
       (direction != -1 && direction != 1)) return false;
-  const bool sfx = menuFocus() == 1;
+  if (menuFocus() == SoundMenu::UnlockAll) {
+    editingSound_.unlockAllLevels = direction > 0;
+    return true;
+  }
+  const bool sfx = menuFocus() == SoundMenu::Sfx;
   int& percent = sfx ? editingSound_.sfx : editingSound_.music;
   // Provisional SDL increment: one displayed segment per click or key press.
   const int step = std::clamp((percent * 16 + 50) / 100 + direction, 0, 16);
@@ -297,7 +304,8 @@ bool FrontendSession::adjustSound(int direction) {
 
 void FrontendSession::hoverSound(int x, int y) {
   if (screen() == shell::Screen::SoundOptions)
-    if (auto hit = soundMenu_.hit(x, y, soundBaseY())) state_.setHighlight(hit->row);
+    if (auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_.unlockAllLevels))
+      state_.setHighlight(hit->row);
 }
 
 Image FrontendSession::renderSoundOptions(const Image& backdrop) const {
@@ -323,10 +331,10 @@ bool FrontendSession::click(int x, int y) {
     return pressReturn() == shell::Outcome::Handled;
   }
   if (screen() == shell::Screen::SoundOptions) {
-    const auto hit = soundMenu_.hit(x, y, soundBaseY());
+    const auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_.unlockAllLevels);
     if (!hit) return false;
     state_.setHighlight(hit->row);
-    if (hit->row == 2) return closeSoundOptions(true) == shell::Outcome::Handled;
+    if (hit->direction == 0) return pressReturn() == shell::Outcome::Handled;
     return adjustSound(hit->direction);
   }
   if (screen() == shell::Screen::Confirm) {
@@ -378,25 +386,19 @@ std::expected<void, std::string> FrontendSession::completeLevel(
     return std::unexpected("inconsistent level outcome");
   // READ445498: success is trigger-time latched, counts are final-call values.
   // A timeout loss can legitimately display saved>=required after late rescues.
-  // Prepare all fallible assets before changing screen or progress. READ485E55
+  // Prepare the results assets before changing screen or progress. READ485E55
   // writes1 to the winning selected slot; a loss never clears earlier progress.
   auto results = ResultsScene::build(library, outcome);
   if (!results) return std::unexpected(results.error());
-  auto flags = completionFlags_;
-  if (outcome.success) flags[*selectedNode_] = 1;
-  auto map = MapScene::build(library, flags);
-  if (!map) return std::unexpected(map.error());
-  auto mapImage = renderMapImage(*map);
   if (state_.showResults(outcome.success) != shell::Outcome::Handled)
     return std::unexpected("cannot present result outside a level");
-  completionFlags_ = flags;
-  map_ = std::move(*map);
-  mapImage_ = std::move(mapImage);
   results_ = std::move(*results);
   outcome_ = outcome;
   outcome_->level = *selectedLevel_;
   selectedLevel_.reset();
   if (outcome.success) {
+    completionFlags_[*selectedNode_] = 1;
+    refreshMap();
     // READ485E55 (0x485E2B..0x485E65): mark C of the winning (group, slot), then
     // write the file. Loss, retry, abandon and exit never reach this. A failed
     // write is reported by persist() and does not discard the results above.

@@ -9,41 +9,37 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- unlock-all-option-001: **needs_review** — Options toggle: unlock all levels (unbeaten ones shown as available)
-- lantern-glow-001: **ready** — Background lanterns in Now You're Stalking glow instead of drawing as black billboards
-- entry-backdrop-rect-001: **ready** — Background scenery shows no opaque blue rectangle during the level-entry zoom and rotation
-- stalking-seams-001: **ready** — Visible rendering seams on the arrow blocks in Now You're Stalking are closed
+- basher-one-way-001: **needs_review** — Make the Basher respect the one-way arrow walls on Now You're Stalking
 
 ## Recently completed queue entries
 
-- web-perf-001: Browser build: smooth camera rotation, unbroken music, bounded console output
-  Accepted: 2026-11-19T00:28:50.706793+00:00
-  Verification evidence: `build/agent-runs/20261119T000859-55692-63676261/verification.log`
-  Verification evidence: `build\agent-runs\20261119T000859-55692-63676261\verification.log`
-- opengl-plan-001: Master plan for converting the renderer to OpenGL
-  Accepted: 2026-11-19T00:55:31.339565+00:00
-  Verification evidence: `build/agent-runs/20261119T004236-56504-542eac06/verification.log`
-  Verification evidence: `build\agent-runs\20261119T004236-56504-542eac06\verification.log`
-- hover-lemming-highlight-001: Hovered lemming is highlighted again alongside the bracket cursor
-  Accepted: 2026-11-19T05:00:24.164216+00:00
-  Verification evidence: `build/agent-runs/20261119T044845-13224-f14f70a4/verification.log`
-  Verification evidence: `build\agent-runs\20261119T044845-13224-f14f70a4\verification.log`
-- miner-staircase-stop-001: A miner that reaches a brick staircase along its diagonal stops instead of mining air
-  Accepted: 2026-11-19T05:17:23.568278+00:00
-  Verification evidence: `build/agent-runs/20261119T051012-13224-e4d69da4/verification.log`
-  Verification evidence: `build\agent-runs\20261119T051012-13224-e4d69da4\verification.log`
 - builder-end-turn-001: A builder that finishes its bricks walks on when the way forward is clear
   Accepted: 2026-11-19T05:34:44.489967+00:00
   Verification evidence: `build/agent-runs/20261119T051723-13224-b74cf29c/verification.log`
   Verification evidence: `build\agent-runs\20261119T051723-13224-b74cf29c\verification.log`
+- unlock-all-option-001: Options toggle: unlock all levels (unbeaten ones shown as available)
+  Accepted: 2026-11-19T06:48:43.669603+00:00
+  Verification evidence: `build/agent-runs/loop-685857b22f7440b5927bc5604b4733d4/0001-verify-31a5b9/verification.log`
+- lantern-glow-001: Background lanterns in Now You're Stalking glow instead of drawing as black billboards
+  Accepted: 2026-11-19T07:07:38.705121+00:00
+  Verification evidence: `build/agent-runs/20261119T064843-33336-c246a753/verification.log`
+  Verification evidence: `build\agent-runs\20261119T064843-33336-c246a753\verification.log`
+- entry-backdrop-rect-001: Background scenery shows no opaque blue rectangle during the level-entry zoom and rotation
+  Accepted: 2026-11-19T07:28:53.350278+00:00
+  Verification evidence: `build/agent-runs/20261119T070738-33336-88d19967/verification.log`
+  Verification evidence: `build\agent-runs\20261119T070738-33336-88d19967\verification.log`
+- stalking-seams-001: Visible rendering seams on the arrow blocks in Now You're Stalking are closed
+  Accepted: 2026-11-19T08:07:13.835916+00:00
+  Verification evidence: `build/agent-runs/20261119T074958-33336-8b631798/verification.log`
+  Verification evidence: `build\agent-runs\20261119T074958-33336-8b631798\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-91490de0d12241a2af6ba7e1553870fd/result.json`
-- Status: **cancelled**
-- Duration: 0h 00m 02s
-- Completed in this invocation: none
-- Reason: Keyboard interrupt
+- Result: `build/agent-runs/loop-685857b22f7440b5927bc5604b4733d4/result.json`
+- Status: **blocked**
+- Duration: 1h 41m 18s
+- Completed in this invocation: unlock-all-option-001, lantern-glow-001, entry-backdrop-rect-001, stalking-seams-001
+- Reason: The production review and supervisor smoke gate pass. Acceptance is blocked on the next human playtest of node 27. The ledger has no post-fix observation of either facing mask, the audible refusal, the visible opening, or any remaining route blocker.
 
 ## Documentation handoff
 

@@ -151,7 +151,11 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
         scene.missing_.push_back(std::format("{}: {}", name, image.error()));
         continue;
       }
-      into.push_back(Tile{toTexture(*image), pos.column, pos.row});
+      // Playtest 18 H2 verified edge bleed on this installed tube skin.
+      // The original terrain walker requests clamp at 0x43A6BB.
+      const auto routeAddress = assetName.starts_with(R"(TEXTURES\CYLINDER\E22_KF_1\)")
+          ? SceneAddress::Clamp : SceneAddress::Wrap;
+      into.push_back(Tile{toTexture(*image), pos.column, pos.row, routeAddress});
       ++count;
     }
   };
@@ -1618,7 +1622,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
           p[i] = projected[ids[i]];
           t[i] = quad.uv[ids[i]];
         }
-        raster.triangle(p, t, tile->texture, modulate);
+        raster.triangle(p, t, tile->texture, modulate, ActorDepth::noOwner, tile->routeAddress);
       }
     };
 

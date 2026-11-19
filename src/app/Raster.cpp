@@ -59,7 +59,8 @@ void Raster::compositeOpaque(const Raster& layer) {
 
 void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
                       const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
-                      const std::array<double, 3>& modulate, std::size_t actorOwner) {
+                      const std::array<double, 3>& modulate, std::size_t actorOwner,
+                      SceneAddress address) {
   profile::Scope profileRaster(profile::active &&
       (actorOwner != ActorDepth::noOwner || profile::active->cost == profile::BuilderBrick) ?
       profile::active->cost : profile::TubeRaster);
@@ -82,9 +83,15 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
   const int th = texture.height;
   std::uint8_t* dst = color_.rgb.data();
   const double mr = modulate[0], mg = modulate[1], mb = modulate[2];
+  const bool wrap = address == SceneAddress::Wrap;
 
-  const auto drawRows = [this, p, uv, &texture, modulate, actorOwner, area, xmin, xmax, tw, th, dst, mr, mg, mb](int first, int last) {
+  const auto drawRows = [this, p, uv, &texture, actorOwner, area, xmin, xmax, tw, th, dst, mr, mg, mb, wrap](int first, int last) {
     const auto& a = p[0]; const auto& b = p[1]; const auto& c = p[2];
+    // The normalized coordinate bounds the bilinear taps to [-1, size].
+    const auto addressTap = [wrap](int i, int size) {
+      if (!wrap) return std::clamp(i, 0, size - 1);
+      return i < 0 ? i + size : i >= size ? i - size : i;
+    };
     std::size_t count = 0;
     for (int y = first; y <= last; ++y) {
       const std::size_t rowAt = static_cast<std::size_t>(y) * width_;
@@ -108,8 +115,8 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
         const double u = (w0 * uv[0][0] * a[3] + w1 * uv[1][0] * b[3] + w2 * uv[2][0] * c[3]) / q;
         const double v = (w0 * uv[0][1] * a[3] + w1 * uv[1][1] * b[3] + w2 * uv[2][1] * c[3]) / q;
 
-        double sx = (u - std::floor(u)) * tw - 0.5;
-        double sy = (v - std::floor(v)) * th - 0.5;
+        const double sx = (wrap ? u - std::floor(u) : std::clamp(u, 0.0, 1.0)) * tw - 0.5;
+        const double sy = (wrap ? v - std::floor(v) : std::clamp(v, 0.0, 1.0)) * th - 0.5;
         int ix = static_cast<int>(std::floor(sx));
         int iy = static_cast<int>(std::floor(sy));
         const double dx = sx - ix;
@@ -118,12 +125,8 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
         double acc[3] = {0.0, 0.0, 0.0};
         const double wx[2] = {1.0 - dx, dx};
         const double wy[2] = {1.0 - dy, dy};
-        // Fractional UV puts ix in [-1, tw-1] and iy in [-1, th-1].
-        // The adjacent taps need at most one wrap; avoid six modulo operations
-        // per accepted pixel without changing weights or accumulation order.
-        const auto wrapTap = [](int i, int n) { return i < 0 ? i + n : i >= n ? i - n : i; };
-        const int xs[]{wrapTap(ix, tw), wrapTap(ix + 1, tw)};
-        const int ys[]{wrapTap(iy, th), wrapTap(iy + 1, th)};
+        const int xs[]{addressTap(ix, tw), addressTap(ix + 1, tw)};
+        const int ys[]{addressTap(iy, th), addressTap(iy + 1, th)};
         for (int j = 0; j < 2; ++j) {
           const int ty = ys[j];
           for (int i = 0; i < 2; ++i) {

@@ -16,6 +16,7 @@ class MapScene {
 public:
   static std::expected<MapScene,std::string> build(
       const AssetLibrary& lib, const std::array<std::int32_t,102>& flags);
+  void setProgress(const std::array<std::int32_t,102>& flags, bool unlockAllLevels);
   const Image& image() const { return image_; }
   const std::array<std::int32_t,102>& states() const { return states_; }
 
@@ -36,7 +37,7 @@ public:
   void drawHover(Image& target, const Image& font, std::size_t node) const;
 
  private:
-  Image image_;
+  Image background_, atlas_, image_;
   std::array<std::int32_t,102> states_{};
   std::vector<std::uint8_t> mask_;
   std::uint8_t maskBackground_ = 0;

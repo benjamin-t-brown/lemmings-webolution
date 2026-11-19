@@ -304,7 +304,7 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
     return std::unexpected("map hover requires UK string 123 (Save)");
   if(auto v=validateImage(*bg,"background");!v) return std::unexpected(v.error());
   if(auto v=validateImage(*atlas,"atlas");!v) return std::unexpected(v.error());
-  MapScene scene; scene.image_=std::move(*bg);
+  MapScene scene;
   // READ 49B7B0 / table 4B3EA0: source (193,0,28,31), black colour key.
   scene.clock_={28,31,AlphaMode::KeyBlack,std::vector<std::uint8_t>(28u*31u*4u)};
   for(int y=0;y<31;++y) for(int x=0;x<28;++x) {
@@ -314,17 +314,8 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
     dst[3]=(src[0]==0 && src[1]==0 && src[2]==0)?0:255;
   }
   scene.mask_=std::move(mask->pixels); scene.maskBackground_=mask->background;
-  std::array<std::int32_t,102> state{}; state.fill(1); state[0]=state[1]=state[2]=3;
-  // Clone playtest aid, not original behaviour: WEBOLUTION_UNLOCK_ALL=1 (set by
-  // scripts/Play-Clone.ps1) shows every unfinished node as available so any level
-  // can be entered while the save keeps completion only for levels actually won.
-  if(const char* unlock=std::getenv("WEBOLUTION_UNLOCK_ALL"); unlock && unlock[0]=='1') state.fill(3);
-  for(std::size_t i=0;i<102;++i) if(flags[i]!=0) {
-    state[i]=2; for(int link: {kRecords[i][2],kRecords[i][3]})
-      if(link!=kLinkEnd && link>=0 && link<102) state[static_cast<std::size_t>(link)]=3;
-  }
   for(std::size_t i=0;i<102;++i) {
-    const auto group=kMapping[i][0], slot=kMapping[i][1], base=kMapping[i][2];
+    const auto group=kMapping[i][0], slot=kMapping[i][1];
     if(group<0 || slot<0 || static_cast<std::size_t>(group)>=levels->groups.size() ||
        static_cast<std::size_t>(slot)>=levels->groups[static_cast<std::size_t>(group)].size())
       return std::unexpected("map node mapping is outside the loaded level table");
@@ -340,19 +331,43 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
         std::format("{} Lemmings : {} {}",title->totalLemmings,(*strings)[123],title->saveTarget),
         title->name,
         std::format("{}:{:02}",title->timeLimitSeconds/60,title->timeLimitSeconds%60)};
-    const int row=base+(state[i]==2?2:state[i]==3?4:0);
+  }
+  scene.background_ = std::move(*bg);
+  scene.atlas_ = std::move(*atlas);
+  scene.setProgress(flags, false);
+  return scene;
+}
+
+void MapScene::setProgress(const std::array<std::int32_t,102>& flags, bool unlockAllLevels) {
+  states_.fill(1);
+  states_[0] = states_[1] = states_[2] = 3;
+  // Clone playtest convenience. Play-Clone.ps1 still forces availability
+  // through the environment. Both inputs affect only the displayed map.
+  const char* unlock = std::getenv("WEBOLUTION_UNLOCK_ALL");
+  if (unlockAllLevels || (unlock && unlock[0] == '1')) states_.fill(3);
+  // The installed links point forward, so a won node overrides availability
+  // from both the convenience setting and its completed predecessors.
+  for (std::size_t i = 0; i < states_.size(); ++i) {
+    if (flags[i] == 0) continue;
+    states_[i] = 2;
+    for (int link : {kRecords[i][2], kRecords[i][3]})
+      if (link != kLinkEnd && link >= 0 && link < static_cast<int>(states_.size()))
+        states_[static_cast<std::size_t>(link)] = 3;
+  }
+
+  image_ = background_;
+  for (std::size_t i = 0; i < states_.size(); ++i) {
+    const int row=kMapping[i][2]+(states_[i]==2?2:states_[i]==3?4:0);
     const auto& r=kRects[static_cast<std::size_t>(row)];
     const int dx=kRecords[i][0]-r[4], dy=kRecords[i][1]-r[5];
-    (void)group; (void)slot;
     for(int y=0;y<r[3];++y) for(int x=0;x<r[2];++x) {
       const int sx=r[0]+x, sy=r[1]+y, tx=dx+x, ty=dy+y;
       if(sx<0||sy<0||sx>=640||sy>=480||tx<0||ty<0||tx>=640||ty>=480) continue;
       const auto si=(static_cast<std::size_t>(sy)*640+sx)*4, di=(static_cast<std::size_t>(ty)*640+tx)*4;
-      const auto* src=atlas->rgba.data()+si; if(src[0]==0&&src[1]==0&&src[2]==0) continue;
-      std::copy_n(src,4,scene.image_.rgba.data()+di);
+      const auto* src=atlas_.rgba.data()+si; if(src[0]==0&&src[1]==0&&src[2]==0) continue;
+      std::copy_n(src,4,image_.rgba.data()+di);
     }
   }
-  scene.states_=state; return scene;
 }
 
 const std::array<std::array<std::int32_t,3>,102>& MapScene::nodeMapping() { return kMapping; }

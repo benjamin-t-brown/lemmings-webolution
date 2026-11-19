@@ -26419,7 +26419,7 @@
     {
       "id": "unlock-all-option-001",
       "title": "Options toggle: unlock all levels (unbeaten ones shown as available)",
-      "status": "needs_review",
+      "status": "done",
       "depends_on": [
         "opengl-plan-001"
       ],
@@ -26541,12 +26541,112 @@
           "blocker": "Acceptance requires a successful browser reload check and lead disposition of two still-promoted recordings that diverge under the accepted Builder fix. The retained browser run ended before initialization, and both actions fall outside this read-only review."
         }
       ],
-      "lead_note": " 2026-11-18: the first review blocked on (a) no browser reload observation, because headless Chrome failed before initialization, and (b) two promoted recordings diverging under the accepted builder-end-turn-001 fix. Lead disposition: (b) both recordings retired by design in docs/playtest/replays/README.md, so criterion 3 now covers the 22 remaining .replay files, which the worker reproduced; (a) per AGENTS.md, playtest fixes are accepted at the user's next playtest, so criterion 1 now asks for the web persistence path by source and leaves the reload to the playtest. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 1: The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts (and a browser reload) through the clone settings file, defaults to off, and older settings files still load."
+      "lead_note": " 2026-11-18: the first review blocked on (a) no browser reload observation, because headless Chrome failed before initialization, and (b) two promoted recordings diverging under the accepted builder-end-turn-001 fix. Lead disposition: (b) both recordings retired by design in docs/playtest/replays/README.md, so criterion 3 now covers the 22 remaining .replay files, which the worker reproduced; (a) per AGENTS.md, playtest fixes are accepted at the user's next playtest, so criterion 1 now asks for the web persistence path by source and leaves the reload to the playtest. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 1: The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts (and a browser reload) through the clone settings file, defaults to off, and older settings files still load.",
+      "review": {
+        "decision": "accept",
+        "reason": "The shared Options toggle and persistence paths satisfy all four criteria. All 22 currently promoted recordings reproduced on native and Wasm, and the supervisor smoke profile passed. Browser reload remains the next playtest check.",
+        "checks": [
+          {
+            "criterion": "The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts through the clone settings file (on the web through the existing IDBFS sync path, shown by source; the browser reload itself is confirmed at the user's next playtest, not by an automated browser run), defaults to off, and older settings files still load.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/SoundMenu.cpp",
+                "detail": "The shared Options renderer draws the On or Off label and computes the corresponding hover and click target. Both builds use this menu."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "Normal startup loads SoundSettings.dat and configures the shared frontend session before entering the menu loop."
+              },
+              {
+                "path": "src/save/SoundSettings.cpp",
+                "detail": "A missing file uses defaults. Version 1 retains both volumes and loads the toggle as Off. Version 2 reads and writes the boolean alongside both volumes."
+              },
+              {
+                "path": "src/save/SaveStore.cpp",
+                "detail": "The settings sink resolves the clone data directory, writes a temporary file beside the target, and routes Wasm replacement through web::replaceSave."
+              },
+              {
+                "path": "src/web/webolution.html",
+                "detail": "Startup sets XDG_DATA_HOME to /store, mounts IDBFS there, and awaits FS.syncfs(true) before the shared application starts."
+              },
+              {
+                "path": "src/web/Browser.cpp",
+                "detail": "The replacement path awaits FS.syncfs(false) and restores the prior in-memory file if synchronization fails. This establishes the browser write path by source."
+              },
+              {
+                "path": "build/unlock-all-option-001/frontend-probe.log",
+                "detail": "The native probe verified both Options entry points, mouse and keyboard edits, Accept and Escape, persistence across session recreation, and retry after a failed write."
+              }
+            ]
+          },
+          {
+            "criterion": "With it on, every map node can be entered and unbeaten levels show as available (yellow) while won levels keep their completed marking; with it off the map shows the save's real progress.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/MapScene.cpp",
+                "detail": "On seeds all 102 nodes with state 3, which selects the yellow available art and permits picking. The completion pass sets won nodes to state 2. All installed links point forward, so a link cannot overwrite a completed marking. With both the option and environment override off, the three starting nodes and saved completions determine availability."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Loading or accepting a changed toggle rebuilds the map image and selection states from the actual completion flags. A win refreshes the same map after marking its selected node complete."
+              },
+              {
+                "path": "build/unlock-all-option-001/frontend-probe.log",
+                "detail": "The probe resolved all 102 map masks to level IDs, preserved seeded wins, selected Make Mine a Large One, and confirmed that disabling the option restored the prior map states and locked node 26 again."
+              }
+            ]
+          },
+          {
+            "criterion": "SavedGame.dat completion data is never changed by the option; WEBOLUTION_UNLOCK_ALL still works; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Accept writes through the settings sink. Map refresh uses the existing completion flags and updates the map image and selection states. The option path never calls progress persistence."
+              },
+              {
+                "path": "build/unlock-all-option-001/frontend-probe.log",
+                "detail": "The private SavedGame.dat remained byte-for-byte intact. With the persisted option Off, WEBOLUTION_UNLOCK_ALL=1 still made all 102 nodes enterable."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "The lead retired the two Builder-dependent recordings at their documented divergence steps. Both now have the .replay.retired suffix, and active promotion is defined by the .replay suffix."
+              },
+              {
+                "path": "build/unlock-all-option-001/promoted-replays.tsv",
+                "detail": "The passing rows match the 22 active .replay paths exactly. Each reports exit code 0, PASS, won=1, and completed=1 on native and Wasm."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-685857b22f7440b5927bc5604b4733d4/0001-verify-31a5b9/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including every installed-level sweep chunk and the aggregate report, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/unlock-all-option-001.md",
+                "detail": "The final note names Make Mine a Large One and asks the player to enable the option, accept, reload, then disable it. It specifies yellow and enterable node 26 after reload, retained completed markings, and restored normal progression after disabling the option."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T06:48:43.669603+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-685857b22f7440b5927bc5604b4733d4/0001-verify-31a5b9/verification.log",
+        "verified_content": "9d386d9f3e2d41f2625bf6b2d2a30aaaa1a90fb87c6cc1cafc8ace88ffb63a0c"
+      }
     },
     {
       "id": "lantern-glow-001",
       "title": "Background lanterns in Now You're Stalking glow instead of drawing as black billboards",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -26561,12 +26661,116 @@
         "In Now You're Stalking the lanterns draw with their light (no black billboard), on desktop and in the browser build, with clone framebuffer evidence before and after under build/.",
         "Other installed levels using the same objects or material are listed and drawn through the same fixed path; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T064843-33336-c246a753",
+      "started": "2026-11-19T06:48:44.098738+00:00",
+      "finished": "2026-11-19T07:04:32.302370+00:00",
+      "last_run": "build/agent-runs/20261119T064843-33336-c246a753",
+      "review": {
+        "decision": "accept",
+        "reason": "The shared billboard renderer now applies the installed lanterns\u2019 additive blend selector. Retained desktop and Emscripten frames show yellow halos with the lantern bodies and scenery visible. All 22 active promoted replays reproduced and the supervisor smoke gate passed. The Emscripten frames were rendered under Node/Wasm. Interactive browser playtest remains pending.",
+        "checks": [
+          {
+            "criterion": "The report names the lantern objects, their textures/materials and the original's draw path for them (static addresses), or labels a choice provisional, and names the clone call path that dropped the glow.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/lantern-glow-001.md",
+                "detail": "Identifies all twelve sprite_Light02_additive nodes in E22_KF_1 and their opaque 64\u00d764 TEXTURES\\MODELS\\BG_TREE04\\LIGHT02.BMP with selector 2. Traces the clone failure from the Secondary scenery pass through makeSceneBillboardSource to drawBillboard, which previously enabled blending only for selector 1."
+              },
+              {
+                "path": "build/lantern-glow-001/rea.json",
+                "detail": "Retained Ghidra instructions for the registered x86 EXE show the serialized selector stored via 0x00406240 at 0x0047B5DA. The type-2 branch-0 call at 0x0047D6D5 reaches 0x00414920, which forwards the selector at 0x0041494F. The instructions at 0x00414DBB\u20130x00414DED agree with the pseudocode and request ONE/ONE for selector 2. Effective original device depth and sampler state remain unverified."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "drawBillboard now passes the selector to blendOptions before rasterizeSceneTriangle. The diff preserves the existing alpha test policy, depth settings, and Secondary dispatch order."
+              }
+            ]
+          },
+          {
+            "criterion": "In Now You're Stalking the lanterns draw with their light (no black billboard), on desktop and in the browser build, with clone framebuffer evidence before and after under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lantern-glow-001/desktop-before.png",
+                "detail": "Three visible lantern glows have opaque black rectangular borders in the native baseline frame."
+              },
+              {
+                "path": "build/lantern-glow-001/desktop-after.png",
+                "detail": "The same native view shows soft yellow halos, visible lantern bodies, and scenery through the former black rectangles."
+              },
+              {
+                "path": "build/lantern-glow-001/wasm-before.png",
+                "detail": "The Emscripten baseline reproduces the same black rectangles at the matching camera pose."
+              },
+              {
+                "path": "build/lantern-glow-001/wasm-after.png",
+                "detail": "The corrected Emscripten frame shows the same halos and visible scenery as the corrected native frame."
+              },
+              {
+                "path": "build/lantern-glow-001/runs.txt",
+                "detail": "Records matching E22_KF_1 headless framebuffer commands and identifies the Emscripten browser distribution running in Node/Wasm CLI mode."
+              },
+              {
+                "path": "build/lantern-glow-001/frame-pixels.txt",
+                "detail": "Records matching desktop and Wasm hashes at each revision. Across the fix, 32,250 pixels changed, 4,762 went from black to nonblack, and zero RGB channels darkened."
+              }
+            ]
+          },
+          {
+            "criterion": "Other installed levels using the same objects or material are listed and drawn through the same fixed path; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/lantern-glow-001/census.txt",
+                "detail": "Lists the 18 affected levels across all 102 installed levels. LIGHT02 is the only branch-0 material in the production roots with a selector above 1. All affected records use selector 2 in the Secondary stage."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "Secondary type-2 branch-0 records dispatch to the same drawBillboard lambda and use their authored blend selector. The path has no level-specific condition."
+              },
+              {
+                "path": "build/lantern-glow-001/promoted-desktop.tsv",
+                "detail": "The 22 rows match the active .replay files under docs/playtest/replays. Every run exited zero with won=1 and completed=1. The affected MM_BLOCK_BOMB_A recording passed at step 1546 with 12 saved of 10 required."
+              },
+              {
+                "path": "build/lantern-glow-001/MM_BLOCK_BOMB_A-wasm-replay.log",
+                "detail": "The affected promoted recording also passed under Node/Wasm at step 1546 with 12 saved of 10 required."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T064843-33336-c246a753/verification.log",
+                "detail": "The supervisor\u2019s smoke selection passed all 95 main tests, including all 17 installed-level sweep chunks and the sweep report. All 84 recovery tests passed."
+              },
+              {
+                "path": "build/agent-runs/20261119T064843-33336-c246a753/result.json",
+                "detail": "Records verifier exit code 0 and the verified content fingerprint supplied for this review."
+              },
+              {
+                "path": "docs/scratch/lantern-glow-001.md",
+                "detail": "The worker handoff records smoke as pending before supervision. The final note asks the player to open node 27 and rotate toward the background lanterns, expecting soft yellow halos with visible lamp bodies and no black borders."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T07:07:38.705121+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T064843-33336-c246a753\\verification.log",
+        "verified_content": "d52b88a68278343084de620bd97b1d2981449b716a2734d91124b1d5a6af9493"
+      }
     },
     {
       "id": "entry-backdrop-rect-001",
       "title": "Background scenery shows no opaque blue rectangle during the level-entry zoom and rotation",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -26581,12 +26785,124 @@
         "During the Now you're stalking entry animation the background draws without the opaque rectangle (with its intended transparency), on desktop and in the browser build, with clone framebuffer evidence before and after under build/.",
         "Other installed levels using the same object or material are listed and checked; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T070738-33336-88d19967",
+      "started": "2026-11-19T07:07:39.134110+00:00",
+      "finished": "2026-11-19T07:25:53.962377+00:00",
+      "last_run": "build/agent-runs/20261119T070738-33336-88d19967",
+      "review": {
+        "decision": "accept",
+        "reason": "The authored facing check clears the foreground rectangle during level entry. Desktop map-entry captures and matching poses rendered by the browser build under Node/Wasm show the corrected scenery. All 22 promoted replays reproduced on both builds, and the supervisor smoke profile passed. Interactive browser presentation remains for playtest. Original behavior was assessed from static evidence.",
+        "checks": [
+          {
+            "criterion": "The report identifies the blue rectangle's object, texture/material and draw path, with the original's static evidence or a provisional label, and its relation to lantern-glow-001.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/entry-backdrop-rect-001.md",
+                "detail": "Identifies the Primary Spooky_Forest bmerge29 mesh at LVL offset 0x5DF37, the offending kind-7 records at 0x9185A and 0x91A02, and selector-0 material 0x6D5A6 using the opaque BACKGROUND_01.BMP with no sibling ALF or texture-name flag. The lanterns use separate additive LIGHT02 billboards in the Secondary pass."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/rea-session.json",
+                "detail": "Records the registered x86 reference with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f and the successful close."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/rea-kind7.json",
+                "detail": "The retained instructions agree with the pseudocode. Both kind-7 routines subtract the first indexed vertex from the local eye via 0x401830, take the dot product with the authored normal via 0x418350, and skip submission on a nonpositive result at 0x46B305 and 0x46B3B5."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/rea-material.json",
+                "detail": "The binder at 0x47261F selects texture alpha and disables alpha testing for flags 0. The separate blend call at 0x43BDDD reaches 0x414D80, where selector 0 disables blending. The supported visibility mechanism is camera-facing culling."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The production drawMesh path applies the existing local-eye predicate to kind-7 quads with the forest backdrop material before raster submission."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/pixels-before-0.log",
+                "detail": "The Primary pass attributes opaque blue foreground writes at sampled pixels to records 0x9185A and 0x91A02."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/pixels-after-0.log",
+                "detail": "The same sampled pixels show no writes from either offending record after the facing check."
+              }
+            ]
+          },
+          {
+            "criterion": "During the Now you're stalking entry animation the background draws without the opaque rectangle (with its intended transparency), on desktop and in the browser build, with clone framebuffer evidence before and after under build/.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/entry-backdrop-rect-001/desktop-entry-comparison.png",
+                "detail": "The connected node 27 entry shows the blue forest panel covering the playfield before the fix. At the same opening poses after the fix, the playfield is visible in front of the forest. Later rotation samples match."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/wasm-shot-before/frame-0.png",
+                "detail": "The Emscripten browser build reproduces the opaque rectangle at the opening camera pose under Node/Wasm."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/wasm-shot-after/frame-0.png",
+                "detail": "The corrected browser build shows the playfield and lantern glow at the same pose, with the forest behind them."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/frame-metrics.tsv",
+                "detail": "The 26 desktop map-entry samples show the correction through 0.875 seconds and identical pixels from 1.0 seconds through the settled frame. At all nine sampled entry poses, the browser build's headless framebuffers match the corresponding desktop headless framebuffers before and after the fix."
+              }
+            ]
+          },
+          {
+            "criterion": "Other installed levels using the same object or material are listed and checked; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/entry-backdrop-rect-001/census.txt",
+                "detail": "The 102-level scan identifies 18 levels with the Primary Spooky_Forest bmerge29 node and its kind-7 Background_01 material, including E22_KF_1."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/family-entry-after.png",
+                "detail": "The opening framebuffer for each of the 17 other affected levels shows the playfield visible in front of the forest."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/family-frame-metrics.tsv",
+                "detail": "Records four paired entry samples per affected level. Each opening frame changes and all 17 settled frames match baseline pixel for pixel."
+              },
+              {
+                "path": "build/entry-backdrop-rect-001/promoted-replays.tsv",
+                "detail": "The recording paths match all 22 active promoted files. All 44 runs exited zero with won=1 and completed=1, with matching results across builds. The affected MM_BLOCK_BOMB_A recording passed on both at step 1546 with 12 saved against 10 required."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T070738-33336-88d19967/verification.log",
+                "detail": "All 95 main smoke tests passed, including the 17 installed-level sweep chunks and sweep report. All 84 recovery tests passed."
+              },
+              {
+                "path": "build/agent-runs/20261119T070738-33336-88d19967/result.json",
+                "detail": "Records verifier exit code 0 and the verified content fingerprint supplied for this review."
+              },
+              {
+                "path": "docs/scratch/entry-backdrop-rect-001.md",
+                "detail": "The report ends with a note to enter Now you're stalking at node 27 and watch the zoom and rotation, expecting a visible playfield, forest behind it, and soft lantern glow."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T07:28:53.350278+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T070738-33336-88d19967\\verification.log",
+        "verified_content": "d1dd14fcddec57d30e968acbe99249fdc335cbddaa7f536b14ce29445f3dcc13"
+      }
     },
     {
       "id": "stalking-seams-001",
       "title": "Visible rendering seams on the arrow blocks in Now You're Stalking are closed",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "builder-end-turn-001"
       ],
@@ -26601,7 +26917,280 @@
         "Those views render without the seams on desktop and in the browser build; a rotation through the level shows no new gaps, and other installed levels spot-checked with the same geometry show no regression.",
         "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261119T074958-33336-8b631798",
+      "started": "2026-11-19T07:49:58.774699+00:00",
+      "finished": "2026-11-19T08:04:16.234003+00:00",
+      "last_run": "build/agent-runs/20261119T074958-33336-8b631798",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261119T072853-33336-ccbd0a52/verification.log",
+      "review": {
+        "decision": "accept",
+        "reason": "The scoped texture clamp removes the reported arrow-block, rail, and wood-panel hairlines in the retained desktop and browser-build framebuffers. The rotation and installed-level spot checks show no new gaps. The source diff confines the change to RGB sampling, all 22 promoted replays reproduce on both builds, and supervisor smoke passed. Browser-build framebuffer evidence comes from the Emscripten artifact running under Node. Interactive browser presentation remains unverified because Chrome and Edge exited before rendering. The original-game evidence is static.",
+        "checks": [
+          {
+            "criterion": "The report shows where the seams are (clone framebuffer images with camera positions under build/), classifies each by cause and names the production path changed, with static evidence or a provisional label.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/stalking-seams-001.md",
+                "detail": "Ties Playtest 18 H2 to Now You're Stalking (E22_KF_1, node 27), identifies outer tile materials 13, 14, 21, and 22, and classifies the colored hairlines as texture-edge bleed. It identifies the central opening and riveted joins as authored and labels the level-specific clamp scope provisional."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/desktop-arrows.png",
+                "detail": "The matched close-up shows the colored line crossing the red-arrow face and steel rail before the fix. The line disappears in the lower image while the central opening and riveted panel joins remain visible."
+              },
+              {
+                "path": "build/stalking-seams-001/cameras/yaw080-tube.json",
+                "detail": "Records the 640\u00d7480 probe pose with yaw offset 80/256, eye distance 377.516, and level eye height 96."
+              },
+              {
+                "path": "build/stalking-seams-001/tube-probe-before.log",
+                "detail": "Places the arrow tile boundary between buckets 23 and 24 within the same OUT side pass. It records finite tube-only depth at the affected arrow and rail pixels and shows that 96 of 128 cells in bucket 22, band 2 have no solid or directional bits."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/tube-probe-scoped.log",
+                "detail": "At the same pose, the arrow pixel at (220,314) changes from RGB (54,33,6) to (43,22,0) and the rail pixel at (220,344) changes from (78,78,55) to (49,60,65). Both depths and the tube-only triangle and pixel counts match the baseline."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "TubeScene::build selects clamp for tiles under the E22_KF_1 tube asset prefix. TubeScene::render passes that address mode from drawRouteQuad to Raster::triangle in the INN and OUT cell-mesh passes."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/rea-walker.json",
+                "detail": "For registered SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained Ghidra instructions agree with pseudocode that the walker calls 0x470FAF with 1 at 0x43A6BB before the terrain calls at 0x43A754, 0x43A7F4, 0x43A87C, and 0x43A8FA, then calls it with 0 at 0x43A908."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/rea-instructions.json",
+                "detail": "The setter instructions at 0x470FB8\u20130x470FD8 select clamp value 3 for the nonzero argument and wrap value 1 for zero, then submit the value for stage 0 address state 0x0C."
+              }
+            ]
+          },
+          {
+            "criterion": "Those views render without the seams on desktop and in the browser build; a rotation through the level shows no new gaps, and other installed levels spot-checked with the same geometry show no regression.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/stalking-seams-001/retry/desktop-rotation.png",
+                "detail": "Sixteen desktop views at 22.5-degree increments cover a full turn. The sampled solid tube joins show no new gaps."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/wasm-arrows.png",
+                "detail": "The Emscripten framebuffer from the repaired build under Node shows the same disappearance of the arrow and rail hairlines and retains the authored opening and panel joins."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/wasm-rotation.png",
+                "detail": "The corresponding full-turn browser-build framebuffers show continuous solid tube joins in the sampled views."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/pixels.tsv",
+                "detail": "Lists entry, yaw, pitch, tube-only, and installed-level comparisons for both targets. MM_CLIMB_002 and E19_KF_2 have zero changed RGB pixels at the sampled poses on both targets."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/desktop-spot-checks.png",
+                "detail": "The before-and-after images for MM_CLIMB_002, MM_DIG_000, and E19_KF_2 show no new tube gaps. The report attributes the MM_DIG_000 composed-frame differences to flame phase."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/check-clone.py",
+                "detail": "Identifies the browser-build target as the Emscripten webolution.js artifact and records that the matched camera framebuffers were rendered through its headless --shot path under Node."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/chrome/entry.chrome.log",
+                "detail": "Chrome exited after repeated GPU subprocess failures at entry. The browser-build images therefore verify framebuffer rendering, with interactive browser presentation still open."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/Raster.cpp",
+                "detail": "The addressing mode changes the bilinear RGB taps after coverage and depth acceptance. The depth comparison, scenery depth write, and actor ownership submission are preserved. The task diff is confined to tile addressing and its raster plumbing, outside the simulation and picking paths."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/actorcompose.log",
+                "detail": "The focused actor-composition test passed with the existing assertions, corroborating the source check of the occlusion path."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/desktop-replays.tsv",
+                "detail": "All 22 promoted recording paths match the active .replay inventory and returned exit 0, PASS, won=1, and completed=1 on desktop. The inventory contains no promoted E22_KF_1 replay."
+              },
+              {
+                "path": "build/stalking-seams-001/retry/wasm-replays.tsv",
+                "detail": "The same 22 recordings passed under Node/Wasm with matching final steps and saved counts."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T074958-33336-8b631798/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the installed-level sweep and actorcompose, and all 84 recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261119T074958-33336-8b631798/result.json",
+                "detail": "Records verifier exit code 0 and the supplied verified-content fingerprint e6005f9e2de9e9b56020672ebd3ccdd71f1dfff6f57f228ce0aa1008ceb5ae0c."
+              },
+              {
+                "path": "docs/scratch/stalking-seams-001.md",
+                "detail": "The final note directs the player to enter node 27 and rotate until both red-arrow faces and the steel rail are visible. It gives the expected result of smooth joins with the central opening and riveted panels still visible."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T08:07:13.835916+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T074958-33336-8b631798\\verification.log",
+        "verified_content": "e6005f9e2de9e9b56020672ebd3ccdd71f1dfff6f57f228ce0aa1008ceb5ae0c"
+      }
+    },
+    {
+      "id": "basher-one-way-001",
+      "title": "Make the Basher respect the one-way arrow walls on Now You're Stalking",
+      "scope": "Playable-v1 step: select and play Now You're Stalking (E22_KF_1, node 27) from the ordinary map. Difficulty: routine. Recommended model: Sonnet because the stored flags, facing rules and production refusal branch are already identified. Playtest 18 H2 reported seams on these arrow blocks. That rendering fix is accepted. Its installed-data probe at build/stalking-seams-001/tube-probe-before.log identifies destructible 0x05 and 0x09 cells in buckets 20\u201325 at bands 1\u20132. The production route is runApplicationLeg \u2192 loadRetailLevel \u2192 loadRetailLevelReport \u2192 Terrain::fromCollisionGrid, then ordinary skill selection and assignment \u2192 RuntimeSimState::advanceElapsed \u2192 World::stepBasher. Terrain retains the bits in the gate restoration baseline, but the active Basher check sees both cell types as ordinary earth. Use the named flags in src/assets/CollisionGrid.h and preserve them in active terrain. For the registered EXE SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, retained instructions at 0x40C0DC\u20130x40C109 select mask 0x04 for right-facing and 0x08 for left-facing, and the refusal branch at 0x40C139\u20130x40C14F requests Scrape before returning. The clear path at 0x40C16D zeroes the cell. See build/refusal-sounds-001/static/crosscheck.txt and docs/scratch/basher-two-hit-001.md. Check the existing punch footprint against active directional flags and reuse the existing refusal transition. Label the decision to refuse a coalesced punch as provisional. Ensure cleared terrain cannot transfer its flags to a later Builder brick. Keep Miner, Digger, steel refusal, the two-punch cadence, and parked timing outside scope. Where acceptance needs a save, use a private temporary clone save with the accepted codec, preserving unknown fields and the prior good file on write failure. The installed and normal user saves remain untouched.",
+      "runtime_change": "Today a Basher can cut a solid arrow-wall cell from either direction. After the fix, a punch that encounters a cell protected against its current facing leaves the wall intact and takes the existing audible refusal and turnaround path. From the permitted direction, the Basher still cuts bottom then top, and the existing terrain mesh update makes the opening visible.",
+      "production_files": [
+        "src/sim/Terrain.h",
+        "src/sim/Terrain.cpp",
+        "src/sim/World.cpp"
+      ],
+      "acceptance": [
+        "Trace the ordinary map-to-world path for node 27 and retain evidence tying representative installed 0x05 and 0x09 solid cells to their expected refusal facings. Distinguish the source-traced defect from the player's report of rendering seams.",
+        "The report gives exact playtest positions on node 27 for a forbidden and a permitted Basher approach to each facing mask (0x05 and 0x09), and the expected result of each (forbidden: wall intact, one Scrape, turn back; permitted: a visible passage, bottom first then top). The human result is recorded at the user's next playtest, not required for review.",
+        "The production diff preserves ordinary two-hit cutting, steel refusal, and the existing skill cadence. A cleared cell carries no stale direction flag into a replacement brick. Any new regression check stays short and legacy.",
+        "The supervisor smoke gate passes, including the installed-level sweep and the recovery suite. Use private clone saves for any worker verification and record human confirmation as pending until it occurs.",
+        "Production implementation changes in src/sim/Terrain.cpp, src/sim/World.cpp deliver this runtime behavior: Today a Basher can cut a solid arrow-wall cell from either direction. After the fix, a punch that encounters a cell protected against its current facing leaves the wall intact and takes the existing audible refusal and turnaround path. From the permitted direction, the Basher still cuts bottom then top, and the existing terrain mesh update makes the opening visible.. Independent review must trace the real call path and before/after behavior; test-only changes, dead code, comments or build registration alone do not satisfy this criterion."
+      ],
+      "depends_on": [
+        "stalking-seams-001",
+        "basher-two-hit-001",
+        "refusal-sounds-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "status": "needs_review",
+      "planning_required": false,
+      "loop_attempts": 1,
+      "run_id": "20261119T081052-33336-c5ddf73f",
+      "started": "2026-11-19T08:10:53.028397+00:00",
+      "finished": "2026-11-19T08:24:03.338329+00:00",
+      "last_run": "build/agent-runs/20261119T081052-33336-c5ddf73f",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261119T081052-33336-c5ddf73f",
+          "review": {
+            "decision": "blocked",
+            "reason": "The production review and supervisor smoke gate pass. Acceptance is blocked on the next human playtest of node 27. The ledger has no post-fix observation of either facing mask, the audible refusal, the visible opening, or any remaining route blocker.",
+            "checks": [
+              {
+                "criterion": "Trace the ordinary map-to-world path for node 27 and retain evidence tying representative installed 0x05 and 0x09 solid cells to their expected refusal facings. Distinguish the source-traced defect from the player's report of rendering seams.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/basher-one-way-001/installed-route-probe.log",
+                    "detail": "The map lookup resolves node 27, group 1 slot 1, to the installed COMPILED\\E22_KF_1.LVL. File cell (160, 29) maps to terrain (160, 66) and its 0x05 word refuses right. File cell (189, 29) maps to terrain (189, 66) and its 0x09 word refuses left. Each permits the opposite facing."
+                  },
+                  {
+                    "path": "build/basher-one-way-001/source-trace.md",
+                    "detail": "The traced path runs from MapScene and FrontendSession::clickMap through runApplicationLeg, loadRetailLevel, loadRetailLevelReport, and Terrain::fromCollisionGrid. The old importer classified both arrow words as Earth and kept their masks in a gate restoration baseline that the Basher did not query."
+                  },
+                  {
+                    "path": "docs/playtest/2026-11-18-playtest-18.md",
+                    "detail": "Playtest 18 H2 records visible seams concentrated on the arrow blocks. The Basher cutting defect was established by the source trace."
+                  }
+                ]
+              },
+              {
+                "criterion": "On the next human playtest, enter node 27 from the map and assign a Basher at an arrow wall. A forbidden approach leaves the wall intact, plays one Scrape, and turns the worker back. A permitted approach opens a visible passage bottom first, then top. Use the installed cells to check both facing masks. Record the actual playtest result and any remaining route blocker.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "docs/scratch/basher-one-way-001.md",
+                    "detail": "The handoff marks human confirmation pending and gives grounded contacts for both approaches to each wall at file feet Y 29. The contacts establish test locations. Audible feedback, visible passage, and any remaining route blocker still await a human result."
+                  },
+                  {
+                    "path": "docs/playtest/2026-11-18-playtest-18.md",
+                    "detail": "The latest recorded human session predates this change. Its three node 27 attempts ended without a win, with a best of 1/49 saved."
+                  }
+                ]
+              },
+              {
+                "criterion": "The production diff preserves ordinary two-hit cutting, steel refusal, and the existing skill cadence. A cleared cell carries no stale direction flag into a replacement brick. Any new regression check stays short and legacy.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "src/sim/World.cpp",
+                    "detail": "The lower and upper punches still cut in order at the existing 12% and 60% phases of the 1440 ms cycle, followed by the 92% advance. Either scheduled punch still refuses steel anywhere in the four-row footprint through the same Scrape, turn, and Walker transition."
+                  },
+                  {
+                    "path": "src/sim/Terrain.cpp",
+                    "detail": "Terrain::clearBox calls Terrain::set to empty a cut cell. The setter clears its live direction bits and increments the version. Builder placement uses the same setter."
+                  },
+                  {
+                    "path": "src/__test__/test_basher_two_hit.cpp",
+                    "detail": "The existing short test adds both masks, lower and upper refusal, a single Scrape event, and replacement-cell reuse. Its execution remains pending milestone sign-off."
+                  },
+                  {
+                    "path": "build/basher-one-way-001/native/CTestTestfile.cmake",
+                    "detail": "The generated registration labels basher_two_hit legacy."
+                  }
+                ]
+              },
+              {
+                "criterion": "The supervisor smoke gate passes, including the installed-level sweep and the recovery suite. Use private clone saves for any worker verification and record human confirmation as pending until it occurs.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261119T081052-33336-c5ddf73f/verification.log",
+                    "detail": "The supervisor recorded 95 of 95 main smoke checks passing, including all 17 installed-level sweep chunks and the report, and 84 of 84 recovery checks passing."
+                  },
+                  {
+                    "path": "build/level-sweep-001/report-summary.txt",
+                    "detail": "The sweep report contains all 102 expected installed-level records."
+                  },
+                  {
+                    "path": "build/basher-one-way-001/installed-cell-probe.cpp",
+                    "detail": "The worker probe reads installed archives and invokes the map and level loaders without opening a save."
+                  },
+                  {
+                    "path": "docs/scratch/basher-one-way-001.md",
+                    "detail": "The worker report records human confirmation as pending."
+                  }
+                ]
+              },
+              {
+                "criterion": "Production implementation changes in src/sim/Terrain.cpp, src/sim/World.cpp deliver this runtime behavior: Today a Basher can cut a solid arrow-wall cell from either direction. After the fix, a punch that encounters a cell protected against its current facing leaves the wall intact and takes the existing audible refusal and turnaround path. From the permitted direction, the Basher still cuts bottom then top, and the existing terrain mesh update makes the opening visible.. Independent review must trace the real call path and before/after behavior; test-only changes, dead code, comments or build registration alone do not satisfy this criterion.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "src/app/main.cpp",
+                    "detail": "The selected map level constructs the live World. The skill panel and actor click reach World::assign, and RuntimeSimState::advanceElapsed reaches World::stepBasher at its tick boundary. The application drains sound events after simulation updates and syncs terrain before drawing."
+                  },
+                  {
+                    "path": "build/basher-one-way-001/task-only.patch",
+                    "detail": "The old punch checked material and refused only steel. The production diff imports the active masks and checks the scheduled punch footprint before writing terrain. A match queues one Scrape, flips facing, and exits to Walker. A permitted punch follows clearSkillBox. The whole-punch refusal is explicitly provisional, and a successful lower punch stays cleared if the later upper punch refuses."
+                  },
+                  {
+                    "path": "src/app/TubeScene.cpp",
+                    "detail": "TubeScene::syncTerrain consumes the version increment from each permitted cut and rebuilds changed mesh blocks and their neighbors."
+                  },
+                  {
+                    "path": "build/basher-one-way-001/static/helper-instructions.json",
+                    "detail": "For the registered x86 executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained instructions agree with the pseudocode. The mask defaults to 0x04 at 0x40C0DC, switches to 0x08 for facing -1 at 0x40C0EC, and is tested at 0x40C104\u20130x40C109. The refusal arm requests Scrape at 0x40C139\u20130x40C148 and returns refusal. The permitted arm zeroes the cell at 0x40C16D."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "The production review and supervisor smoke gate pass. Acceptance is blocked on the next human playtest of node 27. The ledger has no post-fix observation of either facing mask, the audible refusal, the visible opening, or any remaining route blocker."
+        }
+      ],
+      "lead_note": " 2026-11-19: the first review passed the production path and the smoke gate and blocked only criterion 2, which required a human playtest result no reviewer can supply. Per AGENTS.md Verification, a playtest fix is accepted at the user's next playtest; criterion 2 now asks for the exact playtest positions and expected results. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 2: On the next human playtest, enter node 27 from the map and assign a Basher at an arrow wall. A forbidden approach leaves the wall intact, plays one Scrape, and turns the worker back. A permitted approach opens a visible passage bottom first, then top. Use the installed cells to check both facing masks. Record the actual playtest result and any remaining route blocker."
     }
   ]
 }

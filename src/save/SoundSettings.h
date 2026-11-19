@@ -9,6 +9,7 @@ namespace webo::save {
 struct SoundSettings {
   int music = 30;
   int sfx = 100;
+  bool unlockAllLevels = false;  // Clone playtest convenience.
   bool operator==(const SoundSettings&) const = default;
 
   static std::expected<SoundSettings, std::string> load(SaveSink& file);

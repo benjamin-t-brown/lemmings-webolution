@@ -97,7 +97,7 @@ class FrontendSession {
  private:
   FrontendSession() = default;
   shell::Outcome confirmChoice(bool yes);
-  Image renderMapImage(const MapScene& map) const;
+  void refreshMap();
   shell::Frontend state_;
   SoundMenu soundMenu_;
   save::SoundSettings acceptedSound_, editingSound_;
@@ -105,7 +105,7 @@ class FrontendSession {
   std::function<void(save::SoundSettings, bool)> previewSound_;
   bool soundWritePending_ = false;
   mutable Image soundImage_;
-  int soundBaseY() const { return state_.uiState() == shell::kUiDialog ? 100 : 320; }
+  int soundBaseY() const;
   void finishSoundEdit(bool accept);
   // A render cache, not a second focus owner: page replacement can reset the
   // model's highlight without passing through directional input.
@@ -118,7 +118,7 @@ class FrontendSession {
   std::vector<std::string> menuLabels_;
   std::array<std::string, 2> confirmLabels_;
   std::string confirmQuestion_;
-  Image font_, initialMapImage_;
+  Image font_;
   std::string mapFooterLabel_;
   // SOURCE half-open targets for the implemented actions, derived from
   // the rendered panels. The shell model remains the sole focus owner.
@@ -129,7 +129,6 @@ class FrontendSession {
   RuntimeCursor cursor_;
   int pointerX_ = 320, pointerY_ = 240;
   bool leftHeld_ = false, rightHeld_ = false, focused_ = true;
-  MapScene initialMap_;  // zero-flag map: the New Game reset target, not the loaded one
   std::array<std::int32_t, 102> completionFlags_{};
   // Persistence. savedGame_ is the full original-layout image so unmapped records,
   // A, B and the flag survive load -> complete -> save unchanged.

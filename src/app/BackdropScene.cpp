@@ -80,9 +80,11 @@ bool passesFacingPredicate(const SceneMeshRecordSource& rec,
                            const std::map<std::size_t, std::array<double, 3>>& eyes) {
   // Kinds 4/5 (0x46AE20/0x46AFA0) and both kind-7 emitters
   // (0x46B2A0/0x46B350) use the authored normal and first indexed vertex.
-  // Limit the kind-7 change to the mine waterfall quads identified in playtest 15.
-  const bool mineWaterfall = rec.kind == 7 && rec.materialName == R"(Models\bg_mine01\^WaterFall01)";
-  if ((rec.kind != 4 && rec.kind != 5 && !mineWaterfall) || rec.corners.empty()) return true;
+  // Apply the kind-7 predicate to the playtested waterfall and forest backdrop.
+  const bool singleSidedQuad = rec.kind == 7 &&
+      (rec.materialName == R"(Models\bg_mine01\^WaterFall01)" ||
+       rec.materialName == R"(Models\bg_tree04\Background_01)");
+  if ((rec.kind != 4 && rec.kind != 5 && !singleSidedQuad) || rec.corners.empty()) return true;
   const auto eye = eyes.find(rec.nodeSourceOffset);
   if (eye == eyes.end()) return false;
   const auto& e = eye->second;
@@ -1258,10 +1260,10 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    };
    if(stage==Stage::Primary&&observer&&observer->candidate)for(const auto& b:primaryBillboards)observer->candidate(b.sourceOffset,b.sourceOffset,UINT64_MAX,2);
    const auto drawBillboard=[&](const SceneBillboardSource& b){if(stage!=Stage::Primary&&observer&&observer->candidate)observer->candidate(b.sourceOffset,b.sourceOffset,UINT64_MAX,2);const std::string name=b.textureName;const SceneRgbaImage* tex=name.empty()?&white:getTexture(name,b.sourceOffset,b.sourceOffset);if(!tex){++stats.nullMaterials;return;}++stats.billboards;
-    // C3r's accepted normal-constructor census identifies all 17 retained type-2
-    // resources as caret leaves => flags 8. Apply that conditional row here;
-    // this is not a claim about cache hits or effective native device state.
-    auto st=conditionalCaretFlags8Policy(options(true,b.blendSelector==1));
+    // The plain Light02 bitmap (flags 0) shares the caret texture's alpha row
+    // in 0x47261F. The node's independent blend selector reaches 0x414D80,
+    // where selector 2 adds the texture RGB to the backdrop with ONE/ONE.
+    auto st=conditionalCaretFlags8Policy(blendOptions(false,b.blendSelector));
     if (depthOutput) st.depthOutput = *depthOutput;
       std::uint64_t bi=0;for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){SceneRasterObserver tagged;if(observer){tagged=*observer;tagged.source=b.sourceOffset;tagged.triangle=bi;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st,observer?&tagged:nullptr);if(r)++stats.meshTriangles;else {++stats.rejected;++stats.rasterRejected;diagnose(describe(b.sourceOffset,b.sourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}++bi;}};
    const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;

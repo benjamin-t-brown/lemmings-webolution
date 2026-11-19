@@ -38,7 +38,7 @@ EM_ASYNC_JS(int, commitSave, (const char* temporary, const char* target), {
         FS.unlink(to);
       }
     }
-    console.error("Save transaction failed", error);
+    err("Save transaction failed: " + error);
     return 0;
   }
 });

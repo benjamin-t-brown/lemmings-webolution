@@ -43,7 +43,13 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   want.freq = sampleRate;
   want.format = AUDIO_S16SYS;
   want.channels = static_cast<std::uint8_t>(channels);
+#ifdef __EMSCRIPTEN__
+  // SDL's Web Audio ScriptProcessor delivers one block per main-thread event.
+  // At a 48 kHz device rate this leaves 85 ms for a late rotation frame.
+  want.samples = 4096;
+#else
   want.samples = 1024;
+#endif
   want.callback = callback;
   want.userdata = this;
 

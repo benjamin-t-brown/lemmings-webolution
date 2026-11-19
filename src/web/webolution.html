@@ -22,6 +22,13 @@
   const startButton = document.querySelector('#start');
   const canvas = document.querySelector('#canvas');
   let lastDiagnostic = '';
+  // Keep the last error for the exit screen even after console output is full.
+  const reported = new Set();
+  function reportOnce(text, write) {
+    if (reported.size >= 32 || reported.has(text)) return;
+    reported.add(text);
+    write(text);
+  }
   canvas.addEventListener('contextmenu', event => event.preventDefault());
   function message(text) {
     statusLine.hidden = false;
@@ -83,9 +90,10 @@
         });
       } catch (error) { message('Cannot start game. ' + error); }
     },
+    print(text) { reportOnce(text, console.log); },
     printErr(text) {
-      console.error(text);
       lastDiagnostic = text;
+      reportOnce(text, console.error);
       if (/^(save:|sound settings:)/.test(text)) message(text);
     },
     onAbort(reason) { message('Game stopped. ' + reason); releaseStore?.(); }

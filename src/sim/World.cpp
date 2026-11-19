@@ -950,8 +950,11 @@ void World::stepClimber(Lemming& l) {
   // tick later than the original at the same Y) is what exposed it.
   l.y -= v * rules_.climbSpeed;
 
-  if (solidAt(setup_.terrain.wrapX(wall - dir),
-              l.y - v * rules_.lemmingHeight)) {
+  // 0x00413A2A clamps the cell lookup, but 0x00413A67 compares the
+  // unclamped head row to the grid height. With rows flipped (H - 1 - Y),
+  // native Y == H samples row 0; only Y > H forces a head hit over air.
+  const int headY = l.y - v * rules_.lemmingHeight;
+  if (headY < -1 || solidAt(setup_.terrain.wrapX(wall - dir), std::max(0, headY))) {
     l.x = setup_.terrain.wrapX(l.x - dir);
     turn(l);
     l.state = State::Faller;

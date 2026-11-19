@@ -19,10 +19,11 @@ namespace webo::app::detail {
 class RasterRows {
  public:
 #ifdef __EMSCRIPTEN__
-  // One caller drains the same bands in flush(), including legacy error ranges.
-  template<class F> void run(F&& function) { function(0); }
+  static constexpr unsigned maxParticipants = 8; // Includes the caller (see PTHREAD_POOL_SIZE).
 #else
-  RasterRows() : workers_(std::clamp(std::thread::hardware_concurrency(), 1u, 16u) - 1),
+  static constexpr unsigned maxParticipants = 16;
+#endif
+  RasterRows() : workers_(std::clamp(std::thread::hardware_concurrency(), 1u, maxParticipants) - 1),
                  errors_(workers_.size() + 1) {
     try {
       for (unsigned i = 0; i < workers_.size(); ++i)
@@ -80,7 +81,6 @@ class RasterRows {
   std::function<void(unsigned)>* job_ = nullptr;
   unsigned generation_ = 0, remaining_ = 0;
   bool stopping_ = false;
-#endif
 };
 
 inline RasterRows& rasterRows() {

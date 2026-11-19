@@ -17,7 +17,7 @@ endif()
 include(cmake/webolution_sources.cmake)
 
 if(EMSCRIPTEN)
-  add_compile_options(-fexceptions)
+  add_compile_options(-fexceptions -pthread)
 endif()
 
 add_library(webolution_texture_decoder STATIC ${WEBOLUTION_TEXTURE_DECODER_SOURCES})
@@ -116,8 +116,12 @@ if(EMSCRIPTEN)
   target_sources(webolution PRIVATE "${web_dir}/Browser.cpp")
   set_target_properties(webolution PROPERTIES SUFFIX ".js")
   target_link_options(webolution PRIVATE
-    -fexceptions -sUSE_SDL=2 -sASYNCIFY -sASYNCIFY_STACK_SIZE=262144
-    -sSTACK_SIZE=4194304 -sALLOW_MEMORY_GROWTH -sENVIRONMENT=web,node
+    -fexceptions -pthread -sUSE_SDL=2 -sASYNCIFY -sASYNCIFY_STACK_SIZE=262144
+    # Preload before Start. The browser main thread waits for raster bands
+    # synchronously and cannot service a worker startup message at the barrier.
+    "-sPTHREAD_POOL_SIZE=Math.max(0,Math.min(8,_emscripten_num_logical_cores()||1)-1)"
+    -sPTHREAD_POOL_SIZE_STRICT=2
+    -sSTACK_SIZE=4194304 -sALLOW_MEMORY_GROWTH -sENVIRONMENT=web,worker,node
     -sEXIT_RUNTIME=1 -lidbfs.js -lnodefs.js
     -sEXPORTED_FUNCTIONS=_main -sEXPORTED_RUNTIME_METHODS=ccall,FS,IDBFS,ENV
     --pre-js "${web_dir}/node-mount.js")
@@ -1374,6 +1378,10 @@ add_test(NAME terrain COMMAND test_terrain)
 add_executable(test_world src/__test__/test_world.cpp)
 target_link_libraries(test_world PRIVATE webolution_objects)
 add_test(NAME world COMMAND test_world)
+
+add_executable(test_climber_ceiling src/__test__/test_climber_ceiling.cpp)
+target_link_libraries(test_climber_ceiling PRIVATE webolution_objects)
+add_test(NAME climber_ceiling COMMAND test_climber_ceiling)
 
 # D3a: the production retail-level loader (sim/RetailLevel.*). Writes
 # build/tmp/d3a-retail-level-setup/sweep.txt as a deliverable when

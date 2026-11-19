@@ -25524,7 +25524,7 @@
     {
       "id": "climber-topout-001",
       "title": "Make Mine a Large One: a climber hits the ceiling and falls back instead of passing through",
-      "status": "needs_review",
+      "status": "done",
       "depends_on": [
         "emscripten-build-001"
       ],
@@ -25622,12 +25622,92 @@
           },
           "blocker": "The ceiling fix works on the recorded failure. All 23 promoted replays and the supervisor gate passed. The first acceptance criterion remains blocked because only the second supplied replay contains a climber death. The report correctly identifies what happened in both attempts. Satisfying the criterion as written requires the missing recording."
         }
-      ]
+      ],
+      "review": {
+        "decision": "accept",
+        "reason": "Attempt 2 reproduces the reported death and shows the fix at the same wall. Lemming 0 turns left at the ceiling and lands alive on the ledge it climbed from. All 23 promoted wins reproduced their results, and the supervisor smoke and recovery suites passed. A full human win on this level remains unverified.",
+        "checks": [
+          {
+            "criterion": "The report traces the climber death in the user's recordings (attempt 2, lemming 0) from the climb to its death and names why the ceiling probe missed, from clone traces and static evidence or labelled provisional, and says what attempt 1 contains.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/climber-topout-001.md",
+                "detail": "The report identifies Playtest 16 F1 on E18_KF_2, node 26. It distinguishes attempt 1\u2019s Blocker from attempt 2\u2019s lemming 0, which received Climber mid-build at step 4097. Lemming 1 was the Blocker in attempt 2."
+              },
+              {
+                "path": "build/playtest/replays/E18_KF_2-1795044400292762200-1.replay",
+                "detail": "The only assignment is skill 3, Blocker, to lemming 0 at (90,48) on step 1539. The recording ends in retry at step 12738 with zero deaths."
+              },
+              {
+                "path": "build/climber-topout-001/observed-2-changes.csv",
+                "detail": "Lemming 0 clears the first ledge and climbs the steel wall at column 146. At step 6374 the old clone reads air at head row \u22122 and wall row \u22121, then hoists. It walks at row \u22121, falls from column 152 at step 6499, enters Splatter after 51 cells at step 6568, and reaches Dead at step 6569."
+              },
+              {
+                "path": "decomp-lemmings/docs/evidence/actor_climbing.asm",
+                "detail": "In the registered EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the reference clamps the lookup row at 0x00413A2A and reads the head cell at 0x00413A53. Even over air, the comparison at 0x00413A67 sends a head row strictly above grid height into the fall branch before the wall probe at 0x00413B50. The old clone omitted that comparison."
+              }
+            ]
+          },
+          {
+            "criterion": "On Make Mine a Large One a climber that climbs that wall hits the ceiling and falls back down on its own side; it no longer passes through the wall or dies on the far side.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "After the climb move, World::stepClimber samples row 0 for head row \u22121 and forces a ceiling hit for head rows below \u22121. A hit moves the lemming one column back, reverses its facing, clears its fall distance and enters Faller before the hoist check."
+              },
+              {
+                "path": "build/climber-topout-001/corrected-2-changes.csv",
+                "detail": "Lemming 0 still clears the earth ledge at column 114. At the steel wall it turns left into Faller at (145,1) on step 6374 and lands as a left-facing Walker at (145,14) on step 6389. Both positions are on the approach side of column 146."
+              },
+              {
+                "path": "build/climber-topout-001/final-2.log",
+                "detail": "At the former death step, 6568, the final executable reports 11 spawned, zero saved and zero dead. The unpromoted recording expected one death at the same clock and phase, accounting for its divergence."
+              }
+            ]
+          },
+          {
+            "criterion": "Climbing on the levels already won is unchanged; all promoted playtest replays still reproduce their results.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/climber-topout-001/promoted.tsv",
+                "detail": "The table covers all 23 recordings under docs/playtest/replays. Each row identifies its recording, result step, saved count and individual log. All 23 returned exit 0 with won=1 and completed=1."
+              },
+              {
+                "path": "build/climber-topout-001/win-MM_CLIMB_002-1794810756006823700-1.log",
+                "detail": "The promoted climbing tutorial replay passed at its recorded step 1252 with 10 saved and the level completed."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/loop-93eeacb977db464799c79279c2c4b562/0001-verify-1f0ec0/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passing, including the level-sweep chunks and report, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/climber-topout-001.md",
+                "detail": "The report ends with the requested playtest check. On Make Mine a Large One, give the builder Climber, watch it clear the earth ledge, then verify it turns left at the steel-wall ceiling and lands back on the ledge."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T00:08:58.927578+00:00",
+      "accepted_verification": {
+        "profile": "smoke",
+        "log": "build/agent-runs/loop-93eeacb977db464799c79279c2c4b562/0001-verify-1f0ec0/verification.log",
+        "verified_content": "bc5c59b35640a0be1bbc66c02f54cba5dc53364bc650e6aa533149cb3f2f4f2e"
+      }
     },
     {
       "id": "web-perf-001",
       "title": "Browser build: smooth camera rotation, unbroken music, bounded console output",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "climber-topout-001"
       ],
@@ -25643,7 +25723,101 @@
         "Music and cues keep playing without gaps through a slow frame in the web build, by design argument and any measurement available outside a browser.",
         "The native build's behavior and pixels are unchanged; all promoted playtest replays still reproduce on both the native and the web build.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T000859-55692-63676261",
+      "started": "2026-11-19T00:08:59.360415+00:00",
+      "finished": "2026-11-19T00:26:56.595042+00:00",
+      "last_run": "build/agent-runs/20261119T000859-55692-63676261",
+      "review": {
+        "decision": "accept",
+        "reason": "All five criteria are supported. The four rotation scenarios finish within a 60 Hz scene-render budget after warm-up, and the audio buffer covers the measured 50 ms stall at 48 kHz. Display pacing and audible playback remain for the user's desktop-browser playtest.",
+        "checks": [
+          {
+            "criterion": "The report names what flooded the console and the web build no longer prints anything per frame; repeated warnings appear at most once.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/web-perf-001.md",
+                "detail": "The report identifies the changing backdrop statistics written to stderr on every scene draw. The web guard in renderFrame removes that write."
+              },
+              {
+                "path": "build/web-perf-001/measurements.tsv",
+                "detail": "Each of the four baseline runs emitted 180 backdrop summaries in 180 draws. The four final runs emitted zero summaries in 720 draws."
+              },
+              {
+                "path": "build/web-perf-001/console-check.log",
+                "detail": "The page's output handlers emitted one copy of a warning submitted 1,000 times, capped combined stdout and stderr at 32 distinct messages, and kept the latest save error visible."
+              }
+            ]
+          },
+          {
+            "criterion": "The report gives measured web frame times before and after for intro rotation and player rotation on Just Climb and Make Mine a Large One, names the dominant cost, and the after times support smooth rotation.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/web-perf-001/before-summary.json",
+                "detail": "Backdrop and tube rasterization together consumed 24.6\u201327.6 ms per frame. On Just Climb, mean scene times were 25.63 ms for entry and 26.74 ms for drag. On Make Mine a Large One, both means were 29.31 ms when rounded from the retained report measurements, with entry reported as 29.32 ms."
+              },
+              {
+                "path": "build/web-perf-001/final-summary.json",
+                "detail": "Just Climb entry and drag fell to means of 5.71 and 5.94 ms, with p95 values of 6.22 and 6.65 ms. Make Mine a Large One fell to 7.17 and 7.28 ms, with p95 values of 7.72 and 7.80 ms. All four leave headroom within 16.67 ms."
+              },
+              {
+                "path": "build/web-perf-001/measure.inc",
+                "detail": "The Wasm harness calls the production renderFrame with selected-hatch CameraIntro poses or four-pixel right drags through CameraController. These timings cover scene rendering. Browser presentation and display pacing are outside the measurement."
+              }
+            ]
+          },
+          {
+            "criterion": "Music and cues keep playing without gaps through a slow frame in the web build, by design argument and any measurement available outside a browser.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Mixer::open requests 4,096 device frames on the web. At 48 kHz, one block spans 85.33 ms, giving the main-thread callback time to refill after the measured stall."
+              },
+              {
+                "path": "build/web-perf-001/device-audio.log",
+                "detail": "The simulated 48 kHz device measured 50.37 ms for the stall and refill. Across the adjacent blocks, channel minima of 0.0913 and 0.2740 show the looping bed and the right-channel cue remained present. Actual speaker output awaits playtest."
+              }
+            ]
+          },
+          {
+            "criterion": "The native build's behavior and pixels are unchanged; all promoted playtest replays still reproduce on both the native and the web build.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/RasterRows.h",
+                "detail": "Native rendering retains its 16-participant limit and existing raster algorithm. Each row band has one writer, triangles keep submission order within each band, and the caller waits for completion before reducing results. Native pixel preservation follows from the source path."
+              },
+              {
+                "path": "build/web-perf-001/replays.tsv",
+                "detail": "All 23 promoted recordings exited successfully on Windows and Wasm. Every pair matched on final step and saved count and reported won=1 and completed=1."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261119T000859-55692-63676261/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including the level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/web-perf-001.md",
+                "detail": "The final note names both levels and asks the player to watch the entry turn, right-drag the camera, and assign a skill with music enabled. It specifies smooth rotation, continuous music, audible cues, and a quiet console as the expected results."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-19T00:28:50.706793+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T000859-55692-63676261\\verification.log",
+        "verified_content": "63807bacc667e3b484eedec695501397429abd8b4f6b035fd2386ac0bf8b9408"
+      }
     }
   ]
 }

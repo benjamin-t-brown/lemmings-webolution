@@ -948,7 +948,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     if (options.drawCellRoute && !options.composeActorsBeforeRoute)
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
     scene->drawDeathParticles(target, frameCamera, *library);
+#ifndef __EMSCRIPTEN__
     if (!args.sceneOff) std::fprintf(stderr,"backdrop: enabled=%d roots=%zu records=%zu triangles=%zu billboards=%zu null-materials=%zu null-triangles=%zu predicate-rejected=%zu missing-named-textures=%zu rejected=%zu pixels-depth-written=%zu\n",backdrop.has_value(),backdropStats.roots,backdropStats.meshRecords,backdropStats.meshTriangles,backdropStats.billboards,backdropStats.nullMaterials,backdropStats.nullMaterialTriangles,backdropStats.predicateRejected,backdropStats.missingTextures,backdropStats.rejected,backdropStats.pixels);
+#endif
     if (backdrop && !spriteSeedReported && backdrop->firstSpriteDrawRandomState()) {
       spriteSeedReported = true;
       std::fprintf(stderr, "backdrop: sprite scenery generator state at first draw = 0x%08x "

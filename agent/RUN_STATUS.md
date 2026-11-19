@@ -9,7 +9,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
-- climber-topout-001: **ready** — Make Mine a Large One: a climber hits the ceiling and falls back instead of passing through
+- climber-topout-001: **needs_review** — Make Mine a Large One: a climber hits the ceiling and falls back instead of passing through
 - web-perf-001: **ready** — Browser build: smooth camera rotation, unbroken music, bounded console output
 
 ## Recently completed queue entries
@@ -37,11 +37,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-c99f37853608425aa9a16636fad42ddc/result.json`
-- Status: **interrupted**
-- Duration: 0h 00m 59s
+- Result: `build/agent-runs/loop-ab2d429aa83d47ffb141faa3deeea273/result.json`
+- Status: **blocked**
+- Duration: 0h 10m 53s
 - Completed in this invocation: none
-- Reason: Worker stopped; inspect build/agent-runs/20261118T234046-47480-0b053869
+- Reason: The ceiling fix works on the recorded failure. All 23 promoted replays and the supervisor gate passed. The first acceptance criterion remains blocked because only the second supplied replay contains a climber death. The report correctly identifies what happened in both attempts. Satisfying the criterion as written requires the missing recording.
 
 ## Documentation handoff
 

@@ -25524,7 +25524,7 @@
     {
       "id": "climber-topout-001",
       "title": "Make Mine a Large One: a climber hits the ceiling and falls back instead of passing through",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "emscripten-build-001"
       ],
@@ -25535,17 +25535,94 @@
       "user_authorized": true,
       "scope": "Playtest 16 F1, corrected by the user: on Make Mine a Large One (E18_KF_2, map node 26) a lemming given Climber climbs a wall, reaches the top, glitches through the wall and dies on the other side. The user states the expected behavior: the climber should hit the ceiling and fall back down. The user's attempts are build/playtest/replays/E18_KF_2-1795044400292762200-1.replay (Climber assigned to lemming 0 at tick 1539, column 90 row 48) and E18_KF_2-1795044489816902700-2.replay (Climber assigned to lemming 1 at tick 1879, column 83 row 48); replay them through the clone and trace the climber's state, position and the terrain above and beside it, tick by tick, from the climb to its death. The production path is World::stepClimber in src/sim/World.cpp: the climb move (climbSpeed), then the ceiling probe solidAt(wrapX(wall - dir), y - v*lemmingHeight) that turns the lemming into a Faller facing away, then the single-column top-out probe at climberTopOut that starts a Hoister; then World::stepHoister and the walker and fall/death handling. Establish why the ceiling is missed here: for example the probe column (wall - dir) or height not covering this ceiling, the climb step moving the probe past a thin ceiling in one tick, the top-out probe firing first where the wall meets the ceiling, wrapped columns or facing, or the ceiling's material (steel, scenery or gadget collision) not counted by solidAt. Use the retained static evidence cited in stepClimber (0x004137CA, 0x004139BF, 0x00413a53 ceiling probe, 0x00413b50 top-out probe, 0x00417D6F) and static REA where needed. Fix the production path so a climber that reaches this ceiling turns and falls back down as the original would, without changing climbing on the levels already won. Difficulty: difficult. Recommended model: Opus. Reason: climber rules carry retained static evidence and the replay set exercises them. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
-        "The report traces the user's climber in both replays from the climb to its death and names why the ceiling probe missed, from clone traces and static evidence or labelled provisional.",
+        "The report traces the climber death in the user's recordings (attempt 2, lemming 0) from the climb to its death and names why the ceiling probe missed, from clone traces and static evidence or labelled provisional, and says what attempt 1 contains.",
         "On Make Mine a Large One a climber that climbs that wall hits the ceiling and falls back down on its own side; it no longer passes through the wall or dies on the far side.",
         "Climbing on the levels already won is unchanged; all promoted playtest replays still reproduce their results.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ],
-      "loop_attempts": 0,
-      "run_id": "20261118T234046-47480-0b053869",
-      "started": "2026-11-18T23:40:47.352301+00:00",
-      "finished": "2026-11-18T23:41:46.694185+00:00",
-      "last_run": "build/agent-runs/20261118T234046-47480-0b053869",
-      "lead_note": "2026-11-18: attempt in run 20261118T234046-47480-0b053869 was stopped by the user after about 10 minutes because the original scope expected a hoist onto the top; the user corrected the expected behavior to a ceiling hit and fall. No source changes were made. Attempts reset to 0 for the corrected scope."
+      "loop_attempts": 1,
+      "run_id": "20261118T234258-56656-bf5da74f",
+      "started": "2026-11-18T23:42:59.008621+00:00",
+      "finished": "2026-11-18T23:52:41.890435+00:00",
+      "last_run": "build/agent-runs/20261118T234258-56656-bf5da74f",
+      "lead_note": "2026-11-18: attempt in run 20261118T234046-47480-0b053869 was stopped by the user after about 10 minutes because the original scope expected a hoist onto the top; the user corrected the expected behavior to a ceiling hit and fall. No source changes were made. Attempts reset to 0 for the corrected scope. 2026-11-18: the first review blocked only criterion 1, which the lead mis-scoped: the lead read skill 3 in the replay assignments as Climber, but it is Blocker, so only attempt 2 contains a climber death (the worker's report documents both attempts correctly). Criterion 1 reworded to the recordings as they are; the other criteria and the work are unchanged. Returned to needs_review for a fresh independent review. Previous criterion 1: The report traces the user's climber in both replays from the climb to its death and names why the ceiling probe missed, from clone traces and static evidence or labelled provisional.",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261118T234258-56656-bf5da74f",
+          "review": {
+            "decision": "blocked",
+            "reason": "The ceiling fix works on the recorded failure. All 23 promoted replays and the supervisor gate passed. The first acceptance criterion remains blocked because only the second supplied replay contains a climber death. The report correctly identifies what happened in both attempts. Satisfying the criterion as written requires the missing recording.",
+            "checks": [
+              {
+                "criterion": "The report traces the user's climber in both replays from the climb to its death and names why the ceiling probe missed, from clone traces and static evidence or labelled provisional.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/playtest/replays/E18_KF_2-1795044400292762200-1.replay",
+                    "detail": "The only skill assignment is Blocker on lemming 0 at step 1539. The recording ends in retry at step 12738 with zero deaths. There is no climb-to-death sequence to trace."
+                  },
+                  {
+                    "path": "build/climber-topout-001/observed-2-changes.csv",
+                    "detail": "In the second attempt, lemming 0 climbs at column 146, hoists at step 6374, walks at row \u22121 and falls at column 152. It enters Splatter at step 6568 after falling 51 cells and Dead at step 6569. Lemming 1 is the Blocker."
+                  },
+                  {
+                    "path": "decomp-lemmings/docs/evidence/actor_climbing.asm",
+                    "detail": "The reference clamps the lookup row at 0x00413A2A and reads the head cell at 0x00413A53. Even when that cell is empty, the comparison at 0x00413A67 sends a head row above grid height into the fall branch before the wall probe at 0x00413B50. The old clone treated both out-of-grid probes as air and allowed the hoist."
+                  }
+                ]
+              },
+              {
+                "criterion": "On Make Mine a Large One a climber that climbs that wall hits the ceiling and falls back down on its own side; it no longer passes through the wall or dies on the far side.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "src/sim/World.cpp",
+                    "detail": "World::stepClimber now samples row 0 when the head reaches clone row \u22121 and forces a ceiling hit above that. The hit moves the climber back one column, reverses its facing and enters Faller before the hoist check."
+                  },
+                  {
+                    "path": "build/climber-topout-001/corrected-2-changes.csv",
+                    "detail": "Lemming 0 clears the first ledge. On the tall steel wall at column 146, it turns left into Faller at (145,1) on step 6374 and lands as a Walker at (145,14) on step 6389."
+                  },
+                  {
+                    "path": "build/climber-topout-001/final-2.log",
+                    "detail": "The final executable reaches the former death step, 6568, with 11 spawned and zero dead. This accounts for the unpromoted recording\u2019s divergence from its recorded one death."
+                  }
+                ]
+              },
+              {
+                "criterion": "Climbing on the levels already won is unchanged; all promoted playtest replays still reproduce their results.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/climber-topout-001/promoted.tsv",
+                    "detail": "All 23 active promoted recordings have individual result logs. Each reproduced its recorded outcome with exit 0, won=1 and completed=1."
+                  },
+                  {
+                    "path": "build/climber-topout-001/win-MM_CLIMB_002-1794810756006823700-1.log",
+                    "detail": "The promoted climbing tutorial replay passed at step 1252 with all 10 lemmings saved."
+                  }
+                ]
+              },
+              {
+                "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261118T234258-56656-bf5da74f/verification.log",
+                    "detail": "The supervisor recorded 95 of 95 smoke tests passing, including all level-sweep chunks and their report, followed by 84 of 84 recovery tests passing."
+                  },
+                  {
+                    "path": "docs/scratch/climber-topout-001.md",
+                    "detail": "The report ends with a human check on Make Mine a Large One. Give the builder Climber, watch it clear the earth ledge, then verify it turns left at the steel-wall ceiling and lands back on the ledge."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "The ceiling fix works on the recorded failure. All 23 promoted replays and the supervisor gate passed. The first acceptance criterion remains blocked because only the second supplied replay contains a climber death. The report correctly identifies what happened in both attempts. Satisfying the criterion as written requires the missing recording."
+        }
+      ]
     },
     {
       "id": "web-perf-001",

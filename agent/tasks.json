@@ -27528,7 +27528,7 @@
       "scope": "Playtest 19 J1: after stalking-seams-001 (a sampling fix on the arrow faces and rail; docs/scratch/stalking-seams-001.md) the user still sees seams in Now You're Stalking (E22_KF_1, node 27; location not given) and obvious ones in Escape to Victory (E11_KF_1, node 28): (a) a vertical seam through the spawn area, on the cylinder background behind the hatch (the hatch box itself has no seam); (b) a horizontal seam across the big metal blocks below the spawn and the wood to the left of them, running all the way around the cylinder. A seam that runs all the way around suggests a band/row boundary; a vertical one suggests an angular bucket, texture wrap (u=0/1) or block-column boundary. Render both levels from the clone (framebuffer output) at the entry camera and several yaw/pitch positions, locate each seam, and classify its cause: mesh vertices not shared or rounded differently across bands, buckets or cell blocks, T-junctions, UV/texel-edge bleeding or wrap, raster edge/fill rule, depth fighting between the tube and backdrop. Compare with the original's static evidence where retained and fix the production cause so the surfaces are continuous on both levels; check that the stalking-seams-001 fix still holds. Do not change simulation, picking or actor occlusion. Difficulty: difficult. Recommended model: Opus. Reason: geometry/raster cause across two levels, one fix already partial. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
       "acceptance": [
         "The report shows each Escape to Victory seam (clone framebuffer images with camera positions under build/), classifies it by cause and names the production path changed, with static evidence or a provisional label. For Now You're Stalking it records the views checked; a residual seam there without a reported location is out of scope and tracked in the playtest ledger.",
-        "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone on desktop and in the browser build (browser framebuffers, interactive browser check at the user's playtest); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression.",
+        "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone in clone framebuffers from the desktop build and the Emscripten build (rendered headless or under Node; no live browser run is required); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression.",
         "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
       ],
@@ -27664,9 +27664,131 @@
             ]
           },
           "blocker": "The Escape to Victory fix is verified. The remaining Playtest 19 J1 seam in Now You're Stalking could not be identified from the report or reproduced in the retained views. A screenshot or a description of the affected surface and camera angle is needed to classify it. The browser-build evidence covers Emscripten framebuffers rendered under Node. Chrome timed out before loading the game."
+        },
+        {
+          "run": "build/agent-runs/20261119T091556-54888-0deef0f6",
+          "review": {
+            "decision": "blocked",
+            "reason": "Both Escape to Victory seams are gone in the retained desktop and Emscripten framebuffers. The required interactive browser check awaits the user's playtest. The Chrome attempt timed out before loading the game. The residual Now You're Stalking seam is tracked separately as J1b.",
+            "checks": [
+              {
+                "criterion": "The report shows each Escape to Victory seam (clone framebuffer images with camera positions under build/), classifies it by cause and names the production path changed, with static evidence or a provisional label. For Now You're Stalking it records the views checked; a residual seam there without a reported location is out of scope and tracked in the playtest ledger.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/escape-seams-001/E11-spawn-detail.png",
+                    "detail": "The paired clone captures show the vertical hairline in the bark behind the hatch before the change and continuous bark at that location afterward."
+                  },
+                  {
+                    "path": "build/escape-seams-001/E11-band-detail.png",
+                    "detail": "The paired clone captures show the thin line crossing wood and steel before the change. The line disappears afterward and the riveted panel borders remain visible."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-desktop-frames/E11_KF_1-settled.json",
+                    "detail": "Records the 640\u00d7480 hatch camera used for both seam comparisons, with yaw offset 191/256 turns and eye distance 377.516."
+                  },
+                  {
+                    "path": "build/escape-seams-001/route-pixels.log",
+                    "detail": "At the inner shell's column 64, the vertical seam samples bilinear column \u22121 and wraps to column 127. Along outer row 32, the wood and steel samples mix rows 127 and 0. Clamping removes those opposite-edge taps at the same depth."
+                  },
+                  {
+                    "path": "build/escape-seams-001/rea-open.json",
+                    "detail": "Identifies the registered x86 reference executable by SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f."
+                  },
+                  {
+                    "path": "build/escape-seams-001/rea-walker-instructions.json",
+                    "detail": "The retained instructions agree with the pseudocode. The terrain walker calls 0x470FAF with 1 at 0x43A6BB before the terrain draws and with 0 at 0x43A908 afterward."
+                  },
+                  {
+                    "path": "build/escape-seams-001/rea-address-instructions.json",
+                    "detail": "Instructions at 0x470FB8\u20130x470FD8 select clamp value 3 for the first call and wrap value 1 for the second, then pass the selected value for stage 0 address state 0x0C. This establishes the requested static sampler state."
+                  },
+                  {
+                    "path": "docs/scratch/escape-seams-001.md",
+                    "detail": "Traces the change from TubeScene::build through TubeScene::render and drawRouteQuad to Raster::triangle. It labels the asset-family scope provisional and records Stalking's entry, settled, 16 yaw, and four tilt views."
+                  },
+                  {
+                    "path": "docs/playtest/2026-11-19-playtest-19.md",
+                    "detail": "J1 identifies both Escape seams. J1b tracks the residual Stalking seam separately and records that it is parked until a location is reported."
+                  }
+                ]
+              },
+              {
+                "criterion": "The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone on desktop and in the browser build (browser framebuffers, interactive browser check at the user's playtest); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/escape-seams-001/after-desktop-E11_KF_1-rotation-tube.png",
+                    "detail": "Sixteen views spaced 22.5 degrees apart cover a full turn. The sampled solid joins show no new gaps."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-wasm-E11_KF_1-rotation-tube.png",
+                    "detail": "The Emscripten rotation shows continuous solid joins at the same sampled poses."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-wasm-frames/E11_KF_1-settled.log",
+                    "detail": "Records the Emscripten artifact running under Node and writing the 640\u00d7480 settled hatch framebuffer corresponding to the desktop seam comparison."
+                  },
+                  {
+                    "path": "build/escape-seams-001/frame-metrics.tsv",
+                    "detail": "The Escape entry and settled RGB buffers match across desktop and Emscripten. All 44 Stalking desktop captures match before and after. MM_CLIMB_002 also matches."
+                  },
+                  {
+                    "path": "build/escape-seams-001/check-summary.log",
+                    "detail": "Records the small difference bounds for MM_DIG_000 and E19_KF_2, which the report identifies as flame sprites. The spot checks show no tube regression."
+                  },
+                  {
+                    "path": "build/escape-seams-001/chrome-bounded/E11_KF_1-settled.http.log",
+                    "detail": "Chrome fetched the check page and timed out before requesting the game loader. The playtest ledger still lists the fix as unconfirmed, so the interactive browser check remains outstanding."
+                  }
+                ]
+              },
+              {
+                "criterion": "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/loop-4b28dc6e728043ddb89da3aed11bff20/0001-review-6841ea/before-diff.txt",
+                    "detail": "The only production diff extends the existing tube texture clamp selection to E11_KF_1. Simulation and picking code have no changes in this review snapshot."
+                  },
+                  {
+                    "path": "src/app/Raster.cpp",
+                    "detail": "Wrap and clamp select RGB texel coordinates after triangle coverage, depth acceptance and actor visibility checks. Both use the same depth write and actor ownership logic."
+                  },
+                  {
+                    "path": "build/escape-seams-001/check-summary.log",
+                    "detail": "All 44 paired tube depth buffers are byte-identical, confirming the sampled tube depth used by actor occlusion is unchanged."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-desktop-replays/results.tsv",
+                    "detail": "All 23 active promoted recordings match the repository inventory and return exit 0 with PASS, won=1 and completed=1. Stalking completes at step 24402 with 49/49 saved."
+                  },
+                  {
+                    "path": "build/escape-seams-001/after-wasm-replays/results.tsv",
+                    "detail": "The same 23 recordings pass under Node and Emscripten with matching completion steps and saved counts."
+                  }
+                ]
+              },
+              {
+                "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/loop-4b28dc6e728043ddb89da3aed11bff20/0001-verify-049991/verification.log",
+                    "detail": "The current supervisor run passed all 95 main smoke tests, including the level sweep and actor composition, and all 84 recovery tests."
+                  },
+                  {
+                    "path": "docs/scratch/escape-seams-001.md",
+                    "detail": "The report ends by directing the playtester to node 28 to inspect the bark behind the hatch and rotate past the wood and steel, then to node 27 to check the arrow faces and rail. It states the expected appearance at each join."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "Both Escape to Victory seams are gone in the retained desktop and Emscripten framebuffers. The required interactive browser check awaits the user's playtest. The Chrome attempt timed out before loading the game. The residual Now You're Stalking seam is tracked separately as J1b."
         }
       ],
-      "lead_note": " 2026-11-19: the first review passed the Escape to Victory fix, the unchanged simulation/picking/occlusion and smoke, and blocked only because the residual Now You're Stalking seam had no location and could not be reproduced. The lead moved that residual to playtest 19 J1b in the ledger, awaiting the user's surface and camera angle; criteria 1 and 2 now cover Escape to Victory plus no regression on Stalking. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criteria 1-2: The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label. || The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression."
+      "lead_note": " 2026-11-19: the first review passed the Escape to Victory fix, the unchanged simulation/picking/occlusion and smoke, and blocked only because the residual Now You're Stalking seam had no location and could not be reproduced. The lead moved that residual to playtest 19 J1b in the ledger, awaiting the user's surface and camera angle; criteria 1 and 2 now cover Escape to Victory plus no regression on Stalking. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criteria 1-2: The report shows each seam (clone framebuffer images with camera positions under build/) on both levels, classifies it by cause and names the production path changed, with static evidence or a provisional label. || The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone, and no seam remains on Now You're Stalking at the checked views, on desktop and in the browser build; a full rotation shows no new gaps and spot-checked other levels show no regression. 2026-11-19 (second): the review blocked only on the interactive browser check that the lead's own criterion 2 wording named. Human checks belong to the playtest (AGENTS.md Verification), so criterion 2 now names only clone framebuffers. The work is unchanged. Returned to needs_review. Previous criterion 2: The vertical spawn-area seam and the horizontal all-around seam in Escape to Victory are gone on desktop and in the browser build (browser framebuffers, interactive browser check at the user's playtest); a full rotation shows no new gaps, Now You're Stalking's checked views are unchanged, and spot-checked other levels show no regression."
     },
     {
       "id": "rat-motion-smoothing-001",

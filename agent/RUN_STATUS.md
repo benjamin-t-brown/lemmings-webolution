@@ -11,7 +11,8 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - unlock-all-option-001: **needs_review** — Options toggle: unlock all levels (unbeaten ones shown as available)
 - lantern-glow-001: **ready** — Background lanterns in Now You're Stalking glow instead of drawing as black billboards
-- stalking-seams-001: **ready** — Visible rendering seams in Now You're Stalking are closed
+- entry-backdrop-rect-001: **ready** — Background scenery shows no opaque blue rectangle during the level-entry zoom and rotation
+- stalking-seams-001: **ready** — Visible rendering seams on the arrow blocks in Now You're Stalking are closed
 
 ## Recently completed queue entries
 
@@ -38,11 +39,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-3aa25ec22453459cafdeb6c87e27a7a6/result.json`
-- Status: **blocked**
-- Duration: 1h 18m 25s
-- Completed in this invocation: hover-lemming-highlight-001, miner-staircase-stop-001, builder-end-turn-001
-- Reason: Acceptance requires a successful browser reload check and lead disposition of two still-promoted recordings that diverge under the accepted Builder fix. The retained browser run ended before initialization, and both actions fall outside this read-only review.
+- Result: `build/agent-runs/loop-91490de0d12241a2af6ba7e1553870fd/result.json`
+- Status: **cancelled**
+- Duration: 0h 00m 02s
+- Completed in this invocation: none
+- Reason: Keyboard interrupt
 
 ## Documentation handoff
 

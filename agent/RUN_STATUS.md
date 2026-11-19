@@ -10,6 +10,8 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - unlock-all-option-001: **needs_review** — Options toggle: unlock all levels (unbeaten ones shown as available)
+- lantern-glow-001: **ready** — Background lanterns in Now You're Stalking glow instead of drawing as black billboards
+- stalking-seams-001: **ready** — Visible rendering seams in Now You're Stalking are closed
 
 ## Recently completed queue entries
 

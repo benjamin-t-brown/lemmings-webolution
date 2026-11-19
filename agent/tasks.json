@@ -26542,6 +26542,46 @@
         }
       ],
       "lead_note": " 2026-11-18: the first review blocked on (a) no browser reload observation, because headless Chrome failed before initialization, and (b) two promoted recordings diverging under the accepted builder-end-turn-001 fix. Lead disposition: (b) both recordings retired by design in docs/playtest/replays/README.md, so criterion 3 now covers the 22 remaining .replay files, which the worker reproduced; (a) per AGENTS.md, playtest fixes are accepted at the user's next playtest, so criterion 1 now asks for the web persistence path by source and leaves the reload to the playtest. The work is unchanged. Returned to needs_review for a fresh independent review. Previous criterion 1: The Options menu offers an 'Unlock all levels' toggle on desktop and in the browser; it persists across restarts (and a browser reload) through the clone settings file, defaults to off, and older settings files still load."
+    },
+    {
+      "id": "lantern-glow-001",
+      "title": "Background lanterns in Now You're Stalking glow instead of drawing as black billboards",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 18 H1: in Now You're Stalking (E22_KF_1, node 27) the lanterns in the background draw as black billboards; the user expects a glowing light. User recordings (none won): build/playtest/replays/E22_KF_1-1795070062330020700-1.replay (24381 steps), -1795070247793415200-2, -1795070377408519300-1. Identify from the installed level and its scenery/object records which objects are the lanterns, and which textures, sprites and materials they use (for example a '~' additive material, ALF alpha planes, '_'/'$' colour keys, or a separate glow/halo or light-flare pass). Trace from static evidence (REA) how the original draws them: blend selector, texture/alpha source, colour or animation, depth/billboard orientation and draw order. Then find why the clone's draw path loses it (missing pass, wrong blend, black-keyed texels drawn opaque, missing alpha plane, unsupported object kind) and fix that production path so the lanterns glow. Check whether other installed levels use the same objects or material and fix them too through the same path; list them. Do not change scenery depth or actor occlusion rules beyond what this requires. Difficulty: difficult. Recommended model: Opus. Reason: needs the level's object records traced to a renderer material/blend path not yet located. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the lantern objects, their textures/materials and the original's draw path for them (static addresses), or labels a choice provisional, and names the clone call path that dropped the glow.",
+        "In Now You're Stalking the lanterns draw with their light (no black billboard), on desktop and in the browser build, with clone framebuffer evidence before and after under build/.",
+        "Other installed levels using the same objects or material are listed and drawn through the same fixed path; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "stalking-seams-001",
+      "title": "Visible rendering seams in Now You're Stalking are closed",
+      "status": "ready",
+      "depends_on": [
+        "builder-end-turn-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 18 H2: in Now You're Stalking (E22_KF_1, node 27) the user sees seams in the level, rendering errors that should be smooth. The user did not say where; render the level from the clone at its entry camera and several yaw/pitch positions (clone framebuffer output only), find gaps or cracks between adjacent geometry: tube/terrain cell blocks, angular pass buckets (tubePassBounds) and their bank order, backdrop vs tube coverage, scenery mesh joins, or texture-edge bleeding/UV rounding. Classify each seam by cause, compare the clone's geometry/raster path with the original's static evidence where retained (vertex sharing, edge rules, UV inset, depth bias), and fix the production cause so the surface is continuous. Fix only seams that are clone defects; if one also exists by design in the original's data, say so with evidence and leave it. The fix must not change simulation, picking or actor occlusion. Difficulty: difficult. Recommended model: Opus. Reason: location not reported; needs framebuffer search and a raster/geometry cause. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report shows where the seams are (clone framebuffer images with camera positions under build/), classifies each by cause and names the production path changed, with static evidence or a provisional label.",
+        "Those views render without the seams on desktop and in the browser build; a rotation through the level shows no new gaps, and other installed levels spot-checked with the same geometry show no regression.",
+        "Simulation, picking and actor occlusion are unchanged; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

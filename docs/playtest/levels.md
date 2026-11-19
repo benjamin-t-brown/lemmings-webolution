@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 26 of 102.
+under docs/playtest/replays/. Won so far: 27 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -37,7 +37,7 @@ under docs/playtest/replays/. Won so far: 26 of 102.
 | 23 | MM_E1_5_Skills | Swings Both Ways | ok | playtest 14 | pass |  |
 | 24 | MM_ALL_8_002 | Wandering Free | ok | playtest 15 | pass | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 25 | MM_ALL_8_003 | The Iron Curtain | ok | playtest 15 | pass |  |
-| 26 | E18_KF_2 | Make Mine a Large One | ok |  |  | playtest 16 F1: climber misses the ceiling, passes through the wall and dies |
+| 26 | E18_KF_2 | Make Mine a Large One | ok | playtest 17 | pass | playtest 17 G1 builder end turn, G2 miner through staircase |
 | 27 | E22_KF_1 | Now you're stalking | ok |  |  |  |
 | 28 | E11_KF_1 | Escape to victory | ok |  |  |  |
 | 29 | e06_kf_1 | Lets play 'catch'. | ok |  |  |  |

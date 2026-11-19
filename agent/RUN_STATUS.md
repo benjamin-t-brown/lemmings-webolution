@@ -9,6 +9,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - oracle-001: **blocked** — Propose a bounded original-game comparison
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
+- hover-lemming-highlight-001: **ready** — Hovered lemming is highlighted again alongside the bracket cursor
+- miner-staircase-stop-001: **ready** — A miner that reaches a brick staircase along its diagonal stops instead of mining air
+- builder-end-turn-001: **ready** — A builder that finishes its bricks walks on when the way forward is clear
 
 ## Recently completed queue entries
 

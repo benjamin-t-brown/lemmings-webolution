@@ -25945,6 +25945,66 @@
         "log": "build\\agent-runs\\20261119T004236-56504-542eac06\\verification.log",
         "verified_content": "eeaf5c958e503f0897b414254df87203f6ecd7c12039666a699ab83496a59108"
       }
+    },
+    {
+      "id": "hover-lemming-highlight-001",
+      "title": "Hovered lemming is highlighted again alongside the bracket cursor",
+      "status": "ready",
+      "depends_on": [
+        "opengl-plan-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 17 G3: when the user hovers lemmings they cannot see which one will take the job. Regression: hover-feedback-001 (800bb00) drew the picked lemming's silhouette brightened (TubeScene::drawHoveredWalker) and playtest 5 confirmed it worked; hover-cursor-001 (playtest 13 C7, committed in 53df4a1) replaced it with the original's pointer-centred bracket cursor (TEXTURES/_CURLEM.BMP via runtimeCursorState / RuntimeCursor::draw) and removed drawHoveredWalker. Its own report (docs/scratch/hover-cursor-001.md) records that the original also has a separate additive sprite redraw of the hovered actor at 454ACA..454B5C. Today runApplicationLeg still computes hoveredActor (main.cpp, the same picker as left-click assignment) and stores view.hoveredActor, but nothing marks the lemming. Restore a visible highlight of exactly the lemming the next click would assign, following the original's additive redraw at 454ACA..454B5C (static REA: blend, strength, which sprite pass, depth/occlusion handling), keeping the bracket cursor and the hatch hover unchanged. The highlight must use the same placement, flip and occlusion as the drawn lemming (antigrav and lemming-type sprites included), never change picking or scene depth, and disappear when the pointer leaves, a menu opens or the skill is unavailable. Restore markedActor so test_hover_feedback and the related window tests check it. Difficulty: routine. Recommended model: Sonnet. Reason: restores a removed, previously accepted draw path with static evidence already located. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report cites the original's additive redraw (454ACA..454B5C) and says how the restored highlight follows it, or labels the choice provisional.",
+        "Hovering a lemming highlights exactly the lemming a click would assign, with the bracket cursor still shown; nothing is highlighted off a lemming, over the hatch, with a menu open or when the selected skill is unavailable.",
+        "The highlight follows the drawn lemming's placement, flip and occlusion and does not change picking or scene depth; all promoted playtest replays still reproduce.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "miner-staircase-stop-001",
+      "title": "A miner that reaches a brick staircase along its diagonal stops instead of mining air",
+      "status": "ready",
+      "depends_on": [
+        "opengl-plan-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 17 G2 on Make Mine a Large One (E18_KF_2, node 26): the user mined leftward lined up on the same diagonal as their own brick staircase; once the miner reached the staircase it kept mining 'nothing' all the way to the bottom, when it should have stopped at the staircase. Recording: build/playtest/replays/E18_KF_2-1795061453769866500-2.replay (the user's first full play; it reproduces PASS saved=18/25 won=0 completed=1). Skill indices follow sim::Skill (0 Climber, 3 Blocker, 4 Builder, 6 Miner). Lemming 0 builds at steps 1481 (92,48) and 2789 (104,36), gets Climber at 3831, then Miner at step 5861 (126,14), again at 9566 (130,14), 11406 (128,14) and 13397 (127,14); the first Miner is the reported one. Trace that miner tick by tick through the clone (state, facing, position, each stroke's removed cells and their materials, the floor and forward probes) from the assignment until it stops, and identify where it enters the staircase and why it continues. Production path: World::stepMiner and its stroke/terrain removal in src/sim/World.cpp plus the Built material set by stepBuilder. Establish from retained static evidence and static REA how the original's miner decides to stop (for example nothing removed by a stroke, no terrain ahead, steel or a material test, a floor test) and how built bricks count, and fix the production path so this miner stops at the staircase as the original would. Do not change mining on levels already won beyond this defect. Difficulty: difficult. Recommended model: Opus. Reason: miner stop rules carry retained static evidence and interact with built terrain. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report traces the reported miner from step 5861 to where it stops, names why the clone keeps mining through the staircase, and cites the original's stop rule from static evidence or labels it provisional.",
+        "Replaying the same input, the miner stops at the brick staircase instead of mining to the bottom; the report says what it does next and why.",
+        "Mining on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "builder-end-turn-001",
+      "title": "A builder that finishes its bricks walks on when the way forward is clear",
+      "status": "ready",
+      "depends_on": [
+        "opengl-plan-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 17 G1: the user finds it inconsistent whether a builder turns around after laying its last brick. The rule they expect: if the lemming can continue walking forward after the last brick, it should; it turns only when blocked. They believe that on their first play of Make Mine a Large One (E18_KF_2, node 26) a builder turned around when it should not have, but are not certain which build. Recordings: build/playtest/replays/E18_KF_2-1795061453769866500-2.replay (first full play; Builder on lemming 0 at steps 1481 (92,48) and 2789 (104,36)) and the winning docs/playtest/replays/2026-11-18-playtest-17/E18_KF_2-1795061588721901800-4.replay. Skill indices follow sim::Skill (4 Builder). For every build in both recordings, trace the builder from its last brick through Shrugger to its next Walker moves (facing, position, the cells ahead and above at the end of the staircase) and report whether it turned and why. Production path: World::stepBuilder (brick placement, the ceiling/wall checks that can turn a builder), the Shrugger exit and the first Walker step in src/sim/World.cpp. Establish from retained static evidence and static REA the original's end-of-build rule (what is tested after the last brick and the shrug, and when the lemming reverses), and fix the production path where the clone turns a builder the original would let walk on, or vice versa. If every traced build matches the original's rule, say so with evidence and change nothing. Difficulty: difficult. Recommended model: Opus. Reason: builder/shrugger/walker transitions carry retained static evidence and the defect is not yet localized. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report traces every build in both recordings from the last brick to the next walker moves and says whether and why each builder turned.",
+        "The report cites the original's end-of-build rule from static evidence or labels it provisional, and either fixes a deviation in the production path or shows that the traced builds already follow it.",
+        "Building on the levels already won is unchanged beyond the defect; all promoted playtest replays still reproduce, and any intended divergence is named with step and reason.",
+        "The smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

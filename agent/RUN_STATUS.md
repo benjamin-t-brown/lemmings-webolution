@@ -10,6 +10,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
+- rat-hit-sound-003: **ready** — A rat hit plays Thunk instead of Ohno (user-identified sample)
 - rat-fling-spin-random-001: **ready** — Lemmings punched off by rats tumble with a random spin direction and rate
 - flipper-effect-blend-001: **ready** — Gravity flipper effects are drawn with the original's transparency instead of opaque
 - flipper-sound-001: **ready** — Gravity flippers play the original's sound when they flip a lemming

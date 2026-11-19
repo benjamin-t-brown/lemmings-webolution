@@ -29398,6 +29398,25 @@
       }
     },
     {
+      "id": "rat-hit-sound-003",
+      "title": "A rat hit plays Thunk instead of Ohno (user-identified sample)",
+      "status": "ready",
+      "depends_on": [
+        "explosion-pieces-3d-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 21 L1 follow-up. rat-hit-sound-002 (docs/scratch/rat-hit-sound-002.md) found that the static path resolves the rat-hit cue to Ohno (42E349 -> slot 4E32CC) and that no installed record names another sample, and stopped. The user, who knows the original, then listened to the installed samples (extracted by the lead to build/sound-candidates/) and identified the rat-hit sound as SOUNDS\\THUNK.WAV (lemmings.box +0x2bf44fb, mono 5563 Hz, 1288 frames). Implement the user's identification: when a rat hits a lemming in Escape to Victory (E11_KF_1, node 28), the clone plays Thunk once, from the victim's position with the existing positional policy, at the moment the victim is flung (where rat-attack-sound-001 now plays Ohno, World::stepRats -> cueSample), and no longer plays Ohno for a rat hit. Label the sample choice in code and the report as user-identified by ear, contradicting the static Ohno read at 42E349, so a later observation can revisit it. The bomber's Ohno, the closing-gate forced death (427266, which shares the 42E340 path) and every other sound are unchanged; report what the gate plays and leave it. If you find static or data evidence that binds Thunk to the rat hit, cite it. Difficulty: routine. Recommended model: Sonnet. Reason: swap one named sample on an accepted cue path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report states that Thunk is user-identified, cites the static Ohno read it overrides and any evidence found for Thunk, and names the changed call path.",
+        "In Escape to Victory each rat hit plays Thunk once from the victim and no Ohno, shown by a clone sound-event trace under build/; the bomber Ohno, the closing gate and other sounds are unchanged.",
+        "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "rat-fling-spin-random-001",
       "title": "Lemmings punched off by rats tumble with a random spin direction and rate",
       "status": "ready",

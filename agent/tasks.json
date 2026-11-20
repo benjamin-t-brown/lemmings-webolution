@@ -31830,6 +31830,25 @@
         "log": "build\\agent-runs\\20261120T192757-42720-28d85b6e\\verification.log",
         "verified_content": "d9fb6745a851fc024c2d2bd3f4ecb037884248e5720c9d54b253f075905a3658"
       }
+    },
+    {
+      "id": "switch-hover-highlight-002",
+      "title": "Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles",
+      "status": "ready",
+      "depends_on": [
+        "switch-hover-highlight-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 24 P1 (docs/playtest/2026-11-20-playtest-24.md), Designed with love (M11_KF_1, node 33): hovering a lever, pressure pad or laser switch draws rectangles around the elements it controls. The user meant those elements, and the hovered switch, to be highlighted the way a hovered lemming is. The lemming highlight is TubeScene::drawHoveredWalker (src/app/TubeScene.cpp ~1376): the original at 0x454ACA..0x454B5C redraws the body additively (ONE/ONE, neutral RGB 255) only on pixels the body owns in the completed frame. Replace the rectangle outlines in BackdropScene::drawSwitchHover (src/app/BackdropScene.cpp ~1025) with the same kind of highlight: redraw each target's own visible geometry (gate/door/laser/teleport/named-hazard meshes, the fluid surface or gate geometry for fluid receivers, counter gates and occupancy sensors through whatever geometry draws them) additively, only where that geometry is the visible surface in the completed frame, plus the hovered switch itself. Keep the accepted link resolution, pick path and receiver lookup from switch-hover-highlight-001, and keep it presentation only: no change to simulation, input recording, replays or skill assignment. A target with no visible pixels gets no highlight; if a target class has no drawable geometry to brighten, choose the simplest highlight that reads as the element itself (not a box) and label it provisional. Still a clone addition; say so in code and the report. Works during pause and fast-forward, desktop and browser. Difficulty: routine. Recommended model: Sonnet. Reason: reuses the existing lemming highlight method and switch target lookup. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the highlight method reused from drawHoveredWalker, the draw path for each target class (mesh, fluid, counter gate, sensor), any provisional choice, and states that no rectangle outline remains.",
+        "Clone framebuffer frames under build/ on Designed with love and Seafood Sarnie (MM_BLOCK_BUILD_BASH) show, with the pointer over a switch, the switch and its targets brightened on their own visible pixels and no rectangles, and an unchanged frame with the pointer elsewhere; desktop and the Emscripten build under Node match.",
+        "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
+      ]
     }
   ]
 }

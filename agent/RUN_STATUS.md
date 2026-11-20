@@ -10,21 +10,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- antigrav-flip-motion-001: **ready** — A lemming entering an anti-grav lift moves smoothly to the floor above and turns over
-- inverted-builder-fluid-001: **ready** — An upside-down builder treats water ahead as a roof instead of empty space
 - antigrav-lift-quads-001: **ready** — Anti-grav lift effects show their quads; draw them as smoothly as the original
 
 ## Recently completed queue entries
 
-- comment-pass-app-001: Comment pass: src/app
-  Accepted: 2026-11-20T16:23:56.554640+00:00
-  Verification evidence: `build/agent-runs/20261120T160723-47744-efc62838/verification.log`
-  Verification evidence: `build/comment-pass-app-001/final-reference-check/verification.log`
-  Verification evidence: `build\agent-runs\20261120T160723-47744-efc62838\verification.log`
-- comment-pass-platform-001: Comment pass: src/audio, gfx, shell, web, tools, assets
-  Accepted: 2026-11-20T17:07:15.455396+00:00
-  Verification evidence: `build/agent-runs/20261120T165904-47744-ffcbc755/verification.log`
-  Verification evidence: `build\agent-runs\20261120T165904-47744-ffcbc755\verification.log`
 - comment-pass-tests-001: Comment pass: src/__test__
   Accepted: 2026-11-20T18:09:59.615744+00:00
   Verification evidence: `build/agent-runs/20261120T175755-11576-31ccde55/verification.log`
@@ -35,14 +24,22 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Verification evidence: `build\agent-runs\20261120T082724-40472-e1b564bf\verification.log`
 - actorcompose-fixtures-001: Restore the five actorcompose camera fixtures as tracked files
   Verification evidence: `build/agent-runs/20261120T065159-45368-23c3a665/verification.log`
+- antigrav-flip-motion-001: A lemming entering an anti-grav lift moves smoothly to the floor above and turns over
+  Accepted: 2026-11-20T18:55:23.323580+00:00
+  Verification evidence: `build/agent-runs/20261120T182550-37944-de0bcea2/verification.log`
+  Verification evidence: `build\agent-runs\20261120T182550-37944-de0bcea2\verification.log`
+- inverted-builder-fluid-001: An upside-down builder treats water ahead as a roof instead of empty space
+  Accepted: 2026-11-20T19:12:32.572984+00:00
+  Verification evidence: `build/agent-runs/20261120T185523-37944-57dd5e50/verification.log`
+  Verification evidence: `build\agent-runs\20261120T185523-37944-57dd5e50\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-e777857a027e48c4b21508185e85671d/result.json`
+- Result: `build/agent-runs/loop-386b997fee3045e5a680729bbb72946e/result.json`
 - Status: **blocked**
-- Duration: 0h 13m 54s
-- Completed in this invocation: comment-pass-tests-001
-- Reason: No new production task is supported by the current playtest ledger. The three Playtest 22 items have accepted implementations. The next playable-v1 dependency is a human retry of Designed with love (M11_KF_1, node 33) through the ordinary map, including a win and a progress check after restart. The retained post-fix trace shows the inverted Builder advancing on supported steps, but there is no post-fix human result to identify any further change to Builder movement, switch behavior, or another r
+- Duration: 0h 56m 07s
+- Completed in this invocation: antigrav-flip-motion-001, inverted-builder-fluid-001
+- Reason: Windows denied the Emscripten linker write access to build/cmake/emscripten-release/webolution.js, leaving an incomplete JavaScript/Wasm pair. The worker stopped before implementing the lift fix. Acceptance remains open for the artifact diagnosis, matched desktop and Node crops, and promoted replay results. The supervisor smoke profile passed on the submitted source.
 
 ## Documentation handoff
 

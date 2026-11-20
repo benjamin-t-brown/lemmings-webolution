@@ -31492,7 +31492,7 @@
     {
       "id": "antigrav-flip-motion-001",
       "title": "A lemming entering an anti-grav lift moves smoothly to the floor above and turns over",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "comment-pass-tests-001"
       ],
@@ -31506,12 +31506,86 @@
         "The report names the traced AntiGrav state addresses, its motion and rotation profile, and the production call path added from flipIfAntiGrav through the simulation and the actor presentation, labelling any provisional choice.",
         "Clone framebuffer frames under build/ on Designed with love show a lemming crossing an anti-grav lift with intermediate positions and orientations between the two floors (no single-frame snap), arriving upright on the far floor as a Walker, and not dying.",
         "All promoted playtest replays still reproduce or any intended divergence is named with step and reason; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T182550-37944-de0bcea2",
+      "started": "2026-11-20T18:25:50.746629+00:00",
+      "finished": "2026-11-20T18:52:26.745665+00:00",
+      "last_run": "build/agent-runs/20261120T182550-37944-de0bcea2",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The retained clone frames show a surviving half-turn and landing, all 28 promoted replays reproduce, and the supervisor smoke profile passed. The distance-based cartwheel timing is provisional, and the exact retail rotation direction remains unverified.",
+        "checks": [
+          {
+            "criterion": "The report names the traced AntiGrav state addresses, its motion and rotation profile, and the production call path added from flipIfAntiGrav through the simulation and the actor presentation, labelling any provisional choice.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/antigrav-flip-motion-001.md",
+                "detail": "Names Playtest 23 N1 and the registered reference hash. Traces contact at 0x41BFFC, cartwheel entry and update at 0x41ADDC and 0x41AE95, fall at 0x4160BD and Walker entry via 0x42F8B9. Labels the clone's distance-based half-turn provisional and records the unresolved retail sprite direction."
+              },
+              {
+                "path": "build/antigrav-flip-motion-001/static-evidence.json",
+                "detail": "Retained Ghidra pseudocode and instructions agree that 0x41AE1B reverses gravity, 0x41AE28 selects cartwheel, and 0x41AE95 advances the clip and selects walk on Walker entry or fall on timer expiry. The fall instructions show the gravity-signed position update at 0x41627F."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "flipIfAntiGrav enters AntiGrav and cues the sound once. Both step and stepElapsed dispatch to stepAntiGrav, which carries fractional travel through the fall probes. Supported lift landings bypass the distance-based splat and enter Walker without reversing facing."
+              },
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "injectedWalkersFromWorld passes fractional draw position and turn progress to actor preparation. prepareInjectedWalker selects the cartwheel pose and adjusts its placement around the feet. Rendering and screen picking share that placement."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffer frames under build/ on Designed with love show a lemming crossing an anti-grav lift with intermediate positions and orientations between the two floors (no single-frame snap), arriving upright on the far floor as a Walker, and not dying.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/antigrav-flip-motion-001/designed-with-love/crossing-montage.png",
+                "detail": "The inspected framebuffer crops show the actor rising through the lift and changing orientation through several poses before standing with its feet against the far floor."
+              },
+              {
+                "path": "build/antigrav-flip-motion-001/designed-with-love/landed.png",
+                "detail": "The inspected full framebuffer shows the actor upright relative to its new gravity, with its feet against the underside of the upper platform."
+              },
+              {
+                "path": "build/antigrav-flip-motion-001/designed-with-love/crossing.csv",
+                "detail": "Actor 0 enters at step 8150 at (46,65), passes through nine cartwheel poses with fractional draw positions, and reaches (46,53) as a Walker at step 8356, 600 ms later. It then walks right to (47,53) at step 8459. The death count stays at zero."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce or any intended divergence is named with step and reason; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/antigrav-flip-motion-001/replays.tsv",
+                "detail": "Matched all 28 active promoted recordings to PASS rows and their logs, each with won=1 and completed=1. The separate Designed with love recording reproduces its retry at step 13793."
+              },
+              {
+                "path": "build/agent-runs/20261120T182550-37944-de0bcea2/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including the level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/antigrav-flip-motion-001.md",
+                "detail": "The report ends by asking the playtester to send a lemming across the Playtest 23 bridge onto the lift in Designed with love and check for a visible half-turn, one sound, and continued walking on the ceiling in the same direction."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T18:55:23.323580+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T182550-37944-de0bcea2\\verification.log",
+        "verified_content": "137e84d246e9b2c25a9f8b081199d01c568a8780eda79744aa34f21cb941cb2d"
+      }
     },
     {
       "id": "inverted-builder-fluid-001",
       "title": "An upside-down builder treats water ahead as a roof instead of empty space",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "comment-pass-tests-001"
       ],
@@ -31525,7 +31599,73 @@
         "The report names the static evidence for how the Builder probes treat fluid, the production call path changed in World::stepBuilder or the shared probe, and which builders (inverted, upright) it affects.",
         "A clone trace or framebuffer frames under build/ on Designed with love show an upside-down builder reaching water stop and turn without laying a brick into the water, and an upright builder elsewhere unchanged.",
         "All promoted playtest replays still reproduce or any intended divergence is named with step and reason; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T185523-37944-57dd5e50",
+      "started": "2026-11-20T18:55:23.872582+00:00",
+      "finished": "2026-11-20T19:10:10.569562+00:00",
+      "last_run": "build/agent-runs/20261120T185523-37944-57dd5e50",
+      "review": {
+        "decision": "accept",
+        "reason": "The production fix stops the inverted Builder at water on the recorded Designed with love route. All 28 promoted replays and the supervisor smoke profile passed. The live fluid bounds are a provisional clone rule, and human playtest confirmation is pending.",
+        "checks": [
+          {
+            "criterion": "The report names the static evidence for how the Builder probes treat fluid, the production call path changed in World::stepBuilder or the shared probe, and which builders (inverted, upright) it affects.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/inverted-builder-fluid-001/rea-static.json",
+                "detail": "The retained Ghidra output identifies the registered x86 executable by SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. The foot and head probes at 0x40FE77 and 0x410091 call 0x40DE60 and compare the full 32-bit cell to zero. The painter at 0x4311D0 writes fluid bits into those same cells. Gravity reversal at 0x42F5ED changes the rise and probe biases in both gravity directions."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::step dispatches to World::stepBuilder. Its forward foot and head probes now test solid terrain and live fluid bounds for both gravity directions. The fluid check is local to Builder, so the change does not alter Walker or Faller hazard handling."
+              },
+              {
+                "path": "docs/scratch/inverted-builder-fluid-001.md",
+                "detail": "The report names Playtest 23 N2, traces assignment and elapsed updates to World::stepBuilder, and identifies both affected orientations. It labels live receiver height as provisional and records the remaining uncertainty about drained acid and the retail object-overlap check."
+              }
+            ]
+          },
+          {
+            "criterion": "A clone trace or framebuffer frames under build/ on Designed with love show an upside-down builder reaching water stop and turn without laying a brick into the water, and an upright builder elsewhere unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/inverted-builder-fluid-001/recorded-route-final.log",
+                "detail": "On M11_KF_1 at step 12192, actor 0's inverted head probe reaches water at (83,67). The actor turns from right-facing Builder to left-facing Walker at (82,64) with one brick remaining. Every painted cell is dry, including the final pair at (82,63) and (83,63)."
+              },
+              {
+                "path": "build/inverted-builder-fluid-001/upright-builder-comparison.log",
+                "detail": "The upright Builder elsewhere on the same route matches all 14 recorded events, from assignment at (19,65) through 12 brick placements and the return to Walker after shrugging."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce or any intended divergence is named with step and reason; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/inverted-builder-fluid-001/promoted-replays.log",
+                "detail": "Each of the 28 promoted recordings has a matching CLI invocation and a completed win. Wheelbarrows of Doom passes at step 24891 with 99/98 saved."
+              },
+              {
+                "path": "build/agent-runs/20261120T185523-37944-57dd5e50/verification.log",
+                "detail": "The supervisor recorded 95 passing main smoke tests, including the installed-level sweep, and 84 passing recovery tests, with zero failures."
+              },
+              {
+                "path": "docs/scratch/inverted-builder-fluid-001.md",
+                "detail": "The report distinguishes the discarded mask prototype's divergence at step 22669 from the final replay pass. It ends by asking the player to assign Builder to an inverted lemming approaching the water on Designed with love and verify that it places its last dry brick, turns left at the water, and walks back along the stairs."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T19:12:32.572984+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T185523-37944-57dd5e50\\verification.log",
+        "verified_content": "d459ff1d6e4de81188c633dca76ef224c4ecd47199a510d5dfd95bd383c009ea"
+      }
     },
     {
       "id": "antigrav-lift-quads-001",
@@ -31544,7 +31684,135 @@
         "The report lists the original's render states and geometry for the lift effects with addresses, each artifact's cause in the clone, what was changed and on which path, and answers whether any quad edges remain visible in the original.",
         "Clone framebuffer crops under build/ on Designed with love show the lift effects before and after at the same camera, with the identified seams or hard quad edges gone where the original has none, from both the desktop renderer and the Emscripten build under Node.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T191232-37944-ece2a203",
+      "started": "2026-11-20T19:12:33.211643+00:00",
+      "finished": "2026-11-20T19:20:11.424084+00:00",
+      "last_run": "build/agent-runs/20261120T191232-37944-ece2a203",
+      "blocker": null,
+      "review": {
+        "decision": "blocked",
+        "reason": "Windows denied the Emscripten linker write access to build/cmake/emscripten-release/webolution.js, leaving an incomplete JavaScript/Wasm pair. The worker stopped before implementing the lift fix. Acceptance remains open for the artifact diagnosis, matched desktop and Node crops, and promoted replay results. The supervisor smoke profile passed on the submitted source.",
+        "checks": [
+          {
+            "criterion": "The report lists the original's render states and geometry for the lift effects with addresses, each artifact's cause in the clone, what was changed and on which path, and answers whether any quad edges remain visible in the original.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/antigrav-lift-quads-001.md",
+                "detail": "Identifies the three lift roots in Designed with love and traces inherited MIN/MAG filtering to 0x470F29, wrap and the shared gadget/actor walk to 0x43A4EC, and SRCALPHA/ONE selection to 0x414D80. It leaves texture edge texels, effective uploaded alpha, and wrapper Z test and Z write unresolved. It gives two hypotheses for the clone streaks and leaves the visibility of original quad edges undetermined."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/materials.tsv",
+                "detail": "The M11_KF_1 rows confirm roots at 0xFBA34, 0x10243B, and 0x108E42. Each has two beam and two reflection meshes with 16 kind-7 records apiece, selector 3, and diffuse alpha ranges of 0\u2013255 for beams and 0\u2013128 for reflections."
+              },
+              {
+                "path": "build/agent-runs/20261120T191232-37944-ece2a203/after-source-hashes.json",
+                "detail": "Compared with before-source-hashes.json in the same run directory, the only differences are task bookkeeping and the added report. Production source hashes match across the run. There is no implemented change to the existing BackdropScene::renderStage(GadgetEffect) path."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffer crops under build/ on Designed with love show the lift effects before and after at the same camera, with the identified seams or hard quad edges gone where the original has none, from both the desktop renderer and the Emscripten build under Node.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/antigrav-lift-quads-001/native-before-yaw46.png",
+                "detail": "The inspected 640\u00d7480 desktop baseline shows thin vertical streaks through the bright lift beam above the pad. The recorded camera uses yaw 46, eye height 65, and zoom shift 1. The retained directory contains desktop baseline frames and lacks post-fix frames or Node framebuffer crops."
+              },
+              {
+                "path": "build/antigrav-lift-quads-001/wasm-before-build-cached.log",
+                "detail": "The build reached Emscripten's final emission step, where replacing webolution.js failed with PermissionError [Errno 13]. Ninja stopped and the run produced no complete Node baseline."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T191232-37944-ece2a203/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests and 84 of 84 recovery tests passing, including the level sweep. The log contains no promoted replay results."
+              },
+              {
+                "path": "docs/playtest/replays/README.md",
+                "detail": "The replay ledger defines the promoted set as the active .replay files and identifies playtest_replays as legacy. The checkout has 28 active files, so the smoke pass does not establish their reproduction."
+              },
+              {
+                "path": "docs/scratch/antigrav-lift-quads-001.md",
+                "detail": "The report explicitly leaves promoted replays outstanding. It ends with the required Designed with love check to rotate and zoom toward a scrolling lift, look for a smooth glow at the joins, and verify that foreground terrain still occludes it."
+              }
+            ]
+          }
+        ]
+      },
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261120T191232-37944-ece2a203",
+          "review": {
+            "decision": "blocked",
+            "reason": "Windows denied the Emscripten linker write access to build/cmake/emscripten-release/webolution.js, leaving an incomplete JavaScript/Wasm pair. The worker stopped before implementing the lift fix. Acceptance remains open for the artifact diagnosis, matched desktop and Node crops, and promoted replay results. The supervisor smoke profile passed on the submitted source.",
+            "checks": [
+              {
+                "criterion": "The report lists the original's render states and geometry for the lift effects with addresses, each artifact's cause in the clone, what was changed and on which path, and answers whether any quad edges remain visible in the original.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "docs/scratch/antigrav-lift-quads-001.md",
+                    "detail": "Identifies the three lift roots in Designed with love and traces inherited MIN/MAG filtering to 0x470F29, wrap and the shared gadget/actor walk to 0x43A4EC, and SRCALPHA/ONE selection to 0x414D80. It leaves texture edge texels, effective uploaded alpha, and wrapper Z test and Z write unresolved. It gives two hypotheses for the clone streaks and leaves the visibility of original quad edges undetermined."
+                  },
+                  {
+                    "path": "build/flipper-effect-blend-001/materials.tsv",
+                    "detail": "The M11_KF_1 rows confirm roots at 0xFBA34, 0x10243B, and 0x108E42. Each has two beam and two reflection meshes with 16 kind-7 records apiece, selector 3, and diffuse alpha ranges of 0\u2013255 for beams and 0\u2013128 for reflections."
+                  },
+                  {
+                    "path": "build/agent-runs/20261120T191232-37944-ece2a203/after-source-hashes.json",
+                    "detail": "Compared with before-source-hashes.json in the same run directory, the only differences are task bookkeeping and the added report. Production source hashes match across the run. There is no implemented change to the existing BackdropScene::renderStage(GadgetEffect) path."
+                  }
+                ]
+              },
+              {
+                "criterion": "Clone framebuffer crops under build/ on Designed with love show the lift effects before and after at the same camera, with the identified seams or hard quad edges gone where the original has none, from both the desktop renderer and the Emscripten build under Node.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/antigrav-lift-quads-001/native-before-yaw46.png",
+                    "detail": "The inspected 640\u00d7480 desktop baseline shows thin vertical streaks through the bright lift beam above the pad. The recorded camera uses yaw 46, eye height 65, and zoom shift 1. The retained directory contains desktop baseline frames and lacks post-fix frames or Node framebuffer crops."
+                  },
+                  {
+                    "path": "build/antigrav-lift-quads-001/wasm-before-build-cached.log",
+                    "detail": "The build reached Emscripten's final emission step, where replacing webolution.js failed with PermissionError [Errno 13]. Ninja stopped and the run produced no complete Node baseline."
+                  }
+                ]
+              },
+              {
+                "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261120T191232-37944-ece2a203/verification.log",
+                    "detail": "The supervisor recorded 95 of 95 main smoke tests and 84 of 84 recovery tests passing, including the level sweep. The log contains no promoted replay results."
+                  },
+                  {
+                    "path": "docs/playtest/replays/README.md",
+                    "detail": "The replay ledger defines the promoted set as the active .replay files and identifies playtest_replays as legacy. The checkout has 28 active files, so the smoke pass does not establish their reproduction."
+                  },
+                  {
+                    "path": "docs/scratch/antigrav-lift-quads-001.md",
+                    "detail": "The report explicitly leaves promoted replays outstanding. It ends with the required Designed with love check to rotate and zoom toward a scrolling lift, look for a smooth glow at the joins, and verify that foreground terrain still occludes it."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "Windows denied the Emscripten linker write access to build/cmake/emscripten-release/webolution.js, leaving an incomplete JavaScript/Wasm pair. The worker stopped before implementing the lift fix. Acceptance remains open for the artifact diagnosis, matched desktop and Node crops, and promoted replay results. The supervisor smoke profile passed on the submitted source."
+        }
+      ],
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-20: the blocker is cleared. build/cmake/emscripten-release/webolution.js carried a non-inherited ACL (owner, SYSTEM, Administrators only) that excluded the sandbox account; the lead reset it to the folder's inherited ACL (icacls /reset, old ACL in build/lead/webolution-js-acl-backup.txt). Rebuild the browser target, then continue from the static findings in docs/scratch/antigrav-lift-quads-001.md: isolate the vertical seams (opaque texture alpha versus the original's modulated texture/diffuse alpha; depth writes and strict Less among overlapping lift faces), fix each departure from the original, and complete every acceptance criterion. If a build output is denied again, report the exact path and ACL and stop."
+      }
     }
   ]
 }

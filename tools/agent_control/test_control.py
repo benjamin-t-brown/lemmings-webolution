@@ -129,6 +129,17 @@ class QueueTests(unittest.TestCase):
             transcript.write_text('{"type":"turn.completed"}\n{"type":"turn.failed"}\n')
             self.assertFalse(supervisor.successful_transcript('codex', transcript))
 
+    def test_codex_reconnect_notices_are_not_failures(self):
+        with tempfile.TemporaryDirectory() as directory:
+            transcript = Path(directory) / 'events'
+            transcript.write_text('{"type":"error","message":"Reconnecting... 2/5 (503)"}\n'
+                                  '{"type":"turn.completed"}\n')
+            self.assertTrue(supervisor.successful_transcript('codex', transcript))
+            transcript.write_text('{"type":"error","message":"Reconnecting... 5/5 (503)"}\n')
+            self.assertFalse(supervisor.successful_transcript('codex', transcript))
+            transcript.write_text('{"type":"error","message":"unauthorized"}\n{"type":"turn.completed"}\n')
+            self.assertFalse(supervisor.successful_transcript('codex', transcript))
+
     def test_verification_rejects_oracles_but_accepts_source_array_test(self):
         original = Path('C:/game/Lemmings Revolution.exe')
         check_test_inventory([{'name': 'native_int_array',

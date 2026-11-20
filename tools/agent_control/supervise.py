@@ -198,6 +198,10 @@ def successful_transcript(backend, path):
             except json.JSONDecodeError:
                 continue
             if backend == 'codex':
+                # Codex reports transient transport retries as error events and then continues.
+                if (event.get('type') == 'error'
+                        and str(event.get('message', '')).startswith('Reconnecting...')):
+                    continue
                 if event.get('type') in ('turn.failed', 'error'):
                     return False
                 completed |= event.get('type') == 'turn.completed'

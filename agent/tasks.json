@@ -30362,6 +30362,84 @@
         "On Designed with love and Seafood Sarnie (MM_BLOCK_BUILD_BASH), clone framebuffer frames under build/ show each switch's targets highlighted while the pointer is over it and no highlight otherwise.",
         "Simulation, replays and input recording are unchanged: all promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
       ]
+    },
+    {
+      "id": "comment-pass-sim-001",
+      "title": "Comment pass: src/sim and src/save",
+      "status": "ready",
+      "depends_on": [
+        "inverted-builder-001",
+        "laser-switch-blend-001",
+        "switch-hover-highlight-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Scope: src/sim, src/save only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis.",
+      "acceptance": [
+        "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+        "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+        "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
+      ]
+    },
+    {
+      "id": "comment-pass-app-001",
+      "title": "Comment pass: src/app",
+      "status": "ready",
+      "depends_on": [
+        "comment-pass-sim-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Scope: src/app only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis.",
+      "acceptance": [
+        "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+        "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+        "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
+      ]
+    },
+    {
+      "id": "comment-pass-platform-001",
+      "title": "Comment pass: src/audio, gfx, shell, web, tools, assets",
+      "status": "ready",
+      "depends_on": [
+        "comment-pass-app-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Scope: src/audio, src/gfx, src/shell, src/web (including .js), src/tools, src/assets and any top-level files in src/ only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis.",
+      "acceptance": [
+        "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+        "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+        "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
+      ]
+    },
+    {
+      "id": "comment-pass-tests-001",
+      "title": "Comment pass: src/__test__",
+      "status": "ready",
+      "depends_on": [
+        "comment-pass-platform-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Scope: src/__test__ only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis.",
+      "acceptance": [
+        "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+        "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+        "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
+      ]
     }
   ]
 }

@@ -13,6 +13,10 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - inverted-builder-001: **ready** — A builder works under reversed gravity as the original does
 - laser-switch-blend-001: **ready** — Laser switch effects are drawn with the original's transparency
 - switch-hover-highlight-001: **ready** — Hovering a lever or switch highlights the elements it controls (clone addition)
+- comment-pass-sim-001: **ready** — Comment pass: src/sim and src/save
+- comment-pass-app-001: **ready** — Comment pass: src/app
+- comment-pass-platform-001: **ready** — Comment pass: src/audio, gfx, shell, web, tools, assets
+- comment-pass-tests-001: **ready** — Comment pass: src/__test__
 
 ## Recently completed queue entries
 

@@ -30309,7 +30309,7 @@
     {
       "id": "inverted-builder-001",
       "title": "A builder works under reversed gravity as the original does",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "nuke-icon-additive-001",
         "actorcompose-fixtures-001"
@@ -30325,21 +30325,90 @@
         "A clone World trace under build/ shows an inverted builder on Designed with love laying a usable staircase that inverted walkers climb, and an upright builder unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
       ],
-      "loop_attempts": 2,
-      "run_id": "20261120T063842-16728-8927e553",
-      "started": "2026-11-20T06:38:43.275877+00:00",
-      "finished": "2026-11-20T06:42:14.178181+00:00",
-      "last_run": "build/agent-runs/20261120T063842-16728-8927e553",
+      "loop_attempts": 3,
+      "run_id": "20261120T070753-40472-dcb43280",
+      "started": "2026-11-20T07:07:54.134626+00:00",
+      "finished": "2026-11-20T07:15:47.552641+00:00",
+      "last_run": "build/agent-runs/20261120T070753-40472-dcb43280",
       "last_failure": "Verification failed; inspect build/agent-runs/20261120T062837-16728-3afe8bb1/verification.log",
       "review_feedback": {
         "decision": "revise",
         "reason": "Lead, 2026-11-19: attempt 1 failed verification only in actorcompose, whose five build/tmp camera fixtures were deleted outside this task (actorcompose-fixtures-001 restores them); attempt 2 was interrupted when the loop was stopped. The stepBuilder edit in src/sim/World.cpp and docs/scratch/inverted-builder-001.md are still in the working tree. Inspect them, keep what is sound, and complete the task."
+      },
+      "review": {
+        "decision": "accept",
+        "reason": "The retained evidence supports all three criteria. All 28 promoted wins reproduced, and the supervisor\u2019s smoke run passed after the report was written. The next human playtest remains the check for playability on Designed with love. Original-game timing and rendering remain unverified.",
+        "checks": [
+          {
+            "criterion": "The report states what the inverted builder did wrong in the user's recording, with steps and positions, cites the original's inverted-builder behaviour with static addresses or labels choices provisional, and names the changed call path.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/inverted-builder-001.md",
+                "detail": "Identifies Playtest 22 M2 on Designed with love (M11_KF_1, node 33), documents both inverted assignments and failures, and names the production path from World::assign and RuntimeSimState::advanceElapsed through World::stepBuilder."
+              },
+              {
+                "path": "build/inverted-builder-001/recorded-attempt-world.log",
+                "detail": "At step 23534 actor 5 painted to the left and moved from (34,45) to (34,44), then turned right into Walker. At step 26028 it painted to the right and moved from (73,53) to (73,52), then turned left into Walker. Both turns occurred on the first brick with all 12 bricks left. The recording ended on the map at step 27079 with 0/85 saved."
+              },
+              {
+                "path": "build/inverted-builder-001/rea-review-evidence.json",
+                "detail": "The retained Ghidra instructions corroborate the pseudocode. Paint calls the feet accessor at 0x410141 and stamps the two facing columns. Advance adds actor [+0x44] to Y at 0x40FC01. Gravity reversal negates that field and swaps the foot and head Y biases at 0x42F5ED\u20130x42F65D. The terrain-only foot refusal turns and enters Walker at 0x40FEE6\u20130x40FEFB before decrement. The final-brick Shrug branch at 0x40FF96 precedes the forward head check at 0x410032\u20130x4100A6."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "World::stepBuilder paints at the current feet, then uses the actor\u2019s gravity sign for both the one-cell rise and the forward head-height probe. The upright sign preserves the previous arithmetic."
+              }
+            ]
+          },
+          {
+            "criterion": "A clone World trace under build/ shows an inverted builder on Designed with love laying a usable staircase that inverted walkers climb, and an upright builder unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/inverted-builder-001/review-world-trace.log",
+                "detail": "The recorded builder first advanced from (34,45) to (33,46). In a diagnostic copy of the same World, the builder finished the staircase and shrugged at (22,57), and a placed inverted follower climbed all 12 steps on Built support. Separate foot and head obstruction probes produced the expected turns."
+              },
+              {
+                "path": "build/inverted-builder-001/review-upright-comparison.log",
+                "detail": "All 22 traced events for the upright builder matched the pre-fix run, covering assignment, brick placement, the shrug, and the walk back down the stairs."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/inverted-builder-001/review-promoted-replays.log",
+                "detail": "The log covers exactly the 28 active promoted .replay files. Every run returned PASS with won=1, completed=1, and exit code 0."
+              },
+              {
+                "path": "build/inverted-builder-001/review-fixed-attempt-cli.log",
+                "detail": "The unpromoted failed attempt diverges at step 25873 because its second assignment expects Walker at (73,53) while the corrected actor is still building at (23,56), as the report explains."
+              },
+              {
+                "path": "build/agent-runs/20261120T070753-40472-dcb43280/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the installed-level sweep and actorcompose, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/inverted-builder-001.md",
+                "detail": "Ends by asking the player to assign Builder after the gravity flipper on Designed with love and check that followers climb, the builder shrugs at completion, and obstructions cause a turn."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T07:18:12.518436+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T070753-40472-dcb43280\\verification.log",
+        "verified_content": "e8a8acaf3d1332b69d8df6de1e490bb41f25a58277ec3b97d3b169d028e16beb"
       }
     },
     {
       "id": "laser-switch-blend-001",
       "title": "Laser switch effects are drawn with the original's transparency",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "nuke-icon-additive-001",
         "actorcompose-fixtures-001"
@@ -30354,12 +30423,94 @@
         "The report names the laser switch models and materials, cites the original's alpha source and blend/depth state with static addresses or model fields, or labels choices provisional, and names the clone path that drew them wrong.",
         "On Designed with love the laser switch effects are drawn with that transparency, shown by clone framebuffer frames before and after under build/; the switches' gameplay and other scenery not tied to the same evidence are unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T071812-40472-ec3cc378",
+      "started": "2026-11-20T07:18:13.001510+00:00",
+      "finished": "2026-11-20T07:30:54.258137+00:00",
+      "last_run": "build/agent-runs/20261120T071812-40472-ec3cc378",
+      "review": {
+        "decision": "accept",
+        "reason": "The retained instructions support the additive blend used by the clone, and the before-and-after framebuffers show the correction on Designed with love. All 28 promoted replays and the supervisor smoke gate passed. The clone\u2019s post-tube ordering and depth policy remain provisional.",
+        "checks": [
+          {
+            "criterion": "The report names the laser switch models and materials, cites the original's alpha source and blend/depth state with static addresses or model fields, or labels choices provisional, and names the clone path that drew them wrong.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/laser-switch-blend-001.md",
+                "detail": "Links Playtest 22 M1 to node 33, M11_KF_1. Identifies the former pre-tube LegacyUnattributed path, where renderStage enabled mesh blending only for selector 1. Labels the clone\u2019s post-tube order and Less depth test with writes enabled as provisional."
+              },
+              {
+                "path": "build/laser-switch-blend-001/census.tsv",
+                "detail": "Identifies three type-0 pressure_pad.a3d gadgets with null2 roots at 0xD7BB1, 0xE3B43 and 0xEFAB5. The face2*cut and face4*cut nodes use laser and laser_light with selector 2 and corner alpha 255. The cube4 base uses metal_tripswitch with selector 0."
+              },
+              {
+                "path": "build/laser-switch-blend-001/rea/texture-bind.json",
+                "detail": "For the flag-0 path, 0x4728CA\u20130x4728DC disables alpha testing and 0x47293F\u20130x47296F selects texture alpha. The flag-4 branch at 0x4728E5 instead modulates texture and diffuse alpha."
+              },
+              {
+                "path": "build/laser-switch-blend-001/rea/pad-blend.json",
+                "detail": "The Ghidra instructions on the registered EXE agree with the retained pseudocode. The branch at 0x414DBB sets ONE for both factors for selector 2, using state calls at 0x414DD4 and 0x414DEA. Selector 3 uses SRCALPHA/ONE."
+              }
+            ]
+          },
+          {
+            "criterion": "On Designed with love the laser switch effects are drawn with that transparency, shown by clone framebuffer frames before and after under build/; the switches' gameplay and other scenery not tied to the same evidence are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/laser-switch-blend-001/before/yaw-83-frame-0.png",
+                "detail": "The source-built clone\u2019s baseline framebuffer shows the dark red switch effect against the existing scenery at fixed yaw 83."
+              },
+              {
+                "path": "build/laser-switch-blend-001/after/yaw-83-frame-0.png",
+                "detail": "The matching framebuffer shows the switch effect adding light over the scene. Independent pixel comparison found 123 changed pixels at yaw 83, 63 at yaw 163 and 64 at yaw 245 in frame 0. All fell within the sampled post-tube effect footprint. The frame-3 differences outside the sampled footprint were within two pixels of it."
+              },
+              {
+                "path": "build/laser-switch-blend-001/frame-summary.txt",
+                "detail": "The yaw-83 raster audit records 53 initial beam fragments preserving nonblack destination RGB and seven brightening it. The firing sample draws both effects, and the settled sample retains the base with zero beam or glow fragments."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The pass moves the evidenced flag-0 selector-2 pad meshes to additive rendering after the tube. It retains the existing flag-4 selector-3 flipper rule and the pad\u2019s legacy base path. The owner filter excludes the separately routed mine reflections, tree lights and teleporter swirl catalogued in the census."
+              },
+              {
+                "path": "build/agent-runs/20261120T071812-40472-ec3cc378/before-diff.txt",
+                "detail": "The World.cpp inverted-builder edit was already present before the laser-switch worker started. The laser-switch change is confined to rendering, and the existing pressure-pad state feed and animation remain in place."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/laser-switch-blend-001/replay-results.tsv",
+                "detail": "All 28 promoted recording paths match the repository inventory and their individual logs. Each returned exit 0 with PASS, won=1 and completed=1. The promoted set has no recordings on the 23 affected levels."
+              },
+              {
+                "path": "build/agent-runs/20261120T071812-40472-ec3cc378/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passing, including the installed-level sweep and its report, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/laser-switch-blend-001.md",
+                "detail": "Ends with the two-line handoff and a what-to-check note for node 33. It asks the player to rotate to the switches and send a lemming through one, expecting the beam and glow to animate over visible scenery and then go out while the metal base stays visible."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T07:34:48.231318+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T071812-40472-ec3cc378\\verification.log",
+        "verified_content": "5619b3c20a9b45878fcb0e20dc975cc2d6c79225fb285b57972ac7a87e49d5aa"
+      }
     },
     {
       "id": "switch-hover-highlight-001",
       "title": "Hovering a lever or switch highlights the elements it controls (clone addition)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "nuke-icon-additive-001",
         "actorcompose-fixtures-001"
@@ -30374,12 +30525,114 @@
         "The report labels the feature a clone addition, names the link data and pick path it reads and the draw path it adds, and lists the switch kinds covered.",
         "On Designed with love and Seafood Sarnie (MM_BLOCK_BUILD_BASH), clone framebuffer frames under build/ show each switch's targets highlighted while the pointer is over it and no highlight otherwise.",
         "Simulation, replays and input recording are unchanged: all promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T073448-40472-55607a3b",
+      "started": "2026-11-20T07:34:48.671987+00:00",
+      "finished": "2026-11-20T08:00:06.214876+00:00",
+      "last_run": "build/agent-runs/20261120T073448-40472-55607a3b",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria pass. The retained desktop frames show hover and clearing for all four switches on the two requested levels. All 28 promoted replays reproduced, and the supervisor smoke profile passed. The Wasm probe reproduced the framebuffer highlights. Live browser pointer interaction remains unverified because Chrome exited during graphics initialization.",
+        "checks": [
+          {
+            "criterion": "The report labels the feature a clone addition, names the link data and pick path it reads and the draw path it adds, and lists the switch kinds covered.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/switch-hover-highlight-001.md",
+                "detail": "Identifies Playtest 22 M3 as a clone addition for levers, pressure pads, and laser switches. It documents the message lists and construction-order objectIds table from World::setup(), the existing hatch picker\u2019s visible mesh bounds, and the draw before the HUD and cursor."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "drawSwitchHover shares the visible-mesh bounds helper with hatch picking. It reads both lever face lists or the pressure-pad list, which also covers laser switches, and draws a gold switch outline plus one cyan locator per resolved receiver ID."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/rea-static.json",
+                "detail": "The retained Ghidra pseudocode and instructions for the registered EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f agree that 0x433AC0 calls 0x433B2E for each message. At 0x433B4F\u20130x433B61, a signed check gates the lookup at 0x444BA1. At 0x43199D\u20130x4319A7, the pressure pad passes its +0xBC list to 0x433AC0. These findings support the link resolution."
+              }
+            ]
+          },
+          {
+            "criterion": "On Designed with love and Seafood Sarnie (MM_BLOCK_BUILD_BASH), clone framebuffer frames under build/ show each switch's targets highlighted while the pointer is over it and no highlight otherwise.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/switch-hover-highlight-001/M11_KF_1-yaw-163-hover-paused.png",
+                "detail": "Designed with love\u2019s first laser switch has a gold outline under the cursor and three cyan fluid receiver outlines."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/M11_KF_1-yaw-163-away-after-hover.png",
+                "detail": "Moving the cursor away while paused clears the switch outline and all three receiver outlines."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/M11_KF_1-yaw-245-hover-paused.png",
+                "detail": "Designed with love\u2019s second laser switch has a gold outline under the cursor and one cyan terrain gate outline."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/M11_KF_1-yaw-245-away-after-hover.png",
+                "detail": "Moving the cursor away clears both outlines."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/M11_KF_1-yaw-83-hover-paused.png",
+                "detail": "Designed with love\u2019s third laser switch has a gold outline under the cursor and two cyan terrain gate outlines."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/M11_KF_1-yaw-83-away-after-hover.png",
+                "detail": "Moving the cursor away clears the switch outline and both receiver outlines."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/MM_BLOCK_BUILD_BASH-yaw-46-hover-paused.png",
+                "detail": "Seafood Sarnie\u2019s drain switch has a gold outline under the cursor and five cyan fluid receiver outlines."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/MM_BLOCK_BUILD_BASH-yaw-46-away-after-hover.png",
+                "detail": "Moving the cursor away clears the switch outline and all five receiver outlines."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/frame-probe-final.log",
+                "detail": "Lists receiver IDs 12, 11, and 10 at yaw 163, ID 5 at yaw 245, IDs 4 and 3 at yaw 83, and IDs 8 through 4 on Seafood Sarnie. It records gold and cyan pixels on hover, zero after departure, and their return when the pointer re-enters."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation, replays and input recording are unchanged: all promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/switch-hover-highlight-001/production.diff",
+                "detail": "The task adds the overlay to frame materialization and adds receiver placement metadata to the existing loader table. The overlay reads the setup through a const reference and writes image pixels. Simulation stepping, message dispatch, skill assignment, replay dispatch, and recording retain their existing code."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/native-replay-results.tsv",
+                "detail": "The 28 rows match the current promoted .replay files. Each retained native log confirms a successful exit with PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/switch-hover-highlight-001/wasm-replay-results.tsv",
+                "detail": "All 28 corresponding Wasm logs confirm PASS, won=1, and completed=1 with the same final steps and save counts as native."
+              },
+              {
+                "path": "build/agent-runs/20261120T073448-40472-55607a3b/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including all level sweep chunks and the sweep report, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/switch-hover-highlight-001.md",
+                "detail": "The report ends with a What to check note naming both levels, the switches to hover, expected outline counts, and the expected clearing and return on pointer departure and re-entry while paused."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T08:03:01.446106+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T073448-40472-55607a3b\\verification.log",
+        "verified_content": "eb7aabd29c33e21e8cde55c65e40dd6fc8d052c2e81ad52cec68489fb2695b65"
+      }
     },
     {
       "id": "comment-pass-sim-001",
       "title": "Comment pass: src/sim and src/save",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "inverted-builder-001",
         "laser-switch-blend-001",
@@ -30396,7 +30649,138 @@
         "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
         "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261120T090726-40472-0e9a2d8c",
+      "started": "2026-11-20T09:07:26.994076+00:00",
+      "finished": "2026-11-20T09:12:20.153376+00:00",
+      "last_run": "build/agent-runs/20261120T090726-40472-0e9a2d8c",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The revision resolves all three prior findings. Correct the hatch-arm comments to describe the shared delay applied to all installed levels, and restore the omitted instruction operands [ebp-8] and [edx+8] in World.h. The comment-only comparison, ten-reference sample, and smoke gate pass.",
+        "checks": [
+          {
+            "criterion": "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-sim-001/comparison.json",
+                "detail": "All 44 retained outputs match the manifest hashes. The GCC preprocessor and byte-preserving comment stripper each produced identical before and after output for all 11 changed files."
+              },
+              {
+                "path": "build/agent-runs/20261120T083611-40472-1f5c94d4/before-source-hashes.json",
+                "detail": "All 12 archived source inputs match the supervisor's task-start hashes, including the five files with pre-existing edits."
+              },
+              {
+                "path": "build/agent-runs/20261120T090001-40472-1a9e6e63/after-source-hashes.json",
+                "detail": "All 12 live source files match the revised run's recorded hashes. The task changed 11 files in src/sim and src/save. The retry changed only the two scoped headers among source files."
+              }
+            ]
+          },
+          {
+            "criterion": "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-sim-001/references.tsv",
+                "detail": "I found no prohibited development history in the scoped comments. I matched ten exact references against the archived input and live source lines: 0x45F43C, 0x45F94D, 0x0042ACAC, 0x00436E6A, 0x0043F510, 0x004B1528, 0x410032, 0x0042E05F, 0x00433AC0, and FUN_00416433."
+              },
+              {
+                "path": "src/sim/World.h",
+                "detail": "Lines 605\u2013606 restore the builder frame offset +8 and callback offset +0xc. Line 645 now describes basherReach as the probe and cut width, matching the probes and cut in World.cpp. The rewritten comments at lines 578 and 729 still omit the operands [ebp-8] and [edx+8] associated with their retained addresses."
+              },
+              {
+                "path": "build/comment-pass-sim-001/inputs/src/sim/World.h",
+                "detail": "The task-start comments record cmp eax, [ebp-8] at 0x0041B21E on line 842 and fsubr [edx+8] at 0x00413A79 on lines 1228\u20131229. Restore those operands to satisfy the scope's reference-preservation rule beyond the ten-reference sample."
+              },
+              {
+                "path": "src/sim/RetailLevel.h",
+                "detail": "Line 22 now describes decoded fields and derived release values. This matches the assignments and rate calculations in RetailLevel.cpp at lines 403\u2013413."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "Lines 419\u2013422 describe the provisional arm delay as specific to MM_CLIMB_002, but the common loader assigns it without a level check. World.cpp line 1297 consumes the delay whenever the elapsed release scheduler is active. Clarify the shared behavior here and in the corresponding World.h field comment while retaining the provisional label and MM_CLIMB_002 reference."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T090001-40472-1a9e6e63/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including every level-sweep chunk and the sweep report, plus 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/comment-pass-sim-001.md",
+                "detail": "The report ends with separate handoff and gate lines, then a note naming MM_CLIMB_002, the action of assigning Climber after release, and the expected unchanged release, climb, and hoist behavior. The gate line records the worker handoff and the supervisor log supplies the result."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The revision resolves all three prior findings. Correct the hatch-arm comments to describe the shared delay applied to all installed levels, and restore the omitted instruction operands [ebp-8] and [edx+8] in World.h. The comment-only comparison, ten-reference sample, and smoke gate pass.",
+      "review": {
+        "decision": "accept",
+        "reason": "All three acceptance criteria pass. The revision restores both instruction operands and accurately describes the shared provisional hatch-arm delay.",
+        "checks": [
+          {
+            "criterion": "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-sim-001/comparison.json",
+                "detail": "All 44 archived outputs match the manifest hashes. The GCC and byte-preserving comparisons each match before and after for all 11 changed source files. An independent read-only comment strip also produced identical before and after text."
+              },
+              {
+                "path": "build/agent-runs/20261120T083611-40472-1f5c94d4/before-source-hashes.json",
+                "detail": "All 12 archived scoped inputs match the task-start hashes, including the five files with pre-existing edits."
+              },
+              {
+                "path": "build/agent-runs/20261120T090726-40472-0e9a2d8c/after-source-hashes.json",
+                "detail": "The live scoped files match the revision hashes. The task changed 11 source files, all in src/sim or src/save, and added the scratch report."
+              }
+            ]
+          },
+          {
+            "criterion": "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-sim-001/references.tsv",
+                "detail": "All 831 inventory rows match the cited baseline and live source lines. The exact references include 0x45F43C, 0x45F94D, 0x0042ACAC, 0x00436E6A, 0x0043F510, 0x004B1528, 0x410032, 0x0042E05F, 0x00433AC0, FUN_00416433, 0x0041B21E, and 0x00413A79."
+              },
+              {
+                "path": "src/sim/World.h",
+                "detail": "Lines 578\u2013580 preserve cmp eax, [ebp-8] at 0x0041B21E, and line 730 preserves fsubr [edx+8] at 0x00413A79. The scan of all 12 scoped files found no prohibited development history in comments."
+              },
+              {
+                "path": "src/sim/RetailLevel.cpp",
+                "detail": "The common loader assigns the provisional delay without a level-specific branch. The comment at line 421 and the field comment in World.h describe its shared use and retain the MM_CLIMB_002 reference."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T090726-40472-0e9a2d8c/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including all level-sweep chunks and the sweep report, plus 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/comment-pass-sim-001.md",
+                "detail": "The final handoff and gate lines are followed by a note naming MM_CLIMB_002, the action of assigning Climber after hatch release, and the expected unchanged release, climb, and hoist behavior. The gate line records the worker handoff, and the supervisor log records the completed result."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T09:16:22.086612+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T090726-40472-0e9a2d8c\\verification.log",
+        "verified_content": "ebb90c6176871705098bb81c488257c2b46ed2a00a3acb40505be0c46d97cae0"
+      }
     },
     {
       "id": "comment-pass-app-001",
@@ -30410,11 +30794,29 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Scope: src/app only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis.",
+      "scope": "Scope: src/app only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis. Reference completeness (lead, 2026-11-20): before finishing, run a mechanical check over every changed file. Extract from the HEAD version's comments every binary or original-name token: hex addresses and offsets (0x...), FUN_/DAT_/LAB_ names, register/stack operands such as [ebp-8] or [edx+8], quoted asset, clip or file names, original API or render-state names (e.g. timeGetTime, rand(), SELECTARG1), and identifier-style references such as kCellFlag0x400. Every token must still appear in that file's comments after the pass; archive the token list and the result under build/ and fix every miss.",
       "acceptance": [
         "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
         "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261120T094138-40472-afdc413d",
+      "started": "2026-11-20T09:41:39.117099+00:00",
+      "finished": "2026-11-20T09:45:29.881481+00:00",
+      "last_run": "build/agent-runs/20261120T094138-40472-afdc413d",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-20: final attempt. Attempt 3 passed all acceptance checks; review blocked on three dropped references: restore the `climb` SPR clip name in src/app/TubeScene.h (HEAD line ~105), the `kCellFlag0x400` collision-bit reference in src/app/TubeScene.cpp (HEAD line ~1783) and the `SELECTARG1` alpha operation name in src/app/BackdropScene.cpp (HEAD line ~122). Keep every earlier fix. Then run the reference completeness check in the scope over all 65 changed files and fix every miss. Accepted work from other tasks was committed in d9f01f0; HEAD now equals this task's baseline, so `git diff HEAD -- src/app` is exactly this task's change."
+      },
+      "last_failure": "All three acceptance checks pass, and both prior corrections are present. The task scope also requires preserving original references outside the sample. Restore the `climb` SPR clip name in `TubeScene.h`, the `kCellFlag0x400` collision-bit reference in `TubeScene.cpp`, and the `SELECTARG1` alpha operation name in `BackdropScene.cpp`.",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261120T094138-40472-afdc413d",
+          "review": null,
+          "blocker": "Attempt limit: All three acceptance checks pass, and both prior corrections are present. The task scope also requires preserving original references outside the sample. Restore the `climb` SPR clip name in `TubeScene.h`, the `kCellFlag0x400` collision-bit reference in `TubeScene.cpp`, and the `SELECTARG1` alpha operation name in `BackdropScene.cpp`."
+        }
       ]
     },
     {
@@ -30429,7 +30831,7 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Scope: src/audio, src/gfx, src/shell, src/web (including .js), src/tools, src/assets and any top-level files in src/ only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis.",
+      "scope": "Scope: src/audio, src/gfx, src/shell, src/web (including .js), src/tools, src/assets and any top-level files in src/ only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis. Reference completeness (lead, 2026-11-20): before finishing, run a mechanical check over every changed file. Extract from the HEAD version's comments every binary or original-name token: hex addresses and offsets (0x...), FUN_/DAT_/LAB_ names, register/stack operands such as [ebp-8] or [edx+8], quoted asset, clip or file names, original API or render-state names (e.g. timeGetTime, rand(), SELECTARG1), and identifier-style references such as kCellFlag0x400. Every token must still appear in that file's comments after the pass; archive the token list and the result under build/ and fix every miss.",
       "acceptance": [
         "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
@@ -30448,7 +30850,7 @@
       "stop_after_review": false,
       "kind": "implementation",
       "user_authorized": true,
-      "scope": "Scope: src/__test__ only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis.",
+      "scope": "Scope: src/__test__ only; leave every other directory untouched. User request 2026-11-19: refactor the comments in src/ to be concise and to describe what the code does. Rules: (1) Comments only. Do not change code, identifiers, string literals (including test assertion messages and log text), test assertions, timeouts, formatting of code lines, or file layout. (2) Remove development history from comments: playtest numbers and ledger references, task ids (e.g. foo-bar-001), review/worker/run/attempt references, smoke or replay results, 'previously', 'used to', 'no longer', 'fixed', 'regression from', and narrative about how a value or approach was found. (3) Keep and tighten what helps a reader: what the code does and why, invariants, units, ordering constraints, and references back to the original binary (addresses such as 0x433AC0, original function/field names and offsets, original asset names). A binary reference may be shortened but not dropped or altered; keep it exact. (4) Keep 'provisional' or 'clone addition' labels where the behavior is not established from the original, stated briefly as a property of the code (e.g. 'Provisional: not traced in the binary'). (5) Make comments concise: cut restated code, merge multi-paragraph blocks into a few lines, drop commented-out code and empty banner comments. Do not add new comments except where deleting history leaves a non-obvious line unexplained. (6) Match each file's existing comment style (// vs /* */, Doxygen if present). LF only. Preserve all pre-existing uncommitted edits. No original execution, debugger, hooks or capture; no REA needed. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits; do not touch docs/ except the report. Evidence: archive under build/ a comment-stripped comparison of every changed file before and after (e.g. g++ -fpreprocessed -dD -E -P, or an equivalent comment stripper for .js) showing no non-comment difference, and list any file where that could not be shown. Short report under docs/scratch/ naming the directories covered, the number of files changed, any comment kept despite rule (2) with the reason, and a two-line handoff. Finish needs_review. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add tests, replay fixtures, frozen-source builds or scripted routes. End the report with a what-to-check note: level, action, expected result (behavior is unchanged on any level). Difficulty: routine. Recommended model: Sonnet. Reason: mechanical comment editing with no behavior change; volume, not analysis. Reference completeness (lead, 2026-11-20): before finishing, run a mechanical check over every changed file. Extract from the HEAD version's comments every binary or original-name token: hex addresses and offsets (0x...), FUN_/DAT_/LAB_ names, register/stack operands such as [ebp-8] or [edx+8], quoted asset, clip or file names, original API or render-state names (e.g. timeGetTime, rand(), SELECTARG1), and identifier-style references such as kCellFlag0x400. Every token must still appear in that file's comments after the pass; archive the token list and the result under build/ and fix every miss.",
       "acceptance": [
         "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
@@ -30458,7 +30860,7 @@
     {
       "id": "window-scale-option-001",
       "title": "Options menu: window size picker (desktop Auto/1x/2x/3x, browser Fill/1x/2x/3x) (clone addition)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "nuke-icon-additive-001",
         "actorcompose-fixtures-001"
@@ -30473,7 +30875,226 @@
         "The report labels the feature a clone addition, names the Options row, the settings field and its file, the window resize call path and the browser Fill and fixed-size CSS paths, and states that render resolution is unchanged at 640x480.",
         "Clone framebuffer captures under build/ show the Options menu with the Window size row at each value, the browser page source applies Fill as a 4:3 viewport fit and 1x/2x/3x as exact CSS sizes with correct mouse mapping,, and a source-level check shows Auto selects the largest integer scale fitting a given usable area, clamps an oversize choice, and that --window-scale and automation runs take precedence over the saved value.",
         "The saved value round-trips through the clone settings file with the existing write-failure policy and SavedGame.dat is unchanged; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261120T082724-40472-e1b564bf",
+      "started": "2026-11-20T08:27:24.500823+00:00",
+      "finished": "2026-11-20T08:33:48.867152+00:00",
+      "last_run": "build/agent-runs/20261120T082724-40472-e1b564bf",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Desktop Auto stops at 3x even when the usable area fits 4x or higher. An unbounded --direct-level diagnostic also uses the saved setting instead of defaulting to 1x. The retained captures, browser source checks, save round-trip, and smoke results support the other requirements.",
+        "checks": [
+          {
+            "criterion": "The report labels the feature a clone addition, names the Options row, the settings field and its file, the window resize call path and the browser Fill and fixed-size CSS paths, and states that render resolution is unchanged at 640x480.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/window-scale-option-001.md",
+                "detail": "Labels Window size a clone addition, names windowScale in SoundSettings.dat, traces both event loops through SdlWindow to SDL_SetWindowSize and SDL_SetWindowPosition, describes the browser data-window-scale CSS paths, and states that both platforms still render at 640x480."
+              },
+              {
+                "path": "build/window-scale-option-001/rea-instructions.json",
+                "detail": "The retained instructions for the registered reference Options builder at 0x48E5B4 push label indices 11, 12, and 24 at 0x48E602, 0x48E64B, and 0x48E694. These match the retained pseudocode's three original rows."
+              },
+              {
+                "path": "build/window-scale-option-001/rea-pseudocode.json",
+                "detail": "The decompilation for reference SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f shows the same three label lookups and a three-row builder."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffer captures under build/ show the Options menu with the Window size row at each value, the browser page source applies Fill as a 4:3 viewport fit and 1x/2x/3x as exact CSS sizes with correct mouse mapping,, and a source-level check shows Auto selects the largest integer scale fitting a given usable area, clamps an oversize choice, and that --window-scale and automation runs take precedence over the saved value.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/window-scale-option-001/desktop/options-auto.png",
+                "detail": "The Options framebuffer shows Auto at 2x, 1280x960."
+              },
+              {
+                "path": "build/window-scale-option-001/desktop/options-1x.png",
+                "detail": "The Options framebuffer shows 1x, 640x480."
+              },
+              {
+                "path": "build/window-scale-option-001/desktop/options-2x.png",
+                "detail": "The Options framebuffer shows 2x, 1280x960."
+              },
+              {
+                "path": "build/window-scale-option-001/desktop/options-3x.png",
+                "detail": "The Options framebuffer shows 3x, 1920x1440."
+              },
+              {
+                "path": "build/window-scale-option-001/desktop/options-3x-clamped.png",
+                "detail": "The Options framebuffer shows that the selected 3x size fits at 2x on the smaller simulated desktop."
+              },
+              {
+                "path": "src/web/webolution.html",
+                "detail": "Fill uses the smaller of viewport width and four-thirds viewport height. Fixed modes set widths of 640, 1280, and 1920 CSS pixels at 4:3. The canvas remains 640x480 and pixelated. The capture-phase mouse listeners refresh SDL's cached pointer coordinates from each button event."
+              },
+              {
+                "path": "build/window-scale-option-001/browser-source-check.log",
+                "detail": "The retained check verified the built CSS and SDL's displayed-rectangle coordinate conversion. Mocked button events mapped to the logical center in all four modes, including after scrolling."
+              },
+              {
+                "path": "src/app/WindowScale.h",
+                "detail": "largestFittingWindowScale caps Auto at kMaxWindowScale, which is 3. A usable client area of 3000x2000 fits a 4x window at 2560x1920, but the helper returns 3. Apply the 1\u20133 range to fixed choices and let Auto use the largest fitting integer."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The help identifies --direct-level as a diagnostic. The automation predicate covers bounded runs, shots, maps, and observers. With none of those flags or observers present, --direct-level passes the saved scale to SdlWindow without a 1x override."
+              },
+              {
+                "path": "src/__test__/test_window_scale_choice.cpp",
+                "detail": "The compile-time assertions cover fixed-choice clamping, the 2x-to-3x fit threshold, and precedence when the caller supplies the automation flag. They leave the above-3x Auto case and production diagnostic classification uncovered."
+              }
+            ]
+          },
+          {
+            "criterion": "The saved value round-trips through the clone settings file with the existing write-failure policy and SavedGame.dat is unchanged; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/save/SoundSettings.cpp",
+                "detail": "Version 3 writes windowScale through the existing SaveSink to SoundSettings.dat beside SavedGame.dat. Versions 1 and 2 load with the platform default."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Accept updates the in-memory setting and keeps the write pending after a failure so a later Accept retries through the same sink."
+              },
+              {
+                "path": "build/window-scale-option-001/desktop-probe.log",
+                "detail": "The private-save probe passed restart persistence and retry after an injected settings write failure. All 1,504 bytes of the private SavedGame.dat matched the seed."
+              },
+              {
+                "path": "build/agent-runs/20261120T080301-40472-2ca3e093/verification.log",
+                "detail": "The supervisor log records 95 of 95 smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261120T080301-40472-2ca3e093/result.json",
+                "detail": "Records a successful verification exit and the verified content hash supplied for this review."
+              },
+              {
+                "path": "docs/scratch/window-scale-option-001.md",
+                "detail": "Ends with a Just Climb playtest note covering in-level resizing, skill picks, desktop clamping, browser scrolling, and Fill through viewport changes, fullscreen, and reload."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Desktop Auto stops at 3x even when the usable area fits 4x or higher. An unbounded --direct-level diagnostic also uses the saved setting instead of defaulting to 1x. The retained captures, browser source checks, save round-trip, and smoke results support the other requirements.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revision resolves both prior findings. Desktop Auto can exceed 3x, and an unbounded --direct-level run uses 1x unless --window-scale overrides it. All three criteria pass. Browser verification used source inspection and mocked mouse events. Live browser fullscreen and reload remain on the playtest checklist.",
+        "checks": [
+          {
+            "criterion": "The report labels the feature a clone addition, names the Options row, the settings field and its file, the window resize call path and the browser Fill and fixed-size CSS paths, and states that render resolution is unchanged at 640x480.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/window-scale-option-001.md",
+                "detail": "Labels Window size a clone addition and names windowScale in SoundSettings.dat. Traces both event loops through SdlWindow to SDL_SetWindowSize and SDL_SetWindowPosition, describes the browser data-window-scale paths, and states that both platforms retain 640x480 rendering."
+              },
+              {
+                "path": "build/window-scale-option-001/rea-instructions.json",
+                "detail": "For the registered x86 reference, SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the Options builder at 0x48E5B4 pushes label indices 11, 12, and 24 at 0x48E602, 0x48E64B, and 0x48E694."
+              },
+              {
+                "path": "build/window-scale-option-001/rea-pseudocode.json",
+                "detail": "The retained decompilation of 0x48E5B4 shows the same three label lookups and a three-row builder, corroborating the report's clone-addition label."
+              }
+            ]
+          },
+          {
+            "criterion": "Clone framebuffer captures under build/ show the Options menu with the Window size row at each value, the browser page source applies Fill as a 4:3 viewport fit and 1x/2x/3x as exact CSS sizes with correct mouse mapping,, and a source-level check shows Auto selects the largest integer scale fitting a given usable area, clamps an oversize choice, and that --window-scale and automation runs take precedence over the saved value.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/window-scale-option-001/revision/desktop/options-auto.png",
+                "detail": "The Options framebuffer shows Auto at 2x, 1280x960."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/desktop/options-auto-4x.png",
+                "detail": "The Options framebuffer shows Auto at 4x, 2560x1920."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/desktop/options-1x.png",
+                "detail": "The Options framebuffer shows 1x, 640x480."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/desktop/options-2x.png",
+                "detail": "The Options framebuffer shows 2x, 1280x960."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/desktop/options-3x.png",
+                "detail": "The Options framebuffer shows 3x, 1920x1440."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/desktop/options-3x-clamped.png",
+                "detail": "The Options framebuffer shows the selected 3x size with a Fits 2x indication."
+              },
+              {
+                "path": "src/web/webolution.html",
+                "detail": "Fill uses the smaller of the viewport width and four-thirds of its height. Fixed modes set 640, 1280, and 1920 CSS pixel widths at 4:3. The 640x480 backing stays pixelated, and the button listeners refresh SDL's cached pointer position from each button event."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/browser-source-check.log",
+                "detail": "Records the built CSS and SDL displayed-rectangle source checks. Mocked clicks mapped to logical center in all four modes, including after scrolling."
+              },
+              {
+                "path": "src/app/SdlWindow.hpp",
+                "detail": "Uses the current display's usable bounds, subtracts window decorations before fitting, and applies the resulting dimensions to the existing window. Native mouse coordinates use the applied scale."
+              },
+              {
+                "path": "src/__test__/test_window_scale_choice.cpp",
+                "detail": "Compile-time assertions cover Auto at 4x and 5x, fixed 3x staying at 3x on a larger display, clamping 3x to 2x on a smaller display, and precedence among the saved choice, automation, and an explicit CLI override."
+              },
+              {
+                "path": "src/app/main.cpp",
+                "detail": "The production predicate covers non-frontend diagnostics, bounded runs, captures, map runs, and frontend or level frame observers. The scale override helper gives an explicit --window-scale priority."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/desktop-probe.log",
+                "detail": "Records Auto applying a 2560x1920 client on a simulated 3000x2000 usable desktop, bounded and unbounded --direct-level runs using 1x with 3x saved, and --window-scale 2 taking precedence on the direct-level route."
+              }
+            ]
+          },
+          {
+            "criterion": "The saved value round-trips through the clone settings file with the existing write-failure policy and SavedGame.dat is unchanged; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/save/SoundSettings.cpp",
+                "detail": "Version 3 serializes windowScale through the existing SaveSink to SoundSettings.dat beside SavedGame.dat. Versions 1 and 2 load with the platform default."
+              },
+              {
+                "path": "src/app/FrontendSession.cpp",
+                "detail": "Accept keeps the new value in memory and leaves its write pending on failure. A later Accept retries through the same sink."
+              },
+              {
+                "path": "build/window-scale-option-001/revision/desktop-probe.log",
+                "detail": "The private-save probe passed restart persistence and retry after an injected settings write failure. All 1,504 bytes of the private SavedGame.dat matched the seed."
+              },
+              {
+                "path": "build/agent-runs/20261120T082724-40472-e1b564bf/verification.log",
+                "detail": "The revised supervisor run passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "build/agent-runs/20261120T082724-40472-e1b564bf/result.json",
+                "detail": "Records verification exit code 0 and the verified content hash ae82e532a92146d20af5f0fc656661cd48eb58582c24c796088f662b98a5b0d4 supplied for this review."
+              },
+              {
+                "path": "docs/scratch/window-scale-option-001.md",
+                "detail": "Ends with a Just Climb playtest note specifying the actions and expected results for resize, skill picking, clamping, browser scrolling, Fill, fullscreen, and reload. The worker report marks the revised gate pending, and the subsequent supervisor log records its pass."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T08:36:11.655448+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T082724-40472-e1b564bf\\verification.log",
+        "verified_content": "ae82e532a92146d20af5f0fc656661cd48eb58582c24c796088f662b98a5b0d4"
+      }
     },
     {
       "id": "actorcompose-fixtures-001",

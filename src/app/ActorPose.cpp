@@ -122,8 +122,7 @@ ActorTerrainSample terrainSampleFromLemming(const sim::Lemming& lemming, int ter
                                             double zSlab) {
   ActorTerrainSample out;
   out.x = static_cast<double>(lemming.x);
-  const int fileRow = terrainHeight - 1 - lemming.y;
-  out.y = static_cast<double>(fileRow);
+  out.y = terrainHeight - 1.0 - lemming.feetY();
   out.z = zSlab;
   return out;
 }

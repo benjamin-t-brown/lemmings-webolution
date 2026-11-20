@@ -325,10 +325,13 @@ std::optional<std::size_t> hoveredActor(const sim::World& world, const app::Tube
       const auto& placement = *boxes[walker];
       const auto support = firstLevelSupport ?
           app::firstLevelClimberSupport(lemmings[i], skill, world.terrain()) : std::nullopt;
+      const bool eligible = lemmings[i].state == sim::State::AntiGrav
+          ? world.canAssign(i, skill)
+          : app::passesKnownPickExclusions(lemmings[i], skill) && support.value_or(true);
       candidates.push_back({
           reinterpret_cast<void*>(static_cast<std::uintptr_t>(i)),
           pickBoxFromPlacement(placement),
-          app::passesKnownPickExclusions(lemmings[i], skill) && support.value_or(true),
+          eligible,
           {(placement.left + placement.right) * 0.5,
            (placement.top + placement.bottom) * 0.5}});
     }

@@ -55,6 +55,7 @@ std::string_view stateName(State s) {
     case State::Dead: return "dead";
     case State::Bounce: return "bounce";
     case State::Drown: return "drown";
+    case State::AntiGrav: return "antigrav";
   }
   return "?";
 }
@@ -497,8 +498,9 @@ int World::floatOpenCells() const {
 }
 
 void World::stepFaller(Lemming& l) {
+  const bool antiGrav = l.state == State::AntiGrav;
   const bool floating = l.canFloat && l.fallDistance >= rules_.floatAfter;
-  if (floating)
+  if (floating && !antiGrav)
     l.state = State::Floater;
 
   // The tick path without continuous motion spends speed cells.
@@ -510,17 +512,19 @@ void World::stepFaller(Lemming& l) {
   const int speed = halved ? rules_.floatSpeed : rules_.fallSpeed;
 
   const bool continuous = continuousMotion() && speed > 0;
-  // Only a fall with carried sub-tick phase hands time to the walker on
-  // landing. Unused cells from a tick-aligned budget carry no phase by themselves.
-  const bool hasTrackedPhase = continuous && l.stepBudgetSeconds != 0.0;
   // The elapsed budget uses motionDtSeconds(). Each cell costs
   // tickDtSeconds() / speed.
   const double dt = continuous ? motionDtSeconds() : 0.0;
   const double unitSeconds = continuous ? tickDtSeconds() / speed : 0.0;
-  const double budget = continuous ? dt + l.stepBudgetSeconds : 0.0;
-  const int units = continuous
-      ? std::clamp(static_cast<int>(std::floor(budget / unitSeconds + 1e-9)), 0, speed)
-      : speed;
+  // Keep the lift's fraction in distance units when an umbrella changes its
+  // speed. Reinterpreting an old time budget at the new rate moves it backward.
+  const double carried = antiGrav ? l.antiGravFraction * unitSeconds : l.stepBudgetSeconds;
+  // Only a fall with carried sub-tick phase hands time to the Walker on landing.
+  const bool hasTrackedPhase = continuous && carried != 0.0;
+  const double budget = continuous ? dt + carried : 0.0;
+  const int wholeCells = continuous
+      ? std::max(0, static_cast<int>(std::floor(budget / unitSeconds + 1e-9))) : speed;
+  const int units = antiGrav ? wholeCells : std::min(wholeCells, speed);
   if (continuous)
     l.stepBudgetSeconds = 0.0;  // consumed; set again below if a transition needs to carry it
 
@@ -531,7 +535,7 @@ void World::stepFaller(Lemming& l) {
     // floating and splat. The current sub-step's move precedes the probe.
     // Provisional feet-grid adapter: an inverted entry already against a
     // ceiling lands without moving through it.
-    if (v > 0 || !groundAt(l.x, l.y - 1, v)) {
+    if ((v > 0 && !antiGrav) || !groundAt(l.x, l.y + v, v)) {
       l.y += v;
       ++l.fallDistance;
     }
@@ -576,7 +580,9 @@ void World::stepFaller(Lemming& l) {
       // and sheet 2 on 0x4000 from splat.
       const bool zoneExempt =
           setup_.terrain.splatExempt(l.x, l.y + v, l.sheetType);
-      if (!floating && !zoneExempt &&
+      // Playable clone rule: a lift crossing can reach a distant ceiling
+      // safely. The open-world loss, fluid and trampoline checks still apply.
+      if (!antiGrav && !floating && !zoneExempt &&
           l.fallDistance > rules_.splatDistance) {
         l.state = State::Splatter;
         if (l.sheetType != 3) ++dead_;
@@ -597,8 +603,33 @@ void World::stepFaller(Lemming& l) {
       return;
     }
   }
-  if (continuous)
+  if (continuous) {
     l.stepBudgetSeconds = budget - units * unitSeconds;  // cross-tick carry
+    if (antiGrav)
+      l.antiGravFraction = std::clamp(l.stepBudgetSeconds / unitSeconds, 0.0, 1.0);
+  }
+}
+
+void World::stepAntiGrav(Lemming& l) {
+  const int v = l.verticalDir;
+  const double before = l.feetY();
+  stepFaller(l);  // 0x4160BD moves at fall speed while type 0x2b supplies the spin.
+  if (l.state != State::AntiGrav)
+    return;
+
+  // Provisional clone adaptation: fit a half-turn to the live shaft height.
+  // Resample its far support so terrain edits during the lift can change the
+  // remaining distance without resetting the completed portion of the turn.
+  const double feet = l.feetY();
+  const double moved = (feet - before) * v;
+  if (moved <= 0.0)
+    return;
+  int landing = l.y;
+  const int height = setup_.terrain.height();
+  for (int next = landing + v; next >= 0 && next < height && !groundAt(l.x, next, v); next += v)
+    landing = next;
+  const double remaining = std::max(0.0, (landing - feet) * v);
+  l.antiGravTurn = std::lerp(l.antiGravTurn, 1.0, moved / (moved + remaining));
 }
 
 void World::stepBounce(Lemming& l) {
@@ -693,7 +724,7 @@ bool World::attachFluidHazard(Lemming& l) {
       // Provisional surface riding: resample live height each update while
       // keeping actors supported by real terrain above the fluid in place.
       if (l.verticalDir > 0 && (l.state == State::Walker ||
-          l.state == State::Faller || l.state == State::Floater))
+          l.state == State::Faller || l.state == State::Floater || l.state == State::AntiGrav))
         l.y = setup_.terrain.height() - 1 - int(std::floor(g.minY + g.height));
       continue;
     }
@@ -729,11 +760,13 @@ void World::stepWalker(Lemming& l) {
     if (!setup_.terrain.antiGrav(l.x, l.y + v))
       return false;
     l.verticalDir = -v;
-    l.state = State::Faller;
+    l.state = State::AntiGrav;
     l.fallDistance = 0;
     l.frame = 0;
-    // Retail 0x41D590 starts AntiGrav on flipper contact. Use the actual
-    // gravity reversal as the clone's one-shot trigger for both directions.
+    l.antiGravFraction = 0.0;
+    l.antiGravTurn = 0.0;
+    // Retail 0x41D590 starts the sample. Use the reversal as the clone's
+    // one-shot trigger for both directions.
     cueSample("AntiGrav", l);
     return true;
   };
@@ -897,6 +930,26 @@ void World::stepBuilder(Lemming& l) {
     return;
   const int dir = static_cast<int>(l.facing);
   const int gravity = l.verticalDir >= 0 ? 1 : -1;
+  // Both probes test the full grid word in retail (0x40FE77, 0x410091).
+  // Use the receiver painter's cell bounds (0x4311D0) with the clone's live
+  // height so residual zone bits in a drained receiver cannot block a step.
+  const auto blocked = [this](int x, int y) {
+    if (solidAt(x, y))
+      return true;
+    const auto& terrain = setup_.terrain;
+    if (y < 0 || y >= terrain.height() || terrain.width() <= 0)
+      return false;
+    const int row = terrain.height() - 1 - y;
+    return std::ranges::any_of(setup_.gates, [&](const FluidGate& gate) {
+      if (gate.kind < 0 || gate.kind > 2 || !(gate.height > 0.0) ||
+          row < static_cast<int>(gate.minY) || row >= static_cast<int>(gate.minY + gate.height))
+        return false;
+      const int left = static_cast<int>(gate.minX);
+      const int right = static_cast<int>(gate.maxX);
+      const int span = right - left + (right < gate.minX ? terrain.width() : 0);
+      return terrain.wrapX(x - left) < span;
+    });
+  };
 
   // Paint at the current feet, then rise against gravity in the Y-down grid.
   for (int k = 1; k <= rules_.brickLength; ++k) {
@@ -906,7 +959,7 @@ void World::stepBuilder(Lemming& l) {
   }
 
   l.y -= gravity;
-  if (solidAt(setup_.terrain.wrapX(l.x + dir), l.y)) {
+  if (blocked(l.x + dir, l.y)) {
     turn(l);
     l.state = State::Walker;
     l.frame = 0;
@@ -925,7 +978,7 @@ void World::stepBuilder(Lemming& l) {
   }
   // 0x410032..0x41009E probes one column ahead at head height after
   // advancing. The last spent brick enters the shrug before this probe.
-  if (solidAt(l.x + dir, l.y - gravity * rules_.lemmingHeight)) {
+  if (blocked(l.x + dir, l.y - gravity * rules_.lemmingHeight)) {
     turn(l);
     l.state = State::Walker;
     l.frame = 0;
@@ -1251,6 +1304,7 @@ void World::step(Lemming& l) {
   switch (l.state) {
     case State::Faller:
     case State::Floater: stepFaller(l); break;
+    case State::AntiGrav: stepAntiGrav(l); break;
     case State::Bounce: stepBounce(l); break;
     case State::Teleporting: stepTeleporting(l); break;
     case State::Walker:
@@ -1363,6 +1417,7 @@ void World::stepElapsed(Lemming& l, bool tickBoundary) {
   switch (l.state) {
     case State::Faller:
     case State::Floater: stepFaller(l); break;
+    case State::AntiGrav: stepAntiGrav(l); break;
     case State::Walker:
       stepWalker(l);
       if (l.fasterMs > 0 && l.state == State::Walker)
@@ -1952,6 +2007,8 @@ bool World::canAssign(std::size_t index, Skill skill) const {
   if (!l.active())
     return false;
   switch (skill) {
+    // Retail 45A0E0 allows these three during type-0x13 fall with the
+    // cartwheel effect attached. Ground skills below reject that fall.
     case Skill::Climber: return !l.canClimb;
     case Skill::Floater: return !l.canFloat;
     case Skill::Bomber: return l.fuseMs < 0;

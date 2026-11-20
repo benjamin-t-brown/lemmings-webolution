@@ -30,6 +30,7 @@ constexpr std::string_view spriteNameForState(sim::State state) {
     case sim::State::Splatter: return "cartwheel";  // provisional clip
     // Drown entry 0x0040874c sets "drown" at 0x004BF130.
     case sim::State::Drown: return "drown";
+    case sim::State::AntiGrav: return "cartwheel";
     case sim::State::Teleporting: return {};
     case sim::State::Exited: return {};
     case sim::State::Dead: return {};

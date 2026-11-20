@@ -638,7 +638,19 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   auto placement = app::actorSpritePlacement(frame, worldPosition, camera, selection.mirrored, -1);
   if (!placement)
     return std::nullopt;
-  *placement = actorSpriteGravityPlacement(*placement, injected.verticalDir);
+  int spriteGravity = injected.verticalDir;
+  if (injected.antiGravTurn >= 0.0 && walkSprite->name == "cartwheel") {
+    // The art contains the intermediate rotations. Move its centre around
+    // the projected feet over the same half-turn. A return lift reflects
+    // the whole sequence about the feet on its source ceiling.
+    const double angle = std::numbers::pi * injected.antiGravTurn;
+    const double offset = (placement->originY - (placement->top + placement->bottom) * 0.5)
+        * (1.0 - std::cos(angle));
+    placement->top += offset;
+    placement->bottom += offset;
+    spriteGravity = -spriteGravity;
+  }
+  *placement = actorSpriteGravityPlacement(*placement, spriteGravity);
 
   std::array<std::uint8_t, 3> tint{255, 255, 255};
   if (!light.empty()) {
@@ -654,7 +666,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   prepared.placement = *placement;
   prepared.composedPlacement = *placement;
   prepared.mirrored = selection.mirrored;
-  prepared.inverted = injected.verticalDir < 0;
+  prepared.inverted = spriteGravity < 0;
   prepared.tint = tint;
   prepared.worldPosition = worldPosition;
   // The visibility diagnostic bypasses both submission and scene-depth rejection.
@@ -2013,6 +2025,14 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
           break;
         }
       }
+    }
+    if (lemming.state == sim::State::AntiGrav) {
+      walker.antiGravTurn = lemming.antiGravTurn;
+      walker.clip = lemmingClipName(lemming);
+      // The installed 16-entry cartwheel completes its first half at entry 8.
+      // Retiming that half to the lift is provisional. The native controller
+      // runs its own clip timer alongside the fall (41AE95).
+      walker.walkTemporalIndex = static_cast<int>(std::lround(8.0 * walker.antiGravTurn));
     }
     out.push_back(walker);
   }

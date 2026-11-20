@@ -33,6 +33,7 @@ const char* lemmingClipName(const sim::Lemming& lemming) {
     case State::Miner: return "mine";             // READ: strip 9
     case State::Digger: return "dig";             // READ: strip 4
     case State::Drown: return "drown";            // The state enters with "drown".
+    case State::AntiGrav: return "cartwheel";     // Type 0x2b selects this clip at 41AE28.
     case State::Teleporting: return "cartwheel";  // The pad state selects "cartwheel".
     case State::Floater: return "umbopen";        // Umbrella opening transitions to "float".
     case State::Blocker: return "block";          // PROVISIONAL: the only blocker-named strip
@@ -76,6 +77,8 @@ void LemmingAnimTracker::advance(const sim::World& world,
       e.seconds = 0.0;
       e.clock.loopAtEnd = lemmingClipLoops(e.clip) && lemming.state != sim::State::Splatter;
     }
+    if (lemming.state == sim::State::AntiGrav)
+      continue;  // Actor preparation samples the half-turn from World.
     e.seconds += std::max(0.0, elapsedSeconds);
     const int type = lemming.sheetType;
     const SpriteSheet* sheet = type >= 0 && type < 3 ? sprites[type] : nullptr;

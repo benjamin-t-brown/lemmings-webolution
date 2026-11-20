@@ -1186,8 +1186,8 @@ void testAntiGravFlipsGravity() {
     const auto& at = series[static_cast<std::size_t>(flipTick)];
     check(std::get<0>(at) == 50,
           std::format("flip is on the pad column (x={})", std::get<0>(at)));
-    check(std::get<3>(at) == State::Faller,
-          "flip puts the lemming into Faller");
+    check(std::get<3>(at) == State::AntiGrav,
+          "flip enters the lift transition before walking on the ceiling");
     // After the flip, y must decrease (fall toward the ceiling).
     int minY = std::get<1>(at);
     for (int i = flipTick; i < static_cast<int>(series.size()); ++i)

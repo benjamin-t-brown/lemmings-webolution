@@ -124,6 +124,7 @@ void LemmingMotionTracker::observePosition(Entry& e, const sim::Lemming& l,
   const bool stateBreak = e.state != l.state && !(movingState(e.state) && movingState(l.state));
   const bool snap = snapToCurrent || !e.valid || now < e.observedMs || stateBreak ||
       e.facing != l.facing || e.gravity != l.verticalDir ||
+      l.state == sim::State::AntiGrav || e.state == sim::State::AntiGrav ||
       l.state == sim::State::Teleporting || std::abs(dx) > limitX || std::abs(dy) > limitY ||
       (l.state == sim::State::Walker && dx * static_cast<int>(l.facing) < 0);
   if (snap) {
@@ -199,8 +200,13 @@ LemmingDrawPosition LemmingMotionTracker::positionOf(std::size_t index, const si
           e.laneZ + dz * exitTime};
     }
   }
-  return samplePosition(entries_, index, world, {static_cast<double>(l.x), static_cast<double>(l.y),
-      l.alive() ? initialLane(l) : 0.75});
+  auto position = samplePosition(entries_, index, world, {static_cast<double>(l.x),
+      static_cast<double>(l.y), l.alive() ? initialLane(l) : 0.75});
+  if (l.state == sim::State::AntiGrav) {
+    position.x = l.x;
+    position.y = l.feetY();
+  }
+  return position;
 }
 
 LemmingDrawPosition LemmingMotionTracker::ratPositionOf(std::size_t index, const sim::World& world) const {

@@ -19,7 +19,8 @@ struct LemmingDrawPosition {
 // interpolates without extrapolating. Native 0x41BDD4 uses continuous movement.
 // Sparse skill steps span at most the preceding interval. Turns, gravity
 // changes, teleports, stops and large jumps reset the path. Compatible
-// moving states retain it through landing. Level time drives presentation.
+// moving states retain it through landing. Lift transit uses its current
+// fractional position directly, including when paused. Level time drives presentation.
 class LemmingMotionTracker {
  public:
   // Call before advancing and after EACH World update, including fast-forward

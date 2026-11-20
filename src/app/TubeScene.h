@@ -93,6 +93,7 @@ struct SceneOptions {
     int drownFluidKind = -1;  // -1 keeps static-cell drowning on its existing path
     double drownSurfaceY = 0.0, drownBrightness = 1.0;
     double rotationPhase = 0.0;  // exit enter 418027 sets controller phase to 0.25
+    double antiGravTurn = -1.0;  // half-turn progress, negative outside a lift
     // Render-only carried brick. Negative outside Builder. Its Y-up target
     // uses the upcoming cells independently of interpolated body motion.
     double builderPhase = -1.0;

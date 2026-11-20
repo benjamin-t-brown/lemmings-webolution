@@ -38,6 +38,9 @@ enum class State : std::uint8_t {
   // Pad transit enters type 0x28 (0x004B0C1C, cartwheel), then type 0x2c
   // (0x004B0CE8). Object step 0x00434B0F relocates to the partner pose.
   Teleporting,
+  // The cartwheel side effect (0x2b) and reversed fall (0x13) share one
+  // clone state until this lemming reaches support in its new gravity.
+  AntiGrav,
 };
 std::string_view stateName(State s);
 
@@ -114,6 +117,10 @@ struct Lemming {
   // next update. The tick path leaves this at zero unless enabled in LevelSetup.
   double stepBudgetSeconds = 0.0;
 
+  // Live only in AntiGrav. Collision still samples each crossed integer row.
+  double antiGravFraction = 0.0;  // distance toward the next row
+  double antiGravTurn = 0.0;      // fraction of the half-turn completed
+
   // Closing terrain gates raise actor+0x5D (0x4270DC). Consumed on the
   // next actor update, like the original forced transition (0x42E340).
   bool gateCrushed = false;
@@ -124,6 +131,9 @@ struct Lemming {
 
   bool alive() const { return state != State::Exited && state != State::Dead; }
   bool active() const { return alive() && state != State::Splatter && !ratVictim; }
+  double feetY() const {
+    return state == State::AntiGrav ? y + verticalDir * antiGravFraction : y;
+  }
 };
 
 // Placed subclass actors (448550 -> 448630), outside the rescue population.
@@ -891,6 +901,7 @@ private:
   void spawnFromEntrance(std::size_t index, double budgetSeconds);
   void step(Lemming& l);
   void stepFaller(Lemming& l);
+  void stepAntiGrav(Lemming& l);
   void stepBounce(Lemming& l);
   void stepDrown(Lemming& l);
   // Species-aware contact with the live receiver volume.
@@ -911,7 +922,7 @@ private:
   int msPerTick() const;
   // The nominal tick in seconds, shared by release and movement.
   double tickDtSeconds() const;
-  // Fall/walk dt in seconds: the elapsed segment or the nominal tick.
+  // Continuous movement dt in seconds: the elapsed segment or the nominal tick.
   double motionDtSeconds() const { return explicitUpdate_ ? updateDtSeconds_ : tickDtSeconds(); }
   // The elapsed entry always uses continuous budgets. The tick entry can opt in.
   bool continuousMotion() const { return explicitUpdate_ || setup_.continuousStepperClock; }
@@ -920,7 +931,7 @@ private:
   // One world update of the explicit path (<= one tick boundary), see advanceElapsedMs.
   void updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool releaseEnabled);
   // Explicit-path lemming step: the full per-tick step on a tick-boundary update, otherwise
-  // only the continuous fall/walk movement with this update's dt.
+  // only continuous movement with this update's dt.
   void stepElapsed(Lemming& l, bool tickBoundary);
   // Tagged lever/pad/sensor contacts AFTER every lemming moved, before receivers (0x4423D2).
   void stepGadgetContacts(double dt);

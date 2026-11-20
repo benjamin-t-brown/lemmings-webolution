@@ -37,6 +37,20 @@ enum class SceneShade { Flat, Gouraud };
 enum class SceneRgbOperation { Modulate };
 enum class SceneAlphaOperation { SelectTexture, Modulate };
 
+enum class SceneHighlightKind : std::uint8_t { None, BackdropRoot, Fluid, CounterGate };
+
+struct SceneHighlightId {
+  SceneHighlightKind kind = SceneHighlightKind::None;
+  std::uint32_t index = 0;
+  bool operator==(const SceneHighlightId&) const = default;
+};
+
+// The completed frame keeps the last visible fragment and its additive RGB.
+struct SceneHighlightPixel {
+  SceneHighlightId owner;
+  std::array<std::uint8_t, 3> rgb{};
+};
+
 struct SceneRasterOptions {
   // Every state that affects supported output is mandatory at the call site.
   SceneFilter filter;
@@ -56,6 +70,10 @@ struct SceneRasterOptions {
   // Optional accepted depth stores, used by pipe occlusion. Unlike an observer
   // this is ordinary raster output, partitioned with the framebuffer rows.
   std::span<double> depthOutput{};
+  SceneHighlightId highlight{};
+  // Textured marks use the unlit texel, as with a hovered lemming. Vertex-
+  // coloured surfaces such as water retain the colour of their geometry.
+  bool highlightTextureRgb = false;
 };
 
 // Opt-in diagnostic only. The caller supplies a fixed, tightly-packed mask;
@@ -82,6 +100,7 @@ struct SceneRgbaFramebuffer {
   // Production RGB destination. Destination alpha never affects RGB blending;
   // diagnostic observers retain the RGBA path so their alpha events stay exact.
   std::span<std::uint8_t> rgb{};
+  std::span<SceneHighlightPixel> highlights{};
 };
 
 // Software conventions, not asserted native D3D measurements:

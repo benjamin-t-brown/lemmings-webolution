@@ -106,6 +106,8 @@ std::expected<void, std::string> rasterizeSceneTriangle(
     return std::unexpected("invalid masked raster observer");
   if (!o.depthOutput.empty() && o.depthOutput.size() != depth.size())
     return std::unexpected("invalid depth output dimensions");
+  if (!target.highlights.empty() && target.highlights.size() != depth.size())
+    return std::unexpected("invalid highlight output dimensions");
   if (!dimensionsValid(texture.width, texture.height, 4, texture.rgba.size()))
     return std::unexpected("invalid RGBA8 texture dimensions or storage");
   if ((o.filter != SceneFilter::Point && o.filter != SceneFilter::Linear) ||
@@ -179,11 +181,23 @@ std::expected<void, std::string> rasterizeSceneTriangle(
       const int channels = rgb ? 3 : 4;
       auto* color = rgb ? target.rgb.data() : target.rgba.data();
       const auto at = pos * channels;
+      const double sourceFactor = o.blendEnabled ? factorValue(o.sourceBlend, src[3]) : 1.0;
+      const double destinationFactor = o.blendEnabled ? factorValue(o.destinationBlend, src[3]) : 0.0;
+      bool visible = destinationFactor != 1.0;
       for (int k=0;k<channels;++k) {
-        const double out = o.blendEnabled
-            ? src[k] * factorValue(o.sourceBlend, src[3]) + color[at+k] * factorValue(o.destinationBlend, src[3])
-            : src[k];
+        const auto before = color[at+k];
+        const double out = o.blendEnabled ? src[k] * sourceFactor + before * destinationFactor : src[k];
         color[at+k] = unorm8(out);
+        if (k < 3) visible |= color[at+k] != before;
+      }
+      // Zero-alpha and black additive texels leave the prior owner intact.
+      if (!target.highlights.empty() && visible) {
+        auto& pixel = target.highlights[pos];
+        pixel.owner = o.highlight;
+        if (pixel.owner.kind != SceneHighlightKind::None) {
+          const auto& sample = o.highlightTextureRgb ? texel : src;
+          for (int k = 0; k < 3; ++k) pixel.rgb[k] = unorm8(sample[k] * sourceFactor);
+        }
       }
       if (o.depthWrite) {
         depth[pos] = z;

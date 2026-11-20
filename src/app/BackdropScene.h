@@ -26,10 +26,9 @@
 
 namespace webo {
 class AssetLibrary;
-namespace sim { struct Crab; struct NamedHazard; struct LevelSetup; }
+namespace sim { struct Crab; struct NamedHazard; struct LevelSetup; struct OccupancySensor; }
 namespace app {
 class Raster;
-class TubeScene;
 // Application-owned animation state for placed scenery.
 struct EntranceExitPresentation {
   struct Entrance { std::size_t root; HatchAnimation animation; };
@@ -221,11 +220,10 @@ class BackdropScene {
                             bool arrival, int facing, double levelSeconds);
   void animateGadgets(const GadgetPresentation&, double levelSeconds);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
-  using CylinderRegionProjector = std::function<std::optional<PickBox>(
-      const std::array<double, 3>& low, const std::array<double, 3>& high)>;
-  void drawSwitchHover(Image&, const CameraBasis&, const Raster&, const CylinderRegionProjector&,
-                       const sim::LevelSetup&, const LeverPresentation*,
-                       const PressurePadPresentation*, int pointerX, int pointerY) const;
+  void drawSwitchHover(Image&, const CameraBasis&, const Raster&, const sim::LevelSetup&,
+                       const LeverPresentation*, const PressurePadPresentation*,
+                       int pointerX, int pointerY,
+                       const std::function<void(const sim::OccupancySensor&)>& drawSensor) const;
   // Overrides Secondary visibility byte +0x110, which 0x45DA0D toggles on
   // "cutme" type-1 nodes. A hidden node suppresses its subtree.
   void setSecondaryHidden(std::function<bool(const SceneNode&)> hidden) { secondaryHidden_ = std::move(hidden); }

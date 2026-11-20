@@ -7,6 +7,7 @@
 #include "app/ActorOcclusion.h"
 #include "app/BuilderBrick.h"
 #include "app/CrtRand.h"
+#include "app/HoverFeedback.h"
 #include "app/LemmingAnim.h"
 #include "app/LemmingMotion.h"
 #include "assets/Bitmap.h"
@@ -287,39 +288,38 @@ std::array<double, 3> TubeScene::soundWorldPosition(
       {position[0], terrainHeight - 1.0 - position[1], position[2]}, 1).modelPosition;
 }
 
-std::optional<PickBox> TubeScene::cylinderScreenBounds(const CameraBasis& camera,
-    const std::array<double, 3>& low, const std::array<double, 3>& high) const {
-  if (!havePoseLevel_) return std::nullopt;
-  for (int axis = 0; axis < 3; ++axis)
-    if (!std::isfinite(low[axis]) || !std::isfinite(high[axis])) return std::nullopt;
+void TubeScene::drawHoveredSensor(Image& image, const CameraBasis& camera, const Raster& raster,
+    const sim::OccupancySensor& sensor) const {
+  if (!havePoseLevel_ || image.width != camera.width || image.height != camera.height) return;
+  // Provisional clone contact marker for a tagged occupancy volume. It has no
+  // normal draw path. Place the ring at the volume's centre in world space.
+  const auto& low = sensor.min;
+  const auto& high = sensor.max;
+  constexpr double width = 256.0;
+  const double x = std::midpoint(low[0], high[0] < low[0] ? high[0] + width : high[0]);
+  const double y = std::midpoint(low[1], high[1]);
+  const double slab = std::midpoint(low[2], high[2]);
+  if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(slab)) return;
   rewirePoseLevel();
-  const double width = 256.0;
-  const double span = high[0] >= low[0] ? high[0] - low[0] : high[0] - low[0] + width;
-  if (span < 0.0 || span > width) return std::nullopt;
-  const double start = std::fmod(low[0], width);
-  const int slices = std::max(1, static_cast<int>(std::ceil(span / 8.0)));
-  PickBox bounds{camera.width, camera.height, 0, 0};
-  for (int step = 0; step <= slices; ++step) {
-    const double x = start + span * step / slices;
-    for (const double y : {low[1], high[1]}) for (const double slab : {low[2], high[2]}) {
-      const auto at = actorPoseFromCylinderSample(poseLevel_, {x, y, slab}, 1).modelPosition;
-      std::array<double, 4> projected;
-      if (!project(camera, {at[0], at[1], at[2]}, projected) ||
-          !std::isfinite(projected[0]) || !std::isfinite(projected[1])) continue;
-      const double px = std::clamp(projected[0], -1.0, double(camera.width));
-      const double py = std::clamp(projected[1], -1.0, double(camera.height));
-      bounds.left = std::min(bounds.left, int(std::floor(px)));
-      bounds.top = std::min(bounds.top, int(std::floor(py)));
-      bounds.right = std::max(bounds.right, int(std::floor(px)) + 1);
-      bounds.bottom = std::max(bounds.bottom, int(std::floor(py)) + 1);
+  const auto at = actorPoseFromCylinderSample(poseLevel_, {std::fmod(x, width), y, slab}, 1).modelPosition;
+  std::array<double, 4> p;
+  if (!project(camera, {at[0], at[1], at[2]}, p)) return;
+  constexpr int radius = 5;
+  if (!(p[0] >= -radius && p[0] < image.width + radius &&
+        p[1] >= -radius && p[1] < image.height + radius)) return;
+  const ActorOcclusionPlane plane(camera, at);
+  constexpr std::array<std::uint8_t, 3> light{128, 96, 48};
+  const int cx = int(std::floor(p[0])), cy = int(std::floor(p[1]));
+  for (int py = std::max(0, cy - radius); py < std::min(image.height, cy + radius + 1); ++py)
+    for (int px = std::max(0, cx - radius); px < std::min(image.width, cx + radius + 1); ++px) {
+      const double dx = px + 0.5 - p[0], dy = py + 0.5 - p[1];
+      const double r2 = dx * dx + dy * dy;
+      if (r2 > radius * radius || r2 < 9.0) continue;
+      const auto pixel = std::size_t(py) * image.width + px;
+      const double z = plane.depthAt(px + 0.5, py + 0.5);
+      if (z < raster.depthBuffer()[pixel] && z < raster.actorDepth().depthAt(pixel))
+        addHoverRgb(image.rgba.data() + pixel * 4, light.data());
     }
-  }
-  bounds.left = std::max(0, bounds.left);
-  bounds.top = std::max(0, bounds.top);
-  bounds.right = std::min(camera.width, bounds.right);
-  bounds.bottom = std::min(camera.height, bounds.bottom);
-  if (bounds.left < bounds.right && bounds.top < bounds.bottom) return bounds;
-  return std::nullopt;
 }
 
 const TubeScene::Tile* TubeScene::findTile(bool outer, int column, int row) const {
@@ -362,7 +362,9 @@ void compositeActorOverlay(app::Raster& raster, const Image& overlay,
       } else if (!webo::actorSpriteAlphaTestPasses(a)) {
         continue;
       }
-      const std::size_t o = (static_cast<std::size_t>(y) * width + x) * 3;
+      const auto pixel = static_cast<std::size_t>(y) * width + x;
+      const auto o = pixel * 3;
+      raster.coverSceneHighlight(pixel);
       rgb[o] = overlay.rgba[i];
       rgb[o + 1] = overlay.rgba[i + 1];
       rgb[o + 2] = overlay.rgba[i + 2];
@@ -786,9 +788,14 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
           if (!actorSpriteAlphaTestPasses(sprite.rgba[p * 4 + 3])) continue;
           const double z = plane ? plane->depthAt(x + .5, y + .5) : originZ;
           if (physicalActors && !raster.mutableActorDepth().submit(p,z,owner)) continue;
-          for (int c = 0; c < 3; ++c)
-            rgb[p * 3 + c] = std::min(255, rgb[p * 3 + c] +
-                int(std::lround(sprite.rgba[p * 4 + c] * strength)));
+          bool changed = false;
+          for (int c = 0; c < 3; ++c) {
+            auto& channel = rgb[p * 3 + c];
+            const auto out = std::min(255, channel + int(std::lround(sprite.rgba[p * 4 + c] * strength)));
+            changed |= out != channel;
+            channel = out;
+          }
+          if (changed) raster.coverSceneHighlight(p);
         }
       };
       // The fluid state supplies neutral brightness rather than the light map.
@@ -862,6 +869,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
             std::copy_n(sprite.rgba.begin()+source, 4, overlay.rgba.begin()+targetPixel*4);
           } else if (raster.mutableActorDepth().submit(pixel,z,owner)) {
             // Store accepted body and brick RGB opaquely at their sorted slot before later FX.
+            raster.coverSceneHighlight(targetPixel);
             std::copy_n(sprite.rgba.begin()+source, 3, raster.mutableFramebuffer().rgb.begin()+targetPixel*3);
           }
         }
@@ -965,6 +973,7 @@ void TubeScene::drawExplosionDecals(Raster& raster, const CameraBasis& camera) c
   fb.width = camera.width;
   fb.height = camera.height;
   fb.rgb = raster.mutableFramebuffer().rgb;
+  fb.highlights = raster.highlightPixels();
   // 424290 mode 2 -> 44026F -> 414D80: ONE/ONE. ~ texture flags disable
   // alpha test (47261F). PROVISIONAL clone Less/no-write surface policy:
   // scenery occludes the mark; faded/black texels never occlude later actors.
@@ -1367,8 +1376,10 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
         const auto pixel = std::size_t(y) * buffer.width + x;
         const auto* rgba = overlay.rgba.data() + pixel * 4;
         if (actorSpriteAlphaTestPasses(rgba[3]) &&
-            actors.submit(pixel, plane.depthAt(x + .5, y + .5), owner))
+            actors.submit(pixel, plane.depthAt(x + .5, y + .5), owner)) {
+          raster.coverSceneHighlight(pixel);
           std::copy_n(rgba, 3, buffer.rgb.data() + pixel * 3);
+        }
       }
   }
 }
@@ -1403,8 +1414,7 @@ bool TubeScene::drawHoveredWalker(Image& target, std::size_t walker, const Camer
       if (!actorSpriteAlphaTestPasses(sprite.rgba[at + 3]) ||
           !actorDepth.owns(pixel, walker) ||
           actorDepth.depthAt(pixel) != plane.depthAt(x + .5, y + .5)) continue;
-      for (int c = 0; c < 3; ++c)
-        target.rgba[at + c] = std::min(255, target.rgba[at + c] + sprite.rgba[at + c]);
+      addHoverRgb(target.rgba.data() + at, sprite.rgba.data() + at);
       marked = true;
     }
   }
@@ -1677,6 +1687,16 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       }
       const double cc = std::clamp(quad.colour / 255.0, 0.0, 1.0);
       const std::array<double, 3> modulate = {cc, cc, cc};
+      SceneHighlightId highlight;
+      if (quad.gate && !raster.highlightPixels().empty()) {
+        for (const auto vertex : quad.index) {
+          if (vertex < counterGateVertexOwners_.size() &&
+              counterGateVertexOwners_[vertex].kind == SceneHighlightKind::CounterGate) {
+            highlight = counterGateVertexOwners_[vertex];
+            break;
+          }
+        }
+      }
       for (const auto& ids : {std::array<int, 3>{0, 1, 2}, std::array<int, 3>{0, 2, 3}}) {
         std::array<std::array<double, 4>, 3> p{};
         std::array<std::array<double, 2>, 3> t{};
@@ -1684,7 +1704,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
           p[i] = projected[ids[i]];
           t[i] = quad.uv[ids[i]];
         }
-        raster.triangle(p, t, tile->texture, modulate, ActorDepth::noOwner, tile->routeAddress);
+        raster.triangle(p, t, tile->texture, modulate, ActorDepth::noOwner, tile->routeAddress, highlight);
       }
     };
 
@@ -1871,6 +1891,7 @@ void TubeScene::syncCounterGates(std::span<const sim::CounterGate> gates) {
   counterGateFractions_ = fractions;
   counterGateMeshedBlocks_ = terrainBlocksRebuilt_;
   ++counterGateRevision_;
+  counterGateVertexOwners_.assign(mesh_.surface.size(), {});
   for (std::size_t i = 0; i < gates.size(); ++i) {
     const auto& g = gates[i];
     const auto inside = [&](int x, int y) {
@@ -1885,6 +1906,7 @@ void TubeScene::syncCounterGates(std::span<const sim::CounterGate> gates) {
       mesh_.surface[index] = {a->x + (b->x - a->x) * fractions[i],
                               a->y + (b->y - a->y) * fractions[i],
                               a->z + (b->z - a->z) * fractions[i]};
+      counterGateVertexOwners_[index] = {SceneHighlightKind::CounterGate, static_cast<std::uint32_t>(i)};
     };
     // The original binds these exact extra-vertex indices. They can alias
     // keys used by several faces: mutate the shared vertex, not a decal.
@@ -1909,7 +1931,8 @@ void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
   rewirePoseLevel();
   SceneRgbaFramebuffer fb;
   fb.width = camera.width; fb.height = camera.height; fb.rgb = raster.mutableFramebuffer().rgb;
-  const SceneRasterOptions options{SceneFilter::Linear, SceneAddress::Clamp,
+  fb.highlights = raster.highlightPixels();
+  SceneRasterOptions options{SceneFilter::Linear, SceneAddress::Clamp,
       SceneAlphaFunction::StrictGreater, 0, true, SceneBlendFactor::SrcAlpha,
       SceneBlendFactor::InvSrcAlpha, SceneDepthFunction::Less, true,
       SceneShade::Gouraud, SceneRgbOperation::Modulate, SceneAlphaOperation::SelectTexture, 0.5, 0.5};
@@ -1931,8 +1954,11 @@ void TubeScene::renderCounterGates(Raster& raster, const CameraBasis& camera,
       (void)rasterizeSceneTriangle(fb, raster.mutableDepthBuffer(), image,
           {v[ids[0]],v[ids[1]],v[ids[2]]}, options);
   };
-  for (const auto& g : gates) {
+  for (std::uint32_t i = 0; i < gates.size(); ++i) {
+    const auto& g = gates[i];
     if (!g.hasCounter()) continue;
+    options.highlight = {SceneHighlightKind::CounterGate, i};
+    options.highlightTextureRgb = true;
     // 0x423E69: panel 8.2x6.1; digits 2.1x3.5 separated by 2.7.
     quad(g.counterX, g.counterY - 1.3, 8.2, 6.1, 10, 1.005);
     quad(g.counterX + 1.3, g.counterY + 0.35, 2.1, 3.5, g.remaining() / 10, 1.01);

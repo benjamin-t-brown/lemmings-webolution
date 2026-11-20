@@ -229,6 +229,7 @@ class Builder {
                  {u - kUvNudge, v1 + kUvNudge}, {u - kUvNudge, v0 - kUvNudge}}};
         q.colour = colourFromHi(0x4064B800u);
         q.coord = rec.x0;
+        q.gate = g.door;
         quads.push_back(q);
       }
       for (int k = rec.r8; k < rec.r9; ++k) {
@@ -252,6 +253,7 @@ class Builder {
                  {u1 - kUvNudge, v - kUvNudge}, {u1 - kUvNudge, v - kUvNudge}}};
         q.colour = colourFromHi(0x406FE000u);
         q.coord = rec.x0;
+        q.gate = g.door;
         quads.push_back(q);
       }
     }
@@ -300,6 +302,7 @@ class Builder {
                  {u + kUvNudge, v1 + kUvNudge}, {u + kUvNudge, v0 - kUvNudge}}};
         q.colour = colourFromHi(0x406B1800u);
         q.coord = rec.x0;
+        q.gate = g.door;
         quads.push_back(q);
       }
       for (int k = rec.r8; k < rec.r9; ++k) {
@@ -323,6 +326,7 @@ class Builder {
                  {u1 - kUvNudge, v - kUvNudge}, {u1 - kUvNudge, v - kUvNudge}}};
         q.colour = colourFromHi(0x406FE000u);
         q.coord = rec.x0;
+        q.gate = g.door;
         quads.push_back(q);
       }
     }
@@ -492,6 +496,7 @@ class Builder {
     q.uv = {{{u0, v0}, {u0, v1}, {u1, v1}, {u1, v0}}};
     q.colour = colourFromHi(0x406FE000u);
     q.coord = rec.x0;
+    q.gate = rec.door;
     return q;
   }
 

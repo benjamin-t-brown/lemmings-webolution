@@ -32,6 +32,12 @@ class Raster {
   Raster(int width, int height);
 
   void clear(std::uint8_t r, std::uint8_t g, std::uint8_t b);
+  void trackSceneHighlights(bool on) { highlights_.assign(on ? depth_.size() : 0, {}); }
+  std::span<const SceneHighlightPixel> highlightPixels() const { return highlights_; }
+  std::span<SceneHighlightPixel> highlightPixels() { return highlights_; }
+  void coverSceneHighlight(std::size_t pixel) {
+    if (!highlights_.empty()) highlights_[pixel].owner = {};
+  }
   void setDepthEnabled(bool on) { depthEnabled_ = on; }
   // Merge an opaque, depth-tested geometry layer rendered against infinity.
   // Equal depth keeps the earlier destination, as in triangle().
@@ -49,14 +55,14 @@ class Raster {
                 const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
                 const std::array<double, 3>& modulate,
                 std::size_t actorOwner = ActorDepth::noOwner,
-                SceneAddress address = SceneAddress::Wrap);
+                SceneAddress address = SceneAddress::Wrap, SceneHighlightId highlight = {});
   // Reject temporaries even in synchronous calls so the same caller is safe
   // when enclosed in a deferred batch.
   void triangle(const std::array<std::array<double, 4>, 3>& p,
                 const std::array<std::array<double, 2>, 3>& uv, const Texture&& texture,
                 const std::array<double, 3>& modulate,
                 std::size_t actorOwner = ActorDepth::noOwner,
-                SceneAddress address = SceneAddress::Wrap) = delete;
+                SceneAddress address = SceneAddress::Wrap, SceneHighlightId highlight = {}) = delete;
 
   const Framebuffer& framebuffer() const { return color_; }
   Framebuffer& mutableFramebuffer() { return color_; }
@@ -74,6 +80,7 @@ class Raster {
   Framebuffer color_;
   std::vector<double> depth_;
   ActorDepth actorDepth_;
+  std::vector<SceneHighlightPixel> highlights_;
   std::size_t triangles_ = 0;
   std::size_t pixels_ = 0;
 };

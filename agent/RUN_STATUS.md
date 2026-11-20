@@ -10,14 +10,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- switch-hover-highlight-002: **ready** — Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles
 
 ## Recently completed queue entries
 
-- window-scale-option-001: Options menu: window size picker (desktop Auto/1x/2x/3x, browser Fill/1x/2x/3x) (clone addition)
-  Accepted: 2026-11-20T08:36:11.655448+00:00
-  Verification evidence: `build/agent-runs/20261120T082724-40472-e1b564bf/verification.log`
-  Verification evidence: `build\agent-runs\20261120T082724-40472-e1b564bf\verification.log`
 - actorcompose-fixtures-001: Restore the five actorcompose camera fixtures as tracked files
   Verification evidence: `build/agent-runs/20261120T065159-45368-23c3a665/verification.log`
 - antigrav-flip-motion-001: A lemming entering an anti-grav lift moves smoothly to the floor above and turns over
@@ -32,14 +27,18 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-20T19:47:20.821813+00:00
   Verification evidence: `build/agent-runs/20261120T192757-42720-28d85b6e/verification.log`
   Verification evidence: `build\agent-runs\20261120T192757-42720-28d85b6e\verification.log`
+- switch-hover-highlight-002: Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles
+  Accepted: 2026-11-20T21:21:44.866718+00:00
+  Verification evidence: `build/agent-runs/20261120T211150-55872-44197c94/verification.log`
+  Verification evidence: `build\agent-runs\20261120T211150-55872-44197c94\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-6e2d848a78e44875925e8faccdd88b0d/result.json`
+- Result: `build/agent-runs/loop-ae911e2bb85248f2b474ebcadca663b0/result.json`
 - Status: **blocked**
-- Duration: 0h 00m 06s
-- Completed in this invocation: none
-- Reason: Verification failed; inspect the saved logs
+- Duration: 0h 11m 52s
+- Completed in this invocation: switch-hover-highlight-002
+- Reason: The playable-v1 queue has no remaining unparked production fix supported by the playtest ledger. On Designed with love (M11_KF_1, node 33), Playtest 24 confirmed the lift crossing, the inverted Builder stopping at water, and the improved lift effects. Its new P1 switch-hover defect has since passed independent review. The next milestone dependency is a human win on node 33 through the ordinary frontend. If the level still blocks progress, the failed route and the action that stopped it would ide
 
 ## Documentation handoff
 

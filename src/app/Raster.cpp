@@ -37,6 +37,7 @@ void Raster::clear(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
     }
   }
   std::fill(depth_.begin(), depth_.end(), std::numeric_limits<double>::infinity());
+  std::ranges::fill(highlights_, SceneHighlightPixel{});
   actorDepth_.clear();
 }
 
@@ -51,6 +52,13 @@ void Raster::compositeOpaque(const Raster& layer) {
       while (p < end && layer.depth_[p] < depth_[p]) ++p;
       std::copy(layer.depth_.begin()+first, layer.depth_.begin()+p, depth_.begin()+first);
       std::memcpy(color_.rgb.data()+first*3, layer.color_.rgb.data()+first*3, (p-first)*3);
+      if (!highlights_.empty()) {
+        if (layer.highlights_.empty())
+          std::fill(highlights_.begin() + first, highlights_.begin() + p, SceneHighlightPixel{});
+        else
+          std::copy(layer.highlights_.begin() + first, layer.highlights_.begin() + p,
+                    highlights_.begin() + first);
+      }
       pixels_ += p-first;
     }
   }
@@ -60,7 +68,7 @@ void Raster::compositeOpaque(const Raster& layer) {
 void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
                       const std::array<std::array<double, 2>, 3>& uv, const Texture& texture,
                       const std::array<double, 3>& modulate, std::size_t actorOwner,
-                      SceneAddress address) {
+                      SceneAddress address, SceneHighlightId highlight) {
   profile::Scope profileRaster(profile::active &&
       (actorOwner != ActorDepth::noOwner || profile::active->cost == profile::BuilderBrick) ?
       profile::active->cost : profile::TubeRaster);
@@ -85,7 +93,7 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
   const double mr = modulate[0], mg = modulate[1], mb = modulate[2];
   const bool wrap = address == SceneAddress::Wrap;
 
-  const auto drawRows = [this, p, uv, &texture, actorOwner, area, xmin, xmax, tw, th, dst, mr, mg, mb, wrap](int first, int last) {
+  const auto drawRows = [this, p, uv, &texture, actorOwner, area, xmin, xmax, tw, th, dst, mr, mg, mb, wrap, highlight](int first, int last) {
     const auto& a = p[0]; const auto& b = p[1]; const auto& c = p[2];
     // The normalized coordinate bounds the bilinear taps to [-1, size].
     const auto addressTap = [wrap](int i, int size) {
@@ -143,6 +151,12 @@ void Raster::triangle(const std::array<std::array<double, 4>, 3>& p,
         dst[o] = clamp8(acc[0] * mr);
         dst[o + 1] = clamp8(acc[1] * mg);
         dst[o + 2] = clamp8(acc[2] * mb);
+        if (!highlights_.empty()) {
+          auto& pixel = highlights_[pos];
+          pixel.owner = highlight;
+          if (highlight.kind != SceneHighlightKind::None)
+            pixel.rgb = {clamp8(acc[0]), clamp8(acc[1]), clamp8(acc[2])};
+        }
         if (actorOwner == ActorDepth::noOwner) depth_[pos] = z;
         else actorDepth_.submit(pos, z, actorOwner);
         ++count;

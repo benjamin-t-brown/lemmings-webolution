@@ -41,6 +41,7 @@ struct CellMeshQuad {
   // Rectangle x0 is the signed low short of the mesh0 child at entry+0x88 or mesh4 child
   // at entry+0x98. At 0x462465, mesh0 draws coord < cameraCentre*8 and mesh4 draws coord >= cameraCentre*8.
   int coord = 0;
+  bool gate = false;  // Face uses the movable door vertex records.
 };
 
 // One of the 32 x 6 cells. `x0`/`y0` are its collision-grid origin; `material`

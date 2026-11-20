@@ -1,7 +1,9 @@
 #pragma once
 
 #include "assets/Bitmap.h"
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <span>
 
@@ -10,6 +12,11 @@ namespace webo::app {
 // The level cursor uses a half-open rectangle of visible scene pixels.
 inline bool pointerOverSceneBounds(int x, int y, int left, int top, int right, int bottom) {
   return x >= left && x < right && y >= top && y < bottom;
+}
+
+inline void addHoverRgb(std::uint8_t* destination, const std::uint8_t* source) {
+  for (int c = 0; c < 3; ++c)
+    destination[c] = std::min(255, destination[c] + source[c]);
 }
 
 // Displayed hatch geometry, in framebuffer pixels; index is the serialized

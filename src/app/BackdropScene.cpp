@@ -954,59 +954,6 @@ std::optional<PickBox> visibleMeshBounds(const SceneNode& node, const CameraBasi
    return std::nullopt;
 }
 
-std::optional<PickBox> projectedMeshBounds(const SceneNode& node, const CameraBasis& camera) {
-  const auto records = buildSceneMeshSource(node, identity(), camera.worldToView);
-  if (!records) return std::nullopt;
-  PickBox bounds{camera.width, camera.height, 0, 0};
-  for (const auto& record : *records) for (const auto& corner : record.corners) {
-    const auto& p = corner.viewPosition;
-    if (!(p[2] > 0)) continue;
-    const double x = camera.cx + camera.focalX * p[0] / p[2];
-    const double y = camera.cy - camera.focalY * p[1] / p[2];
-    if (!std::isfinite(x) || !std::isfinite(y)) continue;
-    const int px = int(std::floor(std::clamp(x, -1.0, double(camera.width))));
-    const int py = int(std::floor(std::clamp(y, -1.0, double(camera.height))));
-    bounds.left = std::min(bounds.left, px);
-    bounds.top = std::min(bounds.top, py);
-    bounds.right = std::max(bounds.right, px + 1);
-    bounds.bottom = std::max(bounds.bottom, py + 1);
-  }
-  bounds.left = std::max(0, bounds.left);
-  bounds.top = std::max(0, bounds.top);
-  bounds.right = std::min(camera.width, bounds.right);
-  bounds.bottom = std::min(camera.height, bounds.bottom);
-  if (bounds.left < bounds.right && bounds.top < bounds.bottom) return bounds;
-  return std::nullopt;
-}
-
-void drawSwitchOutline(Image& image, const PickBox& box, std::array<std::uint8_t, 3> color) {
-  // Clone addition. The dark border keeps the locator readable over both
-  // bright effects and dark terrain. Narrow or point receivers get a minimum size.
-  const int padX = std::max(2, (12 - (box.right - box.left)) / 2);
-  const int padY = std::max(2, (12 - (box.bottom - box.top)) / 2);
-  const int left = std::clamp(box.left - padX, 1, image.width - 2);
-  const int top = std::clamp(box.top - padY, 1, image.height - 2);
-  const int right = std::clamp(box.right - 1 + padX, 1, image.width - 2);
-  const int bottom = std::clamp(box.bottom - 1 + padY, 1, image.height - 2);
-  const auto pixel = [&](int x, int y, const auto& rgb) {
-    std::ranges::copy(rgb, image.rgba.data() + (std::size_t(y) * image.width + x) * 4);
-  };
-  const std::array<std::uint8_t, 3> border{16, 25, 32};
-  for (int x = left - 1; x <= right + 1; ++x) {
-    pixel(x, top - 1, border); pixel(x, top + 1, border);
-    pixel(x, bottom - 1, border); pixel(x, bottom + 1, border);
-  }
-  for (int y = top - 1; y <= bottom + 1; ++y) {
-    pixel(left - 1, y, border); pixel(left + 1, y, border);
-    pixel(right - 1, y, border); pixel(right + 1, y, border);
-  }
-  for (int x = left; x <= right; ++x) {
-    pixel(x, top, color); pixel(x, bottom, color);
-  }
-  for (int y = top + 1; y < bottom; ++y) {
-    pixel(left, y, color); pixel(right, y, color);
-  }
-}
 }  // namespace
 
 std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
@@ -1023,24 +970,27 @@ std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
 }
 
 void BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
-    const CylinderRegionProjector& region, const sim::LevelSetup& level, const LeverPresentation* levers,
-    const PressurePadPresentation* pads, int pointerX, int pointerY) const {
+    const sim::LevelSetup& level, const LeverPresentation* levers,
+    const PressurePadPresentation* pads, int pointerX, int pointerY,
+    const std::function<void(const sim::OccupancySensor&)>& drawSensor) const {
+  const auto pixels = raster.highlightPixels();
+  if (pixels.empty() || pixels.size() != image.rgba.size() / 4 ||
+      image.width != camera.width || image.height != camera.height) return;
   if ((!levers || levers->bindings.empty()) && (!pads || pads->bindings.empty())) return;
   const auto context = predicateContext(camera);
-  const auto pick = [&](std::size_t root) -> std::optional<PickBox> {
+  const auto pick = [&](std::size_t root) {
     const auto bounds = visibleMeshBounds(roots_[root].node, camera, raster.depthBuffer(), context);
-    if (bounds && pointerOverSceneBounds(pointerX, pointerY, bounds->left, bounds->top,
-                                        bounds->right, bounds->bottom)) return bounds;
-    return std::nullopt;
+    return bounds && pointerOverSceneBounds(pointerX, pointerY, bounds->left, bounds->top,
+                                            bounds->right, bounds->bottom);
   };
 
   // Clone addition. Read both lever lists so the control can be identified
   // in either position. A laser switch shares the one-shot pad binding.
-  std::optional<PickBox> hovered;
+  std::optional<std::size_t> hovered;
   std::span<const sim::LeverMessage> first, second;
   if (levers) for (const auto& binding : levers->bindings) {
-    hovered = pick(binding.root);
-    if (!hovered) continue;
+    if (!pick(binding.root)) continue;
+    hovered = binding.root;
     const auto lever = std::ranges::find_if(level.levers, [&](const auto& entry) {
       return entry.linked && entry.serializedId == binding.id;
     });
@@ -1051,73 +1001,69 @@ void BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, con
     break;
   }
   if (!hovered && pads) for (const auto& binding : pads->bindings) {
-    hovered = pick(binding.root);
-    if (!hovered) continue;
+    if (!pick(binding.root)) continue;
+    hovered = binding.root;
     const auto pad = std::ranges::find(level.pressurePads, binding.id, &sim::PressurePad::id);
     if (pad != level.pressurePads.end()) first = pad->messages;
     break;
   }
   if (!hovered) return;
 
-  const auto model = [&](std::string_view collection, std::size_t index) -> std::optional<PickBox> {
-    for (const auto& root : roots_) {
+  // Clone addition. Like drawHoveredWalker, add the source RGB once on the
+  // completed frame, using ownership from the original geometry submission.
+  std::vector<SceneHighlightId> targets{{SceneHighlightKind::BackdropRoot,
+                                         static_cast<std::uint32_t>(*hovered)}};
+  const auto model = [&](std::string_view collection, std::size_t index) {
+    for (std::uint32_t i = 0; i < roots_.size(); ++i) {
+      const auto& root = roots_[i];
       if (!root.visible || root.source.entityIndex != index) continue;
       const std::string_view owner = root.source.owner;
       if (owner == collection ||
           (collection == "tagged_entities" && owner.starts_with("tagged-")) ||
           (collection == "named_entities" && owner.starts_with("named-")) ||
-          (collection == "entities_4347ec" && owner == "teleport-base")) {
-        if (auto bounds = projectedMeshBounds(root.node, camera)) return bounds;
-      }
+          (collection == "entities_4347ec" && owner == "teleport-base"))
+        targets.push_back({SceneHighlightKind::BackdropRoot, i});
     }
-    return std::nullopt;
   };
-  const auto receiverBounds = [&](const sim::ObjectRef& ref) -> std::optional<PickBox> {
-    const auto index = static_cast<std::size_t>(ref.index);
+  std::vector<std::uint32_t> sensors;
+  const auto addReceiver = [&](const sim::ObjectRef& ref) {
+    const auto index = static_cast<std::uint32_t>(ref.index);
     switch (ref.cls) {
-      case sim::ObjectClass::Gate: {
-        if (index >= level.gates.size()) return std::nullopt;
-        const auto& gate = level.gates[index];
-        // An emptied receiver still has an area the switch controls.
-        const double height = gate.height > gate.low ? gate.height : gate.high;
-        return region(std::array{gate.minX, gate.minY, 0.0},
-                      std::array{gate.maxX, gate.minY + height, 1.0});
-      }
-      case sim::ObjectClass::CounterGate: {
-        if (index >= level.counterGates.size()) return std::nullopt;
-        const auto& gate = level.counterGates[index];
-        return region(std::array{double(gate.left), double(gate.bottom), 1.0},
-                      std::array{double(gate.right), double(gate.top), 1.0});
-      }
-      case sim::ObjectClass::OccupancySensor: {
-        if (index >= level.occupancySensors.size()) return std::nullopt;
-        const auto& sensor = level.occupancySensors[index];
-        return region(sensor.min, sensor.max);
-      }
+      case sim::ObjectClass::Gate:
+        if (index < level.gates.size()) targets.push_back({SceneHighlightKind::Fluid, index});
+        break;
+      case sim::ObjectClass::CounterGate:
+        if (index < level.counterGates.size()) targets.push_back({SceneHighlightKind::CounterGate, index});
+        break;
+      case sim::ObjectClass::OccupancySensor:
+        if (index < level.occupancySensors.size()) sensors.push_back(index);
+        break;
       case sim::ObjectClass::NamedHazard:
-        if (index >= level.namedHazards.size()) return std::nullopt;
-        return model(ref.collection, level.namedHazards[index].entityIndex);
+        if (index < level.namedHazards.size()) model(ref.collection, level.namedHazards[index].entityIndex);
+        break;
       case sim::ObjectClass::Other:
-        if (auto bounds = model(ref.collection, index)) return bounds;
-        if (ref.cylinderPosition) return region(*ref.cylinderPosition, *ref.cylinderPosition);
-        return std::nullopt;
+        model(ref.collection, index);
+        break;
     }
-    return std::nullopt;
   };
 
-  // Use the World loader's signed base-id table directly. The outline is a
-  // locator even through scenery, so retracted or hidden receivers can be found.
-  std::vector<int> outlined;
+  // Use the World loader's signed base-id table directly.
+  std::vector<int> resolved;
   for (const auto messages : {first, second}) for (const auto& message : messages) {
-    if (message.targetId < 0 || std::ranges::find(outlined, message.targetId) != outlined.end()) continue;
+    if (message.targetId < 0 || std::ranges::find(resolved, message.targetId) != resolved.end()) continue;
     const auto receiver = level.objectIds.find(message.targetId);
     if (receiver == level.objectIds.end()) continue;
-    if (const auto bounds = receiverBounds(receiver->second)) {
-      drawSwitchOutline(image, *bounds, {92, 243, 255});
-      outlined.push_back(message.targetId);
-    }
+    resolved.push_back(message.targetId);
+    addReceiver(receiver->second);
   }
-  drawSwitchOutline(image, *hovered, {255, 213, 81});
+  for (std::size_t p = 0; p < pixels.size(); ++p) {
+    const auto& pixel = pixels[p];
+    if (pixel.owner.kind != SceneHighlightKind::None &&
+        std::ranges::find(targets, pixel.owner) != targets.end())
+      addHoverRgb(image.rgba.data() + p * 4, pixel.rgb.data());
+  }
+  for (const auto index : sensors)
+    drawSensor(level.occupancySensors[index]);
 }
 std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
  std::vector<std::size_t> out;
@@ -1177,6 +1123,7 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
  profile::ScenePass profilePass(profile::FluidRaster);
  if(!hasFluidState_||fluidRoots_.empty())return;
  SceneRgbaFramebuffer fb;fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
+ fb.highlights = target.highlightPixels();
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
  const auto before = observer ? rgb : std::vector<std::uint8_t>{};
  if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
@@ -1207,7 +1154,8 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
    for(const auto& rec:*records){
      if(observer&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);
      if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;++sub.predicateRejected;continue;}
-     const auto opts=optionsFor(rec.blendSelector==1);
+     auto opts=optionsFor(rec.blendSelector==1);
+     opts.highlight = {SceneHighlightKind::Fluid, static_cast<std::uint32_t>(root.record.entityIndex)};
      for(std::size_t k=1;k+1<rec.corners.size();++k){
        std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
        for(int j=0;j<3;++j){
@@ -1251,23 +1199,29 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
  if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(), includesRoot)) return;
  // SceneRaster and Raster share linear view-depth units. Effective native D3D state is unresolved.
  SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
+ fb.highlights = target.highlightPixels();
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
  const auto initialDepth = observer ? depth : std::vector<double>{};
  if(observer)for(std::size_t i=0,n=rgb.size()/3;i<n;++i){fb.rgba[4*i]=rgb[3*i];fb.rgba[4*i+1]=rgb[3*i+1];fb.rgba[4*i+2]=rgb[3*i+2];fb.rgba[4*i+3]=255;}
  // Resolve diagnostic identities through owned-tree ancestry too; offsets
  // identify source records but never select their rendering stage.
- std::map<std::size_t,const RootSource*> nodeOwners;
+ std::map<std::size_t,const OwnedRoot*> nodeOwners;
  std::map<std::size_t,double> nodeBias;
  for(const auto& root:roots_){
    if (!includesRoot(root)) continue;
    const auto own=[&](const auto& self,const SceneNode& n)->void{
-     nodeOwners.emplace(n.sourceOffset,&root.source);
+     nodeOwners.emplace(n.sourceOffset,&root);
      nodeBias.emplace(n.sourceOffset,root.projectionBias);
      for(const auto& child:n.children)self(self,child);
    };own(own,root.node);
  }
+ const auto highlightOwner = [&](std::size_t node) -> SceneHighlightId {
+   if (fb.highlights.empty() || (stage != Stage::LegacyUnattributed && !gadgetEffectPass)) return {};
+   return {SceneHighlightKind::BackdropRoot,
+           static_cast<std::uint32_t>(nodeOwners.at(node) - roots_.data())};
+ };
  const auto describe=[&](std::size_t node,std::size_t source){
-   return webo::app::context(levelId_,*nodeOwners.at(node),source);
+   return webo::app::context(levelId_,nodeOwners.at(node)->source,source);
  };
  const auto diagnose=[&](const std::string& message){
    stats.diagnostics.push_back(message);
@@ -1338,7 +1292,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     }
   }
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
-    const bool gravityEffect = gadgetEffectPass && nodeOwners.at(rec.nodeSourceOffset)->owner == "tagged-gravity";
+    const bool gravityEffect = gadgetEffectPass && nodeOwners.at(rec.nodeSourceOffset)->source.owner == "tagged-gravity";
     if(!passesFacingPredicate(rec,eyes,gravityEffect)){++stats.predicateRejected;return;}
     auto state=options(false,rec.blendSelector==1);
     if (gadgetEffectPass) {
@@ -1356,6 +1310,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
       if ((flags & (4 | 16)) == 0) state.alphaOperation = SceneAlphaOperation::SelectTexture;
     }
     if (depthOutput) state.depthOutput = *depthOutput;
+    state.highlight = highlightOwner(rec.nodeSourceOffset);
+    state.highlightTextureRgb = !isNull;
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
        auto adapted=adaptPackedSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],meshProjectionScale,nodeBias.at(rec.nodeSourceOffset),{a[2],a[3],a[4],a[5]},a[0],a[1]);
@@ -1432,6 +1388,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     // where selector 2 adds the texture RGB to the backdrop with ONE/ONE.
     auto st=conditionalCaretFlags8Policy(blendOptions(false,b.blendSelector));
     if (depthOutput) st.depthOutput = *depthOutput;
+    st.highlight = highlightOwner(b.sourceOffset);
+    st.highlightTextureRgb = !name.empty();
       std::uint64_t bi=0;for(const auto& tri:{std::array<int,3>{0,3,2},std::array<int,3>{0,2,1}}){std::array<SceneRasterVertex,3> vv{};bool ok=true;for(int j=0;j<3;++j){auto q=b.slots[tri[j]];if(!(q.z>0)){ok=false;break;}vv[j]=billboardRasterVertex(q,builtChain,{255,255,255,255});}if(ok){SceneRasterObserver tagged;if(observer){tagged=*observer;tagged.source=b.sourceOffset;tagged.triangle=bi;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,vv,st,observer?&tagged:nullptr);if(r)++stats.meshTriangles;else {++stats.rejected;++stats.rasterRejected;diagnose(describe(b.sourceOffset,b.sourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}++bi;}};
    const auto& billboards=stage==Stage::Primary?primaryBillboards:legacyBillboards;
    if(stage==Stage::Primary)stats.stageBillboards+=primaryBillboards.size();

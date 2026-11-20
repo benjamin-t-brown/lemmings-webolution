@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include "app/Pick.h"
-
 #include "app/ActorPose.h"
 #include "app/ActorSprite.h"
 #include "app/Camera.h"
@@ -34,6 +32,7 @@
 namespace webo {
 class AssetLibrary;
 struct Sprite;
+namespace sim { struct OccupancySensor; }
 }
 
 namespace webo::app {
@@ -124,10 +123,7 @@ class TubeScene {
   // snapshotted terrain feet location; no actor lookup after death/teleport.
   std::array<double, 3> soundWorldPosition(const std::array<double, 3>& position,
                                            int terrainHeight) const;
-  // Project a cylinder-coordinate region for scene feedback, using the same
-  // coordinate lattice as the terrain gates and actors.
-  std::optional<PickBox> cylinderScreenBounds(const CameraBasis&,
-      const std::array<double, 3>& low, const std::array<double, 3>& high) const;
+  void drawHoveredSensor(Image&, const CameraBasis&, const Raster&, const sim::OccupancySensor&) const;
   static std::expected<TubeScene, std::string> build(const AssetLibrary& lib,
                                                      const CylinderMesh& mesh,
                                                      std::span<const std::byte> levelBytes,
@@ -305,6 +301,7 @@ class TubeScene {
   // World+0x43C triples map the gate's cylinder coordinates to mutable
   // surface-pool indices (0x43A1C6). Keep these distinct from grid0 keys.
   std::vector<std::array<std::int32_t, 3>> counterGateCoordinates_;
+  std::vector<SceneHighlightId> counterGateVertexOwners_;
   std::vector<double> counterGateFractions_;
   std::uint64_t counterGateRevision_ = 0;
   std::size_t counterGateMeshedBlocks_ = static_cast<std::size_t>(-1);

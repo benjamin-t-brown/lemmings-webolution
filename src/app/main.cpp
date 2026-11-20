@@ -764,6 +764,9 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         a.height == b.height && a.cx == b.cx && a.cy == b.cy && a.selectorTurns == b.selectorTurns;
   };
   const bool darkBlueSky = backdrop && resolvedLevel->id == "MM_ALL_8_001";
+  const bool trackSwitchHover = args.sim &&
+      ((leverPresentation && !leverPresentation->bindings.empty()) ||
+       (pressurePadPresentation && !pressurePadPresentation->bindings.empty()));
   auto renderFrame = [&](const app::CameraParams& frameParams, app::Raster& target, bool scenePrepared = false) {
     app::profile::Scope profilePrepare(app::profile::Preparation);
     const auto frameCamera = app::buildCamera(frameParams);
@@ -776,6 +779,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     // Draw moving poses directly. Populate the pose caches on a repeated pose.
     const bool cachePose = !previousCamera || sameCamera(*previousCamera, frameCamera);
     previousCamera = frameCamera;
+    target.trackSceneHighlights(false);
     if (!primaryHit) target.clear(0, 0, 0);
     if(c3Diagnostic){
       if(args.c3WriteMask.empty()||args.c3WriteEvents.empty()||frameCamera.width!=640||frameCamera.height!=480){std::fprintf(stderr,"C3 diagnostic requires both paths and a 640x480 frame\n");std::exit(2);}
@@ -813,7 +817,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
               }
             }
           },
-         [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
+         [&] {
+           target.trackSceneHighlights(trackSwitchHover);
+           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
+               app::BackdropScene::Stage::LegacyUnattributed);
+         },
          [&] {
            // Cache the nearest opaque tube fragments and merge after the animated legacy stage.
            if (!geometryOptions.depthTest || geometryOptions.flat || geometryOptions.composeActorsBeforeRoute || c3Diagnostic) {
@@ -833,8 +841,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
                return;
              }
              if (!tubeCache || tubeCache->framebuffer().width != frameCamera.width ||
-                 tubeCache->framebuffer().height != frameCamera.height)
+                 tubeCache->framebuffer().height != frameCamera.height) {
                tubeCache.emplace(frameCamera.width, frameCamera.height);
+               tubeCache->trackSceneHighlights(trackSwitchHover);
+             }
              tubeCache->clear(0, 0, 0);
              tubeCache->resetDrawCounts();
              renderTube(*tubeCache);
@@ -1625,12 +1635,12 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
           const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
           if (canHover && pointerInWindow && backdrop)
-            backdrop->drawSwitchHover(image, displayedCamera, windowRaster,
-                [&](const auto& low, const auto& high) {
-                  return scene->cylinderScreenBounds(displayedCamera, low, high);
-                }, world->setup(),
+            backdrop->drawSwitchHover(image, displayedCamera, windowRaster, world->setup(),
                 leverPresentation ? &*leverPresentation : nullptr,
-                pressurePadPresentation ? &*pressurePadPresentation : nullptr, pointerX, pointerY);
+                pressurePadPresentation ? &*pressurePadPresentation : nullptr, pointerX, pointerY,
+                [&](const sim::OccupancySensor& sensor) {
+                  scene->drawHoveredSensor(image, displayedCamera, windowRaster, sensor);
+                });
           const auto selectedSkill = skillSelection.selectedSkill();
           const auto hover = canHover ?
               hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,

@@ -17,7 +17,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - comment-pass-app-001: **ready** — Comment pass: src/app
 - comment-pass-platform-001: **ready** — Comment pass: src/audio, gfx, shell, web, tools, assets
 - comment-pass-tests-001: **ready** — Comment pass: src/__test__
-- window-scale-option-001: **ready** — Options menu: window size picker (Auto, 1x, 2x, 3x) (clone addition)
+- window-scale-option-001: **ready** — Options menu: window size picker (desktop Auto/1x/2x/3x, browser Fill/1x/2x/3x) (clone addition)
 
 ## Recently completed queue entries
 

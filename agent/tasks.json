@@ -30370,7 +30370,8 @@
       "depends_on": [
         "inverted-builder-001",
         "laser-switch-blend-001",
-        "switch-hover-highlight-001"
+        "switch-hover-highlight-001",
+        "window-scale-option-001"
       ],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -30439,6 +30440,25 @@
         "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
         "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
+      ]
+    },
+    {
+      "id": "window-scale-option-001",
+      "title": "Options menu: window size picker (Auto, 1x, 2x, 3x) (clone addition)",
+      "status": "ready",
+      "depends_on": [
+        "nuke-icon-additive-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "User request (2026-11-19): add a window size setting to the Options menu. This is a clone addition, not original behavior; label it so in code and the report. Today the picture is always rendered at 640x480 and nearest-scaled to the window: src/app/SdlWindow.hpp creates a 640*scale x 480*scale window, and src/app/main.cpp windowScale() picks --window-scale 1|2|3, else 1 for diagnostics/automation and 2 for ordinary play. The browser canvas is 640x480 and CSS-fitted up to 1280px (src/web/webolution.html). This is a scale picker, not a render resolution picker: rendering at other internal resolutions is post-1.0 GPU work (docs/POST_1_0.md, docs/OPENGL_PLAN.md decision 4) and is out of scope; the 640x480 scene, UI, input coordinates and screenshots do not change. Add one Options row, 'Window size', using the existing Options menu rendering, hover, keyboard and click handling and its accept/cancel behavior (src/app/SoundMenu, FrontendSession; the unlock-all row from unlock-all-option-001 is the pattern), in every menu where Options is offered. Values: Auto, 1x, 2x, 3x, each shown with its window size (e.g. '2x 1280x960'). Auto is the default and picks the largest integer scale whose window fits the usable desktop area of the display the window is on (SDL_GetDisplayUsableBounds, allowing for the title bar); on a 1080p display that is 2x, which keeps today's default there. A fixed scale that does not fit is still selectable but is clamped to the largest fitting scale when applied, and the row says so. Applying resizes the existing window in place (SDL_SetWindowSize, re-centred) without recreating the renderer, losing the level, or changing simulation, input recording or replays; cursor picking stays correct at every scale (gameCoordinates). Browser: the row sets the canvas CSS maximum (640/1280/1920px, Auto = fit the viewport as today); the canvas backing size stays 640x480. Persist the value beside the existing clone settings (src/save/SoundSettings, the file beside SavedGame.dat, IDBFS-backed on the web) through the same injectable store and write-failure policy; never write it into SavedGame.dat. Precedence: --window-scale overrides the saved value for that run and is not saved; diagnostic, capture, bounded and observer runs stay 1x unless --window-scale is given, as now. Update --help text if it mentions the default. Add one legacy source test for the scale choice (saved value, Auto fit with a given usable area, clamping, --window-scale precedence, automation 1x) only if the logic is factored so it runs in milliseconds without a window. Difficulty: routine. Recommended model: Sonnet. Reason: menu row and settings field on existing patterns plus an SDL window resize. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report labels the feature a clone addition, names the Options row, the settings field and its file, the window resize call path and the browser canvas path, and states that render resolution is unchanged at 640x480.",
+        "Clone framebuffer captures under build/ show the Options menu with the Window size row at each value, and a source-level check shows Auto selects the largest integer scale fitting a given usable area, clamps an oversize choice, and that --window-scale and automation runs take precedence over the saved value.",
+        "The saved value round-trips through the clone settings file with the existing write-failure policy and SavedGame.dat is unchanged; the smoke profile passes and the report ends with a what-to-check note."
       ]
     }
   ]

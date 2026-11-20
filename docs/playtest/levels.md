@@ -7,7 +7,7 @@ evidence for a level already won. Sweep column: build/level-sweep-001/matrix.csv
 
 Wins before playtest 7 are not recorded: earlier ledgers list defects, not a per-level win list, and
 the playtest save is not evidence because every completion flag was set by request. Replays are
-under docs/playtest/replays/. Won so far: 30 of 102.
+under docs/playtest/replays/. Won so far: 33 of 102.
 
 | node | id | name | sweep | won by a person | replay | open defects |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -41,10 +41,10 @@ under docs/playtest/replays/. Won so far: 30 of 102.
 | 27 | E22_KF_1 | Now you're stalking | ok | playtest 19 | pass | playtest 19 J1 seams remain |
 | 28 | E11_KF_1 | Escape to victory | ok | playtest 20 | pass | playtest 20 K1 rat sound, K2 rat victim fling |
 | 29 | e06_kf_1 | Lets play 'catch'. | ok | playtest 21 | pass |  |
-| 30 | M08_KF_1 | 2 sides to every story | ok |  |  | playtest 21 L3 flipper effect opaque, L4 flipper sound missing |
-| 31 | E16_KF_1 | Wood you believe it? | ok |  |  |  |
-| 32 | M08_mg_1 | Wheelbarrows of Doom | ok |  |  |  |
-| 33 | M11_KF_1 | Designed with love | ok |  |  | implemented 2026-11-16, not yet seen by a person: pressure pad |
+| 30 | M08_KF_1 | 2 sides to every story | ok | playtest 22 | pass |  |
+| 31 | E16_KF_1 | Wood you believe it? | ok | playtest 22 | pass |  |
+| 32 | M08_mg_1 | Wheelbarrows of Doom | ok | playtest 22 | pass |  |
+| 33 | M11_KF_1 | Designed with love | ok |  |  | playtest 22 M1 laser switch blend, M2 inverted builder (blocks the win) |
 | 34 | M04_KF_1 | Penelope Lem Stop | ok |  |  | implemented 2026-11-16, not yet seen by a person: deathroller |
 | 35 | H02_JC_1 | How do we get up there! | ok |  |  |  |
 | 36 | E07_JC_1 | There`s only one way down! | ok |  |  | implemented 2026-11-16, not yet seen by a person: crab |

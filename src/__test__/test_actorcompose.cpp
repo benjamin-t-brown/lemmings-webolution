@@ -195,11 +195,11 @@ constexpr ViewSpec kViews[] = {
     {"mouse", "tools/harness/fixtures/camera_a1/rotation-mouse-params.json"},
     {"right", "tools/harness/fixtures/camera_a1/rotation-key-right-params.json"},
     {"left", "tools/harness/fixtures/camera_a1/rotation-key-left-params.json"},
-    {"canonical", "build/tmp/a1-zoom-elevation/params-canonical.json"},
-    {"zoom1", "build/tmp/a1-zoom-elevation/params-zoom1.json"},
-    {"elev_up", "build/tmp/a1-zoom-elevation/params-elev_up.json"},
-    {"elev_down", "build/tmp/a1-zoom-elevation/params-elev_down.json"},
-    {"elev0_neg", "build/tmp/a1-zoom-elevation/params-elev0_neg.json"},
+    {"canonical", "tools/harness/fixtures/camera_a1/a1-params-canonical.json"},
+    {"zoom1", "tools/harness/fixtures/camera_a1/a1-params-zoom1.json"},
+    {"elev_up", "tools/harness/fixtures/camera_a1/a1-params-elev_up.json"},
+    {"elev_down", "tools/harness/fixtures/camera_a1/a1-params-elev_down.json"},
+    {"elev0_neg", "tools/harness/fixtures/camera_a1/a1-params-elev0_neg.json"},
 };
 
 constexpr struct {

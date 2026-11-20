@@ -18,14 +18,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - comment-pass-platform-001: **ready** — Comment pass: src/audio, gfx, shell, web, tools, assets
 - comment-pass-tests-001: **ready** — Comment pass: src/__test__
 - window-scale-option-001: **ready** — Options menu: window size picker (desktop Auto/1x/2x/3x, browser Fill/1x/2x/3x) (clone addition)
-- actorcompose-fixtures-001: **ready** — Restore the five actorcompose camera fixtures as tracked files
 
 ## Recently completed queue entries
 
-- rat-hit-sound-003: A rat hit plays Thunk instead of Ohno (user-identified sample)
-  Accepted: 2026-11-20T00:08:31.980136+00:00
-  Verification evidence: `build/agent-runs/20261119T235952-50436-9ef93b3e/verification.log`
-  Verification evidence: `build\agent-runs\20261119T235952-50436-9ef93b3e\verification.log`
 - rat-fling-spin-random-001: Lemmings punched off by rats tumble with a random spin direction and rate
   Accepted: 2026-11-20T00:21:47.811185+00:00
   Verification evidence: `build/agent-runs/20261120T000832-50436-491e465e/verification.log`
@@ -40,14 +35,16 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Verification evidence: `build\agent-runs\20261120T045756-44600-ed798592\verification.log`
 - nuke-icon-additive-001: The nuke panel icon is drawn without its black background
   Verification evidence: `build/agent-runs/20261120T052354-44600-c171bdd3/verification.log`
+- actorcompose-fixtures-001: Restore the five actorcompose camera fixtures as tracked files
+  Verification evidence: `build/agent-runs/20261120T065159-45368-23c3a665/verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-3cd54ffc4af94eb2a77ca1edcf1fa525/result.json`
-- Status: **interrupted**
-- Duration: 0h 13m 36s
+- Result: `build/agent-runs/loop-61a642a265604c3bbbf9bc23dcf9017f/result.json`
+- Status: **blocked**
+- Duration: 0h 10m 16s
 - Completed in this invocation: none
-- Reason: Worker stopped; inspect build/agent-runs/20261120T063842-16728-8927e553
+- Reason: All five fixtures match the existing clone-render goldens, and the supervisor smoke profile passed. The five JSON files are still untracked. Acceptance requires adding them to Git from a session with a writable index.
 
 ## Documentation handoff
 

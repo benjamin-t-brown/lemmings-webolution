@@ -30785,7 +30785,7 @@
     {
       "id": "comment-pass-app-001",
       "title": "Comment pass: src/app",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "comment-pass-sim-001"
       ],
@@ -30800,11 +30800,11 @@
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
         "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
       ],
-      "loop_attempts": 3,
-      "run_id": "20261120T094138-40472-afdc413d",
-      "started": "2026-11-20T09:41:39.117099+00:00",
-      "finished": "2026-11-20T09:45:29.881481+00:00",
-      "last_run": "build/agent-runs/20261120T094138-40472-afdc413d",
+      "loop_attempts": 4,
+      "run_id": "20261120T160723-47744-efc62838",
+      "started": "2026-11-20T16:07:23.495121+00:00",
+      "finished": "2026-11-20T16:20:00.228908+00:00",
+      "last_run": "build/agent-runs/20261120T160723-47744-efc62838",
       "review_feedback": {
         "decision": "revise",
         "reason": "Lead, 2026-11-20: final attempt. Attempt 3 passed all acceptance checks; review blocked on three dropped references: restore the `climb` SPR clip name in src/app/TubeScene.h (HEAD line ~105), the `kCellFlag0x400` collision-bit reference in src/app/TubeScene.cpp (HEAD line ~1783) and the `SELECTARG1` alpha operation name in src/app/BackdropScene.cpp (HEAD line ~122). Keep every earlier fix. Then run the reference completeness check in the scope over all 65 changed files and fix every miss. Accepted work from other tasks was committed in d9f01f0; HEAD now equals this task's baseline, so `git diff HEAD -- src/app` is exactly this task's change."
@@ -30817,12 +30817,65 @@
           "review": null,
           "blocker": "Attempt limit: All three acceptance checks pass, and both prior corrections are present. The task scope also requires preserving original references outside the sample. Restore the `climb` SPR clip name in `TubeScene.h`, the `kCellFlag0x400` collision-bit reference in `TubeScene.cpp`, and the `SELECTARG1` alpha operation name in `BackdropScene.cpp`."
         }
-      ]
+      ],
+      "review": {
+        "decision": "accept",
+        "reason": "The 65-file src/app diff is comment-only. The final revision preserves the three references flagged in the prior review and both earlier corrections. The supervisor passed smoke on the reviewed revision.",
+        "checks": [
+          {
+            "criterion": "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-app-001/final-reference-check/comparison.json",
+                "detail": "The manifest covers all 65 files in the src/app diff. I checked the archived GCC and whitespace-preserving artifacts against their recorded hashes. Every before and after pair matched, and the current source stripped to the archived after content for all 65 files."
+              }
+            ]
+          },
+          {
+            "criterion": "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-app-001/final-reference-check/history-candidates.tsv",
+                "detail": "The scan covered all 98 tracked src/app files. Its four matches use \u201cfixed\u201d to describe pixel extents, an update interval, a mask, or lighting. An independent comment scan found no development-history references."
+              },
+              {
+                "path": "build/comment-pass-app-001/final-reference-check/reference-sample.tsv",
+                "detail": "I checked all 19 sampled references against the HEAD and current comments. Each matched verbatim, including SELECTARG1, kCellFlag0x400, climb, 0x0043D56C, [ebp-4], timeGetTime, and FUN_0045e51f."
+              },
+              {
+                "path": "build/comment-pass-app-001/final-reference-check/verification.log",
+                "detail": "The archived audit records 1,410 reference entries matched and zero unmatched candidates after exclusions."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T160723-47744-efc62838/verification.log",
+                "detail": "The supervisor passed all 95 main smoke tests, including the level-sweep report, and all 84 recovery tests. The reviewed src/app files match the post-verification source hashes."
+              },
+              {
+                "path": "docs/scratch/comment-pass-app-001.md",
+                "detail": "The report ends with separate Handoff and Gate lines followed by a note to open MM_CLIMB_002, assign Climber after the hatch releases, and confirm that input, rendering, and gameplay behave as before. The Gate line records the pending status at worker handoff."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T16:23:56.554640+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T160723-47744-efc62838\\verification.log",
+        "verified_content": "4da2f83c36e82bb44d49b00c7dfb925b78adfdacae58ffa8fd72d5a4b1bf3917"
+      }
     },
     {
       "id": "comment-pass-platform-001",
       "title": "Comment pass: src/audio, gfx, shell, web, tools, assets",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "comment-pass-app-001"
       ],
@@ -30836,7 +30889,122 @@
         "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
         "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261120T165904-47744-ffcbc755",
+      "started": "2026-11-20T16:59:05.314066+00:00",
+      "finished": "2026-11-20T17:03:25.550345+00:00",
+      "last_run": "build/agent-runs/20261120T165904-47744-ffcbc755",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Restore the two-stage light-map lookup in the CollisionGrid.h comment. FUN_00403F40 uses the coordinate expression to read a byte from the map at +0x664. That byte selects the 24-byte palette record at +0x678.",
+        "checks": [
+          {
+            "criterion": "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-platform-001/review-revision/comparison.json",
+                "detail": "The manifest covers all 63 source files changed between the supervisor snapshots. I independently hashed both sides of every archived pair. All 63 exact comment-stripped comparisons and all 59 GCC-preprocessed comparisons matched."
+              }
+            ]
+          },
+          {
+            "criterion": "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/comment-pass-platform-001/review-revision/reference-sample.tsv",
+                "detail": "I checked all 20 sample entries against the before and current comments, including the restored table[lang][0] and table[lang][idx + 1] operands. The scoped history scan found only technical uses. The light-map reference still needs a correction that the token audit cannot detect."
+              },
+              {
+                "path": "src/assets/CollisionGrid.h",
+                "detail": "Lines 10\u201311 retain both offsets but describe the coordinate expression as selecting the palette record, omitting the intervening byte lookup. Lines 69\u201370 correctly identify the injected 0x100 bit as the condition for the MM_CLIMB_002 observation."
+              },
+              {
+                "path": "old/docs/scratch/phase2-neighbours.md",
+                "detail": "The retained instructions at 0x00403F71\u20130x00403F86 show the map access at +0x664, the byte load at 0x00403F7E, and the byte scaled by 0x18 to address the record at +0x678."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T164834-47744-71b77fd6/verification.log",
+                "detail": "The latest supervisor run passed all 95 smoke tests, including the 102-level sweep, and all 84 recovery tests. These results verify the clone source."
+              },
+              {
+                "path": "docs/scratch/comment-pass-platform-001.md",
+                "detail": "The report ends with separate Handoff and Gate lines, followed by a note to open MM_CLIMB_002 or another installed level, wait for the hatch, assign a skill, and confirm input, rendering, audio, and gameplay behave as before."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "Restore the two-stage light-map lookup in the CollisionGrid.h comment. FUN_00403F40 uses the coordinate expression to read a byte from the map at +0x664. That byte selects the 24-byte palette record at +0x678.",
+      "review": {
+        "decision": "accept",
+        "reason": "All 63 changed source files pass the archived comment-only comparison. The revised light-map comment correctly describes both lookup stages, and the supervisor smoke gate passed for the reviewed source.",
+        "checks": [
+          {
+            "criterion": "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-platform-001/light-map-revision/comparison.json",
+                "detail": "The manifest covers exactly the 63 source files changed between the initial worker and final supervisor snapshots. I independently hashed both sides of all archived pairs. All 63 exact comment-stripped pairs and all 59 GCC-preprocessed pairs matched."
+              },
+              {
+                "path": "build/agent-runs/20261120T165904-47744-ffcbc755/after-source-hashes.json",
+                "detail": "The current bytes of all 70 scoped files match the final supervisor snapshot and the review-entry snapshot."
+              }
+            ]
+          },
+          {
+            "criterion": "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-platform-001/light-map-revision/history-dispositions.tsv",
+                "detail": "The seven flagged comments use technical terms for string extent, serialized sequences, numeric rounding, compression runs, constant stride or thread execution. A broader scoped search found development references only in preserved string literals."
+              },
+              {
+                "path": "build/comment-pass-platform-001/light-map-revision/reference-sample.tsv",
+                "detail": "I checked all 23 entries, covering 19 distinct tokens, at their archived HEAD and current comment locations. Exact matches include 0x00472325, FUN_004608BB, [ebp-0x10], RELEASERATE.PC, Entrance_water.a3d, SELECTARG1, rand(), STR_PAUSED, table[lang][0] and table[lang][idx + 1]."
+              },
+              {
+                "path": "src/assets/CollisionGrid.h",
+                "detail": "Lines 11\u201312 correctly state that FUN_00403F40 uses the coordinate expression to read a byte at +0x664 and uses that byte to select a 24-byte palette record at +0x678."
+              },
+              {
+                "path": "old/docs/scratch/phase2-neighbours.md",
+                "detail": "The retained instructions for the registered reference show the map access at 0x00403F71\u20130x00403F77, the byte load at 0x00403F7E, the 0x18 scale at 0x00403F80 and the palette address at 0x00403F86."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T165904-47744-ffcbc755/verification.log",
+                "detail": "The latest supervisor run passed 95 smoke tests, including the 102-level sweep, and 84 recovery tests. These results cover clone source verification."
+              },
+              {
+                "path": "docs/scratch/comment-pass-platform-001.md",
+                "detail": "The report ends with separate Handoff and Gate lines followed by a What to check note. It names MM_CLIMB_002 or any installed level, asks the player to wait for the hatch and assign a skill, and states the expected behavior for input, rendering, audio and gameplay."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T17:07:15.455396+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T165904-47744-ffcbc755\\verification.log",
+        "verified_content": "991a046cc02c332d45c2c50e3b6001cc91c315c397596ac115cc5f2a929fd5b8"
+      }
     },
     {
       "id": "comment-pass-tests-001",
@@ -30855,6 +31023,24 @@
         "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
         "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
+      ],
+      "loop_attempts": 4,
+      "run_id": "20261120T174517-47744-7d01b05b",
+      "started": "2026-11-20T17:45:17.763880+00:00",
+      "finished": "2026-11-20T17:51:48.134908+00:00",
+      "last_run": "build/agent-runs/20261120T174517-47744-7d01b05b",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-20: final attempt. Attempt 4 passed the comparison, reference sample and smoke; review found exactly two history comments left. (1) src/__test__/test_actorcompose.cpp line ~399: drop the 'A6d17' label; describe how the helper classifies pixels that differ between the tube-only and injected renders inside actor 2's bounding box. (2) src/__test__/test_corpus.cpp line ~112: drop the 1,231-foot-cell result from an earlier original-game run; describe what the assertions check (ring stride, floor beneath every entrance, survivable drop distance on MM_CLIMB_002). Keep every earlier fix, then rerun the history audit over all changed files with a broad pattern that includes phase labels such as A1/A6d17/D3a used as task names, 'earlier run', 'first green run' and recorded results from past runs, and record every match and its disposition. Other accepted work is committed in 3e8d1fa; `git diff HEAD -- src/__test__` is exactly this task's change."
+      },
+      "last_failure": "Two comments still carry development history. Remove the A6d17 task label from the actor-pixel classifier, describe the MM_CLIMB_002 assertions directly, and refresh the history audit. The comment-stripped comparisons, all 33 sampled references, and the supervisor smoke gate passed.",
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261120T174517-47744-7d01b05b",
+          "review": null,
+          "blocker": "Attempt limit: Two comments still carry development history. Remove the A6d17 task label from the actor-pixel classifier, describe the MM_CLIMB_002 assertions directly, and refresh the history audit. The comment-stripped comparisons, all 33 sampled references, and the supervisor smoke gate passed."
+        }
       ]
     },
     {

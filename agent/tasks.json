@@ -30311,7 +30311,8 @@
       "title": "A builder works under reversed gravity as the original does",
       "status": "ready",
       "depends_on": [
-        "nuke-icon-additive-001"
+        "nuke-icon-additive-001",
+        "actorcompose-fixtures-001"
       ],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -30323,14 +30324,25 @@
         "The report states what the inverted builder did wrong in the user's recording, with steps and positions, cites the original's inverted-builder behaviour with static addresses or labels choices provisional, and names the changed call path.",
         "A clone World trace under build/ shows an inverted builder on Designed with love laying a usable staircase that inverted walkers climb, and an upright builder unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261120T063842-16728-8927e553",
+      "started": "2026-11-20T06:38:43.275877+00:00",
+      "finished": "2026-11-20T06:42:14.178181+00:00",
+      "last_run": "build/agent-runs/20261120T063842-16728-8927e553",
+      "last_failure": "Verification failed; inspect build/agent-runs/20261120T062837-16728-3afe8bb1/verification.log",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "Lead, 2026-11-19: attempt 1 failed verification only in actorcompose, whose five build/tmp camera fixtures were deleted outside this task (actorcompose-fixtures-001 restores them); attempt 2 was interrupted when the loop was stopped. The stepBuilder edit in src/sim/World.cpp and docs/scratch/inverted-builder-001.md are still in the working tree. Inspect them, keep what is sound, and complete the task."
+      }
     },
     {
       "id": "laser-switch-blend-001",
       "title": "Laser switch effects are drawn with the original's transparency",
       "status": "ready",
       "depends_on": [
-        "nuke-icon-additive-001"
+        "nuke-icon-additive-001",
+        "actorcompose-fixtures-001"
       ],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -30349,7 +30361,8 @@
       "title": "Hovering a lever or switch highlights the elements it controls (clone addition)",
       "status": "ready",
       "depends_on": [
-        "nuke-icon-additive-001"
+        "nuke-icon-additive-001",
+        "actorcompose-fixtures-001"
       ],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -30447,7 +30460,8 @@
       "title": "Options menu: window size picker (desktop Auto/1x/2x/3x, browser Fill/1x/2x/3x) (clone addition)",
       "status": "ready",
       "depends_on": [
-        "nuke-icon-additive-001"
+        "nuke-icon-additive-001",
+        "actorcompose-fixtures-001"
       ],
       "requires_original_execution": false,
       "verification": "smoke",
@@ -30459,6 +30473,23 @@
         "The report labels the feature a clone addition, names the Options row, the settings field and its file, the window resize call path and the browser Fill and fixed-size CSS paths, and states that render resolution is unchanged at 640x480.",
         "Clone framebuffer captures under build/ show the Options menu with the Window size row at each value, the browser page source applies Fill as a 4:3 viewport fit and 1x/2x/3x as exact CSS sizes with correct mouse mapping,, and a source-level check shows Auto selects the largest integer scale fitting a given usable area, clamps an oversize choice, and that --window-scale and automation runs take precedence over the saved value.",
         "The saved value round-trips through the clone settings file with the existing write-failure policy and SavedGame.dat is unchanged; the smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "actorcompose-fixtures-001",
+      "title": "Restore the five actorcompose camera fixtures as tracked files",
+      "status": "ready",
+      "depends_on": [],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Smoke test actorcompose fails: 'canonical/zoom1/elev_up/elev_down/elev0_neg camera fixture missing' (build/agent-runs/20261120T062837-16728-3afe8bb1/verification.log). src/__test__/test_actorcompose.cpp kViews (line ~193) reads those five views from build/tmp/a1-zoom-elevation/params-*.json, untracked A1 live-capture outputs that were lost when build/tmp was wiped on 2026-11-19; the other four views read tracked files under tools/harness/fixtures/camera_a1/. No copy exists on disk or in git. Rebuild the five parameter files from retained evidence: the format and shared values of tools/harness/fixtures/camera_a1/camera-fixture-params.json, the per-case zoom and elevation table and invariant lens values in docs/scratch/phase-a1-zoom-elevation.md, docs/lessons/camera-tube-sprites.md, the A1 entries in docs/tasks-archive.json and docs/FACILITATOR_HISTORY.md, and how src/app/Camera reads each field. Commit-ready location: tools/harness/fixtures/camera_a1/ (e.g. a1-params-canonical.json); point kViews at them. The test's golden hashes kEmptyGoldenSha are the acceptance check: a rebuilt file is correct only if its empty-list render hash matches. Never edit kEmptyGoldenSha, any other expected value, check, tolerance or timeout, and never make a missing fixture skip or pass. If any view cannot be reproduced exactly from retained evidence, do not guess further: finish blocked, list per view which fields are known and which are missing, and state that re-recording needs the original game in an interactive lead session. Also list every smoke test (cmake/test_tiers.cmake) that reads build/tmp or another untracked path as a required input, and report it; do not change those tests. The working tree holds inverted-builder-001's unfinished edit (src/sim/World.cpp stepBuilder, docs/scratch/inverted-builder-001.md): leave it untouched. Difficulty: routine. Recommended model: Sonnet. Reason: data reconstruction checked by existing golden hashes; no behavior change. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The five camera parameter files are tracked under tools/harness/fixtures/camera_a1/, kViews reads them, and the report cites the evidence for every field value.",
+        "actorcompose passes with kEmptyGoldenSha and every other expectation in the file unchanged (git diff of the test touches only the five kViews paths); otherwise the task is blocked with the per-view missing fields listed.",
+        "The report lists smoke tests that still depend on untracked inputs, the smoke profile passes, and the report ends with a two-line handoff and a what-to-check note."
       ]
     }
   ]

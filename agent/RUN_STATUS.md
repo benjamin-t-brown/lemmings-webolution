@@ -18,6 +18,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - comment-pass-platform-001: **ready** — Comment pass: src/audio, gfx, shell, web, tools, assets
 - comment-pass-tests-001: **ready** — Comment pass: src/__test__
 - window-scale-option-001: **ready** — Options menu: window size picker (desktop Auto/1x/2x/3x, browser Fill/1x/2x/3x) (clone addition)
+- actorcompose-fixtures-001: **ready** — Restore the five actorcompose camera fixtures as tracked files
 
 ## Recently completed queue entries
 
@@ -42,11 +43,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-a005a8c8bd2c4ec99a7d006a059e5cc0/result.json`
-- Status: **blocked**
-- Duration: 0h 51m 41s
-- Completed in this invocation: flipper-sound-001
-- Reason: The desktop captures, all 25 promoted replays, and the current supervisor smoke gate pass. The isolated build produced a matched JavaScript and WebAssembly pair, but both unattended browsers stopped before requesting the loader. Acceptance is blocked pending an interactive browser check with retained canvas crops at rest, armed, and after use.
+- Result: `build/agent-runs/loop-3cd54ffc4af94eb2a77ca1edcf1fa525/result.json`
+- Status: **interrupted**
+- Duration: 0h 13m 36s
+- Completed in this invocation: none
+- Reason: Worker stopped; inspect build/agent-runs/20261120T063842-16728-8927e553
 
 ## Documentation handoff
 

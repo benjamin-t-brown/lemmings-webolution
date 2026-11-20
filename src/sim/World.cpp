@@ -1581,9 +1581,9 @@ void World::stepRats(double dt, bool tickBoundary) {
         rat.punch = rat.attacks++ % 4;
         rat.animationSeconds = 0;
         l.stepBudgetSeconds = 0;
-        // 42E349..42E360 plays the victim's Ohno before the flying figure.
-        // This sample is per victim, independent of the bomber's fuse cue.
-        cueSample("Ohno", victim);
+        // Playtest 21 L1: Thunk is user-identified by ear. This provisional
+        // rat cue overrides the static Ohno read at 0x42E349.
+        cueSample("Thunk", victim);
         if (forcedDeathObserver_) forcedDeathObserver_(victim);
         break;
       }

@@ -1002,6 +1002,7 @@ std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
 void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats) const {
   renderStage(target,camera,lib,stats,Stage::Primary);
   renderStage(target,camera,lib,stats,Stage::LegacyUnattributed);
+  renderStage(target,camera,lib,stats,Stage::GravityEffect);
   renderStage(target,camera,lib,stats,Stage::FluidPipe);
   renderStage(target,camera,lib,stats,Stage::FluidGate);
   renderStage(target,camera,lib,stats,Stage::Secondary);
@@ -1116,8 +1117,11 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
 }
 void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer,std::vector<double>* depthOutput) const {
  if(stage==Stage::FluidGate){renderFluid(target,camera,stats,observer);return;}
- if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(),
-       [&](const auto& root) { return root.source.stage == stage; })) return;
+ const bool gravityEffectPass = stage == Stage::GravityEffect;
+ const auto includesRoot = [&](const OwnedRoot& root) {
+   return gravityEffectPass ? root.source.owner == "tagged-gravity" : root.source.stage == stage;
+ };
+ if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(), includesRoot)) return;
  // SceneRaster and legacy Raster share the same linear view-depth units here;
  // the choice is conditional software integration, not an effective-D3D claim.
  SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
@@ -1129,7 +1133,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
  std::map<std::size_t,const RootSource*> nodeOwners;
  std::map<std::size_t,double> nodeBias;
  for(const auto& root:roots_){
-   if (root.source.stage != stage) continue;
+   if (!includesRoot(root)) continue;
    const auto own=[&](const auto& self,const SceneNode& n)->void{
      nodeOwners.emplace(n.sourceOffset,&root.source);
      nodeBias.emplace(n.sourceOffset,root.projectionBias);
@@ -1160,11 +1164,12 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
   const auto secondaryRoot=std::find_if(roots_.begin(),roots_.end(),[](const auto& n){return n.source.stage==Stage::Secondary;});
   for (const auto& owned : roots_) {
     const auto& root = owned.node;
+    const bool gravityRoot = owned.source.owner == "tagged-gravity";
     if (stage == Stage::Primary) ++stats.roots;
     // Primary retains the all-root census. Later passes need only their own
     // roots: they previously rebuilt and discarded the entire primary mesh.
     // Local facing predicates depend only on ancestors inside the owned root.
-    if (owned.source.stage != stage || !owned.visible) {
+    if (!includesRoot(owned) || !owned.visible) {
       if (stage == Stage::Primary) {
         // Keep the all-root census without transforming/copying records that
         // this stage never submits. Animation changes values, never topology.
@@ -1188,7 +1193,10 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     }
     for (auto& rec : *records) {
       if (stage == Stage::Primary) ++stats.meshRecords;
-      if (owned.source.stage != stage) continue;
+      if (gravityRoot) {
+        const bool coil = rec.blendSelector == 3 && textureNameFlags(rec.materialName) == 4;
+        if (coil != gravityEffectPass) continue;
+      }
       if (stage == Stage::Secondary) secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));
       else if (stage == Stage::Primary) primaryMeshes.push_back(std::move(rec));
       else legacyMeshes.push_back(std::move(rec));
@@ -1197,7 +1205,11 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
     if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;return;}
     auto state=options(false,rec.blendSelector==1);
-    if (rec.materialName.starts_with(mineBackdropMaterials)) {
+    if (gravityEffectPass) {
+      // Texture flag 4 modulates diffuse alpha. Selector 3 adds SrcAlpha/One.
+      // Native depth is inherited. Use the clone's ordinary Less/write-on policy.
+      state = blendOptions(false, rec.blendSelector);
+    } else if (rec.materialName.starts_with(mineBackdropMaterials)) {
       const auto flags = textureNameFlags(rec.materialName);
       state = blendOptions((flags & 3) != 0, rec.blendSelector);
       // 0x47261F: ~ and + modulate alpha. Other mine textures select texture alpha.

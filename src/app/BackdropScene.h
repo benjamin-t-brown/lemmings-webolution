@@ -163,7 +163,7 @@ class BackdropScene {
   // FluidGate (fluid-surface-impl-001): the post-tube base `Fluid` pass of the entities_42acac
   // receivers (frame order 0x441845: tube, +0x160/+0x164, base Fluid, +0x15C, secondary). It draws
   // only while the caller supplies live gate state (setFluidState); without it nothing is drawn.
-  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe };
+  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe, GravityEffect };
   // PROVISIONAL clone depth policy for the alpha-blended fluid draw (user-approved milestone
   // exception). The inherited original ZENABLE/ZWRITEENABLE/ZFUNC/device ZBIAS are UNRESOLVED
   // (fluid research section 7.1); LessWriteOn is the clone's existing mesh default, not original

@@ -29400,7 +29400,7 @@
     {
       "id": "rat-hit-sound-003",
       "title": "A rat hit plays Thunk instead of Ohno (user-identified sample)",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "explosion-pieces-3d-001"
       ],
@@ -29414,12 +29414,82 @@
         "The report states that Thunk is user-identified, cites the static Ohno read it overrides and any evidence found for Thunk, and names the changed call path.",
         "In Escape to Victory each rat hit plays Thunk once from the victim and no Ohno, shown by a clone sound-event trace under build/; the bomber Ohno, the closing gate and other sounds are unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261119T235952-50436-9ef93b3e",
+      "started": "2026-11-19T23:59:53.398256+00:00",
+      "finished": "2026-11-20T00:06:53.693773+00:00",
+      "last_run": "build/agent-runs/20261119T235952-50436-9ef93b3e",
+      "review": {
+        "decision": "accept",
+        "reason": "All three criteria are supported. The clone trace confirms one positional Thunk request per observed rat fling. All 25 promoted replays reproduced, and supervisor smoke passed. Audible playback and camera panning remain for the human playtest.",
+        "checks": [
+          {
+            "criterion": "The report states that Thunk is user-identified, cites the static Ohno read it overrides and any evidence found for Thunk, and names the changed call path.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/rat-hit-sound-003.md",
+                "detail": "Names Playtest 21 L1, records the user's identification by ear as provisional, and traces the clone change from World::stepRats through cueSample, SoundEvent, and CuePlayback::drain to Mixer::play."
+              },
+              {
+                "path": "build/rat-hit-sound-003/static/rea-evidence.json",
+                "detail": "Retained Ghidra instructions for the registered x86 executable show 0x42E349 loading handle 0x4E32CC, 0x42E360 calling playback, and 0x45E5B8 pushing the Ohno name at 0x4C0CAC during registration."
+              },
+              {
+                "path": "build/rat-hit-sound-002/sample-inventory.log",
+                "detail": "Identifies SOUNDS\\THUNK.WAV at lemmings.box offset 0x2bf44fb as mono, 5,563 Hz, and 1,288 frames. The installed level scan found no length-prefixed Thunk reference."
+              }
+            ]
+          },
+          {
+            "criterion": "In Escape to Victory each rat hit plays Thunk once from the victim and no Ohno, shown by a clone sound-event trace under build/; the bomber Ohno, the closing gate and other sounds are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-hit-sound-003/escape-sound-events.log",
+                "detail": "The E11_KF_1 clone trace records 25 flings across both rats and all four punch variants. Each fling has exactly one Thunk request on the same update at the victim's coordinates. The trace reports zero Ohno requests and zero count or position mismatches."
+              },
+              {
+                "path": "build/rat-hit-sound-003/task-source.diff",
+                "detail": "The sole production change swaps the sample at the rat contact call site. Victim positioning, fling notification, bomber fuse sounds, gate behavior, and all other cue paths retain their prior code."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The bomber requests Ohno at fuse end with the existing Nuke guard. The clone's gate crush flings the victim silently, and counter-gate motion retains its separate Rumble cue."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-hit-sound-003/replay-results.tsv",
+                "detail": "Matches all 25 current promoted recordings. Each retained replay log confirms exit 0, PASS, won=1, and completed=1. Escape to Victory saved 43/40 at step 28,060."
+              },
+              {
+                "path": "build/agent-runs/20261119T235952-50436-9ef93b3e/verification.log",
+                "detail": "The supervisor log records 95 of 95 main smoke tests passing, including the installed-level sweep, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "docs/scratch/rat-hit-sound-003.md",
+                "detail": "The final note asks the player to walk a lemming into either rat in Escape to Victory and listen for one Thunk at the fling, followed by silence from that hit."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T00:08:31.980136+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261119T235952-50436-9ef93b3e\\verification.log",
+        "verified_content": "203873ff61f7fb99a341e033e0b9ab1646772df2a7ffa9ea0c8ef30baf5c95ec"
+      }
     },
     {
       "id": "rat-fling-spin-random-001",
       "title": "Lemmings punched off by rats tumble with a random spin direction and rate",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "explosion-pieces-3d-001"
       ],
@@ -29434,12 +29504,96 @@
         "Several rat victims in Escape to Victory spin with differing directions and rates drawn from that distribution, shown by clone framebuffer frames or a per-figure spin trace under build/; launch, fall, lifetime and occlusion are unchanged.",
         "Simulation RNG and counts are untouched; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T000832-50436-491e465e",
+      "started": "2026-11-20T00:08:32.601165+00:00",
+      "finished": "2026-11-20T00:18:50.225616+00:00",
+      "last_run": "build/agent-runs/20261120T000832-50436-491e465e",
+      "review": {
+        "decision": "accept",
+        "reason": "The spin change satisfies all four criteria. The retained clone trace shows 25 distinct signed rates, all 25 promoted replays reproduced, and the supervisor smoke profile passed. The scene seed is provisional, and original-game frame cadence and appearance remain unverified.",
+        "checks": [
+          {
+            "criterion": "The report cites 496D5B/496C84 for the spin distribution, sign and units, or labels any remaining choice provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-fling-spin-random-001/static/open.json",
+                "detail": "The retained Ghidra pseudocode agrees with the instructions for the registered executable. At 496D5B, the first CRT draw is divided by 32767 and cubed with a scale of 16. The second draw sets the direction flag below 0.5. At 496C84, the set flag adds elapsed time times the rate and the clear flag subtracts it. The controller wraps by one turn, submits the phase through 4683E9, and forwards the same elapsed time to strip playback."
+              },
+              {
+                "path": "build/rat-fling-spin-random-001/static/crosscheck.md",
+                "detail": "The caller at 417705 forwards the elapsed-seconds value without rescaling. The chooser at 46840B uses the phase to rotate its view basis, supporting turns per second as the rate unit."
+              },
+              {
+                "path": "docs/scratch/rat-fling-spin-random-001.md",
+                "detail": "The report cites the distribution, sign and units. It marks seed 1 per scene as provisional and documents the clone's use of level-clock age and the cartwheel strip."
+              }
+            ]
+          },
+          {
+            "criterion": "Several rat victims in Escape to Victory spin with differing directions and rates drawn from that distribution, shown by clone framebuffer frames or a per-figure spin trace under build/; launch, fall, lifetime and occlusion are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/rat-fling-spin-random-001/escape-spin-trace.log",
+                "detail": "The installed E11_KF_1 trace records 25 victims across both rats, with 25 distinct rates and 12 positive and 13 negative phases. All logged rates match the two CRT draws to the printed precision. The trace records launch positions and velocities, a first-flight draw at 250 ms that writes no scene depth and is hidden separately by nearer terrain and actor depth, and expiry at 4,000 ms."
+              },
+              {
+                "path": "build/rat-fling-spin-random-001/task-source.diff",
+                "detail": "The production diff adds a signed rate at flight creation and passes its wrapped phase to the existing sprite-view selector. It preserves launch geometry and velocity, gravity and pose integration, flight expiry, and the terrain and actor depth checks."
+              }
+            ]
+          },
+          {
+            "criterion": "Simulation RNG and counts are untouched; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/app/TubeScene.cpp",
+                "detail": "The two random draws come from a scene-owned CrtRand used to initialize the visual flight. The draw path reads the stored rate and flight age. The trace records one casualty for the first punch and 25 total deaths for 25 hits."
+              },
+              {
+                "path": "build/agent-runs/20261120T000832-50436-491e465e/before-source-hashes.json",
+                "detail": "Comparison with the matching after-source-hashes.json places the rat sound and test edits before this task. This task's only production changes are in TubeScene.cpp and TubeScene.h, with simulation source and replay files preserved."
+              },
+              {
+                "path": "build/rat-fling-spin-random-001/replay-results.tsv",
+                "detail": "The 25 rows match the 25 active promoted replay files. Each linked log reports PASS, won=1, completed=1 and exit=0. Escape to Victory finished at step 28,060 with 43/40 saved, and The Iron Curtain finished at step 18,207 with 21/20 saved."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T000832-50436-491e465e/verification.log",
+                "detail": "The supervisor recorded 95 of 95 smoke tests passing, including every chunk and the report for the 102-level sweep, followed by 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261120T000832-50436-491e465e/result.json",
+                "detail": "The supervisor verifier exited with code 0 and recorded the verified content hash supplied for this review."
+              },
+              {
+                "path": "docs/scratch/rat-fling-spin-random-001.md",
+                "detail": "The report ends with the requested note. In Escape to Victory, let several lemmings reach either rat and watch from the side for different spin speeds, both directions, and one casualty per completed punch."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T00:21:47.811185+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T000832-50436-491e465e\\verification.log",
+        "verified_content": "0135eabb2a779415c51cd6264144afb1bfc875759f56158f073c58ba709be165"
+      }
     },
     {
       "id": "flipper-effect-blend-001",
       "title": "Gravity flipper effects are drawn with the original's transparency instead of opaque",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "rat-fling-spin-random-001"
       ],
@@ -29453,12 +29607,183 @@
         "The report cites the material flags, alpha source and blend/depth state the original uses for the flipper effect, with static addresses or model fields, or labels choices provisional, and names the clone path that drew it opaque.",
         "On 2 sides to every story the flipper effect is drawn with that transparency and still scrolls, shown by clone framebuffer frames before and after under build/; the flipper's gameplay and other scenery not tied to the same evidence are unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 3,
+      "run_id": "20261120T004430-50436-fecce770",
+      "started": "2026-11-20T00:44:30.791596+00:00",
+      "finished": "2026-11-20T00:46:50.393962+00:00",
+      "last_run": "build/agent-runs/20261120T004430-50436-fecce770",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The clone shows transparent, scrolling coils on both flippers, all 25 promoted replays reproduce, and supervisor smoke passed. The report needs one correction before acceptance. Distinguish the clone\u2019s all-255 decoded texture alpha from the original\u2019s conditional flag-4 upload path, and label the clone\u2019s texture-alpha treatment provisional. The retained static evidence is sufficient for that correction.",
+        "checks": [
+          {
+            "criterion": "The report cites the material flags, alpha source and blend/depth state the original uses for the flipper effect, with static addresses or model fields, or labels choices provisional, and names the clone path that drew it opaque.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/scratch/flipper-effect-blend-001.md",
+                "detail": "Identifies selector 3, the flag-4 shaft texture, and the old LegacyUnattributed path that enabled blending only for selector 1. It labels the clone\u2019s post-tube ordering and Less/write-on depth state provisional, but leaves the texture-alpha approximation unlabeled."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/rea/blend-asm.json",
+                "detail": "The registered reference\u2019s selector-3 branch enables blending and sets SRCALPHA / ONE at 0x414DA5\u20130x414E1E."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/rea/bind-asm.json",
+                "detail": "At 0x4728CA\u20130x472937, the flag-4 branch disables alpha testing and selects texture alpha multiplied by diffuse alpha."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/rea/472f99-asm.json",
+                "detail": "The native upload checks for an alpha mask at 0x4736B6 and a 16-bit surface at 0x4737B3. In that case the flag-4 loop at 0x473A8D\u20130x473AE2 ORs the alpha mask into nonzero texel words and leaves zero words untouched. The effective upload format for this flipper texture is unverified."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/textures.tsv",
+                "detail": "The asset audit found no matching .ALF and recorded 512 black texels and all-255 alpha from the clone decoder. Those decoded values do not establish the alpha of the original\u2019s uploaded texture."
+              }
+            ]
+          },
+          {
+            "criterion": "On 2 sides to every story the flipper effect is drawn with that transparency and still scrolls, shown by clone framebuffer frames before and after under build/; the flipper's gameplay and other scenery not tied to the same evidence are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-effect-blend-001/before/pad-0-frame-0.png",
+                "detail": "At yaw 151 on M08_KF_1, the dark bands obscure the wall behind the coils."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/after/pad-0-frame-0.png",
+                "detail": "The matching frame shows the wall through both coils, with the bright bands adding light over it."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/after/pad-0-frame-2.png",
+                "detail": "The fixed-camera frame 200 ms later shows the bright bands at different positions on both coils."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/frame-summary.txt",
+                "detail": "Across four matched frames at each yaw, all changed pixels were within observed coil coverage. The two views changed by 2,494 and 2,510 pixels per frame, and both coils showed animation at both yaws."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The new pass selects only tagged-gravity meshes with selector 3 and texture flag 4. Flipper panels and other scenery retain their prior draw paths."
+              },
+              {
+                "path": "build/agent-runs/20261120T002547-50436-76f10c68/after-diff.txt",
+                "detail": "Compared with the entry diff, the task adds only the three renderer-file changes. The existing simulation edits predate this task, and the UV animation code is unchanged."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-effect-blend-001/replay-results.tsv",
+                "detail": "The 25 entries match the promoted .replay files, and all 25 matching logs record PASS with won=1 and completed=1. The affected M06_KF_1 route finished at step 1544 with 91 of 50 saved."
+              },
+              {
+                "path": "build/agent-runs/20261120T002547-50436-76f10c68/verification.log",
+                "detail": "The supervisor passed 95 of 95 smoke tests, including the 102-level sweep, and 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/flipper-effect-blend-001.md",
+                "detail": "The final note names node 30 and asks the player to rotate to both flippers and watch a lemming cross. The expected result is scrolling blue bands with the wall visible through them and a lemming that still flips gravity."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The clone shows transparent, scrolling coils on both flippers, all 25 promoted replays reproduce, and supervisor smoke passed. The report needs one correction before acceptance. Distinguish the clone\u2019s all-255 decoded texture alpha from the original\u2019s conditional flag-4 upload path, and label the clone\u2019s texture-alpha treatment provisional. The retained static evidence is sufficient for that correction.",
+      "review": {
+        "decision": "accept",
+        "reason": "The revised report distinguishes the clone\u2019s provisional texture alpha from the original\u2019s conditional upload path. The retained frames show the wall through both scrolling flipper coils. All 25 promoted replays passed, and the supervisor\u2019s latest log confirms that the smoke gate marked pending in the report has passed.",
+        "checks": [
+          {
+            "criterion": "The report cites the material flags, alpha source and blend/depth state the original uses for the flipper effect, with static addresses or model fields, or labels choices provisional, and names the clone path that drew it opaque.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/flipper-effect-blend-001.md",
+                "detail": "Names Playtest 21 L3 and the old LegacyUnattributed path, which enabled mesh blending only for selector 1. The report identifies the flag-4 shaft texture, records the absence of a matching .ALF, and labels the clone\u2019s all-255 texture alpha, post-tube ordering, and Less/write-on depth policy provisional."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/materials.tsv",
+                "detail": "Both M08_KF_1 roots, 0xC1B13 and 0xC851A, use selector 3 for shaft material slot 0 on nodes 1, 2, 4 and 5. Beam diffuse alpha ranges from 0 to 255 and reflection alpha from 0 to 128. The panels use selector 0."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/rea/472f99-asm.json",
+                "detail": "The retained instructions agree with the upload pseudocode. The routine checks for a nonzero alpha mask at 0x4736B6 and a 16-bit surface at 0x4737B3. The flag-4 loop at 0x473A8D\u20130x473AE2 ORs the mask into nonzero texel words and skips zero words. The selected surface format and resulting native texture alpha remain unverified."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/rea/bind-asm.json",
+                "detail": "The texture binder disables alpha testing at 0x4728DC. The flag-4 branch at 0x4728E5 selects texture alpha multiplied by diffuse alpha."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/rea/blend-asm.json",
+                "detail": "Selector 3 enables blending and selects SRCALPHA / ONE at 0x414DA5\u20130x414E1E."
+              }
+            ]
+          },
+          {
+            "criterion": "On 2 sides to every story the flipper effect is drawn with that transparency and still scrolls, shown by clone framebuffer frames before and after under build/; the flipper's gameplay and other scenery not tied to the same evidence are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-effect-blend-001/before/pad-0-frame-0.png",
+                "detail": "At yaw 151 on M08_KF_1, dark bands obscure the wall behind both coils."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/after/pad-0-frame-0.png",
+                "detail": "The matching frame shows the wall through both coils, with bright bands adding light over it."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/after/pad-0-frame-2.png",
+                "detail": "At the same camera angle 200 ms later, the bright bands have shifted on both coils."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/frame-summary.txt",
+                "detail": "At yaws 151 and 172, each of the four matched frame pairs changed 2,494 and 2,510 pixels respectively, all within observed coil coverage. Both coils animate at both yaws."
+              },
+              {
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The new pass selects tagged gravity meshes with selector 3 and texture flag 4. Panels and unrelated scenery keep their existing draw paths, and animateGravity still supplies the same UV animation."
+              },
+              {
+                "path": "build/agent-runs/20261120T002547-50436-76f10c68/after-diff.txt",
+                "detail": "Compared with the worker\u2019s entry diff, the task adds changes only in BackdropScene.cpp, BackdropScene.h, and main.cpp. The simulation edits predated this task."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-effect-blend-001/replay-results.tsv",
+                "detail": "The 25 entries match the promoted replay files exactly. Each corresponding log records PASS with won=1 and completed=1. The affected M06_KF_1 replay finished at step 1544 with 91 saved against a requirement of 50."
+              },
+              {
+                "path": "build/agent-runs/20261120T004430-50436-fecce770/verification.log",
+                "detail": "The supervisor passed all 95 smoke tests, including the 102-level sweep, and all 84 recovery tests after the report revision."
+              },
+              {
+                "path": "docs/scratch/flipper-effect-blend-001.md",
+                "detail": "The final note names 2 sides to every story at node 30 and asks the player to rotate to both flippers and watch a lemming cross. It specifies scrolling blue bands, a visible wall behind them, and a lemming that still flips gravity."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T00:49:04.722315+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T004430-50436-fecce770\\verification.log",
+        "verified_content": "73fd107007fce75cf19971be1a49b3c0960460ff33019a8895004a25858991dd"
+      }
     },
     {
       "id": "flipper-sound-001",
       "title": "Gravity flippers play the original's sound when they flip a lemming",
-      "status": "ready",
+      "status": "blocked",
       "depends_on": [
         "rat-fling-spin-random-001"
       ],
@@ -29472,7 +29797,73 @@
         "The report names each flipper sound with its sample, trigger, guard and static address (41D384/41D590 or wherever the evidence leads), or labels a choice provisional.",
         "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T004904-50436-5b3c715e",
+      "started": "2026-11-20T00:49:05.316653+00:00",
+      "finished": "2026-11-20T00:50:15.497832+00:00",
+      "last_run": "build/agent-runs/20261120T004904-50436-5b3c715e",
+      "blocker": "The worker stopped over the original-game reconstruction scope and submitted no flipper audio change, task report, or clone sound trace. The supervisor passed smoke on the existing source. The missing implementation and runtime evidence prevent acceptance.",
+      "review": {
+        "decision": "blocked",
+        "reason": "The worker stopped over the original-game reconstruction scope and submitted no flipper audio change, task report, or clone sound trace. The supervisor passed smoke on the existing source. The missing implementation and runtime evidence prevent acceptance.",
+        "checks": [
+          {
+            "criterion": "The report names each flipper sound with its sample, trigger, guard and static address (41D384/41D590 or wherever the evidence leads), or labels a choice provisional.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/last-message.txt",
+                "detail": "The worker left the sample, trigger, and guard unverified. No task report was submitted."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/rea/41d730-asm.json",
+                "detail": "The retained reader instructions show the sample lookup at 0x41D76F and storage at gadget +0xD8 at 0x41D777. This review confirmed that the lookup key at 0x4BF670 is AntiGrav, associated with ANTIGRAV.WAV."
+              },
+              {
+                "path": "Lemmings Revolution/Lemmings Revolution.exe",
+                "detail": "Ghidra confirmed the registered SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. At 0x41D450 any lemming contact sets the audio flag. At 0x41D590 the routine requests positional playback if the sample exists and the playback-status check at 0x41D4E0 is clear. The gravity-match guard at 0x41D475 controls a separate virtual call. The routine adjusts and stops the same sample at 0x41D67C and 0x41D6E1. This bounded lookup did not establish separate sounds for reversing gravity or falling inverted."
+              }
+            ]
+          },
+          {
+            "criterion": "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "docs/playtest/2026-11-19-playtest-21.md",
+                "detail": "Playtest 21 L4 records silent gravity flips on 2 sides to every story (M08_KF_1, node 30)."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The flipIfAntiGrav branch at line 812 reverses gravity, switches the lemming to Faller, and returns without queuing a SoundEvent."
+              },
+              {
+                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/worker.jsonl",
+                "detail": "The worker recorded no implementation or clone run. There is no task sound-event trace to verify one cue per flip or compare the other sounds."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/verification.log",
+                "detail": "The supervisor passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests. This run contains no promoted replay results."
+              },
+              {
+                "path": "build/flipper-effect-blend-001/replay-results.tsv",
+                "detail": "The preceding visual task recorded 25 promoted replay passes, including M06_KF_1 at step 1544 with 91 of 50 required saved. Those runs predate the flipper sound task."
+              },
+              {
+                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/last-message.txt",
+                "detail": "The worker confirms it ran no replays. No task report or final what-to-check note was submitted."
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "id": "nuke-icon-additive-001",

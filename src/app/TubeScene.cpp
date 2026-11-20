@@ -887,8 +887,12 @@ void TubeScene::emitForcedDeathFlight(const sim::Lemming& actor, ActorTerrainSam
       {sample.x, sample.y + 1.5, sample.z + 2.0}, facing);
   const auto& p = launch.modelPosition;
   const auto& q = target.modelPosition;
+  // 496D5B cubes one CRT unit draw and uses a second for the direction.
+  // The scene owns this stream so only forced-death visuals consume it.
+  const double u = forcedDeathSpinRandom_.unit();
+  const double direction = forcedDeathSpinRandom_.unit() < 0.5 ? 1.0 : -1.0;
   forcedDeathFlights_.push_back({sample, launch, {q[0] - p[0], q[1] - p[1] + 10.0, q[2] - p[2]},
-                                 clockMs, actor.sheetType, facing});
+                                 clockMs, actor.sheetType, facing, direction * 16.0 * u * u * u});
 }
 
 void TubeScene::emitExplosionDecal(const sim::Lemming& lemming,
@@ -1338,12 +1342,12 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
     sprite.plus8Y = flight.sample.y;
     sprite.plus8Z = flight.sample.z;
     sprite.facing = flight.facing;
-    // Use the existing cartwheel strip for a readable tumble. The signed
-    // view rotation is a deterministic stand-in for 496C84's random phase rate.
+    // Advance the cartwheel strip alongside the 496C84 view phase, in turns.
     sprite.clip = "cartwheel";
     sprite.clipSeconds = seconds;
     sprite.clipLoops = true;
-    sprite.rotationPhase = 2.0 * flight.facing * seconds;
+    const double phase = flight.spinTurnsPerSecond * seconds;
+    sprite.rotationPhase = phase - std::floor(phase);
     const auto prepared = prepareInjectedWalker(poseLevel_, *sprites, actorLight_, camera,
         flightOptions, sprite, lib, bounds, depth, &overlay,
         nullptr, &mesh_, haveCollision_ ? &collision_ : nullptr, &pose);

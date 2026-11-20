@@ -827,8 +827,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     hasPipes |= source.stage == app::BackdropScene::Stage::FluidPipe;
   });
   // Primary is the immutable paired-primary tree. Doors, balloons, hazards,
-  // levers, pads and gravity are LegacyUnattributed; fluids and secondary
-  // sprite animation retain their original, uncached submission stages.
+  // levers, pads and flipper bases are LegacyUnattributed. Flipper coils,
+  // fluids and the secondary tree draw in uncached passes after the tube.
   std::optional<app::Raster> primaryCache, tubeCache;
   std::optional<app::CameraBasis> primaryPose, tubePose, previousCamera;
   app::BackdropStats primaryStats;
@@ -922,6 +922,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
            target.compositeOpaque(*tubeCache);
          },
          [&] {
+           // The flipper coils add light to the tube colour. The original draws
+           // them inside its tube walker. Composite them over the completed
+           // opaque tube here, using its depth to keep foreground ledges solid.
+           if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
+               app::BackdropScene::Stage::GravityEffect);
            // 0x4418C2: draw all receiver pipes after the tube and before water.
            // Include their opaque depth in the drowning-actor scenery snapshot.
            if (backdrop) {

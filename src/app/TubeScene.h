@@ -20,6 +20,7 @@
 #include "app/ActorPose.h"
 #include "app/ActorSprite.h"
 #include "app/Camera.h"
+#include "app/CrtRand.h"
 #include "app/DeathParticles.h"
 #include "app/Raster.h"
 #include "app/SceneRaster.h"
@@ -292,8 +293,10 @@ class TubeScene {
     std::uint64_t bornMs;
     int sheetType;
     int facing;
+    double spinTurnsPerSecond;
   };
   std::vector<ForcedDeathFlight> forcedDeathFlights_;
+  CrtRand forcedDeathSpinRandom_;
   SpriteSheet deathSprites_;
   bool deathSpritesLoaded_ = false;
   std::uint64_t deathClockMs_ = 0;

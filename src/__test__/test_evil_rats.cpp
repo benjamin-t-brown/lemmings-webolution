@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     assert(drawn.back().sheetType == 3 && std::string(drawn.back().clip) == "punch0");
     const auto cues = w.takeSoundEvents();
     const std::array<double, 3> victimPosition{double(10 + dx), double(59 + dy), 0.75};
-    assert(cues.size() == 1 && !cues[0].cue && cues[0].sample == "Ohno" &&
+    assert(cues.size() == 1 && !cues[0].cue && cues[0].sample == "Thunk" &&
            cues[0].position == victimPosition);
     for (int i = 0; i < 10; ++i) w.advanceElapsedMs(0);
     assert(w.dead() == 0);

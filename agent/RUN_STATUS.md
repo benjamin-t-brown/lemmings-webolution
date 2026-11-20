@@ -10,7 +10,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- switch-hover-highlight-002: **ready** — Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles
+- switch-hover-highlight-002: **needs_review** — Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles
 
 ## Recently completed queue entries
 
@@ -35,11 +35,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-08687cc01e424a279ac16e44b358a775/result.json`
+- Result: `build/agent-runs/loop-7486ac74f8a74690bc8a1892c77fbe60/result.json`
 - Status: **blocked**
-- Duration: 0h 21m 11s
-- Completed in this invocation: antigrav-lift-quads-001
-- Reason: No unparked production defect is evidenced for a new task. Playtest 23 reported three defects on Designed with love (M11_KF_1, node 33), and the lift motion, inverted Builder fluid check, and lift rendering fixes have all passed independent review. The retained Builder replay confirms the corrected turn at the water and still ends at the recorded retry with 0/85 saved. The next dependency is the user's playtest on the accepted build. From the ordinary map, check that the lift carries a lemming t
+- Duration: 0h 22m 31s
+- Completed in this invocation: none
+- Reason: Worker stopped; inspect build/agent-runs/20261120T201309-47208-6b335986
 
 ## Documentation handoff
 

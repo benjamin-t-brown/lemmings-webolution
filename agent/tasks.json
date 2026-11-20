@@ -31834,7 +31834,7 @@
     {
       "id": "switch-hover-highlight-002",
       "title": "Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles",
-      "status": "ready",
+      "status": "needs_review",
       "depends_on": [
         "switch-hover-highlight-001"
       ],
@@ -31848,7 +31848,14 @@
         "The report names the highlight method reused from drawHoveredWalker, the draw path for each target class (mesh, fluid, counter gate, sensor), any provisional choice, and states that no rectangle outline remains.",
         "Clone framebuffer frames under build/ on Designed with love and Seafood Sarnie (MM_BLOCK_BUILD_BASH) show, with the pointer over a switch, the switch and its targets brightened on their own visible pixels and no rectangles, and an unchanged frame with the pointer elsewhere; desktop and the Emscripten build under Node match.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
-      ]
+      ],
+      "loop_attempts": 1,
+      "run_id": "20261120T201309-47208-6b335986",
+      "started": "2026-11-20T20:13:09.731560+00:00",
+      "finished": "2026-11-20T20:35:40.511527+00:00",
+      "last_run": "build/agent-runs/20261120T201309-47208-6b335986",
+      "blocker": null,
+      "lead_note": "Lead, 2026-11-20: attempt 1 (build/agent-runs/20261120T201309-47208-6b335986) completed with turn.completed and exit 0; the controller marked it blocked only because the transcript held 17 Codex \"Reconnecting... n/5\" events from an OpenAI 503 outage. Sent to review unchanged; the review step runs smoke because that run recorded no verified content."
     }
   ]
 }

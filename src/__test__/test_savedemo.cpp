@@ -1,17 +1,6 @@
-// save-codec-001 before/after restart demonstration driver (one source, two builds).
-//
-//   savedemo_before  links the FROZEN pre-change FrontendSession.{h,cpp} kept under the
-//                    ignored build/save-codec-001/frozen/, with no store.
-//   savedemo_after   links the current src/app/FrontendSession.cpp with a FileSaveSink
-//                    store over a temporary directory (never LocalAppData, never the
-//                    installed save).
-//
-// Both run the same scenario: New Game -> select node 0 (MM_CLIMB_002) -> SOURCE-TEST
-// injected winning LevelOutcome (not natural gameplay) -> completeLevel -> discard the
-// session -> "restart" with a fresh session -> compare. Each passes only when it observes
-// the outcome expected for its build, so a pass of savedemo_before proves the absence of
-// persistence before the change. This is source-built evidence of the clone's own
-// behaviour, not retail save compatibility.
+// Compare session restart with and without a FileSaveSink in a temporary directory.
+// Create a new game, select MM_CLIMB_002, submit a synthetic winning LevelOutcome
+// through completeLevel, then open a fresh session and check progress.
 
 #include "app/FrontendSession.h"
 

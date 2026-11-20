@@ -1,20 +1,13 @@
-// targeted-play-001 assessment driver (SCRIPTED CLONE OBSERVATION, not human play, not original fidelity).
+// prepare 0 <dir> verifies and copies the prerequisite save into isolated storage.
+// play S <dir> uses Blockers on MM_BLOCK_001_A (node 3) or checks lever contact
+// and Blocker placement on MM_W_012 (node 8) if selectable.
+// restart S <dir> checks the same save from a fresh process after a win.
 //
-// Modes (see CMakeLists.txt registrations):
-//   prepare 0 <dir>  new run dir; copy the retained, hash-verified node-0 save of playable-expansion-001 run 20261103-003501
-//   play S <dir>     S=1 MM_BLOCK_001_A (node 3), terrain-informed Blocker plans, at most 3 attempts
-//                    S=2 MM_W_012 (node 8, four levers), at most 2 attempts, only if node 8 is selectable on the earned map
-//   restart S <dir>  fresh process over the same isolated save; UNVERIFIED unless the play invocation won
-//
-// Public inputs only (SDL events through the production runApplication). Targeting protocol, from the traced loop order in
-// src/app/main.cpp (events are drained BEFORE runtimeSim.advance and the LevelFrameObserver runs AFTER composing the frame):
-//   1. push SDL_MOUSEMOTION at pixel P            (sets pointerX/Y; no button, so no fast-forward latch)
-//   2. next observed frame: LevelFrameView::hoveredActor is the production hoveredActor() for P at that frame's world
-//   3. only if hover == intended: push SDL_MOUSEBUTTONDOWN at P. It is consumed at the top of the next iteration against the
-//      same world (no sim.advance in between), so the recipient equals the observed hover by construction of the loop.
-//   4. next observed frame: stock change + which actor entered the skill state = ACTUAL recipient (World::assign is atomic).
-// Nothing here calls assign, writes a World/actor/terrain/stock/flag/progress/clock. Fast-forward is only clicked after the
-// targeting window closed. Outcomes are REPORTED, never asserted: exit code = driver integrity only.
+// Move the SDL pointer and wait for LevelFrameView::hoveredActor to identify
+// the intended actor. Queue the click only on a match. The next loop dispatches
+// input before runtimeSim.advance, so it uses the same World state.
+// Verify World::assign via stock changes and the recipient's new skill state.
+// Fast-forward only after targeting ends. The exit code checks driver integrity.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "app/RuntimeSkillPanel.h"
@@ -70,7 +63,7 @@ constexpr int kFastForwardX = 54, kFastForwardY = 348;
 constexpr int kContinueX = 320, kContinueY = 360;
 constexpr int kPlayCurrentX = 320, kPlayCurrentY = 363;
 constexpr const char* kSourceSaveRel = "build/playable-expansion-001/runs/20261103-003501/save/LemmingsWebolution/SavedGame.dat";
-constexpr const char* kSourceSaveFnv = "c05382077a330a32";  // accepted report playable-expansion-001, step 1 restart-result.md
+constexpr const char* kSourceSaveFnv = "c05382077a330a32";  // expected checksum of the prerequisite save
 constexpr long long kSourceSaveBytes = 1504;
 
 bool pushQuit() { SDL_Event e{}; e.type = SDL_QUIT; return SDL_PushEvent(&e) == 1; }
@@ -128,7 +121,6 @@ std::string arr(const Flags& a) {
   return os.str();
 }
 
-// ---- terrain helpers (read-only) --------------------------------------------------------------------------
 int wrapX(const sim::Terrain& t, int x) { const int w = std::max(1, t.width()); return ((x % w) + w) % w; }
 bool solidWrap(const sim::Terrain& t, int x, int y) {
   if (y < 0 || y >= t.height() || t.width() <= 0) return false;
@@ -174,11 +166,10 @@ Edge edgeAhead(const sim::Lemming& l, const sim::Terrain& t, int maxK, int minDe
 }
 int bandOf(int y) { return y / 16; }
 
-// ---- plans -------------------------------------------------------------------------------------------------
 struct Plan {
-  int cap = 1;                 // intentional Blockers this attempt
-  bool leverMode = false;      // node 8 attempt 2: Blocker left of a lever so a walker passes it, turns, and passes it again
-  bool naturalOnly = false;    // node 8 attempt 1: no skill use, observe natural lever contact
+  int cap = 1;                 // planned Blockers
+  bool leverMode = false;      // place a Blocker left of a lever so a walker passes it in both directions
+  bool naturalOnly = false;    // observe natural lever contact without placing skills
   std::set<int> prefer, forbid;  // y/16 bands
   std::string reason = "initial";
 };
@@ -213,7 +204,6 @@ std::optional<Target> blockerSite(const Plan& p, int placedSoFar, const std::set
   return Target{idx, os.str()};
 }
 
-// ---- records -------------------------------------------------------------------------------------------------
 struct TargetRecord {
   int n = 0;
   std::size_t intended = 0;
@@ -252,7 +242,6 @@ struct Attempt {
   std::vector<TargetRecord> targets;
   bool keyPressed = false;
   int lastKeyFrame = -100;
-  // observation / sampling
   long lastTick = -1;
   long framesObserved = 0, ticksObservedNormal = 0, ticksSkippedNormal = 0, ticksSkippedFF = 0, maxGap = 0, framesNoTickAdvance = 0;
   std::vector<std::pair<long, long>> skipRanges;
@@ -329,7 +318,6 @@ std::string actorDump(const app::LevelFrameView& f) {
   return os.str().empty() ? "none-alive" : os.str();
 }
 
-// ---- tracking (read-only) -------------------------------------------------------------------------------
 void trackFrame(Ctx& c, Attempt& a, const app::LevelFrameView& f) {
   const auto& world = f.world;
   const auto& lemmings = world.lemmings();
@@ -378,7 +366,7 @@ void trackFrame(Ctx& c, Attempt& a, const app::LevelFrameView& f) {
       }
     }
   }
-  // Blocker interaction, resolved only across CONSECUTIVE ticks (gap==1); otherwise counted as sampling-gap unresolved.
+  // Resolve Blocker interaction only across consecutive ticks. Record wider gaps.
   for (auto& b : a.blockers) {
     if (b.ended) continue;
     if (!(b.idx < lemmings.size() && lemmings[b.idx].state == sim::State::Blocker)) { b.ended = true; b.tickEnd = tick; continue; }
@@ -484,7 +472,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
   const double w = wallSeconds() - a.wall0;
   const long tick = static_cast<long>(f.world.tickCount());
   const bool ffNow = a.ffClicked;
-  if (a.lastTick >= 0) {  // sampling-gap accounting: every skipped tick range is recorded
+  if (a.lastTick >= 0) {  // record the skipped tick range
     const long gap = tick - a.lastTick;
     ++a.framesObserved;
     if (gap == 0) ++a.framesNoTickAdvance;
@@ -534,7 +522,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
   const auto& stock = f.world.setup().skills;
   const int skill = 3;
 
-  // ---- resolve the click pushed on the previous frame --------------------------------------------------------
+  // Resolve the click queued on the preceding frame.
   if (a.phase == 2) {
     if (f.frame <= a.clickFrame) return;
     TargetRecord& r = a.cur;
@@ -571,7 +559,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
     // fall through: may immediately plan another action below
   }
 
-  // ---- policy gating: normal speed until the targeting window closes, then the public Fast-forward plate --------
+  // Use normal speed until targeting closes, then press Fast-forward.
   const Plan& plan = a.plan;
   const bool noMoreSkill = plan.naturalOnly || a.placedCount >= static_cast<std::size_t>(plan.cap) || stock[skill] <= 0;
   const bool tailDone = a.lastPlaceTick >= 0 ? tick >= a.lastPlaceTick + 100 : true;
@@ -585,7 +573,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
   }
   if (a.ffClicked || noMoreSkill) return;
 
-  // ---- probing: evaluate the hover the production picker reported for the pixel pushed on the previous frame ----
+  // Read the production hover for the preceding frame's probe pixel.
   if (a.phase == 1) {
     if (f.frame <= a.motionFrame) return;
     TargetRecord& r = a.cur;
@@ -597,7 +585,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
     const auto& li = lemmings[r.intended];
     const auto still = blockerSite(plan, static_cast<int>(a.placedCount), a.usedBands, r.intended, li, f.world.terrain(), f.world.setup().levers, stock[skill]);
     const bool cursorOk = f.cursorX == r.px && f.cursorY == r.py;
-    if (!still) {  // intended actor no longer satisfies the site rule
+    if (!still) {  // target fails the site rule
       c.line(wallSeconds(), f.frame, tick, "target-dropped", "intended=" + std::to_string(r.intended) + ";state=" + std::string(sim::stateName(li.state)) + ";pos=" + std::to_string(li.x) + "/" + std::to_string(li.y));
       a.cooldownUntilTick[r.intended] = static_cast<int>(tick) + 15;
       a.phase = 0;
@@ -624,7 +612,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
       a.phase = 0;
       return;
     }
-    // next candidate pixel around the intended actor's CURRENT projected box
+    // Probe another pixel around the actor's latest projected box.
     static const int off[9][2] = {{0, 0}, {-8, 0}, {8, 0}, {0, -8}, {0, 8}, {-14, -14}, {14, -14}, {-14, 14}, {14, 14}};
     for (const auto& view : f.actors) {
       if (view.index != r.intended) continue;
@@ -642,7 +630,6 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
     return;
   }
 
-  // ---- idle: select Blocker, then choose an intended actor ----------------------------------------------------
   if (f.selectedSkillIndex != skill) {
     if (f.frame - a.lastKeyFrame >= 3) { pushSkillKey(skill); a.lastKeyFrame = f.frame; c.line(wallSeconds(), f.frame, tick, "key-select-skill", "Blocker;key=4"); }
     return;
@@ -712,7 +699,6 @@ void writeAttempts(Ctx& c, std::ostream& os) {
   }
 }
 
-// ---- identity / saves ------------------------------------------------------------------------------------
 void writeIdentity(const fs::path& file, const fs::path& game, const std::string& extra) {
   std::ofstream os(file);
   os << "driver=test_targetedplay (scripted clone observation)\n" << extra << "built=" << __DATE__ << ' ' << __TIME__ << "\n";
@@ -769,7 +755,6 @@ std::optional<std::pair<int, int>> pixelFor(const AssetLibrary& lib, const Flags
   return std::nullopt;
 }
 
-// ---- modes ---------------------------------------------------------------------------------------------
 int prepareMode(const fs::path& root, const fs::path& game) {
   std::error_code ec;
   const auto now = std::chrono::system_clock::now();
@@ -795,7 +780,7 @@ int prepareMode(const fs::path& root, const fs::path& game) {
      << "\ncopy_fnv=" << (copied ? fnvHex(dst) : "-") << "\nsource_untouched_fnv_after=" << (exists ? fnvHex(src) : "-") << '\n';
   writeIdentity(runDir / "identity-prepare.txt", game, "mode=prepare\n");
   std::cout << "TargetedPlay prepare: run " << buf << " source save verified=" << verified << " copied=" << copied << '\n';
-  return 0;  // a missing/mismatched source is a REPORTED blocker (play steps print BLOCKED), not a driver fault
+  return 0;  // missing or mismatched input blocks the route
 }
 
 int playMode(const AssetLibrary& lib, int stepNo, const fs::path& root, const std::string& gameDir) {
@@ -909,8 +894,8 @@ int playMode(const AssetLibrary& lib, int stepNo, const fs::path& root, const st
               p.leverMode = true; p.cap = 1;
               why << " lever_toggles=" << r.a.leverToggles << ": natural flow did not toggle a lever -> next: ONE Blocker 6-16 cells left of a lever so a left-walker passes it facing -1, turns, and passes it again facing +1";
             } else {
-              // evidence-driven: bands where a previous Blocker stood while walkers were stranded beside it are forbidden;
-              // bands where walkers died become preferred; more than 0 deaths allows a 2nd Blocker (on a different band only).
+              // Avoid bands where a Blocker stranded walkers. Prefer bands with deaths,
+              // which also permit a second Blocker on a distinct band.
               for (const auto& kv : r.a.strandBandCount) if (kv.second >= 3) p.forbid.insert(kv.first);
               std::set<int> deathBands;
               for (const auto& d : r.a.deaths) deathBands.insert(bandOf(d.y));
@@ -936,7 +921,7 @@ int playMode(const AssetLibrary& lib, int stepNo, const fs::path& root, const st
       default: c.anomaly += "unexpected frontend screen; "; pushQuit(); break;
     }
   };
-  // A level leg is progress (it has its own watchdog); without this the 60 s frontend stall guard fires on return from a long leg.
+  // Reset the 60 s frontend watchdog after a level leg, which has its own watchdog.
   const auto level = [&](const app::LevelFrameView& f) { c.lastProgressWall = wallSeconds(); levelObserver(c, f); };
 
   std::cout << "TargetedPlay step " << stepNo << " (" << step.label << ") run " << runDir.filename().string() << " save " << saveFile.string() << '\n';

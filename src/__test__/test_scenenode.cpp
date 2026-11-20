@@ -77,7 +77,7 @@ Bytes synthetic() {
     }
   }
   w.common("mesh-child");
-  w.u32(2); // type 2 with branch 0, including zero-valued retained field
+  w.u32(2); // type 2 with branch 0 and a zero field
   w.f64(71.25); w.f64(-72.5); w.f64(73.75); w.u8(0xa5); w.u8(0);
   w.str("branch-data"); for(double x:{0.,-1.25,2.5,3.75}) w.f64(x); w.u32(0);
   w.common("type2-child");
@@ -157,16 +157,13 @@ void testErrors() {
   for(int i=0;i<6;++i) x.f64(i+3);
   x.common("invalid");
   auto badIdx=webo::readSceneNode(x.b,0); check(!badIdx && badIdx.error().find("vertex index 1 outside")!=std::string::npos,"invalid vertex index rejected");
-  // scene-branch-impl-001: SUPERSEDED the former "unproved type-2 branch rejected" check, which
-  // required the message "unsupported nonzero type-2 branch" for a nonzero branch byte. Branch 1
-  // is now parsed (testBranchOne). The equivalent error check: the same truncated record (branch
-  // byte but no payload) is still rejected, now as a truncated branch-1 field.
+  // A branch-1 byte without its payload must report a truncated field.
   Bytes branch; branch.u32(2); for(double d:{1.,2.,3.})branch.f64(d); branch.u8(1); branch.u8(1);
   auto branchErr=webo::readSceneNode(branch.b,0); check(!branchErr && branchErr.error().find("truncated type-2 branch-1 field")!=std::string::npos,"truncated type-2 branch-1 record rejected");
 }
 
-// scene-branch-impl-001 (0x0047B44C -> 0x00468BF2): branch 1 = u32 f1..f4, a name of capacity 255,
-// the trailing word, then the common base; no UV doubles.
+// 0x0047B44C -> 0x00468BF2 reads branch 1 as u32 f1..f4, a name of capacity 255,
+// a trailing word and the common base. There are no UV doubles.
 Bytes branchOne(std::uint8_t branchByte, std::string_view name, std::array<std::uint32_t,4> f, std::uint32_t trailing) {
   Bytes w; w.u32(2); w.vec3(1.5,2.5,3.5); w.u8(1); w.u8(branchByte);
   for (auto x : f) w.u32(x);
@@ -202,7 +199,7 @@ void testBranchOne() {
   Bytes extra=w; extra.u8(0);
   auto longer=webo::readSceneNode(extra.b,0);
   check(longer && longer->endOffset==w.b.size() && longer->endOffset!=extra.b.size(),"trailing bytes stay visible to the exact-end check");
-  // Branch 0 stays unchanged next to branch 1 (the existing synthetic tree still parses 4 UV doubles).
+  // Branch 0 reads four UV doubles alongside branch 1.
   auto zero=webo::readSceneNode(synthetic().b,0);
   check(zero && zero->root.children[1].type2.branch==0 && zero->root.children[1].type2.branchWords[0]==0,"branch-0 parsing unchanged");
 }
@@ -224,8 +221,7 @@ void testRetail() {
   check(!file.empty(),"MM_CLIMB_002 found"); if(file.empty())return;
   auto blob=lib->read(file); check(blob.has_value(),"MM_CLIMB_002 bytes read"); if(!blob)return;
   struct Expected{std::size_t root,end,nodes,meshes,records;std::array<std::size_t,8> kinds;};
-  // Independent C3n raw-source table: exact caller roots and consumed endpoints;
-  // aggregate record census was obtained by its separate raw-byte checker.
+  // Check root and end offsets against a separate table of raw byte ranges.
   const Expected expected[]={{0x59644,0x9176e,4,3,923,{}}, {0x91782,0x98d41,30,12,82,{}},
                              {0x9ccd1,0x9db2b,4,3,16,{}}, {0xa0cdd,0xaaa43,2,1,156,{}}};
   std::size_t allNodes=0,allMeshes=0,allRecords=0;std::array<std::size_t,8> allKinds{};

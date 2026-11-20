@@ -1,4 +1,4 @@
-// R7: installed assets and the source-built application's public SDL input.
+// Check installed panel icon animation through the application's SDL input.
 #include "app/AppEntry.h"
 #include "PanelIconComparison.h"
 #include "app/SkillPanel.h"

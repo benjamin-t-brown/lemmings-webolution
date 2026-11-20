@@ -1,5 +1,4 @@
-// Seconds-long legacy invariants: protected cells and material boundaries in
-// runtime mesh rebuilds. Direct terrain edits, no scripted gameplay route.
+// Check protected cells and steel material boundaries after runtime mesh rebuilds.
 #include "app/TubeScene.h"
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
@@ -84,8 +83,7 @@ void installedMesh(const std::filesystem::path& dir, bool explosion) {
   // the neighbouring snow's rectangles now split. This catches mixed merging.
   for (const auto* bank : {&block->mesh0, &block->mesh4})
     assert(std::ranges::any_of(*bank, [&](const auto& q) { return q.index == steelFace; }));
-  // A newly exposed steel side uses coordinate height 112. The old collision
-  // height made this required corner's Y=80 instead of 81 (and tilted metal).
+  // Newly exposed steel uses coordinate height 112, placing this corner at Y=81.
   const auto expected = cylinderTemplateVertex(*cylinder, 141, 81, 1, int(cylinder->faceCount));
   const auto oldShape = cylinderTemplateVertex(*cylinder, 138, 81, 1, grid->height);
   assert(expected && expected->y == 81 && oldShape && oldShape->y == 80);

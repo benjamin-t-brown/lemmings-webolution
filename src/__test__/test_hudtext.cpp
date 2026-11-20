@@ -1,7 +1,5 @@
-// C2g: layout checks for the Out / Saved counters and the timer (shell/HudText.h). Each
-// assertion pins one input (digit string, right-end anchor, y row, timer split, colour) so a
-// change to that input alone fails it. The ink check draws on a blank frame with a synthetic
-// opaque sheet and reads back where the glyph quads landed.
+// Check HUD digit strings, anchors, rows, timer split and color.
+// A synthetic opaque sheet exposes the glyph quad positions.
 
 #include "assets/Bitmap.h"
 #include "shell/HudText.h"

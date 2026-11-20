@@ -1,5 +1,4 @@
-// Public SDL input into the production application; link wrappers observe only
-// this source-built process. No original code is executed.
+// Observe the clone's public SDL input and quit path with link wrappers.
 #include "app/AppEntry.h"
 #include "assets/Png.h"
 #include "sim/World.h"

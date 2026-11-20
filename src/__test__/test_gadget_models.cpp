@@ -1,5 +1,4 @@
-// Short legacy invariants: authored clips, presentation notifications and samples.
-// No scripted level route, replay fixture or save store.
+// Check authored clips, presentation notifications and samples.
 #include "app/BackdropScene.h"
 #include "assets/Box.h"
 #include "assets/LevelObjects.h"

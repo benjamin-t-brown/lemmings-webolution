@@ -1,9 +1,5 @@
-// Tests for the partial .LVL reading.
-//
-// The load-bearing test is the last one: every asset reference recovered from
-// every retail level must resolve to an entry that exists in the archive. A
-// mis-scan would produce references that do not, so this is what justifies
-// trusting the index while the format itself is still being worked out.
+// Check partial .LVL parsing and resolve every extracted retail asset reference
+// against the archive.
 
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
@@ -48,7 +44,7 @@ void putF64(std::vector<std::byte>& v, double x) {
     v.push_back(static_cast<std::byte>(c));
 }
 
-// native-012 fixtures: serialized fields, independent of recovered C++ layouts.
+// Construct fixtures in serialized field order.
 void put16(std::vector<std::byte>& v, std::uint16_t x) {
   for (int i = 0; i < 2; ++i)
     v.push_back(static_cast<std::byte>((x >> (8 * i)) & 0xFF));
@@ -132,7 +128,6 @@ StructuredFixture structuredFixture(bool decoy, bool empty = false) {
   for (std::uint32_t word : {0xDEADBEEFu, 0xFFFFFFFFu, 0x12345678u}) put32(d, word);
   return f;
 }
-// End native-012 fixture construction.
 
 void testStructuredLattice() {
   std::cout << "structured surface-index lattice\n";
@@ -161,7 +156,7 @@ void testStructuredLattice() {
           "both exact-world and unrelated trailing input accepted");
   }
 
-  // A later usable legacy chunk proves an empty structured result cannot fall back.
+  // A usable fallback chunk checks that an empty structured result takes precedence.
   auto empty = structuredFixture(false, true);
   putStr(empty.bytes, "Cylinder");
   for (int i = 0; i < 5; ++i) put32(empty.bytes, 0);
@@ -247,9 +242,8 @@ void testSynthetic() {
     std::cerr << "    " << lvl.error() << "\n";
     return;
   }
-  // The sweep is heuristic, so assert that the planted strings are *present*
-  // rather than that the counts are exact: a header word can itself look like
-  // a short length-prefixed string, and that is expected, not a defect.
+  // Check that the planted strings are present. The heuristic can also read
+  // header words as short length-prefixed strings.
   const auto has = [](const std::vector<std::string>& v, std::string_view want) {
     return std::find(v.begin(), v.end(), want) != v.end();
   };

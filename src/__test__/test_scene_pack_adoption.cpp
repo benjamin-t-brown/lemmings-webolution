@@ -9,8 +9,7 @@
 using namespace webo::app;
 
 int main() {
-  // Asymmetric SOURCE fixture. Independent expectations are binary32 rounding
-  // followed by the documented native-to-physical decode.
+  // Compute expected physical values from binary32 rounding and native decode.
   constexpr double scale = 0.00046874998952262104;
   constexpr double z = 1733.2718281828459;
   constexpr double x = 17.123456789, y = 91.987654321;
@@ -41,8 +40,8 @@ int main() {
   assert(biased->screenZ !=
          static_cast<double>(expectedBiasedNativeZ + static_cast<float>(bias)) / scale);
 
-  // Behavioral output oracle through the exact adapter consumed by
-  // BackdropScene: packed geometry/depth must differ from the former doubles.
+  // Use asymmetric values so the BackdropScene adapter's packed geometry and
+  // depth produce different pixels from double-precision values.
   const SceneRasterVertex old{x, y, z, 0.25 / z, color, 0.123456789, 0.876543211};
   assert(old.screenX != packed->screenX || old.screenY != packed->screenY ||
          old.screenZ != packed->screenZ || old.rhw != packed->rhw ||

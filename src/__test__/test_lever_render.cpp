@@ -100,8 +100,8 @@ void fixtures(const AssetLibrary&lib,const fs::path&out){
   for(auto id:{"MM_W_012","E16_KF_1","MM_ALL_8_001","MM_CLIMB_002","MM_FLOAT"}){
     fs::path dir=out/id;fs::create_directories(dir);auto r=sim::resolveRetailLevel(lib,id);if(!r){check(false,"resolve");continue;}auto bytes=lib.read(r->file);if(!bytes){check(false,"read");continue;}
     auto back=app::BackdropScene::build(lib,*bytes,id);auto setup=sim::loadRetailLevel(lib,id);auto mesh=findCylinderMesh(*bytes);auto index=indexLevel(*bytes);if(!back||!setup||!mesh||!index){check(false,"load scene");continue;}auto tube=app::TubeScene::build(lib,*mesh,*bytes,index->grid0,true);if(!tube){check(false,"tube");continue;}
-    // Re-derive MM_W_012's initial receivers from independently decoded fields,
-    // then check the actual loader after stored-face fan-out and its first step.
+    // Decode MM_W_012's initial receivers independently and check the loader
+    // after stored-face fan-out and its first update.
     if(std::string_view(id)=="MM_W_012"){
       auto decoded=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes->data()),bytes->size()});
       check(setup->gates.size()==19&&setup->levers.size()==4,"MM_W_012 receiver/lever count");

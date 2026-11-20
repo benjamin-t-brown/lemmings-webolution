@@ -1,8 +1,5 @@
-// Tests for surface face reconstruction and rasterisation.
-//
-// Synthetic cases lock the lattice → quad → mask path without game data.
-// The retail pass asserts that every level yields at least some faces and
-// that MM_CLIMB_002 still rebuilds the quads the RE notes counted by hand.
+// Check the lattice-to-quad-to-mask path with synthetic data. Every retail
+// level must yield faces. MM_CLIMB_002 also has a reference quad count.
 
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
@@ -107,7 +104,7 @@ CylinderFixture cylinderFixture(std::uint32_t rings = 2,
     appendU32(out, 0);  // Three tables, no object, fourth and fifth tables.
   appendName(out, "Cylinder");
   f.worldStart = out.size();  // Independently expected to be byte 76 below.
-  appendU32(out, 0x12345678);  // Existing unidentified faceCount field.
+  appendU32(out, 0x12345678);  // unidentified faceCount field
   appendBits(out, thickness);
   appendU32(out, rings);
   for (std::size_t i = 0; i < static_cast<std::size_t>(rings) * 64; ++i)
@@ -116,7 +113,7 @@ CylinderFixture cylinderFixture(std::uint32_t rings = 2,
   appendU32(out, radiusRings);
   for (std::size_t i = 0; i < static_cast<std::size_t>(radiusRings) * 32; ++i)
     appendBits(out, specialDoubles ? doubleBlockBits(i) : radiusBits(i));
-  appendU32(out, 0x87654321);  // Existing unidentified 'one', not normalized.
+  appendU32(out, 0x87654321);  // unidentified 'one' value
   f.surfaceStart = out.size();
   appendU32(out, static_cast<std::uint32_t>(kSurfaceBits.size()));
   for (const auto& bits : kSurfaceBits)
@@ -151,9 +148,8 @@ CylinderFixture cylinderFixture(std::uint32_t rings = 2,
   return f;
 }
 
-// A complete non-level mesh fragment accepted by the authentic locator. Its
-// two plausible vertices give one ring/one angular step, independently of the
-// structured block width. The radius word ends the plausible vertex run.
+// The locator accepts a mesh fragment with two plausible vertices and a radius word.
+// This yields one ring and one angular step independent of structured block width.
 std::vector<std::byte> legacyCylinderFragment() {
   std::vector<std::byte> out;
   appendU32(out, 112);
@@ -279,8 +275,7 @@ void testCylinderLoading() {
   for (const auto bits : {0ull, 0x8000000000000000ull, 0xBFF0000000000000ull,
                           0x7FF0000000000000ull, 0x7FF800000000ABCDull})
     noFallback(cylinderFixture(2, bits), "cylinder: thickness must be finite and positive");
-  // native-016 supersedes only the deliberate structured count-mismatch
-  // rejection. Expectations below describe the complete compatibility output.
+  // Check the compatibility output for a structured count mismatch.
   const auto checkDoubleMesh = [&](const webo::CylinderMesh& actual,
                                    std::size_t secondCount, std::size_t secondaryCount) {
     check(actual.faceCount == 0x12345678 && actual.one == 0x87654321 &&
@@ -307,9 +302,8 @@ void testCylinderLoading() {
               actual.innerTileTextures == std::vector<std::string>{"INN_fixture", ""},
           "independent double blocks preserve both complete slot vectors");
   };
-  // Supersedes native-014's intentional nonempty-secondary rejection. Expected
-  // output is the independent zero-array baseline above, with only endOffset
-  // advanced. Negative zero, NaNs and name/count-like words must stay opaque.
+  // The nonempty secondary array advances only endOffset. Treat negative zero,
+  // NaNs and name/count-like words as opaque.
   constexpr std::array<TripleBits, 3> secondaryBits = {{
       {0x8000000000000000ull, 0x7FF8000000001234ull, 0x000000020000000Bull},
       {0x747869665F54554Full, 0x0000000000657275ull, 0xFFFFFFFFFFFFFFFFull},
@@ -350,8 +344,8 @@ void testCylinderLoading() {
             "cylinder: recovered world reader at byte 3168: invalid world double block count; legacy: no cylinder mesh found",
         "malformed second count retains recovered and legacy causes through expected");
   auto invalidTail = cylinderFixture(2, 0x400A000000000000ull, 3);
-  // Recovered reference values permit 513, while the compatibility slot reader
-  // sees this as an implausible name length. A later usable locator must not run.
+  // The structured reader accepts 513 where the locator sees an implausible
+  // name length. A later usable locator chunk must stay unused.
   invalidTail.bytes[invalidTail.tileStart + 4 + 11] = std::byte{1};
   invalidTail.bytes[invalidTail.tileStart + 4 + 11 + 1] = std::byte{2};
   noFallback(std::move(invalidTail), "cylinder: a tile texture name has an implausible length");
@@ -444,7 +438,7 @@ void testCylinderLoading() {
               result.error().find("; legacy: no cylinder mesh found") != std::string::npos,
           std::format("truncated prefix/world/tail returns both causes at cut {}", cut));
   }
-  // Exercise the preserved hard tail failures through the legacy route too.
+  // Reject malformed tails through the locator path too.
   for (const auto& [cut, cause] : std::array<std::pair<std::size_t, std::string_view>, 6>{{
            {64, "radius array's ring count does not match"},
            {70, "radius array runs past"},
@@ -503,9 +497,8 @@ void testRetail(const fs::path& dir) {
     pixels += static_cast<std::size_t>(mask.width) * mask.height;
 
     if (name.find("MM_CLIMB_002") != std::string::npos) {
-      // Hand-counted on this level during RE: 28 angular + 12 vertical on the
-      // old header[3] window. The lattice is now the whole 49858-word array,
-      // which contains that window, so the floor still applies.
+      // The 49,858-word lattice contains the header[3] window with at least 28 angular
+      // and 12 vertical edges.
       check(faces->angularQuads >= 28,
             std::format("climb angular quads (>=28, got {})", faces->angularQuads));
       check(faces->ringStride == 8224,
@@ -513,10 +506,9 @@ void testRetail(const fs::path& dir) {
       check(faces->ringQuads >= 12,
             std::format("climb ring quads (>=12, got {})", faces->ringQuads));
       check(mask.solidCells() > 100, "climb rasterises to a visible mask");
-      // The quad pass requires a thickness partner. Where that slot is empty
-      // the outer key+16 link is still floor: the live walkers cross columns
-      // 128..144, which this mask used to leave empty. The matching key+Y
-      // link at column 128, from y 32 to y 48, is the wall they turn at.
+      // A quad requires a thickness partner. Without one the outer key+16 link
+      // still forms floor at columns 128..144. The key+Y link at column 128 from
+      // y 32 to y 48 is a wall.
       const auto cell = [&](int col, double worldY) {
         const int py = static_cast<int>(std::lround((mesh->height() - worldY) * 2.0));
         return mask.solid[static_cast<std::size_t>(py) * mask.width + col];
@@ -532,8 +524,8 @@ void testRetail(const fs::path& dir) {
       check(cell(168, 40.0) == 1, "climb: right turn at column 168 is a wall");
       check(cell(164, 40.0) == 0, "climb: column 164, on the walked ledge, has no wall");
       check(cell(164, 32.0) == 1, "climb: the ledge is still solid at column 164");
-      // Negative RE result: Y is derived, not read. Climb's stride (and Y/16)
-      // never appear as aligned u32s in the file, and no header word holds Y.
+      // Derive the vertical stride Y. The MM_CLIMB_002 file stores neither Y nor
+      // Y/16 as an aligned u32.
       std::size_t asU32 = 0, asY16 = 0;
       for (std::size_t o = 0; o + 4 <= blob->size(); o += 4) {
         std::uint32_t w;
@@ -581,9 +573,7 @@ void testRetail(const fs::path& dir) {
   check(coverage < 40.0, "corpus coverage stays sparse (<40%)");
 }
 
-// Skin tiles wrap the whole tube and are fully opaque. They cannot be the
-// walkable mask: surface rasterisation stays sparse while every named tile
-// has AlphaMode::Opaque and essentially no translucent or colour-keyed holes.
+// Opaque skin tiles wrap the tube. The sparse walkable mask comes from surfaces.
 void testSkinNotSolidity(const fs::path& dir) {
   std::cout << "skin is not solidity\n";
   auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");

@@ -1,15 +1,5 @@
-// The stored collision mask, checked against the original itself.
-//
-// This is the strongest oracle the project has: the grid in the `.LVL` is the
-// grid the running engine collides against, so the parser is correct exactly
-// when it reproduces a live dump byte for byte. Five dumps were taken from
-// five independently entered levels (PLAN.md 1.6, `tools/harness/dump_grids.py`)
-// and live in `build/live_dump/`. When they are present this test diffs
-// against them; when they are not it still checks the corpus-wide invariants,
-// so the suite stays useful on a machine that has never run the original.
-//
-// Unlike `test_corpus`, the numbers here are not a baseline to be improved.
-// A disagreement with a live dump is a bug in the parser.
+// Compare the stored .LVL collision mask byte-for-byte with engine grid dumps
+// when available in build/live_dump/. Check corpus-wide invariants independently.
 
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
@@ -86,8 +76,7 @@ Bytes structuredGrid(bool decoy, std::uint32_t height = 2,
   for (int i = 0; i < 7; ++i) put32(out, 0); // six fields, four flag bytes
   put32(out, 1);
   putName(out, decoy ? "Cylinder" : "OtherName");
-  // Five empty counts after the decoy followed by a zero-length name make
-  // the old public loader read height 0, before it reaches the actual world.
+  // Five empty counts and a zero-length name make the decoy appear to have height 0.
   for (int i = 0; i < 5; ++i) put32(out, 0);
   putName(out, "");
   put32(out, 112);
@@ -203,8 +192,7 @@ void testStructuredLoading() {
     check(worldFallback->diagnostic.find("invalid world tail count") != std::string::npos,
           "fallback retains world-reader rejection after a valid prefix");
 
-  // A valid locator chunk is available, so these errors also prove that
-  // successfully decoded dimension/count failures cannot enable fallback.
+  // A valid locator chunk checks that dimension or count failures cannot trigger fallback.
   for (const auto height : {0u, 4097u, 0xffffffffu}) {
     auto invalid = structuredGrid(false, height, 512, "World");
     invalid.insert(invalid.end(), chunk.begin(), chunk.end());
@@ -262,8 +250,8 @@ void testStructuredLoading() {
                      "archive structured patch override");
 }
 
-// Serialized binary64 inputs and literal byte expectations for the existing
-// portable conversion policy. These are not original x87 conversion claims.
+// Check literal output bytes for the portable binary64 conversion.
+// Original x87 equivalence is unestablished.
 struct LightChannelCase { std::uint64_t bits; std::uint8_t expected; };
 constexpr std::array<LightChannelCase, 16> kLightChannels{{
     {0x405ff00000000000ull, 127}, // 127.75
@@ -308,8 +296,7 @@ LightFixture structuredLight(bool decoy, std::uint32_t height = 96,
   putName(out, "Level 23");
   for (int i = 0; i < 7; ++i) put32(out, 0);
   put32(out, 1); putName(out, decoy ? "Cylinder" : "OtherName");
-  // Remaining name tables/object count/short string. The decoy makes the
-  // authentic old public loader select height zero before the real world.
+  // Name tables, object count and short string complete the zero-height decoy before the world.
   for (int i = 0; i < 5; ++i) put32(out, 0);
   putName(out, "");
   fixture.worldStart = out.size();
@@ -469,8 +456,7 @@ void testStructuredActorLightLoading() {
     dir = root / std::format("archive-test-{}-{}", stamp, attempt);
     if (fs::create_directory(dir)) break;
   }
-  // Retain the exact source-built regression inputs for the frozen authentic
-  // pre-change public-loader comparison under ignored build/native-011.
+  // Export the same synthetic inputs for the public loader comparisons.
   writeBytes(dir / "plain.lvl", plain.bytes);
   writeBytes(dir / "decoy.lvl", decoy.bytes);
   constexpr std::string_view asset = "COMPILED\\SYNTHETIC.LVL";
@@ -496,8 +482,7 @@ constexpr int kWidth = 256;
 constexpr int kHeight = 96;
 constexpr std::size_t kLevels = 102;
 
-// Live dumps, and the solid percentage each shows. Measured off the running
-// original, so these are the engine's own numbers, not ours.
+// Original grid dump names and solid fractions.
 struct LiveCase {
   const char* level;
   double solidPercent;
@@ -599,9 +584,7 @@ void testCorpus(const webo::AssetLibrary& lib) {
                     firstError.empty() ? "" : " -- first error: " + firstError));
   check(wrongShape == 0,
         std::format("every grid is {}x{} ({} are not)", kWidth, kHeight, wrongShape));
-  // The engine has no empty levels: the sparsest retail mask is 5.5% solid.
-  // This is what separates the stored mask from the lattice raster, where one
-  // level rasterises to nothing at all.
+  // The sparsest stored retail mask is 5.5% solid. The lattice raster can be empty.
   check(empty == 0, std::format("no level has an empty mask ({} do)", empty));
   check(minPct > 1.0,
         std::format("sparsest level is still real terrain ({:.2f}%)", minPct));
@@ -635,7 +618,7 @@ void testActorLightMap(const webo::AssetLibrary& lib) {
           std::format("palette[{}] grey {}", i, expected[static_cast<std::size_t>(i)]));
   }
 
-  // Facilitator-measured file offsets for the map count and palette start.
+  // File offsets for the map count and palette start.
   constexpr std::size_t kMapCountOffset = 338315;
   constexpr std::size_t kPaletteOffset = 350607;
   std::uint32_t mapCount = 0;
@@ -644,7 +627,7 @@ void testActorLightMap(const webo::AssetLibrary& lib) {
   check(blob->size() >= kPaletteOffset + webo::ActorLightMap::kPaletteBytes,
         "palette fits after offset 350607");
 
-  // A4f actor+0x08/+0x10, before projection onto the cylinder.
+  // Original actor+0x08/+0x10 before cylinder projection.
   constexpr double fixtureTerrainX = 59.68486785888672;
   constexpr double fixtureFileRowY = 32.0;
   const int idxFixture = webo::actorLightMapIndex(fixtureTerrainX, fixtureFileRowY);
@@ -706,16 +689,9 @@ void testTerrainMapping(const webo::AssetLibrary& lib) {
         std::format("solid cells carry over ({} vs {})", terrain.solidCells(),
                     grid->solidCells()));
 
-  // Every cell must agree with the engine's own test, not just the total.
-  // Across the axis, not along the same row: the file grid is Y-up (0 at the
-  // bottom of the tube) and Terrain is Y-down, so fromCollisionGrid maps file
-  // row r to terrain row height - 1 - r. That flip is live-corroborated --
-  // a walker at world Y 32.190 on this level has solid at file row 31 and
-  // empty at 32 (docs/scratch/phase3-round1.md), and the three Round 3 spawn
-  // landings resolve to the same axis (docs/scratch/phase3-round3.md). This
-  // check compared the same row on both sides, which the flip breaks by
-  // construction; it is the test that was stale, not the parser. The live
-  // dumps above are untouched and still compare byte for byte.
+  // Compare each cell across the vertical flip. Terrain is Y-down and the file grid
+  // is Y-up, so fromCollisionGrid maps file row r to terrain row height - 1 - r.
+  // A walker at world Y 32.190 has solid file row 31 and empty row 32.
   std::size_t mismatched = 0;
   for (int y = 0; y < grid->height; ++y)
     for (int x = 0; x < grid->width; ++x)

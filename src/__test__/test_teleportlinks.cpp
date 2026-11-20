@@ -1,9 +1,5 @@
-// native-023: teleport pads are paired from the serialized link ids.
-// Literal partner tables below come from the step-1 measurement
-// (docs/scratch/native-023-teleport-links.md): partner pad = pad whose base id
-// equals this pad's +0x98 word. MM_TELE_003 matches the retained live table
-// (ids 4<->6 and 5<->3, retained from old/docs/scratch/phase3-round16-teleport.md).
-// Pad order is locator (file) order. Source-built; the original never runs.
+// Match each pad's +0x98 word to the partner's base ID. MM_TELE_003 pairs
+// 4<->6 and 5<->3. Literal partner indices follow locator order.
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
 #include "assets/LevelIndex.h"
@@ -59,11 +55,8 @@ void testResolver() {
         "duplicate id: the last record in stream order wins, with a diagnostic");
 }
 
-// ---- synthetic compiled level (asset-free) -----------------------------------
-// Explicit little-endian primitives in the layout the recovered reader decodes,
-// the same Level 23 fixture shape as test_levelobjects.cpp but with teleport.a3d
-// placements for the locator and 0x004347EC records (teleport_fx.a3d x2) for the
-// structured ids. A fixture for the read layout, not a claim about original objects.
+// Write a synthetic level in explicit little-endian order. Use teleport.a3d
+// for locator placements and 0x004347EC records (teleport_fx.a3d x2) for IDs.
 struct Blob {
   std::vector<std::uint8_t> bytes;
   void u8(std::uint8_t v) { bytes.push_back(v); }
@@ -233,8 +226,7 @@ std::size_t teleportPlacements(const webo::LevelObjects& o) {
 
 void testSynthetic() {
   std::cout << "structured teleport links (synthetic compiled level)\n";
-  // Four pads, non-adjacent ids, shuffled link order: 40<->7 and 12<->99. The old
-  // file-order stand-in would pair 0<->2 and 1<->3.
+  // Use shuffled, non-adjacent ID pairs 40<->7 and 12<->99 to distinguish locator pairing.
   {
     const std::vector<Pad> pads{{40, 7, 30}, {7, 40, 40}, {12, 99, 50}, {99, 12, 60}};
     const auto bytes = teleLevel(pads, yOf(pads));
@@ -260,7 +252,7 @@ void testSynthetic() {
           "trailing input is accepted and ignored");
     check(trailing == trailingOriginal, "reading with trailing input leaves it unchanged");
   }
-  // Odd locator count whose ids pair correctly; the old rule creates nothing.
+  // An odd locator count can still contain correctly linked pads.
   {
     const std::vector<Pad> pads{{1, 2, 30}, {2, 3, 40}, {3, 1, 50}};
     auto objs = webo::findLevelObjects(view(teleLevel(pads, yOf(pads))));
@@ -317,7 +309,7 @@ struct Expect {
   const char* level;
   std::vector<int> partner;
 };
-// Literal tables: locator index -> partner locator index (ids), from step 1.
+// Literal partner table indexed by locator order.
 const std::vector<Expect> kExpect = {
     {"H06_MT_1", {2, 3, 0, 1}},    {"H08_MT_1", {1, 0, 3, 2}},   {"H10_MT_1", {1, 0}},
     {"M12_MT_1", {1, 0}},          {"M16_MG_1", {1, 0}},         {"M17_MT_1", {2, 3, 0, 1}},

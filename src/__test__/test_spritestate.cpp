@@ -1,14 +1,5 @@
-// Restored asset-side coverage (PLAN.md Phase A, debt 2).
-//
-// Which .SPR sprite each simulation state is drawn with. The mapping lives in
-// a renderer-independent header so it can be checked without a GL context or
-// an SDL window; sprite drawing itself is a later presentation task.
-//
-// Most states name a sprite directly. The two that do not are deliberate and
-// marked as such in the header: Splatter ("cartwheel") is an interpretation,
-// and Exited has no artwork. The retail sweep confirms every non-empty name
-// actually exists in the shipped LEMMINGSLO.SPR, which is the part that cannot
-// be inferred from the state enum alone.
+// Check simulation state names against .SPR clips in LEMMINGSLO.SPR.
+// The Splatter "cartwheel" mapping is provisional. Exited has no artwork.
 
 #include "assets/Box.h"
 #include "assets/Sprite.h"
@@ -278,7 +269,7 @@ bool writeBox(const fs::path& path, const std::vector<BoxEntry>& entries) {
 
 void testArchiveLoading() {
   std::cout << "asset-free BOX-backed sprite loading\n";
-  // Atomically claim a fresh directory; never reuse or remove another run's files.
+  // Atomically claim a fresh output directory.
   const fs::path root(WEBOLUTION_SPRITE_SCRATCH_ROOT);
   fs::create_directories(root);
   const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();

@@ -20,8 +20,7 @@ int main() {
     check(!clock.takeStep(), "sub-step elapsed time produces no tick");
   }
 
-  // Two sub-step advances combine into exactly one whole tick -- remainders
-  // carried across advance() calls, not reset by them.
+  // Carry remainders between advances to accumulate a whole tick.
   {
     SimClock clock;
     clock.advance(0.5 * SimClock::stepSeconds);
@@ -40,9 +39,7 @@ int main() {
     check(std::abs(clock.remainder()) < 1e-9, "draining a whole-tick backlog leaves no remainder");
   }
 
-  // Equal elapsed time, however it is partitioned across advance() calls
-  // (as long as each call stays within the cap), produces the same total
-  // tick count.
+  // Partitioning elapsed time preserves the tick count within the per-call cap.
   {
     SimClock grouped(100), partitioned(100);
     grouped.advance(4.0 * SimClock::stepSeconds);
@@ -54,7 +51,7 @@ int main() {
          "equal elapsed time partitioned differently produces equal tick counts");
   }
 
-  // One real second at the measured 5 Hz tick is exactly 5 ticks.
+  // One second accumulates five ticks at 5 Hz.
   {
     SimClock clock;
     for (int i = 0; i < 4; ++i) clock.advance(0.25);
@@ -63,10 +60,7 @@ int main() {
     check(steps == 5, "one real second produces 5 ticks at the measured 200 ms period");
   }
 
-  // The cap: a single catastrophic frame (far more owed time than the cap)
-  // yields at most maxTicksPerFrame() ticks THIS frame, with the remainder
-  // carried rather than discarded -- it drains on the next frame instead of
-  // vanishing or bursting unbounded in one frame.
+  // Limit a single frame to maxTicksPerFrame() and carry the excess.
   {
     SimClock clock(10);
     clock.advance(100.0 * SimClock::stepSeconds);  // 100 ticks owed
@@ -92,9 +86,7 @@ int main() {
     check(totalSteps == 100, "every owed tick from the catastrophic frame is eventually taken, none lost");
   }
 
-  // advance() never discards time even when called with no draining between
-  // calls: calling it repeatedly before ever taking a step still carries the
-  // full sum forward.
+  // Repeated advances accumulate time even without draining ticks.
   {
     SimClock clock;
     clock.advance((1.0 / 3.0) * SimClock::stepSeconds);

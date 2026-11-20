@@ -1,4 +1,4 @@
-// Small fluid-height/contact regressions, not installed gameplay routes or fidelity evidence.
+// Check fluid height and contact boundaries.
 #include "sim/World.h"
 
 #include <cmath>

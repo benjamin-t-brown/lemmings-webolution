@@ -1,5 +1,4 @@
-// Short event/lifetime/depth invariants. Synthetic actors supplement installed
-// art; this is not a gameplay route, a replay or an original comparison.
+// Check Miner axe events, lifetime and depth with synthetic actors and installed art.
 #include "app/TubeScene.h"
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"

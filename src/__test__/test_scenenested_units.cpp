@@ -1,5 +1,4 @@
-// scene-nested-impl-001 (d): asset-free checks of the evidenced Secondary ordering and traversal
-// (docs/scratch/scene-nested-research-001.md E6-E11). Expected values are hand-computed literals.
+// Check Secondary ordering and traversal with literal, asset-free cases.
 #include "app/SceneDispatch.h"
 #include <algorithm>
 #include <array>
@@ -32,7 +31,7 @@ Order offsets(const std::vector<SecondaryDispatchItem>& items) { Order o; for (c
 }  // namespace
 
 int main() {
-  // ---- E10 hand-computed tie cases (descending keys; idx starts {0}; lo/hi search then insert) ----
+  // Descending insertion starts at index 0 for nonempty input and can reorder equal keys.
   check(order({}) .empty(), "empty input");
   check(order({7}) == Order{0}, "single key");
   check(order({5, 5}) == (Order{0, 1}), "A: two equal keys keep file order (size-1 path inserts at lo+1)");
@@ -42,8 +41,7 @@ int main() {
   check(order({5, 5, 1}) == (Order{0, 1, 2}), "E: tie above a smaller key keeps file order");
   check(order({1, 5, 5}) == (Order{1, 2, 0}), "F: tie above a smaller key placed earlier-first");
   check(order({1, 2, 3}) == (Order{2, 1, 0}) && order({3, 2, 1}) == (Order{0, 1, 2}), "strict keys are descending");
-  // The retained E11_KF_1 key list (scene-nested-research-001 section 2.3, by file index) and its measured order,
-  // including the triple (23,22,17) and the earlier-first pair (0,1).
+  // E11_KF_1 file-order keys and expected order, including ties (23,22,17) and (0,1).
   const std::vector<double> keys = {691.500, 691.500, 385.435, 385.435, 705.052, 536.543, 424.629, 453.666, 404.091, 406.535, 305.593, 312.298, 381.384, 374.718,
                                     499.777, 334.607, 356.987, 560.183, 687.373, 687.373, 686.638, 686.638, 560.183, 560.183, 693.165, 693.165, 694.427, 694.427};
   check(order(keys) == (Order{4, 27, 26, 25, 24, 0, 1, 19, 18, 21, 20, 23, 22, 17, 5, 14, 7, 6, 9, 8, 3, 2, 12, 13, 16, 15, 11, 10}), "E11_KF_1 measured direct-child order");
@@ -59,7 +57,7 @@ int main() {
     check(order(k) == idx, "tie-free keys equal std::sort(key >)");
   }
 
-  // ---- nested emission: depth-first, file order, immediately after the owner, never reordered ----
+  // Emit descendants depth-first in file order immediately after the owner.
   {
     SceneNode root = node(1, 0, 0, 0, 0);
     SceneNode owner = node(10, 1, 10, 100, 0);                 // key 10
@@ -74,7 +72,7 @@ int main() {
     check(items[0].depth == 1 && items[0].parentOffset == 1 && items[1].depth == 2 && items[1].parentOffset == 10 && items[3].depth == 3 && items[3].parentOffset == 12 &&
           items[4].depth == 4 && items[4].parentOffset == 13 && items[5].depth == 1 && items[5].parentOffset == 1, "depth and parentOffset");
   }
-  // ---- visibility: the byte gates the node and its whole subtree ----
+  // The visibility byte gates the node and its subtree.
   {
     SceneNode root = node(1, 0, 0, 0, 0);
     SceneNode owner = node(10, 1, 10, 100, 0); owner.children.push_back(node(11, 1, 0, 100, 0));
@@ -93,7 +91,7 @@ int main() {
     r2.children[0].type2.visibility = 1;
     check(offsets(run(r2, gates)) == (Order{30}), "type-2 visibility byte 1 is drawn");
   }
-  // ---- type-1 radius cull: skip node and children when z + radius <= 0 ----
+  // Type 1 skips the node and its children when z + radius <= 0.
   {
     SecondaryDispatchOptions gates; gates.originalGates = true;
     SceneNode root = node(1, 0, 0, 0, 0);

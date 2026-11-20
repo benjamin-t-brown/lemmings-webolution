@@ -1,19 +1,9 @@
-// level-selection-case-001 regression driver (SCRIPTED CLONE OBSERVATION, not human play, not original fidelity).
+// frontend <node> <dir> selects a map node through SDL input to webo::app::runApplication.
+// Nodes 0..2 use blank progress. Other nodes use a private save with the prerequisite flag set.
+// The case-sensitive build checks mixed-case lookup failure, with MM_CLIMB_002 as a control.
 //
-//   frontend <node> <dir>   ordinary startup through the PUBLIC webo::app::runApplication: bare invocation
-//                           (+ --game-dir), SDL events queued from the read-only FrontendWindowObserver:
-//                           click Play Current Game, click the map pixel of <node>, then watch the level
-//                           observer. Nodes 0..2 run on a fresh (zero-progress) isolated save. Any other node
-//                           needs a DIAGNOSTIC PREPARED SAVE FIXTURE in <dir>/<label>/save: the single earlier
-//                           node whose completion flag makes <node> selectable is marked complete. That is a
-//                           loading-test fixture only; it is not an earned unlock, win or natural play.
-//                           Built twice: LSC_FROZEN=1 links the task-entry main.cpp/RetailLevel.cpp copies and
-//                           must REPRODUCE the failure for a mixed-case node; the current build must enter the
-//                           canonical level and compose frames. Node 0 (MM_CLIMB_002) must load in both.
-//   census <dir>            (current build only) all 102 installed map spellings: resolve, load, verify identity,
-//                           plus focused resolver checks (partial ids, missing, ambiguity, precedence).
-//
-// Nothing here mutates a World, actor, terrain, stock, flag or the normal/installed saves.
+// census <dir> checks identity for all 102 map spellings and tests partial IDs,
+// missing entries, ambiguities and precedence.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "assets/Box.h"
@@ -85,7 +75,7 @@ std::string normalSaveState() {
 }
 
 #if WEBOLUTION_HAVE_SDL2
-constexpr int kPlayCurrentX = 320, kPlayCurrentY = 363;  // Play Current Game (test_frontendentry)
+constexpr int kPlayCurrentX = 320, kPlayCurrentY = 363;  // Play Current Game
 
 bool pushQuit() {
   SDL_Event e{};
@@ -133,7 +123,7 @@ int frontendMode(const AssetLibrary& lib, std::size_t node, const fs::path& root
   std::error_code ec;
   fs::create_directories(dir, ec);
   const fs::path stderrLog = dir / "stderr.log";
-  if (!std::freopen(stderrLog.string().c_str(), "w", stderr)) return 1;  // capture application diagnostics
+  if (!std::freopen(stderrLog.string().c_str(), "w", stderr)) return 1;  // application diagnostics
 
   auto base = app::MapScene::build(lib, {});
   if (!base) { std::cerr << "map: " << base.error() << '\n'; return 1; }
@@ -300,8 +290,8 @@ int frontendMode(const AssetLibrary& lib, std::size_t node, const fs::path& root
 
   bool ok = seen.map && flagsAsPrepared && normalUnchanged && seen.mapClicks == 1;
 #ifdef LSC_FROZEN
-  // Frozen task-entry build: the mixed-case node must FAIL through the frontend with the lookup error and
-  // never enter the simulation; every other node (e.g. MM_CLIMB_002) must still load.
+  // The case-sensitive build rejects the mixed-case node before simulation and
+  // still loads matching IDs such as MM_CLIMB_002.
   if (mixedCase) {
     ok = ok && !entered && status != 0 && enteredId == *expectedSpelling &&
          log.find("level: no .LVL matching " + *expectedSpelling) != std::string::npos;
@@ -317,7 +307,6 @@ int frontendMode(const AssetLibrary& lib, std::size_t node, const fs::path& root
 #endif  // WEBOLUTION_HAVE_SDL2
 
 #ifndef LSC_FROZEN
-// ---- census + focused resolver checks (current build) -------------------------------------------------------------
 int censusMode(const AssetLibrary& lib, const fs::path& root) {
   fs::create_directories(root);
   std::ofstream os(root / "census.txt");

@@ -1,4 +1,3 @@
-// P7: scripted source-built clone evidence. No original execution or capture.
 #include "app/AppEntry.h"
 #include "app/LemmingMotion.h"
 #include "app/RuntimeHud.h"
@@ -148,8 +147,7 @@ int application(bool baseline,const fs::path& out,const fs::path& before) {
   if(!local) return 2;
   SaveSnapshot normal(save::cloneSavePathUnder(*local));
   std::ofstream trace(out/"motion.csv"),simTrace(out/"simulation.txt");
-  // A clean checkout still exercises production motion/picking. Paired replay
-  // is explicit when the preserved task-entry source exists at configure time.
+  // The production-motion check supports a single application build.
   const bool compare=!baseline && before!=fs::path("-");
   std::ifstream expected;if(compare) expected.open(before/"simulation.txt");
   check(!compare||expected.good(),"authentic baseline trace available for simulation identity");
@@ -227,9 +225,8 @@ int application(bool baseline,const fs::path& out,const fs::path& before) {
   return failures?1:0;
 }
 
-// A second, short measurement uses the ordinary wall clock (no --frames and
-// no frameSeconds override). Thus FPS and position changes/s below are actual
-// presented-frame rates on this machine, separately from deterministic replay.
+// Use the ordinary wall clock without --frames or a frameSeconds override to count
+// presented frames and position changes per second.
 int wallMeasurement(bool baseline,const fs::path& out) {
   if(!std::getenv("WEBOLUTION_GAME_DIR") || !std::getenv("SDL_VIDEODRIVER") ||
       std::string(std::getenv("SDL_VIDEODRIVER"))!="dummy") return 2;

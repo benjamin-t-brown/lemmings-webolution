@@ -1,4 +1,4 @@
-// Playtest 6 V6: real installed ceiling route through SDL panel/hover/click.
+// Assign a skill on the installed ceiling route through SDL panel selection and hover.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "app/RuntimePick.h"
@@ -187,8 +187,7 @@ void blockerRegressions() {
     check(w.assign(0,sim::Skill::Builder),"existing supported reassignment behavior preserved");
     check(w.terrain().blockerFieldCells()==0,"leaving inverted or upright blocker erases entire field");
     check(w.terrain().solid(30,30+v),"field cleanup preserves support material");
-    // A Digger removes support under a neighbouring Blocker through ordinary
-    // simulation; the Blocker's own next step must clear its field and fall.
+    // After a Digger removes a Blocker's support, the Blocker's next step clears its field and falls.
     sim::World lost(setup);lost.place(l);check(lost.assign(0,sim::Skill::Blocker),"second blocker enters");
     auto digger=l;digger.x=31;lost.place(digger);check(lost.assign(1,sim::Skill::Digger),"neighbour digger enters");
     for(int i=0;i<40 && lost.lemmings()[0].state==sim::State::Blocker;++i)lost.tick();

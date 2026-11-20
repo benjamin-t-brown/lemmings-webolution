@@ -1,4 +1,4 @@
-// Short state/dispatch and installed-data invariants, not a gameplay route.
+// Check sensor state, dispatch and installed records.
 #include "sim/RetailLevel.h"
 #include "assets/Box.h"
 #include "lemmings/compiled_level.hpp"
@@ -47,8 +47,7 @@ static void stateAndCooldown() {
   assert(w.setup().leverStats.delivered == 2);
   assert(std::abs(w.setup().occupancySensors[0].cooldownRemaining - 4.9) < 1e-9);
 
-  // Leaving does not bypass the authored cooldown. Its expiry update only
-  // decrements; the following update calls empty. No periodic clock added.
+  // The expiry update only decrements the cooldown. The next update dispatches empty.
   auto s = fixture(5);
   s.occupancySensors[0].state = 1;
   s.occupancySensors[0].cooldownRemaining = .25;
@@ -109,7 +108,7 @@ static void volumesAndRegistry() {
   assert(enabled.setup().occupancySensors[0].contactActor == 0);
   assert(std::abs(enabled.setup().occupancySensors[0].cooldownRemaining - 2.9) < 1e-9);
 
-  // A non-installed fixture confirms the existing fluid target arm, too.
+  // Use a synthetic sensor to exercise fluid target dispatch.
   s = fixture(); FluidGate fluid; fluid.id = 9; fluid.request = 1;
   fluid.minX = 24; fluid.maxX = 26; fluid.minY = 1; fluid.high = 4;
   s.gates.push_back(fluid); s.objectIds[9] = {ObjectClass::Gate,0,"unit"};
@@ -140,8 +139,7 @@ static void installed(const AssetLibrary& lib) {
         assert(sensor.min[axis] == std::bit_cast<double>(t.double_bits_48_60[axis]));
         assert(sensor.max[axis] == std::bit_cast<double>(t.double_bits_48_60[axis+3]));
       }
-      // One isolated contact invariant per stored sensor. Authored messages,
-      // gates and terrain come from the real loader; no level route is played.
+      // Isolate contact for each stored sensor using its authored messages, gates and terrain.
       LevelSetup s; s.terrain = setup.terrain; s.totalLemmings = 0;
       s.counterGates = setup.counterGates; s.objectIds = setup.objectIds;
       s.occupancySensors = setup.occupancySensors;
@@ -162,8 +160,7 @@ static void installed(const AssetLibrary& lib) {
         std::cout << id << " sensor " << sensor.id << " -> gate " << m.targetId
                   << " type " << m.type << " OK\n";
       }
-      // Departure: the installed empty list sends nothing and leaves the
-      // receiver latched. It is not an implicit inverse of the occupied list.
+      // On departure the installed empty list sends nothing, leaving the receiver latched.
       s.occupancySensors[index] = w.setup().occupancySensors[index];
       s.occupancySensors[index].cooldownRemaining = 0;
       s.counterGates = w.setup().counterGates;

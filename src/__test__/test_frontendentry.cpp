@@ -106,8 +106,7 @@ int main(int argc, char** argv) {
   fs::create_directories(outDir, ec);
   if (ec) { std::cerr << "cannot create test output directory: " << ec.message() << '\n'; return 1; }
 
-  // A fresh exclusive child lets CTest repeat without overwriting earlier
-  // diagnostic evidence or cleaning anything owned by the caller.
+  // Use an exclusive output child to keep caller files and other test outputs intact.
   const auto stamp = std::chrono::system_clock::now().time_since_epoch().count();
   const fs::path runDir = outDir / ("run-" + std::to_string(stamp));
   if (!fs::create_directory(runDir, ec) || ec) {
@@ -120,10 +119,7 @@ int main(int argc, char** argv) {
   const fs::path expectedShot = runDir / "expected.png";
   const fs::path expectedZeroShot = runDir / "expected-zero.png";
   const fs::path expectedCamera = runDir / "expected-camera.json";
-  // Independent settled-pose equivalent of the opening move on frame30:
-  // 29 prior frame deltas (pose is computed before increment), no yaw change
-  // before intro second1. This does not invoke CameraIntro/buildCamera's intro
-  // branch, and preserves the original direct-level diagnostic render route.
+  // Calculate frame 30's pose after 29 deltas. Intro yaw stays constant through the first second.
   double introSeconds = 0.0;
   for (int i = 0; i < 29; ++i) introSeconds += 1.0 / 144.0;
   const double q = introSeconds / 2.0;
@@ -182,9 +178,7 @@ int main(int argc, char** argv) {
         std::to_string(ticks), "--skill-panel", "--hud-ticks", std::to_string(ticks), "--cursor-fixture", "--shot", path.string(),
         "--camera", expectedCamera.string(), "--game-dir", gameDir});
     if (result != 0) return result;
-    // P9: the direct diagnostic still renders a closed hatch. Retain that
-    // control and compare it to an independent compositor before sampling
-    // doors at frame 30's 208 ms. All full-frame equality checks below stay.
+    // Verify the closed-door diagnostic frame, then sample the fixture at frame 30.
     auto library = webo::AssetLibrary::open(fs::path(gameDir) / "lemmings.box",
                                            fs::path(gameDir) / "patch.box");
     webo::app::CameraParams pose;
@@ -199,9 +193,7 @@ int main(int argc, char** argv) {
       return 1;
     }
     fs::copy_file(path, path.parent_path() / ("closed-" + path.filename().string()));
-    // Connected presentation uses frame seconds (30/144), while the unchanged
-    // World/HUD clock admits 208 integer ms. The old 208 ms sample fitted a
-    // door clip to the World arm interval and encoded playtest R2.
+    // Connected door presentation uses 30/144 s. The World/HUD clock admits 208 integer ms.
     const auto sampled = webo::test::hatchEntryFixture(*library, pose, ticks, ticks ? 30.0/144.0*1000.0 : 0,
         true, "MM_CLIMB_002", true, ticks ? 30.0/144.0 : 0);
     return webo::writePng(path, sampled).has_value() ? 0 : 1;
@@ -223,8 +215,7 @@ int main(int argc, char** argv) {
   if (expectedBytes == zeroBytes)
     std::cerr << "FAIL: tick-0 positive control matched tick-1 render\n";
 
-  // Unbounded invocations use owned-process observer events, not --frames:
-  // that option deliberately retains the direct diagnostic route.
+  // Stop the ordinary path through observer-queued events. --frames selects the direct diagnostic.
   const auto menuOnly = [&](const std::vector<std::string>& args) {
     int menuCalls = 0, levelCalls = 0;
     bool menuOk = true;
@@ -250,8 +241,7 @@ int main(int argc, char** argv) {
   ok &= menuOnly({"webolution-test", "--frontend", "--direct-level", "--native"});
   ok &= menuOnly({"webolution-test", "--direct-level", "--level", "MM_DIG_000", "--frontend"});
 
-  // Choose another unlocked node so default-level fallback cannot satisfy the
-  // no-option handoff. Keep the two existing deterministic render/reset runs.
+  // Enter a nondefault unlocked node so default-level fallback cannot satisfy the check.
   auto library = webo::AssetLibrary::open(fs::path(gameDir) / "lemmings.box",
                                          fs::path(gameDir) / "patch.box");
   if (!library) { std::cerr << "FAIL: default-entry assets: " << library.error() << '\n'; return 1; }
@@ -287,8 +277,7 @@ int main(int argc, char** argv) {
   ok &= defaultOk;
   if (!defaultOk) std::cerr << "FAIL: no-option Menu/confirmation/map/selected simulation route\n";
 
-  // Ordinary startup also reaches the same selected simulation through the
-  // SOURCE Play Current Game mouse adapter, without New Game confirmation.
+  // Check that a Play Current Game click enters the same selected simulation without confirmation.
   int mouseMenuCalls = 0, mouseLevelCalls = 0, mouseQuits = 0;
   bool mouseOk = true;
   const int mouseResult = invoke({"webolution-test"}, [&](const auto& session, int frame) {
@@ -350,7 +339,7 @@ int main(int argc, char** argv) {
   const auto menuShot = runDir / "explicit-menu.png";
   const auto expectedMenuShot = runDir / "expected-menu.png";
   ok &= invoke({"webolution-test", "--shot", fixtureShot.string()}) == 0;
-  // Unknown options remain ignored, with their previous diagnostic routing.
+  // Direct-level mode ignores the unknown option and produces the fixture screenshot.
   ok &= invoke({"webolution-test", "--direct-level", "--native-017-unknown",
                 "--shot", directShot.string()}) == 0;
   ok &= !bytes(fixtureShot).empty() && bytes(fixtureShot) == bytes(directShot);

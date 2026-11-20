@@ -1,12 +1,9 @@
-// C2i/C2j: the pause caption panel and text (shell/PauseCaption.h). Each assertion pins one input
-// (rectangle edge, fill colour, alpha, text origin, text string) so a change to that input alone fails it.
+// Check pause-caption edges, fill, alpha, text origin and label independently.
 
 #include "assets/Bitmap.h"
 #include "shell/PauseCaption.h"
 
-// The test target's CMake line lists only PauseCaption.cpp, and CMake files are outside this
-// round's owned paths. drawCaption uses HudText's drawHud (and MenuRender's glyph table), so the
-// two translation units are pulled in here. The clean fix is adding them to the add_executable line.
+// Include HudText and MenuRender because drawCaption uses drawHud and the glyph table.
 #include "shell/HudText.cpp"
 #include "shell/MenuRender.cpp"
 

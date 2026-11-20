@@ -68,8 +68,7 @@ bool imageEqualInCountRoi(const webo::Image& a, const webo::Image& b) {
 }
 
 bool findEmptyClick(const std::span<const app::LevelActorView> actors, int& outX, int& outY) {
-  // Source pick geometry uses a 32x32 cursor centered on the click. Stay out
-  // of the fixed panel/HUD plates and out of every projected actor box.
+  // Keep the centered 32x32 pick cursor clear of the panel, HUD and projected actors.
   for (int y = 100; y < 445; y += 5) {
     for (int x = 100; x < 635; x += 5) {
       const app::PickBox cursor{x - 16, y - 16, x + 16, y + 16};
@@ -178,8 +177,7 @@ int main() {
     }
   };
 
-  // --sim-ticks prepares a bounded retail simulation state. This is not a
-  // natural frontend/spawn-timing run and is not a native behavior oracle.
+  // --sim-ticks prepares a bounded simulation state for input checks.
   std::vector<std::string> args{"levelinteraction-test", "--level", "MM_CLIMB_002", "--native",
       "--sim-ticks", "20", "--frames", "12", "--game-dir", gameDir};
   std::vector<char*> raw;

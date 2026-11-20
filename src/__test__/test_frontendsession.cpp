@@ -144,9 +144,7 @@ int main() {
         "New Game click opens confirmation at construction 4");
   check(s->image().width == 640 && s->image().height == 480, "confirmation is native canvas size");
 
-  // Independent pixel conditions rather than a second implementation of the renderer:
-  // the backdrop must survive outside the known text/panel footprints, the heading
-  // uses red font pixels without a surrounding panel, and initial Yes is highlighted.
+  // Check intact backdrop outside text and panels, red heading ink and initial Yes highlighting.
   auto back = loadTexture(*library, "TEXTURES\\SMALL_BACK.BMP");
   if (back) {
     const auto& img = s->image();
@@ -290,8 +288,7 @@ int main() {
         confirmModel.screen() == Screen::Menu && confirmModel.highlight() == 0 && confirmModel.counter() == 5,
         "shell Return agrees with session for focused No");
 
-  // SOURCE-only nonzero progression setup; current native keyboard capture began
-  // with zero flags. Do not substitute this outcome for its actual-app exports.
+  // Seed nonzero progress for the source-side cases.
   auto confirmProgress = make();
   if (!confirmProgress) return 1;
   confirmProgress->pressReturn(); confirmProgress->pressReturn();
@@ -342,9 +339,8 @@ int main() {
   check(footer->pressReturn() == shell::Outcome::Handled && footer->screen() == Screen::Menu &&
         footer->constructionCounter() == 9, "SDL Return adapter activates sole focused footer");
 
-  // SOURCE mouse adapter contract, independently fixed for the visible UK
-  // panels: Start New Game width166, Play Current Game width191, centred at320.
-  // These expected coordinates deliberately do not call production hit helpers.
+  // At x=320, the UK Start New Game panel is 166 px wide and Play Current Game is 191 px wide.
+  // Check their hit regions independently of the production hit helpers.
   check(uk && (*uk)[125] == "Start New Game" && (*uk)[126] == "Play Current Game",
         "independent UK panel-coordinate fixture uses the full loaded labels");
   auto currentGame = make();

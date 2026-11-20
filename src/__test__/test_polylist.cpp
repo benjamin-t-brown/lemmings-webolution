@@ -1,8 +1,5 @@
-// Tests for PolyList 09 parsing: size formula, repeated vertices, surface indices.
-//
-// Kind 5 is 3 vertices of 52 bytes plus a trailing u32 (160). Kind 7 is 4
-// (212). The ranges pinned here were measured on all 102 retail levels; see
-// tools/harness/read_polylist_tail.py and docs/scratch/phase2-polylist.md.
+// Check PolyList 09 record sizes, repeated vertices and surface indices.
+// Kind 5 has three 52-byte vertices and a u32 (160 bytes). Kind 7 has four (212 bytes).
 
 #include "assets/Box.h"
 #include "assets/Cylinder.h"

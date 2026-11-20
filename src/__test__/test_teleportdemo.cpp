@@ -1,18 +1,7 @@
-// native-023: public sim::loadRetailLevel on the installed teleport levels, run
-// in two builds of one driver. teleportdemo_before links the frozen task-entry
-// LevelObjects.{h,cpp} and RetailLevel.cpp (build/native-023/frozen, identified
-// against the supervisor entry manifest by native023_identity_report); teleportdemo_after
-// links the current sources. Production files are never swapped.
-//
-// Expectations are literal partner tables written below, not a second call of
-// the loader: kFileOrder is the old i <-> i+n/2 stand-in, kByIds is the pairing
-// "partner = pad whose base id equals this pad's +0x98 word", taken from the
-// step-1 measurement (docs/scratch/native-023-teleport-links.md). MM_TELE_003's
-// ids and columns match the retained live table of round 16 (retained, not
-// re-measured here). Pad index is locator (file) order. Geometry (source box,
-// destination column and row) comes from the located poses and
-// teleportTriggerFromPose, never from the loader under test.
-// Source-built; the original executable is never run.
+// Compare literal installed pad pairs under the two sim::loadRetailLevel builds.
+// kFileOrder pairs i with i+n/2. kByIds matches this pad's +0x98 word to its
+// partner's base ID. Pad indices follow locator order, including on MM_TELE_003.
+// Calculate the source box and destination pose with teleportTriggerFromPose.
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
 #include "assets/LevelIndex.h"
@@ -42,7 +31,7 @@ constexpr const char* kSide = "after";
 
 struct Level {
   const char* name;
-  std::vector<int> fileOrder;  // old pairing, locator index -> partner locator index
+  std::vector<int> fileOrder;  // half-list pairing by locator index
   std::vector<int> byIds;      // id pairing, locator index -> partner locator index
 };
 

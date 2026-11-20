@@ -1,18 +1,8 @@
-// playable-baseline-001 assessment driver (SCRIPTED CLONE OBSERVATION, not human play, not original fidelity).
-//
-// One executable, several CTest registrations (see CMakeLists.txt):
-//   survey 0 <dir>   read-only decoded-level survey + build/source identity
-//   play N <dir>     route N (1 = MM_CLIMB_002, 2/3 = levels chosen by a data rule) through the
-//                    PUBLIC webo::app::runApplication: bare ordinary startup (frontend default),
-//                    SDL events queued from the read-only FrontendWindowObserver/LevelFrameObserver,
-//                    natural wall-clock level time (no frameSeconds, no --frames), an isolated
-//                    FileSaveSink under <dir>/route-N/save. Outcome (win/loss/watchdog) is REPORTED,
-//                    never asserted: the exit code only reflects driver integrity.
-//   restart N <dir>  a second OS process: fresh runApplication over the same isolated save file,
-//                    inspects persisted progress through the frontend. UNVERIFIED unless play won.
-//
-// Nothing here mutates a World, actor, terrain, stock, flag or save. The only inputs are SDL events.
-// The fast-forward plate is clicked through the public input path and recorded in the trace.
+// survey 0 <dir> reports decoded level data and build identity.
+// play N <dir> enters the frontend through webo::app::runApplication with SDL
+// inputs, wall-clock timing and an isolated FileSaveSink. Route 1 is MM_CLIMB_002.
+// restart N <dir> checks persisted progress in a fresh process after a win.
+// The exit code checks driver integrity. The route record contains the outcome.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "app/RuntimeSkillPanel.h"
@@ -115,7 +105,6 @@ std::string fmt(double v, int digits = 2) {
 
 const char* kSkillNames[8] = {"Climber", "Floater", "Bomber", "Blocker", "Builder", "Basher", "Miner", "Digger"};
 
-// ---- decoded level facts ----------------------------------------------------------------------
 struct LevelFacts {
   std::string level;
   std::size_t node = 0;
@@ -214,9 +203,8 @@ FreshMap surveyFreshMap(const AssetLibrary& lib) {
   return out;
 }
 
-// Deterministic data rule: route 1 is MM_CLIMB_002. Of the other fresh-map selectable levels pick the
-// one adding the most interaction features absent from MM_CLIMB_002, then the one adding the most
-// features absent from both (ties: richer level, then lower node).
+// Start with MM_CLIMB_002. Each subsequent fresh-map level maximizes features
+// absent from the selected levels. Break ties by total features, then node index.
 std::optional<LevelFacts> chooseRoute(const FreshMap& fm, int route, std::string& why) {
   const LevelFacts* r1 = nullptr;
   for (const auto& l : fm.selectable) if (l.level == "MM_CLIMB_002" && l.ok) r1 = &l;
@@ -250,7 +238,6 @@ std::optional<LevelFacts> chooseRoute(const FreshMap& fm, int route, std::string
   return *pick;
 }
 
-// ---- trace/result plumbing ---------------------------------------------------------------------
 struct Attempt {
   int number = 1;
   int strategy = 1;
@@ -264,8 +251,7 @@ struct Attempt {
   bool pending = false;
   std::map<std::pair<std::size_t, int>, int> tries;
   std::map<std::size_t, int> cooldownUntil;
-  // Bomber policy memory: lemming index -> last observed (x, y) of a lemming this attempt primed. A primed
-  // lemming's entry follows it until it dies, so the entry is where the hole is (or will be).
+  // Track each primed Bomber's last observed position as its expected blast site.
   std::map<std::size_t, std::pair<int, int>> bombSites;
   int bombsPrimed = 0;
   std::array<int, 8> keyTries{};
@@ -345,8 +331,8 @@ bool dropAhead(const sim::Lemming& l, const sim::Terrain& t) {
   return false;
 }
 
-// Strategy 1 (reactive): spend a skill only where the observed terrain asks for it.
-// Strategy 2 (blanket, used for the one retry after a loss): Climber/Floater to every Walker first.
+// The reactive policy assigns according to terrain. The Retry policy starts
+// by giving Climber and Floater to each Walker.
 int desiredSkill(const sim::Lemming& l, const sim::Terrain& t, const std::array<int, 8>& stock, int strategy) {
   if (l.state != sim::State::Walker) return -1;
   const bool wall = wallAhead(l, t, 3);
@@ -365,11 +351,9 @@ int desiredSkill(const sim::Lemming& l, const sim::Terrain& t, const std::array<
   return -1;
 }
 
-// Bomber policy (levels whose stock holds Bombers, e.g. MM_BOMB: 20 lemmings, need 10). A primed lemming
-// explodes after its fuse and removes a small terrain disc, so the intent is to open holes in the ledges the
-// lemmings patrol. A Walker is primed only when no earlier-primed lemming's site is within `spacing` cells on
-// the same ledge band (|dy| <= 10) and no wall is directly ahead. Strategy 1 spacing 40 / at most 8 bombs;
-// strategy 2 (retry) spacing 70 / at most 5. The cap keeps dead lemmings well under total - need.
+// On levels with Bomber stock such as MM_BOMB, prime a walker on a patrol
+// ledge away from other blast sites (|dy| <= 10) and with no immediate wall.
+// Use spacing 40 and a cap of 8 for the reactive policy, or 70 and 5 on Retry.
 bool bomberWanted(const Attempt& a, const sim::Lemming& l, const sim::Terrain& t) {
   if (a.stockStart[2] <= 0 || l.state != sim::State::Walker || l.fuseMs >= 0) return false;
   if (a.bombsPrimed >= (a.strategy == 1 ? 8 : 5)) return false;
@@ -599,7 +583,6 @@ std::string arr(const std::array<std::int32_t, 102>& a) {
   return os.str();
 }
 
-// ---- identity ----------------------------------------------------------------------------------
 void writeIdentity(const fs::path& root, const fs::path& game) {
   std::ofstream os(root / "identity.txt");
   os << "driver=test_playablebaseline (scripted clone observation)\n";
@@ -619,7 +602,7 @@ void writeIdentity(const fs::path& root, const fs::path& game) {
   os << "reference exe is never opened or executed by this driver\n";
 }
 
-// State of the clone's normal per-user save (read-only observation, before/after).
+// Read the per-user clone save to check that the route leaves it intact.
 std::string normalSaveState() {
   auto base = save::localAppDataDirectory();
   if (!base) return "unresolved";
@@ -644,7 +627,6 @@ int runApp(const std::string& gameDir, app::FrontendWindowObserver fo, app::Leve
   return app::runApplication(static_cast<int>(argv.size()), argv.data(), std::move(fo), std::move(lo), options);
 }
 
-// ---- modes -------------------------------------------------------------------------------------
 int surveyMode(const AssetLibrary& lib, const fs::path& root, const fs::path& game) {
   fs::create_directories(root);
   writeIdentity(root, game);
@@ -678,7 +660,7 @@ int playMode(const AssetLibrary& lib, int route, const fs::path& root, const std
   const fs::path game(gameDir);
   const fs::path routeDir = root / ("route-" + std::to_string(route));
   std::error_code ec;
-  fs::remove_all(routeDir, ec);  // task-owned output directory under build/
+  fs::remove_all(routeDir, ec);  // test output directory under build/
   fs::create_directories(routeDir, ec);
   if (ec) { std::cerr << "cannot create " << routeDir << '\n'; return 1; }
   writeIdentity(root, game);
@@ -801,7 +783,7 @@ int playMode(const AssetLibrary& lib, int route, const fs::path& root, const std
   const auto level = [&](const app::LevelFrameView& f) {
     const int before = f.frame == 0 ? 1 : 0;
     levelObserver(c, f);
-    if (before) {  // register the attempt so the results screen can attach to it
+    if (before) {  // associate the results screen with this route
       AttemptResult r;
       r.a = c.att;
       c.results.push_back(r);
@@ -920,7 +902,7 @@ int restartMode(const AssetLibrary& /*lib*/, int route, const fs::path& root, co
   std::cout << "PlayableBaseline restart route " << route << ": "
             << (status == 0 && seen.map && flagSet && matches && before == after ? "VERIFIED" : "FAILED (persistence finding)")
             << " flag=" << (node < 102 ? seen.flags[node] : -1) << '\n';
-  return status == 0 && md ? 0 : 1;  // persistence mismatch is a reported finding, not a driver fault
+  return status == 0 && md ? 0 : 1;  // Persistence mismatches affect the report result only.
 }
 
 }  // namespace

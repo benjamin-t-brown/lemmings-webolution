@@ -1,24 +1,7 @@
-// camera-entry-001: frontend selection of the installed MM_BASH_002, frozen vs current.
-//
-// One driver, two builds. cameraentry_before links the authentic entry-snapshot
-// main.cpp / AppEntry.h kept under the ignored build/camera-entry-001/frozen/ and
-// must observe the old behaviour (canonical yaw32, no opening camera move).
-// cameraentry_after links the current sources and must observe the serialized
-// selected hatch's base yaw229 with the existing entry animation, Retry without
-// the animation, and map re-entry with it again. Production files are never swapped.
-//
-// Every expectation is a *static-camera equivalent*: the same public application is
-// run again with an explicit --camera file (which bypasses CameraIntro and the entry
-// metadata) whose operands are calculated below from the retained intro equations,
-// not by calling CameraIntro. A camera file cannot carry the intro's wrapped phase
-// in yaw_units (the controller wraps yaw_units into [0,256)), so the phase goes in
-// through yaw_offset with yaw_units 0; (0 + offset) / 256 is then bit-identical to
-// the intro's wrapped yawTurns.
-//
-// Progress, when MM_BASH_002 is not selectable on a fresh map, is written to a
-// temporary clone save as SOURCE-TEST setup using the accepted node mapping and the
-// unchanged map rules. It is not natural gameplay and not a new unlock policy.
-// Dummy SDL drivers; runs end through observer-queued SDL_QUIT. No original code.
+// Exercise installed MM_BASH_002 through the map, Retry and map re-entry.
+// Compare each entry frame with an independently calculated --camera pose.
+// The controller wraps yaw_units into [0,256), so carry the phase in yaw_offset
+// with yaw_units set to 0. Seed a temporary clone save if the map node needs unlocking.
 
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
@@ -93,8 +76,7 @@ bool pushQuit() {
   return SDL_PushEvent(&e) == 1;
 }
 
-// What the level observer saw at one frame. Pose fields exist only where the
-// read-only observation seam in AppEntry.h exists (the current build).
+// Pose fields are populated by builds that expose the AppEntry.h observer.
 struct Seen {
   int frame = 0;
   std::uint64_t tick = 0;
@@ -135,10 +117,8 @@ std::size_t changedPixels(const Image& a, const Image& b) {
   return n;
 }
 
-// The retained opening-move equations, written out independently of CameraIntro
-// (docs/scratch/level-entry-camera-intro.md): a pull-back of 350 units that
-// eases out over two seconds, and a yaw swing that starts after one second.
-// Static equivalent: yaw_units 0 plus a yaw_offset carrying the wrapped phase.
+// Evaluate the intro independently of CameraIntro. Pull back 350 units over
+// two seconds and start the yaw swing after one second.
 struct StaticOperands {
   double yawUnits = 0.0;
   double yawOffset = 0.0;
@@ -198,7 +178,7 @@ int main() {
   report << "side=" << kSide << " frozen=" << kFrozen << " level=" << kLevel
          << " frameSeconds=" << kFrameSeconds << '\n';
 
-  // ---- Locate the actual installed map node and, only if needed, its prerequisite.
+  // Find the installed map node and any prerequisite needed to select it.
   auto setup = sim::loadRetailLevel(*library, kLevel);
   if (!setup) { std::cerr << "CameraEntry: " << setup.error() << '\n'; return 1; }
   const int terrainHeight = setup->terrain.height();
@@ -247,7 +227,7 @@ int main() {
   expect(mapX >= 0, "MM_BASH_002 map node is pickable");
   if (mapX < 0) return 1;
 
-  // ---- Independently specified static-camera runs through the public application.
+  // Render the independently specified static camera through the public application.
   const auto writeCamera = [&](const std::string& tag, const StaticOperands& op) {
     const fs::path path = outDir / ("camera-" + tag + ".json");
     std::ofstream out(path);
@@ -260,8 +240,7 @@ int main() {
   const auto runStatic = [&](const std::string& tag, const StaticOperands& op, int lastFrame,
                              std::vector<Seen>& seen) {
     const fs::path camera = writeCamera(tag, op);
-    // --frames is the application's precondition for the test frame clock; the
-    // observer-queued SDL_QUIT ends every run long before the cap.
+    // --frames enables the test clock. The observer queues SDL_QUIT before the frame cap.
     std::vector<std::string> args{"cameraentry-static", "--game-dir", gameDir, "--level", kLevel,
                                   "--sim", "--native", "--geom", "route", "--camera", camera.string(),
                                   "--frames", "40", "--no-audio"};
@@ -303,10 +282,8 @@ int main() {
     runStatic("entry-yaw229-frame" + std::to_string(kSamples[i]), op, kSamples[i], entryStatic[i]);
 #ifndef CAMERAENTRY_FROZEN
     if (!entryStatic[i].empty()) {
-      // R2 deliberately changes only connected hatch presentation. Preserve the
-      // explicit-camera production render as a control: the independent fixture
-      // must match it exactly with the historical arm mapping, then compose the
-      // connected expectation with the full 2.8 s clip. No pixel masks/tolerance.
+      // Compare the fixture with the explicit-camera frame using the arm mapping,
+      // then compose the connected frame with the full 2.8 s clip.
       auto& sample = entryStatic[i].back();
       const double openingMs = (kSamples[i] + 1) * kFrameSeconds * 1000.0;
       const auto control = test::hatchEntryFixture(*library, sample.pose,
@@ -321,7 +298,7 @@ int main() {
 #endif
   }
 
-  // ---- Direct diagnostic route: no frontend, no camera file. Unchanged by this task.
+  // Enter directly without the frontend or an explicit camera.
   {
     std::vector<std::string> args{"cameraentry-direct", "--game-dir", gameDir, "--level", kLevel,
                                   "--sim", "--native", "--frames", "40", "--no-audio"};
@@ -345,7 +322,7 @@ int main() {
     expect(ok, "direct --level MM_BASH_002 --sim keeps canonical yaw32 without intro");
   }
 
-  // ---- The ordinary route: startup -> map -> MM_BASH_002 -> Retry -> Quit -> map -> again.
+  // Select MM_BASH_002 from the map, Retry, then quit to the map and re-enter.
   struct Trace {
     bool ok = true;
     int frontCalls = 0, mapVisits = 0, levelCalls = 0, legs = 0, quits = 0;
@@ -407,7 +384,6 @@ int main() {
          "ordinary startup/map/Retry/Quit/re-entry route ends normally through observer SDL_QUIT");
   if (t.entry.size() != 7) { std::cerr << "CameraEntry: incomplete entry trace\n"; return 1; }
 
-  // ---- Compare, per build.
   for (std::size_t i = 0; i < kSamples.size(); ++i) {
     const int k = kSamples[i];
     const Seen& actual = t.entry[static_cast<std::size_t>(k)];

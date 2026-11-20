@@ -1,4 +1,4 @@
-// Fast geometry/depth invariants, no gameplay route or original comparison.
+// Check debris geometry and depth with synthetic poses.
 #include "app/DeathParticles.h"
 #include "app/Raster.h"
 
@@ -59,7 +59,7 @@ int main() {
   assert(raster.framebuffer().rgb[a] == 0 && raster.framebuffer().rgb[a+1] == 255);
   assert(raster.actorDepth().owns(3*16+3,101));
   assert(sceneDepth == raster.depthBuffer());
-  // Ordinary scenery triangles retain their existing depth-write contract.
+  // Ordinary scenery still writes depth when debris is present.
   Raster scenery(16,16);
   scenery.triangle(triangle(8),uv,white,{1,0,0});
   const auto red = scenery.framebuffer().rgb;

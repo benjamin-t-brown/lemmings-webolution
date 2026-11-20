@@ -1,14 +1,6 @@
-// lever-links-research-001: read-only measurement of the serialized lever link
-// fields. Source-built; the original executable is never run. Reports what the
-// unchanged structured reader (lemmings::read_compiled_level) holds for every
-// tagged type-1 record (vtable 0x004B1288, ctor 0x00436C4E, reader 0x00436FED),
-// locates each field in the raw member bytes independently of that reader, and
-// resolves each message target id against every actor collection.
-//
-// It asserts only measurement integrity (level readable, raw-byte location of
-// every lever unique, clone lever boxes tie to a structured record). It does not
-// assert an in-game effect: the receiver behaviour is a static-analysis claim
-// documented in docs/scratch/lever-links-research-001.md.
+// Report serialized links for tagged type 1 (vtable 0x004B1288, constructor
+// 0x00436C4E, reader 0x00436FED). Locate each lever from raw bytes independently
+// of lemmings::read_compiled_level and resolve its targets across all actor collections.
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
 #include "assets/LevelIndex.h"
@@ -151,8 +143,8 @@ int main() {
     }
     const auto& g = level.gadgets;
 
-    // ---- id -> target resolution table, in construction (= stream) order.
-    // 0x00423310..0x00423325 stores every actor into list[id]; a later actor with the same id wins.
+    // Resolve target IDs in stream order. 0x00423310..0x00423325 writes list[id],
+    // so later actors with duplicate IDs take precedence.
     std::map<int, Target> byId;
     std::map<int, int> idCount;
     const auto addBase = [&](const char* coll, std::size_t i, const lemmings::EntityBaseFields& b,
@@ -183,12 +175,11 @@ int main() {
       addBase("named", i, n, std::format("{}/{} model='{}'", n.type, n.subclass_name, modelName(n)));
     }
 
-    // ---- lever = tagged type 1 (case 1 of 0x00433DD9 -> ctor 0x00436C4E).
+    // Lever records are tagged type 1 (0x00433DD9 case 1 -> constructor 0x00436C4E).
     std::vector<std::size_t> leverIdx;
     for (std::size_t i = 0; i < g.tagged_entities.size(); ++i)
       if (g.tagged_entities[i].type == 1) leverIdx.push_back(i);
 
-    // ---- clone view of the same level (what the production loader keeps).
     std::vector<webo::PlacedModel> locator;
     auto objs = webo::findLevelObjects(*blob);
     if (objs)
@@ -242,11 +233,9 @@ int main() {
       }());
     }
 
-    // ---- tie each type-1 record to a clone lever by position, never by file order.
-    // leverTriggerFromPose gives box.x = pose.x - 1 and box.y = H - 1 - (pose.y + 6)
-    // (LevelObjects.cpp speedPadTriggerFromPose, H = collision mask height). The stream record
-    // carries the same pose as doubles (+8,+10,+18), so the pair is accepted only when both
-    // coordinates agree exactly under that transform.
+    // Match the stored pose doubles (+8,+10,+18) to clone levers by coordinates.
+    // Use leverTriggerFromPose: box.x = pose.x - 1 and box.y = H - 1 - (pose.y + 6),
+    // where H is the collision mask height.
     int maskH = 0;
     {
       auto rl = webo::sim::loadRetailLevel(*lib, name);

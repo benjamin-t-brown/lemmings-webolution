@@ -1,5 +1,4 @@
-// Source-built clone only: installed-level crowd, public SDL hover/click,
-// immutable task-entry main for the before side. No original execution.
+// Check overlapping actor selection on an installed level through SDL hover and click.
 #include "app/AppEntry.h"
 #include "app/RuntimePick.h"
 #include "assets/Png.h"
@@ -31,8 +30,7 @@ void point(int x,int y,bool click=false) {SDL_Event e{};e.type=click?SDL_MOUSEBU
 void quit(){SDL_Event e{};e.type=SDL_QUIT;check(SDL_PushEvent(&e)==1,"queue quit");}
 app::PickBox box(const app::ActorSpritePlacement& p){return {int(p.left),int(p.top),int(p.right),int(p.bottom)};}
 double distance(const app::ActorSpritePlacement& p,int x,int y){const double dx=(p.left+p.right)/2-x,dy=(p.top+p.bottom)/2-y;return dx*dx+dy*dy;}
-// Independently express the unchanged rectangle/skill gates; do not call the
-// new selector to derive its expected answer.
+// Compute rectangle and skill eligibility independently of the selector.
 bool eligible(const app::LevelFrameView& f,const app::LevelActorView& a,int x,int y,bool inverted){
   const auto& l=f.world.lemmings()[a.index]; const auto b=box(a.placement);
   if(b.left>x+12||b.right<x-12||b.top>y+20||b.bottom<y-20||!l.active())return false;
@@ -99,7 +97,7 @@ int route(const std::string& name,const fs::path& out){
     if(f.frame==0){key(SDL_SCANCODE_P);if(inverted)point(50,148,true);}
     if(f.frame==1){
       check(f.paused&&f.selectedSkillIndex==skill,"pause and select real stocked job");stock=f.world.setup().skills[skill];
-      // Prefer a real disagreement so retained before pixels expose the defect.
+      // Prefer a point where the two selection policies disagree.
       double bestScore=INFINITY;
       for(int mismatch=1;mismatch>=0&&!found;--mismatch)
       for(int yy=40;yy<420;++yy)for(int xx=100;xx<630;++xx){

@@ -1,12 +1,4 @@
-// Tests for the LRZ decoder.
-//
-// Needs real game data: LRZ streams are not something you can meaningfully
-// synthesise by hand, and the point of the decoder is that it reproduces the
-// original's output exactly. Without WEBOLUTION_GAME_DIR the suite skips.
-//
-// tools/lrz-oracle calls the original executable's own routine; the decoder
-// has been verified byte-identical against it. This test re-checks the
-// properties that hold for every entry.
+// Check LRZ decoder properties against the installed archive at WEBOLUTION_GAME_DIR.
 
 #include "assets/Box.h"
 #include "assets/Lrz.h"
@@ -51,10 +43,8 @@ std::uint16_t le16(const std::byte* p) {
   return v;
 }
 
-// A decoded texture must be a Windows BMP whose pixel data actually fits.
-// Note: some entries carry a bfSize that omits row padding (TEXTURES\^OUT.BMP
-// and ^TIME.BMP say 2550 for a 26x32x24 image that really needs 2614), so the
-// length is checked against the computed size, not against bfSize.
+// Check decoded BMP length against padded rows. TEXTURES\^OUT.BMP and ^TIME.BMP
+// report bfSize 2550 but require 2614 bytes for 26x32x24.
 bool looksLikeBmp(const std::vector<std::byte>& d, std::string& why) {
   if (d.size() < 54) {
     why = "shorter than a BMP header";

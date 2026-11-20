@@ -1,5 +1,4 @@
-// Scripted clone observation. Installed assets, production SDL pointer path,
-// private saves; no original execution or simulation mutation in the app runs.
+// Exercise Nuke on installed levels with SDL pointer input and private saves.
 #include "app/AppEntry.h"
 #include "app/RuntimeSkillPanel.h"
 #include "app/RuntimeHud.h"

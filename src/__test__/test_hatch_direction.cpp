@@ -95,8 +95,7 @@ int census(AssetLibrary& lib, const fs::path& out) {
 }
 
 void boundaries() {
-  // Supplement real-data cases with noncanonical direction shorts and independent
-  // alternation phases on multiple hatches; do not change scheduling or rates.
+  // Test noncanonical direction shorts and independent alternation across hatches.
   for (int direction : {-1,0,1,2}) for (bool alternate : {false,true}) {
     sim::LevelSetup setup;
     setup.terrain = sim::Terrain(100,100);
@@ -166,9 +165,7 @@ int run(const fs::path& game, AssetLibrary& lib, const std::string& id, const fs
 }
 
 int profileFrame(const fs::path& game, const fs::path& out) {
-  // Reproduce the existing performance demonstration with identical CLI inputs.
-  // Both builds share presentation; only the authenticated release/loader units
-  // differ. This independently explains the changed MM_W_012 regression image.
+  // Compare both release implementations on MM_W_012 with identical CLI inputs and presentation.
   std::vector<std::string> args{"hatch-direction-profile","--direct-level",
     "--game-dir",game.string(),"--level","MM_W_012","--native",
     "--sim-ticks","50","--frames","150","--no-audio",

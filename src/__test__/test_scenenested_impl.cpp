@@ -1,7 +1,5 @@
-// scene-nested-impl-001: current loaders over every effective installed level,
-// plus the E11_KF_1 nested type-1 windmill demonstration.
-// Fixed source camera; source-built rendering evidence only. No original code runs; no claim of
-// original admission, pixel agreement, x87 equivalence, clipping or full-frame fidelity; C3 stays FAIL.
+// Check installed nested scenery and the E11_KF_1 type-1 windmill with a static camera.
+// Original x87 equivalence is unestablished.
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
 #include "app/TubeScene.h"
@@ -142,9 +140,9 @@ std::size_t nonblack(const Raster& r) {
   return n;
 }
 
-// ---- E11_KF_1 constants: docs/scratch/scene-nested-research-001.md section 2 and trees/E11_KF_1.plan.txt ----
+// Literal E11_KF_1 scene plan.
 constexpr std::size_t kBody = 0xb60e7, kBladesBegin = 0xb6ed3, kBladesEnd = 0xb7576;
-// Independently written literal: trees/E11_KF_1.plan.txt order (cube1_trans, its child, then the other 27 direct children).
+// Dispatch visits cube1_trans and its child first, then the other 27 direct children.
 constexpr std::array<std::size_t, 29> kPlan = {0xb60e7, 0xb6ed3, 0xbfd87, 0xbf80a, 0xbef09, 0xbe608, 0xb3465, 0xb37a9, 0xbad5f, 0xba372,
                                                0xbc3a1, 0xbb74c, 0xbdaff, 0xbcff6, 0xb809f, 0xb7576, 0xb7dd6, 0xb7754, 0xb7665, 0xb7930,
                                                0xb7842, 0xb4dea, 0xb3aed, 0xb7bfa, 0xb7ce8, 0xb7fb2, 0xb7ec4, 0xb7b0c, 0xb7a1e};
@@ -224,7 +222,7 @@ void e11Demonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
   require(bool(tubeBuilt), "E11_KF_1 tube builds");
   const TubeScene& tube = *tubeBuilt;
 
-  // --- dispatch order equals the independently written literal plan; depth/parent bookkeeping ---
+  // Compare dispatch order, depth and parent with the literal plan.
   std::vector<SecondaryDispatchItem> items;
   const auto order = dispatchOrder(scene, cam, &items);
   require(order.size() == kPlan.size() && std::equal(order.begin(), order.end(), kPlan.begin()), "dispatch order equals trees/E11_KF_1.plan.txt");
@@ -235,7 +233,7 @@ void e11Demonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
   for (auto o : order) log << " 0x" << std::hex << o << std::dec;
   log << '\n';
 
-  // --- tie order: the evidenced insertion differs from std::sort exactly where keys tie ---
+  // The original insertion order differs from std::sort where keys tie.
   std::vector<std::size_t> fileOffsets; std::map<std::size_t, double> keyOf;
   scene.visitRoots([&](const auto& source, const SceneNode& root) {
     if (source.stage != BackdropScene::Stage::Secondary) return;
@@ -255,7 +253,6 @@ void e11Demonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
   for (std::size_t i = 0; i < 28; ++i) require(fileKeys[sorted[i]] == fileKeys[insertion[i]], "orders agree on every key value position");
   log << "ties,exactEqualKeyPairs=" << tiedPairs << ",stdSortVsInsertionPositionsDiffering=" << positionsDiffering << '\n';
 
-  // --- renders: scene-only, scene-on, scene-off, determinism ---
   auto only = render(scene, &tube, lib, cam, true, false);
   auto on = render(scene, &tube, lib, cam, true, true);
   auto off = render(scene, &tube, lib, cam, false, true);
@@ -302,7 +299,7 @@ void e11Demonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
   log << "artifacts,sceneOnlyNonblack=" << nonblack(only.raster) << ",composedChangedPixels=" << changedPixels << ",sceneOnlyRgb=0x" << hex(hashes(only.raster).rgb)
       << ",sceneOnlyDepth=0x" << hex(hashes(only.raster).depth) << ",identical=1\n";
 
-  // --- mutation: hide cube1_trans (node and subtree) ---
+  // Hide cube1_trans and its subtree.
   {
     auto m = buildE11(lib, bytes);
     m.setSecondaryHidden([](const SceneNode& n) { return n.sourceOffset == kBody; });
@@ -314,7 +311,6 @@ void e11Demonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
     log << "mutation,hideBody,dispatched=" << mo.size() << ",secondaryRasterCalls=" << r.stats[2].rasterCalls << " (full " << sec.rasterCalls << "),changedPixels="
         << changed(r.raster.framebuffer().rgb, only.raster.framebuffer().rgb) << '\n';
   }
-  // --- mutation: hide only the child ---
   {
     auto m = buildE11(lib, bytes);
     m.setSecondaryHidden([](const SceneNode& n) { return n.sourceOffset == kBladesBegin; });
@@ -341,7 +337,6 @@ int main() try {
   std::ofstream log(dir / "measurements.txt"); log << std::setprecision(17);
   const auto cam = buildCamera(CameraParams{});
 
-  // ---- Phase 1: build every effective installed level ----
   const auto names = levelFileNames(*lib);
   require(names.size() == 102, "102 effective installed levels");
   log << "side=" << side << " effectiveLevels=" << names.size() << '\n';
@@ -378,7 +373,6 @@ int main() try {
   require(admitted.count("E11_KF_1") == 1, "current admits E11_KF_1");
   require(admitted.size() + emptyCount == 102, "every level is admitted or a diagnosed empty partial scene");
 
-  // ---- Phase 2: render every installed level ----
   std::ofstream hashFile(dir / "hashes.txt");
   double renderSeconds = 0;
   static const std::set<std::string> nestedLevels = {"E11_KF_1", "E22_KF_1", "H05_KF_1", "H09_KF_1", "H20_KF_1", "H24_KF_1", "M04_KF_1", "M11_KF_1", "M16_MG_1", "M21_KF_1", "MM_BLOCK_BOMB_A", "MM_FLOAT_CLIMB2", "MM_H_003", "VH04_JC1", "VH05_JC1", "VH18_JC", "VH19_JC", "VH21_JC"};
@@ -432,7 +426,7 @@ int main() try {
   hashFile.close();
   log << "renderAllSeconds=" << renderSeconds << " admittedRendered=" << admitted.size() << '\n';
 
-  // ---- Phase 4: E11_KF_1 demonstration and bounded public route ----
+  // Exercise the E11_KF_1 scene through the application.
   auto e11 = lib->read("COMPILED\\E11_KF_1.LVL"); require(bool(e11), "read E11_KF_1");
   e11Demonstration(*lib, *e11, cam, dir, log);
   application(gameDir, dir, log);

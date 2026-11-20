@@ -1,5 +1,4 @@
-// U4/U2: installed assets, real level render fixtures and public application routes.
-// Source-built clone evidence only. Never executes original instructions.
+// Check tribe-specific sprites in installed level fixtures and application routes.
 #include "app/AppEntry.h"
 #include "app/LemmingAnim.h"
 #include "app/TubeScene.h"
@@ -93,10 +92,8 @@ void application(const fs::path& game,const fs::path& out,const fs::path& prior,
     ident<<hash(f.image)<<'\n';
     if(!prior.empty()) {
       check(bool(std::getline(oldhash,old)),"prior frame hash exists");
-      // Build and Block contains flames seeded from wall time in production;
-      // whole-frame identity is meaningful on the ordinary-only Climber route.
-      // Ordinary actors in mixed levels are compared by the fixed-pose scene
-      // checks below, without weakening any existing project assertion.
+      // Build and Block has wall-clock-seeded flames. Compare whole frames on the
+      // ordinary-only Climber route and compare actor poses on mixed levels.
       if(level=="MM_CLIMB_002")
         check(old==std::to_string(hash(f.image)),"ordinary non-drown frame identical "+level+" frame "+std::to_string(f.frame));
     }
@@ -162,7 +159,7 @@ void fixtures(const AssetLibrary& lib,const fs::path& out,const fs::path& prior)
       std::array<std::uint64_t,3> typeHashes{};
       for(int type=0;type<3;++type) {
       auto placed=*setup;placed.totalLemmings=0;sim::World w(std::move(placed));
-      // Acid pose is a naturally observed falling sample below the hatch.
+      // Sample the Acid actor falling below the hatch.
       sim::Lemming l;l.x=setup->entrances[0].x;l.y=std::string(id)=="M20_MT_1"?37:setup->entrances[0].y+6;l.state=states[n];l.sheetType=type;w.place(l);
       app::LemmingAnimTracker tracker;
       const double dt=states[n]==sim::State::Hoister?0.9:0.15;

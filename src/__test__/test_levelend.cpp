@@ -50,8 +50,8 @@ int main() {
         targetOnly.timerSeconds() == 7.0 && !targetOnly.snapshot(),
         "meeting save target with population remaining does not trigger");
 
-  // The exhaustion test is equality, not <=: signed selected remaining may
-  // make the aggregate exactly zero even with retained population.
+  // Exhaustion requires exact zero. A negative selected remainder can offset
+  // actors that are still present.
   LevelEndTransition exactZero;
   advance(exactZero, 50.0, false, 5, -5, 3, 4);
   check(exactZero.phase() == LevelEndPhase::Pending &&

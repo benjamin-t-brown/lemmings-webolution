@@ -95,7 +95,7 @@ void testHandBuiltFailures() {
   root.meshes[0].records[0].corners[1].vertexIndex=0;
   root.meshes[0].materialSlot=1;
   check(!webo::buildSceneMeshSource(root,identity,identity),"invalid hand-built material slot is an expected error");
-  root.meshes[0].materialSlot=0; root.meshes[0].kind=3;  // fluid-surface-impl-001: kind 4 is now admitted; kind 3 stays the unsupported fixture
+  root.meshes[0].materialSlot=0; root.meshes[0].kind=3;  // kind 3 exercises the unsupported path
   check(!webo::buildSceneMeshSource(root,identity,identity),"unsupported hand-built mesh kind is an expected error");
 }
 void testRetailOptional() {

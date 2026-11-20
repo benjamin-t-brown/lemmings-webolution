@@ -1,5 +1,4 @@
-// Application-level regression for the tube scene's hidden-actor visibility
-// gate. Runs only through SDL's dummy driver; no stock process or desktop.
+// Check the hidden-actor visibility gate through the SDL dummy window.
 
 #include "app/AppEntry.h"
 #include "app/Camera.h"
@@ -118,8 +117,8 @@ int main(int argc, char** argv) {
     cameraOutput.close();
     if (!cameraOutput) { std::cerr << "LevelVisibility: cannot write temporary camera\n"; return 1; }
 
-    // Independently prepare the comparison projection. Visibility bypass is
-    // diagnostic only; the application run below uses the production default.
+    // Build the comparison projection independently. Use the visibility bypass only
+    // for that comparison and leave the application on its default path.
     auto library = webo::AssetLibrary::open(std::filesystem::path(gameDir) / "lemmings.box",
                                             std::filesystem::path(gameDir) / "patch.box");
     if (!library) { std::cerr << "LevelVisibility: cannot open retail assets\n"; return 1; }
@@ -179,8 +178,7 @@ int main(int argc, char** argv) {
             if (actor.index == targetIndex) present = true;
           if (present) fail("production frame includes hidden actor 0");
         }
-        // Queue the click even when actor 0 leaked into the frame: the next
-        // observation independently catches an erroneous assignment.
+        // Queue the click even if actor 0 is visible so the next frame can reveal a bad assignment.
         if (!pushKey(SDL_SCANCODE_P, SDLK_p)) fail("could not queue pause key");
         if (targetIndex != static_cast<std::size_t>(-1) &&
             !pushClick(targetX, targetY)) fail("could not queue hidden-actor click");

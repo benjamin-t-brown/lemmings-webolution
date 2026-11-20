@@ -1,8 +1,5 @@
-// scene-branch-impl-001: current loaders over every effective installed level,
-// plus the MM_DIG_000 type-2 branch-1 sprite demonstration.
-// Fixed source camera, injected generator state; source-built rendering evidence only. No
-// original code runs; no claim of original admission, flame-phase agreement, x87 equivalence,
-// clipping or full-frame fidelity; C3 stays FAIL.
+// Check installed scenery loaders and MM_DIG_000 type-2 branch-1 sprites
+// with a static camera and explicit generator state. Original x87 equivalence is unestablished.
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
 #include "app/TubeScene.h"
@@ -127,7 +124,7 @@ std::string firstReason(const std::string& d) {
   return d.substr(roleBegin, roleEnd - roleBegin) + ": " + text.substr(0, 160);
 }
 
-// ---- MM_DIG_000 fixed measured record (docs/scratch/scene-branch-research-002.md section 8) ----
+// MM_DIG_000 reference record.
 constexpr std::array<std::size_t, 19> kDigNodes = {0xA7555, 0xBC6EA, 0xBC7C7, 0xBC8A4, 0xBC981, 0xBCA5E, 0xBCB3B, 0xBCC18, 0xBCCF5, 0xBCDD2,
                                                    0xC1DE8, 0xC1EC5, 0xC1FA2, 0xC207F, 0xC215C, 0xC2239, 0xC2316, 0xC23F3, 0xC24D0};
 // 19 draws from CRT state 1 mapped through trunc(15*rand/32767): the hand-computed worked example.
@@ -185,7 +182,7 @@ void application(const std::string& gameDir, const fs::path& dir, std::ostream& 
 }
 
 void digDemonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraBasis& cam, const fs::path& dir, std::ostream& log) {
-  // --- parser/geometry record: orientation on the measured fire record (first node 0xA7555) ---
+  // Check the fire record's orientation (first node at 0xA7555).
   CrtRand rngA(1);
   auto sceneA = buildDig(lib, bytes, rngA);
   require(sceneA.spriteCount() == 19, "19 branch-1 sprites");
@@ -238,7 +235,7 @@ void digDemonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
     }
   }
 
-  // --- injected-state renders: per-role calls, 19 submissions, artifacts ---
+  // Check 19 sprite submissions with explicit generator state.
   const auto cameraTube = [&]() {
     auto mesh = findCylinderMesh(bytes); auto index = indexLevel(bytes);
     require(bool(mesh) && bool(index), "MM_DIG_000 cylinder/index");
@@ -282,7 +279,6 @@ void digDemonstration(const AssetLibrary& lib, const Bytes& bytes, const CameraB
   // Mesh submissions are the same Secondary stage's non-sprite calls; both are reported above.
   require(sec.rasterCalls - sec.spriteRasterCalls > 0, "Secondary mesh submissions listed apart from sprites");
 
-  // scene-on/off and scene-only artifacts, changed pixels.
   artifact(dir, "MM_DIG_000-scene-only", only.raster, true);
   artifact(dir, "MM_DIG_000-scene-on", on.raster, true);
   artifact(dir, "MM_DIG_000-scene-off", off.raster, true);
@@ -348,9 +344,8 @@ int main() try {
   const std::string side = "after";
   const fs::path root = SCENE_BRANCH_IMPL_DIR, dir = root / side; fs::create_directories(dir);
   std::ofstream log(dir / "measurements.txt"); log << std::setprecision(17);
-  const auto cam = buildCamera(CameraParams{});  // explicit fixed source camera for every level and side
+  const auto cam = buildCamera(CameraParams{});  // same camera for all levels and variants
 
-  // ---- Phase 1: build every effective installed level ----
   const auto names = levelFileNames(*lib);
   log << "side=" << side << " effectiveLevels=" << names.size() << '\n';
   std::map<std::string, BackdropScene> admitted; std::map<std::string, Bytes> admittedBytes;
@@ -387,10 +382,10 @@ int main() try {
 
   require(admitted.count("MM_DIG_000") == 1, "current admits MM_DIG_000");
 
-  // ---- Phase 2: render every admitted level, record RGB/depth hashes (and raw MM_CLIMB_002) ----
+  // Hash RGB and depth for each admitted level. Export raw MM_CLIMB_002 frames.
   std::ofstream hashFile(dir / "hashes.txt");
   double renderSeconds = 0;
-  // Preserve the ten composed routes; other installed levels use scene-only rendering.
+  // Compose full frames for ten levels and render scenery alone for the others.
   static const std::set<std::string> composedLevels = {"E06_KF_1", "H17_MG_1", "M06_KF_1", "M08_KF_1", "MM_BASH_002", "MM_CLIMB_002", "MM_E1_3_SKILLS", "MM_E1_4SKILLS", "MM_W_012", "VH22_JC"};
   for (const auto& [id, backdrop] : admitted) {
     const auto& bytes = admittedBytes.at(id);
@@ -417,7 +412,7 @@ int main() try {
     for (const auto& [mode, r] : {std::pair<const char*, Rendered*>{"scene-only", &scene}, {"scene-on", &on}, {"scene-off", &off}}) {
       const auto h = hashes(r->raster);
       hashFile << id << ':' << mode << " rgb=" << hex(h.rgb) << " depth=" << hex(h.depth) << '\n';
-      // Retain current pixels and the provenance of depth-tested gadget stores.
+      // Record depth-tested gadget stores alongside the rendered pixels.
       artifact(dir, id + "-" + mode, r->raster, true);
       r->leverPixels.save(dir / (id + "-" + mode + ".lever-mask"));
     }
@@ -438,10 +433,8 @@ int main() try {
   hashFile.close();
   log << "renderAllSeconds=" << renderSeconds << " admittedRendered=" << admitted.size() << '\n';
 
-  // ---- Phase 4: MM_DIG_000 demonstration ----
   auto dig = lib->read("COMPILED\\MM_DIG_000.LVL"); require(bool(dig), "read MM_DIG_000");
   digDemonstration(*lib, *dig, cam, dir, log);
-  // ---- Phase 5: bounded public route ----
   application(gameDir, dir, log);
   log.close();
   std::ifstream report(dir / "measurements.txt"); std::cout << report.rdbuf();

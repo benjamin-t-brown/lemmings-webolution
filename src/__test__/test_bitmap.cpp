@@ -1,8 +1,5 @@
-// Tests for BMP decoding, the alpha-sigil rules, and the PNG writer.
-//
-// The bitmap tests synthesise their own BMPs so they run anywhere. The
-// synthetic archive tests also exercise loadTexture without retail data. The
-// additional retail checks skip when game data is unavailable.
+// Synthetic BMPs and archives exercise decoding, alpha sigils, PNG output and loadTexture.
+// Retail checks require game data.
 
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
@@ -125,7 +122,7 @@ void testDecode24() {
   auto flipped = bmp;
   const std::int32_t negative = -2;
   std::memcpy(flipped.data() + 22, &negative, 4);
-  // Re-lay the rows top-down to match the new orientation.
+  // Store the top row first for negative BMP height.
   auto topDown = webo::decodeBmp(flipped);
   check(topDown.has_value(), "decodes a top-down bitmap");
   if (topDown)
@@ -184,8 +181,7 @@ Bytes bytes(std::initializer_list<std::uint8_t> values) {
   return result;
 }
 
-// Literal 3x2 bottom-up BMP: 9 pixel bytes + 3 deliberately nonzero padding
-// bytes per row. Neither the decoder nor an image round-trip creates this data.
+// Literal bottom-up 3x2 BMP with nine pixel bytes and three nonzero padding bytes per row.
 Bytes oddWidthBmp() {
   return bytes({
       0x42, 0x4d, 78, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0,
@@ -210,8 +206,7 @@ Bytes alpha32Bmp() {
   });
 }
 
-// An encoder for a single literal run in codec 4's zero-table unary mode.
-// It constructs input only; expected pixels below are independently literal.
+// Encode a single literal run in codec 4's zero-table unary mode.
 Bytes literalBlock(std::span<const std::byte> input) {
   Bytes result(3, std::byte{0});  // three unary tables
   unsigned bit = 0;
@@ -463,7 +458,7 @@ void testPlusTextures() {
   for (const auto sigil : {'_', '$', '~'}) {
     const auto name = std::format("TEXTURES\\{}{}.BMP", sigil, sigil == '~' ? "ADD" : "KEY");
     const auto image = webo::loadTexture(*lib, name);
-    // Independent complete expectations for the unchanged key/additive paths.
+    // Independent expectations for keying and additive alpha.
     const std::vector<std::uint8_t> control = {
         255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255,
         0, 0, 0, static_cast<std::uint8_t>(sigil == '_' ? 0 : 255),
@@ -493,7 +488,6 @@ void testRealTextures() {
     return;
   }
 
-  // One of each interesting kind, by name, so a regression names itself.
   struct Case {
     const char* name;
     webo::AlphaMode mode;

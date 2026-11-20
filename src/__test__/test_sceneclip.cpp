@@ -18,7 +18,7 @@ int main(){
   ck(close((*near)[0].viewX,0)&&close((*near)[0].viewY,2)&&close((*near)[0].viewZ,2e-6),"closing-edge native XYZ");
   ck(close((*near)[1].screenX,0)&&close((*near)[1].screenY,0),"second near crossing/order");
   ck(close((*near)[0].attributes[0],0.5),"near attributes use t");
-  // Positive sub-epsilon source depth is retained, not overwritten.
+  // Keep positive depth below epsilon.
   auto tiny=clipScenePolygon({v(0,0,1e-10,1),v(1,0,1,1),v(0,1,1,1)},cfg(0));
   ck(bool(tiny)&&tiny->size()==3&&(*tiny)[0].viewZ==1e-10,"positive sub-epsilon survives");
   // Projected triangle (-2,0,2),(2,0,4),(2,4,4), clipped X>=0.

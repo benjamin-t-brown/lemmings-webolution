@@ -274,25 +274,14 @@ void testRetailSkills(const fs::path& dir) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// native-009: hatch records through the recovered structured level reader.
+// Original level read order: prefix 0x004432C1, world geometry 0x00439FD3,
+// paired objects 0x00437D48, entity tables 0x00447960, gadgets 0x00448650 … 0x0044D429.
 //
-// Read order of a serialized compiled level, with the original readers:
-//   prefix          0x004432C1
-//   world geometry  0x00439FD3
-//   paired objects  0x00437D48
-//   entity tables   0x00447960
-//   gadget records  0x00448650 … 0x0044D429
-// The hatch list is the third gadget call, 0x004487F0, whose records are read
-// by 0x00425E50: the shared spatial base 0x0043130E (two triples into
-// hatch+0x48 and +0x60, then two *counted* triple arrays) followed by the
-// hatch's own type/count/x/y and rate words.
+// The third gadget call, 0x004487F0, dispatches hatch reader 0x00425E50.
+// Shared spatial reader 0x0043130E stores two triples at hatch+0x48 and +0x60,
+// then reads two counted triple arrays. Hatch type, count, x/y and rates follow.
 //
-// These buffers are written out here from explicit little-endian primitives
-// with empty collections. They are a fixture for that read layout -- not a
-// claim about the original in-memory hatch object, its allocation, its
-// resource resolution or any timing -- and nothing is round-tripped through a
-// production writer.
+// Write explicit little-endian fixture fields with empty collections.
 
 struct Blob {
   std::vector<std::uint8_t> bytes;
@@ -402,8 +391,7 @@ void hatchRecord(Blob& out, const SynthHatch& h) {
   out.u8(0);   // +0xAD
 }
 
-// One Entrance.a3d world placement in the layout poseAfterA3d matches, so
-// findLevelObjects accepts the fixture at all. Unrelated to the hatch list.
+// Add one Entrance.a3d world placement matching poseAfterA3d so the locator can finish.
 void entrancePlacement(Blob& out) {
   out.text("Entrance.a3d");
   out.text("Object 09");
@@ -497,9 +485,8 @@ std::vector<std::uint8_t> syntheticLevel(const std::vector<SynthHatch>& hatches,
   return out.bytes;
 }
 
-// native-013: reuse the complete empty Level 23 sections above, replacing only
-// the empty tail from 0x0045B86D onward with explicit ordered little-endian
-// fields. No production writer or parser supplies the stock expectations.
+// Reuse the empty Level 23 sections and write the tail starting at 0x0045B86D
+// in explicit little-endian order.
 struct SynthSkills {
   std::vector<std::uint8_t> bytes;
   std::size_t panelAt = 0;
@@ -547,7 +534,7 @@ SynthSkills syntheticSkillLevel(bool laterPair) {
 void legacySkillTrailer(Blob& out) {
   out.u32(13); out.u32(23); out.u32(31); out.u32(41);
   out.u32(53); out.u32(61); out.u32(71); out.u32(83);
-  out.u32(91);  // unexplained word, retained only for the old scan's spacing
+  out.u32(91);  // unknown word in the locator layout
   out.u32(1); out.u32(8);
 }
 
@@ -635,8 +622,8 @@ void testSkillFallbackAndErrors() {
           "malformed failure retains both recovered and legacy causes");
   }
 
-  // Decoding succeeds, but portable adapter validation fails. The later
-  // trailer is usable by the unchanged scanner and must not enable fallback.
+  // The portable adapter rejects these decoded fields. A usable locator
+  // trailer must not enable fallback.
   fixture.bytes[fixture.panelAt + 5 * 4] = 201;
   Blob invalid{fixture.bytes};
   legacySkillTrailer(invalid);
@@ -647,9 +634,8 @@ void testSkillFallbackAndErrors() {
           "decoded count failure is solely the adapter validation error");
 }
 
-// A hatch the locator cannot see: an exactly 8 x 5 box, but a populated
-// counted triple array, so the eight bytes after the box are not the +0.0
-// the byte pattern needs for its seventh double.
+// A populated counted triple array after the 8 x 5 box defeats the locator's
+// seventh-double +0.0 check.
 SynthHatch hatchWithTripleArray() {
   SynthHatch h;
   h.model = "entrance_synth_a";
@@ -715,10 +701,8 @@ void testSyntheticStructuredHatches() {
   const SynthHatch wantB = hatchWithOtherBox();
   const auto bytes = syntheticLevel({wantA, wantB});
 
-  // Both records are deliberately invisible to the byte-pattern locator: this
-  // is the before/after. Before the production change findLevelObjects saw
-  // only findHatchRecords, so both were lost and loadRetailLevelReport would
-  // reject such a level with "no hatch record".
+  // Both hatches bypass the byte-pattern locator. Check that the structured
+  // reader still supplies them to findLevelObjects and loadRetailLevelReport.
   const auto located = webo::findHatchRecords(view(bytes));
   check(located.empty(),
         std::format("the locator cannot see either record (it found {})", located.size()));
@@ -741,9 +725,8 @@ void testSyntheticStructuredHatches() {
 
 void testStructuredFallback() {
   std::cout << "locator fallback when the structured reader rejects the input\n";
-  // Not a compiled level: a declared string longer than the buffer. One
-  // locator-visible record follows, then the entrance placement so
-  // findLevelObjects still returns a value.
+  // A string length beyond the buffer forces locator fallback. Follow it with
+  // one locator-visible record and the entrance placement.
   Blob out;
   out.u32(254);  // 0x0047D940 string length, with far fewer bytes left
   out.u64(kB10);
@@ -762,7 +745,7 @@ void testStructuredFallback() {
   out.u32(99);  // rate, rateMin, rateMax
   out.u8(0);
   entrancePlacement(out);
-  for (int i = 0; i < 16; ++i) out.u8(0);  // slack past the transform run
+  for (int i = 0; i < 16; ++i) out.u8(0);  // padding after the transform
 
   const auto located = webo::findHatchRecords(view(out.bytes));
   auto objs = webo::findLevelObjects(view(out.bytes));
@@ -798,9 +781,8 @@ void testStructuredFallback() {
   check(h.at != 0, "the locator still reports its file offset");
 }
 
-// Every locator-found record must also appear in the structured list with the
-// same words. Structured-only records are reported, not asserted away: this
-// sweep measures the installed corpus, it does not define it.
+// Match every locator record to the structured list by field values.
+// Report structured-only records.
 void testRetailStructuredSweep(const fs::path& dir) {
   std::cout << "retail structured vs located hatch records\n";
   auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
@@ -888,9 +870,8 @@ void testRetailStructuredSweep(const fs::path& dir) {
                     "rejected)", rejected));
 }
 
-// camera-entry-001: selected-hatch camera metadata. The hatch's base yaw is the
-// first double the base reader (0x00423291) stores at hatch+8; it is *not* one of
-// the spawn words (+0x98/+0x9A/+0x9C). The selector is gadgets.value_5568.
+// Reader 0x00423291 stores the hatch's base yaw at hatch+8. Spawn words are
+// +0x98/+0x9A/+0x9C. gadgets.value_5568 selects the hatch.
 constexpr std::uint64_t dbits(double v) { return std::bit_cast<std::uint64_t>(v); }
 
 std::string sha256Hex(const std::vector<std::uint8_t>& data) {
@@ -970,9 +951,8 @@ void testSelectedHatchCamera() {
     return webo::readSelectedHatchCamera(view(bytes));
   };
 
-  // A selector chooses the non-first hatch, whose base yaw shares nothing with
-  // its spawn words or either hatch's model name; the first hatch carries a
-  // populated counted triple array and a model between the records.
+  // Select the second hatch's base yaw. A counted triple array and a model
+  // separate the two records.
   const auto bytes = syntheticLevel({first, second}, 1);
   const auto before = bytes;
   const auto chosen = read(bytes);
@@ -984,8 +964,8 @@ void testSelectedHatchCamera() {
   }
   checkYaw(read(syntheticLevel({first, second}, 0)), 0, 2, 17.5, "selector 0 chooses the first hatch");
 
-  // Nonnegative selectors beyond the list, including an empty list, are the
-  // evidenced yaw128 default (0x00444FA2 / 0x00444FA9).
+  // Out-of-range nonnegative selectors, including an empty list, use yaw128
+  // (0x00444FA2 / 0x00444FA9).
   checkYaw(read(syntheticLevel({first, second}, 2)), 2, 2, 128.0, "selector equal to count");
   checkYaw(read(syntheticLevel({first, second}, 0x7FFFFFFFu)), 0x7FFFFFFF, 2, 128.0,
            "selector INT32_MAX");
@@ -1055,7 +1035,7 @@ void testRetailSelectedCamera(const fs::path& dir) {
                              blob->size(), got ? got->selector : -1, got ? got->hatchCount : 0,
                              got ? got->yawUnits : 0.0);
     if (std::string_view(want.id) == "MM_BASH_002") {
-      // Planning-time measurements, reproduced here against the installed bytes.
+      // Check the installed payload's identity and raw hatch fields.
       std::vector<std::uint8_t> raw(blob->size());
       std::memcpy(raw.data(), blob->data(), blob->size());
       check(blob->size() == 709367, "MM_BASH_002 is 709,367 bytes");
@@ -1073,8 +1053,7 @@ void testRetailSelectedCamera(const fs::path& dir) {
     }
   }
 
-  // Corpus census, reported rather than asserted: it is the evidence for which
-  // other levels already take the same path.
+  // Report other installed levels that use the same selector path.
   std::size_t levels = 0, inRange = 0, defaulted = 0, rejected = 0, nonzero = 0;
   for (const auto& name : webo::levelFileNames(*lib)) {
     auto blob = lib->read(name);

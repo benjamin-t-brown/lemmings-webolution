@@ -1,5 +1,4 @@
-// Small legacy checks for presentation lifetime, live-prefix indexing and
-// independent exit clocks. Synthetic contacts, not a gameplay/replay route.
+// Check presentation lifetime, live-prefix indexing and independent exit clocks with synthetic contacts.
 #include "app/LemmingAnim.h"
 #include "app/LemmingMotion.h"
 #include "app/BackdropScene.h"
@@ -121,8 +120,8 @@ int main(int argc, char** argv) {
   check(draw.size() == 1 && world.saved() == 4 && world.takeCues().size() == 1,
       "tail expiry creates no extra saves or cues");
   check(app::injectedWalkersFromWorld(world, 112).size() == 1, "diagnostic without tracker retains live-only behavior");
-  // Y8: keep the model and the exit-tail adapter coupled. These installed
-  // asset samples/synthetic contacts are short logic checks, not play routes.
+  // Use installed exit models and synthetic arrivals to check that the
+  // exit-tail adapter follows the basket's bob.
   const auto levelNames = levelFileNames(*library);
   for (const char* id : {"MM_CLIMB_002", "MM_W_012", "M06_KF_1"}) {
     std::string name;
@@ -171,8 +170,7 @@ int main(int argc, char** argv) {
     app::RuntimeSimState clock;
     tails.observe(arrivals);
     const auto observe = [&] { tails.observe(arrivals); };
-    // Exit recognition stays on the accepted bookkeeping tick. No jump or bob
-    // sample is allowed to defer its save/cue until presentation completion.
+    // Save and cue at exit recognition. Jump and bob are presentation only.
     arrivals.tick(); observe();
     check(arrivals.saved() == 2 && arrivals.takeCues().size() == 2,
         "bobbing does not defer saves or cues until jump completion");
@@ -206,7 +204,7 @@ int main(int argc, char** argv) {
         "fast-forward advances presentation expiry with no extra save/cue");
     check(arrivals.setup().exits.front().x == trigger.x && arrivals.setup().exits.front().y == trigger.y,
         "all render samples leave the simulation trigger fixed");
-    // Sampling departure at an arbitrary bob phase must not snap back to base.
+    // Departure starts at the sampled bob position.
     backdrop->setEntranceExitPresentation(*presentation, 1, 0, .5);
     const auto beforeDeparture = matrices();
     backdrop->setEntranceExitPresentation(*presentation, 1, 1e-8, .50000001);

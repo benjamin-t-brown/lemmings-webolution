@@ -1,6 +1,4 @@
-// Independent, headless entry-frame composition for the existing wiring tests.
-// P9 changes their former closed-door expectation, not the camera, HUD or input
-// contract. Explicit milliseconds keep this fixture independent of the SDL loop.
+// Compose the expected entry frame headlessly with explicit milliseconds.
 #pragma once
 
 #include "app/BackdropScene.h"
@@ -41,12 +39,9 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   // animation/motion clocks, so refuse to silently fake a later gameplay frame.
   if (world.spawned() != 0 || !std::isfinite(openingMs) || openingMs < 0)
     throw std::runtime_error("hatch entry fixture is restricted to pre-release frames");
-  // R2 corrects connected entry's compressed door expectation. Direct-level
-  // diagnostics retain the old arm mapping. Zero-time control stays identical.
+  // Connected entry uses the full door clip. Direct-level diagnostics map it to the arm interval.
   const double arm = connectedEntry ? 2.799999952316284 : world.setup().releaseArmSeconds;
-  // Y8: this expectation formerly encoded the static exit-balloon defect.
-  // Sample its bob at the entry frame's admitted whole milliseconds, while
-  // doors retain their independent sub-ms clock. Zero-time controls stay exact.
+  // Sample the exit balloon at whole milliseconds. Doors use a separate sub-millisecond clock.
   const double levelSeconds = std::floor(openingMs + 1e-6) / 1000.0;
   backdrop.setEntranceExitPresentation(effects, arm > 0 ? openingMs / 1000.0 / arm : 1, 0,
                                       levelSeconds);
@@ -71,9 +66,7 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
     image.rgba.insert(image.rgba.end(), {rgb[i], rgb[i + 1], rgb[i + 2], 255});
   }
   const auto font = require(loadTexture(library, "TEXTURES\\^FONT.BMP"));
-  // R6: the ordinary window's initial pointer is centered on this hatch.
-  // Keep the historical headless closed control unchanged by opting in only
-  // for expected window frames. Full-frame equality assertions remain exact.
+  // Window frames start with the pointer centered on the hatch.
   bool overHatch = false;
   if (hoverFeedback) {
     auto hatches = backdrop.hatchHoverTargets(camera, raster);
@@ -86,13 +79,10 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   }
   const auto panel = require(app::RetailSkillPanel::create(library, levelName));
   auto icons = require(app::SkillPanelIconAnimation::create(library));
-  // R7: the old fixed icon expectation encoded the playtest defect. Sample
-  // explicit UI time; retain the zero-time control and exact full-frame checks.
+  // Sample the skill panel at explicit UI time.
   icons.advanceIcons(panelSeconds, 0, -1);
   panel.draw(image, panel.initialCounts(), 0, false, &icons);
-  // Playtest 13 C6: the expected window frame includes the three HUD icons.
-  // In this fixture, direct window samples request hover feedback and the
-  // direct headless control requests neither connected entry nor hover.
+  // Window frames with hover feedback include all three HUD icons.
   if (connectedEntry || hoverFeedback) {
     app::compositeIconRegion(image, require(loadTexture(library, "TEXTURES\\^OUT.BMP")),
                              {557, 15, 0, 0, 26, 32});
@@ -103,7 +93,7 @@ inline Image hatchEntryFixture(const AssetLibrary& library,
   }
   app::drawRuntimeHud(image, font, world, false);
   const auto cursor = require(app::RuntimeCursor::load(library));
-  // C7: initial hatch hover displays the installed entrance cursor.
+  // Initial hatch hover uses the installed entrance cursor.
   cursor.draw(image, overHatch ? app::CursorState::Entrance : app::CursorState::NoLemming,
               image.width / 2, image.height / 2);
   return image;

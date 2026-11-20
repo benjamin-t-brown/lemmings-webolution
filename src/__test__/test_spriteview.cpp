@@ -48,8 +48,7 @@ int main() {
     bool priorMirror;
     bool mirror;
   };
-  // Independent quadrant and diagonal examples, with all diagonal ties fixed
-  // to the <= branches visible in the original chooser.
+  // Diagonal ties use the original chooser's <= branches.
   constexpr std::array cases{
       Case{0, 0, 5, 2, true, false}, Case{0, 1, 5, 3, false, true},
       Case{1, 0, 5, 0, true, false}, Case{-1, 0, 5, 3, true, false},

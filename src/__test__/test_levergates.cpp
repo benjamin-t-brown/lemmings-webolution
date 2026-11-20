@@ -1,17 +1,7 @@
-// lever-gates-impl-001: serialized lever links -> receiver gates -> the 0x200 zone mask, driven
-// through the production loader (loadRetailLevel / loadRetailLevelReport) and the shared elapsed
-// path (RuntimeSimState::advanceElapsed -> World::advanceElapsedMs -> updateSegment). Source-built;
-// the original executable is never run.
-//
-// Label key used in the observation file:
-//   REAL      installed MM_W_012 data through the public loader, no injected actors
-//   SYNTHETIC a walker placed beside/inside a real lever (a fixture, not natural play)
-//   FIXTURE   a source-level change to the loaded setup (the supported type-5 lowering request,
-//             which no installed MM_W_012 lever sends)
-//   UNIT      a hand-built Terrain exercising the rectangle painter
-// Expectations come from an independent transcription (struct Ref) of the traced recurrence and
-// from rectangles read straight out of the structured level bytes; no number is copied from the
-// production code under test. Nothing here claims natural play, visible fluid or original fidelity.
+// Check that installed MM_W_012 lever links update receiver gates and the
+// 0x200 zone mask through loadRetailLevel and World::advanceElapsedMs.
+// Compare against a separate recurrence and serialized rectangles. A fixture
+// supplies the type-5 lowering request absent from the installed levers.
 #include "app/RuntimeHud.h"
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
@@ -77,9 +67,8 @@ constexpr std::size_t kTargetLever = 2;  // (183,60)
 
 int rowsAt(double h) { return static_cast<int>(4.0 + h) - 4; }  // painted rows for min.y = 4
 
-// Independent transcription of the traced step (lever-timing section 3 / lever-links section 3),
-// specialised to the ids 5/6 gates (kind 0, rate 2.0, low 0, high 24.5, min.y 4). `rows` is the
-// number of painted rows from original row 4 up (the mask is a column-aligned stack).
+// Reference step for gates 5/6 (kind 0, rate 2.0, low 0, high 24.5, min.y 4).
+// rows counts the painted rows from original row 4 upward.
 struct Ref {
   int request = 1, done = 2;
   bool armed = false;
@@ -143,9 +132,8 @@ std::size_t placeWalker(sim::World& w, sim::Facing facing, bool inBox) {
   return w.lemmings().size() - 1;
 }
 
-// Drives World::advanceElapsedMs and keeps the independent reference in step with every update
-// segment: a lever state change reports the message the lever list carries (lowerOnPlus selects
-// the FIXTURE where the +1 list carries type 5), then the reference steps with THAT segment's dt.
+// Keep the reference in step with each World::advanceElapsedMs segment.
+// lowerOnPlus selects type 5 on the +1 list.
 struct Probe {
   sim::World& w;
   Ref ref;
@@ -200,7 +188,6 @@ int main(int argc, char** argv) {
   }
   note("lever-gates-impl-001 AFTER observations (production loader + shared elapsed path)");
 
-  // ---- UNIT: the rectangle painter (traced traversal) on a hand-built 256 x 96 terrain.
   {
     sim::Terrain t(256, 96);
     t.paintZoneWaterRect(10.9, 4.9, 12.2, 7.5, true);  // cols [10,12) rows [4,7): truncation, exclusive
@@ -237,7 +224,6 @@ int main(int argc, char** argv) {
     check(none.zoneWaterCells() == 0, "UNIT: empty column range paints nothing");
   }
 
-  // ---- REAL: independent receiver rectangles from the structured level bytes.
   auto resolved = sim::resolveRetailLevel(*lib, "MM_W_012");
   check(resolved.has_value(), "resolve MM_W_012");
   if (!resolved) return 1;
@@ -258,7 +244,6 @@ int main(int argc, char** argv) {
   }
   check(g_rects.size() == 19, "19 receiver records");
 
-  // ---- REAL: load result through the public loader.
   auto report = sim::loadRetailLevelReport(*lib, "MM_W_012");
   check(report.has_value(), "loadRetailLevelReport MM_W_012");
   if (!report) return 1;
@@ -280,9 +265,8 @@ int main(int argc, char** argv) {
       }
     }
     check(req1Left == 0 && req0Kept == 528, "16 request-1 regions clear 3072, the three request-0 regions keep 528");
-    // empty-receiver-fall-001: raw fluid-only cells are no longer immutable
-    // Earth. Independently identify those cells from the installed receiver
-    // rectangles; every actual floor/wall and every unrelated plane stays exact.
+    // Identify raw fluid-only cells from the installed rectangles. Floors, walls
+    // and unrelated planes must remain intact.
     auto grid = webo::findCollisionGrid(*blob);
     check(grid.has_value(), "collision grid");
     if (grid) {
@@ -352,7 +336,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  // ---- FIXTURE: unsupported targets/types are bounded and never reach a gate.
+  // Unsupported targets and message types must never reach a receiver.
   {
     sim::World w = loadWorld(*lib);
     sim::LevelSetup s = w.setup();
@@ -383,7 +367,7 @@ int main(int argc, char** argv) {
     check(s.leverStats.delivered == 1 && raised == 1 && sixRaised, "FIXTURE: a type-4 message reaches only the gate with that id");
   }
 
-  // ---- SYNTHETIC: zero-delta first update. Contact runs before receivers in the same update.
+  // Contact precedes receiver updates even at zero delta.
   {
     sim::World w = loadWorld(*lib);
     placeWalker(w, sim::Facing::Left, true);
@@ -399,14 +383,13 @@ int main(int argc, char** argv) {
     check(gateById(w, 9)->request == 1 && gateById(w, 9)->done == 1 && gateById(w, 9)->armed,
           "an untargeted request-1 gate settled (done 1, armed) in that zero-delta update");
     check(w.terrain().zoneWaterCells() == 528, "zero-delta update paints no cell");
-    // The never-settled edge: reaching `high` with armed false leaves done at 2 (traced edge state).
+    // Reaching high while unarmed leaves done at 2.
     for (int i = 0; i < 1000; ++i) w.advanceElapsedMs(100);
     check(g5->height == 24.5 && g5->done == 2 && !g5->armed && flaggedIn(w.terrain(), rectOf(5)) == 192 &&
               flaggedIn(w.terrain(), rectOf(6)) == 192 && w.terrain().zoneWaterCells() == 912,
           "pre-settle activation reaches 24.5 / 384 cells and keeps repainting (done stays 2)");
   }
 
-  // ---- SYNTHETIC: activation, intermediate ramp, repeat pulls, settle (shared dt per segment).
   {
     sim::World w = loadWorld(*lib);
     Probe p(w);
@@ -415,7 +398,7 @@ int main(int argc, char** argv) {
     check(w.setup().levers[kTargetLever].state == 1 && gateById(w, 5)->done == 1 && gateById(w, 5)->armed,
           "before contact the pair has settled drained (done 1, armed) and the lever is untouched");
     check(w.terrain().zoneWaterCells() == 528, "528 until the pull");
-    p.run(16);  // 13th update: the walker steps, the lever fires after the lemming, the gate steps with the same dt
+    p.run(16);  // on update 13, contact fires after the walker step and the gate uses the same dt
     const sim::FluidGate* g5 = gateById(w, 5);
     note(std::format("SYNTHETIC activation update: lever.state={} g5.request={} h={} (first raise step used this update's dt 0.016 -> expect {})",
                      w.setup().levers[kTargetLever].state, g5->request, g5->height, 0.016 * 2.0 + 0.0));
@@ -488,7 +471,7 @@ int main(int argc, char** argv) {
           "repeat -1 pull after settling and a zero-delta update change nothing (idempotent)");
   }
 
-  // ---- FIXTURE: the supported lowering request (type 5), absent from installed MM_W_012 levers.
+  // Type 5 lowers receivers. The installed MM_W_012 levers do not send it.
   {
     auto setup = sim::loadRetailLevel(*lib, "MM_W_012");
     check(setup.has_value(), "load for lowering fixture");
@@ -523,7 +506,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  // ---- SYNTHETIC: shared elapsed path (RuntimeSimState): pause, fast-forward, partition independence.
+  // Check pause, fast-forward and partition independence through RuntimeSimState.
   {
     sim::World a = loadWorld(*lib);
     sim::World b = loadWorld(*lib);
@@ -576,7 +559,7 @@ int main(int argc, char** argv) {
     check(dts.size() == 2 && gateById(d, 5)->height == e.h, "event boundary: two updates (11 ms + 5 ms), each step uses its own segment dt");
   }
 
-  // ---- REAL: reload resets every receiver and the mask.
+  // Reload resets receivers and the mask.
   {
     sim::World w = loadWorld(*lib);
     Probe p(w);

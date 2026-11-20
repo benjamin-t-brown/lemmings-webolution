@@ -1,27 +1,11 @@
-// D3c: offline click-to-assign wiring. Loads MM_CLIMB_002, ticks to a fixed
-// count where two lemmings are alive, and checks that each alive lemming's
-// on-screen sprite box (the same placement drawInjectedWalkers computes)
-// feeds pickHoveredLemming. No stock game, no window.
+// On MM_CLIMB_002, use drawInjectedWalkers geometry to check pickHoveredLemming.
 //
-// Tick count 25, counted before this test was run, from the loader's seconds
-// release model and tickDtSeconds() == 0.2:
-//   releaseArmSeconds 0.723061695938398 arms on tick 4 (elapsed 0.8) and
-//   seeds releaseFirstCountdownSeconds 1.3 with no decrement that tick;
-//   tick 11 spawns the first lemming; releaseIntervalSeconds
-//   2.8864866275534937 then crosses zero again on tick 25, spawning the
-//   second. continuousStepperClock stays false (the loader does not set it).
-//   After 25 ticks both lemmings are alive, so the alive-only walker list is
-//   index-aligned with World::lemmings().
+// At 0.2 s per tick, releaseArmSeconds arms on tick 4 and seeds
+// releaseFirstCountdownSeconds without decrementing it that tick.
+// Lemmings spawn on ticks 11 and 25, so both are alive and aligned with World::lemmings().
 //
-// Camera: tools/harness/fixtures/camera_a1/camera-fixture-params.json, the
-// A1/A4 params file loadCameraParams already reads (test_actorcompose's
-// "initial" view). reference-state.json is a live memory dump and is not
-// that schema.
-//
-// priority and distanceSquared are 0 on every candidate. That is the
-// inherited D2a limitation: first eligible overlapping candidate in list
-// order wins only when every candidate is tied on both keys. This test does
-// not resolve the priority table or screen+0x58.
+// Use the loadCameraParams schema. Tied priority and distanceSquared
+// preserve list order. Original screen+0x58 priority remains untraced here.
 
 #include "app/Camera.h"
 #include "app/Pick.h"
@@ -56,8 +40,7 @@ void check(bool condition, const char* message) {
   }
 }
 
-// Toward-zero truncation, matching the conversion Pick.h documents for the
-// original screen-box fields. Not a new exe read.
+// Truncate toward zero to match the original screen-box conversion.
 webo::app::PickBox pickBoxFromPlacement(const webo::app::ActorSpritePlacement& placement) {
   return webo::app::PickBox{
       static_cast<int>(placement.left),
@@ -150,10 +133,8 @@ int main() {
     candidates[i].distanceSquared = 0.0;
   }
 
-  // Lemming 0's own box, used as the cursor. With every tie-break key equal
-  // to 0, an earlier lemming wins an exact tie, so this cursor selects
-  // lemming 0 whenever the box is wide enough to overlap itself after the
-  // 4px x shrink (right - left >= 4).
+  // Use lemming 0's box as the cursor. With equal tie-break keys it wins if its
+  // box overlaps after the 4 px horizontal shrink.
   constexpr std::size_t kChosen = 0;
   const webo::app::PickBox& chosen = candidates[kChosen].box;
   check(chosen.right - chosen.left >= 4, "chosen box is at least 4px wide");

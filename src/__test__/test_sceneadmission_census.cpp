@@ -1,9 +1,6 @@
-// scene-admission-001 step 1: structural census of every effective installed level.
-// Source-built, read-only archive access. It mirrors the production structural
-// pipeline (read_compiled_level, readSceneNode with exact tree_end check, Secondary
-// leaf-domain check, model type0 requirement, buildSceneMeshSource and the billboard
-// adapter) WITHOUT any level-ID allowlist and classifies each level by outcome. It
-// does not render, run original code or claim native admission.
+// Classify scenery across the installed corpus without using level IDs.
+// Check the exact tree_end, Secondary node domain, type-0 model roots and
+// mesh and billboard adapter results.
 #include "app/Camera.h"
 #include "app/SceneBillboardSource.h"
 #include "app/SceneMeshSource.h"
@@ -34,16 +31,15 @@ using namespace webo::app;
 namespace {
 using Matrix=std::array<double,12>;
 Matrix identity(){return {1,0,0,0,1,0,0,0,1,0,0,0};}
-// Same row-vector helpers as BackdropScene.cpp (copied so the census depends on no production seam).
+// Use independent row-vector helpers for the census.
 Matrix compose(const Matrix&a,const Matrix&b){Matrix o{};for(int i=0;i<3;++i){for(int j=0;j<3;++j)for(int k=0;k<3;++k)o[3*i+j]+=a[3*i+k]*b[3*k+j];o[9+i]=b[9+i];for(int k=0;k<3;++k)o[9+i]+=a[9+k]*b[3*k+i];}return o;}
 BillboardAffine3x4 affine(const Matrix& m){return {{{m[0],m[3],m[6],m[9],m[1],m[4],m[7],m[10],m[2],m[5],m[8],m[11]}}};}
 BillboardAffine3x4 multiply(const BillboardAffine3x4&a,const BillboardAffine3x4&b){BillboardAffine3x4 o;for(int r=0;r<3;++r){for(int c=0;c<3;++c)for(int k=0;k<3;++k)o.values[4*r+c]+=a.values[4*r+k]*b.values[4*k+c];o.values[4*r+3]=a.values[4*r+3];for(int k=0;k<3;++k)o.values[4*r+3]+=a.values[4*r+k]*b.values[4*k+3];}return o;}
 
 enum class Cls{Ok,Unsupported,Malformed};
 const char* clsName(Cls c){return c==Cls::Ok?"ok":c==Cls::Unsupported?"unsupported":"malformed";}
-// Explicit classification rule under test: a reader/adapter message beginning a
-// form diagnosis with "unsupported" is an unsupported form; anything else
-// (truncation, bounds, marker/end contradictions, bad references) is malformed.
+// An "unsupported" form diagnosis marks unsupported input. Truncation,
+// bounds, marker/end contradictions and bad references mark malformed input.
 Cls classify(const std::string& msg){return msg.find("unsupported")!=std::string::npos?Cls::Unsupported:Cls::Malformed;}
 
 struct RootCensus{
@@ -65,10 +61,8 @@ void walk(const SceneNode& n,RootCensus& r){
   for(const auto& m:n.materials)if(!m.name.empty())r.textures.insert(m.name);
   for(const auto& c:n.children)walk(c,r);
 }
-// scene-branch-impl-001: independent mirror of the branch-1 sprite admission rule (contract
-// section 10): sprite file present and parsing, clip in range with >=1 temporal entry, every
-// temporal entry exactly one directional image, texture flags row 1/2 with the texture present.
-// Written from the contract, not from BackdropScene.cpp. Without a library it is unsupported.
+// Branch 1 needs a readable sprite file, an in-range nonempty clip, one image per
+// temporal entry, and present textures for flag rows 1/2. Without a library it is unsupported.
 const AssetLibrary* censusLibrary=nullptr;
 std::string firstSpriteFailure(const SceneNode& root,bool secondary){
   std::string err;
@@ -115,9 +109,8 @@ RootCensus evaluate(std::span<const std::byte> bytes,const std::string& role,boo
   if(parsed->endOffset!=e.tree_end)return fail(Cls::Malformed,std::format("recursive tree end 0x{:x} differs from serialized reader 0x{:x}",parsed->endOffset,e.tree_end));
   if(e.tree_end<=bytes.size()&&e.typed_root_begin<=e.tree_end)r.treeHash=fnv(bytes.subspan(e.typed_root_begin,e.tree_end-e.typed_root_begin));
   walk(parsed->root,r);
-  // scene-nested-impl-001: SUPERSEDED predicate (was: root type 0 and every direct child a childless type-1/2 leaf, i.e.
-  // "unsupported nested/non-leaf secondary dispatch"). Independent mirror of the structural rule: type-0 root, node types
-  // 0..2, and children only under type-0/type-1 nodes (a type-2 owner's double matrix push is not implemented).
+  // Require a type-0 root and node types 0..2. Only type-0 and type-1 nodes
+  // can own children. The type-2 double matrix push is unsupported.
   if(secondary){
     const auto badForm=[](const auto& self,const SceneNode& n)->bool{
       if(n.type>2||(n.type==2&&!n.children.empty()))return true;
@@ -226,7 +219,6 @@ int main()try{
   const fs::path dir=SCENE_ADMISSION_DIR;fs::create_directories(dir);
   std::ofstream(dir/"census.txt")<<out.str();
   std::cout<<out.str();
-  // The census itself must have found the two accepted levels supported.
   if(!bothAdmitted){std::cerr<<"FAIL: an accepted level does not pass the structural pipeline\n";return 1;}
   std::cout<<"PASS sceneadmission_census\n";return 0;
 }catch(const std::exception& e){std::cerr<<"FAIL sceneadmission_census: "<<e.what()<<'\n';return 1;}

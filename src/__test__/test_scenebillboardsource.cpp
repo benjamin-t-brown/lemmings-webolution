@@ -103,7 +103,7 @@ void nativeMatrixLayout() {
 
 struct RetailExpected {
   std::size_t offset;
-  std::array<std::array<double,5>,4> slots; // x,y,z,u,v from independent repaired C3o table
+  std::array<std::array<double,5>,4> slots; // reference x,y,z,u,v table
 };
 constexpr RetailExpected retailExpected[] = {
   {0x967a2, {{{127.37244539895102,-7.5552263641560842,.3698773301636632,0,0}, {127.37244539895102,67.802330586103864,.3698773301636632,0,1}, {202.73000234921099,67.802330586103864,.3698773301636632,1,1}, {202.73000234921099,-7.5552263641560842,.3698773301636632,1,0}}}},

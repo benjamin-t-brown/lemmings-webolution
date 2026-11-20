@@ -1,10 +1,4 @@
-// Tests for the simulation.
-//
-// These check mechanics and determinism, not fidelity: the rule constants are
-// provisional until the oracle pins them down (see World.h). What is asserted
-// here is that a lemming falls, lands, walks, turns at walls, splats from a
-// height, that each skill does the thing it is named for, and that the whole
-// thing is reproducible tick for tick.
+// Check simulation mechanics and tick-by-tick determinism using World.h's provisional rules.
 
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
@@ -44,16 +38,8 @@ LevelSetup flatLevel(int floorY = 80) {
   LevelSetup s;
   s.terrain = Terrain(200, 100);
   s.terrain.fillBox(0, floorY, 200, 100 - floorY, Material::Earth);
-  // High enough above the floor that the fall is observable -- three ticks of
-  // it -- and low enough that it is survivable. Both bounds are read off
-  // Rules rather than written out, because the drop that spans more than one
-  // tick is a function of fallSpeed: at the value this file was first written
-  // against the ten rows it used to hard-code took four ticks, and at the
-  // rate since read off the original (World.h) it lands inside the first one,
-  // which is a property of the number and not a bug in the test. A drop from
-  // the top of the world would exceed splatDistance, which is correct
-  // behaviour but not what most of these tests are about; testSplat sets up a
-  // long fall deliberately.
+  // Choose a survivable drop long enough to observe three falling ticks using
+  // fallSpeed and splatDistance. testSplat uses a deliberately longer drop.
   const World::Rules r;
   const int drop = std::min(r.fallSpeed * 3, r.splatDistance - 1);
   s.entrances.push_back({100, floorY - drop});
@@ -68,10 +54,7 @@ void runFor(World& w, int ticks) {
     w.tick();
 }
 
-// The world wraps, so a lemming left running long enough circles the cylinder
-// and comes back. Asserting on the state after an arbitrary number of ticks
-// therefore tests the clock, not the mechanic. These helpers watch what
-// happens *during* a run instead.
+// Sample transitions because a longer walk can wrap back to its starting column.
 struct Watch {
   int minY = 1 << 30;
   int maxY = -(1 << 30);
@@ -137,30 +120,13 @@ void testFallAndWalk() {
   check(l.x > 100, "it walks in its facing direction");
 }
 
-// D1n: the opt-in continuous sub-tick stepper clock
-// (docs/scratch/phase-d1-stepper-clock.md), additive alongside the untouched
-// fixed-count-per-tick stepFaller/stepWalker loops every other test in this
-// file exercises (LevelSetup::continuousStepperClock defaults to false).
+// LevelSetup::continuousStepperClock defaults to false. Without fractional
+// release time, both modes must produce identical per-tick trajectories.
+// World::stepFaller uses hasTrackedPhase to allow a same-tick land-to-walk
+// handoff only when carrying tracked time.
 //
-// Two properties pinned here:
-//  1. Turning the opt-in on WITHOUT ever giving a lemming a reduced,
-//     fractional spawn budget (i.e. the continuous release model stays off,
-//     its own 0.0 default) must change nothing: World::stepFaller's
-//     hasTrackedPhase guard exists precisely so that reusing the existing
-//     whole-cell fall loop as a time budget never invents a same-tick
-//     land -> walk handoff out of a fall that has only ever run on whole,
-//     tick-aligned dt budgets (see World.cpp's own comment on why that
-//     would be a modelling artifact, not a measured quantity). The full
-//     per-tick (x, y, facing, state) trajectory must be byte-for-byte
-//     identical to the flag off.
-//  2. A continuous release model engineered to cross zero partway through
-//     its own tick (not at a tick boundary -- see World::tick()'s
-//     `countdownBefore` comment) gives the newly spawned lemming a real,
-//     fractional first-fall budget, and that visibly changes how many
-//     ticks after spawning it reaches State::Walker, relative to an
-//     otherwise-identical run that spawns on the very same tick but never
-//     carries that fractional budget (continuousStepperClock off) --
-//     proving the mechanism is not a no-op once real phase exists.
+// World::tick() derives the leftover first-fall budget from countdownBefore.
+// When the release crosses zero mid-tick, that budget can change the landing tick.
 void testContinuousStepperClock() {
   std::cout << "continuous sub-tick stepper clock (D1n)\n";
 
@@ -204,18 +170,12 @@ void testContinuousStepperClock() {
           "release model (no lemming ever carries a fractional budget)");
   }
 
-  // (2) a genuinely fractional spawn budget changes the landing tick,
-  // holding the spawn tick itself fixed (both runs use the SAME continuous
-  // release constants, so both spawn on the same tick; only
-  // continuousStepperClock differs).
+  // Hold the spawn tick constant to isolate the effect of the fractional budget on landing.
   {
     LevelSetup s = flatLevel();
     s.releaseArmSeconds = 0.0;
-    // Crosses zero mid-tick, not at a tick boundary: 0.17s of this 0.2s
-    // tick elapses before the countdown goes negative (World::tick()'s own
-    // countdownBefore), leaving a genuine fractional 0.03s first-fall
-    // budget -- not a whole multiple of the 0.05s-per-cell fall unit
-    // (Rules::fallSpeed = 4 cells per 0.2s tick).
+    // The countdown uses 0.17 s of a 0.2 s tick, leaving 0.03 s for the
+    // first fall. Rules::fallSpeed gives four cells per tick (0.05 s per cell).
     s.releaseFirstCountdownSeconds = 0.17;
     s.releaseIntervalSeconds = 10.0;  // only the first release matters here
 
@@ -280,20 +240,11 @@ void testWallTurn() {
   check(w.lemmings()[0].x < 120, "without passing through it");
 }
 
-// maxStepUp, pinned the way it was measured.
-//
-// Round 4 wrote single-column pillars of exactly 1, 2, 3 and 4 solid cells
-// into the original's own collision grid in front of its own walkers and
-// watched what its step-up arm (0x0041BFFC) did: it adopted the 1 and the 2
-// -- the 2 in a single step -- and turned at the 3, on VH13_MT and again on
-// E07_JC_1. This asserts the same three outcomes on the same shape, so a
-// later round cannot move the field without this failing.
-// docs/scratch/phase3-round4-live.md.
+// Original step-up at 0x0041BFFC climbs one or two cells in a single step
+// and turns at three (VH13_MT and E07_JC_1).
 void testStepUpHeight() {
   std::cout << "a walker rises 1 and 2 and turns at 3\n";
-  // Written out rather than derived from Rules::maxStepUp, which would make
-  // this a tautology that passes at any value of the field. These four rows
-  // are what the original did.
+  // Use literal expectations independent of Rules::maxStepUp.
   struct Case { int pillar; int highestWalkingY; bool turns; };
   const Case cases[] = {
       {1, 78, false},  // rise 1 adopted
@@ -307,8 +258,7 @@ void testStepUpHeight() {
     // walker's feet are y = 79, so the probed cells are 79 down to 80 - pillar.
     s.terrain.fillBox(130, 80 - pillar, 1, pillar, Material::Earth);
     World w(s);
-    // Only the walking samples: the spawn drop is higher than any pillar, so
-    // a plain minimum over the run would measure the hatch, not the step.
+    // Sample only walking positions so the spawn drop cannot determine the minimum.
     int highestWalking = 1 << 30;
     bool turned = false;
     for (int i = 0; i < 70; ++i) {
@@ -384,26 +334,12 @@ Lemming walkerAt(int x, Facing f) {
   return l;
 }
 
-// Round 10. Three behavioural tests for the three stepper shapes the round
-// measured. Every expected number below is WRITTEN OUT from the live series in
-// docs/scratch/phase3-round10-steppers.md and mapped once into our downward-Y
-// grid; none of them is derived from the Rules field it is testing, because a
-// derived expectation passes at any value of the field (round 4's lesson).
-//
-// The mapping, done once: the engine's grid is Y-up and ours grows downward.
-// A wall whose topmost solid row is `t` in our grid has its top surface at
-// `t`, a lemming standing on it has its feet at `t - 1`, and the engine's
-// "last climbing Y = topSolid - 1" is one row deeper inside the wall, so `t +
-// 1` for us. The hoist's "+2 upward" is `y -= 2`.
+// The simulation is Y-down. With top solid row t, standing feet are at
+// t - 1. The original climbing limit topSolid - 1 maps to t + 1,
+// and the two-unit hoist maps to y -= 2.
 
-// The step-down arm: one cell down and a walker, two or more and a faller.
-//
-// Live (MM_CLIMB_002, holes cut into the pen floor and restored): seven
-// lemmings over a one-cell hole at column 34, every one `dy -1.000` with the
-// state still `walk`, then `dy +1.000` on the far side; eight over a two-cell
-// hole at column 42, every one `walk -> fall`, landing two cells down; and a
-// three-cell hole at column 50 that trapped every walker that entered it,
-// because a three-cell rise is a wall.
+// A one-cell drop keeps walk. Two cells cause walk -> fall. A three-cell rise
+// blocks the return, as on the MM_CLIMB_002 pen-floor probes.
 void testWalkerStepsDownOneCell() {
   std::cout << "a walker steps down one cell and falls at two\n";
   // One cell: the floor's top row removed at a single column.
@@ -459,13 +395,8 @@ void testWalkerStepsDownOneCell() {
   }
 }
 
-// The climber's column, its last climbing row, and the hoist.
-//
-// Live: five panel-assigned climbers on MM_CLIMB_002 held X exactly 64.000,
-// 80.000, 96.000, 112.000 and 120.000 -- the wall column itself; four
-// top-outs came at `topSolid - 1` (46 over 47, 58 over 59, 45 over 46, 61
-// over 62); four hoists held 0.840, 0.840, 0.833 and 0.840 s on strip 8; and
-// all five placements were `dx 0.000 dy +2.000`.
+// The original holds the wall column during climb, tops out at topSolid - 1
+// on MM_CLIMB_002, holds strip 8 for about 0.84 s, then rises two units.
 void testClimbWallColumnTopOutAndHoist() {
   std::cout << "the climber stands on the wall, tops out one cell lower,"
                " and hoists for four ticks\n";
@@ -497,17 +428,8 @@ void testClimbWallColumnTopOutAndHoist() {
   check(climberX == 120,
         std::format("the climber stands ON the wall column 120 (got {})",
                     climberX));
-  // Corrected round 2 of d2f-skill-assign-capture (repair 1): this used to
-  // read 41. The disassembly of 0x004137CA/0x004139BF
-  // (build/tmp/d2f-skill-assign-capture-repair1/disasm_notes.md) shows the
-  // original's topout probe reads Y AFTER that tick's climb move, in the
-  // same call, so the state flips to Hoister on the very tick Y reaches the
-  // topout row (41) -- there is no tick where the lemming is still
-  // Climber-labelled AT y 41. The last Climber-labelled sample is therefore
-  // one row shallower, 42, and 41 is where Hoister's own first sample lands
-  // (see testClimbTopsOutSameTickAsHoistHandoff below, and round 1's live
-  // trace: sim/live both reach Y 49 on the same tick, and live is already
-  // Hoister there).
+  // 0x004137CA/0x004139BF probe after the climb move. In this fixture y=42 is
+  // the final Climber sample and y=41 is the first Hoister sample.
   check(lastClimbingY == 42,
         std::format("its last Climber-labelled row is 42, one inside the wall (got {})",
                     lastClimbingY));
@@ -519,26 +441,14 @@ void testClimbWallColumnTopOutAndHoist() {
         std::format("then it stands on top at y 39 (got {})", walkedOnTopY));
 }
 
-// Round 2 of d2f-skill-assign-capture (repair 1). READ: 0x004137CA's Y
-// write-back (0x00413875-0x0041388B) runs strictly before the call to
-// 0x004139BF at 0x004138E8, and 0x004139BF's own topout probe
-// (0x00413b50-0x00413b58) is built from that already-moved Y -- see
-// build/tmp/d2f-skill-assign-capture-repair1/disasm_notes.md. So the
-// original hands off Climber -> Hoister on the SAME tick Y first reaches the
-// topout row, never leaving a Climber-labelled sample at that Y. This test
-// fails against the pre-fix check-then-move stepClimber (which leaves one
-// extra Climber tick at the topout Y before handing off one tick later, at
-// the same Y, with no further movement) and passes after the move-then-check
-// reorder. MEASURED live, round 1: sim tick 42 and live tick 43 both read
-// (64, 49, 1); live was already `hoister`, ours was still `climber`
-// (build/tmp/d2f-skill-assign-capture/live_trace.csv).
+// 0x004137CA writes Y at 0x00413875-0x0041388B before calling 0x004139BF at
+// 0x004138E8. Its probe at 0x00413b50-0x00413b58 sees the moved Y. The
+// original switches from climber to hoister upon reaching the topout row.
 void testClimbTopsOutSameTickAsHoistHandoff() {
   std::cout << "the climb hands off to hoist on the same tick Y reaches the"
                " topout row\n";
   World w(placedLevel());
-  // Same wall as testClimbWallColumnTopOutAndHoist: columns 120..143 solid
-  // from row 40 down, so the topmost solid row is 40 and the topout row
-  // (round 10's `topSolid - 1` mapped into our Y-down grid, `t + 1`) is 41.
+  // The solid wall spans columns 120..143 from row 40 down. The topout row is 41.
   w.terrain().fillBox(120, 40, 24, 40, Material::Earth);
   w.place(walkerAt(110, Facing::Right));
   check(w.assign(0, Skill::Climber), "climber applies");
@@ -572,24 +482,9 @@ void testClimbTopsOutSameTickAsHoistHandoff() {
                     firstHoistY));
 }
 
-// d2h repair 1 (round 2 of d2h-skill-assign-floater). READ:
-// build/tmp/d2h-skill-assign-floater-repair1/disasm_confirmation.md --
-// 0x004160bd's per-sub-unit move write-back (0x0041627f) runs strictly
-// before that same sub-unit's own call to the land check (0x0041632b ->
-// 0x00416433), whose 0x42f22e re-read observes the already-moved Y. So a
-// fall whose final tick needs its FULL sub-unit budget to reach the ground
-// (gap-to-ground == fallSpeed + 1 at that tick's start, here 5 == 4 + 1)
-// lands THAT SAME tick in the original, never leaving a Faller-labelled
-// sample at the resting Y. This is the same class of bug as
-// testClimbTopsOutSameTickAsHoistHandoff above, in the sibling stepper:
-// fails against the pre-fix check-then-move stepFaller (which uses this
-// tick's full budget to reach the resting Y, same as the fix, but needs a
-// SECOND, otherwise-idle tick to notice it has landed, since checking
-// before moving can only detect "gap == 1" with one look-ahead fewer than
-// moving first provides) and passes after the move-then-check reorder.
-// MEASURED live, D2h round 1: sim tick 11 and live tick 12 both read
-// (80, 22, 1); live was already `walker`, ours was still `faller`
-// (build/tmp/d2h-skill-assign-floater/live_trace.csv).
+// 0x004160bd writes movement at 0x0041627f, then calls the landing check
+// (0x0041632b -> 0x00416433). The read at 0x42f22e sees the moved Y, so a
+// faller becomes a walker on the landing tick even after a full movement budget.
 void testFallLandsSameTickAsWalkHandoff() {
   std::cout << "the fall hands off to walk on the same tick Y reaches the"
                " ground, even when the landing move spends the tick's whole"
@@ -603,10 +498,7 @@ void testFallLandsSameTickAsWalkHandoff() {
   World w(s);
   Lemming faller;
   faller.x = 40;
-  // gap-to-ground = 40 - 35 = 5 = fallSpeed(4) + 1: the exact boundary where
-  // a check-before-move loop needs a fifth look-ahead this tick's four
-  // sub-units do not have, but a move-then-check loop reaches and detects
-  // the landing using the very same four sub-units.
+  // A gap of fallSpeed + 1 uses all four movement units before landing detection.
   faller.y = 35;
   faller.facing = Facing::Right;
   faller.state = State::Faller;
@@ -623,9 +515,7 @@ void testFallLandsSameTickAsWalkHandoff() {
         std::format("it rests one cell above the floor's top solid row, 39 "
                     "(got {})", l0.y));
 
-  // Across a longer run, no Faller-labelled sample should ever share the
-  // resting y with a Walker-labelled one -- same discipline as
-  // testClimbTopsOutSameTickAsHoistHandoff's climberSampledAtHoistY check.
+  // A Faller sample must never share the Walker's resting row.
   World w2(s);
   Lemming faller2 = faller;
   w2.place(faller2);
@@ -641,13 +531,8 @@ void testFallLandsSameTickAsWalkHandoff() {
         "(a pre-fix stepper spends one extra tick there)");
 }
 
-// The float halving waits for the `umbopen` animation, so a floater keeps
-// falling at full speed for 480 ms after its umbrella opens.
-//
-// Live, on one lemming given the floater byte as a labelled probe: a 16-unit
-// drop never halved at all (19.85 world units/s for the whole 0.805 s), and a
-// 28-unit drop halved 0.479 s and 9.564 units after the strip became
-// `umbopen`, then ran at 9.972 units/s.
+// The original Floater keeps full speed for about 480 ms after entering
+// the umbopen strip, then falls at half speed.
 void testFloatHalvingIsDelayed() {
   std::cout << "a floater keeps falling at full speed while umbopen plays\n";
   // A sixteen-cell drop: the original lands before the halving ever starts.
@@ -693,20 +578,9 @@ void testFloatHalvingIsDelayed() {
   }
 }
 
-// Round 8. The numbers here are WRITTEN OUT from the live measurements, not
-// derived from Rules::blockerFieldHeight and not read back out of the
-// stamping code -- the round-4 lesson again. Mapped once: the engine's grid is
-// Y-up and ours grows downward, so its "feet row + 0 .. 3" is our y down to
-// y - 3, and its "turned at world X = C" for a right-facing walker is our
-// "never left cell C - 1".
-//
-//   blocker (170.066, 78.000) -> cells (170, 78) (170, 79) (170, 80) (170, 81)
-//   field column 170, five right-facing walkers turned at X = 170.000
-//   field column 105, a left-facing walker turned at X = 106.000
-//   field column 76,  four left-facing walkers turned at X =  77.000
-//   bombing the (170, 78..81) blocker cleared exactly those four cells
-//
-// docs/scratch/phase3-round8-blocker.md.
+// The original Blocker field extends four cells upward from the feet. With
+// Y down that spans y through y - 3. The original probes an adjacent field
+// column at the shared cell edge. Bombing the Blocker clears all four cells.
 void testBlockerField() {
   std::cout << "a blocker stamps one column of four cells\n";
   World w(placedLevel());
@@ -733,18 +607,8 @@ void testBlockerField() {
 
 void testBlockerTurnsWalkers() {
   std::cout << "a walker turns on the blocker's own column, both ways\n";
-  // Approaching from the left, facing right: it turns ON cell 130 and must
-  // never reach 131.
-  //
-  // Round 8 wrote 129 here. The probe column it measured is unchanged -- it
-  // is the field's own cell, 130, either way -- but the STORED column moved
-  // in round 10, which measured where the original's X is when the probe
-  // runs: the shared edge of the two cells, and truncation gives that edge to
-  // the right-hand one. Round 8's own live numbers already said so --
-  // "field column 170 -> five right-facing walkers turned at X = 170.000" --
-  // and round 10 reproduced it on plain terrain walls (right-facing turns at
-  // X exactly 64.000 against a wall at column 64, left-facing at X exactly
-  // 24.000 against a wall at column 23). See World::stepWalker.
+  // Right-facing contact at the shared edge truncates to column 130. The
+  // walker turns there without reaching 131.
   {
     World w(placedLevel());
     w.place(walkerAt(130, Facing::Right));
@@ -765,21 +629,8 @@ void testBlockerTurnsWalkers() {
                       furthest));
     check(w.lemmings()[1].state == State::Walker, "and it is still walking");
   }
-  // Approaching from the right, facing left: it stops one cell further out,
-  // because the probe column is cell + facing either way, and -- new in
-  // D1f, round 6 -- it is *this* sub-case, not the first one, that the
-  // left-facing-turn fix touches: the walker was facing Left when it hit
-  // the field, so it gets the same-tick continuation and is already one
-  // column into its new (rightward) walk by the time this loop samples it.
-  // (The first sub-case above approaches facing Right, turns to Left, and
-  // is unaffected -- "right-facing turns already match", round 10 Part 6 --
-  // confirmed unchanged at 130 by this round's own ctest run; a plausible
-  // text in this round's brief guessed the opposite sub-case would move,
-  // but the measured mechanism and the actual failure both point here.)
-  // 131 -> 132 is a DIRECT, JUSTIFIED CONSEQUENCE of the fix: `nearest`
-  // below still bottoms out at 131 (x never visits 130; the continuation
-  // steps it straight from 131 to 132 within the turning tick), so only
-  // the turn-moment sample moves.
+  // A left-facing probe sees the field from column 131. The walker turns
+  // and continues to 132 within the same tick.
   {
     World w(placedLevel());
     w.place(walkerAt(130, Facing::Right));
@@ -798,9 +649,7 @@ void testBlockerTurnsWalkers() {
     check(nearest == 131,
           std::format("never entered the blocker's column: nearest {}", nearest));
   }
-  // The blocker itself is not a wall: with no field there, the same walker
-  // walks straight past the same cell. This is the control that separates the
-  // field from the lemming.
+  // Clear the field to check that the Blocker actor itself does not obstruct the walker.
   {
     World w(placedLevel());
     w.place(walkerAt(130, Facing::Right));   // left a walker, never blocking
@@ -817,8 +666,7 @@ void testBlockerTurnsWalkers() {
 
 void testBlockerFieldIsErased() {
   std::cout << "leaving the block state erases the field\n";
-  // The bomb. MEASURED: the four cells cleared 2 ms after the state changed
-  // to explode, and the crater came a second later.
+  // A bombed Blocker clears four field cells near flapper entry, about a second before the crater.
   {
     World w(placedLevel());
     w.place(walkerAt(130, Facing::Right));
@@ -849,7 +697,7 @@ void testBlockerFieldIsErased() {
     check(w.terrain().blockerFieldCells() == 0,
           "the field went with the block state");
   }
-  // And a walker is no longer turned once the field is gone.
+  // A walker passes after the field is cleared.
   {
     World w(placedLevel());
     w.place(walkerAt(130, Facing::Right));
@@ -874,14 +722,8 @@ void testBlockerFieldIsErased() {
         "blockerFieldHeight is the four rows the 0x004B10B8 dword 3 gives");
 }
 
-// Round 9. A walker whose ground cell carries the anti-grav bit flips
-// verticalDir and falls the other way. The expectation is a tick-by-tick
-// series, not a field readback: without the flip the walker stays at
-// verticalDir +1 and its y never decreases through a fall.
-// Round 13. A faller whose landing cell carries the trampoline bit enters
-// Bounce and rises (y decreases in this Y-down sim) instead of walking or
-// splatting. Mutate-alone: delete the trampoline() branch in stepFaller and
-// this fails — the faller walks.
+// Anti-gravity ground flips verticalDir. Landing on a trampoline enters
+// Bounce and moves upward (decreasing Y).
 void testTrampolineBounce() {
   std::cout << "trampoline pad bounces a faller\n";
   LevelSetup s;
@@ -937,10 +779,7 @@ void testTrampolineBounce() {
   check(!bounced2, "no trampoline bit means no bounce");
 }
 
-// Round 14. Ground cell bit 0x40 attaches Drown; after drownMs the lemming
-// is Dead. Mutate-alone: delete the waterHazard() branch in World::step and
-// this fails — the faller walks. Touch World.cpp after restoring so ninja
-// rebuilds.
+// Ground bit 0x40 attaches Drown. The actor dies after drownMs.
 void testWaterHazardDrown() {
   std::cout << "water hazard drowns a faller\n";
   LevelSetup s;
@@ -977,8 +816,7 @@ void testWaterHazardDrown() {
   check(sawDrown, "faller entered Drown on the water cell");
   check(deadTick > drownTick,
         std::format("drown then dead (drown@{} dead@{})", drownTick, deadTick));
-  // Attach tick sets Drown frame=0; then 10 ticks of stepDrown reach
-  // drownMs=2000 and die. deadTick - drownTick == 10.
+  // Drown starts at frame 0 and reaches drownMs=2000 after 10 ticks.
   check(deadTick - drownTick == 10,
         std::format("drown lasts 10 ticks / 2.0 s (delta={})",
                     deadTick - drownTick));
@@ -998,11 +836,8 @@ void testWaterHazardDrown() {
   check(!drowned2, "no 0x40 bit means no drown");
 }
 
-// Round 15. Acid-as-hazard is the same 0x40 → Drown path (no State::Acid,
-// no separate duration). Live: paint 0x40 on H02_JC_1 (^acid) and under
-// Entrance_acid [+0x4c]=1 walkers on H23_mg_1 → drown stype 0x22, 0 type2e.
-// Mutate-alone: drownMs 2000→200 in World.h — this duration check fails.
-// Touch World.h after restore so ninja rebuilds.
+// Cells set to 0x40 in H02_JC_1 (^acid) and under H23_mg_1 Entrance_acid
+// actors ([+0x4c]=1) trigger Drown (stype 0x22, 0 type2e).
 void testAcidHazardSharesDrown() {
   std::cout << "acid hazard shares water drown (0x40)\n";
   LevelSetup s;
@@ -1012,8 +847,7 @@ void testAcidHazardSharesDrown() {
   s.totalLemmings = 0;
   s.saveTarget = 0;
   World w(s);
-  // Round 15 live: hatch type 1 (entrance_acid) → [+0x4c]=1 still drowns
-  // on 0x40 (H23_mg_1 paint). Shared bit/duration is the claim.
+  // H23_mg_1 hatch type 1 (entrance_acid, [+0x4c]=1) also drowns on bit 0x40.
   Lemming faller;
   faller.x = 40;
   faller.y = 20;
@@ -1040,10 +874,7 @@ void testAcidHazardSharesDrown() {
   check(w.dead() == 1, "shared drown increments dead");
 }
 
-// Round 16. A walker whose feet sit in a teleport AABB relocates to the
-// partner pad after teleportDelayTicks. Mutate-alone: delete the
-// teleportAt() arm in World::step and this fails — the walker stays put.
-// Touch World.cpp after restoring so ninja rebuilds.
+// Feet inside a teleport AABB move to the partner pad after teleportDelayTicks.
 void testTeleportPad() {
   std::cout << "teleport pad relocates a walker\n";
   LevelSetup s;
@@ -1091,10 +922,7 @@ void testTeleportPad() {
   check(false, "walker relocated to partner (200, 40) within 20 ticks");
 }
 
-// Round 17. A walker whose feet sit in a SpeedPad AABB gets a temporary
-// 2× walk (FASTER). Mutate-alone: delete the speedPadAt() arm in
-// World::step, or set Rules::fasterMs = 0, and this fails. Touch World.cpp
-// after restoring so ninja rebuilds.
+// Feet inside a SpeedPad AABB receive a temporary 2x walk speed (FASTER).
 void testSpeedPadFaster() {
   std::cout << "speed pad doubles walk rate for fasterMs\n";
   LevelSetup s;
@@ -1141,10 +969,8 @@ void testSpeedPadFaster() {
   check(boostedTicks == 25, "fasterMs lasts 25 ticks at 200 ms");
 }
 
-// Round 21. A walker whose feet sit in a Lever AABB with the facing that
-// matches +0xb8 flips Lever::state to that facing. No lemming attach.
-// Mutate-alone: delete the leverAt() arm in World::step and this fails.
-// Touch World.cpp after restoring so ninja rebuilds.
+// A walker within a lever AABB that faces the direction at +0xb8 sets
+// Lever::state to that facing without changing its own state.
 void testLeverToggle() {
   std::cout << "lever toggles state on facing-gated AABB pull\n";
   LevelSetup s;
@@ -1194,106 +1020,78 @@ void testLeverToggle() {
   check(w2.setup().levers.empty(), "no lever means nothing to toggle");
 }
 
-// Round 18. Balloon is a registered SFX cue with no retail play site and
-// no world gadget. Mutate-alone: set kBalloonGadgetInRetail = true in
-// World.h and this fails. Touch World.h after restoring so ninja rebuilds.
+// Balloon is a registered cue with no retail play site or world gadget.
 void testBalloonCueUnused() {
   std::cout << "balloon cue is unused in retail (clean negative)\n";
   check(!kBalloonGadgetInRetail,
         "Balloon has no lemming effect to simulate");
 }
 
-// Round 19. Fire is a registered SFX cue with no retail play site and
-// no world gadget. Mutate-alone: set kFireGadgetInRetail = true in
-// World.h and this fails. Touch World.h after restoring so ninja rebuilds.
+// Fire is a registered cue with no retail play site or world gadget.
 void testFireCueUnused() {
   std::cout << "fire cue is unused in retail (clean negative)\n";
   check(!kFireGadgetInRetail,
         "Fire has no lemming effect to simulate");
 }
 
-// Round 20. Witch is a registered SFX cue with one UI play site (e10_kf_1
-// pause easter egg) and no lemming gadget. Mutate-alone: set
-// kWitchGadgetInRetail = true in World.h and this fails. Touch World.h
-// after restoring so ninja rebuilds.
+// Witch plays in the e10_kf_1 pause easter egg and has no lemming gadget.
 void testWitchCueNoLemmingsGadget() {
   std::cout << "witch cue has no lemming gadget (UI easter egg only)\n";
   check(!kWitchGadgetInRetail,
         "Witch has no lemming effect to simulate");
 }
 
-// Round 22. ForceF is a registered SFX cue with no retail play site and
-// no world gadget. Mutate-alone: set kForceFGadgetInRetail = true in
-// World.h and this fails. Touch World.h after restoring so ninja rebuilds.
+// ForceF is a registered cue with no retail play site or world gadget.
 void testForceFCueUnused() {
   std::cout << "forcef cue is unused in retail (clean negative)\n";
   check(!kForceFGadgetInRetail,
         "ForceF has no lemming effect to simulate");
 }
 
-// Round 23. Axe is a HUD sprite sheet (SPRITES\AXE.SPR) with one UI bind
-// site and no lemming gadget. Mutate-alone: set kAxeGadgetInRetail = true
-// in World.h and this fails. Touch World.h after restoring so ninja
-// rebuilds.
+// SPRITES\AXE.SPR binds once in the HUD and has no lemming gadget.
 void testAxeSheetNoLemmingsGadget() {
   std::cout << "axe sheet has no lemming gadget (HUD sprite only)\n";
   check(!kAxeGadgetInRetail,
         "Axe has no lemming effect to simulate");
 }
 
-// Round 24. Bubble is a registered SFX cue played from type-0x23 fluid-
-// mismatch state step; no Bubble world gadget / no bubble.a3d.
-// Mutate-alone: set kBubbleGadgetInRetail = true in World.h and this
-// fails. Touch World.h after restoring so ninja rebuilds.
+// Bubble plays in the type-0x23 fluid-mismatch step. There is no bubble.a3d.
 void testBubbleCueNoGadget() {
   std::cout << "bubble cue has no world gadget (SFX on type-0x23)\n";
   check(!kBubbleGadgetInRetail,
         "Bubble has no exclusive gadget to simulate");
 }
 
-// Round 25. Scrape is a registered SFX cue played from dig-bite and
-// bash cell-helper steel/blocker refusal arms; no scrape.a3d / no
-// Scrape gadget. Mutate-alone: set kScrapeGadgetInRetail = true in
-// World.h and this fails. Touch World.h after restoring so ninja
-// rebuilds.
+// Scrape plays for dig bites and for bash refusal on steel or Blockers.
+// There is no scrape.a3d.
 void testScrapeCueNoGadget() {
   std::cout << "scrape cue has no world gadget (dig/bash refuse SFX)\n";
   check(!kScrapeGadgetInRetail,
         "Scrape has no exclusive gadget to simulate");
 }
 
-// Round 26. Rumble is a registered SFX cue played from object step
-// FUN_00423749 (vtable 0x004B0F00) on deferred state commit; no
-// rumble.a3d / no Rumble gadget. Mutate-alone: set
-// kRumbleGadgetInRetail = true in World.h and this fails. Touch
-// World.h after restoring so ninja rebuilds.
+// Rumble plays on deferred state commit in FUN_00423749 (vtable 0x004B0F00).
+// There is no rumble.a3d.
 void testRumbleCueNoGadget() {
   std::cout << "rumble cue has no world gadget (object state-commit SFX)\n";
   check(!kRumbleGadgetInRetail,
         "Rumble has no exclusive gadget to simulate");
 }
 
-// Round 27. Changeop is a registered SFX cue played from skill-panel
-// select FUN_0045ac5c and options SFX-slider FUN_0048e8d5; no
-// changeop.a3d / no Changeop gadget. Mutate-alone: set
-// kChangeopGadgetInRetail = true in World.h and this fails. Touch
-// World.h after restoring so ninja rebuilds.
+// Changeop plays on panel select (FUN_0045ac5c) and the SFX slider
+// (FUN_0048e8d5). There is no changeop.a3d.
 void testChangeopCueNoGadget() {
   std::cout << "changeop cue has no world gadget (UI skill/volume SFX)\n";
   check(!kChangeopGadgetInRetail,
         "Changeop has no exclusive gadget to simulate");
 }
 
-// Round 28. Die is a registered SFX cue played solely from type-0x23
-// enter FUN_00404261 when fluid+0x128==1; no die.a3d / no Die gadget.
-// Distinct from FallSplat (type 0x1a splat enter) and unused Splat.
-// Mutate-alone: set kDieGadgetInRetail = true in World.h and this
-// fails. Touch World.h after restoring so ninja rebuilds.
-// Round 29. Matching zone + sheetType skips splat after a long fall.
-// Live: MM_W_012 type-1 + 0x200 + raise-acc 31 → walk; H23 type-2 + paint
-// 0x4000 + raise-acc → walk; type-2 onto 0x3 without zone → splat.
-// Mutate-alone: delete the splatExempt() guard in stepFaller — sheet-1
-// on zone water then dies. Touch World.cpp after restore so ninja rebuilds.
+// Die plays on type-0x23 enter (FUN_00404261) when fluid+0x128==1.
+// There is no die.a3d. FallSplat plays on type 0x1a enter. Splat is unused.
+//
+// Matching zone bits and sheetType exempt long falls from splat.
+// MM_W_012 type 1 survives on 0x200. H23 type 2 survives on cells set to
+// 0x4000 and splats on 0x3 without a zone.
 void testSplatZoneExempt() {
   std::cout << "zone + sheetType skips splat\n";
   LevelSetup s;
@@ -1416,10 +1214,8 @@ void testAntiGravFlipsGravity() {
         "without the pad, y never falls upward");
 }
 
-// Round 30. Inverted step-up / dig refuse. Live on stock exe: m06_kf_1
-// inverted walkers adopted dy -1 / -2 (Y-up) on hangs painted under the
-// ceiling; forced-vdir diggers refused painted 0x21 and cleared painted
-// 0x11 with Y += 1 per cycle. docs/scratch/phase3-round30-inverted.md.
+// Inverted walkers on m06_kf_1 take Y-up steps of -1 or -2 on ceiling ledges.
+// Inverted Diggers refuse 0x21 and clear 0x11 with Y += 1 per cycle.
 void testInvertedStepUp() {
   std::cout << "inverted walker rises 1 and 2 against gravity\n";
   struct Case {
@@ -1545,15 +1341,8 @@ void testBasher() {
   check(w.terrain().solidCells() < before, "the basher removed terrain");
 }
 
-// Round 5: what bash and dig remove, and when.
-//
-// Every number here is written out rather than derived from a Rules field --
-// the round-4 lesson (see testStepUpHeight) is that a derived expectation
-// passes at any value of the field it came from. These are the per-tick grid
-// diffs measured off the original on MM_DIG_000 and MM_BASH_002, converted
-// once: our y grows downward where the engine's grid is Y-up, so the
-// engine's "feet row + 0..3" is our `y` down to `y - 3`, and its "row below
-// the feet" is our `y + 1`.
+// Check literal terrain edits for MM_DIG_000 and MM_BASH_002. The original's
+// Y-up rows above the feet map to y through y - 3, and below maps to y + 1.
 void testDigFootprintAndCadence() {
   std::cout << "a digger takes three cells, one row, every six ticks\n";
   World w(flatLevel());
@@ -1562,9 +1351,7 @@ void testDigFootprintAndCadence() {
   const int y0 = w.lemmings()[0].y;
   check(w.assign(0, Skill::Digger), "digger applies");
 
-  // Which tick of the state each removal landed on, and how many cells it
-  // took. MEASURED: 3 cells a cycle (columns trunc(X)-1, trunc(X), trunc(X)+1
-  // in the row below the feet), four cycles of it on every digger watched.
+  // Each Digger bite clears the three cells centered one row below the feet.
   std::vector<int> at;
   std::vector<int> took;
   std::size_t prev = w.terrain().solidCells();
@@ -1586,10 +1373,8 @@ void testDigFootprintAndCadence() {
                               took.size() > 0 ? took[0] : -1, took.size() > 1 ? took[1] : -1,
                               took.size() > 2 ? took[2] : -1, took.size() > 3 ? took[3] : -1));
 
-  // The cycle is 1.200 s and the tick is 200 ms, so the dig is the one skill
-  // of the three that lands on whole ticks: six of them, every time. The
-  // bite is at 25% of the cycle, so the first falls in the tick covering
-  // 300 ms, which is the state's second.
+  // A Digger cycle spans 1.200 s, or six 200 ms ticks. The 25% bite lands
+  // in the second tick, which covers 300 ms.
   if (at.size() >= 4) {
     check(at[0] == 1, std::format("first bite on the state's second tick (was {})", at[0]));
     check(at[1] - at[0] == 6 && at[2] - at[1] == 6 && at[3] - at[2] == 6,
@@ -1656,9 +1441,8 @@ void testBashFootprintAndCadence() {
                              took.size() > 0 ? took[0] : -1, took.size() > 1 ? took[1] : -1,
                              took.size() > 2 ? took[2] : -1, took.size() > 3 ? took[3] : -1));
 
-  // 1.440 s of animation against a 200 ms tick is 7.2 ticks, which cannot be
-  // one integer. Sampled, the gaps run 8, 7, 7, 7, 7 -- 36 ticks for five
-  // cycles, the 7.2 the original measures, rather than a rounded 7 or 8.
+  // A 1.440 s cycle spans 7.2 ticks. At 200 ms samples it gives gaps of
+  // 8, 7, 7, 7, 7 over five cycles.
   if (at.size() >= 12) {
     const int want[] = {8, 7, 7, 7, 7};
     bool gapsMatch = true;
@@ -1678,13 +1462,11 @@ void testBashFootprintAndCadence() {
   check(isSolid(w.terrain().at(x0 + dir, y0 + 1)), "the row below the feet is still there");
 }
 
-// basher-fix-001 (playtest P1): when a bash starts and when it ends. The rule is READ from the original's
-// bash state (ctor 0x0040BBA0, end-of-cycle record 0x0040C6E8, bite 0x0040C357; see Rules::basherGraceCycles):
-// two cycles swing and advance a column even through air, then a cycle that removed nothing ends it. The
-// numbers are written out, not derived from Rules.
+// Original Bash (constructor 0x0040BBA0, bite 0x0040C357, cycle end 0x0040C6E8)
+// advances through air for the first two cycles. After that, a cycle
+// without removal ends the state.
 //
-// Advance until the lemming walks with its first tall solid column exactly `gap` cells ahead (gap 1 =
-// adjacent), so a skill can be applied at a chosen distance from the wall.
+// Find a walker exactly gap cells from the first tall solid column.
 bool runUntilWallAt(World& w, int gap, int maxTicks) {
   for (int i = 0; i < maxTicks; ++i) {
     w.tick();
@@ -1766,18 +1548,9 @@ void testBasherSteelTurnsIt() {
   check(w.lemmings()[0].facing == Facing::Left, "turned away from the steel");
 }
 
-// Round 6: when a builder lays a brick, and which cells it writes.
-//
-// MEASURED off the original on MM_BUILD -- three builders, three processes,
-// both facings, twelve bricks each, 72 of 72 cells 0x00000000 -> 0x00000001 at
-// animation percent 81, 0.9597 s apart. The numbers here are written out, not
-// derived from Rules: that is the round-4 lesson, and the tick list below is
-// the one thing a derived expectation would hide, because 960 ms against a
-// 200 ms tick is 4.8 and no single integer interval can produce it.
-//
-// Converted once, as the dig and bash tests are: the engine's grid is Y-up and
-// this Terrain grows downward, so the engine's "the builder's own row, then one
-// row up" is our `y`, then `y - 1`.
+// The original Builder stamps 0x00000000 -> 0x00000001 at 81% animation
+// about every 960 ms on MM_BUILD. It builds on row y, then steps to y - 1
+// in the Y-down grid.
 void testBuilderFootprintAndCadence() {
   std::cout << "a builder lays two cells on its own row, twelve times, then shrugs\n";
   World w(flatLevel());
@@ -1833,11 +1606,8 @@ void testBuilderFootprintAndCadence() {
         std::format("24 cells of terrain in all (was {})",
                     w.terrain().solidCells() - before));
 
-  // The cadence. 960 ms a cycle, the brick 75% in (81% less the 6.25% the
-  // enter seek at 0x004B08F8 skips), against a 200 ms tick: the bricks land
-  // on these ticks of the state, with gaps of 5, 5, 5, 4, 5, 5, 5, 5, 4, 5, 5
-  // -- eleven gaps spanning 53 ticks, which averages 4.82. An interval of 5
-  // would span 55 and an interval of 4 would span 44.
+  // Bricks land 75% into each 960 ms cycle after accounting for the 6.25%
+  // enter seek at 0x004B08F8. At 200 ms per tick, eleven gaps span 53 ticks.
   const std::vector<int> wantAt{3, 8, 13, 18, 22, 27, 32, 37, 42, 46, 51, 56};
   std::string sawAt;
   for (int v : at)
@@ -1848,10 +1618,7 @@ void testBuilderFootprintAndCadence() {
     check(at[11] - at[0] == 53, std::format("eleven gaps span 53 ticks (was {})",
                                             at[11] - at[0]));
 
-  // The footprint. Brick k is the two cells at offsets +1 and +2 ahead of the
-  // builder, on the builder's OWN row, and the builder then steps one column
-  // on and one row up -- so brick k sits at columns x0 + k*dir and
-  // x0 + (k+1)*dir, on row y0 - (k - 1).
+  // Brick k occupies columns x0 + k*dir and x0 + (k+1)*dir on row y0 - (k - 1).
   for (int k = 1; k <= 12; ++k) {
     const int row = y0 - (k - 1);
     check(isSolid(w.terrain().at(x0 + k * dir, row)),
@@ -1883,21 +1650,13 @@ void testBuilderFootprintAndCadence() {
         std::format("and it walks again on tick 61 (was {})", walkAfterShrug));
 }
 
-// Round 6: the builder's refusal, measured. At percent 90 the engine raises
-// the row first and then probes the cell it is about to step into
-// (`call 0x40de60` at 0x0040FE77, `cmp dword ptr [eax], 0` at 0x0040FE7C). A
-// non-zero cell turns the lemming (0x0042F66B at 0x0040FEE3) and takes it out
-// of the build state, and the brick counter is NOT decremented -- the
-// decrement at 0x0040FF93 sits past that branch.
-//
-// Live: a left-facing builder with room for six bricks laid six whole ones and
-// a seventh half-brick, then found (153, 31) = 0x00000001 on its eighth cycle,
-// turned, and walked with its counter stuck at 5.
+// At 90%, raise the row before probing the next cell (`call 0x40de60` at
+// 0x0040FE77, `cmp dword ptr [eax], 0` at 0x0040FE7C). A nonzero cell
+// (0x00000001 here) turns the Builder via 0x0042F66B at 0x0040FEE3 and
+// leaves the state before the counter decrement at 0x0040FF93.
 void testBuilderRefusesAtAWall() {
   std::cout << "a builder that steps into terrain turns, and keeps the brick\n";
-  // Where an unobstructed builder would be standing, so the wall can go
-  // exactly four columns ahead of it. The simulation is deterministic, so the
-  // same 60 ticks put the lemming in the same cell on both worlds.
+  // Use the unobstructed Builder's position after 60 ticks to place the wall four columns ahead.
   int x0 = 0;
   int y0 = 0;
   int dir = 1;
@@ -1934,10 +1693,8 @@ void testBuilderRefusesAtAWall() {
     }
   }
 
-  // Bricks one and two land clear of the wall; brick three has its far cell
-  // already standing and brick four its near cell, so each of those writes
-  // one cell -- the stamp is an `or`, so a brick laid into terrain changes
-  // nothing. Then the step-into probe hits the wall.
+  // The wall already occupies one cell of each of bricks three and four.
+  // The bitwise or changes only the other cell before the step-into probe hits.
   const std::vector<int> wantLaid{2, 2, 1, 1};
   std::string sawLaid;
   for (int v : laid)
@@ -1967,8 +1724,6 @@ void testSkillRules() {
   check(r.basherBitePercent == 12 && r.diggerBitePercent == 25 && r.minerBitePercent == 12,
         "the first bite of each cycle is at the record frame read live");
 
-  // Round 6, the builder. Each of these is the read or the measurement named
-  // in World.h, written out here so a change to the field fails this too.
   check(r.builderBricks == 12, "builderBricks is 12 (state+0x3c, 0x0040F948)");
   check(r.brickLength == 2, "brickLength is 2 cells (was classic 3)");
   check(r.builderCycleMs == 960, "build cycle is 16 animation frames of 60 ms");
@@ -1976,9 +1731,8 @@ void testSkillRules() {
   check(r.builderEnterPercent == 6, "the 16.0 enter seek is a sixteenth of a cycle");
   check(r.shrugCycleMs == 960, "the shrug is 8 frames of 60 ms over divisor 0.5");
 
-  // Round 7, the bomber. The fuse is a time, not a tick count: the integer 5
-  // at 0x0045B1B3 becomes a double and the enter multiplies by the 1000 at
-  // 0x004657B2.
+  // The original converts the 5-second fuse at 0x0045B1B3 to a double and
+  // multiplies by 1000 at 0x004657B2.
   check(r.bomberFuseMs == 5000, "the fuse is 5000 ms (5 x 1000, not 25 ticks)");
   check(r.exploderCycleMs == 1020,
         "the explode strip is 17 animation frames of 60 ms");
@@ -1995,16 +1749,8 @@ void testBuilder() {
   check(watch.minY < 79, std::format("and rose as it built (highest y {})", watch.minY));
 }
 
-// MEASURED LIVE, round 7. Six bombs across MM_BOMB and MM_Block_Bomb_A,
-// clicked from inside a 650 Hz whole-grid diff loop
-// (tools/harness/measure_bomb.py --bomb):
-//
-//   click -> flapper   4.9967 4.9985 4.9981 4.9976 4.9998 4.9980 s
-//   flapper -> blast   1.0211 1.0193 1.0226 1.0206 1.0191 1.0201 s
-//
-// so the fuse is five seconds, the `Ohno` cue is at the END of it, and the
-// crater is 1.02 s later again. Every number below is written out rather than
-// read back off `Rules`, which is round 4's lesson.
+// On MM_BOMB and MM_Block_Bomb_A the fuse ends at about 5 s with Ohno
+// as the flapper starts. The crater follows about 1.02 s later.
 void testBomberFuseAndCrater() {
   std::cout << "the bomber: a 25-tick fuse, a flap, then the 7x7 stencil\n";
   World w(flatLevel(80));
@@ -2046,13 +1792,12 @@ void testBomberFuseAndCrater() {
       firstGridTick = t;
   }
 
-  // 5000 ms at the measured 200 ms tick.
+  // 5000 ms at 200 ms per tick.
   check(ohNoTick == 25, std::format("oh-no on tick 25 (was {})", ohNoTick));
   check(exploderTick == 25,
         std::format("and the explode animation starts on the same tick (was {})",
                     exploderTick));
-  // The old stepper cued oh-no one second from the end, which on a 25-tick
-  // fuse is tick 20. Nothing happens on tick 20 now.
+  // At tick 20 the fuse is still lit and Ohno remains silent.
   check(ohNoTick != 20, "not one second early, which is where it used to be");
   // 1020 ms of `explode` strip: the tick that covers it is the sixth.
   check(explodeTick == 31, std::format("the blast on tick 31 (was {})", explodeTick));
@@ -2065,11 +1810,8 @@ void testBomberFuseAndCrater() {
         std::format("it walked through the whole fuse and stopped where it blew"
                     " ({} vs {})", walkedTo, bombX));
 
-  // The crater. The window is columns bombX-4 .. bombX+2 and rows 76..82 --
-  // the blast cell is y 80, one below the feet row, because 0x00416B5B drops
-  // the Y by one vertical unit when the blast state is installed. Rows 76..79
-  // are open air above this floor, so the cells that go are the stencil's
-  // bottom three rows: 7 + 5 + 3.
+  // 0x00416B5B shifts Y down one unit at blast entry, placing the center
+  // at row 80. Only the stencil's bottom three rows intersect the floor (7 + 5 + 3 cells).
   const std::size_t removed = before - w.terrain().solidCells();
   check(removed == 15, std::format("15 cells of floor went (got {})", removed));
   const Terrain& t = w.terrain();
@@ -2091,10 +1833,8 @@ void testBomberFuseAndCrater() {
         "and row 83 is below the window");
 }
 
-// MEASURED LIVE, round 7: a bombed blocker's four field cells cleared 3.7 ms
-// and 4.2 ms after the state became the flapper -- that is, at the END of the
-// fuse -- and the crater came 1.02 s after that. So there are six ticks in
-// which the blocker is neither blocking nor dead.
+// A bombed Blocker loses its four field cells as the fuse ends, about
+// 1.02 s before the crater. The fixture samples six intermediate ticks.
 void testBombedBlockerLosesItsFieldAtTheFuse() {
   std::cout << "a bombed blocker drops its field at the fuse, not at the blast\n";
   World w(flatLevel(80));
@@ -2149,12 +1889,8 @@ void testBomberAndSteel() {
 void testExit() {
   std::cout << "reaching the exit\n";
   LevelSetup s = flatLevel();
-  // Floor fill starts at y=80; feet rest at 79. Measured box is 2 x 3
-  // inclusive (round 11), covering x 128..130 and y 76..79.
-  // Behavioural pin: the old half-open test (`y < y+height`) leaves y=79
-  // outside [76, 79) and never saves — flip only the comparison in
-  // World::atExit to watch this fail. The live original hits the exact max
-  // doubles (222 and 34).
+  // Feet rest at y=79 on floor row 80. The inclusive box covers x 128..130
+  // and y 76..79. The original accepts the exact maxima (222 and 34).
   s.exits.push_back({128, 76, 2, 3});
   World w(s);
   runFor(w, 300);
@@ -2162,18 +1898,15 @@ void testExit() {
   check(w.won(), "the level is won");
 }
 
-// Round 12: nothing previously called exitTriggerFromPose. Widening the
-// measured 2×3 back to the old 12-column guess left all 16 tests green.
-// Pin the exact Terrain rectangle from a known .a3d pose, including a case
-// where round(ang*width) ≠ floor (Exit_water e14_kf_1), and assert a
-// lemming one cell outside each edge is not saved.
+// Check exitTriggerFromPose against a known .a3d, including Exit_water
+// on e14_kf_1 where round(ang*width) differs from floor. Test one cell beyond each edge.
 void testExitTriggerFromPose() {
   std::cout << "exitTriggerFromPose extent\n";
   constexpr int kW = 256;
   constexpr int kH = 96;
 
-  // MM_CLIMB_002 Exit.a3d — live AABB X[220..222] Y[31..34] (round 11).
-  // ang*256 ≈ 221.016; floor and round agree.
+  // MM_CLIMB_002 Exit.a3d has reference bounds X[220..222] Y[31..34].
+  // At ang*256 ≈ 221.016, floor and round both give 221.
   {
     webo::WorldPose pose;
     pose.position = {49.062, 40.0, 42.35388};
@@ -2183,8 +1916,8 @@ void testExitTriggerFromPose() {
                       box.height));
   }
 
-  // e14_kf_1 Exit_water.a3d — live AABB X[10..12] Y[16..19] (round 12).
-  // ang*256 ≈ 10.989; floor would centre on 10 and miss the dump.
+  // e14_kf_1 Exit_water.a3d has reference bounds X[10..12] Y[16..19].
+  // At ang*256 ≈ 10.989, rounding gives center 11.
   {
     webo::WorldPose pose;
     pose.position = {-17.26225182172313, 25.0, 62.44198834698115};
@@ -2277,10 +2010,8 @@ void testPickAndNuke() {
   check(w.finished(), "and the level is finished");
 }
 
-// The level clock. LEVELMAP.DAT gives every level a time limit, so the field
-// has to do something; this pins down exactly what, which is narrower than it
-// sounds. Running out closes the entrance. It does not kill anyone, and it
-// does not end the level -- that is the game shell's call.
+// When the LEVELMAP.DAT time limit expires, stop new releases. Existing actors
+// keep moving and the shell decides when to end the level.
 void testTimeLimit() {
   std::cout << "the level clock\n";
 
@@ -2321,11 +2052,7 @@ void testTimeLimit() {
   check(u.activeCount() + u.saved() + u.dead() == 4, "all of its lemmings were released");
 }
 
-// Sound cues are how the shell hears the simulation without the simulation
-// knowing about SDL. They have to fire at the right moments and de-dupe the
-// ones a nuke would otherwise stack.
-// The climb tutorial's mask, not a hand-built wall. A climber released at the
-// entrance has to leave the lower ledge: that is the whole of this level.
+// Check that a Climber leaves the lower ledge on the installed tutorial mask.
 void testRetailClimb(const std::filesystem::path& dir) {
   std::cout << "climber on MM_CLIMB_002\n";
   auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
@@ -2403,11 +2130,8 @@ void testRetailClimb(const std::filesystem::path& dir) {
         std::format("and leaves the ledge (landed {}, highest {})", landed, highest));
 }
 
-// Where a released lemming starts. Not a mechanic test: these three triples
-// were read out of the running original's hatch (words +0x9A / +0x9C) and out
-// of the live lemming a fresh birth produced (+0x08 / +0x10), so they pin our
-// parse and our spawn to measurements rather than to each other. The levels
-// and the numbers are the ones in docs/scratch/phase3-round3.md.
+// Cross-check parsed hatch words +0x9A / +0x9C against birth coordinates
+// at actor offsets +0x08 / +0x10.
 void testRetailSpawn(const std::filesystem::path& dir) {
   std::cout << "spawn from the hatch words\n";
   auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
@@ -2468,8 +2192,7 @@ void testRetailSpawn(const std::filesystem::path& dir) {
     if (w.lemmings().empty())
       continue;
     const Lemming& l = w.lemmings().front();
-    // One tick of fall has already happened, so compare the released cell,
-    // not the current one: spawn's own write is (x, height - y).
+    // Compare the recorded release cell (x, height - y). The observed position already includes a fall step.
     std::cout << std::format("  {}: words x {} y {} -> cell ({}, {}), first lemming x {}\n",
                              c.level, h.x, h.y, cx, cy, l.x);
     check(l.x == cx, std::format("{}: released column is the x word ({} vs {})", c.level,
@@ -2481,10 +2204,7 @@ void testRetailSpawn(const std::filesystem::path& dir) {
           std::format("{}: released facing is our +1 (the original writes +0x40 = 1; "
                       "which column direction that is stays unverified)", c.level));
 
-    // The drop from the word, on the stored grid, against the live landing.
-    // This is the part that would catch a one-cell error in the flip: the
-    // original's birth on each of these levels came to rest with +0x10 at
-    // landWorldY, which is terrain row height - 1 - landWorldY.
+    // The original settled Y at +0x10 maps to terrain row height - 1 - landWorldY.
     const int wantRow = grid->height - 1 - c.landWorldY;
     int restRow = -1;
     for (int i = 0; i < 200 && !w.lemmings().empty(); ++i) {
@@ -2503,37 +2223,13 @@ void testRetailSpawn(const std::filesystem::path& dir) {
   }
 }
 
-// D1e: wiring the measured real-seconds release-timing mechanism
-// (docs/scratch/phase-d1-release-trigger.md, phase-d1-door-open-duration.md,
-// phase-d1-hatch-step-clock.md) into World, against the one level/hatch it
-// was measured on. Additive: this sets the three new, opt-in LevelSetup
-// fields; every other test in this file leaves them at their 0.0 default and
-// so keeps the untouched releaseIntervalTicks model.
+// MM_CLIMB_002 uses releaseFirstCountdownSeconds=1.3 from 0x004B0F48 and
+// releaseIntervalSeconds=2.8864866275534937 from RELEASERATE.PC row 20.
+// The level-specific releaseArmSeconds=0.723061695938398 is provisional.
+// These fields opt out of the default releaseIntervalTicks model.
 //
-// The three constants:
-//   releaseFirstCountdownSeconds = 1.3   READ: the fixed engine seed at
-//                                         0x004B0F48 -- not per-level.
-//   releaseIntervalSeconds = 2.8864866275534937  READ: RELEASERATE.PC row 20,
-//                                         MM_CLIMB_002's resolved rate.
-//   releaseArmSeconds = 0.723061695938398  DERIVED, MM_CLIMB_002-specific
-//                                         only (not yet known to generalize).
-//
-// The expected pattern is D1a's own measured, saved live capture
-// (build/tmp/d1a-release-walkout-trace/live_trace.csv, read directly for
-// this test, not re-derived): the "released" column reads 0 through tick 10
-// and 1 from tick 11 on (the row at tick 10 shows a lemming already visible
-// at its unfallen spawn cell with released still 0 -- a one-tick alignment
-// artifact D1a's own "Open limitation" section already flagged, not a second
-// mechanism), then climbs by one every 11, 26, 41, 56, 71, 87, 102, 112, 127,
-// 142 -- gaps of 15, 15, 15, 15, 16, 15, 10, 15, 15, mean 14.44, against the
-// table value's own 2.8864866275534937 / 0.2 = 14.432433 ticks. Our World is
-// a per-tick accumulator, not the original's continuous one, so it cannot
-// reproduce that series tick-for-tick (the brief's own "Already settled"
-// section: agreement is only expected at each 200 ms sample boundary) --
-// this test instead checks the same three properties the brief's acceptance
-// criterion 2 names: no release through tick 10, the first release landing
-// at tick 10 or 11, and the recurring gap averaging close to 14.432433
-// ticks.
+// At 200 ms sampling, check no release through tick 10, a first release at
+// tick 10 or 11 and a recurring mean interval near 14.432433 ticks.
 void testRetailReleaseTiming(const std::filesystem::path& dir) {
   std::cout << "release timing on MM_CLIMB_002, the measured real-seconds model\n";
   auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
@@ -2578,7 +2274,6 @@ void testRetailReleaseTiming(const std::filesystem::path& dir) {
   e.sheetType = h.type;
   s.entrances.push_back(e);
   s.totalLemmings = h.count;
-  // The measured constants -- see this function's own comment above.
   s.releaseArmSeconds = 0.723061695938398;
   s.releaseFirstCountdownSeconds = 1.3;
   s.releaseIntervalSeconds = 2.8864866275534937;
@@ -2644,13 +2339,8 @@ void testSoundCues() {
     check(cues.size() == 1 && cues[0] == SoundCue::Assign, "assigning a bomber chinks once");
   }
 
-  // MEASURED LIVE, round 7: the fuse is 5000 ms, which at the measured 200 ms
-  // tick is 25 ticks, and `Ohno` is requested at the END of it -- the same
-  // instant the explode animation starts. The blast is a further 1020 ms, so
-  // the tick that covers it is the sixth after that. These counts are written
-  // out, not taken off `Rules`: the old version of this test computed them
-  // from `bomberFuse` and `ticksPerSecond` and so could not have failed when
-  // the cue was in the wrong place.
+  // The 5000 ms fuse lasts 25 ticks at 200 ms. Ohno starts with the
+  // explosion animation, and the 1020 ms blast delay spans a further six ticks.
   runFor(w, 24);
   check(w.takeCues().empty(), "quiet for the first 24 ticks of the fuse");
   w.tick();  // tick 25: the 5000 ms event

@@ -1,8 +1,4 @@
-// Tests for the LEMBOX reader.
-//
-// Pure-format tests run everywhere against archives synthesised in a temp dir.
-// Tests that need the real thing read WEBOLUTION_GAME_DIR and report a skip
-// when it is unset, so the suite stays green on a machine without the game.
+// Read synthetic LEMBOX archives and optionally the install at WEBOLUTION_GAME_DIR.
 
 #include "assets/Box.h"
 
@@ -85,13 +81,8 @@ std::vector<std::byte> makeBox(const std::vector<std::pair<std::string, std::str
   return out;
 }
 
-// std::filesystem::temp_directory_path() just reads TMP/TEMP/TMPDIR, and when
-// none are set it happily returns C:\WINDOWS\, which is not writable. That is
-// exactly what happens when the suite is launched from make rather than a
-// shell. Pick a directory we have actually proven we can write to.
-// The directory is test-owned (webolution_test/box): main() removes it at exit,
-// and the shared webolution_test parent also holds test_cueplayback's scratch,
-// so a concurrent run must never delete the parent.
+// Choose a writable scratch folder even when TMP/TEMP/TMPDIR are unset.
+// Clean only webolution_test/box because other tests share the parent.
 const fs::path& scratchDir() {
   static const fs::path dir = [] {
     std::error_code ec;
@@ -149,9 +140,7 @@ void testSyntheticArchive() {
   });
   const auto path = writeTemp("basic", data);
 
-  // Box holds the archive open for the life of the object -- reads seek into a
-  // 300 MB file, so reopening per read would be absurd. Scope it so the handle
-  // is closed before we delete the temp file; Windows refuses otherwise.
+  // Scope the archive handle so Windows can delete the temporary file afterward.
   {
   auto box = webo::Box::open(path);
   check(box.has_value(), "opens");
@@ -297,7 +286,7 @@ void testRealArchive() {
       break;
     }
     if (++checked >= 500)
-      break;  // enough to prove the offsets line up without reading 300 MB
+      break;  // sample sufficient bytes to check the offsets
   }
   ++g_checks;
   std::cout << std::format("    spot-read {} entries\n", checked);

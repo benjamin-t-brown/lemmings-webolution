@@ -127,8 +127,7 @@ int main() {
   }
   const fs::path outputDir(outputConfigured);
   fs::create_directories(outputDir);
-  // Exact observed native prefix: ordinary Menu3 -> DOWN row1 -> RETURN Map4.
-  // Unlike the progress-retention setup below, this export has no injected outcome.
+  // Check Menu3 -> DOWN on row 1 -> RETURN to Map4 before seeding any outcome.
   auto observedRoute = createSession();
   if (!observedRoute) return 1;
   bool observedOk = true;
@@ -176,7 +175,7 @@ int main() {
           navigationOk &= current.pointerX() == 320 && current.pointerY() == 240;
           rowOneFrameSaved = static_cast<bool>(webo::writePng(
               outputDir / "main-menu-row1.png", current.composeFrame()));
-          navigationOk &= key(SDLK_RETURN); // observed Continue action.
+          navigationOk &= key(SDLK_RETURN); // Continue action
         } else if (frame == 4) {
           navigationOk &= current.screen() == Screen::Map &&
                            current.constructionCounter() == menuCounter + 1;
@@ -213,8 +212,7 @@ int main() {
     std::cerr << "SDL main-menu focus/Continue route mismatch\n"; return 1;
   }
 
-  // SOURCE mouse activation through the unchanged SDL loop. Injecting an
-  // outcome below prepares progress only; it is not a natural win/native run.
+  // Activate with SDL mouse input. Seed an outcome only to prepare progress.
   for (const bool progressed : {false, true}) {
     auto clicked = createSession();
     if (!clicked) return 1;
@@ -541,9 +539,7 @@ int main() {
   if (!footerResult || *footerResult || !footerOk || footerFrames != 7) {
     std::cerr << "SDL map footer click/Return route mismatch\n"; return 1;
   }
-  // Known-value result fixture through the real SDL frontend dispatcher. This
-  // is not a simulated victory or native input observation (levelreturn covers
-  // natural application results separately).
+  // Dispatch a known result through the production SDL frontend.
   auto lossQuit = createSession();
   if (!lossQuit) return 1;
   lossQuit->pressReturn(); lossQuit->pressReturn(); lossQuit->clickMap(206, 204);

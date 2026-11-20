@@ -1,17 +1,6 @@
-// C1b: the compositing primitive, offline, plus the negative archive finding
-// this round reached (see build/tmp/c1b-panel-icon-render/round-note.md).
-//
-// Two independent halves:
-//   1. compositeIconRegion's own blit/clip/alpha-skip math -- fully offline,
-//      synthetic fixtures, no archive and no WEBOLUTION_GAME_DIR needed.
-//   2. A real-archive check (gated the same way test_frontend.cpp's
-//      testFrontendAssetsLoad is) that GreyIcons/BlackIcons/AdditiveIcons --
-//      the three sprite-sheet names LESSONS.md names as unchased -- resolve,
-//      through the already-tested production webo::loadSpriteSheet reader,
-//      to exactly one sprite each ("bomb", "questionmark", "armageddon")
-//      rather than ten 72x32 panel-index-ordered icons. This reproduces,
-//      with the production reader rather than a scratch parser, the finding
-//      this round used to decide not to wire a guessed render.
+// Check compositeIconRegion clipping, blitting and alpha skipping with synthetic inputs.
+// The installed GreyIcons, BlackIcons and AdditiveIcons sheets each contain one
+// sprite: "bomb", "questionmark" and "armageddon", respectively.
 
 #include "app/SkillPanel.h"
 #include "assets/Box.h"
@@ -104,15 +93,12 @@ void testPartialAlphaBlend() {
   Image dest = makeSolid(2, 2, 0, 0, 0, 255);
   Image source = makeSolid(2, 2, 255, 255, 255, 128);  // ~50% alpha
   compositeIconRegion(dest, source, {0, 0, 0, 0, 2, 2});
-  // (255*128 + 0*127) / 255 = 128 (integer division), not a guess at a
-  // specific blend formula elsewhere -- this is the formula this file's own
-  // header documents.
+  // Integer blending gives (255*128 + 0*127) / 255 = 128.
   check(dest.rgba[0] == 128, std::format("partial blend: R channel is 128, was {}", dest.rgba[0]));
 }
 
 void testLoadedPlusIcon() {
-  // Asset-free BOX with a raw, bottom-up 3x1 BMP and top-down ALF. Retain
-  // this test's own files under ignored build/, independent of retail data.
+  // Make a synthetic BOX with a bottom-up 3x1 BMP and top-down ALF.
   const auto parent = fs::absolute(fs::path(__FILE__)).parent_path().parent_path().parent_path() /
                       "build/skillpanel-test";
   fs::create_directories(parent);
@@ -203,9 +189,7 @@ void testClipsSourceEdge() {
   std::cout << "clipping: source rectangle reads before the source's own origin\n";
   Image dest = makeSolid(8, 8, 9, 9, 9, 255);
   Image source = makeSolid(5, 5, 50, 60, 70, 255);
-  // srcX=-2/srcY=-2 asks to read 2 pixels before the source's own left/top
-  // edge; the placement shifts destX/destY in lock-step so the destination
-  // position for the surviving (in-bounds) source pixels is unaffected.
+  // Clipping srcX=-2/srcY=-2 shifts destX/destY so surviving pixels stay in place.
   const std::size_t written =
       compositeIconRegion(dest, source, {/*destX=*/1, /*destY=*/1, /*srcX=*/-2, /*srcY=*/-2,
                                          /*width=*/5, /*height=*/5});
@@ -229,7 +213,7 @@ void testEmptyInputsAreNoOps() {
 }
 
 void testNativePanelPlacementAndDigit() {
-  // READ/C1l geometry with the measured placement and byte-read scale branch.
+  // Exercise the original geometry and scale branch with literal placement values.
   webo::SpriteFrame f;
   f.unknown0 = 8; f.unknown1 = 7; f.width = 23; f.height = 30;
   const auto half = skillPanelRect(f, 39, 40, -1);
@@ -242,8 +226,7 @@ void testNativePanelPlacementAndDigit() {
 
   Image dest = makeSolid(90, 400, 0, 0, 0, 255);
   Image font = makeSolid(64, 16, 0, 0, 0, 0);
-  // A distinct ink pixel only in the '0' cell makes reverting either ASCII
-  // digit fail without depending on the archived font's full pixel pattern.
+  // Put one ink pixel in the '0' cell to distinguish the two ASCII digits.
   font.rgba[0] = 255;
   font.rgba[3] = 255;
   std::array<int, 9> counts{}; counts[0] = 20;
@@ -294,8 +277,8 @@ void testPatchPlateResizeRowAsymmetricAlpha() {
   check(dest.rgba[(12u*640u+18u)*4] == 100, "plate alpha composites into destination pixel");
   check(dest.rgba[(11u*640u+18u)*4] == 0, "plate compositor leaves pixel outside box untouched");
 
-  // Source-derived C1bc discriminator: selected asset row 24 has ALF x6=170,
-  // x7=43; at output x11 C1bc p53-nearest is 151 (p24-nearest is 150).
+  // On selected asset row 24, ALF x6=170 and x7=43. At output x11, p53-nearest
+  // gives 151 and p24-nearest gives 150.
   Image discriminator = makeSolid(72,32,255,255,255,0);
   discriminator.rgba[(24u*72u+6u)*4+3] = 170;
   discriminator.rgba[(24u*72u+7u)*4+3] = 43;
@@ -398,9 +381,8 @@ void testSelectedQuadDestination() {
 
 void testLinearPlateSampleDiffersFromNearest() {
   std::cout << "linear plate sample\n";
-  // Two texels on one row. x=0 lands on s=0, so linear equals that texel.
-  // x=1 has s=128/72, weights 16 and 56. Truncating blend of 0 and 255 is
-  // 198. Nearest min(127,(128+36)/72) is texel 2 and would write 255.
+  // At x=1, s=128/72 blends 0 and 255 with weights 16 and 56, giving 198.
+  // Nearest would select texel 2 and give 255.
   Image plate = makeSolid(128, 32, 0, 0, 0, 0);
   plate.rgba[0] = 10;
   plate.rgba[1] = 20;
@@ -458,7 +440,7 @@ void testPatchPlateFullWordsAgainstC1bc() {
   check(differences==0,std::format("all 16384 channels equal C1bc p53-nearest, mismatches={}",differences));
 }
 
-// The real-archive negative finding. Gated like test_frontend.cpp.
+// With WEBOLUTION_GAME_DIR set, check installed icon-sheet contents and frame dimensions.
 void testSkillPanelIconSheetsAreNotTheTenIcons() {
   const char* dir = std::getenv("WEBOLUTION_GAME_DIR");
   if (!dir || !*dir) {
@@ -477,7 +459,7 @@ void testSkillPanelIconSheetsAreNotTheTenIcons() {
     const char* sheetFile;   // SPRITES\\*.SPR
     const char* spriteName;  // the single sprite name it decodes to
     std::size_t maxFrameW;   // every frame's width/height is at most this --
-    std::size_t maxFrameH;   // nowhere near the measured 72x32 button cell.
+    std::size_t maxFrameH;   // different from the 72x32 button cell
   };
   const Expectation expectations[] = {
       {"SPRITES\\GREYICONS.SPR", "bomb", 18, 25},
@@ -512,9 +494,7 @@ void testSkillPanelIconSheetsAreNotTheTenIcons() {
     check(maxW <= expectation.maxFrameW && maxH <= expectation.maxFrameH,
           std::format("{}: every frame stays within {}x{} (not the 72x32 button cell)",
                        expectation.sheetFile, expectation.maxFrameW, expectation.maxFrameH));
-    // The falsified hypothesis this round tested: ten frames at the
-    // panel_boxes cell size (A7p state.json / PLAN.md A7), in panel-index
-    // order. None of the three sheets is that shape.
+    // None of the three sheets has the ten-frame panel_boxes layout.
     check(sprite->frameCount() != 10,
           std::format("{}: frame count is not 10 (it is {})", expectation.sheetFile,
                        sprite->frameCount()));

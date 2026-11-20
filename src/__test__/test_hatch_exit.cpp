@@ -1,4 +1,4 @@
-// P9-P11 clone observations; no original execution. Baseline uses frozen source.
+// Check hatch and exit presentation through application frames.
 #include "app/AppEntry.h"
 #include "app/BackdropScene.h"
 #include "app/HatchAnimation.h"
@@ -335,9 +335,8 @@ int application(const fs::path& out) {
               "pause comparison has only the selected Climber icon active");
         if (pausedFrames++ == 0)
           frozen = f.image;
-        // R7's UI clock continues during pause; only its measured Climber
-        // sprite footprint may move. The frozen application still requires
-        // full-frame equality. panel_icon_after covers the icon itself.
+        // When the build animates the UI during pause, allow differences only in the
+        // measured Climber sprite footprint. Otherwise compare the entire frame.
         auto expected = frozen, actual = f.image;
         if (!baseline) {
           test::normalizeClimberIcon(expected, iconPixels);
@@ -431,9 +430,8 @@ int endRoute(const fs::path& out) {
   };
   auto observer = [&](const app::LevelFrameView& f) {
     traceState.frame(f);
-    // Retain entry through the ordinary map path as well as the fixed-camera
-    // direct-level samples. The existing entry title can cover the first
-    // birth; the second release happens after it retires.
+    // Check the ordinary map path as well as direct-level samples. The title can
+    // cover the first release. The second occurs after the title retires.
     if (f.frame < 5)
       png(out / ("entry-" + std::to_string(f.frame) + ".png"), f.image);
     if (!f.world.lemmings().empty() && f.world.spawned() <= 2 &&
@@ -474,9 +472,8 @@ int endRoute(const fs::path& out) {
               "departure pause comparison has only the selected Climber icon active");
         if (pauseFrames++ == 0)
           frozen = f.image;
-        // The simulation/balloon and departure timer freeze; R7's selected
-        // Climber icon keeps UI time. Preserve the original full-frame check
-        // for the frozen application and exact equality elsewhere after R7.
+        // Pause stops the balloon and departure timer. If the selected Climber animates
+        // on UI time, exclude only its measured footprint from the comparison.
         auto expected = frozen, actual = f.image;
         if (!baseline) {
           test::normalizeClimberIcon(expected, iconPixels);

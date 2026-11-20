@@ -1,21 +1,10 @@
-// fluid-lever-assessment-001 observation driver (SCRIPTED CLONE OBSERVATION; not human play, not original fidelity).
+// Drive MM_W_012 through runApplication using SDL input. Start from Menu
+// "Play Current Game", enter map node 8, wait for lever (183,60), and re-enter after results.
+// Log the lever, receivers 5/6 and zone mask through a read-only frame observer.
 //
-// Modes (see CMakeLists.txt):
-//   play <variant> <dir>     variant = ordinary-camera | stable-camera
-//   restart <variant> <dir>  fresh process over the same isolated save (exit/reload usability)
-//
-// Route: the public connected frontend through the production runApplication, driven only by queued SDL events:
-//   Menu "Play Current Game" click -> Map click on node 8 (MM_W_012) -> the level runs NATURALLY (no skill, no injected
-//   walker, no World/gate/lever write) -> lever (183,60) is pulled by whichever walker reaches it -> results -> continue ->
-//   map -> click node 8 again (reload).
-// The level-frame observer is read-only: it copies images and logs World state (lever state, receivers 5/6, zone mask).
-//
-// Variants share the input route. `ordinary-camera` is the bare CLI (hatch yaw + camera intro). `stable-camera` adds
-// `--frontend --native --camera <json>` (the same stable camera file the fluid-surface-impl public route uses), which only
-// replaces the camera operands.
-//
-// Save: a PRIVATE copy of a retained clone save earned by public wins (targeted-play-001: node 3 won) is used; the installed
-// save and the clone's normal save are never touched (checked before/after).
+// Usage: play <variant> <dir> | restart <variant> <dir>
+// Both variants use an isolated save. ordinary-camera uses hatch yaw and the intro.
+// stable-camera uses --frontend --native --camera <json> to specify the camera pose.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "assets/Box.h"
@@ -71,7 +60,7 @@ constexpr std::size_t kTargetNode = 8;
 constexpr const char* kTargetLevel = "MM_W_012";
 constexpr int kLeverX = 183, kLeverY = 60;
 constexpr int kReceiverA = 5, kReceiverB = 6;
-// Provenance of acceptable private save copies (targeted-play-001 step-1 win / step-2 win FNVs, 1504 bytes).
+// Accepted size and FNV checksums for private save copies.
 constexpr const char* kSaveFnvs[2] = {"980473be299a98f3", "163ecc74695712a2"};
 constexpr const char* kCameraJson = "{\"viewport\": [640, 480], \"yaw_units\": 160, \"level_eye_height\": 96}\n";
 
@@ -144,7 +133,6 @@ std::string arr(const std::array<std::int32_t, 102>& a) {
   return os.str();
 }
 
-// ---- image helpers -------------------------------------------------------------------------------------------
 struct DiffStat { long changed = 0; int minX = 9999, minY = 9999, maxX = -1, maxY = -1; };
 // Viewport rows only (y 40..329): excludes the HUD strip and the skill panel; the cursor and lemmings are NOT excluded.
 DiffStat diffViewport(const Image& a, const Image& b) {
@@ -169,7 +157,6 @@ std::string diffStr(const DiffStat& d) {
   return os.str();
 }
 
-// ---- observation context -------------------------------------------------------------------------------------
 struct GateSnap { bool found = false; double h = 0, high = 0, phase = 0; int request = -1, done = -1; bool armed = false, animated = false; };
 GateSnap gateById(const sim::World& w, int id) {
   GateSnap s;
@@ -335,7 +322,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
         snap(c, e, f, "settled-plus-3s", "stability: surface stays raised");
       }
     }
-    // after the settled observations, speed the level up with the ordinary fast-forward button so it can end and be reloaded
+    // Use the ordinary fast-forward control after the fluid settles to reach results.
     if (e.settledLater && !e.ffClicked && f.endPhase == app::LevelEndPhase::Running) {
       e.ffClicked = true;
       pushClick(kFastForwardX, kFastForwardY);
@@ -348,7 +335,7 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
       pushQuit();
     }
   } else {
-    // reload entry: capture the first stable post-intro frame, compare, then stop
+    // Compare the first stable frame after re-entry.
     if (!e.reloadShot && introOver && e.postIntroFrames >= 3) {
       e.reloadShot = true;
       std::ostringstream os;
@@ -373,7 +360,6 @@ void levelObserver(Ctx& c, const app::LevelFrameView& f) {
   e.lastTick = tick;
 }
 
-// ---- play mode -----------------------------------------------------------------------------------------------
 std::optional<fs::path> findSourceSave(std::string& why, std::string& fnv) {
   const fs::path runs = fs::path(FLA_SOURCE_DIR) / "build" / "targeted-play-001" / "runs";
   std::error_code ec;
@@ -500,7 +486,6 @@ int playMode(const std::string& variant, const fs::path& root, const std::string
   const std::string normalAfter = normalSaveState();
   const std::string saveFnvEnd = fs::exists(dst, ec) ? fnvHex(dst) : "-";
 
-  // ---- verdict (reported, derived only from observations) ----
   const Entry* e1 = c.entries.size() >= 1 ? &c.entries[0] : nullptr;
   const Entry* e2 = c.entries.size() >= 2 ? &c.entries[1] : nullptr;
   std::ofstream res(dir / "result.txt");
@@ -520,8 +505,7 @@ int playMode(const std::string& variant, const fs::path& root, const std::string
   std::cout << "FluidLeverAssessment " << variant << ": entries=" << c.entries.size() << " blocked=" << (c.blocked ? c.blockedWhy : "-") << " anomaly=" << (c.anomaly.empty() ? "-" : c.anomaly)
             << " toggles=" << (e1 ? e1->leverToggles : -1) << " settled=" << (e1 ? e1->settledShot : false) << " reload=" << (e2 ? e2->reloadShot : false)
             << " normal_save_unchanged=" << (normalBefore == normalAfter) << " wall=" << fmt(totalWall, 1) << "s\n";
-  // Exit code = driver integrity (route executed, artifacts written, normal save untouched). Whether the lever was reached
-  // is REPORTED in result.txt and judged by the assessment report, not asserted here.
+  // The exit code checks route and output integrity. result.txt records lever contact separately.
   const bool integrity = status == 0 && res && c.events && c.index && normalBefore == normalAfter && (c.blocked || !c.entries.empty());
   if (!integrity) std::cerr << "FAIL: driver integrity (status=" << status << ")\n";
   return integrity ? 0 : 1;

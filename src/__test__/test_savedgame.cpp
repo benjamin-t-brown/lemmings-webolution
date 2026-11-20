@@ -1,9 +1,6 @@
-// save-codec-001: original-layout SavedGame.dat codec, storage adapter and the
-// node mapping check. Everything here is source consistency, not evidence of
-// retail save compatibility: the installed sample is all zero, so nonzero field
-// positions rest on the 0x45F43C / 0x45F94D disassembly, not on a sample.
-// No original execution; the reference executable and the installed save are
-// only ever read as bytes, and every write goes to a temporary directory.
+// Check the SavedGame.dat codec, storage adapter and node mapping.
+// The original layout for nonzero fields comes from 0x45F43C / 0x45F94D.
+// Read the installed sample and executable as bytes. Write only to temporary storage.
 
 #include "app/MapScene.h"
 #include "save/SaveStore.h"
@@ -134,7 +131,7 @@ void testCodec() {
   check(parsed.has_value(), "crafted 1504-byte image parses");
   if (parsed) {
     check(parsed->serialize() == crafted, "crafted image round-trips byte-identically");
-    // File offsets from the research contract, little-endian.
+    // Read little-endian fields directly from the original save layout.
     const auto at = [&](std::size_t off) {
       return static_cast<std::int32_t>(
           static_cast<std::uint32_t>(std::to_integer<std::uint8_t>(crafted[off])) |
@@ -322,7 +319,7 @@ void testStore(const fs::path& root) {
         !fs::exists(dirTarget.string() + ".tmp"), "unreplaceable destination reports an error and cleans up");
   check(!dirStore.load().has_value(), "a non-regular destination is a load error, not a missing file");
 
-  // Installed-directory guard (read and write), never creating anything there.
+  // Check that storage rejects both reads and writes in the installation directory.
   const fs::path installed = root / "installed";
   fs::create_directories(installed);
   save::FileSaveSink guarded(installed / "SavedGame.dat", installed);

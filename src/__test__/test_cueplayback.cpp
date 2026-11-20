@@ -1,11 +1,5 @@
-// native-022: sim cue -> retail cue name routing and the silent-degrade paths.
-//
-// Asset-free except where WEBOLUTION_GAME_DIR names an install, which is only
-// read. Run under SDL_AUDIODRIVER=dummy: no real device is ever opened.
-//
-// Expectations are LITERAL retail cue names. They are not computed by another
-// recovered invocation. This establishes cue routing only -- not native sample
-// timing, volume, mixing or resampling fidelity.
+// Check simulation cue routing against literal retail cue names and verify silent fallback.
+// Optional installed-asset checks use WEBOLUTION_GAME_DIR and SDL_AUDIODRIVER=dummy.
 
 #include "assets/Box.h"
 #include "assets/Wav.h"

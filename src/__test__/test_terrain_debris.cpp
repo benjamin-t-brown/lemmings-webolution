@@ -1,5 +1,5 @@
-// Seconds-long legacy logic check: successful cuts notify after clearing,
-// refusals/air do not, and presentation particles expire. No gameplay route.
+// Successful cuts notify after clearing. Refusals and air emit nothing.
+// Check that debris particles expire.
 #include "app/TubeScene.h"
 #include "sim/World.h"
 
@@ -52,7 +52,7 @@ void cut(sim::State state, bool steel, bool air, int facing = 1, int gravity = 1
   } else {
     assert(events > 0 && !removed.empty());
     assert(scene.deathParticleCount() == removed.size() * 4);
-    // Retained particles bridge consecutive default skill bites, then vanish.
+    // Particles bridge consecutive default-rate bites, then expire.
     scene.advanceDeathParticles(cutClockMs + 1500);
     assert(scene.deathParticleCount() > 0);
     scene.advanceDeathParticles(cutClockMs + 2000);

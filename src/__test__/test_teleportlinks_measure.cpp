@@ -1,7 +1,4 @@
-// native-023 step 1: read-only measurement of the serialized teleport link
-// fields on every effective installed level. Source-built; the original
-// executable is never run. Reports (does not assert) what the structured
-// reader holds so the pairing rule can be judged from data.
+// Report serialized teleport links across all effective installed levels.
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
 #include "assets/LevelObjects.h"
@@ -100,9 +97,8 @@ int main() {
       for (double d : r.d) out << std::format("{:.3f} ", d);
       out << "\n";
     }
-    // 0x00423325 stores every actor into one list by base id, whatever its class,
-    // so also report ids shared across all gadget collections (a collision would
-    // change what the pad lookup returns).
+    // 0x00423325 writes every actor into a shared base-ID list regardless of class.
+    // Report collisions across gadget collections because they affect pad lookup.
     {
       std::map<int, int> all;
       const auto addAll = [&](const auto& v) {

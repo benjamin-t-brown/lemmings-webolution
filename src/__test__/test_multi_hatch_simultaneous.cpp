@@ -102,8 +102,7 @@ void census(const AssetLibrary& lib) {
       auto setup = report->setup;
       if (partition == 20) setup.releaseArmSeconds = 0.0; // connected-entry contract
       World w(std::move(setup));
-      // Unit check of release gating, not an application play route. Ordinary
-      // entry holds hatches while the level clock runs; reserve its first 5 s.
+      // Reserve 5 s for entry: the level clock advances while hatch releases are held.
       if (partition == 20) w.advanceElapsedMsWithReleaseGate(5000, false, false);
       std::uint64_t firstBatchMs = 0;
       while (!w.timedOut() && w.spawned() < quotaSum) {

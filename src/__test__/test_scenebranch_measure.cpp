@@ -1,11 +1,7 @@
-// scene-branch-research-002: read-only measurement of the installed MM_DIG_000
-// Secondary scenery tree including type-2 branch-1 records. Source-built; reads
-// the effective archive overlay (patch over base) and the reference executable's
-// bytes (never executes it). Production readers are not changed: the branch-1
-// traversal below is a measurement-only reader whose layout comes from the
-// address-backed contract in docs/scratch/scene-branch-research-002.md
-// (reader 0x0047B44C, branch-1 reader 0x00468BF2, common base 0x0046BB73).
-// Writes only under build/scene-branch-research-002 (SCENE_BRANCH_DIR).
+// Measure MM_DIG_000 Secondary scenery, including type-2 branch-1 records,
+// from the installed archive overlay. The independent reader follows
+// 0x0047B44C, branch-1 reader 0x00468BF2 and common base 0x0046BB73.
+// Read constants from the reference executable and write to SCENE_BRANCH_DIR.
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
 #include "assets/Sprite.h"
@@ -71,7 +67,7 @@ std::string sha256Hex(const std::uint8_t* data, std::size_t n) {
   return out;
 }
 
-// ---- measurement-only scene tree reader (types 0/1/2, branch 0/1) ----------
+// Read scene nodes of types 0/1/2 and branches 0/1.
 struct Node {
   std::size_t begin = 0, end = 0, parent = SIZE_MAX, depth = 0;
   std::uint32_t type = 0;
@@ -180,7 +176,7 @@ struct Tree {
   }
 };
 
-// ---- PE image reader for constants (bytes only) -----------------------------
+// Map reference addresses to offsets in the PE file.
 struct Pe {
   std::vector<std::uint8_t> data;
   struct Sec { std::uint32_t va, vsize, raw, rawsize; std::string name; };
@@ -240,7 +236,6 @@ int main() try {
   const fs::path outDir = SCENE_BRANCH_DIR; fs::create_directories(outDir);
   std::ostringstream out;
 
-  // ---- level identity --------------------------------------------------------
   std::string levelName;
   for (const auto& n : levelFileNames(*lib)) if (idOf(n) == "MM_DIG_000") levelName = n;
   check(!levelName.empty(), "MM_DIG_000 level entry present");
@@ -257,7 +252,6 @@ int main() try {
   const auto ext = *level.objects.second_object_source_extent;
   out << std::format("SECONDARY typedRoot=0x{:x} treeEnd=0x{:x} markerMatches={}\n", ext.typed_root_begin, ext.tree_end, level.objects.second_object_marker_matches);
 
-  // ---- traverse --------------------------------------------------------------
   Tree t; t.b = *bytes; t.p = ext.typed_root_begin;
   const bool ok = t.node(SIZE_MAX, 0);
   out << std::format("TRAVERSAL ok={} end=0x{:x} nodes={} error=\"{}\"\n", ok, t.p, t.nodes.size(), t.err);
@@ -279,7 +273,6 @@ int main() try {
                      nT0, nT1, nT2b0, nT2b1, hidden, nested, rootChildren, b1WithChildren, t1WithChildren);
   check(nT2b1 > 0, "at least one branch-1 record measured");
 
-  // ---- records ---------------------------------------------------------------
   out << "RECORDS (file order; offsets are absolute file offsets into the level)\n";
   std::set<std::string> names;
   for (std::size_t i = 0; i < t.nodes.size(); ++i) {
@@ -297,7 +290,6 @@ int main() try {
     out << '\n';
   }
 
-  // ---- sprite resolution -----------------------------------------------------
   out << "RESOLUTION (registry name -> SPRITES\\<name>.SPR via fmt 0x4C33C4 'Sprites\\%s.spr', 0x484EB0)\n";
   std::map<std::string, SpriteSheet> sheets; std::map<std::string, std::string> srcOf;
   std::size_t unresolved = 0, missingTex = 0;
@@ -337,8 +329,8 @@ int main() try {
     const auto& clip = sh.sprites[n.f2];
     const auto cnt = clip.animations.size();
     tempHist[cnt]++;
-    // 0x4B03B0 is 32767.0 (measured below), so r = rand()/32767.0 is in [0,1] and
-    // trunc((count-1)*r) is in [0,count-1]; count-1 occurs only when rand() == 32767.
+    // 0x4B03B0 holds 32767.0. With r = rand()/32767.0, trunc((count-1)*r)
+    // selects the last entry only when rand() == 32767.
     out << std::format(" clipName=\"{}\" rate={:.9g} temporalEntries={} firstDrawRange=[0,{}]", clip.name, clip.rate, cnt, cnt ? cnt - 1 : 0);
     if (n.f3 >= cnt) ++badTemporal;
     const auto& a = clip.animations[std::min<std::size_t>(n.f3, cnt ? cnt - 1 : 0)];
@@ -366,7 +358,7 @@ int main() try {
   check(unresolved == 0, "every branch-1 sprite name resolves to an installed SPRITES\\*.SPR");
   check(badClip == 0, "every branch-1 clip index is inside its sheet");
 
-  // ---- reference executable constants (bytes only; never executed) ------------
+  // Read constants from the reference executable image.
   {
     Pe pe; const fs::path exe = fs::path(gameDir) / "Lemmings Revolution.exe";
     std::ifstream f(exe, std::ios::binary);
@@ -378,21 +370,20 @@ int main() try {
       check(pe.parse(), "PE parse");
       for (const auto& s : pe.secs) out << std::format("  SECTION {} va=0x{:x} vsize=0x{:x} raw=0x{:x} rawsize=0x{:x}\n", s.name, pe.base + s.va, s.vsize, s.raw, s.rawsize);
       const std::uint32_t dv[] = {0x4B02C8, 0x4B02D0, 0x4B0338, 0x4B03B0, 0x4B03F8, 0x4B0D68, 0x4B1928, 0x4B1940, 0x4B1948, 0x4B1950,
-                                    // frame-clock constants: ms->seconds divisor, paused/non-play fixed step, step cap, burst cap, seed override
+                                    // Read time conversion, paused/non-play step, step cap, burst cap and seed override.
                                     0x4B1758, 0x4B17B8, 0x4C08E8, 0x4B1800, 0x4E33D0};
       for (auto va : dv) { double v = 0; const bool g = pe.dbl(va, v); out << std::format("  DOUBLE @0x{:x} [{}] = {}\n", va, pe.secOf(va), g ? std::format("{:.17g} (bits 0x{:016x})", v, std::bit_cast<std::uint64_t>(v)) : "<no file bytes>"); }
       const std::uint32_t wv[] = {0x4C4570, 0x4C24E0, 0x4C227C, 0x4C24E4, 0x58D53C, 0x58CB38, 0x5CD5F4,
                                           0x4B15F8, 0x4E33C8, 0x4E33D0, 0x4E33D4, 0x4C36A8};
       for (auto va : wv) { std::uint32_t v = 0; const bool g = pe.dw(va, v); out << std::format("  DWORD  @0x{:x} [{}] = {}\n", va, pe.secOf(va), g ? std::format("0x{:08x} ({})", v, v) : "<no file bytes (zero-initialised)>"); }
       out << "  STRING @0x4C33C4 = \"" << pe.cstr(0x4C33C4) << "\"\n  STRING @0x4C33D4 = \"" << pe.cstr(0x4C33D4) << "\"\n";
-      // Calls to srand-style writers: the only static writer of 0x4C4570 is 0x49C844 (disassembly grep), so the
-      // initial image value is the effective initial PRNG state unless that writer runs.
+      // 0x49C844 is the only static writer of 0x4C4570, via an srand-style entry point.
     }
   }
-  // Worked example only (NOT a claim about the original's runtime state): the CRT LCG at 0x0049C84A
-  // (state' = state*0x343FD + 0x269EC3; value = (int32(state') >> 16) & 0x7FFF) started from the
-  // executable's initial image state 1 with no earlier rand()/srand() call, mapped through the
-  // first-draw formula f3 = trunc((count-1) * value/32767.0) for the 16-entry clip, in file order.
+  // Example from image seed 1 before rand()/srand() calls. The CRT LCG at
+  // 0x0049C84A computes state' = state*0x343FD + 0x269EC3 and
+  // value = (int32(state') >> 16) & 0x7FFF. The first draw selects
+  // f3 = trunc((count-1) * value/32767.0) in the 16-entry clip's file order.
   {
     std::uint32_t state = 1; out << "WORKED-EXAMPLE initial-state-1 first-draw f3 for 19 records (count=16):";
     for (std::size_t i = 0; i < nT2b1; ++i) {

@@ -1,22 +1,8 @@
-// basher-fix-001: the Basher at a wall on the installed MM_BASH_002, through the production path.
+// Drive Basher assignments through webo::app::runApplication on MM_BASH_002.
+// Use 200 ms frames and SDL mouse input after confirming hoveredActor(); the click calls World::assign().
 //
-// SCRIPTED CLONE OBSERVATION and regression test, not human play and not original-fidelity evidence.
-// The level runs through the public webo::app::runApplication (--level MM_BASH_002 --sim --native) on the
-// owned deterministic clock (--frames N with ApplicationRunOptions::frameSeconds = one 200 ms tick per
-// frame). The only inputs are SDL events queued from the read-only LevelFrameObserver: key 6 selects the
-// Basher plate, right-button drags turn the camera after a followed lemming (the pillars are ~75 columns from
-// the hatch view), a mouse motion places the pointer on its projected box, and a left click assigns through
-// the same hoveredActor() + World::assign() path a player uses. Nothing mutates a World, stock or terrain.
-// No save store is installed (standalone --level), so no save file is read or written.
-//
-// Usage:
-//   test_basherfix probe  <dir> <gap>   observe and report; exit code reflects driver integrity only
-//   test_basherfix assert <dir>         the regression: two cells short of the first pillar, it must tunnel
-//   test_basherfix away   <dir>         64 cells short on the flat hatch ledge: ends after its free swings
-//
-// A lemming is clicked when its distance to the wall ahead equals <gap> cells: the smallest d >= 1 whose
-// column x + d*facing is solid and not steel over the eight rows y .. y-7 (see wallDistance). gap 1 is the
-// wall directly in front of the lemming.
+// Usage: test_basherfix probe <dir> <gap> | assert <dir> | away <dir>
+// Probe takes a cell gap. Assert tunnels from two cells short. Away starts 64 cells short on the ledge.
 #include "app/AppEntry.h"
 #include "sim/World.h"
 
@@ -116,10 +102,9 @@ char glyph(sim::Material m) {
   return '?';
 }
 
-// Smallest d in 1..limit whose column x + d*dir is a TALL bashable wall: the eight cells y .. y-7 all
-// solid and none of them steel. That picks the 16-column earth pillars of MM_BASH_002 (rows 7..71) and
-// skips the thin diagonal strokes the walkers climb and the steel seam of the ring (columns 245..12).
-// -1 when no such column lies within the limit.
+// Return the gap to the nearest column with eight solid, non-steel cells at y .. y-7,
+// or -1 if none is in range. This finds the 16-column MM_BASH_002 earth pillars
+// (rows 7..71) and skips the diagonal strokes and steel seam (columns 245..12).
 constexpr int kWallLimit = 96;
 int wallDistance(const sim::Terrain& t, const sim::Lemming& l, int limit = kWallLimit) {
   const int dir = static_cast<int>(l.facing);
@@ -146,9 +131,7 @@ std::string dumpRegion(const sim::Terrain& t, int x, int y, int dir) {
   return os.str();
 }
 
-// One lemming being followed towards a wall: the camera is dragged after it (the pillars of MM_BASH_002 are
-// ~75 columns from the hatch view, so a player has to turn the view too), the right button is released a few
-// cells short of the click, and the left click goes in only when the production hover is on that lemming.
+// Drag the camera to follow the target. Release the drag before assignment and click only on a matching hover.
 struct Aim {
   std::size_t target = static_cast<std::size_t>(-1);
   bool held = false;
@@ -162,7 +145,7 @@ struct Result {
   std::string failure;
   int frames = 0;
   int gap = 1;
-  double panSign = 1.0;  // learned: +1 when yaw = 256 - (cell column of the view centre)
+  double panSign = 1.0;  // positive for the 256-minus-column yaw convention
   // click bookkeeping
   std::size_t target = static_cast<std::size_t>(-1);
   bool selected = false, clicked = false, assigned = false;
@@ -210,8 +193,7 @@ int main(int argc, char** argv) {
   fs::create_directories(outDir, ec);
 
   Result r;
-  // probe: gap from argv[3]; assert: two cells short of the first pillar; away: 64 cells short of it, on the
-  // flat y=33 hatch ledge (ends after its free swings, no tunnel)
+  // Probe reads the wall gap from argv[3]. Away starts on the flat y=33 ledge.
   r.gap = argc > 3 ? std::atoi(argv[3]) : (mode == "away" ? 64 : 2);
   const bool playOn = mode == "probe";  // later walls get their own Basher so the level outcome can be seen
   Aim firstAim, laterAim;
@@ -271,9 +253,8 @@ int main(int argc, char** argv) {
       r.log.push_back(os.str());
     }
 
-    // Follow one lemming to the requested distance from a wall and click it through the production hover.
-    // Returns the clicked lemming's index, or npos. Selection: a walker with a tall wall ahead at least
-    // gap+6 cells away. Dropped when it stops walking/falling, turns away, or passes the distance unclicked.
+    // Choose a walker at least gap+6 cells from a tall wall. Return its index on a
+    // confirmed click, or npos if it leaves walking/falling, turns, or passes the gap.
     constexpr std::size_t npos = static_cast<std::size_t>(-1);
     const auto drive = [&](Aim& aim, int selectLimit) -> std::size_t {
       if (f.cameraIntroActive || f.levelMenuOpen) return npos;
@@ -324,11 +305,8 @@ int main(int argc, char** argv) {
         }
         return npos;
       }
-      // Turn the view after the lemming (aim a little ahead of it). P8 correction:
-      // Camera::buildCamera and ActorPose use the same angular direction, so the
-      // near-side column is yaw, not 256-yaw. The old driver clicked through the
-      // cylinder at gap 64 and cannot select that now-hidden actor. Keep the
-      // same distance, public hover/click and all Basher behavior assertions.
+      // Aim slightly ahead. Camera::buildCamera and ActorPose agree that yaw locates
+      // the near-side column.
       const double ahead = static_cast<double>(l.x + 2 * static_cast<int>(l.facing));
       double delta = std::fmod(ahead - f.displayedPose.yawUnits, 256.0);
       if (delta >= 128.0) delta -= 256.0;
@@ -351,7 +329,6 @@ int main(int argc, char** argv) {
       return npos;
     };
 
-    // ---- phase 1: choose, follow and click a lemming at the requested distance to the wall
     if (!r.clicked && calls >= 2) {
       const std::size_t hit = drive(firstAim, kWallLimit);
       if (hit != npos) {
@@ -370,7 +347,6 @@ int main(int argc, char** argv) {
       }
     }
 
-    // ---- phase 2: record the target's state from the assignment on
     if (r.clicked) {
       const auto& l = lemmings[r.target];
       if (!r.assigned && l.state == sim::State::Basher) {
@@ -405,7 +381,7 @@ int main(int argc, char** argv) {
       }
     }
 
-    // ---- phase 3: later walls (the second pillar) get a Basher too, by the same hover-confirmed click
+    // Use the same hover-confirmed assignment at the second pillar.
     if (playOn && r.firstWalkerAfter >= 0 && r.laterClicks < 4 && w.setup().skills[kBasherSkillIndex] > 0) {
       // Later targets are only picked up within 64 cells of a wall (the pillars and the ledges beside them).
       const std::size_t hit = drive(laterAim, 64);
@@ -437,7 +413,7 @@ int main(int argc, char** argv) {
     for (const auto& l : lemmings)
       if (l.alive() && l.state != sim::State::Blocker) allDone = false;
     r.leveled = f.endPhase != app::LevelEndPhase::Running;
-    // probe: run the level out; assert: until a follower has crossed the tunnel; away: once the bash ended
+    // Stop the assert case when a follower crosses the tunnel and the away case when bashing ends.
     const bool done = mode == "probe" ? (allDone || r.leveled)
                       : mode == "assert" ? (!r.crossed.empty() || tick > r.firstWalkerAfter + 200)
                                          : tick > r.firstWalkerAfter + 5;
@@ -497,7 +473,7 @@ int main(int argc, char** argv) {
     expect(r.stockAfter == r.stockBefore - 1, "the Basher count dropped by one");
     expect(r.firstWalkerAfter >= 0, "the Basher ended and the lemming walks again (no endless Basher)");
     if (mode == "assert") {
-      // Two cells short of the 16-column pillar: swing through the gap, then tunnel the whole pillar.
+      // Two cells short of the 16-column pillar, the Basher must swing across the gap and tunnel through.
       expect(r.basherTicks >= 8 * 8, "the Basher kept bashing for many cycles");
       expect(std::abs(r.basherX1 - r.basherX0) >= 16, "the Basher advanced through all 16 columns of the pillar");
       expect(r.solidLatest < r.solidAtAssign, "terrain was removed");

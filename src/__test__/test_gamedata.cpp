@@ -221,7 +221,7 @@ void testRealData() {
     check(none.intervalTicks(50, 20) == 1, "an empty table still yields a usable interval");
   }
 
-  // Rates run from slowest to fastest and stay positive.
+  // Rates are positive and ordered slowest to fastest.
   bool descending = true, positive = true;
   for (std::size_t i = 0; i < rates->size(); ++i) {
     if ((*rates)[i] <= 0)

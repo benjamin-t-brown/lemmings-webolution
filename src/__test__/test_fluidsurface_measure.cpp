@@ -1,13 +1,10 @@
-// fluid-surface-research-001: read-only measurement of what the installed MM_W_012 level stores for
-// every `entities_42acac` fluid gate (vtable 0x004B1020, ctor 0x00428680, reader 0x0042ACAC).
-// Source-built; the original executable is never run. It prints, from the unchanged structured
-// reader (lemmings::read_compiled_level), the gate's spatial block, its child models
-// (+0x158 base model, +0x15C, optional +0x160/+0x164), the wave vectors (+0x1B8..+0x278, +0x290),
-// the secondary-object resource name (+0x190 -> list +0x194) and the +0x16C/+0x140 words, so the
-// render contract in docs/scratch/fluid-surface-research-001.md rests on installed bytes.
+// Report installed MM_W_012 entities_42acac fluid gates (vtable 0x004B1020,
+// constructor 0x00428680, reader 0x0042ACAC) via lemmings::read_compiled_level.
+// Include child models (+0x158 base, +0x15C, optional +0x160/+0x164),
+// wave vectors (+0x1B8..+0x278, +0x290), secondary resource name
+// (+0x190 -> list +0x194), and words +0x16C/+0x140.
 //
-// It asserts measurement integrity only (level readable, 19 gates, lever (183,60) targets present
-// with matching stored heights). It does not assert any visual result.
+// Require 19 readable gates and matching stored heights for the targets of lever (183,60).
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
 #include "lemmings/compiled_level.hpp"
@@ -60,9 +57,9 @@ std::string dumpChild(const lemmings::ObjectBasePrefix::Child& c, int depth) {
   return o.str();
 }
 
-// Full stored geometry of one class-1 mesh node (resume, blockers 1-2): the +0x118 vertex list, the
-// +0x128 normal list, the 12-double node head and every PolyList record. Kinds 4/6 carry one shared
-// RGBA per record and index/UV corners (0x00479F3A); kinds 5/7 carry index/UV/RGBA corners.
+// Report class-1 geometry, including +0x118 vertices, +0x128 normals, the
+// 12-double node header and all PolyList records. Kinds 4/6 share one RGBA
+// with index/UV corners (0x00479F3A). Kinds 5/7 store index/UV/RGBA per corner.
 std::string dumpMesh(const char* label, const lemmings::ObjectBasePrefix::Child& c) {
   std::ostringstream o;
   o << std::format("    {} mesh '{}' class_tag={}\n", label, c.following_name, c.class_tag);

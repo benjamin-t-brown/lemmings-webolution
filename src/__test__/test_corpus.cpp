@@ -1,30 +1,9 @@
-// Corpus baseline for the terrain, both readings of it.
+// Track both terrain masks across the installed .LVL corpus. The simulation uses
+// the stored collision grid. The lattice raster comes from surface vertices.
 //
-// This is a change-detector, not a statement that the numbers are right.
-//
-// Two masks are surveyed. The **stored collision grid** is the one the
-// original itself collides against, read out of the .LVL, and it is what the
-// simulation now runs on: 39.7% solid at the median, and 99 of 102 levels
-// take a lemming released from a parsed entrance without killing it once the
-// grid is flipped onto the sim's y-down axis. The **lattice raster** is our
-// own reconstruction from the surface vertices, which turns out to be the
-// engine's render input rather than its terrain. On the 49858-word index
-// array it is 27.5% solid at the median and 93 of 102 releasable. The
-// numbers are a change detector, not a quality target.
-//
-// The invariant is chosen because it needs no running original: a lemming
-// released from an entrance has to land on something, and past
-// `Rules::splatDistance` the landing kills it. So every number here is a
-// measurement of where the lattice reading stands, and the point of pinning
-// them is that the next change to the face rule in `SurfaceMesh.cpp` moves
-// one visibly instead of going unnoticed. PLAN.md 1.6 records what the
-// survey does and does not support -- in particular, a tall hatch is
-// legitimate on MM_FLOAT, where a floater survives any drop.
-//
-// Bounds are directional: a floor where an improvement should push the
-// number up, a ceiling where it should push the number down. The parse
-// counts are exact, because a level that stops parsing is a bug whichever
-// way it moves.
+// Count releases that find ground within Rules::splatDistance. MM_FLOAT can
+// release a Floater from a tall hatch. Parse counts are exact. Other bounds
+// are one-sided, using a floor or ceiling for each metric.
 
 #include "assets/Box.h"
 #include "assets/LevelStats.h"
@@ -51,12 +30,7 @@ void check(bool cond, std::string_view what) {
   }
 }
 
-// The stored-grid figures were re-measured 2026-10-14 after
-// Terrain::fromCollisionGrid started flipping file rows onto the sim's
-// y-down axis (same map as worldToMaskPixel). The earlier pin (median
-// drop 9, 81 releasable) searched +y on the unflipped file grid from a
-// flipped entrance row, so it often hit a different solid band. Lattice
-// figures are unchanged.
+// Terrain::fromCollisionGrid uses the same file-Y to simulation-Y mapping as worldToMaskPixel.
 constexpr std::size_t kLevels = 102;
 // The stored grid: every level has one, and it is real terrain everywhere.
 constexpr std::size_t kGrids = 102;
@@ -64,8 +38,7 @@ constexpr std::size_t kGridSurvivableLevels = 99;
 constexpr std::size_t kGridEntrancesWithFloor = 144;
 constexpr std::size_t kGridEntrancesSurvivable = 138;
 constexpr int kGridMedianDropCells = 13;
-// Re-measured 2026-10-14 after indexLevel started reading the whole
-// 49858-word array. VH13_KF_1 rasterises now; it was the empty mask.
+// Use the full 49,858-word lattice array, including VH13_KF_1.
 constexpr std::size_t kNonEmptyMasks = 102;
 constexpr std::size_t kSurvivableLevels = 93;
 constexpr std::size_t kEntrances = 144;
@@ -130,16 +103,13 @@ void testCorpusBaseline(const fs::path& dir) {
   check(c.gridMedianDropRows <= kGridMedianDropCells,
         std::format("real-grid median drop <= {} cells (got {})", kGridMedianDropCells,
                     c.gridMedianDropRows));
-  // The stored grid is still the denser of the two (39.7% vs 27.5% at the
-  // median). The old factor-of-five gap was the header[3] window, not a
-  // property of the index array. This is a change detector, not a target.
+  // The stored grid is denser at the median (39.7% vs 27.5%). The lattice
+  // metric uses the full index array instead of the header[3] window.
   check(c.gridMedianSolidPercent > c.medianSolidPercent,
         std::format("the stored grid stays denser than the raster ({:.1f}% vs {:.1f}%)",
                     c.gridMedianSolidPercent, c.medianSolidPercent));
 
-  // The one level whose ledge is confirmed against the running original
-  // (PLAN.md 1.6, 1,231/1,231 foot cells). It must stay releasable, and it
-  // must keep the ring stride the live check was made against.
+  // Check MM_CLIMB_002's ring stride, floor beneath every entrance, and survivable median drop.
   bool sawClimb = false;
   for (const auto& r : *rows) {
     if (r.shortName != "MM_CLIMB_002")

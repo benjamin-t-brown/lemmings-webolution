@@ -1,4 +1,3 @@
-// Seconds-long legacy logic checks, not a per-level gameplay/replay route.
 #include "sim/RetailLevel.h"
 #include "app/BackdropScene.h"
 #include "app/MapScene.h"

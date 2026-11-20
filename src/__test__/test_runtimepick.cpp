@@ -34,8 +34,7 @@ int main() {
       runtimePickCandidate(&second, box, walker, sim::Skill::Climber, {40,32,0.75}, movedReference)};
   check(pickHoveredLemming(moved, cursor)->id == &first,
         "same actor positions and rectangles use supplied moved target, not fixed start");
-  // Floater applicability is intentionally not claimed: this checks the native
-  // priority input independently of the first-level Climber exclusion path.
+  // Check native priority independently of the first-level Climber stock rule.
   PickCandidate priority[] = {
       runtimePickCandidate(&first, box, walker, sim::Skill::Floater, reference, reference),
       runtimePickCandidate(&second, box, falling, sim::Skill::Floater, {200,0,0.75}, reference)};

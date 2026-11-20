@@ -1,5 +1,4 @@
-// scene-integration-001: installed inputs through current loaders and a fixed
-// source camera. No original code runs.
+// Check scenery integration with installed inputs and a static camera.
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
 #include "app/TubeScene.h"
@@ -90,8 +89,7 @@ Rendered render(const BackdropScene& backdrop,const TubeScene& tube,const AssetL
     SceneRasterObserver observer;observer.mask=&mask;
     observer.candidate=[&](auto,auto,auto,auto){++out.candidates[i];};
     observer.accepted=[&](const SceneRasterWriteEvent& e){
-      // Bounded event samples retain actual before/after values independently
-      // of aggregate counts (the mask covers the entire 640x480 target).
+      // Sample individual pixel changes as well as aggregate counts across 640x480.
       if(out.writes[i]<3){
         log<<"accepted,"<<stageNames[i]<<",source="<<e.source<<",triangle="<<e.triangle
            <<",pixel="<<e.pixel<<",before=";
@@ -174,8 +172,7 @@ void boundaries(const BackdropScene& scene,const Bytes& bytes,bool bash,std::ost
 void negatives(const AssetLibrary& lib,const Bytes& bytes,std::ostream& log) {
   const auto level=lemmings::read_compiled_level(raw(bytes));
   const auto primary=level.objects.source_extent,secondary=*level.objects.second_object_source_extent;
-  // Delete the optional holder from an otherwise real serialized level. No
-  // production offset selection or re-encoded-name positioning is involved.
+  // Delete the optional holder using the fixture's known serialized offset.
   auto absent=bytes;absent[primary.holder_end]=std::byte{0};
   absent.erase(absent.begin()+secondary.marker_begin,absent.begin()+secondary.holder_end);
   auto noSecond=BackdropScene::build(lib,absent,"MM_BASH_002");require(bool(noSecond),"absent secondary valid");
@@ -187,14 +184,13 @@ void negatives(const AssetLibrary& lib,const Bytes& bytes,std::ostream& log) {
     require(rejected,"truncated flags/auxiliary rejected");
   }
   const auto& model=*level.gadgets.entities_425e50.at(0).model;
-  const auto modelBegin=std::size_t{0x9f4a2}; // accepted research observation, test only
+  const auto modelBegin=std::size_t{0x9f4a2}; // installed fixture offset
   lemmings::LevelByteStream modelStream{raw(bytes),modelBegin};(void)lemmings::read_level_model(modelStream);
   Bytes modelOne(24,std::byte{0});setWord(modelOne,0,1); // type1: four words and empty resource string
   auto unsupported=bytes;unsupported.erase(unsupported.begin()+modelBegin,unsupported.begin()+modelStream.cursor);
   unsupported.insert(unsupported.begin()+modelBegin,modelOne.begin(),modelOne.end());
   auto result=BackdropScene::build(lib,unsupported,"MM_BASH_002");
-  // scene-admission-001: SUPERSEDED `!result` hard-error check. An unsupported present
-  // model form is now a successful, diagnosed, EMPTY partial scene (any level ID).
+  // An unsupported present model produces an empty partial scene with a diagnostic.
   require(result&&result->empty()&&result->diagnostics().size()==1&&result->diagnostics()[0].find("unsupported present model type 1")!=std::string::npos&&result->diagnostics()[0].find("LegacyUnattributed")!=std::string::npos,"explicit typed model diagnostic (empty partial scene)");log<<"unsupported-model,"<<result->diagnostics()[0]<<'\n';
   auto noModel=bytes;noModel[modelBegin-2]=std::byte{0};
   noModel.erase(noModel.begin()+modelBegin,noModel.begin()+modelStream.cursor);
@@ -205,13 +201,11 @@ void negatives(const AssetLibrary& lib,const Bytes& bytes,std::ostream& log) {
   // the same common base). The composed reader supports it; SceneNode rejects.
   badNode.insert(badNode.begin()+e.typed_root_begin+4,80,std::byte{0});setWord(badNode,e.typed_root_begin,3);
   result=BackdropScene::build(lib,badNode,"MM_BASH_002");
-  // SUPERSEDED `!result` hard-error check (scene-admission-001): now an empty partial scene
-  // whose diagnostic still names the role and the exact unsupported node type.
+  // The empty scene diagnostic must name the role and unsupported node type.
   require(result&&result->empty()&&result->diagnostics().size()==1&&result->diagnostics()[0].find("LegacyUnattributed")!=std::string::npos&&result->diagnostics()[0].find("unsupported scene node type 3")!=std::string::npos,"explicit unsupported node diagnostic (empty partial scene)");log<<"unsupported-node,"<<result->diagnostics()[0]<<'\n';
   auto dig=lib.read("COMPILED\\MM_DIG_000.LVL");require(bool(dig),"read real branch1 level");
-  // scene-branch-impl-001: SUPERSEDED. Real MM_DIG_000 branch-1 bytes are no longer an unsupported
-  // form (structurally admitted); the equivalent unsupported-form check mutates the first branch-1
-  // record's sprite name 'fire' (4 bytes at 0xa7587) to the missing file 'nofi'.
+  // In MM_DIG_000 replace the first branch-1 'fire' name (four bytes at 0xa7587)
+  // with missing sprite 'nofi' to exercise the unsupported form.
   { auto admitted=BackdropScene::build(lib,*dig,"MM_BASH_002");
     require(admitted&&!admitted->empty()&&admitted->diagnostics().empty()&&admitted->spriteCount()==19,"real branch1 bytes are admitted under any ID"); }
   auto digMissing=*dig;require(digMissing.size()>0xa758b&&char(digMissing[0xa7587])=='f'&&char(digMissing[0xa758a])=='e',"first branch-1 name is 'fire'");
@@ -233,12 +227,11 @@ void negatives(const AssetLibrary& lib,const Bytes& bytes,std::ostream& log) {
   result->visitRoots([&](const auto& s,const auto&){require(shiftedIndex<oldRoots.size()&&s.extent.typed_root_begin==oldRoots[shiftedIndex++]+1,"each structural root follows shifted layout");});
   require(shiftedIndex==4,"shifted layout retains every owned root");
   auto unsupportedId=BackdropScene::build(lib,digMissing,"MM_DIG_000");require(unsupportedId&&unsupportedId->empty()&&!unsupportedId->diagnostics().empty(),"undemonstrated level explicitly partial");
-  // scene-admission-001: the old "scenery adapter not demonstrated" wording is superseded by a
-  // level-qualified diagnostic naming the role and exact unsupported form (same empty partial scene).
+  // The empty scene diagnostic must name the level, role and unsupported form.
   { const auto& d=unsupportedId->diagnostics().front();
     require(d.find("MM_DIG_000")!=std::string::npos&&d.find("Secondary")!=std::string::npos&&d.find("unsupported type-2 branch 1 sprite 'nofi'")!=std::string::npos&&d.find("scenery adapter not demonstrated")==std::string::npos,"real-ID MM_DIG_000 (missing-sprite variant) diagnosed empty partial scene names role and form");
     log<<"unsupported-real-id,"<<d<<'\n'; }
-  // Exercise the formerly silent billboard-adapter failure on a real tree.
+  // Check billboard adapter failure on an installed tree.
   auto invalidBillboard=bytes;auto tree=readSceneNode(bytes,secondary.typed_root_begin);
   require(bool(tree),"secondary tree for bounded adapter rejection");
   const auto leaf=std::find_if(tree->root.children.begin(),tree->root.children.end(),[](const auto& n){return n.type==2;});

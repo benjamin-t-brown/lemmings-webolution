@@ -1,4 +1,3 @@
-// Assignment contract only: no scripted route or claim of original fidelity.
 #include "app/RuntimePick.h"
 #include "sim/World.h"
 
@@ -63,7 +62,7 @@ int main() {
     }
   }
 
-  // Adding shrug must not broaden the existing work-skill state boundary.
+  // Check that shrug uses the work-skill state boundary.
   for (State state : {State::Faller, State::Climber, State::Hoister, State::Floater,
                       State::Exploder, State::Splatter, State::Exited, State::Dead,
                       State::Bounce, State::Drown, State::Teleporting}) {

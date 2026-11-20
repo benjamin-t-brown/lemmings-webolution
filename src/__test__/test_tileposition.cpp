@@ -1,14 +1,5 @@
-// Restored asset-side coverage (PLAN.md Phase A, debt 2).
-//
-// A cylinder skin tile carries its own position in its name, and that is the
-// whole of the skin's layout logic. The flat renderer's version of this
-// function shipped with a bug that returned column 0, row 0 for every tile, so
-// the level stacked itself in one corner; these are the checks that would have
-// caught it in a second. The function was retired with old/src/gfx; this
-// re-establishes the coverage against the production header src/gfx/TilePosition.h.
-//
-// Synthetic checks always run. The retail sweep runs only when
-// WEBOLUTION_GAME_DIR points at an installation.
+// Decode cylinder tile positions from names in synthetic cases and the
+// optional WEBOLUTION_GAME_DIR archive sweep.
 
 #include "assets/Box.h"
 #include "assets/Cylinder.h"
@@ -51,8 +42,8 @@ void testSynthetic() {
   check(inner.column == 7 && inner.row == 2, "with its own position");
   check(!inner.outer, "and is marked inner");
 
-  // Column 0 row 0 is a real position, so it must be distinguishable from the
-  // failure case -- which is exactly what the original bug blurred.
+  // Column 0, row 0 is a valid tile position.
+  // The parser must distinguish it from a parse failure.
   const auto origin = webo::gfx::parseTilePosition("Cylinder\\L\\OUT_L_0_0");
   check(origin.valid && origin.column == 0 && origin.row == 0, "0,0 is a valid position");
 

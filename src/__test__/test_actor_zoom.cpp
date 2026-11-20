@@ -1,5 +1,4 @@
-// Seconds-long geometry unit, not a gameplay route or an original comparison.
-// Guard the reference camera across yaw, elevation, level height and intro.
+// Check reference-camera geometry across yaw, elevation, level height and intro.
 #include "app/ActorSprite.h"
 #include "app/ActorOcclusion.h"
 #include "app/RuntimePick.h"
@@ -41,9 +40,7 @@ int main() {
           const auto zoom = buildCamera(params);
           assert(base.defaultZoomDepthOffset == 0);
           for (double lane : {-40.0, 0.0, 40.0}) {
-            // World points on three different camera depths, including the
-            // canonical actor anchor. Independent full camera construction
-            // supplies the reference, not the stored translation offset.
+            // Build the reference camera independently at three depths, including the actor anchor.
             const std::array<double, 3> point{-56.9983 + lane, 32, 6.06948};
             const double z0 = viewZ(base, point), z1 = viewZ(zoom, point);
             assert(z0 > 0 && z1 > 0);

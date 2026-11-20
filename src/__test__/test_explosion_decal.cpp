@@ -1,5 +1,4 @@
-// Short presentation invariants, using installed Just Bomb art. Synthetic
-// explosions are supplemental; no new gameplay route or fidelity assertion.
+// Check synthetic explosion decals with installed Just Bomb art.
 #include "app/TubeScene.h"
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
@@ -53,8 +52,7 @@ int main(int argc, char** argv) {
   scene->advanceDeathParticles(21000); assert(scene->explosionDecalCount()==0);
   auto expired=empty; scene->drawExplosionDecals(expired,camera);
   assert(expired.framebuffer().rgb==empty.framebuffer().rgb);
-  // Installed terrain supplies real depth: carve one synthetic crater, then
-  // draw the decal at its inner surface. This is not a played Bomber route.
+  // Carve a crater in installed terrain and draw the decal against its inner-surface depth.
   auto setup=sim::loadRetailLevel(*lib,"MM_BOMB"); assert(setup);
   setup->terrain.clearExplosion(l.x,l.y);
   scene->syncTerrain(setup->terrain);

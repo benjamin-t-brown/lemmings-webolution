@@ -1,4 +1,4 @@
-// Seconds-long invariants: clicked hatch limits and v1 replay's hatch selector.
+// Check clicked hatch limits and the v1 recording's hatch selector.
 #include "app/Replay.hpp"
 #include "assets/Box.h"
 #include "assets/LevelObjects.h"
@@ -71,9 +71,8 @@ void units(const AssetLibrary& lib, const std::filesystem::path& directory) {
     }
   }
 
-  // E10's secondary hatch has a different fixed rate. This catches accidentally
-  // validating new recordings against primary limits; index zero also exercises
-  // the old panel-recording layout without rewriting a historical replay.
+  // E10's secondary hatch has a distinct constant rate. Index zero checks
+  // the v1 panel-recording layout and the primary hatch.
   for (std::size_t h : {0u, 1u}) {
     auto fixed = app::RuntimeReleaseRateControl::create(lib, "E10_KF_1");
     const auto fixedSetup = sim::loadRetailLevel(lib, "E10_KF_1");

@@ -1,7 +1,5 @@
-# The app menu must use the same cursor-composed frame in headless and actual
-# window-loop/dummy-driver paths. frontendsession separately checks the unchanged
-# base against MenuRender; retain that base dump here for inspection as well.
-# No original game or desktop is used.
+# Compare cursor-composed menu frames from the headless and SDL dummy-window paths.
+# Export the MenuRender base frame separately.
 file(MAKE_DIRECTORY "${OUTPUT_DIR}")
 function(run)
   execute_process(COMMAND ${ARGN} RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)

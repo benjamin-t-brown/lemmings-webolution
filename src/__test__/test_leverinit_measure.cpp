@@ -1,22 +1,13 @@
-// lever-init-research-001: read-only measurement of the exact cell traversal of the
-// original rect painters 0x004311D0 (set) / 0x0043127E (clear) over the installed
-// MM_W_012 gate rectangles. Source-built; the original executable is never run and
-// no original bytes are executed.
+// Measure installed MM_W_012 rectangles using the original painters
+// 0x004311D0 (set) and 0x0043127E (clear).
 //
-// The traversal below is written from the instruction trace in
-// build/lever-init-research-001/static-trace.md, not from the earlier 200-cell
-// geometric enumeration:
-//   * every double -> int conversion is the helper 0x0049C5AC: FSTCW, RC |= 0xC00,
-//     FISTP (truncate toward zero), restore -- i.e. a C++ static_cast<int>(double);
-//   * x loop: x from ftol(min.x) while x < ftol(max.x)  (JGE exit: upper bound exclusive);
-//     the SET variant adds 0x100 to ftol(max.x) when (double)ftol(max.x) < min.x; CLEAR has no wrap;
-//   * y loop: y from ftol(min.y) while y < ftol(max.y)  (exclusive; bound re-evaluated per step);
-//   * cell lookup 0x0040DE60: x &= 0xFF; y clamped to [0, height-1]; element x + (y << 8).
-// The reader 0x0042ACAC runs the CLEAR variant (init request == 1) or the SET variant
-// (otherwise) over the stream AABB as stored (+0x50 .. +0x68 is NOT recomputed first).
-// The settled endpoint of a type-4 message is the SET variant over y max = min.y + high.
+// 0x0049C5AC truncates toward zero (FSTCW, RC |= 0xC00, FISTP, restore).
+// Both loops start at ftol(min) and stop before ftol(max) (JGE).
+// SET adds 0x100 to ftol(max.x) if (double)ftol(max.x) < min.x. CLEAR does not wrap.
+// 0x0040DE60 wraps x with 0xFF, clamps y to [0, height-1] and indexes x + (y << 8).
 //
-// It asserts only measurement integrity. It does not assert in-game behavior.
+// Reader 0x0042ACAC clears when init request is 1 and sets otherwise, using
+// the stored AABB (+0x50 .. +0x68). A settled type-4 request sets up to min.y + high.
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
 #include "assets/LevelIndex.h"
@@ -136,7 +127,7 @@ int main() {
   const auto& g = level.gadgets;
   const auto dbl = [](std::uint64_t b) { return std::bit_cast<double>(b); };
 
-  // Lever-targeted gate ids and, for the observed lever, its own face -1 list (ids 5 and 6 per lever-links-research-001).
+  // Measure the linked gate IDs and the selected lever's face -1 targets, 5 and 6.
   std::set<int> targetedIds;
   for (const auto& t : g.tagged_entities) {
     if (t.type != 1) continue;
@@ -187,8 +178,7 @@ int main() {
     for (const auto& v : end) endSet.insert(v.index);
     r.flaggedAtSettled = endSet.size();  // every visited cell has the bit after a SET
 
-    // Stored-grid comparison: bit over the gate's columns, all rows in the inclusive geometric window used by
-    // lever-links-research-001 (rows ftol(min.y)..ftol(min.y+high) inclusive).
+    // Check the stored grid over the inclusive interval ftol(min.y)..ftol(min.y+high).
     const int y0 = ftol(r.rect.miny), y1 = ftol(r.rect.miny + r.high);
     for (int y = y0; y <= y1; ++y)
       for (int x = ftol(r.rect.minx); x < ftol(r.rect.maxx); ++x) {
@@ -274,7 +264,7 @@ int main() {
                      visitsTotal, unionCells.size(), visitsTotal - unionCells.size(), stored200, stored200InUnion,
                      stored2000);
 
-  // Counter-check of the earlier prediction arithmetic against the traced traversal.
+  // Compare the rectangle count with the painted-cell total.
   const std::size_t inclusivePrediction = targetedCount * 200;
   out << std::format("PREDICTIONS: inherited 3072 (=16*192) vs traced changed={} ; inherited 384 (=2*192) vs traced ids5/6 settled={} ; "
                      "geometric-inclusive enumeration 200/gate -> {} for {} gates (NOT visited by the binary)\n",

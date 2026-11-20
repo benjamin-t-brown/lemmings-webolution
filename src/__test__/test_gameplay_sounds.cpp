@@ -1,5 +1,4 @@
-// Small synthetic units for playtest 9 Y3/Y5/Y12 and playtest 10 Z4, plus read-only
-// installed sample decoding. No gameplay route, save or audio device.
+// Check game cue routing with synthetic events and decode installed samples read-only.
 #include "app/RuntimeHud.h"
 #include "assets/Box.h"
 #include "assets/Wav.h"
@@ -146,8 +145,7 @@ void excavation(bool miner, bool solid, bool steel, bool fastForward) {
   check(sounds == strokes, "no looping or deferred Mine after work stops");
 }
 
-// This legacy unit protects the accepted/refused distinction independently of
-// input picking: a future skill change must not turn a refusal into an Action.
+// Check that accepted assignments emit Action and refused assignments stay quiet.
 void assignmentFeedback() {
   sim::World world(floor());
   sim::Lemming actor;
@@ -189,8 +187,7 @@ void assignmentFeedback() {
     }
   }
 }
-// Legacy regression: audio suppression must not alter the existing Bomber or
-// Nuke removal path, including a fuse that was already lit when Nuke began.
+// Suppressing audio leaves Bomber and Nuke removal intact, even with an already lit fuse.
 void nukeVoice() {
   for (bool prelit : {false, true}) {
     sim::World world(floor());

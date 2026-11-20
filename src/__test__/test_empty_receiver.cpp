@@ -1,4 +1,4 @@
-// Installed receiver regression and production application images. No original execution.
+// Check falls into installed drained receivers and export application frames.
 #include "app/AppEntry.h"
 #include "FrameConsumptionAudit.h"
 #include "app/BackdropScene.h"

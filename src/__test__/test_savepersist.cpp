@@ -1,9 +1,5 @@
-// save-codec-001: FrontendSession persistence against retail assets.
-// LevelOutcome values below are SOURCE-TEST setup (injected through the same
-// completeLevel entry runApplication uses), not natural gameplay. Stores point at
-// temporary directories or in-memory sinks; nothing touches LocalAppData or the
-// installed save. Byte checks prove source consistency with the recovered
-// 0x45F43C/0x45F94D layout, not retail save compatibility.
+// Check FrontendSession persistence against the recovered 0x45F43C/0x45F94D layout.
+// Inject LevelOutcome through completeLevel and use temporary or in-memory stores.
 
 #include "app/FrontendSession.h"
 
@@ -103,7 +99,7 @@ int main() {
   if (!library) { std::cerr << library.error() << '\n'; return 1; }
   const auto zeroImage = save::SavedGame{}.serialize();
 
-  // ---- A. complete -> exit -> restart through a real file in a temp directory --
+  // Complete a level and reload progress in a fresh session from a temporary file.
   std::error_code ec;
   const fs::path root = fs::temp_directory_path(ec) / "webolution-savepersist-test";
   fs::remove_all(root, ec);
@@ -155,7 +151,7 @@ int main() {
   check(!fs::exists(file.string() + ".tmp"), "no temporary file remains");
   fs::remove_all(root, ec);
 
-  // ---- B. loss / abandon never save ------------------------------------------------
+  // Loss and abandonment leave the save intact.
   {
     auto state = std::make_shared<SharedState>();
     auto s = app::FrontendSession::create(*library, storeOver(state));
@@ -170,7 +166,7 @@ int main() {
     check(state->writes == 1, "writes stay at one after retry/abandon");
   }
 
-  // ---- C. save failure keeps the session and the results screen ---------------------
+  // A failed write keeps the session and results screen.
   {
     auto state = std::make_shared<SharedState>();
     auto s = app::FrontendSession::create(*library, storeOver(state));
@@ -185,7 +181,7 @@ int main() {
     check(state->bytes == before, "failed save leaves the prior good bytes intact");
   }
 
-  // ---- D. corrupt file: visible diagnostic, empty session, no silent overwrite ------
+  // A corrupt file produces a visible diagnostic and an empty session without being overwritten.
   {
     auto state = std::make_shared<SharedState>();
     state->bytes = std::vector<std::byte>(1503, std::byte{0x5A});
@@ -201,7 +197,7 @@ int main() {
           state->bytes && state->bytes->size() == 1504, "a successful save then replaces it");
   }
 
-  // ---- E. flag, A, B and unmapped records survive load -> complete -> save ----------
+  // Flag, A, B and unmapped records survive load, completion and save.
   {
     auto crafted = save::SavedGame{};
     crafted.flagRaw = 0x01020304;

@@ -148,8 +148,8 @@ int main(int argc, char** argv) {
       const auto mesh = findCylinderMesh(*bytes); const auto index = indexLevel(*bytes);
       assert(mesh && index);
       auto scene = app::TubeScene::build(*lib, *mesh, *bytes, index->grid0); assert(scene);
-      // Gate cells and their vertexDoor records exist in this installed file.
-      // Passing an empty record list used to draw pool[0] for each gate face.
+      // Use installed vertexDoor records to exercise the individual gate-face indices.
+      // Uniform pool[0] indices would collapse the faces.
       assert(scene->cellMeshes().unresolved == 0);
       scene->syncTerrain(report->setup.terrain, gates);
       scene->syncCounterGates(gates);

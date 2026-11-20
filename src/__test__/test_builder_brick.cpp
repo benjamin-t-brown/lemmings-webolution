@@ -1,5 +1,4 @@
-// Seconds-long legacy unit: carried/solid handoff and shared draw/pick/occlusion.
-// Synthetic poses are supplemental; the next human playtest judges appearance.
+// Check the carried-to-solid brick handoff and its shared draw, pick and occlusion rules.
 #include "app/ActorOcclusion.h"
 #include "app/BuilderBrick.h"
 #include "app/LemmingAnim.h"

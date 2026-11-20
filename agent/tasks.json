@@ -31009,7 +31009,7 @@
     {
       "id": "comment-pass-tests-001",
       "title": "Comment pass: src/__test__",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "comment-pass-platform-001"
       ],
@@ -31024,11 +31024,11 @@
         "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
         "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note."
       ],
-      "loop_attempts": 4,
-      "run_id": "20261120T174517-47744-7d01b05b",
-      "started": "2026-11-20T17:45:17.763880+00:00",
-      "finished": "2026-11-20T17:51:48.134908+00:00",
-      "last_run": "build/agent-runs/20261120T174517-47744-7d01b05b",
+      "loop_attempts": 5,
+      "run_id": "20261120T175755-11576-31ccde55",
+      "started": "2026-11-20T17:57:56.337476+00:00",
+      "finished": "2026-11-20T18:07:33.833064+00:00",
+      "last_run": "build/agent-runs/20261120T175755-11576-31ccde55",
       "review_feedback": {
         "decision": "revise",
         "reason": "Lead, 2026-11-20: final attempt. Attempt 4 passed the comparison, reference sample and smoke; review found exactly two history comments left. (1) src/__test__/test_actorcompose.cpp line ~399: drop the 'A6d17' label; describe how the helper classifies pixels that differ between the tube-only and injected renders inside actor 2's bounding box. (2) src/__test__/test_corpus.cpp line ~112: drop the 1,231-foot-cell result from an earlier original-game run; describe what the assertions check (ring stride, floor beneath every entrance, survivable drop distance on MM_CLIMB_002). Keep every earlier fix, then rerun the history audit over all changed files with a broad pattern that includes phase labels such as A1/A6d17/D3a used as task names, 'earlier run', 'first green run' and recorded results from past runs, and record every match and its disposition. Other accepted work is committed in 3e8d1fa; `git diff HEAD -- src/__test__` is exactly this task's change."
@@ -31041,7 +31041,72 @@
           "review": null,
           "blocker": "Attempt limit: Two comments still carry development history. Remove the A6d17 task label from the actor-pixel classifier, describe the MM_CLIMB_002 assertions directly, and refresh the history audit. The comment-stripped comparisons, all 33 sampled references, and the supervisor smoke gate passed."
         }
-      ]
+      ],
+      "review": {
+        "decision": "accept",
+        "reason": "All 154 changed files have matching comment-stripped comparisons. The two development-history comments flagged in the prior review are gone, all 33 sampled binary references match HEAD, and the supervisor smoke profile passed for the reviewed source.",
+        "checks": [
+          {
+            "criterion": "The archived comment-stripped comparison under build/ shows no non-comment change in any file changed by this task.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-tests-001/last-attempt/comparison.json",
+                "detail": "The manifest covers exactly the 154 files in the scoped Git diff. I checked the archived before and after hashes for all 154 exact comparisons and all 152 GCC preprocessing comparisons. Every pair matched."
+              },
+              {
+                "path": "build/comment-pass-tests-001/last-attempt/revision-comparison.tsv",
+                "detail": "The two files edited in the final attempt, test_actorcompose.cpp and test_corpus.cpp, also have matching stripped hashes against the incoming worker snapshot."
+              }
+            ]
+          },
+          {
+            "criterion": "In the covered directories, no comment names a playtest, task id, review, worker, run or fix history, and a sample of at least ten binary references (addresses or original names) present before the task is still present and unaltered.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/comment-pass-tests-001/last-attempt/broad-history-dispositions.tsv",
+                "detail": "The audit records 194 technical matches and the two removed history lines. My independent search of src/__test__ found no remaining development-history references in comments."
+              },
+              {
+                "path": "src/__test__/test_actorcompose.cpp",
+                "detail": "The comment at line 399 describes classification of pixels that differ between the tube-only and injected renders inside actor 2's bounding box. The A6d17 label is gone."
+              },
+              {
+                "path": "src/__test__/test_corpus.cpp",
+                "detail": "The comment at line 112 describes the MM_CLIMB_002 ring stride, floor beneath every entrance, and survivable median drop checks. The earlier run's foot-cell count is gone."
+              },
+              {
+                "path": "build/comment-pass-tests-001/last-attempt/reference-sample.tsv",
+                "detail": "I checked all 33 entries against the HEAD and working-tree comments at the recorded lines. Exact matches include GREATER, FUN_00463100, SELECT_TEXTURE, 0x2863630, 0x00425C0B, 0x0045B86D, 0x43D09A, 0x4B15F8, 0x43D56C, 0x004B1020, 476EE0, and 0x004432C1."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a two-line handoff and a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T175755-11576-31ccde55/verification.log",
+                "detail": "The supervisor recorded 95 of 95 main smoke tests passing, including all 17 installed-level sweep chunks and the aggregate report, and 84 of 84 recovery tests passing."
+              },
+              {
+                "path": "build/agent-runs/20261120T175755-11576-31ccde55/after-source-hashes.json",
+                "detail": "All 154 changed source files match the supervisor's post-verification hashes and the review-entry snapshot."
+              },
+              {
+                "path": "docs/scratch/comment-pass-tests-001.md",
+                "detail": "The report ends with the Handoff and Gate lines followed by a note to open any installed level, wait for a release, and assign a skill. It names MM_CLIMB_002 and gives the expected input, rendering, and gameplay result. The Gate line records the worker handoff state before the supervisor ran smoke."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T18:09:59.615744+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T175755-11576-31ccde55\\verification.log",
+        "verified_content": "89436616fd5e89ef1aba429145994d5619738aac5d1157a1b5b31dd00454080a"
+      }
     },
     {
       "id": "window-scale-option-001",

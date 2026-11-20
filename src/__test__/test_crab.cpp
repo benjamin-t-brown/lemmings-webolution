@@ -1,5 +1,4 @@
-// Small legacy logic checks: relative contact bounds, attack latch, loss
-// accounting and deterministic animation state. No scripted gameplay route.
+// Check relative crab contact bounds, attack latch, loss accounting and animation determinism.
 #include "sim/RetailLevel.h"
 #include "app/BackdropScene.h"
 #include "app/MapScene.h"
@@ -63,8 +62,7 @@ void units() {
     check(w.setup().crabs[0].attacking && w.setup().crabs[0].animationSeconds == 0.1,
           "attack uses admitted simulation time");
   }
-  // A stable non-mover stays in the volume until the next attack. This checks
-  // rearming without a replay or a per-level command route.
+  // A stationary actor stays in the volume until the next attack, testing rearm.
   auto s = fixture();
   s.terrain.fillBox(0, 55, 256, 1, Material::Earth);
   World w(s);
@@ -93,8 +91,7 @@ void units() {
   check(!reloaded.setup().crabs[0].attacking && reloaded.setup().crabs[0].animationSeconds == 0,
         "reload starts with rest animation and no attack latch");
 }
-// Fast legacy coverage for fractional surface/contact boundaries. This guards
-// the integer-coordinate adapter without adding a scripted per-level route.
+// Check the integer-coordinate adapter at fractional surface and contact boundaries.
 void surfaceContact() {
   for (int kind : {0, 2}) {
     auto s = fixture();

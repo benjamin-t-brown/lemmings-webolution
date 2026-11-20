@@ -1,11 +1,6 @@
-// fastforward-impl-001 unit checks: the fast-forward latch, the 7-pass budget in
-// RuntimeSimState::advance and the plate-8/9 panel classification. All expected
-// tick counts are hand-computed from SimClock's documented step arithmetic
-// (0.2 s steps, remainder carried, 10 ticks per advance), not by calling the
-// advance code twice. The World is the installed MM_CLIMB_002 level.
-//
-// Source-test evidence only: 7 is a pass budget (dword 0x4B15F8), not a measured
-// speedup, and nothing here establishes original timing fidelity.
+// Check fast-forward latching, plate-8/9 classification and RuntimeSimState::advance on MM_CLIMB_002.
+// SimClock uses 0.2 s steps, carrying remainders, with a 10-tick cap per pass.
+// The original dword 0x4B15F8 supplies a budget of seven passes.
 #include "app/RuntimeHud.h"
 #include "app/RuntimeSkillPanel.h"
 #include "assets/Box.h"
@@ -39,7 +34,7 @@ int main() {
   check(bool(setup), "load MM_CLIMB_002");
   const auto fresh = [&] { return World(*setup); };
 
-  // -- panel classification (geometry is runtimeSkillPanelIndex's, unchanged) --
+  // Use runtimeSkillPanelIndex geometry for panel classification.
   check(runtimeSkillPanelIndex(50, 332) == 8 && runtimeSkillPanelIndex(50, 363) == 8, "plate 8 spans y 332..363");
   check(runtimeSkillPanelIndex(50, 372) == 9 && runtimeSkillPanelIndex(50, 403) == 9, "plate 9 spans y 372..403");
   check(runtimeSkillPanelCommand(18, 332) == RuntimePanelCommand::FastForward, "plate 8 origin pixel");
@@ -53,18 +48,16 @@ int main() {
   check(runtimeSkillPanelCommand(50, 28) == RuntimePanelCommand::None, "skill plate 0 is no command");
   check(runtimeSkillPanelCommand(320, 240) == RuntimePanelCommand::None, "viewport is no command");
 
-  // -- fresh state is unlatched; unlatched advance is the pre-task behaviour --
   {
     RuntimeSimState state;
     check(!state.fastForward(), "fresh RuntimeSimState is unlatched");
     World world = fresh();
-    // 0.4 s = exactly two 0.2 s steps per call, one pass: 2 ticks per call.
     for (int i = 0; i < 3; ++i) check(state.advance(world, 0.4), "unlatched advance ticks");
     check(world.tickCount() == 6, "unlatched 3 x 0.4 s = 6 ticks");
     check(!state.fastForward(), "advancing never latches");
   }
 
-  // -- latched: seven same-delta passes ---------------------------------------
+  // Check seven same-delta passes while latched.
   {
     RuntimeSimState state;
     World world = fresh();
@@ -77,7 +70,6 @@ int main() {
     state.setFastForward(true);  // Repeated updates while held keep fast-forward active.
     check(state.fastForward(), "second explicit enable does not toggle off");
     check(state.advance(world, 0.4) && world.tickCount() == 56, "still fast after explicit enable");
-    // Playtest 13 C3: release clears speed and a new hold enables it again.
     state.setFastForward(false);
     check(!state.fastForward(), "release turns fast-forward off");
     check(state.advance(world, 0.4) && world.tickCount() == 58, "normal budget after release");
@@ -86,8 +78,8 @@ int main() {
     check(state.advance(world, 0.4) && world.tickCount() == 72, "seven-pass budget after another hold");
   }
   {
-    // 0.5 s: passes owe 2,3,2,3,2,3,2 = 17 ticks (3.5 s = 17.5 steps; 0.1 s carried), then
-    // the carried 0.1 s plus 3.5 s = 3.6 s = 18 steps, 35 cumulative (7.0 s = 35 steps).
+    // Seven 0.5 s passes alternate between two and three ticks. Carry 0.1 s
+    // from the first call (17 ticks) into the next (18 ticks).
     RuntimeSimState state;
     World world = fresh();
     state.latchFastForward();
@@ -95,7 +87,6 @@ int main() {
     check(world.tickCount() == 17, "latched 0.5 s first frame = 17 ticks");
     state.advance(world, 0.5);
     check(world.tickCount() == 35, "latched 0.5 s second frame = 35 cumulative ticks");
-    // Unlatched control on the same delta: 0.5 s = 2.5 steps; 2 then 3 ticks.
     RuntimeSimState plain;
     World control = fresh();
     plain.advance(control, 0.5);
@@ -104,8 +95,7 @@ int main() {
     check(control.tickCount() == 5, "unlatched 0.5 s second frame = 5 cumulative ticks");
   }
   {
-    // The existing 10-ticks-per-advance cap applies to each pass: 3.0 s owes 15
-    // steps, each pass takes 10 and carries 1.0 s more, so 7 passes take 70.
+    // Each 3.0 s pass takes 10 ticks and carries at least 1.0 s. Seven passes take 70 ticks.
     RuntimeSimState state;
     World world = fresh();
     state.latchFastForward();
@@ -117,7 +107,7 @@ int main() {
     check(control.tickCount() == 10, "unlatched 3.0 s stays capped at 10");
   }
 
-  // -- pause preserves the latch and ticks nothing ----------------------------
+  // Pause preserves the latch without advancing ticks.
   {
     RuntimeSimState state;
     World world = fresh();
@@ -142,12 +132,9 @@ int main() {
     check(first.fastForward() && !next.fastForward(), "new state starts unlatched");
   }
 
-  // -- the level-end stop ------------------------------------------------------
   {
-    // No entrance and one lemming owed: ends by timeout (limit 3 ticks) and the
-    // 7 s result countdown. The unlatched run reaches Results at some tick T0 in
-    // (30,34] (test_runtimehud measures the same fixture); latched must stop at the
-    // same T0 inside the first 70-tick budget instead of ticking on.
+    // A level with one lemming owed and no entrance times out after three ticks,
+    // then waits 7 s for results. Both modes must stop on the same tick.
     LevelSetup timeout;
     timeout.totalLemmings = 1;
     timeout.timeLimitTicks = 3;
@@ -163,8 +150,7 @@ int main() {
     check(!fast.advance(fastWorld, 2.0, true) && fastWorld.tickCount() == t0, "no ticks after Results");
   }
 
-  // -- plate 8/9 clicks: consumed, no stock read/decrement, selection unchanged;
-  //    skill assignment afterwards still works through the existing path --------
+  // Plates 8/9 consume the click without reading stock or changing selection.
   {
     World world = fresh();
     RuntimeSimState state;
@@ -188,7 +174,7 @@ int main() {
     if (runtimeSkillPanelCommand(50, 348) == RuntimePanelCommand::FastForward) state.latchFastForward();
     check(state.fastForward(), "plate 8 latches");
 
-    // Run latched until the first lemming is live, then assign through World::assign.
+    // Assign through World::assign as soon as fast-forward releases an actor.
     for (int i = 0; i < 3; ++i) state.advance(world, 0.4);
     check(world.tickCount() == 42, "latched ticks reached the live-lemming window");
     std::size_t target = world.lemmings().size();

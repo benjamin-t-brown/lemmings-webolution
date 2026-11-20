@@ -1,4 +1,4 @@
-// Q2/Q3: real installed data and production renderer, source-built clone only.
+// Check fluid rendering and the water-to-land walking transition using installed level data.
 #include "app/BackdropScene.h"
 #include "app/AppEntry.h"
 #include "app/TubeScene.h"
@@ -50,9 +50,8 @@ Shot shoot(app::BackdropScene& backdrop,const app::TubeScene& tube,const AssetLi
   }
   backdrop.setFluidState(std::move(states));using S=app::BackdropScene::Stage;
   backdrop.renderStage(raster,camera,lib,result.stats,S::Primary);
-  // lever-render-001 corrects the invisible levers captured by the fluid task's
-  // baseline. Only accepted stores from those real model extents may differ;
-  // all other matched-phase fluid/scenery pixels must still match exactly.
+  // Allow differences only within the real lever model stores. Compare other
+  // fluid and scenery pixels at the same phase.
   result.leverPixels.assign(640*480,0);
   std::vector<lemmings::ObjectSourceExtent> leverExtents;
   backdrop.visitRoots([&](const auto& source,const auto&){if(source.owner=="tagged-lever")leverExtents.push_back(source.extent);});
@@ -76,9 +75,8 @@ Shot shoot(app::BackdropScene& backdrop,const app::TubeScene& tube,const AssetLi
   return result;
 }
 void png(const fs::path& p,const Image& image){check(writePng(p,image).has_value(),"write "+p.string());}
-// Independent original row/layer indexing over decoded world data (0x43D56C,
-// 0x43E580 stride 0x600 and 0x43EA20 stride 0x300). Reader 0x43D09A
-// deinterleaves FILE triples into those layers; this test reads file order.
+// Read file-order triples. Reader 0x43D09A splits them into row/layer data used
+// at 0x43D56C, 0x43E580 (stride 0x600) and 0x43EA20 (stride 0x300).
 std::array<double,3> originalPoint(const lemmings::WorldGeometryPrefix& w,ActorTerrainSample p){
   const int bx=int(p.x)/8,by=int(p.y)/16,last=int(w.leading_value)/16-1;
   const auto lerp=[](auto a,auto b,double t){for(int j=0;j<3;++j)a[j]+=(b[j]-a[j])*t;return a;};

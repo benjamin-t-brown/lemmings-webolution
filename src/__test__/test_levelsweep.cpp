@@ -1,18 +1,8 @@
-// level-sweep-001 assessment driver (SCRIPTED CLONE OBSERVATION: direct level entry, no input, scripted
-// source-test frame timing; not frontend reachability, not winnability, not original fidelity).
-//
-// One executable, several CTest registrations (see CMakeLists.txt):
-//   chunk K <dir>   parent for map nodes [K*kChunkSize, (K+1)*kChunkSize): one CHILD PROCESS per node, with a wall
-//                   watchdog, so a crash or hang of one level cannot hide the others. Asserts driver integrity only
-//                   (every node visited, a result record written for it), never a per-level outcome.
-//   level N <dir>   child for map node N: production load/render/idle-simulation path through the PUBLIC
-//                   webo::app::runApplication ("--level <id as stored on the map> --sim --frames F --no-audio",
-//                   ownedClock frameSeconds), read-only LevelFrameObserver, no input, no save store.
-//   report 0 <dir>  aggregates every node's records into matrix.csv/.md, contact sheets and groups; asserts that all
-//                   102 nodes have a record and the sheets were written.
-//
-// Nothing here mutates a World, actor, terrain, stock, flag or save. The only injected event is SDL_QUIT once the
-// idle window has elapsed. The sweep's per-level outcome is REPORTED, never asserted.
+// chunk K <dir> launches one child process per map node under a wall-clock watchdog.
+// level N <dir> enters directly through webo::app::runApplication with constant frame
+// deltas and no gameplay input. The read-only observer records the settled view.
+// report 0 <dir> aggregates all 102 nodes into matrices, contact sheets and groups.
+// Load, render and record failures fail the sweep.
 #include "app/AppEntry.h"
 #include "FrameConsumptionAudit.h"
 #include "app/BackdropScene.h"
@@ -71,7 +61,7 @@ namespace {
 
 constexpr int kNodes = 102;
 constexpr int kChunkSize = 6;                       // 17 chunks x 6 = 102
-constexpr double kFrameSeconds = 1.0;               // scripted source-test frame step, see report
+constexpr double kFrameSeconds = 1.0;               // seconds per frame
 constexpr double kIdleAfterReleaseSeconds = 5.0;    // idle window after the last scripted release
 constexpr double kChildWatchdogSeconds = 420.0;     // parent kills a child after this much wall time
 const char* kSkillNames[8] = {"Climber", "Floater", "Bomber", "Blocker", "Builder", "Basher", "Miner", "Digger"};
@@ -135,9 +125,7 @@ std::map<std::string, std::string> readRecord(const fs::path& path) {
   return m;
 }
 
-// ---- frame statistics ------------------------------------------------------------------------------
-// "view" is rows [0, kViewRows): above the skill panel. The panel/HUD is drawn on top, so a whole-frame
-// statistic alone cannot detect a blank level view.
+// Measure rows [0, kViewRows) separately. The skill panel and HUD can make a blank view appear nonblank.
 constexpr int kViewRows = 320;
 struct FrameStats {
   int w = 0, h = 0;
@@ -229,14 +217,12 @@ void writeThumb(const fs::path& path, const Image& img) {
     }
 }
 
-// ---- map enumeration ---------------------------------------------------------------------------------
 std::optional<std::string> storedIdForNode(const AssetLibrary& lib, int node) {
   auto map = app::MapScene::build(lib, {});
   require(bool(map), "MapScene::build failed");
   return map->levelForNode(static_cast<std::size_t>(node));
 }
 
-// ---- child: one level ----------------------------------------------------------------------------------
 struct ChildCtx {
   fs::path dir;
   Record rec;
@@ -250,7 +236,7 @@ struct ChildCtx {
   long releaseDoneMs = -1;
   double capSeconds = 0;
   int total = 0;
-  // end-of-run snapshot taken from the last observed frame
+  // Snapshot the last observed frame.
   int spawned = 0, saved = 0, dead = 0, active = 0;
   long clockMs = 0;
   bool finished = false, timedOut = false;
@@ -318,7 +304,7 @@ int runChild(int node, const fs::path& root) {
     put(r, "failure_detail", detail);
     put(r, "child_wall_s", fmt(wallSeconds(), 1));
     writeRecord(dir / "result.txt", r);
-    return 0;  // the outcome is an observation; exit code 0 means the record exists
+    return 0;  // exit code 0 indicates the level record was written
   };
   try {
     auto lib = AssetLibrary::open(fs::path(gameDir) / "lemmings.box", fs::path(gameDir) / "patch.box");
@@ -389,7 +375,7 @@ int runChild(int node, const fs::path& root) {
       put(r, "trampoline_cells", std::to_string(tramp));
       put(r, "antigrav_cells", std::to_string(anti));
     }
-    // Decoded placed gadget models (a3d basenames) from the level stream.
+    // Read placed gadget model a3d basenames from the level stream.
     auto bytes = lib->read(resolved->file);
     if (!bytes) return finish("FAIL", "read(.LVL)", bytes.error());
     if (auto objs = findLevelObjects(*bytes)) {
@@ -404,8 +390,7 @@ int runChild(int node, const fs::path& root) {
     } else {
       put(r, "gadget_models", "ERROR " + objs.error());
     }
-    // Scenery admission: the production builder on the same bytes and id the run uses (a second, driver-side
-    // call; the instance the run uses is not exposed). A successful empty scene is the "not admitted" branch.
+    // Check scenery admission with the same bytes and ID. An empty scene means scenery was omitted.
     {
       auto built = app::BackdropScene::build(*lib, *bytes, *stored);
       if (!built) {
@@ -419,9 +404,8 @@ int runChild(int node, const fs::path& root) {
       }
     }
 
-    // Idle duration from level data (see report). Release model: arm + first countdown, then one lemming per
-    // interval on the first hatch's cadence (LevelSetup carries exactly one cadence; other hatches round-robin
-    // against it, so total spawn time is governed by it).
+    // Size the idle window for arming, the first countdown and remaining releases.
+    // Hatches share the first hatch's cadence and release in round-robin order.
     const double interval = setup.releaseIntervalSeconds > 0 ? setup.releaseIntervalSeconds : setup.releaseIntervalTicks / 5.0;
     const double releaseEnd = setup.releaseArmSeconds + setup.releaseFirstCountdownSeconds +
                               std::max(0, setup.totalLemmings - 1) * interval;
@@ -489,7 +473,6 @@ int runChild(int node, const fs::path& root) {
   }
 }
 
-// ---- parent (chunk) ------------------------------------------------------------------------------------
 fs::path normalSavePath() {
   const char* la = std::getenv("LOCALAPPDATA");
   return la ? fs::path(la) / "LemmingsWebolution" / "SavedGame.dat" : fs::path();
@@ -595,7 +578,6 @@ int runChunk(int chunk, const fs::path& root) {
   return 0;
 }
 
-// ---- report ----------------------------------------------------------------------------------------------
 using Rec = std::map<std::string, std::string>;
 std::string field(const Rec& r, const std::string& k, const std::string& d = "-") {
   const auto it = r.find(k);
@@ -790,8 +772,7 @@ int runReport(const fs::path& root) {
   sum << "records=" << have << " expected=" << kNodes << " contact_sheets=" << sheets << '\n';
   std::cout << "report: " << have << "/" << kNodes << " level records, " << sheets << " contact sheets\n";
   require(have == kNodes, "all 102 level records present");
-  // Smoke gate (2026-11-15): every level's outcome was only reported until all 102 completed with a
-  // non-blank settled view. A crash, hang, failed load or blank view on any installed level now fails.
+  // All 102 installed levels must load, finish the sample and render a nonblank settled view.
   std::string bad;
   for (int node = 0; node < kNodes; ++node) {
     auto& r = rows[node];

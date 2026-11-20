@@ -1,5 +1,5 @@
-// P14: public SDL motion through runApplication, using installed map/title/font
-// assets. The all-progress save is a fixture, not evidence of natural victories.
+// Check map hover through SDL motion in runApplication with installed map,
+// title and font assets and a prepared all-progress save.
 #include "app/AppEntry.h"
 #include "assets/GameData.h"
 #include "assets/Lrz.h"

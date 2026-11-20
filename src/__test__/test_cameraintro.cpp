@@ -34,7 +34,7 @@ int main() {
     CameraBasis b = buildCamera(pose);
     const double distance = std::sqrt(b.eyeWorld[0] * b.eyeWorld[0] + b.eyeWorld[2] * b.eyeWorld[2]);
     near(distance, distances[i], "intro distance equation");
-    // selector is the normalized pose phase, retaining strict >1 wrap semantics.
+    // The normalized pose phase wraps only above 1.
     double phase = (yaws[i] + 128.0) / 256.0;
     while (phase > 1.0) phase -= 1.0;
     near(b.selectorTurns, phase, "pose phase and strict wrap");

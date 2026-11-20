@@ -315,8 +315,8 @@ int main() {
         fresh->completionFlags()[0] == 0,
         "new game via footer/menu/confirm resets owned flags and rebuilds initial map");
 
-  // Playtest 6: 20 map nodes spell their launch id in a different case from the
-  // id the level leg reports. The result must be accepted and retry must work.
+  // Twenty map nodes differ in case from the level IDs reported at Results.
+  // Accept the result and allow Retry for those nodes.
   auto mixed = make();
   if (!mixed) return 1;
   mixed->pressReturn(); mixed->pressReturn();

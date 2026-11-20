@@ -1,5 +1,4 @@
-// scene-admission-001: current loaders over every effective installed level.
-// Fixed source camera, source-built rendering only; no original code, no native claim.
+// Check installed scenery admission and render a subset with a static camera.
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
 #include "app/TubeScene.h"
@@ -146,9 +145,8 @@ int main()try {
   const std::string side="after";
   const fs::path root=SCENE_ADMISSION_DIR,dir=root/side;fs::create_directories(dir);
   std::ofstream log(dir/"measurements.txt");log<<std::setprecision(17);
-  const auto cam=buildCamera(CameraParams{}); // explicit same fixed source camera for every level/side
+  const auto cam=buildCamera(CameraParams{}); // same camera for all levels
 
-  // ---- Phase 1: build every effective installed level through BackdropScene::build ----
   const auto names=levelFileNames(*lib);
   log<<"side="<<side<<" effectiveLevels="<<names.size()<<'\n';
   std::map<std::string,BackdropScene> admitted;std::map<std::string,Bytes> admittedBytes;
@@ -157,7 +155,7 @@ int main()try {
   for(const auto& name:names){
     const auto id=idOf(name);
     auto bytes=lib->read(name);require(bool(bytes),"read actual "+id);
-    const auto outcome=sceneadmission::structuralOutcome(*bytes,&*lib);  // scene-branch-impl-001: branch-1 mirror needs the archive
+    const auto outcome=sceneadmission::structuralOutcome(*bytes,&*lib);  // branch-1 sprite checks need the archive
     const auto t0=Clock::now();
     auto backdrop=BackdropScene::build(*lib,*bytes,id);
     const auto ms=seconds(t0,Clock::now())*1000;
@@ -165,7 +163,7 @@ int main()try {
       ++hardErrors;log<<"LEVEL "<<id<<" build=HARD_ERROR "<<backdrop.error()<<'\n';
       require(false,"no installed level may hard-error: "+id+": "+backdrop.error());
     }
-    // Structural rule: admission equals the independent census classification, with no ID table.
+    // Compare admission with the independent structural census.
     require(!outcome.malformed,"installed level is not malformed: "+id);
     require(backdrop->empty()==!outcome.supported,"production admission equals independent structural outcome: "+id);
     if(isAcceptedPair(id))require(!backdrop->empty()&&backdrop->diagnostics().empty(),"accepted level stays admitted without diagnostics");
@@ -186,19 +184,13 @@ int main()try {
   for(const auto& [k,v]:emptyReasons)log<<"emptyReason \""<<k.substr(0,160)<<"\" levels="<<v<<'\n';
   log<<"admittedIds=";for(const auto& [id,_]:admitted)log<<id<<',';log<<'\n';
   require(admitted.size()>2,"current admits additional levels");
-  // scene-nested-impl-001: SUPERSEDED `admitted.size()==84&&emptyCount==18` (scene-branch-impl-001: 18 nested/non-leaf
-  // levels remained empty partial scenes). Nested type-1 Secondary dispatch is now admitted structurally; the replacement
-  // keeps the invariant that every level is either admitted or a diagnosed empty partial scene, and expects the 18 to admit.
+  // Check that the 18 nested cases admit and any omitted scenery has a diagnostic.
   require(admitted.size()+emptyCount==names.size()&&admitted.size()==102&&emptyCount==0,"scene-nested-impl-001: 102 admitted, no level remains an empty partial scene");
 
-  // ---- Phase 2: render every admitted level under the fixed camera ----
   double renderSeconds=0;std::size_t newlyRendered=0;
   for(const auto& [id,backdrop]:admitted){
-    // scene-branch-impl-001: SUPERSEDED "render every admitted level" (and the 923 primary partition
-    // it asserted for each). Branch-1 sprite admission raised the admitted set from 10 to 84 levels;
-    // this driver keeps rendering exactly the ten levels admitted at scene-admission-001 acceptance
-    // with every original assertion, and the 74 branch-1-admitted levels are rendered and compared
-    // by scenebranchimpl_after, which keeps this test inside its guard.
+    // Render the ten levels that share the 923 primary partition. The branch-1
+    // render check covers the additional sprite cases.
     static const std::set<std::string> acceptedTen={"E06_KF_1","H17_MG_1","M06_KF_1","M08_KF_1","MM_BASH_002","MM_CLIMB_002","MM_E1_3_SKILLS","MM_E1_4SKILLS","MM_W_012","VH22_JC"};
     if(!acceptedTen.count(id))continue;
     const auto& bytes=admittedBytes.at(id);
@@ -227,7 +219,7 @@ int main()try {
        <<" sceneryRasterCalls="<<sceneryCalls<<" modelRasterCalls="<<modelCalls<<" sceneryColorStores="<<sceneryWrites<<" sceneryDepthStores="<<sceneryDepth
        <<" modelColorStores="<<scene.writes[1]<<" sceneOnlyNonblackPixels="<<sceneOnlyNonblack<<" composedChangedPixels="<<changedPixels
        <<" deterministic=1\n";
-    // Shared nonzero-scenery proof for every admitted level (models are counted apart).
+    // Count scenery separately from models.
     require(sceneryCalls>0&&sceneryWrites>0&&sceneryDepth>0,"nonzero scenery raster calls and accepted color/depth stores: "+id);
     require(changedPixels>0,"composed scenery changes pixels: "+id);
     const bool first=id=="MM_CLIMB_002",bash=id=="MM_BASH_002";

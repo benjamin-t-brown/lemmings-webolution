@@ -139,8 +139,7 @@ int main() {
   cursor->draw(unchanged, CursorState::Hidden, 32, 32);
   check(unchanged.rgba == original, "hidden cursor leaves target unchanged");
 
-  // Grab uses the archived per-pixel alpha plane; ensure actual partially
-  // transparent texels participate in fractional blending, not binary masking.
+  // Check fractional blending of the archive's per-pixel grab cursor alpha.
   auto renderedGrab = blankTarget();
   cursor->draw(renderedGrab, CursorState::Grab, 32, 32);
   std::size_t partialAlpha = 0;

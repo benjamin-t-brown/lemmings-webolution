@@ -9,8 +9,7 @@
 #include <iomanip>
 
 namespace webo::test {
-// Explicit test opt-in; the override is read here, never by interactive play.
-// It runs precisely the same driver with every frame drawn for paired evidence.
+// Explicit test opt-in to draw every frame with the same driver.
 class FrameConsumptionAudit {
  public:
   explicit FrameConsumptionAudit(const std::filesystem::path& out)
@@ -32,8 +31,7 @@ class FrameConsumptionAudit {
     const auto mask = app::levelFrameSpriteCoverage();
     std::ofstream out(active_->out_ / ("render-sprites-" + std::to_string(f.frame) + ".mask"), std::ios::binary);
     out.write(reinterpret_cast<const char*>(mask.data()), std::streamsize(mask.size()));
-    // Each PNG's exact RGBA identifies its mask without changing existing PNG
-    // naming, export sites or assertions in the historical drivers.
+    // Identify each PNG's mask by exact RGBA.
     std::uint32_t a = 1, b = 0;
     for (auto v : f.image.rgba) { a = (a + v) % 65521; b = (b + a) % 65521; }
     const std::uint32_t hash = (b << 16) | a;

@@ -1,5 +1,4 @@
-// Owned clone only: exact demand-render pixels/state and a pick following an
-// unrendered frame. No original instructions or normal user save are used.
+// Compare demand-render pixels and state. Check picking after an undrawn frame.
 #include "FrameConsumptionAudit.h"
 #include "app/RuntimePick.h"
 #include "assets/Png.h"
@@ -45,8 +44,7 @@ Result run(const fs::path& out, std::optional<bool> skip) {
     for (const auto& l : f.world.lemmings())
       state << ';' << l.x << ',' << l.y << ',' << int(l.state) << ',' << l.canClimb << ',' << l.stepBudgetSeconds;
     result.state += state.str() + '\n';
-    // The selection is made only on an inspected frame. The following paused
-    // frame is deliberately discarded, then its scene is needed by the click.
+    // Select on a drawn frame, then discard the paused frame whose scene the click needs.
     const bool inspect = f.frame % 10 == 0 || f.frame == 119;
     if (inspect) {
       const auto& rendered = app::inspectLevelFrame(f);

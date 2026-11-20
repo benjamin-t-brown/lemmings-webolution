@@ -56,8 +56,7 @@ bool cursorPatchDiffers(const Image& a, const Image& b, int x, int y) {
   }
   return false;
 }
-// Independent decoded-art oracle: every opaque texel must be present, not just
-// an arbitrary patch difference that could come from a moving actor beneath it.
+// Compare every opaque texel against the independently decoded cursor.
 bool opaqueArtworkMatches(const Image& image, const Image& art, int x, int y) {
   int checked = 0;
   for (int sy = 0; sy < art.height; ++sy) for (int sx = 0; sx < art.width; ++sx) {

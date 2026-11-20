@@ -151,9 +151,7 @@ int main() {
               f.endPhase == app::LevelEndPhase::Running && f.entryCueSeconds == (retry ? 1.0 : 3.0);
         if (retry) ok &= !f.cameraIntroActive;
         if (phase == 1) {
-          // R6: Retry resets the pointer onto the hatch, but opening the menu
-          // suppresses that feedback. Independently compose the unhovered base
-          // rather than carrying the highlighted image into the menu check.
+          // Retry centers the pointer on the hatch. Compose the menu base without hover feedback.
           retryFrame = test::hatchEntryFixture(*library, f.displayedPose,
               static_cast<int>(f.world.tickCount()), f.hatchOpeningProgress * 2799.999952316284,
               true, std::string(f.levelName), false, 0.5);
@@ -173,9 +171,8 @@ int main() {
       } else if (f.frame == 1) {
         ok &= f.levelMenuOpen && f.paused && f.world.tickCount() == 2;
         if (phase == 1) {
-          // Retry has no camera intro. Opening menu must leave the exact scene,
-          // cue and HUD beneath it, with hover feedback now suppressed and
-          // without a pause caption or full backdrop.
+          // Retry skips the intro. Opening the menu preserves the scene, cue and HUD
+          // and hides hover feedback, the pause caption and the full backdrop.
           ok &= !f.markedActor && !f.hoveredHatch;
           menuImage->open(); menuImage->draw(retryFrame);
           cursor->draw(retryFrame, app::CursorState::NoLemming, f.cursorX, f.cursorY);
@@ -193,7 +190,7 @@ int main() {
                                          {.frameSeconds = 0.5});
   if (result || !ok || phase != 6 || callbacks != 17) return 1;
 
-  // Retain the earlier native-matched abandonment route and its export names.
+  // Check abandonment through the same menu input sequence.
   {
     bool traceOk = true;
     int tracePhase = 0;
@@ -256,8 +253,7 @@ int main() {
     if (traceResult || !traceOk || tracePhase != 6) return 1;
   }
 
-  // Independent owned SDL-dummy trace for the bounded connected frontend route.
-  // This runs the application, rather than a FrontendSession-only model.
+  // Exercise the connected frontend through the application's SDL dummy window.
   bool traceOk = true;
   int tracePhase = 0;
   const char* traceOutput = std::getenv("WEBOLUTION_TEST_OUTPUT_DIR");

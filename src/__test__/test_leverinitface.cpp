@@ -1,19 +1,10 @@
-// lever-initial-face-impl-001: the serialized lever starting face ([+0xDC]) is applied to the runtime
-// Lever::state AND to the load-time fan-out in one step (0x00444417 -> 0x0043703F -> 0x00436E6A), driven
-// through the production loader (loadRetailLevel / loadRetailLevelReport) and the shared elapsed path
-// (World::advanceElapsedMs). Source-built; the original executable is never run.
+// The original uses the stored lever face at [+0xDC] for Lever::state and
+// load-time fan-out (0x00444417 -> 0x0043703F -> 0x00436E6A).
+// Decode the stored faces independently of loadRetailLevel, then test the
+// installed MM_W_012 levers and World::advanceElapsedMs. At state s, a pull
+// facing -s sets that direction and sends its list.
 //
-// Label key used in the observation file:
-//   SERIALIZED the stored faces, lists and receiver rectangles read straight from the level bytes
-//              (lemmings::read_compiled_level), independently of the production pairing/state code
-//   REAL       installed MM_W_012 through the public loader, no injected actors
-//   SYNTHETIC  a walker placed inside a real lever's box (a fixture, not natural play)
-//   FIXTURE    the installed level bytes with ONE stored-face word rewritten, served to the unchanged
-//              loader through a temporary patch.box (the only way to give a stored-face list that is not
-//              empty, since every installed stored-face list is empty), or a hand-built LevelSetup
-// Expected directions come from the stored face and the accepted contract "state s accepts the pulling
-// facing -s; the pull sets state := facing and sends that face's list", never from the new output.
-// Nothing here claims natural play, visible fluid or full timing fidelity.
+// The temporary patch.box changes one face word to exercise a nonempty starting list.
 #include "assets/Box.h"
 #include "lemmings/compiled_level.hpp"
 #include "sim/RetailLevel.h"
@@ -129,7 +120,7 @@ std::string describeLists(const Stored& s) {
   return out;
 }
 
-// ---- FIXTURE support: a temporary patch.box that serves the installed level with one word changed.
+// Serve a one-word level variant from a temporary patch.box.
 void put32(std::vector<std::byte>& v, std::uint32_t x) {
   for (int i = 0; i < 4; ++i) v.push_back(static_cast<std::byte>((x >> (8 * i)) & 0xFF));
 }
@@ -184,7 +175,7 @@ int main(int argc, char** argv) {
   }
   note("lever-initial-face-impl-001 AFTER observations (production loader + shared elapsed path)");
 
-  // ---- SERIALIZED: stored faces, lists and receiver rectangles, read independently of production.
+  // Read stored faces, lists and receiver rectangles independently of production pairing.
   auto resolved = sim::resolveRetailLevel(*lib, "MM_W_012");
   check(resolved.has_value(), "resolve MM_W_012");
   if (!resolved) return 1;
@@ -228,7 +219,6 @@ int main(int argc, char** argv) {
       if (r.id == id) return r;
     return Rect{};
   };
-  // Cross-check of the stored data against the task statement (documented, not used as a code path):
   for (const Stored& s : stored) {
     if (s.boxX == 79 && s.boxY == 60) check(s.face == -1, "SERIALIZED (79,60) stores -1");
     if (s.boxX == 189 && s.boxY == 35) check(s.face == -1, "SERIALIZED (189,35) stores -1");
@@ -238,7 +228,6 @@ int main(int argc, char** argv) {
     check(s.list(s.face).empty(), std::format("lever id {}: the stored-face list is empty (nothing is sent at load)", s.id));
   }
 
-  // ---- REAL: loaded face and load-time bookkeeping, all four levers.
   auto report = sim::loadRetailLevelReport(*lib, "MM_W_012");
   check(report.has_value(), "loadRetailLevelReport MM_W_012");
   if (!report) return 1;
@@ -263,7 +252,6 @@ int main(int argc, char** argv) {
                                         "receivers keep the stored request, done 2, armed false");
   }
 
-  // ---- SYNTHETIC: first accepted / rejected pull for every lever, from the stored face.
   for (const Stored& st : stored) {
     const std::size_t idx = leverAtBox(probe.setup(), st);
     if (idx >= probe.setup().levers.size()) continue;
@@ -286,7 +274,7 @@ int main(int argc, char** argv) {
         check(g != nullptr, "target gate exists");
         if (!g) continue;
         if (accepted) {
-          // Same update: the contact's request reaches the receiver and the receiver steps with that dt.
+          // The receiver handles contact and steps with the same delta.
           note(std::format("  gate{} request={} done={} h={}", g->id, g->request, g->done, g->height));
           check(g->request == 0 && g->done == 2 && g->height == 0.016 * 2.0,
                 std::format("accepted pull: gate {} raises in the same update (request 0, h == dt*2.0)", m.id));
@@ -299,7 +287,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  // ---- SYNTHETIC repeat: two walkers alternate; each accepted pull flips the state and sends its list.
+  // Alternate walkers. Each accepted pull flips the lever and sends the new list.
   for (const Stored& st : stored) {
     const std::size_t idx = leverAtBox(probe.setup(), st);
     if (idx >= probe.setup().levers.size()) continue;
@@ -325,7 +313,7 @@ int main(int argc, char** argv) {
           "repeat: re-sending type 4 does not restart the ramp (h keeps growing)");
   }
 
-  // ---- SYNTHETIC ramp: the +1 lever (183,60) ids 5/6 regression (384 cells, total 912).
+  // Check the 384-cell increase to 912 total for gates 5/6 after pulling lever (183,60).
   {
     const Stored* t = nullptr;
     for (const Stored& st : stored)
@@ -345,7 +333,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  // ---- REAL reload: a mutated world and a fresh load; the face and receivers are rebuilt.
+  // Reload restores lever faces and receivers from disk.
   {
     const std::size_t idx = leverAtBox(probe.setup(), stored[0]);
     sim::World w = worldOf(*lib);
@@ -363,7 +351,7 @@ int main(int argc, char** argv) {
     note("REAL reload: all four levers back at their stored faces, 528 cells, receivers request 1 / done 2 / h 0");
   }
 
-  // ---- UNIT/FIXTURE: unlinked (legacy / synthetic) levers are not touched by the load stage.
+  // Load-time fan-out leaves unlinked levers unchanged.
   {
     sim::LevelSetup s;
     s.levers.push_back({10, 10, 2, 6, 1});
@@ -378,9 +366,8 @@ int main(int argc, char** argv) {
           "FIXTURE: an unsupported stored face leaves the state and sends nothing");
   }
 
-  // ---- FIXTURE through the unchanged loader: a non-empty stored-face list proves the once-only fan-out.
-  // Lever id 2 (183,60) stores +1 with face -1 list (id 5 type 4, id 6 type 4). Rewriting only its stored
-  // face word to -1 makes the load-time list the two-message list; rewriting it to 5 is unsupported.
+  // Lever 2 at (183,60) starts at +1. Changing its stored face to -1 sends
+  // type 4 to IDs 5 and 6 once at load. Face 5 is unsupported.
   {
     const Stored* t = nullptr;
     for (const Stored& st : stored)

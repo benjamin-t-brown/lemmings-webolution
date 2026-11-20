@@ -42,8 +42,7 @@ app::PickBox boxFor(const app::ActorSpritePlacement& p) {
           static_cast<int>(p.right), static_cast<int>(p.bottom)};
 }
 
-// V7 replaces the terrain-target expectation that encoded the demonstrated
-// picking defect. Independent displayed-centre oracle; stable World-order ties.
+// Independently compute displayed-center distance, with stable World-order ties.
 double distanceToCursor(const app::ActorSpritePlacement& p, int x, int y) {
   const double dx = (p.left + p.right) / 2 - x;
   const double dy = (p.top + p.bottom) / 2 - y;

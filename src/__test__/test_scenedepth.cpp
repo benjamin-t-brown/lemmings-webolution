@@ -75,9 +75,8 @@ void sourceAndSubmitOffsetCase() {
   }
   check(submitted[0].screenZ!=submitted[1].screenZ, "source-to-submission preserves distinct a/b corner depths");
 
-  // Submit the actual helper-produced vertices against an opaque 38.5-depth
-  // screen. Near (38) fragments pass, far (39) fragments fail. A raw normalized
-  // slot-Z regression instead paints both sides.
+  // Against an opaque depth of 38.5, helper-produced geometry at 38 passes
+  // and geometry at 39 fails.
   SceneRgbaFramebuffer fb{32,32,std::vector<std::uint8_t>(32*32*4,0)};
   std::vector<double> depth(32*32,std::numeric_limits<double>::infinity());
   for(std::size_t p=0;p<32*32;++p){fb.rgba[p*4+1]=80;fb.rgba[p*4+3]=255;}
@@ -111,8 +110,7 @@ void draw(SceneRgbaFramebuffer& fb, std::vector<double>& depth,
 
 int main() {
   sourceAndSubmitOffsetCase();
-  // Independent accepted Z operands, binary32-context values from the
-  // derivation packet. Do not calculate expected values from the helper.
+  // Use independent binary32 reference operands for expected Z.
   BillboardCameraChain chain{};
   constexpr double pz = 0.0004687500186264515;
   constexpr double sz = 2133.333251953125;

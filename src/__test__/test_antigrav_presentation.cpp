@@ -1,4 +1,4 @@
-// R8: installed-data regression and source-built production before/after images.
+// Check inverted actor presentation on installed data.
 #include "app/AppEntry.h"
 #include "app/BackdropScene.h"
 #include "app/TubeScene.h"
@@ -31,8 +31,7 @@ struct SavedFile{fs::path p;bool exists;std::string data;explicit SavedFile(fs::
 void key(SDL_Scancode k){SDL_Event e{};e.type=SDL_KEYDOWN;e.key.keysym.scancode=k;check(SDL_PushEvent(&e)==1,"enqueue key");}
 void point(int x,int y){SDL_Event e{};e.type=SDL_MOUSEMOTION;e.motion.x=x;e.motion.y=y;check(SDL_PushEvent(&e)==1,"enqueue pointer");}
 void png(const fs::path& p,const Image& im){check(writePng(p,im).has_value(),"write clone image "+p.string());}
-// Nearest-neighbour review aid from the actual application framebuffer. The
-// full frame is retained beside it; this does not synthesize actor pixels.
+// Export a nearest-neighbor crop from the app framebuffer alongside the full frame.
 void detail(const fs::path& p,const Image& im,const app::ActorSpritePlacement& box){
   const int left=int(box.originX)-36,top=int(box.originY)-36;Image crop;crop.width=432;crop.height=432;crop.rgba.resize(432*432*4);
   for(int y=0;y<432;++y)for(int x=0;x<432;++x){const int sx=std::clamp(left+x/6,0,im.width-1),sy=std::clamp(top+y/6,0,im.height-1);std::copy_n(im.rgba.begin()+(sy*im.width+sx)*4,4,crop.rgba.begin()+(y*432+x)*4);}

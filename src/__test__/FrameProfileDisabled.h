@@ -1,5 +1,4 @@
-// Benchmark control only: compile the same clone with timer scopes erased.
-// This header is never on the production or ordinary test include path.
+// Benchmark control that compiles out frame timer scopes.
 #pragma once
 #include <cstddef>
 namespace webo::app::profile {

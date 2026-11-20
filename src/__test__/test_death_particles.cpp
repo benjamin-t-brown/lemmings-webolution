@@ -1,5 +1,4 @@
-// Small logic checks only: event delivery and presentation lifetime. No routes,
-// replays, frozen builds, original execution or original-fidelity assertions.
+// Check death-particle event delivery and presentation lifetime.
 #include "app/DeathParticles.h"
 #include "sim/World.h"
 #include <cassert>

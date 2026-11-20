@@ -1,8 +1,4 @@
-// Tests for the terrain mask.
-//
-// The behaviour that matters and is easy to get wrong is the wraparound: the
-// level is a cylinder, so x = -1 and x = width - 1 are the same cell, and a
-// box or circle that straddles the seam must act on both sides of it.
+// Cylinder columns wrap. Areas straddling the seam affect both sides.
 
 #include "assets/CollisionGrid.h"
 #include "sim/Terrain.h"
@@ -63,9 +59,7 @@ void testClearAndFill() {
   check(t.at(2, 2) == Material::Empty && t.at(5, 4) == Material::Empty, "box corners cleared");
   check(t.at(6, 2) == Material::Earth, "just outside the box is untouched");
 
-  // The explosion stencil, written out from 0x004B1528: 37 of 49 cells, in a
-  // 7-wide window at columns x-4..x+2 and rows y-4..y+2. A blast at (10, 10)
-  // therefore spans columns 6..12 and rows 6..12.
+  // 0x004B1528 stores a 37-cell stencil in a 7x7 window from x-4..x+2 and y-4..y+2.
   const std::size_t blast = t.clearExplosion(10, 10);
   check(blast == 37, std::format("the blast stencil is 37 cells (got {})", blast));
   check(t.at(9, 6) == Material::Empty && t.at(6, 10) == Material::Empty,
@@ -135,9 +129,7 @@ void testFromLevelGrid() {
 }
 
 void testAntiGravFromCollisionGrid() {
-  // Round 11 gap: every prior anti-grav test built pads with setAntiGrav, so
-  // the 0x8000 extraction in fromCollisionGrid could be deleted and the
-  // suite would stay green. A hand-built grid word pins the line.
+  // Use a stored cell word to check 0x8000 extraction in fromCollisionGrid.
   std::cout << "anti-grav bit fromCollisionGrid\n";
   webo::CollisionGrid g;
   g.width = 8;
@@ -154,7 +146,7 @@ void testAntiGravFromCollisionGrid() {
 }
 
 void testWaterHazardFromCollisionGrid() {
-  // Round 14: 0x40 extraction in fromCollisionGrid.
+  // Check 0x40 extraction in fromCollisionGrid.
   std::cout << "water-hazard bit fromCollisionGrid\n";
   webo::CollisionGrid g;
   g.width = 8;

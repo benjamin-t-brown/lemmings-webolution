@@ -1,6 +1,4 @@
-// Fast, device-free checks for playtest 6 V4: preserve every save event and
-// bound the exit bus even when several loud cheers overlap. Synthetic units,
-// not a scripted level win or evidence of original timing/mixing fidelity.
+// Check that each save event reaches the mixer and overlapping exit cheers stay within range.
 #include "audio/CuePlayback.h"
 #include "audio/OverlapMix.h"
 #include "sim/Terrain.h"
@@ -54,8 +52,7 @@ void saveEvents(bool drainEachTick) {
 }
 
 void overlapHeadroom() {
-  // Same-phase loud voices are the worst case for additive clipping. Their
-  // average retains the original peak rather than flattening at S16 limits.
+  // Same-phase voices maximize additive clipping. Averaging preserves the sample peak within S16 limits.
   for (int count : {1, 2, 5, 32, 100}) {
     audio::OverlapMix mix;
     const std::array<std::int16_t, 2> source{28000, -28000};

@@ -1,17 +1,5 @@
-// B1a: wire the already-tested texture/.LTX readers into an app-side load.
-//
-// The readers themselves (Box, Bitmap, Lrz, GameData) already exist, are
-// unit-tested elsewhere (test_box.cpp, test_bitmap.cpp, test_gamedata.cpp),
-// and are already proven against the real archive. This test proves only
-// that the app side can load a representative background texture, the font
-// texture, and GERMAN.LTX's strings end to end through those production
-// readers -- the same webo::loadTexture(lib, name) / webo::loadStrings(lib,
-// language) calls src/app/TubeScene.cpp already uses -- against the real
-// installed archive. It does not render anything and does not touch
-// src/assets/**.
-//
-// Gated the same way test_gamedata.cpp's testRealData is: skipped cleanly
-// without WEBOLUTION_GAME_DIR, run against the real archive when set.
+// Load an installed background, font and GERMAN.LTX strings through the frontend
+// texture and .LTX readers. Requires WEBOLUTION_GAME_DIR.
 
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
@@ -70,9 +58,7 @@ void testFrontendAssetsLoad() {
     }
   }
 
-  // The font texture. Leading '_' means colour 000000 is the transparency
-  // key -- a real glyph sheet should actually exercise that, not just carry
-  // non-zero dimensions.
+  // In the font texture a leading '_' selects color 000000 as transparent.
   {
     const char* name = "TEXTURES\\_FONT.BMP";
     check(lib->contains(name), std::format("{} present in the archive", name));
@@ -97,10 +83,7 @@ void testFrontendAssetsLoad() {
     }
   }
 
-  // GERMAN.LTX's interface strings, through the same loadStrings() path
-  // test_gamedata.cpp's testRealData already proves against every available
-  // language. Here it is addressed directly by name, the way a frontend
-  // screen asking for "the German strings" would.
+  // Load GERMAN.LTX by name through loadStrings().
   {
     const auto langs = webo::availableLanguages(*lib);
     check(std::ranges::find(langs, "GERMAN") != langs.end(),
@@ -112,9 +95,7 @@ void testFrontendAssetsLoad() {
       std::cout << std::format("    GERMAN.LTX: {} strings, e.g. [1]=\"{}\"\n", strings->size(),
                                (*strings)[1]);
       check(strings->size() > 0, "GERMAN.LTX: a non-zero string count");
-      // Index 0 is a known-empty string in the real file (a bare NUL ahead
-      // of the first real entry) -- assert non-emptiness on an index known
-      // to hold text, not blindly on [0].
+      // A leading NUL leaves string index 0 empty. Check a populated index.
       check(!(*strings)[1].empty(), "GERMAN.LTX: at least one non-empty string ([1])");
     }
   }

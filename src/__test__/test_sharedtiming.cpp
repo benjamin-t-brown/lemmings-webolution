@@ -1,12 +1,6 @@
-// shared-timing-impl-001: the connected explicit elapsed-time world update, driven through
-// the production RuntimeSimState::advanceElapsed -> World::advanceElapsedMs path on the
-// installed MM_W_012 (lever (183,60) is index 2). Source-built; the original is never run.
-//
-// Label key used in the observation file:
-//   REAL      installed level data loaded by loadRetailLevel, no injected actors
-//   SYNTHETIC one walker placed next to a real lever (a fixture, not natural play)
-// Nothing here claims gate receiver behaviour, fluid, or fidelity of walker/fall rates:
-// it checks the shared clock/order foundation (input policy, update count and order).
+// Check RuntimeSimState::advanceElapsed -> World::advanceElapsedMs input
+// policy and update count and order on installed MM_W_012. A fixture places
+// a walker near lever 2 at (183,60).
 #include "app/RuntimeHud.h"
 #include "assets/Box.h"
 #include "sim/RetailLevel.h"
@@ -99,8 +93,7 @@ int main(int argc, char** argv) {
   }
   note("shared-timing-impl-001 connected-path observations (RuntimeSimState::advanceElapsed -> World::advanceElapsedMs)");
 
-  // 0. Production call-path scan (SOURCE evidence, not behaviour): main.cpp reaches the world only
-  //    through the explicit entry. Before the change the same site called runtimeSim.advance().
+  // Check main.cpp uses the explicit elapsed-time update entry point.
 #ifdef STI_SOURCE_DIR
   {
     const std::filesystem::path appMain = std::filesystem::path(STI_SOURCE_DIR) / "src/app/main.cpp";
@@ -111,9 +104,8 @@ int main(int argc, char** argv) {
   }
 #endif
 
-  // 1. SYNTHETIC: ordinary sub-200 ms frames. The walker starts one column outside lever 2's box.
-  //    Its first step happens in the 13th 16 ms update (13*16 = 208 ms of budget); contact is
-  //    evaluated AFTER that movement, so the lever fires in that same update, not a tick later.
+  // A walker one column outside lever 2 first steps after thirteen 16 ms
+  // updates (208 ms). Contact follows movement in the same update.
   {
     sim::World w = loadWorld(*lib);
     app::RuntimeSimState state;
@@ -141,7 +133,7 @@ int main(int argc, char** argv) {
           "HUD/timeout state reads the same level clock");
   }
 
-  // 2. Zero-delta input: the original runs a full update with dt = 0; the clone must too.
+  // The original performs a full update at dt = 0.
   {
     sim::World w = loadWorld(*lib);
     app::RuntimeSimState state;
@@ -226,9 +218,8 @@ int main(int argc, char** argv) {
       check(clocks.size() == 2 && clocks[0] == 1000 && clocks[1] == 1000, "984 ms + 16 ms: update to 1000 then a zero-length trailing update");
   }
 
-  // 7. Lever contact order. SYNTHETIC: two walkers in lever 2's box, one facing each way. One
-  //    update produces ONE activation (first accepted in list order); legacy tick() lets the
-  //    second actor re-toggle inside the same tick (baseline scenario "order": state stayed 1).
+  // With opposing walkers inside lever 2, the first eligible walker in list order
+  // activates it. The explicit elapsed path accepts one activation per update.
   {
     sim::World w = loadWorld(*lib);
     app::RuntimeSimState state;
@@ -290,13 +281,11 @@ int main(int argc, char** argv) {
           "reload restarts level clock, event count, lever state and input carry");
   }
 
-  // 11. Results: once the completion phase reaches Results no further updates run.
+  // Results stops simulation updates.
   {
     sim::World w = loadWorld(*lib);
     app::RuntimeSimState state;
-    // Untimed-out, never-released level: Results is not reached by this input alone; the guard is
-    // exercised by the existing fastforward_units completion test through the legacy wrapper and by
-    // levelreturn through the app route. Here we only check the phase stays Running without a result.
+    // Without a timeout or releases, the level stays in Running.
     state.advanceElapsed(w, 0.016, true);
     check(state.endTransition().phase() == app::LevelEndPhase::Running, "completion tracking starts in Running");
   }

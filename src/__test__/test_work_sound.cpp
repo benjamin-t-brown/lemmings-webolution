@@ -1,5 +1,4 @@
-// Legacy audio unit: exercise CuePlayback -> Mixer::play -> Mixer::fill PCM,
-// not the request observer. No level route, save or physical audio output.
+// Check work cues through CuePlayback -> Mixer::play -> Mixer::fill.
 #include "assets/Box.h"
 #include "assets/Wav.h"
 #include "audio/CuePlayback.h"
@@ -57,10 +56,9 @@ void attacks(const Sound& source) {
   check(mixer.load("Other", other).has_value(), "unrelated effect loads");
   mixer.play("Other");
 
-  // All intervals are shorter than MINE.WAV. 3780/4725 frames approximate
-  // dig/miner fast-forward spacing; short intervals represent other workers.
-  // Each output must be the attack at sample zero, never the previous tail
-  // (SkipPlaying) or the sum of a new attack and that tail (Add/Average).
+  // Intervals are shorter than MINE.WAV. 3780/4725 frames approximate Digger
+  // and Miner fast-forward spacing. Each cue restarts at sample zero
+  // independently of the previous tail (SkipPlaying or Add/Average).
   for (int frames : {256, 3780, 97, 4725, 1, 256}) {
     playback.play(sim::SoundCue::Work);
     const auto out = Access::render(mixer, frames);
@@ -90,8 +88,7 @@ void attacks(const Sound& source) {
 int main() {
   SDL_SetMainReady();
   SDL_SetHintWithPriority(SDL_HINT_AUDIODRIVER, "dummy", SDL_HINT_OVERRIDE);
-  // Distinct positive/negative samples make a retained tail or additive
-  // stacking detectable without depending on the installed asset waveform.
+  // Distinct positive and negative samples distinguish a clean restart from a stacked tail.
   Sound synthetic{22050, 1, std::vector<std::int16_t>(22050)};
   for (std::size_t i = 0; i < synthetic.samples.size(); ++i)
     synthetic.samples[i] = static_cast<std::int16_t>(static_cast<int>(i % 20001) - 10000);

@@ -152,8 +152,7 @@ int main() {
                   << " seconds-left=" << s.outcome()->secondsRemaining << '\n';
         if (!t.checkedUnfocusedReturn) {
           t.checkedUnfocusedReturn = true;
-          // Initial result focus repair is unresolved. Exercise the actual
-          // adapter's refusal to invent Return-to-Continue, then explicitly click.
+          // Provisional initial result focus: Return does not activate Continue. Click it explicitly.
           if (!pushKey()) { t.fail("could not queue unfocused results Return"); pushQuit(); }
           break;
         }
@@ -267,8 +266,7 @@ int main() {
     }
   };
 
-  // save-codec-001: this natural-gameplay run persists to a temporary store (never
-  // LocalAppData, never the installed save); the restart run below reloads it.
+  // Persist the route to a temporary save and reload it in a fresh session.
   std::error_code saveEc;
   const std::filesystem::path saveRoot = std::filesystem::temp_directory_path(saveEc) / "webolution-levelreturn-save";
   std::filesystem::remove_all(saveRoot, saveEc);
@@ -425,9 +423,8 @@ int main() {
     loss.fail("loss-only route did not export/verify Results7, Results9, Map11 and Menu12");
   if (!loss.ok) { std::cerr << "FAIL: LevelReturn loss route: " << loss.why << " (level callbacks=" << loss.levelCalls << ")\n"; return 1; }
 
-  // Restart integration: the first natural run above won node 0, lost, retried and
-  // quit. Only the win may have saved: the file is the zero image except C of
-  // record (0,0) at offset 0x00C.
+  // Only the win writes progress. Expect a zero image except for C of record
+  // (0,0) at offset 0x00C.
   {
     std::ifstream in(savePath, std::ios::binary);
     const std::vector<char> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());

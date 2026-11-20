@@ -1,5 +1,4 @@
-// Short legacy invariants: exit filtering, any-tribe exits and serialized
-// type propagation. No recorded gameplay, injected win or original execution.
+// Check exit filtering, any-tribe exits and serialized type propagation.
 #include "assets/Box.h"
 #include "assets/LevelObjects.h"
 #include "sim/RetailLevel.h"
@@ -94,8 +93,7 @@ void installed(const std::filesystem::path& gameDir) {
       ++exits;
       const auto& raw = rawExits[i]; const auto& e = level->exits.at(i);
       check(e.sheetType == static_cast<int>(raw.value_98), name + " serialized exit tribe");
-      // Independently correlate stream order with the located model: the
-      // serialized AABB and the existing pose-derived trigger must agree.
+      // Match models in stream order and cross-check the serialized AABB against the pose trigger.
       const auto value = [&](int k) { return std::bit_cast<double>(raw.double_bits_48_60[k]); };
       check(value(0) == e.x && level->terrain.height() - 1 - value(4) == e.y &&
                 value(3) - value(0) == e.width && value(4) - value(1) == e.height,

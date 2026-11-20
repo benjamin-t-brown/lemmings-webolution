@@ -1,6 +1,5 @@
-// B1w: unit checks for the main-menu renderer, plus a real-archive check (gated on
-// WEBOLUTION_GAME_DIR) that the transcribed glyph table equals the exe bytes at 0x4BF968
-// and that the sheet and strings are what the renderer assumes.
+// Check main-menu rendering and the installed sheet and strings.
+// With WEBOLUTION_GAME_DIR set, compare the glyph table with EXE bytes at 0x4BF968.
 
 #include "assets/Bitmap.h"
 #include "assets/Box.h"
@@ -70,7 +69,7 @@ void testRules() {
   check(px(left - 5, 321) == 64, "panel border is grey");
   check(px(left - p.panelPadX + 3, 321 + 5) == 224, "row 0 fill is the highlight colour");
 
-  // B1y READ values, every channel. Row 0 is the highlight, row 1 the normal fill.
+  // Original panel colors: row 0 is highlighted and row 1 is normal.
   auto rgb = [&](int x, int y) {
     const std::size_t o = (static_cast<std::size_t>(y) * 640 + x) * 4;
     return std::array<std::uint8_t, 3>{out.rgba[o], out.rgba[o + 1], out.rgba[o + 2]};
@@ -118,7 +117,7 @@ void testRealData() {
     check(same, "transcribed cells equal the exe records for 0x20..0x7E");
   }
 
-  // B1y: the panel values the renderer uses, re-read from the exe (text: file offset = VA - 0x400000).
+  // Read panel colors from EXE text at file offset VA - 0x400000.
   auto at = [&](std::size_t va) { return exe.size() > va - 0x400000 + 8 ? &exe[va - 0x400000] : nullptr; };
   auto bytesAre = [&](std::size_t va, std::initializer_list<int> want) {
     const std::uint8_t* b = at(va);

@@ -1,5 +1,4 @@
-// R4: source-built production route and installed coordinate-mesh evidence.
-// Only public SDL input; no original execution and no World mutation.
+// Check the exit balloon's installed mesh and drive the installed route through SDL input.
 #include "app/AppEntry.h"
 #include "app/BackdropScene.h"
 #include "app/RuntimePick.h"
@@ -80,8 +79,7 @@ std::string state(const app::LevelFrameView& f) {
   }
   return s.str();
 }
-// Blue balloon cloth in the fixed reference-like view. Excludes the HUD,
-// bottom scenery, blue cylinder seam and the Climber's selected job icon.
+// Mask blue balloon cloth, excluding the HUD, bottom scenery, cylinder seam and selected Climber icon.
 std::array<double,3> blueBalloon(const Image& image) {
   double xSum = 0, ySum = 0, count = 0;
   for (int y = 80; y < 350; ++y) for (int x = 420; x < 640; ++x) {
@@ -147,8 +145,8 @@ int run(const fs::path& out) {
   scene->setEntranceExitPresentation(*presentation, 1, 0);
   check(exitMatrix(*scene) == initial, "zero departure resets the stored pose");
 
-  // Match the original's right-edge perch and keep the camera still. The exact
-  // original camera parameters were not retained; this is a visual comparison.
+  // Use the original's right-edge perch with a stationary camera.
+  // The comparison uses an approximate camera pose.
   const double tau = 2*3.1415927410125732;
   const double yaw = std::fmod((std::atan2(initial[11],initial[9])+0.4)/tau*256+128+256,256);
   const auto cameraFile = out / "camera.json";
@@ -222,7 +220,7 @@ int run(const fs::path& out) {
   std::vector<std::string> args{"exit-balloon", "--frontend", "--native", "--frames", "2200",
       "--game-dir", game.string(), "--camera", cameraFile.string()};
   std::vector<char*> raw; for(auto& arg:args) raw.push_back(arg.data());
-  // A fresh private save on every run; no user state is imported or reset.
+  // Use an isolated clone save.
   const auto saveFile=out/"SavedGame.dat";
   const auto data=save::SavedGame{}.serialize();
   {std::ofstream file(saveFile,std::ios::binary);file.write(reinterpret_cast<const char*>(data.data()),data.size());}
@@ -231,9 +229,7 @@ int run(const fs::path& out) {
   check(app::runApplication(int(raw.size()),raw.data(),front,observer,options)==0,"production application exits");
   check(success && pauses==3,"win, results and pending pause completed");
   if (!before) {
-    // Visibility depends on the camera, which was not retained with the
-    // original. The exact recovered world path is asserted above; these
-    // pixel checks distinguish it from the authentic vertical baseline.
+    // Check the departure path in world space and use pixels to distinguish it from vertical travel.
     check(xAtTwo-firstX > 20,"production balloon travels sideways in reference-like view");
     check(std::abs(yAtTwo-firstY) < 60,"rise remains bounded while sideways motion is visible");
     check(blueAtFour >= 0 && blueAtFour < firstPixels*0.25,"most balloon cloth has left the view at 4.5 seconds");

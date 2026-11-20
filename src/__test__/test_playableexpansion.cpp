@@ -1,21 +1,10 @@
-// playable-expansion-001 assessment driver (SCRIPTED CLONE OBSERVATION, not human play, not original fidelity).
-//
-// One executable, several CTest registrations (see CMakeLists.txt):
-//   survey 0 <dir>   read-only: map link/unlock graph, shortest earned routes, terrain dumps of the core levels
-//   play S <dir>     step S through the PUBLIC webo::app::runApplication (bare ordinary startup, SDL events queued
-//                    from the read-only FrontendWindowObserver/LevelFrameObserver, production wall clock, isolated
-//                    FileSaveSink). All steps of one verifier run share <dir>/runs/<stamp>/save:
-//                      1 earn node 0 (MM_CLIMB_002, Climber) -- the genuine prerequisite win that unlocks nodes 3 and 4
-//                      2 core: MM_BLOCK_001_A (node 3), Blocker policy, at most two attempts
-//                      3 core: MM_BUILD       (node 4), Builder policy, at most two attempts
-//                      4 gadget: the nearest genuinely selectable lever/teleport/speed-pad level on the earned map
-//                        (node 8 MM_W_012 is a candidate, not assumed), one attempt, Blocker policy
-//   restart S <dir>  a second OS process: fresh runApplication over the same isolated save; UNVERIFIED unless the
-//                    play invocation won.
-//
-// Nothing here mutates a World, actor, terrain, stock, flag, progress or clock. Inputs are SDL events only.
-// The fast-forward plate is clicked through the public input path and recorded in the trace.
-// Outcomes (win/loss/blocked/watchdog) are REPORTED, never asserted: the exit code reflects driver integrity only.
+// survey 0 <dir> reports the map unlock graph, route lengths and terrain.
+// play S <dir> drives webo::app::runApplication through SDL with a shared isolated
+// FileSaveSink. Step 1 earns node 0 (MM_CLIMB_002). Steps 2 and 3 use Blocker on
+// MM_BLOCK_001_A and Builder on MM_BUILD. Step 4 selects a reachable gadget
+// level such as MM_W_012 and uses Blockers.
+// restart S <dir> checks the same save in a fresh process after a win.
+// The exit code checks driver integrity. Each route record contains its outcome.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "app/RuntimeSkillPanel.h"
@@ -125,7 +114,6 @@ std::string arr(const Flags& a) {
   return os.str();
 }
 
-// ---- decoded level facts (read-only) -------------------------------------------------------------
 struct LevelFacts {
   std::string level;
   std::size_t node = 0;
@@ -167,7 +155,7 @@ LevelFacts inspect(const AssetLibrary& lib, std::size_t node, const std::string&
 
 bool isGadget(const LevelFacts& f) { return f.ok && (f.levers > 0 || f.teleports > 0 || f.pads > 0); }
 
-// ---- map unlock graph (read-only; MapScene::build with hypothetical in-memory flags) ----------------
+// Build the map unlock graph with hypothetical flags in memory.
 struct MapGraph {
   std::vector<std::vector<int>> links;  // links[i]: nodes that become selectable (state 3) when node i is completed
   std::array<std::int32_t, 102> baseStates{};
@@ -226,7 +214,6 @@ std::string chainTo(const MapGraph& g, const Flags& states, int node) {
   return s;
 }
 
-// ---- terrain helpers (read-only) ------------------------------------------------------------------
 int wrapX(const sim::Terrain& t, int x) {
   const int w = std::max(1, t.width());
   return ((x % w) + w) % w;
@@ -305,7 +292,6 @@ int farSide(const sim::Lemming& l, const sim::Terrain& t, int k, int maxJ) {
   return 0;
 }
 
-// ---- attempt records -----------------------------------------------------------------------------
 struct BlockerTrack {
   std::size_t idx = 0;
   int x = 0, y = 0;
@@ -378,7 +364,7 @@ struct AttemptResult {
 };
 
 struct StepDef { int step; const char* label; int policy; int maxAttempts; std::size_t node; };
-// policy: 0 earn (baseline reactive Climber), 1 Blocker, 2 Builder, 3 gadget level (Blocker policy + lever watch)
+// Policy 0 uses reactive Climber assignments, 1 uses Blocker, 2 uses Builder, and 3 uses Blocker with lever tracking.
 constexpr StepDef kSteps[4] = {
     {1, "earn-node0", 0, 2, 0}, {2, "core-blocker", 1, 2, 3}, {3, "core-builder", 2, 2, 4}, {4, "gadget", 3, 1, 8}};
 
@@ -436,10 +422,9 @@ void shot(Ctx& c, const Image& image, const std::string& name) {
 
 int policySkill(int policy) { return policy == 2 ? 4 : (policy == 1 || policy == 3) ? 3 : 0; }
 
-// ---- policies (read World/terrain only) -------------------------------------------------------------
 struct Intent { int skill = -1; std::string why; };
 
-// Strategy for the earn step: the accepted baseline reactive Climber policy (strategy 1) / blanket (strategy 2).
+// Use reactive Climber assignments first and blanket assignments on Retry.
 Intent earnIntent(const Attempt& a, const sim::Lemming& l, const sim::Terrain& t, const std::array<int, 8>& stock) {
   Intent in;
   if (l.state != sim::State::Walker) return in;
@@ -515,7 +500,6 @@ Intent chooseIntent(const Ctx& c, const Attempt& a, const sim::Lemming& l, const
   }
 }
 
-// ---- read-only observation tracking -----------------------------------------------------------------
 void finalizeBuilder(Ctx& c, Attempt& a, BuilderTrack& b, const sim::World& w, long tick, int frame, const char* why) {
   if (b.newCells >= 0) return;
   int n = 0;
@@ -896,7 +880,6 @@ void writeAttempts(Ctx& c, std::ostream& os) {
   }
 }
 
-// ---- identity / saves --------------------------------------------------------------------------------
 void writeIdentity(const fs::path& file, const fs::path& game, const std::string& extra) {
   std::ofstream os(file);
   os << "driver=test_playableexpansion (scripted clone observation)\n" << extra;
@@ -966,7 +949,6 @@ std::optional<std::pair<int, int>> pixelFor(const AssetLibrary& lib, const Flags
   return std::nullopt;
 }
 
-// ---- modes -------------------------------------------------------------------------------------------
 void dumpTerrain(const AssetLibrary& lib, const std::string& level, const fs::path& out) {
   auto setup = sim::loadRetailLevel(lib, level);
   std::ofstream os(out);
@@ -1218,7 +1200,8 @@ int playMode(const AssetLibrary& lib, int stepNo, const fs::path& root, const st
           else if (r.a.number < step.maxAttempts) {
             c.resultAction = 2;
             c.nextAttempt = r.a.number + 1;
-            // Revision from retained observation: nothing placed -> relax thresholds; placed but not enough -> more of it.
+            // Relax placement thresholds when no skills were assigned. Increase use when
+            // assignments were insufficient.
             c.nextRev = (step.policy == 0) ? 0 : (r.a.placed == 0 || r.a.assignOk == 0) ? 1 : 2;
             c.nextRevReason = "attempt " + std::to_string(r.a.number) + " " + cls + ": policy_skill_assign_ok=" + std::to_string(r.a.assignOk) +
                               " blockers_seen=" + std::to_string(r.a.blockers.size()) + " builders_seen=" + std::to_string(r.a.builders.size()) +
@@ -1253,7 +1236,7 @@ int playMode(const AssetLibrary& lib, int stepNo, const fs::path& root, const st
   const double totalWall = wallSeconds() - startWall;
   const std::string normalAfter = normalSaveState();
 
-  if (c.attemptOpen) {  // an attempt that never reached a results screen (watchdog / quit)
+  if (c.attemptOpen) {  // watchdog or quit before results
     AttemptResult r;
     r.a = c.att;
     r.wallEnd = wallSeconds();
@@ -1348,7 +1331,7 @@ int restartMode(int stepNo, const fs::path& root, const std::string& gameDir) {
      << "\nsave file bytes=" << (fs::exists(saveFile, ec) ? static_cast<long long>(fs::file_size(saveFile, ec)) : -1) << " fnv before=" << before
      << " after=" << after << " (unchanged: " << (before == after) << ")\nRESULT: " << (ok ? "VERIFIED" : "FAILED") << "\n";
   std::cout << "PlayableExpansion restart step " << stepNo << ": " << (ok ? "VERIFIED" : "FAILED (persistence finding)") << " flag=" << (node < 102 ? seen.flags[node] : -1) << '\n';
-  return status == 0 && md ? 0 : 1;  // a persistence mismatch is a reported finding, not a driver fault
+  return status == 0 && md ? 0 : 1;  // Persistence mismatches affect the report result only.
 }
 
 }  // namespace

@@ -1,17 +1,9 @@
-// native-023: the public application route for the installed MM_TELE_003,
-//   runApplication(--level MM_TELE_003 --sim) -> sim::loadRetailLevel ->
-//   LevelSetup::teleports -> World,
-// observed through the read-only per-frame view. The run ends through an
-// observer-queued SDL_QUIT under the SDL dummy drivers; --frames is only a
-// failure guard that is never reached.
+// Check installed MM_TELE_003 pads through runApplication and sim::loadRetailLevel.
+// The SDL dummy-window observer queues SDL_QUIT before the --frames cap.
 //
-// Literal expectations: the four pads of MM_TELE_003 in locator order stand on
-// columns 219, 241, 102 and 79 (step-1 measurement; the retained live table of
-// round 16 has the same columns), each with the closed 12-wide box
-// [col-6, col+6]. Ids pair 3<->5 and 4<->6, i.e. locator pads 0<->2 and 1<->3, so
-// every destination column is the partner pad's column. This level pairs
-// identically under the old file-order rule; the level-changing evidence is in
-// teleportdemo_before/after. No original code runs.
+// The four pads occupy columns 219, 241, 102 and 79 with inclusive [col-6, col+6]
+// bounds. Ids pair 3<->5 and 4<->6 (locator indices 0<->2 and 1<->3).
+// Destinations use the partner pad's column.
 #include "app/AppEntry.h"
 #include "sim/World.h"
 

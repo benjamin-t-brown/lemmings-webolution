@@ -1,4 +1,4 @@
-// Owned-process clone observations through the ordinary frontend. No original run.
+// Check hatch timing through the ordinary application frontend.
 #include "app/AppEntry.h"
 #include "FrameConsumptionAudit.h"
 #include "app/RuntimeHud.h"
@@ -111,7 +111,7 @@ int entry(const fs::path& out) {
       else if (s.screen() == shell::Screen::Map) click(px,py);
       else { check(false, "entry stays on expected frontend route"); quit(); }
     };
-    // Frozen historical mains have no render-demand path and stay unconverted.
+    // Use render-demand coverage only with builds that support it.
     std::unique_ptr<test::FrameConsumptionAudit> audit;
     if (!before) audit = std::make_unique<test::FrameConsumptionAudit>(dir);
     auto frame = [&](const app::LevelFrameView& f) {
@@ -119,8 +119,7 @@ int entry(const fs::path& out) {
       ++frameCount;
       if (!f.paused) elapsed += 0.1;
       check(f.levelName == *id, "selected installed level matches");
-      // The frozen task-entry main samples this exact expression. Current main
-      // publishes the value it actually passed to BackdropScene.
+      // Read door progress from BackdropScene or compute the arm-mapped sample.
       const double opening = before ? std::min(1.0, f.world.levelClockMs()/1000.0/
           f.world.setup().releaseArmSeconds) : f.hatchOpeningProgress;
       trace << f.frame << ',' << elapsed << ',' << f.world.levelClockMs() << ','
@@ -194,9 +193,8 @@ int assets(const fs::path& out) {
           float accumulated=0.0f;
           for(std::size_t i=0;i<t.keys.size();++i) {
             error=std::max(error,std::abs(t.keys[i].end-0.04*(i+1)));
-            // Stored doubles retain accumulated float 40 ms times, with the
-            // last key snapped to the float clip duration. Check those exact
-            // values rather than imposing a false uniform-double grid.
+            // Stored doubles preserve float 40 ms accumulation and snap the final key
+            // to the float clip duration.
             accumulated+=0.04f;
             const double expected=i+1==t.keys.size() ? a->duration : double(accumulated);
             check(t.keys[i].end==expected,"serialized 40 ms float accumulation and final endpoint");
@@ -209,8 +207,7 @@ int assets(const fs::path& out) {
     }
   }
   check(levels==102 && hatches==144,"complete installed hatch census");
-  // Supplemental model-only views expose the door poses which the ordinary
-  // camera intro/title can obscure. These do not replace application frames.
+  // Use model-only frames to expose door poses behind the intro or title.
   auto resolved=sim::resolveRetailLevel(lib,"MM_CLIMB_002"); if(!resolved) return 2;
   auto blob=lib.read(resolved->file);
   if(!blob) return 2;
@@ -304,13 +301,8 @@ int retry(const fs::path& out) {
   std::ofstream(out/"summary.txt")<<"cue_end="<<cueEnd<<"\ndoor_end="<<doorEnd<<"\nfirst_release="<<first<<"\nfailures="<<failures<<'\n';
   return failures ? 1:0;
 }
-// Matched replay for the review's expansion WIN -> LOSS finding. The historical
-// wall-clock driver did NOT make the same assignments: its winning Retry left
-// blockers a few cells away from the losses. Reproduce both exact sets of
-// placement choices with owned 200 ms frames and public input, then compare every
-// post-birth actor/stock/gadget sample to the authentic pre-task application.
-// The level clock still runs during the added wait, so compare only up to timeout
-// and assert the final saved/count/outcome separately (no invented extra time).
+// Use 200 ms frames and SDL input to check both sets of Blocker placements.
+// Compare actor, stock and gadget state up to timeout. Check saved count and outcome separately.
 std::string routeState(const app::LevelFrameView& f) {
   const auto& w=f.world;
   std::ostringstream s; s<<std::setprecision(17)<<w.spawned()<<','<<w.saved()<<','<<w.dead();
@@ -339,12 +331,9 @@ int routes(const fs::path& out) {
   {std::ofstream s(saveFile,std::ios::binary);s.write(reinterpret_cast<const char*>(data.data()),data.size());}
   auto store=std::make_shared<save::SaveStore>(std::make_unique<save::FileSaveSink>(saveFile,game));
   struct Site { std::size_t actor; int x,y; sim::Facing face; };
-  // Use actors-at-end, not state-blocker events: the historical observer resets
-  // its previous-state vector at each birth and can miss valid transitions.
-  // hatch-release-direction-001: both levels alternate. The old all-right
-  // actor IDs no longer reach these sites. Preserve the historical simulation
-  // control; the current route first turns left-born actors on the upper shelf,
-  // then places the same four physical blockers with the right-born even IDs.
+  // Count Blockers at the end because resetting the observer on birth can miss
+  // state transitions. For alternating releases, turn left-born actors on the
+  // shelf, then place the four Blockers with right-born even IDs at the same sites.
   const std::vector<Site> winning = receiverBaseline ?
       std::vector<Site>{{0,177,24,sim::Facing::Right},{1,82,45,sim::Facing::Left},
                        {2,176,65,sim::Facing::Right},{3,155,65,sim::Facing::Left}} :
@@ -354,9 +343,7 @@ int routes(const fs::path& out) {
   const std::vector<Site> losing{{0,175,24,sim::Facing::Right},{receiverBaseline?1u:2u,82,45,sim::Facing::Left},
                                {receiverBaseline?2u:4u,175,65,sim::Facing::Right},
                                {receiverBaseline?3u:6u,153,65,sim::Facing::Left}};
-  // Actual final placements in the pre-task expansion gadget route. Its third
-  // click intended actor 11 but picked actor 12. Replay that resulting input
-  // choice explicitly, rather than relying on a wall-clock picking race.
+  // Specify actor 12 for the third click to make picking independent of frame pacing.
   const std::vector<Site> gadgetSites{{receiverBaseline?2u:4u,214,41,sim::Facing::Right},
                                      {receiverBaseline?3u:6u,163,41,sim::Facing::Left},
                                      {receiverBaseline?12u:18u,185,26,sim::Facing::Right}};
@@ -402,7 +389,7 @@ int routes(const fs::path& out) {
     auto frame=[&](const app::LevelFrameView& f) {
       if(f.frame==0)++leg;
       check(f.levelName==level,"matched installed level");
-      // Public Retry gives the same short-cue route as historical attempt 2.
+      // Public Retry exercises the short-cue route.
       if(!gadget && stage==0){key(SDL_SCANCODE_ESCAPE);stage=1;return;}
       if(!gadget && stage==1){check(f.levelMenuOpen,"matched menu opened");click(320,140);stage=2;return;}
       if(stage<3){stage=3;key(SDL_SCANCODE_4);}
@@ -475,9 +462,8 @@ int routes(const fs::path& out) {
     if(pass==0)check(won && saved==23 && mapEarned,"historical placements win 23/30 and genuinely unlock gadget");
     if(miss)check(!won && saved==0,"historical losing placements reproduce trapped zero-save loss");
     if(gadget) {
-      // U3: both former survivors used the baked dry-fluid lid. Keep an
-      // authenticated entry-simulation replay alongside the corrected route,
-      // rather than accepting an arbitrary changed saved count.
+      // The two survivors depend on the dry-fluid lid. Check both receiver behaviors
+      // with their own expected saved counts.
       check(mapEarned && spawned==20 && !won && saved==(receiverBaseline?2:0),
             "earned gadget retains its loss, with the U3 dry-pit correction to the saved count");
       check(receiverBaseline ? (drySplats.empty() && exitedActors==std::set<std::size_t>{0,1}) :
@@ -504,7 +490,7 @@ int units(const fs::path& game) {
   app::RuntimeSimState sim;
   for(int i=0;i<60;++i) sim.advanceElapsed(w,0.1,false,{},0,false);
   check(w.levelClockMs()==6000 && w.spawned()==0, "hold only release; level clock advances");
-  // Default arm/countdown/cadence are untouched by the new gate itself.
+  // Check the default arm, countdown and cadence with entry gating enabled.
   for(int i=0;i<350;++i) {
     sim.advanceElapsed(w,0.1,false,{},0,true);
     reference.advanceElapsedMs(100);

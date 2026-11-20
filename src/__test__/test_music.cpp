@@ -1,5 +1,4 @@
-// Legacy audio units: real callback PCM and installed WAV loading, no level
-// route, recording, save, physical output or original-game execution.
+// Check callback PCM and installed WAV loading without opening a physical output.
 #include "assets/Box.h"
 #include "audio/CuePlayback.h"
 #include "sim/World.h"

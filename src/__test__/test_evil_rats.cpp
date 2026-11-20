@@ -1,5 +1,5 @@
-// Short legacy invariants: rescue accounting, contact ownership and loss paths.
-// Synthetic cells establish logic only; installed parsing establishes placements.
+// Check rescue accounting, contact ownership and losses with synthetic cells.
+// Read placements from installed data.
 #include "sim/RetailLevel.h"
 #include "app/MapScene.h"
 #include "app/TubeScene.h"

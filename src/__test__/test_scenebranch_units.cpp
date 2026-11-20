@@ -1,6 +1,4 @@
-// scene-branch-impl-001: asset-free formula tests for the branch-1 sprite scenery state.
-// Every expectation is a hand-computed literal, not a call into the code under test.
-// Source-built evidence only: no original code, no claim about original flame phases.
+// Check branch-1 sprite scenery formulas with hand-computed literals.
 #include "app/CrtRand.h"
 #include "app/SceneBillboardSource.h"
 

@@ -1,22 +1,10 @@
-// terrain-render-001: terrain a skill removes or adds reaches the level view.
+// scene checks TubeScene::syncTerrain against installed .LVL geometry
+// and the simulation's cells after four types of terrain edit. Check that
+// each rebuilt block resolves its keys and changes pixels around the edit.
 //
-// SCRIPTED CLONE OBSERVATION and regression test; not human play and not original-fidelity evidence.
-//
-// Two parts, both on installed retail levels:
-//
-//   scene   TubeScene on real level data, driven the way the application drives it (build from the .LVL, then
-//           TubeScene::syncTerrain(world.terrain()) once per frame). A pristine terrain must leave the render
-//           pixel-identical; each edit (Bomber crater, Builder slab, Digger shaft, Basher tunnel) is made through
-//           the sim's own Terrain mutators, and then
-//             - the drawn collision cells equal the simulation's cells (0 cells of tolerance),
-//             - no rebuilt block asked for a vertex the key table lacked,
-//             - the picture changed, and (almost) only inside the screen box of the changed cells.
-//   app     the public webo::app::runApplication (--level L --sim --native, owned 200 ms clock). The only inputs are
-//           SDL events queued from the read-only LevelFrameObserver: a plate key, a pointer motion onto a visible
-//           lemming and a left click, i.e. the hoveredActor() + World::assign() path a player uses. Each skill
-//           runs twice with identical inputs, once normally and once with --no-terrain-sync (the view before
-//           terrain-render-001); the sim is deterministic so the two differ only in the drawn terrain. The images
-//           are written under build/terrain-render-001/ for review.
+// app uses SDL hover and click in webo::app::runApplication to assign through
+// hoveredActor() and World::assign(). Compare identical skill inputs with
+// terrain sync enabled and --no-terrain-sync.
 //
 // Usage: test_terrainrender scene <dir> | app <dir> <level> <plateIndex> <label>
 #include "app/AppEntry.h"
@@ -70,8 +58,6 @@ void expect(bool ok, const std::string& what) {
   }
 }
 
-// ---------------------------------------------------------------------------------------------------------------
-// pixels
 
 std::size_t diffPixels(const Image& a, const Image& b) {
   if (a.width != b.width || a.height != b.height || a.rgba.size() != b.rgba.size()) return a.pixelCount();
@@ -121,8 +107,6 @@ void save(const fs::path& path, const Image& img) {
   if (auto r = writePng(path, img); !r) std::cerr << "terrainrender: cannot write " << path << ": " << r.error() << '\n';
 }
 
-// ---------------------------------------------------------------------------------------------------------------
-// scene part
 
 app::CameraBasis facing(app::CameraParams params, int column) {
   // The pass window's centre bucket is (selectorTurns - 0.5) * 32 = yaw / 8 (tubePassBounds), i.e. the view is
@@ -382,8 +366,6 @@ int sceneMain(const fs::path& outDir, const fs::path& gameDir) {
   return 0;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
-// app part
 
 bool pushKey(int index) {
   SDL_Event e{};
@@ -516,10 +498,8 @@ AppRun runApp(const std::string& level, int plate, bool wantDiggable, bool noSyn
         r.stockAfter = w.setup().skills[plate];
       }
     }
-    // Two frames before the capture, turn the view onto what the skill changed, with the player's camera grab. The
-    // pointer events are queued now, applied by the next frame, and the release by the one after, so the end frame is
-    // drawn at rest. The target is the circular mean column of the cells that differ from the loaded terrain; both runs
-    // (sync and no-sync) see the same terrain, so both turn by the same amount.
+    // Use the circular mean of edited columns to aim both cameras. Queue the grab
+    // two frames before sampling so the drag and release take effect first.
     if (r.editFrame >= 0 && r.endFrame < 0 && calls == r.editFrame + settleFrames - 2) {
       const auto& t = w.terrain();
       int first = -1;
@@ -596,7 +576,7 @@ int appMain(const fs::path& outDir, const fs::path& gameDir, const std::string& 
   expect(sync.clicked && plain.clicked, label + ": a public click assigned the skill in both runs");
   expect(sync.stockAfter == sync.stockBefore - 1, label + ": the skill count dropped by one");
   expect(sync.editFrame >= 0 && sync.endFrame >= 0, label + ": the skill edited the simulation terrain");
-  // The sim is deterministic: both runs click and edit on the same frames and end with the same terrain.
+  // Both modes click and edit on the same frames and reach identical terrain.
   expect(sync.clickFrame == plain.clickFrame && sync.editFrame == plain.editFrame && sync.endFrame == plain.endFrame &&
              sync.solidEnd == plain.solidEnd,
          label + ": the two runs saw the same simulation");
@@ -607,8 +587,7 @@ int appMain(const fs::path& outDir, const fs::path& gameDir, const std::string& 
   const std::size_t net = sync.solidEnd > sync.solid0 ? sync.solidEnd - sync.solid0 : sync.solid0 - sync.solidEnd;
   expect(sync.cellsChangedEnd >= net, label + ": the view followed at least every net changed cell");
 
-  // Pixels. Before the edit the two runs draw the same terrain; their difference there is the baseline (scenery that
-  // reads the wall clock can differ, so it is measured and subtracted rather than assumed zero).
+  // Measure the pre-edit pixel difference to account for wall-clock scenery.
   const std::size_t basePre = diffPixels(sync.pre, plain.pre);
   const std::size_t diffEnd = diffPixels(sync.end, plain.end);
   const std::size_t diffEdit = diffPixels(sync.edit, plain.edit);
@@ -642,8 +621,7 @@ int appMain(const fs::path& outDir, const fs::path& gameDir, const std::string& 
   expect(regionEnd >= regionPre + 50,
          label + ": inside the changed cells' screen box the synced view differs from the unsynced view after the edit "
                  "(before " + std::to_string(regionPre) + ", after " + std::to_string(regionEnd) + ")");
-  // The unsynced view is the old behaviour: terrain unchanged after the edit. Its own pre/end difference is only
-  // what moved (lemmings, effects).
+  // With terrain sync disabled, only actors and effects change after the edit.
   save(outDir / (label + "-1-before-click.png"), sync.pre);
   save(outDir / (label + "-2-after-sync.png"), sync.end);
   save(outDir / (label + "-3-after-nosync.png"), plain.end);

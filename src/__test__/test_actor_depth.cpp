@@ -1,4 +1,4 @@
-// Short logic/coverage invariants. Supplemental poses, no simulation route.
+// Check actor coverage and depth with synthetic poses.
 #include "app/ActorDepth.h"
 #include "app/ActorOcclusion.h"
 #include "app/TubeScene.h"
@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
   layer.reset(3);
   assert(layer.submit(0, 30, 99));
 
-  // Independent world points on the upright plane verify the new inverse ray
-  // used for footprint membership, under yaw and pitch. Camera math is f32.
+  // Check the inverse ray against independent f32 points on the upright actor plane
+  // under yaw and pitch.
   for (int turn=0; turn<32; ++turn) for (double pitch : {-.03,.04}) {
     CameraParams cp; cp.yawUnits=turn*8; cp.fixedPitchTurns=pitch;
     const auto camera=buildCamera(cp);
@@ -139,8 +139,7 @@ int main(int argc, char** argv) {
     scene->drawInjectedWalkers(b,camera,options,*lib);
     assert(a.framebuffer().rgb==b.framebuffer().rgb);
   }
-  // Exercise the production BITS and coloured-chip paths against an occupied
-  // actor layer. This is coverage rejection, not a simulated death route.
+  // Check BITS and colored-chip rejection against an occupied actor layer.
   sim::Lemming lemming;
   lemming.x=90; lemming.y=25;
   const std::array<std::array<int,2>,1> removed{{{90,25}}};

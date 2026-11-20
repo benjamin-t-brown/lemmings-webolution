@@ -21,8 +21,7 @@ struct ExpectedFrame {
   double accumulator;
 };
 
-// MM_CLIMB_002 Walker 0x2863630, action 13, temporalCount 12, rate 1.0, loopAtEnd true.
-// Measured 2026-10-20 (first packet native_series.json).
+// MM_CLIMB_002 Walker 0x2863630: action 13, temporalCount 12, rate 1.0, loopAtEnd true.
 constexpr int kElapsedMs[] = {
     6, 6, 8, 7, 8, 6, 8, 6, 6, 8, 6, 8, 6, 7, 8, 6, 8, 6, 7, 7, 7, 8, 6, 6, 8, 6, 9, 6, 8, 6, 6, 7, 7, 8, 6, 8, 6, 7, 7, 7, 7, 7, 8, 6
 };

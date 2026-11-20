@@ -1,21 +1,6 @@
-// Tests for the per-cell tube mesh rule (src/assets/CellMesh).
-//
-// Everything asserted here is derived from stored level data: the collision
-// grid, the `(x, y, layer) -> pool index` key table (LevelIndex::grid0) and the
-// surface pool (CylinderMesh::surface). No captured arena bytes are read.
-//
-// The two file-derived invariants that pin the rule:
-//
-//   1. The rule resolves exactly the key-table slots the level populates and no
-//      others. On MM_CLIMB_002 that is 897 of the 49,858 slots, and a wrong
-//      scan (for example reading a gap's start where its end belongs) asks for
-//      keys the level does not hold, so this fails.
-//   2. The mesh0 / mesh4 quad counts and the quads-per-cell histogram are
-//      stable for the level.
-//
-// The retained A1 live arena match (389/389 mesh0 and 387/387 mesh4 quads by
-// index, UV, colour and order) is an offline oracle check, not a production
-// input: `tools/harness/generate_cellmesh.py --compare`.
+// Check the per-cell tube mesh against the stored collision grid, LevelIndex::grid0
+// and CylinderMesh::surface. On MM_CLIMB_002 the rule resolves 897 of 49,858 slots.
+// Check mesh0 and mesh4 quad counts and the quads-per-cell histogram.
 
 #include "assets/Box.h"
 #include "assets/CellMesh.h"
@@ -121,9 +106,8 @@ void testLevel(const fs::path& dir, std::string_view level) {
         {6, 6}, {8, 3}, {11, 2}, {12, 1}, {14, 1}, {15, 4}};
     check(histogram == want, "MM_CLIMB_002 mesh0 quads/cell histogram");
     check(both == 163, "MM_CLIMB_002 cells carrying both banks (163)");
-    // The mesh banks reach 802 of the 897 pool vertices; the whole-block inner
-    // quads reach 131, of which 36 are shared with the banks, leaving the 95 the
-    // A4c check measured as reachable only through FUN_00463100's wall path.
+    // The two banks reach 802 of 897 pool vertices. Whole-block inner quads reach 131,
+    // sharing 36 with the banks and leaving 95 exclusive to FUN_00463100's wall path.
     std::set<std::uint32_t> innerUsed;
     for (const auto& cell : cells.cells)
       if (cell.hasInner)
@@ -146,14 +130,9 @@ void testLevel(const fs::path& dir, std::string_view level) {
     check(together.size() == cells.keySlots,
           "the banks and the inner quads together cover every populated key");
 
-    // The two draw-route derivations, checked against the stored data.
-    //
-    // `coord` is the value the engine keeps in a parallel 4-byte child record
-    // per quad (entry+0x88 / entry+0x98) and compares against the camera's own
-    // column in `0x462465`. It is the x0 of the rectangle the quad came from, so
-    // it must lie inside the cell's own 8 columns, and the assembly order puts
-    // mesh0's in ascending and mesh4's in descending order. A wrong rule (for
-    // instance taking the record's x1, or the gap's own column) breaks both.
+    // The engine stores coord in a parallel 4-byte record per quad (entry+0x88 / entry+0x98).
+    // 0x462465 compares the rectangle's x0 with the camera column. mesh0 orders those
+    // columns ascending and mesh4 orders them descending within the cell's eight columns.
     for (const auto& cell : cells.cells) {
       for (const auto& q : cell.mesh0) {
         check(q.coord >= cell.x0 && q.coord < cell.x0 + 8,
@@ -171,12 +150,8 @@ void testLevel(const fs::path& dir, std::string_view level) {
               "mesh4 child coords are non-increasing");
     }
 
-    // `CellMeshCell::inner` is FUN_00463100's whole-block quad at entry+8: four
-    // LAYER-0 (inner shell) vertices over the full 8x16 block, in the open-top
-    // order and with the open-top UV formula. Resolve every index back through
-    // the stored key table and check the geometry and the UVs; a layer-1
-    // (outer shell) quad, a per-record extent instead of the block's, or the
-    // closed-top UV order all fail here.
+    // CellMeshCell::inner mirrors FUN_00463100's whole-block quad at entry+8.
+    // Its four layer-0 vertices cover the full 8x16 block with open-top ordering and UVs.
     std::vector<std::int64_t> indexToKey(mesh->surface.size(), -1);
     for (std::size_t k = 0; k < index->grid0.size(); ++k)
       if (index->grid0[k] != 0xFFFFFFFFu && index->grid0[k] < indexToKey.size())
@@ -225,12 +200,8 @@ void testLevel(const fs::path& dir, std::string_view level) {
     }
     check(innerChecked == 98, "all 98 wall-flagged cells carry an inner quad");
 
-    // The discriminating check on `coord`: it is at or below the x of the
-    // quad's first corner. A record's top quad starts at the record's x0, so
-    // that one is equality; a mesh0 right-side gap starts at x1+1 and a top gap
-    // at its own start column, both strictly above. Putting x1 in `coord`
-    // instead of x0 pushes every top quad above its own first corner and fails
-    // here, which the column-range and monotonicity checks above do not catch.
+    // coord equals the first corner's x for top quads and sits below it for
+    // mesh0 right-side gaps starting at x1+1 and top gaps at their own start column.
     std::size_t coordAtFirstCorner = 0;
     for (const auto& cell : cells.cells) {
       for (const auto* bank : {&cell.mesh0, &cell.mesh4}) {

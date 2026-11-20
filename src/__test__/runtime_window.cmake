@@ -1,5 +1,4 @@
-# Own-app integration only: no original executable or physical input, and SDL's
-# dummy driver cannot take focus. The two paths must compose identical frames.
+# Compare full frames from SDL's dummy window and the independent fixture.
 file(MAKE_DIRECTORY "${OUTPUT_DIR}")
 function(run_app)
   execute_process(COMMAND "${CMAKE_COMMAND}" -E env SDL_VIDEODRIVER=dummy
@@ -21,13 +20,11 @@ foreach(ticks IN ITEMS 0 1)
   set(window "${OUTPUT_DIR}/window-${ticks}.png")
   set(fixture "${OUTPUT_DIR}/fixture-${ticks}.png")
   set(closed_fixture "${OUTPUT_DIR}/closed-fixture-${ticks}.png")
-  # Remove only our own outputs, so a stale image cannot pass a missing-write bug.
+  # Clear the output files so every comparison requires a fresh image.
   file(REMOVE "${window}" "${fixture}" "${closed_fixture}")
   run_app(--native --sim --frames ${frames} --window-shot "${window}")
   run_app(--native --sim-ticks ${ticks} --skill-panel --hud-ticks ${ticks} --cursor-fixture --shot "${closed_fixture}")
-  # P9: the old fixture freezes the doors. Verify the independent compositor
-  # against it at time zero, then sample the doors at the window's exact clock.
-  # Keep the full-frame equality assertion; no pixels are masked or ignored.
+  # Compose animated doors from the closed fixture at the window's exact clock.
   execute_process(COMMAND "${FIXTURE}" "${GAME_DIR}" ${ticks} ${opening_ms}
     "${closed_fixture}" "${fixture}" RESULT_VARIABLE fixture_result)
   if(NOT fixture_result EQUAL 0)

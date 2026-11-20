@@ -1,9 +1,5 @@
-// Replay the two Blocker placements from the historical MM_W_012 WIN 11/20:
-// build/fluid-hazard-001/route-regressions/20261114-062255/step-4-gadget/action-trace.csv.
-// empty-receiver-fall-001: that win depended on walking across dry receivers.
-// The same placements must now lose enough actors to make winning impossible.
-// This supplements the unchanged wall-clock assessment driver. Only SDL inputs
-// are written; World, stock, progress and clocks are never mutated by callbacks.
+// Apply two specific Blocker placements on MM_W_012 through SDL input.
+// Dry receiver falls must make that route unwinnable.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "assets/Png.h"
@@ -79,8 +75,7 @@ int main(int argc, char** argv) {
   std::vector<char*> raw;
   for (auto& arg : args) raw.push_back(arg.data());
   app::ApplicationRunOptions options;
-  // The existing bounded integration-test clock makes input sampling repeatable.
-  // Production simulation/release/skill rules and fast-forward passes are unchanged.
+  // Use the bounded test clock for repeatable input sampling.
   options.frameSeconds = 0.02;
   options.saveStore = store;
   bool entered = false, ff = false, selected = false, results = false, won = false, returned = false;
@@ -105,7 +100,7 @@ int main(int argc, char** argv) {
         check(session.completionFlags()[0] == 1 && session.completionFlags()[3] == 1 &&
               session.completionFlags()[8] == 0 && session.mapStates()[8] == 3,
               "earned prerequisite wins unlock the uncompleted gadget level");
-        click(273, 195);  // same node-8 map pixel as the recorded route
+        click(273, 195);  // select map node 8
       }
     } else if (session.screen() == shell::Screen::Results && !results) {
       results = true;
@@ -139,8 +134,7 @@ int main(int argc, char** argv) {
       quit(); // Public close once fewer than the required ten can survive.
       return;
     }
-    // These two actor IDs/edges are the recorded winning route. Do not place an
-    // earlier actor as the adaptive wall-clock driver sometimes does on faster runs.
+    // Use the specified actor IDs and edges regardless of frame pacing.
     const auto emit = [&](std::size_t index, const char* action) {
       if (index >= world.lemmings().size()) return;
       const auto& actor = world.lemmings()[index];
@@ -149,8 +143,8 @@ int main(int argc, char** argv) {
             << ',' << saved << ',' << dead << ',' << action << '\n';
     };
     for (std::size_t n = 0; n < 2; ++n) {
-      // Alternating births: actor 11 now starts left and never reaches the
-      // recorded right-hand site. Use the next right-born actors, 12 and 14.
+      // Actor 11 starts left and misses the right-hand site.
+      // Use the next right-born actors, 12 and 14.
       const auto index = 12 + 2*n;
       if (index < world.lemmings().size() && world.lemmings()[index].state == sim::State::Blocker) {
         if (!blockerSeen[n]) {
@@ -167,7 +161,7 @@ int main(int argc, char** argv) {
     if (frame.cameraIntroActive || frame.endPhase != app::LevelEndPhase::Running) return;
     if (!ff) {
       ff = true;
-      click(54, 348);  // recorded public fast-forward plate
+      click(54, 348);  // press Fast-forward on the skill panel
       return;
     }
     if (!selected) {
@@ -184,8 +178,8 @@ int main(int argc, char** argv) {
     if (index >= world.lemmings().size() || frame.selectedSkillIndex != 3) return;
     const auto& actor = world.lemmings()[index];
     if (actor.state != sim::State::Walker || actor.y != 41) return;
-    // Same base-policy edge window (distance 4..8) as blockerIntent. The trace
-    // pins the actual sampled placement; no actor position is injected.
+    // Use blockerIntent's 4..8-cell edge window for naturally moving actors.
+    // Log the sampled placement.
     const bool atSite = placements == 0 ?
         actor.facing == sim::Facing::Right && actor.x >= 214 && actor.x <= 218 :
         actor.facing == sim::Facing::Left && actor.x >= 161 && actor.x <= 165;

@@ -81,7 +81,7 @@ int main() {
   check(menu.isOpen() && menu.focusedIndex() == 0 &&
         menu.focusedAction() == LevelMenuAction::Resume,
         "open focuses Resume");
-  // Verified UK content rectangles: (L,T,R,B), with strict edges.
+  // UK content rectangles are (L,T,R,B) and exclude their edges.
   const std::array<std::array<int, 4>, 4> rects{{
       {{281, 100, 360, 129}}, {{271, 129, 369, 158}},
       {{300, 158, 341, 187}}, {{282, 187, 359, 216}},
@@ -126,7 +126,7 @@ int main() {
                                                params, shell::fontCells());
   check(frame.rgba == expected.rgba,
         "draw matches independent literal-UK renderer assembly (shared primitives, not native oracle)");
-  // A known untouched pixel away from all panel/text bounds remains from the scene.
+  // Sample the scene outside all panel and text bounds.
   const auto pixelOffset = (static_cast<std::size_t>(20) * 640 + 20) * 4;
   check(std::equal(frame.rgba.begin() + static_cast<std::ptrdiff_t>(pixelOffset),
                    frame.rgba.begin() + static_cast<std::ptrdiff_t>(pixelOffset + 4),

@@ -1,4 +1,4 @@
-// Real installed routes and source-built framebuffers; never an original-game run.
+// Check installed fluid routes and application framebuffers.
 #include "app/AppEntry.h"
 #include "app/MapScene.h"
 #include "assets/Png.h"
@@ -32,8 +32,8 @@ struct SavedFile {
   explicit SavedFile(fs::path p):path(std::move(p)),existed(fs::exists(path)),data(bytes(path)){}
   bool unchanged() const { return existed == fs::exists(path) && data == bytes(path); }
 };
-// Receiver membership in original rows at the visible feet. Keep the ground
-// cell as a separate trace column to distinguish the existing 0x40 path.
+// Record receiver membership at visible feet and record the ground cell
+// separately for the 0x40 hazard path.
 int contact(const sim::World& w, const sim::Lemming& l) {
   const double row = w.terrain().height()-1-l.y;
   for (std::size_t i=0; i<w.setup().gates.size(); ++i) {
@@ -76,9 +76,7 @@ void natural(const AssetLibrary& lib, const fs::path& out, const std::string& id
     }
     if(w.lemmings().empty())continue;
     const auto& l=w.lemmings()[0]; int g=contact(w,l);
-    // U3 intentionally changes the later empty-pit route. Keep an exact
-    // before/after control up to its first dry receiver, plus the unchanged
-    // public app prefix, rather than calling dry falls immunity.
+    // Compare the route prefix through the approach to the first dry receiver.
     if(id=="MM_W_012") {
       const double row=w.terrain().height()-1-l.y;
       for(const auto& receiver:w.setup().gates)
@@ -86,9 +84,7 @@ void natural(const AssetLibrary& lib, const fs::path& out, const std::string& id
            row>=receiver.minY && row<=receiver.minY+receiver.high)
           reachedDryReceiver=true;
       if(!reachedDryReceiver)
-        // The current hatch alternates; the historical World released all right.
-        // Compare actor 0's unchanged water motion, independently of later births
-        // and their now-different aggregate losses. Full traces stay above.
+        // Compare actor 0's water motion independently of later births and total losses.
         for(std::size_t index=0;index<std::min(std::size_t{1},w.lemmings().size());++index) {
           const auto& actor=w.lemmings()[index];
           supported<<w.levelClockMs()<<','<<index<<','<<actor.x<<','<<actor.y<<','
@@ -175,8 +171,7 @@ void application(const fs::path& game,const fs::path& out,const std::string& id)
 }
 
 #ifdef FLUID_HAZARD_after
-// Placed-contact fixtures on installed volumes supplement (and do not replace)
-// the natural hatch routes above. No species is inferred from an entrance name.
+// Use placed contacts to isolate installed receiver volumes.
 void speciesAndHeight(const AssetLibrary& lib,const fs::path& out) {
   std::ofstream log(out/"contact-fixtures.csv");
   log<<"level,gate,kind,sheet,height,feet_row,initial_state,result,dead\n";
@@ -206,10 +201,8 @@ void speciesAndHeight(const AssetLibrary& lib,const fs::path& out) {
         <<sim::stateName(world.lemmings()[0].state)<<','<<world.dead()<<'\n';
     }
   }
-  // Actual linked water receiver 5 starts drained on MM_W_012. Send the same
-  // type-4/type-5 messages the lever dispatches, ramp with the existing clock,
-  // then place at the same point. This also checks the inclusive mean boundary
-  // and rejects a bridge/actor's feet one row above the fluid.
+  // On MM_W_012, ramp receiver 5 with the lever's type-4/type-5 messages.
+  // Check the inclusive mean-height boundary and dry feet one row above it.
   for(int phase=0;phase<4;++phase)for(int above=0;above<2;++above) {
     auto setup=sim::loadRetailLevel(lib,"MM_W_012");if(!setup){check(false,"height fixture load");continue;}
     setup->totalLemmings=0;
@@ -244,8 +237,7 @@ int main(int argc,char** argv) {
   auto map=app::MapScene::build(*lib,{});if(!map)return 2;
   check(map->levelForNode(14)==std::optional<std::string>("MM_BUILD_BLOCK_A"),"map node 14 installed id");
   check(map->titleForNode(14)==std::optional<std::string>("Build and Block"),"installed title corrects reported word order");
-  // Diagnose any changed recorded Blocker route without weakening that driver's
-  // outcome. Points come from its retained production actor/exit traces.
+  // Sample the Blocker placements against application actor and exit positions.
   if(auto setup=sim::loadRetailLevel(*lib,"MM_BLOCK_001_A")) {
     std::ofstream data(out/"MM_BLOCK_001_A-receivers.txt");
     for(std::size_t i=0;i<setup->gates.size();++i) {

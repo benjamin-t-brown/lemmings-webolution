@@ -1,20 +1,11 @@
-// fluid-surface-impl-001: visible linked fluid on the installed MM_W_012, source-built clone only.
+// Check MM_W_012 receiver admission in BackdropScene::build, including base Fluid
+// roots, and BackdropScene::renderStage(Stage::FluidGate) with live state. scheduleSceneFrame
+// draws tube, fluid and secondary stages in order. Exercise World::advanceElapsedMs
+// and the ordinary app::runApplication route.
 //
-// Production components exercised: BackdropScene::build (kind-4 admission, receiver base `Fluid`
-// roots), BackdropScene::renderStage(Stage::FluidGate) fed from the live sim::World gate state,
-// scheduleSceneFrame (tube -> fluid -> secondary), the accepted shared-dt World::advanceElapsedMs
-// path and, for the ordinary route, app::runApplication(--level MM_W_012 --sim).
-//
-// Label key (observations file):
-//   REAL       installed MM_W_012 data through the public loaders, no injected actors
-//   SYNTHETIC  a walker placed beside the real lever (183,60) so contact happens within the run
-//              (a fixture, not natural play; the natural input route belongs to the final assessment)
-//   UNIT       a hand-built SceneNode exercising the animation update with literal expectations that
-//              come from the retained measurement dump (gate-meshes-MM_W_012.txt), not from the code
-//   PUBLIC     runApplication frames observed through the read-only per-frame view
-//
-// Nothing here is original-fidelity proof: depth state is the named PROVISIONAL clone policy
-// (BackdropScene::kProvisionalFluidDepthPolicy); the original is never run.
+// Real cases use installed MM_W_012 data. One fixture places a walker next to
+// lever (183,60). The unit case uses literal SceneNode animation expectations.
+// The provisional clone depth policy is BackdropScene::kProvisionalFluidDepthPolicy.
 #include "app/AppEntry.h"
 #include "app/BackdropScene.h"
 #include "app/SceneFrame.h"
@@ -83,7 +74,7 @@ std::vector<std::size_t> diffPixels(const std::vector<std::uint8_t>& a, const st
   return out;
 }
 
-// Independent projection (row-vector convention of the accepted camera basis).
+// Project independently with row-vector operands.
 bool project(const app::CameraBasis& c, double x, double y, double z, double& sx, double& sy) {
   const auto& m = c.worldToView;
   const double vx = x * m[0] + y * m[3] + z * m[6] + m[9];
@@ -171,7 +162,7 @@ int main(int argc, char** argv) {
   const std::filesystem::path outDir = argc > 1 ? argv[1] : "build/fluid-surface-impl-001";
   std::filesystem::create_directories(outDir);
 
-  // ---- UNIT: animation update, literal expectations from the retained dump (gate 12, lane 20).
+  // Check the animation update against literal values for gate 12, lane 20.
   {
     SceneNode g;
     g.type = 1;
@@ -211,9 +202,8 @@ int main(int argc, char** argv) {
           "UNIT: X/Z of the animated vertices stay at the serialized pos_off");
     const auto& r0 = settled.meshes[1].records[0].corners;
     const auto& r1 = settled.meshes[1].records[1].corners;
-    // The colour phase uses the traced promoted-f32 pi, so cos(2*pi*(0-0.25)) is -4.4e-8 rather than 0
-    // and the 0.25 lane weight lands ~5.6e-6 below 63.75. The tolerance is 1e-3 colour units, far
-    // below one 8-bit output step; the literals themselves are the exact-pi arithmetic values.
+    // Promoted-f32 pi puts the 0.25 lane weight about 5.6e-6 below its exact-pi
+    // value of 63.75. Use a 1e-3 tolerance, below one 8-bit color step.
     constexpr double kColourTol = 1e-3;
     check(std::abs(r0[0].r - 63.75) < kColourTol && std::abs(r0[0].b - 207.75) < kColourTol && std::abs(r0[1].r - 63.75) < kColourTol &&
               std::abs(r0[2].r - 255.0) < kColourTol && std::abs(r1[0].b - 255.0) < kColourTol && std::abs(r1[1].r - 63.75) < kColourTol &&
@@ -235,7 +225,6 @@ int main(int argc, char** argv) {
     SceneNode raw = g;
     app::BackdropScene::applyFluidState(raw, rec, st);
     check(raw.positions[2][1] == 0.0, "UNIT: before the first update the stored vertices are untouched");
-    // Wave phase: a half period flips the lane-1 sample from +0.5 to -0.5.
     st.animated = true;
     st.wavePhase = 1.0;
     SceneNode half = g;
@@ -281,7 +270,6 @@ int main(int argc, char** argv) {
   check(app::BackdropScene::kProvisionalFluidDepthPolicy == Policy::LessWriteOn && backdrop.fluidDepthPolicy() == Policy::LessWriteOn,
         "the default policy is the named provisional LessWriteOn");
 
-  // ---- REAL: admission of the installed receivers.
   {
     const auto indices = backdrop.fluidEntityIndices();
     check(indices.size() == 19, std::format("REAL: all 19 kind-0 receivers admitted as animated Fluid roots, got {}", indices.size()));
@@ -342,7 +330,6 @@ int main(int argc, char** argv) {
   const auto step = [](sim::World& w, int ms) { w.advanceElapsedMs(ms); };
 
   constexpr int kIdA = 5, kIdB = 6;  // lever (183,60) receivers
-  // Settled reference world only to choose the stable camera.
   sim::World reference = loadWorld();
   const std::size_t ia = gateIndexById(reference, kIdA), ib = gateIndexById(reference, kIdB);
   check(ia == 12 && ib == 11, "REAL: ids 5/6 are stream indices 12/11");
@@ -351,8 +338,7 @@ int main(int argc, char** argv) {
   for (int i = 0; i < 200; ++i) step(reference, 100);
   check(gateById(reference, kIdA)->height == 24.5 && gateById(reference, kIdB)->height == 24.5, "SYNTHETIC: reference world settled at 24.5");
 
-  // Stable camera: the yaw (0.. 252 step 4, the production params otherwise) from which the settled
-  // pair of receivers writes the most pixels. Selection is by actual raster stores, not by geometry.
+  // Choose the yaw (0..252 in steps of 4) with the most raster stores for the settled receivers.
   const int terrainHeight = reference.terrain().height();
   app::CameraParams chosen;
   std::size_t bestScore = 0;
@@ -373,7 +359,7 @@ int main(int argc, char** argv) {
   check(bestScore > 0, "REAL: some camera yaw sees the settled receiver pair of lever (183,60) (fluid pixels written)");
   const app::CameraBasis cam = app::buildCamera(chosen);
 
-  // ---- Baseline: the production scene with NO fluid state (what the clone drew before this task).
+  // Use the scene without fluid state as a render control.
   sim::World initialWorld = loadWorld();
   placeWalker(initialWorld, sim::Facing::Left, false);
   for (int i = 0; i < 12; ++i) step(initialWorld, 16);  // 12 updates: before the walker touches the lever
@@ -404,7 +390,7 @@ int main(int argc, char** argv) {
             "initial: loaded-raised receivers change pixels relative to the no-fluid baseline");
   }
 
-  // ---- Matched-time controls: control (no pull) versus activated, identical dt history.
+  // Advance control and activated worlds with identical deltas.
   sim::World control = loadWorld();
   sim::World active = loadWorld();
   placeWalker(active, sim::Facing::Left, false);
@@ -444,9 +430,8 @@ int main(int argc, char** argv) {
     check(ca && ca->triangles == 0, std::string(sample.name) + ": control draws no surface for id 5");
     check(aa && ab && aa->triangles > 0 && ab->triangles > 0 && aa->height == h, std::string(sample.name) + ": activated ids 5/6 submit surface triangles at the live height");
     check(aa && aa->acceptedColorWrites > 0 && ab->acceptedColorWrites > 0, std::string(sample.name) + ": activated ids 5/6 write pixels");
-    // Receivers whose live state is identical in both worlds must submit identically. The injected
-    // walker may touch another lever during the run, so such receivers (if any) are listed and
-    // excluded from the equality and added to the footprint instead of being assumed unchanged.
+    // Receivers with matching live state must submit identical geometry.
+    // Include any receiver toggled by additional lever contact in the changed footprint.
     std::set<std::size_t> differing{ia, ib};
     for (std::size_t i = 0; i < active.setup().gates.size(); ++i) {
       const auto& ga = active.setup().gates[i];
@@ -499,7 +484,7 @@ int main(int argc, char** argv) {
   check(changedCounts[0] > 0 && changedCounts[1] > 0 && changedCounts[2] > 0, "pixels differ between control and activated at every sample");
   check(changedCounts[0] != changedCounts[1] || changedCounts[1] != changedCounts[2], "differing-pixel counts change as the surface rises");
 
-  // ---- Provisional depth policy diagnostic at the matched settled time.
+  // Compare the provisional depth policies at the same settled time.
   {
     const Shot less = shoot(&active, cam, Policy::LessWriteOn);
     const Shot lessNoWrite = shoot(&active, cam, Policy::LessWriteOff);
@@ -517,7 +502,7 @@ int main(int argc, char** argv) {
     backdrop.setFluidDepthPolicy(app::BackdropScene::kProvisionalFluidDepthPolicy);  // leave the diagnostic selection
   }
 
-  // ---- Repeat pulls after settle, pause and reload.
+  // Repeat pulls after settling, pausing and reloading.
   {
     placeWalker(active, sim::Facing::Right, true);
     step(active, 16);
@@ -539,7 +524,7 @@ int main(int argc, char** argv) {
           "reload: ids 5/6 drained, loaded-raised receivers (ids 10/11/12) at 22.5");
   }
 
-  // ---- Fast-forward synchronisation: wave phase depends on total elapsed time, not on segmentation.
+  // Wave phase depends on total elapsed time across fast-forward steps.
   {
     sim::World fine = loadWorld();
     sim::World coarse = loadWorld();
@@ -555,7 +540,7 @@ int main(int argc, char** argv) {
     check(std::abs(coarse.setup().gates[0].wavePhase - 1.0) < 1e-9, "5.0 s of dt wraps to phase 1.0 at the 2.0 period");
   }
 
-  // ---- Unrelated scene regression: levels without a fluid stage render identically with or without state.
+  // Levels without a fluid stage render identically with or without fluid state.
   {
     auto other = sim::resolveRetailLevel(*lib, "MM_CLIMB_002");
     if (other) {
@@ -579,17 +564,13 @@ int main(int argc, char** argv) {
     }
   }
 
-  // ---- PUBLIC: ordinary application route, with and without scenery.
   {
     const char* video = std::getenv("SDL_VIDEODRIVER");
     const char* audio = std::getenv("SDL_AUDIODRIVER");
     if (!video || std::string(video) != "dummy" || !audio || std::string(audio) != "dummy") {
       note("PUBLIC: skipped, SDL dummy drivers are not set");
     } else {
-      // The standalone default camera (yaw 32, eye height 96) barely sees the raised receivers: the
-      // first supervised run measured 1930 fluid-stage pixels in 8 frames, none visible in the final
-      // image. Both public runs therefore use the stable camera of the stages above, handed to the
-      // ordinary route through its documented --camera parameter file.
+      // Supply the stable --camera pose in both application modes so the raised receivers are visible.
       const std::filesystem::path cameraFile = outDir / "public-camera.json";
       {
         std::ofstream cf(cameraFile);

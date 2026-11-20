@@ -74,10 +74,8 @@ bool bodyBrightened(const app::LevelFrameView& f, const Image& unmarked,
   }
   return false;
 }
-// V7 displayed-centre oracle replaces the old terrain-target expectation.
-// This historical feedback comparison uses a crowd point where both policies
-// agree so its frozen pre-feedback main still assigns the same actor. The new
-// pick_nearest routes independently demonstrate policy disagreements.
+// Pick a crowd point where both policies select the same actor so the
+// comparison isolates hover feedback.
 bool overlap(const app::LevelFrameView& f,int& x,int& y,std::size_t& expected,int& n) {
   for (y=45;y<420;y+=2) for(x=110;x<620;x+=2) {
     const app::PickBox cursor{x-16,y-16,x+16,y+16};
@@ -245,8 +243,8 @@ int compare(const fs::path& root) {
     while(shots>>frame>>name>>kind>>l>>t>>r>>b) {
       ++count;auto a=bytes(after/(name+".rgba")),o=bytes(old/(name+".rgba"));
       check(a.size()==640*480*4&&a.size()==o.size(),"paired raw framebuffer sizes");
-      // Both routes select Climber and point outside the panel. Static vs
-      // animated Climber pixels encode R7, not an actor/hatch feedback failure.
+      // Both routes select Climber and point outside the panel.
+      // Mask Climber icon pixels to isolate actor and hatch hover feedback.
       for(auto at:iconPixels)for(int c=0;c<4;++c) {a.at(at+c)=0;o.at(at+c)=0;}
       check(bytes(after/(name+".state"))==bytes(old/(name+".state")),"paired simulation and stock identical: "+name);
       int changed=0,outside=0;
@@ -260,10 +258,9 @@ int compare(const fs::path& root) {
       if(kind=='a')check(changed>0&&outside==0,"only selected actor bounds change: "+name);
       if(kind=='h') {
         check(changed>10,"visible hatch marking/count added: "+name);
-        // Independently compose the expected numeric glyphs on the authentic
-        // baseline. Brackets alone cannot pass the count-display regression.
+        // Compose the expected number glyphs independently of the brackets.
         const auto cells=shell::fontCells();
-        const auto text=name.substr(6); // observed numeric count, asserted against World above
+        const auto text=name.substr(6); // numeric count checked against World
         const int width=shell::textWidth(text,cells);
         const shell::HudLine line{text,std::clamp((l+r-width)/2,0,640-width),
           std::clamp((t+b)/2-44,0,480-shell::kLineHeight),{255,255,255}};
@@ -306,8 +303,7 @@ int units() {
   check(!world.canAssign(0, floater) && !world.assign(0, floater) && world.setup().skills[slot] == 1,
         "a repeat Floater is ineligible for highlighting and refused without spending stock");
 
-  // Uneven global totals, all release prefixes, every hatch: future allocation
-  // independently enumerated from the unchanged round-robin World contract.
+  // Enumerate future round-robin releases for every hatch and uneven total.
   for(int count=1;count<=8;++count)for(int total=0;total<25;++total)for(int spawned=0;spawned<=total;++spawned)
     for(int index=0;index<count;++index) {
       int expected=0;for(int future=spawned;future<total;++future)expected+=(future%count==index);

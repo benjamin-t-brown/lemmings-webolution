@@ -70,8 +70,7 @@ void pcm() {
     mixer.stopAll();
     mixer.play("Tone", 1, overlap, {0.5f, 0.125f});
     const auto first = Access::render(mixer, 100);
-    // Moving the camera computes future-event gains only; existing PCM is
-    // unchanged across callback boundaries, with no gain step/click.
+    // Camera changes affect future gains. Existing PCM remains continuous across callbacks.
     app::CameraParams params; params.yawUnits=160;
     const auto future = audio::spatialSoundGains(app::buildCamera(params), {20,50,-55});
     assert(future.left != 0.5f || future.right != 0.125f);

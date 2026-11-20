@@ -1,8 +1,5 @@
-// native-022 source-built before/after demonstration. The included application
-// source is either authentic HEAD frozen under build/native-022 or current.
-// Only loadRetailLevel is substituted in this test translation unit. Both sides
-// receive the SAME synthetic setup on the real installed MM_CLIMB_002 terrain.
-// No production observer mutates a World, and no original code is executed.
+// Both application builds use the same synthetic cue setup on installed MM_CLIMB_002 terrain.
+// The test translation unit substitutes only loadRetailLevel.
 #include "app/AppEntry.h"
 #include "assets/Box.h"
 #include "sim/RetailLevel.h"
@@ -27,9 +24,7 @@ std::expected<LevelSetup, std::string> loadAudioDemoLevel(
     const AssetLibrary& library, std::string_view id) {
   auto retail = loadRetailLevel(library, id);
   if (!retail) return std::unexpected(retail.error());
-  // Preserve the installed collision terrain, including its authored flags.
-  // Synthetic population, stock, releases and exits isolate each cue. These
-  // are test inputs, not a claim about retail level play or original timing.
+  // Use the installed collision flags. Synthetic population, stock, releases and exits isolate each cue.
   LevelSetup setup;
   setup.terrain = retail->terrain;
   setup.entrances = retail->entrances;
@@ -64,8 +59,7 @@ std::expected<LevelSetup, std::string> loadAudioDemoLevel(
 }
 }
 
-// Headers above are already guarded. Do not rewrite or instrument the frozen
-// main.cpp; this sole loader seam is applied equally to frozen and current.
+// The guarded headers let the included main.cpp use the test's loader substitution.
 #define loadRetailLevel loadAudioDemoLevel
 #include WEBOLUTION_AUDIO_DEMO_MAIN
 #undef loadRetailLevel
@@ -129,7 +123,7 @@ bool run(const std::string& gameDir, std::ostream& report) {
 #endif
       quitSent = quit(); ok &= quitSent;
     } else if (f.frame >= 78) {
-      ok = false; quit();  // failure guard, never success
+      ok = false; quit();  // failure bound
     }
   };
   std::vector<std::string> args{"audiodemo", "--level", "MM_CLIMB_002", "--sim", "--native", "--scene-off",

@@ -55,8 +55,7 @@ int main() {
   check(std::equal(actual.begin(), actual.end(), expected.begin()),
         "intermediate texture alpha 128 survives as literal blended destination pixel");
 
-  // Mutate alpha-test alone: SELECT_TEXTURE alpha 128 is rejected by the old
-  // strict >239 test. No other field is changed.
+  // Changing only alpha test rejects SELECT_TEXTURE alpha 128 at the strict >239 threshold.
   auto oldTestOnly = policy;
   oldTestOnly.alphaFunction = SceneAlphaFunction::StrictGreater;
   const auto rejected = render(oldTestOnly);

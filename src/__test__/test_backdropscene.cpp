@@ -26,17 +26,11 @@ int main(){
   std::string level;for(auto& n:webo::levelFileNames(*lib))if(n.find("MM_CLIMB_002")!=std::string::npos){level=n;break;}check(!level.empty(),"find supported level");if(level.empty())return 1;
  auto bytes=lib->read(level);check(bool(bytes),"read supported level");if(!bytes)return 1;
  auto scene=webo::app::BackdropScene::build(*lib,*bytes,"MM_CLIMB_002");check(bool(scene),"parse guarded roots");if(!scene)return 1;
- // scene-admission-001: SUPERSEDED. The former check built MM_CLIMB_002's bytes under the ID
- // "MM_DIG_000" and expected an empty scene, which was only an artifact of the two-ID allowlist.
- // Admission is now structural, so (a) the same bytes under any ID are admitted and (b) the
- // equivalent unsupported-form check uses the real MM_DIG_000 bytes (Secondary type-2 branch 1).
+ // Check that MM_CLIMB_002 geometry is admitted under the ID "MM_DIG_000".
  auto otherId=webo::app::BackdropScene::build(*lib,*bytes,"MM_DIG_000");check(bool(otherId)&&!otherId->empty()&&otherId->diagnostics().empty(),"admission is structural: same supported bytes are admitted under any level ID");
  auto digBytes=lib->read("COMPILED\\MM_DIG_000.LVL");check(bool(digBytes),"read real unsupported-form level");if(!digBytes)return 1;
- // scene-branch-impl-001: SUPERSEDED. The real MM_DIG_000 bytes are no longer an unsupported
- // form (its 19 Secondary branch-1 'fire' sprites are structurally admitted), so the former
- // "diagnosed empty scene" expectation moves to an unsupported-form variant of the same level:
- // the first branch-1 record's 4-byte name 'fire' (offset 0xa7587) is changed to 'nofi', a
- // missing sprite file, which must still give one level-qualified diagnosed empty partial scene.
+ // MM_DIG_000 contains 19 Secondary branch-1 'fire' sprites. Replace the first
+ // 'fire' at offset 0xa7587 with 'nofi' to test a diagnosed empty partial scene.
  auto admittedDig=webo::app::BackdropScene::build(*lib,*digBytes,"MM_DIG_000");check(bool(admittedDig)&&!admittedDig->empty()&&admittedDig->diagnostics().empty()&&admittedDig->spriteCount()==19,"real MM_DIG_000 branch-1 sprite scenery is admitted (19 sprites)");
  auto missingSprite=*digBytes;check(missingSprite.size()>0xa758b&&std::equal(missingSprite.begin()+0xa7587,missingSprite.begin()+0xa758b,std::array<std::byte,4>{std::byte{'f'},std::byte{'i'},std::byte{'r'},std::byte{'e'}}.begin()),"first branch-1 record name is 'fire' at 0xa7587");
  for(std::size_t i=0;i<4;++i)missingSprite[0xa7587+i]=std::byte{"nofi"[i]};
@@ -51,8 +45,7 @@ int main(){
    std::cout<<"STAGE_CENSUS primary="<<primaryCensus.stageMeshRecords<<"/"<<primaryCensus.stageBillboards<<" legacy="<<legacyCensus.stageMeshRecords<<"/"<<legacyCensus.stageBillboards<<" secondary="<<secondaryCensus.stageMeshRecords<<"/"<<secondaryCensus.stageBillboards<<"\n";
    check(primaryCensus.stageMeshRecords+legacyCensus.stageMeshRecords+secondaryCensus.stageMeshRecords==1177&&primaryCensus.stageBillboards+legacyCensus.stageBillboards+secondaryCensus.stageBillboards==17,"actual production stage renders census every retained mesh and billboard contribution once across primary, legacy, secondary");
   check(stats.roots==4,"four retained roots");check(stats.meshRecords==1177,"source records preserved");check(stats.nullMaterials==304,"known null materials counted");check(stats.nullMaterialTriangles>0,"known null records draw with source diffuse");check(stats.billboards==17,"17 production billboards submitted once");check(stats.predicateRejected>0,"kind5 source predicate rejects records");check(nonblack>0,"scene-on changes pixels");
-  // Inject accepted raw camera operands (camera affine + scale vectors), then
-  // exercise the same production camera-chain builder used by render.
+  // Supply camera affine and scale vectors to the render path's camera-chain builder.
   auto measured=cam;
   const double rawAffine[12]={-.7071066498756409,0,-.70710688829422,.1384189873933792,.9806530475616455,-.13841894268989563,.6934265494346619,-.19575399160385132,-.6934263110160828,-266.94415283203125,113.39199829101562,266.9440612792969};
   for(int r=0;r<3;++r)for(int c=0;c<3;++c)measured.worldToView[3*r+c]=rawAffine[3*c+r];
@@ -61,8 +54,7 @@ int main(){
   measured.projectionVector={2.2373132705688477,2.2373132705688477,.0015625000232830644};
   measured.inverseProjectionVector={.44696468114852905,.44696468114852905,640.0};
   const auto accepted=webo::app::buildBillboardCameraChain(measured);
-  // C3p's accepted retained-camera context; compare each production record in
-  // source order, not merely the aggregate skip count.
+  // Compare camera-skip records in source order.
   constexpr char decisions[]="111111111111010000000011111000111111111111111110001010111011011110101010111111111111111111111111111111111111111111100001111111100001111011111111111111111101111111011111001110010110001111001111111111111111111111111110011111000111111110000000011111111000000000000000011111111000000001111111111111111111111111111111110101010101010101100110000111100110000111100110000111100110000111100111100001100110011000011110011000011110011000011110011000011110000000000110011110011";
   std::size_t predCount=0,predPass=0,lastOffset=0;bool predMatch=true;
   scene->visitKind5Predicates(measured,[&](std::size_t offset,bool pass){std::cout<<"PRED,"<<std::hex<<offset<<std::dec<<","<<(pass?"pass":"skip")<<"\n";if(predCount>=sizeof(decisions)-1||pass!=(decisions[predCount]=='1')||(predCount&&offset<=lastOffset))predMatch=false;++predCount;predPass+=pass;lastOffset=offset;});

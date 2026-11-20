@@ -1,12 +1,8 @@
-// scene-nested-research-001: read-only measurement of the nested/non-leaf Secondary scenery
-// trees of every effective installed level. Source-built; reads the effective archive overlay
-// (patch over base) and the reference executable's bytes (never executes it). The production
-// readers (read_compiled_level, readSceneNode) are reused unchanged; everything else here is
-// measurement-only and mirrors the address-backed contract in
-// docs/scratch/scene-nested-research-001.md:
-//   0x0046B73F root slot 8 (sorted direct children), 0x0046B6CC base child traversal,
-//   0x0046C55D type-1 slot 4, 0x0047D0C0 type-2 slot 4, 0x0046B590 base constructor.
-// Writes only under build/scene-nested-research-001 (SCENE_NESTED_DIR).
+// Measure nested Secondary trees from the installed archive overlay. Use
+// read_compiled_level and readSceneNode, then follow the original traversal:
+// 0x0046B73F root slot 8 sorts direct children, 0x0046B6CC traverses base
+// children, 0x0046C55D is type-1 slot 4, 0x0047D0C0 is type-2 slot 4, and
+// 0x0046B590 constructs the base. Write to SCENE_NESTED_DIR.
 #include "app/Camera.h"
 #include "app/SceneBillboardSource.h"
 #include "app/SceneMeshSource.h"
@@ -111,10 +107,10 @@ bool productionNestedPredicate(const SceneNode& root) {
   });
 }
 
-// 0x0046B73F..0x0046BAD1: descending binary insertion of child i (file order) into the order array.
-// Mirrors 0x0046B8F4..0x0046BA72: lo=0, hi=size-1; while(hi-lo>1){mid=(hi+lo)>>1; key[i]<key[idx[mid]]
-// ? lo=mid : hi=mid}; key[i]<key[idx[hi]] -> insert(hi+1); else key[i]>key[idx[lo]] -> insert(lo);
-// else insert(lo+1). Child slot 4 is then called in array order.
+// 0x0046B73F..0x0046BAD1 inserts child i by descending key in file order.
+// 0x0046B8F4..0x0046BA72 narrows lo/hi with key[i]<key[idx[mid]].
+// Insert after hi if key[i]<key[idx[hi]], before lo if key[i]>key[idx[lo]],
+// and after lo otherwise. Call child slot 4 in array order.
 std::vector<std::size_t> originalOrder(const std::vector<double>& key) {
   std::vector<std::size_t> idx;
   if (key.empty()) return idx;
@@ -199,7 +195,7 @@ std::string describe(const AssetLibrary& lib, const SceneNode& n) {
   return s;
 }
 
-// First failure of the production pipeline AFTER the nested guard (mirrors BackdropScene::build admission).
+// Report the first BackdropScene::build failure after the nested guard.
 std::string nonNestedFailure(const AssetLibrary& lib, const SceneNode& root, const BillboardSourceInputs& chain, std::size_t& missingTextures) {
   std::string err;
   const auto sprites = [&](const auto& self, const SceneNode& n) -> void {
@@ -390,8 +386,8 @@ int main() try {
     tree << "\nstd::sort(key>) differs=" << (orig != std_) << '\n';
     std::ofstream(dir / "trees" / (r.id + ".txt")) << tree.str();
 
-    // Evidenced traversal plan (0x0046B73F sorted direct children, then depth-first file order for
-    // descendants, subtree skipped when +0x110==0, type-2 parent matrix pushed twice).
+    // 0x0046B73F sorts root children. Descendants follow in depth-first file order.
+    // +0x110==0 skips a subtree. A type-2 parent pushes its matrix twice.
     std::ostringstream plan;
     plan << r.id << " traversal plan (planned order of node slot-4 calls)\n";
     std::size_t visited = 0, skippedSubtrees = 0;
@@ -417,7 +413,7 @@ int main() try {
   std::ofstream(dir / "summary.txt") << out.str();
   std::cout << out.str();
 
-  // Assertions: the 18 accepted nested levels, no others; reference levels unaffected; a representative exists.
+  // Require exactly the 18 nested cases and preserve the reference-level counts.
   const std::vector<std::string> expected = {"E11_KF_1", "E22_KF_1", "H05_KF_1", "H09_KF_1", "H20_KF_1", "H24_KF_1", "M04_KF_1", "M11_KF_1", "M16_MG_1",
                                              "M21_KF_1", "MM_BLOCK_BOMB_A", "MM_FLOAT_CLIMB2", "MM_H_003", "VH04_JC1", "VH05_JC1", "VH18_JC", "VH19_JC", "VH21_JC"};
   if (results.size() != 102) { std::cerr << "FAIL effective level count " << results.size() << " != 102\n"; return 1; }

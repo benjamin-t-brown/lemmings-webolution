@@ -1,7 +1,5 @@
-// R7 correction to historical clone before/after comparisons. Their frozen
-// frame loops predate UI animation. Only the union of actual Climber sprite
-// texels can differ in these routes; plate, stock, HUD and scene pixels keep
-// their existing exact expectations. panel_icon_after tests animation itself.
+// Ignore only the union of actual Climber sprite texels when comparing UI animation modes.
+// Plate, stock, HUD and scene pixels must match exactly.
 #pragma once
 #include "app/SkillPanel.h"
 #include "assets/Box.h"

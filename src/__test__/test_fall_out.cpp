@@ -1,4 +1,4 @@
-// Boundary logic only. Human recordings establish the actual Abyss route.
+// Check the fall-out boundary and effect placement.
 #include "sim/World.h"
 
 #include <algorithm>

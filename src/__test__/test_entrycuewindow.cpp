@@ -52,9 +52,7 @@ int main() {
   auto cursor = app::RuntimeCursor::load(*library);
   if (!cursor) return 1;
 
-  // Independent interior-only mask for the base (160,180)-(480,260) cue.
-  // Use fully opaque texels at the SOURCE point-sample locations. This tests
-  // app composition/omission, not native half-texel, sampling or raster edges.
+  // Build an interior mask from opaque point-sampled cue texels in (160,180)-(480,260).
   const auto& cells = shell::fontCells();
   const std::string text = "Let's Go!";
   int width = 0;
@@ -125,10 +123,8 @@ int main() {
     }
     if (f.frame == 4 || f.frame == 6) ok &= key(SDLK_p);
     if (f.frame == 5 || f.frame == 6) {
-      // R7 explicitly animates the selected icon while paused. This assertion
-      // previously encoded the static-icon defect. Retain exact equality for
-      // all other pixels, including the cue, HUD, plates and stock numbers.
-      // panel_icon_after separately checks the animated icon pixels.
+      // The selected icon follows UI time during pause. Require exact equality
+      // outside its sprite, including the cue, HUD, plates and stock numbers.
       ok &= f.selectedSkillIndex == 0 && app::runtimeSkillPanelIndex(f.cursorX, f.cursorY) == -1;
       if (f.frame == 5) firstPaused = f.image;
       auto expected = firstPaused, actual = f.image;
@@ -147,7 +143,7 @@ int main() {
         const auto i = (y * 640 + x) * 4;
         if (f.image.rgba[i] != 255 || f.image.rgba[i + 1] != 255 || f.image.rgba[i + 2] != 255) ++changed;
       }
-      ok &= changed > 20; // positive control: retired cue must no longer cover the scene
+      ok &= changed > 20; // the expired cue leaves the scene visible
       ok &= quit();
     }
     if (!ok) { std::cerr << "entry cue mismatch at frame " << f.frame << '\n'; quit(); }

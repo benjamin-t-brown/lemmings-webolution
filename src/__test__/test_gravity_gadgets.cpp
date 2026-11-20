@@ -1,4 +1,4 @@
-// T5(a,c): real installed assets and source-built clone evidence. No original execution.
+// Check gravity gadgets with installed data and application frames.
 #include "app/AppEntry.h"
 #include "app/BackdropScene.h"
 #include "app/TubeScene.h"
@@ -153,10 +153,8 @@ void application(const AssetLibrary&,const fs::path&game,const fs::path&base,con
   std::string s,p;check(bool(std::getline(expectedStates,s))&&bool(std::getline(expectedPixels,p)),"matching entry frame exists");if(id=="MM_CLIMB_002"){check(s==serial,"unchanged right-facing non-gravity simulation/outcomes");check(p==std::to_string(h),"unchanged right-facing non-gravity production pixels");}
   else if(id=="m06_kf_1" && f.world.levelClockMs()<=18900)check(s==serial,"gravity route physics/timing identical until the demonstrated roof escape");
 #endif
-  // hatch-release-direction-001: this control stores fixed left. The old
-  // simulation baseline hard-coded right, so its later motion/pixels change.
-  // Keep both traces and pin the corrected natural births instead of comparing
-  // the obsolete all-right trajectory. MM_CLIMB_002 remains an exact control.
+  // This control stores left-only releases. Check natural births separately
+  // from the MM_CLIMB_002 comparison.
   if(id=="MM_BASH_002")while(births<f.world.spawned()) {
 #ifdef GRAVITY_GADGETS_BEFORE
     check(f.world.lemmings()[births].facing==sim::Facing::Right,"historical all-right hatch control");

@@ -1,11 +1,5 @@
-// Tests for the RIFF/WAVE reader.
-//
-// The format is standard, so the interesting cases are the ones where the
-// retail data is not uniform: seventeen sample rates from 3179 to 44100, both
-// 8- and 16-bit, mono and stereo, and three files with chunks after `data`.
-// The synthetic tests below cover the parts that are easy to get subtly wrong
-// -- 8-bit samples being unsigned, and odd-sized chunks being padded -- and
-// the retail pass requires all 73 to decode.
+// Check unsigned 8-bit samples and odd-chunk padding with synthetic RIFF/WAVE files.
+// Decode all 73 installed files, including varied rates, channel counts and chunks after data.
 
 #include "assets/Box.h"
 #include "assets/Wav.h"

@@ -28,15 +28,14 @@ void result(const CursorPolicyInput& in, CursorState state, std::string_view nam
 } // namespace
 
 int main() {
-    // All supported native software bindings, including retained/externally set
-    // hidden and mouse-down states. These names are byte-read registration data.
+    // Check the original software bindings, including hidden and mouse-down states.
     constexpr std::array<std::string_view, 11> names = {
         "", "_curNoLem", "_curNoLemLeft", "_curNoLemRight", "_curLem",
         "_curLemLeft", "_curLemRight", "^curGrab", "_curExit", "_curEnt", "_curMseDwn"};
     for (int s = 0; s < 11; ++s) {
         auto in = base();
         in.previous = static_cast<CursorState>(s);
-        in.displayMode0c = 3; // neither main nor panel decision runs
+        in.displayMode0c = 3; // no cursor decision for this display mode
         result(in, static_cast<CursorState>(s), names[s], "retained state binding");
     }
     expect(app::softwareCursorResource(static_cast<CursorState>(-1)) == "_curLemRight",

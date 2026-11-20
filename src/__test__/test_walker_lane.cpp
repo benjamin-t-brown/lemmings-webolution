@@ -1,4 +1,4 @@
-// Q1: clone presentation only. Installed natural release/wall turn, no injection.
+// Check walker lane changes in MM_CLIMB_002 through a natural hatch release and wall turn.
 #include "app/AppEntry.h"
 #include "app/LemmingMotion.h"
 #include "app/RuntimeHud.h"
@@ -141,15 +141,14 @@ void units(const fs::path& out) {
       prior=p.z;oldFacing=cur.facing;
     }
     check(turned&&intermediate&&arrived,"natural wall turns cross intermediate depths and settle");
-    // Existing fast-forward pass budget must advance lane on the same level clock.
+    // Fast-forward advances actor lanes on the shared level clock.
     app::RuntimeSimState fast;fast.toggleFastForward();const auto before=w.levelClockMs();
     fast.advanceElapsed(w,0.02,false,[&]{t.observe(w);});
     check(w.levelClockMs()==before+140,"fast-forward uses unchanged seven-pass level time");
     hatchAndBlockerLane(facing, false);
     hatchAndBlockerLane(facing, true);
   }
-  // A narrow corridor turns again before completing a crossing. Track the
-  // confirmed facing, not an old end-to-end animation that would keep sliding.
+  // A narrow lane turns before the crossing completes. Track the confirmed facing on each turn.
   {
     sim::LevelSetup s;s.terrain=sim::Terrain(256,160);s.totalLemmings=0;s.continuousStepperClock=true;
     s.terrain.fillBox(0,140,256,20,sim::Material::Earth);

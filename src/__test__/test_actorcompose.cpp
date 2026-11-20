@@ -177,7 +177,7 @@ struct ViewSpec {
   const char* cameraRel;
 };
 
-// Empty-list route PNG SHA-256 (encodePng of 640x480 RGBA); must stay A4d-stable.
+// Reference PNG SHA-256 for the empty-actor route (640x480 RGBA passed to encodePng).
 constexpr std::array<const char*, 9> kEmptyGoldenSha = {
     "66a8ea3b44df2216b64debf9d8f417d2ed923841fc440e99c028b013010d3651",
     "2c0867ba4a1a28be1362fc01f5f8f48f374f1ada14af711b55a8afbb6029f3bf",
@@ -396,7 +396,7 @@ ShiftMatch bestShiftInjectToOrig(const webo::app::Framebuffer& inject,
   return best;
 }
 
-// A6d17 painted-pixel classes (tube != inject within actor-2 bbox).
+// Classify pixels inside actor 2's bounding box where the tube-only and injected renders differ.
 const char* classifyActor2PaintedPixel(const webo::app::Framebuffer& tube,
                                        const webo::app::Framebuffer& inject,
                                        const std::vector<std::uint8_t>& origRgb, int refWidth,
@@ -1027,7 +1027,7 @@ int main() {
               "a6d4 sweep negative confirmed");
       }
 
-      // Actors 0–1 must still improve at default inject (temporal 0 all walkers, phase 0).
+      // Actors 0–1 improve the match with default injection (walker entry 0, phase 0).
       for (std::size_t a = 0; a < 2; ++a) {
         const int x0 = kActorRects[a][0];
         const int y0 = kActorRects[a][1];
@@ -1272,7 +1272,7 @@ int main() {
                                  a6d9InjectMae[a], beats ? "true" : "false");
       }
 
-      // Synthetic overlay proves composite predicate differs from legacy a!=0.
+      // The synthetic overlay distinguishes the composite predicate from a!=0.
       auto applyOverlayComposite = [](std::vector<std::uint8_t>& rgb, int width, int height,
                                       const webo::Image& overlay, bool legacyNonZero) {
         for (int y = 0; y < height; ++y) {

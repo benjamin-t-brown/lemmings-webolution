@@ -1,16 +1,6 @@
-// Tests for the production retail-level loader (sim/RetailLevel.h).
-//
-// D3a (PLAN.md Phase D, D3 "one retail level end to end"). The sub-parsers
-// this file assembles (hatchSpawnCell, exitTriggerFromPose, findLevelSkills,
-// loadReleaseRateTable, ...) are each already tested elsewhere
-// (test_levelobjects.cpp, test_gamedata.cpp, test_world.cpp's
-// testRetailSpawn/testRetailReleaseTiming). This file checks the one new
-// thing: that loadRetailLevel/loadRetailLevelReport assemble them correctly
-// into one LevelSetup, and -- as a deliverable, not just a check -- sweeps
-// every retail level and writes build/tmp/d3a-retail-level-setup/sweep.txt.
-//
-// Skipped cleanly when WEBOLUTION_GAME_DIR is unset or has no lemmings.box,
-// the way test_world.cpp's retail tests already do.
+// Check how loadRetailLevel and loadRetailLevelReport assemble LevelSetup,
+// then report results for the installed corpus. Requires WEBOLUTION_GAME_DIR
+// with lemmings.box.
 
 #include "assets/Box.h"
 #include "assets/CollisionGrid.h"
@@ -43,13 +33,8 @@ void check(bool cond, std::string_view what) {
 
 using namespace webo::sim;
 
-// The MM_CLIMB_002 acceptance check: one entrance at hatchSpawnCell, the
-// rate-20 seconds exactly, LevelInfo totals, skills and exits as read.
-//
-// "As read" is proven by recomputing the expected values from the same
-// already-tested primitives loadRetailLevel itself calls (not by copying
-// literals out of a previous round's probe), so this test fails if the two
-// paths ever disagree, not just if either one regresses to a stale number.
+// Cross-check MM_CLIMB_002's hatchSpawnCell, rate-20 interval, LevelInfo totals,
+// skills and exits against individual parser results.
 void testMmClimb002(const std::filesystem::path& dir) {
   std::cout << "loadRetailLevel: MM_CLIMB_002 matches the already-tested primitives\n";
 
@@ -114,8 +99,7 @@ void testMmClimb002(const std::filesystem::path& dir) {
     check(s.entrances.front().sheetType == h.type, "entrance sheetType is the hatch's type");
   }
 
-  // The rate-20 seconds exactly: RELEASERATE.PC row 20, the same number
-  // D1b read and testRetailReleaseTiming already hard-codes.
+  // The interval in seconds comes from RELEASERATE.PC row 20.
   const double expectedSeconds = rates->secondsPerLemming(20);
   check(expectedSeconds == 2.8864866275534937,
         std::format("rate 20 is 2.8864866275534937 s (got {:.17g})", expectedSeconds));
@@ -161,10 +145,7 @@ void testMmClimb002(const std::filesystem::path& dir) {
           std::format("exit {} matches exitTriggerFromPose", i));
   }
 
-  // A level built this way must actually run: spawn at least one lemming
-  // without crashing or immediately erroring (D3's own eventual "playable"
-  // gate, not re-litigated here -- just a smoke check that World(s) is
-  // usable).
+  // Advance the assembled World until it releases a lemming.
   World w(s);
   for (int t = 0; t < 20; ++t)
     w.tick();
@@ -184,9 +165,7 @@ void testUnknownLevel(const std::filesystem::path& dir) {
   check(!result.has_value(), "an unknown level id is an error, not a default LevelSetup");
 }
 
-// The corpus sweep deliverable: every retail level, loaded or the error,
-// with hatch count and the rate/min/max triple per hatch, and whether any
-// rate falls outside its own [min, max] (D1b's own "this is unchecked").
+// Report load errors, hatch counts and each hatch's rate, minimum and maximum.
 void writeCorpusSweep(const std::filesystem::path& dir) {
   std::cout << "corpus sweep -> build/tmp/d3a-retail-level-setup/sweep.txt\n";
   auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");

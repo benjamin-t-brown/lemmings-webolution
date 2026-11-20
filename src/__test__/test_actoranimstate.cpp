@@ -1,19 +1,7 @@
-// actor-anim-001 (playtest P4-P6): lemmings draw the strip of their own state, advance it with level
-// time, freeze it while paused, and a lit bomber fuse shows a countdown.
-//
-// SCRIPTED CLONE OBSERVATION and regression test; not human play and not original-fidelity evidence.
-//
-//   units  The lemming sheet (SPRITES\LEMMINGSHI.SPR) from the installed archive: every clip the state map uses
-//          exists with the temporal counts the retained live reads give, each mapped state draws a clip whose first
-//          image differs from the walk clip's, and the tracker advances/holds/wraps on those real clip lengths.
-//   app    The public webo::app::runApplication (--level L --sim --native, owned 200 ms clock). Inputs are SDL events
-//          queued from the read-only LevelFrameObserver: a plate key, a pointer motion onto a lemming and a left
-//          click (the hoveredActor() + World::assign() path a player uses), and a camera grab that follows the
-//          lemming. The run is repeated with --no-actor-anim (the view before actor-anim-001: walk entry 0 for every
-//          state); the sim is deterministic so the two runs differ only in the drawn strip. Crops of the target in
-//          both runs are written to <dir> for review.
-//   pause  MM_CLIMB_002: walkers cycle through several temporal entries; with the pause key down they hold the same
-//          entry for every paused frame; after resume they move again.
+// Check state-specific clips in SPRITES\LEMMINGSHI.SPR, their frame counts and timing,
+// and the Bomber fuse countdown. Drive installed levels through SDL input to
+// webo::app::runApplication and compare actor crops with --no-actor-anim.
+// On MM_CLIMB_002, walking animation holds during pause and resumes with level time.
 //
 // Usage: test_actoranimstate units <dir> | app <dir> <level> <plate> <label> <preState> <expectState> <expectClip>
 //        | pause <dir>
@@ -69,8 +57,6 @@ void save(const fs::path& path, const Image& img) {
     expect(false, "cannot write " + path.string() + ": " + r.error());
 }
 
-// ---------------------------------------------------------------------------------------------------------------
-// units
 
 int unitsMain(const fs::path& outDir, const fs::path& gameDir) {
   auto lib = AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
@@ -90,8 +76,8 @@ int unitsMain(const fs::path& outDir, const fs::path& gameDir) {
   table.close();
   std::cout << "units: " << sheet->sprites.size() << " clips, table in " << (outDir / "clips.txt").string() << '\n';
 
-  // Temporal counts read live (docs/lessons/data-and-simulation.md, test_actoranim): walk 12, bash 24, build 16,
-  // dig 20, mine 25, hoist flip 14, umbopen 8, shrug 8.
+  // Native temporal counts: walk 12, bash 24, build 16, dig 20, mine 25,
+  // hoist flip 14, umbopen 8, shrug 8.
   const std::map<std::string, std::size_t> evidenced{{"walk", 12}, {"bash", 24}, {"build", 16}, {"dig", 20},
                                                       {"mine", 25}, {"flip", 14}, {"umbopen", 8}, {"shrug", 8}};
   for (const auto& [name, count] : evidenced) {
@@ -187,8 +173,6 @@ int unitsMain(const fs::path& outDir, const fs::path& gameDir) {
   return 0;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
-// app
 
 bool pushKey(SDL_Scancode sc, SDL_Keycode sym) {
   SDL_Event e{};
@@ -236,7 +220,7 @@ bool pushQuit() {
 }
 
 constexpr int kFrames = 420;       // 84 s of simulation at one 200 ms tick per frame
-constexpr int kStateFrames = 12;   // frames of the expected state recorded before the run ends
+constexpr int kStateFrames = 12;   // frames sampled in the expected state
 constexpr int kCrop = 64;          // crop size around the target
 
 sim::State parseState(const std::string& s) {
@@ -322,9 +306,8 @@ AppRun runApp(const std::string& level, int plate, sim::State pre, sim::State wa
     }
 
     if (!r.clicked && calls >= 3 && !f.cameraIntroActive && !f.levelMenuOpen) {
-      // Pause on the same simulation state in both runs, then use the public camera and
-      // picker while stationary. Animated sprite boxes need not have the walk[0] centre.
-      // A successful assignment resumes through the production input path.
+      // Pause at the same simulation state in both modes. Animated sprite boxes can
+      // have a different center from walk[0]. Assign through the public picker.
       if (!aim) {
         for (std::size_t i = 0; i < lemmings.size(); ++i) {
           if (lemmings[i].alive() && lemmings[i].state == pre) {
@@ -362,8 +345,7 @@ AppRun runApp(const std::string& level, int plate, sim::State pre, sim::State wa
           r.clicked = true;
           r.clickFrame = calls;
           target = *f.hoveredActor;
-          // Park the public cursor away from the actor before grabbing, so its hand image
-          // does not cover the very animation/countdown these retained frames demonstrate.
+          // Move the pointer aside so the grab cursor leaves the actor and fuse digit visible.
           pushMotion(620, 460);
           // Hold the camera on the target with the player's grab (right button + relative motion).
           pushRight(true, 620, 460);
@@ -410,7 +392,7 @@ AppRun runApp(const std::string& level, int plate, sim::State pre, sim::State wa
         }
       }
       r.explosionCompleted = want == sim::State::Exploder && r.stateFrame >= 0 && t.state == sim::State::Dead;
-      // A bomber runs through the actual blast/removal; others record kStateFrames of their state.
+      // Sample other states for kStateFrames. Follow the Bomber through blast and removal.
       const bool done = want == sim::State::Exploder ? r.explosionCompleted
                                                       : (followFrames >= kStateFrames);
       if (done && r.endFrame < 0) {
@@ -448,8 +430,7 @@ Image scaled(const Image& src, int k) {
   return out;
 }
 
-// Row 1: animated run, row 2: --no-actor-anim run, columns: consecutive frames of the target from the first frame it
-// is in the wanted state. Crops are scaled 2x.
+// Stack animated and --no-actor-anim crops at 2x, starting at entry to the expected state.
 Image contactSheet(const AppRun& anim, const AppRun& plain, sim::State want, int columns) {
   const auto firstIdx = [&](const AppRun& r) -> std::size_t {
     for (std::size_t i = 0; i < r.samples.size(); ++i)
@@ -553,7 +534,7 @@ int appMain(const fs::path& outDir, const fs::path& gameDir, const std::string& 
   std::cout << "app " << level << '/' << label << ": " << differing << "/" << compared << " state frames differ from the walk frame by >= 30 pixels\n";
   expect(compared > 0 && differing * 2 >= compared, label + ": the drawn picture differs from the old walk picture");
 
-  // Floater scenario: the same run also shows the plain fall strip for a faller.
+  // The Floater scenario also samples the fall strip.
   if (want == sim::State::Floater) {
     expect(anim.fallerFramesDrawn > 0, label + ": a Faller was drawn with the fall clip");
     std::set<int> fallTemporals;
@@ -582,7 +563,7 @@ int appMain(const fs::path& outDir, const fs::path& gameDir, const std::string& 
     expect(digits.size() >= 4, label + ": at least four different countdown digits were shown (" + std::to_string(digits.size()) + ")");
     expect(std::is_sorted(digits.begin(), digits.end(), std::greater<int>()) && std::adjacent_find(digits.begin(), digits.end()) == digits.end(),
            label + ": the countdown only decreases");
-    // Asset measurement from development-1: the narrow '1' has 17 opaque pixels; others >=29.
+    // The narrow '1' has 17 opaque pixels. Other digits have at least 29.
     for (int d : digits) expect(pixelsAtDigit[d] >= (d == 1 ? 17u : 20u), label + ": digit " + std::to_string(d) + " is drawn (" + std::to_string(pixelsAtDigit[d]) + " px)");
     // Different digits are different pictures above the lemming.
     for (std::size_t i = 1; i < digits.size(); ++i)
@@ -592,7 +573,6 @@ int appMain(const fs::path& outDir, const fs::path& gameDir, const std::string& 
     for (const Sample& s : anim.samples) exploded |= s.state == sim::State::Exploder && s.clip == "explode";
     expect(exploded, label + ": the fused lemming went on to the exploder state and its explode clip");
     expect(anim.explosionCompleted && plain.explosionCompleted, label + ": both routes continued to the actual blast and actor removal");
-    // One crop per distinct digit side by side, 2x, for review.
     Image row;
     row.width = kCrop * 2 * static_cast<int>(std::max<std::size_t>(digits.size(), 1));
     row.height = kCrop * 2;
@@ -621,8 +601,6 @@ int appMain(const fs::path& outDir, const fs::path& gameDir, const std::string& 
   return 0;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
-// pause
 
 int pauseMain(const fs::path& outDir, const fs::path& gameDir) {
   std::vector<std::map<std::size_t, int>> frames;  // per observed frame: lemming index -> temporal entry (walkers only)

@@ -14,10 +14,8 @@ void check(bool condition, const char* message) {
 }  // namespace
 
 int main() {
-  // Retained native D2d sample, not a new live run. Values decoded from
-  // build/tmp/d2d-tie-live/overlap.json's little-endian bytes; both actors
-  // had category 0x12 / priority 0 and eligibility bytes 1. Native hover=3.
-  // Testing the raw operands catches the former all-zero-distance caller.
+  // Reference candidates have category 0x12, priority 0 and eligibility byte 1.
+  // Their original hover result is actor 3.
   {
     const std::array<double, 3> reference{32.0, 48.0, 0.5};
     int actor2 = 2, actor3 = 3;
@@ -37,22 +35,14 @@ int main() {
     check(pickDistanceSquared({255, 0, 0}, {1, 0, 0}) == 64516,
           "raw X subtraction does not wrap around cylinder seam");
   }
-  // ---- pickBoxOverlaps: one hit -------------------------------------------
-  // A cursor box with comfortable margin on every side (0x0045578C: the real
-  // sprite is 32x32; the exact size does not matter to the formula, only
-  // that it is a sane box), against a lemming box well inside the adjusted
-  // (x shrunk 4, y grown 4) hit region.
+  // 0x0045578C uses a 32x32 cursor sprite. The lemming hit region shrinks by
+  // 4 px horizontally and grows by 4 px vertically.
   const PickBox cursor{90, 90, 150, 150};
   const PickBox hit{110, 110, 120, 120};
   check(pickBoxOverlaps(hit, cursor), "one hit: comfortably inside the adjusted cursor box");
 
-  // ---- pickBoxOverlaps: a miss by one pixel on each of the four edges ----
-  // 0x00454CB9 compares with <=/>= (jg/jl/jg/jl -> miss), so each edge is
-  // inclusive: sitting exactly on the adjusted threshold is still a hit, and
-  // only one pixel further is a miss. Each case below holds three of the
-  // cursor box's four sides at the comfortable baseline and moves only the
-  // one side that bounds the edge under test, so the other three conditions
-  // stay far from their own thresholds throughout.
+  // 0x00454CB9 uses jg/jl/jg/jl for misses, making each threshold inclusive.
+  // Move exactly one cursor edge at a time.
 
   // left: lemming.left <= cursor.right - 4
   check(pickBoxOverlaps(hit, PickBox{90, 90, /*right=*/114, 150}),
@@ -78,7 +68,6 @@ int main() {
   check(!pickBoxOverlaps(hit, PickBox{90, /*top=*/125, 150, 150}),
         "bottom edge: one pixel further is a miss");
 
-  // ---- pickHoveredLemming: no candidates / nothing overlapping -----------
   {
     std::vector<PickCandidate> none;
     check(pickHoveredLemming(none, cursor) == nullptr, "no candidates: nullptr, matching +0x16D8 cleared");
@@ -88,11 +77,8 @@ int main() {
     check(pickHoveredLemming(missedList, cursor) == nullptr, "a non-overlapping candidate picks nothing");
   }
 
-  // ---- pickHoveredLemming: two overlapping lemmings, tie-break ------------
-  // 0x004550A3-0x00455236: priority (desc) then distanceSquared (asc,
-  // strict) decide among overlapping, eligible candidates. This is read as
-  // NOT "last overlapping lemming in list order wins" -- the brief's own
-  // unverified hypothesis -- which the exact-tie case below falsifies.
+  // 0x004550A3-0x00455236 favors higher priority, then strictly smaller
+  // distanceSquared. Exact ties preserve the first eligible candidate.
   {
     int a = 1, b = 2;
     PickCandidate closer; closer.id = &a; closer.box = hit; closer.priority = 0; closer.distanceSquared = 10.0;
@@ -122,10 +108,8 @@ int main() {
           "higher priority wins outright over a much closer, lower-priority candidate");
   }
 
-  // ---- pickHoveredLemming: a skipped (ineligible) lemming -----------------
-  // 0x00455104 (byte lemming+0x29, the render-visibility flag) and 0x00455159
-  // (byte lemming+0x370 via 0x00455F20) both skip a candidate outright
-  // before the box test; folded here into PickCandidate::eligible.
+  // 0x00455104 (visibility byte lemming+0x29) and 0x00455159 (byte lemming+0x370
+  // via 0x00455F20) reject candidates before the box test.
   {
     int a = 1, b = 2;
     PickCandidate ineligible; ineligible.id = &a; ineligible.box = hit;

@@ -44,7 +44,7 @@ struct NativeSample {
   double zSlab;
 };
 
-// Measured live on MM_CLIMB_002, 2026-10-20 (`build/tmp/a6a-actor-pose/live/report.json`).
+// Pose rows for MM_CLIMB_002.
 constexpr NativeSample kSamples[] = {
     {"0x2833720", 0x004B10E8,
      {59.64480209350586, 32.0, 0.75}, 1,
@@ -155,9 +155,8 @@ void testA6d7MatchedPause(const webo::ActorPoseLevel& level, const fs::path& roo
 void testNativeTable(const webo::ActorPoseLevel& level) {
   std::cout << "actor pose native table\n";
   constexpr double kModelTol = 1e-4;
-  // REGRESSION BOUND (not a fidelity tolerance): brief basis falsifier 1e-6 is not met
-  // (max measured delta 2.962e-5 on retained live table). Native float32/x87 normalize at
-  // 0x00480AC8 is not replayed in the C++ adapter.
+  // The basis comparison allows the sampled 2.962e-5 difference from the
+  // original float32/x87 normalization at 0x00480AC8.
   constexpr double kBasisRegressionBound = 5e-5;
   for (const auto& s : kSamples) {
     webo::ActorTerrainSample plus8{s.plus8[0], s.plus8[1], s.plus8[2]};

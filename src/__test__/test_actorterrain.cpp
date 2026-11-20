@@ -32,7 +32,7 @@ void checkSample(const webo::ActorTerrainSample& got, double x, double y, double
 }  // namespace
 
 int main() {
-  // Phase-2 live hatch words (MM_CLIMB_002 row): column 32, file Y word 42.
+  // MM_CLIMB_002 hatch words give column 32 and file Y 42.
   const auto climb = webo::terrainSampleFromHatchSpawn({32, 42});
   checkSample(climb, 32.0, 42.0, 0.5, "hatch spawn MM_CLIMB_002");
 

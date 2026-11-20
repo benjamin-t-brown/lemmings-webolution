@@ -1,4 +1,4 @@
-// Public SDL route through runApplication. No simulation mutation or original process.
+// Exercise Climber visibility through SDL input to runApplication.
 #include "app/AppEntry.h"
 #include "app/TubeScene.h"
 #include "assets/Box.h"
@@ -34,8 +34,7 @@ std::string state(const app::LevelFrameView& f){std::ostringstream s;s<<std::set
 void application(const AssetLibrary& lib,const fs::path& game,const std::string& level,
     const fs::path& out,const fs::path& baseline,bool before){
   fs::create_directories(out);const bool paired=!baseline.empty();
-  // E22_KF_1 replaces the obsolete all-right MM_FLOAT_CLIMB2 route: its
-  // naturally released actor reaches a wall with the stored hatch direction.
+  // Use E22_KF_1 for a natural wall approach. The MM_FLOAT_CLIMB2 approach requires all-right releases.
   const double initial=level=="MM_CLIMB_002"?32.0:112.0;
   std::ofstream(out/"camera.json")<<"{\"yaw_units\":"<<initial<<"}\n";
   auto resolved=sim::resolveRetailLevel(lib,level);check(bool(resolved),"resolve app level");if(!resolved)return;
@@ -81,8 +80,7 @@ void application(const AssetLibrary& lib,const fs::path& game,const std::string&
       }else {
         check(actor!=f.actors.end(),"public exposed climber has displayed pick box");
         if(level=="E22_KF_1")check(f.hoveredActor==0,"public Floater hover selects exposed climber");
-        // Just Climb has only Climber stock: the accepted picker intentionally
-        // excludes an actor which already has that permanent capability.
+        // Just Climb stocks only Climber. The picker skips actors that already have that capability.
         else check(f.hoveredActor!=0,"public Climber selection preserves existing capability exclusion");
         ++frontChecks;
       }

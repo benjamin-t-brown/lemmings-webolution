@@ -56,7 +56,7 @@ int main() {
   require(productionPlacement.has_value() && std::isfinite(productionPlacement->originX),
           "A1 camera builder converts to normalized actor projection units");
 
-  // The selected five-direction record from live-pairs-4 (action13/time8/dir1).
+  // Five-direction record at action13/time8/dir1.
   webo::SpriteFrame walk;
   walk.left = 53; walk.top = 0; walk.right = 79; walk.bottom = 38;
   walk.uLeft = 53.0 / 256.0; walk.uTop = 0.0;
@@ -74,7 +74,7 @@ int main() {
   nearNativeFloat(five->right, 476.3755798339844, "native five right corner within one float ULP");
   nearNativeFloat(five->bottom, 300.36407470703125, "native five bottom corner within one float ULP");
 
-  // The selected eight-direction record from live-pairs-4 (action1/time0/dir7).
+  // Eight-direction record at action1/time0/dir7.
   webo::SpriteFrame block;
   block.left = 210; block.top = 152; block.right = 240; block.bottom = 190;
   block.uLeft = 210.0 / 256.0; block.uTop = 152.0 / 228.0;
@@ -127,7 +127,7 @@ int main() {
   require(!webo::app::actorSpritePlacement(tiny, world, nativeProjection, false, 2).has_value(),
           "unsupported scale delta rejected");
 
-  // Captured actor+0x08/+0x10 for both A4f frames.
+  // Original actor+0x08/+0x10 in the two reference frames.
   require(webo::actorLightMapIndex(59.68486785888672, 32.0) == 4125,
           "A4f fixture terrain X and file-row Y map to index 4125");
   require(webo::actorLightMapIndex(-57.0, 32.0) == 4195,
@@ -182,12 +182,9 @@ int main() {
   require(tintedPixel(2, 2, 0) == static_cast<std::uint8_t>((200 * 152) / 255),
           "draw path applies MODULATE");
 
-  // A4y: material row 3 alpha test, GREATER against the in-draw reference 0xEF
-  // (A4x: 0x47A75D calls 0x470F29(0) at 0x47A776 before the draw; the writer
-  // 0x470F39 sets [0x4C24E0]=0xEF; reader 0x472896). 4x1 sheet of alpha
-  // 0xA1 / 0xEF / 0xF0 / 0x00 on a sentinel overlay. The raster assertions run
-  // first and read destination pixels, so reverting the reference or the
-  // strictness fails on pixels, not on the helper or the literal constant.
+  // Material row 3 uses GREATER with reference 0xEF. The code at 0x47A75D calls
+  // 0x470F29(0) at 0x47A776. The writer at 0x470F39 sets [0x4C24E0]=0xEF for
+  // reader 0x472896. Use alpha 0xA1 / 0xEF / 0xF0 / 0x00 on a sentinel backdrop.
   webo::Image aSheet;
   aSheet.width = 4;
   aSheet.height = 1;
@@ -230,7 +227,7 @@ int main() {
   require(!webo::actorSpriteAlphaTestPasses(0x00) && webo::actorSpriteAlphaTestPasses(0xFF),
           "alpha 0x00 rejected, 0xFF accepted");
 
-  // Diagnostic path (alphaTest=false) is the pre-A4u write: every texel, texture alpha kept.
+  // With alphaTest=false, write every texel and preserve its alpha.
   resetOverlay();
   require(webo::app::drawActorSprite(aOverlay, aFrame, aSheet, aQuad, false, aTint, false)
               .has_value(),
@@ -238,10 +235,8 @@ int main() {
   require(ap(0, 3) == 0xA1 && ap(1, 3) == 0xEF && ap(2, 3) == 0xF0 && ap(3, 3) == 0x00,
           "diagnostic path keeps texture alpha on every texel");
 
-  // A4v: integer pixel-centre raster (pixel x covered iff left <= x < right, UV
-  // (x-left)/(right-left)). 8x1 opaque sheet drawn at 2:1 into [1.3,5.3) x [1.3,2.3)
-  // on a sentinel overlay. The old x+0.5 rule covered x=1..4 / y=1 and sampled texels
-  // 0/2/4/6; the integer-centre rule covers x=2..5 / y=2 with texels 1/3/5/7.
+  // Integer pixel centers cover x=2..5 and y=2 in this fractional quad.
+  // With UV (x-left)/(right-left) the horizontal samples are texels 1/3/5/7.
   webo::Image cSheet;
   cSheet.width = 8;
   cSheet.height = 1;
@@ -270,10 +265,8 @@ int main() {
   require(cp(2, 2, 0) == 20 && cp(3, 2, 0) == 40 && cp(4, 2, 0) == 60 && cp(5, 2, 0) == 80,
           "integer-centre UV selects texels 1,3,5,7");
 
-  // Same rule on the V axis. The 8x1 sheet above cannot select by V, so use a 1x8
-  // sheet with distinct rows (R = 10*(i+1)) drawn at 2:1 into x [1.3,2.3) x y [1.3,5.3).
-  // Integer centre covers y=2..5 with v = (y-1.3)/4 -> row floor(v*8) = 1,3,5,7; the
-  // old y+0.5 centre would sample rows 2,4,6,7 (v = 0.3,0.55,0.8,1.05 clamped).
+  // The 1x8 sheet tests integer centers on the V axis. Rows y=2..5 select
+  // texels 1,3,5,7 via floor(v*8), where v = (y-1.3)/4.
   webo::Image vSheet;
   vSheet.width = 1;
   vSheet.height = 8;

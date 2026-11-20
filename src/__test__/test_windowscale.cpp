@@ -1,5 +1,4 @@
-// Owned clone process only: public SDL input and presenter readback. No original
-// execution, injected code, OS input automation, or original capture.
+// Check window scaling through SDL input and presenter readback.
 #define SDL_MAIN_HANDLED
 #include "app/AppEntry.h"
 #include "app/RuntimePick.h"
@@ -145,8 +144,7 @@ int main(int argc, char** argv) {
         check(e.motion.xrel == 1 && e.motion.yrel == -1, "relative deltas preserved for floating-point conversion");
       }
     }
-    // Real ordinary entry: no frame limit and no observer (which would itself
-    // be automation). The presenter queues public SDL_QUIT after its first frame.
+    // Use ordinary entry. The presenter queues SDL_QUIT after the first frame.
     scale = before ? 1 : 2; presents = 0; quitAfter = 1;
     captureName = "ordinary-default";
     check(run(args()) == 0, "ordinary startup exits via SDL_QUIT"); quitAfter = 0;
@@ -217,8 +215,8 @@ int main(int argc, char** argv) {
       check(run(a, front, level, 0.2) == 0, "connected scaled route exits successfully");
       check(frontStage == 4 && levelStage == 4 && levelFrames > 0, "complete map/panel/hover/assignment route");
       check(creates == initialCreates + 1, "one shared window across frontend and level");
-      // The first tutorial only stocks Climber (already selected by default).
-      // Also prove an actual selection change on the installed Basher tutorial.
+      // The first tutorial stocks only the default Climber. Use the Basher
+      // tutorial to check a change of selection.
       int panelFrames = 0;
       auto panel = args(); panel.insert(panel.end(), {"--level", "MM_BASH_002", "--sim", "--frames", "2",
           "--window-scale", std::to_string(requested)});

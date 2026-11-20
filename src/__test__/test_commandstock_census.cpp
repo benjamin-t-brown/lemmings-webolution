@@ -1,9 +1,6 @@
-// gameplay-commands-research-001: read-only census of the serialized stock words
-// values_27d0[0..10] of every effective installed level. 0x0045B86D reads eleven
-// consecutive words into game+0x27D0..+0x2C; plate 9 (Armageddon) guard indexes
-// stock[9] (0x004532E2 tail, 0x0045AC5C). Source-built; reads installed archives only
-// through the production reader, never executes the game. Writes only under
-// build/gameplay-commands-research-001 (COMMAND_CENSUS_DIR). No production change.
+// Report serialized values_27d0[0..10] for every effective installed level.
+// 0x0045B86D reads eleven words into game+0x27D0..+0x2C. The Armageddon
+// guard indexes stock[9] (0x004532E2 tail, 0x0045AC5C).
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"
 #include "lemmings/compiled_level.hpp"

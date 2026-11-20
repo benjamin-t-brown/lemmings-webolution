@@ -1,4 +1,4 @@
-// Frontend screen sequence replay against the b2e and b2h live captures.
+// Check the frontend sequence against native menu, pause and map state values.
 
 #include "shell/Frontend.h"
 
@@ -22,8 +22,7 @@ void check(bool cond, std::string_view msg) {
   }
 }
 
-// Source: build/tmp/b2e-live-capture/report.json, steps[].counter / ui_state / nodes /
-// vtables (OBSERVED, one run). Vtable 0 and nodes 0 mean an empty list head in a level.
+// In steps[], vtable and node count both 0 identify an empty list head in a level.
 struct Row {
   const char* step;
   int counter;
@@ -41,8 +40,7 @@ constexpr std::array<Row, 7> kB2e = {{
     {"pause-ESC-hold-25", 5, 0, 0, 0},
 }};
 
-// Source: build/tmp/b2h-live-esc-sweep/report.json (OBSERVED, one run). ESC in pause at
-// each hold left pause: ui_state 0, counter 5, empty list.
+// ESC leaves pause with ui_state 0, counter 5 and an empty list.
 constexpr std::array<int, 5> kB2hHolds = {2, 5, 10, 25, 40};
 // ESC in the level (hold 20), then O, then P.
 constexpr Row kB2hDialog = {"level-ESC-dialog", 7, 2, 1, 0x4B26B0};
@@ -182,7 +180,7 @@ int main() {
     check(f.counter() == 7, "ToMap: teardown then new root and Map page (READ)");
   }
   {
-    // Main-menu row1 is the observed Play Current Game / Continue action.
+    // Main-menu row 1 selects Play Current Game / Continue.
     Frontend f;
     f.setHighlight(1);
     check(f.press(Key::Return) == Outcome::Handled && f.screen() == Screen::Map,

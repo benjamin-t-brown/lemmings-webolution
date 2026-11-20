@@ -1,5 +1,4 @@
-// teleport-softlock-001: source-built production routes on installed assets.
-// No original execution. --observe retains the unchanged baseline without claiming a pass.
+// Check installed teleport routes. --observe records diagnostics without asserting the outcome.
 #include "app/AppEntry.h"
 #include "assets/Box.h"
 #include "assets/Png.h"
@@ -46,8 +45,8 @@ void summary(std::ostream& out, const std::string& level, const World& w) {
   for (const auto& [s,n] : states) out << ',' << s << ':' << n;
   out << '\n';
 }
-// Same idle horizon as level-sweep-001: 1 s passes, five seconds after last release,
-// or time limit +2 s / level end. No injected actors or skills in this measurement.
+// Advance in 1 s passes through five seconds after the last release,
+// the time limit plus 2 s, or level end.
 void sweep(const AssetLibrary& lib, const fs::path& out) {
   std::ofstream table(out/"idle.csv");
   table << "level,ms,spawned,saved,dead,states\n";
@@ -103,8 +102,7 @@ void sweep(const AssetLibrary& lib, const fs::path& out) {
     summary(table, name, w);
     visits << name << ',' << entries << ',' << arrivals << ',' << departures << ',' << maxTransit << ',' << reentries << '\n';
     check(reentries == 0 && maxTransit <= 800, name + " natural visits have bounded transit and no immediate re-entry");
-    // Natural idle is not a win test. No teleport state should be stuck for longer
-    // than the existing four-tick transition; test every actual visit separately below.
+    // Check each pad visit against the four-tick transition bound.
     for (std::size_t i=0; i<setup->teleports.size(); ++i) for (Facing face : {Facing::Left, Facing::Right}) {
       LevelSetup route = *setup; route.totalLemmings=0; route.saveTarget=0;
       const auto& pad=route.teleports[i];
@@ -113,8 +111,7 @@ void sweep(const AssetLibrary& lib, const fs::path& out) {
       World trial(std::move(route)); trial.place(l);
       trial.advanceElapsedMs(200);
       check(trial.lemmings()[0].state==State::Teleporting, name+" enters pad "+std::to_string(i));
-      // Observe the actual transition, without imposing a timing retune: the
-      // hybrid implementation also increments frame in World's common tail.
+      // World's common update tail also increments the frame counter.
       for (int t=0;t<6 && trial.lemmings()[0].state==State::Teleporting;++t) trial.advanceElapsedMs(200);
       const Lemming arrival=trial.lemmings()[0];
       check(arrival.state==State::Walker && arrival.x==trial.terrain().wrapX(pad.destX) && arrival.y==pad.destY && arrival.facing==face,
@@ -132,9 +129,8 @@ void sweep(const AssetLibrary& lib, const fs::path& out) {
       check(left && !bounced, name+" leaves destination without re-entry, pad "+std::to_string(i)+" facing "+std::to_string(static_cast<int>(face)));
       directed << name << ',' << i << ',' << destination << ',' << static_cast<int>(face) << ',' << arrival.x << ',' << arrival.y << ',' << left << ',' << bounced << '\n';
       if (left && !bounced) {
-        // A departed actor can use the destination again. Carry its production
-        // state through one outside update, then seed a deliberate return visit
-        // on the same retail pad. A second actor there must be independent.
+        // Advance through one update outside the pad before testing a return visit.
+        // A second actor on the pad uses independent state.
         trial.advanceElapsedMs(200);
         Lemming returning = trial.lemmings()[0];
         returning.x = arrival.x; returning.y = arrival.y;

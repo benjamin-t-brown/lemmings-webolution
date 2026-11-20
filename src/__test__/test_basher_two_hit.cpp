@@ -1,5 +1,4 @@
-// Short legacy invariants: two cuts share one column; collision, debris and
-// runtime mesh consume the same surviving rows. No scripted gameplay route.
+// Check that two cuts sharing a column leave the same rows for collision, debris and the mesh.
 #include "app/TubeScene.h"
 #include "assets/Box.h"
 #include "assets/LevelIndex.h"

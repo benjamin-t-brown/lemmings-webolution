@@ -10,7 +10,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- flipper-sound-001: **blocked** — Gravity flippers play the original's sound when they flip a lemming
+- flipper-sound-001: **ready** — Gravity flippers play the original's sound when they flip a lemming
 - nuke-icon-additive-001: **ready** — The nuke panel icon is drawn without its black background
 
 ## Recently completed queue entries

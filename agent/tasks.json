@@ -29783,7 +29783,7 @@
     {
       "id": "flipper-sound-001",
       "title": "Gravity flippers play the original's sound when they flip a lemming",
-      "status": "blocked",
+      "status": "ready",
       "depends_on": [
         "rat-fling-spin-random-001"
       ],
@@ -29798,72 +29798,79 @@
         "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
       ],
-      "loop_attempts": 1,
+      "loop_attempts": 0,
       "run_id": "20261120T004904-50436-5b3c715e",
       "started": "2026-11-20T00:49:05.316653+00:00",
       "finished": "2026-11-20T00:50:15.497832+00:00",
       "last_run": "build/agent-runs/20261120T004904-50436-5b3c715e",
-      "blocker": "The worker stopped over the original-game reconstruction scope and submitted no flipper audio change, task report, or clone sound trace. The supervisor passed smoke on the existing source. The missing implementation and runtime evidence prevent acceptance.",
-      "review": {
-        "decision": "blocked",
-        "reason": "The worker stopped over the original-game reconstruction scope and submitted no flipper audio change, task report, or clone sound trace. The supervisor passed smoke on the existing source. The missing implementation and runtime evidence prevent acceptance.",
-        "checks": [
-          {
-            "criterion": "The report names each flipper sound with its sample, trigger, guard and static address (41D384/41D590 or wherever the evidence leads), or labels a choice provisional.",
-            "passed": false,
-            "evidence": [
+      "blocker": null,
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261120T004904-50436-5b3c715e",
+          "review": {
+            "decision": "blocked",
+            "reason": "The worker stopped over the original-game reconstruction scope and submitted no flipper audio change, task report, or clone sound trace. The supervisor passed smoke on the existing source. The missing implementation and runtime evidence prevent acceptance.",
+            "checks": [
               {
-                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/last-message.txt",
-                "detail": "The worker left the sample, trigger, and guard unverified. No task report was submitted."
+                "criterion": "The report names each flipper sound with its sample, trigger, guard and static address (41D384/41D590 or wherever the evidence leads), or labels a choice provisional.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261120T004904-50436-5b3c715e/last-message.txt",
+                    "detail": "The worker left the sample, trigger, and guard unverified. No task report was submitted."
+                  },
+                  {
+                    "path": "build/flipper-effect-blend-001/rea/41d730-asm.json",
+                    "detail": "The retained reader instructions show the sample lookup at 0x41D76F and storage at gadget +0xD8 at 0x41D777. This review confirmed that the lookup key at 0x4BF670 is AntiGrav, associated with ANTIGRAV.WAV."
+                  },
+                  {
+                    "path": "Lemmings Revolution/Lemmings Revolution.exe",
+                    "detail": "Ghidra confirmed the registered SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. At 0x41D450 any lemming contact sets the audio flag. At 0x41D590 the routine requests positional playback if the sample exists and the playback-status check at 0x41D4E0 is clear. The gravity-match guard at 0x41D475 controls a separate virtual call. The routine adjusts and stops the same sample at 0x41D67C and 0x41D6E1. This bounded lookup did not establish separate sounds for reversing gravity or falling inverted."
+                  }
+                ]
               },
               {
-                "path": "build/flipper-effect-blend-001/rea/41d730-asm.json",
-                "detail": "The retained reader instructions show the sample lookup at 0x41D76F and storage at gadget +0xD8 at 0x41D777. This review confirmed that the lookup key at 0x4BF670 is AntiGrav, associated with ANTIGRAV.WAV."
+                "criterion": "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "docs/playtest/2026-11-19-playtest-21.md",
+                    "detail": "Playtest 21 L4 records silent gravity flips on 2 sides to every story (M08_KF_1, node 30)."
+                  },
+                  {
+                    "path": "src/sim/World.cpp",
+                    "detail": "The flipIfAntiGrav branch at line 812 reverses gravity, switches the lemming to Faller, and returns without queuing a SoundEvent."
+                  },
+                  {
+                    "path": "build/agent-runs/20261120T004904-50436-5b3c715e/worker.jsonl",
+                    "detail": "The worker recorded no implementation or clone run. There is no task sound-event trace to verify one cue per flip or compare the other sounds."
+                  }
+                ]
               },
               {
-                "path": "Lemmings Revolution/Lemmings Revolution.exe",
-                "detail": "Ghidra confirmed the registered SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f. At 0x41D450 any lemming contact sets the audio flag. At 0x41D590 the routine requests positional playback if the sample exists and the playback-status check at 0x41D4E0 is clear. The gravity-match guard at 0x41D475 controls a separate virtual call. The routine adjusts and stops the same sample at 0x41D67C and 0x41D6E1. This bounded lookup did not establish separate sounds for reversing gravity or falling inverted."
+                "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261120T004904-50436-5b3c715e/verification.log",
+                    "detail": "The supervisor passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests. This run contains no promoted replay results."
+                  },
+                  {
+                    "path": "build/flipper-effect-blend-001/replay-results.tsv",
+                    "detail": "The preceding visual task recorded 25 promoted replay passes, including M06_KF_1 at step 1544 with 91 of 50 required saved. Those runs predate the flipper sound task."
+                  },
+                  {
+                    "path": "build/agent-runs/20261120T004904-50436-5b3c715e/last-message.txt",
+                    "detail": "The worker confirms it ran no replays. No task report or final what-to-check note was submitted."
+                  }
+                ]
               }
             ]
           },
-          {
-            "criterion": "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
-            "passed": false,
-            "evidence": [
-              {
-                "path": "docs/playtest/2026-11-19-playtest-21.md",
-                "detail": "Playtest 21 L4 records silent gravity flips on 2 sides to every story (M08_KF_1, node 30)."
-              },
-              {
-                "path": "src/sim/World.cpp",
-                "detail": "The flipIfAntiGrav branch at line 812 reverses gravity, switches the lemming to Faller, and returns without queuing a SoundEvent."
-              },
-              {
-                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/worker.jsonl",
-                "detail": "The worker recorded no implementation or clone run. There is no task sound-event trace to verify one cue per flip or compare the other sounds."
-              }
-            ]
-          },
-          {
-            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
-            "passed": false,
-            "evidence": [
-              {
-                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/verification.log",
-                "detail": "The supervisor passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests. This run contains no promoted replay results."
-              },
-              {
-                "path": "build/flipper-effect-blend-001/replay-results.tsv",
-                "detail": "The preceding visual task recorded 25 promoted replay passes, including M06_KF_1 at step 1544 with 91 of 50 required saved. Those runs predate the flipper sound task."
-              },
-              {
-                "path": "build/agent-runs/20261120T004904-50436-5b3c715e/last-message.txt",
-                "detail": "The worker confirms it ran no replays. No task report or final what-to-check note was submitted."
-              }
-            ]
-          }
-        ]
-      }
+          "blocker": "The worker stopped over the original-game reconstruction scope and submitted no flipper audio change, task report, or clone sound trace. The supervisor passed smoke on the existing source. The missing implementation and runtime evidence prevent acceptance."
+        }
+      ],
+      "lead_note": "Lead note 2026-11-19: attempt 1 declined, reading the task as recreating an existing game's assets. This repository is the user's engine reconstruction: the clone loads the user's own installed Lemmings Revolution data at runtime and no original binary or asset is committed (AGENTS.md, Builds and saves). Playing an installed sample by name through the existing cue path is what every accepted sound task does (e.g. rat-hit-sound-003 plays the installed THUNK.WAV). Static analysis of the registered reference EXE is authorized by AGENTS.md (Static analysis). If you still decline, say so in the report and stop."
     },
     {
       "id": "nuke-icon-additive-001",

@@ -4,6 +4,24 @@
 
 namespace webo::web {
 
+// Clone addition. Only the CSS presentation changes. SDL retains its 640x480
+// canvas backing size and translates the displayed rectangle to game pixels.
+EM_JS(void, applyCanvasScale, (int scale), {
+  const canvas = Module['canvas'];
+  if (canvas?.dataset) canvas.dataset.windowScale = scale;
+});
+
+void setCanvasScale(int scale) { applyCanvasScale(scale); }
+
+EM_JS(void, getCanvasFillSize, (int* width, int* height), {
+  if (typeof window === 'undefined') return;
+  const w = Math.min(window.innerWidth, window.innerHeight * 4 / 3);
+  HEAP32[width >> 2] = Math.round(w);
+  HEAP32[height >> 2] = Math.round(w * 3 / 4);
+});
+
+void canvasFillSize(int& width, int& height) { getCanvasFillSize(&width, &height); }
+
 EM_ASYNC_JS(void, waitForFrame, (), {
   await new Promise(resolve => requestAnimationFrame(resolve));
 });

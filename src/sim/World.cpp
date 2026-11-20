@@ -13,8 +13,8 @@ bool insideTeleport(const Terrain& terrain, const Teleport& t, const Lemming& l)
 }
 
 void releaseTeleportContacts(const LevelSetup& setup, Lemming& l) {
-  // 0x435467..0x435478: remove an excluded actor only outside the pad.
-  // This also runs for non-walkers, so falling/skill motion can rearm a visit.
+  // 0x435467..0x435478 rearms a pad visit when an excluded actor leaves,
+  // including during a fall or skill motion.
   std::erase_if(l.teleportPadsLatched, [&](std::size_t i) {
     return i >= setup.teleports.size() || !insideTeleport(setup.terrain, setup.teleports[i], l);
   });
@@ -70,8 +70,7 @@ World::World(LevelSetup setup, Rules rules) : setup_(std::move(setup)), rules_(r
     if (e.releaseCount < 0) ++unspecified;
     else unassigned -= e.releaseCount;
   }
-  // Provisional fallback for hand-built setups only. Retail quotas come from
-  // the stored hatch words, including uneven populations such as 3/50.
+  // Provisional: divide hand-built populations among hatches without quotas.
   for (auto& e : setup_.entrances) {
     if (e.releaseCount < 0) {
       e.releaseCount = (std::max(0, unassigned) + unspecified - 1) / unspecified;
@@ -105,9 +104,8 @@ void World::place(Lemming lemming) {
 }
 
 void World::spawn(double budgetSeconds) {
-  // Playtest 10 Z6: a release tick serves every nonempty hatch. The shared
-  // countdown and first-fall budget are identical for this entire batch.
-  // Stream order breaks simultaneous actor-index ties provisionally.
+  // One shared release tick and first-fall budget serve every nonempty hatch.
+  // Provisional: stream order breaks simultaneous actor-index ties.
   for (std::size_t i = 0; i < setup_.entrances.size(); ++i) {
     if (remainingFromEntrance(i) > 0)
       spawnFromEntrance(i, budgetSeconds);
@@ -124,23 +122,17 @@ void World::spawnFromEntrance(std::size_t entranceIndex, double budgetSeconds) {
   l.y = e.y;
   l.state = State::Faller;
   l.releasedFromHatch = true;
-  // Round 29: hatch+0xB0 -> [lemming+0x4c] at 0x0042E05F.
+  // 0x0042E05F copies hatch+0xB0 to [lemming+0x4c].
   l.sheetType = e.sheetType;
-  // 0x42DFDD initializes +0x40=1; 0x425C6E..0x425C7D reverses it only
-  // for hatch +0xB4 == -1. Toggle this hatch AFTER choosing the birth face,
-  // before the actor's first update (0x425C82..0x425CCC).
+  // 0x42DFDD sets +0x40=1. 0x425C6E..0x425C7D reverses it for hatch
+  // +0xB4 == -1. Toggle the hatch after choosing the birth face and before
+  // the actor updates (0x425C82..0x425CCC).
   auto& direction = e.direction;
   l.facing = direction == -1 ? Facing::Left : Facing::Right;
   if (e.alternateDirection)
     direction = direction == 1 ? -1 : 1;
-  // D1n: under the opt-in continuous stepper clock, a lemming released
-  // partway through the tick that spawned it (continuous release model
-  // only -- the caller passes a reduced budgetSeconds in that case) should
-  // not get a full tick's worth of fall time before the next World::tick()
-  // call. budgetSeconds < 0.0 (every integer-release-model call, and every
-  // continuous-release call that happened to land exactly on a tick
-  // boundary) means "the full tick," matching the old unconditional
-  // behaviour.
+  // The continuous release clock can give a new faller only the time left
+  // in this update. A negative budgetSeconds uses the entire update.
   if (continuousMotion()) {
     const double dt = motionDtSeconds();
     const double budget = budgetSeconds >= 0.0 ? budgetSeconds : dt;
@@ -151,10 +143,8 @@ void World::spawnFromEntrance(std::size_t entranceIndex, double budgetSeconds) {
   ++spawnedByEntrance_[entranceIndex];
 }
 void World::stampBlockerField(const Lemming& l) {
-  // 40E2D7 multiplies the row offset by actor+44; 40E19A does the
-  // same on exit. Convert Y-up to our feet-based Y-down coordinates.
-  // The exact original +368 anchor conversion remains provisional, as for
-  // inverted drawing; reflect the accepted upright footprint about the feet.
+  // 40E2D7 on entry and 40E19A on exit scale the row by actor+44.
+  // Provisional +368 anchor conversion: reflect about the feet in Y-down.
   const int v = l.verticalDir >= 0 ? 1 : -1;
   for (int k = 0; k < rules_.blockerFieldHeight; ++k)
     setup_.terrain.setBlockerField(l.x, l.y - k * v, true);
@@ -247,8 +237,8 @@ double FluidGate::rateFor(int kind) {
 }
 
 void FluidGate::initialise(Terrain& terrain) {
-  // Reader 0x0042ACAC (0x42af32..0x42afc4): request 1 -> height := low, CLEAR the zone bit over
-  // the stream AABB; otherwise height := high and SET it. [+0x68] is not recomputed here.
+  // At load, 0x0042ACAC (0x42af32..0x42afc4) selects low and clears the
+  // stream AABB for request 1, otherwise high and set. Keep serialized [+0x68].
   const bool drained = request == 1;
   height = drained ? low : high;
   if (paintsZonePlane())
@@ -274,16 +264,13 @@ double FluidGate::wavePeriodFor(int kind) {
 }
 
 void FluidGate::stepHeight(double dt, Terrain& terrain) {
-  // 0x0042B24D. While request == done the height machine exits to the wave/model tail
-  // (advanceWave; the model update itself is rendered from this state by the app).
+  // 0x0042B24D skips height changes when request equals done. Waves still advance.
   if (request == done)
     return;
   const double rate = rateFor(kind);
   if (request == 0) {
-    // Raise (message type 4). The comparison is made BEFORE the add and nothing clamps the
-    // add, so the update that crosses `high` overshoots by less than dt * rate and the next
-    // update snaps to `high`; rows the overshoot set are never cleared. The settle update
-    // still repaints (it is the unconditional tail of this branch).
+    // Raise (message 4) checks before adding dt * rate, so one update may
+    // overshoot. Settling snaps to high and repaints without clearing overshoot rows.
     if (height < high) {
       height = dt * rate + height;
     } else {
@@ -297,9 +284,8 @@ void FluidGate::stepHeight(double dt, Terrain& terrain) {
     if (paintsZonePlane())
       terrain.paintZoneWaterRect(minX, minY, maxX, maxY, true);
   } else {
-    // Drain (message type 5). Settling dispatches the +0x12C list in the original; the
-    // serialized objects carry none, so only the bookkeeping is reproduced. The settle path
-    // neither paints nor recomputes [+0x68].
+    // Drain (message 5) settles without painting or recomputing [+0x68].
+    // The original sends +0x12C at settle. Installed receivers have no entries.
     if (height <= low) {
       height = low;
       if (!armed) {
@@ -369,8 +355,8 @@ void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& l
     if (ref.cls == ObjectClass::OccupancySensor && ref.index >= 0 &&
         static_cast<std::size_t>(ref.index) < setup.occupancySensors.size()) {
       if (m.type == 4 || m.type == 5) {
-        // Sensor vt 0x4B12B4: +4/+8 are base 0x41DC00/20, not its
-        // occupied/empty arms (+0x20/+0x24). Disabling freezes the cooldown.
+        // Sensor vt 0x4B12B4 uses base 0x41DC00/20 at +4/+8. The occupancy
+        // arms are +0x20/+0x24. Disabling freezes the cooldown.
         setup.occupancySensors[static_cast<std::size_t>(ref.index)].enabled = m.type == 4;
         ++setup.leverStats.delivered;
       } else ++setup.leverStats.unsupported;
@@ -391,8 +377,7 @@ void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& l
       if (m.type == 4 || m.type == 5) {
         hazard.enabled = m.type == 4; // 0x43645E / 0x436471 -> 0x41DC00/20
       } else if (m.type == 0 && hazard.moving && m.p1 <= 2) {
-        // 0x424583: choose a path, or toggle the requested path. The actual
-        // switch waits for a shared junction in advancePatrol.
+        // 0x424583 selects or toggles the requested path. advancePatrol waits for a junction.
         const unsigned next = m.p1 == 2 ? 1 - hazard.requestedPath : m.p1;
         if (hazard.paths[next].segments.empty()) {
           ++setup.leverStats.unsupported;
@@ -409,7 +394,7 @@ void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& l
     const bool gateTarget = ref.cls == ObjectClass::Gate && ref.index >= 0 &&
                             static_cast<std::size_t>(ref.index) < setup.gates.size();
     if (!gateTarget || (m.type != 4 && m.type != 5)) {
-      // Type 0 (vt+0xC) and the other classes' vt+4/vt+8 are not traced: bounded, not applied.
+      // Provisional: type 0 (vt+0xC) and untraced vt+4/vt+8 targets are ignored.
       ++setup.leverStats.unsupported;
       continue;
     }
@@ -428,12 +413,9 @@ void activateLeverFace(LevelSetup& setup, Lever& lever, int face) {
 }
 
 void fanOutLeverLoadFaces(LevelSetup& setup) {
-  // 0x00444417 -> vt+0x28 0x0043703F -> 0x00436E6A([+0xDC]): the stored face is the state AND the
-  // list that is sent, in one step, so the two cannot disagree. activateLeverFace does exactly the
-  // runtime step (state := face, then the matching list) and touches neither the cooldown (the load
-  // path calls 0x00436E6A directly, not the cooldown-reloading 0x00436E14) nor the cue. A face that
-  // is not +-1 changes nothing and the lever keeps its constructed state, as 0x00436E6A ignores it.
-  // An unlinked (legacy / synthetic) lever has no serialized face and is left untouched.
+  // 0x00444417 -> vt+0x28 0x0043703F -> 0x00436E6A([+0xDC]) applies
+  // the stored face and sends its list. The direct call bypasses
+  // 0x00436E14, leaving cooldown and sound alone. Unlinked levers are skipped.
   for (Lever& lever : setup.levers) {
     if (!lever.linked)
       continue;
@@ -447,15 +429,12 @@ void World::stepTeleporting(Lemming& l) {
   ++l.frame;
   if (l.frame < rules_.teleportDelayTicks)
     return;
-  // destX/destY were stashed in bricksLeft / fallDistance at attach — those
-  // fields are idle for a walker-sourced teleport.
+  // Walker-sourced teleports store the partner feet cell in idle state fields.
   l.x = setup_.terrain.wrapX(l.bricksLeft);
   l.y = l.fallDistance;
   // 0x4350E1..0x4350F9 registers the actor with the partner before relocation.
-  // RetailLevel projects each partner pose to its pad's bottom-center cell;
-  // retain that identity without changing serialized pairing or the snap rule.
-  // Provisional for custom overlapping pads: exclude every pad containing the
-  // arrival cell. Installed links all have exactly one containing destination.
+  // The destination uses the partner pad's bottom-center cell. Provisional:
+  // if pads overlap there, exclude each until the actor leaves it.
   for (std::size_t i = 0; i < setup_.teleports.size(); ++i) {
     if (insideTeleport(setup_.terrain, setup_.teleports[i], l) &&
         std::find(l.teleportPadsLatched.begin(), l.teleportPadsLatched.end(), i) ==
@@ -522,39 +501,20 @@ void World::stepFaller(Lemming& l) {
   if (floating)
     l.state = State::Floater;
 
-  // D1n: opt-in continuous sub-tick clock (LevelSetup::continuousStepperClock,
-  // docs/scratch/phase-d1-stepper-clock.md). Off (the default, `continuous`
-  // false below): `units` is exactly `speed` and `dt`/`unitSeconds`/`budget`
-  // are never read, so the loop runs byte-for-byte as it did before this
-  // round. On: `units` is how many whole fall cells this tick's own
-  // real-time budget (this tick's dt, plus whatever a prior call could not
-  // spend -- Lemming::stepBudgetSeconds) actually buys, and a landing
-  // mid-loop hands the unconsumed remainder of that budget to stepWalker()
-  // within the SAME tick instead of discarding it.
+  // The tick path without continuous motion spends speed cells.
+  // Continuous motion spends whole cells from dt plus stepBudgetSeconds, with a
+  // same-update handoff on landing when the fall carries sub-tick phase.
 
   const bool halved =
       floating && l.fallDistance >= rules_.floatAfter + floatOpenCells();
   const int speed = halved ? rules_.floatSpeed : rules_.fallSpeed;
 
   const bool continuous = continuousMotion() && speed > 0;
-  // D1n: whether this call already carries a REAL, measured sub-tick phase
-  // (traced back to a reduced spawn budget from the continuous release
-  // model, or a same-tick handoff from an earlier stepper this very tick --
-  // see Lemming::stepBudgetSeconds). A fall that has run only on whole,
-  // tick-aligned dt budgets so far (every ordinary mid-walk ledge fall,
-  // where nothing upstream ever set a fractional carry) reaches its OWN
-  // landing tick with `stepBudgetSeconds == 0.0` even though the loop below
-  // may stop partway through this tick's `speed` sub-units -- that
-  // leftover is an artifact of how this implementation happens to batch a
-  // whole tick's fall into `speed` equal-sized cell crossings, not a
-  // measured real-time quantity (nothing in D1m's reading establishes that
-  // the original's own per-frame dt is quantized to 1/fallSpeed of a
-  // 200ms tick), so it must NOT be handed to the walker -- only a call that
-  // is already carrying real phase may extend that same real phase forward.
+  // Only a fall with carried sub-tick phase hands time to the walker on
+  // landing. Unused cells from a tick-aligned budget carry no phase by themselves.
   const bool hasTrackedPhase = continuous && l.stepBudgetSeconds != 0.0;
-  // shared-timing-impl-001: `dt` is this update's own elapsed time (motionDtSeconds(): the
-  // explicit segment dt, or tickDtSeconds() under legacy tick()); the lattice unit stays
-  // the measured tickDtSeconds() / speed, so a legacy 0.2 s call computes exactly as before.
+  // The elapsed budget uses motionDtSeconds(). Each cell costs
+  // tickDtSeconds() / speed.
   const double dt = continuous ? motionDtSeconds() : 0.0;
   const double unitSeconds = continuous ? tickDtSeconds() / speed : 0.0;
   const double budget = continuous ? dt + l.stepBudgetSeconds : 0.0;
@@ -566,25 +526,11 @@ void World::stepFaller(Lemming& l) {
 
   const int v = l.verticalDir >= 0 ? 1 : -1;
   for (int i = 0; i < units; ++i) {
-    // d2h repair 1 (round 2): native (0x004160bd) writes this sub-unit's
-    // move back to lemming+0x10 (0x0041627f) strictly BEFORE calling the
-    // land/floater/splat check (0x0041632b -> 0x00416433), which re-reads
-    // the lemming's position fresh at its own entry (0x42f22e) -- so the
-    // check below tests the cell neighbouring the Y this sub-unit's OWN
-    // move already reached, not the Y before it. Moving first here (unlike
-    // the prior check-then-move shape) matches that: it lets the final
-    // sub-unit of a tick whose fall exactly reaches the ground see the
-    // ground as `l.y + v` using the just-updated `l.y`, instead of
-    // deferring that same-tick landing to the next call's first sub-unit.
-    // build/tmp/d2h-skill-assign-floater-repair1/disasm_confirmation.md has
-    // the full byte trace and the gap-to-ground invariant (established from
-    // stepWalker's own Faller-entry condition) that makes an unconditional
-    // move safe here -- a fall's gap-to-ground is never 1 at the start of
-    // any stepFaller call, so this can never walk a lemming INTO solid
-    // ground before its own post-move check gets a chance to catch it.
-    // PROVISIONAL feet-grid adapter for inverted entries already adjacent to
-    // a ceiling: do not move through that support. Upright's accepted move/check
-    // order is unchanged; ordinary inverted falls also move first.
+    // Fall step 0x004160bd writes lemming+0x10 at 0x0041627f before
+    // 0x0041632b -> 0x00416433 rereads position (0x42f22e) for landing,
+    // floating and splat. The current sub-step's move precedes the probe.
+    // Provisional feet-grid adapter: an inverted entry already against a
+    // ceiling lands without moving through it.
     if (v > 0 || !groundAt(l.x, l.y - 1, v)) {
       l.y += v;
       ++l.fallDistance;
@@ -592,14 +538,10 @@ void World::stepFaller(Lemming& l) {
 
     const int height = setup_.terrain.height();
     if (l.y < 0 || l.y >= height || (v > 0 && l.y == height - 1)) {
-      // READ 4164CE..41653A: vertical bounds precede landing and attach the
-      // same type-1A loss as an excessive fall; float/distance/gravity do not
-      // exempt it. PROVISIONAL feet/raw-origin adapter: upright loses at the
-      // bottom row, before Terrain::at's out-of-grid Steel can land it on an
-      // imaginary floor. Real support in the last row lands at height-2 and
-      // remains safe. Preserve inverted's first-outside-cell boundary.
-      // Native raw Y/bias/clamp differs (40DF50, 42F22E).
-      // Keep the existing clone splat lifetime/counting, without fall retiming.
+      // 4164CE..41653A checks vertical bounds before landing and selects
+      // the same type-1A loss as splat. Provisional feet-grid bounds account
+      // for native Y/bias/clamp (40DF50, 42F22E). Upright loses on the last
+      // row before probing the Steel sentinel. Inverted loses above row zero.
       l.y = std::clamp(l.y, 0, std::max(0, height - 1));
       l.state = State::Splatter;
       l.frame = 0;
@@ -613,9 +555,8 @@ void World::stepFaller(Lemming& l) {
     if (attachFluidHazard(l))
       return;
 
-    // Round 14: 0x2f probes the ground cell every sub-step. Live paint of
-    // 0x40 on MM_CLIMB_002 attached drown mid-fall when under=(col,floor)
-    // before the walk land (`measure_water.py`). Ahead of trampoline/splat.
+    // Side-effect 0x2f tests ground bit 0x40 before trampoline and splat.
+    // Its probe can reach a floor such as the pen in MM_CLIMB_002 before landing.
     if (setup_.terrain.waterHazard(l.x, l.y + v)) {
       cueSample("Bubble", l); // provisional: entry rather than later sinking bubble
       l.state = State::Drown;
@@ -631,8 +572,8 @@ void World::stepFaller(Lemming& l) {
         return;
       }
 
-      // Round 29: after floater, FUN_00416433 skips splat when the foot
-      // cell's 0x200/0x4000 matches sheetType 1/2 (measure_splat_exempt.py).
+      // After the floater check, FUN_00416433 exempts sheet 1 on 0x200
+      // and sheet 2 on 0x4000 from splat.
       const bool zoneExempt =
           setup_.terrain.splatExempt(l.x, l.y + v, l.sheetType);
       if (!floating && !zoneExempt &&
@@ -647,18 +588,8 @@ void World::stepFaller(Lemming& l) {
       l.fallDistance = 0;
       l.frame = 0;
       if (hasTrackedPhase) {
-        // D1n: the landing instant is `(i + 1) * unitSeconds` into this
-        // call's own budget -- updated from `i * unitSeconds` as a direct,
-        // named consequence of the repair-1 reorder above: this sub-unit's
-        // OWN move (now counted before this check runs) is part of the
-        // consumed budget, so the (i+1)-th sub-unit, not the i-th, is what
-        // actually landed. Everything after that was never fall time to
-        // begin with (the lemming was already standing on the ground) --
-        // hand it to the walk stepper in the SAME tick instead of dropping
-        // it, which is the mechanism D1m's replay showed collapses the
-        // landing-tick drift (docs/scratch/phase-d1-stepper-clock.md).
-        // Gated on hasTrackedPhase (see above): only when this fall's own
-        // budget already carries a real measured sub-tick offset.
+        // Landing spends (i + 1) * unitSeconds, including the move that reached
+        // support. Give the walker the remaining tracked time in this update.
         const double leftover = budget - (i + 1) * unitSeconds;
         l.stepBudgetSeconds = leftover - dt;
         stepWalker(l);
@@ -699,13 +630,10 @@ void World::stepBounce(Lemming& l) {
 }
 
 void World::stepDrown(Lemming& l) {
-  // Round 14. Drown step 0x00408766: add dt to state+8; when > 2.0 return 2
-  // (lemming leaves the actor list). Live: acc reached 2.000 then removal
-  // (~2.0 s). frame accumulates ms via msPerTick.
+  // Drown step 0x00408766 adds seconds to state+8 and removes the actor
+  // when it exceeds 2.0. Here frame counts milliseconds.
   l.frame += msPerTick();
-  // Original: return 2 when accumulator > 2.0. Live removals sat at
-  // acc=2.000 then left within one sample; at 200 ms ticks, >= 2000 ms is
-  // the same discrete length (10 ticks).
+  // Sample removal at 2000 ms (10 updates at 5 Hz).
   if (l.frame >= rules_.drownMs) {
     l.state = State::Dead;
     if (l.sheetType != 3) ++dead_;
@@ -728,10 +656,10 @@ bool World::groundAt(int x, int y, int verticalDir) const {
     double dx = std::fmod(x - g.minX, double(width));
     if (dx < 0.0)
       dx += width;
-    // Provisional integer support: feet use floor(mean live surface), so
-    // the ground probe is one row below it. Visual waves are not collision.
-    // Original 0x41C321..0x41C41D separates receiver/species contact from
-    // terrain; human MM_W_012 observations establish dry fall / wet travel.
+    // Provisional support: feet ride floor(mean live surface). The ground
+    // probe is one row below. 0x41C321..0x41C41D checks receiver contact
+    // separately from terrain. A dry receiver such as MM_W_012's supplies no
+    // support. Visual waves do not affect collision.
     if (dx < span && row == int(std::floor(g.minY + g.height)) - 1)
       return true;
   }
@@ -741,18 +669,13 @@ bool World::groundAt(int x, int y, int verticalDir) const {
 bool World::attachFluidHazard(Lemming& l) {
   if (!l.active() || l.state == State::Drown || l.state == State::Teleporting)
     return false;
-  // 0x41C321..0x41C36F: water (kind 0) spares sheet 1, acid (2)
-  // spares sheet 2; lava (1) always kills. 0x404261 enters "drown".
-  // PROVISIONAL playable-v1 contact: feet enter the mean fluid volume,
-  // inclusive vertically and half-open in X. The original writer
-  // of lem+0x54 / exact immersion threshold is not yet traced. Waves are
-  // visual, not a new hazard clock. Read live height, never the stored mask
-  // or maxY (which can remain stale after drain-to-low settling).
-  // Reuse State::Drown's existing animation/loss bookkeeping and duration;
-  // the original fluid-mismatch state (0x23) instead sinks to the bottom.
-  // Its sinking/FX lifetime is not an established clone timing contract.
-  // A ground-cell probe would kill an actor standing above the surface:
-  // MM_BUILD_BLOCK_A has surface Y=28.5 and dry feet at Y=29.
+  // 0x41C321..0x41C36F spares sheet 1 in water (kind 0) and sheet 2
+  // in acid (2). Lava (1) kills any tribe. 0x404261 enters "drown".
+  // Provisional contact: test feet against the mean live fluid volume,
+  // vertically closed and half-open in X. The lem+0x54 writer and exact
+  // immersion threshold are untraced. Feet above the surface are dry,
+  // for example Y=29 over Y=28.5 in MM_BUILD_BLOCK_A. Use the clone's Drown timer.
+  // The original's fluid-mismatch state (0x23) sinks to the bottom.
   const double row = setup_.terrain.height() - 1 - l.y;
   const int width = setup_.terrain.width();
   if (width <= 0)
@@ -767,9 +690,8 @@ bool World::attachFluidHazard(Lemming& l) {
     if (dx >= span || row < g.minY || row > g.minY + g.height)
       continue;
     if ((g.kind == 0 && l.sheetType == 1) || (g.kind == 2 && l.sheetType == 2)) {
-      // Provisional cell quantization of surface riding. Re-evaluate the
-      // live height each update, including while a linked receiver rises.
-      // Do not move an actor standing on actual terrain above the fluid.
+      // Provisional surface riding: resample live height each update while
+      // keeping actors supported by real terrain above the fluid in place.
       if (l.verticalDir > 0 && (l.state == State::Walker ||
           l.state == State::Faller || l.state == State::Floater))
         l.y = setup_.terrain.height() - 1 - int(std::floor(g.minY + g.height));
@@ -787,18 +709,12 @@ bool World::attachFluidHazard(Lemming& l) {
 
 void World::stepWalker(Lemming& l) {
   const int dir = static_cast<int>(l.facing);
-  // D1f (round 6), MEASURED via old/docs/scratch/phase3-round10-steppers.md
-  // Part 6 (0x0041C67E): captured before either `turn(l)` below can run, so
-  // it reflects the facing this call actually walked in on, not any facing
-  // a recursive continuation already flipped.
+  // Sample incoming facing before any turn or recursion (0x0041C67E).
   const bool wasLeft = l.facing == Facing::Left;
 
-  // D1n: opt-in continuous sub-tick clock -- see the matching comment in
-  // stepFaller. Off (the default, `continuous` false below): `units` is
-  // exactly `rules_.walkSpeed` and `dt`/`unitSeconds`/`budget` are never
-  // read, so the loop runs byte-for-byte as it did before this round.
+  // As in stepFaller, the continuous path spends elapsed time in whole cells.
   const bool continuous = continuousMotion() && rules_.walkSpeed > 0;
-  // shared-timing-impl-001: same dt / lattice-unit split as stepFaller.
+  // This update supplies elapsed time. The nominal tick sets the cost per cell.
   const double dt = continuous ? motionDtSeconds() : 0.0;
   const double unitSeconds = continuous ? tickDtSeconds() / rules_.walkSpeed : 0.0;
   const double budget = continuous ? dt + l.stepBudgetSeconds : 0.0;
@@ -832,27 +748,18 @@ void World::stepWalker(Lemming& l) {
         l.x = setup_.terrain.wrapX(nx);
     };
 
-    // Step-up probes along -verticalDir (against gravity). MEASURED round 30:
-    // upright add [+0x44] at 0x0041C48E / 0x0041C528; inverted walkers on
-    // m06 adopted dy -1 / -2 in Y-up (= +rise in this Y-down terrain).
+    // Each step-up probe moves against gravity, using [+0x44] in the
+    // original's Y-up grid (0x0041C48E / 0x0041C528).
     int rise = 0;
     while (rise <= rules_.maxStepUp) {
       if (setup_.terrain.blockerField(nx, l.y - rise * v)) {
         settleOnProbeColumn();
         turn(l);
-        // MEASURED, round 10 Part 6 (0x0041C67E, after 0x0041C679 calls
-        // 0x0042F66B): the original's turn arm returns 0, so its slice loop
-        // (0x0041BDD4) keeps going in the SAME tick and a walker that was
-        // facing Left steps once in its new (now Right) direction
-        // immediately -- live went 24, 25, 26, 27 against the column-23
-        // wall where ours went 24, 24, 25, 26. A walker that was facing
-        // Right already consumed the tick moving onto the wall column via
-        // settleOnProbeColumn() above, so it must NOT get this extra step
-        // ("right-facing turns already match" -- do not add it there).
+        // At 0x0041C67E, the turn call at 0x0041C679 (0x0042F66B) returns zero
+        // to continue the slice loop (0x0041BDD4). The clone continues an incoming
+        // leftward step immediately. A rightward step spent its movement settling.
         if (wasLeft) {
-          // D1n: only when the recursive call actually happens -- the
-          // right-facing case above must stay byte-for-byte untouched, so
-          // the leftover-budget handoff lives inside this branch alone.
+          // Give only the same-update continuation the unspent budget.
           if (continuous) {
             const double leftover = budget - s * unitSeconds;
             l.stepBudgetSeconds = leftover - dt;
@@ -876,11 +783,8 @@ void World::stepWalker(Lemming& l) {
         return;
       }
       turn(l);
-      // Same mechanism as the blocker-field turn above: only a walker that
-      // was facing Left gets the same-tick continuation. D1f, round 6.
+      // As with a blocker field, only an incoming leftward step continues after turning.
       if (wasLeft) {
-        // D1n: same leftover-budget handoff as the blocker-field turn
-        // above, same restriction to the wasLeft branch only.
         if (continuous) {
           const double leftover = budget - s * unitSeconds;
           l.stepBudgetSeconds = leftover - dt;
@@ -929,29 +833,18 @@ void World::stepWalker(Lemming& l) {
 
 void World::stepClimber(Lemming& l) {
   const int dir = static_cast<int>(l.facing);
-  // Climb advances Y by vdir * 5.0 * dt (0x00413869). Hoist net is
-  // +2*vdir (0x00417D6F / exit). MEASURED round 30 on m06: inverted climb
-  // then hoist walked at Y 12 after enter at ~14.5 (Y-up, against gravity).
+  // Climb rises at vdir * 5.0 * dt in Y-up (0x00413869).
+  // Hoist and exit net +2*vdir (0x00417D6F).
   const int v = l.verticalDir >= 0 ? 1 : -1;
 
   const int wall = l.facing == Facing::Right
                        ? l.x
                        : setup_.terrain.wrapX(l.x - 1);
 
-  // READ round 2 of d2f-skill-assign-capture (repair 1), disassembly of
-  // 0x004137CA (the outer per-tick stepper) and 0x004139BF (the function it
-  // calls at 0x004138E8). The Y write-back (0x00413875-0x0041388B) happens
-  // strictly BEFORE 0x004139BF's own biased-position read (0x0042F35F,
-  // called from 0x004139DD), which both the ceiling probe (0x00413a53) and
-  // the topout probe (0x00413b50) are built from. So both checks below test
-  // the lemming's Y AFTER this tick's climb move, not before it -- moving
-  // first and checking the new Y, below, matches the native ordering.
-  // build/tmp/d2f-skill-assign-capture-repair1/disasm_notes.md has the full
-  // byte trace. This corrects old/docs/scratch/phase3-round10-steppers.md's
-  // "tests the ceiling first (the original's order)" claim, which asserted
-  // check-then-move without having the 0x4137CA/0x4139BF call split in view;
-  // round 1's live capture (45/50 ticks, one residual: our Hoister label one
-  // tick later than the original at the same Y) is what exposed it.
+  // Climb step 0x004137CA (0x4137CA) writes Y at 0x00413875-0x0041388B
+  // before calling 0x004139BF (0x4139BF) at 0x004138E8.
+  // That helper reads the biased position (0x004139DD -> 0x0042F35F)
+  // before the ceiling (0x00413a53) and top-out (0x00413b50) probes.
   l.y -= v * rules_.climbSpeed;
 
   // 0x00413A2A clamps the cell lookup, but 0x00413A67 compares the
@@ -1003,21 +896,16 @@ void World::stepBuilder(Lemming& l) {
                      rules_.builderBrickPercent - rules_.builderEnterPercent))
     return;
   const int dir = static_cast<int>(l.facing);
+  const int gravity = l.verticalDir >= 0 ? 1 : -1;
 
-
-
-
+  // Paint at the current feet, then rise against gravity in the Y-down grid.
   for (int k = 1; k <= rules_.brickLength; ++k) {
     const int bx = setup_.terrain.wrapX(l.x + k * dir);
     if (!setup_.terrain.solid(bx, l.y))
       setup_.terrain.set(bx, l.y, Material::Built);
   }
 
-
-
-
-
-  l.y -= 1;
+  l.y -= gravity;
   if (solidAt(setup_.terrain.wrapX(l.x + dir), l.y)) {
     turn(l);
     l.state = State::Walker;
@@ -1026,8 +914,7 @@ void World::stepBuilder(Lemming& l) {
   }
 
   l.x = setup_.terrain.wrapX(l.x + dir);
-  // 0x40FF54..0x40FF73: Chink with the PRE-decrement count 3, 2 or 1.
-  // Keep the accepted hybrid brick timing; attach only an audio event.
+  // 0x40FF54..0x40FF73 plays Chink for pre-decrement counts 3, 2 or 1.
   if (l.bricksLeft > 0 && l.bricksLeft < 4)
     cue(SoundCue::BuilderWarning, &l);
   --l.bricksLeft;
@@ -1038,7 +925,7 @@ void World::stepBuilder(Lemming& l) {
   }
   // 0x410032..0x41009E probes one column ahead at head height after
   // advancing. The last spent brick enters the shrug before this probe.
-  if (solidAt(l.x + dir, l.y - rules_.lemmingHeight)) {
+  if (solidAt(l.x + dir, l.y - gravity * rules_.lemmingHeight)) {
     turn(l);
     l.state = State::Walker;
     l.frame = 0;
@@ -1052,8 +939,7 @@ void World::stepShrugger(Lemming& l) {
 }
 
 std::size_t World::clearSkillBox(const Lemming& l, int x, int y, int width, int height) {
-  // Snapshot only the small existing cut footprint, and only with a renderer
-  // listening. Keep the original clearBox's stencil, ordering and return value.
+  // Snapshot the cut for presentation only when a removal observer is present.
   if (!terrainCutObserver_) return setup_.terrain.clearBox(x, y, width, height);
   std::vector<std::array<int, 2>> cells;
   for (int cy = std::max(0, y); cy < std::min(y + height, setup_.terrain.height()); ++cy)
@@ -1082,8 +968,7 @@ void World::stepBasher(Lemming& l) {
   const int x0 = l.x + dir;
   const int top = l.y - (rules_.basherHeight - 1);
 
-  // Steel and the open-air check still use the whole footprint. The upper
-  // half left by the first punch still counts as solid.
+  // Preflight covers the full footprint, including the upper rows between punches.
   bool anySolid = false, anySteel = false;
   for (int dy = 0; dy < rules_.basherHeight; ++dy)
     for (int dx = 0; dx < rules_.basherReach; ++dx) {
@@ -1094,12 +979,10 @@ void World::stepBasher(Lemming& l) {
         anySolid = true;
     }
 
-  // 40BBA0 registers rows 0/1 at 12/16%, then 3/2 at 60/64%.
-  // 40C0AF zeroes ordinary grid cells (40C16D), with debris and Mine for
-  // subpasses 0 and 3. A wall piece is four rows, not a packed half-cell.
-  // PROVISIONAL 5 Hz adapter: coalesce each punch's two nearby row writes
-  // at its first record. Both collision and the mesh see the surviving half
-  // through the ordinary Terrain::set/version -> TubeScene::syncTerrain path.
+  // 40BBA0 registers rows 0/1 at 12/16% and 3/2 at 60/64%.
+  // 40C0AF clears cells (40C16D), with debris and Mine on subpasses 0 and 3.
+  // Provisional 5 Hz adapter: group each pair at its first record. Terrain::set
+  // exposes the remaining rows to collision and TubeScene::syncTerrain.
   const int lowerHeight = (rules_.basherHeight + 1) / 2;
   const int cutX = dir > 0 ? x0 : x0 - rules_.basherReach + 1;
   const auto punchRefused = [&](int y, int height) {
@@ -1140,17 +1023,15 @@ void World::stepBasher(Lemming& l) {
       cue(SoundCue::Bash, &l);
   }
 
-  // 40C6E8 commits the column at 92%, after both punches. Keep the same
-  // 1440 ms cycle (one column per cycle), grace count and support probe.
+  // 40C6E8 commits the column at 92%, after both punches.
   if (!advance)
     return;
   l.x = setup_.terrain.wrapX(l.x + dir);
   if (l.bashCycles < rules_.basherGraceCycles)
     ++l.bashCycles;
 
-  // 0x0040C6E8: off the ground after the advance -> the fall state. INFERENCE: FUN_0042E913 is the
-  // walker's ground probe (the RuntimePick notes cite it as such) and false selects FUN_00415FA0,
-  // the fall state; this also lets a lemming that swings off a ledge fall instead of hanging.
+  // 0x0040C6E8 selects fall (FUN_00415FA0) on lost support.
+  // Inferred ground probe: FUN_0042E913.
   if (!solidAt(l.x, l.y + 1)) {
     l.state = State::Faller;
     l.fallDistance = 0;
@@ -1212,10 +1093,9 @@ void World::stepDigger(Lemming& l) {
   if (!bitesThisTick(l.frame, msPerTick(), rules_.diggerCycleMs, rules_.diggerBitePercent))
     return;
 
-  // Dig toward gravity: row = posY - vdir (0x00415AA0), Y step -= vdir
-  // (0x00415DD2). Refusal mask 0x10 upright / 0x20 inverted (0x00415A86 /
-  // 0x00415A96). MEASURED round 30: inverted cleared painted 0x11 with
-  // Y += 1 per cycle in Y-up (= y -= 1 here) and refused painted 0x21.
+  // In Y-up, dig at posY - vdir (0x00415AA0), then step Y -= vdir
+  // (0x00415DD2). Refusal masks are 0x10 upright and 0x20 inverted
+  // (0x00415A86 / 0x00415A96).
   const int v = l.verticalDir >= 0 ? 1 : -1;
   const int digY = l.y + v;
   const int half = rules_.diggerWidth / 2;
@@ -1249,9 +1129,8 @@ void World::step(Lemming& l) {
     return;
 
   if (l.nukeExploding) {
-    // Nuke is a primary-state replacement (0x42E696), not a Bomber skill
-    // assignment. Do not let exit/fluid contact replace it before removal.
-    // frame -1 gives the same entry-only tick as an ordinary fuse expiring.
+    // Nuke replaces the primary state (0x42E696) and takes precedence over
+    // contact until removal. Frame -1 gives the entry-only Bomber update.
     if (l.frame >= 0) stepExploder(l);
     ++l.frame;
     return;
@@ -1307,12 +1186,9 @@ void World::step(Lemming& l) {
   if (attachFluidHazard(l))
     return;
 
-  // Round 14/15: ground cell bit 0x40 attaches drown (side-effect 0x2f /
-  // 0x00415386). Acid-as-hazard uses this same attach (round 15); type 0x2e
-  // Fluid-match sibling never fired live. Checked before exit so a water
-  // cell under the feet kills rather than saves when both overlap —
-  // Exit_water / Exit_acid are separate AABBs (round 12); this is the
-  // hazard bit alone.
+  // Side-effect 0x2f tests ground bit 0x40 for water and acid drown
+  // (0x00415386). The type 0x2e Fluid-match sibling is separate.
+  // Check the cell hazard before Exit_water / Exit_acid AABBs.
   {
     const int v = l.verticalDir >= 0 ? 1 : -1;
     if (setup_.terrain.waterHazard(l.x, l.y + v)) {
@@ -1330,9 +1206,8 @@ void World::step(Lemming& l) {
     return;
   }
 
-  // Round 16: teleport pad AABB (object 0x004B1250 / 0x00430BA1). Ahead of
-  // the walk step so a lemming standing in the box enters Teleporting rather
-  // than walking out. Mutate-alone: delete this arm and testTeleportPad fails.
+  // Test the teleport AABB (object 0x004B1250 / 0x00430BA1) before
+  // walking, so a lemming already inside attaches before moving.
   if (l.state == State::Walker) {
     if (const Teleport* pad = teleportAt(l)) {
       if (gadgetObserver_) gadgetObserver_(GadgetUse::TeleportDeparture,
@@ -1346,9 +1221,8 @@ void World::step(Lemming& l) {
     }
   }
 
-  // Round 17: SpeedPad AABB (0x004B1178 / FUN_00432742). Rising-edge latch
-  // mirrors object+0xb8 — one FASTER attach per visit. Mutate-alone: delete
-  // this arm and testSpeedPadFaster fails.
+  // SpeedPad contact (0x004B1178 / FUN_00432742) mirrors object+0xb8:
+  // attach FASTER once per visit.
   if (l.state == State::Walker) {
     if (const SpeedPad* pad = speedPadAt(l)) {
       if (!l.speedPadLatched) {
@@ -1363,12 +1237,9 @@ void World::step(Lemming& l) {
     }
   }
 
-  // Round 21: Lever AABB (0x004B1288 / 0x00436D30). Facing-gated toggle of
-  // Lever::state (object+0xb8); no lemming attach. Mutate-alone: delete this
-  // arm and testLeverToggle fails.
-  // shared-timing-impl-001: only the legacy tick() path evaluates contact here. The explicit
-  // path evaluates it once per update AFTER all lemmings (stepGadgetContacts), so the two
-  // semantics never both run in one route.
+  // Lever contact (0x004B1288 / 0x00436D30) gates the object+0xb8 toggle
+  // on actor facing. This path checks per actor. The elapsed entry checks
+  // once per lever after all actors move (stepGadgetContacts).
   if (l.state == State::Walker && !explicitUpdate_) {
     if (Lever* lev = leverAt(l)) {
       // 0x00436E6A: +0xb8 := pull facing (±1).
@@ -1383,7 +1254,7 @@ void World::step(Lemming& l) {
     case State::Bounce: stepBounce(l); break;
     case State::Teleporting: stepTeleporting(l); break;
     case State::Walker:
-      // 0x0042E2BF: while +0x50==2, run the main state twice per frame.
+      // 0x0042E2BF steps the main state twice per frame while +0x50==2.
       stepWalker(l);
       if (l.fasterMs > 0 && l.state == State::Walker)
         stepWalker(l);
@@ -1417,34 +1288,19 @@ void World::step(Lemming& l) {
 void World::stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout) {
   if (nukeRequested_) return;
 
-  // Round D1e: an additive, opt-in real-seconds release model
-  // (docs/scratch/phase-d1-release-trigger.md and the two D1c/D1d follow-ups),
-  // alongside the untouched integer-tick model it extends. A LevelSetup that
-  // leaves releaseIntervalSeconds at its default 0.0 runs the exact old
-  // branch, byte-for-byte.
-  // D1n: the stepper clock's own dt is the same number the release model
-  // already computes below -- shared via tickDtSeconds() so both read the
-  // exact same value, per the brief's "Already settled" note.
-  // shared-timing-impl-001: `dt` is now a parameter -- tickDtSeconds() from the legacy tick(),
-  // the update's own segment dt from the explicit path -- so every elapsed-time consumer
-  // below (arm clock, countdown, spawn phase) sees the same number as the steppers.
+  // A positive releaseIntervalSeconds selects elapsed release timing. Other
+  // setups count ticks. Both release and motion use the same update dt.
 
   if (!timedOut() || continueHatchesAfterTimeout) {
     if (setup_.releaseIntervalSeconds > 0.0) {
       releaseElapsedSeconds_ += dt;
       if (!releaseArmed_ && releaseElapsedSeconds_ >= setup_.releaseArmSeconds) {
-        // Arm once, this tick: seed the countdown but do not also decrement
-        // it the same tick it was seeded (matches the original's continuous
-        // arm-then-seed instant; the decrement is "every step while armed",
-        // starting from the next one).
+        // Seed the countdown on arming. Start decrementing next update.
         releaseArmed_ = true;
         releaseCountdown_ = setup_.releaseFirstCountdownSeconds;
       } else if (releaseArmed_) {
-        // D1n: capture the countdown BEFORE the decrement -- if it crosses
-        // zero this tick, it crossed `countdownBefore` seconds into this
-        // tick's own dt window, not at the window's start, so only
-        // `dt - countdownBefore` of real time remains in this tick for the
-        // new lemming's first fall call (see World::spawn()).
+        // A release at countdownBefore seconds into the update leaves only
+        // dt - countdownBefore seconds for its first fall.
         const double countdownBefore = releaseCountdown_;
         releaseCountdown_ -= dt;
         if (releaseCountdown_ <= 0.0) {
@@ -1452,8 +1308,7 @@ void World::stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterT
                                           ? std::max(0.0, dt - countdownBefore)
                                           : -1.0;
           spawn(spawnBudget);
-          // Rollover, not a reset: D1b measured the recurring interval added
-          // back into whatever the countdown currently holds.
+          // Add the recurring interval to carry the countdown overshoot.
           releaseCountdown_ += setup_.releaseIntervalSeconds;
         }
       }
@@ -1477,8 +1332,7 @@ void World::tick(bool continueHatchesAfterTimeout) {
 
   stepRats(tickDtSeconds(), true);
 
-  // The diagnostic/compatibility tick entry must not silently omit sensors.
-  // Keep the legacy per-actor lever arm unchanged; only sensors join here.
+  // The tick entry checks sensors here and levers in each actor's step.
   for (auto& sensor : setup_.occupancySensors)
     stepOccupancySensor(sensor, tickDtSeconds());
   stepCounterGates(tickDtSeconds(), gateBefore);
@@ -1500,12 +1354,12 @@ void World::stepElapsed(Lemming& l, bool tickBoundary) {
   }
   if (!l.alive())
     return;
-  if (l.nukeExploding) return; // Bomber animation remains on the existing 5 Hz clock.
+  if (l.nukeExploding) return; // Bomber animation steps at 5 Hz.
   releaseTeleportContacts(setup_, l);
   if (attachFluidHazard(l))
     return;
-  // Between tick boundaries only the continuous movers advance (their budget carries the
-  // sub-tick time); every other state, bookkeeping and counter keeps its measured 5 Hz step.
+  // Only continuous movers step between tick boundaries. Other states
+  // and counters step at 5 Hz.
   switch (l.state) {
     case State::Faller:
     case State::Floater: stepFaller(l); break;
@@ -1567,8 +1421,8 @@ void World::stepRats(double dt, bool tickBoundary) {
       if (rat.animationSeconds > rat.punchDurations[rat.punch]) finishRatAttack(rat);
       continue;
     }
-    // The clone's ground probe includes fluid surfaces. A drowning rat must
-    // reach stepDrown without a punch replacing its state and resetting its timer.
+    // A fluid surface can support the ground probe. Skip punches while
+    // drowning so stepDrown can finish its timer.
     if (l.state != State::Drown && groundAt(l.x, l.y + l.verticalDir, l.verticalDir)) {
       for (std::size_t i = 0; i < lemmings_.size(); ++i) {
         auto& victim = lemmings_[i];
@@ -1584,8 +1438,7 @@ void World::stepRats(double dt, bool tickBoundary) {
         rat.punch = rat.attacks++ % 4;
         rat.animationSeconds = 0;
         l.stepBudgetSeconds = 0;
-        // Playtest 21 L1: Thunk is user-identified by ear. This provisional
-        // rat cue overrides the static Ohno read at 0x42E349.
+        // Provisional rat cue: use Thunk for contact. Original 0x42E349 plays Ohno.
         cueSample("Thunk", victim);
         if (forcedDeathObserver_) forcedDeathObserver_(victim);
         break;
@@ -1602,7 +1455,7 @@ void World::stepRats(double dt, bool tickBoundary) {
     rat.animationSeconds = before == l.state ? rat.animationSeconds + dt : 0.0;
     if (l.state == State::Walker) {
       const double target = l.facing == Facing::Left ? 0.25 : 0.75;
-      // Same provisional one-slab-unit/second presentation lane as lemmings.
+      // Provisional radial lane advances one slab unit per second, as for lemmings.
       rat.lane += std::clamp(target - rat.lane, -dt, dt);
     }
   }
@@ -1625,12 +1478,9 @@ void World::stepCrabs(double dt) {
     for (Lemming* actor : hazardActors()) {
       Lemming& l = *actor;
       if (!l.active()) continue;
-      // 0x430F4D -> 0x430C9C tests the actor's double-precision 3D point.
-      // PROVISIONAL adapter: retain the mean surface fraction discarded by
-      // attachFluidHazard's integer feet. E19_KF_2 has surface Y=45.5 above
-      // the crab's closed Y=38..45 box; rounding to 45 invents contact.
-      // This is geometry, not tribe immunity: a surface inside the box, a
-      // drained tank, or an actor down at the crab still allows a kill.
+      // 0x430F4D -> 0x430C9C tests a double-precision 3D point. Provisional
+      // adapter: use the fractional fluid surface for a riding actor. On E19_KF_2
+      // the surface is at Y=45.5 and the crab's closed box ends at Y=45.
       std::array<double, 3> point{double(l.x),
           double(setup_.terrain.height() - 1 - l.y), 0.0};
       const int width = setup_.terrain.width();
@@ -1658,10 +1508,9 @@ void World::stepCrabs(double dt) {
             return true;
           });
       if (!contact) continue;
-      // Installed +0x1D1=1: collect/kill all contacts, without a species,
-      // gravity, facing or skill filter. +0x1D4 prevents kills during attack.
-      // 0x4330D7..0x433106 removes the victim from the active actor list;
-      // +0xC0=5 selects 0x40A6A0 -> death particles, not a drowning strip.
+      // Installed +0x1D1=1 kills all contacts. +0x1D4 suppresses kills
+      // during an attack. 0x4330D7..0x433106 removes the actor.
+      // +0xC0=5 selects death particles at 0x40A6A0.
       leaveBlocker(l);
       l.state = State::Dead;
       l.frame = 0;
@@ -1736,9 +1585,8 @@ void NamedHazard::advancePatrol(double dt, Terrain& terrain) {
     }
     for (unsigned axis = 0; axis < 2; ++axis) {
       const double velocity = segments[segment].velocity[axis];
-      // PROVISIONAL numeric guard for SHOW_KF3's infinite wait: zero
-      // velocity retains its authored point even after a reverse wrap adds
-      // +infinity to travel. Do not feed 0*infinity NaNs to the renderer.
+      // Provisional guard: retain SHOW_KF3's authored endpoint when zero
+      // velocity and infinite travel would produce NaN.
       position[axis] = segments[segment].start[axis] + (velocity == 0 ? 0 : travel * velocity);
     }
     position[2] = 0.5;
@@ -1808,9 +1656,8 @@ void World::stepNamedHazards(double dt) {
         return true;
       });
     };
-    // +0x1D1=0 retains the first victim's id until the current clip ends;
-    // it does not retest that victim's position. Negative IDs encode rats,
-    // independent of later hatch births extending the rescue population.
+    // +0x1D1=0 keeps the first victim until the clip ends, without retesting
+    // position. Negative IDs retain rat identity across hatch births.
     if (!hazard.allContacts && !hazard.attacking && hazard.pendingVictim == -1) {
       for (auto* actor : hazardActors())
         if (actor->active() && contact(*actor)) { hazard.pendingVictim = hazardActorId(actor); break; }
@@ -1976,7 +1823,7 @@ void World::stepGadgetContacts(double dt) {
     const Lemming* contact = nullptr;
     for (const auto* actor : hazardActors()) {
       const auto& l = *actor;
-      // Same eligibility as the legacy arm: a live walker, then the AABB + facing filter.
+      // Check live walkers against the lever's AABB and facing filter.
       if (l.alive() && !l.ratVictim && l.state == State::Walker && leverAccepts(lev, l)) {
         contact = &l;
         break;
@@ -1994,9 +1841,8 @@ void World::stepGadgetContacts(double dt) {
       return;
     for (const auto* actor : hazardActors()) {
       const auto& l = *actor;
-      // 0x431A59 scans the actor list, unlike a lever's facing predicate.
-      // Clone actors have integer feet and no radial lane: use that same
-      // feet point as other gadgets. All installed pad Z ranges include 0.
+      // 0x431A59 scans all actors. Use the clone's integer feet point at
+      // radial lane zero, which lies inside every installed pad's Z range.
       if (!l.alive() || l.ratVictim || pad.min[2] > 0.0 || pad.max[2] < 0.0)
         continue;
       const double row = setup_.terrain.height() - 1 - l.y;
@@ -2013,7 +1859,7 @@ void World::stepGadgetContacts(double dt) {
     }
   };
   if (setup_.gadgetContactOrder.empty()) {
-    // Hand-built setups predate the serialized order list.
+    // Hand-built setups without a serialized order use collection order.
     for (Lever& lev : setup_.levers) leverContact(lev);
     for (PressurePad& pad : setup_.pressurePads) padContact(pad);
     for (auto& sensor : setup_.occupancySensors) stepOccupancySensor(sensor, dt);
@@ -2043,13 +1889,11 @@ void World::updateSegment(int segmentMs, bool continueHatchesAfterTimeout, bool 
   stepRats(dt, tickBoundary);
   stepGadgetContacts(dt);
   stepCounterGates(dt, gateBefore);
-  // 0x4423D2 order: lemmings -> tagged triggers -> receivers (+0x1F70). A request written by a contact
-  // above reaches its gate in this same update and its first raise step uses this segment's dt,
-  // including a zero-length one. There is no separate gate clock.
+  // 0x4423D2 updates lemmings, tagged triggers, then receivers (+0x1F70).
+  // A contact request reaches its receiver in the same segment, even at dt=0.
   for (FluidGate& gate : setup_.gates)
     gate.step(dt, setup_.terrain);
-  // Clone contact order: named hazards run after the existing tagged triggers
-  // and receivers. Cross-class overlap priority is provisional.
+  // Provisional overlap priority: named hazards follow tagged triggers and receivers.
   stepCrabs(dt);
   stepNamedHazards(dt);
 
@@ -2074,8 +1918,7 @@ void World::advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterT
   const auto run = [&](int ms) {
     if (!open)
       return;
-    // A request that spans several tick boundaries first splits at them, so each update
-    // reaches at most one boundary (the connected app never exceeds its 100 ms cap).
+    // Split at tick boundaries so each update reaches at most one.
     while (((levelClockMs_ % period) + static_cast<std::uint64_t>(ms)) / period >= 2) {
       const int toBoundary = static_cast<int>(period - levelClockMs_ % period);
       updateSegment(toBoundary, continueHatchesAfterTimeout, releaseEnabled);
@@ -2114,8 +1957,8 @@ bool World::canAssign(std::size_t index, Skill skill) const {
     case Skill::Bomber: return l.fuseMs < 0;
     default: break;
   }
-  // A spent builder can take another walking job without waiting for its shrug.
-  // Native shrug category 0x1D (0x41AB4B) is not excluded by 0x4183D3.
+  // A spent builder can take walking skills during the shrug. 0x4183D3
+  // accepts native shrug category 0x1D (0x41AB4B).
   if (l.state != State::Walker && l.state != State::Shrugger &&
       l.state != State::Builder && l.state != State::Basher &&
       l.state != State::Miner && l.state != State::Digger && l.state != State::Blocker)
@@ -2126,7 +1969,7 @@ bool World::canAssign(std::size_t index, Skill skill) const {
 bool World::assign(std::size_t index, Skill skill) {
   const auto slot = static_cast<std::size_t>(skill);
   if (!canAssign(index, skill)) {
-    // An unsupported Blocker reassignment used to clear and restore the field.
+    // Preserve an active blocker's field when reassignment fails.
     if (skill == Skill::Blocker && index < lemmings_.size() && setup_.skills[slot] != 0) {
       const Lemming& l = lemmings_[index];
       if (l.active() && l.state == State::Blocker)
@@ -2140,7 +1983,7 @@ bool World::assign(std::size_t index, Skill skill) {
     int& stock = setup_.skills[slot];
     if (stock > 0)
       --stock;
-    cue(SoundCue::Assign); // UI success feedback stays centred, like Changeop
+    cue(SoundCue::Assign); // Center successful assignment feedback like Changeop.
     return true;
   };
 
@@ -2199,8 +2042,8 @@ void World::nuke() {
   nukeRequested_ = true;
   nukeCountdownMs_ = 5000; // Static 0x4423D2 -> 0x413F15: global five-second overlay.
   nukeCursor_ = 0;
-  // PROVISIONAL playable-v1: stop releases immediately, including an empty
-  // hatch. Original stops in the consumer after a non-type-3 actor exists.
+  // Provisional: stop hatch releases on request. The original's consumer
+  // stops them once a non-type-3 actor exists.
 }
 
 void World::stepNuke(int elapsedMs, bool tickBoundary) {
@@ -2210,13 +2053,10 @@ void World::stepNuke(int elapsedMs, bool tickBoundary) {
     if (nukeCountdownMs_ > 0) return;
   }
   if (!tickBoundary) return;
-  // Static 0x4423D2: oldest insertion first, primary replacement, no skill
-  // eligibility veto. Stable vector indices skip actors already removed by
-  // gameplay, avoiding the unresolved original cursor lifetime hazard.
-  // PROVISIONAL stagger: one per existing 5 Hz tick (normally 200 ms).
-  // Original adds 0.05 s credit, at most one attachment per update, with
-  // credit accumulating during countdown. A native activation recording
-  // with frame/update timestamps would settle its player-visible cadence.
+  // 0x4423D2 replaces primary states in insertion order with no skill
+  // eligibility check. Stable actor indices let the clone skip losses.
+  // Provisional: attach once per 5 Hz tick. The original accrues 0.05 s
+  // credit during countdown and attaches at most once per update.
   while (nukeCursor_ < lemmings_.size()) {
     auto& l = lemmings_[nukeCursor_++];
     if (!l.active()) continue; // Splatter is already counted lost at entry.
@@ -2233,9 +2073,8 @@ void World::stepNuke(int elapsedMs, bool tickBoundary) {
 }
 
 void World::cue(SoundCue c, const Lemming* source) {
-  // 0x414420..0x414443: suppress Ohno while the nuke request byte is set.
-  // 0x4C6A08 + 0x5138 == 0x4CBB40; see letsgo-text-nuke-ohno-001.md.
-  // This also mutes an ordinary fuse ending after Nuke, without changing it.
+  // 0x414420..0x414443 suppresses Ohno while the nuke byte at
+  // 0x4C6A08 + 0x5138 == 0x4CBB40 is set, including ordinary fuses.
   if (c == SoundCue::OhNo && nukeRequested_) return;
 
   if (c == SoundCue::OhNo || c == SoundCue::Explode) {
@@ -2263,8 +2102,7 @@ std::vector<SoundEvent> World::takeSoundEvents() {
 
 std::vector<SoundCue> World::takeCues() {
   std::vector<SoundCue> out;
-  // Compatibility sink for simulation-only diagnostics. Production drains
-  // the full events, including serialized object samples, via takeSoundEvents.
+  // The typed diagnostic sink drains the shared buffer and drops named samples.
   for (const SoundEvent& event : takeSoundEvents())
     if (event.cue) out.push_back(*event.cue);
   return out;

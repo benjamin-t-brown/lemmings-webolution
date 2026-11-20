@@ -14,22 +14,20 @@
 
 namespace webo::save {
 
-// Byte storage behind the codec. Injectable so tests (and a future web store)
-// can substitute a failing or in-memory sink.
+// Byte storage interface for file-backed or in-memory save images.
 class SaveSink {
  public:
   virtual ~SaveSink() = default;
-  // No value = no stored file (the original's open-fails path). An error means
-  // the file exists but cannot be read; it must never be treated as "absent".
+  // An absent file returns an empty optional, as on the original's open failure.
+  // Read failures return an error.
   virtual std::expected<std::optional<std::vector<std::byte>>, std::string> read() = 0;
-  // Replaces the stored image. On error the previously stored bytes are intact.
+  // A write failure preserves the stored image.
   virtual std::expected<void, std::string> write(std::span<const std::byte> bytes) = 0;
 };
 
-// One file on disk. The write goes to a temporary file in the same directory and
-// is then atomically swapped in (MoveFileExW REPLACE_EXISTING on Windows,
-// rename elsewhere): clone policy, the original rewrites the file in place.
-// A target inside `installedGameDir` is refused for both read and write.
+// Clone policy: write beside the target, then replace it atomically.
+// Windows uses MoveFileExW REPLACE_EXISTING. The original writes in place.
+// Reject reads and writes inside the installedGameDir.
 class FileSaveSink final : public SaveSink {
  public:
   explicit FileSaveSink(std::filesystem::path target, std::filesystem::path installedGameDir = {});
@@ -45,8 +43,8 @@ class FileSaveSink final : public SaveSink {
 class SaveStore {
  public:
   explicit SaveStore(std::unique_ptr<SaveSink> sink) : sink_(std::move(sink)) {}
-  // Missing file -> all-zero state (matches the original open-fails path). A file
-  // of the wrong size or one that cannot be read is an error; load never writes.
+  // An absent file yields the original all-zero state. Unreadable or
+  // wrong-sized files return an error. Loading never writes.
   std::expected<SavedGame, std::string> load();
   std::expected<void, std::string> save(const SavedGame& game);
 
@@ -61,8 +59,7 @@ bool pathIsInside(const std::filesystem::path& candidate, const std::filesystem:
 std::filesystem::path cloneSavePathUnder(const std::filesystem::path& localAppData);
 // %LOCALAPPDATA% on Windows (XDG_DATA_HOME or ~/.local/share elsewhere).
 std::expected<std::filesystem::path, std::string> localAppDataDirectory();
-// Production store at the clone's own per-user path. Fails (instead of storing
-// anywhere) if the resolved path would lie inside the installed game directory.
+// Use the clone's per-user path and reject paths inside the installation.
 std::expected<std::shared_ptr<SaveStore>, std::string> makeDefaultSaveStore(
     const std::filesystem::path& installedGameDir);
 

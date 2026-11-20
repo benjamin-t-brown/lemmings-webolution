@@ -10,14 +10,11 @@
 
 namespace webo::save {
 
-// Original SavedGame.dat image: reader 0x45F43C, writer 0x45F94D, reference exe
-// SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f.
-// [disassembly] int32 LE flag at 0x000, then for n = group * 25 + slot the three
-// int32 values A, B, C at 0x004 + 12 * n + {0, 4, 8}; 5 x 25 records, 1504 bytes.
-// Only C (completion) has a recovered consumer; the meanings of the flag, A and B
-// are unknown and every value is kept verbatim. The installed sample is all zero,
-// so it confirms size and the zero state only: nonzero field positions rest on
-// disassembly, and a byte-layout test proves source consistency, nothing more.
+// Original SavedGame.dat layout, reader 0x45F43C and writer 0x45F94D.
+// Reference EXE SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f.
+// LE int32 flag at 0x000. A, B, C at 0x004 + 12 * (group * 25 + slot) + {0, 4, 8}.
+// The 5 x 25 records and flag occupy 1504 bytes. C marks completion.
+// The flag, A and B have unknown meanings and are preserved verbatim.
 inline constexpr std::size_t kGroupCount = 5;
 inline constexpr std::size_t kSlotsPerGroup = 25;
 inline constexpr std::size_t kRecordCount = kGroupCount * kSlotsPerGroup;  // 125
@@ -34,8 +31,8 @@ struct SaveRecord {
   bool operator==(const SaveRecord&) const = default;
 };
 
-// Clone policy, not original behaviour: the original reads short files as
-// indeterminate stack data and ignores trailing bytes; the clone rejects both.
+// Clone policy: accept exactly kSavedGameSize bytes. The original
+// reads short files into an incomplete image and ignores trailing bytes.
 struct SavedGameError {
   enum class Kind { Empty, TooShort, TooLong } kind = Kind::Empty;
   std::size_t size = 0;
@@ -43,8 +40,8 @@ struct SavedGameError {
 };
 
 struct SavedGame {
-  // Raw int32 at 0x000. The original stores (value != 0) and would rewrite 0/1;
-  // the clone keeps the value verbatim so unknown data survives a round trip.
+  // Raw int32 at 0x000. Preserve its value across saves. The original
+  // normalizes it to 0 or 1.
   std::int32_t flagRaw = 0;
   std::array<SaveRecord, kRecordCount> records{};
 
@@ -63,9 +60,9 @@ struct SavedGame {
 
   // Project C != 0 into the 102 map-node flags (1 / 0).
   std::array<std::int32_t, kMapNodeCount> nodeFlags(const NodeMapping& mapping) const;
-  // Merge node flags back by (group, slot): a nonzero flag makes C nonzero (an
-  // existing nonzero C is kept verbatim), a zero flag clears C. Records with no
-  // map node, A, B and the flag are untouched.
+  // Merge flags by (group, slot). A zero flag clears C, while a nonzero flag
+  // sets C if needed and preserves a nonzero C verbatim. Keep unmapped records,
+  // the file flag and fields A and B intact.
   void mergeNodeFlags(const NodeMapping& mapping,
                       const std::array<std::int32_t, kMapNodeCount>& flags);
 };

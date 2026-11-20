@@ -8,6 +8,7 @@
 #include "app/SceneDispatch.h"
 #include "app/HatchAnimation.h"
 #include "app/HoverFeedback.h"
+#include "app/Pick.h"
 #include "assets/SceneNode.h"
 #include "lemmings/object_base_prefix.hpp"
 #include "lemmings/world_coordinates.hpp"
@@ -25,7 +26,7 @@
 
 namespace webo {
 class AssetLibrary;
-namespace sim { struct Crab; struct NamedHazard; }
+namespace sim { struct Crab; struct NamedHazard; struct LevelSetup; }
 namespace app {
 class Raster;
 class TubeScene;
@@ -163,7 +164,7 @@ class BackdropScene {
   // FluidGate (fluid-surface-impl-001): the post-tube base `Fluid` pass of the entities_42acac
   // receivers (frame order 0x441845: tube, +0x160/+0x164, base Fluid, +0x15C, secondary). It draws
   // only while the caller supplies live gate state (setFluidState); without it nothing is drawn.
-  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe, GravityEffect };
+  enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe, GadgetEffect };
   // PROVISIONAL clone depth policy for the alpha-blended fluid draw (user-approved milestone
   // exception). The inherited original ZENABLE/ZWRITEENABLE/ZFUNC/device ZBIAS are UNRESOLVED
   // (fluid research section 7.1); LessWriteOn is the clone's existing mesh default, not original
@@ -237,6 +238,11 @@ class BackdropScene {
                             bool arrival, int facing, double levelSeconds);
   void animateGadgets(const GadgetPresentation&, double levelSeconds);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
+  using CylinderRegionProjector = std::function<std::optional<PickBox>(
+      const std::array<double, 3>& low, const std::array<double, 3>& high)>;
+  void drawSwitchHover(Image&, const CameraBasis&, const Raster&, const CylinderRegionProjector&,
+                       const sim::LevelSetup&, const LeverPresentation*,
+                       const PressurePadPresentation*, int pointerX, int pointerY) const;
   // Runtime override of the per-node visibility byte +0x110 for Secondary nodes (the original toggles
   // it only for "cutme" type-1 nodes, 0x45DA0D). A hidden node and its subtree are not dispatched.
   // Production never installs one; it is the seam used by mutation checks.

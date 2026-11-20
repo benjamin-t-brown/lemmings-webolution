@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "app/Pick.h"
+
 #include "app/ActorPose.h"
 #include "app/ActorSprite.h"
 #include "app/Camera.h"
@@ -148,6 +150,10 @@ class TubeScene {
   // snapshotted terrain feet location; no actor lookup after death/teleport.
   std::array<double, 3> soundWorldPosition(const std::array<double, 3>& position,
                                            int terrainHeight) const;
+  // Project a cylinder-coordinate region for scene feedback, using the same
+  // coordinate lattice as the terrain gates and actors.
+  std::optional<PickBox> cylinderScreenBounds(const CameraBasis&,
+      const std::array<double, 3>& low, const std::array<double, 3>& high) const;
   static std::expected<TubeScene, std::string> build(const AssetLibrary& lib,
                                                      const CylinderMesh& mesh,
                                                      std::span<const std::byte> levelBytes,

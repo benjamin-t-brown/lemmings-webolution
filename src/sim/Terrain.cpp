@@ -229,8 +229,8 @@ void Terrain::paintZoneWaterRect(double minX, double minY, double maxX, double m
     return;
   const int x0 = static_cast<int>(minX);  // ftol 0x0049C5AC: truncation toward zero
   int x1 = static_cast<int>(maxX);
-  // 0x004311EE..0x00431207 (set painter only): a rectangle that wraps the seam is painted
-  // across the column wrap. The clear painter 0x0043127E has no such fix-up.
+  // 0x004311EE..0x00431207 extends seam-crossing set rectangles by one
+  // width. Clear painter 0x0043127E uses the raw bounds.
   if (set && static_cast<double>(x1) < minX)
     x1 += width_;
   const int y0 = static_cast<int>(minY);
@@ -292,10 +292,7 @@ bool Terrain::splatExempt(int x, int y, int sheetType) const {
   return false;
 }
 
-// The bytes at 0x004B1528, read out of the stock exe. Written out here rather
-// than computed, because the original stores them: there is no formula behind
-// the shape, and `tools/harness/measure_bomb.py --stencil` prints the same 49
-// bytes straight out of .rdata.
+// The original stores the 49 crater stencil bytes at 0x004B1528.
 namespace {
 constexpr int kExplosionSize = 7;
 constexpr std::uint8_t kExplosionStencil[kExplosionSize * kExplosionSize] = {
@@ -321,10 +318,8 @@ std::size_t Terrain::clearExplosion(int x, int y) {
       if (!kExplosionStencil[i * kExplosionSize + j])
         continue;
       const int cx = wrapX(col0 + j);
-      // 0x0043F61B: an indestructible cell is skipped. 0x0043F63E: so is a
-      // cell carrying a blocker's field -- a dying blocker's own four cells
-      // are already gone by now (the exit hook runs when the fuse ends), but
-      // a second blocker standing inside the window keeps its field.
+      // Skip indestructible cells (0x0043F61B) and blocker fields (0x0043F63E).
+      // The exploding blocker's exit hook clears its own field before the blast.
       if (blockerField(cx, cy))
         continue;
       const Material m = at(cx, cy);
@@ -386,15 +381,9 @@ Terrain Terrain::fromLevelGrid(std::span<const std::uint32_t> grid, int width, i
 }
 
 Terrain Terrain::fromCollisionGrid(const CollisionGrid& grid) {
-  // The file grid uses the engine's own Y: 0 at the bottom of the tube,
-  // increasing upward. FUN_0040DE60 indexes row Y directly; a walker at
-  // world Y 32.190 on MM_CLIMB_002 has solid at file row 31 and empty at
-  // 32 (tools/harness/compare_tick.py, docs/scratch/phase3-round1.md).
-  // Fall subtracts from Y; climb adds. Our Terrain and steppers are the
-  // other way: y increases downward, ground is at y+1, fall does ++y.
-  // worldToMaskPixel already maps with floor(worldH - y). Flip here so a
-  // retail mask and those coordinates share one axis. Hand-built test
-  // terrains are untouched.
+  // FUN_0040DE60 indexes the original's Y-up rows from the tube floor.
+  // MM_CLIMB_002's file row 31 supports a walker at world Y 32.190.
+  // Flip rows to match the Y-down steppers and worldToMaskPixel.
   Terrain t(grid.width, grid.height);
   t.gateResidualWords_.resize(static_cast<std::size_t>(grid.width) * grid.height);
   for (int y = 0; y < grid.height; ++y) {
@@ -409,24 +398,19 @@ Terrain Terrain::fromCollisionGrid(const CollisionGrid& grid) {
           t.bashRefusalFlags_.resize(t.cells_.size());
         t.bashRefusalFlags_[cell] = static_cast<std::uint8_t>(bashFlags);
       }
-      // Round 9: 0x8000 is the anti-grav pad bit (kCellFlag0x8000). It can
-      // sit on a solid cell (typical pad word 0x8003) or, rarely, alone; the
-      // walk probe tests the bit, not solidity of that word beyond the
-      // ground sample it already took.
+      // Import anti-grav bit 0x8000 (kCellFlag0x8000) independently of material.
       if (word & kCellFlag0x8000)
         t.setAntiGrav(x, destY, true);
-      // Round 30: dig refuse 0x10 / 0x20 (kCellNoDigUpright / Inverted).
+      // Dig refusal bits 0x10 / 0x20 (kCellNoDigUpright / Inverted).
       if (word & kCellNoDigUpright)
         t.setNoDigUpright(x, destY, true);
       if (word & kCellNoDigInverted)
         t.setNoDigInverted(x, destY, true);
-      // Round 14: 0x40 is the drown / water-hazard bit (kCellFlag0x40). It
-      // usually rides a solid cell (word 0x41 on H18_mg_1 / M19_MT_1).
+      // Import water-hazard bit 0x40 (kCellFlag0x40) independently of material.
+      // H18_mg_1 / M19_MT_1 carry it on solid cells (word 0x41).
       if (word & kCellFlag0x40)
         t.setWaterHazard(x, destY, true);
-      // Round 29: splat-exemption zones (kCellZoneType0 / Type2). Can sit on
-      // air (word 0x200 alone) or ride solid; the fall land tests the bit,
-      // not Material::Earth.
+      // Import splat-exemption bits (kCellZoneType0 / Type2), including on air cells.
       if (word & kCellZoneType0)
         t.setZoneWater(x, destY, true);
       if (word & kCellZoneType2)

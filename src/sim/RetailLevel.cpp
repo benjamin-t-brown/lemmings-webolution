@@ -30,8 +30,7 @@ bool ciEquals(std::string_view a, std::string_view b) {
          });
 }
 
-// The matched archive path's own id, not the caller's (possibly partial)
-// levelId -- "COMPILED\\MM_CLIMB_002.LVL" -> "MM_CLIMB_002".
+// Extract the archive path's complete id: "COMPILED\\MM_CLIMB_002.LVL" yields "MM_CLIMB_002".
 std::string idFromFileName(std::string_view name) {
   const auto slash = name.find_last_of("\\/");
   std::string_view base = slash == std::string_view::npos ? name : name.substr(slash + 1);
@@ -49,14 +48,12 @@ const webo::LevelInfo* findLevelInfo(const std::vector<webo::LevelInfo>& infos,
   return nullptr;
 }
 
-// lever-gates-impl-001: serialized lever links, receiver gates and the load-time zone-mask pass.
-// Reads the structured gadget records (lemmings::read_compiled_level), builds the base-id table in
-// the loader's construction order (a later construction wins, 0x00423310..0x00423325), turns every
-// entities_42acac record into a FluidGate and runs the reader's load pass over the terrain that
-// was just populated from the file grid (0x0042ACAC runs after 0x0043B640 filled the grid), pairs
-// each tagged type-1 record with its placed lever and finally applies each linked lever's stored
-// face once, as its state and as its list send (0x00444417 -> 0x0043703F -> 0x00436E6A runs last). Returns a diagnostic when the records cannot be read, in
-// which case the level keeps the stored mask and unlinked levers (the pre-existing behaviour).
+// Register gadget ids in construction order, with the last duplicate winning
+// (0x00423310..0x00423325). Convert entities_42acac to FluidGate and paint the
+// load mask at 0x0042ACAC after the grid loads at 0x0043B640. Pair tagged
+// type-1 records by pose, then apply the stored lever faces and send their lists
+// (0x00444417 -> 0x0043703F -> 0x00436E6A). Unreadable records leave the
+// authored mask and placement-only levers intact.
 std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid& grid,
                            LevelSetup& s, std::size_t& pairedLevers) {
   const int maskWidth = grid.width, maskHeight = grid.height;
@@ -70,9 +67,15 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
   }
   const auto& g = level.gadgets;
 
-  const auto addOther = [&](const auto& v, const char* collection) {
-    for (const auto& e : v)
-      s.objectIds[e.id] = ObjectRef{ObjectClass::Other, -1, collection};
+  const auto otherRef = [](const auto& entity, std::size_t index, const char* collection) {
+    const auto& bits = entity.double_bits;
+    return ObjectRef{ObjectClass::Other, static_cast<int>(index), collection,
+                     std::array{std::bit_cast<double>(bits[0]), std::bit_cast<double>(bits[1]),
+                                std::bit_cast<double>(bits[2])}};
+  };
+  const auto addOther = [&](const auto& entities, const char* collection) {
+    for (std::size_t i = 0; i < entities.size(); ++i)
+      s.objectIds[entities[i].id] = otherRef(entities[i], i, collection);
   };
   // Loader order of 0x004432C1: 0x448650, 0x448710, 0x4487F0, 0x4488F0, 0x4489F0, 0x448AF0,
   // 0x448BD0 (receivers), 0x448CB0, 0x448D90, 0x448E70, then the tagged and named readers.
@@ -87,8 +90,7 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
     const auto v = [&](int i) { return static_cast<std::int32_t>(e.values[i]); };
     gate.left = v(0); gate.right = v(1); gate.top = v(2); gate.bottom = v(3);
     gate.mode = v(4); gate.request = v(5); gate.quota = v(6);
-    // Mode 0 never consumes these fields (0x423749). Do not interpret the
-    // stored debug-fill bit patterns as coordinates or a direction.
+    // Mode 0 ignores the stored counter coordinates and direction (0x423749).
     if (gate.hasCounter()) {
       gate.counterX = v(7); gate.counterY = v(8); gate.direction = v(9);
     }
@@ -110,7 +112,7 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
     gate.maxY = std::bit_cast<double>(e.double_bits_48_60[4]);
     gate.high = std::bit_cast<double>(e.doubles_98_1a8_a0[0]);
     gate.low = std::bit_cast<double>(e.doubles_98_1a8_a0[2]);
-    gate.lane = e.value_16c;  // [+0x16C], wave lane (fluid-surface-impl-001)
+    gate.lane = e.value_16c;  // [+0x16C], wave lane
     gate.done = 2;  // ctor 0x00428680
     gate.armed = false;
     s.objectIds[e.id] = ObjectRef{ObjectClass::Gate, static_cast<int>(s.gates.size()), "entities_42acac"};
@@ -119,17 +121,17 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
   addOther(g.entities_4347ec, "entities_4347ec");
   addOther(g.basic_4342bf, "basic_4342bf");
   addOther(g.spatial_41e038, "spatial_41e038");
-  // Register in construction order, before named entities can replace an id.
-  // The sensor payloads are filled below, alongside the other tagged contacts.
+  // Register tagged ids before named entities can replace them.
   std::size_t sensorIndex = 0;
-  for (const auto& t : g.tagged_entities) {
+  for (std::size_t i = 0; i < g.tagged_entities.size(); ++i) {
+    const auto& t = g.tagged_entities[i];
     s.objectIds[t.id] = t.type == 2
         ? ObjectRef{ObjectClass::OccupancySensor, static_cast<int>(sensorIndex++), "tagged_entities"}
-        : ObjectRef{ObjectClass::Other, -1, "tagged_entities"};
+        : otherRef(t, i, "tagged_entities");
   }
   for (std::size_t entity = 0; entity < g.named_entities.size(); ++entity) {
     const auto& e = g.named_entities[entity];
-    s.objectIds[e.id] = {ObjectClass::Other, -1, "named_entities"};
+    s.objectIds[e.id] = otherRef(e, entity, "named_entities");
     for (std::size_t i = 0; i < s.namedHazards.size(); ++i)
       if (s.namedHazards[i].entityIndex == entity)
         s.objectIds[e.id] = {ObjectClass::NamedHazard, int(i), "named_entities"};
@@ -139,12 +141,9 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
   for (FluidGate& gate : s.gates)
     gate.initialise(s.terrain);
 
-  // empty-receiver-fall-001: fromCollisionGrid admits every nonzero landable
-  // word, including a fluid-zone bit by itself. The reader's load pass above
-  // clears the zone plane in a dry receiver, but previously left that baked
-  // Earth behind as a permanent lid. Only discard fluid-only words belonging
-  // to a registered receiver; retain actual floor, wall and bridge materials.
-  // Runtime support comes from World::groundAt's live height, not this mask.
+  // Remove fluid-only cells in registered dry receivers. Real floors, walls
+  // and bridges remain solid, and World::groundAt uses the live fluid height
+  // for receiver support.
   constexpr auto fluidBits = kCellZoneType0 | kCellZoneType1 | kCellZoneType2;
   for (const FluidGate& gate : s.gates) {
     double span = gate.maxX - gate.minX;
@@ -169,10 +168,9 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
   // 0x42421D -> 0x42727C, after reader fluid masks, before lever load-face sends.
   for (auto& gate : s.counterGates) gate.initialise(s.terrain);
 
-  // Build type-0 pads from their serialized volumes and single message lists
-  // (0x431B30). Pair each tagged type-1 record (a lever) with its placed lever. The record carries the same
-  // pose as the lever.a3d placement; the pairing is by that pose through the production box
-  // transform and never by file order. A record that matches no unclaimed lever stays unlinked.
+  // Type-0 pads use the serialized volume and message list (0x431B30).
+  // Pair each tagged type-1 lever with an unclaimed lever.a3d at the same
+  // transformed pose. Records without a match stay unlinked.
   std::vector<bool> claimed(s.levers.size(), false);
   for (const auto& t : g.tagged_entities) {
     if (t.type == 2) {
@@ -238,12 +236,11 @@ std::string linkLevelGates(std::span<const std::byte> bytes, const CollisionGrid
       break;
     }
   }
-  // Preserve the existing placement-only fallback for an unpaired lever.
+  // Retain an unpaired lever's placement-only state.
   for (std::size_t j = 0; j < s.levers.size(); ++j)
     if (!claimed[j]) s.gadgetContactOrder.push_back({false, j});
 
-  // Once per load, after every lever record and receiver exists (lever-initial-face-impl-001):
-  // state := stored face and the same face's list is sent. Reload rebuilds the whole LevelSetup.
+  // After constructing all targets, apply each stored lever face and send its list once.
   fanOutLeverLoadFaces(s);
   return {};
 }
@@ -264,16 +261,13 @@ std::expected<ResolvedLevel, std::string> resolveRetailLevel(const webo::AssetLi
     if (ciEquals(idFromFileName(name), levelId))
       return resolved(name, LevelMatch::ExactId);
 
-  // Same convention SimReleaseTrace.cpp and test_world.cpp already use: the
-  // archive stores "COMPILED\\MM_CLIMB_002.LVL"; callers pass the level id as
-  // a substring. Case-sensitive and first-hit, exactly as before.
+  // Case-sensitive substring fallback takes the first archive hit (e.g. "COMPILED\\MM_CLIMB_002.LVL").
   for (const auto& name : names)
     if (name.find(levelId) != std::string::npos)
       return resolved(name, LevelMatch::Substring);
 
-  // The map names some levels in mixed case ("MM_Block_Bomb_A", "m06_kf_1"); the
-  // archive reads case-insensitively, so match that way, but only when it names
-  // one level (archive spellings differing only in case are one level).
+  // Accept a case-insensitive substring only when it names one distinct level.
+  // The map includes mixed-case ids such as "MM_Block_Bomb_A" and "m06_kf_1".
   const std::string wanted = webo::normaliseAssetName(levelId);
   std::vector<const std::string*> hits;
   std::vector<std::string> canonical;
@@ -391,10 +385,9 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     return std::unexpected(file + ": rat records: " + e.what());
   }
 
-  // One Entrance per hatch, with its stored population in stream order.
-  // Playable-v1 deliberately keeps the first hatch's shared release cadence:
-  // every nonempty hatch emits on the same tick (playtest 10 Z6).
-  const int kTicksPerSecond = World::Rules{}.ticksPerSecond;  // MEASURED, World.h
+  // Provisional shared cadence: every nonempty hatch releases on the same tick,
+  // with its own stored population.
+  const int kTicksPerSecond = World::Rules{}.ticksPerSecond;  // 5 Hz clone clock.
   for (const auto& h : objs->hatches) {
     const auto [cx, cy] = webo::hatchSpawnCell(h, grid->width, grid->height);
     Entrance e;
@@ -422,21 +415,15 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
   }
 
   const RetailHatchSummary& primary = report.hatches.front();
-  // D1b (docs/scratch/phase-d1-release-trigger.md): the fixed one-time seed
-  // is READ (1.3, at 0x004B0F48); the per-cycle interval is this hatch's own
-  // RELEASERATE.PC row; the arm delay is DERIVED on MM_CLIMB_002 only and
-  // kept labelled as such -- it is not re-derived per level here, since no
-  // other level's arm delay has been measured.
+  // The first hatch supplies the shared RELEASERATE.PC row. The one-time
+  // seed is 1.3 seconds (0x004B0F48).
   s.releaseFirstCountdownSeconds = 1.3;
-  s.releaseArmSeconds = 0.723061695938398;  // DERIVED, MM_CLIMB_002 only
+  s.releaseArmSeconds = 0.723061695938398;  // Provisional for all installed levels (MM_CLIMB_002 basis).
   s.releaseIntervalSeconds = primary.intervalSeconds;
   s.releaseIntervalTicks =
       rateTable->intervalTicks(primary.clampedRate, kTicksPerSecond);
 
-  // Totals from LEVELMAP.DAT, not summed hatch words: round 1's own corpus
-  // probe found sum(hatch.count) == LevelInfo.totalLemmings on all 102
-  // retail levels, and the brief's acceptance criterion names LevelInfo as
-  // the source.
+  // Read the rescue total, save target and time limit from LEVELMAP.DAT.
   s.totalLemmings = static_cast<int>(info->totalLemmings);
   s.saveTarget = static_cast<int>(info->saveTarget);
   s.timeLimitTicks = static_cast<int>(info->timeLimitSeconds) * kTicksPerSecond;
@@ -445,12 +432,10 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
   if (s.entrances.size() > 1 && info->timeLimitSeconds > 0) {
     int largestQuota = 0;
     for (const auto& e : s.entrances) largestQuota = std::max(largestQuota, e.releaseCount);
-    // PROVISIONAL playable-v1 capacity floor: VH21_JC stores 1/49 at rate 1
-    // (5 seconds), which cannot empty in 210 seconds. Preserve those populations
-    // and select the slowest allowed shared table rate that fits. Reserve five
-    // level seconds for ordinary connected entry (4.5-second cue / 2.8-second
-    // doors), plus two update periods for arm/final-release sampling at 5 Hz.
-    // This only changes the initial rate, not player bounds or an in-flight clock.
+    // Provisional release-rate floor: choose the slowest allowed shared rate that
+    // fits the largest quota. VH21_JC's 49-actor hatch cannot empty at rate 1
+    // in 210 seconds. Reserve five seconds for entry and two 5 Hz updates for
+    // arming and final release. Preserve the player's rate bounds.
     const double startup = std::max(5.0, s.releaseArmSeconds) + s.releaseFirstCountdownSeconds +
                            2.0 / kTicksPerSecond;
     while (report.initialSharedRate < primary.rateMax && largestQuota > 1 &&
@@ -461,10 +446,8 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     s.releaseIntervalTicks = rateTable->intervalTicks(report.initialSharedRate, kTicksPerSecond);
   }
 
-  // 0x426C6B reads exit +0x98 immediately after the spatial base. Keep
-  // that tribe, including type 4 (any), rather than inferring it from artwork.
-  // Both lists follow stream order; refuse an uncorrelated list instead of
-  // silently giving an exit the wrong tribe. Trigger geometry stays unchanged.
+  // 0x426C6B reads tribe from exit +0x98 after the spatial base. Type 4 accepts
+  // every tribe. Correlate triggers with records in stream order.
   try {
     const auto decoded = lemmings::read_compiled_level(
         {reinterpret_cast<const std::uint8_t*>(blob->data()), blob->size()}, false);
@@ -481,12 +464,9 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     return std::unexpected(std::format("{}: serialized exits: {}", file, error.what()));
   }
 
-  // Each pad's destination is the pad whose serialized id equals this pad's
-  // linked id (+0x98; list lookup at 0x00434BCD, list filled by id at
-  // 0x00423325). The ids come from the structured 0x004347EC records,
-  // correlated with the located poses by LevelObjects (objs->teleportLinks
-  // non-empty). A pad whose linked id no pad carries gets no teleport
-  // (diagnostic in LevelObjects).
+  // Pair pads using the linked id (+0x98) in the 0x004347EC records correlated
+  // with placed poses. 0x00434BCD looks up the id registered at 0x00423325.
+  // Missing destination ids leave the source pad unlinked.
   std::vector<TeleportTrigger> telePads;
   for (const auto& p : objs->placed)
     if (p.kind == PlacedKind::Teleport)
@@ -503,9 +483,8 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
                              grid->height - 1 - dst.destWorldY});
     }
   } else if (n >= 2 && (n % 2) == 0) {
-    // FALLBACK (objs->teleportLinkDiagnostic says why): the old stand-in,
-    // file order i <-> i+n/2, used only when the structured ids are rejected
-    // or cannot be correlated with the located pads.
+    // Provisional file-order pairing (i <-> i+n/2) when serialized ids or pose
+    // correlation are unavailable. teleportLinkDiagnostic records the reason.
     const std::size_t half = n / 2;
     for (std::size_t i = 0; i < n; ++i) {
       const auto& src = telePads[i];
@@ -529,7 +508,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     s.levers.push_back({box.x, box.y, box.width, box.height, 1});
   }
 
-  // lever-gates-impl-001: after the terrain, the placed levers and every other object exist.
+  // Apply serialized links after terrain and placed objects exist.
   if (std::any_of(objs->placed.begin(), objs->placed.end(),
                   [](const auto& p) { return p.name == "Crab.a3d"; })) {
     try {
@@ -538,8 +517,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
       for (std::size_t i = 0; i < decoded.gadgets.named_entities.size(); ++i) {
         const auto& e = decoded.gadgets.named_entities[i];
         if (!e.model || e.model->name != "Crab.a3d") continue;
-        // All 14 installed crabs have this traced STAT contract. Do not
-        // silently turn an unimplemented moving/pending-victim variant into it.
+        // The stationary STAT branch requires the installed crabs' flag values.
         if (e.type != "STAT" || !e.model->object || e.value_c0 != 5 ||
             !e.flag_1d1 || e.flag_1d2 || e.flag_1d3 ||
             e.triple_arrays[0].empty() ||
@@ -583,8 +561,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
     }
   }
 
-  // moving-hazards-001: named records own behavior AND model placement. Read
-  // the existing recovered layout; never infer a patrol from a model name.
+  // Named records supply each hazard's placement and behavior, including its patrol.
   const auto hazardKind = [](std::string_view name) -> std::optional<NamedHazard::Kind> {
     if (name == "deathroller.a3d") return NamedHazard::Kind::Deathroller;
     if (name == "buzzsaw.a3d") return NamedHazard::Kind::Buzzsaw;
@@ -655,8 +632,7 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
             for (std::size_t k=0; k<source.records.size(); ++k) {
               const auto& r = source.records[k];
               NamedHazard::Segment segment;
-              // SHOW_KF3's parked endpoint is an authored +infinity duration
-              // with zero velocity, consumed by the ordinary sampler comparison.
+              // SHOW_KF3 uses an infinite-duration, zero-velocity endpoint.
               segment.duration = std::bit_cast<double>(r.leading_double_bits); segment.direction = r.value;
               for (unsigned axis=0; axis<2; ++axis) {
                 segment.start[axis] = number(r.double_bits[axis]);
@@ -696,15 +672,14 @@ std::expected<RetailLevelReport, std::string> loadRetailLevelReport(
 
   for (std::size_t i = 0; i < skills->counts.size(); ++i)
     s.skills[i] = static_cast<int>(skills->counts[i]);
-  // Static command-stock contract 0x45B86D/0x454725; retain the resource
-  // value rather than assuming all installed levels offer one command.
+  // Read command stock from the serialized resource (0x45B86D/0x454725).
   s.nukeStock = 0;
   try {
     const auto decoded = lemmings::read_compiled_level(
         std::span(reinterpret_cast<const std::uint8_t*>(blob->data()), blob->size()), false);
     s.nukeStock = static_cast<int>(std::min<std::uint32_t>(decoded.gadgets.values_27d0[9], 200));
   } catch (const std::invalid_argument&) {
-    // Legacy skill-trailer fallback has no established command-stock field.
+    // Provisional: skill-trailer fallback supplies no command-stock field.
   }
 
   return report;

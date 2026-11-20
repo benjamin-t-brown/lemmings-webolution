@@ -940,21 +940,16 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
    matrix = compose(compose(rotateX, rotateZ), matrix);
  }
 }
-std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
-    const CameraBasis& camera, const Raster& raster) const {
- std::vector<HatchHoverTarget> targets;
- if (raster.framebuffer().width != camera.width || raster.framebuffer().height != camera.height) return targets;
- const auto& depth = raster.depthBuffer();
- const auto context = predicateContext(camera);
- for (const auto& owned : roots_) {
-   if (owned.source.owner != "entities_425e50") continue;
-   auto records = buildSceneMeshSource(owned.node, identity(), camera.worldToView);
-   if (!records) continue;
+namespace {
+std::optional<PickBox> visibleMeshBounds(const SceneNode& node, const CameraBasis& camera,
+                                       const std::vector<double>& depth, const Matrix& context) {
+   auto records = buildSceneMeshSource(node, identity(), camera.worldToView);
+   if (!records) return std::nullopt;
    std::map<std::size_t,std::array<double,3>> eyes;
-   collectEyes(owned.node, identity(), context, eyes);
-   HatchHoverTarget h{owned.source.entityIndex, camera.width, camera.height, 0, 0};
+   collectEyes(node, identity(), context, eyes);
+   PickBox h{camera.width, camera.height, 0, 0};
    // SOURCE visibility: bounds of mesh pixels present in the completed scene
-   // depth buffer. This follows animated doors and hides rear/occluded hatches.
+   // depth buffer. This follows animation and excludes occluded pixels.
    // PROVISIONAL rectangular hit area rather than native model-origin +/-20;
    // a 0.5 world-unit tolerance covers raster depth conversion/rounding.
    for (const auto& record : *records) {
@@ -990,9 +985,174 @@ std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
        }
      }
    }
-   if (h.left < h.right && h.top < h.bottom) targets.push_back(h);
+   if (h.left < h.right && h.top < h.bottom) return h;
+   return std::nullopt;
+}
+
+std::optional<PickBox> projectedMeshBounds(const SceneNode& node, const CameraBasis& camera) {
+  const auto records = buildSceneMeshSource(node, identity(), camera.worldToView);
+  if (!records) return std::nullopt;
+  PickBox bounds{camera.width, camera.height, 0, 0};
+  for (const auto& record : *records) for (const auto& corner : record.corners) {
+    const auto& p = corner.viewPosition;
+    if (!(p[2] > 0)) continue;
+    const double x = camera.cx + camera.focalX * p[0] / p[2];
+    const double y = camera.cy - camera.focalY * p[1] / p[2];
+    if (!std::isfinite(x) || !std::isfinite(y)) continue;
+    const int px = int(std::floor(std::clamp(x, -1.0, double(camera.width))));
+    const int py = int(std::floor(std::clamp(y, -1.0, double(camera.height))));
+    bounds.left = std::min(bounds.left, px);
+    bounds.top = std::min(bounds.top, py);
+    bounds.right = std::max(bounds.right, px + 1);
+    bounds.bottom = std::max(bounds.bottom, py + 1);
+  }
+  bounds.left = std::max(0, bounds.left);
+  bounds.top = std::max(0, bounds.top);
+  bounds.right = std::min(camera.width, bounds.right);
+  bounds.bottom = std::min(camera.height, bounds.bottom);
+  if (bounds.left < bounds.right && bounds.top < bounds.bottom) return bounds;
+  return std::nullopt;
+}
+
+void drawSwitchOutline(Image& image, const PickBox& box, std::array<std::uint8_t, 3> color) {
+  // Clone addition. The dark border keeps the locator readable over both
+  // bright effects and dark terrain. Narrow or point receivers get a minimum size.
+  const int padX = std::max(2, (12 - (box.right - box.left)) / 2);
+  const int padY = std::max(2, (12 - (box.bottom - box.top)) / 2);
+  const int left = std::clamp(box.left - padX, 1, image.width - 2);
+  const int top = std::clamp(box.top - padY, 1, image.height - 2);
+  const int right = std::clamp(box.right - 1 + padX, 1, image.width - 2);
+  const int bottom = std::clamp(box.bottom - 1 + padY, 1, image.height - 2);
+  const auto pixel = [&](int x, int y, const auto& rgb) {
+    std::ranges::copy(rgb, image.rgba.data() + (std::size_t(y) * image.width + x) * 4);
+  };
+  const std::array<std::uint8_t, 3> border{16, 25, 32};
+  for (int x = left - 1; x <= right + 1; ++x) {
+    pixel(x, top - 1, border); pixel(x, top + 1, border);
+    pixel(x, bottom - 1, border); pixel(x, bottom + 1, border);
+  }
+  for (int y = top - 1; y <= bottom + 1; ++y) {
+    pixel(left - 1, y, border); pixel(left + 1, y, border);
+    pixel(right - 1, y, border); pixel(right + 1, y, border);
+  }
+  for (int x = left; x <= right; ++x) {
+    pixel(x, top, color); pixel(x, bottom, color);
+  }
+  for (int y = top + 1; y < bottom; ++y) {
+    pixel(left, y, color); pixel(right, y, color);
+  }
+}
+}  // namespace
+
+std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
+    const CameraBasis& camera, const Raster& raster) const {
+ std::vector<HatchHoverTarget> targets;
+ if (raster.framebuffer().width != camera.width || raster.framebuffer().height != camera.height) return targets;
+ const auto context = predicateContext(camera);
+ for (const auto& owned : roots_) {
+   if (owned.source.owner != "entities_425e50") continue;
+   if (auto h = visibleMeshBounds(owned.node, camera, raster.depthBuffer(), context))
+     targets.push_back({owned.source.entityIndex, h->left, h->top, h->right, h->bottom});
  }
  return targets;
+}
+
+void BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
+    const CylinderRegionProjector& region, const sim::LevelSetup& level, const LeverPresentation* levers,
+    const PressurePadPresentation* pads, int pointerX, int pointerY) const {
+  if ((!levers || levers->bindings.empty()) && (!pads || pads->bindings.empty())) return;
+  const auto context = predicateContext(camera);
+  const auto pick = [&](std::size_t root) -> std::optional<PickBox> {
+    const auto bounds = visibleMeshBounds(roots_[root].node, camera, raster.depthBuffer(), context);
+    if (bounds && pointerOverSceneBounds(pointerX, pointerY, bounds->left, bounds->top,
+                                        bounds->right, bounds->bottom)) return bounds;
+    return std::nullopt;
+  };
+
+  // Clone addition. Read both lever lists so the control can be identified
+  // in either position. A laser switch shares the one-shot pad binding.
+  std::optional<PickBox> hovered;
+  std::span<const sim::LeverMessage> first, second;
+  if (levers) for (const auto& binding : levers->bindings) {
+    hovered = pick(binding.root);
+    if (!hovered) continue;
+    const auto lever = std::ranges::find_if(level.levers, [&](const auto& entry) {
+      return entry.linked && entry.serializedId == binding.id;
+    });
+    if (lever != level.levers.end()) {
+      first = lever->faceMinus;
+      second = lever->facePlus;
+    }
+    break;
+  }
+  if (!hovered && pads) for (const auto& binding : pads->bindings) {
+    hovered = pick(binding.root);
+    if (!hovered) continue;
+    const auto pad = std::ranges::find(level.pressurePads, binding.id, &sim::PressurePad::id);
+    if (pad != level.pressurePads.end()) first = pad->messages;
+    break;
+  }
+  if (!hovered) return;
+
+  const auto model = [&](std::string_view collection, std::size_t index) -> std::optional<PickBox> {
+    for (const auto& root : roots_) {
+      if (!root.visible || root.source.entityIndex != index) continue;
+      const std::string_view owner = root.source.owner;
+      if (owner == collection ||
+          (collection == "tagged_entities" && owner.starts_with("tagged-")) ||
+          (collection == "named_entities" && owner.starts_with("named-")) ||
+          (collection == "entities_4347ec" && owner == "teleport-base")) {
+        if (auto bounds = projectedMeshBounds(root.node, camera)) return bounds;
+      }
+    }
+    return std::nullopt;
+  };
+  const auto receiverBounds = [&](const sim::ObjectRef& ref) -> std::optional<PickBox> {
+    const auto index = static_cast<std::size_t>(ref.index);
+    switch (ref.cls) {
+      case sim::ObjectClass::Gate: {
+        if (index >= level.gates.size()) return std::nullopt;
+        const auto& gate = level.gates[index];
+        // An emptied receiver still has an area the switch controls.
+        const double height = gate.height > gate.low ? gate.height : gate.high;
+        return region(std::array{gate.minX, gate.minY, 0.0},
+                      std::array{gate.maxX, gate.minY + height, 1.0});
+      }
+      case sim::ObjectClass::CounterGate: {
+        if (index >= level.counterGates.size()) return std::nullopt;
+        const auto& gate = level.counterGates[index];
+        return region(std::array{double(gate.left), double(gate.bottom), 1.0},
+                      std::array{double(gate.right), double(gate.top), 1.0});
+      }
+      case sim::ObjectClass::OccupancySensor: {
+        if (index >= level.occupancySensors.size()) return std::nullopt;
+        const auto& sensor = level.occupancySensors[index];
+        return region(sensor.min, sensor.max);
+      }
+      case sim::ObjectClass::NamedHazard:
+        if (index >= level.namedHazards.size()) return std::nullopt;
+        return model(ref.collection, level.namedHazards[index].entityIndex);
+      case sim::ObjectClass::Other:
+        if (auto bounds = model(ref.collection, index)) return bounds;
+        if (ref.cylinderPosition) return region(*ref.cylinderPosition, *ref.cylinderPosition);
+        return std::nullopt;
+    }
+    return std::nullopt;
+  };
+
+  // Use the World loader's signed base-id table directly. The outline is a
+  // locator even through scenery, so retracted or hidden receivers can be found.
+  std::vector<int> outlined;
+  for (const auto messages : {first, second}) for (const auto& message : messages) {
+    if (message.targetId < 0 || std::ranges::find(outlined, message.targetId) != outlined.end()) continue;
+    const auto receiver = level.objectIds.find(message.targetId);
+    if (receiver == level.objectIds.end()) continue;
+    if (const auto bounds = receiverBounds(receiver->second)) {
+      drawSwitchOutline(image, *bounds, {92, 243, 255});
+      outlined.push_back(message.targetId);
+    }
+  }
+  drawSwitchOutline(image, *hovered, {255, 213, 81});
 }
 std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
  std::vector<std::size_t> out;
@@ -1002,7 +1162,7 @@ std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
 void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats) const {
   renderStage(target,camera,lib,stats,Stage::Primary);
   renderStage(target,camera,lib,stats,Stage::LegacyUnattributed);
-  renderStage(target,camera,lib,stats,Stage::GravityEffect);
+  renderStage(target,camera,lib,stats,Stage::GadgetEffect);
   renderStage(target,camera,lib,stats,Stage::FluidPipe);
   renderStage(target,camera,lib,stats,Stage::FluidGate);
   renderStage(target,camera,lib,stats,Stage::Secondary);
@@ -1117,9 +1277,11 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
 }
 void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const AssetLibrary& lib,BackdropStats& stats,Stage stage,SceneRasterObserver* observer,std::vector<double>* depthOutput) const {
  if(stage==Stage::FluidGate){renderFluid(target,camera,stats,observer);return;}
- const bool gravityEffectPass = stage == Stage::GravityEffect;
+ const bool gadgetEffectPass = stage == Stage::GadgetEffect;
  const auto includesRoot = [&](const OwnedRoot& root) {
-   return gravityEffectPass ? root.source.owner == "tagged-gravity" : root.source.stage == stage;
+   if (gadgetEffectPass)
+     return root.source.owner == "tagged-gravity" || root.source.owner == "tagged-pressure-pad";
+   return root.source.stage == stage;
  };
  if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(), includesRoot)) return;
  // SceneRaster and legacy Raster share the same linear view-depth units here;
@@ -1165,6 +1327,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
   for (const auto& owned : roots_) {
     const auto& root = owned.node;
     const bool gravityRoot = owned.source.owner == "tagged-gravity";
+    const bool pressurePadRoot = owned.source.owner == "tagged-pressure-pad";
     if (stage == Stage::Primary) ++stats.roots;
     // Primary retains the all-root census. Later passes need only their own
     // roots: they previously rebuilt and discarded the entire primary mesh.
@@ -1193,9 +1356,11 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     }
     for (auto& rec : *records) {
       if (stage == Stage::Primary) ++stats.meshRecords;
-      if (gravityRoot) {
-        const bool coil = rec.blendSelector == 3 && textureNameFlags(rec.materialName) == 4;
-        if (coil != gravityEffectPass) continue;
+      if (gravityRoot || pressurePadRoot) {
+        const auto flags = textureNameFlags(rec.materialName);
+        const bool additiveEffect = gravityRoot ? rec.blendSelector == 3 && flags == 4
+            : rec.blendSelector == 2 && flags == 0 && !rec.materialName.empty();
+        if (additiveEffect != gadgetEffectPass) continue;
       }
       if (stage == Stage::Secondary) secondaryMeshes[rec.nodeSourceOffset].push_back(std::move(rec));
       else if (stage == Stage::Primary) primaryMeshes.push_back(std::move(rec));
@@ -1205,10 +1370,12 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
     if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;return;}
     auto state=options(false,rec.blendSelector==1);
-    if (gravityEffectPass) {
-      // Texture flag 4 modulates diffuse alpha. Selector 3 adds SrcAlpha/One.
+    if (gadgetEffectPass) {
+      // Flag 4 modulates alpha for selector-3 coils (SrcAlpha/One). Plain
+      // pad textures select texture alpha, with selector 2 adding One/One.
       // Native depth is inherited. Use the clone's ordinary Less/write-on policy.
       state = blendOptions(false, rec.blendSelector);
+      if (textureNameFlags(rec.materialName) == 0) state.alphaOperation = SceneAlphaOperation::SelectTexture;
     } else if (rec.materialName.starts_with(mineBackdropMaterials)) {
       const auto flags = textureNameFlags(rec.materialName);
       state = blendOptions((flags & 3) != 0, rec.blendSelector);

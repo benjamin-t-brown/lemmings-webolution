@@ -10,7 +10,7 @@
 //
 //   --frontend       explicitly enter the connected frontend with other options
 //   --direct-level   request the previous bare-launch injected-walker diagnostic
-//   --window-scale <1|2|3> integer presentation only; ordinary interactive default 2
+//   --window-scale <1|2|3> override the saved presentation scale for this run
 //   --level <id>     level to load (default MM_CLIMB_002)
 //   --native         render at the original's 640x480
 //   --camera <json>  camera state params (the A1 fixture/params format)
@@ -181,7 +181,7 @@ struct Args {
   std::string gameDir;
   int frames = 0;
   bool framesSpecified = false;
-  int windowScale = 0;  // omitted: ordinary interactive 2x, automation 1x
+  int windowScale = 0;  // omitted: use the saved choice in ordinary play
   bool invalidWindowScale = false;
   bool help = false;
   bool map = false;
@@ -284,23 +284,16 @@ Args parseArgs(int argc, char** argv) {
   return a;
 }
 
-int windowScale(const Args& args, bool observing) {
-  // PROVISIONAL clone UI policy for V9. Diagnostic captures, bounded runs and
-  // observer-driven automation retain their existing presentation unless the
-  // caller explicitly chooses a scale. The raster and CPU outputs never scale.
-  if (args.windowScale) return args.windowScale;
-  return args.framesSpecified || !args.shot.empty() || args.map || observing ? 1 : 2;
-}
-
 void printHelp() {
   std::puts("webolution [--game-dir PATH] [--frontend | --direct-level | --level ID | --map] [options]\n"
             "No options, or only --game-dir/--no-audio/--window-scale, starts the connected frontend.\n"
             "Any other option keeps its diagnostic route unless --frontend is explicit.\n"
             "--direct-level opens the previous MM_CLIMB_002 injected-walker diagnostic.\n"
-            "--window-scale 1|2|3 chooses crisp integer window scaling (ordinary play: 2).\n"
+            "--window-scale 1|2|3 overrides the saved Window size for this run.\n"
+            "Without a saved Window size, ordinary play uses Auto on desktop or Fill on web.\n"
             "--record DIR records each level attempt as DIR/*.replay (default via Play-Clone.ps1).\n"
             "--replay FILE checks a recording headless at full speed, without opening a save.\n"
-            "Bounded runs, map diagnostics and observers default to 1; CPU screenshots keep their resolution.\n"
+            "Diagnostics, bounded runs and observers default to 1x. CPU screenshots keep their resolution.\n"
             "Window: right mouse + NUMPAD4/6 revolves; mouse drag revolves/elevates;\n"
             "SPACE or CTRL zooms; BACKSPACE flips. Default geometry is route.\n"
             "--shot renders one headless frame; --frames N runs N window frames\n"
@@ -413,15 +406,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   Args args = parseArgs(argc, argv);
   if (args.help) { printHelp(); return 0; }
   if (args.invalidWindowScale) { std::fprintf(stderr, "--window-scale requires 1, 2 or 3\n"); return 1; }
-  const bool observing = bool(observer) || bool(levelObserver);
-  const int scale = windowScale(args, observing);
 #ifdef __EMSCRIPTEN__
   const bool logLevelDetails = true;
 #else
   const char* diagnosticSetting = std::getenv("WEBOLUTION_NATIVE_DIAGNOSTICS");
   const bool verbose = diagnosticSetting && std::string_view(diagnosticSetting) == "1";
   // Keep diagnostics for observer-driven tools, including the sweep's child-log tail.
-  const bool logLevelDetails = verbose || observing;
+  const bool logLevelDetails = verbose || observer || levelObserver;
 #endif
   if (!std::isfinite(runOptions.frameSeconds) || runOptions.frameSeconds < 0 ||
       (runOptions.frameSeconds > 0 && args.frames <= 0)) {
@@ -505,7 +496,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       cues->start(*library, runOptions.enableAudio && !args.noAudio);
       cues->playFrontendMusic();
     }
-    app::SdlWindow presentation(scale);
+    auto& presentation = *sharedWindow;
     if (auto ready = presentation.ensure("Lemmings Webolution — conditional map base layer (SOURCE)"); !ready) {
       std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
     }
@@ -827,8 +818,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     hasPipes |= source.stage == app::BackdropScene::Stage::FluidPipe;
   });
   // Primary is the immutable paired-primary tree. Doors, balloons, hazards,
-  // levers, pads and flipper bases are LegacyUnattributed. Flipper coils,
-  // fluids and the secondary tree draw in uncached passes after the tube.
+  // levers and opaque gadget parts are LegacyUnattributed. Pad beams, flipper
+  // coils, fluids and the secondary tree draw in uncached passes after the tube.
   std::optional<app::Raster> primaryCache, tubeCache;
   std::optional<app::CameraBasis> primaryPose, tubePose, previousCamera;
   app::BackdropStats primaryStats;
@@ -922,11 +913,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
            target.compositeOpaque(*tubeCache);
          },
          [&] {
-           // The flipper coils add light to the tube colour. The original draws
-           // them inside its tube walker. Composite them over the completed
+           // Pad beams and flipper coils add light to the tube colour. The original
+           // draws them inside its tube walker. Composite them over the completed
            // opaque tube here, using its depth to keep foreground ledges solid.
            if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats,
-               app::BackdropScene::Stage::GravityEffect);
+               app::BackdropScene::Stage::GadgetEffect);
            // 0x4418C2: draw all receiver pipes after the tube and before water.
            // Include their opaque depth in the drowning-actor scenery snapshot.
            if (backdrop) {
@@ -1118,8 +1109,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     cues->start(*library, runOptions.enableAudio && !args.noAudio);
     cues->playLevelMusic();
   }
-  app::SdlWindow localWindow(scale);
-  auto& presentation = sharedWindow ? *sharedWindow : localWindow;
+  auto& presentation = *sharedWindow;
+  if (persistentFrontend) presentation.updateWindowScale(persistentFrontend->windowScale());
   if (auto ready = presentation.ensure(
       "Lemmings Webolution — right mouse + NUMPAD4/6 revolve; drag mouse; SPACE/CTRL zoom; BACKSPACE flip"); !ready) {
     std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
@@ -1372,8 +1363,11 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         rendererInfo.name, rendererInfo.flags, bool(rendererInfo.flags & SDL_RENDERER_SOFTWARE),
         bool(rendererInfo.flags & SDL_RENDERER_PRESENTVSYNC));
   const auto processLevelEvents = [&] {
+    bool displayChanged = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+      displayChanged |= event.type == SDL_WINDOWEVENT &&
+                        event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED;
       presentation.gameCoordinates(event);
       // A hold can span Escape or a page change, including its consumed event batch.
       if (persistentFrontend) app::updateFrontendCursorInput(*persistentFrontend, event);
@@ -1411,7 +1405,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           resetMenuInput();
           menuDismissedThisFrame = true;
         } else if (persistentFrontend->screen() == shell::Screen::SoundOptions) {
-          app::handleSoundOptionsInput(*persistentFrontend, event);
+          app::handleSoundOptionsInput(*persistentFrontend, event, presentation);
           if (persistentFrontend->screen() == shell::Screen::Dialog) {
             levelMenu->open(); // caller 1F is rebuilt with Resume focused
             menuDismissedThisFrame = true;
@@ -1551,6 +1545,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         }
       }
       recordCommands();
+    }
+    if (running) {
+      const auto choice = persistentFrontend ? std::optional{persistentFrontend->windowScale()} : std::nullopt;
+      presentation.updateWindowScale(choice, displayChanged);
     }
   };
   while (running && (args.frames <= 0 || rendered < args.frames)) {
@@ -1711,6 +1709,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           image = toImage(windowRaster.framebuffer());
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
           const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
+          if (canHover && pointerInWindow && backdrop)
+            backdrop->drawSwitchHover(image, displayedCamera, windowRaster,
+                [&](const auto& low, const auto& high) {
+                  return scene->cylinderScreenBounds(displayedCamera, low, high);
+                }, world->setup(),
+                leverPresentation ? &*leverPresentation : nullptr,
+                pressurePadPresentation ? &*pressurePadPresentation : nullptr, pointerX, pointerY);
           const auto selectedSkill = skillSelection.selectedSkill();
           const auto hover = canHover ?
               hoveredActor(*world, *scene, options, *library, displayedCamera, windowRaster,
@@ -1782,9 +1787,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             const app::EntryCueFrame countdown{{320 - dx, 240 - dy, 330 + dx, 252 + dy}, true};
             app::drawEntryStartCue(image, *runtimeFont, std::to_string(digit), countdown);
           }
-          if (menuOpen() && persistentFrontend->screen() == shell::Screen::SoundOptions)
+          if (menuOpen() && persistentFrontend->screen() == shell::Screen::SoundOptions) {
+            persistentFrontend->setWindowScaleMenu(presentation.windowScaleMenu());
             image = persistentFrontend->renderSoundOptions(image);
-          else if (levelMenu) levelMenu->draw(image);
+          } else if (levelMenu) levelMenu->draw(image);
           const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
           const auto cursorState = menuOpen() ? persistentFrontend->cursorState() :
@@ -1947,10 +1953,17 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   if (args.noAudio) playback.disable();
   if (options.cueObserver) playback.setObserver(options.cueObserver);
   cues = &playback;
+  // Clone presentation. Direct-level startup is diagnostic even without a frame limit.
+  const bool useAutomationScale = !args.frontend || args.framesSpecified || !args.shot.empty() ||
+                                  args.map || observer || levelObserver;
+  SdlWindow presentation(sound.windowScale, windowScaleOverride(args.windowScale, useAutomationScale));
+  auto* sharedWindow = &presentation;
+#else
+  SdlWindow* sharedWindow = nullptr;
 #endif
   if (!args.frontend || !args.shot.empty() || args.help || args.map)
     return runApplicationLeg(argc, argv, std::move(observer), std::move(levelObserver), options,
-                             nullptr, nullptr, cues, completed, disposition);
+                             nullptr, sharedWindow, cues, completed, disposition);
   auto library = AssetLibrary::open(fs::path(args.gameDir) / "lemmings.box",
                                     fs::path(args.gameDir) / "patch.box");
   if (!library) { std::fprintf(stderr, "assets: %s\n", library.error().c_str()); return 1; }
@@ -1974,12 +1987,6 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   };
   // Device failure, a missing WAV or no audio backend only print a diagnostic.
   playback.start(*library, options.enableAudio && !args.noAudio);
-  // Own the window and renderer across menu, levels, retries and results. Legs
-  // borrow them and own only their texture; no video shutdown between pages.
-  SdlWindow presentation(windowScale(args, bool(observer) || bool(levelObserver)));
-  auto* sharedWindow = &presentation;
-#else
-  SdlWindow* sharedWindow = nullptr;
 #endif
   session->configureSound(sound, std::move(soundFile), std::move(preview));
   // Keep this session alive across level/results/map/retry legs. Every level

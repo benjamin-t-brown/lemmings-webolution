@@ -44,7 +44,9 @@ void updateFrontendCursorInput(FrontendSession& session, const SDL_Event& event)
   }
 }
 
-void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event) {
+void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event,
+                             const SdlWindow& presentation) {
+  session.setWindowScaleMenu(presentation.windowScaleMenu());
   if (event.type == SDL_MOUSEMOTION) {
     session.hoverSound(event.motion.x, event.motion.y);
   } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
@@ -69,8 +71,10 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
   if (session.selectedLevel()) return session.selectedLevel();
   if (session.quitRequested()) return std::optional<std::string>{};
 
-  SdlWindow localWindow;
+  SdlWindow localWindow(session.windowScale(),
+      windowScaleOverride(0, options.maxFrames > 0 || bool(observer)));
   auto& presentation = sharedWindow ? *sharedWindow : localWindow;
+  presentation.updateWindowScale(session.windowScale());
   if (auto ready = presentation.ensure(); !ready) return std::unexpected(ready.error());
   auto* renderer = presentation.renderer();
   std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> texture(
@@ -91,8 +95,11 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
   int frames = 0;
   std::optional<Image> lastPresented;
   while (running && (options.maxFrames == 0 || frames < options.maxFrames)) {
+    bool displayChanged = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+      displayChanged |= event.type == SDL_WINDOWEVENT &&
+                        event.window.event == SDL_WINDOWEVENT_DISPLAY_CHANGED;
       presentation.gameCoordinates(event);
       if (event.type == SDL_QUIT) { running = false; break; }
       updateFrontendCursorInput(session, event);
@@ -101,7 +108,7 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
         if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
           session.setPointer(event.button.x, event.button.y);
         if (session.screen() == shell::Screen::SoundOptions) {
-          handleSoundOptionsInput(session, event);
+          handleSoundOptionsInput(session, event, presentation);
         } else if (event.type == SDL_MOUSEMOTION) {
           session.hoverMenu(session.pointerX(), session.pointerY());
         } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
@@ -117,6 +124,10 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     }
     if (!running) break;
 
+    // All queued mouse events above belong to the old client size.
+    presentation.updateWindowScale(session.windowScale(), displayChanged);
+    if (session.screen() == shell::Screen::SoundOptions)
+      session.setWindowScaleMenu(presentation.windowScaleMenu());
     const Image image = session.composeFrame();
     if (image.width != 640 || image.height != 480 || image.rgba.size() != 640u * 480u * 4u)
       return std::unexpected("frontend image must be tightly packed 640x480 RGBA");

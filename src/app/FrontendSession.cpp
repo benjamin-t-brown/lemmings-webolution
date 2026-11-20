@@ -204,7 +204,7 @@ shell::Outcome FrontendSession::pressReturn() {
     if (menuFocus() == SoundMenu::UnlockAll)
       editingSound_.unlockAllLevels = !editingSound_.unlockAllLevels;
     else
-      adjustSound(-1);
+      adjustSound(menuFocus() == SoundMenu::WindowSize ? 1 : -1);
     return shell::Outcome::Handled;
   }
   // The native shared builder focuses the sole footer row. SDL Return invokes
@@ -253,8 +253,9 @@ void FrontendSession::configureSound(save::SoundSettings levels, std::shared_ptr
 }
 
 int FrontendSession::soundBaseY() const {
-  // The extra clone row moves the main-menu page up while keeping Accept at y=436.
-  return state_.uiState() == shell::kUiDialog ? 100 : 320 - 2 * shell::kLineHeight;
+  // Fit the clone rows above the main-menu Accept position.
+  return state_.uiState() == shell::kUiDialog ? 100 :
+      436 - SoundMenu::Accept * 2 * shell::kLineHeight;
 }
 
 shell::Outcome FrontendSession::openSoundOptions() {
@@ -293,6 +294,11 @@ bool FrontendSession::adjustSound(int direction) {
     editingSound_.unlockAllLevels = direction > 0;
     return true;
   }
+  if (menuFocus() == SoundMenu::WindowSize) {
+    constexpr int choices = kMaxFixedWindowScale + 1;
+    editingSound_.windowScale = (editingSound_.windowScale + direction + choices) % choices;
+    return true;
+  }
   const bool sfx = menuFocus() == SoundMenu::Sfx;
   int& percent = sfx ? editingSound_.sfx : editingSound_.music;
   // Provisional SDL increment: one displayed segment per click or key press.
@@ -304,12 +310,12 @@ bool FrontendSession::adjustSound(int direction) {
 
 void FrontendSession::hoverSound(int x, int y) {
   if (screen() == shell::Screen::SoundOptions)
-    if (auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_.unlockAllLevels))
+    if (auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_, windowScaleMenu_))
       state_.setHighlight(hit->row);
 }
 
 Image FrontendSession::renderSoundOptions(const Image& backdrop) const {
-  return soundMenu_.render(backdrop, font_, soundBaseY(), menuFocus(), editingSound_);
+  return soundMenu_.render(backdrop, font_, soundBaseY(), menuFocus(), editingSound_, windowScaleMenu_);
 }
 
 void FrontendSession::hoverMenu(int x, int y) {
@@ -331,7 +337,7 @@ bool FrontendSession::click(int x, int y) {
     return pressReturn() == shell::Outcome::Handled;
   }
   if (screen() == shell::Screen::SoundOptions) {
-    const auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_.unlockAllLevels);
+    const auto hit = soundMenu_.hit(x, y, soundBaseY(), editingSound_, windowScaleMenu_);
     if (!hit) return false;
     state_.setHighlight(hit->row);
     if (hit->direction == 0) return pressReturn() == shell::Outcome::Handled;

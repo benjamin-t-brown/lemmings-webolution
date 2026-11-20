@@ -1,20 +1,4 @@
-﻿// The simulation: lemmings, the skills applied to them, and the tick that
-// moves everything forward.
-//
-// Deterministic by construction. There is no clock, no randomness and no
-// floating point in the step: the same level plus the same ordered list of
-// commands always produces the same outcome, which is what makes the
-// differential oracle in PLAN.md 2 usable as a regression test.
-//
-// Most of the constants below are still provisional; three are not.
-//
-// They started as the well-documented classic-Lemmings values (fall 3px/tick,
-// splat above 63px, a six-pixel step-up limit, twelve bricks per builder).
-// Revolution is a Lemmings game and those are the right shape, but it is a
-// different engine, so each one has to be checked against it. Three have been,
-// off the running original through the dinput shim (PLAN.md 2.2): the
-// simulation step rate, the walking speed, and the climber's rise. The rest
-// are still guesses and are marked as such, one by one, on `Rules`.
+﻿// Simulates actors, skill assignments and level updates on the terrain grid.
 
 #pragma once
 
@@ -41,34 +25,25 @@ std::string_view skillName(Skill s);
 
 enum class State : std::uint8_t {
   Faller, Walker, Climber, Hoister, Floater, Blocker,
-  // Shrugger is where a builder goes when its last brick is spent. MEASURED
-  // live, round 6: the twelfth brick's percent-90 callback builds the state
-  // whose vtable store is `mov [eax], 0x004B0C78` at 0x0041AB42, which
-  // `read_steppers.py --states` names `shrug`, and the lemming walked again
-  // 0.966 s later. See Rules::shrugCycleMs.
+  // A builder enters Shrugger after its last brick. The 90% callback
+  // installs shrug vtable 0x004B0C78 at 0x0041AB42.
   Builder, Shrugger, Basher, Miner, Digger, Exploder, Splatter, Exited, Dead,
-  // Bounce off a trampoline pad. MEASURED, round 13: vtable 0x004B0810,
-  // type 0x21; fall land on cell bit 0x1000 attaches it (0x00416560) ahead
-  // of the splat arm. See Rules::bounceRiseCells.
+  // A fall onto bit 0x1000 attaches bounce (type 0x21, vtable 0x004B0810)
+  // at 0x00416560 before the splat check.
   Bounce,
-  // Drown in water (and acid). MEASURED, round 14/15: vtable 0x004B0570,
-  // type 0x22; cell bit 0x40 on the ground under the feet attaches it
-  // (0x00415386 / 0x004154D8). Enter sets anim "drown" (0x004BF130). Acid
-  // Fluid / Entrance_acid are not a separate state â€” same attach. See
-  // Rules::drownMs. docs/scratch/phase3-round15-acid.md.
+  // Ground bit 0x40 attaches drown for water or acid (0x00415386 /
+  // 0x004154D8, type 0x22, vtable 0x004B0570). Enter plays "drown"
+  // (0x004BF130). Entrance_acid identifies a hatch, independent of this hazard.
   Drown,
-  // In a teleport pad. MEASURED, round 16: type 0x28 (vtable 0x004B0C1C,
-  // cartwheel anim) then type 0x2c (0x004B0CE8); object step 0x00434B0F
-  // relocates to partner pose. See Rules::teleportDelayTicks.
+  // Pad transit enters type 0x28 (0x004B0C1C, cartwheel), then type 0x2c
+  // (0x004B0CE8). Object step 0x00434B0F relocates to the partner pose.
   Teleporting,
 };
 std::string_view stateName(State s);
 
 enum class Facing : std::int8_t { Left = -1, Right = 1 };
 
-// Moments the shell can hear. The simulation stays free of SDL and of asset
-// names: it only says *what happened*. Mapping each cue onto a `.WAV` is the
-// mixer's job. Drained with takeCues() after each tick (or after assign).
+// Simulation audio events. The mixer maps each cue to its .WAV.
 enum class SoundCue : std::uint8_t {
   Assign,   // a skill stuck -- Action (0x4556B5); refusals emit no cue
   OhNo,     // a bomber fuse ended outside Nuke -- Ohno
@@ -76,7 +51,7 @@ enum class SoundCue : std::uint8_t {
   Splat,    // landed too hard -- Splat
   Exit,     // reached the exit -- Yippee
   LevelStart, // first hatch spawn -- Letsgo (presentation only)
-  Bash,     // retained name for the common excavation cue -- Mine
+  Bash,     // Common excavation cue (Mine).
   BuilderWarning, // a builder spends brick 3, 2 or 1 -- Chink
   Work = Bash, // a successful bash, mine or dig stroke removed terrain
 };
@@ -96,76 +71,47 @@ struct Lemming {
   State state = State::Faller;
 
   int fallDistance = 0;    // pixels fallen since leaving the ground
-  int frame = 0;           // ticks spent in the current state
+  int frame = 0;           // State-local animation progress in ticks or milliseconds.
   int bricksLeft = 0;      // builder
-  // Basher: finished cycles, capped at Rules::basherGraceCycles (state+0x44 of the original's bash
-  // state, constructor 0x0040BBA0 zeroes it). While below the cap a cycle that removed nothing does
-  // not end the bash. Reset by World::assign.
+  // Basher's completed cycles, capped at Rules::basherGraceCycles.
+  // The first cycles can cross air. Constructor 0x0040BBA0 clears state+0x44.
   int bashCycles = 0;
-  // The bomber countdown, in MILLISECONDS, because that is what the original
-  // keeps: the countdown object at vtable 0x004B0990 holds the double 5.0 and
-  // its step subtracts the frame's own time slice (`fsub qword ptr [ecx]` at
-  // 0x00413F53). MEASURED live off that double on the lemming's +0x374 list:
-  // it runs 4.994 -> 0.133 at exactly 1.000 s per second. -1 means never
-  // primed; 0 means the fuse has already run out, which is how a second bomb
-  // is refused.
+  // Fuse in milliseconds. The original +0x374 side-effect list holds
+  // state 0x004B0990, whose countdown uses seconds (0x00413F53).
+  // -1 means unprimed. Zero marks an expired fuse and bars a second assignment.
   int fuseMs = -1;
-  // Nuke replacement owns the Bomber animation until its crater/removal.
-  // Kept separate so ordinary Bomber/hazard/exit rules remain unchanged.
+  // Nuke owns the replacement Bomber state until crater and removal.
   bool nukeExploding = false;
 
-  // SpeedPad FASTER boost. MEASURED round 17: parallel state 0x004B0A38
-  // (type 0x10) enter 0x0041688C sets lemming+0x50=2 and a 5.0 s timer;
-  // 0x0042E2BF runs the main state twice while +0x50==2. 0 = inactive;
-  // >0 counts down in ms like fuseMs. speedPadLatched mirrors pad+0xb8:
-  // one attach per visit until the lemming leaves the AABB.
+  // FASTER (type 0x10, vtable 0x004B0A38) sets lemming+0x50=2
+  // for 5.0 s at 0x0041688C. 0x0042E2BF steps the main state twice.
+  // The timer counts down in ms, with zero inactive. The latch mirrors
+  // pad+0xb8 and rearms when the actor leaves the AABB.
   int fasterMs = 0;
   bool speedPadLatched = false;
 
-  // teleport-softlock-001: transpose each pad's original +0x248 actor-id
-  // exclusion list onto the actor as pad indices. A visit is armed again only
-  // after leaving that pad's closed AABB; no time-based cooldown.
+  // Store excluded pad indices per actor, transposing the original's
+  // pad+0x248 list of actor IDs. Leaving a pad's closed AABB rearms it.
   std::vector<std::size_t> teleportPadsLatched;
 
   bool canClimb = false;   // climber and floater are permanent, not states
   bool canFloat = false;
 
-  // Vertical direction. MEASURED, round 9: the engine dword at lemming+0x44,
-  // +1 upright / -1 inverted. Anti-grav's cartwheel enter (`0x0042F5E3`,
-  // called from `0x0041AE1B`) negates it. In THIS sim's Y-down terrain +1
-  // means falling increases y (toward the floor) and -1 means falling
-  // decreases y (toward the ceiling). Round 30 MEASURED that step-up, climb,
-  // hoist and dig all follow this same axis (walk probe add [+0x44], climb
-  // `*5.0*dt`, dig `Y -= vdir`, dig mask 0x20 when inverted). See
-  // docs/scratch/phase3-round9-antigrav.md and phase3-round30-inverted.md.
+  // Gravity sign: lemming+0x44 is +1 upright or -1 inverted.
+  // Cartwheel enter 0x0041AE1B calls 0x0042F5E3 to negate it.
+  // In the clone's Y-down grid, +1 falls toward the floor and -1
+  // toward the ceiling. Step-up, climb, hoist and dig use the same axis.
   int verticalDir = 1;
 
-  // Lemming sheet index. MEASURED, round 29: hatch+0xB0 copied to
-  // [lemming+0x4c] at spawn `0x0042E05F`. Sheet table `0x004BFFC8`:
-  // 0 Lemmings, 1 LemmingsWater, 2 LemmingsAcid. Landing splat exemption
-  // matches this against zone bits 0x200 / 0x4000 (FUN_00416433).
-  // docs/scratch/phase3-round29-splat-exempt.md.
+  // 0x0042E05F copies hatch+0xB0 to [lemming+0x4c].
+  // Sheet table 0x004BFFC8 maps 0 Lemmings, 1 LemmingsWater, 2 LemmingsAcid.
+  // FUN_00416433 exempts matching sheets on zone bits 0x200 / 0x4000 from splat.
   int sheetType = 0;
 
-  // Continuous sub-tick clock carry (phase D1n,
-  // docs/scratch/phase-d1-stepper-clock.md), only touched when
-  // LevelSetup::continuousStepperClock is true. It is the real-seconds
-  // adjustment to this lemming's NEXT call to stepFaller/stepWalker's own
-  // per-tick time budget (`dt + stepBudgetSeconds`): 0.0 means "just this
-  // tick's own dt" (every lemming's steady state, and the only value this
-  // field ever takes when the opt-in is off). World::spawn() sets a
-  // negative value when a lemming is released partway through the tick
-  // that spawned it (continuous release model only), so its first fall
-  // call gets less than a full tick. A stepper sets a negative value
-  // itself, immediately before handing the unconsumed remainder of ITS OWN
-  // budget to the next state's stepper within the SAME World::tick() call
-  // (a landing faller handing its leftover to the walker it becomes; a
-  // walker's own already-existing same-tick turn continuation handing its
-  // leftover to its own recursive call) -- so that call's own
-  // `dt + stepBudgetSeconds` resolves to the leftover, not a fresh dt. A
-  // non-negative value otherwise carries an unconverted fractional
-  // remainder forward into the next tick. See World::stepFaller/
-  // stepWalker.
+  // Continuous movement adds this signed adjustment in seconds to update dt.
+  // A partial spawn or same-update handoff subtracts time already elapsed.
+  // A positive value carries time left after spending whole cells into the
+  // next update. The tick path leaves this at zero unless enabled in LevelSetup.
   double stepBudgetSeconds = 0.0;
 
   // Closing terrain gates raise actor+0x5D (0x4270DC). Consumed on the
@@ -199,35 +145,25 @@ struct EvilRat {
 struct Entrance {
   int x = 0;
   int y = 0;
-  // Which read produced x and y. The original releases from the hatch's own
-  // stored int16 words (webo::HatchRecord, `0x00425F1C` / `0x00425F2E`), so a
-  // retail load supplies HatchWords and that is what the sim matches. The
-  // `Entrance*.a3d` translation is the fallback: hand-built levels, the
-  // synthetic setups in main.cpp, and any retail level whose hatch record did
-  // not parse. The two are not interchangeable -- on all 144 retail hatch
-  // records the stored Y is the translation's world Y minus 2, and that
-  // difference is stored, not computed.
+  // Retail spawns use the stored int16 HatchRecord coordinates (0x00425F1C /
+  // 0x00425F2E). The authored Y is two units below Entrance*.a3d on retail
+  // hatches. Use the model translation only when hatch words are unavailable.
   enum class Source : std::uint8_t { EntranceModel, HatchWords };
   Source source = Source::EntranceModel;
   // Stored hatch +0xB4/+0xB6; direction becomes the next birth's direction.
   // Direction fields occupy the padding before sheetType.
   bool alternateDirection = false;
   std::int16_t direction = 1;
-  // Hatch type word → [lemming+0x4c]. MEASURED round 29: from HatchRecord.type
-  // (hatch+0xB0). 1 = LemmingsWater, 2 = LemmingsAcid.
+  // HatchRecord.type (hatch+0xB0) becomes [lemming+0x4c].
+  // 1 = LemmingsWater, 2 = LemmingsAcid.
   int sheetType = 0;
   // Stored hatch +0x98, decremented per birth (0x425B72..0x425BCB).
   // -1 lets hand-built setups divide the level total evenly in stream order.
   int releaseCount = -1;
 };
-// Save trigger. MEASURED, round 11: the original's exit object keeps an AABB
-// at +0x48..+0x70 and tests the lemming's raw (X,Y,Z) with 0x00430BA1
-// (inclusive on every edge). Live on MM_CLIMB_002 and MM_FLOAT the box is
-// exactly 2 wide and 3 tall in world units; Z is the fixed slab [0, 1].
-// `x`/`y` are the minimum corner in Terrain space (Y-down); a point is in
-// when x âˆˆ [x, x+width] and y âˆˆ [y, y+height] â€” closed, matching the
-// original's fcomp, not a half-open rectangle. See
-// docs/scratch/phase3-round11-exit.md.
+// Exit AABB at +0x48..+0x70. 0x00430BA1 tests raw (X,Y,Z) with closed
+// edges. MM_CLIMB_002 and MM_FLOAT use 2x3 boxes with Z in [0,1].
+// This trigger stores the minimum corner in Y-down terrain cells.
 struct Exit {
   int x = 0;
   int y = 0;
@@ -242,11 +178,9 @@ struct Exit {
   }
 };
 
-// One teleport pad. MEASURED round 16: object vtable 0x004B1250, AABB via
-// 0x00430BA1; partner at object+0x260. x/y/width/height are Terrain Y-down
-// inclusive spans (12Ã—8). destX/destY are the partner feet cell after the
-// snap (partner pose column, terrain row of partner world Y). Facing is
-// preserved. docs/scratch/phase3-round16-teleport.md.
+// Teleport vtable 0x004B1250 uses a closed AABB (0x00430BA1) and
+// partner at object+0x260. The 12x8 spans are Y-down. Snap to the
+// partner's feet cell while preserving facing.
 struct Teleport {
   int x = 0;
   int y = 0;
@@ -256,11 +190,10 @@ struct Teleport {
   int destY = 0;
 };
 
-// One SpeedPad. MEASURED round 17: speedup_two_way.a3d â†’ object vtable
-// 0x004B1178. AABB via 0x00430BA1 inside FUN_00432742; live VH21_JC boxes
-// are X âˆˆ [poseÂ±1] Ã— Y âˆˆ [ty .. ty+6] (width=2, height=6, closed). Facing
-// filter at object+0xbc (0 = any); +0xa0==0 requires upright (+0x44==1).
-// Embed message (âˆ’2,6,1) â†’ FASTER. docs/scratch/phase3-round17-speedpad.md.
+// speedup_two_way.a3d uses vtable 0x004B1178. FUN_00432742 calls
+// 0x00430BA1 on a closed box (VH21_JC: X at pose +/-1, Y at ty..ty+6).
+// object+0xbc filters facing (0 = any) and +0xa0==0 requires
+// upright (+0x44==1). Message (-2,6,1) attaches FASTER.
 struct SpeedPad {
   int x = 0;
   int y = 0;
@@ -270,18 +203,13 @@ struct SpeedPad {
   bool requireUpright = true;
 };
 
-// One Lever. MEASURED + READ round 21: lever.a3d â†’ object vtable
-// 0x004B1288. Detection: list 0x004C88D0 + AABB 0x00430BA1 in 0x00436D30;
-// facing filter vs toggle +0xb8 (+0xb8==1 needs face âˆ’1, else face +1).
-// Activate 0x00436E14 plays cue Lever (DAT_004E32E4), 0x00436E6A sets
-// +0xb8 to the pull facing and fans message list +0xcc (face +1) or +0xbc
-// (face âˆ’1) through 0x00433AC0 â†’ FUN_00433B2E (type 4 / type 5 to linked
-// object ids). No lemming parallel state. Live E16_KF_1 AABB matches
-// SpeedPad's 2Ã—6. docs/scratch/phase3-round21-lever.md.
-// One serialized lever message (element reader 0x00433FB9, dispatch 0x00433B2E): the target's
-// base id, the message type (0 -> vt+0xC(p1,p2), 4 -> vt+4, 5 -> vt+8, others ignored) and the
-// two parameters. A negative id is not a list lookup (-2 is a special arm that no installed
-// lever uses); it is bounded, not applied.
+// lever.a3d uses vtable 0x004B1288. 0x00436D30 checks list 0x004C88D0,
+// AABB 0x00430BA1 and facing vs +0xb8 (state 1 requires -1, else +1).
+// 0x00436E14 plays Lever (DAT_004E32E4). 0x00436E6A stores facing and
+// sends +0xcc (+1) or +0xbc (-1) through 0x00433AC0 -> FUN_00433B2E.
+// Reader 0x00433FB9 loads each target id, type and two parameters.
+// Dispatch 0x00433B2E maps 0 to vt+0xC(p1,p2), 4 to vt+4 and 5 to vt+8.
+// Negative ids bypass lookup. The clone ignores the special -2 arm.
 struct LeverMessage {
   std::int32_t targetId = -1;
   std::uint32_t type = 0;
@@ -294,21 +222,17 @@ struct Lever {
   int y = 0;
   int width = 2;
   int height = 6;
-  // Mirrors object+0xb8. MEASURED E16 start = 1.
+  // Mirrors object+0xb8. E16_KF_1 starts at 1.
   int state = 1;
-  // shared-timing-impl-001 (lever-timing-research-001 section 1): the lever step
-  // reads `cooldown -= dt` while `cooldown > 0`, fires only when contact holds and
-  // the cooldown is <= 0 AFTER that decrement, then reloads it from object+0x98.
-  // The installed levers carry 0.0, so retail behaviour is unchanged; the fields exist
-  // so the explicit-dt contact phase can follow the traced order. Legacy tick() ignores them.
+  // The elapsed contact path decrements a positive cooldown before
+  // testing eligibility. A pull reloads it from object+0x98.
+  // Installed levers store 0.0. The per-actor tick path ignores cooldown.
   double cooldownSeconds = 0.0;
   double cooldownRemaining = 0.0;
-  // lever-gates-impl-001: the serialized link data of the paired tagged type-1 record
-  // (reader 0x00436FED). `linked` is false for a lever whose placement matched no unique
-  // record; such a lever toggles `state` only, as before. `serializedId` is the record's own
-  // base id (a lever is itself an addressable object). `initialFace` is the stored u32
-  // [+0xDC]; the load-time fan-out (0x0043703F -> 0x00436E6A) sends that face's list once.
-  // faceMinus is list +0xBC (face -1), facePlus is list +0xCC (face +1).
+  // Reader 0x00436FED supplies the linked type-1 record. The record's
+  // base id addresses the lever. The load call (0x0043703F -> 0x00436E6A)
+  // applies stored [+0xDC] and sends +0xBC for -1 or +0xCC for +1.
+  // Without a unique pose match, only the local toggle is available.
   bool linked = false;
   int serializedId = -1;
   int initialFace = 0;
@@ -328,13 +252,13 @@ struct PressurePad {
   std::vector<LeverMessage> messages;
 };
 
-// Tagged type 2: 0x43725A occupancy -> 0x437285/29A -> 0x4372AF.
-// Shares the existing registry with levers/pads; no separate gate link table.
+// Tagged type 2 shares the object registry. Occupancy dispatch is
+// 0x43725A -> 0x437285/29A -> 0x4372AF.
 struct OccupancySensor {
   int id = -1, state = 0;
   bool enabled = true; // base +0x38; vt+4/vt+8 enable/disable updates
-  // +0xA4 is the FIRST overlapping actor pointer, not a population count.
-  // Clone identity: lemming index or -2-rat index; -1 means no contact.
+  // +0xA4 holds the first overlapping actor pointer. The clone stores
+  // a lemming index or -2-rat index, with -1 for no contact.
   int contactActor = -1;
   std::array<double, 3> min{}, max{};
   double cooldownSeconds = 0.0, cooldownRemaining = 0.0;
@@ -348,10 +272,9 @@ struct GadgetContactRef {
   bool sensor = false;
 };
 
-// The movable TERRAIN gate (vt 0x4B0F00), not a FluidGate. 0x424187
-// reads [left,right,top,bottom,mode,request,quota,counterX,counterY,direction].
-// Mode 0 is switch-only: its counter fields are inactive (often CDCDCDCD).
-// Mode 1 counts vertical crossings, mode 2 horizontal crossings.
+// Terrain gate (vt 0x4B0F00). Reader 0x424187 loads bounds, mode,
+// request, quota, counter coordinates and direction. Mode 0 ignores the
+// counter fields (often CDCDCDCD). Modes 1 and 2 count Y and X crossings.
 struct CounterGate {
   int id = -1;
   int left = 0, right = 0, top = 0, bottom = 0; // original Y up, half-open
@@ -372,17 +295,14 @@ struct CounterGate {
   double surfaceFraction() const;
 };
 
-// lever-gates-impl-001: the fluid-zone receiver of vtable 0x004B1020 (ctor 0x00428680, reader
-// 0x0042ACAC, step 0x0042B24D). Field names follow the object offsets of the accepted traces
-// (lever-links section 3, lever-timing section 3, lever-init proof chain 2).
-//   request  [+0x18C]  written by message type 4 (-> 0, raise) and type 5 (-> 1, drain)
-//   done     [+0x188]  ctor 2; settle writes 0 (raised) or 1 (drained)
-//   armed    [+0x1B0]  ctor 0
-//   height   [+0x1A8]  load: low (request 1) or high (request 0); ramps by dt * rate
-//   high [+0x98] / low [+0xA0]; AABB min (+0x48,+0x50) max (+0x60,+0x68) in ORIGINAL rows;
-//   kind [+0x128]: 0 -> zone bit 0x200 (the only plane this clone has), 1 -> 0x2000.
-// The clone has no 0x2000 plane, so a kind-1 gate keeps its request/height/armed/done state
-// but paints nothing (bounded, see docs/scratch/lever-gates-impl-001.md).
+// Fluid-zone receiver (vtable 0x004B1020, ctor 0x00428680, reader
+// 0x0042ACAC, step 0x0042B24D). Request [+0x18C] is 0 to raise
+// (message 4) or 1 to drain (5). Done [+0x188] starts at 2 and
+// settles to request. Armed [+0x1B0] starts at 0.
+// Height [+0x1A8] ramps by dt * rate between high [+0x98] and low [+0xA0].
+// The Y-up AABB spans (+0x48,+0x50) to (+0x60,+0x68).
+// Kind [+0x128] selects 0x200 (water) or 0x2000 (lava). The clone
+// tracks lava height and state without a 0x2000 terrain plane.
 struct FluidGate {
   int id = -1;
   int kind = 0;
@@ -391,16 +311,14 @@ struct FluidGate {
   bool armed = false;
   double minX = 0.0, minY = 0.0, maxX = 0.0, maxY = 0.0;
   double height = 0.0, high = 0.0, low = 0.0;
-  // fluid-surface-impl-001 (fluid research 6.2 item 3 / 7.4): render-only state of the animation tail
-  // of 0x0042B24D. `lane` = u32 [+0x16C] (serialized value_16c); `wavePhase` = [+0x148], zero at
-  // load, `+= dt` on EVERY update (also when request == done or dt == 0) and wrapped at the kind's
-  // period; `animated` records that the first update has run (before it the stored mesh is
-  // the raw deserialized one). None of this feeds the height/mask machine above.
+  // Render-only tail of 0x0042B24D. Lane is serialized value_16c
+  // ([+0x16C]). Wave phase [+0x148] starts at zero and advances on
+  // every update, even with request == done. Use the stored mesh until the first update.
   std::uint32_t lane = 0;
   double wavePhase = 0.0;
   static double wavePeriodFor(int kind);
   bool animated = false;
-  static constexpr double kWavePeriod = 2.0;  // kind-0 measured period (fluid research 6.2 item 3)
+  static constexpr double kWavePeriod = 2.0;  // Kind-0 wave period, in seconds.
 
   // Rate table 0x004BF6F8 + kind * 0x48 (startup writer 0x00428848):
   // kind 0 = 2.0, kind 1 = 0.5, kind 2 = 1.0.
@@ -409,148 +327,114 @@ struct FluidGate {
   // Reader 0x0042ACAC load pass: request 1 -> height = low and CLEAR the AABB; else
   // height = high and SET it. The AABB is the stream one (+0x68 is not recomputed).
   void initialise(Terrain& terrain);
-  // Step 0x0042B24D for one update of `dt` seconds (the same segment dt as the lever contact):
-  // the accepted height/mask machine, then the animation tail (no separate gate clock).
+  // 0x0042B24D advances height and mask, then wave phase, on the same
+  // elapsed seconds as the lever contact.
   void step(double dt, Terrain& terrain);
-  // The accepted height/mask machine alone (unchanged behaviour of the former step()).
+  // Height ramp and zone-mask paint only.
   void stepHeight(double dt, Terrain& terrain);
   // `[+0x148] += dt; while (2.0 < phase) phase -= 2.0` (0x0042B24D tail, the jump target of the
   // request == done early exit at 0x42B29E).
   void advanceWave(double dt);
 };
 
-// What a lever message resolved to. The id table follows the base reader (0x00423310): every
-// constructed actor of ANY collection is stored at list[id] and a later construction wins.
-// Gates, sensors and the admitted named hazards have traced message semantics. Other
-// classes stay diagnosed and are never interpreted as one of these targets.
+// The base reader (0x00423310) registers every object by id in
+// construction order, with the last one winning. Dispatch applies traced
+// messages to gates, sensors and supported named hazards.
 enum class ObjectClass : std::uint8_t { Gate, Other, NamedHazard, CounterGate, OccupancySensor };
 struct ObjectRef {
   ObjectClass cls = ObjectClass::Other;
-  int index = -1;                  // index into the class's LevelSetup collection
-  const char* collection = "";    // loader collection name, for diagnostics
+  int index = -1;                 // LevelSetup index, or serialized index for Other
+  const char* collection = "";   // loader collection name
+  // Presentation anchor for Other receivers, whose motion is not simulated.
+  std::optional<std::array<double, 3>> cylinderPosition{};
 };
 
-// Bookkeeping of the lever message fan-out (diagnostic and test visibility).
+// Lever dispatch outcomes.
 struct LeverDispatchStats {
   std::uint64_t delivered = 0;     // supported message applied to a gate/hazard/sensor
   std::uint64_t unresolved = 0;    // id slot empty (0x00433B2E skips it)
   std::uint64_t unsupported = 0;   // type 0/other types, special ids, non-gate targets
 };
 
-// Balloon cue. READ round 18: string 0x004C0D24 registered to
-// object+0x1c8f8 / DAT_004E3300 (FUN_0045e51f); preload 0x0045EB2B;
-// unload 0x0045F172. Zero absolute refs to DAT_004E3300; +0x1c8f8 only
-// those three sites; no balloon.a3d; SOUNDS\BALLOON.WAV asset-only.
-// Exit Models\exit\balloon_* are decorations, not this gadget.
-// Clean negative: retail never plays the cue / never attaches an effect.
-// docs/scratch/phase3-round18-balloon.md. Mutate-alone: set true.
+// Balloon is an asset-only cue. FUN_0045e51f registers 0x004C0D24 at
+// object+0x1c8f8 / DAT_004E3300 (load 0x0045EB2B, unload 0x0045F172).
+// SOUNDS\BALLOON.WAV has no play path or balloon.a3d gadget.
+// Models\exit\balloon_* are exit decorations.
 inline constexpr bool kBalloonGadgetInRetail = false;
 
-// Fire cue. READ round 19: string 0x004C0D2C registered to
-// object+0x1c8fc / DAT_004E3304 (FUN_0045e51f); preload 0x0045EB41;
-// unload 0x0045F186. Zero absolute refs to DAT_004E3304; +0x1c8fc only
-// those three sites; no fire/flame/burn a3d; SOUNDS\FIRE.WAV and
-// SPRITES\FIRE.SPR asset-only (no exe/LVL path refs). Mine _FireBraize*
-// / lava glow textures are decorations, not this gadget.
-// Clean negative: retail never plays the cue / never attaches an effect.
-// docs/scratch/phase3-round19-fire.md. Mutate-alone: set true.
+// Fire is an asset-only cue. FUN_0045e51f registers 0x004C0D2C at
+// object+0x1c8fc / DAT_004E3304 (load 0x0045EB41, unload 0x0045F186).
+// SOUNDS\FIRE.WAV and SPRITES\FIRE.SPR have no executable or .LVL use.
+// _FireBraize* and lava glow are decoration.
 inline constexpr bool kFireGadgetInRetail = false;
 
-// Witch cue. READ round 20: string 0x004C0D34 registered to
-// object+0x1c8a8 / DAT_004E32B0 (FUN_0045e51f; not sequential +0x1c900);
-// preload 0x0045EB57; unload 0x0045F19A. One absolute play ref:
-// 0x0045D200 mov ecx,[DAT_004E32B0] â†’ call FUN_0044521b (Action-style),
-// inside FUN_0045cff9 pause arm, gated on strcmpi(DAT_004cbbf8,
-// "compiled\\e10_kf_1.lvl"). On match: play Witch and skip pause UI.
-// No witch.a3d; orphan TEXTURES\MODELS\WITCH\*; SOUNDS\WITCH.WAV for that
-// easter egg only. No lemming object/AABB/cell-bit/parallel-state path.
-// docs/scratch/phase3-round20-witch.md. Mutate-alone: set true.
+// Witch is a pause cue. FUN_0045e51f registers 0x004C0D34 at
+// object+0x1c8a8 / DAT_004E32B0 (load 0x0045EB57, unload 0x0045F19A).
+// Pause arm FUN_0045cff9 compares DAT_004cbbf8 with "compiled\\e10_kf_1.lvl".
+// On match, 0x0045D200 calls FUN_0044521b and skips the pause UI.
+// SOUNDS\WITCH.WAV serves that branch. TEXTURES\MODELS\WITCH\* is unused
+// and there is no witch.a3d gadget or +0x1c900 Witch slot.
 inline constexpr bool kWitchGadgetInRetail = false;
 
-// ForceF cue. READ round 22: string 0x004C0CC8 registered to
-// object+0x1c8d0 / DAT_004E32D8 (FUN_0045e51f); store disp 0x0045E614;
-// preload 0x0045EA39; unload 0x0045F0AA. Zero absolute refs to
-// DAT_004E32D8 (whole PE); +0x1c8d0 only those three sites; no
-// force/fan/blow a3d; SOUNDS\FORCEF.WAV and SOUNDS\FORCEFLD.WAV
-// asset-only (FORCEFLD has no cue string in retail exe).
-// Clean negative: retail never plays the cue / never attaches an effect.
-// docs/scratch/phase3-round22-forcef.md. Mutate-alone: set true.
+// ForceF is an asset-only cue. FUN_0045e51f registers 0x004C0CC8 at
+// object+0x1c8d0 / DAT_004E32D8 (store 0x0045E614, load 0x0045EA39,
+// unload 0x0045F0AA). SOUNDS\FORCEF.WAV has no play path, and
+// SOUNDS\FORCEFLD.WAV has no cue string.
 inline constexpr bool kForceFGadgetInRetail = false;
 
-// Axe has no independent simulation gadget/AABB/cell-bit path. Correction
-// to round 23's UI-only attribution: miner refusal 418D75..418E5B constructs
-// a render-only child; 4194F0 -> 496E40 binds 4E331C (SPRITES/AXE.SPR),
-// and 4196C0 -> 493761 submits its draw. See asset-census-001 and
-// docs/scratch/miner-axe-001.md. The false flag is only about simulation;
-// the installed sprite effect is now drawn through TubeScene.
+// Axe is a render-only miner refusal effect. 418D75..418E5B constructs
+// the child, 4194F0 -> 496E40 binds 4E331C (SPRITES/AXE.SPR), and
+// 4196C0 -> 493761 submits the draw. TubeScene presents the sprite.
 inline constexpr bool kAxeGadgetInRetail = false;
 
-// Bubble cue. READ round 24: string 0x004C0C9C registered to
-// object+0x1c8bc / DAT_004E32C4 (FUN_0045e51f); preload 0x0045E9CB;
-// unload 0x0045F046. Absolute play loads 0x00404697 / 0x004046C4 inside
-// type-0x23 step FUN_00404372 (vtable 0x004B03C0): lookup FUN_00404cc0 â†’
-// channel FUN_00406a00 â†’ SFX FUN_0044535b (height delta >5, one-shot
-// +0x1a). Attach: sole ctor FUN_004041fd call at 0x0041C3BA from walker
-// FUN_0041bffc when lem+0x54 fluid object mismatches sheet +0x4c /
-// fluid+0x128 (or subtype 1). Enter sets anim "drown"; subtype 1 also
-// plays Die DAT_004E32DC. Distinct from water-hazard drown type 0x22 /
-// 0x004B0570. No bubble.a3d; SOUNDS\BUBBLE.WAV + SPRITES\BUBBLES.SPR
-// (FX name Bubbles 0x004BF128, not this cue). No Bubble world gadget â€”
-// cue is SFX on that fluid-mismatch state.
-// docs/scratch/phase3-round24-bubble.md. Mutate-alone: set true.
+// Bubble is a fluid-mismatch cue. FUN_0045e51f registers 0x004C0C9C
+// at object+0x1c8bc / DAT_004E32C4 (load 0x0045E9CB, unload 0x0045F046).
+// Walker FUN_0041bffc attaches FUN_004041fd at 0x0041C3BA when lem+0x54
+// mismatches sheet +0x4c / fluid+0x128 or the fluid is subtype 1.
+// Type 0x23 (vtable 0x004B03C0) enters "drown" and plays Die DAT_004E32DC
+// for subtype 1. FUN_00404372 plays SOUNDS\BUBBLE.WAV at 0x00404697 /
+// 0x004046C4 via FUN_00404cc0 -> FUN_00406a00 -> FUN_0044535b
+// on height delta >5 (one-shot +0x1a). Water-hazard drown is type 0x22
+// (0x004B0570). Bubbles 0x004BF128 names SPRITES\BUBBLES.SPR. No bubble.a3d.
 inline constexpr bool kBubbleGadgetInRetail = false;
 
-// Scrape cue. READ round 25: string 0x004C0CA4 registered to
-// object+0x1c8c0 / DAT_004E32C8 (FUN_0045e51f); preload 0x0045E9E1;
-// unload 0x0045F05A. Absolute play loads only 0x0040C139 (bash cell
-// helper FUN_0040c0af refuse â†’ FUN_00445274) and 0x00415B33 (dig-bite
-// FUN_00415a43 refuse â†’ FUN_00406a00 â†’ FUN_0044535b â†’ walk FUN_0042f8b9).
-// Bash bite FUN_0040c357 calls the helper. Dig/bash success play Mine
-// DAT_004E32E8; mine refuse plays MineMetal DAT_004E32EC â€” not Scrape.
-// No scrape.a3d; SOUNDS\SCRAPE.WAV. Cue is SFX on already-measured
-// steel/blocker refuse arms; no exclusive Scrape gadget / state.
-// docs/scratch/phase3-round25-scrape.md. Mutate-alone: set true.
+// Scrape is a refusal cue. FUN_0045e51f registers 0x004C0CA4 at
+// object+0x1c8c0 / DAT_004E32C8 (load 0x0045E9E1, unload 0x0045F05A).
+// Bash FUN_0040c357 calls FUN_0040c0af, which plays via FUN_00445274
+// at 0x0040C139. Dig FUN_00415a43 plays via FUN_00406a00 ->
+// FUN_0044535b at 0x00415B33, then walks via FUN_0042f8b9.
+// Success plays Mine DAT_004E32E8. Miner refusal plays MineMetal
+// DAT_004E32EC. SOUNDS\SCRAPE.WAV serves the cue without a scrape.a3d.
 inline constexpr bool kScrapeGadgetInRetail = false;
 
-// Rumble cue. READ round 26: string 0x004C0CFC registered to
-// object+0x1c8e8 / DAT_004E32F0 (FUN_0045e51f); preload 0x0045EAD3;
-// unload 0x0045F122. Sole absolute play load 0x00423823 inside object
-// step FUN_00423749 (vtable 0x004B0F00 +0x14): on deferred state commit
-// when previous +0xa4 != 0 â†’ FUN_00406a00 â†’ FUN_0044535b. Count helper
-// FUN_00423858 walks list 0x004C88D0 (object may open/close via +0x90 /
-// +0x58); cue itself attaches no lemming state. Imm32 hits at
-// 0x46dfc3 / 0x489453 are call+0x1c8 false positives, not +0x1c8e8.
-// No rumble.a3d; SOUNDS\RUMBLE.WAV. No exclusive Rumble gadget.
-// docs/scratch/phase3-round26-rumble.md. Mutate-alone: set true.
+// Rumble is a gate cue. FUN_0045e51f registers 0x004C0CFC at
+// object+0x1c8e8 / DAT_004E32F0 (load 0x0045EAD3, unload 0x0045F122).
+// At a deferred commit with nonzero prior +0xa4, 0x00423823 in
+// FUN_00423749 (vtable 0x004B0F00 +0x14) calls FUN_00406a00 ->
+// FUN_0044535b. FUN_00423858 scans list 0x004C88D0 for the gate count
+// (+0x90 / +0x58). 0x46dfc3 / 0x489453 refer to call+0x1c8.
+// SOUNDS\RUMBLE.WAV plays without a rumble.a3d gadget.
 inline constexpr bool kRumbleGadgetInRetail = false;
 
-// Changeop cue. READ round 27: string 0x004C0CB4 registered to
-// object+0x1c8c8 / DAT_004E32D0 (FUN_0045e51f); preload 0x0045EA0D;
-// unload 0x0045F082. Absolute play loads only 0x0045AD07 (skill-panel
-// select FUN_0045ac5c, gated dword[0x004C6A08]==2 ? FUN_0044521b) and
-// 0x0048EB0C (options slider FUN_0048e8d5 / vtable 0x004B24D4 when
-// target==this+0x44 ? FUN_00404cc0 ? FUN_00497f39). UI SFX only; no
-// actor-list path. No changeop.a3d; SOUNDS\CHANGEOP.WAV (+ orphan
-// OLD-CHANGEOP.WAV). No exclusive Changeop gadget.
-// docs/scratch/phase3-round27-changeop.md. Mutate-alone: set true.
+// Changeop is a UI cue. FUN_0045e51f registers 0x004C0CB4 at
+// object+0x1c8c8 / DAT_004E32D0 (load 0x0045EA0D, unload 0x0045F082).
+// Skill select FUN_0045ac5c plays at 0x0045AD07 through FUN_0044521b
+// when dword[0x004C6A08]==2. Slider FUN_0048e8d5 (vtable 0x004B24D4)
+// plays at 0x0048EB0C via FUN_00404cc0 -> FUN_00497f39 for target==this+0x44.
+// SOUNDS\CHANGEOP.WAV is active. OLD-CHANGEOP.WAV is unused. No changeop.a3d.
 inline constexpr bool kChangeopGadgetInRetail = false;
 
-// Die cue. READ round 28: string 0x004C0CD0 registered to
-// object+0x1c8d4 / DAT_004E32DC (FUN_0045e51f); preload 0x0045EA4F;
-// unload 0x0045F0BE. Sole absolute play load imm 0x004042CF
-// (mov ecx,[DAT_004E32DC] at 0x004042CD) inside type-0x23 enter
-// FUN_00404261 (vtable 0x004B03C0 +8) when fluid+0x128==1 →
-// FUN_00406a00 → FUN_0044535b. SFX on already-measured fluid-mismatch
-// death (Round 24); not a separate Die state. Distinct from FallSplat
-// DAT_004E32E0 (splat enter FUN_0040b3ec / type 0x1a) and from Splat
-// DAT_004E32D4 (0 abs play refs). No die.a3d; SOUNDS\DIE.WAV. No
-// exclusive Die gadget.
-// docs/scratch/phase3-round28-die.md. Mutate-alone: set true.
+// Die is a lava contact cue. FUN_0045e51f registers 0x004C0CD0 at
+// object+0x1c8d4 / DAT_004E32DC (load 0x0045EA4F, unload 0x0045F0BE).
+// Type 0x23 enter FUN_00404261 (vtable 0x004B03C0 +8) loads it at
+// 0x004042CD (operand 0x004042CF) for fluid+0x128==1, then calls
+// FUN_00406a00 -> FUN_0044535b. FallSplat DAT_004E32E0 is used by
+// FUN_0040b3ec (type 0x1a). Splat DAT_004E32D4 has no play references.
+// SOUNDS\DIE.WAV plays without a die.a3d gadget.
 inline constexpr bool kDieGadgetInRetail = false;
 
-// Installed Crab.a3d records are stationary named STAT hazards (0x4333D2),
-// not moving DYNA actors. Contact uses the relative boxes at +0x78/+0x88,
-// added to the stored broad-box minimum (0x430C9C), not its maximum.
+// Crab.a3d records are stationary STAT hazards (0x4333D2).
+// 0x430C9C adds relative boxes +0x78/+0x88 to the broad-box minimum.
 struct Crab {
   struct Volume { std::array<double, 3> min{}, max{}; };
   std::size_t entityIndex = 0;  // named_entities stream index, shared with the scene
@@ -563,8 +447,8 @@ struct Crab {
   std::string attackSound;
 };
 
-// Named STAT/DYNA hazards: 0x4333D2 / 0x42576F. Patrol segments are
-// serialized start + velocity*time (0x451997), not inferred terrain routes.
+// Named STAT/DYNA hazards (0x4333D2 / 0x42576F) use serialized
+// patrol segments, sampled at start + velocity*time (0x451997).
 struct NamedHazard {
   enum class Kind { Deathroller, Buzzsaw, Scorpion, Robin };
   struct Segment {
@@ -610,58 +494,25 @@ struct LevelSetup {
   std::vector<NamedHazard> namedHazards;
   std::vector<EvilRat> rats;
   std::vector<GadgetContactRef> gadgetContactOrder;
-  // lever-gates-impl-001: world/level-owned receiver state (a reload builds a new LevelSetup,
-  // so gate request/done/armed/height all restart). `objectIds` is the base-id lookup used by
-  // lever dispatch (later construction wins); `leverStats` counts the fan-out outcomes.
+  // Each level owns its receiver state, object-id table and dispatch counts.
   std::vector<FluidGate> gates;
   std::map<int, ObjectRef> objectIds;
   LeverDispatchStats leverStats;
   int totalLemmings = 10;
   int saveTarget = 1;
   int releaseIntervalTicks = 20;  // ticks between spawns
-  // Additive, optional real-seconds release-timing model (phase D1,
-  // docs/scratch/phase-d1-release-trigger.md / phase-d1-door-open-duration.md /
-  // phase-d1-hatch-step-clock.md). The original's hatch keeps a per-hatch
-  // double countdown (hatch+0xC0): a one-time arm once the door has been open
-  // `releaseArmSeconds` real seconds (derived, MM_CLIMB_002-specific:
-  // ~0.723061695938398 s), seeded then to the fixed engine constant
-  // `releaseFirstCountdownSeconds` (READ: 1.3, at 0x004B0F48 -- not
-  // per-level), decremented every real-time step, firing spawn() at <= 0.0
-  // and rolling the recurring, RELEASERATE.PC-derived
-  // `releaseIntervalSeconds` back into the SAME accumulator (not a reset).
-  // This is frame-driven in the original (phase-d1-hatch-step-clock.md); here
-  // it is sampled once per World::tick() call, at the already-measured 200 ms
-  // tick (Rules::ticksPerSecond), which reproduces the original as observed
-  // at each 200 ms boundary.
-  //
-  // Leaving `releaseIntervalSeconds` at its default 0.0 keeps the exact old
-  // `releaseIntervalTicks` integer-tick behavior untouched -- every existing
-  // hand-built LevelSetup that does not set these three fields is unaffected.
-  // Setting `releaseIntervalSeconds > 0.0` opts this World instance into the
-  // new model instead.
-  double releaseArmSeconds = 0.0;             // DERIVED, MM_CLIMB_002 only
-  double releaseFirstCountdownSeconds = 0.0;  // READ: the fixed seed is 1.3
-  double releaseIntervalSeconds = 0.0;        // READ: RELEASERATE.PC row, seconds
+  // Positive releaseIntervalSeconds selects the shared elapsed scheduler.
+  // It waits releaseArmSeconds, seeds once from the original's 1.3 seconds
+  // (0x004B0F48), then decrements per update. At zero it releases and adds
+  // the RELEASERATE.PC interval to the accumulator. The original keeps a
+  // per-hatch double at hatch+0xC0. Zero interval selects the tick scheduler.
+  double releaseArmSeconds = 0.0;             // Provisional for all installed levels (MM_CLIMB_002 basis).
+  double releaseFirstCountdownSeconds = 0.0;  // One-time seed in seconds.
+  double releaseIntervalSeconds = 0.0;        // Recurring RELEASERATE.PC interval, in seconds.
 
-  // Additive, optional continuous sub-tick clock for the fall/walk steppers
-  // (phase D1n, docs/scratch/phase-d1-stepper-clock.md). D1m found the
-  // original's walk/fall motion is driven by a real per-frame dt that the
-  // walk stepper itself keeps as a mutable, re-checked, byref budget -- not
-  // a fixed 0.2s step -- and that a zero-fitted-parameter continuous replay
-  // (release at the real instant, fall at 20.0 u/s, land, walk at 5.0 u/s,
-  // sampled onto the SAME 200ms tick grid the harness already computes)
-  // collapsed the landing-tick-drift mismatch count 76-100% against three
-  // saved live captures (build/tmp/d1m-stepper-clock/replay.py). This flag
-  // is a separate opt-in from releaseIntervalSeconds above -- the two
-  // accumulators are not conflated, per D1n's brief -- following D1e's own
-  // additive shape exactly: `false` (every existing hand-built LevelSetup)
-  // runs the exact old stepFaller/stepWalker fixed-count-per-tick loops,
-  // byte-for-byte; `true` lets a lemming's own real-time tick budget (this
-  // tick's own dt, plus any leftover real seconds a prior call could not
-  // spend on a whole lattice unit -- see Lemming::stepBudgetSeconds) carry
-  // across a state transition within the SAME World::tick() call, instead
-  // of discarding it the way the old fixed-count loop does when it lands
-  // or turns before using up its whole per-tick count.
+  // Enable elapsed fall/walk budgets on the tick entry, independently of
+  // hatch timing. A stepper spends whole cells and can hand off leftover
+  // seconds within the update. When disabled, it uses cells per tick.
   bool continuousStepperClock = false;
 
   int timeLimitTicks = 0;         // 0 = untimed
@@ -671,722 +522,285 @@ struct LevelSetup {
   int nukeStock = 1; // Retail loader supplies serialized values_27d0[9].
 };
 
-// lever-gates-impl-001: the lever message fan-out, shared by the load stage and the runtime
-// contact phase so both follow one dispatch (0x00433AC0 -> 0x00433B2E per element, in list order).
-// Type 4 -> request 0, type 5 -> request 1 on a receiver found through LevelSetup::objectIds by
-// base id; everything else is counted in LevelSetup::leverStats and changes nothing.
+// Dispatch serialized lists in order (0x00433AC0 -> 0x00433B2E),
+// resolving base ids in LevelSetup::objectIds. For fluid receivers,
+// types 4 and 5 write request 0 and 1. Count unsupported or missing targets.
 void dispatchLeverMessages(LevelSetup& setup, const std::vector<LeverMessage>& list);
 // 0x00436E6A: face +1 -> state := 1 and send list +0xCC; face -1 -> state := -1 and send list
 // +0xBC; any other face does nothing. The explicit update path calls this on lever contact.
 void activateLeverFace(LevelSetup& setup, Lever& lever, int face);
-// Load-time stage (0x00444417 -> vt+0x28 = 0x0043703F -> 0x00436E6A with the stored face): sends
-// the list of the stored face once, for every linked lever, and applies that same face to
-// Lever::state (lever-initial-face-impl-001; the load stage previously sent the list but left the
-// state at the constructed +1, which is wrong for stored face -1).
+// Apply each linked lever's stored face and send its list once at load
+// (0x00444417 -> vt+0x28 = 0x0043703F -> 0x00436E6A).
 void fanOutLeverLoadFaces(LevelSetup& setup);
 
 class World {
 public:
-  // How fast things happen. Named so the oracle work has something concrete
-  // to correct rather than magic numbers scattered through the code.
-  //
-  // Each field says whether it was MEASURED off the running original or is
-  // still PROVISIONAL. Do not quietly promote a guess: the point of the
-  // distinction is that a provisional value can be wrong by a factor of four
-  // and nothing in the code will tell you, which is exactly what happened to
-  // the tick rate.
-  //
-  // Two timing facts come from the game's own data rather than from here, and
-  // both have now been confirmed live: the spawn interval comes from
-  // RELEASERATE.PC via webo::ReleaseRates (its doubles are literal seconds --
-  // the original released a lemming every 2.889 s on a level whose table
-  // entry is 2.8865 s), and the level limit comes from LEVELMAP.DAT (its
-  // u32 is literal seconds -- the original counts it down one per real
-  // second, from a static we can read at 0x004CBAAC).
+  // Timing and distances for the clone's terrain grid and skill updates.
+  // RELEASERATE.PC supplies release intervals in seconds through webo::ReleaseRates.
+  // LEVELMAP.DAT supplies the level limit in seconds (original clock 0x004CBAAC).
   struct Rules {
-    // MEASURED. The original steps its lemmings five times a second, on a
-    // flat 200 ms period. It is *not* frame-locked: the same 200 ms holds at
-    // 144, 30 and 27 frames per second, so the engine runs the simulation off
-    // a real-time accumulator and its render loop is free. See
-    // tools/harness/measure_tick.py and PLAN.md 2.2.
+    // Nominal simulation clock, independent of render cadence.
     int ticksPerSecond = 5;
 
-    // MEASURED. A walker advances exactly one lattice column per step --
-    // 1.000 of the 256 columns MM_CLIMB_002's surface ring is divided into,
-    // over many steps on several lemmings, never a fraction of one. Which
-    // also means the horizontal mask resolution is the engine's own unit, not
-    // a choice of ours. tools/harness/measure_motion.py.
+    // One walking column is one collision-mask lattice unit.
     int walkSpeed = 1;          // mask columns per tick
 
-    // MEASURED. A climber rises one world unit per step. On MM_CLIMB_002 the
-    // billboard went 34.190, 35.190, 36.190 â€¦ one per 200 ms tick, up the
-    // column-128 wall and again up the next. The terrain is one cell per
-    // world unit -- the resolution the original's own stored mask uses
-    // (assets/CollisionGrid.h) -- so this is the measured number with no
-    // conversion.
+    // One climbing cell is one world unit (assets/CollisionGrid.h).
     int climbSpeed = 1;         // cells per tick
 
-    // READ FROM THE BINARY, and confirmed live on a walk-off the y = 48 ring
-    // (docs/scratch/phase3-round2.md): three steps of exactly âˆ’4.000 world
-    // units (48.190 â†’ 44.190 â†’ 40.190 â†’ 36.190). The vtable Round 2 could not
-    // catch has since been read off the heap during a fall: objects whose
-    // first dword is 0x004B0A20, whose +0x18 climbs one per world unit of
-    // descent (docs/scratch/phase3-round3b-float-splat.md). Round 3b also
-    // measured the same âˆ’4.000 a tick on two further levels, eighteen
-    // consecutive ticks on MM_H_002 and eleven on VH13_KF_1.
-    // The lemming's own fall is the state at vtable 0x004B0A20 -- the
-    // one that carries the splat test, the floater check and the umbrella.
-    // Its speed comes from an accessor, 0x00416038, which branches on
-    // the lemming's umbrella flag:
-    //
-    //   0041604a  dd05180a4b00  fld   qword ptr [0x004b0a18]  ; 20.0
-    //   00416050  dc35f8034b00  fdiv  qword ptr [0x004b03f8]  ; 2.0, if open
-    //   0041607b  dc4d0c        fmul  qword ptr [ebp+0xc]     ; seconds
-    //
-    // and the stepper subtracts the result from Y:
-    //
-    //   00416213  db4044        fild  dword ptr [eax+0x44]    ; direction
-    //   00416216  dc4de0        fmul  qword ptr [ebp-0x20]    ; * the distance
-    //   00416219  dc6a10        fsubr qword ptr [edx+0x10]    ; Y - that
-    //
-    // So the constant is world units per *second*: 20.0 * 0.2 s = 4 world
-    // units per tick, halving to 2 under the umbrella. The terrain is one
-    // cell per world unit, so that is the value here as it stands.
-    // The same arithmetic with the climb's 5.0 gives 1 world unit per tick and
-    // with the walk's 5.0 gives 1 column per tick, and both of those were
-    // measured on the running original -- which is what fixes the units here.
-    //
-    // An earlier read took 25.0 from the state whose vtable is 0x004B0C60 and
-    // put this at 10. The constant itself is at 0x004B0C40 (0x0041A758 does
-    // `fmul qword ptr [0x004b0c40]`); 0x004B0C60 is the vtable, and eight
-    // bytes read there are 1.96e-307, not a double anyone meant.
-    // That state is also a faller by its animation, but it has no splat
-    // test, no umbrella and no floater check, so it is some other descent and
-    // not this one. PLAN.md 2.3 has both.
+    // Fall vtable 0x004B0A20 accumulates descent at +0x18. Accessor
+    // 0x00416038 loads 20.0 at 0041604a (0x004b0a18), halves it for an
+    // open umbrella at 00416050 (0x004b03f8), and multiplies by seconds
+    // at 0041607b ([ebp+0xc]). 00416213 / 00416216 scale [ebp-0x20] by
+    // gravity [eax+0x44]. 00416219 subtracts that from Y [edx+0x10].
+    // At 200 ms, 20 units/s is four cells, as on MM_H_002 and VH13_KF_1.
+    // The separate descent state
+    // 0x004B0C60 uses 25.0 at 0x004B0C40 (0x0041A758 loads 0x004b0c40).
     int fallSpeed = 4;          // cells per tick while falling
 
-    // READ FROM THE BINARY AND MEASURED LIVE. Exactly half the fall, because
-    // the umbrella path divides by the 2.0 at 0x004B03F8. The flag it branches
-    // on is the lemming's [+0x4b], set when the stepper starts the "float"
-    // animation at 0x004162C2.
-    //
-    // Live, on E10_KF_1, a lemming given the floater byte at birth and
-    // sampled off the actor list fell -4.000 world units a 200 ms tick down
-    // to y = 62.160 and then -2.010 +/- 0.03 for fourteen consecutive ticks
-    // (62.160, 60.140, 58.130, 56.120 ...), with [+0x4b] flipping to 1 on the
-    // tick the step halved. 20.0 -> 10.0 world units a second.
-    // docs/scratch/phase3-round3b-float-splat.md.
-    //
-    // One thing our stepper does not model, measured the same pass: the
-    // halving is not immediate. [+0x4b] is set when the "umbopen" animation
-    // *finishes*, about 9.6 world units (0.48 s) after the umbrella opens, so
-    // the original keeps falling at 4 for those ticks. Encoding that needs a
-    // field this round was told not to invent; it is recorded in the note.
+    // The float branch divides by 2.0 at 0x004B03F8 once 0x004162C2
+    // sets lemming [+0x4b] at the end of "umbopen" and starts "float".
+    // On E10_KF_1, an open umbrella reduces descent to 10 units/s.
     int floatSpeed = 2;         // cells per tick under an umbrella
 
-    // READ FROM THE BINARY AND MEASURED LIVE. The *fall state*, not the
-    // lemming, keeps the distance fallen as a double at its own +0x18 -- the
-    // lemming object holds no pointer to that state, which is why a heap scan
-    // for the state is how it is found (measure_float_splat.py --find-state).
-    // It is incremented by 1.0 per sub-step at 0x00416318 and tested twice:
-    //
-    //   004162d9  dc1de8034b00  fcomp qword ptr [0x004b03e8]  ; 10.0 -> umbrella
-    //   004165ff  dc1da8104b00  fcomp qword ptr [0x004b10a8]  ; 30.0 -> splat
-    //
-    // Ten and thirty world units, and one cell is one world unit, so these
-    // are the read values unchanged. The splat is skipped
-    // when the lemming's has-floater byte [+0x49] is set -- which is what our
-    // `floating` already stands for, since the umbrella opens well before the
-    // splat distance -- and the landing cell's own flags can exempt it too
-    // (bit 0x80 is not landable at all). The classic values were 16 and 63.
-    //
-    // Live: on E10_KF_1 the accumulator read 1, 2, 3 ... 9 at y 81.996 down
-    // to 73.936 and the umbrella latch [state+0x20] was already 1 by the
-    // sample at accumulator 11, y 71.996 -- a hatch Y of 82, so the umbrella
-    // opens exactly 10.000 world units into the fall. The accumulator is
-    // floor(distance fallen) + 1, so the 10.0 compare (which reads it before
-    // the increment) fires on the boundary at ten units.
-    //
-    // splatDistance was pinned by holding that accumulator: with it held at
-    // 29 the lemmings landing from E10_KF_1's 75-unit drop stayed in the
-    // actor list and walked (1 death in the first 12 s), and with it held at
-    // 31 they died at the untouched rate (13 in the first 12 s, 27 in 24 s).
-    // `test ah, 0x41` at 0x00416607 survives on <= 30.0, so the branch's
-    // threshold is 30 and nothing else. Unprobed confirmation on a second
-    // level: VH13_KF_1's hatch drop is 28 world units, the accumulator ran
-    // 1..28, and none of ten lemmings left the actor list on landing.
-    //
-    // Round 29 MEASURED: after the floater byte, FUN_00416433 also skips
-    // splat when (cell & 0x200 && [+0x4c]==1) or (cell & 0x4000 &&
-    // [+0x4c]==2). Terrain::splatExempt / Lemming::sheetType. Lava zone
-    // 0x2000 has no arm. docs/scratch/phase3-round29-splat-exempt.md.
+    // Fall state +0x18 accumulates descent in world units at 0x00416318.
+    // 004162d9 compares 0x004b03e8 (10.0) and latches opening at
+    // [state+0x20]. 004165ff compares 0x004b10a8 (30.0).
+    // 0x00416607 (test ah, 0x41) survives at or below 30.0.
+    // Floater [+0x49] and FUN_00416433's sheet [+0x4c] matches
+    // (1 on 0x200, 2 on 0x4000) exempt splat. Bit 0x80 prevents
+    // landing. Lava zone 0x2000 provides no splat exemption.
     int floatAfter = 10;        // umbrella opens this far into the fall
     int splatDistance = 30;     // falling further than this kills
 
-    // PROVISIONAL from here down, with these exceptions, each of which
-    // carries its own addresses and series below: `maxStepUp` and
-    // `lemmingHeight` (read and measured live in round 4), the whole
-    // bash / dig / mine block (round 5), the whole builder block (round 6),
-    // `blockerFieldHeight` (round 8) and the whole bomber block (round 7).
-    // `basherReach` and the two miner numbers are what is left.
+    // Bash, dig and mine use animation callbacks. 0x0041B077 converts
+    // progress to percent (fld [0x004B0CE0] loads 100.0 at 0x0041B1A9,
+    // truncated by 0x0049C5AC). For each crossed percent, 0x0041B21E
+    // matches the record frame (cmp eax, [ebp-8]) and 0x0041B248 dispatches
+    // its callback (call [eax+0xc]).
+    // 0x00468B04 / 0x00468B5D scale frame count / index by 0.06 s
+    // (0x004B1940). The divisor [strip+0x10] cancels in the ratio.
+    // The strip table is on the controller at lemming+0x128, with
+    // frame count at [[+0x1F8]+0xC] + [+0x1C8] * 0x98. Bash/dig/mine
+    // occupy strips 0/4/9 at rate 1.0. Dig enter 0x004159CA ->
+    // 0x004683E9 writes 0.75 to controller +0x1D8, a separate field.
+    // The bites zero whole cell words. Slot 3 of trampoline vtable
+    // 0x004B0D08 holds FUN_0041B683 (and 0xf77c at 0x0041B783).
     //
-    // ---- bash, dig and mine: MEASURED LIVE, round 5 --------------------
-    //
-    // "An interval in ticks" is the wrong shape and the three fields that
-    // had it are gone. All three skills share slot-1 stepper 0x0041B077,
-    // which clears no cell itself: it turns the animation's progress into an
-    // integer percent (`fld [0x004B0CE0]` = 100.0 at 0x0041B1A9, truncated
-    // at 0x0049C5AC) and, for each percent it crosses, calls the record whose
-    // stored frame EQUALS that percent (`cmp eax, [ebp-8]` at 0x0041B21E,
-    // `call [eax+0xc]` at 0x0041B248). The removal is in those records.
-    //
-    // The clock is the animation, not the tick. 0x00468B04 multiplies the
-    // strip's frame count by the double 0.06 at 0x004B1940, 0x00468B5D
-    // multiplies the current frame index by the same 0.06, and the strip's
-    // own divisor at [strip+0x10] cancels in the ratio -- so one whole cycle
-    // is `frames * 0.06` seconds. Read live off the controller at
-    // lemming+0x128 (frames at [[+0x1F8]+0xC] + [+0x1C8] * 0x98, divisor
-    // 1.0 on all three): bash strip 0 is 24 frames, dig strip 4 is 20, mine
-    // strip 9 is 25. Live cycle times, measured off the grid writes:
-    //
-    //   dig   20 x 0.06 = 1.200 s   measured 1.2005 / 1.2017 / 1.1990 s
-    //   bash  24 x 0.06 = 1.440 s   measured 1.4380 / 1.4370 / 1.4450 s
-    //   mine  25 x 0.06 = 1.500 s   measured 1.4997 / 1.5010 / 1.5005 s
-    //
-    // At the measured 200 ms tick that is 6.000, 7.200 and 7.500 ticks. Only
-    // dig is a whole number of ticks, which is why these are milliseconds
-    // and not an interval: `World::stepBasher` samples the real cycle and so
-    // acts every 7 or 8 ticks, averaging 7.2, instead of rounding to one of
-    // them. The 0.75 dig's enter hook writes to controller +0x1D8
-    // (0x004159CA into 0x004683E9) is NOT this cycle's divisor -- the strip
-    // itself is 20 frames and 20 x 0.06 is the measured 1.2 s, so whatever
-    // that rate does, it does not scale the cycle.
-    //
-    // docs/scratch/phase3-round5-live.md has the per-tick grid diffs;
-    // tools/harness/measure_dig.py re-runs them.
-    //
-    // FUN_0041B683, the four-cell `and 0xf77c` removal at 0x0041B783, is
-    // still nobody's and is now positively excluded: it is slot 3 of the
-    // trampoline vtable 0x004B0D08 with no direct caller in .text, and every
-    // live removal measured this round stored a **whole dword 0** over the
-    // cell (0x21 -> 0x00000000, 0x5 -> 0x00000000, 0x1 -> 0x00000000, 38 of
-    // 38 cells), which is `mov dword ptr [edx], 0` in the bites and not an
-    // AND of any mask.
-    //
-    // The distances below were classic-Lemmings *pixel* values carried at the
-    // two-rows-per-world-unit resolution our old raster used. The terrain is
-    // now one cell per world unit, matching the original's stored mask, so
-    // each has been halved to keep the physical size it was standing in for.
-    // Halving a guess still leaves a guess: these are no better founded than
-    // before, only expressed in the right unit. `maxStepUp` and
-    // `lemmingHeight` were on that halved-guess list until round 4, and
-    // `basherReach` and `diggerDepth` until round 5; none of them is any
-    // more, and the halving had nothing to do with any of the four numbers.
-    //
-    // READ FROM THE BINARY AND MEASURED LIVE, and it is 2, not the classic 3.
-    // The walk stepper 0x0041BDD4 loads no step height -- its only doubles
-    // are 2.0, 0.0 and 5.0 -- because the step-up lives in the mask probe
-    // 0x0041BFFC that it calls at 0x0041BEE6. That probe's step-up arm is
-    // unrolled exactly two deep and the third solid cell is a wall:
-    //
-    //   0041c47d  83e201    and edx, 1            ; cell(X, Y)   & 1
-    //   0041c482  0f8467..  je  0x41c6ef          ;   clear -> the step-DOWN arm
-    //   0041c48e  034844    add ecx, [eax+0x44]   ; row += vertical direction
-    //   0041c517  83e101    and ecx, 1            ; cell(X, Y+1) & 1
-    //   0041c51c  0f848c..  je  0x41c6ae          ;   clear -> adopt (rise 1)
-    //   0041c528  034244    add eax, [edx+0x44]   ; row += direction again
-    //   0041c5b1  83e001    and eax, 1            ; cell(X, Y+2) & 1
-    //   0041c5b6  0f84f2..  je  0x41c6ae          ;   clear -> adopt (rise 2)
-    //   0041c5c1  8a5148    mov dl, [ecx+0x48]    ; third solid cell: climber?
-    //   0041c5c6  0f84aa..  je  0x41c676          ;   no -> 0x42f66b, turn round
-    //
-    // 0x0041C6AE is the adopt path (it stores the row through 0x0042EE74).
-    // There is no third `add`: over the whole function to its `ret 4` at
-    // 0x0041C872, `add ..., [reg+0x44]` appears only at 0x0041C48E,
-    // 0x0041C528 and 0x0041C81B (that last one is on the step-down arm).
-    // [+0x44] is the integer 1 written at spawn by 0x0042DFE7 and 0x0042F5E3
-    // only ever negates it, so the greatest rise the probe can write is 2.
-    //
-    // Live, by writing single-column pillars of exactly N solid cells into
-    // the original's own grid in front of its own walkers (the bit tested is
-    // 0x1, so that is the bit written) and watching what its arm does --
-    // tools/harness/measure_stepup.py --carve. On VH13_MT, pillars of 1, 2,
-    // 3, 4 at columns 29, 33, 37, 41 above feet row 59: **230 adopted rises
-    // of exactly 1, 231 of exactly 2 (in a single step, dy +2.000), 114
-    // turns at the pillar of 3, and nothing ever reached the pillar of 4**.
-    // Repeated on E07_JC_1 (pillars at 216, 224, 232, 240 above feet row 51):
-    // rise 1, rise 2, then 14 lemmings turned at the 3. Both bounds, two
-    // levels. docs/scratch/phase3-round4-live.md.
+    // Walk step 0x0041BDD4 calls probe 0x0041BFFC at 0x0041BEE6.
+    // 0041c47d tests solidity and 0041c482 branches to 0x41c6ef for
+    // clear ground. 0041c48e (0x0041C48E) and 0041c528 (0x0041C528)
+    // add [+0x44] for the two rises. Tests 0041c517 and 0041c5b1
+    // branch at 0041c51c and 0041c5b6 to 0x41c6ae (0x0041C6AE),
+    // which stores the row through 0x0042EE74. A third solid cell
+    // tests climb ability at 0041c5c1 and branches at 0041c5c6 to
+    // 0x41c676 (turn 0x42f66b) when unavailable. The step-down arm
+    // adds [+0x44] at 0x0041C81B before return at 0x0041C872.
+    // Spawn 0x0042DFE7 sets [+0x44] to 1 and 0x0042F5E3 negates it.
+    // A rise of three cells takes the wall arm, as on VH13_MT and E07_JC_1.
     int maxStepUp = 2;          // a walker climbs steps up to this high
 
-    // ---- the builder: MEASURED LIVE, round 6 ---------------------------
-    //
-    // The builder is on the same record mechanism as bash / dig / mine. Its
-    // state vtable is 0x004B08DC (`mov [edx], 0x4b08dc` at 0x0040F93F), its
-    // step is slot +4 = 0x00410302 whose tail is `call 0x41b077` at
-    // 0x0041047B, and its constructor 0x0040F8D1 registers exactly TWO
-    // records into the list at state+0x18:
-    //
-    //   0040f9a8  c7 40 08 51 00 00 00  mov [eax+8], 0x51      ; frame 81
-    //   0040f9b2  c7 41 0c 1c 01 41 00  mov [ecx+0xc], 0x41011c    ; the brick
-    //   0040fa06  c7 42 08 5a 00 00 00  mov [edx+8], 0x5a      ; frame 90
-    //   0040fa10  c7 40 0c cc fb 40 00  mov [eax+0xc], 0x40fbcc    ; advance
-    //
-    // read out of the running process, entry for entry, on all three builders
-    // watched. So there is no `builderInterval` and that field is gone: one
-    // cycle is the build strip's `frames * 0.06 / divisor`, which is strip 2,
-    // 16 frames, divisor 1.0 = 960 ms. Measured off the grid writes:
-    // 33 gaps across three builders, every one between 0.955 and 0.969 s,
-    // mean 0.9597 s = 4.80 ticks. Not a whole number of ticks, like bash and
-    // mine.
-    //
-    // THE BRICK is 0x0041011C, and it is TWO cells, not three:
-    //
-    //   00410199  c7 45 f0 01 00 00 00  mov [ebp-0x10], 1   ; i = 1
-    //   004101ab  83 7d f0 03           cmp [ebp-0x10], 3   ; while i < 3
-    //   004101b7  0f af 42 40           imul eax, [edx+0x40]    ; i * facing
-    //   004101eb  e8 70 dc ff ff        call 0x40de60           ; the cell
-    //   004101f8  83 ca 01              or  edx, 1              ; THE BRICK
-    //   004101fe  89 10                 mov dword ptr [eax], edx
-    //
-    // at `(p + i*facing, trunc(Y))` for i = 1 and 2, where p is the stamp's
-    // own column `trunc(X + [+0x360])` -- and the enter hook's snap cancels
-    // the facing bias exactly as the bash bite's does (facing left it adds 1
-    // to the truncation at 0x0040FB0B and `[+0x360]` is -1.0), so p is
-    // `trunc(X at the click)` in both facings. The row is the lemming's OWN
-    // row, not the row below it: a builder at world Y 23 writes row 23 and
-    // then stands at 24.
-    //
-    // Live, three builders on MM_BUILD in three separate processes, both
-    // facings, 12 bricks each: **72 of 72 cells went 0x00000000 ->
-    // 0x00000001**, at animation percent **81** every time.
-    //
-    //   left-facing  (185.147, 23) -> (183,23)(184,23) (182,24)(183,24) ...
-    //                                 (172,34)(173,34)
-    //   right-facing (159.845, 23) -> (160,23)(161,23) (161,24)(162,24) ...
-    //                                 (171,34)(172,34)
-    //   left-facing  (233.966, 49) -> (231,49)(232,49) ... (220,60)(221,60)
-    //
-    // So a brick is plain solid. It is NOT the `or edx, 0x403` at 0x004275C1
-    // -- that function 0x00427554 has three E8 callers (0x004271D5,
-    // 0x00427509, 0x0043B1F8) and the builder's chain 0x0041011C ->
-    // 0x0043B016 -> 0x0043AE6C reaches none of them -- so bricks are
-    // destructible, and Material::Built is the right material. The stamp is
-    // an OR, so a brick laid where terrain already stands changes nothing.
-    int builderBricks = 12;     // 0x0040F948 stores 0xc at state+0x3c, and
-                                // three builders laid exactly twelve
-    int brickLength = 2;        // cells per brick, at offsets +1 and +2 ahead
-                                // (was the classic 3; the loop runs i = 1, 2)
-    int builderCycleMs = 16 * 60;   // 960 ms = 4.8 ticks, measured 0.9597 s
+    // Builder vtable 0x004B08DC (0x4b08dc at 0x0040F93F) steps
+    // via slot +4 at 0x00410302, tail-calling 0x41b077 at 0x0041047B.
+    // Ctor 0x0040F8D1 registers two records at state+0x18.
+    // 0040f9a8 / 0040fa06 set frame +8 to 81% / 90%.
+    // 0040f9b2 / 0040fa10 set callback +0xc to 0x41011c / 0x40fbcc.
+    // Strip 2 lasts 16 * 0.06 s / 1.0 = 960 ms.
+    // Brick 0x0041011C stamps cells at offsets 1 and 2 times facing
+    // [edx+0x40]. 00410199 / 004101ab set the [ebp-0x10] loop bounds,
+    // 004101b7 multiplies by facing and 004101eb calls 0x40de60.
+    // 004101f8 / 004101fe OR and store 0x00000001 at the feet row.
+    // The 0x0040FB0B snap offsets the left-facing [+0x360] bias so
+    // trunc(X + [+0x360]) is the placement column in either direction.
+    // The brick chain 0x0041011C -> 0x0043B016 -> 0x0043AE6C paints
+    // destructible cells. The separate OR 0x403 at 0x004275C1 in
+    // 0x00427554 is called by 0x004271D5, 0x00427509 and 0x0043B1F8.
+    // The two-cell bricks on MM_BUILD leave existing solid cells intact.
+    int builderBricks = 12;     // 0x0040F948 sets state+0x3c to 0xc.
+    int brickLength = 2;        // Cells at offsets +1 and +2 ahead.
+    int builderCycleMs = 16 * 60;   // Milliseconds per strip-2 cycle.
     int builderBrickPercent = 81;   // the first record's stored frame
-    // The build state does not start at percent 0. Its enter hook seeks the
-    // animation forward once:
-    //
-    //   0040fb99  e8 66 8f 05 00  call 0x468b04        ; frames * 0.06 / div
-    //   0040fb9e  dc 35 f8 08 4b 00  fdiv [0x4b08f8]   ; the double 16.0
-    //
-    // and hands the quotient to the same advance method the per-tick step
-    // uses, so it advances the clock by one sixteenth of a whole cycle --
-    // 1/16 = 6.25%, whatever the frame count is. Live: the first sample after
-    // every click read percent 9-10 about 25 ms in, and the first brick came
-    // 0.692-0.694 s later, i.e. 0.715 s after the click against the 0.718 s
-    // (81 - 6.25)% predicts. So the first brick is at 75% of a cycle, not at
-    // 81%, and this field is why.
+    // Enter seeks one sixteenth of the cycle. 0040fb99 calls 0x468b04
+    // for strip duration, and 0040fb9e divides by 16.0 at 0x4b08f8.
+    // That leaves roughly 75% of the cycle before the first brick.
     int builderEnterPercent = 6;    // 6.25% rounded; the 16.0 at 0x004B08F8
-    // Where a spent builder goes. MEASURED: strip 10, 8 frames, divisor 0.5,
-    // so `frames * 0.06 / divisor` = 0.96 s -- and the shrug ran 0.966 s on
-    // both builders that reached it before walking again. That divisor is
-    // the first one in this project that is not 1.0, and it settles that the
-    // divisor belongs in the DURATION even though it cancels in the percent
-    // (round 5 only ever saw 1.0).
+    // Shrug uses strip 10 at half speed. The divisor scales duration
+    // even though it cancels when computing progress.
     int shrugCycleMs = 8 * 60 * 2;  // 960 ms; 8 frames of 60 ms over 0.5
 
-    // MEASURED LIVE, round 5. One cycle of each skill's animation, in
-    // milliseconds: frames * 60, where 60 ms is the double 0.06 at
-    // 0x004B1940 and the frame counts were read off the live strip.
+    // Skill cycle duration uses frame count times 60 ms (0.06 s at 0x004B1940).
     int basherCycleMs = 24 * 60;   // 1440 ms = 7.2 ticks
     int diggerCycleMs = 20 * 60;   // 1200 ms = 6.0 ticks
     int minerCycleMs = 25 * 60;    // 1500 ms = 7.5 ticks
-    // Where in the cycle the first bite fires, as the integer percent the
-    // stepper compares against each record's stored frame. Read live out of
-    // the record lists: bash frames 12, 16, 60, 64 (row offsets 0, 1, 3, 2);
-    // dig 25 (the bite) and 30 (the Y step); mine 12, 12, 16, 16, 20 (args
-    // 3, 2, 1, 0, -1). Basher now groups 12/16 into the lower punch and
-    // 60/64 into the upper punch, then advances at 92 (basher-two-hit-001).
-    // Mine/dig retain their existing whole-bite hybrid sampling.
+    // Callback percents: bash 12/16/60/64 (rows 0/1/3/2), dig 25/30
+    // (bite/advance), mine 12/12/16/16/20 (args 3/2/1/0/-1).
+    // Provisional hybrid sampling groups the lower and upper bash punches
+    // at 12% and 60%, then advances at 92%. Dig and mine sample whole bites.
     int basherBitePercent = 12;
     int diggerBitePercent = 25;
     int minerBitePercent = 12;
 
-    // MEASURED LIVE, round 5: the footprints, in cells, relative to the
-    // lemming's own cell. Each is the per-tick grid diff, not a guess.
-    //
-    // bash  the leading column only -- `trunc(X) + facing` -- four rows
-    //       deep from the feet row upward. On MM_BASH_002, a right-facing
-    //       basher at (190.455, 24) cleared (191, 24) (191, 25) (191, 27)
-    //       (191, 26) at percents 12, 16, 60, 64, then columns 192, 193,
-    //       194 the same way, one per cycle. A left-facing one at
-    //       (156.97, 40) cleared columns 152, 151, 150, 149, 148 the same
-    //       four rows each. The bite also re-sweeps any column between the
-    //       column it entered on (state+0x4C) and the leading column, four
-    //       rows per bite -- a catch-up path over cells it has already
-    //       emptied, and the one live cell it ever caught was (152, 44).
-    int basherReach = 1;        // columns removed per cycle (classic was 2)
+    // Each bash cycle cuts ahead from the feet row upward. With reach 1,
+    // X=190.455 facing right on MM_BASH_002 cuts column 191.
+    // The original can re-sweep columns starting at state+0x4C.
+    int basherReach = 1;        // Probe and cut width in columns.
     int basherHeight = 4;       // rows, from the feet row upward
-    // basher-fix-001 (playtest P1). When a bash ends. READ from the decompiled bash state, not
-    // measured live: the state's ctor 0x0040BBA0 zeroes a removed-anything flag (+0x41) and a cycle
-    // counter (+0x44) and registers records at 4% steps; the end-of-cycle record 0x0040C6E8 (92%)
-    // advances the lemming one column (+0x48 += facing), then
-    //   `if (+0x44 == 2 && +0x41 == 0) -> walk (FUN_0042F8B9)`, else on ground (FUN_0042E913)
-    //   `if (+0x44 < 2) ++(+0x44); +0x41 = 0` and keep bashing, off ground -> fall state.
-    // The bite 0x0040C357 refuses steel / directional / blocker-field cells (cell helper
-    // 0x0040C0AF returns 1, bite ends the state) and applies the same `+0x44 == 2 && +0x41 == 0`
-    // test after its first record (arg 0, 12%). The helper sets +0x41 only when it clears a nonzero
-    // cell. So the first two cycles swing and advance a column each even through open air; from the
-    // third cycle on, a cycle that removed nothing ends the bash with the lemming facing as before.
-    // The clone still preflights all basherHeight rows at the lower punch,
-    // preserving its accepted open-air/refusal rule; the original's 12%
-    // stop sees only the feet row. PROVISIONAL overhang difference. Cuts are
-    // now two punches and the column commits at 92%, as the traced records.
+    // Basher ctor 0x0040BBA0 clears the removal flag (+0x41) and cycle
+    // counter (+0x44). The 92% callback 0x0040C6E8 advances +0x48 by
+    // facing. On support (FUN_0042E913), two completed cycles and no cut
+    // select walk (FUN_0042F8B9). Otherwise cap the counter at two and
+    // clear the flag. Off support selects fall.
+    // Bite 0x0040C357 also tests the flag after argument 0 at 12%.
+    // Helper 0x0040C0AF refuses steel, directional bits and blocker fields,
+    // and sets +0x41 only for a nonzero cell it cleared. Provisional:
+    // the clone preflights all rows at the first punch. The original's
+    // 12% open-air stop sees the feet row.
     int basherGraceCycles = 2;
-    // dig   three cells, `trunc(X) - 1 .. + 1`, in the row below the feet,
-    //       then Y steps one cell down. Four diggers on MM_DIG_000 cleared
-    //       3 cells x 4 cycles each, every one 0x21 -> 0x00000000.
-    int diggerWidth = 3;        // cells across (was a hard-coded 5)
-    int diggerDepth = 1;        // rows per cycle -- now measured, not "it
-                                // cannot halve"
-    // mine  columns `+1` and `+2` ahead, rows feet-1 .. feet+3 in the
-    //       original's Y-up grid, minus the one cell the bite skips
-    //       (arg 2 with dx 1, the `0x004B10B8` dword 3 test at 0x00418A1E),
-    //       then X advances one column and Y one row per cycle. Measured on
-    //       MM_MINE: (194,71) (195,71) then (196,71) (195,70) (196,70) then
-    //       (197,70) (197,71) (196,69) (197,69), the lemming going
-    //       (193,72) -> (194,71) -> (195,70) -> (196,69).
+    // A dig clears the row toward gravity, centered on trunc(X), then
+    // advances into it. The three-cell cut on MM_DIG_000 clears word 0x21.
+    int diggerWidth = 3;        // Cells across the cut.
+    int diggerDepth = 1;        // Rows per cycle.
+    // Mine probes two columns ahead at feet-1 through feet+3 in Y-up.
+    // 0x00418A1E skips the arg 2, dx 1 cell using dword 3 at 0x004B10B8.
+    // Each cycle advances one column and one row, as on MM_MINE.
     int minerReach = 2;         // columns ahead the bite probes
 
-    // ---- the blocker: MEASURED LIVE, round 8 ---------------------------
-    //
-    // How tall a blocker's field is, in cells, counting the feet row. The
-    // stamp loop at 0x0040E2BD runs `j = 0` while `j <= [0x004B10B8]`, and
-    // that dword is 3, so four rows -- the feet row and the three above it,
-    // one column wide, at the blocker's own trunc(X). Live: three blockers,
-    // four cells each, 0x00000000 -> 0x00000800, predicted from this read
-    // before every click and matched cell for cell; and all four cleared
-    // again when one was bombed. Nothing else in the 256 x 96 grid moved in
-    // any run.
-    //
-    // There is no radius and no width to tune here, which is the point: the
-    // list scan this replaced had a `|dx| <= 3` either side of the blocker
-    // and the original has one column.
-    // docs/scratch/phase3-round8-blocker.md, tools/harness/measure_blocker.py.
+    // 0x0040E2BD stamps one column at trunc(X), from the feet through
+    // row offset [0x004B10B8] (3). Air words go from 0x00000000 to
+    // 0x00000800 without becoming solid.
     int blockerFieldHeight = 4;  // cells, from the feet row upward
-    // ---- trampoline / bounce: MEASURED + READ, round 13 ----------------
-    //
-    // Detection is cell bit 0x1000 (Terrain::trampoline), painted at runtime
-    // by trampoline-state enter 0x0041B838 and tested on fall land at
-    // 0x00416560 â€” before splat. Bounce step 0x0040EEC4 lifts by
-    // `-12.5*t*t + 35.0*t` (peak 24.5 at t = 1.4 = DAT_004c55a8) and moves
-    // X by facing * 5.0 * dt. Live pad paint on MM_CLIMB_002 rose ~10 cells
-    // before a head hit cut the arc; the formula peak is the open-air bound.
-    // Integer sim: rise `bounceRiseCells` at `bounceSpeed` cells/tick along
-    // -verticalDir, then Faller. tools/harness/measure_trampoline.py.
+    // Trampoline enter 0x0041B838 paints bit 0x1000. Fall land
+    // 0x00416560 tests it before splat. Bounce step 0x0040EEC4 uses
+    // -12.5*t*t + 35.0*t (peak 24.5 at t=1.4, DAT_004c55a8), and
+    // moves X by facing * 5.0 * dt. Provisional: the clone rises in
+    // whole cells against gravity until its head hits or it reaches the cap.
     int bounceRiseCells = 24;  // peak of -12.5 t^2 + 35 t at t=1.4
     int bounceSpeed = 7;       // 35.0 world-units/s * 0.2 s tick
-    // ---- water / drown: MEASURED + READ, round 14 ----------------------
-    //
-    // Detection is cell bit 0x40 (Terrain::waterHazard). Every spawn attaches
-    // type 0x2f (0x0042E02C) as a side-effect; its step probes ground
-    // `(trunc(X), trunc(Y)-[+0x44])`, tests `and 0x40` at 0x00415386, and
-    // constructs drown (0x00408700 â†’ vtable 0x004B0570) when the object loop
-    // at 0x004C89D8 does not match. Enter 0x0040874c sets "drown". Step
-    // 0x00408766 accumulates dt at state+8 and returns 2 when > 2.0.
-    // Live paint on MM_CLIMB_002: five fallâ†’drown attaches, each left the
-    // actor list with acc â‰ˆ 2.000 (~2.0 s). Integer sim: drownMs / tick.
-    // tools/harness/measure_water.py. docs/scratch/phase3-round14-water.md.
-    //
-    // Round 15 MEASURED: acid-as-hazard is this same path. No separate
-    // acidMs / State::Acid. Type 0x2e sibling unused (empty 0x004C89D8).
-    // Entrance_acid â†’ [+0x4c]=1 (LemmingsAcid sheet); ^acid_glow is Fluid
-    // subtype 2 visual. tools/harness/measure_acid.py.
-    // docs/scratch/phase3-round15-acid.md.
-    int drownMs = 2000;  // 2.0 s at state+8; 10 ticks at ticksPerSecond=5
-    // ---- teleport: MEASURED + READ, round 16 ---------------------------
-    //
-    // Detection is object AABB on teleport.a3d (vtable 0x004B1250), not a
-    // cell bit â€” 0/18 exclusive bits vs teleport levels (`measure_teleport.py
-    // --audit`). Overlap 0x00430BA1 sites 0x00435467 / 0x004354CB walk the
-    // shared list; attach type 0x28 (0x0041A310) with countdown push 4 at
-    // state+0x18, then type 0x2c (0x0041B590). Relocate at 0x0043503C:
-    // X = partner[+0x1b0] (+ facingÃ—6Ã—t), Y = partner[+0x1b8] + 2.0
-    // (0x004B1238). Live MM_TELE_003: walkâ†’0x28â†’0x2câ†’jump to partner in
-    // ~0.8 s; facing preserved. Integer sim: delay then snap to partner
-    // feet (destY = terrain row of partner world Y, not Y+2 â€” the +2 is a
-    // brief in-air pose before walk/fall). teleport_fx.a3d is visual only.
-    // tools/harness/measure_teleport.py.
+    // Spawn 0x0042E02C attaches type 0x2f, which probes
+    // (trunc(X), trunc(Y)-[+0x44]) for bit 0x40 at 0x00415386.
+    // With no match in the 0x004C89D8 list, it constructs drown
+    // (0x00408700 -> 0x004B0570). 0x0040874c sets "drown".
+    // 0x00408766 accumulates seconds at state+8 and removes the actor
+    // above 2.0. Acid uses the same hazard bit. Type 0x2e is a separate
+    // Fluid-match sibling. Entrance_acid and LemmingsAcid identify a
+    // hatch and sheet. ^acid_glow is a subtype 2 Fluid visual.
+    int drownMs = 2000;  // 2.0 s at state+8 (10 ticks at 5 Hz).
+    // teleport.a3d (vtable 0x004B1250) uses overlap 0x00430BA1 at
+    // 0x00435467 / 0x004354CB. Type 0x28 (0x0041A310) counts down
+    // from push 4 at state+0x18 before type 0x2c (0x0041B590).
+    // 0x0043503C places X at partner[+0x1b0] + facing*6*t and Y at
+    // partner[+0x1b8] + 2.0 (0x004B1238). The clone snaps to the
+    // partner's feet cell after the delay, as on MM_TELE_003.
+    // teleport_fx.a3d is visual.
     int teleportDelayTicks = 4;  // state+0x18 countdown from push 4
-    // ---- SpeedPad / FASTER: MEASURED + READ, round 17 ------------------
-    //
-    // Detection is object AABB on speedup_two_way.a3d (vtable 0x004B1178),
-    // not a cell bit â€” 0/9 exclusive bits (`measure_speedpad.py --audit`).
-    // Overlap FUN_00432742 walks list 0x004C88D0 + 0x00430BA1, filters
-    // facing (+0xbc) and vdir (+0xa0). Activate FUN_00432632 dispatches
-    // embed msg (âˆ’2,6,1) via FUN_00433B2E â†’ FASTER ctor FUN_00416730
-    // (vtable 0x004B0A38, type 0x10, +0x11=1 â†’ parallel list +0x374).
-    // Enter 0x0041688C: +0x50=2, timer double 5.0. Tick 0x0041677C
-    // counts down; expiry sets +0x50=1. While +0x50==2, 0x0042E2BF sets
-    // local_14=2 (main state twice per frame). Cue SpeedPad at 0x004C0D10
-    // loads into DAT_004E32F8 and plays on activate (0x004326D1).
-    // pressure_pad.a3d is not this object (trampoline round-13 negative;
-    // co-occurs on some speed levels only). Live VH21_JC: walker on pad
-    // â†’ FASTER on +0x378 list, timer 5.0â†’4.44; +0x50 poke ~2Ã— column rate.
-    // tools/harness/measure_speedpad.py.
+    // speedup_two_way.a3d (vtable 0x004B1178) uses FUN_00432742 to
+    // scan list 0x004C88D0 via 0x00430BA1, filtering facing (+0xbc)
+    // and gravity (+0xa0). FUN_00432632 sends (-2,6,1) via FUN_00433B2E
+    // to FASTER ctor FUN_00416730 (vtable 0x004B0A38, type 0x10,
+    // +0x11=1, parallel list +0x374 / +0x378).
+    // Enter 0x0041688C sets +0x50=2 and 5.0 s. 0x0041677C restores
+    // +0x50=1 at expiry. 0x0042E2BF sets local_14=2 to step twice.
+    // SpeedPad string 0x004C0D10 loads into DAT_004E32F8 and plays at
+    // 0x004326D1. pressure_pad.a3d is a separate gadget.
     int fasterMs = 5000;  // FASTER enter double 5.0 at state+0x18
-    // ---- the bomber: READ AND MEASURED LIVE, round 7 -------------------
-    //
-    // The fuse is five seconds, and it is a time and not a tick count. The
-    // bomb factory `0x0045B197` (entry [2] of the skill table at
-    // `0x0045B570`, so panel index 2, which round 8 measured) pushes the
-    // integer 5 at `0x0045B1B3`; the countdown's constructor `fild`s it into
-    // a double at `0x00413D74`; its enter `0x00413DF9` schedules an event at
-    // `clock + trunc(5.0) * 1000` ms, the 1000 being the dword
-    // `mov [edx], 0x3e8` at `0x004657B2`. There is no stored 25 anywhere.
-    //
-    // MEASURED, six bombs across MM_BOMB and MM_Block_Bomb_A, each timed
-    // from inside the grid-diff loop at ~650 Hz:
-    //
-    //   click -> flapper   4.9967 4.9985 4.9981 4.9976 4.9998 4.9980 s
-    //   flapper -> blast   1.0211 1.0193 1.0226 1.0206 1.0191 1.0201 s
-    //
-    // and the countdown double itself, read off the lemming's +0x374 list,
-    // came down 4.9940 -> 0.1330 over 4.8616 s: 1.000 s of fuse per second.
-    // The lemming keeps its own state through all of it -- one primed walker
-    // went from X 144.770 to 119.770, exactly 25.000 columns, which is 25
-    // ticks of walkSpeed.
+    // Bomber factory 0x0045B197 (skill table 0x0045B570, index 2)
+    // pushes 5 at 0x0045B1B3. Ctor 0x00413D74 converts it to seconds.
+    // Enter 0x00413DF9 schedules clock + trunc(seconds) * 1000 ms
+    // (0x004657B2 writes 0x3e8). The +0x374 fuse is parallel to movement.
     int bomberFuseMs = 5000;
-    // What happens at the end of the fuse is NOT the explosion. The 5000 ms
-    // event plays `Ohno` (`0x00414443`, gated on the byte at `0x004CBB40`,
-    // which reads 0x00 in play -- see the note below) and installs the
-    // "flapper" state, vtable `0x004B0A58`, whose enter `0x0041695C` starts
-    // the animation `explode`. Only when that strip finishes
-    // (`call [eax+0x44]` at `0x00416AC6`) does `0x004081B0` build the real
-    // blast state `0x004B0550`, whose step `0x00408227` cuts the crater.
-    //
-    // READ live off the controller: `explode` is strip 6, 17 frames,
-    // divisor 1.0, so `17 * 0.06 / 1.0` = 1.020 s -- against 1.0191-1.0226 s
-    // measured five times. Round 6's live strip table has [5] and [6] both at
-    // 17 frames; [6] is the one a flapper actually plays.
+    // Fuse expiry plays Ohno at 0x00414443 when 0x004CBB40 is zero
+    // and enters flapper vtable 0x004B0A58. 0x0041695C starts "explode"
+    // (strip 6, 17 frames at rate 1.0). Finish slot [eax+0x44] at
+    // 0x00416AC6 calls 0x004081B0 to construct blast 0x004B0550.
+    // Its step 0x00408227 cuts the crater.
     int exploderCycleMs = 17 * 60;   // 1020 ms
-    // So `OhNo` is cued at 5000 ms and the crater lands 1020 ms after that,
-    // 6020 ms after the click. Our OhNo used to fire at `fuse ==
-    // ticksPerSecond` -- one second early by construction -- and our crater
-    // landed on the same tick as the cue. Both moved.
+    // Nuke request at level base 0x004C6A08 + 0x5138 == 0x004CBB40
+    // gates Ohno. 0x00444A98 writes the request via its receiver.
+    // Event 7 also writes the byte at 0x00457017.
+    // Terrain::clearExplosion applies the 7x7 stencil, including on MM_BOMB
+    // and MM_Block_Bomb_A.
     //
-    // Correction (letsgo-text-nuke-ohno-001): the gate is the nuke request,
-    // level base 0x004C6A08 + 0x5138 == 0x004CBB40. Request 0x00444A98
-    // writes it through the receiver; replay event 7 writes the absolute byte
-    // at 0x00457017. The old claim "nothing stores it" missed both paths.
-    // The ordinary-bomb live observations above only established zero before
-    // Nuke. World::cue now mutes OhNo while nukeRequested_ is set; fuse,
-    // explosion animation, crater and removal behavior are unchanged.
-    //
-    // There is no `explosionRadius` any more. The footprint is a stored
-    // 7 x 7 bitmap; see Terrain::clearExplosion. MEASURED: six blasts, 75
-    // cells, every one `0x00000001` -> `0x00000000`, and in five of the six
-    // the set of cells that changed was EXACTLY the set the stencil predicts
-    // from the grid as it was before the click (the sixth also lost two
-    // neighbouring blockers' fields, because the crater took their floor).
-    // Nothing outside the window changed in any of the six whole-grid diffs.
-    // docs/scratch/phase3-round7-live.md; tools/harness/measure_bomb.py.
-    // READ FROM THE BINARY AND MEASURED LIVE, and it is 3, not the classic 4.
-    // The head-room sample is the climber's, and it is not a constant inside
-    // the test: 0x004139BF (called only from 0x004138E8 in the climb stepper
-    // 0x004137CA) loads no .rdata double and has no immediate 3 or 4. It
-    // takes its position from 0x0042F35F, which returns X + [+0x350] and
-    // Y + [+0x358], and [+0x358] is the double 3.0 --
-    //
-    //   0042e0fc  c781 5c030000 00000840   mov [ecx+0x35c], 0x40080000
-    //
-    // in the lemming constructor 0x0042DE51, and written again at 0x0042F616
-    // whenever the vertical flip 0x0042F5E3 leaves [+0x44] == 1 (upright).
-    // Two probes come off that biased position, and they are one cell apart:
-    //
-    //   00413a53  call 0x40de60  ; cell(trunc(X+[+0x350]) - [+0x40], Y+3)
-    //   00413a5b  jne 0x413a70   ;   nonzero -> "Climber hit head" (0x004BF2FC)
-    //   00413b22  2b4244         sub eax, [edx+0x44]   ; row = (Y+3) - 1
-    //   00413b50  call 0x40de60  ; cell(trunc(X+[+0x350]),          Y+2)
-    //   00413b58  jne 0x413bfd   ;   nonzero -> keep climbing
-    //                            ;   zero    -> "Climber topping out"
-    //
-    // Live, both arms, with the climber byte [lemming+0x48] -- the byte
-    // 0x0041C5C1 reads -- written at birth and a pillar carved in the
-    // original's own grid (measure_stepup.py --poke-climb --carve):
-    //
-    //  * ceiling: one solid cell at column 231 row 58 over a 12-cell pillar
-    //    at column 232. 12 of 12 climbers hit head at feet Y = 55.000 --
-    //    58 - 55 = 3 -- and X jumped 232 -> 231 (the `fsubr [edx+8]` at
-    //    0x00413A79). A bias of 4 would have fired a tick earlier, at 54.
-    //  * top-out: the same pillar with no ceiling, top solid row 62. 12 of
-    //    12 climbers' last climbing Y was 61.000, never 60 and never 62, so
-    //    the probe row is Y + 2 = the bias minus one vertical unit.
-    //
-    // This field is the CEILING bias only. Round 4 cited two differences it
-    // does not capture and round 10 measured both; they are the two fields
-    // below and `Rules::hoistLift`.  docs/scratch/phase3-round4-live.md,
-    // docs/scratch/phase3-round10-steppers.md.
+    // Climb step 0x004137CA calls the head checks 0x004139BF at
+    // 0x004138E8. 0x0042F35F returns X + [+0x350], Y + [+0x358].
+    // Ctor 0x0042DE51 stores upright head bias 3.0 (0042e0fc,
+    // [ecx+0x35c] = 0x40080000). Flip 0x0042F5E3 restores it at
+    // 0x0042F616 when [+0x44] == 1.
+    // 00413a53 calls 0x40de60 one cell behind facing [+0x40] at head
+    // height. 00413a5b branches to 0x413a70 ("Climber hit head",
+    // 0x004BF2FC), with the X correction at 0x00413A79 (fsubr [edx+8]).
+    // 00413b22 subtracts [edx+0x44] for the wall-column probe at
+    // 00413b50. 00413b58 branches to 0x413bfd to keep climbing.
+    // The wall's climb capability check reads [lemming+0x48] at 0x0041C5C1.
     int lemmingHeight = 3;      // head room: the ceiling probe, Y + 3
 
-    // ---- the climber's top-out and the hoist: round 10 ------------------
-    //
-    // READ FROM THE BINARY AND MEASURED LIVE. The climb's top-out sample is
-    // one cell BELOW its ceiling sample. Both come off the biased position
-    // 0x0042F35F returns (X + [+0x350], Y + [+0x358], and [+0x358] is the
-    // double 3.0); the top-out then takes one vertical unit back off the row:
-    //
-    //   00413b0c  dd45dc    fld  [ebp-0x24]   ; X + [+0x350], no facing term
-    //   00413b1a  e8..      call 0x49c5ac     ; -> the WALL column
-    //   00413b22  2b4244    sub  eax,[edx+0x44]  ; row = trunc(Y+[+0x358]) - 1
-    //   00413b50  e8..      call 0x40de60
-    //   00413b55  83380 0   cmp  dword [eax], 0
-    //   00413b58  0f85..    jne  0x413bfd     ; non-zero -> keep climbing
-    //   00413b5e  68..      push 0x004bf310   ; "Climber topping out"
-    //
-    // so the probe is the wall column `climberTopOut` cells above the feet,
-    // and a climber's last climbing row is one below the wall's top.
-    //
-    // Live, MM_CLIMB_002, five panel-assigned climbers off the actor list
-    // (tools/harness/measure_steppers.py --climber): walls at columns 64, 80,
-    // 96 and 112, top solid rows 47, 59, 46 and 62, last climbing Y
-    // **46.000, 58.000, 45.000, 61.000** -- `topSolid - 1` four times out of
-    // four, and a fifth climb on a wall cut into the grid by hand topped out
-    // at 43.000 over a top solid row of 44. Round 4 had the same figure on a
-    // different level (12 of 12 at Y 61 over a top row of 62).
+    // Top-out samples the wall one row below the head. 0x0042F35F
+    // supplies X + [+0x350], Y + [+0x358]. 00413b0c loads biased X
+    // from [ebp-0x24], and 00413b1a truncates it through 0x49c5ac.
+    // 00413b22 subtracts
+    // [edx+0x44] from the biased row, then 00413b50 calls 0x40de60.
+    // 00413b55 / 00413b58 branch to 0x413bfd for solid, otherwise
+    // 00413b5e selects "Climber topping out" (0x004bf310).
     int climberTopOut = 2;      // cells above the feet; NOT lemmingHeight
 
-    // MEASURED LIVE. The hoist is its own state -- `read_steppers.py
-    // --states` names vtable 0x004B0AF8 (constructor 0x00417C80, which also
-    // writes 0x1e at +0x14), animation **`flip`** (0x004BF41C, pushed by the
-    // enter hook 0x00417CCC) -- and its step does nothing at all until that
-    // animation ends:
-    //
-    //   00417d05  ff5230    call dword [edx+0x2c]  ; advance by the slice
-    //   00417d1b  ff5244    call dword [eax+0x44]  ; finished?
-    //   00417d25  0f8494..  je   0x417dbf          ;  no -> return, X/Y alone
-    //
-    // `+0x44` is the same "strip finished" slot round 7 measured on the
-    // flapper, so the hold is `frames * 0.06 / divisor`. READ off the live
-    // controller table: `flip` is **strip 8, 14 frames, divisor 1.0 = 840 ms**
-    // -- and the strip index was sampled as 8 with the animation running
-    // frames 0 through 13 during every hoist. MEASURED: four hoists held
-    // 0.840, 0.840, 0.833 and 0.840 s, and round 4 measured 0.834 s on
-    // another level. It is NOT a whole number of 200 ms ticks (4.2 of them),
-    // which is why this is milliseconds; our old `l.frame >= 2` was 400 ms.
+    // Hoist vtable 0x004B0AF8 (ctor 0x00417C80, type 0x1e at +0x14)
+    // starts "flip" (0x004BF41C) at 0x00417CCC. 00417d05 advances the
+    // strip (8, 14 frames, rate 1.0) via [edx+0x2c]. 00417d1b calls finished
+    // slot +0x44. 00417d25 branches to 0x417dbf while it is playing.
     int hoistCycleMs = 14 * 60;  // 840 ms
-    // MEASURED LIVE, and it is 2 -- not `lemmingHeight`, and X does not move.
-    // The step writes both:
-    //
-    //   00417d39  0341 40   add eax,[ecx+0x40]    ; X := trunc(X) + facing
-    //   00417d6f  8b5144 / 6bd203 / 03c2          ; Y := trunc(Y) + 3*vdir
-    //
-    // and then 0x0042F8B9 installs a fresh walk state through 0x0042E696,
-    // which runs the flip state's EXIT hook 0x00417DD7 -- and that takes one
-    // unit back off each:
-    //
-    //   00417de4  db4144 / dc6810 / dd5a10        ; Y -= vdir
-    //   00417df6  db4140 / dc6808 / dd5a08        ; X -= facing
-    //
-    // Net: X unchanged, two cells up. Live, five placements, every one
-    // `dx 0.000 dy +2.000`: (64.000, 46.000) -> (64.000, 48.000),
-    // (80, 58) -> (80, 60), (96, 45) -> (96, 47), (112, 61) -> (112, 63), and
-    // a left-facing one (24.000, 43.000) -> (24.000, 45.000). Round 4's
-    // (61.000, 232.000) -> feet 63.000 with X still 232 is the same thing.
+    // Hoist adds facing [ecx+0x40] to X at 00417d39 and 3*vdir
+    // [edx+0x44] to Y at 00417d6f. 0x0042F8B9 installs Walker via
+    // 0x0042E696, calling exit 0x00417DD7. Exit subtracts one
+    // vertical unit (00417de4) and one facing unit (00417df6).
+    // Net motion is two cells against gravity, with X unchanged.
     int hoistLift = 2;          // cells up, X untouched
 
-    // ---- the float halving is delayed: round 10 -------------------------
-    //
-    // READ AND MEASURED LIVE. `floatAfter` is when the umbrella *opens*; the
-    // speed halves only when the `umbopen` animation ENDS. 0x004162FE starts
-    // `umbopen` (0x004BF384) once the distance passes the 10.0 at
-    // 0x004B03E8, 0x0041612F..0x00416186 clamps the sub-step to the time left
-    // in it, 0x004162C2 then sets `[lemming+0x4b]`, and 0x00416038 is the
-    // only thing that divides the 20.0 by the 2.0 at 0x004B03F8 -- on that
-    // byte. So between the open and the halving the original is still at
-    // `fallSpeed`.
-    //
-    // READ off the live controller table: `umbopen` is **strip 12, 8 frames,
-    // divisor 1.0 = 480 ms**. MEASURED on MM_CLIMB_002, one lemming given
-    // the floater byte as a labelled probe (the level stocks no parasol) and
-    // dropped 28 world units: the strip went 7 (`fall`) -> 12 (`umbopen`) as
-    // the distance passed 10, and 12 -> 11 (`float`) with `[+0x4b]` flipping
-    // to 1, **0.479 s** later and 9.564 world units lower. Round 3b measured
-    // the same 9.6-9.7 units on a different level. The descent rate after the
-    // flag was 9.972 world units/s, so `floatSpeed` 2 is untouched.
-    //
-    // It is a fixed animation length, not a distance and not a function of
-    // the drop: a 16-unit drop in the same run **never halved at all**
-    // (15.980 units in 0.805 s = 19.85 u/s for the whole descent), because
-    // the umbrella opens half a second in and `umbopen` had not finished when
-    // it landed. `World::stepFaller` used to halve the moment the distance
-    // passed 10 and would have taken five ticks over that drop against the
-    // original's four.
+    // At 0x004162FE, fall starts "umbopen" (0x004BF384, strip 12,
+    // 8 frames at rate 1.0) on passing the 10.0-unit threshold
+    // at 0x004B03E8. 0x0041612F..0x00416186 clamps the sub-step to
+    // time left in the strip. 0x004162C2 sets [lemming+0x4b] at
+    // completion, then 0x00416038 divides speed by 2.0 (0x004B03F8).
+    // Landing during "umbopen" spends the whole descent at fallSpeed.
     int floatOpenMs = 8 * 60;   // 480 ms of `umbopen` at full fall speed
   };
 
   World() = default;
-  // Two overloads rather than a defaulted argument: a brace-init default for a
-  // nested type is not usable while the enclosing class is still incomplete.
+  // A nested Rules default argument would require the enclosing class to be complete.
   explicit World(LevelSetup setup);
   World(LevelSetup setup, Rules rules);
 
-  // One fixed step. Everything that changes, changes here.
-  // Connected native-style pending-end playback admits hatches after timeout
-  // (425A95 has no time/pending gate). Default retains diagnostic behavior.
-  //
-  // LEGACY / COMPATIBILITY WRAPPER. One call is exactly one 0.2 s (Rules::ticksPerSecond)
-  // update: it keeps the pre-existing fixed-count steppers (unless the setup opts in to
-  // continuousStepperClock) and evaluates lever contact inside each lemming's own step().
-  // Deterministic tick-based fixtures use this contract; connected play does not.
-  // It advances the same level clock as the explicit path by msPerTick().
+  // Advance one nominal tick, using the same level clock as the elapsed entry.
+  // Check levers during each actor's step. continueHatchesAfterTimeout lets
+  // releases continue after timeout, as in 425A95.
   void tick(bool continueHatchesAfterTimeout = false);
 
-  // Shared explicit elapsed-time entry (connected play: RuntimeSimState::advanceElapsed).
-  // One call is one original-style frame PASS of `dtMs` integer milliseconds
-  // (frame loop 0x45CFF9, cadence report section 1.2): the pass is split at every
-  // 1000 ms level-clock boundary, each segment is one world update with
-  // dt = segmentMs / 1000.0, a boundary that lands exactly on the end leaves a trailing
-  // zero-length update, and dtMs == 0 still runs exactly one zero-delta update. Inside
-  // an update the order is hatch release, ALL lemmings, then lever contact
-  // (0x4423D2: lemmings -> levers). Fall/walk use the continuous step budget with
-  // this dt (forced on for this entry); every other lemming state keeps its
-  // measured 5 Hz per-tick step and runs once on the update that reaches a
-  // msPerTick() boundary of the level clock (see stepsOnTickBoundary()).
-  // `afterUpdate(segmentSeconds)` runs after each update; returning false abandons the rest of
-  // the pass. A dtMs that spans several tick boundaries is first split at those boundaries.
+  // Advance one frame of dtMs. Split at 1 Hz clock events (0x45CFF9)
+  // and subdivide segments that reach multiple simulation ticks. Include a
+  // zero-length tail when a frame ends on a clock event or has zero input.
+  // Each segment releases hatches, steps actors, then checks tagged
+  // contacts and receivers (0x4423D2). Fall and walk spend elapsed
+  // seconds. Other actor states advance only at tick boundaries.
+  // afterUpdate receives each segment's seconds. False ends the frame early.
   void advanceElapsedMs(int dtMs, bool continueHatchesAfterTimeout = false,
                         const std::function<bool(double)>& afterUpdate = {});
-  // Connected entry only: hold the hatch clock while the entry presentation
-  // finishes. All level, actor, gadget and completion clocks still advance.
-  // Keep the ordinary entry/ABI for frozen timing demonstrations.
+  // Pause hatch timing during level entry while other clocks advance.
   void advanceElapsedMsWithReleaseGate(int dtMs, bool continueHatchesAfterTimeout,
                         bool releaseEnabled, const std::function<bool(double)>& afterUpdate = {});
 
   std::uint64_t tickCount() const { return tick_; }
-  // The single level clock (integer ms). tickCount() == levelClockMs() / msPerTick() on
-  // both entries; timedOut()/timeRemainingTicks() and the HUD read tick_, so there is
-  // no second countdown. levelSecondEvents() counts the 1 Hz level-clock events (0x4458B0).
+  // tickCount() divides the shared level clock by msPerTick().
+  // levelSecondEvents() counts the 1 Hz events (0x4458B0).
   std::uint64_t levelClockMs() const { return levelClockMs_; }
   std::uint64_t levelSecondEvents() const { return levelSecondEvents_; }
   // World updates executed through advanceElapsedMs (zero-delta ones included).
   std::uint64_t explicitUpdateCount() const { return explicitUpdates_; }
   static constexpr int kLevelEventPeriodMs = 1000;  // repeating event, period 1000 (0x444D1E)
 
-  // The level clock, from LEVELMAP.DAT's per-level time limit. A limit of 0
-  // means untimed, which is how an unsupplied limit behaves.
+  // The LEVELMAP.DAT limit is in seconds. Zero means untimed.
   bool timedOut() const {
     return setup_.timeLimitTicks > 0 &&
            tick_ >= static_cast<std::uint64_t>(setup_.timeLimitTicks);
   }
-  // Ticks left on the clock, 0 once it has run out. Untimed levels report 0
-  // too, so check timedOut() or the setup's limit to tell them apart.
+  // Returns zero for both untimed and timed-out levels. Use timedOut() to distinguish them.
   std::uint64_t timeRemainingTicks() const {
     if (setup_.timeLimitTicks <= 0 || timedOut())
       return 0;
@@ -1399,9 +813,8 @@ public:
   const LevelSetup& setup() const { return setup_; }
   const Rules& rules() const { return rules_; }
 
-  // Player release control: replace only the recurring interval. Preserve the
-  // running countdown, first-release seed, arm phase and integer tick carry.
-  // Keep this small interval edit inline; it adds no scheduler state.
+  // Player rate control changes the recurring interval and preserves
+  // the countdown, seed, arm phase and tick carry.
   void setReleaseInterval(double seconds, int ticks) {
     if (std::isfinite(seconds) && seconds > 0.0 && ticks > 0) {
       setup_.releaseIntervalSeconds = seconds;
@@ -1427,8 +840,7 @@ public:
 
   // Check skill assignment against the current actor and stock without changing either.
   bool canAssign(std::size_t lemmingIndex, Skill skill) const;
-  // Apply a skill to a lemming. Returns false when it cannot be applied, which
-  // is a legitimate outcome rather than an error.
+  // Apply a skill and return false when the actor or stock makes it unavailable.
   bool assign(std::size_t lemmingIndex, Skill skill);
   // The lemming nearest a point that a click should affect, if any.
   std::optional<std::size_t> pick(int x, int y, int radius = 4) const;
@@ -1437,18 +849,14 @@ public:
   // first with the existing Bomber explosion. Repeated requests are inert.
   void nuke();
 
-  // Insert one lemming already at a cell and in a state. Not spawn: spawn
-  // still drops from the entrance, and a live comparison starts from a
-  // measured cell instead of that drop.
+  // Insert a lemming at a supplied cell and state, bypassing hatch release.
   void place(Lemming lemming);
 
-  // Both calls consume the same audio buffer. takeCues is the legacy typed
-  // diagnostic sink; it discards named samples. Production takes full events.
+  // Both calls drain the same buffer. takeCues discards named samples.
   std::vector<SoundCue> takeCues();
   std::vector<SoundEvent> takeSoundEvents();
 
-  // Read-only presentation notification at the existing death transition.
-  // Removed cells are reported from the actual blast result, never predicted.
+  // At the death transition, report the cells the blast actually removed.
   using DeathObserver = std::function<void(const Lemming&, bool explosion,
                                            std::span<const std::array<int, 2>>)>;
   void setDeathObserver(DeathObserver observer) { deathObserver_ = std::move(observer); }
@@ -1459,8 +867,8 @@ public:
     forcedDeathObserver_ = std::move(observer);
   }
 
-  // Presentation only, after a skill's existing clearBox and before movement.
-  // Empty swings/refusals report nothing; cells are actual removals, X wrapped.
+  // Report actual removed cells with wrapped X, after the cut and before
+  // movement. Notify only for nonempty removal.
   using TerrainCutObserver = std::function<void(const Lemming&,
       std::span<const std::array<int, 2>>)>;
   void setTerrainCutObserver(TerrainCutObserver observer) { terrainCutObserver_ = std::move(observer); }
@@ -1468,7 +876,7 @@ public:
   using MinerRefusalObserver = std::function<void(const Lemming&)>;
   void setMinerRefusalObserver(MinerRefusalObserver observer) { minerRefusalObserver_ = std::move(observer); }
 
-  // Presentation notification at existing contacts; never changes gadget rules.
+  // Notify presentation when a gadget contact activates.
   enum class GadgetUse { TeleportDeparture, TeleportArrival, SpeedPad };
   using GadgetObserver = std::function<void(GadgetUse, std::size_t, const Lemming&)>;
   void setGadgetObserver(GadgetObserver observer) { gadgetObserver_ = std::move(observer); }
@@ -1477,17 +885,15 @@ private:
   std::size_t clearSkillBox(const Lemming&, int x, int y, int width, int height);
   void cue(SoundCue c, const Lemming* source = nullptr);
   void cueSample(std::string_view sample, const Lemming& source);
-  // D1n: optional real-seconds budget for the new lemming's first fall
-  // call, under the opt-in continuous stepper clock -- see
-  // Lemming::stepBudgetSeconds. -1.0 (every existing call site) means "a
-  // full tick's dt," the old behaviour.
+  // Optional first-fall budget in seconds for continuous movement.
+  // A negative value uses the update's full dt.
   void spawn(double budgetSeconds = -1.0);
   void spawnFromEntrance(std::size_t index, double budgetSeconds);
   void step(Lemming& l);
   void stepFaller(Lemming& l);
   void stepBounce(Lemming& l);
   void stepDrown(Lemming& l);
-  // fluid-hazard-001: species-aware contact with the current receiver volume.
+  // Species-aware contact with the live receiver volume.
   bool attachFluidHazard(Lemming& l);
   // Live receiver support is separate from terrain walls/skill material.
   bool groundAt(int x, int y, int verticalDir) const;
@@ -1501,17 +907,13 @@ private:
   void stepBasher(Lemming& l);
   void stepMiner(Lemming& l);
   void stepDigger(Lemming& l);
-  // Milliseconds in one step, from the measured 5 Hz tick. The skills' cycles
-  // are in milliseconds because they are not whole ticks (see Rules).
+  // Milliseconds per nominal simulation tick.
   int msPerTick() const;
-  // The same tick length in real seconds (D1n). Shared by World::tick()'s
-  // own release-model dt and by stepFaller/stepWalker's opt-in continuous
-  // clock, so both read the exact same number.
+  // The nominal tick in seconds, shared by release and movement.
   double tickDtSeconds() const;
-  // The dt the fall/walk budget model spends in the CURRENT update: the explicit
-  // segment dt inside advanceElapsedMs, tickDtSeconds() under the legacy tick().
+  // Fall/walk dt in seconds: the elapsed segment or the nominal tick.
   double motionDtSeconds() const { return explicitUpdate_ ? updateDtSeconds_ : tickDtSeconds(); }
-  // Continuous fall/walk budgets: the setup's opt-in (legacy) or the explicit entry.
+  // The elapsed entry always uses continuous budgets. The tick entry can opt in.
   bool continuousMotion() const { return explicitUpdate_ || setup_.continuousStepperClock; }
   // Hatch release for one update; `tickBoundary` gates only the integer-tick release model.
   void stepRelease(double dt, bool tickBoundary, bool continueHatchesAfterTimeout);
@@ -1524,7 +926,7 @@ private:
   void stepGadgetContacts(double dt);
   void stepOccupancySensor(OccupancySensor& sensor, double dt);
   // Movement samples keep integer-lattice crossings edge-triggered; standing
-  // still in the original's dt*speed strip must not spend a quota repeatedly.
+  // still in the original's dt*speed strip spends no crossing quota.
   struct GateMotion { int x, y; State state; bool active; };
   std::vector<GateMotion> gateMotionSamples() const;
   void stepCounterGates(double dt, std::span<const GateMotion> before);
@@ -1544,22 +946,18 @@ private:
   void explode(Lemming& l);
 
   bool solidAt(int x, int y) const { return setup_.terrain.solid(x, y); }
-  // A blocker's field, stamped into the terrain by the block state's enter
-  // hook and erased by its exit hook. Round 8 replaced a list scan over the
-  // lemmings -- `blockedBy`, which turned anyone within |dx| <= 3 -- with
-  // this; the original never looks at the lemming list to block a walker.
-  // World.cpp carries the addresses and the live series.
+  // Enter stamps the terrain field, and exit erases it.
   void stampBlockerField(const Lemming& l);
   void clearBlockerField(const Lemming& l);
   void leaveBlocker(Lemming& l);
   bool atExit(const Lemming& l) const;
-  // Round 16: closed AABB test matching live teleport doubles / atExit.
+  // Closed teleport AABB, as for exits.
   const Teleport* teleportAt(const Lemming& l) const;
   void stepTeleporting(Lemming& l);
-  // Round 17: SpeedPad AABB + facing/vdir filters (FUN_00432742).
+  // SpeedPad AABB, facing and gravity filters (FUN_00432742).
   const SpeedPad* speedPadAt(const Lemming& l) const;
-  // Round 21: Lever AABB + facing-vs-+0xb8 filter (0x00436D30); non-const
-  // so a pull can flip Lever::state like activate 0x00436E6A.
+  // Lever AABB and facing filter against +0xb8 (0x00436D30).
+  // A pull can flip the state through 0x00436E6A.
   Lever* leverAt(const Lemming& l);
   void turn(Lemming& l) { l.facing = l.facing == Facing::Right ? Facing::Left : Facing::Right; }
 
@@ -1567,11 +965,11 @@ private:
   Rules rules_;
   std::vector<Lemming> lemmings_;
   std::uint64_t tick_ = 0;
-  // shared-timing-impl-001: the one level clock (integer ms) and the explicit-update state.
+  // Shared level clock in integer milliseconds and current elapsed-update state.
   std::uint64_t levelClockMs_ = 0;
   std::uint64_t levelSecondEvents_ = 0;
   std::uint64_t explicitUpdates_ = 0;
-  bool explicitUpdate_ = false;       // true only while advanceElapsedMs runs an update
+  bool explicitUpdate_ = false;       // True during an advanceElapsedMs update.
   double updateDtSeconds_ = 0.0;      // dt of the update in progress (explicit path)
   int spawned_ = 0;
   int saved_ = 0;
@@ -1580,8 +978,7 @@ private:
   int nukeCountdownMs_ = 0;
   std::size_t nukeCursor_ = 0;
   int sinceSpawn_ = 0;
-  // New real-seconds release model (phase D1e), only touched when
-  // setup_.releaseIntervalSeconds > 0.0 -- see LevelSetup's own comment.
+  // Elapsed release clock state for setups with releaseIntervalSeconds > 0.
   double releaseElapsedSeconds_ = 0.0;  // real seconds since construction
   bool releaseArmed_ = false;
   double releaseCountdown_ = 0.0;

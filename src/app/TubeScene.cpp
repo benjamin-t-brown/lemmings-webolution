@@ -296,6 +296,41 @@ std::array<double, 3> TubeScene::soundWorldPosition(
       {position[0], terrainHeight - 1.0 - position[1], position[2]}, 1).modelPosition;
 }
 
+std::optional<PickBox> TubeScene::cylinderScreenBounds(const CameraBasis& camera,
+    const std::array<double, 3>& low, const std::array<double, 3>& high) const {
+  if (!havePoseLevel_) return std::nullopt;
+  for (int axis = 0; axis < 3; ++axis)
+    if (!std::isfinite(low[axis]) || !std::isfinite(high[axis])) return std::nullopt;
+  rewirePoseLevel();
+  const double width = 256.0;
+  const double span = high[0] >= low[0] ? high[0] - low[0] : high[0] - low[0] + width;
+  if (span < 0.0 || span > width) return std::nullopt;
+  const double start = std::fmod(low[0], width);
+  const int slices = std::max(1, static_cast<int>(std::ceil(span / 8.0)));
+  PickBox bounds{camera.width, camera.height, 0, 0};
+  for (int step = 0; step <= slices; ++step) {
+    const double x = start + span * step / slices;
+    for (const double y : {low[1], high[1]}) for (const double slab : {low[2], high[2]}) {
+      const auto at = actorPoseFromCylinderSample(poseLevel_, {x, y, slab}, 1).modelPosition;
+      std::array<double, 4> projected;
+      if (!project(camera, {at[0], at[1], at[2]}, projected) ||
+          !std::isfinite(projected[0]) || !std::isfinite(projected[1])) continue;
+      const double px = std::clamp(projected[0], -1.0, double(camera.width));
+      const double py = std::clamp(projected[1], -1.0, double(camera.height));
+      bounds.left = std::min(bounds.left, int(std::floor(px)));
+      bounds.top = std::min(bounds.top, int(std::floor(py)));
+      bounds.right = std::max(bounds.right, int(std::floor(px)) + 1);
+      bounds.bottom = std::max(bounds.bottom, int(std::floor(py)) + 1);
+    }
+  }
+  bounds.left = std::max(0, bounds.left);
+  bounds.top = std::max(0, bounds.top);
+  bounds.right = std::min(camera.width, bounds.right);
+  bounds.bottom = std::min(camera.height, bounds.bottom);
+  if (bounds.left < bounds.right && bounds.top < bounds.bottom) return bounds;
+  return std::nullopt;
+}
+
 const TubeScene::Tile* TubeScene::findTile(bool outer, int column, int row) const {
   const auto& block = outer ? outer_ : inner_;
   for (const auto& t : block)

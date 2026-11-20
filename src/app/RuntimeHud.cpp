@@ -22,7 +22,7 @@ int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index)
 std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> targets, int x, int y) {
   for (std::size_t i = 0; i < targets.size(); ++i) {
     const auto& h = targets[i];
-    if (x >= h.left && x < h.right && y >= h.top && y < h.bottom) return i;
+    if (pointerOverSceneBounds(x, y, h.left, h.top, h.right, h.bottom)) return i;
   }
   return std::nullopt;
 }

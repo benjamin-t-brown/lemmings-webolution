@@ -77,6 +77,8 @@ class FrontendSession {
   shell::Outcome closeLevelMenu(bool paused);
   void configureSound(save::SoundSettings levels, std::shared_ptr<save::SaveSink> file,
                       std::function<void(save::SoundSettings, bool previewSfx)> preview);
+  int windowScale() const { return acceptedSound_.windowScale; }
+  void setWindowScaleMenu(WindowScaleMenu window) { windowScaleMenu_ = window; }
   shell::Outcome openSoundOptions();
   shell::Outcome closeSoundOptions(bool accept);
   bool adjustSound(int direction);
@@ -101,6 +103,7 @@ class FrontendSession {
   shell::Frontend state_;
   SoundMenu soundMenu_;
   save::SoundSettings acceptedSound_, editingSound_;
+  WindowScaleMenu windowScaleMenu_;
   std::shared_ptr<save::SaveSink> soundFile_;
   std::function<void(save::SoundSettings, bool)> previewSound_;
   bool soundWritePending_ = false;

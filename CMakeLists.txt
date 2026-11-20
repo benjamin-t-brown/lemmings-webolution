@@ -497,6 +497,10 @@ add_executable(test_soundsettings src/__test__/test_soundsettings.cpp)
 target_link_libraries(test_soundsettings PRIVATE webolution_objects)
 add_test(NAME soundsettings COMMAND test_soundsettings "${CMAKE_BINARY_DIR}/sound-settings-test")
 
+add_executable(test_window_scale_choice src/__test__/test_window_scale_choice.cpp)
+target_include_directories(test_window_scale_choice PRIVATE src)
+add_test(NAME window_scale_choice COMMAND test_window_scale_choice)
+
 # FrontendSession load/save/New Game against retail assets, temp stores only.
 add_executable(test_savepersist src/__test__/test_savepersist.cpp
   src/app/ResultsScene.cpp

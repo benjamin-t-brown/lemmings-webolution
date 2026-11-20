@@ -7,6 +7,11 @@
 
 namespace webo::app {
 
+// The level cursor uses a half-open rectangle of visible scene pixels.
+inline bool pointerOverSceneBounds(int x, int y, int left, int top, int right, int bottom) {
+  return x >= left && x < right && y >= top && y < bottom;
+}
+
 // Displayed hatch geometry, in framebuffer pixels; index is the serialized
 // hatch order also used by World::setup().entrances. No simulation state.
 struct HatchHoverTarget {

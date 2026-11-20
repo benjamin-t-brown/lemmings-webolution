@@ -116,7 +116,7 @@ std::expected<void, std::string> FileSaveSink::write(std::span<const std::byte> 
     }
   }
   if (auto replaced = replaceFile(temp, target_); !replaced) {
-    fs::remove(temp, ec);  // the previous good file is untouched
+    fs::remove(temp, ec);  // A failed replacement leaves the stored image intact.
     return replaced;
   }
   return {};

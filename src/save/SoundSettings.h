@@ -4,12 +4,13 @@
 
 namespace webo::save {
 
-// Clone settings beside SavedGame.dat. The original's volume doubles belong
-// to its audio manager and have no traced disk fields.
+// Clone settings beside SavedGame.dat. The original's audio-manager volume
+// doubles have no traced disk fields.
 struct SoundSettings {
   int music = 30;
   int sfx = 100;
-  bool unlockAllLevels = false;  // Clone playtest convenience.
+  bool unlockAllLevels = false;  // Clone addition: allow access to every level.
+  int windowScale = 0;  // Clone addition: 0 = Auto/Fill, 1..3 = window scale multiplier.
   bool operator==(const SoundSettings&) const = default;
 
   static std::expected<SoundSettings, std::string> load(SaveSink& file);

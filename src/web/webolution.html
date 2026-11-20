@@ -5,10 +5,24 @@
 <title>Lemmings Webolution</title>
 <style>
   :root { color-scheme: dark; font-family: system-ui, sans-serif; }
-  body { margin: 0; min-height: 100vh; display: grid; place-content: center; background: #141414; }
-  main { display: grid; justify-items: center; gap: 1rem; }
+  body { margin: 0; background: #141414; }
+  main {
+    min-height: 100vh; min-height: 100dvh;
+    width: max-content; min-width: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1rem;
+  }
   button { padding: .6rem 1.4rem; font: inherit; cursor: pointer; }
-  canvas { width: min(100vw, 133.33vh, 1280px); height: auto; image-rendering: pixelated; }
+  /* Clone window-size setting. Fixed scales use CSS pixels and can scroll. */
+  canvas {
+    display: block;
+    width: min(100vw, calc(100vh * 4 / 3));
+    width: min(100dvw, calc(100dvh * 4 / 3));
+    height: auto; aspect-ratio: 4 / 3; image-rendering: pixelated;
+  }
+  canvas[data-window-scale="1"] { width: 640px; }
+  canvas[data-window-scale="2"] { width: 1280px; }
+  canvas[data-window-scale="3"] { width: 1920px; }
   canvas:focus { outline: none; }
   [hidden] { display: none; }
 </style>
@@ -30,6 +44,20 @@
     write(text);
   }
   canvas.addEventListener('contextmenu', event => event.preventDefault());
+  // SDL puts its last motion position in button events. Scrolling or a CSS
+  // resize can move the canvas under a stationary pointer. Refresh that
+  // position with the button's client coordinates before SDL sees the button.
+  function refreshMousePosition(event) {
+    if (document.pointerLockElement === canvas) return;
+    canvas.dispatchEvent(new MouseEvent('mousemove', {
+      clientX: event.clientX, clientY: event.clientY, buttons: event.buttons,
+    }));
+  }
+  canvas.addEventListener('mousedown', refreshMousePosition, true);
+  canvas.addEventListener('mouseup', refreshMousePosition, true);
+  canvas.addEventListener('keydown', event => {
+    if (event.key === 'F11') event.stopPropagation();
+  });
   function message(text) {
     statusLine.hidden = false;
     statusLine.textContent = text;

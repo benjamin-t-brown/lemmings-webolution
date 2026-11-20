@@ -10,6 +10,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
+- antigrav-flip-motion-001: **ready** — A lemming entering an anti-grav lift moves smoothly to the floor above and turns over
+- inverted-builder-fluid-001: **ready** — An upside-down builder treats water ahead as a roof instead of empty space
+- antigrav-lift-quads-001: **ready** — Anti-grav lift effects show their quads; draw them as smoothly as the original
 
 ## Recently completed queue entries
 

@@ -37,7 +37,8 @@ public:
   // SkipPlaying is an additive one-shot, suppressed while the same clip is
   // still audible. No delayed requests or looping voice are created.
   // RestartPlaying starts each work/warning attack without stacking tails.
-  enum class Overlap { Add, Average, SkipPlaying, RestartPlaying };
+  // AddWithoutEviction plays an additive one-shot outside the capped pool.
+  enum class Overlap { Add, Average, SkipPlaying, RestartPlaying, AddWithoutEviction };
 
   Mixer() = default;
   ~Mixer();

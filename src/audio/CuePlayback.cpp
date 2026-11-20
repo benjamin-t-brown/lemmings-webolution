@@ -195,7 +195,11 @@ void CuePlayback::drain(sim::World& world, const PositionResolver& position) {
                          ? StereoGains{} : gains);
     } else {
       ++drained_;
-      if (!disabled_) playName(event.sample, Mixer::Overlap::Add, gains);
+      if (!disabled_) {
+        const auto overlap = event.sample == "AntiGrav" ?
+            Mixer::Overlap::AddWithoutEviction : Mixer::Overlap::Add;
+        playName(event.sample, overlap, gains);
+      }
     }
   }
 }

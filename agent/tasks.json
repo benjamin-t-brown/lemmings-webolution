@@ -29783,7 +29783,7 @@
     {
       "id": "flipper-sound-001",
       "title": "Gravity flippers play the original's sound when they flip a lemming",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "rat-fling-spin-random-001"
       ],
@@ -29798,11 +29798,11 @@
         "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
       ],
-      "loop_attempts": 0,
-      "run_id": "20261120T004904-50436-5b3c715e",
-      "started": "2026-11-20T00:49:05.316653+00:00",
-      "finished": "2026-11-20T00:50:15.497832+00:00",
-      "last_run": "build/agent-runs/20261120T004904-50436-5b3c715e",
+      "loop_attempts": 2,
+      "run_id": "20261120T045756-44600-ed798592",
+      "started": "2026-11-20T04:57:56.980634+00:00",
+      "finished": "2026-11-20T05:09:21.751093+00:00",
+      "last_run": "build/agent-runs/20261120T045756-44600-ed798592",
       "blocker": null,
       "prior_reviews": [
         {
@@ -29870,12 +29870,146 @@
           "blocker": "The worker stopped over the original-game reconstruction scope and submitted no flipper audio change, task report, or clone sound trace. The supervisor passed smoke on the existing source. The missing implementation and runtime evidence prevent acceptance."
         }
       ],
-      "lead_note": "Lead note 2026-11-19: attempt 1 declined, reading the task as recreating an existing game's assets. This repository is the user's engine reconstruction: the clone loads the user's own installed Lemmings Revolution data at runtime and no original binary or asset is committed (AGENTS.md, Builds and saves). Playing an installed sample by name through the existing cue path is what every accepted sound task does (e.g. rat-hit-sound-003 plays the installed THUNK.WAV). Static analysis of the registered reference EXE is authorized by AGENTS.md (Static analysis). If you still decline, say so in the report and stop."
+      "lead_note": "Lead note 2026-11-19: attempt 1 declined, reading the task as recreating an existing game's assets. This repository is the user's engine reconstruction: the clone loads the user's own installed Lemmings Revolution data at runtime and no original binary or asset is committed (AGENTS.md, Builds and saves). Playing an installed sample by name through the existing cue path is what every accepted sound task does (e.g. rat-hit-sound-003 plays the installed THUNK.WAV). Static analysis of the registered reference EXE is authorized by AGENTS.md (Static analysis). If you still decline, say so in the report and stop.",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The trace confirms one positional AntiGrav request for the observed flip. The new cue shares the mixer's 32-voice additive limit, so a flip at that limit can cut off an existing lemming or gadget sound. Preserve existing voices and extend the M08 trace to cover the return flip. All promoted replays and smoke passed.",
+        "checks": [
+          {
+            "criterion": "The report names each flipper sound with its sample, trigger, guard and static address (41D384/41D590 or wherever the evidence leads), or labels a choice provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-sound-001/rea/01-open.json",
+                "detail": "On the registered x86 executable with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f, the retained instructions and pseudocode agree. The reader registers AntiGrav at 0x41D76F. Contact at 0x41D450, sample resolution at 0x41D4BF, and a clear playing bit checked at 0x41D4E0 gate positional playback at 0x41D590."
+              },
+              {
+                "path": "docs/scratch/flipper-sound-001.md",
+                "detail": "The report identifies ANTIGRAV.WAV and labels the clone's reversal trigger, actor position, additive overlap, and one-shot lifetime provisional. It bounds the negative findings for flip-back, animation, and inverted fall to the inspected paths. AGRISE.WAV and AGFALL.WAV remain unassigned."
+              }
+            ]
+          },
+          {
+            "criterion": "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/flipper-sound-001/m08-sound-events.log",
+                "detail": "The M08_KF_1 trace pairs the upright-to-inverted reversal at step 3620 with exactly one AntiGrav request at the same position. It records zero return flips and zero other sound requests, so it provides no evidence of concurrent playback."
+              },
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "The single cueSample call follows the existing sign reversal and Faller transition. All three successful walker probes return immediately, and both gravity directions share this branch."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "Named World sound events reach the mixer through Overlap::Add, so AntiGrav joins the same voice pool used by existing effects."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "At the 32-voice additive limit, a new AntiGrav request erases the oldest active additive voice. That voice can belong to an existing lemming or gadget cue. This follows from the eviction branch and was not exercised in the retained trace."
+              },
+              {
+                "path": "build/playtest/replays/M08_KF_1-1795150361515499600-4.replay",
+                "detail": "A later human recording reaches completion at step 33240 with 42 of 40 required saved. It provides an existing M08 route for extending the sound trace."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-sound-001/replay-results.tsv",
+                "detail": "The manifest matches all 25 promoted .replay files. Each row records exit 0, PASS, won=1, and completed=1."
+              },
+              {
+                "path": "build/agent-runs/20261120T044542-44600-8b21ffa5/verification.log",
+                "detail": "The supervisor rebuilt World.cpp and passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/flipper-sound-001.md",
+                "detail": "The final note names 2 sides to every story, asks the player to use both flippers, and expects one short cue at each reversal with no extra cue during the fall."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The trace confirms one positional AntiGrav request for the observed flip. The new cue shares the mixer's 32-voice additive limit, so a flip at that limit can cut off an existing lemming or gadget sound. Preserve existing voices and extend the M08 trace to cover the return flip. All promoted replays and smoke passed.",
+      "review": {
+        "decision": "accept",
+        "reason": "The M08 trace shows one positioned AntiGrav voice per reversal in both directions. The saturation probe confirms the cue preserves existing voices. All 25 promoted replays reproduced and supervisor smoke passed. Audible confirmation remains for the next live playtest.",
+        "checks": [
+          {
+            "criterion": "The report names each flipper sound with its sample, trigger, guard and static address (41D384/41D590 or wherever the evidence leads), or labels a choice provisional.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-sound-001/revision/rea-crosscheck.json",
+                "detail": "Retained Ghidra pseudocode and instructions for the registered x86 EXE with SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f agree on the playback path. The update at 0x41D384 sets the contact flag at 0x41D450 and resolves the sample at 0x41D4BF. A resolved sample and a clear playing status checked at 0x41D4E0 allow the positional call at 0x41D590. The gravity comparison at 0x41D475 gates a separate call."
+              },
+              {
+                "path": "docs/scratch/flipper-sound-001.md",
+                "detail": "The report identifies ANTIGRAV.WAV, gives its registration, trigger, guard, and playback addresses, and marks the clone's reversal trigger, actor position, overlap, and one-shot lifetime provisional. It bounds its findings on return flips, animation, and inverted falls to the inspected paths and leaves AGRISE.WAV and AGFALL.WAV unassigned."
+              }
+            ]
+          },
+          {
+            "criterion": "On 2 sides to every story a flipped lemming triggers that sound once per flip, shown by a clone sound-event trace under build/; other lemming and gadget sounds are unchanged.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "src/sim/World.cpp",
+                "detail": "All successful flipper probes in World::stepWalker use the same branch. It reverses gravity, enters Faller, submits one positioned AntiGrav event through cueSample, and returns immediately."
+              },
+              {
+                "path": "src/audio/CuePlayback.cpp",
+                "detail": "The existing position resolver supplies gains. Only the named AntiGrav event selects AddWithoutEviction. Other named and typed cues retain their routing and overlap policies."
+              },
+              {
+                "path": "src/audio/Mixer.cpp",
+                "detail": "Only regular additive requests count against the 32-voice pool or evict its oldest voice. Flipper voices mix as one-shots outside that pool."
+              },
+              {
+                "path": "build/flipper-sound-001/revision/m08-sound-events.log",
+                "detail": "The installed M08_KF_1 route records five flips into inverted gravity and two returns to upright at steps 15552 and 16465. Seven positioned requests match seven mixer voices with zero mismatches. At capacity, the flipper cue preserved all 32 FallSplat and Lever voices and their playheads. The next regular request still evicted the oldest capped voice."
+              },
+              {
+                "path": "build/flipper-sound-001/revision/web-voice-probe.log",
+                "detail": "The mock Web Audio probe passed with two flipper voices alongside 32 capped voices, exit audio, and music."
+              }
+            ]
+          },
+          {
+            "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/flipper-sound-001/revision/replay-results.tsv",
+                "detail": "The manifest matches all 25 promoted recordings. Each returned exit 0 and PASS with won=1 and completed=1. The additional M08 recording completed at step 33240 with 42 of 40 required saved."
+              },
+              {
+                "path": "build/agent-runs/20261120T045756-44600-ed798592/verification.log",
+                "detail": "The supervisor passed all 95 smoke tests, including the installed-level sweep, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/flipper-sound-001.md",
+                "detail": "The closing note names 2 sides to every story, asks the player to guide a lemming onto each flipper, and expects one short sound per reversal in either direction with no extra cue during the fall."
+              }
+            ]
+          }
+        ]
+      },
+      "accepted_at": "2026-11-20T05:11:37.817498+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T045756-44600-ed798592\\verification.log",
+        "verified_content": "982d571e9ba8c2c5222ecdba4070ee9a5e587d7163191828eb372cbe89037259"
+      }
     },
     {
       "id": "nuke-icon-additive-001",
       "title": "The nuke panel icon is drawn without its black background",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "rat-fling-spin-random-001"
       ],
@@ -29890,6 +30024,343 @@
         "The nuke icon shows no black background in the panel at rest, armed and after use, shown by clone framebuffer crops before and after under build/; other panel icons are unchanged.",
         "Nuke input and behaviour are unchanged; all promoted playtest replays still reproduce.",
         "The smoke profile passes and the report ends with a what-to-check note."
+      ],
+      "loop_attempts": 2,
+      "run_id": "20261120T052354-44600-c171bdd3",
+      "started": "2026-11-20T05:23:55.017225+00:00",
+      "finished": "2026-11-20T05:35:12.334959+00:00",
+      "last_run": "build/agent-runs/20261120T052354-44600-c171bdd3",
+      "review_feedback": {
+        "decision": "revise",
+        "reason": "The desktop crops, all 25 promoted replays, and the supervisor smoke gate pass. Browser verification remains open. Emscripten wrote the new WebAssembly file, then Windows denied replacement of its JavaScript loader. Build a matched pair in a writable output directory and verify the three nuke states in the browser.",
+        "checks": [
+          {
+            "criterion": "The report cites the original's blend mode for ADDITIVEICONS with static addresses, or labels it provisional, and lists every clone draw that uses that sheet.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/nuke-icon-additive-001.md",
+                "detail": "Identifies the registered executable by SHA-256, cites ONE/ONE blending, and inventories the in-level plate 9 and headless --skill-panel draws. It also identifies the separate HUD and cursor assets."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/static/setup.json",
+                "detail": "Ghidra instructions show the registrar storing the resource handle at game +0x1C910 at 0x45E7BD. The slot-9 initializer reads the handle at 0x45A8A5 and writes selector 2 through the call at 0x45A8D8."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/static/draw.json",
+                "detail": "The panel dispatch at 0x45B784 reaches the frame draw at 0x47AB96. The quad draw forwards its first word to 0x414D80 at 0x41494F."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/static/blend.json",
+                "detail": "The pseudocode agrees with the instructions at 0x414DA5\u20130x414DEA. Selector 2 enables blending and writes D3DBLEND_ONE to both source and destination blend states."
+              },
+              {
+                "path": "src/app/SkillPanel.cpp",
+                "detail": "Slot 9 loads ADDITIVEICONS.SPR. The runtime and headless panel draws use the same sampler, which clamps the sum of source and destination RGB for additive textures."
+              }
+            ]
+          },
+          {
+            "criterion": "The nuke icon shows no black background in the panel at rest, armed and after use, shown by clone framebuffer crops before and after under build/; other panel icons are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/nuke-icon-additive-001/pixels.tsv",
+                "detail": "I viewed the six desktop PNGs referenced by the report. At rest, armed, and after use, the before crops show a black rectangle and the after crops show the plate through the icon. The pixel comparison records 144 recovered black pixels per state and byte-identical crops for the other nine plates."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/wasm-build-registered-python.log",
+                "detail": "The browser build exited 1 when Emscripten could not replace webolution.js. The desktop crops cover the native renderer, and the report records the browser framebuffer check as pending."
+              }
+            ]
+          },
+          {
+            "criterion": "Nuke input and behaviour are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/nuke-icon-additive-001/observer-before.log",
+                "detail": "On M08_KF_1, the first click arms with stock 1, the second consumes the stock and starts the countdown, and a third leaves the countdown running."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/observer-after.log",
+                "detail": "The same four observations match the baseline stock, request, countdown, and outline values. The production diff is confined to panel compositing and its documentation."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/replay-results.tsv",
+                "detail": "The table covers all 25 current promoted recordings. I checked each row against its retained log. Every run exited 0 with won=1 and completed=1."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T051137-44600-3ea9ae7b/verification.log",
+                "detail": "The supervisor log records 95 of 95 smoke tests passing, including all installed-level sweep chunks and their aggregate report, plus 84 of 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/nuke-icon-additive-001.md",
+                "detail": "The final note names 2 sides to every story, describes the two clicks within half a second, and gives the expected icon background, confirmation outline, and countdown."
+              }
+            ]
+          }
+        ]
+      },
+      "last_failure": "The desktop crops, all 25 promoted replays, and the supervisor smoke gate pass. Browser verification remains open. Emscripten wrote the new WebAssembly file, then Windows denied replacement of its JavaScript loader. Build a matched pair in a writable output directory and verify the three nuke states in the browser.",
+      "blocker": null,
+      "review": {
+        "decision": "blocked",
+        "reason": "The desktop captures, all 25 promoted replays, and the current supervisor smoke gate pass. The isolated build produced a matched JavaScript and WebAssembly pair, but both unattended browsers stopped before requesting the loader. Acceptance is blocked pending an interactive browser check with retained canvas crops at rest, armed, and after use.",
+        "checks": [
+          {
+            "criterion": "The report cites the original's blend mode for ADDITIVEICONS with static addresses, or labels it provisional, and lists every clone draw that uses that sheet.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "docs/scratch/nuke-icon-additive-001.md",
+                "detail": "Identifies the registered executable by SHA-256 and lists both production uses of ADDITIVEICONS.SPR. The in-level Armageddon plate and the headless --skill-panel draw share the same renderer. The report identifies the separate HUD and cursor assets."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/static/setup.json",
+                "detail": "The instructions show registration at 0x45E7AB\u20130x45E7BD, a slot-9 read of the handle at 0x45A8A5, and a call at 0x45A8D8 that sets selector 2."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/static/draw.json",
+                "detail": "The panel dispatch at 0x45B784 reaches the frame draw at 0x47AB96. The quad draw forwards the selector to 0x414D80 at 0x41494F."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/static/blend.json",
+                "detail": "The instructions at 0x414DA5\u20130x414DEA agree with the pseudocode. Selector 2 enables blending and sets both factors to D3DBLEND_ONE. This establishes the blend factors from static evidence."
+              },
+              {
+                "path": "src/app/SkillPanel.cpp",
+                "detail": "Slot 9 loads ADDITIVEICONS.SPR. Both draw paths use the same sampler, which adds source and destination RGB with saturation at 255 for additive textures."
+              }
+            ]
+          },
+          {
+            "criterion": "The nuke icon shows no black background in the panel at rest, armed and after use, shown by clone framebuffer crops before and after under build/; other panel icons are unchanged.",
+            "passed": false,
+            "evidence": [
+              {
+                "path": "build/nuke-icon-additive-001/pixels.tsv",
+                "detail": "I inspected the six native before-and-after PNGs on M08_KF_1. The black rectangle disappears at rest, armed, and after use. The table records 144 recovered black pixels per state and byte-identical crops for the other nine plates."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/browser-dist-local-build.log",
+                "detail": "The isolated Emscripten build compiled SkillPanel.cpp and linked the JavaScript loader and WebAssembly module successfully, resolving the earlier loader write failure."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/wasm-headless-pixels.txt",
+                "detail": "The Node headless render matched all 270 desktop RGB pixels in the rest-state comparison and showed the plate through all 144 formerly black pixels. This covers Wasm compositing in the headless path."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/browser-canvas/http.log",
+                "detail": "Headless Chrome fetched the check page and timed out before requesting webolution.js. The run yielded no canvas crops."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/browser-canvas-edge/http.log",
+                "detail": "Headless Edge fetched the check page but never requested webolution.js. The report records all three browser canvas states as unverified."
+              }
+            ]
+          },
+          {
+            "criterion": "Nuke input and behaviour are unchanged; all promoted playtest replays still reproduce.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/nuke-icon-additive-001/observer-before.log",
+                "detail": "The first click arms the nuke with stock 1. The second consumes the stock and starts the countdown. A third click leaves the countdown running."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/observer-after.log",
+                "detail": "Stock, request flag, outline, and countdown match the baseline at all four observations. The task diff changes only icon compositing and its declaration comment."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/replay-results.tsv",
+                "detail": "All 25 current promoted recording paths appear exactly once. Every reported result matches its retained native log and shows exit 0, won=1, and completed=1."
+              },
+              {
+                "path": "build/nuke-icon-additive-001/wasm-replay-results.tsv",
+                "detail": "The same 25 recordings reproduced under Node with the matched Wasm build. Every row matches its retained log and shows exit 0, won=1, and completed=1."
+              }
+            ]
+          },
+          {
+            "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+            "passed": true,
+            "evidence": [
+              {
+                "path": "build/agent-runs/20261120T052354-44600-c171bdd3/verification.log",
+                "detail": "The current supervisor run passed all 95 main smoke tests, including the installed-level sweep and aggregate report, and all 84 recovery tests."
+              },
+              {
+                "path": "docs/scratch/nuke-icon-additive-001.md",
+                "detail": "The report ends with a two-line handoff and a check on 2 sides to every story. It specifies the two clicks within half a second and the expected icon background, gold outline, and countdown."
+              }
+            ]
+          }
+        ]
+      },
+      "prior_reviews": [
+        {
+          "run": "build/agent-runs/20261120T052354-44600-c171bdd3",
+          "review": {
+            "decision": "blocked",
+            "reason": "The desktop captures, all 25 promoted replays, and the current supervisor smoke gate pass. The isolated build produced a matched JavaScript and WebAssembly pair, but both unattended browsers stopped before requesting the loader. Acceptance is blocked pending an interactive browser check with retained canvas crops at rest, armed, and after use.",
+            "checks": [
+              {
+                "criterion": "The report cites the original's blend mode for ADDITIVEICONS with static addresses, or labels it provisional, and lists every clone draw that uses that sheet.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "docs/scratch/nuke-icon-additive-001.md",
+                    "detail": "Identifies the registered executable by SHA-256 and lists both production uses of ADDITIVEICONS.SPR. The in-level Armageddon plate and the headless --skill-panel draw share the same renderer. The report identifies the separate HUD and cursor assets."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/static/setup.json",
+                    "detail": "The instructions show registration at 0x45E7AB\u20130x45E7BD, a slot-9 read of the handle at 0x45A8A5, and a call at 0x45A8D8 that sets selector 2."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/static/draw.json",
+                    "detail": "The panel dispatch at 0x45B784 reaches the frame draw at 0x47AB96. The quad draw forwards the selector to 0x414D80 at 0x41494F."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/static/blend.json",
+                    "detail": "The instructions at 0x414DA5\u20130x414DEA agree with the pseudocode. Selector 2 enables blending and sets both factors to D3DBLEND_ONE. This establishes the blend factors from static evidence."
+                  },
+                  {
+                    "path": "src/app/SkillPanel.cpp",
+                    "detail": "Slot 9 loads ADDITIVEICONS.SPR. Both draw paths use the same sampler, which adds source and destination RGB with saturation at 255 for additive textures."
+                  }
+                ]
+              },
+              {
+                "criterion": "The nuke icon shows no black background in the panel at rest, armed and after use, shown by clone framebuffer crops before and after under build/; other panel icons are unchanged.",
+                "passed": false,
+                "evidence": [
+                  {
+                    "path": "build/nuke-icon-additive-001/pixels.tsv",
+                    "detail": "I inspected the six native before-and-after PNGs on M08_KF_1. The black rectangle disappears at rest, armed, and after use. The table records 144 recovered black pixels per state and byte-identical crops for the other nine plates."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/browser-dist-local-build.log",
+                    "detail": "The isolated Emscripten build compiled SkillPanel.cpp and linked the JavaScript loader and WebAssembly module successfully, resolving the earlier loader write failure."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/wasm-headless-pixels.txt",
+                    "detail": "The Node headless render matched all 270 desktop RGB pixels in the rest-state comparison and showed the plate through all 144 formerly black pixels. This covers Wasm compositing in the headless path."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/browser-canvas/http.log",
+                    "detail": "Headless Chrome fetched the check page and timed out before requesting webolution.js. The run yielded no canvas crops."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/browser-canvas-edge/http.log",
+                    "detail": "Headless Edge fetched the check page but never requested webolution.js. The report records all three browser canvas states as unverified."
+                  }
+                ]
+              },
+              {
+                "criterion": "Nuke input and behaviour are unchanged; all promoted playtest replays still reproduce.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/nuke-icon-additive-001/observer-before.log",
+                    "detail": "The first click arms the nuke with stock 1. The second consumes the stock and starts the countdown. A third click leaves the countdown running."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/observer-after.log",
+                    "detail": "Stock, request flag, outline, and countdown match the baseline at all four observations. The task diff changes only icon compositing and its declaration comment."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/replay-results.tsv",
+                    "detail": "All 25 current promoted recording paths appear exactly once. Every reported result matches its retained native log and shows exit 0, won=1, and completed=1."
+                  },
+                  {
+                    "path": "build/nuke-icon-additive-001/wasm-replay-results.tsv",
+                    "detail": "The same 25 recordings reproduced under Node with the matched Wasm build. Every row matches its retained log and shows exit 0, won=1, and completed=1."
+                  }
+                ]
+              },
+              {
+                "criterion": "The smoke profile passes and the report ends with a what-to-check note.",
+                "passed": true,
+                "evidence": [
+                  {
+                    "path": "build/agent-runs/20261120T052354-44600-c171bdd3/verification.log",
+                    "detail": "The current supervisor run passed all 95 main smoke tests, including the installed-level sweep and aggregate report, and all 84 recovery tests."
+                  },
+                  {
+                    "path": "docs/scratch/nuke-icon-additive-001.md",
+                    "detail": "The report ends with a two-line handoff and a check on 2 sides to every story. It specifies the two clicks within half a second and the expected icon background, gold outline, and countdown."
+                  }
+                ]
+              }
+            ]
+          },
+          "blocker": "The desktop captures, all 25 promoted replays, and the current supervisor smoke gate pass. The isolated build produced a matched JavaScript and WebAssembly pair, but both unattended browsers stopped before requesting the loader. Acceptance is blocked pending an interactive browser check with retained canvas crops at rest, armed, and after use."
+        }
+      ],
+      "lead_note": "Lead acceptance 2026-11-19: review passed the static blend (selector 2, ONE/ONE at 0x414DA5..0x414DEA), the desktop crops for all three states, all 25 promoted replays and smoke, and blocked only on an interactive browser check. The browser build shares SkillPanel.cpp's drawSkillPanelIcon and the Node headless WebAssembly render matched the desktop pixels (build/nuke-icon-additive-001/wasm-headless-pixels.txt). The in-browser look is left to the user's next playtest, which is acceptance (AGENTS.md, Verification)."
+    },
+    {
+      "id": "inverted-builder-001",
+      "title": "A builder works under reversed gravity as the original does",
+      "status": "ready",
+      "depends_on": [
+        "nuke-icon-additive-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 22 M2: on Designed with love (M11_KF_1, node 33) the user cannot complete the level because building while upside down (after a gravity flipper, under reversed gravity) does not work properly. The user's attempt is recorded at build/playtest/replays/M11_KF_1-1795151456076104200-17.replay (ends on the map, 0/85 saved). Replay it with a private LocalAppData and trace every builder assigned while gravity is reversed: brick placement side and height, the step up onto each brick, the turn at a wall or ceiling, the shrug and the end of the staircase, and compare each with an upright builder on the same route. Establish from static evidence how the original builder behaves under reversed gravity (the builder state and brick-paint path, the gravity sign it reads, see gravity-gadgets-001 and antigrav-skill-assign-001 for the inverted walker/faller and the builder-* reports for the upright builder), and make the clone's inverted builder follow it through the production World path. Report exactly what went wrong in the recording. If the recording shows no builder failure, report what it does show and stop blocked with that evidence instead of guessing. Upright building is unchanged. Difficulty: difficult. Recommended model: Opus. Reason: a skill state under a mirrored frame, traced from a human recording. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report states what the inverted builder did wrong in the user's recording, with steps and positions, cites the original's inverted-builder behaviour with static addresses or labels choices provisional, and names the changed call path.",
+        "A clone World trace under build/ shows an inverted builder on Designed with love laying a usable staircase that inverted walkers climb, and an upright builder unchanged.",
+        "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "laser-switch-blend-001",
+      "title": "Laser switch effects are drawn with the original's transparency",
+      "status": "ready",
+      "depends_on": [
+        "nuke-icon-additive-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 22 M1: on Designed with love (M11_KF_1, node 33) the laser switches do not have proper transparency. Identify the laser switch models on that level (the switch gadget and any beam or glow it owns; see pressure-pad-drain-001, lever-render-001 and lever-links-research-001 for the switch and lever classes), and find the material/texture flags, alpha source and blend and depth-write state the original uses for them. flipper-effect-blend-001 (docs/scratch/flipper-effect-blend-001.md) just fixed the same symptom for the gravity flippers on the shared scenery path; reuse that evidence and path where the flags match, and report where they differ. Keep the switch's animation and its on/off presentation. Check other scenery using the same flags and report them; change them only where the evidence is the same. Presentation only. Difficulty: routine. Recommended model: Sonnet. Reason: one blend state on an accepted draw path, with a fresh precedent. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the laser switch models and materials, cites the original's alpha source and blend/depth state with static addresses or model fields, or labels choices provisional, and names the clone path that drew them wrong.",
+        "On Designed with love the laser switch effects are drawn with that transparency, shown by clone framebuffer frames before and after under build/; the switches' gameplay and other scenery not tied to the same evidence are unchanged.",
+        "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
+      ]
+    },
+    {
+      "id": "switch-hover-highlight-001",
+      "title": "Hovering a lever or switch highlights the elements it controls (clone addition)",
+      "status": "ready",
+      "depends_on": [
+        "nuke-icon-additive-001"
+      ],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 22 M3, a feature the user requested on 2026-11-19: when the mouse pointer is over a lever, pressure pad or laser switch in a level, highlight every element that switch affects (gates, doors, lasers, fluid, or whatever its message list targets). This is a clone addition, not original behaviour: label it so in code and the report. Use the accepted link resolution (lever-links-research-001: 0x433AC0 -> 0x433B2E -> 0x444BA1, signed base-id lookup in construction order; pressure-pad-drain-001 message list +0xBC) from the clone's existing World/scene link data; do not re-derive or duplicate it. Pick the hovered switch with the existing cursor pick path, and draw the highlight (a clear tint or outline on the targets, and on the hovered switch) in the scene presentation only; it must not change simulation, input recording, replays or skill assignment. It shows while the pointer is over the switch and clears when it leaves; it works during pause and fast-forward. Desktop and browser. Difficulty: routine. Recommended model: Sonnet. Reason: presentation on existing link and pick data. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report labels the feature a clone addition, names the link data and pick path it reads and the draw path it adds, and lists the switch kinds covered.",
+        "On Designed with love and Seafood Sarnie (MM_BLOCK_BUILD_BASH), clone framebuffer frames under build/ show each switch's targets highlighted while the pointer is over it and no highlight otherwise.",
+        "Simulation, replays and input recording are unchanged: all promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
       ]
     }
   ]

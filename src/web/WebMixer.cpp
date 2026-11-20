@@ -10,7 +10,7 @@ int weboAudioLoad(const void* id, const char* key, const std::int16_t* pcm,
                   int frames, int channels, int sampleRate);
 int weboAudioHas(const void* id, const char* key);
 void weboAudioPlay(const void* id, const char* key, float volume, float left, float right,
-                   int average, int skipPlaying, int restartPlaying);
+                   int average, int skipPlaying, int restartPlaying, int addWithoutEviction);
 void weboAudioPlayMusic(const void* id, const char* key, float volume);
 void weboAudioStopMusic(const void* id);
 void weboAudioStopAll(const void* id);
@@ -67,7 +67,7 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
   weboAudioPlay(this, cueKey(cue).c_str(), std::clamp(volume, 0.0f, 1.0f),
                 std::clamp(gains.left, 0.0f, 1.0f), std::clamp(gains.right, 0.0f, 1.0f),
                 overlap == Overlap::Average, overlap == Overlap::SkipPlaying,
-                overlap == Overlap::RestartPlaying);
+                overlap == Overlap::RestartPlaying, overlap == Overlap::AddWithoutEviction);
 }
 
 void Mixer::playMusic(std::string_view cue, float volume) {

@@ -182,19 +182,12 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
           [clip](const Voice& v) { return v.clip == clip; }), voices_.end());
       overlap = Overlap::Add;
     }
-    // Preserve the existing cap for additive voices (e.g. a long nuke).
-    // Exit cheers own a separate bus: one short voice per saved actor. Do not
-    // cut earlier cheers off when a whole group reaches the exit together,
-    // and do not let those new voices steal slots from existing effects.
-    const auto additiveVoices = std::count_if(voices_.begin(), voices_.end(),
-        [](const Voice& v) { return !v.music && v.overlap == Overlap::Add; });
-    if (overlap == Overlap::Add && additiveVoices >= kMaxAdditiveVoices) {
-      for (auto vit = voices_.begin(); vit != voices_.end(); ++vit) {
-        if (!vit->music && vit->overlap == Overlap::Add) {
-          voices_.erase(vit);
-          break;
-        }
-      }
+    // Exit cheers and flipper one-shots have their own lifetimes outside the
+    // capped pool. Only a capped voice can take another capped voice's slot.
+    if (overlap == Overlap::Add) {
+      const auto inCappedPool = [](const Voice& v) { return !v.music && v.overlap == Overlap::Add; };
+      if (std::count_if(voices_.begin(), voices_.end(), inCappedPool) >= kMaxAdditiveVoices)
+        voices_.erase(std::find_if(voices_.begin(), voices_.end(), inCappedPool));
     }
     const float v = std::clamp(volume, 0.0f, 1.0f);
     gains.left = std::clamp(gains.left, 0.0f, 1.0f);

@@ -129,6 +129,39 @@ void pcm() {
   auto click=Access::render(mixer,1); assert(click[0]==10000 && click[1]==10000);
 }
 
+void flipperVoiceCapacity() {
+  audio::CuePlayback playback;
+  auto& mixer = Access::mixer(playback);
+  assert(mixer.open());
+  Access::pause(mixer);
+  assert(mixer.load("First", Sound{22050, 1, {1000, 1000}}));
+  assert(mixer.load("Regular", Sound{22050, 1, {200, 200}}));
+  assert(mixer.load("AntiGrav", Sound{22050, 1, {50, 50}}));
+  mixer.play("First");
+  for (int i = 0; i < 31; ++i)
+    mixer.play("Regular");
+
+  sim::LevelSetup setup;
+  setup.terrain = sim::Terrain(80, 60);
+  setup.terrain.fillBox(0, 40, 80, 20, sim::Material::Earth);
+  setup.terrain.setAntiGrav(50, 40, true);
+  setup.totalLemmings = 0;
+  sim::World world(std::move(setup));
+  sim::Lemming walker;
+  walker.x = 50;
+  walker.y = 39;
+  walker.state = sim::State::Walker;
+  world.place(walker);
+  world.tick();
+  assert(world.lemmings().front().verticalDir == -1);
+  playback.drain(world, [](const auto&) { return audio::StereoGains{0.5f, 1.0f}; });
+  // The full pool and the positioned flipper clip both contribute.
+  assert((Access::render(mixer, 1) == std::vector<std::int16_t>{7225, 7250}));
+  mixer.play("Regular");
+  // A capped request still evicts the oldest capped voice.
+  assert((Access::render(mixer, 1) == std::vector<std::int16_t>{6425, 6450}));
+}
+
 // A refusal can touch several protected cells; emit one positioned one-shot,
 // without changing the cut, movement or existing transition out of the skill.
 void refusalSounds() {
@@ -225,7 +258,7 @@ void installed(const AssetLibrary& lib) {
 
 int main() {
   SDL_SetMainReady(); SDL_SetHintWithPriority(SDL_HINT_AUDIODRIVER,"dummy",SDL_HINT_OVERRIDE);
-  projection(); pcm(); refusalSounds();
+  projection(); pcm(); flipperVoiceCapacity(); refusalSounds();
   if (const char* directory=std::getenv("WEBOLUTION_GAME_DIR")) {
     const std::filesystem::path root(directory);
     auto lib=AssetLibrary::open(root/"lemmings.box",root/"patch.box"); assert(lib);

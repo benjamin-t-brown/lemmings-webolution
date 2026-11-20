@@ -100,6 +100,7 @@ void drawSkillPanelIcon(Image& dest, const Image& sheet, const webo::SpriteFrame
   const int x1 = std::min(dest.width, static_cast<int>(std::ceil(r.right)));
   const int y0 = std::max(0, static_cast<int>(std::ceil(r.top)));
   const int y1 = std::min(dest.height, static_cast<int>(std::ceil(r.bottom)));
+  const bool additive = sheet.alpha == AlphaMode::Additive;
   for (int py = y0; py < y1; ++py) {
     const double v = (py - r.top) / (r.bottom - r.top);
     const int sy = std::clamp(static_cast<int>(std::floor((f.uTop + v * (f.uBottom - f.uTop)) * sheet.height)),
@@ -110,10 +111,15 @@ void drawSkillPanelIcon(Image& dest, const Image& sheet, const webo::SpriteFrame
                                 static_cast<int>(f.left), static_cast<int>(f.right) - 1);
       const auto* src = sheet.rgba.data() + (static_cast<std::size_t>(sy) * sheet.width + sx) * 4;
       auto* dst = dest.rgba.data() + (static_cast<std::size_t>(py) * dest.width + px) * 4;
-      const int a = src[3];
-      // This is project AlphaMode compositing, not a claim about unread D3D blending.
-      for (int c = 0; c < 3; ++c)
-        dst[c] = static_cast<std::uint8_t>((dst[c] * (255 - a) + src[c] * a + 127) / 255);
+      if (additive) {
+        // Armageddon's ~Additive0 texture uses selector 2 (ONE/ONE, 0x45A8D8 -> 0x414D80).
+        for (int c = 0; c < 3; ++c)
+          dst[c] = static_cast<std::uint8_t>(std::min(255, dst[c] + src[c]));
+      } else {
+        const int a = src[3];
+        for (int c = 0; c < 3; ++c)
+          dst[c] = static_cast<std::uint8_t>((dst[c] * (255 - a) + src[c] * a + 127) / 255);
+      }
     }
   }
 }

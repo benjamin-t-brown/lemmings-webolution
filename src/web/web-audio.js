@@ -139,7 +139,7 @@ addToLibrary({
   },
 
   weboAudioPlay__deps: ['$WebolutionAudio', '$UTF8ToString'],
-  weboAudioPlay(id, key, volume, left, right, average, skipPlaying, restartPlaying) {
+  weboAudioPlay(id, key, volume, left, right, average, skipPlaying, restartPlaying, addWithoutEviction) {
     const mixer = WebolutionAudio.mixers.get(id);
     const clip = mixer.clips.get(UTF8ToString(key));
     if (!clip) return;
@@ -161,15 +161,17 @@ addToLibrary({
           continue;
         }
       }
-      if (!voice.average) {
+      if (!voice.average && !voice.addWithoutEviction) {
         oldest ??= voice;
         ++additive;
       }
     }
-    if (!average && additive >= mixer.maxVoices) WebolutionAudio.stop(mixer, oldest);
+    if (!average && !addWithoutEviction && additive >= mixer.maxVoices)
+      WebolutionAudio.stop(mixer, oldest);
     const bus = average ? mixer.exitBus : mixer.effectsBus;
     const voice = WebolutionAudio.voice(mixer, clip, bus, volume, left, right, false, now);
     voice.average = Boolean(average);
+    voice.addWithoutEviction = Boolean(addWithoutEviction);
     mixer.effects.add(voice);
     if (average || exitChanged) WebolutionAudio.updateExitGain(mixer, now);
   },

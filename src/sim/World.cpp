@@ -816,6 +816,9 @@ void World::stepWalker(Lemming& l) {
     l.state = State::Faller;
     l.fallDistance = 0;
     l.frame = 0;
+    // Retail 0x41D590 starts AntiGrav on flipper contact. Use the actual
+    // gravity reversal as the clone's one-shot trigger for both directions.
+    cueSample("AntiGrav", l);
     return true;
   };
   if (flipIfAntiGrav())

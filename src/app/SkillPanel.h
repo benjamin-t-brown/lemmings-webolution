@@ -78,8 +78,8 @@ struct SkillPanelRect { double left = 0, top = 0, right = 0, bottom = 0; };
 // READ from 0x47A75D: mirror=0 uses x-dx*scale; y-dy-height*scale,
 // where scale=1 (mode S=0) or 0.5 (mode S=-1); C1h inputs and 0x47AA12/59.
 SkillPanelRect skillPanelRect(const webo::SpriteFrame& frame, double x, double y, int scaleDelta);
-// READ frame geometry/UV + MEASURED x/y (C1s); tex alpha resolution follows
-// the project AlphaMode convention in Bitmap.cpp. Blend state/tint stay UNREAD.
+// READ frame geometry/UV + MEASURED x/y (C1s). Additive sheets use ONE/ONE
+// (Armageddon at 0x45A8D8); other sheets use the decoded straight alpha.
 void drawSkillPanelIcon(webo::Image& dest, const webo::Image& sheet,
                         const webo::SpriteFrame& frame, double x, double y, int scaleDelta);
 // READ C1n/C1q: fixed two ASCII digits, glyphs 6x14, white vertex colour.

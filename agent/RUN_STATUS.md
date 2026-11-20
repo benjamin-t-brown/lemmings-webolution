@@ -10,7 +10,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- switch-hover-highlight-002: **needs_review** — Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles
+- switch-hover-highlight-002: **ready** — Switch hover brightens the controlled elements like a hovered lemming instead of drawing rectangles
 
 ## Recently completed queue entries
 
@@ -35,11 +35,11 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-7486ac74f8a74690bc8a1892c77fbe60/result.json`
+- Result: `build/agent-runs/loop-6e2d848a78e44875925e8faccdd88b0d/result.json`
 - Status: **blocked**
-- Duration: 0h 22m 31s
+- Duration: 0h 00m 06s
 - Completed in this invocation: none
-- Reason: Worker stopped; inspect build/agent-runs/20261120T201309-47208-6b335986
+- Reason: Verification failed; inspect the saved logs
 
 ## Documentation handoff
 

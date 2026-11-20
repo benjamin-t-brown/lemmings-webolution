@@ -14,16 +14,12 @@
 namespace webo {
 namespace {
 
-// The chunk the walk starts from. Length-prefixed, like every string in the
-// file.
+// Begin at the length-prefixed "Cylinder" chunk name.
 constexpr char kCylinder[] = "Cylinder";
 constexpr std::uint32_t kCylinderLen = 8;
 
-// Fixed fields between "Cylinder" and the first array: five zero words, the
-// height, and a double. Their values are not asserted -- only their size
-// matters for the walk -- but they are stable across all 102 levels
-// (0,0,0,0,0 and 0.36), so a mismatch downstream means the walk is wrong
-// rather than the data being unusual.
+// Preamble after "Cylinder": five zero words, height and a double (0.36 in retail).
+// The locator uses field sizes and does not validate these values.
 constexpr std::size_t kZeroWords = 5;
 constexpr std::size_t kPreambleBytes = kZeroWords * 4 + 4 /*height*/ + 8 /*f64*/;
 
@@ -31,8 +27,7 @@ constexpr std::size_t kPreambleBytes = kZeroWords * 4 + 4 /*height*/ + 8 /*f64*/
 // (FUN_0043B9C0, `imul ecx, ecx, 0xc` at 0x0043BA1D).
 constexpr std::size_t kRecordBytes = 12;
 
-// A sane bound on the grid, so a bad walk fails instead of allocating wildly.
-// Retail is 96 rows; this leaves room without trusting the file.
+// Allocation bound for malformed grids. Retail height is 96.
 constexpr std::uint32_t kMaxRows = 4096;
 
 bool readU32(std::span<const std::byte> d, std::size_t offset, std::uint32_t& out) {
@@ -49,9 +44,7 @@ bool readF64(std::span<const std::byte> d, std::size_t offset, double& out) {
   return true;
 }
 
-// The literal `u32 8, "Cylinder"` chunk. `LevelIndex` finds the same string
-// while scanning for references; this looks for it directly because the walk
-// below needs its exact offset.
+// Locate the literal u32 8, "Cylinder" chunk. LevelIndex scans its other references separately.
 std::size_t findCylinderChunk(std::span<const std::byte> d) {
   std::byte needle[4 + kCylinderLen];
   std::memcpy(needle, &kCylinderLen, 4);
@@ -97,7 +90,7 @@ std::expected<CollisionGrid, std::string> findCollisionGridLegacy(
   if (cyl == std::string::npos)
     return std::unexpected("collision grid: no \"Cylinder\" chunk");
 
-  // Past the length-prefixed string, then the fixed preamble.
+  // Skip the length-prefixed name and preamble.
   std::size_t p = cyl + 4 + kCylinderLen;
   std::uint32_t rows = 0;
   if (!readU32(d, p + kZeroWords * 4, rows))
@@ -108,8 +101,7 @@ std::expected<CollisionGrid, std::string> findCollisionGridLegacy(
   const bool haveExtent = readF64(d, p + kZeroWords * 4 + 4, extent);
   p += kPreambleBytes;
 
-  // The tube's own array. Its length is the same in every retail level, but
-  // it is read from the file rather than assumed.
+  // Use the serialized array length.
   std::uint32_t tubeCount = 0;
   if (!readU32(d, p, tubeCount))
     return std::unexpected("collision grid: truncated before the surface array");
@@ -127,7 +119,6 @@ std::expected<CollisionGrid, std::string> findCollisionGridLegacy(
     return std::unexpected("collision grid: record array runs past the file");
   p += static_cast<std::size_t>(recordCount) * kRecordBytes;
 
-  // The grid itself.
   std::uint32_t count = 0;
   if (!readU32(d, p, count))
     return std::unexpected("collision grid: truncated before the grid");
@@ -152,8 +143,7 @@ std::expected<CollisionGrid, std::string> findCollisionGridLegacy(
 
 std::expected<CollisionGrid, std::string> findCollisionGrid(
     std::span<const std::byte> d) {
-  // Own the byte storage for the entire stream lifetime; the recovered stream
-  // holds a span, and its readers retain the original serialized read order.
+  // Keep byte storage alive for the borrowing stream and read in serialized order.
   std::vector<std::uint8_t> bytes;
   bytes.reserve(d.size());
   for (const auto byte : d)
@@ -173,8 +163,7 @@ std::expected<CollisionGrid, std::string> findCollisionGrid(
     return fallback;
   }
 
-  // Portable adapter policy, not original validation. A decoded world with
-  // invalid dimensions must fail here rather than select another chunk.
+  // Clone validation: reject invalid decoded dimensions before attempting any fallback.
   const auto rows = world.following_value;
   if (rows == 0 || rows > kMaxRows)
     return std::unexpected(std::format("collision grid: implausible height {}", rows));
@@ -187,7 +176,7 @@ std::expected<CollisionGrid, std::string> findCollisionGrid(
   CollisionGrid grid;
   grid.height = static_cast<int>(rows);
   grid.cells = std::move(world.second_integer_array);
-  // The correspondence to runtime world+0x408 remains the existing inference.
+  // Mapping this field to runtime world+0x408 is inferred.
   grid.cylinderExtent = std::bit_cast<double>(world.following_double_bits_2);
   return grid;
 }

@@ -21,8 +21,7 @@ namespace webo::app {
 #if WEBOLUTION_HAVE_SDL2
 namespace {
 struct CursorVisibility {
-  // This frontend path uses the software sprite. Native's alternate backend
-  // owns separate monochrome OS handles; SDL hiding here is not that backend.
+  // SDL hides the OS cursor for the software sprite. The alternate native backend owns monochrome handles.
   int previous = SDL_ENABLE;
   CursorVisibility() : previous(SDL_ShowCursor(SDL_QUERY)) { SDL_ShowCursor(SDL_DISABLE); }
   ~CursorVisibility() { if (previous >= 0) SDL_ShowCursor(previous); }
@@ -86,9 +85,8 @@ std::expected<std::optional<std::string>, std::string> runFrontendWindow(
 
   CursorVisibility cursorVisibility;
 
-  // Each frontend leg starts a new input lifetime, including on the shared
-  // window. Retain logical XY without querying/warping desktop
-  // input. This is the SOURCE adapter boundary, not native focus sampling.
+  // Each frontend leg starts a new input lifetime on the shared window.
+  // Preserve logical XY without reading or moving the desktop pointer.
   session.setFocused(true);
   session.setButtons(false, false);
   bool running = true;

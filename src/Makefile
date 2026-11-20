@@ -1,20 +1,16 @@
-# Convenience commands for humans. CMake remains the authoritative build graph.
+# Convenience targets for the CMake build.
 
 ROOT := $(abspath $(CURDIR)/..)
 PRESET ?= dev-debug
 BUILD_DIR := $(ROOT)/build/cmake/$(PRESET)
 
-# MSYS make does not pass TMP/TEMP through to its children. The native-Windows
-# toolchain then falls back to C:\WINDOWS\, which is not writable, and both GCC
-# and the test suite fail with "Cannot create temporary file". Guarantee a
-# writable one, as a Windows-form path since the tools are native binaries.
+# Supply TMP/TEMP as writable Windows paths for native GCC and tests launched by MSYS make.
 SCRATCH := $(ROOT)/build/tmp
 WIN_SCRATCH := $(shell cygpath -w "$(SCRATCH)" 2>/dev/null || echo "$(SCRATCH)")
 export TMP := $(if $(strip $(TMP)),$(TMP),$(WIN_SCRATCH))
 export TEMP := $(if $(strip $(TEMP)),$(TEMP),$(TMP))
 
-# Tests that read real game data need an installation to point at.
-# Override on the command line:  make test GAME_DIR="C:/Games/Lemmings Revolution"
+# Point asset tests at an installation, for example make test GAME_DIR="C:/Games/Lemmings Revolution".
 GAME_DIR ?= $(ROOT)/Lemmings Revolution
 
 ifeq ($(OS),Windows_NT)
@@ -38,7 +34,7 @@ configure:
 run: build
 	@"$(BUILD_DIR)/webolution" || "$(BUILD_DIR)/webolution.exe"
 
-# WebAssembly build; needs an activated Emscripten SDK (EMSDK set).
+# WebAssembly build with an activated Emscripten SDK (EMSDK set).
 js:
 	@if [ -z "$$EMSDK" ]; then echo "error: activate the Emscripten SDK so EMSDK is set" >&2; exit 1; fi
 	@cd "$(ROOT)" && cmake --preset emscripten-release && cmake --build --preset emscripten-release
@@ -46,20 +42,18 @@ js:
 test: build
 	@cd "$(ROOT)" && ctest --preset "$(PRESET)"
 
-# Summarise the archives in a Lemmings Revolution installation.
 info: build
 	@"$(LRTOOL)" info "$(GAME_DIR)"
 
-# Extract everything to build/assets for inspection.
+# Extract to build/assets.
 dump: build
 	@"$(LRTOOL)" dump "$(GAME_DIR)" "$(ROOT)/build/assets"
 
-# Decode every texture to a PNG for inspection (~380 MB).
+# Decode textures to build/png (~380 MB).
 png: build
 	@"$(LRTOOL)" png "$(GAME_DIR)" "$(ROOT)/build/png"
 
-# Unroll a level's cylinder surface to a PNG for inspection.
-#   make lvlmap LEVEL=MM_CLIMB_002
+# Unroll the cylinder surface, for example make lvlmap LEVEL=MM_CLIMB_002.
 LEVEL ?= MM_CLIMB_002
 lvlmap: build
 	@mkdir -p "$(ROOT)/build/lvlmap"

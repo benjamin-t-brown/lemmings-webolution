@@ -7,12 +7,10 @@
 
 namespace webo::app {
 
-// Presentation adapter for the accepted hybrid builder, never a simulation clock.
-// Native 410302 shows the mesh at 0.12..0.78 s of the 16 * 0.06 s strip;
-// 4105B0 interpolates its smaller geometry to the placed shape over that span.
-// PROVISIONAL: stretch the strip between the clone's ACTUAL placement ticks.
-// This keeps the hands and mesh together and retires the mesh exactly when
-// stepBuilder has made terrain, including after several fast-forward updates.
+// Native 410302 shows the mesh at 0.12..0.78 s of a 16-entry strip
+// at 0.06 s per entry. 4105B0 expands it toward the placed shape.
+// Provisional clone sampling spans actual placement ticks so the carried
+// brick retires when stepBuilder changes terrain.
 inline double builderPresentationPhase(const sim::World& world, const sim::Lemming& l) {
   if (l.state != sim::State::Builder || l.bricksLeft <= 0) return -1.0;
   const auto& r = world.rules();

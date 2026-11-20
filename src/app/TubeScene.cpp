@@ -94,9 +94,8 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
       if (last != first) out.push_back(last);
       return out;
     };
-    // 0x42727C -> 0x43A1C6: gate initialisation resolves each (x,y,pool-index)
-    // record, creating one only when absent. Gate-bearing installed levels
-    // already contain these records; earlier no-gate samples had none.
+    // 0x42727C -> 0x43A1C6 resolves each gate (x,y,pool-index) reference,
+    // creating a record only if absent. Installed gate levels supply the records.
     for (const auto& e : level.gadgets.entities_424187) {
       const int left = static_cast<int>(e.values[0]), right = static_cast<int>(e.values[1]);
       const int top = static_cast<int>(e.values[2]), bottom = static_cast<int>(e.values[3]);
@@ -127,8 +126,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
       }
     }
   } catch (const std::invalid_argument& e) {
-    // TubeScene also admits partial diagnostic inputs. RetailLevel is the
-    // production format authority; do not impose a new admission rule here.
+    // Accept partial diagnostic inputs here. RetailLevel validates playable inputs.
     scene.missing_.push_back(std::string("gate coordinates: ") + e.what());
   }
 
@@ -144,9 +142,8 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
       }
       auto assetName = highDetailTiles ? levelTextureAssetNameHi(name)
                                       : levelTextureAssetName(name + "Lo");
-      // Constructor 0x0047218A restores the unsuffixed name after a failed
-      // quality probe. Archive presence covers only the absent-entry case;
-      // errors loading an existing HI/Lo entry must remain errors.
+      // 0x0047218A restores the unsuffixed name after a failed detail probe.
+      // An existing HI/Lo entry must load successfully.
       if (!lib.contains(assetName))
         assetName = levelTextureAssetName(name);
       auto image = loadTexture(lib, assetName);
@@ -154,8 +151,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
         scene.missing_.push_back(std::format("{}: {}", name, image.error()));
         continue;
       }
-      // 0x43A6BB clamps terrain sampling. Scope the clone's change to the
-      // tube skins with edge bleed reported in playtests 18 H2 and 19 J1.
+      // Clamp tube-skin sampling at tile edges, as at 0x43A6BB.
       const bool clampRoute = assetName.starts_with(R"(TEXTURES\CYLINDER\E22_KF_1\)") ||
                               assetName.starts_with(R"(TEXTURES\CYLINDER\E11_KF_1\)");
       const auto routeAddress = clampRoute ? SceneAddress::Clamp : SceneAddress::Wrap;
@@ -166,8 +162,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
   loadBlock(mesh.tileTextures, true, scene.outer_, scene.outerTileCount_);
   loadBlock(mesh.innerTileTextures, false, scene.inner_, scene.innerTileCount_);
 
-  // The per-cell mesh the engine builds at level load. A failure is not a scene
-  // failure: it means this level's stored key table does not answer the rule.
+  // Build the load-time cell mesh when stored keys support it.
   if (scene.haveCollision_ && !grid0.empty()) {
     if (auto built = buildCellMeshes(grid0, scene.counterGateCoordinates_, scene.collision_, scene.mesh_.surface.size())) {
       scene.cellMesh_ = std::move(*built);
@@ -176,8 +171,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     }
   }
 
-  // Optional cut-in geometry from the stored lattice. A failure here is not a
-  // scene failure: it means this level has no reconstructible lattice faces.
+  // Reconstruct lattice faces when the optional lattice is present.
   if (!grid0.empty()) {
     if (auto built = buildSurfaceMesh(mesh, grid0, {}); built && !built->quads.empty()) {
       for (const auto& q : built->quads) {
@@ -194,9 +188,7 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     }
   }
 
-  // Optional cut-in geometry from the stored PolyList 09 records. These carry
-  // their own index into CylinderMesh::surface, a UV and an RGBA colour. They
-  // are render attributes, not the runtime per-cell mesh (see the round note).
+  // Optional PolyList 09 records carry their own CylinderMesh::surface index, UV and RGBA.
   if (!levelBytes.empty()) {
     if (auto lists = findPolyLists(levelBytes)) {
       for (const auto& block : lists->blocks) {
@@ -244,9 +236,8 @@ std::expected<TubeScene, std::string> TubeScene::build(const AssetLibrary& lib,
     scene.poseGrid0_.assign(grid0.begin(), grid0.end());
     scene.poseSurface_ = scene.mesh_.surface;
     scene.poseCylinderTemplate_ = scene.mesh_;
-    // 0x43D56C clamps against world+0x28, the serialized coordinate-mesh
-    // height (112 in the installed levels), NOT the collision mask's 96 rows.
-    // `faceCount` is Cylinder's historical name for that first stored word.
+    // 0x43D56C clamps against the serialized height (112, world+0x28).
+    // Cylinder stores this word as faceCount. The collision mask has 96 rows.
     scene.poseLevel_.gridHeight = static_cast<int>(mesh.faceCount);
     scene.poseLevel_.grid0 = scene.poseGrid0_;
     scene.poseLevel_.surface = scene.poseSurface_;
@@ -379,19 +370,12 @@ void compositeActorOverlay(app::Raster& raster, const Image& overlay,
   }
 }
 
-// Pose, view selection, sheet load, placement and tint for one injected
-// walker: the steps `drawInjectedWalkers` already ran immediately before
-// `drawActorSprite`. nullopt is one of that loop's `continue`s (temporal
-// index, empty direction list, forced view out of range, sheet-load failure,
-// placement failure). Drawing also rasterizes into depth-clipped scratch
-// storage and skips wholly covered figures. Picking needs only the placement:
-// a submitted actor keeps its box even when no body pixels are exposed.
+// Prepare pose, view, sheet, placement and tint for one submitted actor.
+// Drawing depth-tests body pixels. Picking keeps the box even when fully covered.
 struct PreparedInjectedWalker {
   webo::SpriteFrame frame;
   webo::Image texture;
-  // Borrow only from the owning application leg's immutable decoded cache.
-  // Prepared walkers never escape a draw/pick call; standalone consumers own
-  // their image as before. unordered_map insertions preserve image references.
+  // Borrow images only for the draw/pick call. Cache insertions preserve references.
   const webo::Image* borrowedTexture = nullptr;
   const webo::Image& sheet() const { return borrowedTexture ? *borrowedTexture : texture; }
   ActorSpritePlacement placement{};
@@ -403,10 +387,8 @@ struct PreparedInjectedWalker {
   std::vector<double> attachmentDepth;
 };
 
-// The native mesh's world-space lift does not track the clone's fixed-size
-// SPR at every zoom. PROVISIONAL attachment from the selected directional
-// image: the red pack's top edge, mirrored with exactly the body placement.
-// Water/acid or replacement art without a red pack uses a body-relative anchor.
+// Provisional brick anchor follows the red pack's top edge in the selected
+// SPR image, mirrored with the body. Art without a red pack uses a body-relative anchor.
 std::array<double, 2> builderPackAnchor(const SpriteFrame& frame, const Image& sheet,
     const ActorSpritePlacement& p, bool mirrored, bool inverted) {
   double sumX = 0.0;
@@ -430,10 +412,9 @@ std::array<double, 2> builderPackAnchor(const SpriteFrame& frame, const Image& s
   return {std::lerp(p.left, p.right, u), std::lerp(p.top, p.bottom, v)};
 }
 
-// Rasterise the separate brick before the body so the builder's hands cover it.
-// Native 410C0E/410E78 builds a terrain-textured mesh, not a SPR attachment.
-// PROVISIONAL geometry/attachment: cuboid expanding at the pack, moving to the
-// exact clone cell footprint. No terrain/depth writes escape this scratch raster.
+// Rasterize the brick before the body so the hands cover it. Native
+// 410C0E/410E78 build a terrain-textured mesh. The provisional clone cuboid
+// grows at the pack and moves to the target cells in a scratch raster.
 void drawBuilderBrick(Image& image, ActorSpritePlacement& bounds,
     const ActorPoseLevel& level, const CameraBasis& camera,
     const SceneOptions::InjectedNativeWalker& w, const Texture& texture,
@@ -516,9 +497,8 @@ void clipBodyFootprint(Image& body, const ActorSpritePlacement& p,
     }
 }
 
-// Smaller physical view Z wins. Effects without a world-upright body retain
-// an origin-depth billboard; ordinary figures supply the same plane to drawing,
-// highlight via prepareInjectedWalker. This never writes scenery depth.
+// Smaller view Z wins. Upright body planes are shared by drawing and
+// highlight. Effects without a body plane use origin depth.
 bool clipActorToScene(Image& sprite, const ActorSpritePlacement& p,
                       std::span<const double> depth,
                       const ActorOcclusionPlane* plane = nullptr,
@@ -569,7 +549,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   if (!airbornePose && !options.composeSkipActorVisibility &&
       !actorSubmissionVisible(injected.plus8X, injected.plus8Z, injected.renderEnabled, bounds))
     return std::nullopt;
-  // actor-anim-001: the walker's own clip; the walk clip when the sheet lacks it.
+  // Fall back to "walk" when the sheet lacks the actor's clip.
   const Sprite* walkSprite = injected.clip != nullptr ? sprites.find(injected.clip) : nullptr;
   if (walkSprite == nullptr)
     walkSprite = sprites.find("walk");
@@ -595,18 +575,14 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   gfx::SpriteViewVector basisVec{pose.basis[0], pose.basis[1], pose.basis[2]};
   double phase = options.composeActorPhase + injected.rotationPhase;
   if (walkSprite->name == "dig") {
-    // PROVISIONAL reference: use the smooth cylinder tangent rather than the
-    // facing-dependent, faceted walking tangent. Native entry 4159B4 supplies
-    // phase 0.75; the shared chooser still selects the view from the camera.
+    // Provisional dig pose uses the smooth cylinder tangent. Native 4159B4
+    // sets phase 0.75. The shared view chooser uses the camera angle.
     const double radius = std::hypot(pose.modelPosition[0], pose.modelPosition[2]);
     if (radius > 0.0)
       basisVec = {-pose.modelPosition[2] / radius, 0.0, pose.modelPosition[0] / radius};
-    // Centre the installed front view's angular sector on the outward normal.
-    // The shared five-view chooser's front sector spans 33.75 degrees, ending
-    // at phase 0.75's normal; half that sector is 3/64 of a turn.
+    // Centre the front view on the outward normal. Half its 33.75 degree sector is 3/64 turn.
     phase += 3.0 / 64.0;
-    // Playtest 19 J6: left walkers head for the inner lane. Turn their dig pose
-    // toward the cylinder. Keep the original clone rectangle for screen picking.
+    // Face leftward diggers into the cylinder. Keep the body rectangle for picking.
     if (spriteTarget && injected.facing == static_cast<int>(sim::Facing::Left))
       phase += 0.5;
   }
@@ -681,8 +657,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
   prepared.inverted = injected.verticalDir < 0;
   prepared.tint = tint;
   prepared.worldPosition = worldPosition;
-  // Keep the explicit visibility diagnostic able to reveal rejected actors,
-  // including actors hidden by scene depth. Production never sets this flag.
+  // The visibility diagnostic bypasses both submission and scene-depth rejection.
   const bool sceneClip = !options.composeSkipActorVisibility && !options.composeSkipActorPose;
   if (spriteTarget && (sceneClip || brickTexture)) {
     auto& sprite = *spriteTarget;
@@ -694,8 +669,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
       // The attachment can expand the bounds beyond the body.
       std::fill(sprite.rgba.begin(), sprite.rgba.end(), 0);
     } else {
-      // Sampling, terrain clipping and composition all use this half-open
-      // rectangle in screen coordinates. Previous bodies outside it are dead.
+      // Share the half-open screen rectangle across sampling, clipping and composition.
       clearSpriteRect(sprite, spriteRect(sprite, *placement));
     }
     const ActorOcclusionPlane plane(camera, worldPosition);
@@ -704,8 +678,7 @@ std::optional<PreparedInjectedWalker> prepareInjectedWalker(
           *brickTexture, tint, builderPackAnchor(frame, prepared.sheet(), *placement,
                                                 selection.mirrored, prepared.inverted),
           prepared.attachmentDepth);
-    // Keep the carried mesh beneath the hands, with its own physical depth
-    // against other actors. The body's terrain footprint cannot erase it.
+    // The brick depth-tests independently of the hands and the body footprint.
     Image body;
     if (brickTexture) {
       body = sprite;
@@ -761,9 +734,8 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
   std::vector<std::size_t> order(options.injectedWalkers.size());
   std::iota(order.rbegin(), order.rend(), 0);
   if (physicalActors) {
-    // Upright body planes are parallel: sort their horizontal camera distance,
-    // not radius, column, height or creation order. Far-to-near also preserves
-    // the existing additive drowning blend over bodies behind it.
+    // Sort parallel upright body planes far to near in horizontal view depth.
+    // That order also blends additive drowning over bodies behind it.
     std::vector<double> distance(order.size());
     const auto& m = camera.worldToView;
     for (std::size_t i = 0; i < order.size(); ++i) {
@@ -788,9 +760,8 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
     if (!prepared)
       continue;
     if (it->drownFluidKind >= 0 && clipped) {
-      // READ 4043F3..404434 sets selector 2 (ONE/ONE) and equal RGB
-      // proportional to height above the fluid bottom. Preserve ordinary
-      // actor composition; flush its pending layer before this additive one.
+      // 4043F3..404434 selects ONE/ONE with neutral brightness proportional to
+      // height above the fluid bottom. Flush pending actor coverage before blending it.
       if (!physicalActors) {
         compositeActorOverlay(raster, overlay, options.overlayCompositeLegacyNonZero);
         std::fill(overlay.rgba.begin(), overlay.rgba.end(), 0);
@@ -824,10 +795,8 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
           &plane, options.pipeSceneDepth);
       add(bodyRect, 1.0, &plane, 0);
 
-      // READ: 404372 creates Bubbles FX once submerged by 5..10 units.
-      // PROVISIONAL deterministic presentation: two installed bubble sprites
-      // rise from the body; small early ones stand in for splash droplets.
-      // Original randomized emitter/lifetimes are not reconstructed.
+      // 404372 creates Bubbles FX at 5..10 units submerged. Provisional clone
+      // feedback uses two rising bubble sprites and smaller early splashes.
       if (it->drownFluidKind == 0) {
         const Sprite* bubbles = bubbleSprites_.find("bubbles");
         if (bubbles && !bubbles->animations.empty()) {
@@ -880,8 +849,7 @@ void TubeScene::drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
           if (!physicalActors) {
             std::copy_n(sprite.rgba.begin()+source, 4, overlay.rgba.begin()+targetPixel*4);
           } else if (raster.mutableActorDepth().submit(pixel,z,owner)) {
-            // Accepted body and brick texels replace RGB opaquely. Apply
-            // that store at its sorted slot, including before additive FX.
+            // Store accepted body and brick RGB opaquely at their sorted slot before later FX.
             std::copy_n(sprite.rgba.begin()+source, 3, raster.mutableFramebuffer().rgb.begin()+targetPixel*3);
           }
         }
@@ -972,9 +940,8 @@ void TubeScene::emitExplosionDecal(const sim::Lemming& lemming,
       }
     }
   }
-  // PROVISIONAL clone cap, in whole marks rather than the native shared
-  // 128-segment pool (441B17). One per explosion even during a full nuke;
-  // no asset reads or geometry construction in the frame pass.
+  // Provisional clone cap counts whole marks (one per explosion). Native
+  // 441B17 shares a 128-segment pool. Prepare geometry and textures before drawing.
   constexpr std::size_t maxDecals = 256;
   if (explosionDecals_.size() == maxDecals) explosionDecals_.erase(explosionDecals_.begin());
   explosionDecals_.push_back(decal);
@@ -1008,8 +975,8 @@ void TubeScene::drawExplosionDecals(Raster& raster, const CameraBasis& camera) c
           visible = false;
           break;
         }
-        // 43FA93 temporarily adds 4B15B8 to software bias. Its conversion
-        // to clone view-depth units is provisional; separate coplanar skin.
+        // 43FA93 temporarily adds 4B15B8 to software bias. Provisional clone
+        // conversion separates the mark from the coplanar skin.
         v[i] = {p[0], p[1], p[2] - 0.0012, p[3], {fade, fade, fade, 255},
                 patch.uv[i][0], patch.uv[i][1]};
       }
@@ -1073,12 +1040,10 @@ void TubeScene::emitTerrainDebris(const sim::Lemming& lemming,
   deathClockMs_ = clockMs;
   const int gravityDir = lemming.verticalDir < 0 ? -1 : 1;
   const int facing = static_cast<int>(lemming.facing);
-  // READ: bash 40C1C5 (subpasses 0/3), mine 418B69 (rows -1/+1),
-  // dig 415BE8 all construct 40C960. Correction to bash-particles-001:
-  // 40DBF0 selects velocity callback 4, not count; 40C9B5 configures 12 slots.
-  // PROVISIONAL: retain four chunks per actually removed hybrid cell,
-  // thrown back from the work face (Digger fans both ways). Deterministic
-  // gravity-only arcs use no simulation RNG or collision.
+  // Bash 40C1C5 (passes 0/3), mine 418B69 (rows -1/+1) and dig 415BE8
+  // construct 40C960. 40DBF0 selects velocity mode 4; 40C9B5 sets 12 slots.
+  // Provisional clone arcs use four chunks per removed cell and local
+  // deterministic gravity. Digger debris fans both ways.
   for (const auto& cell : removedCells) {
     constexpr std::size_t maxParticles = 4096;
     if (deathParticles_.size() > maxParticles - 4)
@@ -1118,11 +1083,9 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
     deathSpritesLoaded_ = true;
     if (auto bits = loadSpriteSheet(lib, "SPRITES\\BITS.SPR")) deathSprites_ = std::move(*bits);
   }
-  // READ: 408227 creates six actor pieces; 40B3EC does the same on splat.
-  // 401C50 selects Bits clips 0,1,2,2,3,3 for normal lemmings.
-  // PROVISIONAL physics throughout: deterministic terrain-coordinate ballistics,
-  // gravity 32 units/s^2, no collision/bounce, finite 0.55..1.6 second life.
-  // No World RNG, state, counters, timers or terrain are written here.
+  // 408227 and 40B3EC create six pieces. 401C50 selects Bits clips
+  // 0,1,2,2,3,3 for normal lemmings. Provisional clone ballistics use
+  // 32 terrain units/s^2, no collision, 0.55..1.6 s life and local RNG.
   auto origin = terrainSampleFromLemming(lemming, terrainHeight,
                                          lemming.verticalDir < 0 ? 0.55 : 0.75);
   const int gravityDir = lemming.verticalDir < 0 ? -1 : 1;
@@ -1152,8 +1115,7 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
     deathParticles_.push_back(p);
     return deathParticles_.back();
   };
-  // Bound presentation memory under repeated Nuke/retry stress. At capacity
-  // evict oldest particles only; every new death still gets its complete burst.
+  // Evict the oldest particles at capacity so each new death keeps its full burst.
   constexpr std::size_t maxParticles = 4096;
   if (deathParticles_.size() > maxParticles - 160)
     deathParticles_.erase(deathParticles_.begin(), deathParticles_.begin() +
@@ -1199,8 +1161,8 @@ void TubeScene::emitDeathParticles(const sim::Lemming& lemming, bool explosion,
     }
   };
   bool emitted = false;
-  // READ 43F510: emit at eligible 4x4-aligned sites. Four fragments per
-  // removed cell is the existing clone density; 40DBF0's 4 is a mode.
+  // 43F510 emits at eligible 4x4 sites. The clone uses four fragments
+  // per removed cell. At 40DBF0, 4 selects the velocity mode.
   for (const auto& cell : removedCells)
     if ((cell[0] & 3) == 0 && ((terrainHeight - 1 - cell[1]) & 3) == 0) {
       debris(cell);
@@ -1244,9 +1206,8 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
         // PROVISIONAL: use stored strip rate when positive, otherwise 12 fps.
         const double rate = clip.rate > 0 && std::isfinite(clip.rate) ? clip.rate : 12.0;
         const double seconds = (deathClockMs_ - p.bornMs) / 1000.0;
-        // Axe uses the recovered 60 ms controller strip clock (419780 ->
-        // 496C84). Phase/spin-axis adaptation is provisional; debris retains
-        // its accepted rate policy. Both use the existing level clock.
+        // Axe uses the 60 ms strip clock (419780 -> 496C84) with provisional
+        // phase and spin axis. Both effects advance on level time.
         const auto index = std::size_t(seconds * rate / (p.minerAxe ? .06 : 1.0)) %
             clip.animations.size();
         const auto& entry = clip.animations[index];
@@ -1266,9 +1227,8 @@ void TubeScene::drawDeathParticles(Raster& raster, const CameraBasis& camera,
           if (texture && box) {
             *box = actorSpriteGravityPlacement(*box, p.verticalDir);
             if (p.minerAxe && (frame.uRight > 1.0 || frame.uBottom > 1.0)) {
-              // 16/40 installed AXE.SPR directional records retain pixel UVs;
-              // the other 24 are normalized. Convert only those raw records
-              // using the decoded atlas, not a 31..56-as-0..1 clamped edge.
+              // Convert the 16 pixel-UV records in AXE.SPR using atlas dimensions.
+              // The other 24 records are normalized.
               frame.uLeft = double(frame.left) / texture->width;
               frame.uRight = double(frame.right) / texture->width;
               frame.uTop = double(frame.top) / texture->height;
@@ -1567,10 +1527,7 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
 
   const auto drawWall = [&](bool outer) {
     for (int band = 0; band < bands; ++band) {
-      // Vertical tile row, with the A2 flip: the source-derived row is
-      // (bands-1-band)/bandsPerRow, which reverses the tile rows against the
-      // band order. Within a row the two bands split the tile's V in half,
-      // reversed the same way so the art stays continuous up the tube.
+      // Reverse tile rows relative to band order. Each band uses half the tile's V span.
       const int row = options.tileRowsFlipped ? (bands - 1 - band) / bandsPerRow
                                               : band / bandsPerRow;
       const int withinRow = options.tileRowsFlipped ? (bands - 1 - band) % bandsPerRow
@@ -1578,10 +1535,8 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
       for (int step = 0; step < steps; ++step) {
         const int column = step / stepsPerCol;
         if (!options.fullWall && haveCollision_) {
-          // File-side presence rule measured in the round note: a runtime
-          // outer-wall cell is drawn exactly when at least one collision cell
-          // of its (step,band) box is solid. The collision grid is 256 x 96,
-          // so one angular step is 8 columns and one ring band is 16 rows.
+          // The solid-only wall needs at least one solid collision cell in the
+          // corresponding 8-column by 16-row block of the 256 x 96 grid.
           const int columnsPerStep = CollisionGrid::kWidth / steps;
           const int rowsPerBand = collision_.height > 0 ? collision_.height / bands : 0;
           bool solid = false;
@@ -1678,22 +1633,16 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
     maybeCompose();
 
   if (options.drawCellRoute && cellMesh_.buckets > 0 && cellMesh_.bands > 0) {
-    // The original's tube submission, `0x43A4EC`. Everything here is a port of
-    // that walker and its four callees; see the round note for the addresses.
-    //
-    // The pass bounds. `0x43A4EC` composes the camera's own turn fraction into
-    // a bucket centre (`0x43c990 -> fsub 0.5, fmul 32.0`), then brackets it by
-    // the stored extent and 0.7 of it, chopping each bound toward zero with the
-    // engine's float-to-int helper `0x49C5AC`, then shifting the whole set into
-    // [0, 32] in 32s.
+    // 0x43A4EC centres the bucket range from the camera turn fraction
+    // (`0x43c990 -> fsub 0.5, fmul 32.0`). Bracket it by the extent and
+    // 0.7 of the extent, truncate with 0x49C5AC, then shift together by 32s.
     const auto [centre, a, b, mid, c, d] = tubePassBounds(camera.selectorTurns, cylinderExtent_);
     // `0x462465` compares each quad's child coordinate against the centre
     // bucket in eighths, i.e. the camera's own collision column.
     const double centreColumn = centre * 8.0;
 
-    // The bank texture: A2's addressing (`0x460A2D`, `0x43AB3A`). The material
-    // index is the cell's stored descriptor; +24 selects the inner bank, and
-    // the tile position is (material % 8, material / 8) within that bank.
+    // 0x460A2D and 0x43AB3A use the cell descriptor as material.
+    // Material +24 selects the inner bank. Tile coordinates are (material % 8, material / 8).
     const auto tileFor = [&](std::uint32_t materialIndex) -> const Tile* {
       const std::uint32_t tile = materialIndex % 24;
       const bool outer = (materialIndex < 24) != options.routeTexBankSwap;
@@ -1812,18 +1761,11 @@ void TubeScene::render(Raster& raster, const CameraBasis& camera,
     maybeCompose();
 }
 
-// terrain-render-001. METHOD, with its evidence level:
-//   READ (0x43A31D, 0x43D2B8, static): a vertex the key table lacks is created on demand and
-//     filled by bilinear interpolation of the cylinder template (`cylinderTemplateVertex`).
-//   READ (docs: kCellFlag0x400, CollisionGrid.h): the original already rebuilds the per-cell
-//     mesh after a runtime collision change, by re-running the 0x4615E9 scan for the blocks
-//     concerned; gates and doors do it. This function does the same for skill edits.
-//   PROVISIONAL (not read in the binary): that the original's Basher/Miner/Digger/Bomber/
-//     Builder cell writers (FUN_0043f510 is the cell-clear function; its mesh hand-off was not
-//     traced) queue a rebuild of exactly the touched blocks padded by one cell, that a Builder
-//     brick is drawn with its block's tile material, and the frame on which the original
-//     redraws. What would settle it: an original capture of a bomber crater and a builder
-//     staircase compared with the clone frame (not run here).
+// Missing keys use bilinear cylinder vertices (0x43A31D, 0x43D2B8).
+// The native per-block scan (0x4615E9) tests kCellFlag0x400, the gate and door stamp bit.
+// FUN_0043f510 clears cells; its mesh handoff is unresolved.
+// Provisional clone skill edits rebuild touched blocks with a one-cell
+// margin at sync time. Builder cells use the block material.
 void TubeScene::syncTerrain(const sim::Terrain& terrain, std::span<const sim::CounterGate> gates) {
   if (terrainFailed_ || !haveCollision_ || cellMesh_.cells.empty() || poseGrid0_.empty() ||
       terrain.empty() || terrain.width() != collision_.width ||
@@ -1876,8 +1818,7 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain, std::span<const sim::Co
 
   if (editKeys_.empty())
     editKeys_ = poseGrid0_;
-  // Every key a rebuilt block can ask for: its own corners (x0..x0+8, y0..y0+16) with a
-  // margin for the neighbour reads. Keys the stored table holds are left alone.
+  // Supply corner keys (x0..x0+8, y0..y0+16) plus a margin for neighbour reads.
   for (const auto& [bucket, band] : dirty) {
     const int x0 = bucket * kColumnsPerBlock;
     const int y0 = band * kRowsPerBlock;
@@ -1887,9 +1828,7 @@ void TubeScene::syncTerrain(const sim::Terrain& terrain, std::span<const sim::Co
           const std::size_t key = static_cast<std::size_t>(layer) + (x + y * 0x101) * 2;
           if (key >= editKeys_.size() || editKeys_[key] != 0xFFFFFFFFu)
             continue;
-          // 43D2B8 clamps with coordinate height world+28 (112, 43D2F9/43D334),
-          // not the collision height (96), which collapsed new rows 80..96 onto
-          // row 80: flat builder bricks near the top (playtest 14).
+          // 43D2B8 clamps with coordinate height world+28 (112, 43D2F9/43D334).
           const auto v = cylinderTemplateVertex(mesh_, x, y, layer, static_cast<int>(mesh_.faceCount));
           if (!v)
             continue;
@@ -1999,7 +1938,6 @@ std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers
 
 std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim) {
-  // Keep the pre-P7 signature for frozen source demonstrations/headers too.
   return injectedWalkersFromWorld(world, terrainHeight, anim, nullptr);
 }
 
@@ -2025,14 +1963,13 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
       const auto drawn = motion->positionOf(i, world);
       walker.plus8X = drawn.x;
       walker.plus8Y = terrainHeight - 1.0 - drawn.y;
-      // Q1: same radial lane sample for actor placement, occlusion and picking.
+      // Reuse the displayed radial lane for placement, occlusion and picking.
       walker.plus8Z = drawn.z;
     }
     walker.facing = static_cast<int>(lemming.facing);
     walker.verticalDir = lemming.verticalDir;
     walker.sheetType = lemming.sheetType;
-    // Without a tracker every state draws walk entry 0 (the D3b behaviour); with one, the
-    // lemming's own clip and temporal entry (actor-anim-001).
+    // Use the tracked clip and entry, or walk entry 0 without a tracker.
     if (anim != nullptr) {
       const LemmingAnimPose pose = anim->poseOf(i);
       walker.clip = pose.clip;
@@ -2051,7 +1988,7 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
         walker.builderX = lemming.x;
         walker.builderY = terrainHeight - 1 - lemming.y;
         walker.builderLength = world.rules().brickLength;
-        // Both hands and brick use this phase. Other clips retain their existing clock.
+        // Sample the hands and brick at the same phase.
         walker.walkTemporalIndex = std::clamp(int(walker.builderPhase * 16.0), 0, 15);
       }
       if (lemming.state == sim::State::Drown && pose.drownSeconds >= 0.0) {
@@ -2066,10 +2003,9 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
           if (dx >= span || row < g.minY || row > g.minY + g.height) continue;
           walker.drownFluidKind = g.kind;
           walker.drownSurfaceY = g.minY + g.height;
-          // READ 404655..404675: Y -= verticalDir * 20 * dt / 2.
-          // Presentation only: World position, death timer and counters stay
-          // unchanged. PROVISIONAL clamp at the receiver bottom; the original
-          // removes type 0x23 there, while the clone's existing timer owns death.
+          // 404655..404675 uses Y -= verticalDir * 20 * dt / 2.
+          // Provisional clone pose clamps at the receiver bottom. The original
+          // removes type 0x23 there; World still owns the clone's death timing.
           walker.plus8Y = std::clamp(row - lemming.verticalDir * 10.0 * pose.drownSeconds,
               g.minY, g.minY + g.height);
           walker.drownBrightness = std::clamp((walker.plus8Y - g.minY) /
@@ -2080,8 +2016,7 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     }
     out.push_back(walker);
   }
-  // Exit tails are render-only and follow the live prefix. Keep the established
-  // alive-lemming -> screen-box indices used by hovering, skills and observers.
+  // Append noninteractive exit tails after live actors to preserve pick indices.
   if (motion) for (std::size_t i = 0; i < lemmings.size(); ++i) {
     const double t = motion->exitSeconds(i, world);
     if (t < 0.0) continue;
@@ -2099,8 +2034,7 @@ std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     if (anim) jumper.walkTemporalIndex = anim->poseOf(i).temporalIndex;
     out.push_back(jumper);
   }
-  // Append outside the live rescue prefix and exit tails: rats draw through
-  // the identical sprite/lighting/occlusion/zoom path but cannot be skill picks.
+  // Rats share actor rendering and stay outside the pickable prefix.
   constexpr const char* punches[]{"punch0", "punch1", "punch2", "punch3"};
   const auto& rats = world.rats();
   for (std::size_t i = 0; i < rats.size(); ++i) {

@@ -9,9 +9,7 @@ namespace webo::app {
 //   state = state * 0x343FD + 0x269EC3;  return (int32(state) >> 16) & 0x7FFF;
 // 0x004040A0 scales it as rand() / 32767.0 (constant at 0x004B03B0), and 0x00447580 seeds it as
 // srand(ftol(ms * 32767.0)) with ftol = truncating fistp, low 32 bits (0x0049C5AC).
-// The default state (1) exists so unit tests can construct an object; production seeds the
-// process generator from its own millisecond clock (see main.cpp). Source-built support only:
-// the original seed is wall-clock derived and not reproducible.
+// The default seed is 1. The application seeds the process generator from milliseconds.
 class CrtRand {
  public:
   CrtRand() = default;

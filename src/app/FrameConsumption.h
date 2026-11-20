@@ -9,11 +9,8 @@
 namespace webo::app {
 struct LevelFrameView;
 
-// Explicit owned-process automation option. Ordinary application entry never
-// creates this scope. Only observers that consume simulation/presentation state
-// and selected images may opt in; per-frame depth/hover/actor consumers must not.
-// Uninspected views have an empty image and no raster-derived fields. Call
-// inspectLevelFrame() within the observer before reading those fields or pixels.
+// Automation opts in to deferred frame inspection. In the callback, call
+// inspectLevelFrame() before reading pixels or raster-derived fields.
 class ScopedFrameConsumption {
  public:
   explicit ScopedFrameConsumption(bool skipUnconsumed = true)
@@ -30,14 +27,12 @@ class ScopedFrameConsumption {
 };
 
 namespace detail {
-// Actual branch-1 sprite color stores for scoped image comparisons. This mask
-// is diagnostic only; it never changes pixels, depth, RNG or the seeding clock.
+// Observe branch-1 sprite color stores without affecting drawing or RNG.
 inline std::vector<std::uint8_t>& frameSpriteCoverage() {
   static thread_local std::vector<std::uint8_t> coverage;
   return coverage;
 }
-// Callback lifetime is precisely the synchronous level observer invocation.
-// Nesting restores the caller's request, including on an exception.
+// Valid during the synchronous level callback. Nested scopes restore the outer request.
 inline thread_local const std::function<void()>* pendingFrameInspection = nullptr;
 class PendingFrameInspection {
  public:

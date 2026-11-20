@@ -11,10 +11,9 @@
 
 namespace webo::app {
 
-// READ45C9AB/45CE7C/45E0E0, docs/scratch/level-entry-start-cue.md.
-// vertexAlpha records the negative-phase request; nonnegative255 describes
-// fresh glyph allocation only (native pooled glyphs may retain old alpha).
-// The ordinary ^Font material selects texture alpha, so this is not opacity.
+// At 45C9AB/45CE7C/45E0E0, vertexAlpha records the negative-phase request.
+// Fresh glyphs use 255 in the nonnegative phase. Pooled glyphs can retain alpha.
+// The ordinary ^Font material uses texture alpha.
 struct EntryCueFrame {
   std::array<int, 4> rect{};  // left, top, right, bottom
   bool additive = false;
@@ -37,15 +36,12 @@ class EntryStartCue {
   bool active_ = true;
 };
 
-// Useful independently for checking the native proportional cumulative fit.
-// Unsupported/non-ASCII characters and zero-width cells are omitted.
+// The fit skips unsupported characters and zero-width cells.
 std::vector<std::array<int, 4>> entryCueGlyphRects(std::string_view text, const EntryCueFrame& cue,
                                                     std::span<const shell::GlyphCell> cells = shell::fontCells());
 
-// A bounded software approximation: POINT-sampled texture pixels, source
-// alpha for source-over/additive blending, and no filled background. Native
-// sampler state depends on renderer+3A1 and is not established by static
-// evidence; this routine does not reproduce that conditional state.
+// Software approximation with POINT sampling and texture-alpha blending.
+// The native sampler depends on renderer+3A1. Its active state is unresolved.
 void drawEntryStartCue(webo::Image& target, const webo::Image& font, std::string_view text,
                        const EntryCueFrame& cue,
                        std::span<const shell::GlyphCell> cells = shell::fontCells());

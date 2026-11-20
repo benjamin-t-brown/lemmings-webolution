@@ -1,24 +1,11 @@
-// actor-anim-001 (playtest P4-P6): per-lemming animation for the level view.
-//
-// Every live lemming used to be drawn as the first temporal entry of the "walk" clip. This
-// module gives each simulated lemming its own clip, chosen from its sim::State, and its own
-// clock, advanced with level time through the recovered controller clock (ActorAnim.h,
-// 0x00468833: 0.06 s per temporal entry, scaled by the clip's rate).
-//
-// Evidence, kept apart:
-//   * Clip names and order in SPRITES\LEMMINGSHI.SPR: READ (docs/scratch/phase-c1p-spr-sheet-read.md):
-//     bash, block, build, climb, dig, drown, explode, fall, flip, mine, shrug, float, umbopen,
-//     walk, cartwheel. The live controller indices match: walk 13 (test_actoranim), bash 0,
-//     build 2, dig 4, flip 8 (hoist), mine 9, shrug 10, umbopen 12 (docs/lessons/data-and-simulation.md).
-//   * Clip lengths and rates are read from the sheet at run time, never hard-coded.
-//   * State -> clip is evidenced for walker, climber, hoister (flip), builder, shrugger, basher,
-//     miner, digger, drowning (the state's enter sets "drown", World.h Drown) and the teleport pad
-//     ("cartwheel", World.h Teleporting). Retained actor_falling/climbing/topping/drowning/
-//     bouncing/flapper evidence also establishes those names and the umbopen -> float sequence.
-//     Blocker and splatter are PROVISIONAL mappings; the frame-end state adapter and umbrella
-//     handover are provisional, rather than original within-frame model callbacks.
-//   * Looping versus holding the last entry per clip is PROVISIONAL (lemmingClipLoops).
-// Presentation only: nothing here feeds back into the simulation.
+// Select a SPRITES\LEMMINGSHI.SPR clip per state and advance each actor on
+// level time. At 0x00468833 each entry consumes 0.06 s of rate-scaled
+// time. Lengths and rates come from the sheet.
+// Strip order: bash, block, build, climb, dig, drown, explode, fall, flip,
+// mine, shrug, float, umbopen, walk, cartwheel.
+// Provisional clone policies select Blocker/Splatter clips, looping, and
+// frame-end transitions. Native actor_falling defines the umbopen-to-float
+// transition. Animation state stays local to presentation.
 #pragma once
 
 #include "app/ActorAnim.h"
@@ -49,11 +36,9 @@ struct LemmingAnimPose {
 
 class LemmingAnimTracker {
  public:
-  // Advance live lemmings and saved exit tails by `elapsedSeconds` of level time.
-  // At 0 (paused) clocks hold, but a state change still restarts the new clip at entry 0.
-  // A lemming whose state changed since the last call starts its new clip from temporal 0.
-  // Floating plays "umbopen" once, then "float" (the open animation finishes first; World.h
-  // floatOpenMs). Index i is World::lemmings()[i].
+  // Advance live actors and saved exit tails in level seconds. At zero dt,
+  // the clock holds but a new state starts at entry 0. Floating plays
+  // "umbopen" before "float". Indices match World::lemmings().
   void advance(const sim::World& world, const SpriteSheet& sprites, double elapsedSeconds);
   void advance(const sim::World& world, const std::array<const SpriteSheet*, 3>& sprites,
                double elapsedSeconds);
@@ -72,14 +57,11 @@ class LemmingAnimTracker {
   std::vector<Entry> entries_;
 };
 
-// The decimal bomber countdown for a lit fuse: whole seconds remaining, rounded up, so the
-// 5 s fuse reads 5, 4, 3, 2, 1. 0 for a lemming with no lit fuse (fuseMs <= 0).
+// Lit fuses show whole seconds rounded up. An unlit fuse returns zero.
 int bomberCountdownDigit(const sim::Lemming& lemming);
 
-// Draw the countdown above every live lemming with a lit fuse, using the ^Font sheet and
-// glyph table the HUD uses (shell::drawHud). `actors` gives each lemming's on-screen box.
-// PROVISIONAL presentation: text above the sprite, at the actor billboard depth.
-// An optional physical scene depth masks each glyph pixel (smaller is nearer).
+// Provisional countdown draws ^Font glyphs above the sprite. Optional
+// scene depth masks glyph pixels against the actor billboard plane.
 void drawBomberCountdowns(Image& frame, const Image& font, const sim::World& world,
                           std::span<const LevelActorView> actors);
 void drawBomberCountdowns(Image& frame, const Image& font, const sim::World& world,

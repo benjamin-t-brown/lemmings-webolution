@@ -39,12 +39,10 @@ int main(int argc, char** argv) {
     return 1;
   }
   for (int i = 0; i < returnPresses; ++i) session->pressReturn();
-  // Explicit composition fixture matching a sampled native held state, not a
-  // substitute for the SDL input regression or proof of physical input binding.
+  // Compose the held-input screen directly.
   if (screen == "map-held-fixture") session->setButtons(false, true);
   if (screen == "win-fixture" || screen == "loss-fixture" || screen == "completed-map-fixture") {
-    // Explicit offline composition fixture, not a simulated solution or native
-    // capture. Exercise the production result/map renderer with known values.
+    // Draw the result and map screens with supplied values.
     if (!session->clickMap(206, 204) || session->selectedLevel() != "MM_CLIMB_002") {
       std::cerr << "cannot select fixture level\n"; return 1;
     }

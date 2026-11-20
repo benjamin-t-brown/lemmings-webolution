@@ -1,17 +1,5 @@
-// Where a cylinder skin tile sits, parsed out of its own name.
-//
-// A level names 48 skin tiles: 8 columns around the tube by 3 rows up it, for
-// each of the inner and outer surfaces. The name carries its own position --
-// "Cylinder\MM_CLIMB_002\OUT_MM_CLIMB_002_3_1" is the outer surface, column 3,
-// row 1 -- so this parses the name rather than trusting the slot index. The
-// slot layout is regular (stride 2 within a block) but the name is
-// self-describing and cannot drift out of step with the data.
-//
-// Header-only so it can be tested without a GL context. That is not fussiness:
-// the first version of this function computed the indices and forgot to write
-// them to its out-parameters, so every tile came back as column 0, row 0 and
-// the level stacked itself in one corner. This was retired with the flat
-// renderer (old/src/gfx/CylinderSkin.h); A4 restores it as production code.
+// Parse the tile's surface, column and row from its name. Each surface has 8 columns and 3 rows.
+// "Cylinder\MM_CLIMB_002\OUT_MM_CLIMB_002_3_1" is outer column 3, row 1.
 
 #pragma once
 
@@ -46,13 +34,12 @@ inline TilePosition parseTilePosition(std::string_view tileName) {
   if (tileName.empty())
     return pos;
 
-  // Keep only the last path component: the folder names repeat the level id
-  // and would otherwise confuse the underscore split.
+  // Ignore directories because the level ID can appear in their names too.
   const auto slash = tileName.find_last_of("\\/");
   const std::string_view leaf =
       slash == std::string_view::npos ? tileName : tileName.substr(slash + 1);
 
-  // The leading "INN_" or "OUT_" says which surface.
+  // "INN_" and "OUT_" select the surface.
   if (leaf.starts_with("OUT_"))
     pos.outer = true;
   else if (leaf.starts_with("INN_"))

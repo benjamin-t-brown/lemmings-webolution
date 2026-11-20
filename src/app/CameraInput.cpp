@@ -92,8 +92,7 @@ void CameraController::update(const CameraInput& in, double dt) {
     cursorX_ = clamp(cursorX_, 0.0, static_cast<double>(camera_.width - 1));
     cursorY_ = clamp(cursorY_, 0.0, static_cast<double>(camera_.height - 1));
   }
-  // Keep the target's history. Clamping a cumulative display-height delta
-  // only when clicked loses information after saturation and reversal.
+  // Keep the pick reference bounded each update so reversal responds immediately.
   pickReference_[1] = clamp(pickReference_[1], 0.0, levelRows_); // 45458F..45462E
   camera_.yawUnits = wrapYaw(camera_.yawUnits);
 }

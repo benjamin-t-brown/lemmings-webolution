@@ -43,9 +43,8 @@ std::optional<Vec3> vertexAt(const ActorPoseLevel& level, int x, int y, int laye
   return level.surface[index];
 }
 
-// Native `0x0043D2B8`: bilinear on the cylinder template band at `world+0x18`
-// for integer grid `(x,y)` and shell layer `param_4`. Offline we read the
-// retail constant `CylinderMesh::vertices` (byte-identical template).
+// Native `0x0043D2B8` interpolates `world+0x18` for grid (x,y) and shell `param_4`.
+// `CylinderMesh::vertices` supplies the constant retail template.
 std::optional<Vec3> interpolateCylinderTemplateD2B8(const CylinderMesh& cylinder, int gridX,
                                                     int gridY, int layer, int gridHeight) {
   const int bucketX = sarBucketX(static_cast<double>(gridX));
@@ -202,15 +201,13 @@ ActorPoseResult actorPoseFromCylinderSample(const ActorPoseLevel& level,
   if (!level.cylinderTemplate || level.gridHeight < 16 ||
       level.cylinderTemplate->vertices.size() < static_cast<std::size_t>(level.gridHeight/16)*64)
     return actorPoseFromNativeSample(level, plus8, facing);
-  // READ 0x43D56C: all four corners come from world+0x18 via 0x43E580 /
-  // 0x43EA20. The surface-index pool is terrain, not an actor anchor.
+  // `0x43D56C` reads all four actor-anchor corners from world+0x18 via 0x43E580 / 0x43EA20.
   const auto position = [&](ActorTerrainSample p) {
     const int bx = sarBucketX(p.x), by = sarBucketY(p.y, level.gridHeight);
     const int nextY = std::min(by + 1, level.gridHeight / 16 - 1);
     const auto radial = [&](int x, int y) {
-      // 0x43D09A reads alternating inner/outer triples into separate runtime
-      // layers (+0 / +0x300). CylinderMesh preserves FILE interleaving, so
-      // vertex() is the corresponding accessor (0x43E580 / 0x43EA20).
+      // `0x43D09A` separates interleaved file triples into layers (+0 / +0x300).
+      // `vertex()` reads them from file order, corresponding to 0x43E580 / 0x43EA20.
       const auto v = [&](int shell) { return toArray(level.cylinderTemplate->vertex(
           static_cast<std::uint32_t>(std::max(0,y)),static_cast<std::uint32_t>(x & 31),shell==1)); };
       return vecLerp(v(0),v(1),p.z);

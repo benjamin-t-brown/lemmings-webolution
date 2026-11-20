@@ -13,8 +13,7 @@
 namespace webo::audio {
 namespace {
 
-// The one cue table. Every routed entry carries the retained static read that
-// justifies it (exe SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f).
+// Retail cue table for exe SHA-256 32675bdb49866e76502713251fdfd2b09078c2481c72ca22ff68ebf4b3737a2f.
 // Cue strings are packed at 0x004C0C7C (docs/lessons/hud-and-panel.md).
 constexpr CueRoute kRoutes[] = {
     {sim::SoundCue::Assign, "Action",
@@ -30,8 +29,7 @@ constexpr CueRoute kRoutes[] = {
      "docs/scratch/work-sounds-001.md: 0x0045E570..0x0045E582 registers Explode "
      "as 0x004E32C0; helper 0x004081FC loads it at 0x00408205 and plays at "
      "0x0040821C; provisional clone trigger is the existing completed blast cue"},
-    // The sim names this moment Splat, but the retail `Splat` cue (DAT_004E32D4)
-    // has zero play references. The fall death plays FallSplat.
+    // Fall deaths play FallSplat. The retail Splat cue (DAT_004E32D4) has no play references.
     {sim::SoundCue::Splat, "FallSplat",
      "old/docs/scratch/phase3-round28-die.md: FallSplat (DAT_004E32E0) is played "
      "once, at 0x0040B4B6 inside splat enter FUN_0040b3ec (type 0x1a) after a "
@@ -116,12 +114,8 @@ void CuePlayback::play(sim::SoundCue cue, StereoGains gains) {
   const auto name = routedCueName(cue);
   if (!name)
     return;
-  // Provisional overlap: exit cheers average; assignment clips finish before
-  // another can start. Each successful work stroke and warning starts afresh,
-  // replacing the previous tail rather than dropping fast-forward/worker hits.
-  // Explode also restarts: at most one explosion voice, with a fresh attack
-  // for each blast and no summed explosion tails in a nuke.
-  // None queues requests during fast-forward/group arrivals.
+  // Provisional overlap: average exit cheers and suppress overlapping assignment clips.
+  // Restart work, warning and Explode clips on each event. Requests are never queued.
   const auto overlap = cue == sim::SoundCue::Exit ? Mixer::Overlap::Average :
       cue == sim::SoundCue::Assign ? Mixer::Overlap::SkipPlaying :
       (cue == sim::SoundCue::Work || cue == sim::SoundCue::BuilderWarning ||
@@ -147,9 +141,8 @@ void CuePlayback::playFrontendMusic() {
 
 void CuePlayback::playLevelMusic() {
   if (disabled_ || !mixer_.ready()) return;
-  // Native 0x498E13..29 uses trunc(rand()/32767 * 12 + 1) as a
-  // zero-based table index. Use an independent, bounded uniform draw here;
-  // do not reproduce its rare out-of-table endpoint or consume world RNG.
+  // Native 0x498E13..29 indexes the table with trunc(rand()/32767 * 12 + 1).
+  // The clone uses a bounded uniform draw independent of the world RNG.
   static std::mt19937 random(static_cast<std::mt19937::result_type>(
       std::chrono::steady_clock::now().time_since_epoch().count()));
   const int track = std::uniform_int_distribution<int>(2, 13)(random);
@@ -159,14 +152,13 @@ void CuePlayback::playLevelMusic() {
 void CuePlayback::playMusic(std::string_view name, bool restart) {
   if (disabled_ || !mixer_.ready() || !library_) return;
   if (!restart && currentMusic_ == name) return;
-  // Loading/resampling is outside the callback lock, between scenes, never
-  // in a sim update. Cache successes and failures across every app leg.
+  // Cache load and resample results, including failures, between scenes outside the callback lock.
   if (attemptedMusic_.insert(std::string(name)).second) {
     if (auto loaded = mixer_.loadMusicFrom(*library_, name); !loaded)
       report(std::format("audio: music {} unavailable ({}); it will be silent", name,
                          loaded.error()));
   }
-  mixer_.playMusic(name); // replaces only music, preserving every SFX tail
+  mixer_.playMusic(name); // Preserve active SFX tails.
   currentMusic_ = name;
 }
 

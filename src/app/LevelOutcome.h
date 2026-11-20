@@ -4,8 +4,7 @@
 
 namespace webo::app {
 
-// Immutable end-of-run values carried across SDL window teardown. The outcome
-// belongs to one selected level; it is not a native save-file representation.
+// Immutable outcome for one level, carried across SDL teardown.
 struct LevelOutcome {
   std::string level;
   int saved = 0;

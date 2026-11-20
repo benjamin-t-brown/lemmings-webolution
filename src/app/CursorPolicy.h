@@ -13,9 +13,7 @@ enum class CursorState : int {
     Exit = 8, Entrance = 9, MouseDown = 10
 };
 
-// Results of the native hit-test/filter stage, NOT a replacement for picking.
-// In particular exitMarker1898 is a retained input, not inferred from a name
-// or simply from an object hit. Its writer is outside the recovered decision.
+// Native hit/filter results. Supply exitMarker1898 independently of object hits.
 struct CursorHits {
     bool lemming16d8;
     bool object1890;
@@ -38,13 +36,11 @@ struct CursorPolicyInput {
     int panelAvailability; // [0x4c91d8 + index*4], ignored for -1
 };
 
-// READ, not live-validated. Includes grab's early return and the later panel
-// override. Picking/geometry, cursor motion, and side effects stay with caller.
+// Grab can return before the panel override. The caller handles picking,
+// pointer movement and side effects.
 CursorState selectCursorState(const CursorPolicyInput& input);
 
-// Software route only (byte [0x58cdad] == 0). The alternate native OS-cursor
-// route uses different handles; this does not claim to implement that backend.
-// Preserves native fallback: all unknown state numbers bind _curLemRight.
+// Software route when [0x58cdad] == 0. Unknown states bind _curLemRight.
 std::string_view softwareCursorResource(CursorState state);
 
 } // namespace webo::app

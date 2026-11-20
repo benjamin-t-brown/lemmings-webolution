@@ -12,12 +12,8 @@
 
 namespace webo::app {
 
-// Playtest 9 Y9-Y11, PROVISIONAL clone presentation. Native SPR pixels retain
-// their screen placement; their scene-occlusion proxy is an upright plane
-// through the actual actor position, facing the camera in the horizontal plane.
-// Screen-aligned constant Z gives the feet the head's depth at pitched views.
-// A foreground allowance further exposes the figure through walls and floors.
-// Neither is needed here; no state/facing-dependent allowance or scenery depth writes.
+// Provisional clone occlusion. Test SPR pixels on an upright plane through
+// the actor, facing the camera in XZ. Plane depth varies from head to feet.
 class ActorOcclusionPlane {
  public:
   ActorOcclusionPlane(const CameraBasis& camera, const std::array<double, 3>& origin) {
@@ -30,12 +26,10 @@ class ActorOcclusionPlane {
     constant_ = nx * m[2] + nz * m[8] - dx_ * camera.cx - dy_ * camera.cy;
   }
 
-  // Supply the scene raster's pixel centre (x+0.5, y+0.5), not the sprite
-  // sampler's integer coordinates. Return physical view Z, smaller is nearer.
+  // Sample at the raster pixel centre (x+0.5, y+0.5). Smaller view Z is nearer.
   double depthAt(double screenX, double screenY) const {
     const double denominator = constant_ + dx_ * screenX + dy_ * screenY;
-    // Reject an invalid or behind-camera intersection. No fallback foreground
-    // plane: it would allow a near-vertical camera to reveal covered actors.
+    // Reject invalid or behind-camera intersections to keep covered actors hidden.
     return denominator > 0.0 && numerator_ > 0.0 ? numerator_ / denominator :
         std::numeric_limits<double>::infinity();
   }
@@ -53,12 +47,9 @@ class ActorOcclusionPlane {
   double numerator_, dx_, dy_, constant_;
 };
 
-// PROVISIONAL solid footprint of a body texel on the accepted upright plane.
-// Installed cylinders have 32 angular sectors, 8 collision columns per sector,
-// and horizontal rings. Invert the polygonal template, rather than treating
-// its chord as a circular arc. This excludes body pixels occupying a solid
-// collision cell even when the plane bulges in front of that cell's curved
-// drawn skin. Scenery Z alone cannot reject such pixels (playtest 10 Z1).
+// Provisional solid footprint on the upright actor plane. Invert the polygonal
+// cylinder template (32 sectors, 8 collision columns per sector) to reject
+// pixels in solid cells even when the plane bulges beyond the visible surface.
 inline bool actorTexelInsideTerrain(const CylinderMesh& mesh, const CollisionGrid& grid,
                                    const std::array<double, 3>& p) {
   if (mesh.angularSteps != 32 || mesh.ringCount < 2 || grid.width != 256 ||
@@ -91,8 +82,7 @@ inline bool actorTexelInsideTerrain(const CylinderMesh& mesh, const CollisionGri
   const double thickness2 = dx*dx + dz*dz;
   if (!(thickness2 > 0)) return false;
   const double layer = ((p[0]-ix)*dx + (p[2]-iz)*dz) / thickness2;
-  // Match CellMesh's solid/door topology; zone, blocker and fluid flags alone
-  // are not opaque terrain (CollisionGrid::solid is a broader legacy query).
+  // Match CellMesh opacity by testing solid and door flags.
   return layer >= 0 && layer <= 1 &&
       (grid.at((sector*8 + int(u*8)) & 255, int(p[1])) & (kCellSolid | kCellFlag0x400)) != 0;
 }

@@ -22,16 +22,11 @@
 
 namespace webo::app {
 
-// PROVISIONAL clone format, not an original-game replay format or fidelity claim. A step
-// is one admitted advanceElapsed call (including its fast-forward passes and
-// zero-ms updates), not World::tickCount(). That hybrid simulation depends on
-// the exact sequence of dt values, not merely total elapsed time. Store the
-// integer budget AFTER the wall-clock clamp/carry, and the presentation's hatch
-// gate; replay never supplies wall time or re-runs picking.
+// Provisional clone recording format. Store the integer dt after clamp and carry,
+// plus the hatch gate, for each admitted advanceElapsed call. Playback passes the
+// stored budget through fast-forward and zero-ms updates, without wall time or picking.
 inline const std::string& replayBuildIdentity() {
-  // A TU timestamp alone misses incremental builds which only rebuild World.
-  // Identify the actual running clone image once per process, outside play's
-  // frame loop. FNV-1a is a build label, not a security/compatibility check.
+  // Hash the clone executable once per process with FNV-1a for identification.
   static const std::string identity = [] {
     std::filesystem::path executable;
 #ifdef _WIN32
@@ -75,7 +70,7 @@ class ReplayRecorder {
     std::error_code ec;
     std::filesystem::create_directories(directory, ec);
     if (ec) return std::unexpected("cannot create replay directory: " + ec.message());
-    // Time plus a process-local serial also distinguishes retries in one clock tick.
+    // Time and a process-local serial distinguish recordings created in the same clock tick.
     static unsigned int serial = 0;
     const auto stamp = std::chrono::system_clock::now().time_since_epoch().count();
     ReplayRecorder recorder;
@@ -113,8 +108,7 @@ class ReplayRecorder {
     if (nuked_ != world.nukeRequested()) { nuked_ = world.nukeRequested(); append('n', {}); }
     if (rate_ != rate) {
       rate_ = rate;
-      // Version 1's spare third value now identifies the clicked hatch. Old
-      // panel recordings contain zero here, correctly selecting the primary.
+      // Version 1's third value is the hatch index. Zero selects the primary hatch.
       auto& row = append('r', {rate, world.setup().releaseIntervalTicks, static_cast<int>(rateHatch)});
       row.seconds = world.setup().releaseIntervalSeconds;
     }
@@ -129,8 +123,8 @@ class ReplayRecorder {
 
   std::expected<std::filesystem::path, std::string> finish(
       const sim::World& world, const RuntimeSimState& runtime, std::string_view reason) {
-    // Buffer compact records in memory during play. Only attempt boundaries do
-    // formatting or disk I/O; a crash leaves an explicitly incomplete .partial.
+    // Buffer records in memory during play. Write at recording boundaries.
+    // A crash can leave an incomplete .partial file.
     output_ << std::setprecision(std::numeric_limits<double>::max_digits10);
     for (const auto& row : records_) {
       output_ << row.kind << ' ' << row.step;
@@ -158,17 +152,15 @@ class ReplayRecorder {
   }
   std::ofstream output_;
   std::filesystem::path path_, partial_;
-  // Small blocks avoid copying a whole attempt during a render frame as the
-  // recording grows. There are no per-actor scans or per-frame disk writes.
+  // Small blocks avoid copying the whole recording during a render frame.
   std::deque<ReplayRecord> records_;
   std::uint64_t step_ = 0;
   int selected_ = 0, rate_ = 0;
   bool paused_ = false, fast_ = false, nuked_ = false;
 };
 
-// No frontend, renderer, audio device or SaveStore is constructed on this path.
-// A different build is expected when using recordings as regression checks;
-// its identity is diagnostic, never an excuse to skip a replay.
+// Playback constructs no frontend, renderer, audio device or SaveStore.
+// Build identity is diagnostic and does not gate playback.
 inline int replayLevel(const AssetLibrary& library, const std::filesystem::path& file,
                        std::ostream& log = std::cerr) {
   std::ifstream input(file, std::ios::binary);
@@ -269,8 +261,7 @@ inline int replayLevel(const AssetLibrary& library, const std::filesystem::path&
       case 't': {
         if (v[0] < 0 || v[0] > 60000 || (v[1] != 0 && v[1] != 1) || runtime.paused())
           return fail("invalid simulation budget/gate");
-        // Reconstitute only the already-quantized integer budget. This does
-        // not reconstruct or approximate the discarded real-clock fraction.
+        // Pass the stored integer budget directly to the clock.
         if (!runtime.advanceElapsed(world, v[0] / 1000.0, connected, drain, 0, v[1]))
           return fail("simulation update refused");
         if (world.spawned() != v[2] || world.saved() != v[3] || world.dead() != v[4] ||

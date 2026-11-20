@@ -1,16 +1,7 @@
-// Sound playback for the retail `.WAV` cues.
-//
-// The decoder lives in assets/Wav and stays free of SDL: it turns archive
-// entries into signed 16-bit PCM at whatever rate they arrived. Clips are
-// converted to the mix format on load. Desktop uses an SDL audio callback.
-// The browser schedules the clips directly on its Web Audio rendering clock.
-//
-// Opening the device is optional. The game shell treats failure the same way
-// it treats missing sprites -- stderr and keep going -- so a headless CI box
-// without an audio backend is not a hard error.
-//
-// The game calls play() on the main thread. Desktop's SDL callback shares
-// the voice state under SDL_LockAudioDevice. Web Audio owns its rendered PCM.
+// Playback for retail .WAV cues. assets/Wav decodes signed 16-bit PCM for load-time conversion.
+// play() runs on the main thread. The SDL callback shares voice state under SDL_LockAudioDevice.
+// Web Audio owns its PCM and schedules clips on its rendering clock.
+// Device initialization failure is nonfatal.
 
 #pragma once
 
@@ -32,12 +23,9 @@ namespace webo::audio {
 
 class Mixer {
 public:
-  // Average is an opt-in bus for overlapping exit cheers. Other SFX retain
-  // the existing additive mix. The policy is provisional, not retail mixing.
-  // SkipPlaying is an additive one-shot, suppressed while the same clip is
-  // still audible. No delayed requests or looping voice are created.
-  // RestartPlaying starts each work/warning attack without stacking tails.
-  // AddWithoutEviction plays an additive one-shot outside the capped pool.
+  // Provisional mix policy. Average shares a bus across concurrent exit cheers.
+  // SkipPlaying suppresses an audible duplicate. RestartPlaying replaces its tail with a fresh attack.
+  // AddWithoutEviction plays outside the capped additive pool.
   enum class Overlap { Add, Average, SkipPlaying, RestartPlaying, AddWithoutEviction };
 
   Mixer() = default;
@@ -58,8 +46,7 @@ public:
   int sampleRate() const { return sampleRate_; }
   int channels() const { return channels_; }
 
-  // Decode + resample into the mix format and keep by cue name ("Letsgo").
-  // Replaces a previous load of the same name.
+  // Decode and resample by cue name ("Letsgo"), replacing any clip with that name.
   std::expected<void, std::string> load(std::string_view cue, const Sound& source);
   std::expected<void, std::string> loadFrom(const AssetLibrary& lib, std::string_view cue);
 

@@ -13,10 +13,8 @@ struct StereoGains {
   float right = 1.0f;
 };
 
-// PROVISIONAL playable-v1 curve, inspired by 0x4375F0's camera-X/depth
-// rule, not a reproduction of its transform scales or DirectSound dB curve.
-// Screen edges pan fully; the back of the cylinder is 25% of front gain.
-// A one-shot snapshots these gains: camera motion never retunes its tail.
+// Provisional panning and gain using 0x4375F0's camera-X/depth inputs. The DirectSound dB curve is unmodeled.
+// Screen edges pan fully, and the cylinder back gets 25% of front gain. Each voice retains its starting gains.
 inline StereoGains spatialSoundGains(const app::CameraBasis& camera,
                                      const std::array<double, 3>& point) {
   const auto& m = camera.worldToView;

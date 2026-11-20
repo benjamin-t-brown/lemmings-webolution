@@ -1,51 +1,20 @@
-// The per-cell tube mesh the engine builds at level load.
-//
-// `Lemmings Revolution` does not store the tube's per-cell topology. It stores
-// a 256 x 96 collision grid (`CollisionGrid.h`) and a 897..1558 vertex surface
-// pool (`CylinderMesh::surface`), and derives the quads from them at load. This
-// module is that derivation, read out of the shipped executable:
-//
-//   FUN_004608BB  0x4608BB  per-bucket sweep: 32 buckets x 6 bands = 192 cells
-//   FUN_00461E1D  0x461E1D  the eight 0x10-byte part lists, merged into the
-//                           0x4ECA80 records (one solid rectangle per entry)
-//   FUN_004615E9  0x4615E9  the gap lists at the rectangle's left / right / top
-//                           boundary (0x4ECA68 / 0x4ECA58 / 0x4ECA48)
-//   FUN_00463100  0x463100  the whole-block "wall" quad at entry+8
+// Derives tube quads from the 256 x 96 collision grid (CollisionGrid.h) and CylinderMesh::surface.
+// Original build:
+//   FUN_004608BB  0x4608BB  32 buckets x 6 bands = 192 cells
+//   FUN_00461E1D  0x461E1D  eight 0x10-byte part lists merged to 0x4ECA80 rectangles
+//   FUN_004615E9  0x4615E9  left, right and top gap lists (0x4ECA68 / 0x4ECA58 / 0x4ECA48)
+//   FUN_00463100  0x463100  whole-block "wall" quad at entry+8
 //   FUN_00463410  0x463410  mesh0 (entry+0) and mesh4 (entry+4)
-//   FUN_0043A31D  0x43A31D  get-or-create a vertex keyed `layer + (x + y*0x101)*2`
-//   FUN_0043A1C6  0x43A1C6  the door path: a separate (x, y) record list
-//   FUN_004136E0  0x4136E0  U = (x & 31) / 32     (the table is T[i] = i/64)
+//   FUN_0043A31D  0x43A31D  get or create vertex by layer + (x + y*0x101)*2
+//   FUN_0043A1C6  0x43A1C6  separate door records (x, y)
+//   FUN_004136E0  0x4136E0  U = (x & 31) / 32, from T[i] = i/64
 //   FUN_00413710  0x413710  V = 1 - (y & 31) / 32
-//
-// The `layer` is the cylinder template's inner (0) / outer (1) selector.
-//
-// Two further derivations the draw passes need, both read out of the shipped
-// bytes and both matched against the retained arena:
-//
-//   * `CellMeshQuad::coord` -- the per-quad child record at entry+0x88 /
-//     entry+0x98, whose signed low short `0x462465` compares against the
-//     camera's own column. It is the `x0` of the rectangle the quad came from.
-//   * `CellMeshCell::inner` -- FUN_00463100's whole-block quad at entry+8, the
-//     INN pass's inline quad. Four layer-0 vertices over the block, open-top
-//     UVs, colour 255, gated by the entry+0xF8 byte (the `wall` flag).
-//
-// What the vertex indices mean
-// ----------------------------
-// The `u32[N]` array on the `Cylinder` chunk walk (LevelIndex::grid0, 49858
-// words in every retail level) is **not** a face list: it is the engine's
-// `(x, y, layer) -> pool index` table at `world+0x42C`. Key `layer + (x +
-// y*0x101)*2` (`FUN_0043C930`), value the index into `CylinderMesh::surface`,
-// or 0xFFFFFFFF for "not present". On `MM_CLIMB_002` exactly 897 of the 49,858
-// slots are populated, values 0..896, a permutation onto the whole surface
-// pool. The rule below touches exactly those 897 slots and no others, which is
-// the file-derived check `test_cellmesh` asserts.
-//
-// The companion `R x 12` record array (`world+0x43C`, `FUN_0043A1C6`) is empty
-// in `MM_CLIMB_002` and in every retail level measured so far.
-//
-// Evidence: `tools/harness/generate_cellmesh.py` (the same rule in Python,
-// with `--compare` against the retained A1 live arena and static pin
-// assertions) and `docs/scratch/phase-a4-cell-mesh-source.md`.
+// Layer 0 is inner, layer 1 outer. CellMeshQuad::coord is rectangle x0 at entry+0x88 / entry+0x98,
+// compared with the camera column by 0x462465. CellMeshCell::inner is the INN pass's layer-0
+// quad at entry+8, gated by entry+0xF8, with open-top UVs and colour 255.
+// Cylinder chunk LevelIndex::grid0 is the 49,858-word u32[N] at world+0x42C (FUN_0043C930).
+// It maps (x, y, layer) to a surface index or 0xFFFFFFFF. MM_CLIMB_002 has 897 populated slots.
+// The R x 12 companion at world+0x43C (FUN_0043A1C6) is empty in retail levels.
 
 #pragma once
 
@@ -62,21 +31,15 @@
 
 namespace webo {
 
-// One quad in a mesh bank. `index` are pool indices into
-// `CylinderMesh::surface`; `uv` is per corner; `colour` is the single double
-// the engine writes into all three channels (`FUN_004135C0` called with the
-// entry's two colour dwords repeated three times).
+// Per-corner indices into CylinderMesh::surface and UVs. FUN_004135C0 uses the
+// same double for each colour channel by repeating the entry's two colour dwords.
 struct CellMeshQuad {
   std::array<std::uint32_t, 4> index{};
   std::array<std::array<double, 2>, 4> uv{};
   double colour = 255.0;
 
-  // The centre-pass filter key. Each bank has a parallel 4-byte child record
-  // per quad at entry+0x88 (mesh0) / entry+0x98 (mesh4), whose signed low
-  // short is this value -- the `x0` of the solid rectangle the quad was built
-  // from. `0x462465` submits mesh0 quads with `coord < cameraCentre*8` and
-  // mesh4 quads with `coord >= cameraCentre*8`, which is how one record is
-  // drawn by exactly one bank at the camera's own bucket.
+  // Rectangle x0 is the signed low short of the mesh0 child at entry+0x88 or mesh4 child
+  // at entry+0x98. At 0x462465, mesh0 draws coord < cameraCentre*8 and mesh4 draws coord >= cameraCentre*8.
   int coord = 0;
 };
 
@@ -95,12 +58,8 @@ struct CellMeshCell {
   std::vector<CellMeshQuad> mesh0;
   std::vector<CellMeshQuad> mesh4;
 
-  // The whole-block "wall" quad at entry+8, emitted by FUN_00463100 exactly
-  // when `wall` is true and submitted as the INN pass's inline quad by
-  // `0x4622FD` (which tests the byte at entry+0xF8, the same flag). Four
-  // layer-0 (inner shell, radius ~50) vertices over the whole 8x16 block with
-  // the open-top UV formula and a white modulate. In the retained arena this
-  // is active on 98 of the 192 cells and on exactly the `wall` set.
+  // FUN_00463100 emits the whole-block "wall" quad at entry+8. 0x4622FD submits it for INN
+  // when entry+0xF8 is set. Four inner layer-0 vertices use open-top UVs and white modulation.
   bool hasInner = false;
   CellMeshQuad inner;
 };
@@ -116,9 +75,7 @@ struct CellMeshes {
   std::size_t keySlotsTouched = 0;  // distinct keys the rule resolves
   std::size_t unresolved = 0;       // lookups the stored table does not answer
   bool keySupportMatches = false;   // touched keys == populated keys
-  // Lookups the key table failed to answer during rebuildCellMeshCells, summed over
-  // every rebuild (an answered-by-index-0 quad would be garbage). 0 when the caller
-  // filled every key the rebuilt blocks need.
+  // Unanswered key lookups across rebuildCellMeshCells calls. Zero when all required vertices exist.
   std::size_t rebuildUnresolved = 0;
 
   // Cells are stored bucket-major: `band + bucket * bands`.
@@ -130,25 +87,17 @@ struct CellMeshes {
   }
 };
 
-// `keyTable` is LevelIndex::grid0; `doorRecords` is the `R x 12` array on the
-// same walk (the `FUN_0043A1C6` (x, y, index) list, empty in every retail level
-// measured); `surfaceVertexCount` is CylinderMesh::surface.size(), used only to
-// bound-check the indices.
+// keyTable is LevelIndex::grid0. doorRecords is the FUN_0043A1C6 R x 12 (x, y, index) list,
+// empty in retail. surfaceVertexCount bounds the indices into CylinderMesh::surface.
 std::expected<CellMeshes, std::string> buildCellMeshes(
     std::span<const std::uint32_t> keyTable,
     std::span<const std::array<std::int32_t, 3>> doorRecords,
     const CollisionGrid& grid, std::size_t surfaceVertexCount);
 
-// Regenerates the listed (bucket, band) cells of an already built mesh against
-// the grid's present contents, with the per-cell rule `buildCellMeshes` uses.
-// The original re-runs this per-cell scan (0x4615E9 via 0x462264) when a door
-// or gate toggles its collision cells; the cells to re-run are the caller's
-// choice. The key table must answer every vertex the cells ask for;
-// `surfaceVertexCount` bounds the indices as in the full build. The quad totals
-// are recounted.
-// Playable-v1 rebuilds partition solid runs at steel boundaries, so a new
-// ordinary excavation face cannot reshape an unchanged steel region. This
-// protection is provisional; the load-time merge rule remains unchanged.
+// Regenerate selected (bucket, band) cells with the per-cell rule in buildCellMeshes and recount quads.
+// Doors and gates invoke the original scan at 0x4615E9 via 0x462264.
+// The caller chooses cells and must provide every needed key within surfaceVertexCount.
+// Provisional runtime meshes split solid spans at steel boundaries to protect adjacent steel faces.
 std::expected<void, std::string> rebuildCellMeshCells(
     CellMeshes& meshes, std::span<const std::uint32_t> keyTable,
     std::span<const std::array<std::int32_t, 3>> doorRecords, const CollisionGrid& grid,

@@ -16,21 +16,14 @@ struct SpriteViewVector {
   double z = 0.0;
 };
 
-// Reproduce the score inputs built at 0x00468456..0x004685D9. The helper
-// normalizes cameraToActor (actor world position minus camera translation),
-// rotates the basis stored at controller+0x1E0 by phase (controller+0x1D8)
-// plus the native offsets, and applies the native one-shot score correction.
-// The native path evaluates sin/cos through x87;
-// this helper uses the platform math library, so exact tie decisions still
-// belong to selectSpriteView's explicit score inputs.
+// Build the scores from 0x00468456..0x004685D9. Normalize cameraToActor (actor minus camera),
+// rotate the basis at controller+0x1E0 by phase at controller+0x1D8 plus the native offsets,
+// and apply the one-shot score correction. Native sin/cos uses x87. Pass explicit tie scores to selectSpriteView.
 std::array<double, 2> spriteViewScores(SpriteViewVector cameraToActor,
                                        SpriteViewVector basis, double phase);
 
-// Select the sprite entry from the two signed orientation scores consumed by
-// the original chooser at 0x0046840B. For 5-entry lists the chooser resets
-// and may set the mirror bit. For 8-entry lists the original leaves the prior
-// mirror bit untouched. Lists shorter than two force entry zero and likewise
-// leave that bit untouched.
+// At 0x0046840B, two signed scores select the entry. Five entries reset and may set the
+// mirror bit. Eight entries preserve it. Fewer than two select entry zero and preserve it.
 SpriteViewSelection selectSpriteView(double horizontalScore, double verticalScore,
                                      std::size_t entryCount, bool priorMirror = false);
 

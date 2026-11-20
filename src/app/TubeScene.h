@@ -1,19 +1,8 @@
-// The tube scene, built only from stored level and archive data.
-//
-// Geometry sources, all file-side:
-//   * the constant tube lattice (CylinderMesh::vertices, 7 rings x 32 steps x
-//     inner/outer) subdivided per cell, textured with the level's own 8x3 tile
-//     names -- the outer and inner skin;
-//   * optionally the SurfaceMesh lattice reconstruction from the stored
-//     grid0 index array (src/assets/SurfaceMesh);
-//   * optionally the stored PolyList 09 records (src/assets/PolyList).
-//
-// The A2 fixture read per-cell mesh arrays from a live arena (0x4ECB00). This
-// scene never touches that data: A4c decoded the load-time rule and derives the
-// same per-cell banks from the stored collision grid and key table
-// (src/assets/CellMesh). The arena remains an offline oracle only. `--geom
-// route` submits the derived banks in the original walker's pass order; the
-// constant lattice is not part of that walker.
+// Tube geometry from level and archive data. The wall uses the
+// 7-ring, 32-step inner/outer lattice and the level's 8x3 tile names.
+// Optional SurfaceMesh and PolyList 09 sources add stored geometry.
+// The route derives per-cell banks from collision words and keys,
+// corresponding to the native mesh arrays (0x4ECB00).
 
 #pragma once
 
@@ -57,19 +46,14 @@ struct SceneOptions {
   bool drawInner = true;
   bool drawSurface = false;   // stored SurfaceMesh lattice quads
   bool drawPolyList = false;  // stored PolyList 09 records
-  // The per-cell mesh the engine derives from the collision grid at level load
-  // (src/assets/CellMesh). This is the runtime tube topology, not the smooth
-  // constant lattice the wall pass draws.
+  // Runtime cell topology derived from the collision grid (src/assets/CellMesh).
   bool drawCellMesh = false;
-  // The original's actual tube submission. `0x43A4EC` draws, in order:
-  // INN (buckets c..b, all bands, the entry+8 whole-block quad, material +24),
-  // OUT right (buckets d-1..mid+1, mesh4 reversed), OUT left (buckets a..mid-1,
-  // mesh0 reversed), OUT centre (bucket mid, mesh0 forward with coord <
-  // cameraColumn then mesh4 forward with coord >= it). Only the 23-bucket-wide
-  // front arc is drawn at all. Production uses this alone: the stored constant
-  // lattice is not part of that walker.
+  // 0x43A4EC submits the front arc in order: INN (c..b, entry+8, material +24),
+  // OUT right (d-1..mid+1, mesh4 reversed), OUT left (a..mid-1, mesh0
+  // reversed), then OUT centre (mid, mesh0 and mesh4 in forward order,
+  // split at cameraColumn).
   bool drawCellRoute = false;
-  // Diagnostics for the isolated route-term mutations (never the default).
+  // Diagnostic overrides for the route passes.
   bool routeSwapBanks = false;   // swap the mesh0/mesh4 roles in all four passes
   bool routeNoInner = false;     // drop the INN pass
   bool routeFlipCentre = false;  // invert both centre filters
@@ -80,17 +64,12 @@ struct SceneOptions {
   double outerContext = 0.0;
   double innerContext = -0.0003;
   bool depthTest = true;
-  // Diagnostic: draw every outer/inner cell's wall quad (true) rather than only
-  // the cells whose collision column is solid (false). The solid-only mode is
-  // the file-side rule measured in the round note: all 156 runtime outer-wall
-  // cells are solid, none is empty.
+  // Draw full wall quads or restrict them to blocks containing solid collision cells.
   bool fullWall = true;
-  // Debug: unwrap the outer skin into a 2D 8x3 tile atlas instead of the 3D
-  // view. Never the default.
+  // Unwrap the outer skin into a 2D 8x3 tile atlas.
   bool flat = false;
-  // Injected A6a native `+0x08` samples (not sim lemmings). Empty leaves the
-  // tube frame unchanged. Drawn after the route passes unless
-  // composeActorsBeforeRoute (diagnostic).
+  // Actor samples use native +0x08 coordinates. They draw after the route
+  // unless the diagnostic composeActorsBeforeRoute is set.
   struct InjectedNativeWalker {
     double plus8X = 0;
     double plus8Y = 0;
@@ -98,27 +77,24 @@ struct SceneOptions {
     int facing = 1;
     // Walk SPR temporal strip index for this injected sample (default 0).
     int walkTemporalIndex = 0;
-    // Diagnostic (A6d6): force chooser output; negative = use selectSpriteView.
+    // Negative selects the directional image with selectSpriteView.
     int forcedViewIndex = -1;
     int forcedMirror = -1;
     // Explicit native actor+28 input. Injected/source alive actors default on;
     // the full native lifecycle producer is not reconstructed by this adapter.
     bool renderEnabled = true;
-    // actor-anim-001: the lemming SPR clip this walker draws ("walk", "climb", ...) and, in
-    // `walkTemporalIndex`, the temporal entry inside that clip. A literal with static storage
-    // (app/LemmingAnim.h names them); a clip the sheet lacks falls back to "walk".
-    // Last member so positional initialisers of the fields above are unaffected.
+    // Static SPR clip name ("walk", "climb", etc.). walkTemporalIndex selects the entry.
+    // Missing clips fall back to "walk".
     const char* clip = "walk";
-    // Simulation gravity persists after leaving a flipper cell. Keep it with
-    // the shared draw/pick sample rather than resampling the terrain at draw time.
+    // Keep simulation gravity with the draw/pick sample, including after leaving a flipper.
     int verticalDir = 1;
     int sheetType = 0;  // actor+4C: ordinary / water / acid (42DF75..42DF89)
     double drownSeconds = -1.0;  // presentation only; negative outside fluid drowning
     int drownFluidKind = -1;  // -1 keeps static-cell drowning on its existing path
     double drownSurfaceY = 0.0, drownBrightness = 1.0;
     double rotationPhase = 0.0;  // exit enter 418027 sets controller phase to 0.25
-    // Y14: render-only carried mesh. Negative outside Builder; the target is
-    // the upcoming solid cells in Y-up coordinates, independent of motion lag.
+    // Render-only carried brick. Negative outside Builder. Its Y-up target
+    // uses the upcoming cells independently of interpolated body motion.
     double builderPhase = -1.0;
     int builderX = 0, builderY = 0, builderLength = 2;
     // Rat clocks use the selected installed clip's own length/rate.
@@ -126,21 +102,18 @@ struct SceneOptions {
     bool clipLoops = true;
   };
   std::vector<InjectedNativeWalker> injectedWalkers;
-  // U2: opaque scenery depth with the fluid pass excluded, only for the
-  // additive submerged figure/effects. Normal actors use the completed depth.
+  // Additive submerged actors test opaque scenery depth without the fluid pass.
   std::span<const double> fluidDrownSceneDepth;
-  // Y2: only pipe fragments that passed scene depth, retained before fluid can
-  // replace their depth. Figures use the same unbiased plane for every surface.
+  // Save accepted pipe depth before the fluid pass can replace it.
+  // Test it with the same unbiased actor plane as other surfaces.
   std::span<const double> pipeSceneDepth;
   bool composeActorsBeforeRoute = false;
-  // Diagnostic (A6d9): composite overlay with legacy `a != 0` replace instead of A4y `> 0xEF`.
+  // Diagnostic: replace on any nonzero alpha instead of testing > 0xEF.
   bool overlayCompositeLegacyNonZero = false;
   bool composeSkipActorPose = false;
-  // Diagnostic only: project/render even actors rejected by native +29 gate
-  // or the provisional actor scene-depth test. Production drawing/picking leaves off.
+  // Diagnostic: bypass native +29 and provisional scene-depth rejection.
   bool composeSkipActorVisibility = false;
-  // Controller +0x1D8 rotation phase (A3 chooser input; spriteViewScores adds 0.0625).
-  // A6d5 live read: all three matched-pause walkers hold 0.0 at controller+0x1D8.
+  // Rotation phase at controller+0x1D8. spriteViewScores adds 0.0625.
   double composeActorPhase = 0.0;
 };
 
@@ -163,9 +136,8 @@ class TubeScene {
   void render(Raster& raster, const CameraBasis& camera, const SceneOptions& options,
               const AssetLibrary* composeAssets = nullptr) const;
 
-  // Actor pass after all scenery/terrain/fluid passes. render() also calls this
-  // for standalone scene consumers. Resets/populates Raster's separate actor
-  // coverage, shared with particles and highlight; does not change scene depth.
+  // Draw after scenery, terrain and fluid. Reset the actor coverage
+  // shared by bodies, particles and highlights.
   void drawInjectedWalkers(Raster& raster, const CameraBasis& camera,
                            const SceneOptions& options, const AssetLibrary& lib) const;
 
@@ -186,42 +158,26 @@ class TubeScene {
   void drawDeathParticles(Raster&, const CameraBasis&, const AssetLibrary&,
                           std::span<const double> pipeDepth = {}) const;
   std::size_t deathParticleCount() const { return deathParticles_.size(); }
-  // Dynamic surface pass, after scenery and before actors; never cache with
-  // the opaque tube. Shares the level clock with the death presentation.
+  // Draw moving fluid after scenery and before actors, on level time.
   void drawExplosionDecals(Raster&, const CameraBasis&) const;
   std::size_t explosionDecalCount() const { return explosionDecals_.size(); }
 
-  // Read-only screen box for each `options.injectedWalkers` entry, in that
-  // vector's order (forward). Each placement is the one `drawInjectedWalkers`
-  // would pass to `drawActorSprite` for that walker; nullopt when that walker
-  // is skipped by submission, asset or projection checks. Scene-depth
-  // occlusion affects drawing; fully covered actors can keep boxes.
-  //
-  // `injectedWalkersFromWorld` emits one walker per alive lemming, in
-  // `World::lemmings()` order. While every lemming is alive the returned
-  // vector is index-aligned with `World::lemmings()`. A dead or exited
-  // lemming has no live walker. When motion tracking is supplied, still-visible
-  // exit jumps are appended AFTER all live walkers; hover/skill/countdown code
-  // only consumes the live prefix, so these tails cannot be picked.
-  // Placed rats follow those tails and also remain outside the pickable prefix.
+  // Project one box per injected walker, in vector order. nullopt indicates
+  // failed submission, asset or projection checks. A fully occluded actor can
+  // keep its box. World walkers have a live prefix in actor order followed by
+  // noninteractive exit tails and rats.
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib) const;
-  // Production passes the completed frame explicitly. Its dimensions must match
-  // the camera; its pixel depths do not determine picking eligibility.
+  // The completed frame must match the camera dimensions. Picking uses its boxes.
   std::vector<std::optional<ActorSpritePlacement>> injectedWalkerScreenBoxes(
       const CameraBasis& camera, const SceneOptions& options, const AssetLibrary& lib,
       const Raster& sceneRaster) const;
 
-  // terrain-render-001: brings the drawn tube in line with the live simulation terrain, so
-  // cells a skill removed stop being drawn and cells a Builder added are. The cheap path
-  // (terrain version unchanged) is one integer compare. On a change it diffs the terrain
-  // against the solidity the mesh was last built from (grid row y is terrain row
-  // height - 1 - y), updates the collision words the mesh rule reads (a removed cell becomes
-  // 0 like the original's clear; an added cell becomes kCellSolid), fills any key the stored
-  // table lacks with the native 0x43A31D/0x43D2B8 vertex, and regenerates only the 8x16
-  // blocks the changed cells touch, padded by one cell, with the per-cell rule
-  // (rebuildCellMeshCells). The `--geom route` / `cellmesh` banks follow; the constant
-  // lattice skin (`--geom wall`) is not edited.
+  // On a terrain version change, copy edited solidity into the collision
+  // words (grid Y = height - 1 - terrain Y). Clear removed cells and set
+  // new cells to kCellSolid. Synthesize missing keys with 0x43A31D/0x43D2B8.
+  // Rebuild the 8x16 cells touched by edits plus a one-cell margin. The
+  // route and cellmesh banks use the result. The constant wall is separate.
   void syncTerrain(const sim::Terrain& terrain, std::span<const sim::CounterGate> gates = {});
   void syncCounterGates(std::span<const sim::CounterGate> gates);
   void renderCounterGates(Raster&, const CameraBasis&, const AssetLibrary&,
@@ -333,10 +289,8 @@ class TubeScene {
   // The per-cell mesh derived from the collision grid (src/assets/CellMesh).
   CellMeshes cellMesh_;
 
-  // syncTerrain state. `meshedSolid_` is the solidity (grid row order) the current `cellMesh_`
-  // was built from; `editKeys_` is a copy of the stored key table that gains pool vertices
-  // (appended to `mesh_.surface`) for the keys edited blocks need. Both are created on the
-  // first change only, so a level that is never edited costs nothing.
+  // Allocate meshed solidity and editable keys on the first terrain change.
+  // Append new pool vertices to mesh_.surface.
   bool terrainSeen_ = false;
   bool terrainFailed_ = false;
   std::uint64_t terrainVersion_ = 0;
@@ -360,27 +314,13 @@ class TubeScene {
   double cylinderExtent_ = 0.36;
 };
 
-// Settled A6a native `+0x08` samples for MM_CLIMB_002 injected compose (not sim).
+// Native +0x08 samples for the MM_CLIMB_002 diagnostic.
 std::vector<SceneOptions::InjectedNativeWalker> defaultMmClimb002InjectedWalkers();
 
-// D3b: one `InjectedNativeWalker` per live `sim::Lemming`, through the same
-// `terrainSampleFromLemming` adapter the A6a fixture samples stand in for
-// (ActorPose.h), so `drawInjectedWalkers` stays the only actor draw path --
-// a ticking `World`'s lemmings reuse it rather than growing a second one.
-// `terrainHeight` is the loaded level's own grid height (matches
-// `sim::World::terrain().height()` when both are read from the same `.LVL`
-// collision grid, which `webolution`'s `main.cpp` guarantees by construction).
-//
-// The live prefix contains only `Lemming::alive()` actors. With motion tracking,
-// one-second, noninteractive exit tails are appended after that prefix. Placed
-// rats follow the tails and use their own clip clocks in the same sprite pass.
-//
-// Without `anim` every rescue entry draws "walk" at temporal index 0 (the D3b behaviour, kept for
-// the fixtures that build walkers without a clock). With `anim` (actor-anim-001) each entry
-// takes the clip and temporal index the tracker holds for its lemming (app/LemmingAnim.h).
-// With `motion` (P7), confirmed terrain coordinates are interpolated in the
-// presentation tracker. The fractional sample feeds drawing AND screen boxes;
-// a null tracker preserves the integer-cell diagnostic/fixture behavior.
+// Build render samples in World order using the loaded .LVL grid height.
+// Keep live actors first, then noninteractive exit tails and placed rats.
+// Without anim, use walk entry 0. Motion tracking supplies fractional
+// terrain samples for drawing and picking. Without it, use cell positions.
 std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(
     const sim::World& world, int terrainHeight, const LemmingAnimTracker* anim = nullptr);
 std::vector<SceneOptions::InjectedNativeWalker> injectedWalkersFromWorld(

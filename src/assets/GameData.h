@@ -1,15 +1,8 @@
-// The small metadata files: which levels exist, what they are called, how long
-// you get, and the localised interface strings.
-//
-//   COMPILED\LEVELMAP.DAT   125 level records, in a flat list
-//   LEVELS\LEVELS.MAP       the same 125 as 5 groups of 25 -- the difficulty
-//                           tiers -- in play order
-//   COMPILED\RELEASERATE.PC 99 doubles: seconds per lemming for rates 1..99
-//   LANGUAGE\*.LTX          232 interface strings per language
-//
-// Two corrections to the published notes, both found by parsing the real
-// files: RELEASERATE.PC is doubles rather than (u32, float) pairs, and
-// LEVELS.MAP is five counted groups rather than one flat list of 125.
+// Level metadata and interface text:
+//   COMPILED\LEVELMAP.DAT   125 flat level records
+//   LEVELS\LEVELS.MAP       5 counted tiers of 25 slots in play order
+//   COMPILED\RELEASERATE.PC 99 doubles, seconds per lemming for rates 1..99
+//   LANGUAGE\*.LTX          232 strings per language
 
 #pragma once
 
@@ -35,9 +28,8 @@ struct LevelInfo {
   bool isBlank() const { return id == "blank"; }
 };
 
-// One entry of LEVELS.MAP. The three trailing integers are not understood yet:
-// across the retail data `a` is always 1, `c` always 0, and `b` is 1 for just
-// two slots.
+// One LEVELS.MAP entry. The three trailing integers are unidentified. Retail a is 1,
+// c is 0, and b is 1 in two slots.
 struct LevelSlot {
   std::string id;
   std::uint32_t a = 0, b = 0, c = 0;
@@ -65,8 +57,7 @@ public:
                                                        Codepage cp = Codepage::Windows1252);
 
   std::size_t size() const { return strings_.size(); }
-  // Out of range yields an empty view rather than throwing: missing text
-  // should never take the game down.
+  // Out-of-range lookups return an empty view.
   std::string_view operator[](std::size_t index) const;
 
   const std::vector<std::string>& all() const { return strings_; }
@@ -75,17 +66,8 @@ private:
   std::vector<std::string> strings_;
 };
 
-// RELEASERATE.PC as the simulation wants it.
-//
-// The file is 99 doubles: seconds between one lemming and the next, for the
-// release rates 1 to 99 the player can select. It falls from 5.0 at rate 1 to
-// 0.2 at rate 99, strictly, in 98 distinct step sizes -- a hand-tuned curve
-// rather than anything derivable, which is exactly why it is worth reading
-// from the data instead of approximating with a formula.
-//
-// Because the table is in *seconds*, converting it to ticks needs only our own
-// tick rate, not the original's. That matters: the original's internal update
-// rate is not known, and this conversion does not depend on it.
+// RELEASERATE.PC stores seconds between releases for rates 1..99 (5.0 down to 0.2).
+// Convert to ticks using the caller's tick rate.
 class ReleaseRates {
 public:
   ReleaseRates() = default;
@@ -94,12 +76,10 @@ public:
   bool empty() const { return seconds_.empty(); }
   std::size_t size() const { return seconds_.size(); }
 
-  // Rates are 1-based, as the player sees them. Out of range clamps rather
-  // than throwing: a bad level should not take the game down.
+  // Rates are 1-based and clamp to the table.
   double secondsPerLemming(int rate) const;
 
-  // Ticks between spawns, never less than 1 -- a zero interval would release
-  // the whole level in a single tick.
+  // Clamp the interval to at least one tick to prevent a zero-interval release.
   int intervalTicks(int rate, int ticksPerSecond) const;
 
   const std::vector<double>& all() const { return seconds_; }

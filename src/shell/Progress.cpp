@@ -47,7 +47,6 @@ SlotState Progress::state(int group, int slot) const {
 
 void Progress::complete(const LevelTable& table, int group, int slot) {
   if (!canPlay(group, slot) && state(group, slot) != SlotState::Locked) {
-    // allow completing unlocked
   }
   if (group < 0 || group >= kGroups || slot < 0 || slot >= kSlotsPerGroup)
     return;

@@ -341,8 +341,7 @@ std::expected<MapScene, std::string> MapScene::build(const AssetLibrary& lib, co
 void MapScene::setProgress(const std::array<std::int32_t,102>& flags, bool unlockAllLevels) {
   states_.fill(1);
   states_[0] = states_[1] = states_[2] = 3;
-  // Clone playtest convenience. Play-Clone.ps1 still forces availability
-  // through the environment. Both inputs affect only the displayed map.
+  // Clone map override displays all levels as available, including via the environment.
   const char* unlock = std::getenv("WEBOLUTION_UNLOCK_ALL");
   if (unlockAllLevels || (unlock && unlock[0] == '1')) states_.fill(3);
   // The installed links point forward, so a won node overrides availability
@@ -399,9 +398,8 @@ std::optional<std::array<std::string,3>> MapScene::hoverTextForNode(std::size_t 
 void MapScene::drawHover(Image& target, const Image& font, std::size_t node) const {
   const auto block=hoverTextForNode(node);
   if(!block) return;
-  // READ 49AC47: left aligned default ^Font, black at x30, red (220,50,50)
-  // at x32/y+2; row origins 0,20,60. The supplied original screenshots settle
-  // the former provisional stacking: red shadow first, black foreground last.
+  // 49AC47 uses left-aligned ^Font at rows 0,20,60. Draw red (220,50,50)
+  // at x32/y+2 before the black foreground at x30.
   constexpr std::array<int,3> rows{0,20,60};
   std::array<shell::HudLine,6> lines;
   for(std::size_t i=0;i<3;++i) {
@@ -410,7 +408,6 @@ void MapScene::drawHover(Image& target, const Image& font, std::size_t node) con
   }
   shell::drawHud(target,font,lines,shell::fontCells());
   compositeIconRegion(target,clock_,{0,60,0,0,28,31});
-  // Provisional: reuse the clone's integer alpha blit; exact native sampling
-  // and framebuffer quantization require a matching original pixel comparison.
+  // Provisional clone text uses the integer alpha blit.
 }
 }  // namespace webo::app

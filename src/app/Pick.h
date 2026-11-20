@@ -5,21 +5,11 @@
 
 namespace webo::app {
 
-// A pure port of the original's in-level cursor-to-lemming pick rule.
-//
-// Read at `0x00454D33` (builds one candidate's box and dispatches to the
-// overlap test) and `0x00454CB9` (the overlap test itself), reached from the
-// per-frame hover scan at `0x00454D6C`-`0x00455236`. Every rule here cites
-// its address and the instruction bytes read there in
-// `build/tmp/d2a-pick-rule/reads.txt`; re-read those addresses before
-// trusting a claim below rather than this comment.
-//
-// A box is in render-pixel screen coordinates, left<=right, top<=bottom.
-// Which way y runs does not matter to this file: both boxes below come from
-// the same accessor shape (`+0x20` left, `+0x28` top, `+0xF0` right, `+0x90`
-// bottom, each a truncated double -- `0x00414770`/`0x00414790`/`0x0044D860`/
-// `0x0044DFF0` through `0x0049C5AC`), so whatever convention the original
-// uses, both sides of every compare use it the same way.
+// Cursor-to-lemming overlap and ranking. 0x00454D33 builds the candidate
+// box and calls 0x00454CB9 from the scan at 0x00454D6C-0x00455236.
+// Both boxes use render pixels with left<=right and top<=bottom. At
+// 0x0049C5AC, the accessors truncate doubles: left +0x20 (0x00414770),
+// top +0x28 (0x00414790), right +0xF0 (0x0044D860), bottom +0x90 (0x0044DFF0).
 struct PickBox {
   int left = 0;
   int top = 0;
@@ -27,60 +17,25 @@ struct PickBox {
   int bottom = 0;
 };
 
-// Whether `box` (a lemming's own rectangle, `lemming+0x128`) is hit by
-// `cursorBox` (the cursor sprite's rectangle, `[screen+0x3c]+0x10`), exactly
-// as `0x00454CB9` computes it. The cursor box is shrunk 4 px in x and grown
-// 4 px in y before the compare (the sprite itself is 32x32, set at
-// `0x0045578C`), and all four edges are inclusive (<=, >=, read off the
-// jg/jl/jg/jl branches at `0x00454CD6`/`0x00454CEC`/`0x00454D02`/
-// `0x00454D18`): touching the adjusted edge counts as a hit.
+// 0x00454CB9 compares the actor box (lemming+0x128) with cursorBox
+// ([screen+0x3c]+0x10). The cursor sprite is 32x32 (0x0045578C).
+// Shrink the box by 4 px horizontally and grow it by 4 px vertically.
+// The adjusted edges are inclusive (0x00454CD6/0x00454CEC/0x00454D02/0x00454D18).
 bool pickBoxOverlaps(const PickBox& box, const PickBox& cursorBox);
 
-// READ 0x4551AB..0x4551EB: subtract the three raw terrain-space doubles
-// (lemming+8) - (screen+0x58), then dot the result with itself. Neither
-// operand is a projected pixel coordinate or a cylindrical model position.
+// 0x4551AB..0x4551EB computes squared distance from raw terrain vectors
+// at lemming+8 and screen+0x58.
 double pickDistanceSquared(const std::array<double, 3>& position,
                            const std::array<double, 3>& reference);
 
-// One lemming's candidacy for the hover slot `screen+0x16D8`.
-//
-// `box` is its own rectangle (`lemming+0x128`, confirmed this round to be an
-// *embedded* sub-object rather than a pointer stored there -- the caller at
-// `0x004550D9` computes `lemming+0x128` as a plain address and passes it
-// straight through as the accessor's `this`, with no extra dereference).
-//
-// `eligible` folds the two purely lemming-side skip tests the original
-// performs before it even reaches the box compare for a given candidate: the
-// render-visibility byte at `lemming+0x29` (`0x00455104`, skip when zero) and
-// the byte at `lemming+0x370` (`0x00455159`, via the one-line accessor at
-// `0x00455F20`, skip when zero; its exact meaning beyond "the original tests
-// it and skips on zero" is not established by this round's reads). `false`
-// means the original would never select this lemming this frame regardless
-// of its box.
-// Correction to the old hatch-emergence label: 43A9A4/43AA30 write +29
-// from the tube bucket visibility test and actor +28; it is not just alive().
-//
-// `priority` and `distanceSquared` are the two tie-break keys the original
-// computes for every candidate that is eligible: `priority` from a per-state
-// category read at `[state+0x14]` (`0x00430A70`) through a partially enumerated
-// table at `0x004C05D0`, and `distanceSquared` the squared distance between
-// the lemming's own position (`lemming+8`, a 3-double vector) and a
-// reference point at `screen+0x58` (also a 3-double vector) -- read at
-// `0x004551AB`-`0x004551EB` as two calls to a vector-subtract helper
-// (`0x00401830`) feeding a dot-product helper (`0x00418350`), i.e.
-// `dot(a-b, a-b) = |a-b|^2`.
-//
-// This function does not compute either tie-break key itself. The reference
-// is now traced to the combined input/camera controller's target vector +58,
-// NOT its Cartesian eye or intro-adjusted pose. RuntimePick maps four proven
-// state identities; see docs/scratch/first-level-overlap-selection.md.
-// The caller supplies both keys. Passing 0 for every candidate's keys
-// reproduces "first eligible, overlapping candidate in list order wins",
-// which is only correct when every real candidate is genuinely tied on both
-// keys (the original's own sentinel init -- priority `-1`, distance `1e8`,
-// both at `0x00454D7D`/`0x00455069` -- gives the same answer for a single
-// candidate, which is what every `test_pick` case except the tie-break one
-// exercises).
+// Candidate for screen+0x16D8. At 0x004550D9, lemming+0x128 is the embedded box.
+// Eligibility requires nonzero lemming+0x29 (0x00455104) and lemming+0x370
+// (0x00455159 via 0x00455F20). 43A9A4/43AA30 write +29 from the tube bucket
+// gate and actor +28. The full meaning of +0x370 is unresolved.
+// priority comes from [state+0x14] (0x00430A70) via 0x004C05D0.
+// distanceSquared uses lemming+8 and the controller's terrain target +58 (screen+0x58). At
+// 0x004551AB-0x004551EB, 0x00401830 subtracts and 0x00418350 computes the dot
+// product. The caller supplies both keys (initial -1 and 1e8 at 0x00454D7D/0x00455069).
 struct PickCandidate {
   void* id = nullptr;  // identifies the lemming to the caller; opaque here
   PickBox box;
@@ -89,34 +44,14 @@ struct PickCandidate {
   double distanceSquared = 0.0;
 };
 
-// Which candidate (if any) the original would write to `screen+0x16D8` this
-// frame, given `cursorBox` and the per-lemming candidates in the same
-// (actor-list) order the original iterates them. Returns `nullptr` for "no
-// lemming", matching the clear-then-maybe-set shape of `0x00454D6C`'s
-// prologue (`+0x16D8` is unconditionally zeroed at `0x00454DC2` before any
-// candidate is considered).
-//
-// Decision, read from `0x004550A3`-`0x00455236`: skip ineligible candidates
-// and candidates whose box does not overlap `cursorBox` (`pickBoxOverlaps`);
-// among the rest, the highest `priority` wins outright over any
-// lower-priority candidate seen so far (`jg` at `0x004551F4`, unconditional,
-// no distance compare), and among candidates tied on `priority`, the
-// smallest `distanceSquared` wins -- strictly smaller (`fcomp` + `test ah,1`
-// at `0x004551F6`-`0x004551FE` reads the FPU's C0 flag, i.e. "is the new
-// distance less than the stored one", not "less or equal"), so an exact tie
-// on both keys keeps the earlier-encountered candidate rather than the
-// later one. This is NOT "last overlapping lemming in list order wins" (the
-// brief's own unverified hypothesis): that hypothesis is falsified by this
-// read.
-//
-// Not modelled here, because they are not lemming-vs-cursor geometry: two
-// UI-state facing filters (`screen+0x16b1`/`+0x16b2` against `lemming+0x40`,
-// `0x0045511B`-`0x00455153`) and a skill-stock validity gate
-// (`0x0045A0E0(0x004C91D8, lemming)`, `0x00455194`-`0x004551A5`) that the
-// real routine also applies before writing `+0x16D8`. A live caller that
-// needs a byte-exact `+0x16D8` in a scenario where those can differ (cursor
-// over a facing-restricted lemming with no stock, for instance) must apply
-// them itself; see `round-note.md`.
+// Scan in actor-list order as at 0x004550A3-0x00455236. The original
+// clears screen+0x16D8 at 0x00454DC2 in 0x00454D6C before choosing a hit.
+// Among eligible overlaps, prefer highest priority (0x004551F4 jg) then
+// smallest squared distance (FPU C0 via fcomp + test ah,1 at 0x004551F6-0x004551FE).
+// Exact ties keep the first actor. Return nullptr when no candidate qualifies.
+// Callers handle facing (screen+0x16b1/+0x16b2 versus lemming+0x40,
+// 0x0045511B-0x00455153) and stock (0x0045A0E0(0x004C91D8, lemming),
+// 0x00455194-0x004551A5) outside this geometry helper.
 const PickCandidate* pickHoveredLemming(std::span<const PickCandidate> candidates,
                                          const PickBox& cursorBox);
 

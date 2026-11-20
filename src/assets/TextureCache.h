@@ -1,6 +1,5 @@
-// Decoded textures are immutable within one application leg. The scope is
-// bound to one live archive library, so cache entries cannot survive a reload,
-// retry or a different patch overlay. Callers still receive independent Images.
+// Cache immutable decoded textures for one application leg and archive overlay.
+// Return independent Images to callers.
 #pragma once
 #include "assets/Bitmap.h"
 #include <cstdio>

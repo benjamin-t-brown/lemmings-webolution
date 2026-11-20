@@ -1,5 +1,4 @@
-// Node runs the same Wasm CLI. Resolve relative archive and replay arguments
-// against its working directory. The default save directory stays in MEMFS.
+// Resolve Wasm CLI paths against the Node working directory. Default saves stay in MEMFS.
 if (ENVIRONMENT_IS_NODE) {
   Module['preRun'] = [() => {
     FS.mkdir('/work');

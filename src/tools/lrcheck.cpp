@@ -1,9 +1,4 @@
-// Decode every compressed texture entry and verify it really is a Windows BMP.
-//
-// This is the acceptance test for the LRZ decoder: the original stores
-// textures as LRZ-compressed standard bitmaps, so a correct decoder must
-// produce 'BM', a bfSize matching the decoded length, and a 40-byte
-// BITMAPINFOHEADER -- on all ten thousand of them, not just a sample.
+// Check decoded LRZ textures for a BMP signature 'BM', matching bfSize and a 40-byte BITMAPINFOHEADER.
 
 #include "assets/Box.h"
 #include "assets/Lrz.h"
@@ -76,8 +71,7 @@ int main(int argc, char** argv) {
       std::memcpy(&w, b + 18, 4);
       std::memcpy(&h, b + 22, 4);
       std::memcpy(&bpp, b + 28, 2);
-      // Check the size the geometry actually needs, not bfSize: a couple of
-      // entries carry a bfSize that forgot to account for row padding.
+      // Check the size required by the geometry: some bfSize fields omit row padding.
       const std::uint64_t rowBytes = ((std::uint64_t(w) * bpp + 31) / 32) * 4;
       const std::uint64_t needed = offBits + rowBytes * std::uint64_t(h < 0 ? -h : h);
       good = hdrSize == 40 && w > 0 && h != 0 && bpp != 0 && img->size() >= needed;

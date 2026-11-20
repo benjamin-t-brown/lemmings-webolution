@@ -8,13 +8,9 @@ namespace webo::app {
 
 double billboardPhysicalComparisonDepth(double nativeSlotZ,
                                          const BillboardCameraChain& chain) {
-  // In the supported diagonal, zero-translation chain, center view depth is
-  // multiplied by parent P, source S, then final P. Generated source-space
-  // delta is added after S and receives only final P. Inverting slot Z by k
-  // therefore preserves that offset's physical equivalent; it is not k times
-  // the source delta and is not a fitted function.
-  // parentCamera contains the view transform as well as P, so use the explicit
-  // diagonal P operand supplied in projectionTransform for the scalar factor.
+  // Base Z receives parent P, source S and final P. A generated offset
+  // receives only final P. Use the supplied diagonal P because parentCamera
+  // also includes the view transform.
   const double parentPz = chain.projectionTransform[10];
   const double sourceSz = chain.sourceTransform[10];
   const double finalPz = chain.projectionTransform[10];

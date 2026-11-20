@@ -19,8 +19,7 @@ std::optional<int> knownPickPriority(sim::State state) {
 bool passesKnownPickExclusions(const sim::Lemming& lemming, sim::Skill skill) {
   if (!lemming.active()) return false;
   if (skill != sim::Skill::Climber) return true;
-  // canClimb is the source representation of the retained Climber capability;
-  // native 42ECC9 checks category0 in both the current and parallel state lists.
+  // canClimb represents ability. Native 42ECC9 checks category0 in the current and parallel lists.
   if (lemming.canClimb) return false;
   switch (lemming.state) {
     case sim::State::Climber:

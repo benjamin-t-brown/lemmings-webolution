@@ -4,8 +4,7 @@
 
 namespace webo::app {
 
-// Retained 45CC09 entry-pose equation, not a claim that a native runtime clock
-// or live intro state has been observed.
+// Entry pose follows the equation at 45CC09.
 class CameraIntro {
  public:
   explicit CameraIntro(bool enabled = false) { reset(enabled); }

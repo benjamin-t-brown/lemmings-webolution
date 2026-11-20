@@ -61,12 +61,8 @@ int usage() {
   return 2;
 }
 
-// Unrolls a level's cylinder surface to a flat image, so the geometry can be
-// looked at instead of inferred. This is a diagnostic, not a level loader: it
-// plots the vertices and the ring lattice, and joins consecutive vertices only
-// where they land near each other in the unrolled plane. It deliberately does
-// not fill faces -- the surface's topology is still unknown (see Cylinder.h),
-// and filling would mean asserting one.
+// Plot unrolled vertices and the ring lattice, joining only nearby consecutive vertices.
+// Faces are omitted because the topology is unresolved (Cylinder.h).
 int cmdLvlMap(const fs::path& gameDir, std::string_view levelName, const fs::path& out) {
   auto lib = webo::AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
   if (!lib) {
@@ -141,9 +137,7 @@ int cmdLvlMap(const fs::path& gameDir, std::string_view levelName, const fs::pat
     return std::pair{static_cast<int>(a * w), h - 1 - static_cast<int>(v.y) * kScale};
   };
 
-  // Join consecutive vertices when they are close in the unrolled plane. A
-  // jump to a new column exceeds the threshold and is left undrawn rather
-  // than guessed at.
+  // Skip joins that jump to another column in the unrolled plane.
   const int limit = kScale * 5;
   for (std::size_t i = 1; i < mesh->surface.size(); ++i) {
     const auto [x0, y0] = project(mesh->surface[i - 1]);
@@ -176,18 +170,9 @@ int cmdLvlMap(const fs::path& gameDir, std::string_view levelName, const fs::pat
   return 0;
 }
 
-// Probes how the sparse u32 arrays after "Cylinder" are keyed.
-//
-// Settled (see PLAN.md 1.6): the *values* are surface-vertex indices, and the
-// *slots* are a cylindrical lattice. Adjacent keys map to geometrically
-// adjacent vertices:
-//
-//   key+1     often inner <-> outer at the same (ang, y)   dist ≈ thickness 10
-//   key+16    next angular step                            dist ≈ chord(r=50|60)
-//   key+Y     next ring (Y is per-level)                   dist ≈ 16
-//
-// This command reports those median distances so a regression is visible, and
-// dumps a few key->vertex rows when a single level is named.
+// Report median distances for adjacent keys in the sparse surface-index arrays after "Cylinder".
+// key+1 often crosses shells (thickness about 10). key+16 advances one angular step.
+// A per-level Y stride reaches the next ring (about 16 units). One level also prints sample key-to-index rows.
 int cmdLvlKeys(const fs::path& gameDir, std::string_view levelFilter) {
   auto lib = webo::AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
   if (!lib) {
@@ -352,9 +337,7 @@ int cmdLvlKeys(const fs::path& gameDir, std::string_view levelFilter) {
   return 0;
 }
 
-// Rasterises a level's surface lattice to a flat occupancy PNG -- the same
-// mask the simulation walks on when --level is used. Useful for judging how
-// much of the tube the faces actually cover.
+// Rasterise a diagnostic occupancy PNG from the surface lattice.
 int cmdLvlMask(const fs::path& gameDir, std::string_view levelName, const fs::path& out) {
   auto lib = webo::AssetLibrary::open(gameDir / "lemmings.box", gameDir / "patch.box");
   if (!lib) {
@@ -427,17 +410,8 @@ int cmdLvlMask(const fs::path& gameDir, std::string_view levelName, const fs::pa
   return 0;
 }
 
-// Surveys the terrain the lattice rebuilds, across every level, against one
-// invariant that needs no running original: a lemming released from a parsed
-// entrance has to land on something, and a drop past `splatDistance` kills it.
-// So for each entrance, is there a solid cell below it, and is the drop
-// survivable?
-//
-// This is a measurement, not a verdict. It says where the lattice reading
-// stands; PLAN.md 1.6 records what the numbers do and do not support. The
-// splat distance comes from `World::Rules` rather than a literal here, so the
-// oracle tracks the simulation. `--csv` emits one row per level so two runs
-// can be diffed.
+// For each entrance, report the first solid cell below it and whether the drop exceeds
+// World::Rules::splatDistance. --csv emits one row per level.
 int cmdLvlStats(const fs::path& dir, bool csv) {
   auto lib = webo::AssetLibrary::open(dir / "lemmings.box", dir / "patch.box");
   if (!lib) {
@@ -856,8 +830,7 @@ int cmdSprites(const fs::path& dir, std::string_view filter) {
   return (failed || missingSheets) ? 1 : 0;
 }
 
-// Composite one animation's frames into a horizontal strip, so the rectangles
-// can be checked by eye rather than only by arithmetic.
+// Composite one animation's frames into a horizontal strip for inspection.
 int cmdAnim(const fs::path& dir, std::string_view sprName, std::string_view spriteName,
             const fs::path& out, std::size_t animIndex) {
   auto lib = openGame(dir);

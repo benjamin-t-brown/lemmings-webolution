@@ -5,11 +5,9 @@
 
 namespace webo::app {
 
-// Playtest R1/R2: connected level entry only. Installed door tracks contain
-// 70 keys over 2.8 seconds; 0x451121 adds dt without a speed multiplier.
-// PROVISIONAL phase: start opening at level entry and hold the hatch clock
-// until BOTH the full clip and EntryStartCue have retired. Original startup
-// phase versus the cue is not established by the old ~0.723 s arm estimate.
+// Connected level entry. Installed door tracks have 70 keys over 2.8 seconds.
+// 0x451121 adds dt without scaling. Provisional clone sequencing starts the
+// doors on entry and enables release after the full clip and EntryStartCue.
 class LevelStartSequence {
  public:
   explicit LevelStartSequence(double doorSeconds) : duration_(std::max(0.0, doorSeconds)) {}

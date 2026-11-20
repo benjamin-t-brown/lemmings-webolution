@@ -20,9 +20,7 @@ public:
   const Image& image() const { return image_; }
   const std::array<std::int32_t,102>& states() const { return states_; }
 
-  // The 102 {group, slot, base} entries of the table at VA 0x4B3948, indexed by
-  // map node. Shared by build() and the save adapter; verified against the
-  // reference executable bytes by test_savedgame.
+  // Map-node order indexes the 102 {group, slot, base} entries at VA 0x4B3948.
   static const std::array<std::array<std::int32_t,3>,102>& nodeMapping();
 
   // SOURCE mask semantics read at 0x0049ABC8; state eligibility at 0x0049B26A.

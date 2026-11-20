@@ -4,9 +4,8 @@
 
 namespace webo::app {
 
-// Conditional software row for the accepted successful-normal caret constructor
-// route (leaf prefix '^' => encoded flags 8). This does not model cache hits or
-// claim that the native device accepted these requests.
+// Software material row for a successfully constructed texture with leaf
+// prefix '^' and encoded flags 8.
 inline SceneRasterOptions conditionalCaretFlags8Policy(SceneRasterOptions options) {
   options.alphaFunction = SceneAlphaFunction::Disabled;
   options.alphaOperation = SceneAlphaOperation::SelectTexture;

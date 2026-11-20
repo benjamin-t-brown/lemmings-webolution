@@ -26,8 +26,7 @@ void LevelEndTransition::afterSimulationSlice(double seconds, const LevelEndInpu
   if (timer_ < 1.0) {
     effectActive_ = false;
     timer_ = 7.0;
-    // Native globals publish CURRENT counts even though the result flag was
-    // latched on the earlier trigger. Late rescues cannot upgrade a loss.
+    // Publish final counts with the trigger-time result. Late rescues cannot upgrade a loss.
     snapshot_ = LevelEndSnapshot{winLatched_, in.saved, in.needed};
     phase_ = LevelEndPhase::Results;
   }

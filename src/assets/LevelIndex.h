@@ -1,105 +1,21 @@
-// A partial .LVL index with structured surface-index lattice extraction.
-//
-// indexLevel preserves its heuristic string sweep and header capture, but reads
-// grid0 through the recovered prefix and world readers in serialized order.
-// It stops after the world section, accepts trailing input and projects every
-// first_integer_array u32 unchanged, including an empty array. Only a recovered
-// reader's invalid_argument enables the diagnosed legacy Cylinder locator.
-// Missing grids on that fallback remain successful partial indexes.
-//
-// The level format is large (700 KB - 1.9 MB each), undocumented, and carries
-// several things at once: cylinder geometry, the terrain, placed models, a
-// script, and sound and sprite references. It is not solved yet. This header
-// exposes only what has been *verified* across all 102 retail levels, so that
-// the rest of the engine has something real to build against while the format
-// is finished.
-//
-// Retained historical corpus observations (not parser validation policies)
-// ----------------------------------------------------------------------
-//   * The file opens with a u32-length-prefixed title ("Level 23").
-//   * Asset references appear as u32-length-prefixed ASCII, and every one of
-//     the 26,021 references across the 102 levels resolves to an entry that
-//     exists in the archive, under TEXTURES\<reference>.BMP. That is what
-//     makes the scan below trustworthy rather than a guess: a mis-scan would
-//     produce references that do not resolve.
-//   * The title is followed by seven u32 header words, then a u32 count and
-//     that many length-prefixed asset names -- the level's manifest. That
-//     parse consumes exactly, in all 102 levels, and the manifest always
-//     begins with "_curNoLem". An earlier reading of this header had eight
-//     words: the eighth was really the manifest's count, and the ninth word
-//     that "was always 9" was the length prefix of "_curNoLem".
-//   * Header invariants across all 102 levels: word[3] == word[4], word[2] -
-//     word[1] is always 0x1B0000, and word[0] repeats the manifest count.
-//     word[3] is a multiple of 64 and ranges from 20480 to 111936 (30 distinct
-//     values). It is **not** the lattice's byte length. That reading was a
-//     window into the array below; see docs/scratch/phase2-lattice.md.
-//   * The literal "Cylinder" chunk starts a fixed walk, the same one
-//     CollisionGrid.h uses to reach the mask:
-//
-//         u32 8, "Cylinder"
-//         u32[5]     zeros, in all 102 levels
-//         u32        height 96, in all 102 levels
-//         f64        0.36, in all 102 levels
-//         u32 N      49858, in all 102 levels
-//         u32[N]     one surface-index array
-//
-//     Every word is 0xFFFFFFFF or an index into CylinderMesh::surface. The
-//     array is occupied through its last word in all 102 levels (last
-//     non-empty at 49856 or 49857). The tube mesh in Cylinder.h is a
-//     different, earlier object; this array is not that mesh, and its bytes
-//     are not the same from level to level.
-//   * There is no second index array of length word[3]. grid1 is empty.
-//     The collision grid is the next counted array after u32 R and R*12
-//     records (CollisionGrid.h). A counted array of 12288 words follows the
-//     collision payload in all 102 levels; it is not this lattice.
-//
-// Keying — settled
-// ----------------
-//   The non-empty entries are indices into the cylinder's surface vertices
-//   (see Cylinder.h). Asserted on the whole 49858-word array in all 102
-//   levels: every value is in range, and (highest + 1) / vertex count is at
-//   worst 0.993 (M18_MT_1). The earlier 87%..99.8% band was the header[3]
-//   window, which drops most of the pool on the short levels.
-//
-//   The *slots* are a cylindrical lattice, not a hash and not a flat terrain
-//   bitmap. Neighbouring keys name neighbouring vertices. Re-measured on the
-//   49858-word array, all 102 levels:
-//
-//     key+1   inner <-> outer (median distance within 1 of thickness 10)
-//     key+16  next angular step (median within 1 of the chord at r=50 or r=60)
-//
-//   The array length is not a multiple of 16: 49858 = 16*3116 + 2. The old
-//   "multiple of 16" note was header[3] / 4, which is a different number.
-//   `lrtool lvlkeys` reports the median distances; see PLAN.md 1.6 for the
-//   quad reconstruction.
-//
-//   The ring stride Y is not a stored .LVL field. On MM_CLIMB_002, MM_FLOAT,
-//   MM_BUILD and VH13_KF_1, SurfaceMesh::detectRingStride returns 8224 and
-//   the median key+8224 distance is exactly one ring (16). MM_CLIMB_002 has
-//   no aligned u32 equal to 8224 or 8224/16 (test_surface).
-//
-// Not yet determined
-// ------------------
-//   * What header word[3] and word[4] are. They match each other in all 102
-//     levels, but neither equals N*4 (199432) and neither is stored as a
-//     count beside the Cylinder chunk.
-//   * Script / remaining non-world Object 09 subtypes (fish, teleport_fx, …).
-//
-// Skin tiles do **not** encode solidity: all 4,896 named INN/OUT tiles across
-// the corpus are opaque bitmaps with no transparency sigil (ruled out in
-// PLAN.md 1.6 / test_surface).
-//
-// PolyList 09 chunks are render attributes for surface vertices (UV + RGBA),
-// not a second collision mesh -- see PolyList.h.
-//
-// Entrances, exits, other placed models, and skill counts: see LevelObjects.h.
-//
-// The string sweep is a *heuristic index*, not a parser: it finds
-// length-prefixed strings rather than walking a known structure. The
-// surface-index array is the exception: recovered section-order readers reach
-// world.first_integer_array. The Cylinder walk above is retained only as a
-// diagnosed legacy fallback, not a scan for 0xFFFFFFFF. Other fields here are
-// still a heuristic index; this is not a complete level/runtime object loader.
+// Partial .LVL index. indexLevel scans for strings and reads world.first_integer_array
+// as grid0 in section order. A recovered reader's invalid_argument enables the legacy
+// "Cylinder" locator. An absent fallback array still yields a partial index.
+// A u32-length-prefixed title ("Level 23") precedes seven header words and a counted name
+// list starting with "_curNoLem". TEXTURES\<reference>.BMP resolves asset names.
+// Retail word[0] repeats the name count, word[2] - word[1] == 0x1B0000, and word[3] == word[4].
+// word[3] (header[3]) and word[4] are multiples of 64 with unresolved meaning.
+// The "Cylinder" preamble (CollisionGrid.h) has u32[5] zeros, height 96, f64 0.36,
+// then one counted u32[N] surface-index array (49858 in retail). It maps keys to
+// CylinderMesh::surface indices or 0xFFFFFFFF. The ring geometry in Cylinder.h is separate.
+// On M18_MT_1 the highest index plus one is 99.3% of the surface pool.
+// The collision grid follows R 12-byte records. grid1 stays empty. The grid is followed by 12288 light-map bytes.
+// key+1 crosses shells and key+16 advances an angular step. SurfaceMesh::detectRingStride
+// derives the ring stride, e.g. 8224 on MM_CLIMB_002, MM_FLOAT, MM_BUILD and VH13_KF_1.
+// The measured displacement for key+8224 is 16 world units. lrtool lvlkeys reports these distances.
+// Scripts and some Object 09 subtypes (fish, teleport_fx) remain unresolved here.
+// Retail INN/OUT tiles are opaque. PolyList 09 describes render UV and RGBA (PolyList.h).
+// LevelObjects.h covers placed models and skill counts.
 
 #pragma once
 
@@ -120,8 +36,7 @@ struct LevelIndex {
   std::string title;
   std::vector<std::uint32_t> header;  // the u32 words following the title
 
-  // "Cylinder\MM_CLIMB_002\INN_MM_CLIMB_002_0_0" and friends: the inner and
-  // outer skins of the tube, as a grid of tiles.
+  // Tube skin tile, e.g. "Cylinder\MM_CLIMB_002\INN_MM_CLIMB_002_0_0".
   std::vector<std::string> cylinderTextures;
   // "Models\bg_sand_medium\sand_1", "Models\exit\basket", ...
   std::vector<std::string> modelTextures;
@@ -132,16 +47,12 @@ struct LevelIndex {
 
   std::size_t polyListCount = 0;
 
-  // Recovered world's first_integer_array, with every u32 bit and position
-  // preserved. Historical retail N is 49858; no length or index policy is
-  // imposed here. 0xFFFFFFFF is the consumers' empty-slot marker.
+  // Preserve the world's first_integer_array words and positions. Consumers use 0xFFFFFFFF for empty slots.
   std::vector<std::uint32_t> grid0;
-  // Not present in the file. Kept so callers can still pass both spans;
-  // indexLevel leaves it empty.
+  // Kept for the two-span interface. indexLevel leaves it empty.
   std::vector<std::uint32_t> grid1;
 
-  // Empty on structured success (even for empty grid0); otherwise the recovered
-  // rejection and cursor, whether or not the legacy locator finds an array.
+  // Empty on ordered success. Otherwise records the reader rejection and cursor even if no fallback array is found.
   std::string gridFallbackReason;
 
   // Cells in grid1 that are not the empty marker (0xFFFFFFFF).
@@ -152,21 +63,11 @@ struct LevelIndex {
 //   "Models\exit\basket" -> "TEXTURES\MODELS\EXIT\BASKET.BMP"
 std::string levelTextureAssetName(std::string_view reference);
 
-// The same mapping with the cylinder skin's high-detail variant:
+// High-detail cylinder variant:
 //   "Cylinder\MM_CLIMB_002\OUT_MM_CLIMB_002_3_1"
 //     -> "TEXTURES\CYLINDER\MM_CLIMB_002\OUT_MM_CLIMB_002_3_1HI.BMP"
-//
-// The archive stores the tube's tiles twice, "<name>.BMP" and "<name>HI.BMP"
-// (all 48 tile names of every level; 4,897 of the archive's 10,384 ".BMP"
-// entries have such a sibling across the whole corpus). The .LVL names the tile
-// once, without a suffix -- `parseTilePosition` reads the trailing column/row
-// and only that -- so the variant is a loader choice, not a stored reference.
-//
-// The retained originals settle it: at identical geometry the tube's nine
-// retained views and the exposed inner-wall region match only with the HI
-// bitmap (`initial` 0.015574261 with HI vs 0.028511432 with the plain one under
-// the unchanged fixed-ROI gate). That is a pixel measurement, not a byte read of
-// the original's own texture loader.
+// The .LVL stores an unsuffixed name for both "<name>.BMP" and "<name>HI.BMP".
+// parseTilePosition reads its trailing column/row. Clone selection of HI follows the original image match.
 std::string levelTextureAssetNameHi(std::string_view reference);
 
 std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte>);

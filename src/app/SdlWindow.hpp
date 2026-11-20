@@ -1,8 +1,6 @@
-// One presentation lifetime for connected play; standalone adapters own a local
-// instance. Textures remain local to each leg (RGBA frontend, RGB level).
-// PROVISIONAL clone ownership policy: native HWND/device continuity across
-// menu/level/results has not been observed. A native handle trace would settle
-// that comparison; a stable player window is the playable-v1 requirement here.
+// Provisional clone ownership shares one window across connected play.
+// Standalone callers own their window. Textures are local to each leg.
+// Native HWND and device continuity across legs are unresolved.
 #pragma once
 
 #if defined(WEBOLUTION_HAVE_SDL2) && WEBOLUTION_HAVE_SDL2
@@ -64,10 +62,8 @@ class SdlWindow {
       if (desktop) SDL_ShowWindow(window_);
 #endif
     }
-    // Upscale only the final 640x480 texture on the GPU when available. Keeping
-    // the enlarged blit off the CPU avoids a scale-dependent frame-time cost;
-    // dummy/headless drivers retain the existing software fallback. Use the
-    // same backend at every scale; no vsync request or simulation/raster changes.
+    // Scale the final 640x480 texture on the GPU when available. Headless
+    // drivers use the software fallback. The renderer choice is scale-independent.
     renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer_) renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_SOFTWARE);
     if (!renderer_) return error("SDL_CreateRenderer");
@@ -91,12 +87,9 @@ class SdlWindow {
 #endif
     return info;
   }
-  // PROVISIONAL clone presentation policy (playtest V9), not recovered native
-  // window sizing. No logical renderer size/event filter: translate exactly
-  // once here, including public SDL_PushEvent automation. A native window/input
-  // observation would settle original scaling behavior. Relative camera motion
-  // is divided in floating point by the caller so subpixel deltas survive.
-  // On the web scale_ stays 1 because SDL already maps the CSS canvas rectangle.
+  // Provisional clone coordinates. Map SDL events once to render pixels.
+  // Callers divide relative deltas in floating point. Web scale stays 1
+  // because SDL already maps the CSS canvas rectangle.
   void gameCoordinates(SDL_Event& event) const {
     const auto pixel = [this](int value) {
       const int quotient = value / scale_;

@@ -65,8 +65,7 @@ struct Reader {
     if (!charge(n, 1, what)) return false;
     s.assign(reinterpret_cast<const char*>(bytes.data() + p), n); p += n; return true;
   }
-  // Length-prefixed string with an explicit capacity (0x0047D940 as called by the
-  // branch-1 reader 0x00468BF2 with capacity 0xFF): longer names are rejected.
+  // Branch-1 reader 0x00468BF2 calls 0x0047D940 for a counted name with capacity 0xFF.
   bool boundedString(std::string& s, std::uint32_t capacity, const char* what) {
     std::uint32_t n;
     if (!u32(n, "string length")) return false;
@@ -125,16 +124,14 @@ struct Reader {
           return false;
         }
         if (!u32(b.kind, "mesh kind")) return false;
-        // Read the remaining two header words separately; keeping the native
-        // 12-byte block header distinct from legacy PolyList's 16-byte header.
+        // The native 12-byte header has two remaining words. Legacy PolyList has a 16-byte header.
         if (!u32(count, "mesh record count") || !u32(slot, "material slot")) return false;
         b.materialSlot = slot;
         if (b.kind != 4 && b.kind != 5 && b.kind != 6 && b.kind != 7) {
           error = std::format("unsupported scene mesh kind {} at 0x{:x}", b.kind, b.sourceOffset); return false;
         }
         if (slot >= out.materials.size()) { error = std::format("material slot {} outside node table at 0x{:x}", slot, b.sourceOffset); return false; }
-        // Kind 4 (fluid-surface-impl-001, fluid research 6.3 A): serialized stride 96 = normal index,
-        // shared RGBA, three corners (the in-memory record stride 0x70 is a different quantity).
+        // Kind 4 stores a normal index, shared RGBA and three corners in 96 bytes. Runtime stride is 0x70.
         const std::size_t stride = b.kind == 4 ? 96 : b.kind == 5 ? 160 : b.kind == 6 ? 116 : 212;
         if (count > (bytes.size() - p) / stride) { error = std::format("mesh record count {} exceeds remaining bytes", count); return false; }
         if (!charge(count, sizeof(SceneRecord), "mesh records")) return false;
@@ -167,10 +164,9 @@ struct Reader {
         if (!string(out.type2.branchName, "type-2 branch name")) return false;
         for (double& x : out.type2.branchDoubles) if (!f64(x, "type-2 branch double")) return false;
       } else {
-        // Branch 1 (0x0047B44C -> 0x00468BF2). The original normalises the branch byte to a
-        // boolean (0x0047B4E5), so any nonzero byte is branch 1. Four u32 fields (f1 mirror,
-        // f2 clip, f3 temporal, f4 directional; stored at sub+0x1B0/0x1C8/0x1CC/0x1B8), then a
-        // name of capacity 0xFF. There are no UV doubles in this branch.
+        // Branch 1 (0x0047B44C -> 0x00468BF2) accepts any nonzero byte (0x0047B4E5).
+        // Four u32s f1 mirror, f2 clip, f3 temporal, f4 directional go to sub+0x1B0/0x1C8/0x1CC/0x1B8,
+        // followed by a name with capacity 0xFF. No UV doubles are serialized here.
         for (std::uint32_t& w : out.type2.branchWords) if (!u32(w, "type-2 branch-1 field")) return false;
         if (!boundedString(out.type2.branchName, 255, "type-2 branch-1 name")) return false;
       }

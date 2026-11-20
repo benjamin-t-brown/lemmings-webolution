@@ -1,62 +1,18 @@
-// The cylinder a level is played on.
-//
-// Lemmings Revolution's levels are not flat: each one wraps around the inside
-// and outside of a vertical tube, which is why the simulation's X axis wraps
-// and its Y axis does not. This is the tube's geometry, read out of the .LVL
-// file. The observations below were measured across 102 retail levels.
-//
-// Those measured meshes have identical ring counts, radii, spacing and vertex
-// counts. These are retail observations, not general serialized constraints:
-// the recovered reader counts its first and second block arrays independently.
-//
-// Layout in the file, at the position `findCylinderMesh` locates:
-//
-//     u32     faceCount      112 in every retail level; not yet identified
-//     f64     thickness      10.0 -- outerRadius - innerRadius
-//     u32     ringCount      7
-//     ringCount * 32 * 2 * { f64 x, f64 y, f64 z }     ring vertices
-//     u32     secondCount    7 in the historically measured retail levels
-//     secondCount * 32 * f64                          uninterpreted double blocks
-//     u32     one            1 in every retail level; not yet identified
-//     u32     surfaceCount
-//     surfaceCount * { f64 x, f64 y, f64 z }           the level's surface
-//     u32     secondaryCount 0 in the historically measured retail levels
-//     secondaryCount * { f64, f64, f64 }              opaque serialized triples
-//     u32     48
-//     48 * counted string                              OUTER tile names
-//     48 * counted string                              INNER tile names
-//
-// The whole chain parses exactly in all 102 retail levels.
-//
-// In that retail sample everything above is constant except `surfaceCount`
-// and its vertices, which range from 539
-// to 1558. This mesh is what the engine draws. The collision mask is a
-// separate stored grid (CollisionGrid.h). The per-level surface-index array
-// after the Cylinder preamble is one counted run of 49858 words (LevelIndex.h),
-// not two slices of header[3].
-//
-// The surface vertices open with a quad -- for the first retail level,
-// (0,0,60) (0,16,60) (-11.74,16,59.02) (-11.74,0,59.02), spanning one angular
-// step and one ring band on the outer skin -- and then continue in pairs, so
-// they read as a strip. The exact primitive and winding are not yet pinned
-// down, so this exposes the vertices without claiming a topology.
-//
-// The vertices are **not** 8-byte aligned in the file (the u32 before them
-// puts them on a 4-byte boundary), so they must be read unaligned.
-//
-// Vertices come in angular order, and within each angular step the inner
-// vertex precedes the outer one:
-//
-//     ring 0: (step 0 inner) (step 0 outer) (step 1 inner) (step 1 outer) ...
-//     ring 1: ...
-//
-// Measured in the retail data: 32 angular steps of exactly 11.25 degrees,
-// 7 rings at y = 0, 16, 32, ... 96, inner radius 50 and outer radius 60.
-//
-// The angular step count divides the tile grid evenly, which is the useful
-// part: the skin is addressed as 8 tile columns by 3 tile rows (read off the
-// loop bounds at .text:0043AA91 in the original), so one tile column spans
-// 32 / 8 = 4 angular steps, and one tile row spans 6 / 3 = 2 ring bands.
+// Tube geometry in the .LVL. X wraps around the cylinder and Y measures height.
+// Layout at the position returned by findCylinderMesh:
+//   u32 faceCount, unidentified (112 in retail)
+//   f64 thickness (10.0), u32 ringCount (7)
+//   ringCount * 32 * 2 triples of f64 x, y, z, inner then outer at each angular step
+//   u32 secondCount (7), secondCount * 32 uninterpreted doubles
+//   u32 one, unidentified (1), u32 surfaceCount, surfaceCount triples (539..1558)
+//   u32 secondaryCount (0), secondaryCount opaque f64 triples
+//   u32 tile count (48), then outer and inner counted-string blocks of that length
+// Vertex doubles can be unaligned. The structured reader counts rings and double blocks independently.
+// The 49858-word surface index is counted separately from header[3] (LevelIndex.h).
+// Physics uses CollisionGrid.h.
+// Surface primitive and winding remain unresolved. The ring mesh uses 32 steps of 11.25 degrees,
+// seven rings at Y=0..96 in steps of 16, and radii 50 and 60 in retail data.
+// Tile loop .text:0043AA91 uses 8 columns by 3 rows, or four angular steps by two bands per tile.
 
 #pragma once
 
@@ -75,8 +31,7 @@ struct Vec3 {
 };
 
 struct CylinderMesh {
-  // Unidentified. 112 in all 102 retail levels, so it is recorded rather than
-  // interpreted; naming it something confident would be a guess.
+  // Unidentified word (112 in retail).
   std::uint32_t faceCount = 0;
 
   double thickness = 0;          // outerRadius - innerRadius
@@ -86,23 +41,18 @@ struct CylinderMesh {
   // ringCount * angularSteps * 2 vertices, inner before outer at each step.
   std::vector<Vec3> vertices;
 
-  // Independently counted second blocks, flattened in block/component order.
-  // The name is retained for compatibility. Count equality with ringCount and
-  // a per-inner-vertex relationship are retail observations, not reader rules.
-  // Period 8 in the historically measured retail data.
+  // Independent double blocks in block/component order. The compatibility name gives no vertex mapping.
+  // The retail values repeat with period 8.
   std::vector<double> radii;
 
   // The per-level surface geometry. This is the part that varies.
   std::vector<Vec3> surface;
 
-  // Unidentified; 1 in every retail level. Recorded, not interpreted.
+  // Unidentified word (1 in retail).
   std::uint32_t one = 0;
 
-  // The skin tiles, in two blocks of 48 slots. The count is stated once and
-  // applies to each block; the second follows the first with no header of its
-  // own. Half of each block's slots are empty, so a level names 24 outer and
-  // 24 inner tiles -- one per cell of the 8x3 grid.
-  //   "Cylinder\MM_CLIMB_002\OUT_MM_CLIMB_002_0_0"
+  // The shared count covers both 48-slot blocks. Each block names 24 tiles
+  // and leaves the other surface's slots empty, e.g. "Cylinder\MM_CLIMB_002\OUT_MM_CLIMB_002_0_0".
   std::vector<std::string> tileTextures;       // all prefixed OUT_
   std::vector<std::string> innerTileTextures;  // all prefixed INN_
 
@@ -110,8 +60,7 @@ struct CylinderMesh {
   std::size_t offset = 0;
   std::size_t endOffset = 0;
 
-  // Empty for structured loading. Successful legacy loading retains the
-  // recovered reader's rejection and byte cursor for diagnosis.
+  // Legacy success retains the structured reader's rejection and byte cursor.
   std::string meshFallbackReason;
 
   const Vec3& vertex(std::uint32_t ring, std::uint32_t step, bool outer) const;
@@ -124,8 +73,7 @@ struct CylinderMesh {
   // Bands of surface between rings.
   std::uint32_t bandCount() const { return ringCount > 0 ? ringCount - 1 : 0; }
 
-  // The tile grid the skin textures are addressed in, from the original's
-  // own loop bounds rather than from this file.
+  // Tile dimensions from the original's draw loop bounds.
   static constexpr std::uint32_t kTileColumns = 8;
   static constexpr std::uint32_t kTileRows = 3;
 
@@ -133,13 +81,9 @@ struct CylinderMesh {
   std::uint32_t bandsPerTileRow() const { return bandCount() / kTileRows; }
 };
 
-// Read counted ring vertices and independent double blocks through the recovered
-// ordered prefix/world readers, then the compatibility surface/tile tail,
-// consuming the recovered secondary-triple count/payload without exposing or
-// interpreting its values.
-// Only a recovered-reader rejection enables the diagnosed legacy signature
-// locator, whose tail still requires equal radius/ring counts and a zero word
-// at the secondary-triple position.
+// Read the ordered prefix and world, then the compatibility surface/tile tail.
+// Consume the secondary triples without exposing them. Only a structured rejection
+// enables the fallback, which requires equal ring/radius counts and zero secondary triples.
 std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::byte>);
 
 }  // namespace webo

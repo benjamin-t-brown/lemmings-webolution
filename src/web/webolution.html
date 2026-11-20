@@ -13,7 +13,7 @@
     align-items: center; justify-content: center; gap: 1rem;
   }
   button { padding: .6rem 1.4rem; font: inherit; cursor: pointer; }
-  /* Clone window-size setting. Fixed scales use CSS pixels and can scroll. */
+  /* Clone addition. Preset canvas widths use CSS pixels and may require scrolling. */
   canvas {
     display: block;
     width: min(100vw, calc(100vh * 4 / 3));
@@ -44,9 +44,8 @@
     write(text);
   }
   canvas.addEventListener('contextmenu', event => event.preventDefault());
-  // SDL puts its last motion position in button events. Scrolling or a CSS
-  // resize can move the canvas under a stationary pointer. Refresh that
-  // position with the button's client coordinates before SDL sees the button.
+  // SDL button events reuse the last pointer position. Refresh it after scroll or resize
+  // changes the canvas position under a stationary pointer.
   function refreshMousePosition(event) {
     if (document.pointerLockElement === canvas) return;
     canvas.dispatchEvent(new MouseEvent('mousemove', {
@@ -86,8 +85,7 @@
       canvas.hidden = false;
       canvas.focus();
       try {
-        // Ordinary no-option startup. Open browser audio in this gesture and hold
-        // the save lock across Asyncify suspensions until main really returns.
+        // Open audio in the click gesture and hold the save lock until main returns across Asyncify yields.
         const code = await Module.ccall('main', 'number', ['number', 'number'], [0, 0], {async: true});
         if (code === 0) message('Game closed. Reload to play again.');
         else message(lastDiagnostic || 'Game exited with code ' + code + '.');
@@ -109,7 +107,7 @@
     },
     async onRuntimeInitialized() {
       try {
-        // A second tab must not reconcile a stale IDBFS tree over this one.
+        // Lock the IDBFS save tree so two tabs cannot sync over each other.
         await navigator.locks.request('webolution-save', {ifAvailable: true}, async lock => {
           if (!lock) throw new Error('Close the other game tab and reload.');
           const finished = new Promise(resolve => { releaseStore = resolve; });

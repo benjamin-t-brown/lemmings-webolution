@@ -45,15 +45,13 @@ std::expected<Sound, std::string> decodeWav(std::span<const std::byte> data) {
   std::span<const std::byte> pcm;
   bool haveFmt = false;
 
-  // Walk the chunk list rather than assuming an order. Chunks are padded to
-  // an even size in RIFF, and skipping that padding is what keeps every chunk
-  // after the first odd one aligned.
+  // Walk RIFF chunks in file order, skipping the pad byte after odd-sized payloads.
   std::size_t at = 12;
   while (at + 8 <= data.size()) {
     const std::uint32_t size = read32(data, at + 4);
     const std::size_t body = at + 8;
     if (size > data.size() - body)
-      break;  // a truncated tail; keep whatever was already found
+      break;  // Keep chunks found before a truncated tail.
 
     if (tagIs(data, at, "fmt ") && size >= 16) {
       format = read16(data, body);
@@ -86,9 +84,7 @@ std::expected<Sound, std::string> decodeWav(std::span<const std::byte> data) {
   sound.sampleRate = static_cast<int>(sampleRate);
 
   if (bits == 8) {
-    // 8-bit RIFF samples are unsigned and centred on 128. Shifting rather
-    // than reinterpreting matters: reinterpreting turns quiet audio into a
-    // loud buzz, which is audible but easy to mistake for a bad asset.
+    // Recenter unsigned 8-bit RIFF samples around 128 before scaling to signed PCM.
     sound.samples.resize(pcm.size());
     for (std::size_t i = 0; i < pcm.size(); ++i) {
       const int v = static_cast<int>(std::to_integer<std::uint8_t>(pcm[i])) - 128;
@@ -126,8 +122,7 @@ Sound resampleTo(const Sound& source, int sampleRate, int channels) {
     return out;
   out.samples.resize(outFrames * static_cast<std::size_t>(channels));
 
-  // Reads one source channel of a frame, mixing down when the source has more
-  // channels than the destination.
+  // Read a source channel or mix down when reducing channel count.
   const auto sampleAt = [&](std::size_t frame, int channel) -> double {
     frame = std::min(frame, inFrames - 1);
     const std::size_t base = frame * static_cast<std::size_t>(source.channels);
@@ -135,7 +130,7 @@ Sound resampleTo(const Sound& source, int sampleRate, int channels) {
       return source.samples[base + static_cast<std::size_t>(channel)];
     if (source.channels == 1)
       return source.samples[base];  // mono fans out to every destination channel
-    // Stereo down to mono: average, so a hard-panned sound does not vanish.
+    // Average stereo channels to keep hard-panned sounds audible.
     return 0.5 * (static_cast<double>(source.samples[base]) +
                   static_cast<double>(source.samples[base + 1]));
   };

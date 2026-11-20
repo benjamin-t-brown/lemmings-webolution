@@ -9,8 +9,7 @@ namespace {
 constexpr std::size_t kMaxSymbols = 17;    // low nibble (<=15) + 2
 constexpr std::size_t kArenaBytes = 8192;  // node arena, shared by the three trees
 
-// The original rotates an 8-bit mask and carries into the pointer. Rotating
-// right past bit 0 steps forward a byte; rotating left past bit 7 steps back.
+// Rotate the bit mask. Crossing bit 0 to the right or bit 7 to the left moves the byte cursor.
 inline void maskForward(std::uint8_t& mask, std::size_t& index) {
   const bool wrapped = (mask & 0x01) != 0;
   mask = static_cast<std::uint8_t>((mask >> 1) | (mask << 7));
@@ -36,7 +35,6 @@ public:
   const std::string& error() const { return error_; }
 
 private:
-  // -- source bitstream ---------------------------------------------------
   bool bit() {
     if (srcPos_ >= srcSize_) {
       fail("bitstream ran past the end of the chunk");
@@ -108,9 +106,8 @@ bool Decoder::readTree(int index) {
     return true;
   }
 
-  // Low nibble of the first byte is the symbol count, less two. The depth
-  // values are nibbles: the high nibble of this first byte, then for every
-  // following byte the low nibble and then the high nibble.
+  // The first low nibble is symbol count minus two. Read depths from the first
+  // high nibble, then low/high nibble pairs from subsequent bytes.
   const std::uint8_t count = static_cast<std::uint8_t>((first & 0x0F) + 2);
   std::uint8_t maxDepth = 0;
   std::size_t stored = 0;
@@ -136,9 +133,8 @@ bool Decoder::readTree(int index) {
   return buildTree(index, count, maxDepth);
 }
 
-// Walks the code space depth by depth, emitting nodes as it assigns a code to
-// each symbol. Nodes are bytes: at node p, bit 0 steps to p + 1 and bit 1 steps
-// to p + arena[p]; a zero byte marks a leaf, whose value is the next byte.
+// Build canonical codes by depth. At node p, bit 0 steps to p + 1 and bit 1 to p + arena[p].
+// A zero node byte marks a leaf and the next byte holds the symbol.
 bool Decoder::buildTree(int index, std::uint8_t count, std::uint8_t maxDepth) {
   const auto emit = [&](std::uint8_t v) {
     if (arenaUsed_ >= kArenaBytes) {
@@ -190,8 +186,7 @@ haveSymbol:
     return false;
 
   {
-    // Advance the canonical code: scan back over set bits for a clear one.
-    // Running out means the code space is full and the tree is complete.
+    // Scan backward over set bits to the next clear bit. Exhaustion completes the tree.
     std::uint8_t back = depth;  // al
     while ((codeBits_[cb] & dh) != 0) {
       maskBack(dh, cb);
@@ -200,10 +195,7 @@ haveSymbol:
     }
     codeBits_[cb] |= dh;
 
-    // Walk from the root along that code, materialising nodes as needed.
-    // This reuses the shared code cursor rather than a private one: the walk
-    // deliberately leaves it at the END of the code just placed, which is
-    // where the next symbol's backward scan has to start from.
+    // Materialise nodes along the code. Leave the shared cursor at the end for the next backward scan.
     std::uint8_t steps = depth;  // dl
     dh = 0x80;
     cb = 0;
@@ -217,7 +209,7 @@ haveSymbol:
       if ((codeBits_[cb] & dh) != 0) {
         const std::uint8_t off = arena_[node];
         if (off == 0) {
-          // An unwritten right branch: aim it at the nodes we now append.
+          // Point the unwritten right branch at the appended nodes.
           const std::size_t delta = arenaUsed_ - node;
           if (delta >= 0x100) {
             fail("tree branch offset exceeded one byte");

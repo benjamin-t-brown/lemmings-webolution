@@ -79,10 +79,7 @@ private:
   std::string error_;
 };
 
-// Each localisation was authored for the Windows ANSI codepage of its locale,
-// so a single table would silently corrupt three of the eight languages:
-// Polish and Czech need 1250, Hebrew needs 1255. The tables are generated
-// rather than transcribed -- see codepages.inc.
+// Decode Polish and Czech as Windows-1250 and Hebrew as Windows-1255 (codepages.inc).
 #include "codepages.inc"
 
 std::string toUtf8(std::string_view in, Codepage cp) {
@@ -202,9 +199,8 @@ std::expected<LevelTable, std::string> parseLevelTable(std::span<const std::byte
   Reader r(d);
   LevelTable table;
 
-  // A sequence of counted groups. Each group restarts MFC's per-archive class
-  // table, so the first slot in it carries the full class header and the rest
-  // use the "same class as before" tag.
+  // Each counted group restarts MFC's class table, so its first slot carries the full header.
+  // Later slots use the "same class as before" tag.
   while (!r.atEnd()) {
     const std::uint16_t count = r.u16();
     if (!r.ok())

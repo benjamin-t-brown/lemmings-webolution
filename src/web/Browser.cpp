@@ -4,8 +4,7 @@
 
 namespace webo::web {
 
-// Clone addition. Only the CSS presentation changes. SDL retains its 640x480
-// canvas backing size and translates the displayed rectangle to game pixels.
+// Clone addition. Scale the display with CSS. SDL maps it to the 640x480 backing canvas.
 EM_JS(void, applyCanvasScale, (int scale), {
   const canvas = Module['canvas'];
   if (canvas?.dataset) canvas.dataset.windowScale = scale;
@@ -53,9 +52,8 @@ EM_ASYNC_JS(int, waitForLevelInput, (), {
 
 bool waitForLevelFrameOrClick() { return waitForLevelInput() != 0; }
 
-// IDBFS compares mtimes during sync. Make even same-millisecond replacements
-// distinguishable. If the transaction fails, restore the prior in-memory file
-// so a later write to the other sidecar cannot accidentally publish this one.
+// Give replacements distinct mtimes for IDBFS. On sync failure restore the in-memory file
+// so a later sidecar sync cannot publish the failed write.
 EM_ASYNC_JS(int, commitSave, (const char* temporary, const char* target), {
   const from = UTF8ToString(temporary);
   const to = UTF8ToString(target);

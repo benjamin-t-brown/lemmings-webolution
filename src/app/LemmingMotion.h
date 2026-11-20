@@ -15,15 +15,11 @@ struct LemmingDrawPosition {
   double z = 0.75;  // radial blend: 0 inner shell, 1 outer shell
 };
 
-// P7, PROVISIONAL presentation only. D1m (0x41BDD4) establishes continuous
-// original movement, not this reconstruction's interpolation policy. Buffer
-// confirmed cell positions by one bookkeeping interval, then linearly sample
-// that path on every frame. Never extrapolate. Sparse skill steps occupy at
-// most the preceding interval; their intervening stationary time stays still.
-// Turns, gravity changes, teleport/stationary transitions and implausible jumps
-// reset the path immediately; compatible moving states retain it through landing.
-// An original per-frame actor-position/render trace would settle the policy.
-// World is read-only; its level clock supplies pause, stall cap and fast-forward.
+// Provisional clone motion buffers one interval of confirmed positions and
+// interpolates without extrapolating. Native 0x41BDD4 uses continuous movement.
+// Sparse skill steps span at most the preceding interval. Turns, gravity
+// changes, teleports, stops and large jumps reset the path. Compatible
+// moving states retain it through landing. Level time drives presentation.
 class LemmingMotionTracker {
  public:
   // Call before advancing and after EACH World update, including fast-forward
@@ -50,7 +46,7 @@ class LemmingMotionTracker {
     sim::Facing facing = sim::Facing::Right;
     sim::State state = sim::State::Faller;
     std::uint64_t observedMs = 0;
-    // Q1: keep radial presentation separate from the discontinuity-reset X/Y path.
+    // Radial easing is independent of discontinuities in the X/Y path.
     double laneZ = 0.75;
     bool firstHatchDrawPending = false;
     double exitStepSeconds = 0.0;

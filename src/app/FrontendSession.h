@@ -20,35 +20,26 @@
 
 namespace webo::app {
 
-// Retail assets plus the retained B2 screen sequence. SDL is only an input
-// adapter: the model does not claim that an SDL click proves native DirectInput
-// binding. Progress is owned here; the installed save is never read or reset.
-// With a store, create() loads the clone's own original-layout SavedGame.dat
-// (missing file = empty progress; unreadable or wrong-size file = empty progress
-// plus a diagnostic, and the file is left alone until a successful save), a
-// winning completeLevel saves after the in-memory commit, and New Game Yes writes
-// the zero image. Without a store (tests) nothing touches disk. Results
-// Continue/retry/Quit preserve this owned progress. Main-menu clicks support New
-// Game, Play Current Game, Options and Quit. Main-menu
-// UP/DOWN is an SDL adapter, not a claim about physical DirectInput bindings.
+// Owns retail frontend assets and the clone's progress. create() optionally
+// loads original-layout SavedGame.dat. Missing or invalid saves start empty,
+// with diagnostics for invalid input. A win persists the in-memory commit.
+// New Game Yes writes the zero image. Disk I/O requires a store.
 class FrontendSession {
  public:
   static std::expected<FrontendSession, std::string> create(
       const AssetLibrary& library, std::shared_ptr<save::SaveStore> store = nullptr);
-  // Diagnostics for the clone's save: why the stored image was not loaded, and why
-  // the latest save attempt failed (cleared by the next successful save).
+  // Save diagnostics describe a failed load or write. A successful write clears its error.
   const std::optional<std::string>& saveLoadError() const { return saveLoadError_; }
   const std::optional<std::string>& saveError() const { return saveError_; }
-  // Store write attempts made by this session (successful or not); loading never counts.
+  // Session write count, including failed writes.
   int saveCount() const { return saveCount_; }
   const save::SavedGame& savedGame() const { return savedGame_; }
 
   const Image& image() const;
-  // image() is the cached base scene. Production paths present this independent
-  // copy with map hover text and then the frontend cursor composited last.
+  // Present the cached base scene with map hover text, then draw the cursor last.
   Image composeFrame() const;
-  // SOURCE absolute SDL adapter; native453C3A..453D23 uses these inclusive
-  // extents after adding relative device deltas. No pointer warp is performed.
+  // SDL supplies absolute coordinates. 453C3A..453D23 clamps relative
+  // DirectInput deltas to these same inclusive extents.
   void setPointer(int x, int y) {
     pointerX_ = std::clamp(x, 0, 640);
     pointerY_ = std::clamp(y, 0, 480);
@@ -110,8 +101,7 @@ class FrontendSession {
   mutable Image soundImage_;
   int soundBaseY() const;
   void finishSoundEdit(bool accept);
-  // A render cache, not a second focus owner: page replacement can reset the
-  // model's highlight without passing through directional input.
+  // Cache the rendered focus. Page replacement can reset the model's highlight.
   mutable Image menu_;
   mutable int menuImageHighlight_ = 0;
   Image menuBackdrop_, confirmBackdrop_;
@@ -123,8 +113,7 @@ class FrontendSession {
   std::string confirmQuestion_;
   Image font_;
   std::string mapFooterLabel_;
-  // SOURCE half-open targets for the implemented actions, derived from
-  // the rendered panels. The shell model remains the sole focus owner.
+  // Half-open hit regions follow the rendered panels. The shell owns focus.
   std::array<std::array<int, 4>, 5> menuBoxes_{};
   std::array<std::array<int, 4>, 2> confirmBoxes_{};
   std::array<int, 4> mapFooterBox_{};

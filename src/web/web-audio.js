@@ -2,8 +2,7 @@ addToLibrary({
   $WebolutionAudio: {
     mixers: null,
 
-    // A source owns its clip on the audio rendering timeline. Once started,
-    // it can play and loop during a long main-thread render without refills.
+    // A source plays its buffered clip on the audio clock even while the main thread renders.
     voice(mixer, clip, bus, volume, left, right, loop, now) {
       const {context} = mixer;
       const source = context.createBufferSource();
@@ -47,8 +46,7 @@ addToLibrary({
       if (mixer.music === voice) mixer.music = null;
     },
 
-    // Exit cheers average over the voices still active at each sample. Queue
-    // the gain changes at the tails now so they also work during a long draw.
+    // Schedule gain changes at exit cheer end times to average only active voices.
     updateExitGain(mixer, now) {
       const ends = [];
       for (const voice of mixer.effects) {

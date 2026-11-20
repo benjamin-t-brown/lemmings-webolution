@@ -1,63 +1,14 @@
-// SimReleaseTrace -- offline tick-by-tick trace of webo::sim::World on a
-// retail level, for the D1a differential check against a live capture of
-// the original (see tools/harness/measure_d1_release_trace.py and
-// build/tmp/d1a-release-walkout-trace/diff_trace.py).
-//
-// D1a (PLAN.md "Phase D -- reconnect the simulation", D1 release and
-// walk-out). D3a (round 1) rebuilt this tool's LevelSetup on the new
-// production loader, webo::sim::loadRetailLevelReport (sim/RetailLevel.h),
-// instead of hand-building the minimal entrance-only setup
-// src/__test__/test_world.cpp::testRetailSpawn also used to build. The CLI
-// is unchanged -- every argument here is still read and still applied on
-// top of the loader's own result, in the same order, so a caller cannot
-// tell the difference, and D3a's own round-note shows a byte-identical
-// re-run of D1g's exact invocation as the proof. src/sim/World.* is not
-// modified.
-//
-// A default-constructed Lemming spawned by World::spawn() starts
-// Facing::Right, State::Faller (World.h ~line 76-79) -- this tool never
-// hand-places a Lemming the way the retired old/src/tools/compare_tick.cpp
-// did; World::tick()'s own spawn() releases from the Entrance.
-//
-//   SimReleaseTrace <game-dir> <level> <ticks> <releaseIntervalTicks>
-//       [totalLemmings] [--real-seconds <armSeconds> <firstCountdownSeconds> <intervalSeconds>]
-//
-// <releaseIntervalTicks> is NOT guessed here: LevelInfo carries no
-// release-rate index field (see the brief's "Already settled" -- no code
-// anywhere resolves which RELEASERATE.PC row applies to a given level), so
-// the caller supplies the value tools/harness/measure_d1_release_trace.py
-// measured live (RELEASED counter against the wall clock, converted to
-// ticks at the measured 200 ms / 5 Hz tick). [totalLemmings], if given,
-// overrides the hatch's own release count word (hatch+0x98); otherwise that
-// word is used, matching testRetailSpawn.
-//
-// D1e extension: the optional trailing "--real-seconds <arm> <first>
-// <interval>" flag sets LevelSetup::releaseArmSeconds /
-// releaseFirstCountdownSeconds / releaseIntervalSeconds, which switches
-// World::tick() over to the new real-seconds accumulator model
-// (docs/scratch/phase-d1-release-trigger.md and the D1c/D1d follow-ups)
-// instead of the integer-tick model <releaseIntervalTicks> alone drives. The
-// positional <releaseIntervalTicks> argument is still required (and still
-// read by LevelSetup) even when this flag is given, since it is otherwise
-// unused by the new model and the old CLI shape is not being redesigned.
-//
-// D1n extension: an independent, optional "--continuous-stepper-clock"
-// switch (no argument, may appear anywhere after the required four
-// positionals, in any order relative to "--real-seconds") sets
-// LevelSetup::continuousStepperClock, the opt-in fall/walk sub-tick clock
-// (docs/scratch/phase-d1-stepper-clock.md). Omitting it, as every call site
-// predating this round does, leaves World's fixed-count-per-tick
-// stepFaller/stepWalker loops untouched.
-//
-// Output (stdout) is a CSV with a header row:
-//   tick,lemming_index,x,y,facing,state,spawned,saved,dead
-// tick 0 is the initial state, before any World::tick() call -- always no
-// lemmings (spawn() has not run yet), emitted as a single marker row so the
-// tick axis in this file starts at the same place the live capture's does.
-// Ticks 1..N each follow exactly one World::tick() call. lemming_index is
-// World::lemmings()'s own vector index, which is spawn order (spawn() only
-// ever push_back()s -- see World::spawn(), World.cpp), the same identity
-// the live capture uses (first-seen order in the actor list).
+// Trace webo::sim::World on a retail level loaded by webo::sim::loadRetailLevelReport.
+// SimReleaseTrace <game-dir> <level> <ticks> <releaseIntervalTicks>
+//     [totalLemmings] [--real-seconds <armSeconds> <firstCountdownSeconds> <intervalSeconds>]
+// Supply the release interval in 200 ms ticks. LevelInfo does not select a RELEASERATE.PC row.
+// totalLemmings overrides the hatch count at hatch+0x98.
+// --real-seconds sets LevelSetup::releaseArmSeconds, releaseFirstCountdownSeconds and
+// releaseIntervalSeconds. Both modes require the positional releaseIntervalTicks.
+// --continuous-stepper-clock sets LevelSetup::continuousStepperClock independently of hatch timing.
+// World::tick() releases State::Faller actors via World::spawn() using the hatch's facing.
+// Output CSV: tick,lemming_index,x,y,facing,state,spawned,saved,dead. spawned is the RELEASED count.
+// Tick 0 is the initial state. Later rows follow one World::tick() each; lemming_index is the spawn-order vector index.
 
 #include "assets/Box.h"
 #include "sim/RetailLevel.h"
@@ -96,9 +47,7 @@ int main(int argc, char** argv) {
   bool useRealSeconds = false;
   bool useContinuousStepperClock = false;
 
-  // D1n: pull "--continuous-stepper-clock" out of the tail first, wherever
-  // it appears, so the rest of the (unchanged) positional/"--real-seconds"
-  // parsing below sees exactly the argument shape it always has.
+  // Remove "--continuous-stepper-clock" from the argument tail before parsing positionals and "--real-seconds".
   std::vector<std::string> tail;
   for (int i = 5; i < argc; ++i) {
     if (std::string(argv[i]) == "--continuous-stepper-clock")
@@ -133,14 +82,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  // D3a (round 1): the production loader replaces this tool's own
-  // hand-built, entrance-only LevelSetup -- it now also carries the real
-  // exits/teleports/speed pads/levers/skills/totals the brief's D3 gate
-  // needs, none of which this tool used to set (every field it left
-  // default was LevelSetup's own default, matching World.h). The CLI below
-  // still overrides totalLemmings/releaseIntervalTicks/the real-seconds
-  // triple exactly as before, in the same order, so this tool's own output
-  // contract (and D1's byte-identical re-run of it) is unchanged.
+  // Apply CLI release overrides after loading the level.
   auto report = webo::sim::loadRetailLevelReport(*lib, levelName);
   if (!report) {
     std::cerr << "error: " << report.error() << "\n";
@@ -186,18 +128,14 @@ int main(int argc, char** argv) {
   World w(setup);
 
   std::cout << "tick,lemming_index,x,y,facing,state,spawned,saved,dead\n";
-  // Tick 0 marker: no lemmings yet (spawn() has not run).
+  // Tick 0 marks the initial state before any spawn.
   std::cout << std::format("0,,,,,,{},{},{}\n", w.spawned(), w.saved(), w.dead());
 
   for (int t = 1; t <= ticks; ++t) {
     w.tick();
     const auto& lemmings = w.lemmings();
     if (lemmings.empty()) {
-      // D1e: the real-seconds model can leave the hatch unarmed/counting down
-      // for several ticks, so "no lemmings yet" is no longer tick 0 only --
-      // emit the same marker row shape (blank lemming_index) so a reader
-      // that pulls "spawned" per tick (diff_trace.py's load_sim) has a row
-      // at every tick, matching the pre-existing tick-0 convention above.
+      // Emit a marker with blank lemming_index for ticks when the hatch has released nobody yet.
       std::cout << std::format("{},,,,,,{},{},{}\n", t, w.spawned(), w.saved(), w.dead());
       continue;
     }

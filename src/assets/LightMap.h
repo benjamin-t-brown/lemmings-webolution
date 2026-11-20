@@ -13,17 +13,15 @@ namespace webo {
 
 class AssetLibrary;
 
-// Per-level light map and RGB palette stored immediately after the
-// collision grid (`u32 12288, u8[12288]` then 256 x {f64 R, G, B} with no
-// prefix). Indexed by actor terrain X and file-row Y; see actorLightMapIndex.
+// Light map after the collision grid: u32 count, u8[12288], then 256 uncounted f64 RGB triples.
+// Index by actor terrain X and file-row Y (actorLightMapIndex).
 struct ActorLightMap {
   static constexpr std::size_t kMapBytes = 12288;
   static constexpr std::size_t kPaletteBytes = 6144;
   static constexpr int kPaletteEntries = 256;
 
   std::vector<std::uint8_t> map;
-  // Palette channel bytes converted from the stored doubles (grey entries use
-  // equal R, G, B).
+  // Convert the stored RGB doubles to bytes.
   std::array<std::array<std::uint8_t, 3>, kPaletteEntries> palette{};
 
   // Empty on structured success; recovered rejection and cursor when the
@@ -45,23 +43,18 @@ std::expected<ActorLightMap, std::string> findActorLightMap(std::span<const std:
 std::expected<ActorLightMap, std::string> loadActorLightMap(const AssetLibrary&,
                                                             std::string_view levelName);
 
-// Bounds-checked lookup; the native path does not guard idx.
+// Bounds-checked lookup. Native lookup leaves idx unchecked.
 std::expected<std::array<std::uint8_t, 3>, std::string> actorLightTintAt(
     const ActorLightMap& light, double terrainX, double fileRowY);
 
-// D3D-style MODULATE on RGB; alpha is copied unchanged. This is the RGB stage
-// only; the alpha test below is separate (A4u).
+// Apply D3D MODULATE to RGB, preserving alpha for the separate test.
 std::array<std::uint8_t, 4> modulateActorSpritePixel(const std::array<std::uint8_t, 4>& tex,
                                                      const std::array<std::uint8_t, 3>& tint);
 
-// Material row 3 (flags 0x2): ALPHAFUNC GREATER against the reference stored at
-// 0x004C24E0. A4x: the actor submit 0x47A75D calls 0x470F29(0) at 0x47A776
-// before its draw, and the writer 0x470F39 sets [0x4C24E0] = 0xEF; the reader is
-// 0x472896. The 0xA0 in file .data and read live between draws is the LINEAR
-// post-call value (A4u/A4t/A4w), not the in-draw one. A texel is drawn only when
-// texture alpha is strictly greater than the reference. Row 3 alpha is
-// SELECTARG1(TEXTURE) and selector 0 disables blending, so a drawn texel
-// replaces the destination (see drawActorSprite).
+// Material row 3 (flags 0x2) uses ALPHAFUNC GREATER against 0x004C24E0.
+// Actor submit 0x47A75D calls 0x470F29(0) at 0x47A776. Writer 0x470F39 sets
+// [0x4C24E0] to 0xEF for reader 0x472896. The LINEAR post-call value is 0xA0, also stored in .data.
+// SELECTARG1(TEXTURE) takes texture alpha. Selector 0 disables blending, so drawActorSprite replaces the destination.
 inline constexpr std::uint8_t kActorAlphaTestReference = 0xEF;
 bool actorSpriteAlphaTestPasses(std::uint8_t textureAlpha);
 

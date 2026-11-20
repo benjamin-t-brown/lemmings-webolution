@@ -34,8 +34,7 @@ std::expected<void, std::string> Mixer::load(std::string_view cue, const Sound& 
 
   int clipChannels = channels_;
 #ifdef __EMSCRIPTEN__
-  // Web Audio can fan out mono at playback. All installed music is mono,
-  // so this keeps the float AudioBuffer cache the size of the old stereo PCM.
+  // Web Audio expands mono at playback, keeping mono music clips compact in the AudioBuffer cache.
   if (source.channels == 1) clipChannels = 1;
 #endif
   Sound mixed = resampleTo(source, sampleRate_, clipChannels);
@@ -65,8 +64,7 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   if (sampleRate <= 0 || channels < 1 || channels > 2)
     return std::unexpected("mixer: bad output format");
 
-  // The application builds with SDL_MAIN_HANDLED, so SDL must be told main()
-  // ran before any subsystem starts. Idempotent.
+  // SDL_MAIN_HANDLED builds must notify SDL that main() ran before subsystem initialization.
   SDL_SetMainReady();
   if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
     if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
@@ -83,8 +81,7 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   want.userdata = this;
 
   SDL_AudioSpec have{};
-  // Exact format: a negotiated rate would need a second resampler in the
-  // callback, which is what load-time resampling exists to avoid.
+  // An exact device format keeps resampling out of the callback.
   const SDL_AudioDeviceID id = SDL_OpenAudioDevice(nullptr, 0, &want, &have, 0);
   if (id == 0) {
     std::string message = std::format("mixer: SDL_OpenAudioDevice: {}", SDL_GetError());
@@ -107,8 +104,7 @@ std::expected<void, std::string> Mixer::open(int sampleRate, int channels) {
   return {};
 }
 
-// Only the audio subsystem this mixer started is stopped, and never through
-// SDL_Quit, so the window legs can come and go around one open device.
+// Stop only the audio subsystem owned by this mixer. SDL_Quit would also stop the window subsystem.
 void Mixer::releaseSubsystem() {
   if (!ownsAudioSubsystem_)
     return;
@@ -121,8 +117,7 @@ void Mixer::close() {
     releaseSubsystem();
     return;
   }
-  // Closing the device stops the callback before we free anything it might
-  // have been reading.
+  // Close the device to stop the callback before freeing its inputs.
   SDL_CloseAudioDevice(device_);
   device_ = 0;
   voices_.clear();
@@ -134,8 +129,7 @@ void Mixer::close() {
 
 std::expected<void, std::string> Mixer::storeClip(std::string key, Sound clip) {
   SDL_LockAudioDevice(device_);
-  // Drop voices that still point at the clip we are about to replace -- the
-  // pointer would otherwise dangle the moment the map entry is overwritten.
+  // Stop voices that reference the clip before overwriting it.
   if (const auto it = clips_.find(key); it != clips_.end()) {
     const Clip* dying = &it->second;
     voices_.erase(std::remove_if(voices_.begin(), voices_.end(),
@@ -182,8 +176,7 @@ void Mixer::play(std::string_view cue, float volume, Overlap overlap, StereoGain
           [clip](const Voice& v) { return v.clip == clip; }), voices_.end());
       overlap = Overlap::Add;
     }
-    // Exit cheers and flipper one-shots have their own lifetimes outside the
-    // capped pool. Only a capped voice can take another capped voice's slot.
+    // Exit cheers and flipper one-shots bypass the capped pool. Capped voices evict only other capped voices.
     if (overlap == Overlap::Add) {
       const auto inCappedPool = [](const Voice& v) { return !v.music && v.overlap == Overlap::Add; };
       if (std::count_if(voices_.begin(), voices_.end(), inCappedPool) >= kMaxAdditiveVoices)
@@ -286,10 +279,7 @@ void Mixer::fill(std::int16_t* out, int frames) {
     }
   }
 
-  // Only opt-in exit cheers use this bus. Each voice keeps its own cursor,
-  // including when another lemming exits before the previous cheer finishes.
-  // Average only voices still playing at this frame, so an ended voice does
-  // not attenuate the remaining tails for the rest of the callback block.
+  // Average opt-in exit cheers per frame so ended voices stop attenuating the others immediately.
   const bool hasExitVoices = std::any_of(voices_.begin(), voices_.end(),
       [](const Voice& v) { return v.overlap == Overlap::Average; });
   for (int f = 0; hasExitVoices && f < frames; ++f) {

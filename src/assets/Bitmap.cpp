@@ -90,8 +90,7 @@ std::expected<Image, std::string> decodeBmp(std::span<const std::byte> bmp) {
     return std::unexpected(
         std::format("{} bytes but {}x{}x{} needs {}", bmp.size(), width, height, bpp, needed));
 
-  // Palette, when there is one, sits between the header and the pixel data as
-  // BGRX quads.
+  // An optional BGRX palette sits between the header and pixel data.
   const std::byte* palette = p + 14 + hdrSize;
   if (bpp <= 8) {
     if (paletteEntries == 0)
@@ -186,9 +185,7 @@ void applyColourKey(Image& image, std::uint8_t r, std::uint8_t g, std::uint8_t b
 }  // namespace
 
 std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::string_view name) {
-  // Only the owning application leg opts in. Asset/unit consumers retain an
-  // uncached read, and failures are never cached. Image copies preserve the
-  // existing caller-owned alpha/colour modification contract.
+  // Cache successful reads within the owning application leg. Return copies for caller-owned alpha and colour changes.
   auto* cache = activeTextureCache;
   if (cache && cache->library != &lib) cache = nullptr;
   if (cache) {
@@ -222,9 +219,8 @@ std::expected<Image, std::string> loadTexture(const AssetLibrary& lib, std::stri
       break;
     case AlphaMode::AlfFile:
     case AlphaMode::Embedded: {
-      // Factory 0x00474485 maps '+' to 0x10; constructor 0x00472325
-      // tests flags & 0x18, so both '+' and '^' load a sibling plane.
-      // Same path and stem, .ALF instead of .BMP.
+      // Factory 0x00474485 maps '+' to 0x10. Constructor 0x00472325 tests flags & 0x18,
+      // so '+' and '^' load the same-stem .ALF beside the .BMP.
       std::string alfName(name);
       alfName.replace(alfName.size() - 4, 4, ".ALF");
       auto alf = lib.read(alfName);

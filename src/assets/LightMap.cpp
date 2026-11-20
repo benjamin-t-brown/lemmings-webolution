@@ -136,8 +136,7 @@ std::expected<ActorLightMap, std::string> findActorLightMapLegacy(
 
 std::expected<ActorLightMap, std::string> findActorLightMap(
     std::span<const std::byte> d) {
-  // LevelByteStream borrows its input. Keep the adapted storage alive through
-  // both recovered readers, preserving their serialized section order.
+  // Keep storage alive through both ordered reads of the borrowing LevelByteStream.
   std::vector<std::uint8_t> bytes;
   bytes.reserve(d.size());
   for (const auto byte : d)
@@ -157,8 +156,7 @@ std::expected<ActorLightMap, std::string> findActorLightMap(
     return fallback;
   }
 
-  // Existing portable adapter policies, not original loader validation. A
-  // decoded invalid projection must fail without trying a different chunk.
+  // Clone validation rejects an invalid decoded projection without trying the legacy locator.
   const auto rows = world.following_value;
   if (rows == 0 || rows > kMaxRows)
     return std::unexpected(std::format("actor light map: implausible height {}", rows));

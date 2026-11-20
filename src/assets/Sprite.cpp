@@ -64,8 +64,7 @@ std::string sheetAssetName(std::string_view sheet) {
 std::expected<SpriteSheet, std::string> parseSpriteSheet(std::span<const std::byte> data) {
   lemmings::SpriteResource resource;
   try {
-    // The caller owns data throughout this synchronous parse. Only serialized
-    // values are recovered here; no original runtime objects are constructed.
+    // Borrow the caller's bytes for the serialized read.
     resource = lemmings::parse_sprite_resource(
         {reinterpret_cast<const std::uint8_t*>(data.data()), data.size()});
   } catch (const std::invalid_argument& error) {
@@ -104,9 +103,7 @@ std::expected<SpriteSheet, std::string> parseSpriteSheet(std::span<const std::by
     sheet.sprites.push_back(std::move(sprite));
   }
 
-  // Compatibility projection: the recovered tag dispatch has already selected
-  // 16 triples for tag 0, 256 for tag 1, and none for other tags. Flatten only
-  // populated triples in block order; their runtime meaning remains separate.
+  // Flatten populated triples in block order: tag 0 has 16, tag 1 has 256.
   for (const auto& block : resource.triple_arrays)
     for (const auto& triple : block.triples)
       sheet.palette.push_back({std::bit_cast<double>(triple[0]),

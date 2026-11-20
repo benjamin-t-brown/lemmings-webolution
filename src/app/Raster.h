@@ -1,14 +1,6 @@
-// A small CPU triangle rasteriser for the 3D-first frame.
-//
-// Deliberately a straight port of the accepted A2 fixture's inner loop
-// (tools/harness/render_tube_fixture.py, triangle()): screen-space linear
-// depth with a smaller-is-nearer keep test, perspective-correct UVs via 1/z,
-// bilinear sampling with per-draw addressing. It is not a device-state model: no blend state,
-// no scissor, no guard band, no mip selection. The A2 note already limits the
-// pass to the fixed ROI and to the declared software depth ordering.
-//
-// Colours are 8-bit triplets; the PNG writer converts. One cell is one world
-// unit throughout, so no PIXELS_PER_UNIT scaling appears anywhere.
+// CPU triangle rasterizer with linear view depth (smaller is nearer),
+// perspective-correct UVs and bilinear sampling. RGB uses 8-bit triplets.
+// One terrain cell is one world unit.
 
 #pragma once
 

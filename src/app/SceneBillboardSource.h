@@ -45,7 +45,6 @@ struct SceneBillboardSource {
 std::expected<SceneBillboardSource, std::string> makeSceneBillboardSource(
     const SceneNode& node, const BillboardSourceInputs& inputs);
 
-// ---- type-2 branch 1 (sprite) scenery: scene-branch-impl-001 ------------------------------
 // Per-node temporal state: sub-object +0x1C0 accumulator, +0x1CC temporal index, +0x1D0 mode
 // (constructor 0x004680F0: 1), +0x200 finished, +0x201 loop (constructor: 1), node +0x350
 // first-draw latch (cleared by the reader 0x0047B461).
@@ -58,16 +57,14 @@ struct SpriteTemporalState {
   bool finished = false;
 };
 
-// First draw (0x0047D391..0x0047D3F8): temporal = ftol(double(count-1) * rand()/32767.0), then
-// the latch is set; later calls change nothing. `unitRandom` is CrtRand::unit() (0x004040A0).
-// Returns true when this call performed the latch.
+// First draw (0x0047D391..0x0047D3F8) latches ftol(double(count-1) * (rand()/32767.0)).
+// CrtRand::unit() supplies unitRandom (0x004040A0). Returns true if this call sets the latch.
 bool latchSpriteFirstDrawFrame(SpriteTemporalState& state, std::uint32_t temporalCount,
                                double unitRandom);
 
-// Forward temporal advance 0x00468833 (mode 1), `dt` already the per-node scenery delta
-// (0x004764C4) and `rate` the clip's double at Sprite+0x10: threshold 0.06 (0x4B1940), epsilon
-// 1e-8 (0x4B1928), loop wrap, finished flag. Modes other than 1 are not implemented (nothing
-// in the reader changes the constructor value).
+// Forward mode 1 at 0x00468833 uses per-node dt (0x004764C4) and double
+// rate at Sprite+0x10. Threshold 0.06 (0x4B1940), epsilon 1e-8 (0x4B1928).
+// A completed strip wraps only when looping is enabled.
 void advanceSpriteTemporal(SpriteTemporalState& state, double dt, double rate,
                            std::uint32_t temporalCount);
 
@@ -86,10 +83,9 @@ struct SceneSpriteQuad {
   std::array<unsigned, 4> adapterOrder{0, 3, 2, 1};
 };
 
-// Branch-1 geometry (0x0047D379..0x0047D81B and 0x0047A565): corners as branch 0 with +H/2 on y
-// for all four, the shared projection/slot formulas, then the screen-rectangle fill with the
-// image offsets/size and the UV rule. [0x0058D53C] is taken as 0 (the +h/4 shift), see
-// docs/scratch/scene-branch-research-002.md section 7.
+// 0x0047D379..0x0047D81B and 0x0047A565 reuse branch-0 corners with +H/2
+// on Y, then fill the projected rectangle from image offsets, size and UVs.
+// [0x0058D53C] is treated as zero, selecting the +h/4 shift.
 std::expected<SceneSpriteQuad, std::string> makeSceneSpriteQuad(
     const SceneNode& node, const BillboardSourceInputs& inputs, const SpriteFrame& image,
     bool mirror);

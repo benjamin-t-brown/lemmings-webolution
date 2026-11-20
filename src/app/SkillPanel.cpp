@@ -16,10 +16,7 @@ std::size_t compositeIconRegion(Image& dest, const Image& source, const SkillIco
   if (dest.empty() || source.empty() || placement.width <= 0 || placement.height <= 0)
     return 0;
 
-  // Clip the source rectangle to the source image, and the destination
-  // placement to the destination image, keeping both offsets in step so a
-  // partially off-screen or partially off-sheet placement still copies the
-  // overlapping region correctly rather than reading/writing out of bounds.
+  // Clip source and destination together to keep their pixel offsets aligned.
   int srcX0 = placement.srcX;
   int srcY0 = placement.srcY;
   int destX0 = placement.destX;
@@ -68,9 +65,7 @@ std::size_t compositeIconRegion(Image& dest, const Image& source, const SkillIco
         d[2] = s[2];
         d[3] = 255;
       } else {
-        // Linear blend, straight (non-premultiplied) alpha: the convention
-        // decodeBmp/applyAlfAlpha already use (colour channels are the
-        // decoded BMP's own values regardless of alpha).
+        // Blend straight alpha, as supplied by decodeBmp and applyAlfAlpha.
         for (int c = 0; c < 3; ++c) {
           const int blended = (static_cast<int>(s[c]) * a + static_cast<int>(d[c]) * (255 - a)) / 255;
           d[c] = static_cast<std::uint8_t>(blended);
@@ -86,8 +81,7 @@ std::size_t compositeIconRegion(Image& dest, const Image& source, const SkillIco
 SkillPanelRect skillPanelRect(const webo::SpriteFrame& f, double x, double y, int scaleDelta) {
   const double scale = scaleDelta == 0 ? 1.0 : scaleDelta < 0 ? 0.5 : 2.0;
   const double left = x - f.unknown0 * scale;
-  // READ: unmirrored code preserves full dy subtraction; only the source
-  // frame's vertical extent is scaled (0x47AA59..AA86).
+  // Unmirrored Y keeps the full dy offset. Only frame height is scaled (0x47AA59..AA86).
   const double top = y - f.unknown1 - f.height * scale;
   return {left, top, left + f.width * scale, top + f.height * scale};
 }
@@ -127,7 +121,7 @@ void drawSkillPanelIcon(Image& dest, const Image& sheet, const webo::SpriteFrame
 void drawSkillPanelCounts(Image& dest, const Image& font, const std::array<int, 9>& counts) {
   for (int i = 0; i < 9; ++i) {
     const int count = counts[static_cast<std::size_t>(i)];
-    if (count == 0) continue; // READ, C1v: native branch skips the text submit.
+    if (count == 0) continue; // Native skips text for zero stock.
     const char digits[2] = {static_cast<char>('0' + count / 10), static_cast<char>('0' + count % 10)};
     for (int d = 0; d < 2; ++d) for (int y = 0; y < 14; ++y) for (int x = 0; x < 6; ++x) {
       const int sx = (digits[d] - '0') * 6 + x, dx = 66 + d * 6 + x, dy = 20 + 40 * i + y;
@@ -145,8 +139,8 @@ Image resizeSkillPlatePatch(const Image& source) {
   Image out; out.width = 128; out.height = 32; out.alpha = source.alpha;
   out.rgba.resize(128u * 32u * 4u);
   for (int y = 0; y < 32; ++y) for (int x = 0; x < 128; ++x) {
-    // HYPOTHESIS, conditional C1bc p53-nearest successful stream: x87 p53
-    // arithmetic, then binary32 store. Original entry FPU state is unobserved.
+    // Provisional x87 model computes in p53-nearest, then stores binary32.
+    // The original entry FPU state is unresolved.
     const float fx = static_cast<float>(static_cast<double>(x) / 127.0 * 71.0);
     const int x0 = static_cast<int>(fx), x1 = std::min(x0 + 1, 71);
     const float tx = static_cast<float>(static_cast<double>(fx) - x0);
@@ -162,13 +156,9 @@ Image resizeSkillPlatePatch(const Image& source) {
 
 namespace {
 
-// HYPOTHESIS: one linear sample of the coordinate the nearest pick uses.
-// s = x * 128 / 72, texel centers at integers. Nearest is
-// min(127, (x * 128 + 36) / 72) = min(127, floor(s + 1/2)); that formula
-// is unchanged and is not itself the sample position. Request 2 is DERIVED
-// LINEAR (C1be, MinGW d3dtypes.h). These weights are not a measured D3D
-// kernel. Y stays the integer source row. Straight alpha is unchanged.
-// Shared by the ten base plates and the one selected quad.
+// Provisional horizontal linear sampling uses s = x * 128 / 72 with
+// integer texel centres. Nearest uses min(127, (x * 128 + 36) / 72).
+// D3D request 2 denotes LINEAR in d3dtypes.h. Y stays on the source row.
 void drawSkillPanelPlateQuad(Image& dest, const Image& plate, int index) {
   const int py = 12 + 40 * index;
   for (int y = 0; y < 32 && py + y < dest.height; ++y) for (int x = 0; x < 72 && 18 + x < dest.width; ++x) {
@@ -196,8 +186,7 @@ void drawSkillPanelPlates(Image& dest, const Image& plate) {
     drawSkillPanelPlateQuad(dest, plate, i);
 }
 
-// DERIVED, C1bg: this fixture's normal init selects index 0 with enable 1.
-// Rectangle 18,12,90,44. Not a selection state machine.
+// The headless overlay starts enabled at index 0, rectangle 18,12,90,44.
 void drawSkillPanelSelectedPlate(Image& dest, const Image& plate) {
   drawSkillPanelPlateQuad(dest, plate, 0);
 }
@@ -216,23 +205,21 @@ std::expected<RetailSkillPanel, std::string> RetailSkillPanel::create(
   if (!skills || !spriteSheet)
     return std::unexpected(!skills ? skills.error() : spriteSheet.error());
 
-  // MEASURED, C1s: the ten 0x47A75D x/y arguments from four stable frames.
+  // Plate anchors are screen coordinates passed to 0x47A75D.
   constexpr int drawX[10] = {39,37,38,39,40,39,41,37,38,38};
   constexpr int drawY[10] = {40,92,121,158,197,238,279,317,364,410};
-  // READ, C1l: animation sub-entry (+1CC) and selected frame (+1B8).
+  // Controller fields are temporal sub-entry (+1CC) and selected frame (+1B8).
   constexpr int sub[10] = {4,0,0,0,15,0,21,1,0,6};
   constexpr int frameNo[10] = {2,4,0,4,2,2,2,4,0,0};
-  // READ, C1g/C1l: skill action names and special sheet registrations.
+  // Skill action names and special sheet registrations.
   constexpr const char* names[10] = {"climb","float","bomb","block","build","bash","mine","dig","questionmark","armageddon"};
   constexpr const char* specialSpr[3] = {"SPRITES\\GREYICONS.SPR","SPRITES\\BLACKICONS.SPR","SPRITES\\ADDITIVEICONS.SPR"};
 
   RetailSkillPanel panel;
   for (std::size_t i = 0; i < skills->counts.size(); ++i)
     panel.initialCounts_[i] = static_cast<int>(skills->counts[i]); // READ: level .LVL trailer, findLevelSkills.
-  panel.initialCounts_[8] = 0; // UNREAD on MM_DIG_000; C1l MEASURED zero for this slot on MM_CLIMB_002.
-  // HYPOTHESIS: base plates stay the unselected ^tab stream. The extra quad
-  // reuses that resizer and plate sampler; both remain hypotheses.
-  // DERIVED, C1bg: index 0, enable 1. Not chosen from the stock ring.
+  panel.initialCounts_[8] = 0; // Default is zero, including MM_CLIMB_002. The native MM_DIG_000 value is unresolved.
+  // Provisional overlay resizes and samples base and selected plates from ^tab.
   Image plate = resizeSkillPlatePatch(*plateSource);
   if (plate.empty()) return std::unexpected("skill-panel plate must be 72x32");
   Image selected = resizeSkillPlatePatch(*selectedSource);
@@ -261,11 +248,11 @@ std::expected<RetailSkillPanel, std::string> RetailSkillPanel::create(
     if (fi >= frames.size())
       return std::unexpected(std::format("skill-panel frame missing {}/{}", names[i], fi));
     const auto& frame = frames[fi];
-    // READ: existing production texture loader plus Sprite.h sheet-name mapping.
+    // Resolve the frame's sheet through the Sprite.h name mapping.
     auto texture = loadTexture(library, webo::sheetAssetName(frame.sheet));
     if (!texture)
       return std::unexpected(std::format("{}: {}", frame.sheet, texture.error()));
-    // DERIVED from byte reads: seven generic icons use mode S=-1; indices 2/8/9 use S=0.
+    // Generic icons use mode S=-1. Plates 2/8/9 use S=0.
     panel.icons_.push_back({std::move(*texture), frame, drawX[i], drawY[i],
                             (i == 2 || i == 8 || i == 9) ? 0 : -1});
   }
@@ -276,9 +263,8 @@ std::expected<SkillPanelIconAnimation, std::string> SkillPanelIconAnimation::cre
   auto sheet = loadSpriteSheet(library, "SPRITES\\LEMMINGSHI.SPR");
   auto bomb = loadSpriteSheet(library, "SPRITES\\GREYICONS.SPR");
   if (!sheet || !bomb) return std::unexpected(!sheet ? sheet.error() : bomb.error());
-  // Retain C1l's measured fixed poses, facing and anchors. PROVISIONAL idle
-  // policy: that was a selected-start snapshot, not an all-idle observation;
-  // 45AC5C's reset formula gives Climber 3, while this retained pose is 4.
+  // Provisional idle poses use the panel's preset anchors and facing. Climber
+  // uses entry 4 here. The reset at 45AC5C selects entry 3.
   constexpr const char* names[] = {"climb","float","bomb","block","build","bash","mine","dig"};
   constexpr int idle[] = {4,0,0,0,15,0,21,1};
   constexpr int facing[] = {2,4,0,4,2,2,2,4};
@@ -322,19 +308,16 @@ void SkillPanelIconAnimation::advanceIcons(double seconds, std::optional<int> se
   if (!std::isfinite(seconds) || seconds < 0) return;
   for (std::size_t i = 0; i < icons_.size(); ++i) {
     auto& icon = icons_[i];
-    // READ 45AFCD..45AFE0: selected icon advances through 468833.
-    // PROVISIONAL R7: also animate an unselected hovered skill; reset idle
-    // artwork on leaving both states. Command artwork/rules stay unchanged.
+    // 45AFCD..45AFE0 advances the selected icon through 468833.
+    // Provisional feedback also animates hovered skills and resets them on leave.
     const bool active = i < 8 && ((selectedIndex && *selectedIndex == static_cast<int>(i)) ||
                                   hoveredIndex == static_cast<int>(i));
     if (!active || !icon.active) { icon.current = icon.idle; icon.phase = 0; }
     icon.active = active;
     if (!active || icon.poses.size() <= 1 || !std::isfinite(icon.rate) || icon.rate <= 0) continue;
-    // 46889E..4688E6: accumulator += dt*rate, strict >0.06 then next
-    // temporal entry. PROVISIONAL: loop for feedback and reset fractional
-    // phase on activation; native panel loop/pause flags were not traced.
-    // Direction is fixed by C1l.
-    // Reduce whole cycles before multiplying to bound work after a long stall.
+    // 46889E..4688E6 accumulates dt*rate and steps strictly above 0.06.
+    // Provisional playback loops and resets the fraction on activation.
+    // Reduce whole cycles before multiplying to bound work on stalls.
     const double cycle = 0.06 * icon.poses.size();
     icon.phase += std::fmod(seconds, cycle / icon.rate) * icon.rate;
     while (icon.phase > 0.06) {

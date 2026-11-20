@@ -1,8 +1,4 @@
-// Player progress for the Phase 5 shell.
-//
-// Not the stock SavedGame.dat layout — that file is unread. Behaviour matches
-// the original's intent: slots unlock as levels are cleared, Load/Save keep
-// language and volumes, and a new game resets the unlock chain.
+// Clone progress codec for slot states, language and volume settings. SavedGame.dat uses a separate codec.
 
 #pragma once
 
@@ -49,7 +45,7 @@ std::expected<Progress, std::string> loadProgress(const std::filesystem::path&);
 
 // First non-blank slot index in a group, or -1.
 int firstPlayableSlot(const LevelTable& table, int group);
-// Next non-blank after (group,slot), wrapping to the next group. -1 if none.
+// Find the next nonblank slot, advancing groups as needed. Return false when none remains.
 bool nextPlayable(const LevelTable& table, int group, int slot, int& outGroup, int& outSlot);
 
 }  // namespace webo::shell

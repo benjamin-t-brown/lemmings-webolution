@@ -16,13 +16,10 @@ inline double exitBalloonPhaseRadians(double levelSeconds) {
   return std::max(0.0, levelSeconds) * kExitBalloonPi;
 }
 
-// READ 0x4268CA..0x426901, 0x426AC0..0x426AE6, 0x426D90:
-// phase += dt*0.5; logical Y = baseY + sin(phase*2*pi)*0.5.
-// The stored pi is float-rounded. Period is approximately two level seconds,
-// amplitude half a logical height unit. The entire model/basket moves together.
-// PROVISIONAL: phase starts at zero for every clone exit, rather than consuming
-// the original load-time random phase (0x426D31). Use the existing level clock:
-// pause freezes it and fast-forward advances it, without changing simulation.
+// 0x4268CA..0x426901, 0x426AC0..0x426AE6 and 0x426D90 bob the whole
+// exit with a two-second period and amplitude 0.5 height units.
+// Provisional clone phase starts at zero (native random phase at 0x426D31).
+// Level time supplies pause and fast-forward.
 inline double exitBalloonBob(double levelSeconds) {
   return 0.5 * std::sin(exitBalloonPhaseRadians(levelSeconds));
 }

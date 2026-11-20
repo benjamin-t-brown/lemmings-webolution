@@ -52,7 +52,7 @@ void chunk(std::vector<std::uint8_t>& out, const char tag[4], const std::vector<
   put32(out, crc32(out.data() + crcStart, out.size() - crcStart));
 }
 
-// zlib stream of stored deflate blocks: no compression, but always correct.
+// zlib stream with uncompressed deflate blocks.
 std::vector<std::uint8_t> zlibStored(const std::vector<std::uint8_t>& raw) {
   std::vector<std::uint8_t> z;
   z.push_back(0x78);  // CM = deflate, CINFO = 32K window

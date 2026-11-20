@@ -22,9 +22,7 @@ std::array<double,12> compose32(const std::array<double,12>& a,const std::array<
   return o;
 }
 
-// Minimal scalar extractor for the camera params files: they are flat objects
-// of numbers and short arrays, so a full JSON parser would be more rope than
-// this needs. Every lookup is for an exact quoted key followed by ':'.
+// Read exact keys from flat JSON containing numbers and short arrays.
 bool findValue(const std::string& text, const std::string& key, double& out) {
   const std::string needle = "\"" + key + "\"";
   const auto at = text.find(needle);
@@ -137,8 +135,7 @@ bool loadCameraParams(const std::filesystem::path& path, CameraParams& out, std:
 double resolvedYawUnits(const CameraParams& p) {
   if (!p.hasControlCase)
     return p.yawUnits;
-  // Port of camera_fixture.grabbed_mode2_yaw. One step is one update of the
-  // traced control path; mouse movement only contributes on the first update.
+  // Each step is one camera update. Mouse movement applies only to the first.
   double yaw = p.yawUnits;
   for (int step = 0; step < p.updates; ++step) {
     double local = 0.0;
@@ -268,10 +265,9 @@ std::optional<CameraZoomPose> cursorZoomPose(const CameraBasis& displayed,
 }
 
 BillboardCameraChain buildBillboardCameraChain(const CameraBasis& camera) {
-  // READ camera-builder scale literals: projection 0.3 at 0x468FC9/CE and
-  // inverse projection 10/3 at 0x46906E/73. The context stores float32 results
-  // promoted to double; each helper operation follows the accepted A1 audit's
-  // binary32 diagnostic model, not a claim about the runtime x87 control word.
+  // Projection 0.3 (0x468FC9/CE) and inverse 10/3 (0x46906E/73) use
+  // binary32 operations with results promoted to double in the clone.
+  // The native x87 control word is unresolved here.
   constexpr double projectionScale=0.3;
   constexpr double inverseProjectionScale=10.0/3.0;
   BillboardCameraChain out{};

@@ -2,71 +2,28 @@
 #include "app/RasterRows.h"
 #include "app/FrameConsumption.h"
 #include "app/Replay.hpp"
-// Lemmings Webolution -- 3D-first entry point.
+// Ordinary startup opens the connected frontend. Diagnostic options load
+// .LVL and archive data from WEBOLUTION_GAME_DIR (default Lemmings Revolution/).
 //
-// Ordinary startup enters the connected frontend. Explicit diagnostics load
-// one retail level, build the tube from stored .LVL and archive data, and draw
-// it through the verified A1 camera. The flat unwrapped view is a debug flag.
-//
-//   --frontend       explicitly enter the connected frontend with other options
-//   --direct-level   request the previous bare-launch injected-walker diagnostic
-//   --window-scale <1|2|3> override the saved presentation scale for this run
-//   --level <id>     level to load (default MM_CLIMB_002)
-//   --native         render at the original's 640x480
-//   --camera <json>  camera state params (the A1 fixture/params format)
-//   --shot <png>     render one frame headless and write it
-//   --window-shot <png> with --frames N, save the final presented CPU frame;
-//                     SDL_VIDEODRIVER=dummy exercises the loop without a desktop window.
-//   --geom <what>    wall | wall+surface | wall+polylist | cellmesh | route
-//                    `route` is the original's own tube submission
-//                    (0x43A4EC): the per-cell mesh through the INN pass and the
-//                    three OUT passes, and nothing else. `cellmesh` is the
-//                    older diagnostic that adds both banks over the wall.
-//   --tiles <mode>   flipped | unflipped  (A2 texture-row addressing)
-//   --order <mode>   inner-first | outer-first
-//   --route <term>   diagnostic single-term mutation of the route:
-//                    swap | noinn | centre | texbank
-//   --tile-detail    hi | low  (the cylinder skin's archive variant; hi is
-//                    what the retained originals were captured with)
-//   --no-depth       disable the software depth test (diagnostic)
-//   --no-audio       do not open an audio device or play music/sound cues
-//   --flat           debug: unwrap the skin to 2D instead of the 3D view
-//   --sim            tick a sim::World (D3a's loadRetailLevel) instead of the
-//                     fixed injected-walker fixtures, and draw its live
-//                     lemmings through the same drawInjectedWalkers path
-//                     (TubeScene::injectedWalkersFromWorld). Direct-level
-//                     diagnostics retain fixtures unless simulation is requested.
-//   --sim-ticks <N>  diagnostic setup: call World::tick() exactly
-//                     N times before rendering, independent of frame count.
-//                     Implies --sim. Prints the tick, lemming count and every
-//                     live lemming's cell to stderr. Also seeds a direct-level
-//                     window; natural --frontend entry explicitly resets it.
-//   --hud-ticks <N>  headless only (with --shot): after the frame, tick a separate
-//                     sim::World N times and overlay the Out / Saved counters and the
-//                     timer (shell/HudText.h, C2g). Does not change the scene or the
-//                     walkers. Off by default.
-//   --hud-out N       with --hud-ticks: replace the sim's Out count (diagnostic only; used to
-//                     show the layout against a reference that reads a different number).
-//   --hud-colour R,G,B  with --hud-ticks: the Out / timer glyph colour (UNREAD default
-//                     255,255,255; exists only for the sensitivity run).
-//   --pause-caption   headless only (with --shot): overlay the paused-frame caption panel
-//   --cursor-fixture  headless only: center NoLemming software cursor (runtime wiring test)
-//                     (shell/PauseCaption.h, C2i panel, C2j text via the ^Font path).
-//   --caption-no-text  with --pause-caption: the C2i panel only (the "before" render).
-//   --caption-alpha N  with --pause-caption: panel alpha (HYPOTHESIS 128 of 255; sensitivity only)
-//   --caption-fill R,G,B  with --pause-caption: panel colour (HYPOTHESIS 0,0,0; sensitivity only)
-//   SOURCE input adapter, windowed --sim only (not native-validated):
-//                     click the first eight skill plates or use keys 1-8 for
-//                     Climber, Floater, Bomber, Blocker,
-//                     Builder, Basher, Miner, Digger in that enum order, and
-//                     a left click outside the plates assigns the skill to the lemming
-//                     under a 32x32 cursor box centered on the click. Hover and
-//                     click share the same bounded eligibility/ranking path.
-//                     Counts and selected plate update; icon poses remain the C1
-//                     fixture. Runtime command controls use the connected panel path.
-//
-// No live game and no captured arena data are used. Everything comes from the
-// install named by WEBOLUTION_GAME_DIR (default Lemmings Revolution/ from repo root).
+// --direct-level  Load MM_CLIMB_002 with injected walkers.
+// --sim           Display live World actors in the direct-level view.
+// --sim-ticks N   Seed that World with N ticks before drawing.
+// --camera JSON   Supply camera pose and projection parameters.
+// --window-scale  Override the saved presentation scale (1, 2 or 3).
+// --native        Render at 640x480.
+// --shot PNG      Save a single headless frame.
+// --window-shot PNG  Save the final CPU frame when --frames N is reached.
+//                  SDL_VIDEODRIVER=dummy supports offscreen presentation.
+// --geom route    Draw 0x43A4EC's INN and three OUT passes. Other geometry
+//                  options expose the wall, surface, PolyList and cellmesh banks.
+// --route TERM    Isolate a tube term: swap, noinn, centre, texbank or keepwall.
+// --tile-detail   Select hi or low cylinder skins from the archive.
+// --flat          Unwrap the skin into a 2D view.
+// --hud-ticks N   Add an overlay from a separate World to a headless shot.
+//                  --hud-out and --hud-colour override its values and tint.
+// --pause-caption  Overlay the pause panel. --caption-no-text omits
+//                  ^Font glyphs. Alpha and fill defaults are provisional.
+// --cursor-fixture  Centre the NoLemming software cursor on a headless shot.
 
 #include "app/Camera.h"
 #include "app/CameraIntro.h"
@@ -143,11 +100,10 @@ namespace {
 
 constexpr const char* kDefaultGameDir = "Lemmings Revolution";
 
-// scene-branch-impl-001: the process-wide CRT generator that draws first-frame choices for
-// branch-1 sprite scenery. The original seeds it from the unpaused millisecond timer T0 at
-// main-loop entry (0x0045D06C) and again at play start (0x004451E5), both through
-// srand(ftol(ms * 32767.0)) (0x00447580); the clone's analogue is this monotonic clock,
-// measured from application start with sim-paused time excluded. Never a constant seed.
+// Process-wide CRT generator for branch-1 scenery start frames.
+// Native 0x0045D06C and 0x004451E5 seed from the unpaused timer T0 via
+// srand(ftol(ms * 32767.0)) (0x00447580). The clone uses its monotonic
+// application milliseconds excluding simulation pause.
 struct SceneryRandom {
   app::CrtRand rng;
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
@@ -189,8 +145,8 @@ struct Args {
   bool mapFlagsSpecified = false;
   std::string mapFlags;
   bool noInjectedWalkers = false;
-  bool noTerrainSync = false;  // diagnostic: draw the terrain as loaded (the view before terrain-render-001)
-  bool noActorAnim = false;    // diagnostic: every lemming draws walk entry 0 (the view before actor-anim-001)
+  bool noTerrainSync = false;  // Diagnostic: draw terrain as loaded.
+  bool noActorAnim = false;    // Diagnostic: draw every lemming at walk entry 0.
   bool sceneOff = false;
   std::string walkers;
   bool sim = false;
@@ -210,10 +166,8 @@ struct Args {
 
 Args parseArgs(int argc, char** argv) {
   Args a;
-  // Portable CLI policy, not a recovered original startup sequence. Only a
-  // bare invocation, game-directory, --window-scale or --no-audio acquire the frontend
-  // default. Other tokens (including ignored unknown options) keep diagnostic
-  // routing; an explicit --frontend remains authoritative regardless of order.
+  // Bare startup, --game-dir, --no-audio, --window-scale and --record default
+  // to the frontend. Other tokens select diagnostics unless --frontend is explicit.
   bool defaultFrontend = true;
   for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
@@ -341,9 +295,7 @@ Image toImage(const app::Framebuffer& fb) {
 }
 
 #if WEBOLUTION_HAVE_SDL2
-// Toward-zero truncation. Pick.h documents that the original's screen-box
-// fields are truncated doubles; this debug path uses that conversion on the
-// placement the accessor returns. Not a new exe read.
+// Truncate projected rectangles toward zero, as the native box accessors do.
 app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
   return app::PickBox{
       static_cast<int>(placement.left),
@@ -353,14 +305,9 @@ app::PickBox pickBoxFromPlacement(const app::ActorSpritePlacement& placement) {
   };
 }
 
-// Shared SOURCE hover/click adapter after skill-panel routing. The cursor is a 32x32
-// box centered on the window click (sprite size named in Pick.h at
-// 0x0045578C); pickBoxOverlaps applies the +/-4 adjustment itself. Presentation
-// maps the pointer to the raster's 640x480 placement coordinates.
-// PROVISIONAL playable-v1 policy: rank by
-// displayed body-box centre distance to the cursor dot, retaining the existing
-// visibility, stock, support and skill exclusions. Exact ties keep World order.
-// Full native visibility, facing and applicability are still incomplete.
+// Hover and click share a 32x32 cursor box (0x0045578C) in render pixels;
+// pickBoxOverlaps adjusts it by 4 px per edge. Provisional clone ranking
+// uses nearest displayed body centre after eligibility checks. Ties keep World order.
 std::optional<std::size_t> hoveredActor(const sim::World& world, const app::TubeScene& scene,
                         const app::SceneOptions& options, const AssetLibrary& library,
                         const app::CameraBasis& camera, const app::Raster& sceneRaster,
@@ -411,7 +358,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 #else
   const char* diagnosticSetting = std::getenv("WEBOLUTION_NATIVE_DIAGNOSTICS");
   const bool verbose = diagnosticSetting && std::string_view(diagnosticSetting) == "1";
-  // Keep diagnostics for observer-driven tools, including the sweep's child-log tail.
+  // Keep observer-driven diagnostics in the level output.
   const bool logLevelDetails = verbose || observer || levelObserver;
 #endif
   if (!std::isfinite(runOptions.frameSeconds) || runOptions.frameSeconds < 0 ||
@@ -437,9 +384,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 
   TextureCacheScope textureCache(*library);
 
-  // parseArgs resolves ordinary/explicit frontend entry for both app layers.
-  // Selection feeds the same retail loader/sim below, never
-  // a second executable, a captured world, or the original installation's save.
+  // Frontend selection feeds the retail-level loader below.
   if (args.frontend) {
     std::optional<app::FrontendSession> localFrontend;
     auto* frontend = persistentFrontend;
@@ -470,8 +415,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       std::fprintf(stderr, "frontend: entering %s from map (SOURCE SDL adapter)\n", args.level.c_str());
   }
 
-  // B3j: explicit source-fixture map display. This early branch deliberately
-  // bypasses level/sim/3D setup; all old commands retain their prior path.
+  // Map diagnostics bypass level, simulation and 3D setup.
   if (args.map) {
     std::array<std::int32_t, 102> flags{};
     if (args.mapFlagsSpecified && args.mapFlags.empty()) {
@@ -526,12 +470,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 #endif
   }
 
-  // The same resolution sim::loadRetailLevel uses below, so the application and
-  // the simulation can never pick different archive levels for one id. The map
-  // names some levels in mixed case ("MM_Block_Bomb_A"); when the id only matches
-  // case-insensitively, continue with the archive's own spelling so every later
-  // use of args.level (skill panel, outcome, observers) sees the canonical id.
-  // Ids that already matched keep the caller's text, as before.
+  // Use the same archive resolver as sim::loadRetailLevel. Case-insensitive
+  // matches such as MM_Block_Bomb_A take the archive spelling for downstream consumers.
   const auto resolvedLevel = sim::resolveRetailLevel(*library, args.level);
   if (!resolvedLevel) {
     std::fprintf(stderr, "level: %s\n", resolvedLevel.error().c_str());
@@ -627,9 +567,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   options.drawCellMesh = args.geom == "cellmesh" || args.geom == "wall+cellmesh";
   options.drawCellRoute = args.geom == "route";
   if (options.drawCellRoute && args.route != "keepwall") {
-    // The route is the original's whole tube: the stored constant lattice is
-    // not part of that walker, so it is not drawn alongside it. `--route
-    // keepwall` is the diagnostic that measures the difference.
+    // Draw the route alone unless --route keepwall requests the constant lattice too.
     options.drawWall = false;
     options.drawOuter = false;
     options.drawInner = false;
@@ -643,7 +581,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   } else if (args.route == "texbank") {
     options.routeTexBankSwap = true;
   } else if (args.route == "keepwall") {
-    // handled above: keep the constant lattice alongside the route
+    // keepwall leaves the constant lattice enabled.
   } else if (!args.route.empty()) {
     std::fprintf(stderr, "route: unknown mutation term '%s'\n", args.route.c_str());
     return 1;
@@ -689,10 +627,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     options.injectedWalkers = std::move(loaded);
   }
 
-  // D3b: a ticking sim::World, built by the D3a production loader, replaces
-  // the fixed injected-walker fixtures above -- but only when --sim/--sim-ticks
-  // is given. Every pre-existing command line (no --sim) leaves
-  // options.injectedWalkers exactly as the blocks above already set it.
+  // With --sim, live World actors replace the supplied diagnostic walkers.
   app::LemmingMotionTracker lemmingMotion;
   std::optional<sim::World> world;
   int terrainHeight = 0;
@@ -702,10 +637,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       std::fprintf(stderr, "sim: %s\n", setup.error().c_str());
       return 1;
     }
-    // R1/R2: connected play arms only after the entry presentation below.
-    // Its full door clip replaces the old derived door-arm delay; retain the
-    // 1.3 s first countdown and every recurring interval. Diagnostic World
-    // fixtures keep their existing timing contract.
+    // Connected play gates the 1.3 s first countdown on entry presentation.
+    // Recurring release intervals still come from World.
     if (persistentFrontend) setup->releaseArmSeconds = 0.0;
     world.emplace(*setup);
     world->setDeathObserver([&](const sim::Lemming& lemming, bool explosion,
@@ -776,15 +709,13 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
 
   const auto prepareScene = [&] {
     app::profile::Scope profilePrepare(app::profile::Preparation);
-    // fluid-surface-impl-001: feed the live receiver state of the accepted shared-dt world to the
-    // scene (stream order == sim::LevelSetup::gates order). Without --sim there is no world and
-    // the fluid pass draws nothing. Depth policy: BackdropScene::kProvisionalFluidDepthPolicy.
+    // Supply fluid state in sim::LevelSetup::gates order. Without a World the
+    // fluid pass is empty. Use BackdropScene::kProvisionalFluidDepthPolicy.
     if (backdrop && world) {
       std::vector<app::BackdropScene::FluidGateState> fluid;
       for (const auto& g : world->setup().gates) {
-        // All installed receivers start [+0x150] at zero and receive every
-        // shared-dt update. The existing level clock therefore samples the
-        // kind-2 four-second alpha phase without another simulation clock.
+        // Installed receivers start [+0x150] at zero. The level clock supplies the
+        // kind-2 four-second alpha phase.
         fluid.push_back({g.lane, g.height, g.wavePhase, g.animated,
                          (world->levelClockMs() % 4000) / 1000.0});
       }
@@ -805,8 +736,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         backdrop->setPressurePadStates(*pressurePadPresentation, states);
       }
     }
-    // terrain-render-001: skill edits to sim::Terrain reach the drawn tube here; a no-op unless
-    // the terrain version moved since the last frame.
+    // Sync edited terrain when its version changes.
     if (world && !args.noTerrainSync) {
       scene->syncTerrain(world->terrain(), world->setup().counterGates);
       scene->syncCounterGates(world->setup().counterGates);
@@ -840,8 +770,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     std::ofstream c3Out;
     const bool c3Diagnostic=!args.c3WriteMask.empty()||!args.c3WriteEvents.empty();
     const bool primaryHit = !c3Diagnostic && primaryCache && sameCamera(*primaryPose, frameCamera);
-    // While rotating, rasterize straight into the live buffers. Populate the
-    // exact-pose caches when a pose repeats. Existing exact hits remain valid.
+    // Draw moving poses directly. Populate the pose caches on a repeated pose.
     const bool cachePose = !previousCamera || sameCamera(*previousCamera, frameCamera);
     previousCamera = frameCamera;
     if (!primaryHit) target.clear(0, 0, 0);
@@ -883,9 +812,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           },
          [&] { if (backdrop) backdrop->renderStage(target, frameCamera, *library, backdropStats, app::BackdropScene::Stage::LegacyUnattributed); },
          [&] {
-           // Tube materials are opaque and triangle() keeps strictly nearer Z.
-           // Cache the independently rendered nearest tube fragment, then merge
-           // against the animated legacy stage at exactly the old tube slot.
+           // Cache the nearest opaque tube fragments and merge after the animated legacy stage.
            if (!geometryOptions.depthTest || geometryOptions.flat || geometryOptions.composeActorsBeforeRoute || c3Diagnostic) {
              scene->render(target, frameCamera, geometryOptions, &*library);
              return;
@@ -948,8 +875,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
            if (world) scene->renderCounterGates(target, frameCamera, *library, world->setup().counterGates);
          });
     if (darkBlueSky) {
-      // Provisional Playtest 13 C5 sky. Fill uncovered pixels after the water
-      // blends against the retail black clear.
+      // Provisional clone sky fills uncovered pixels after water blends with the black clear.
       auto& rgb = target.mutableFramebuffer().rgb;
       const auto& depth = target.depthBuffer();
       for (std::size_t p = 0; p < depth.size(); ++p) {
@@ -962,15 +888,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
     }
     if (fluidDrowning) {
-      // U2 PROVISIONAL: additive drowning is visible through its water, while
-      // all opaque scenery (including the later secondary pass) still hides it.
-      // This does not change the fluid depth policy or ordinary actor depth.
+      // Provisional drowning occlusion includes all opaque stages, including
+      // the later secondary pass. The additive figure can show through its fluid.
       const auto& completed = target.depthBuffer();
       for (std::size_t p = 0; p < fluidDrownSceneDepth.size(); ++p)
         if (completed[p] != afterFluidDepth[p]) fluidDrownSceneDepth[p] = completed[p];
       options.fluidDrownSceneDepth = fluidDrownSceneDepth;
     }
-    // R3: actors test against completed scenery, fluids and edited terrain.
+    // Test actors against the completed scene depth.
     scene->drawExplosionDecals(target, frameCamera);
     if (options.drawCellRoute && !options.composeActorsBeforeRoute)
       scene->drawInjectedWalkers(target, frameCamera, options, *library);
@@ -1015,14 +940,14 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   if (!args.shot.empty()) {
     Image image = toImage(raster.framebuffer());
     if (args.skillPanel) {
-      // C1t opt-in headless render; all panel drawing lives in SkillPanel.cpp.
+      // Draw the headless skill panel.
       if (auto panel = app::drawRetailSkillPanel(image, *library, args.level); !panel) {
         std::fprintf(stderr, "skill-panel: %s\n", panel.error().c_str());
         return 1;
       }
     }
     if (args.hudTicks >= 0) {
-      // C2g: HUD overlay from a separate World, so the scene above is untouched.
+      // Use a separate World for the headless HUD overlay.
       auto setup = sim::loadRetailLevel(*library, args.level);
       auto sheet = loadTexture(*library, "TEXTURES\\^FONT.BMP");
       if (!setup || !sheet) {
@@ -1062,7 +987,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       }
     }
     if (args.pauseCaption) {
-      // C2i: paused frames only; the panel is drawn over the finished frame and HUD.
+      // Draw the pause caption over the HUD.
       shell::CaptionParams caption;
       if (args.captionAlpha >= 0)
         caption.alpha = args.captionAlpha;
@@ -1103,8 +1028,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   }
 
 #if WEBOLUTION_HAVE_SDL2
-  // Frontend runs already started the adapter in runApplication (idempotent);
-  // direct-level runs start it here, still once per process.
+  // Start the process audio adapter here if the frontend has not started it.
   if (cues) {
     cues->start(*library, runOptions.enableAudio && !args.noAudio);
     cues->playLevelMusic();
@@ -1116,8 +1040,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     std::fprintf(stderr, "SDL: %s\n", ready.error().c_str()); return 1;
   }
   SDL_Renderer* presenter = presentation.renderer();
-  // The composed HUD image already has RGB in its first three bytes.
-  // RGBX ignores its fourth byte exactly as the former RGB24 upload did.
+  // RGBX uploads use the first three bytes of the composed HUD pixels.
   bool uploadRgbx = args.sim && world;
   const auto makeTexture = [&](Uint32 format) {
     return SDL_CreateTexture(presenter, format, SDL_TEXTUREACCESS_STREAMING, 640, 480);
@@ -1147,10 +1070,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   const Uint64 frequency = SDL_GetPerformanceFrequency();
   Uint64 previous = SDL_GetPerformanceCounter();
   app::FixedCameraClock fixedClock;
-  // D3b: the sim ticks at its own measured 200 ms period (SimClock.h),
-  // independent of this window's 144 Hz camera clock and its render rate --
-  // only active when --sim was given. Natural frontend entry resets the World
-  // to tick0; a direct-level diagnostic may seed it with --sim-ticks.
+  // The 144 Hz camera clock is independent of simulation and redraw cadence.
+  // Connected entry starts at tick 0. --sim-ticks can seed the direct-level World.
   app::RuntimeSimState runtimeSim;
   bool entryVoicePending = true;
   const auto uiClick = [&] { if (cues) cues->playUiClick(); };
@@ -1246,7 +1167,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       levelMenu = std::move(*loadedMenu);
     }
   }
-  // SOURCE input adapter: retained C1 geometry with live counts/selection.
+  // The source skill panel uses live counts and selection in the HUD layout.
   app::RuntimeSkillSelection skillSelection;
   app::RuntimeNukeInput nukeInput;
   std::optional<app::ReplayRecorder> recorder;
@@ -1264,8 +1185,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
   auto displayedCamera = app::buildCamera(cameraIntro.pose(controls.camera()));
   auto displayedPickReference = controls.pickReference();
   auto displayedScenePose = cameraIntro.pose(controls.camera());
-  // Preserve the original initial input contract. Only an actually discarded
-  // loop frame invalidates depth and requires a later click to refresh it.
+  // After a discarded loop frame, a click refreshes invalid scene depth.
   bool windowSceneCurrent = true;
   bool pointerInWindow = true;
   // First-draw sprite latches consume RNG in dispatch order. Until every sprite
@@ -1280,7 +1200,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     runtimeSim.setFastForward(false);
   };
   const auto updateFastForwardHold = [&] {
-    // PROVISIONAL Playtest 13 C3: plate 8 is a hold, including drag-onto.
+    // Provisional clone input: hold button 0 over plate 8, including dragging onto it.
     const bool active = leftDown &&
         app::runtimeSkillPanelCommand(pointerX, pointerY) == app::RuntimePanelCommand::FastForward;
     if (active && !runtimeSim.fastForward()) uiClick(); // Original plate 8 has no play call.
@@ -1331,7 +1251,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
         persistentFrontend->openLevelMenu() != shell::Outcome::Handled) return;
     levelMenu->open();
     if (!runtimeSim.paused()) runtimeSim.togglePause();
-    uiClick(); // PROVISIONAL pause feedback; simulation/menu policy is unchanged.
+    uiClick(); // Provisional pause feedback.
     resetMenuInput();
   };
   bool menuDismissedThisFrame = false;
@@ -1582,8 +1502,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
     if (panelIconAnimation) {
       const int hover = focused && !menuOpen() && !rightDown ?
           app::runtimeSkillPanelIndex(pointerX, pointerY) : -1;
-      // R7: UI animation continues while simulation is paused and is never
-      // multiplied by fast-forward. Menu/focus suspension is provisional.
+      // UI animation uses frame time independently of simulation pause and fast-forward.
+      // Provisional policy suspends it while a menu is open or focus is lost.
       panelIconAnimation->advanceIcons(focused && !menuOpen() ? elapsed : 0.0,
                                  skillSelection.selectedIndex(), hover);
     }
@@ -1603,34 +1523,28 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       updated = true;
     }
     bool simTicked = false;
-    // READ45CC09: title clock updates after input, before simulation/drawing.
-    // Playtest 10 Z3 restores the load-time countdown independently of the voice.
+    // 45CC09 advances the entry cue after input and before simulation.
+    // The text clock is independent of voice playback.
     if (entryCue) entryCue->advanceBeforeFrame(elapsed, focused && !runtimeSim.paused());
     if (levelStart) levelStart->advance(elapsed, focused && !runtimeSim.paused());
     if (args.sim && world) {
-      // shared-timing-impl-001: explicit elapsed-time world update (integer ms, 100 ms stall
-      // cap, level-second splitting, lemmings then lever contact). The cap applies to the
-      // production wall clock; --frames and frameSeconds are owned deterministic clocks whose
-      // declared step is simulated as given. Camera/input cadence above is unchanged.
+      // Convert elapsed time to integer ms and cap wall-clock stalls at 100 ms.
+      // --frames and frameSeconds use the supplied budget without the cap.
       const bool ownedClock = args.frames > 0 || runOptions.frameSeconds > 0;
-      // P7: observe each confirmed update, including every fast-forward pass,
-      // using the existing World clock. This never supplies time to simulation.
+      // Capture confirmed motion before stepping and after each World update.
       lemmingMotion.observe(*world);
       const auto afterUpdate = [&] {
         drainCues(); lemmingMotion.observe(*world);
         scene->advanceDeathParticles(world->levelClockMs());
       };
-      // The restored text clock is identical to the former release-only delay;
-      // keep the accepted release predicate, including fast-forward passes.
+      // Hold hatch release until both entry text and the full door clip have finished.
       const bool releaseEnabled = !levelStart || levelStart->releaseEnabled(entryCue && entryCue->active());
       simTicked = runtimeSim.advanceElapsed(*world, elapsed, persistentFrontend != nullptr, afterUpdate,
                                             ownedClock ? 0 : app::RuntimeSimState::kStallCapMs, releaseEnabled);
       if (recorder && simTicked) recorder->advanced(*world, runtimeSim, releaseEnabled);
-      // actor-anim-001: every lemming draws its own clip, advanced by level time every frame
-      // (not only on a simulation tick) and frozen while paused. Fast-forward runs the world
-      // kFastForwardPasses times per frame. Reuse its accepted integer-ms budget, including
-      // its stall cap and owned-clock exception; this does not change simulation timing.
-      // PROVISIONAL: a transition observed at frame end receives this frame's whole budget.
+      // Advance animation with the admitted integer-ms budget times the pass
+      // count, or zero when paused. Provisional frame-end transitions receive
+      // the full animation delta.
       if (const SpriteSheet* lemmingSheet = scene->lemmingSprites(); lemmingSheet && !args.noActorAnim) {
         const double levelDt = !simTicked ? 0.0 : runtimeSim.lastPassMs() / 1000.0 *
             (runtimeSim.fastForward() ? app::RuntimeSimState::kFastForwardPasses : 1);
@@ -1640,9 +1554,8 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       options.injectedWalkers = app::injectedWalkersFromWorld(
           *world, terrainHeight, args.noActorAnim ? nullptr : &lemmingAnim, &lemmingMotion);
       if (backdrop && entranceExitPresentation) {
-        // R2: connected play samples the full installed door duration (25
-        // keys/s); its phase relative to the cue is provisional. The direct
-        // diagnostic retains the historical P9 arm-normalized sampling.
+        // Connected entry samples the full clip (25 keys/s) with provisional cue
+        // sequencing. Direct diagnostics normalize door progress by releaseArmSeconds.
         const double arm = world->setup().releaseArmSeconds;
         hatchOpeningProgress = levelStart ? levelStart->openingProgress() :
             (arm > 0 ? world->levelClockMs()/1000.0/arm : 1.0);
@@ -1677,8 +1590,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
       displayedPickReference = controls.pickReference();
       prepareScene();
       windowSceneCurrent = false;
-      // Native pose is evaluated at the old intro clock before its increment;
-      // pause freezes the opening move independently of camera input updates.
+      // Sample the pose before advancing intro time. Pause freezes the intro clock.
       cameraIntro.advanceAfterFrame(elapsed, runtimeSim.paused());
       Image image;
       std::vector<app::LevelActorView> actors;
@@ -1747,7 +1659,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             app::compositeIconRegion(image, runtimeHudIcons[i], hudIcons[i].placement);
           app::drawRuntimeHud(image, *runtimeFont, *world, false);
           app::drawRuntimeNukeFeedback(image, *runtimeFont, *world, nukeInput.armed());
-          // actor-anim-001 (P6): the bomber countdown above each lemming whose fuse is lit.
+          // Draw a countdown over each lemming with a lit fuse.
           if (!args.noActorAnim && std::any_of(world->lemmings().begin(), world->lemmings().end(),
                           [](const sim::Lemming& l) { return l.alive() && l.fuseMs > 0; })) {
             const auto fuseBoxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
@@ -1763,9 +1675,7 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
           }
           if (cueFrame) {
             app::drawEntryStartCue(image, *runtimeFont, entryCueText, *cueFrame);
-            // A12 supersedes Y13: request Letsgo on the first drawn text frame.
-            // Each entry/Retry owns this latch, including silent attempts; neither
-            // simulation passes nor later pause/menu redraws can retrigger it.
+            // Request Letsgo on the first drawn cue frame, once per level entry or retry.
             if (entryVoicePending) {
               entryVoicePending = false;
               if (cues) cues->play(sim::SoundCue::LevelStart);
@@ -1774,13 +1684,10 @@ static int runApplicationLeg(int argc, char** argv, app::FrontendWindowObserver 
             }
           }
           if (const int remainingMs = world->nukeCountdownMs(); remainingMs > 0) {
-            // A3: 44279A..4427B2 anchors the nuke digit at (320,240), centred;
-            // 414132 adds (5,6). 413F15/41419F expand it during each second;
-            // PROVISIONAL 640x480 adapter: fix the native mode factor to zero:
-            // dx=trunc(150*phase), dy=trunc(195*phase), additive ^Font text.
-            // PROVISIONAL boundary adapter: ceil the existing integer-ms timer
-            // to 5..1 (no native blank '6' at t=5 or extra digit at exact seconds).
-            // Reading World alone keeps pause, speed and explosion timing intact.
+            // 44279A..4427B2 centres the Nuke digit at (320,240); 414132 adds (5,6).
+            // 413F15/41419F expands it during each second. Provisional 640x480 adapter
+            // uses mode 0, dx=trunc(150*phase), dy=trunc(195*phase) and additive ^Font.
+            // Provisional countdown rounds the World timer up to display 5..1.
             const int digit = (remainingMs + 999) / 1000;
             const int phaseMs = digit * 1000 - remainingMs;
             const int dx = 150 * phaseMs / 1000, dy = 195 * phaseMs / 1000;
@@ -1918,8 +1825,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
     std::fflush(stdout);
   }
 #endif
-  // Read the clone image once before any gameplay clock starts. Attempt setup
-  // later uses this cached identity and never hashes inside a measured frame.
+  // Cache the clone executable's recording identity before gameplay clocks start.
   if (!args.recordDir.empty()) (void)app::replayBuildIdentity();
   sceneryRandom().begin();  // main-loop entry seed (0x0045D06C analogue)
   std::optional<app::LevelOutcome> completed;
@@ -1967,8 +1873,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   auto library = AssetLibrary::open(fs::path(args.gameDir) / "lemmings.box",
                                     fs::path(args.gameDir) / "patch.box");
   if (!library) { std::fprintf(stderr, "assets: %s\n", library.error().c_str()); return 1; }
-  // Progress store: injected by tests, or the clone's own per-user SavedGame.dat
-  // for the CLI. Never the installed game directory's save.
+  // Use the injected store or the clone's per-user SavedGame.dat.
   auto store = options.saveStore;
   if (!store && options.useDefaultSaveStore) {
     if (auto made = save::makeDefaultSaveStore(fs::path(args.gameDir)); made) {
@@ -1989,8 +1894,7 @@ int webo::app::runApplication(int argc, char** argv, FrontendWindowObserver obse
   playback.start(*library, options.enableAudio && !args.noAudio);
 #endif
   session->configureSound(sound, std::move(soundFile), std::move(preview));
-  // Keep this session alive across level/results/map/retry legs. Every level
-  // still uses the same loader and SDL runtime; no recursive app invocation.
+  // Keep the same frontend session across level, results, map and retry.
   for (;;) {
     completed.reset();
     disposition = LegDisposition::Exit;

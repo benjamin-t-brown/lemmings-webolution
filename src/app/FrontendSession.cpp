@@ -14,9 +14,8 @@ namespace webo::app {
 
 std::expected<FrontendSession, std::string> FrontendSession::create(
     const AssetLibrary& library, std::shared_ptr<save::SaveStore> store) {
-  // Restart half of the persistence contract. A missing file is the zero state; a
-  // wrong-size or unreadable file leaves the session empty with a visible
-  // diagnostic, and it is only ever replaced by a later successful save.
+  // Missing saves start empty. Unreadable or wrong-size saves report a
+  // diagnostic and remain on disk until a successful write.
   save::SavedGame loadedImage;
   std::optional<std::string> loadError;
   if (store) {
@@ -84,17 +83,15 @@ std::expected<FrontendSession, std::string> FrontendSession::create(
     result.confirmBoxes_[i] = {left - choices.panelPadX, top,
         left + shell::textWidth(labels[i], cells) + choices.panelPadX, top + choices.panelHeight};
   }
-  // READ 0x49BBD0..0x49BC0A: independent heading at (320,250), string129,
-  // RGB(255,0,0), flags0x840 (horizontal centre, no vertical offset). No panel.
-  // Reuse the font alpha blitter only; no HUD-specific layout is applied.
+  // 0x49BBD0..0x49BC0A draws standalone string129 at (320,250), RGB(255,0,0).
+  // flags0x840 centres it horizontally without a vertical offset.
   const std::string question((*strings)[129]);
   result.confirmQuestion_ = question;
   const std::array<shell::HudLine, 1> heading{{
       {question, shell::labelLeft(question, cells, 640), 250, {255, 0, 0}}}};
   shell::drawHud(result.confirm_, *font, heading, cells);
 
-  // READ 0x49AC6B/0x49AC90: shared row builder, layout base340 +100,
-  // table0x4C44E0 = UK127. Native screenshot corroborates [205,441,436,468].
+  // 0x49AC6B/0x49AC90 build the shared row at base340 +100, table0x4C44E0 = UK127.
   shell::MenuParams footer;
   footer.baseY = 440;
   const std::array<std::string, 1> footerLabels{std::string((*strings)[127])};
@@ -187,9 +184,8 @@ const Image& FrontendSession::image() const {
 Image FrontendSession::composeFrame() const {
   Image composed = image();
   if (screen() == shell::Screen::Map && focused_) {
-    // READ 49B2F6: indexed-mask hover, state2/3 only. Each frame starts from
-    // the clean map, so leaving a node removes all three lines and the clock.
-    // Provisional focus policy retained: hide the block while unfocused.
+    // 49B2F6 shows the indexed-mask tooltip for state2/3. Compose over the base
+    // map each frame. Provisional clone policy hides it while unfocused.
     if (const auto node = map_.pickNode(pointerX_, pointerY_)) {
       map_.drawHover(composed,font_,*node);
     }
@@ -207,10 +203,9 @@ shell::Outcome FrontendSession::pressReturn() {
       adjustSound(menuFocus() == SoundMenu::WindowSize ? 1 : -1);
     return shell::Outcome::Handled;
   }
-  // The native shared builder focuses the sole footer row. SDL Return invokes
-  // its recovered semantic action; physical Return binding was not remeasured.
+  // SDL Return activates the footer row focused by the native shared builder.
   if (screen() == shell::Screen::Map) return state_.activateMapFooter();
-  // READ49BC59 dispatches the focused row; observed keyboard No returns Menu5.
+  // 49BC59 dispatches the focused row. No returns to Menu5.
   if (screen() == shell::Screen::Confirm) return confirmChoice(menuFocus() == 0);
   return state_.press(shell::Key::Return);
 }
@@ -364,8 +359,7 @@ bool FrontendSession::click(int x, int y) {
       case ResultAction::Quit:
         if (state_.activateResultsQuit() != shell::Outcome::Handled) return false;
         levelIntroEnabled_ = true; // READ48658A, independent of map destination.
-        // Clone launch ownership, not a claimed null write to native5D59F0:
-        // native retains a path but requires a separate reload request.
+        // Clear the selected launch. The native path at 5D59F0 requires a reload request.
         selectedLevel_.reset(); selectedNode_.reset(); outcome_.reset(); results_.reset();
         return true;
       case ResultAction::None: return false;
@@ -376,10 +370,8 @@ bool FrontendSession::click(int x, int y) {
 
 std::expected<void, std::string> FrontendSession::completeLevel(
     const AssetLibrary& library, const LevelOutcome& outcome) {
-  // Playtest 6: the map stores 20 launch ids in mixed case (MM_Block_Bomb_A)
-  // while the level leg reports the resolved archive id (MM_BLOCK_BOMB_A).
-  // Clone policy: ids are compared without ASCII case, as the level resolver
-  // does, and the session keeps the map's own spelling for retry.
+  // Compare launch IDs without ASCII case (MM_Block_Bomb_A / MM_BLOCK_BOMB_A),
+  // matching the resolver. Retain the map spelling for retry.
   const auto sameId = [](std::string_view a, std::string_view b) {
     return std::ranges::equal(a, b, [](unsigned char x, unsigned char y) {
       return std::toupper(x) == std::toupper(y); });
@@ -390,10 +382,8 @@ std::expected<void, std::string> FrontendSession::completeLevel(
   if (outcome.saved < 0 || outcome.total < outcome.saved || outcome.required < 0 ||
       outcome.secondsRemaining < 0)
     return std::unexpected("inconsistent level outcome");
-  // READ445498: success is trigger-time latched, counts are final-call values.
-  // A timeout loss can legitimately display saved>=required after late rescues.
-  // Prepare the results assets before changing screen or progress. READ485E55
-  // writes1 to the winning selected slot; a loss never clears earlier progress.
+  // 445498 latches success at the trigger and publishes counts at completion.
+  // Prepare results assets before committing state. READ485E55 marks only a win.
   auto results = ResultsScene::build(library, outcome);
   if (!results) return std::unexpected(results.error());
   if (state_.showResults(outcome.success) != shell::Outcome::Handled)
@@ -405,9 +395,8 @@ std::expected<void, std::string> FrontendSession::completeLevel(
   if (outcome.success) {
     completionFlags_[*selectedNode_] = 1;
     refreshMap();
-    // READ485E55 (0x485E2B..0x485E65): mark C of the winning (group, slot), then
-    // write the file. Loss, retry, abandon and exit never reach this. A failed
-    // write is reported by persist() and does not discard the results above.
+    // READ485E55 (0x485E2B..0x485E65) marks C of the winning (group, slot) then writes
+    // the save. A failed write leaves the prepared results and in-memory progress intact.
     const auto& entry = MapScene::nodeMapping()[*selectedNode_];
     savedGame_.markComplete(entry[0], entry[1]);
     persist();
@@ -428,8 +417,7 @@ bool FrontendSession::retryLevel() {
 bool FrontendSession::abandonLevelToMap() {
   if (state_.abandonLevelToMap() != shell::Outcome::Handled) return false;
   selectedLevel_.reset(); selectedNode_.reset(); outcome_.reset(); results_.reset();
-  // Unlike loss-results Quit,48F601 does NOT change the intro preference.
-  // Preserve the prepared current-progress map; no fabricated LevelOutcome.
+  // 48F601 preserves the intro preference. Return to the prepared current-progress map.
   return true;
 }
 

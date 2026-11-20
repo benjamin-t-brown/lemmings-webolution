@@ -13,9 +13,8 @@ namespace {
 
 bool isClip(const char* a, const char* b) { return std::strcmp(a, b) == 0; }
 
-// Strip rate for the controller clock. The serialized clip speed is the rate the recovered
-// clock multiplies elapsed time by (ActorAnimStrip::rate, strip +0x10); a missing or unusable
-// value falls back to 1.0 (the walk strip's measured rate, test_actoranim).
+// The controller scales elapsed time by ActorAnimStrip::rate (strip +0x10).
+// Missing or unusable speeds default to 1.0.
 double clipRate(const Sprite& clip) {
   return std::isfinite(clip.rate) && clip.rate > 0.0 ? clip.rate : 1.0;
 }
@@ -33,13 +32,13 @@ const char* lemmingClipName(const sim::Lemming& lemming) {
     case State::Basher: return "bash";            // READ: strip 0
     case State::Miner: return "mine";             // READ: strip 9
     case State::Digger: return "dig";             // READ: strip 4
-    case State::Drown: return "drown";            // READ: the state's enter sets "drown" (World.h)
-    case State::Teleporting: return "cartwheel";  // READ: the pad's state plays the cartwheel (World.h)
-    case State::Floater: return "umbopen";        // READ: actor_falling.md; presentation handover below
+    case State::Drown: return "drown";            // The state enters with "drown".
+    case State::Teleporting: return "cartwheel";  // The pad state selects "cartwheel".
+    case State::Floater: return "umbopen";        // Umbrella opening transitions to "float".
     case State::Blocker: return "block";          // PROVISIONAL: the only blocker-named strip
-    case State::Exploder: return "explode";       // READ: actor_flapper.md, pre-blast type 0x20
-    case State::Faller: return "fall";            // READ: actor_falling.md, entry selects "fall"
-    case State::Bounce: return "fall";            // READ: actor_bouncing.md, entry selects "fall"
+    case State::Exploder: return "explode";       // actor_flapper handles pre-blast type 0x20.
+    case State::Faller: return "fall";            // actor_falling entry clip.
+    case State::Bounce: return "fall";            // actor_bouncing entry clip.
     case State::Splatter:                         // PROVISIONAL: no splat strip; the fall pose, held
     case State::Exited:
     case State::Dead: return "fall";
@@ -85,9 +84,8 @@ void LemmingAnimTracker::advance(const sim::World& world,
       continue;
     const ActorAnimStrip strip{static_cast<int>(clip->animations.size()), clipRate(*clip)};
     e.clock = advanceActorAnimClock(e.clock, strip, std::max(0.0, elapsedSeconds));
-    // READ actor_falling.md: umbrella completion selects "float". PROVISIONAL frame-end
-    // adapter: hand over here, discarding this frame's excess opening budget, rather than
-    // reconstructing the original model's within-frame event callback.
+    // Native actor_falling umbrella completion selects "float". The provisional clone
+    // handover occurs at frame end and discards excess opening time.
     if (isClip(e.clip, "umbopen") && e.clock.wrapped) {
       e.clip = "float";
       e.clock = ActorAnimClockState{};

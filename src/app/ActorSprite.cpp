@@ -43,10 +43,9 @@ std::expected<ActorSpritePlacement, std::string> actorSpritePlacement(
   const double scale = camera.zoomScaleAtDepth(actorPhysicalDepth(*placement, camera.width));
   if (!(scale > 0.0) || !std::isfinite(scale))
     return std::unexpected("actor sprite: invalid zoom reference depth");
-  // PROVISIONAL playable-v1 policy (playtest 12 B1). Native 47A75D uses
-  // global half/full/double pixel extents. Match terrain magnification at this
-  // depth instead, preserving its zoom-0 rectangle and the traced origin bias.
-  // Drawing, highlight and picking all consume this same placement.
+  // Provisional clone zoom. Native 47A75D uses global half/full/double extents.
+  // Scale the zoom-0 rectangle by local terrain magnification and retain its
+  // origin bias. Drawing, highlighting and picking share this placement.
   placement->left = nativeFloat(placement->originX + (placement->left - placement->originX) * scale);
   placement->right = nativeFloat(placement->originX + (placement->right - placement->originX) * scale);
   placement->top = nativeFloat(placement->originY + (placement->top - placement->originY) * scale);
@@ -68,8 +67,7 @@ std::expected<ActorSpritePlacement, std::string> actorSpritePlacement(
                    m[7] * worldPosition[2] + m[10];
   const double z = m[2] * worldPosition[0] + m[5] * worldPosition[1] +
                    m[8] * worldPosition[2] + m[11];
-  // Native lens vector uses Z/width. 43CDA0's 0.0003 bias is in that same
-  // normalized unit; applying it to physical world-space Z is incorrect.
+  // 43CDA0's 0.0003 bias uses normalized lens Z (Z/width).
   const double biasedDepth = z - 0.0003;
   if (!(biasedDepth > 0.0) || !std::isfinite(biasedDepth))
     return std::unexpected("actor sprite: origin is behind the biased near plane");
@@ -77,16 +75,14 @@ std::expected<ActorSpritePlacement, std::string> actorSpritePlacement(
   const double scale = scaleDelta == 0 ? 1.0 : (scaleDelta < 0 ? 0.5 : 2.0);
   const double originX = projection.cx + x / biasedDepth;
   const double originY = projection.cy - y / biasedDepth;
-  // Raw 0x47A75D delta=-1 path: add the two record offsets at half scale,
-  // then subtract half the source width/height. The reverse side supplies
-  // right/bottom by adding the same half extents. The other two literal
-  // branches are the full and doubled versions of this arithmetic.
+  // In the 0x47A75D delta=-1 path, add the half-scaled frame offsets and
+  // subtract the half extents. The reverse side adds the same extents.
   double left = horizontalMirror
                     ? originX + (static_cast<double>(frame.unknown0) - frame.width) * scale
                     : originX - frame.unknown0 * scale;
   double top = originY - frame.unknown1 * scale - frame.height * scale;
-  // The unmirrored branches at 0x47AA59 and 0x47AAAF both keep the initial
-  // full unknown1 subtraction; only the frame-height extent changes scale.
+  // At 0x47AA59 and 0x47AAAF, scaling affects the frame height. The initial
+  // unmirrored subtraction of unknown1 is at full scale.
   if (!horizontalMirror)
     top = originY - frame.unknown1 - frame.height * scale;
   double right = left + frame.width * scale;
@@ -136,19 +132,11 @@ std::expected<void, std::string> drawActorSprite(webo::Image& overlay,
   if (frame.width == 0 || frame.height == 0 || p.right <= p.left || p.bottom <= p.top)
     return std::unexpected("actor sprite: empty frame or destination");
 
-  // A4v (MEASURED offline on the two retained fixtures; no exe byte states the
-  // pixel-centre convention): the native raster matches as if the pixel centre
-  // is the INTEGER coordinate, not x+0.5. Pixel x is covered when
-  // left <= x < right and its UV is (x - left) / (right - left); likewise for
-  // y. The earlier x+0.5 centre was this project's choice and sat half a pixel
-  // up-left of native (support MAE 0.0819/0.0778 before, 0.0014/0.0015 after).
-  // Sampling stays nearest-texel. READ: 0x470F29(linear) writes TSS stage-0
-  // 0x10 and 0x11 (MAG/MIN) with value 1 by default and 2 only when its arg and
-  // byte [this+0x3a1] are both nonzero (0x470F32/0x470F5E, pushes at
-  // 0x470F72/0x470F8F); 0x47A766 calls it with 0 when [0x58D53C]==0. That the
-  // value 1 is D3D7 POINT (2 = LINEAR) is header knowledge, not an exe byte;
-  // bilinear scores worse here (support MAE 0.027). Whether this call is the one
-  // in force for actor sprites is not traced.
+  // Software coverage and UVs use integer pixel coordinates and nearest sampling.
+  // 0x470F29(linear) sets stage-0 TSS MAG/MIN (0x10 and 0x11). In D3D7,
+  // the default 1 is POINT. LINEAR (2) requires a nonzero argument and [this+0x3a1]
+  // (0x470F32/0x470F5E, pushes at 0x470F72/0x470F8F).
+  // 0x47A766 passes 0 when [0x58D53C]==0. The active actor sampler is unconfirmed.
   const int x0 = std::max(0, static_cast<int>(std::ceil(p.left)));
   const int x1 = std::min(overlay.width, static_cast<int>(std::ceil(p.right)));
   const int y0 = std::max(0, static_cast<int>(std::ceil(p.top)));

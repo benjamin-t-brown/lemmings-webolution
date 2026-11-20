@@ -89,9 +89,7 @@ std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte> d) 
   for (std::size_t i = 0; i < kHeaderWords && pos + 4 <= d.size(); ++i, pos += 4)
     lvl.header.push_back(u32At(d, pos));
 
-  // Sweep for length-prefixed printable strings. Every reference found this
-  // way resolves against the archive in the retail data, which is the evidence
-  // that the sweep is reading real fields rather than coincidences.
+  // Heuristically index length-prefixed printable strings.
   std::size_t cylinderChunk = std::string::npos;
   std::size_t i = 0;
   while (i + 4 <= d.size()) {
@@ -124,9 +122,7 @@ std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte> d) 
     ++i;
   }
 
-  // The stream borrows its input; keep the adapted storage alive through both
-  // recovered readers. Stop at the world boundary, without later sections or
-  // EOF validation. The string sweep above remains a separate heuristic index.
+  // Keep the borrowed storage alive through the two ordered reads. Stop at the world boundary.
   std::vector<std::uint8_t> bytes;
   bytes.reserve(d.size());
   for (const auto byte : d)
@@ -142,12 +138,10 @@ std::expected<LevelIndex, std::string> indexLevel(std::span<const std::byte> d) 
   }
 
   if (lvl.gridFallbackReason.empty()) {
-    // Preserve all words and positions, including an empty array. No dimension
-    // policy or index filtering is part of this serialized projection.
+    // Preserve every word and its position, including an empty array.
     lvl.grid0 = std::move(world.first_integer_array);
   } else if (cylinderChunk != std::string::npos) {
-    // Diagnosed legacy extraction, only after a recovered-reader rejection.
-    // Keep partial-index success even when no usable locator array exists.
+    // On reader rejection, try the legacy locator. A missing array still permits a partial index.
     constexpr std::size_t kPreambleBytes = 5 * 4 + 4 + 8;
     const std::size_t countAt = cylinderChunk + kPreambleBytes;
     if (countAt + 4 <= d.size()) {

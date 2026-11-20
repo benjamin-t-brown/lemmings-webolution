@@ -1,6 +1,5 @@
-// Opt-in, exclusive wall-clock scopes for source-built clone profiling.
-// Disabled: no clocks, file writes or per-pixel instrumentation. Enable by naming
-// a CSV in WEBOLUTION_FRAME_PROFILE. CSV writing is outside the measured frame.
+// Set WEBOLUTION_FRAME_PROFILE to a CSV path for exclusive wall-clock
+// timing. CSV writes occur outside the timed frame.
 #pragma once
 #include <array>
 #include <chrono>

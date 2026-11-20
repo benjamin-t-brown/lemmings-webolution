@@ -30,8 +30,8 @@ CursorState selectCursorState(const CursorPolicyInput& in) {
             state = directional(in, true);
     }
 
-    // 0x455478..0x45564e. Panel hit clears hover pointers in the native caller,
-    // but those side effects must not be used to re-run the earlier decision.
+    // At 0x455478..0x45564e, the panel result overrides the earlier cursor
+    // decision. Clearing the hover pointers does not reconsider that decision.
     if ((in.uiState4cc134 == 0 || in.uiState4cc134 == 1) &&
         (in.displayMode0c == 1 || in.effectiveMode == 2)) {
         if ((in.panelIndex == -1 || in.panelAvailability < 1) && in.panelIndex < 11) {

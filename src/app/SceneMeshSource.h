@@ -37,8 +37,7 @@ struct SceneMeshRecordSource {
   std::vector<SceneMeshCornerSource> corners;
 };
 
-// Matrices use the accepted 12-double row-vector affine representation:
-// out[j]=sum(in[i]*m[3*i+j])+m[9+j]. Required caller matrices, no defaults.
+// 12-double row-vector affine matrices: out[j]=sum(in[i]*m[3*i+j])+m[9+j].
 std::expected<std::vector<SceneMeshRecordSource>, std::string> buildSceneMeshSource(
     const SceneNode& root, const std::array<double, 12>& parentWorld,
     const std::array<double, 12>& view);

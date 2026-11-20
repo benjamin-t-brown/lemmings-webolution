@@ -10,8 +10,7 @@
 
 namespace webo::app {
 
-// Presentation only. No particle feeds a position, random value or collision
-// back into World. See docs/scratch/death-particles-001.md for evidence/limits.
+// Presentation particles are independent of World state and its random stream.
 struct DeathParticle {
   ActorTerrainSample origin{};
   double vx = 0, vy = 0, vz = 0, gravity = 0;

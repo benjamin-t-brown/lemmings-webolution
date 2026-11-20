@@ -13,8 +13,7 @@
 #include <string>
 #include <string_view>
 
-// A4f actor CPU candidate fixture. Geometry is bounded against native data;
-// tint comes from the level light map unless overridden with --tint.
+// Use the level light map for actor tint unless --tint overrides it.
 int main(int argc, char** argv) {
   std::map<std::string, std::string> args;
   for (int i = 1; i < argc; ++i) {

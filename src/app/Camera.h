@@ -1,15 +1,6 @@
-// The A1 camera: the verified pose/lens operands, assembled into one transform.
-//
-// This is a direct port of the accepted A1 arithmetic
-// (tools/harness/camera_fixture.py, docs/scratch/phase-a1-camera.md and
-// phase-a1-live-arena.md), not a reconstruction and not a decompiler reading.
-// Operands live in a small params file so the nine retained camera states can
-// be replayed exactly; the defaults are the canonical MM_CLIMB_002 view.
-//
-// Projection is x/z + centerX, centerY - y/z with the measured lens scale
-// vector. It does not use a fourth homogeneous coordinate. The exact x87
-// rounding sequence is not reproduced; the accepted fixture is a candidate
-// that passes the fixed pixel gate, not a bit-exact arithmetic replay.
+// Camera pose and lens transform. Projection is x/z + centerX and
+// centerY - y/z. Defaults describe the MM_CLIMB_002 view.
+// The clone approximates the native x87 rounding sequence.
 
 #pragma once
 
@@ -40,12 +31,11 @@ struct CameraParams {
   double angleUnitsPerTurn = 360.0;
   double elevation = 0.0;
   double zoomLateralOffset = 0.0;  // camera-local eye X, used only when zoomed
-  // Explicit opening-pose state; defaults preserve the settled canonical view.
+  // Opening-pose parameters.
   bool introActive = false;
   double introSeconds = 0.0;
 
-  // Bounded unmodified-key/mouse grab case. Absent unless the params file
-  // carries a control_case, which is the only thing that consumes these.
+  // Optional control_case input for the grabbed-key and mouse yaw calculation.
   bool hasControlCase = false;
   double mouseGain = 10.0;
   double rotationUnit = 24.0;
@@ -59,7 +49,7 @@ struct CameraParams {
 
 struct CameraBasis {
   std::array<double, 12> worldToView{};  // 9 basis values, then translation
-  // A1 camera-context scale operands, before native context normalization.
+  // Camera-context scales before native normalization.
   std::array<double, 3> projectionVector{};
   std::array<double, 3> inverseProjectionVector{};
   std::array<double, 3> eyeWorld{};
@@ -69,10 +59,9 @@ struct CameraBasis {
   int height = 480;
   double cx = 319.0;
   double cy = 239.0;
-  // The camera's own angular position in turns: `(yaw + yaw_offset) /
-  // yaw_units_per_turn`, the operand the tube walker (`0x43A4EC`) turns into a
-  // bucket centre with `0x43c990 -> fsub 0.5, fmul 32.0`. Same expression as
-  // the A1 fixture's `selector`, which drives the pass bounds there.
+  // Camera angle in turns, (yaw + yaw_offset) / yaw_units_per_turn.
+  // The tube walker (`0x43A4EC`) converts it to a bucket centre with
+  // `0x43c990 -> fsub 0.5, fmul 32.0`.
   double selectorTurns = 0.0;
   // View-Z translation from this camera to zoom 0 at the same yaw/intro phase.
   // PROVISIONAL sprite presentation: preserve the zoom-0 pixel size, then
@@ -107,8 +96,7 @@ struct BillboardCameraChain {
 // error when the file cannot be read or a required key is missing.
 bool loadCameraParams(const std::filesystem::path& path, CameraParams& out, std::string& error);
 
-// The bounded grabbed-key/mouse yaw from the A1 control mapping. Returns the
-// params' yaw unchanged when there is no control_case.
+// Computes grabbed-key and mouse yaw. With no control_case, returns the input yaw.
 double resolvedYawUnits(const CameraParams& p);
 
 CameraBasis buildCamera(const CameraParams& p);

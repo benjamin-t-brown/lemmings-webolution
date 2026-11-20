@@ -1,6 +1,5 @@
-// Provisional clone policy for exit cheers: average concurrent voices, then
-// fit that bus into the headroom left by existing effects. No hard clipping,
-// allocation or device access. This does not model the retail DirectSound mix.
+// Provisional clone mix. Average concurrent exit cheers and fit the bus into the remaining
+// headroom. The calculation allocates nothing and uses no device or retail DirectSound mix state.
 #pragma once
 
 #include <algorithm>
@@ -24,8 +23,7 @@ public:
   void mixInto(std::span<std::int16_t> frame) const {
     if (voices_ == 0)
       return;
-    // One gain for both channels preserves the stereo image. Existing sounds
-    // keep their samples; only the new bus is attenuated if room is limited.
+    // Use one gain for both channels to preserve the stereo balance. Attenuate only the exit bus.
     double gain = 1.0;
     for (std::size_t c = 0; c < frame.size(); ++c) {
       const double sample = sum_[c] / voices_;

@@ -1,9 +1,5 @@
-// B1w: render the highlight-0 main menu from the real archive and write a PNG.
-//
-//   MenuRenderDump <game-dir> <out.png> [--xword N] [--rowstep N] [--sheet ARCHIVE_NAME]
-//
-// The overrides exist only for the three single-input mutation checks; defaults are the
-// read/observed values in MenuRender.h.
+// Render the archive's main menu with highlight 0. Defaults come from MenuRender.h.
+// MenuRenderDump <game-dir> <out.png> [--xword N] [--rowstep N] [--sheet ARCHIVE_NAME]
 
 #include "assets/Bitmap.h"
 #include "assets/Box.h"

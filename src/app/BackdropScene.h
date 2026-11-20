@@ -30,8 +30,7 @@ namespace sim { struct Crab; struct NamedHazard; struct LevelSetup; }
 namespace app {
 class Raster;
 class TubeScene;
-// App-owned animation data keeps BackdropScene's layout compatible with the
-// retained demonstrations that compile older headers against current support.
+// Application-owned animation state for placed scenery.
 struct EntranceExitPresentation {
   struct Entrance { std::size_t root; HatchAnimation animation; };
   struct Exit {
@@ -45,8 +44,7 @@ struct EntranceExitPresentation {
   std::int32_t exitCoordinateHeight = 0;
   std::vector<lemmings::WorldGeometryPrefix::TripleBlock> exitCoordinateRows;
 };
-// Application-owned binding: serialized tagged IDs are shared with sim::Lever.
-// Keeping this outside BackdropScene preserves the retained renderers' layout.
+// Serialized tagged IDs are shared with sim::Lever.
 struct LeverPresentation {
   struct Binding {
     std::size_t root;
@@ -90,8 +88,7 @@ struct NamedHazardPresentation {
   std::int32_t coordinateHeight = 0;
   std::vector<lemmings::WorldGeometryPrefix::TripleBlock> coordinateRows;
 };
-// App-owned UV tracks for the placed type-3 gravity gadgets. No scene layout
-// change: historical render demonstrations keep their own compatible headers.
+// App-owned UV tracks for placed type-3 gravity gadgets.
 struct GravityPresentation {
   struct Key { double end, u, v, du, dv; };
   struct Corner {
@@ -102,8 +99,7 @@ struct GravityPresentation {
   struct Binding { std::size_t root; double duration; std::vector<Track> tracks; };
   std::vector<Binding> bindings;
 };
-// Per-leg gadget presentation. Clip clocks use the existing level clock;
-// simulation contacts only notify this owner and never depend on its state.
+// Gadget clips use the level clock. Contacts notify presentation, which never feeds simulation.
 struct GadgetPresentation {
   struct Spin { std::size_t node; unsigned axis; double turnsPerSecond; };
   struct Clip {
@@ -129,13 +125,10 @@ struct BackdropStats {
       predicateRejected=0, missingTextures=0, rejected=0, pixels=0;
   std::size_t rasterCalls=0;
   std::size_t projectionRejected=0, rasterRejected=0;
-  // Actual accepted stores within the supplied observer mask (zero without an
-  // observer). These count events, including repeated stores to one pixel.
+  // Accepted raster stores inside the observer mask, including repeated stores.
   std::size_t acceptedColorWrites=0, acceptedDepthWrites=0;
   std::vector<std::string> diagnostics;
-  // Type-2 branch-1 (sprite) scenery, scene-branch-impl-001. These are also included in the
-  // general rasterCalls / meshTriangles / accepted-store totals above; the sprite counters let a
-  // caller separate them from mesh submissions.
+  // Type-2 branch-1 sprite counts are also included in the general raster totals.
   std::size_t stageSprites=0, sprites=0, spriteRasterCalls=0, spriteTriangles=0,
       spriteAcceptedColorWrites=0, spriteAcceptedDepthWrites=0;
   struct SpriteSubmission {
@@ -146,9 +139,8 @@ struct BackdropStats {
     std::string reason;  // empty when both triangles were rasterized
   };
   std::vector<SpriteSubmission> spriteSubmissions;
-  // fluid-surface-impl-001: one entry per drawn base `Fluid` model (Stage::FluidGate), in source
-  // order, labelled by the entities_42acac stream index. `acceptedColorWrites` counts actual
-  // raster stores and is nonzero only when the caller supplied an observer mask.
+  // One base Fluid entry per submission, in entities_42acac stream order.
+  // acceptedColorWrites counts raster stores within the observer mask.
   struct FluidSubmission {
     std::size_t entityIndex = 0;
     double height = 0.0;
@@ -161,14 +153,11 @@ struct BackdropStats {
 };
 class BackdropScene {
  public:
-  // FluidGate (fluid-surface-impl-001): the post-tube base `Fluid` pass of the entities_42acac
-  // receivers (frame order 0x441845: tube, +0x160/+0x164, base Fluid, +0x15C, secondary). It draws
-  // only while the caller supplies live gate state (setFluidState); without it nothing is drawn.
+  // FluidGate draws base Fluid only with live entities_42acac receiver state.
+  // Frame order at 0x441845 is tube, +0x160/+0x164, base Fluid, +0x15C, secondary.
   enum class Stage { Primary, LegacyUnattributed, Secondary, FluidGate, FluidPipe, GadgetEffect };
-  // PROVISIONAL clone depth policy for the alpha-blended fluid draw (user-approved milestone
-  // exception). The inherited original ZENABLE/ZWRITEENABLE/ZFUNC/device ZBIAS are UNRESOLVED
-  // (fluid research section 7.1); LessWriteOn is the clone's existing mesh default, not original
-  // evidence. The alternatives exist for focused matched-time diagnostics only.
+  // Provisional clone fluid depth defaults to LessWriteOn. Original ZENABLE,
+  // ZWRITEENABLE, ZFUNC and device ZBIAS are unresolved.
   enum class FluidDepthPolicy { LessWriteOn, LessWriteOff, DepthDisabled };
   static constexpr FluidDepthPolicy kProvisionalFluidDepthPolicy = FluidDepthPolicy::LessWriteOn;
   // Live per-receiver render state, indexed by entities_42acac stream index (from sim FluidGate).
@@ -176,7 +165,7 @@ class BackdropScene {
     std::uint32_t lane = 0;   // u32 [+0x16C]
     double height = 0.0;      // [+0x1A8]
     double wavePhase = 0.0;   // [+0x148], wrapped at this receiver kind's period
-    bool animated = false;    // first update has run; false => stored deserialized mesh
+    bool animated = false;    // True once an update has animated the deserialized mesh.
     double alphaPhase = 0.0;  // [+0x150], kind 2 only
   };
   // Serialized per-receiver parameters of the animated base model (Entity42acac).
@@ -187,9 +176,8 @@ class BackdropScene {
     double projectionBias = 0.0;                            // model+0xF8 (third stored double)
     std::uint32_t kind = 0;  // [+0x128], table 0x4BF6E8 + kind*0x48
   };
-  // Applies one animation update to a copy of the parsed base model (verified geometry node):
-  // vertices 2..5, the six block[1] top colours and the normal sign (0x0042B24D, 0x0042C5C9).
-  // Public for value checks; production reaches it only through Stage::FluidGate.
+  // Apply 0x0042B24D and 0x0042C5C9 to a copy of the base model, updating
+  // vertices 2..5, the six block[1] top colours and the normal sign.
   static void applyFluidState(SceneNode& geometry, const FluidRecord& record, const FluidGateState& state);
   struct RootSource {
     Stage stage;
@@ -202,22 +190,17 @@ class BackdropScene {
   void renderStage(Raster&, const CameraBasis&, const AssetLibrary&, BackdropStats&, Stage,
                   SceneRasterObserver* observer = nullptr,
                   std::vector<double>* depthOutput = nullptr) const;
-  // Runs the production parsed-tree traversal; explicit inputs are a fixture seam.
+  // Dispatches the parsed trees with the supplied inputs.
   void visitBillboards(const BillboardSourceInputs& cameraChain,
                        const std::function<void(const SceneBillboardSource&)>& visitor) const;
-  // Replays the production kind-5 predicate context for value checks. The visitor
-  // receives each source record offset and the branch result (true means pass).
+  // Reports the kind-5 predicate result and source record offset to the visitor.
    void visitKind5Predicates(const CameraBasis& camera,
        const std::function<void(std::size_t, bool)>& visitor) const;
   void visitSecondaryDispatch(const CameraBasis& camera,
        const std::function<void(const SecondaryDispatchItem&)>& visitor) const;
   void visitRoots(const std::function<void(const RootSource&, const SceneNode&)>& visitor) const;
-  // P9-P11 presentation only. The caller derives progress from the existing
-  // release arm clock, departure time from the existing pending end timer,
-  // and balloon bob from the same level clock used by exiting actors.
-  // Absolute samples make pause, retry and repeated draws deterministic.
-  // Build presentation data once from the same bytes passed to build(); it
-  // belongs to this scene and is discarded when the application reloads it.
+  // Door progress, departure and bob are sampled at absolute times so repeated
+  // draws during pause agree. The caller supplies release, end and level clocks.
   std::expected<EntranceExitPresentation,std::string> entranceExitPresentation(std::span<const std::byte> level) const;
   void setEntranceExitPresentation(const EntranceExitPresentation&, double openingProgress,
                                   double departureSeconds, double levelSeconds = 0.0,
@@ -243,39 +226,33 @@ class BackdropScene {
   void drawSwitchHover(Image&, const CameraBasis&, const Raster&, const CylinderRegionProjector&,
                        const sim::LevelSetup&, const LeverPresentation*,
                        const PressurePadPresentation*, int pointerX, int pointerY) const;
-  // Runtime override of the per-node visibility byte +0x110 for Secondary nodes (the original toggles
-  // it only for "cutme" type-1 nodes, 0x45DA0D). A hidden node and its subtree are not dispatched.
-  // Production never installs one; it is the seam used by mutation checks.
+  // Overrides Secondary visibility byte +0x110, which 0x45DA0D toggles on
+  // "cutme" type-1 nodes. A hidden node suppresses its subtree.
   void setSecondaryHidden(std::function<bool(const SceneNode&)> hidden) { secondaryHidden_ = std::move(hidden); }
   const std::vector<std::string>& diagnostics() const { return diagnostics_; }
   bool empty() const { return roots_.empty(); }
 
-  // ---- fluid surface (fluid-surface-impl-001) ----
   // Replaces the live receiver snapshot used by Stage::FluidGate (entities_42acac stream order).
   void setFluidState(std::vector<FluidGateState> gates) { fluidState_ = std::move(gates); hasFluidState_ = true; }
   void clearFluidState() { fluidState_.clear(); hasFluidState_ = false; }
   void setFluidDepthPolicy(FluidDepthPolicy policy) { fluidPolicy_ = policy; }
   FluidDepthPolicy fluidDepthPolicy() const { return fluidPolicy_; }
-  // Admitted animated receivers (stream indices), for tests and run reports.
+  // Stream indices of receivers with animated models.
   std::vector<std::size_t> fluidEntityIndices() const;
 
-  // ---- branch-1 sprite scenery state (scene-branch-impl-001) ----
-  // The generator used for first-draw frames (0x004040A0). The application owns one per
-  // process and seeds it from its own clock; without one a scene-local generator with the
-  // CRT default state (1) is used, which exists for unit tests only. The pointee must
-  // outlive the scene's draws.
+  // Generator for first-draw frames (0x004040A0). The supplied instance must
+  // outlive the scene. Otherwise, use a scene-local generator seeded with 1.
   void setRandom(CrtRand* random) { random_ = random; }
-  // One scenery update: dt = min(frameMs,100)/1000 seconds, zero outside the in-level state or
-  // while paused (0x0045CFF9 -> 0x004423D2); then the scenery clock (0x00437BDE/0x004764C4,
-  // no scene-duration wrap is parsed) and the 0x00468833 advance of every sprite node.
+  // Advance scenery by min(frameMs,100)/1000 seconds, or zero when paused or
+  // outside play (0x0045CFF9 -> 0x004423D2). Update node clocks (0x00437BDE/0x004764C4)
+  // and advance sprite controllers (0x00468833). Scene-duration wrapping is unsupported.
   void advanceScenery(double frameMs, bool inLevel, bool paused);
   std::size_t spriteCount() const { return sprites_.size(); }
   // Current temporal state of the sprite node at `sourceOffset` (nullptr if none).
   const SpriteTemporalState* spriteState(std::size_t sourceOffset) const;
-  // Generator state immediately before the first sprite frame was drawn, for run diagnostics.
+  // Generator state just before the sprite's first draw.
   std::optional<std::uint32_t> firstSpriteDrawRandomState() const { return firstDrawState_; }
-  // Process-wide counters so a bounded public-route run can show that the temporal advance
-  // and first-draw latch actually executed (diagnostic only; no behaviour depends on them).
+  // Process-wide counts of temporal advances and first-draw latches.
   struct SceneryTelemetry {
     std::size_t advanceCalls=0, advancesWithTime=0, temporalSteps=0, firstDrawLatches=0;
   };
@@ -289,8 +266,7 @@ class BackdropScene {
     mutable SpriteTemporalState state;
   };
   std::vector<OwnedRoot> roots_;
-  // Base `Fluid` models of the entities_42acac receivers. Kept apart from roots_ so existing
-  // root/record accounting and the fail-closed extraction of the other roles are unchanged.
+  // Base Fluid models of entities_42acac receivers, kept outside the other root collections.
   struct FluidRoot { RootSource source; SceneNode node; FluidRecord record; };
   std::vector<FluidRoot> fluidRoots_;
   std::vector<FluidGateState> fluidState_;

@@ -22,8 +22,7 @@ std::expected<RuntimeReleaseRateControl, std::string> RuntimeReleaseRateControl:
     control.limits_.push_back({hatch.rateMin, hatch.rateMax});
   }
   control.rates_ = std::move(*rates);
-  // Use the loader's effective initial rate so hover/input also reflect its
-  // provisional multi-hatch capacity floor. Loading never advances World.
+  // Display the loader's effective value, including the provisional multi-hatch rate floor.
   control.current_ = report->initialSharedRate;
   return control;
 }
@@ -33,9 +32,8 @@ void RuntimeReleaseRateControl::change(std::size_t hatch, int delta, sim::World&
   if (rate == current_) return;
   current_ = rate;
   rateHatch_ = hatch;
-  // PROVISIONAL: all hatches still use RetailLevel's accepted shared cadence.
-  // A click uses this hatch's limits without introducing a second scheduler.
-  // READ 425DE3: change +A0 and table interval +B8, never countdown +C0.
+  // Provisional clone scheduling shares one rate across hatches and applies the
+  // clicked hatch's limits. 425DE3 changes +A0 and interval +B8 without resetting +C0.
   world.setReleaseInterval(rates_.secondsPerLemming(rate),
                            rates_.intervalTicks(rate, world.rules().ticksPerSecond));
 }
@@ -55,9 +53,8 @@ void RuntimeReleaseRateControl::advance(double seconds, std::optional<std::size_
   if (!heldButton_) return;
   if (hatch != heldHatch_) { reset(); return; }
   if (!std::isfinite(seconds) || seconds <= 0) return;
-  // PROVISIONAL player-friendly repeat: immediate unit step, then 0.4 s delay
-  // and 0.1 s repeats, independent of simulation pause/fast-forward. Original
-  // repeats per input update; authorized original observation would settle feel.
+  // Provisional clone repeat steps immediately, waits 0.4 s, then repeats
+  // every 0.1 s in real time. Native repeats on input updates.
   repeatSeconds_ += std::min(10.0, seconds);
   while (repeatSeconds_ + 1e-9 >= 0.4) {
     change(*heldHatch_, heldButton_ == 1 ? -1 : 1, world);
@@ -112,7 +109,7 @@ bool RuntimeSkillSelection::selectAvailableIndex(
 }
 
 int runtimeSkillPanelIndex(int x, int y) {
-  // Source-policy geometry: ten visible 72x32 plates at this fixed position.
+  // Clone hit geometry uses ten 72x32 plates.
   if (x < 18 || x >= 90) return -1;
   if (y < 12 || y >= 404) return -1;
   const int offset = y - 12;
@@ -133,10 +130,8 @@ bool RuntimeSkillSelection::consumePanelClick(
   const int index = runtimeSkillPanelIndex(x, y);
   if (index < 0) return false;
   if (index >= 0 && index < 8) selectAvailableIndex(index, counts);
-  // Physical indices 8/9 are commands, not actor skills. Consume them so the
-  // click cannot fall through to an actor behind this UI. Plate 8 never reads
-  // stock or changes selection (0x455AFF); the fast-forward mode itself is
-  // changed by the caller via runtimeSkillPanelCommand and RuntimeSimState.
+  // Consume command plates before actor picking. Plate 8 bypasses stock
+  // and selection (0x455AFF). The caller controls fast-forward.
   return true;
 }
 

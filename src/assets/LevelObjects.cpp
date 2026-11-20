@@ -18,8 +18,7 @@ namespace webo {
 std::expected<SelectedHatchCamera, std::string> readSelectedHatchCamera(
     std::span<const std::byte> bytes) {
   try {
-    // The caller's storage backs this view for the entire read; bytes after the
-    // complete serialized level are accepted (require_eof=false).
+    // Borrow the caller's bytes. Accept trailing data (require_eof=false).
     const std::span<const std::uint8_t> raw(
         reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size());
     const lemmings::CompiledLevel level = lemmings::read_compiled_level(raw, /*require_eof=*/false);
@@ -65,10 +64,8 @@ bool isExitName(std::string_view name) {
   return name.size() >= 8 && name.starts_with("Exit") && name.ends_with(".a3d");
 }
 
-// After a length-prefixed `.a3d` name, the next `Object 09` opens the model.
-// Four zero pad bytes follow the name, then the double run whose [9],[10],[11]
-// are the translation. Non-zero pad is a different Object 09 subtype (fish,
-// most lights) and is skipped.
+// After a counted .a3d name, locate the next Object 09 with four zero pad bytes
+// and translation doubles [9],[10],[11]. Skip nonzero-pad subtypes such as fish and most lights.
 std::expected<WorldPose, std::string> poseAfterA3d(std::span<const std::byte> d,
                                                    std::size_t a3dAt, std::string_view kind) {
   constexpr std::size_t kSearch = 80;
@@ -109,8 +106,7 @@ std::expected<WorldPose, std::string> poseAfterA3d(std::span<const std::byte> d,
     return std::unexpected(std::format("{}: rotation is not a unit yaw", kind));
 
   const double r = std::hypot(tx, tz);
-  // Loose tube check: reject obvious garbage without rejecting the exit's
-  // ~65 radius that sits just outside the outer skin.
+  // Allow exit models just outside the outer shell (radius about 65).
   if (r < 20.0 || r > 100.0 || ty < -10.0 || ty > 200.0)
     return std::unexpected(std::format("{}: translation off the tube (r={:.1f}, y={:.1f})",
                                        kind, r, ty));
@@ -131,9 +127,7 @@ bool integralDouble(double v) {
   return std::isfinite(v) && v == std::floor(v) && std::abs(v) < 1e6;
 }
 
-// The last length-prefixed printable name record ending just before `at`.
-// The hatch's is the model name, "entrance" or "entrance_acid"; it is
-// reported so a hit can be eyeballed, and is not part of the match.
+// Find the last counted printable name ending before at, e.g. "entrance" or "entrance_acid".
 std::string nameBefore(std::span<const std::byte> d, std::size_t at) {
   constexpr std::size_t kBack = 0x40;
   std::string last;
@@ -203,8 +197,7 @@ PlacedKind classifyPlacedModel(std::string_view name) {
 std::expected<std::vector<TeleportLink>, std::string> readTeleportLinks(
     std::span<const std::byte> bytes) {
   try {
-    // The caller's storage backs this view for the whole read; bytes after the
-    // complete serialized level are accepted (require_eof=false).
+    // Borrow the caller's bytes and accept trailing data (require_eof=false).
     const std::span<const std::uint8_t> raw(
         reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size());
     const lemmings::CompiledLevel level = lemmings::read_compiled_level(raw, /*require_eof=*/false);
@@ -229,10 +222,8 @@ std::expected<std::vector<TeleportLink>, std::string> readTeleportLinks(
 
 std::vector<int> resolveTeleportPartners(std::span<const TeleportLink> links,
                                          std::string& diagnostic) {
-  // 0x00423310..0x00423325 stores every constructed actor into list[id] and
-  // overwrites an occupied slot, so with a repeated id the last record in stream
-  // order is the one 0x00434BE8 finds. A slot nobody filled holds zero
-  // (0x00443ABD), i.e. no partner.
+  // 0x00423310..0x00423325 stores actors in list[id], overwriting duplicate IDs.
+  // 0x00434BE8 finds the last such actor, or zero when the slot is empty (0x00443ABD).
   std::vector<int> partner(links.size(), -1);
   for (std::size_t k = 0; k < links.size(); ++k) {
     int found = -1;
@@ -272,8 +263,7 @@ std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::b
     const std::string name(reinterpret_cast<const char*>(nameBytes.data()), n);
     auto pose = poseAfterA3d(d, i, name);
     if (!pose) {
-      // Nested name references and FX subtypes are common; only keep the
-      // first hard failure for the empty-result error path.
+      // Keep the first hard failure for an empty result. Ignore nested reference and FX candidates.
       if (err.empty() && (isEntranceName(name) || isExitName(name)))
         err = pose.error();
       i += 3 + n;
@@ -291,9 +281,7 @@ std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::b
     i += 3 + n;
   }
 
-  // Prefer the structured entity list: the byte-pattern locator below can only
-  // see records that happen to satisfy its plausibility filter. Only the
-  // recovered decoder's own rejection falls back, and its message is kept.
+  // Use the ordered decoder first. On its rejection, record the cause and try the filtered pattern locator.
   try {
     objs.hatches = readHatchRecords(d);
   } catch (const std::invalid_argument& error) {
@@ -301,8 +289,7 @@ std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::b
     objs.hatches = findHatchRecords(d);
   }
 
-  // Teleport links: structured 0x004347EC ids, accepted only when they
-  // correlate one-to-one (count and Y, in order) with the located pads.
+  // Accept structured 0x004347EC links when count and Y match the located pads in order.
   {
     std::vector<const PlacedModel*> pads;
     for (const auto& p : objs.placed)
@@ -339,9 +326,7 @@ std::expected<LevelObjects, std::string> findLevelObjects(std::span<const std::b
 namespace {
 
 std::expected<LevelSkills, std::string> findLegacyLevelSkills(std::span<const std::byte> d) {
-  // Historical locator: the last incidental `1, 8` pair selects eight words
-  // starting 36 bytes earlier. This is not a required serialized marker; keep
-  // the scanner only for inputs the recovered ordered reader rejects.
+  // Fallback only: the last incidental 1, 8 pair selects eight words starting 36 bytes earlier.
   constexpr std::byte kMarker[] = {
       std::byte{1}, std::byte{0}, std::byte{0}, std::byte{0},
       std::byte{8}, std::byte{0}, std::byte{0}, std::byte{0},
@@ -378,8 +363,7 @@ std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byt
       reinterpret_cast<const std::uint8_t*>(d.data()), d.size());
   lemmings::CompiledLevel level;
   try {
-    // The caller's storage backs this view for the entire read. As with the
-    // hatch adapter, bytes after the complete serialized level are accepted.
+    // Borrow the caller's bytes and accept trailing data.
     level = lemmings::read_compiled_level(bytes, /*require_eof=*/false);
   } catch (const std::invalid_argument& error) {
     auto legacy = findLegacyLevelSkills(d);
@@ -390,15 +374,11 @@ std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byt
     return legacy;
   }
 
-  // 0x0045B86D reads eleven consecutive words, represented by values_27d0.
-  // Project only the first eight, in the existing panel/sim order. The other
-  // three words get no new meaning here; original panel offsets are not this
-  // portable struct's layout. See level_entity_tail and phase-c1bg evidence.
+  // 0x0045B86D reads eleven words into values_27d0. Project only the first eight in panel/sim order.
   LevelSkills skills;
   for (std::size_t k = 0; k < skills.counts.size(); ++k) {
     const std::uint32_t n = level.gadgets.values_27d0[k];
-    // Retained portable adapter policy, not original-game validation. A
-    // decoded invalid count must not be replaced by a legacy scanner result.
+    // Clone validation rejects invalid decoded counts without consulting the legacy scanner.
     if (n > 200)
       return std::unexpected(std::format("implausible skill count {} at slot {}", n, k));
     skills.counts[k] = n;
@@ -407,24 +387,15 @@ std::expected<LevelSkills, std::string> findLevelSkills(std::span<const std::byt
 }
 
 std::vector<HatchRecord> readHatchRecords(std::span<const std::byte> d) {
-  // `0x004432C1` reads the sections in order; the third gadget list call
-  // `0x004487F0` reads its records through the hatch reader `0x00425E50`,
-  // which is the shared spatial base `0x0043130E` (two triples into
-  // hatch+0x48 / +0x60, then two counted triple arrays) followed by the
-  // hatch's own fields. `lemmings::read_compiled_level` is that reader,
-  // unmodified; this function only projects what it returns.
-  //
-  // Field mapping, original destination offsets in brackets:
-  //   value_b0            [+0xB0] -> type
-  //   shorts_98_9a_9c     [+0x98, +0x9A, +0x9C] -> count, x, y
-  //   values_a0_a4_a8     [+0xA0, +0xA4, +0xA8] -> rate, rateMin, rateMax
-  //   double_bits_48_60   [+0x48] -> boxMin, [+0x60] -> boxMax (bits only)
-  //   model->name                 -> model
-  // short_b4 / flag_b6 -> direction / alternateDirection (0x425C6E..0x425CAC).
-  // Everything else the record carries (id, flag_28/_38/_40/_41/_ac/_ad,
-  // the five base doubles and both counted triple arrays) is
-  // deliberately not projected: no evidence establishes what those mean, and
-  // guessing one into a gameplay field would invent a rule.
+  // 0x004432C1 reads sections in order. The third gadget list 0x004487F0 calls hatch reader
+  // 0x00425E50. Its spatial base 0x0043130E reads two triples and two counted triple arrays.
+  // lemmings::read_compiled_level supplies these projected fields:
+  //   value_b0 [+0xB0] -> type, shorts_98_9a_9c [+0x98, +0x9A, +0x9C] -> count, x, y
+  //   values_a0_a4_a8 [+0xA0, +0xA4, +0xA8] -> rate, rateMin, rateMax
+  //   double_bits_48_60 [+0x48] -> boxMin, [+0x60] -> boxMax (bits), model->name -> model
+  // Both triples are at hatch+0x48 / +0x60.
+  //   short_b4 / flag_b6 -> direction / alternateDirection (0x425C6E..0x425CAC)
+  // id, flag_28/_38/_40/_41/_ac/_ad, the base doubles and counted arrays are left unprojected.
   const std::span<const std::uint8_t> bytes(
       reinterpret_cast<const std::uint8_t*>(d.data()), d.size());
   const lemmings::CompiledLevel level =
@@ -443,7 +414,7 @@ std::vector<HatchRecord> readHatchRecords(std::span<const std::byte> d) {
     h.rateMax = static_cast<int>(e.values_a0_a4_a8[2]);
     h.direction = std::bit_cast<std::int16_t>(e.short_b4);
     h.alternateDirection = e.flag_b6;
-    // The decoder retains binary64 bit patterns; transfer them, do not compute.
+    // Preserve serialized binary64 bits.
     h.boxMin = {std::bit_cast<double>(e.double_bits_48_60[0]),
                 std::bit_cast<double>(e.double_bits_48_60[1]),
                 std::bit_cast<double>(e.double_bits_48_60[2])};
@@ -459,39 +430,17 @@ std::vector<HatchRecord> readHatchRecords(std::span<const std::byte> d) {
 }
 
 std::vector<HatchRecord> findHatchRecords(std::span<const std::byte> d) {
-  // The hatch loader `0x00425E50` calls the base loader `0x0043130E` and then
-  // reads its own fields out of the stream. Stream primitives, each
-  // disassembled with `tools/harness/read_steppers.py --at`:
-  //
-  //   0x00402540 u8   0x00423360 u16   0x00402560 u32   0x00402580 f64
-  //   0x00480BB0 Vec3 (three f64)
-  //
-  // Read order, the tail of `0x0043130E` then `0x00425E50`:
-  //
+  // Legacy hatch locator follows base loader 0x0043130E and hatch loader 0x00425E50:
+  // Stream primitives: 0x00402540 u8, 0x00423360 u16, 0x00402560 u32, 0x00402580 f64, 0x00480BB0 Vec3.
   //   0x00431328  Vec3 -> hatch+0x48
   //   0x0043133A  Vec3 -> hatch+0x60
-  //               f64  (the hatch+0x78 reader)
-  //   0x00425EF1  u32  -> hatch+0xB0   lemming type
-  //   0x00425F02  u16  -> hatch+0x98   release count
-  //   0x00425F14  u16  -> hatch+0x9A   spawn X
-  //   0x00425F26  u16  -> hatch+0x9C   spawn Y
-  //   0x00425F38  u32  -> hatch+0xA0
-  //   0x00425F49  u32  -> hatch+0xA4
-  //   0x00425F5A  u32  -> hatch+0xA8
+  //   0x00425EF1  u32 -> hatch+0xB0 (type)
+  //   0x00425F02 / 0x00425F14 / 0x00425F26  u16 -> hatch+0x98 / hatch+0x9A / hatch+0x9C (count, X, Y)
+  //   0x00425F38 / 0x00425F49 / 0x00425F5A  u32 -> hatch+0xA0 / hatch+0xA4 / hatch+0xA8
   //   0x00425F6B  u8
-  //
-  // So the locator looks for that run of seven doubles -- an 8 x 5 box with
-  // z 0 then z 1, every component integral -- followed by a small type dword
-  // and a plausible triple. Nothing here is an offset carried over from one
-  // level to the next.
-  //
-  // INFERENCE (not established by the disassembly above): the seventh double
-  // is not a field at all. The shared spatial base reads the two triples into
-  // +0x48 and +0x60 and then two *counted* triple arrays; when both counts
-  // are zero their eight bytes read back as the binary64 +0.0 this pattern
-  // tests for. That is why the filter below only matches records whose arrays
-  // are empty, and why a record with a populated array -- or a box that is
-  // not exactly 8 x 5 -- is invisible here and needs `readHatchRecords`.
+  // The locator requires an integral 8 x 5 box with z = 0 and 1, a zero binary64 at the
+  // hatch+0x78 position, then plausible type and spawn words. The zero is inferred to be both
+  // empty array counts. readHatchRecords handles other box sizes and populated arrays.
   constexpr std::size_t kDoubles = 7;
   constexpr std::size_t kTypeAt = kDoubles * 8;
   constexpr std::size_t kTripleAt = kTypeAt + 4;
@@ -530,9 +479,7 @@ std::vector<HatchRecord> findHatchRecords(std::span<const std::byte> d) {
     if (count < 1 || count > 200 || x >= 256 || y >= 256)
       continue;
 
-    // The three tail u32s (hatch+0xA0/+0xA4/+0xA8), right after the
-    // count/x/y u16 triple -- see HatchRecord's own comment and D1b
-    // (docs/scratch/phase-d1-release-trigger.md).
+    // These u32s at hatch+0xA0/+0xA4/+0xA8 follow the u16 count, X and Y.
     const std::uint32_t rate = u32At(d, p + kTailAt);
     const std::uint32_t rateMin = u32At(d, p + kTailAt + 4);
     const std::uint32_t rateMax = u32At(d, p + kTailAt + 8);
@@ -545,8 +492,7 @@ std::vector<HatchRecord> findHatchRecords(std::span<const std::byte> d) {
     h.rate = static_cast<int>(rate);
     h.rateMin = static_cast<int>(rateMin);
     h.rateMax = static_cast<int>(rateMax);
-    // The historical locator accepts truncated tails. Preserve that fallback
-    // with the hand-built default; complete records carry the same stored fields.
+    // The fallback accepts truncated tails and uses defaults for absent fields.
     if (p + kTailAt + 16 <= d.size()) {
       h.direction = std::bit_cast<std::int16_t>(u16At(d, p + kTailAt + 13));
       h.alternateDirection = d[p + kTailAt + 15] != std::byte{0};
@@ -599,18 +545,13 @@ ExitTrigger exitTriggerFromPose(const WorldPose& pose, int maskWidth, int maskHe
   if (maskWidth <= 0 || maskHeight <= 0)
     return e;
   const auto [ang, yUp] = unrollCylinder(pose.position);
-  // Round 12: live exit AABBs on Exit_water / Exit_any / Exit_acid (and the
-  // 46 corpus placements where ang*width sits past .5) centre on
-  // round(ang*width), not floor. Round 11's two Exit.a3d dumps both had
-  // frac < 0.5, so floor happened to agree. Wrap after rounding so 255.6
-  // becomes column 0, not 256.
+  // Exit_water, Exit_any, Exit_acid and Exit.a3d use a rounded angular column.
+  // Wrap after rounding so 255.6 maps to column 0 on a 256-cell grid.
   int col = static_cast<int>(std::lround(ang * static_cast<double>(maskWidth)));
   col %= maskWidth;
   if (col < 0)
     col += maskWidth;
-  // Integer a3d translations truncate to themselves; match hatchSpawnCell's
-  // chop rather than worldToMaskPixel's floor(worldH - y), which is one cell
-  // off for an integer y and was the wrong axis for this box.
+  // Truncate world Y as in hatchSpawnCell. worldToMaskPixel floors on the flipped axis.
   const int worldY = static_cast<int>(yUp);
   const int worldMinY = worldY - 9;
   const int worldMaxY = worldY - 6;
@@ -634,7 +575,7 @@ TeleportTrigger teleportTriggerFromPose(const WorldPose& pose, int maskWidth,
   if (col < 0)
     col += maskWidth;
   const int worldY = static_cast<int>(yUp);
-  // Live AABB on MM_TELE_003: X[col±6] Y[ty .. ty+8], closed.
+  // MM_TELE_003 original bounds: closed X[col±6], Y[ty .. ty+8].
   t.x = col - 6;
   t.y = maskHeight - 1 - (worldY + 8);
   t.width = 12;
@@ -655,7 +596,7 @@ SpeedPadTrigger speedPadTriggerFromPose(const WorldPose& pose, int maskWidth,
   if (col < 0)
     col += maskWidth;
   const int worldY = static_cast<int>(yUp);
-  // Live AABB on VH21_JC: X[col±1] Y[ty .. ty+6], closed.
+  // VH21_JC original bounds: closed X[col±1], Y[ty .. ty+6].
   t.x = col - 1;
   t.y = maskHeight - 1 - (worldY + 6);
   t.width = 2;
@@ -665,7 +606,7 @@ SpeedPadTrigger speedPadTriggerFromPose(const WorldPose& pose, int maskWidth,
 
 LeverTrigger leverTriggerFromPose(const WorldPose& pose, int maskWidth,
                                   int maskHeight) {
-  // Same live box shape as SpeedPad (E16_KF_1: X[20..22] Y[13..19] at ty=13).
+  // The lever uses SpeedPad bounds (E16_KF_1: X[20..22], Y[13..19] at ty=13).
   LeverTrigger t;
   const SpeedPadTrigger box =
       speedPadTriggerFromPose(pose, maskWidth, maskHeight);

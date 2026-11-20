@@ -11,8 +11,7 @@
 
 namespace webo {
 
-// Level data needed to reproduce native `0x0043D56C` cell-mesh interpolation
-// (same key table and surface pool the loader builds at level load).
+// Level geometry for native cell-mesh interpolation at `0x0043D56C`.
 struct ActorPoseLevel {
   int gridHeight = 0;
   std::span<const std::uint32_t> grid0{};
@@ -33,17 +32,14 @@ struct ActorPoseResult {
   std::array<double, 3> basis{};
 };
 
-// Native actor `+0x08` triple (file Y-up X/Y, Z blends inner/outer shell).
-// **Unsettled:** no live sim/native pair was measured for the Y flip or Z slab;
-// `terrainHeight - 1 - lemming.y` follows other webolution terrain adapters.
+// Native actor `+0x08` triple. Y is up and Z blends the two shells.
+// The clone's Y conversion and Z slab are provisional.
 ActorTerrainSample terrainSampleFromLemming(const sim::Lemming& lemming, int terrainHeight,
                                             double zSlab = 0.75);
 
-// Native `0x0043D2B8` as `0x0043A31D` calls it (`0x43A3AE`) for a `grid0` key that holds -1:
-// the vertex for grid `(x, y)` on shell `layer` (0 inner, 1 outer), bilinear on the cylinder
-// template with 8-column / 16-row buckets, columns wrapped `& 0x1F`, rows clamped to
-// `gridHeight / 16 - 1` (so grid row `gridHeight` itself lands on the last ring below the top,
-// exactly as the native clamp reads). Used to give edited terrain vertices the stored pool lacks.
+// Native `0x0043D2B8` supplies missing mesh vertices for `0x0043A31D` at `0x43A3AE`.
+// Bilinear interpolation uses 8-column by 16-row buckets on shell 0 (inner) or
+// 1 (outer). Columns wrap with `& 0x1F` and rows clamp to `gridHeight / 16 - 1`.
 std::optional<Vec3> cylinderTemplateVertex(const CylinderMesh& cylinder, int x, int y, int layer,
                                            int gridHeight);
 
@@ -60,10 +56,9 @@ ActorPoseResult actorPoseFromLemming(const ActorPoseLevel& level, const sim::Lem
 ActorPoseResult actorPoseFromNativeSample(const ActorPoseLevel& level,
                                           const ActorTerrainSample& plus8, int facing);
 
-// 0x43D56C reads world+0x18 (the cylinder template), not the deformed
-// surface pool at +0x148. Use this for live actors so a water/land boundary
-// cannot flatten their feet onto an unrelated surface-index corner.
-// Here gridHeight is the serialized coordinate height (112), not mask height.
+// `0x43D56C` anchors live actors on the cylinder template (world+0x18).
+// The deformed pool (+0x148) can flatten their feet at water boundaries.
+// gridHeight is the serialized coordinate height (112).
 ActorPoseResult actorPoseFromCylinderSample(const ActorPoseLevel& level,
                                             const ActorTerrainSample& plus8, int facing);
 

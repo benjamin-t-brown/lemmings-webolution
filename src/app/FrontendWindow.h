@@ -29,8 +29,7 @@ void updateFrontendCursorInput(FrontendSession& session, const SDL_Event& event)
 void handleSoundOptionsInput(FrontendSession& session, const SDL_Event& event,
                              const SdlWindow& presentation);
 
-// SDL is a SOURCE input adapter only; it does not establish native physical-input binding.
-// A selected level is returned immediately and is left for the caller to render/capture.
+// Return immediately on level selection so the caller can present the level.
 std::expected<std::optional<std::string>, std::string> runFrontendWindow(
     FrontendSession& session, const FrontendWindowOptions& options,
     FrontendWindowObserver observer = {}, SdlWindow* sharedWindow = nullptr);

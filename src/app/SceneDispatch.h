@@ -11,15 +11,12 @@ struct SecondaryDispatchItem {
   std::size_t nodeSourceOffset = 0;
   std::uint32_t type = 0;
   double key = 0;
-  // scene-nested-impl-001 (additive): 1 for the root's direct children, 2 for their children, ...
-  // parentOffset is the source offset of the node that owns this one (the root for depth 1).
+  // depth starts at 1 for direct children. parentOffset identifies the owning node.
   std::size_t depth = 0;
   std::size_t parentOffset = 0;
 };
 
-// Optional per-node gates of the original draw routines (scene-nested-research-001 E4/E7/E8).
-// A default-constructed value keeps the legacy leaf-only behaviour (no gates), which the
-// pre-existing dispatch fixtures rely on; BackdropScene passes originalGates=true.
+// Optional visibility gates. The default leaves nodes ungated.
 struct SecondaryDispatchOptions {
   // true: a type-2 node whose serialized visibility byte (+0x110, 0x47B4C8) is 0 draws nothing, and
   // a type-1 node is skipped together with its children when z + headDoubles[0] <= 0
@@ -30,17 +27,13 @@ struct SecondaryDispatchOptions {
   std::function<bool(const SceneNode&)> hidden;
 };
 
-// The exact descending binary-insertion order of 0x0046B8F4..0x0046BA72 (insert helper
-// 0x0046C2A0). Returns the indices of `keys` in draw order. Equal keys are placed by the search
-// path, not by position, so this is neither stable nor reverse-stable and differs from
-// std::sort(key >) wherever keys tie. Unordered (NaN) keys are outside the contract.
+// Descending binary insertion at 0x0046B8F4..0x0046BA72 (helper 0x0046C2A0).
+// Equal keys follow the insertion search path. Keys must be ordered values.
 std::vector<std::size_t> binaryInsertionOrder(std::span<const double> keys);
 
-// The retained slot-8 stream: the root's direct children are ordered by key
-// (camera-space depth of the child origin + the child's +108 head double) with
-// binaryInsertionOrder; each ordered child is followed immediately by its descendants,
-// depth-first in file order (never reordered), before the next ordered direct child.
-// The dispatch is a common render/test seam.
+// Slot-8 sorts direct children by camera-space origin depth plus the
+// child's +108 head double. Each is followed by its descendants in
+// depth-first file order.
 void dispatchSecondaryChildren(const SceneNode& root,
     const std::array<double,12>& parentCamera,
     const std::array<double,12>& sourceRotation,

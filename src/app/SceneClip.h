@@ -1,4 +1,4 @@
-// Explicit-input fresh-cache source-domain scene polygon clipper.
+// Explicit-input scene polygon clipper for a fresh cache entry.
 #pragma once
 #include <array>
 #include <expected>
@@ -24,15 +24,14 @@ struct SceneClipInputs {
   double centerX, centerY;
   int bottom, top, right, left; // signed-i32 bounds in this order
 };
-// Software binary64 finite-cache-miss model: near clip physical XYZ with native
-// Z=scale*viewZ, overwrite generated viewZ=epsilon/scale; then project
-// (cx+projectionX*x/z, cy-projectionY*y/z), and set biasedNativeZ=scale*z-bias.
-// Screen planes are inclusive bottom/top/right/left. Endpoint H/L is sorted by
-// clipping coordinate (and by biased Z for near); screen other-coordinate uses
-// t, while XYZ/depth/attributes use C3bj p. Zero p denominator selects H. No
-// cache-hit emulation, f32/x87 claim, final packing, device defaults or source
-// submission claim. Rejects nonfinite/intermediate magnitude >1e100, invalid
-// scale/epsilon, reversed bounds, or >4096 inputs before mutating caller data.
+// Clip near in binary64 with native Z = scale*viewZ and set generated
+// viewZ to epsilon/scale. Project XY with projectionX and projectionY.
+// Set biasedNativeZ = scale*z-bias. Native f32/x87 rounding is unresolved.
+// Screen planes are inclusive bottom/top/right/left. Sort endpoints by
+// clipping coordinate, and by biased Z at near. Screen position uses t;
+// XYZ, depth and attributes use p. A zero p denominator selects H.
+// Reject invalid scale, epsilon, bounds, nonfinite or excessive coordinates
+// (>1e100 in magnitude), and inputs over 4096 vertices.
 std::expected<std::vector<SceneClipVertex>,std::string> clipScenePolygon(
     const std::vector<SceneClipInputVertex>& polygon,const SceneClipInputs& inputs);
 } // namespace webo::app

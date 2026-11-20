@@ -1,9 +1,4 @@
-// Minimal PNG writer, for looking at decoded assets.
-//
-// Deliberately dependency-free: it emits a valid zlib stream made of stored
-// (uncompressed) deflate blocks, so there is no compressor to get wrong and no
-// zlib to link. Output is therefore roughly the size of the raw pixels, which
-// is fine for inspecting assets and is not used by the game itself.
+// PNG writer for asset inspection. Stored deflate blocks require no compressor or zlib dependency.
 
 #pragma once
 
@@ -17,10 +12,10 @@ namespace webo {
 
 struct Image;
 
-// Writes RGBA, or RGB when every pixel is opaque (which is most of them).
+// Write RGB for fully opaque pixels and RGBA otherwise.
 std::expected<void, std::string> writePng(const std::filesystem::path& path, const Image& image);
 
-// The encoded bytes, if you would rather not go through a file.
+// Return the encoded PNG bytes.
 std::vector<std::uint8_t> encodePng(const Image& image);
 
 }  // namespace webo

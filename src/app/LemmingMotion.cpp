@@ -181,10 +181,8 @@ LemmingDrawPosition LemmingMotionTracker::positionOf(std::size_t index, const si
       if (contactX < 0 || contactX > balloon.width || l.y < balloon.y ||
           l.y > balloon.y + balloon.height) continue;
       const double dx = wrapped(balloon.x + balloon.width * 0.5 - l.x + width * 0.5, width) - width * 0.5;
-      // Invert the accepted retail trigger adapter: box top is model Y - 6.
-      // PROVISIONAL: rounded static pose rather than the exact serialized root;
-      // all exit themes use this box. Native target adds (0,2,0) to the root;
-      // Y-down therefore subtracts another 2. The exit root's radial Z is 1.5.
+      // Provisional exit target uses the rounded trigger box: its top is model Y - 6.
+      // Native adds (0,2,0) to the root, subtracting 2 more in Y-down. Root Z is 1.5.
       const double dy = balloon.y - 8.0 - l.y;
       const double dz = 1.5 - e.laneZ;
       const double speed = std::sqrt(dx * dx + dy * dy + dz * dz);
@@ -192,11 +190,9 @@ LemmingDrawPosition LemmingMotionTracker::positionOf(std::size_t index, const si
       // then delta*dt. Y is reset from entry every update before that addition;
       // it deliberately uses dy*dt, not dy*t. X/Z accumulate to the target.
       const double lift = speed * exitTime - 12.5 * exitTime * exitTime;
-      // The original jump captures the bobbing target on entry (0x41803B).
-      // PROVISIONAL presentation adapter: blend the same current bob used by
-      // BackdropScene into the accepted jump. Feet start at their unchanged
-      // contact position and converge on the moving basket, including inverted
-      // actors (the model's world-Y bob does not reverse with actor gravity).
+      // Native 0x41803B captures the bobbing target on entry. Provisional clone
+      // interpolation converges on the current basket position. The basket's
+      // world-Y bob is independent of actor gravity.
       const double bob = exitBalloonBob(world.levelClockMs() / 1000.0) * exitTime;
       return {wrapped(l.x + dx * exitTime, width),
           l.y - l.verticalDir * lift + dy * e.exitStepSeconds - bob,

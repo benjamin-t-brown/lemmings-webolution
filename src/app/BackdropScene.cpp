@@ -26,8 +26,7 @@
 
 namespace webo::app {
 namespace {
-// Snapshot only rows where this stage has triangles. The same worker copies,
-// draws and compares each band, so overlapping triangles count a pixel once.
+// Copy, draw and compare only bands with triangles. Each changed pixel counts once.
 template<int Channels, class T>
 std::vector<std::string> flushCountingChanges(detail::RasterCommandBatch& batch,
     const std::vector<T>& buffer, int width, std::size_t& total) {
@@ -71,16 +70,14 @@ bool hasMineBackdropMaterials(const SceneNode& node) {
 BillboardAffine3x4 multiply(const BillboardAffine3x4&a,const BillboardAffine3x4&b){BillboardAffine3x4 o;for(int r=0;r<3;++r){for(int c=0;c<3;++c)for(int k=0;k<3;++k)o.values[4*r+c]+=a.values[4*r+k]*b.values[4*k+c];o.values[4*r+3]=a.values[4*r+3];for(int k=0;k<3;++k)o.values[4*r+3]+=a.values[4*r+k]*b.values[4*k+3];}return o;}
 std::array<double,3> eyeLocal(const Matrix&m){double a=m[0],b=m[1],c=m[2],d=m[3],e=m[4],f=m[5],g=m[6],h=m[7],i=m[8];double det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);if(std::abs(det)<1e-15)return {NAN,NAN,NAN};double q=1/det;double inv[9]={(e*i-f*h)*q,(c*h-b*i)*q,(b*f-c*e)*q,(f*g-d*i)*q,(a*i-c*g)*q,(c*d-a*f)*q,(d*h-e*g)*q,(b*g-a*h)*q,(a*e-b*d)*q};std::array<double,3> out{};for(int j=0;j<3;++j)for(int k=0;k<3;++k)out[j]-=m[9+k]*inv[3*k+j];return out;}
 Matrix nativeAffine(const BillboardAffine3x4& a){return {a.values[0],a.values[4],a.values[8],a.values[1],a.values[5],a.values[9],a.values[2],a.values[6],a.values[10],a.values[3],a.values[7],a.values[11]};}
-// Reuse the accepted camera builder: its parent includes the camera/projection
-// chain and its source transform is S. Convert both affine matrices back to the
-// SceneNode row-vector layout before composing the predicate context.
+// Convert the camera parent transform and source S to SceneNode row-vector layout
+// before composing the facing predicate.
 Matrix predicateContext(const CameraBasis& camera){const auto chain=buildBillboardCameraChain(camera);return compose(nativeAffine(BillboardAffine3x4{chain.parentCamera}),nativeAffine(BillboardAffine3x4{chain.sourceTransform}));}
 void collectEyes(const SceneNode& n,const Matrix& parent,const Matrix& context,std::map<std::size_t,std::array<double,3>>& out){auto m=compose(n.matrix,parent);out[n.sourceOffset]=eyeLocal(compose(m,context));for(auto&c:n.children)collectEyes(c,m,context,out);}
 bool passesFacingPredicate(const SceneMeshRecordSource& rec,
                            const std::map<std::size_t, std::array<double, 3>>& eyes) {
-  // Kinds 4/5 (0x46AE20/0x46AFA0) and both kind-7 emitters
-  // (0x46B2A0/0x46B350) use the authored normal and first indexed vertex.
-  // Apply the kind-7 predicate to the playtested waterfall and forest backdrop.
+  // Kinds 4/5 (0x46AE20/0x46AFA0) and kind-7 emitters (0x46B2A0/0x46B350)
+  // use the authored normal and first indexed vertex.
   const bool singleSidedQuad = rec.kind == 7 &&
       (rec.materialName == R"(Models\bg_mine01\^WaterFall01)" ||
        rec.materialName == R"(Models\bg_tree04\Background_01)");
@@ -119,8 +116,8 @@ SceneRasterOptions blendOptions(bool alphaTest, std::uint32_t selector) {
 
 SceneRasterOptions spriteOptions(std::uint32_t selector){
  auto o=blendOptions(true,selector);
- // Conditional, labelled: texture flags 1 => `flags & 3` row of 0x0047261F: SELECTARG1 alpha,
- // alpha test GREATER with reference 0xEF (options() default); RGB modulates white diffuse.
+ // For texture flags 1, the `flags & 3` row of 0x0047261F uses SELECTARG1 for alpha.
+ // GREATER uses reference 0xEF and RGB modulates white diffuse.
  o.alphaOperation=SceneAlphaOperation::SelectTexture;
  return o;
 }
@@ -128,32 +125,22 @@ SceneRasterOptions spriteOptions(std::uint32_t selector){
 std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary& lib,std::span<const std::byte> bytes,std::string_view levelId){
  BackdropScene s;
  s.levelId_=levelId;
- // Admission is structural, never by level ID: every level is attempted with the
- // serialized-ownership extraction below. This is a portable renderer-capability
- // gate (the readers/adapters below can represent the level), not recovered
- // native admission; the original loads every level.
- // The byte storage belongs to the caller and remains alive throughout both
- // readers. Only the composed reader's documented format exception is mapped.
+ // The clone admits scenery by supported serialized structure. The caller's
+ // byte storage must outlive both readers.
  lemmings::CompiledLevel level;
  try {
    level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
  } catch(const std::invalid_argument& e) {
    return std::unexpected(std::string(levelId)+" serialized level: "+e.what());
  }
- // A failure is either malformed data (hard error: truncation, bad references,
- // marker/end contradictions) or a form the current readers/renderer do not
- // represent (the level is then a diagnosed, successful, empty partial scene so
- // gameplay is unaffected). Reader diagnostics name unsupported forms with the
- // word "unsupported"; every existing check below is unchanged.
+ // Malformed data is an error. Unsupported forms produce an empty partial scene
+ // with a diagnostic. The reader identifies these with "unsupported".
  struct Failure{bool unsupported;std::string message;};
  const auto formFailure=[](const std::string& label,const std::string& reason){return std::unexpected(Failure{reason.find("unsupported")!=std::string::npos,label+reason});};
- // Type-2 branch-1 (sprite) admission, scene-branch-impl-001 (contract: docs/scratch/
- // scene-branch-research-002.md section 10). Structural, never by level ID or partial subset:
- // SPRITES\<name>.SPR present and parsing, clip in range with >=1 temporal entry, every
- // temporal entry exactly one directional image (the early-return path of 0x0046840B; the
- // multi-image selection 0x00418350/0x00480AC8 is not implemented), its texture present with
- // a flags row this renderer implements. A missing sprite file is an explicit error (the
- // original exits); the clone reports it and keeps the level as a diagnosed empty scene.
+ // Type-2 branch-1 binds a valid SPRITES\<name>.SPR clip and supported texture.
+ // Each entry needs one directional image (0x0046840B early return).
+ // Multi-image selection (0x00418350/0x00480AC8) is unsupported.
+ // A missing sprite file produces a diagnostic and an empty partial scene.
  const auto admitSprites=[&](const RootSource& source,const SceneNode& root)->std::expected<void,Failure>{
    std::vector<const SceneNode*> found;
    const auto collect=[&](const auto& self,const SceneNode& n)->void{
@@ -200,12 +187,10 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    // Scope the presentation change to the shared mine backdrop.
    if(mirror && hasMineBackdropMaterials(parsed->root))
      for (std::size_t i : {6, 7, 8}) parsed->root.matrix[i] = -parsed->root.matrix[i];
-   // Secondary slot8 admission (scene-nested-impl-001, contract: docs/scratch/scene-nested-research-001.md
-   // sections 1 and 3). Structural, never by level ID: the root is type 0, every node is type 0, 1 or 2,
-   // and only type-0/type-1 nodes may own children (type-1 owners: 0x0046C55D draws own meshes, then
-   // children in file order). A type-2 owner's matrix is applied twice to its children by the original
-   // (0x47D0F2 and 0x46B6EB); that is evidenced but unexercised by any installed level, so it is not
-   // implemented and the whole level stays a diagnosed empty partial scene.
+   // Secondary slot8 requires a type-0 root and nodes of types 0..2.
+   // Type-1 owners draw meshes before children in file order (0x0046C55D).
+   // Type-2 owners apply their matrix twice to children (0x47D0F2 and 0x46B6EB).
+   // The clone rejects that ownership and returns an empty partial scene.
    if(source.stage==Stage::Secondary){
      if(parsed->root.type!=0)return std::unexpected(Failure{true,label+"unsupported secondary root node type "+std::to_string(parsed->root.type)});
      std::string rejected;
@@ -255,9 +240,8 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    s.diagnostics_.push_back(extracted.error().message+"; scenery not admitted: empty partial scene");
    std::fprintf(stderr,"backdrop: %s\n",s.diagnostics_.back().c_str());
  }
- // Playtests T2/T5: the tagged collection was absent from scene extraction.
- // Admit type-0 pressure pads, type-1 levers and type-3 gravity models, retaining each placed root.
- // Use the same mesh/billboard depth path as other placed scenery.
+ // Route tagged type-0 pads, type-1 levers and type-3 gravity models through
+ // the same depth path as other placed scenery, retaining each root.
  for(std::size_t i=0;i<level.gadgets.tagged_entities.size();++i){
    const auto& gadget=level.gadgets.tagged_entities[i];
    if(gadget.type!=0&&gadget.type!=1&&gadget.type!=3&&gadget.type!=4)continue;
@@ -285,8 +269,7 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
      if(role) s.roots_.back().visible=false;
    }
  }
- // The installed Crab.a3d models belong to named STAT entities, not scenery
- // or fluid receivers. Keep their stored cylinder placement and scene depth.
+ // Named STAT entities own the installed Crab.a3d models and their cylinder placement.
  for(std::size_t i=0;i<level.gadgets.named_entities.size();++i){
    const auto& entity=level.gadgets.named_entities[i];
    const auto& model=entity.model;
@@ -299,8 +282,7 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
  auto crabs=s.crabPresentation(bytes);
  if(!crabs)return std::unexpected(crabs.error());
  s.setCrabStates(*crabs,{});
- // moving-hazards-001: named STAT and DYNA objects were parsed but omitted
- // from scene extraction. They share the ordinary placed-mesh depth path.
+ // Named STAT and DYNA hazards use the placed-mesh depth path.
  for(std::size_t i=0;i<level.gadgets.named_entities.size();++i){
    const auto& model=level.gadgets.named_entities[i].model;
    if(!model||(model->name!="deathroller.a3d"&&model->name!="buzzsaw.a3d"&&
@@ -317,10 +299,9 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
  auto levers=s.leverPresentation(bytes);
  if(!levers)return std::unexpected(levers.error());
  s.setLeverFaces(*levers,{});
- // 0x42C556 submits the optional +0x160 drain and +0x164 supply in receiver
- // order, unconditionally with respect to height/request. Their inline roots
- // retain authored placement/orientation (unlike the world-space Fluid root).
- // Installed pipes have no animation tracks; do not invent a flow animation.
+ // 0x42C556 submits optional +0x160 drain and +0x164 supply models in receiver
+ // order, independent of height and request. The pipes retain their inline
+ // placement and have no animation tracks. The Fluid root uses world coordinates.
  for(std::size_t i=0;i<level.gadgets.entities_42acac.size();++i){
    const auto& gate=level.gadgets.entities_42acac[i];
    for(const auto slot:{0x160,0x164}){
@@ -332,18 +313,16 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
        continue;
      }
      const auto& object=*model->object;
-     // Model+0xF8 is the third stored double (0x451865). Drains use 0.0003;
-     // supplies use zero. Preserve it independently of the clone depth policy.
+     // Model+0xF8 is the third stored double (0x451865). Drains use 0.0003
+     // and supplies use zero. This projection bias is independent of depth policy.
      auto added=add({Stage::FluidPipe,owner,i,object.source_extent},object.marker_matches,
                     std::bit_cast<double>(model->double_bits[2]));
      if(!added)return std::unexpected(added.error().message);
    }
  }
- // Animated base `Fluid` models of the entities_42acac receivers (fluid-surface-impl-001; contract:
- // docs/scratch/fluid-surface-research-001.md sections 6.2 and 7.4). Structural, never by level ID:
- // kinds 0..2 (startup constants at 0x428848) with an inline type-0 base model whose first
- // type-1 node has the traced layout are admitted. A failure omits that receiver's fluid with a
- // diagnostic; it never empties the other roles (they are extracted and validated above).
+ // Admit animated base Fluid models for entities_42acac kinds 0..2
+ // (0x428848) when an inline type-0 root begins with the expected type-1 mesh.
+ // A binding failure omits only that receiver's surface.
  for(std::size_t i=0;i<level.gadgets.entities_42acac.size();++i){
    const auto& gate=level.gadgets.entities_42acac[i];
    if(!gate.model)continue;
@@ -360,8 +339,8 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    const SceneNode* geometry=nullptr;
    const auto first=[&](const auto& self,const SceneNode& n)->void{if(geometry)return;if(n.type==1){geometry=&n;return;}for(const auto& c:n.children)self(self,c);};
    first(first,parsed->root);
-   // Traced layout: >=6 vertices, >=3 normals, block[1] = kind-5 top surface whose corners all
-   // reference the four animated vertex slots 2..5 (0x42B24D writes exactly those).
+   // The mesh needs six vertices, three normals and a kind-5 top at block[1].
+   // Its corners reference slots 2..5, which 0x42B24D updates.
    bool layout=geometry&&geometry->positions.size()>=6&&geometry->normals.size()>=3&&geometry->meshes.size()>=2&&geometry->meshes[1].kind==5&&geometry->meshes[1].records.size()>=2;
    if(layout)for(const auto& rec:geometry->meshes[1].records)for(const auto& c:rec.corners)if(c.vertexIndex<2||c.vertexIndex>5)layout=false;
    if(!layout){reject("base model lacks the traced Fluid layout (6 vertices, 3 normals, kind-5 top over vertices 2..5)");continue;}
@@ -389,8 +368,8 @@ std::expected<GravityPresentation,std::string> BackdropScene::gravityPresentatio
      const auto& model=*level.gadgets.tagged_entities.at(owned.source.entityIndex).model;
      for(const auto& aux:model.object->auxiliary_records){
        if(aux.name!="anti_grav")continue;
-       // READ 47C93D/47CF5C: second array = two-component material tracks,
-       // not colour tracks. Installed anti_grav has no transform/event tracks.
+       // At 47C93D/47CF5C the second array holds two-component material tracks.
+       // Installed anti_grav has no transform or event tracks.
        std::size_t at=0;const auto& raw=aux.serialized_bytes;
        const auto integer=[&](std::size_t size){
          if(at>raw.size()||size>raw.size()-at)throw std::invalid_argument("truncated gravity UV animation");
@@ -411,9 +390,8 @@ std::expected<GravityPresentation,std::string> BackdropScene::gravityPresentatio
          if(previous<binding.duration)throw std::invalid_argument("gravity UV keys do not cover duration");
          const auto material=integer(4), targets=integer(4);if(targets>(raw.size()-at)/4)throw std::invalid_argument("invalid gravity UV target count");
          for(std::size_t k=0;k<targets;++k){
-           // PROVISIONAL node-index adapter, shared with the hatch track
-           // convention: serialized ids address the placed tree in preorder.
-           // Real anti_grav tracks select its four coil panels (1,2,4,5).
+           // Provisional node indexing uses preorder, as in hatch tracks.
+           // The four anti_grav coil panels are nodes 1, 2, 4 and 5.
            const auto node=integer(4);if(node>=nodes.size())throw std::invalid_argument("gravity UV node outside placed tree");
            for(std::size_t m=0;m<nodes[node]->meshes.size();++m){const auto& mesh=nodes[node]->meshes[m];if(mesh.materialSlot!=material)continue;
              for(std::size_t r=0;r<mesh.records.size();++r)for(std::size_t c=0;c<mesh.records[r].corners.size();++c){const auto& uv=mesh.records[r].corners[c];track.corners.push_back({std::size_t(node),m,r,c,uv.u,uv.v});}
@@ -434,9 +412,8 @@ void BackdropScene::animateGravity(const GravityPresentation& presentation){
  for(const auto& binding:presentation.bindings){
    std::vector<SceneNode*> nodes;
    const auto collect=[&](auto& self,SceneNode& n)->void{nodes.push_back(&n);for(auto& c:n.children)self(self,c);};collect(collect,roots_.at(binding.root).node);
-   // PROVISIONAL playable-v1 adapter: loop the stored UV clip on the existing
-   // paused scenery clock, with a shared zero phase. Native per-object start
-   // phase/contact-driven sound/activation are not established here.
+   // Provisional clone UV playback. Loop from a shared zero phase on the scenery
+   // clock, which pauses with play.
    const double time=std::fmod(sceneryClock_,binding.duration);
    for(const auto& track:binding.tracks){
      std::size_t k=0;while(k+1<track.keys.size()&&time>track.keys[k].end)++k;
@@ -633,7 +610,7 @@ std::expected<NamedHazardPresentation,std::string> BackdropScene::namedHazardPre
    const auto level=lemmings::read_compiled_level({reinterpret_cast<const std::uint8_t*>(bytes.data()),bytes.size()});
    result.coordinateHeight=std::int32_t(level.world.leading_value);
    result.coordinateRows.resize(level.world.first_blocks.size());
-   // Same FILE-to-runtime lattice adapter as the accepted balloon departure.
+   // Convert the file lattice to the runtime layout used by balloon departure.
    for(std::size_t row=0;row<result.coordinateRows.size();++row)
      for(std::size_t x=0;x<32;++x)for(std::size_t layer=0;layer<2;++layer)
        result.coordinateRows[row][layer*32+x]=level.world.first_blocks[row][x*2+layer];
@@ -653,8 +630,8 @@ std::expected<NamedHazardPresentation,std::string> BackdropScene::namedHazardPre
            if(!transforms)throw std::invalid_argument(name+": "+transforms.error());
            clip.transforms=std::move(*transforms);
          }else{
-           // 0x476277/0x47CDE7: third array = node, axis, turns/sec.
-           // 0x476EE0 uses absolute clip time, not accumulated frame angles.
+           // 0x476277/0x47CDE7 read node, axis and turns/sec in the third array.
+           // 0x476EE0 uses absolute clip time for rotation.
            if(a.first_count||a.second_count)throw std::invalid_argument("mixed hazard spin/transform tracks");
            const auto& raw=a.serialized_bytes;std::size_t at=20;
            const auto integer=[&](std::size_t n){
@@ -708,8 +685,7 @@ void BackdropScene::setNamedHazardStates(const NamedHazardPresentation& presenta
    const auto start=lemmings::map_world_coordinates(mesh,state->initialPosition);
    const auto moved=lemmings::map_world_coordinates(mesh,state->position);
    for(unsigned j=0;j<3;++j)root.matrix[9+j]+=moved[j]-start[j];
-   // PROVISIONAL orientation adapter: preserve authored tilt/scale while
-   // following radial heading, as in the accepted balloon departure path.
+   // Provisional orientation follows radial heading while preserving authored tilt and scale.
    const double angle=std::atan2(moved[2],moved[0])-std::atan2(start[2],start[0]);
    const double c=std::cos(angle),s=std::sin(angle);
    for(unsigned row=0;row<3;++row){
@@ -743,8 +719,7 @@ std::expected<PressurePadPresentation,std::string> BackdropScene::pressurePadPre
      number();const auto transforms=integer(4);
      if(transforms>raw.size()/8)throw std::invalid_argument("invalid pad transform count");
      for(std::size_t t=0;t<transforms;++t){integer(4);const auto keys=integer(4);if(keys>(raw.size()-at)/89)throw std::invalid_argument("invalid pad key count");at+=keys*89;}
-     // Reuse the instruction-checked transform sampler without changing the
-     // hatch reader's contract. The following arrays are material/event tracks.
+     // Sample the transform keys before reading material and event tracks.
      std::vector<std::uint8_t> transformBytes(raw.begin(),raw.begin()+at);
      transformBytes.insert(transformBytes.end(),8,0);
      auto animation=readHatchAnimation(transformBytes);
@@ -798,12 +773,9 @@ void BackdropScene::setPressurePadStates(PressurePadPresentation& presentation,s
      for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+key.u+t*key.du;uv.v=c.v+key.v+t*key.dv;}
    }
    if(state==1&&time>=duration){
-     // 0x431B93..0x431BF9 finds names containing "cut"; 0x4319E5
-     // hides them after first activation. Keep the base cube visible.
-     // PROVISIONAL Y1 feedback: play the stored clip once before hiding its
-     // beams, rather than native 4319E5's immediate hide. The simulation latch
-     // and messages still fire immediately; this delay is presentation only.
-     // Pruning only this owned model also suppresses a cut node's subtree.
+     // 0x431B93..0x431BF9 finds "cut" nodes. 0x4319E5 hides them on first activation.
+     // Provisional clone feedback plays the clip before pruning each subtree,
+     // delaying the immediate hide at native 4319E5. Simulation latches immediately.
      const auto hide=[&](auto& self,SceneNode& node)->void{
        if(node.name.find("cut")!=std::string::npos){node.meshes.clear();node.children.clear();return;}
        for(auto& child:node.children)self(self,child);
@@ -836,11 +808,9 @@ void BackdropScene::setLeverFaces(const LeverPresentation& presentation,std::spa
    int face=binding.initialFace;
    for(const auto& [id,current]:idFaces)if(id==binding.id){face=current;break;}
    if(face!=1&&face!=-1)continue; // 0x436E6A ignores unsupported faces.
-   // 0x436E6A selects "lever" and direction (face == -1) XOR [+0xA0].
-   // Load hook 0x43703F calls model vt+0x24 (0x45130A): forward
-   // samples duration, reverse samples zero. Keep that settled face mapping.
-   // PROVISIONAL presentation: show the settled endpoint immediately. Native
-   // pull interpolation is not connected; no simulation clock is changed.
+   // 0x436E6A selects "lever" with direction (face == -1) XOR [+0xA0].
+   // At load, 0x43703F calls model vt+0x24 (0x45130A), sampling duration
+   // forward and zero in reverse. Provisional clone presentation jumps to the endpoint.
    const bool reverse=(face==-1)!=binding.reversed;
    applyHatchAnimation(roots_.at(binding.root).node,binding.animation,reverse?0.0:1.0);
  }
@@ -853,9 +823,7 @@ std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitP
  } catch(const std::invalid_argument& e) { return std::unexpected(e.what()); }
  presentation.exitCoordinateHeight=static_cast<std::int32_t>(level.world.leading_value);
  presentation.exitCoordinateRows.resize(level.world.first_blocks.size());
- // 0x43D09A deinterleaves FILE inner/outer pairs into the RUNTIME layers
- // consumed by 0x43D56C. Match ActorPose's cylinder-template accessor here;
- // do not pass the raw serialized blocks to the runtime-coordinate helper.
+ // 0x43D09A separates file inner/outer pairs into the runtime layers for 0x43D56C.
  for(std::size_t row=0;row<level.world.first_blocks.size();++row)
    for(std::size_t x=0;x<32;++x)for(std::size_t layer=0;layer<2;++layer)
      presentation.exitCoordinateRows[row][layer*32+x]=level.world.first_blocks[row][x*2+layer];
@@ -864,8 +832,7 @@ std::expected<EntranceExitPresentation,std::string> BackdropScene::entranceExitP
    if(owned.source.owner=="entities_425e50") {
      const auto& model=level.gadgets.entities_425e50.at(owned.source.entityIndex).model;
      if(!model||!model->object)continue;
-     // Water hatch models name the same two-door clip "entrance_acid".
-     // Both names/layouts are measured over all 144 installed hatches.
+     // Water hatches use "entrance_acid" for the same two-door track layout.
      for(const auto& aux:model->object->auxiliary_records)if(aux.name=="entrance"||aux.name=="entrance_acid") {
        auto animation=readHatchAnimation(aux.serialized_bytes);
        if(!animation)return std::unexpected(animation.error());
@@ -892,8 +859,7 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
     !std::isfinite(swayScale))return;
  const double time = std::max(0.0, departureSeconds);
  const double bob = exitBalloonBob(levelSeconds);
- // Provisional onset for the ordinary final rescue. The caller also damps
- // sway around individual landings, including rescues late in Pending.
+ // Provisional departure starts on final rescue. The caller damps sway during landings.
  const double departureRamp = (time - kExitJumpSeconds) / kExitBalloonSwayBlendSeconds;
  const double swayWeight = std::clamp(std::min(departureRamp, swayScale), 0.0, 1.0);
  for(const auto& entrance:presentation.entrances)
@@ -914,9 +880,8 @@ void BackdropScene::setEntranceExitPresentation(const EntranceExitPresentation& 
    const auto start=lemmings::map_world_coordinates(mesh,exit.cylinderPosition);
    const auto moved=lemmings::map_world_coordinates(mesh,position);
    for(std::size_t j=0;j<3;++j)matrix[9+j]+=moved[j]-start[j];
-   // PROVISIONAL presentation adapter: turn the stored model with its radial
-   // heading, preserving its scale/tilt. Continue the idle bob during
-   // departure for continuity at the existing global Pending trigger.
+   // Provisional departure follows radial heading, preserves scale and tilt,
+   // and continues the idle bob through Pending.
    const double angle=std::atan2(moved[2],moved[0])-std::atan2(start[2],start[0]);
    const double c=std::cos(angle),s=std::sin(angle);
    for(std::size_t row=0;row<3;++row){
@@ -948,10 +913,8 @@ std::optional<PickBox> visibleMeshBounds(const SceneNode& node, const CameraBasi
    std::map<std::size_t,std::array<double,3>> eyes;
    collectEyes(node, identity(), context, eyes);
    PickBox h{camera.width, camera.height, 0, 0};
-   // SOURCE visibility: bounds of mesh pixels present in the completed scene
-   // depth buffer. This follows animation and excludes occluded pixels.
-   // PROVISIONAL rectangular hit area rather than native model-origin +/-20;
-   // a 0.5 world-unit tolerance covers raster depth conversion/rounding.
+   // Provisional hit area bounds visible depth-buffer pixels, following animation
+   // and occlusion. The depth tolerance is 0.5 world units. Native uses model-origin +/-20.
    for (const auto& record : *records) {
      if (!passesFacingPredicate(record, eyes)) continue;
      for (std::size_t k = 1; k+1 < record.corners.size(); ++k) {
@@ -1167,20 +1130,20 @@ void BackdropScene::render(Raster& target,const CameraBasis& camera,const AssetL
   renderStage(target,camera,lib,stats,Stage::FluidGate);
   renderStage(target,camera,lib,stats,Stage::Secondary);
 }
-// 0x0042B24D animation tail + 0x0042C5C9 normal sign, applied to a pristine copy of the parsed model.
-// Constants are the three rows written by 0x428848; pi is the traced promoted-f32
-// literal 3.1415927410125732, never M_PI (fluid research 7.2).
+// Update the parsed base model copy with 0x0042B24D's animation and
+// 0x0042C5C9's normal sign. The 0x428848 table supplies constants and
+// pi is the promoted f32 value 3.1415927410125732.
 void BackdropScene::applyFluidState(SceneNode& g,const FluidRecord& rec,const FluidGateState& st){
  constexpr double kPi=3.1415927410125732;
- // 0x428848 writes rows at 0x4BF6E8 + kind*0x48; 0x42B24D consumes
- // period +0, amplitude +8, lane count +0x38. Keep kind 0 arithmetic unchanged.
+ // 0x428848 writes rows at 0x4BF6E8 + kind*0x48. 0x42B24D reads
+ // period +0, amplitude +8 and lane count +0x38.
  const double period=rec.kind==1?8.0:rec.kind==2?0.8:2.0;
  const double amplitude=rec.kind==1?1.0:rec.kind==2?0.25:0.5;
  const std::uint32_t lanes=rec.kind==1?16u:rec.kind==2?2u:4u;
  const double h=st.height;
  // 0x42C5C9: normals 0..2 are negated whenever the height is zero (the facing predicate is then inverted).
  if(h==0.0)for(std::size_t k=0;k<3;++k)for(double& x:g.normals[k])x=-x;
- if(!st.animated)return;  // raw deserialized mesh until the first update has run
+ if(!st.animated)return;  // Deserialized mesh until the first update.
  const double phase=st.wavePhase/period;
  const double x1=static_cast<double>(st.lane&(lanes-1u))/lanes+phase;
  const double x2=static_cast<double>((st.lane+1u)&(lanes-1u))/lanes+phase;
@@ -1195,8 +1158,8 @@ void BackdropScene::applyFluidState(SceneNode& g,const FluidRecord& rec,const Fl
    return c;
  };
  const auto c1=colour(x1),c2=colour(x2);
- // Lane 1 colours the corners on vertex slots 2 and 4, lane 2 those on slots 3 and 5 (6.2 item 4).
- // Corner alpha is left as stored: the alpha branch is skipped for kind 0.
+ // Lane 1 colors vertex slots 2 and 4. Lane 2 colors slots 3 and 5.
+ // Kind 0 retains authored corner alpha.
  for(auto& rec5:g.meshes[1].records)for(auto& c:rec5.corners){
    const auto& v=(c.vertexIndex==2||c.vertexIndex==4)?c1:c2;
    c.r=v[0];c.g=v[1];c.b=v[2];
@@ -1219,8 +1182,8 @@ void BackdropScene::renderFluid(Raster& target,const CameraBasis& camera,Backdro
  detail::RasterCommandBatch batch(camera.height, !observer);
  const auto context=predicateContext(camera);
  const auto scale=buildBillboardCameraChain(camera).projectionTransform[10];
- // Named provisional depth policy (see FluidDepthPolicy); the software projection bias below is the
- // traced model+0xF8 contribution, kept separate from any unknown device ZBIAS.
+ // FluidDepthPolicy selects provisional depth behavior. The model+0xF8
+ // projection bias is independent of device ZBIAS.
  const auto optionsFor=[&](bool blend){
    auto o=options(false,blend);o.shade=SceneShade::Flat;
    if(fluidPolicy_==FluidDepthPolicy::LessWriteOff)o.depthWrite=false;
@@ -1284,8 +1247,7 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    return root.source.stage == stage;
  };
  if (stage != Stage::Primary && std::none_of(roots_.begin(), roots_.end(), includesRoot)) return;
- // SceneRaster and legacy Raster share the same linear view-depth units here;
- // the choice is conditional software integration, not an effective-D3D claim.
+ // SceneRaster and Raster share linear view-depth units. Effective native D3D state is unresolved.
  SceneRgbaFramebuffer fb; fb.width=camera.width;fb.height=camera.height;if(observer)fb.rgba.resize(target.framebuffer().rgb.size()/3*4);else fb.rgb=target.mutableFramebuffer().rgb;
  auto& rgb=target.mutableFramebuffer().rgb;auto& depth=target.mutableDepthBuffer();
  const auto initialDepth = observer ? depth : std::vector<double>{};
@@ -1329,13 +1291,11 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     const bool gravityRoot = owned.source.owner == "tagged-gravity";
     const bool pressurePadRoot = owned.source.owner == "tagged-pressure-pad";
     if (stage == Stage::Primary) ++stats.roots;
-    // Primary retains the all-root census. Later passes need only their own
-    // roots: they previously rebuilt and discarded the entire primary mesh.
-    // Local facing predicates depend only on ancestors inside the owned root.
+    // The primary pass counts all owned roots. Later passes visit only their own.
+    // Local facing depends on ancestors within the owned root.
     if (!includesRoot(owned) || !owned.visible) {
       if (stage == Stage::Primary) {
-        // Keep the all-root census without transforming/copying records that
-        // this stage never submits. Animation changes values, never topology.
+        // Count records without transforming those outside this stage. Animation preserves topology.
         const auto count = [&](const auto& self, const SceneNode& n) -> std::size_t {
           std::size_t total = 0;
           if (n.type == 1) for (const auto& mesh : n.meshes) total += mesh.records.size();
@@ -1402,9 +1362,8 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
   chain.projectionTransform.values=builtChain.projectionTransform;chain.center={camera.cx,camera.cy};
    std::map<std::size_t,SceneBillboardSource> secondaryBillboards;
    std::vector<SceneBillboardSource> primaryBillboards, legacyBillboards;
-   // Branch-1 sprites are registered by the same collection walk (with their ancestor-composed
-   // inputs) and realized at their Secondary dispatch slot: the first-draw frame, and so the
-   // quad, can only be chosen when the node is actually drawn.
+   // Register branch-1 sprites with ancestor-composed inputs. Choose the start frame
+   // and quad only when the Secondary dispatch draws the node.
    std::map<std::size_t,PendingSprite> pendingSprites;
    collectBillboards(chain,[&](const RootSource& source,const SceneBillboardSource& b){if(source.stage!=stage)return;if(source.stage==Stage::Secondary)secondaryBillboards.emplace(b.sourceOffset,b);else if(source.stage==Stage::Primary)primaryBillboards.push_back(b);else legacyBillboards.push_back(b);},[&](const std::string& message){stats.diagnostics.push_back(message);std::fprintf(stderr,"backdrop: %s\n",message.c_str());},
      [&](const RootSource& source,const SceneNode& n,const BillboardSourceInputs& in){if(source.stage==Stage::Secondary)pendingSprites.emplace(n.sourceOffset,PendingSprite{&n,in});}, stage);
@@ -1511,8 +1470,8 @@ void BackdropScene::advanceScenery(double frameMs,bool inLevel,bool paused){
  double dt=0.0;
  auto& tele=telemetry();++tele.advanceCalls;
  if(inLevel&&!paused&&std::isfinite(frameMs)&&frameMs>0.0){dt=std::min(frameMs,100.0)/1000.0;if(!sprites_.empty())++tele.advancesWithTime;}
- // 0x00437BDE: scene clock += dt (no scene-duration wrap is parsed, a documented limit);
- // 0x004764C4: node delta = t - previous, t itself after a negative delta.
+ // 0x00437BDE adds dt to the scene clock. This path does not parse duration wrapping.
+ // 0x004764C4 uses t - previous as node delta, or t after a negative delta.
  sceneryClock_+=dt;
  double delta=sceneryClock_-sceneryPrevious_;
  if(delta<0.0)delta=sceneryClock_;
@@ -1544,9 +1503,8 @@ void BackdropScene::visitSecondaryDispatch(const CameraBasis& camera,const std::
  const auto root=std::find_if(roots_.begin(),roots_.end(),[](const auto& n){return n.source.stage==Stage::Secondary;});if(root==roots_.end())return;
  const auto chain=buildBillboardCameraChain(camera);dispatchSecondaryChildren(root->node,nativeAffine(BillboardAffine3x4{chain.parentCamera}),nativeAffine(BillboardAffine3x4{chain.sourceTransform}),visitor,dispatchOptions());
 }
-// Production dispatch gates (0x46C56B/0x46C5C4/0x47D0D9). The runtime "cutme" frame-time LOD (0x45DA0D)
-// is not connected: unless a caller installs setSecondaryHidden, those type-1 nodes stay visible, a
-// recorded limit (no admitted target level has one).
+// Dispatch applies 0x46C56B/0x46C5C4/0x47D0D9 visibility gates. The "cutme"
+// frame-time LOD (0x45DA0D) requires a caller's setSecondaryHidden override.
 SecondaryDispatchOptions BackdropScene::dispatchOptions() const {SecondaryDispatchOptions o;o.originalGates=true;o.hidden=secondaryHidden_;return o;}
 void BackdropScene::visitRoots(const std::function<void(const RootSource&,const SceneNode&)>& visitor) const {
  for(const auto& root:roots_)visitor(root.source,root.node);

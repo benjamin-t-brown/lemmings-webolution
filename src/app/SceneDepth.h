@@ -8,25 +8,18 @@
 
 namespace webo::app {
 
-// Software inverse-stage conversion for production's diagonal billboard P/S
-// transforms with zero transform translation. A source-space generated Z offset
-// is added after source S, so slotZ = k*centerViewZ + finalPz*deltaSourceZ,
-// where k=parentPz*sourceSz*finalPz. Dividing by k yields the equivalent
-// physical-view comparison depth centerViewZ + deltaSourceZ/(parentPz*sourceSz).
-// This supported domain is the accepted diagonal source chain, not arbitrary
-// affine matrices or a claim about effective native device depth state. Only
-// comparison Z is converted; the source slot and RHW remain native.
+// Convert billboard slot Z to physical view depth for the diagonal,
+// zero-translation P/S chain. slotZ = k*centerViewZ + finalPz*deltaSourceZ
+// with k=parentPz*sourceSz*finalPz. Divide by k for comparison depth.
+// Keep the native slot and RHW for projection and interpolation.
 double billboardPhysicalComparisonDepth(double nativeSlotZ,
                                          const BillboardCameraChain& chain);
 
-// Production adapter used by BackdropScene's actual billboard submission path.
 SceneRasterVertex billboardRasterVertex(const BillboardVertex& slot,
                                         const BillboardCameraChain& chain,
                                         std::array<double, 4> diffuse);
 
-// SOURCE mesh submission adapter. projectionScale and bias are explicit; the
-// BackdropScene caller supplies the current chain's Pzz and its declared zero
-// source bias. Returned depth is decoded to physical view units for SceneRaster.
+// Decode mesh depth to physical view units using the supplied projection scale and bias.
 std::expected<SceneRasterVertex, std::string> adaptPackedSceneMeshVertex(
     double screenX, double screenY, double physicalViewZ,
     double projectionScale, double sourceBias,

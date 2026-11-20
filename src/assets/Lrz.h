@@ -1,26 +1,12 @@
-// LRZ -- the compression used by Lemmings Revolution for texture entries.
-//
-// Transcribed from the hand-written assembly in the original executable:
-//
-//     .text:00467DE8  lrzDecodeChunk(src, dst, packedSize, unpackedSize)
-//     .text:00467EB7  read one canonical-Huffman tree (nibble depth list)
-//     .text:00467F0D  build the tree into the node arena
-//     .text:00467FED  decode one number, with or without a tree
-//
-// A compressed entry is a one-byte chunk count followed by that many chunks:
-//
-//     u16 packedSize      total chunk size, the 5-byte header included
-//     u16 unpackedSize
-//     u8  method          3 = stored (plain memcpy), 4 = LRZ
-//     ... three trees, then the bitstream ...
-//
-// The decompressed result of a texture entry is an ordinary Windows BMP.
-//
-// Bits are read most-significant first. Each chunk codes an alternating
-// sequence of RAW runs (a count, then that many literal bytes, themselves
-// read 8 bits at a time from the bitstream rather than byte-aligned) and
-// COPY references (length + 2, distance + 1, copied byte by byte so that
-// overlapping runs replicate).
+// LRZ texture compression. Original decoder routines:
+//   .text:00467DE8  lrzDecodeChunk(src, dst, packedSize, unpackedSize)
+//   .text:00467EB7  read canonical Huffman depths as nibbles
+//   .text:00467F0D  build a tree in the node arena
+//   .text:00467FED  decode a number with or without a tree
+// A u8 chunk count precedes chunks with u16 packedSize (including the 5-byte header),
+// u16 unpackedSize and u8 method (3 stored, 4 LRZ). LRZ has three trees before the bitstream.
+// MSB-first codes alternate RAW runs of unaligned literal bytes with COPY references
+// (length + 2, distance + 1). Copy bytewise to replicate overlaps. Decoded textures are Windows BMPs.
 
 #pragma once
 
@@ -33,12 +19,10 @@
 
 namespace webo {
 
-// Decodes every chunk of one compressed entry. Returns the decompressed bytes,
-// or a message describing where it gave up.
+// Decode all chunks or report the failing chunk.
 std::expected<std::vector<std::byte>, std::string> lrzDecode(std::span<const std::byte> src);
 
-// Size of the decoded result without decoding it: the sum of the chunk
-// unpackedSize fields. Cheap; useful for sizing and for sanity checks.
+// Sum unpackedSize fields without decoding.
 std::expected<std::size_t, std::string> lrzDecodedSize(std::span<const std::byte> src);
 
 }  // namespace webo

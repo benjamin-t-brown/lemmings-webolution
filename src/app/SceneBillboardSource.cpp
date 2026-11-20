@@ -116,8 +116,8 @@ bool latchSpriteFirstDrawFrame(SpriteTemporalState& state, std::uint32_t tempora
 
 void advanceSpriteTemporal(SpriteTemporalState& state, double dt, double rate,
                            std::uint32_t temporalCount) {
-  constexpr double kThreshold = 0.06;       // 0x004B1940 (measured)
-  constexpr double kEpsilon = 9.99999993922529e-09;  // 0x004B1928 (measured)
+  constexpr double kThreshold = 0.06;       // 0x004B1940
+  constexpr double kEpsilon = 9.99999993922529e-09;  // 0x004B1928
   if (state.mode != 1 || temporalCount == 0) return;
   state.finished = false;
   double acc = state.accumulator + dt * rate;

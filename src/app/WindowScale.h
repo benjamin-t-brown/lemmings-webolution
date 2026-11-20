@@ -23,7 +23,7 @@ constexpr int largestFittingWindowScale(int clientWidth, int clientHeight) {
 }
 
 constexpr int desktopWindowScale(int choice, int largestFit) {
-  // Without usable desktop bounds, retain the previous ordinary 2x default.
+  // Use 2x when desktop bounds are unavailable.
   if (!largestFit) return choice ? choice : 2;
   return choice ? std::min(choice, largestFit) : largestFit;
 }

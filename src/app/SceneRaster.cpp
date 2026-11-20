@@ -52,14 +52,12 @@ std::array<double, 4> sample(const SceneRgbaImage& image, double u, double v,
   }
   const double fx = u * image.width - 0.5, fy = v * image.height - 0.5;
   const double floorX = std::floor(fx), floorY = std::floor(fy);
-  // UV is bounded to +/-1e6 before sampling; even INT_MAX dimensions give
-  // integer floors below 2.15e15 (<2^53 and INT64_MAX). Integer modulo is
-  // therefore exactly the former floating fmod, including negative wrap.
+  // Bounded UVs (+/-1e6) keep texel floors below 2.15e15 for INT_MAX dimensions.
+  // Integer modulo preserves negative wrap.
   const auto x0 = static_cast<std::int64_t>(floorX);
   const auto y0 = static_cast<std::int64_t>(floorY);
   const double tx = fx - floorX, ty = fy - floorY;
-  // Four addresses per pixel rather than repeating X/Y for every tap. Keep
-  // weights, channel accumulation order and final rounding exactly as before.
+  // Resolve the four texel addresses once and reuse them across channels.
   const int xs[]{addressIndex(x0, image.width, address), addressIndex(x0 + 1, image.width, address)};
   const int ys[]{addressIndex(y0, image.height, address), addressIndex(y0 + 1, image.height, address)};
   std::array<double, 4> out{};

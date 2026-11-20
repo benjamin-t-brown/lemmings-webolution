@@ -88,10 +88,9 @@ inline RasterRows& rasterRows() {
   return rows;
 }
 
-// A stage can defer its validated triangles while its texture storage remains
-// alive. Bin by clipped Y extent, preserving submission order within each band.
-// Short bands let idle cores take rows from a more heavily covered part of the
-// image. Only the caller reduces draw counts and errors after the barrier.
+// Deferred triangles borrow texture storage. Bin by clipped Y extent
+// while preserving submission order within each band. The caller reduces
+// counters and errors after all bands finish.
 class RasterCommandBatch;
 inline thread_local RasterCommandBatch* commandBatch = nullptr;
 class RasterCommandBatch {
@@ -106,14 +105,12 @@ class RasterCommandBatch {
   void add(int ymin, int ymax, Draw draw, Finish finish = {}) {
     commands_.push_back({ymin, ymax, std::move(draw), std::move(finish)});
   }
-  // On extreme inputs the scene sampler can reject UV partway through a
-  // triangle. Preserve the old eight independent error/early-return ranges.
+  // Keep eight independent early-return ranges when UV validation fails during drawing.
   void preserveErrorRanges() { legacyRanges_ = true; }
   std::vector<std::string> flush() {
     return flush([](int, int, auto draw) { draw(); });
   }
-  // A stage may measure its disjoint destination rows around the actual draw.
-  // The callback executes on the worker that owns the band.
+  // Each callback measures the draw on its assigned row band.
   template<class DrawBand>
   std::vector<std::string> flush(DrawBand drawBand) {
     if (commands_.empty()) return {};

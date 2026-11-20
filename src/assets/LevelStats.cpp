@@ -14,9 +14,7 @@
 namespace webo {
 namespace {
 
-// The mask resolution the simulation loads a level at, and the same value
-// `lrtool lvlmask` draws. Changing it here without changing the caller would
-// make the survey measure a mask nothing plays on.
+// Match the diagnostic mask resolution used by lrtool lvlmask.
 constexpr int kPixelsPerUnit = 2;
 
 double median(std::vector<double> v) {
@@ -84,16 +82,13 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
     row.entrances = objs->entrances.size();
     row.exits = objs->exits.size();
 
-    // The lattice survey needs a mask with something in it. The grid survey
-    // further down does not depend on it, and must not be skipped when the
-    // raster comes up empty. The stored grid is present either way.
+    // An empty lattice raster still permits a stored-grid survey.
     for (const auto& e : objs->entrances) {
       if (!row.nonEmptyMask)
         break;
       const auto [col, top] = worldToMaskPixel(
           e.position, mask.width, mask.height, mesh->height(), kPixelsPerUnit);
-      // Straight down the mask column. py grows downward, so this is the
-      // first thing the lemming would meet.
+      // Scan to the first solid row in the mask column. Y grows downward.
       int drop = -1;
       for (int y = top; y < mask.height; ++y)
         if (mask.solid[static_cast<std::size_t>(y) * mask.width + col]) {
@@ -104,16 +99,14 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
         continue;
       ++row.entrancesWithFloor;
       row.drops.push_back(drop);
-      // The raster is kPixelsPerUnit rows to a world unit; the splat
-      // distance is in world units.
+      // Scale the world-unit splat threshold by kPixelsPerUnit to compare it with the raster drop.
       if (drop <= splatDistanceCells * kPixelsPerUnit)
         ++row.entrancesSurvivable;
     }
     std::ranges::sort(row.drops);
     row.medianDropRows = median(row.drops);
 
-    // The same question against the mask the original collides against. One
-    // cell per world unit, so no scaling.
+    // The stored collision grid has one cell per world unit.
     auto grid = findCollisionGrid(*blob);
     if (!grid)
       continue;
@@ -123,8 +116,7 @@ std::expected<std::vector<LevelStats>, std::string> surveyLevels(const AssetLibr
     const auto gcells = static_cast<std::size_t>(grid->width) * grid->height;
     row.gridSolidPercent =
         gcells ? 100.0 * static_cast<double>(row.gridSolidCells) / gcells : 0.0;
-    // Same axis as the sim: worldToMaskPixel is y-down, the file grid is
-    // y-up. Terrain::fromCollisionGrid flips once; probe that.
+    // Terrain::fromCollisionGrid flips the Y-up file grid to the Y-down mask used by worldToMaskPixel.
     const auto terrain = sim::Terrain::fromCollisionGrid(*grid);
     for (const auto& e : objs->entrances) {
       const auto [col, top] =
@@ -158,8 +150,7 @@ CorpusStats summariseLevels(std::span<const LevelStats> rows, int splatDistanceC
       continue;
     ++c.parsed;
 
-    // The stored grid is independent of whether our raster produced
-    // anything, so it is accumulated before the raster-only counts bail out.
+    // Accumulate stored-grid results before skipping empty rasters.
     if (r.hasGrid) {
       ++c.grids;
       gridSolids.push_back(r.gridSolidPercent);
@@ -189,7 +180,7 @@ CorpusStats summariseLevels(std::span<const LevelStats> rows, int splatDistanceC
       ++c.levelsWithFloorlessEntrance;
       c.floorlessEntrances += floorless;
     }
-    // Releasable: something to land on, and nothing that lands fatally.
+    // Count levels with a floor and no fatal measured drops.
     if (r.entrancesWithFloor > 0 && r.entrancesSurvivable == r.entrancesWithFloor)
       ++c.survivableLevels;
     if (r.medianDropRows >= 0 && r.medianDropRows <= splatDistanceCells * kPixelsPerUnit)

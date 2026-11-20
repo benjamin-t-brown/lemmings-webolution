@@ -10,8 +10,7 @@
 
 namespace webo::app {
 
-// Playable-v1 world-hatch input. Limits belong to the clicked hatch; the rate
-// remains shared until the parked per-hatch scheduler is resolved.
+// Provisional clone input uses the clicked hatch's limits on the shared rate.
 class RuntimeReleaseRateControl {
  public:
   static std::expected<RuntimeReleaseRateControl, std::string> create(
@@ -40,18 +39,15 @@ class RuntimeReleaseRateControl {
 // Same SOURCE plate geometry for hover and click; -1 means outside all plates.
 int runtimeSkillPanelIndex(int x, int y);
 
-// The two command plates after the eight skill plates. READ 0x455AFF: hover
-// index 8 with mouse button 0 down is the fast-forward plate. Index 9 is
-// Armageddon; exact original command timing remains parked.
+// Plate 8 is fast-forward on hover with button 0 held (0x455AFF).
+// Plate 9 is Armageddon.
 enum class RuntimePanelCommand { None, FastForward, Armageddon };
 
-// Reports which command plate, if any, covers the window point. Uses
-// runtimeSkillPanelIndex for geometry, so hit testing is shared with clicks.
+// Uses runtimeSkillPanelIndex to share command and click hit regions.
 RuntimePanelCommand runtimeSkillPanelCommand(int x, int y);
 
-// Player adapter for the release-pair gesture traced at 0x483B5D/0x454725.
-// PROVISIONAL: require two complete clicks on this plate within <500 ms,
-// excluding the original's ambiguous first-release timestamp-zero case.
+// For the release pair at 0x483B5D/0x454725, provisional clone input
+// requires two complete clicks on the plate less than 500 ms apart.
 class RuntimeNukeInput {
  public:
   void press(int x, int y);
@@ -65,14 +61,12 @@ class RuntimeNukeInput {
 void drawRuntimeNukeFeedback(Image& image, const Image& font,
                              const sim::World& world, bool armed);
 
-// Runtime selection/input policy. READ evidence establishes a positive-stock
-// gate for selecting skill plates. Keyboard selection remains a SOURCE adapter;
-// the click rectangles are not a claim about native physical hit testing.
+// A skill needs positive stock for plate selection. Keyboard input and
+// click geometry use clone mappings.
 class RuntimeSkillSelection {
  public:
   int selectedIndex() const { return selectedIndex_; }
   sim::Skill selectedSkill() const;
-  // Generic selection helper for source fixtures and rendering tests.
   bool selectIndex(int index);
   bool selectAvailableIndex(int index, const std::array<int, 9>& counts);
   bool consumePanelClick(int x, int y, const std::array<int, 9>& counts);
@@ -81,9 +75,8 @@ class RuntimeSkillSelection {
   int selectedIndex_ = 0;
 };
 
-// SOURCE display policy: eight live stocks clamped to [0,99], including hiding
-// synthetic unlimited (-1). Ninth slot retains the C1 fixture's zero; native
-// out-of-range/unlimited formatting is not established by this adapter.
+// Provisional clone display policy. Clamp eight live stock values to [0,99],
+// display unlimited (-1) as zero, and set the ninth slot to zero.
 std::array<int, 9> runtimeSkillPanelCounts(const sim::World& world);
 void drawRuntimeSkillPanel(Image& dest, const RetailSkillPanel& panel,
                            const sim::World& world,

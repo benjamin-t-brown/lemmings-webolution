@@ -20,8 +20,7 @@ struct LevelEndSnapshot {
   int needed;
 };
 
-// READ 444BC2 /445498. Called AFTER an admitted simulation slice. No wall
-// timer, target-only finish, inferred fade, or results-phase re-evaluation.
+// Update after an admitted simulation slice (444BC2 /445498).
 class LevelEndTransition {
  public:
   void afterSimulationSlice(double seconds, const LevelEndInputs& inputs);

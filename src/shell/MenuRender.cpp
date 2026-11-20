@@ -6,7 +6,7 @@
 namespace webo::shell {
 namespace {
 
-// READ: exe bytes at 0x4BF968 + 4, records for 0x20..0x7E.
+// Original ^Font table at 0x4BF968 + 4, records for 0x20..0x7E.
 constexpr std::array<GlyphCell, kGlyphCount> kCells{{
     {0, 0, 8}, {8, 0, 7}, {16, 0, 10}, {26, 0, 14}, {40, 0, 13},
     {54, 0, 20}, {74, 0, 0}, {74, 0, 6}, {80, 0, 8}, {88, 0, 8},
@@ -92,7 +92,7 @@ webo::Image renderMainMenu(const webo::Image& backdrop, const webo::Image& sheet
     const int left = labelLeft(text, cells, params.xWord);
     const int width = textWidth(text, cells);
 
-    // panel: border then fill (X pad, insets and colours READ in B1y; top/height MEASURED)
+    // Draw the panel border before the fill.
     const int px0 = left - params.panelPadX, px1 = left + width + params.panelPadX;
     const int py0 = textY + params.panelTop, py1 = py0 + params.panelHeight;
     const auto& fill = static_cast<int>(row) == params.highlight ? params.panelHighlight

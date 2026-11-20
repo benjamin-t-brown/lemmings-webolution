@@ -23,9 +23,7 @@ constexpr double kUvNudge128 = 1.0 / 128.0; // 0.0078125
 double uvU(int x) { return (x & 31) / 32.0; }
 double uvV(int y) { return 1.0 - (y & 31) / 32.0; }
 
-// The three colour dwords the engine writes are (0, hi) repeated three times,
-// so the quad carries three copies of one double. FUN_004608BB sets
-// entry+0xD8..+0xEC; the pairs are (0.0f, hi) for every site.
+// FUN_004608BB writes (0, hi) three times at entry+0xD8..+0xEC for one double per colour channel.
 double colourFromHi(std::uint32_t hi) {
   const std::uint64_t bits = (static_cast<std::uint64_t>(hi) << 32);
   double d = 0;
@@ -267,8 +265,7 @@ class Builder {
     std::vector<int> order(static_cast<std::size_t>(n));
     for (int i = 0; i < n; ++i)
       order[i] = n - 1 - i;
-    // FUN_00463410 0x463F9B..0x4640E2: a selection sort over the record
-    // pointers keyed on x1 descending, then y_start ascending.
+    // FUN_00463410 (0x463F9B..0x4640E2) selection-sorts records by descending x1, then ascending y_start.
     for (int a = 0; a < n - 1; ++a) {
       for (int b = a + 1; b < n; ++b) {
         const Record& ra = recs[order[a]];
@@ -332,11 +329,8 @@ class Builder {
     return quads;
   }
 
-  // FUN_00463100: the whole-block quad at entry+8, submitted by the INN pass.
-  // Four layer-0 vertices over the whole 8x16 block in the open-top order, the
-  // open-top UV formula over the same extent, and a white modulate. The four
-  // keys are the ones `buildCellMeshes` already touches for the wall flag, so
-  // this adds no new key support.
+  // FUN_00463100 builds the INN quad at entry+8 from four layer-0 vertices over the 8x16 block.
+  // It shares buildCellMeshes' wall vertex keys and uses open-top order and UVs with white modulation.
   CellMeshQuad wholeBlockQuad(int x0, int y0) {
     CellMeshQuad q;
     q.index[0] = vertex(x0, y0, 0);
@@ -359,8 +353,7 @@ class Builder {
     if (recs.size() == 1 && recs[0].y_end == y0 + 0xF && recs[0].y_start == y0 &&
         recs[0].x0 == x0 && recs[0].x1 == x0 + 7)
       return false;
-    // Runtime material partitions must not turn a full solid block into an
-    // open block merely because it contains both earth and steel.
+    // Preserve the whole-block classification across earth/steel material partitions.
     if (preserveSteel_) {
       for (int x = x0; x < x0 + kColumnsPerBucket; ++x)
         for (int y = y0; y < y0 + kRowsPerBand; ++y)
@@ -392,9 +385,8 @@ class Builder {
   }
 
  private:
-  // The record's `+4` is the first gap cell and `+2` the last, in both the
-  // 0x4ECA58 and 0x4ECA68 lists (FUN_004615E9). `x_rec` is the x the quad's
-  // UV is anchored on: the record's x1 for the right list, x0 for the left.
+  // In both lists (0x4ECA58 and 0x4ECA68), FUN_004615E9 stores the first gap cell
+  // at +4 and last at +2. UV anchor x_rec is x1 on the right and x0 on the left.
   void sideGaps(const Record& rec, int x_rec, int x, std::vector<Gap>& into) const {
     if (!rec.door) {
       int y = rec.y_start;
@@ -528,9 +520,7 @@ std::expected<CellMeshCell, std::string> buildOneCell(Builder& builder, int buck
   cell.material = static_cast<std::uint32_t>((bucket >> 2) + ((bands - 1 - band) / 2) * 8);
   cell.wall = builder.wallFlag(recs, x0, y0);
   if (cell.wall) {
-    // FUN_00463100 builds the whole-block quad at entry+8 from four layer-0
-    // vertices; they share the key table with the meshes. `0x4622FD`
-    // submits it as the INN pass's inline quad.
+    // FUN_00463100 builds entry+8 from four shared layer-0 keys. 0x4622FD submits it in the INN pass.
     cell.inner = builder.wholeBlockQuad(x0, y0);
     cell.hasInner = true;
   }
@@ -602,8 +592,7 @@ std::expected<void, std::string> rebuildCellMeshCells(
   if (meshes.cells.empty() || meshes.bands == 0 || grid.height <= 0 ||
       grid.height / kRowsPerBand != static_cast<int>(meshes.bands))
     return std::unexpected("cell mesh: rebuild does not match the built mesh");
-  // PROVISIONAL playable-v1 steel protection: never stretch an ordinary cut
-  // face across a steel region. Load-time meshing keeps the traced merge rule.
+  // Provisional rebuilds split cut faces at steel boundaries. Load-time meshing uses the original merge rule.
   Builder builder(keyTable, grid, true);
   builder.setRecords(doorRecords);
   const int bands = static_cast<int>(meshes.bands);

@@ -10,14 +10,12 @@ Frontend::Frontend(Policy policy, int initialCounter)
 Outcome Frontend::beginFrontend(Screen page) {
   if (rootOwned_ || page == Screen::Level)
     return Outcome::Ignored;
-  // READ 486F60 -> 48BC00 root, then page factory; each consumes one serial.
+  // At 486F60, 48BC00 creates the root before the page factory. Each consumes one serial.
   ++counter_; // root's base constructor
   rootOwned_ = true;
   ++counter_; // selected page's base constructor
   screen_ = page;
-  // Model the full-initialization caller's UI write (45DF33/45E0B7/45D743),
-  // not a side effect of the native page constructor. In contrast,
-  // replacePage deliberately changes only page identity and preserves the mode.
+  // Full initialization sets the dispatch mode as at 45DF33/45E0B7/45D743. Page replacement preserves it.
   switch (page) {
     case Screen::Menu:
     case Screen::Confirm:
@@ -60,8 +58,7 @@ Outcome Frontend::press(Key key, int holdFrames) {
         if (highlight_ == 1) return replacePage(Screen::Map);
         if (highlight_ == 3) return openSoundOptions();
         if (highlight_ == 4) {
-          // READ48EE41..48EE4C: activating row pointer [menu+50] sets
-          // application exit byte4E3581. Results/level-menu Quit are separate.
+          // At 48EE41..48EE4C, activating [menu+50] sets the application exit flag byte4E3581.
           quitRequested_ = true;
           return Outcome::Handled;
         }
@@ -94,7 +91,6 @@ Outcome Frontend::press(Key key, int holdFrames) {
       }
       if (key == Key::Esc) {
         if (holdFrames != kEscHoldLevel) return Outcome::Unobserved;
-        // Legacy key replay is intentionally kept distinct from production semantic open.
         return beginFrontend(Screen::Dialog);
       }
       return Outcome::Unobserved;
@@ -106,8 +102,7 @@ Outcome Frontend::press(Key key, int holdFrames) {
       if (key == Key::O && dispatchMode_ == kUiDialog) return closeLevelMenu(true);
       return Outcome::Unobserved;
     case Screen::Results:
-      // Native initial hidden-row focus repair remains unresolved. No invented
-      // Return-to-Continue; the semantic activation below is separate.
+      // Results start with a hidden row. Native keyboard focus repair is unresolved.
       return Outcome::Unobserved;
   }
   return Outcome::Unobserved;
@@ -155,7 +150,7 @@ std::uint32_t Frontend::nodeVtable() const {
 
 Outcome Frontend::showResults(bool success) {
   if (screen_ != Screen::Level || rootOwned_) return Outcome::Ignored;
-  // READ45DF25/45E0A9: full initialization, unlike Continue's page replacement.
+  // At 45DF25/45E0A9, results construct a new root and page.
   paused_ = false;
   resultsWon_ = success;
   highlight_ = -1; // The shared builder's initial row is hidden on both results pages.
@@ -164,7 +159,7 @@ Outcome Frontend::showResults(bool success) {
 
 Outcome Frontend::activateResultsContinue() {
   if (screen_ != Screen::Results) return Outcome::Ignored;
-  // READ4886E4 ->48726F: preserve the root, retire/replace the result page.
+  // At 4886E4 -> 48726F, retain the root and replace the result page.
   return replacePage(Screen::Map);
 }
 
@@ -179,7 +174,7 @@ Outcome Frontend::activateResultsRetry() {
 
 Outcome Frontend::activateResultsQuit() {
   if (screen_ != Screen::Results || resultsWon_) return Outcome::Ignored;
-  // READ45D79E/45D7EC: teardown, then full initialization (not Continue).
+  // At 45D79E/45D7EC, tear down the frontend before creating the map root and page.
   if (endFrontend() != Outcome::Handled) return Outcome::Ignored;
   return beginFrontend(Screen::Map);
 }
@@ -215,8 +210,7 @@ Outcome Frontend::openSoundOptions() {
 Outcome Frontend::returnFromSoundOptions() {
   if (screen_ != Screen::SoundOptions) return Outcome::Ignored;
   highlight_ = 0;
-  // 48EE6A / 48F617 pass selector 7 / 1F as page+24. Dispatch mode
-  // survives page replacement (including a main menu reached from results).
+  // 48EE6A / 48F617 pass selector 7 / 1F as page+24. Page replacement preserves dispatch mode.
   return replacePage(dispatchMode_ == kUiDialog ? Screen::Dialog : Screen::Menu);
 }
 

@@ -1,17 +1,8 @@
-// Reader for the LEMBOX archive format used by Lemmings Revolution.
-//
-// Layout, all little-endian (see PLAN.md 1.2):
-//
-//     char[6] "LEMBOX"
-//     u32     count
-//     u32     nameBlockBytes
-//     u8[nameBlockBytes]   count x (u32 len, char[len])   -- no NUL terminators
-//     u32 count ; u32[count] offsets   -- absolute, from the start of the file
-//     u32 count ; u32[count] sizes
-//     payload
-//
-// Nothing inside a .box is compressed; individual *entries* may be (texture
-// entries are LRZ). Decoding those is a separate layer.
+// Reads little-endian LEMBOX archives.
+// Header: char[6] "LEMBOX", u32 count, u32 nameBlockBytes.
+// Names: u8[nameBlockBytes] holds count x (u32 len, char[len]) without NUL terminators.
+// Offsets and sizes each use u32 count and u32[count]. Offsets are absolute file positions.
+// The .box payload can contain individually compressed entries, including LRZ textures.
 
 #pragma once
 
@@ -28,8 +19,7 @@
 
 namespace webo {
 
-// Archive names are stored uppercase with backslash separators. Lookups accept
-// any case and either separator; this is what they are normalised to.
+// Stored names use uppercase and backslashes. Lookups accept either case or separator.
 std::string normaliseAssetName(std::string_view name);
 
 class Box {
@@ -67,9 +57,7 @@ public:
   std::expected<std::vector<std::byte>, std::string> read(const Entry& entry) const;
   std::expected<std::vector<std::byte>, std::string> read(std::string_view name) const;
 
-  // Confirms the directory covers the payload exactly: entries ascending, no
-  // overlap, nothing past EOF. A correct parse of a healthy archive reports
-  // ok with zero gaps and payloadEnd == fileSize.
+  // Check ascending, contiguous entries through EOF, with no overlap.
   Validation validate() const;
 
 private:
@@ -81,8 +69,7 @@ private:
   std::uint64_t fileSize_ = 0;
 };
 
-// The game ships a base archive plus a patch archive that overrides entries of
-// the same name and adds a few new ones. Reads resolve against the patch first.
+// Resolve patch entries before the base archive, so patches can add or shadow names.
 class AssetLibrary {
 public:
   static std::expected<AssetLibrary, std::string> open(

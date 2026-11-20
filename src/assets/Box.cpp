@@ -15,7 +15,7 @@ constexpr std::uint32_t kMaxNameBlock = 1u << 26;
 std::uint32_t readU32(const std::byte* p) {
   std::uint32_t v;
   std::memcpy(&v, p, 4);
-  return v;  // the format is little-endian; so is every target we build for
+  return v;  // Archive offsets and their host representation are little-endian.
 }
 
 }  // namespace
@@ -174,7 +174,6 @@ Box::Validation Box::validate() const {
   return v;
 }
 
-// -- AssetLibrary ----------------------------------------------------------
 
 std::expected<AssetLibrary, std::string> AssetLibrary::open(const std::filesystem::path& base,
                                                             const std::filesystem::path& patch) {

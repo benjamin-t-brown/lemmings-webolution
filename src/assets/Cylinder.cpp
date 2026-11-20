@@ -25,9 +25,7 @@ T readAt(std::span<const std::byte> data, std::size_t offset) {
 
 constexpr std::size_t kVertexBytes = 3 * sizeof(double);
 
-// A vertex is plausible if it sits on a tube of sane radius at a sane height.
-// The bounds are deliberately loose: they only have to reject the surrounding
-// non-vertex data, and every accepted run is then checked for exact length.
+// Use loose tube-radius and height bounds to locate candidates, then validate the vertex count.
 bool plausibleVertex(const Vec3& v) {
   const double radius = std::hypot(v.x, v.z);
   if (!std::isfinite(radius) || !std::isfinite(v.y))
@@ -35,15 +33,11 @@ bool plausibleVertex(const Vec3& v) {
   return radius > 5.0 && radius < 4096.0 && std::abs(v.y) < 4096.0;
 }
 
-// Both routes use the existing compatibility tail, including its two tile-slot
-// blocks and boundary contract. This is separate from the recovered reader's
-// class-one representation; no named-reference projection is made here.
+// Both readers consume the same compatibility tail, including both tile-slot blocks.
 std::expected<CylinderMesh, std::string> readSurfaceTail(
     std::span<const std::byte> data, CylinderMesh mesh, std::size_t p,
     std::optional<std::size_t> secondaryTripleCount = std::nullopt) {
-  // Everything past the double blocks is addressed from a known offset rather
-  // than searched for, so a short or malformed tail is a hard failure here
-  // instead of being silently skipped.
+  // Read the tail at a known offset. Reject short or malformed payloads.
   mesh.endOffset = p;
 
   const auto need = [&](std::size_t bytes) {
@@ -67,9 +61,7 @@ std::expected<CylinderMesh, std::string> readSurfaceTail(
   p += static_cast<std::size_t>(surfaceCount) * kVertexBytes;
 
   if (secondaryTripleCount) {
-    // The recovered class-one reader already validated this count and payload.
-    // Consume the u32 count and exactly 24 serialized bytes per opaque triple;
-    // neither their values nor the reader's later named references are projected.
+    // Skip the validated count and exactly 24 serialized bytes per opaque triple.
     if (!need(4))
       return std::unexpected("cylinder: the file ends before the secondary triple count");
     p += 4;
@@ -79,7 +71,7 @@ std::expected<CylinderMesh, std::string> readSurfaceTail(
     if (!need(4))
       return std::unexpected("cylinder: the file ends before the tile texture list");
   } else {
-    // Legacy-only fragments retain the zero-word policy and diagnostics.
+    // Only the legacy locator requires the secondary count to be zero.
     if (!need(8))
       return std::unexpected("cylinder: the file ends before the tile texture list");
     if (readAt<std::uint32_t>(data, p) != 0)
@@ -90,10 +82,7 @@ std::expected<CylinderMesh, std::string> readSurfaceTail(
   p += 4;
   if (tileCount > 4096)
     return std::unexpected("cylinder: implausible tile texture count");
-  // Two blocks of `tileCount` slots: the outer skin, then the inner. The
-  // count is stated once and the second block follows it with no header of
-  // its own, which is why this reads the same loop twice rather than
-  // looking for another count.
+  // One tileCount applies to both tile blocks, outer first. The inner block has no separate header.
   const auto readTileBlock = [&](std::vector<std::string>& into) -> const char* {
     into.reserve(tileCount);
     for (std::uint32_t i = 0; i < tileCount; ++i) {
@@ -101,8 +90,7 @@ std::expected<CylinderMesh, std::string> readSurfaceTail(
         return "cylinder: the file ends inside a tile texture list";
       const std::uint32_t len = readAt<std::uint32_t>(data, p);
       p += 4;
-      // An empty name is normal: half the slots in each block are empty,
-      // because a slot names a tile on one surface only.
+      // Each slot names a tile on one surface only, so half are empty in each block.
       if (len > 512 || !need(len))
         return "cylinder: a tile texture name has an implausible length";
       std::string name(len, '\0');
@@ -122,7 +110,7 @@ std::expected<CylinderMesh, std::string> readSurfaceTail(
   return mesh;
 }
 
-// The locator retains its count-coupled radius stage before the shared tail.
+// The legacy locator requires equal ring and radius block counts.
 std::expected<CylinderMesh, std::string> readMeshTail(
     std::span<const std::byte> data, CylinderMesh mesh, std::size_t p) {
   const std::uint32_t ringCount = mesh.ringCount;
@@ -177,16 +165,13 @@ double CylinderMesh::height() const {
 namespace {
 
 std::expected<CylinderMesh, std::string> findLegacyCylinderMesh(std::span<const std::byte> data) {
-  // The header is u32 faceCount, f64 thickness, u32 ringCount, so the vertex
-  // run starts 16 bytes in. Scan for the run and validate backwards.
+  // Scan for vertices, then check the preceding u32 faceCount, f64 thickness and u32 ringCount.
   constexpr std::size_t kHeaderBytes = 16;
 
   for (std::size_t at = kHeaderBytes; at + kVertexBytes <= data.size(); ++at) {
     const Vec3 first{readAt<double>(data, at), readAt<double>(data, at + 8),
                      readAt<double>(data, at + 16)};
-    // The first vertex of the first ring is on the axis' zero angle at the
-    // inner radius: x and y are zero (x as a negative zero, in the data) and
-    // z is the radius.
+    // The first ring starts at angle zero: negative zero X, zero Y, inner radius Z.
     if (first.x != 0.0 || first.y != 0.0 || !(first.z > 10.0 && first.z < 4096.0))
       continue;
 
@@ -196,9 +181,7 @@ std::expected<CylinderMesh, std::string> findLegacyCylinderMesh(std::span<const 
     if (ringCount == 0 || ringCount > 64 || !std::isfinite(thickness) || thickness <= 0)
       continue;
 
-    // Accept the run only if it is exactly ringCount whole rings long and the
-    // ring width is consistent, which is what makes this a match rather than
-    // a coincidence.
+    // Require exactly ringCount whole rings with consistent width.
     std::size_t count = 0;
     while (at + (count + 1) * kVertexBytes <= data.size()) {
       const std::size_t p = at + count * kVertexBytes;
@@ -236,8 +219,7 @@ std::expected<CylinderMesh, std::string> findLegacyCylinderMesh(std::span<const 
 }  // namespace
 
 std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::byte> data) {
-  // LevelByteStream borrows its bytes. Keep the adapted storage alive for both
-  // unchanged recovered reads; neither later level sections nor EOF is needed.
+  // LevelByteStream borrows storage through both reads. Stop before later sections.
   std::vector<std::uint8_t> bytes;
   bytes.reserve(data.size());
   for (const auto byte : data)
@@ -261,16 +243,14 @@ std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::b
     return legacy;
   }
 
-  // These are existing portable adapter policies, not original validation.
-  // Decoded metadata and compatibility-tail errors must not enter the locator.
+  // Clone validation: reject invalid decoded metadata or tails without trying the locator.
   if (world.first_blocks.empty() || world.first_blocks.size() > 64)
     return std::unexpected("cylinder: ring count must be in [1,64]");
   const double thickness = std::bit_cast<double>(world.following_double_bits);
   if (!std::isfinite(thickness) || thickness <= 0)
     return std::unexpected("cylinder: thickness must be finite and positive");
 
-  // 0x0043D09A reads 64 triples per counted block. Preserve serialized order
-  // and binary64 bits; this does not establish the renderer's layer convention.
+  // 0x0043D09A reads 64 triples per block. Preserve order and binary64 bits. Layer semantics are unresolved.
   constexpr std::size_t kTriplesPerBlock =
       std::tuple_size_v<lemmings::WorldGeometryPrefix::TripleBlock>;
   constexpr std::size_t kSerializedBlockBytes = kTriplesPerBlock * 3 * 8;
@@ -281,8 +261,7 @@ std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::b
   constexpr std::size_t kSerializedDoubleBlockBytes = kDoublesPerBlock * 8;
   static_assert(kDoublesPerBlock == 32 && kSerializedDoubleBlockBytes == 256);
 
-  // Establish the actual post-second-array boundary without overflowing cursor
-  // additions or payload multiplications, even though the reader bounded both.
+  // Bounds-check cursor and payload arithmetic through the second array.
   std::size_t tailStart = worldStart;
   const auto advance = [&](std::size_t count, std::size_t width) {
     if (tailStart > data.size() || count > (data.size() - tailStart) / width)
@@ -297,7 +276,7 @@ std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::b
     return std::unexpected("cylinder: decoded block boundary runs past the end of the file");
 
   CylinderMesh mesh;
-  mesh.faceCount = world.leading_value;  // Retain the existing unidentified field.
+  mesh.faceCount = world.leading_value;  // Preserve the unidentified serialized word.
   mesh.thickness = thickness;
   mesh.ringCount = static_cast<std::uint32_t>(world.first_blocks.size());
   mesh.angularSteps = kTriplesPerBlock / 2;
@@ -311,8 +290,7 @@ std::expected<CylinderMesh, std::string> findCylinderMesh(std::span<const std::b
     }
   }
 
-  // 0x0043D060 reads 32 binary64 components per independently counted block.
-  // Keep the compatibility field name without imposing a vertex relationship.
+  // 0x0043D060 reads 32 binary64 components per independent block. Vertex correspondence is unresolved.
   mesh.radii.reserve(world.second_blocks.size() * kDoublesPerBlock);
   for (const auto& block : world.second_blocks) {
     for (const auto bits : block)

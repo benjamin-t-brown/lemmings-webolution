@@ -11,9 +11,7 @@ namespace webo::app {
 
 int hatchRemaining(int total, int spawned, std::size_t count, std::size_t index) {
   if (!count || index >= count) return 0;
-  // SOURCE: World::spawn cycles the entrance vector once per successful
-  // release. Count future releases assigned to this hatch under that existing
-  // policy; do not substitute the original's unresolved per-hatch scheduling.
+  // Count pending releases for this hatch using World's round-robin entrance order.
   const auto n = static_cast<long long>(count), i = static_cast<long long>(index);
   const auto quota = [=](int released) { return std::max(0LL, (released + n - 1 - i) / n); };
   return static_cast<int>(std::max(0LL, quota(std::max(0, total)) - quota(std::clamp(spawned, 0, std::max(0, total)))));
@@ -30,13 +28,11 @@ std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget> target
 void drawHatchHover(Image& image, const Image& font, const HatchHoverTarget& h,
                     std::optional<int> adjustingRate) {
   const auto cells = shell::fontCells();
-  // C7 displays the clone's remaining population. The original's format
-  // argument at 0x454B95 is the release rate.
+  // The clone displays remaining population. Native 0x454B95 passes release rate.
   shell::HudLine line{shell::counterText(h.remaining), 0, 0, {255,255,255}};
   const int width = shell::textWidth(line.text, cells);
-  // READ 454C34..454C64: centered on projected hatch, y - (44 << mode).
-  // PROVISIONAL normal ^Font at 640x480: mode-0's other font is unresolved;
-  // use mesh centre as anchor and clamp labels to keep them on the viewport.
+  // 454C34..454C64 centres text on projected hatch Y - (44 << mode).
+  // Provisional 640x480 display uses ^Font, mesh centre and viewport clamping.
   line.x = std::clamp((h.left+h.right-width)/2, 0, std::max(0, image.width-width));
   line.y = std::clamp((h.top+h.bottom)/2 - 44, 0, std::max(0, image.height-shell::kLineHeight));
   shell::drawHud(image, font, std::span<const shell::HudLine>(&line, 1), cells);
@@ -136,15 +132,14 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
         int retainedNonRat = 0;
         for (const auto& lemming : world.lemmings())
           if (lemming.alive() && (world.nukeRequested() || lemming.sheetType != 3)) ++retainedNonRat;
-        // The completion slice receives this update's own dt, not a fixed 1/ticksPerSecond.
-        // PROVISIONAL Nuke completion policy: finish its replacement/animation
-        // sequence before the result delay can expire, even at timeout or on
-        // a rat-only population. Ordinary completion/Bomber paths are unchanged.
+        // Pass the slice's own dt to the end transition. Provisional Nuke policy
+        // delays the result until the replacement and animation sequence finishes,
+        // including at timeout and with only rats.
         const bool nukeDraining = world.nukeRequested() && retainedNonRat > 0;
         end_.afterSimulationSlice(nukeDraining ? 0.0 : segmentSeconds,
             {world.timedOut() && !nukeDraining, retainedNonRat, world.remainingToRelease(),
              world.saved(), world.setup().saveTarget});
-        // The existing completion stop also ends the remaining updates and passes.
+        // A completed result stops all remaining updates and passes.
         if (end_.phase() == LevelEndPhase::Results) return false;
       }
       return true;
@@ -156,20 +151,16 @@ bool RuntimeSimState::advanceElapsed(sim::World& world, double elapsedSeconds, b
 bool RuntimeSimState::advance(sim::World& world, double elapsedSeconds, bool trackCompletion,
                               const std::function<void()>& afterTick) {
   if (paused_) return false;
-  // READ 0x45DB0E-0x45DD5C: the latch selects the 0x4B15F8 pass count (7)
-  // instead of 1, and every pass reuses the full frame delta. Only this pass
-  // loop repeats; input and camera clocks run once per frame in the caller.
-  // Each pass goes through the unchanged SimClock path, so the base tick rate
-  // and the per-advance tick cap apply to every pass.
+  // 0x45DB0E-0x45DD5C selects 1 or the pass count at 0x4B15F8 (7).
+  // Each pass gives the full frame delta to SimClock, with its own tick cap.
   const int passes = fastForward_ ? kFastForwardPasses : 1;
   bool ticked = false;
   for (int pass = 0; pass < passes; ++pass) {
-    // The existing completion stop also ends the remaining passes.
+    // A completed result stops all remaining passes.
     if (pass > 0 && trackCompletion && end_.phase() == LevelEndPhase::Results) break;
     clock_.advance(elapsedSeconds);
     while ((!trackCompletion || end_.phase() != LevelEndPhase::Results) && clock_.takeStep()) {
-      // Native hatches continue while timeout-pending (425A95). Default World
-      // fixtures keep their old timeout-release policy; connected play opts in.
+      // Connected play keeps hatches active while timeout is pending (425A95).
       world.tick(trackCompletion);
       ticked = true;
       if (afterTick) afterTick();
@@ -177,9 +168,8 @@ bool RuntimeSimState::advance(sim::World& world, double elapsedSeconds, bool tra
         int retainedNonRat = 0;
         for (const auto& lemming : world.lemmings())
           if (lemming.alive() && (world.nukeRequested() || lemming.sheetType != 3)) ++retainedNonRat;
-        // DERIVED ordinary-population adapter. Native5098 is selected-type
-        // unreleased hatch population, not an active-actor count. Nuke cancels
-        // it without falsifying spawned/dead/saved counters.
+        // Native5098 counts unreleased actors of the selected type. The clone uses
+        // the ordinary population, clearing it on Nuke without changing actor counters.
         const bool nukeDraining = world.nukeRequested() && retainedNonRat > 0;
         end_.afterSimulationSlice(nukeDraining ? 0.0 : 1.0 / world.rules().ticksPerSecond,
             {world.timedOut() && !nukeDraining, retainedNonRat, world.remainingToRelease(),

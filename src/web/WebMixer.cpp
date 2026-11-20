@@ -43,8 +43,7 @@ std::expected<void, std::string> Mixer::storeClip(std::string key, Sound clip) {
   const auto channels = static_cast<std::size_t>(clip.channels);
   std::span<const std::int16_t> pcm(clip.samples);
   if (key == "ACTION") {
-    // Playtest 20 K3. The installed Action clip stays below -48 dBFS for its first 53 ms.
-    // Skip that lead on the web, leaving the attack and any louder variant intact.
+    // Clone addition. Trim the first 53 ms of Action when its peak is at or below about -48 dBFS.
     const auto leadSamples = static_cast<std::size_t>(sampleRate_) * 53 / 1000 * channels;
     constexpr int quietPeak = 128; // About -48 dBFS.
     if (leadSamples < pcm.size() && std::ranges::all_of(pcm.first(leadSamples),

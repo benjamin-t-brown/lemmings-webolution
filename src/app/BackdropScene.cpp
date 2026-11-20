@@ -62,6 +62,7 @@ BillboardAffine3x4 affine(const std::array<double,12>& m){return {{{m[0],m[3],m[
 using Matrix=std::array<double,12>;
 Matrix compose(const Matrix&a,const Matrix&b){Matrix o{};for(int i=0;i<3;++i){for(int j=0;j<3;++j)for(int k=0;k<3;++k)o[3*i+j]+=a[3*i+k]*b[3*k+j];o[9+i]=b[9+i];for(int k=0;k<3;++k)o[9+i]+=a[9+k]*b[3*k+i];}return o;}
 constexpr std::string_view mineBackdropMaterials = "Models\\bg_mine01\\";
+constexpr std::string_view gravityShaftMaterial = R"(Models\anti_grav\~shaft_antigrav)";
 bool hasMineBackdropMaterials(const SceneNode& node) {
   return std::ranges::any_of(node.materials, [](const SceneMaterial& material) {
     return material.name.starts_with(mineBackdropMaterials);
@@ -75,11 +76,12 @@ Matrix nativeAffine(const BillboardAffine3x4& a){return {a.values[0],a.values[4]
 Matrix predicateContext(const CameraBasis& camera){const auto chain=buildBillboardCameraChain(camera);return compose(nativeAffine(BillboardAffine3x4{chain.parentCamera}),nativeAffine(BillboardAffine3x4{chain.sourceTransform}));}
 void collectEyes(const SceneNode& n,const Matrix& parent,const Matrix& context,std::map<std::size_t,std::array<double,3>>& out){auto m=compose(n.matrix,parent);out[n.sourceOffset]=eyeLocal(compose(m,context));for(auto&c:n.children)collectEyes(c,m,context,out);}
 bool passesFacingPredicate(const SceneMeshRecordSource& rec,
-                           const std::map<std::size_t, std::array<double, 3>>& eyes) {
+                           const std::map<std::size_t, std::array<double, 3>>& eyes,
+                           bool gravityEffect = false) {
   // Kinds 4/5 (0x46AE20/0x46AFA0) and kind-7 emitters (0x46B2A0/0x46B350)
   // use the authored normal and first indexed vertex.
   const bool singleSidedQuad = rec.kind == 7 &&
-      (rec.materialName == R"(Models\bg_mine01\^WaterFall01)" ||
+      (gravityEffect || rec.materialName == R"(Models\bg_mine01\^WaterFall01)" ||
        rec.materialName == R"(Models\bg_tree04\Background_01)");
   if ((rec.kind != 4 && rec.kind != 5 && !singleSidedQuad) || rec.corners.empty()) return true;
   const auto eye = eyes.find(rec.nodeSourceOffset);
@@ -1276,6 +1278,14 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
    if(name.empty()) return nullptr;
    auto it=textures.find(name);if(it!=textures.end())return &it->second;
    auto img=loadTexture(lib,"TEXTURES\\"+name+".BMP");if(!img){++stats.missingTextures;diagnose(describe(node,source)+"missing texture "+name+": "+img.error());return nullptr;}
+   if (gadgetEffectPass && name == gravityShaftMaterial) {
+     // The flag-4 alpha surface upload (0x473A8D) sets alpha on nonzero
+     // words. Give the black rows zero alpha before bilinear filtering.
+     for (std::size_t p = 0; p < img->rgba.size(); p += 4) {
+       const bool lit = img->rgba[p] || img->rgba[p + 1] || img->rgba[p + 2];
+       img->rgba[p + 3] = lit ? 255 : 0;
+     }
+   }
    return &textures.emplace(name,rgba(std::move(*img))).first->second;
  };
  const SceneRgbaImage white{1,1,{255,255,255,255}};
@@ -1328,13 +1338,16 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     }
   }
    const auto drawMesh=[&](const SceneMeshRecordSource& rec){const bool observed=observer!=nullptr;if(observed&&observer->candidate)observer->candidate(rec.recordSourceOffset,rec.nodeSourceOffset,rec.blockSourceOffset,rec.corners.size()>2?rec.corners.size()-2:0);const SceneRgbaImage* tex=nullptr;const bool isNull=rec.materialName.empty();if(isNull){++stats.nullMaterials;tex=&white;}else tex=getTexture(rec.materialName,rec.nodeSourceOffset,rec.recordSourceOffset);if(!tex)return;
-    if(!passesFacingPredicate(rec,eyes)){++stats.predicateRejected;return;}
+    const bool gravityEffect = gadgetEffectPass && nodeOwners.at(rec.nodeSourceOffset)->owner == "tagged-gravity";
+    if(!passesFacingPredicate(rec,eyes,gravityEffect)){++stats.predicateRejected;return;}
     auto state=options(false,rec.blendSelector==1);
     if (gadgetEffectPass) {
       // Flag 4 modulates alpha for selector-3 coils (SrcAlpha/One). Plain
       // pad textures select texture alpha, with selector 2 adding One/One.
-      // Native depth is inherited. Use the clone's ordinary Less/write-on policy.
       state = blendOptions(false, rec.blendSelector);
+      // Test the glow against opaque scenery. A transparent stripe must not
+      // mask other glow or actors. Native device depth state is inherited.
+      if (gravityEffect) state.depthWrite = false;
       if (textureNameFlags(rec.materialName) == 0) state.alphaOperation = SceneAlphaOperation::SelectTexture;
     } else if (rec.materialName.starts_with(mineBackdropMaterials)) {
       const auto flags = textureNameFlags(rec.materialName);

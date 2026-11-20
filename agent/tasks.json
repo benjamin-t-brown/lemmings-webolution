@@ -31670,7 +31670,7 @@
     {
       "id": "antigrav-lift-quads-001",
       "title": "Anti-grav lift effects show their quads; draw them as smoothly as the original",
-      "status": "ready",
+      "status": "done",
       "depends_on": [
         "comment-pass-tests-001"
       ],
@@ -31685,63 +31685,75 @@
         "Clone framebuffer crops under build/ on Designed with love show the lift effects before and after at the same camera, with the identified seams or hard quad edges gone where the original has none, from both the desktop renderer and the Emscripten build under Node.",
         "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note."
       ],
-      "loop_attempts": 1,
-      "run_id": "20261120T191232-37944-ece2a203",
-      "started": "2026-11-20T19:12:33.211643+00:00",
-      "finished": "2026-11-20T19:20:11.424084+00:00",
-      "last_run": "build/agent-runs/20261120T191232-37944-ece2a203",
+      "loop_attempts": 2,
+      "run_id": "20261120T192757-42720-28d85b6e",
+      "started": "2026-11-20T19:27:58.254055+00:00",
+      "finished": "2026-11-20T19:43:40.472288+00:00",
+      "last_run": "build/agent-runs/20261120T192757-42720-28d85b6e",
       "blocker": null,
       "review": {
-        "decision": "blocked",
-        "reason": "Windows denied the Emscripten linker write access to build/cmake/emscripten-release/webolution.js, leaving an incomplete JavaScript/Wasm pair. The worker stopped before implementing the lift fix. Acceptance remains open for the artifact diagnosis, matched desktop and Node crops, and promoted replay results. The supervisor smoke profile passed on the submitted source.",
+        "decision": "accept",
+        "reason": "The matched desktop and Node crops show the reported hard seams gone from the lift glow. All 28 promoted replays reproduced, and the supervisor smoke profile passed. The report identifies read-only lift depth as provisional and distinguishes the original\u2019s authored banding and UV joins from what can be confirmed about its rendered pixels.",
         "checks": [
           {
             "criterion": "The report lists the original's render states and geometry for the lift effects with addresses, each artifact's cause in the clone, what was changed and on which path, and answers whether any quad edges remain visible in the original.",
-            "passed": false,
+            "passed": true,
             "evidence": [
               {
                 "path": "docs/scratch/antigrav-lift-quads-001.md",
-                "detail": "Identifies the three lift roots in Designed with love and traces inherited MIN/MAG filtering to 0x470F29, wrap and the shared gadget/actor walk to 0x43A4EC, and SRCALPHA/ONE selection to 0x414D80. It leaves texture edge texels, effective uploaded alpha, and wrapper Z test and Z write unresolved. It gives two hypotheses for the clone streaks and leaves the visibility of original quad edges undetermined."
+                "detail": "Traces the three lift roots, kind-7 geometry, vertex alpha, shaft edge texels, MIN and MAG filtering, wrap, additive blending, inherited depth state, and the shared lift and actor draw order. It explains that authored bands, the tapered silhouette, and small UV discontinuities can remain visible, while the visibility of faint facets in the original remains unverified."
               },
               {
-                "path": "build/flipper-effect-blend-001/materials.tsv",
-                "detail": "The M11_KF_1 rows confirm roots at 0xFBA34, 0x10243B, and 0x108E42. Each has two beam and two reflection meshes with 16 kind-7 records apiece, selector 3, and diffuse alpha ranges of 0\u2013255 for beams and 0\u2013128 for reflections."
+                "path": "build/antigrav-lift-quads-001/rea-lift-revision.ndjson",
+                "detail": "The instructions at 0x46B305 and 0x46B3B5 confirm that both kind-7 paths skip emission unless the facing dot product is positive. The upload loop at 0x473AC8\u20130x473AE2 skips zero words and ORs the alpha mask into nonzero words on the applicable 16-bit path."
               },
               {
-                "path": "build/agent-runs/20261120T191232-37944-ece2a203/after-source-hashes.json",
-                "detail": "Compared with before-source-hashes.json in the same run directory, the only differences are task bookkeeping and the added report. Production source hashes match across the run. There is no implemented change to the existing BackdropScene::renderStage(GadgetEffect) path."
+                "path": "src/app/BackdropScene.cpp",
+                "detail": "The shared GadgetEffect path culls back-facing lift quads, derives shaft texel alpha before bilinear sampling, and disables depth writes for the lift glow while retaining its depth test and SRCALPHA/ONE blend. The matched intermediate crops isolate the effect of each change."
               }
             ]
           },
           {
             "criterion": "Clone framebuffer crops under build/ on Designed with love show the lift effects before and after at the same camera, with the identified seams or hard quad edges gone where the original has none, from both the desktop renderer and the Emscripten build under Node.",
-            "passed": false,
+            "passed": true,
             "evidence": [
               {
-                "path": "build/antigrav-lift-quads-001/native-before-yaw46.png",
-                "detail": "The inspected 640\u00d7480 desktop baseline shows thin vertical streaks through the bright lift beam above the pad. The recorded camera uses yaw 46, eye height 65, and zoom shift 1. The retained directory contains desktop baseline frames and lacks post-fix frames or Node framebuffer crops."
+                "path": "build/antigrav-lift-quads-001/native-before-yaw46-h106-z1-crop.png",
+                "detail": "The desktop baseline shows hard vertical brightness steps inside the lift at yaw 46, eye height 106, and zoom shift 1."
               },
               {
-                "path": "build/antigrav-lift-quads-001/wasm-before-build-cached.log",
-                "detail": "The build reached Emscripten's final emission step, where replacing webolution.js failed with PermissionError [Errno 13]. Ninja stopped and the run produced no complete Node baseline."
+                "path": "build/antigrav-lift-quads-001/native-after-yaw46-h106-z1-crop.png",
+                "detail": "At the same camera and animation phase, the lift glow is continuous across the former seams and retains its blue bands and tapered outline."
+              },
+              {
+                "path": "build/antigrav-lift-quads-001/node-before-yaw46-h106-z1-crop.png",
+                "detail": "The Emscripten build under Node reproduces the same baseline seams."
+              },
+              {
+                "path": "build/antigrav-lift-quads-001/node-after-yaw46-h106-z1-crop.png",
+                "detail": "The matched Node crop shows the same seam removal and retained banding as desktop."
+              },
+              {
+                "path": "build/antigrav-lift-quads-001/frame-pixel-comparisons.tsv",
+                "detail": "The height-106 close and wide pairs match across platforms at each stage. The close before/after pair changes 7,228 pixels within the lift region. Earlier height-65 desktop baselines used simulation and the corresponding after frames did not, so those exploratory comparisons were excluded from this check."
               }
             ]
           },
           {
             "criterion": "All promoted playtest replays still reproduce; the smoke profile passes and the report ends with a what-to-check note.",
-            "passed": false,
+            "passed": true,
             "evidence": [
               {
-                "path": "build/agent-runs/20261120T191232-37944-ece2a203/verification.log",
-                "detail": "The supervisor recorded 95 of 95 main smoke tests and 84 of 84 recovery tests passing, including the level sweep. The log contains no promoted replay results."
+                "path": "build/antigrav-lift-quads-001/replay-results.tsv",
+                "detail": "The 28 rows match the active promoted recordings one for one. Every run exited zero with PASS, won=1, and completed=1, including the M06_KF_1 and M08_KF_1 lift routes."
               },
               {
-                "path": "docs/playtest/replays/README.md",
-                "detail": "The replay ledger defines the promoted set as the active .replay files and identifies playtest_replays as legacy. The checkout has 28 active files, so the smoke pass does not establish their reproduction."
+                "path": "build/agent-runs/20261120T192757-42720-28d85b6e/verification.log",
+                "detail": "The supervisor compiled the revised renderer and passed all 95 main smoke tests, including the installed-level sweep, and all 84 recovery tests."
               },
               {
                 "path": "docs/scratch/antigrav-lift-quads-001.md",
-                "detail": "The report explicitly leaves promoted replays outstanding. It ends with the required Designed with love check to rotate and zoom toward a scrolling lift, look for a smooth glow at the joins, and verify that foreground terrain still occludes it."
+                "detail": "The closing note asks the player to zoom toward a scrolling lift on Designed with love and rotate past it, checking for smooth joins, a tapered outline, and occlusion behind a foreground ledge."
               }
             ]
           }
@@ -31812,6 +31824,11 @@
       "review_feedback": {
         "decision": "revise",
         "reason": "Lead, 2026-11-20: the blocker is cleared. build/cmake/emscripten-release/webolution.js carried a non-inherited ACL (owner, SYSTEM, Administrators only) that excluded the sandbox account; the lead reset it to the folder's inherited ACL (icacls /reset, old ACL in build/lead/webolution-js-acl-backup.txt). Rebuild the browser target, then continue from the static findings in docs/scratch/antigrav-lift-quads-001.md: isolate the vertical seams (opaque texture alpha versus the original's modulated texture/diffuse alpha; depth writes and strict Less among overlapping lift faces), fix each departure from the original, and complete every acceptance criterion. If a build output is denied again, report the exact path and ACL and stop."
+      },
+      "accepted_at": "2026-11-20T19:47:20.821813+00:00",
+      "accepted_verification": {
+        "log": "build\\agent-runs\\20261120T192757-42720-28d85b6e\\verification.log",
+        "verified_content": "d9fb6745a851fc024c2d2bd3f4ecb037884248e5720c9d54b253f075905a3658"
       }
     }
   ]

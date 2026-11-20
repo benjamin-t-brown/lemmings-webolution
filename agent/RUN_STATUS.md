@@ -10,14 +10,9 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
-- antigrav-lift-quads-001: **ready** — Anti-grav lift effects show their quads; draw them as smoothly as the original
 
 ## Recently completed queue entries
 
-- comment-pass-tests-001: Comment pass: src/__test__
-  Accepted: 2026-11-20T18:09:59.615744+00:00
-  Verification evidence: `build/agent-runs/20261120T175755-11576-31ccde55/verification.log`
-  Verification evidence: `build\agent-runs\20261120T175755-11576-31ccde55\verification.log`
 - window-scale-option-001: Options menu: window size picker (desktop Auto/1x/2x/3x, browser Fill/1x/2x/3x) (clone addition)
   Accepted: 2026-11-20T08:36:11.655448+00:00
   Verification evidence: `build/agent-runs/20261120T082724-40472-e1b564bf/verification.log`
@@ -32,14 +27,18 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
   Accepted: 2026-11-20T19:12:32.572984+00:00
   Verification evidence: `build/agent-runs/20261120T185523-37944-57dd5e50/verification.log`
   Verification evidence: `build\agent-runs\20261120T185523-37944-57dd5e50\verification.log`
+- antigrav-lift-quads-001: Anti-grav lift effects show their quads; draw them as smoothly as the original
+  Accepted: 2026-11-20T19:47:20.821813+00:00
+  Verification evidence: `build/agent-runs/20261120T192757-42720-28d85b6e/verification.log`
+  Verification evidence: `build\agent-runs\20261120T192757-42720-28d85b6e\verification.log`
 
 ## Latest loop
 
-- Result: `build/agent-runs/loop-386b997fee3045e5a680729bbb72946e/result.json`
+- Result: `build/agent-runs/loop-08687cc01e424a279ac16e44b358a775/result.json`
 - Status: **blocked**
-- Duration: 0h 56m 07s
-- Completed in this invocation: antigrav-flip-motion-001, inverted-builder-fluid-001
-- Reason: Windows denied the Emscripten linker write access to build/cmake/emscripten-release/webolution.js, leaving an incomplete JavaScript/Wasm pair. The worker stopped before implementing the lift fix. Acceptance remains open for the artifact diagnosis, matched desktop and Node crops, and promoted replay results. The supervisor smoke profile passed on the submitted source.
+- Duration: 0h 21m 11s
+- Completed in this invocation: antigrav-lift-quads-001
+- Reason: No unparked production defect is evidenced for a new task. Playtest 23 reported three defects on Designed with love (M11_KF_1, node 33), and the lift motion, inverted Builder fluid check, and lift rendering fixes have all passed independent review. The retained Builder replay confirms the corrected turn at the water and still ends at the recorded retry with 0/85 saved. The next dependency is the user's playtest on the accepted build. From the ordinary map, check that the lift carries a lemming t
 
 ## Documentation handoff
 

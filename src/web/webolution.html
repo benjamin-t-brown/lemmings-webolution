@@ -15,9 +15,15 @@
   }
   button { padding: .6rem 1rem; font: inherit; cursor: pointer; }
   button:disabled { cursor: wait; }
-  #setup, #status, #data-notes {
+  #mobile-warning, #setup, #status, #data-notes {
     width: min(40rem, calc(100vw - 2rem)); overflow-wrap: anywhere;
   }
+  #mobile-warning {
+    box-sizing: border-box; margin-top: 1rem; padding: .75rem 1rem;
+    background: #252018; border: 1px solid #705d38; border-radius: .5rem;
+    color: #e4d3ad; line-height: 1.5;
+  }
+  #mobile-warning p { margin: 0 0 .5rem; }
   #setup { margin-block: 1.5rem; }
   #setup h1 { margin: 0 0 .5rem; }
   #setup p { line-height: 1.5; }
@@ -44,6 +50,11 @@
   [hidden] { display: none; }
 </style>
 <main>
+  <!-- Clone addition: mobile play warning. -->
+  <aside id="mobile-warning" aria-label="Mobile play warning" hidden>
+    <p>This game does not play well on mobile. Play at your own discretion.</p>
+    <button id="dismiss-mobile-warning" type="button">Dismiss</button>
+  </aside>
   <section id="setup" aria-labelledby="setup-title" hidden>
     <h1 id="setup-title">Set up game data</h1>
     <p>Use the files from your own copy of the game or from the archive.org item.
@@ -88,6 +99,7 @@
   <button id="change-data" type="button" hidden>Change game data</button>
 </main>
 <script>
+  const mobileWarning = document.querySelector('#mobile-warning');
   const statusLine = document.querySelector('#status');
   const startButton = document.querySelector('#start');
   const canvas = document.querySelector('#canvas');
@@ -127,16 +139,41 @@
     statusLine.hidden = false;
     statusLine.textContent = text;
   }
+
+  function isMobileDevice(browser) {
+    return browser.navigator.userAgentData?.mobile === true ||
+      (browser.matchMedia?.('(pointer: coarse)').matches === true &&
+       !browser.matchMedia('(any-pointer: fine)').matches);
+  }
+
+  function showMobileWarning() {
+    if (!isMobileDevice(window)) return;
+    const key = 'webolution-mobile-warning-dismissed';
+    try {
+      if (window.localStorage.getItem(key) === '1') return;
+    } catch {
+      // The warning is still useful when storage is unavailable.
+    }
+    mobileWarning.hidden = false;
+    document.querySelector('#dismiss-mobile-warning').onclick = () => {
+      mobileWarning.hidden = true;
+      try { window.localStorage.setItem(key, '1'); } catch {
+        // This dismissal lasts for the current visit.
+      }
+    };
+  }
+
   function offerStart(notes) {
     statusLine.hidden = true;
     notesLine.textContent = notes.join(' ');
     notesLine.hidden = notes.length === 0;
     changeButton.hidden = false;
     startButton.hidden = false;
-    startButton.focus();
+    startButton.focus({preventScroll: !mobileWarning.hidden});
   }
 
   startButton.onclick = async () => {
+    mobileWarning.hidden = true;
     startButton.hidden = true;
     changeButton.hidden = true;
     notesLine.hidden = true;
@@ -408,6 +445,7 @@
     script.onerror = () => message('Could not load webolution.js.');
     document.head.append(script);
   }
+  showMobileWarning();
   loadGame().catch(error => message('Cannot start game. ' + error.message));
 </script>
 </html>

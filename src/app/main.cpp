@@ -546,7 +546,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       // Play start (0x004451E5 analogue): reseed from the application clock before the
       // first scenery draw of this level.
       backdrop->setRandom(&sceneryRandom().rng);
-      sceneryRandom().seed();
+      if (runOptions.scenerySeed) sceneryRandom().rng.srand(*runOptions.scenerySeed);
+      else sceneryRandom().seed();
     }
     else std::fprintf(stderr,"backdrop: unsupported/invalid scene: %s\n",built.error().c_str());
   }
@@ -932,9 +933,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
 #endif
     if (logLevelDetails && backdrop && !spriteSeedReported && backdrop->firstSpriteDrawRandomState()) {
       spriteSeedReported = true;
-      std::fprintf(stderr, "backdrop: sprite scenery generator state at first draw = 0x%08x "
-                   "(seeded from the application clock; flame phases are not reproducible)\n",
-                   *backdrop->firstSpriteDrawRandomState());
+      const char* seedSource = runOptions.scenerySeed ? "supplied test seed" :
+          "seeded from the application clock; flame phases are not reproducible";
+      std::fprintf(stderr, "backdrop: sprite scenery generator state at first draw = 0x%08x (%s)\n",
+                   *backdrop->firstSpriteDrawRandomState(), seedSource);
     }
     return frameCamera;
   };

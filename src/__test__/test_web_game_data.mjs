@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {access, open, readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {dirname, resolve} from 'node:path';
+import {runInNewContext} from 'node:vm';
 import {
   createGameData, extractDiscPatch, mountGameData, readCdImage, selectInstalledFiles,
 } from '../web/web-game-data.mjs';
@@ -12,6 +13,69 @@ const expectedPatch10 = 'fd6025ddc5520fbf5c36314f602b9321ca1f088f391800722f85e0d
 const expectedPatch11 = 'a393a45e71d797fc5b646a9a235d1f64298129f378c6f4b79f47ec773d00de53';
 const encoder = new TextEncoder();
 const blockSize = 2048;
+
+async function checkMobileWarning(shellPath) {
+  const html = await readFile(shellPath, 'utf8');
+  const notice = html.match(/<aside id="mobile-warning"[^>]*\bhidden>([\s\S]*?)<\/aside>/);
+  assert.ok(notice);
+  assert.match(notice[1], /<p>This game does not play well on mobile\. Play at your own discretion\.<\/p>/);
+  assert.match(notice[1], /<button id="dismiss-mobile-warning" type="button">Dismiss<\/button>/);
+  assert.ok(notice.index < html.indexOf('id="setup"'));
+  assert.ok(notice.index < html.indexOf('id="start"'));
+  const [, script] = html.match(/<script>([\s\S]*?)<\/script>/);
+
+  const noStorage = () => { throw new Error('Storage unavailable'); };
+  function visit({coarse = false, fine = false, userAgentData, getStorage = noStorage} = {}) {
+    const elements = new Map();
+    let gameScript;
+    const queries = new Map([['(pointer: coarse)', coarse], ['(any-pointer: fine)', fine]]);
+    const browser = {
+      navigator: {userAgentData},
+      matchMedia(query) {
+        assert.ok(queries.has(query), `Unexpected pointer query ${query}`);
+        return {matches: queries.get(query)};
+      },
+      get localStorage() { return getStorage(); },
+      URL, location: {href: 'https://example.test/game/'}, crossOriginIsolated: true,
+      sessionStorage: {removeItem() {}},
+      document: {
+        querySelector(selector) {
+          if (!elements.has(selector)) elements.set(selector, {hidden: true, addEventListener() {}});
+          return elements.get(selector);
+        },
+        createElement: () => ({}),
+        head: {append(script) { gameScript = script.src; }},
+      },
+    };
+    browser.window = browser;
+    runInNewContext(script, browser, {filename: 'webolution.html'});
+    assert.equal(gameScript, './webolution.js');
+    assert.equal(typeof elements.get('#start').onclick, 'function');
+    return {notice: elements.get('#mobile-warning'), dismiss: elements.get('#dismiss-mobile-warning')};
+  }
+
+  assert.equal(visit({coarse: true}).notice.hidden, false);
+  assert.equal(visit({fine: true}).notice.hidden, true);
+  assert.equal(visit({coarse: true, fine: true, userAgentData: {mobile: false}}).notice.hidden, true);
+  assert.equal(visit({userAgentData: {mobile: true}}).notice.hidden, false);
+  console.log('PASS mobile warning detection on phone, desktop, touch laptop and mobile user agent data');
+
+  const values = new Map();
+  const storage = {getItem: key => values.get(key), setItem: (key, value) => values.set(key, value)};
+  for (const [getStorage, hiddenOnReturn] of [
+    [() => storage, true],
+    [() => ({getItem: noStorage, setItem: noStorage}), false],
+    [noStorage, false],
+  ]) {
+    const phone = {coarse: true, getStorage};
+    const {notice, dismiss} = visit(phone);
+    assert.equal(notice.hidden, false);
+    dismiss.onclick();
+    assert.equal(notice.hidden, true);
+    assert.equal(visit(phone).notice.hidden, hiddenOnReturn);
+  }
+  console.log('PASS mobile warning dismissal with working storage, throwing methods and a throwing getter');
+}
 
 function bothEndian(bytes, offset, value, width) {
   const fields = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -275,6 +339,8 @@ async function realDisc(path, wasm) {
 }
 
 const [, , wasmPath, discPath] = process.argv;
+await checkMobileWarning(wasmPath ? resolve(dirname(wasmPath), 'webolution.html')
+  : new URL('../web/webolution.html', import.meta.url));
 const sampleFiles = await synthetic();
 let discPresent = false;
 if (discPath) {

@@ -63,6 +63,42 @@ using Matrix=std::array<double,12>;
 Matrix compose(const Matrix&a,const Matrix&b){Matrix o{};for(int i=0;i<3;++i){for(int j=0;j<3;++j)for(int k=0;k<3;++k)o[3*i+j]+=a[3*i+k]*b[3*k+j];o[9+i]=b[9+i];for(int k=0;k<3;++k)o[9+i]+=a[9+k]*b[3*k+i];}return o;}
 constexpr std::string_view mineBackdropMaterials = "Models\\bg_mine01\\";
 constexpr std::string_view gravityShaftMaterial = R"(Models\anti_grav\~shaft_antigrav)";
+bool isBackdropWaterMaterial(std::string_view name) {
+  if (name == R"(Models\bg_sand_medium\~Water1)") return true;
+  if (!name.starts_with(mineBackdropMaterials)) return false;
+  name.remove_prefix(mineBackdropMaterials.size());
+  return name == "~Water01" || name == "^WaterFall01" || name == "~Splash01" ||
+         name == "WaterRef01" || name == "WaterRef02";
+}
+
+// 0x47645E -> 0x46BAFE builds the target table in preorder, including the root.
+template<class Node>
+void collectSceneNodes(Node& node, std::vector<Node*>& nodes) {
+  nodes.push_back(&node);
+  for (auto& child : node.children) collectSceneNodes<Node>(child, nodes);
+}
+
+std::array<double, 2> sampleUvOffset(std::span<const GravityPresentation::Key> keys, double time) {
+  // 0x476FB0 / 0x476A80: select the key ending at or after time, then
+  // evaluate its base UV plus the interval fraction times its stored delta.
+  auto key = std::ranges::lower_bound(keys, time, {}, &GravityPresentation::Key::end);
+  if (key == keys.end()) --key;
+  const double start = key == keys.begin() ? 0.0 : (key - 1)->end;
+  const double t = key->end > start ? std::clamp((time - start) / (key->end - start), 0.0, 1.0) : 0.0;
+  return {key->u + t * key->du, key->v + t * key->dv};
+}
+
+void setSceneSpin(Matrix& matrix, std::uint32_t axis, double turns) {
+  const double angle = turns * 2 * 3.1415927410125732; // 0x4B0F88
+  const double c = std::cos(angle), s = std::sin(angle);
+  // 0x476EE0 selects Y, X or Z. The setters overwrite the basis and retain the translation.
+  const std::array<double, 9> rotation = axis == 0 ?
+      std::array<double, 9>{c, 0, s, 0, 1, 0, -s, 0, c} : axis == 1 ?
+      std::array<double, 9>{1, 0, 0, 0, c, -s, 0, s, c} :
+      std::array<double, 9>{c, -s, 0, s, c, 0, 0, 0, 1};
+  std::copy(rotation.begin(), rotation.end(), matrix.begin());
+}
+
 bool hasMineBackdropMaterials(const SceneNode& node) {
   return std::ranges::any_of(node.materials, [](const SceneMaterial& material) {
     return material.name.starts_with(mineBackdropMaterials);
@@ -242,6 +278,7 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
    s.diagnostics_.push_back(extracted.error().message+"; scenery not admitted: empty partial scene");
    std::fprintf(stderr,"backdrop: %s\n",s.diagnostics_.back().c_str());
  }
+ s.bindSecondaryAnimation(level.objects);
  // Route tagged type-0 pads, type-1 levers and type-3 gravity models through
  // the same depth path as other placed scenery, retaining each root.
  for(std::size_t i=0;i<level.gadgets.tagged_entities.size();++i){
@@ -360,6 +397,113 @@ std::expected<BackdropScene,std::string> BackdropScene::build(const AssetLibrary
  }
  return s;
 }
+
+void BackdropScene::bindSecondaryAnimation(const lemmings::ObjectBasePrefix& objects) {
+  const auto root = std::ranges::find_if(roots_, [](const auto& owned) {
+    return owned.source.stage == Stage::Secondary;
+  });
+  // 0x437BDE selects clip zero. The installed water clips have UV-only tracks.
+  const auto& clips = objects.second_object_auxiliary_records;
+  if (root == roots_.end() || clips.empty()) return;
+  const auto& clip = clips.front();
+  const auto waterTrackCount = clip.first_count == 0 ? clip.second_count : 0;
+  if (waterTrackCount == 0 && clip.spins.empty()) return;
+
+  try {
+    const double duration = std::bit_cast<double>(clip.leading_double_bits);
+    if (!std::isfinite(duration) || duration <= 0)
+      throw std::invalid_argument("invalid duration");
+    SecondaryAnimation animation{.root = std::size_t(root - roots_.begin()),
+        .duration = duration, .waterTracks = {}, .spins = {}};
+    std::vector<const SceneNode*> nodes;
+    collectSceneNodes(std::as_const(root->node), nodes);
+
+    for (const auto& spin : clip.spins) {
+      const double rate = std::bit_cast<double>(spin.turns_per_second_bits);
+      if (spin.node_index >= nodes.size() || !std::isfinite(rate))
+        throw std::invalid_argument("invalid spin target or rate");
+      animation.spins.push_back({spin.node_index, spin.axis_selector, rate});
+    }
+
+    const auto& bytes = clip.serialized_bytes;
+    // Skip the duration and the counts of the empty transform and the UV arrays.
+    std::size_t cursor = 16;
+    const auto integer = [&](std::size_t size) {
+      if (cursor > bytes.size() || size > bytes.size() - cursor)
+        throw std::invalid_argument("truncated track");
+      std::uint64_t value = 0;
+      for (std::size_t i = 0; i < size; ++i)
+        value |= std::uint64_t(bytes[cursor++]) << (8 * i);
+      return value;
+    };
+    const auto number = [&]() {
+      const double value = std::bit_cast<double>(integer(8));
+      if (!std::isfinite(value)) throw std::invalid_argument("nonfinite UV key");
+      return value;
+    };
+
+    // 0x47C93D / 0x47CF5C: keys, material slot, mesh node indices, sprite node indices.
+    for (std::uint32_t i = 0; i < waterTrackCount; ++i) {
+      if (integer(4) != 0) throw std::invalid_argument("unsupported UV track kind");
+      const auto count = integer(4);
+      if (!count || count > (bytes.size() - cursor) / 40)
+        throw std::invalid_argument("invalid UV key count");
+      WaterUvTrack track;
+      track.keys.reserve(count);
+      double previous = 0.0;
+      for (std::size_t k = 0; k < count; ++k) {
+        GravityPresentation::Key key{number(), number(), number(), number(), number()};
+        if (key.end < previous) throw std::invalid_argument("unordered UV keys");
+        previous = key.end;
+        track.keys.push_back(key);
+      }
+      if (previous < duration) throw std::invalid_argument("UV keys end before the clip");
+      track.materialSlot = integer(4);
+      const auto targets = integer(4);
+      if (targets > (bytes.size() - cursor) / 4)
+        throw std::invalid_argument("invalid mesh target count");
+      for (std::size_t k = 0; k < targets; ++k) {
+        const auto node = integer(4);
+        if (node >= nodes.size() || track.materialSlot >= nodes[node]->materials.size())
+          throw std::invalid_argument("mesh material target outside the scene");
+        if (isBackdropWaterMaterial(nodes[node]->materials[track.materialSlot].name))
+          track.nodes.push_back(node);
+      }
+      const auto sprites = integer(4);
+      if (sprites > (bytes.size() - cursor) / 4)
+        throw std::invalid_argument("invalid sprite target count");
+      cursor += sprites * 4;
+      if (!track.nodes.empty()) animation.waterTracks.push_back(std::move(track));
+    }
+    if (!animation.waterTracks.empty() || !animation.spins.empty())
+      secondaryAnimation_ = std::move(animation);
+  } catch (const std::invalid_argument& e) {
+    diagnostics_.push_back(std::format("{} secondary clip: {}", levelId_, e.what()));
+  }
+}
+
+void BackdropScene::advanceSecondaryAnimation(double dt) {
+  if (!secondaryAnimation_ || (dt == 0.0 && secondaryAnimation_->spins.empty())) return;
+  auto& animation = *secondaryAnimation_;
+  animation.time += dt;
+  if (animation.time > animation.duration) {
+    const double remainder = std::fmod(animation.time, animation.duration);
+    animation.time = remainder == 0.0 ? animation.duration : remainder;
+  }
+  std::vector<SceneNode*> nodes;
+  collectSceneNodes(roots_[animation.root].node, nodes);
+  if (dt != 0.0) {
+    for (const auto& track : animation.waterTracks) {
+      const auto offset = sampleUvOffset(track.keys, animation.time);
+      for (const auto node : track.nodes)
+        nodes[node]->materials[track.materialSlot].uvOffset = offset;
+    }
+  }
+  // 0x476A6D samples the absolute clip phase, including zero on entry.
+  for (const auto& spin : animation.spins)
+    setSceneSpin(nodes[spin.node]->matrix, spin.axis, animation.time * spin.turnsPerSecond);
+}
+
 std::expected<GravityPresentation,std::string> BackdropScene::gravityPresentation(std::span<const std::byte> bytes) const {
  GravityPresentation result;
  if(std::none_of(roots_.begin(),roots_.end(),[](const auto& r){return r.source.owner=="tagged-gravity";}))return result;
@@ -381,7 +525,7 @@ std::expected<GravityPresentation,std::string> BackdropScene::gravityPresentatio
        GravityPresentation::Binding binding{root,number(),{}};
        if(binding.duration<=0||integer(4)!=0)throw std::invalid_argument("unsupported gravity transform tracks/duration");
        std::vector<const SceneNode*> nodes;
-       const auto collect=[&](auto& self,const SceneNode& n)->void{nodes.push_back(&n);for(const auto& c:n.children)self(self,c);};collect(collect,owned.node);
+       collectSceneNodes(owned.node, nodes);
        const auto count=integer(4);if(count>raw.size()/16)throw std::invalid_argument("invalid gravity track count");
        for(std::size_t i=0;i<count;++i){
          if(integer(4)!=0)throw std::invalid_argument("unsupported gravity UV track id");
@@ -413,16 +557,12 @@ std::expected<GravityPresentation,std::string> BackdropScene::gravityPresentatio
 void BackdropScene::animateGravity(const GravityPresentation& presentation){
  for(const auto& binding:presentation.bindings){
    std::vector<SceneNode*> nodes;
-   const auto collect=[&](auto& self,SceneNode& n)->void{nodes.push_back(&n);for(auto& c:n.children)self(self,c);};collect(collect,roots_.at(binding.root).node);
+   collectSceneNodes(roots_.at(binding.root).node, nodes);
    // Provisional clone UV playback. Loop from a shared zero phase on the scenery
    // clock, which pauses with play.
    const double time=std::fmod(sceneryClock_,binding.duration);
    for(const auto& track:binding.tracks){
-     std::size_t k=0;while(k+1<track.keys.size()&&time>track.keys[k].end)++k;
-     const auto& key=track.keys[k];const double start=k?track.keys[k-1].end:0.0;
-     const double t=key.end>start?std::clamp((time-start)/(key.end-start),0.0,1.0):0.0;
-     // READ 476FB0/476A80: interval fraction, then base + fraction*delta.
-     const double u=key.u+t*key.du,v=key.v+t*key.dv;
+     const auto [u, v] = sampleUvOffset(track.keys, time);
      for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+u;uv.v=c.v+v;}
    }
  }
@@ -561,17 +701,8 @@ void BackdropScene::animateGadgets(const GadgetPresentation& presentation,double
      const double fraction=key.end>start?std::clamp((time-start)/(key.end-start),0.0,1.0):0;
      for(const auto& c:track.corners){auto& uv=nodes[c.node]->meshes[c.mesh].records[c.record].corners[c.corner];uv.u=c.u+key.u+fraction*key.du;uv.v=c.v+key.v+fraction*key.dv;}
    }
-   for(const auto& spin:b.clip.spins){
-     const double angle=time*spin.turnsPerSecond*2*3.1415927410125732;
-     const double c=std::cos(angle),s=std::sin(angle);
-     // 476EE0 dispatches 0 -> 481D10 (Y), 1 -> 481E26 (X),
-     // 2 -> 481F3C (Z); serialized axis is not a Cartesian index.
-     const std::array<double,9> rotation=spin.axis==0?
-         std::array<double,9>{c,0,s,0,1,0,-s,0,c}:spin.axis==1?
-         std::array<double,9>{1,0,0,0,c,-s,0,s,c}:
-         std::array<double,9>{c,-s,0,s,c,0,0,0,1};
-     std::copy(rotation.begin(),rotation.end(),nodes[spin.node]->matrix.begin());
-   }
+   for(const auto& spin:b.clip.spins)
+     setSceneSpin(nodes[spin.node]->matrix, spin.axis, time * spin.turnsPerSecond);
  }
 }
 std::expected<CrabPresentation,std::string> BackdropScene::crabPresentation(std::span<const std::byte> bytes) const {
@@ -1314,7 +1445,10 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     state.highlightTextureRgb = !isNull;
     for(std::size_t k=1;k+1<rec.corners.size();++k){std::array<SceneRasterVertex,3> v{};bool valid=true;const std::size_t ids[3]={0,k,k+1};
     for(int j=0;j<3;++j){const auto& c=rec.corners[ids[j]];const auto p=c.viewPosition;if(!(p[2]>0)){valid=false;break;}auto a=c.attributes;
-       auto adapted=adaptPackedSceneMeshVertex(camera.cx+camera.focalX*p[0]/p[2],camera.cy-camera.focalY*p[1]/p[2],p[2],meshProjectionScale,nodeBias.at(rec.nodeSourceOffset),{a[2],a[3],a[4],a[5]},a[0],a[1]);
+       auto adapted=adaptPackedSceneMeshVertex(
+           camera.cx+camera.focalX*p[0]/p[2], camera.cy-camera.focalY*p[1]/p[2], p[2],
+           meshProjectionScale, nodeBias.at(rec.nodeSourceOffset), {a[2],a[3],a[4],a[5]},
+           a[0], a[1], rec.materialUvOffset);
       if(!adapted){diagnose(describe(rec.nodeSourceOffset,rec.recordSourceOffset)+"mesh vertex adapter: "+adapted.error());valid=false;break;}v[j]=*adapted;
     }
      if(valid){SceneRasterObserver tagged;if(observed){tagged=*observer;tagged.source=rec.recordSourceOffset;tagged.triangle=k-1;if(observer->accepted)tagged.accepted=[&](const SceneRasterWriteEvent& e){++stats.acceptedColorWrites;stats.acceptedDepthWrites+=e.depthAssigned;if(observer->accepted)observer->accepted(e);};}++stats.rasterCalls;auto r=rasterizeSceneTriangle(fb,depth,*tex,v,state,observed?&tagged:nullptr);if(r){++stats.meshTriangles;if(isNull)++stats.nullMaterialTriangles;}else {++stats.rejected;++stats.rasterRejected;diagnose(describe(rec.nodeSourceOffset,rec.recordSourceOffset)+"raster rejected: "+r.error());}}else {++stats.rejected;++stats.projectionRejected;}
@@ -1441,7 +1575,8 @@ void BackdropScene::advanceScenery(double frameMs,bool inLevel,bool paused){
  double dt=0.0;
  auto& tele=telemetry();++tele.advanceCalls;
  if(inLevel&&!paused&&std::isfinite(frameMs)&&frameMs>0.0){dt=std::min(frameMs,100.0)/1000.0;if(!sprites_.empty())++tele.advancesWithTime;}
- // 0x00437BDE adds dt to the scene clock. This path does not parse duration wrapping.
+ // 0x00437BDE adds dt to the secondary clip phase and wraps it at its duration.
+ advanceSecondaryAnimation(dt);
  // 0x004764C4 uses t - previous as node delta, or t after a negative delta.
  sceneryClock_+=dt;
  double delta=sceneryClock_-sceneryPrevious_;

@@ -64,6 +64,7 @@ std::expected<void, std::string> visit(
         out.materialSlot = block.materialSlot;
         out.materialName = material.name;
         out.blendSelector = material.blendSelector;
+        out.materialUvOffset = material.uvOffset;
         out.corners.reserve(record.corners.size());
         for (const auto& c : record.corners) {
           SceneMeshCornerSource corner;

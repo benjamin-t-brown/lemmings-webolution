@@ -1,0 +1,14 @@
+# Web mobile warning
+
+Playtest 25 Q7 requested a mobile warning for the web build. The previous browser shell offered setup or Start game without one. This is a clone addition to the shared web entry page, before any installed level is loaded. [Playtest ledger](../playtest/2026-11-21-playtest-25.md#requests)
+
+In `src/web/webolution.html`, `showMobileWarning` runs before `loadGame`. It shows the exact warning in a dark, viewport-width panel above setup and Start game when `isMobileDevice` finds a primary coarse pointer with no fine pointer or the browser reports mobile user agent data. Dismiss hides the panel immediately and attempts to remember the choice in `localStorage`. If storage is unavailable, the panel can return on the next visit. The page continues setup and launch normally with the panel visible. Start game hides it before opening the canvas. Device detection runs once per page load.
+
+- The existing Node test ran the inline startup script for phone, desktop, touch laptop and mobile user agent data cases. It verified dismissal on a return visit with working storage, throwing storage methods and a throwing storage getter. It also checked the exact text, placement and that the runtime loader still starts. Both the source and emitted HTML passed. [Source Node check](../../build/web-mobile-warning-001/node-source.log) · [Built Node check](../../build/web-mobile-warning-001/node-built.log)
+- Emscripten built the web bundle after overriding an inherited `EMSDK_PYTHON` that pointed to a Node directory. The main exporter scanned and passed 231 files in a task-local output directory. The exported shell contains the notice and its startup wiring, and the exported Pages workflow stages that shell as `index.html`. [Initial build attempt](../../build/web-mobile-warning-001/emscripten-build.log) · [Successful build](../../build/web-mobile-warning-001/emscripten-build-sdk-python.log) · [Built HTML](../../build/cmake/emscripten-release/webolution.html) · [Export scan](../../build/web-mobile-warning-001/export-scan.log) · [Exported shell check](../../build/web-mobile-warning-001/export-shell-check.log)
+- The change runs before the game opens and affects no native replay route. The Node checks used stubbed browser APIs and synthetic game data. Phone layout and interaction await the next human playtest.
+
+- **Handoff** `needs_review`. The supervisor's `verify.py --profile smoke` gate is pending.
+- **Next action** Review the smoke result and playtest the warning in the web build.
+
+**What to check** On a phone, open the web build with fresh site storage. Expect the warning above game-data setup or Start game. Leave it visible and start Just Climb (`MM_CLIMB_002`). Expect the canvas to open with the warning hidden. Reload, dismiss the warning and reload again. Expect it to stay hidden. On a desktop and a touchscreen laptop with a mouse or trackpad, expect no warning on the first visit.

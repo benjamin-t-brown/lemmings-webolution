@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <charconv>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -48,6 +49,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #ifndef LS_SOURCE_DIR
@@ -288,7 +290,7 @@ void observe(ChildCtx& c, const app::LevelFrameView& f) {
   }
 }
 
-int runChild(int node, const fs::path& root) {
+int runChild(int node, const fs::path& root, std::optional<std::uint32_t> scenerySeed) {
   const std::string gameDir = gameDirFromEnv();
   const fs::path dir = root / ("node-" + pad3(node));
   fs::create_directories(dir);
@@ -425,6 +427,7 @@ int runChild(int node, const fs::path& root) {
     for (auto& a : args) argv.push_back(a.data());
     app::ApplicationRunOptions options;
     options.frameSeconds = kFrameSeconds;
+    options.scenerySeed = scenerySeed;
     test::FrameConsumptionAudit audit(dir);
     const double wallStart = wallSeconds();
     const int status = app::runApplication(static_cast<int>(argv.size()), argv.data(), {},
@@ -786,12 +789,25 @@ int runReport(const fs::path& root) {
 }  // namespace
 
 int main(int argc, char** argv) try {
-  if (argc != 4) { std::cerr << "usage: test_levelsweep chunk|level|report <index> <dir>\n"; return 2; }
+  if (argc != 4 && !(argc == 5 && std::string_view(argv[1]) == "level")) {
+    std::cerr << "usage: test_levelsweep chunk|level|report <index> <dir>\n"
+              << "       test_levelsweep level <index> <dir> <hex scenery seed>\n";
+    return 2;
+  }
   const std::string mode = argv[1];
   const int index = std::atoi(argv[2]);
   const fs::path root = argv[3];
+  std::optional<std::uint32_t> scenerySeed;
+  if (argc == 5) {
+    const std::string_view hex = argv[4];
+    std::uint32_t seed = 0;
+    const auto end = hex.data() + hex.size();
+    const auto parsed = std::from_chars(hex.data(), end, seed, 16);
+    require(parsed.ec == std::errc{} && parsed.ptr == end, "invalid hex scenery seed");
+    scenerySeed = seed;
+  }
   fs::create_directories(root);
-  if (mode == "level") return runChild(index, root);
+  if (mode == "level") return runChild(index, root, scenerySeed);
   if (mode == "chunk") return runChunk(index, root);
   if (mode == "report") return runReport(root);
   std::cerr << "unknown mode\n";

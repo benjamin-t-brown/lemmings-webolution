@@ -34,6 +34,7 @@ struct SceneMaterial {
   std::size_t sourceOffset = 0;
   std::string name;
   std::uint32_t blendSelector = 0;
+  std::array<double, 2> uvOffset{};  // Presentation offset in texture repeats.
 };
 
 struct SceneType2Payload {

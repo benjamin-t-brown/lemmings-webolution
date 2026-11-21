@@ -139,13 +139,15 @@ class Iso9660 {
     return files;
   }
 
-  void readVolume() {
+  // Report whether a recognized descriptor declares more blocks than the file contains.
+  bool readVolume() {
+    bool shortVolume = false;
     for (std::uint32_t lba = kFirstDescriptor; lba < kFirstDescriptor + 64; ++lba) {
       const auto bytes = sector(lba);
       if (!descriptor(bytes)) fail("Invalid ISO 9660 volume descriptor.");
       if (bytes[0] == 255) {
         if (!roots_[0]) fail("Missing primary ISO 9660 volume descriptor.");
-        return;
+        return shortVolume;
       }
       const auto escape = std::string_view(reinterpret_cast<const char*>(bytes.data() + 88), 3);
       const bool joliet = bytes[0] == 2 && (escape == "%/@" || escape == "%/C" || escape == "%/E");
@@ -154,8 +156,7 @@ class Iso9660 {
         fail("Unsupported ISO 9660 logical block size.");
       const auto volumeBlocks = bothEndian(bytes, 80, 4);
       if (volumeBlocks <= lba) fail("Invalid ISO 9660 volume space size.");
-      if (volumeBlocks > size_ / layout_.stride)
-        fail("Truncated CD image: the file is shorter than the declared ISO 9660 volume.");
+      if (volumeBlocks > size_ / layout_.stride) shortVolume = true;
       roots_[joliet] = readRecord(Bytes(bytes).subspan(156, bytes[156])).extent;
     }
     fail("Missing ISO 9660 volume descriptor terminator.");
@@ -359,7 +360,7 @@ std::expected<void, std::string> checkGameBoxHashes(const AssetLibrary& library)
 std::expected<void, std::string> installDiscGameData(const fs::path& image, const fs::path& destination) {
   try {
     Iso9660 iso(image);
-    iso.readVolume();
+    const bool shortVolume = iso.readVolume();
     const auto files = iso.findGameFiles();
     if (!files.base) fail("Missing LEMMINGS.BOX at the root of the CD image.");
     if (!files.patchInstaller && !files.rootPatch)
@@ -416,6 +417,9 @@ std::expected<void, std::string> installDiscGameData(const fs::path& image, cons
     } else {
       staging.path.clear();
     }
+    if (shortVolume)
+      std::fputs("Warning: the CD image is shorter than the declared ISO 9660 volume. "
+                 "Both game data files were imported.\n", stderr);
     return {};
   } catch (const DiscError& error) {
     return std::unexpected(error.message);

@@ -242,8 +242,8 @@ class BackdropScene {
   // outlive the scene. Otherwise, use a scene-local generator seeded with 1.
   void setRandom(CrtRand* random) { random_ = random; }
   // Advance scenery by min(frameMs,100)/1000 seconds, or zero when paused or
-  // outside play (0x0045CFF9 -> 0x004423D2). Update node clocks (0x00437BDE/0x004764C4)
-  // and advance sprite controllers (0x00468833). Scene-duration wrapping is unsupported.
+  // outside play (0x0045CFF9 -> 0x004423D2). Advance sprite controllers
+  // (0x00468833) and loop secondary clips at their authored duration (0x00437BDE).
   void advanceScenery(double frameMs, bool inLevel, bool paused);
   std::size_t spriteCount() const { return sprites_.size(); }
   // Current temporal state of the sprite node at `sourceOffset` (nullptr if none).
@@ -264,6 +264,22 @@ class BackdropScene {
     mutable SpriteTemporalState state;
   };
   std::vector<OwnedRoot> roots_;
+  struct WaterUvTrack {
+    std::vector<GravityPresentation::Key> keys;
+    std::size_t materialSlot;
+    std::vector<std::size_t> nodes;  // Preorder indices in the secondary tree.
+  };
+  struct SecondaryAnimation {
+    struct Spin { std::size_t node; std::uint32_t axis; double turnsPerSecond; };
+    std::size_t root;
+    double duration;
+    double time = 0.0;
+    std::vector<WaterUvTrack> waterTracks;
+    std::vector<Spin> spins;
+  };
+  std::optional<SecondaryAnimation> secondaryAnimation_;
+  void bindSecondaryAnimation(const lemmings::ObjectBasePrefix& objects);
+  void advanceSecondaryAnimation(double dt);
   // Base Fluid models of entities_42acac receivers, kept outside the other root collections.
   struct FluidRoot { RootSource source; SceneNode node; FluidRecord record; };
   std::vector<FluidRoot> fluidRoots_;

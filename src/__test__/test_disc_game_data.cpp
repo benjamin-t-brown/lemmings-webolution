@@ -170,12 +170,12 @@ void dataPaths(const fs::path& scratch) {
 void synthetic(const fs::path& scratch) {
   const auto base = box(2300, 'b'), patch = box(16, 'p');
   const std::array layouts{Layout{2048, 0}, Layout{2352, 16}, Layout{2352, 24, true}};
-  for (std::size_t i = 0; i < layouts.size(); ++i) {
-    const auto folder = scratch / ("layout-" + std::to_string(i));
+  const auto good = [&](std::string_view name, std::string_view bytes) {
+    const auto folder = scratch / name;
     fs::create_directory(folder);
     const auto input = folder / "synthetic.bin";
     const auto output = folder / "GameData";
-    write(input, image(layouts[i], base, patch));
+    write(input, bytes);
 #ifdef _WIN32
     // Simulate an earlier termination before the cache directory was published.
     const auto abandoned = folder / ".disc-data.tmp";
@@ -188,6 +188,13 @@ void synthetic(const fs::path& scratch) {
             "synthetic ISO payloads match across physical sectors");
     require(std::distance(fs::directory_iterator(folder), fs::directory_iterator{}) == 2,
             "successful import leaves only its input and complete cache");
+  };
+  for (std::size_t i = 0; i < layouts.size(); ++i) {
+    const auto suffix = std::to_string(i);
+    auto contents = image(layouts[i], base, patch);
+    good("layout-" + suffix, contents);
+    contents.resize(contents.size() - layouts[i].stride);
+    good("truncated-tail-" + suffix, contents);
   }
   const auto bad = [&](std::string_view name, std::string_view bytes, std::string_view error) {
     const auto folder = scratch / name;
@@ -200,20 +207,21 @@ void synthetic(const fs::path& scratch) {
             "failed import leaves only its input image");
   };
   bad("missing-base", image(layouts[0], base, patch, true), "Missing LEMMINGS.BOX");
-  constexpr std::string_view truncatedVolume = "shorter than the declared ISO 9660 volume";
   auto truncated = image(layouts[1], base, patch);
   truncated.resize((kBaseLba + 1) * layouts[1].stride);
-  bad("truncated-box", truncated, truncatedVolume);
-  for (std::size_t i = 0; i < layouts.size(); ++i) {
-    auto missingTail = image(layouts[i], base, patch);
-    missingTail.resize(missingTail.size() - layouts[i].stride);
-    bad("truncated-tail-" + std::to_string(i), missingTail, truncatedVolume);
-  }
+  bad("truncated-box", truncated, "Truncated CD image file extent");
+  auto truncatedDirectory = image(layouts[2], base, patch);
+  // Cut inside the primary root directory sector, after the box extents and the Joliet root.
+  truncatedDirectory.resize(truncatedDirectory.size() - layouts[2].stride - 1);
+  bad("truncated-directory", truncatedDirectory, "Truncated CD image sector");
   auto invalidPatch = patch;
   invalidPatch[0] = 'X';
-  bad("invalid-box", image(layouts[0], base, invalidPatch), "Invalid game data file");
+  auto invalid = image(layouts[0], base, invalidPatch);
+  bad("invalid-box", invalid, "Invalid game data file");
+  invalid.resize(invalid.size() - layouts[0].stride);
+  bad("invalid-box-truncated-tail", invalid, "Invalid game data file");
   std::cout << "Synthetic ISO 9660 cases passed (2048, Mode 1, Mode 2 with Joliet, missing, "
-               "truncated box, truncated volume tail, invalid).\n";
+               "truncated box, truncated directory, trimmed tail, invalid).\n";
 }
 }  // namespace
 

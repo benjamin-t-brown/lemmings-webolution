@@ -11,6 +11,7 @@
 #include "save/SaveStore.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <span>
 #include <optional>
@@ -82,6 +83,8 @@ struct ApplicationRunOptions {
   bool enableAudio = false;
   // Optional sink for routed retail cue names, independent of device availability.
   audio::CueObserver cueObserver;
+  // Optional level-start seed for source tests that compare scenery frames.
+  std::optional<std::uint32_t> scenerySeed = std::nullopt;
 };
 
 // The optional observer can inspect each frontend frame and enqueue SDL events.

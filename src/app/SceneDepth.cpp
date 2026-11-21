@@ -30,11 +30,11 @@ SceneRasterVertex billboardRasterVertex(const BillboardVertex& slot,
 
 std::expected<SceneRasterVertex, std::string> adaptPackedSceneMeshVertex(
     double x, double y, double z, double scale, double bias,
-    std::array<double, 4> diffuse, double u, double v) {
+    std::array<double, 4> diffuse, double u, double v, std::array<double, 2> materialUvOffset) {
   if (!std::isfinite(scale) || scale == 0.0 || !std::isfinite(bias))
     return std::unexpected("mesh SOURCE projection scale/bias invalid");
   std::array<std::byte, 32> bytes{};
-  SceneVertexPackInput input{x, y, scale * z - bias, diffuse, u, v, 0.0, 0.0};
+  SceneVertexPackInput input{x, y, scale * z - bias, diffuse, u, v, materialUvOffset[0], materialUvOffset[1]};
   if (auto packed = packSceneVertex(input, bytes); !packed)
     return std::unexpected(packed.error());
   auto readF32 = [&](std::size_t offset) {

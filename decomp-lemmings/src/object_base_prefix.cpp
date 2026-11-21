@@ -191,7 +191,14 @@ ObjectBasePrefix::AuxiliaryRecord read_auxiliary_record(LevelByteStream& stream)
         skip_records(stream, read_u32(stream), 4);
     }
     record.third_count = read_u32(stream);
-    skip_records(stream, record.third_count, 16);
+    if (record.third_count > (stream.bytes.size() - stream.cursor) / 16) {
+        throw std::invalid_argument("truncated auxiliary records");
+    }
+    // 0x47CDE7 reads the preorder target, axis selector and rate.
+    record.spins.reserve(record.third_count);
+    for (std::uint32_t i = 0; i < record.third_count; ++i) {
+        record.spins.push_back({read_u32(stream), read_u32(stream), read_u64(stream)});
+    }
     record.name = read_name(stream, 128);
     record.trailing_integer_count = read_u32(stream);
     skip_records(stream, record.trailing_integer_count, 4);

@@ -1,0 +1,46 @@
+#pragma once
+#include "assets/Box.h"
+#include "assets/Bitmap.h"
+#include <array>
+#include <cstdint>
+#include <expected>
+#include <filesystem>
+#include <optional>
+#include <string>
+#include <vector>
+
+namespace webo::app {
+std::expected<std::array<std::int32_t,102>,std::string> readMapFlags(const std::filesystem::path& path);
+
+class MapScene {
+public:
+  static std::expected<MapScene,std::string> build(
+      const AssetLibrary& lib, const std::array<std::int32_t,102>& flags);
+  void setProgress(const std::array<std::int32_t,102>& flags, bool unlockAllLevels);
+  const Image& image() const { return image_; }
+  const std::array<std::int32_t,102>& states() const { return states_; }
+
+  // Map-node order indexes the 102 {group, slot, base} entries at VA 0x4B3948.
+  static const std::array<std::array<std::int32_t,3>,102>& nodeMapping();
+
+  // SOURCE mask semantics read at 0x0049ABC8; state eligibility at 0x0049B26A.
+  std::optional<std::size_t> pickNode(int x, int y) const;
+  // The mask index maps to a group/slot tuple at 0x0049AB95.
+  std::optional<std::string> levelForNode(std::size_t node) const;
+  // Installed LEVELMAP.DAT display title, joined to the LEVELS.MAP id.
+  // Eligibility remains owned by pickNode(), shared by hover and activation.
+  std::optional<std::string> titleForNode(std::size_t node) const;
+  // Counts, display title, then m:ss, from the installed LEVELMAP.DAT row.
+  std::optional<std::array<std::string,3>> hoverTextForNode(std::size_t node) const;
+  void drawHover(Image& target, const Image& font, std::size_t node) const;
+
+ private:
+  Image background_, atlas_, image_;
+  std::array<std::int32_t,102> states_{};
+  std::vector<std::uint8_t> mask_;
+  std::uint8_t maskBackground_ = 0;
+  std::array<std::string,102> levelIds_{};
+  std::array<std::array<std::string,3>,102> hoverText_{};
+  Image clock_;
+};
+}

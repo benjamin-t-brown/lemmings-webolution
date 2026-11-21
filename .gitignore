@@ -1,0 +1,16 @@
+/build/
+/dist/
+/.cache/
+/.deps/
+/compile_commands.json
+/CMakeUserPresets.json
+/.DS_Store
+/Lemmings Revolution/
+*.box
+*.dat
+*.iso
+*.exe
+*.dll
+*.o
+*.a
+*.wasm

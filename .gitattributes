@@ -1,0 +1,30 @@
+# All text in this repo is LF. Do not check out or commit CRLF.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.bmp binary
+*.pdn binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.zip binary
+*.7z binary
+*.gz binary
+*.exe binary
+*.dll binary
+*.lib binary
+*.a binary
+*.so binary
+*.dylib binary
+*.idx binary

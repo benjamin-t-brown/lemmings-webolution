@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lemmings Webolution</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+  body { margin: 0; background: #141414; }
+  main {
+    min-height: 100vh; min-height: 100dvh;
+    width: max-content; min-width: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1rem;
+  }
+  button { padding: .6rem 1rem; font: inherit; cursor: pointer; }
+  button:disabled { cursor: wait; }
+  #setup, #status, #data-notes {
+    width: min(40rem, calc(100vw - 2rem)); overflow-wrap: anywhere;
+  }
+  #setup { margin-block: 1.5rem; }
+  #setup h1 { margin: 0 0 .5rem; }
+  #setup p { line-height: 1.5; }
+  #setup-options { display: grid; gap: .75rem; border: 0; padding: 0; margin: 0; }
+  .route { padding: 1rem; background: #202020; border: 1px solid #454545; border-radius: .5rem; }
+  .route h2 { font-size: 1.05rem; margin: 0 0 .4rem; }
+  .route p { margin: .4rem 0 .75rem; }
+  .route a { display: inline-block; margin-block: .5rem; color: #abe4ff; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+  #status, #data-notes { text-align: center; }
+  #data-notes { margin: 0; color: #e4d3ad; }
+  #change-data { font-size: .875rem; padding: .35rem .65rem; }
+  /* Clone addition. Preset canvas widths use CSS pixels and may require scrolling. */
+  canvas {
+    display: block;
+    width: min(100vw, calc(100vh * 4 / 3));
+    width: min(100dvw, calc(100dvh * 4 / 3));
+    height: auto; aspect-ratio: 4 / 3; image-rendering: pixelated;
+  }
+  canvas[data-window-scale="1"] { width: 640px; }
+  canvas[data-window-scale="2"] { width: 1280px; }
+  canvas[data-window-scale="3"] { width: 1920px; }
+  canvas:focus { outline: none; }
+  [hidden] { display: none; }
+</style>
+<main>
+  <section id="setup" aria-labelledby="setup-title" hidden>
+    <h1 id="setup-title">Set up game data</h1>
+    <p>Use the files from your own copy of the game or from the archive.org item.
+      The files you add are stored only in this browser.</p>
+    <fieldset id="setup-options" aria-label="Game data sources">
+      <section class="route" id="installed-route">
+        <h2>I have the game installed</h2>
+        <p>Choose or drop the installation folder, or select both <code>lemmings.box</code> and
+          <code>patch.box</code>.</p>
+        <div class="actions">
+          <button type="button" data-picker="folder-input">Choose folder</button>
+          <button type="button" data-picker="files-input">Choose both files</button>
+        </div>
+        <input id="folder-input" type="file" webkitdirectory multiple hidden>
+        <input id="files-input" type="file" accept=".box" multiple hidden>
+      </section>
+      <section class="route" id="cd-route">
+        <h2>I have the CD image</h2>
+        <p>Choose or drop a local <code>.iso</code> file.</p>
+        <button type="button" data-picker="iso-input">Choose CD image</button>
+        <input id="iso-input" type="file" accept=".iso" hidden>
+      </section>
+      <section class="route">
+        <h2>Download from archive.org</h2>
+        <div class="actions">
+          <button id="download" type="button">Download game data</button>
+          <a id="archive-item" href="https://archive.org/details/lemmings-revolution" target="_blank"
+            rel="noopener noreferrer">Open the archive.org item</a>
+        </div>
+        <p>You can also download the CD image from the item and open it above.</p>
+      </section>
+    </fieldset>
+    <div class="actions" id="transfer" hidden>
+      <p id="bytes-downloaded"></p>
+      <button id="cancel" type="button">Cancel</button>
+    </div>
+  </section>
+  <output id="status" role="status">Loading game…</output>
+  <p id="data-notes" role="status" hidden></p>
+  <button id="start" type="button" hidden>Start game</button>
+  <canvas id="canvas" width="640" height="480" tabindex="0" aria-label="Lemmings Webolution" hidden></canvas>
+  <button id="change-data" type="button" hidden>Change game data</button>
+</main>
+<script>
+  const statusLine = document.querySelector('#status');
+  const startButton = document.querySelector('#start');
+  const canvas = document.querySelector('#canvas');
+  const setup = document.querySelector('#setup');
+  const setupOptions = document.querySelector('#setup-options');
+  const changeButton = document.querySelector('#change-data');
+  const notesLine = document.querySelector('#data-notes');
+  const transfer = document.querySelector('#transfer');
+  const bytesLine = document.querySelector('#bytes-downloaded');
+  let gameData;
+  let dataTools;
+  let transferController;
+  let releaseStore;
+  let lastDiagnostic = '';
+  // Keep the last error for the exit screen even after console output is full.
+  const reported = new Set();
+  function reportOnce(text, write) {
+    if (reported.size >= 32 || reported.has(text)) return;
+    reported.add(text);
+    write(text);
+  }
+  canvas.addEventListener('contextmenu', event => event.preventDefault());
+  // SDL button events reuse the last pointer position. Refresh it after scroll or resize
+  // changes the canvas position under a stationary pointer.
+  function refreshMousePosition(event) {
+    if (document.pointerLockElement === canvas) return;
+    canvas.dispatchEvent(new MouseEvent('mousemove', {
+      clientX: event.clientX, clientY: event.clientY, buttons: event.buttons,
+    }));
+  }
+  canvas.addEventListener('mousedown', refreshMousePosition, true);
+  canvas.addEventListener('mouseup', refreshMousePosition, true);
+  canvas.addEventListener('keydown', event => {
+    if (event.key === 'F11') event.stopPropagation();
+  });
+  function message(text) {
+    statusLine.hidden = false;
+    statusLine.textContent = text;
+  }
+  function offerStart(notes) {
+    statusLine.hidden = true;
+    notesLine.textContent = notes.join(' ');
+    notesLine.hidden = notes.length === 0;
+    changeButton.hidden = false;
+    startButton.hidden = false;
+    startButton.focus();
+  }
+
+  startButton.onclick = async () => {
+    startButton.hidden = true;
+    changeButton.hidden = true;
+    notesLine.hidden = true;
+    canvas.hidden = false;
+    canvas.focus();
+    try {
+      // Open audio in the click gesture and hold the save lock until main returns across Asyncify yields.
+      const code = await Module.ccall('main', 'number', ['number', 'number'], [0, 0], {async: true});
+      if (code === 0) message('Game closed. Reload to play again.');
+      else message(lastDiagnostic || 'Game exited with code ' + code + '.');
+    } catch (error) {
+      message('Game stopped. ' + error);
+    } finally {
+      releaseStore();
+      canvas.hidden = true;
+      changeButton.hidden = false;
+    }
+  };
+
+  async function loadSaveAndOfferStart(notes) {
+    const {FS, IDBFS} = Module;
+    await navigator.locks.request('webolution-save', {ifAvailable: true}, async lock => {
+      if (!lock) throw new Error('Close the other game tab and reload.');
+      const finished = new Promise(resolve => { releaseStore = resolve; });
+      FS.mkdir('/store');
+      FS.mount(IDBFS, {}, '/store');
+      await new Promise((resolve, reject) =>
+        FS.syncfs(true, error => error ? reject(error) : resolve()));
+      offerStart(notes);
+      await finished;
+    });
+  }
+
+  function launchFailed(error) {
+    message('Cannot start game. ' + error.message);
+    changeButton.hidden = false;
+  }
+
+  async function prepareLaunch(data, persistenceNote) {
+    setup.hidden = true;
+    message('Preparing game data…');
+    try {
+      await dataTools.mountGameData(Module.FS, data.files);
+      // The save lock can outlive setup without retaining the source blobs.
+      loadSaveAndOfferStart([...data.notes, ...persistenceNote]).catch(launchFailed);
+    } catch (error) { launchFailed(error); }
+  }
+
+  function storageNote(persistent) {
+    if (persistent === true) return ['Persistent browser storage granted.'];
+    if (persistent === false) return ['Persistent storage was not granted. The browser may clear game data.'];
+    return ['The browser did not report whether game data storage is persistent.'];
+  }
+
+  async function install(read, label) {
+    if (transferController) return;
+    const controller = new AbortController();
+    transferController = controller;
+    setupOptions.disabled = true;
+    transfer.hidden = false;
+    bytesLine.textContent = '';
+    message(label);
+    let data;
+    let persistenceNote;
+    try {
+      const files = await read(controller.signal);
+      controller.signal.throwIfAborted();
+      message('Checking game files…');
+      data = await gameData.validate(files, controller.signal);
+      transfer.hidden = true;
+      message('Storing game files in this browser…');
+      persistenceNote = storageNote(await gameData.save(data));
+      const url = new URL(location.href);
+      url.searchParams.delete('setup');
+      history.replaceState(null, '', url);
+    } catch (error) {
+      data = null;
+      message(controller.signal.aborted ? 'Setup canceled.' : 'Setup failed. ' + error.message);
+    } finally {
+      transferController = undefined;
+      setupOptions.disabled = false;
+      transfer.hidden = true;
+    }
+    if (data) await prepareLaunch(data, persistenceNote);
+  }
+
+  changeButton.onclick = async () => {
+    if (!confirm('Remove the stored game files and return to setup? Your saved progress will be kept.')) return;
+    changeButton.disabled = true;
+    startButton.disabled = true;
+    try {
+      await gameData.clear();
+      const url = new URL(location.href);
+      url.searchParams.set('setup', 'game-data');
+      location.replace(url);
+    } catch (error) {
+      message('Could not remove the game files. ' + error.message);
+      changeButton.disabled = false;
+      startButton.disabled = false;
+    }
+  };
+
+  async function* droppedFiles(entry, depth, signal) {
+    signal.throwIfAborted();
+    if (entry.isFile) {
+      const name = entry.name.toLowerCase();
+      if (name === 'lemmings.box' || name === 'patch.box') {
+        const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+        yield {file, depth};
+      }
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      while (true) {
+        const children = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+        if (!children.length) break;
+        for (const child of children) yield* droppedFiles(child, depth + 1, signal);
+      }
+    }
+  }
+
+  function handleDrop(selector, drop) {
+    const target = document.querySelector(selector);
+    target.addEventListener('dragover', event => event.preventDefault());
+    target.addEventListener('drop', event => {
+      event.preventDefault();
+      drop(event.dataTransfer);
+    });
+  }
+
+  function wireSetup() {
+    for (const button of document.querySelectorAll('[data-picker]')) {
+      button.onclick = () => document.getElementById(button.dataset.picker).click();
+    }
+    for (const id of ['folder-input', 'files-input']) {
+      const input = document.getElementById(id);
+      input.onchange = () => {
+        const files = [...input.files].map(file => ({file, depth: file.webkitRelativePath.split('/').length}));
+        input.value = '';
+        if (files.length) install(() => dataTools.selectInstalledFiles(files), 'Reading the installed game files…');
+      };
+    }
+    handleDrop('#installed-route', dataTransfer => {
+      const items = [...dataTransfer.items].filter(item => item.kind === 'file');
+      const entries = items.map(item => item.webkitGetAsEntry?.() ?? item.getAsFile()).filter(Boolean);
+      const direct = [...dataTransfer.files];
+      install(async signal => {
+        const files = [];
+        for (const entry of entries.length ? entries : direct) {
+          if (entry instanceof File) files.push({file: entry, depth: 0});
+          else for await (const file of droppedFiles(entry, 0, signal)) files.push(file);
+        }
+        return dataTools.selectInstalledFiles(files);
+      }, 'Reading the installed game files…');
+    });
+    function openCd(files) {
+      install(signal => {
+        if (files.length !== 1 || !files[0].name.toLowerCase().endsWith('.iso')) {
+          throw new Error('Choose a single .iso file.');
+        }
+        return gameData.readCd(files[0], signal);
+      }, 'Reading the CD image…');
+    }
+    const iso = document.querySelector('#iso-input');
+    iso.onchange = () => {
+      const files = [...iso.files];
+      iso.value = '';
+      if (files.length) openCd(files);
+    };
+    handleDrop('#cd-route', dataTransfer => openCd([...dataTransfer.files]));
+    document.querySelector('#download').onclick = () => {
+      let lastUpdate = -Infinity;
+      install(signal => gameData.download(bytes => {
+        if (performance.now() - lastUpdate < 150) return;
+        lastUpdate = performance.now();
+        bytesLine.textContent = bytes.toLocaleString() + ' bytes downloaded';
+      }, signal), 'Downloading the CD image from archive.org…');
+    };
+    document.querySelector('#cancel').onclick = () => transferController?.abort();
+  }
+
+  async function prepare() {
+    dataTools = await import('./web-game-data.mjs');
+    gameData = dataTools.createGameData({
+      store: dataTools.indexedDbGameData(globalThis.indexedDB),
+      extractPatch: (sfx, signal) => dataTools.extractDiscPatch(Module, sfx, signal),
+    });
+    wireSetup();
+    let failure;
+    if (new URL(location.href).searchParams.get('setup') !== 'game-data') {
+      try {
+        const stored = await gameData.load();
+        if (stored) {
+          await prepareLaunch(stored, storageNote(await gameData.persisted()));
+          return;
+        }
+      } catch (error) { failure = 'Could not read stored game data. ' + error.message; }
+      try {
+        const hosted = await gameData.hostedData();
+        if (hosted) {
+          await prepareLaunch(hosted, []);
+          return;
+        }
+      } catch (error) { failure = 'Could not load hosted game data. ' + error.message; }
+    }
+    setup.hidden = false;
+    if (failure) message(failure);
+    else statusLine.hidden = true;
+  }
+
+  var Module = {
+    canvas, noInitialRun: true,
+    preRun() {
+      // libc snapshots the environment on first use, including in constructors.
+      Module.ENV.XDG_DATA_HOME = '/store';
+      Module.ENV.WEBOLUTION_GAME_DIR = '/game';
+      Module.ENV.SDL_EMSCRIPTEN_ASYNCIFY = '0'; // The game yields once per frame.
+    },
+    async onRuntimeInitialized() {
+      try { await prepare(); }
+      catch (error) { message('Cannot start game. ' + error); }
+    },
+    print(text) { reportOnce(text, console.log); },
+    printErr(text) {
+      lastDiagnostic = text;
+      reportOnce(text, console.error);
+      if (/^(save:|sound settings:)/.test(text)) message(text);
+    },
+    onAbort(reason) { message('Game stopped. ' + reason); releaseStore?.(); }
+  };
+
+  async function loadGame() {
+    const scope = new URL('.', location.href);
+    const reloadKey = scope.pathname + 'isolation-reload';
+    if (!globalThis.crossOriginIsolated) {
+      if (!globalThis.isSecureContext || !('serviceWorker' in navigator)) {
+        throw new Error('This game requires HTTPS or localhost and Service Worker support to enable WebAssembly threads.');
+      }
+      const service = navigator.serviceWorker;
+      const scriptUrl = new URL('./isolate.js', scope).href;
+      if (sessionStorage.getItem(reloadKey)) {
+        throw new Error('Cross-origin isolation is still unavailable. Open the game in its own tab and allow Service Workers in your browser.');
+      }
+      message('Enabling WebAssembly threads. This page will reload once.');
+      const registration = await service.register(scriptUrl);
+      // A hard refresh can bypass an active script for the current navigation.
+      if (registration.active?.state !== 'activated' && service.controller?.scriptURL !== scriptUrl) {
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            service.removeEventListener('controllerchange', onControl);
+            reject(new Error('The isolation script did not take control of this page.'));
+          }, 10000);
+          function onControl() {
+            if (service.controller?.scriptURL !== scriptUrl) return;
+            clearTimeout(timer);
+            service.removeEventListener('controllerchange', onControl);
+            resolve();
+          }
+          service.addEventListener('controllerchange', onControl);
+          onControl();
+        });
+      }
+      sessionStorage.setItem(reloadKey, '1');
+      location.reload();
+      return;
+    }
+    sessionStorage.removeItem(reloadKey);
+    const script = document.createElement('script');
+    script.src = './webolution.js';
+    script.onerror = () => message('Could not load webolution.js.');
+    document.head.append(script);
+  }
+  loadGame().catch(error => message('Cannot start game. ' + error.message));
+</script>
+</html>

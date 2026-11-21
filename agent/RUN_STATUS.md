@@ -10,6 +10,7 @@ Read IMPLEMENTATION_PLAN.md for priorities and docs/STATUS.md for the fidelity l
 - native-006: **blocked** — Add expected-result coverage for texture pixel-format enumeration
 - multi-hatch-release-001: **blocked** — Release lemmings per hatch on multi-hatch levels
 - rat-hit-sound-002: **blocked** — A lemming punched off by a rat plays the original's sound, not Ohno
+- lantern-occlusion-001: **ready** — Lemmings stay visible in front of the lantern glow by the exit on Penelope Lem Stop (playtest 25 Q14)
 - builder-brick-rotate-001: **ready** — Carried builder plank rotates into place as it grows (playtest 25 Q11)
 - examine-pause-001: **ready** — Examine pause: Enter or Pause/Break freezes the level so the player can drag to look around, with switch highlights (playtest 25 Q12, clone addition)
 - exit-hover-count-001: **ready** — Hovering an exit balloon shows the number of lemmings needed to win (playtest 25 Q13, clone addition)

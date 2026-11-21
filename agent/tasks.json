@@ -33615,11 +33615,28 @@
       }
     },
     {
+      "id": "lantern-occlusion-001",
+      "title": "Lemmings stay visible in front of the lantern glow by the exit on Penelope Lem Stop (playtest 25 Q14)",
+      "status": "ready",
+      "depends_on": [],
+      "requires_original_execution": false,
+      "verification": "smoke",
+      "stop_after_review": false,
+      "kind": "implementation",
+      "user_authorized": true,
+      "scope": "Playtest 25 Q14 (docs/playtest/2026-11-21-playtest-25.md): on Penelope Lem Stop (M04_KF_1, node 34), a background lantern stands next to the exit balloon. Viewed from the left side, with the exit on the right of the cylinder and screen, lemmings walking to the exit disappear before they jump into the balloon; the user describes it as the transparency on the lemmings being wrong. Lead source lead, unconfirmed: the lanterns are the sprite_Light02_additive type-2 billboards of the Secondary scenery (lantern-glow-001: selector 2, ONE/ONE, a 64x64 yellow glow on black, 12 per level in 18 levels including M04_KF_1). drawBillboard in src/app/BackdropScene.cpp rasterizes them through rasterizeSceneTriangle with SceneRasterOptions whose depthWrite defaults to true, so the whole quad, black corners included, may write scene depth; actors are then clipped against completed scene depth (clipActorToScene, ActorOcclusionPlane; actor-occlusion-001/002, basher-occlusion-001), and a lemming behind or level with the invisible part of the quad vanishes. Confirm or refute this from the clone: find the node that hides the lemmings in this view, its record offset, its blend and depth state, and how the actor clip treats its pixels. Fix the production rule, not the one level: an additive or otherwise blended scenery surface should not hide actors through pixels that contribute no colour. The retained static evidence leaves the original device depth state for these quads unverified (lantern-glow-001, phase-c3q-scene-device-state.md); look for the depth write or z-enable request in the selector-2 path at 0x00414D80 and the quad bind at 0x0047261F (REA static profile), and if it cannot be established, choose the provisional rule that fixes the visible defect (for example no depth write for ONE/ONE billboards, or no actor clip by additive-only pixels), label it provisional and give the reason. Keep the lantern glow drawing as accepted in lantern-glow-001, and keep genuine occluders (solid scenery, terrain, pipes) hiding actors as they do now. Say which other levels and node kinds the rule changes. Evidence: clone framebuffers under build/ of M04_KF_1 from the left-side view with a lemming between the lantern and the exit, before and after, showing the lemming visible up to the exit jump; the same view of another affected level such as E22_KF_1; the level sweep frames of levels without these billboards unchanged. Difficulty: routine. Recommended model: Sonnet. Reason: a depth or clip rule for one blend mode on an already traced draw path. Playable v1, per agent/IMPLEMENTATION_PLAN.md and AGENTS.md 'Project lead direction'. Evidence of failure: the playtest ledgers under docs/playtest/. Use retained evidence and the static REA profile for what the original does; where static evidence is insufficient choose the simplest behavior that is correct for a player and label it provisional. No original execution, debugger, hooks or capture. Use a private temporary save path; never the installed or normal user save. No subagents or concurrent writers; no queue, verifier, controller or shared-instruction edits. Short report under docs/scratch/ with the production call path, limitations and a two-line handoff. Finish needs_review. Replay policy: a promoted recording that diverges only because of this task's intended fix does not block acceptance; name it with step and reason in the report and the lead retires it. Never edit, rename or weaken a recording or the replay check. Gate (AGENTS.md \"Verification tiers\"): the supervisor runs the smoke profile. Do not add before/after replay fixtures, frozen-source builds, identity checks or per-task scripted routes. The recorded human wins under docs/playtest/replays/ are the regression routes: run `webolution --game-dir \"Lemmings Revolution\" --replay <file>` on the ones for levels this change can affect and report each result; if an intended change makes one diverge, say why and leave the file alone. Before finishing, build the smoke_tests target and run the smoke-labelled tests, not only the game executable. End the report with a what-to-check note: level, action, expected result.",
+      "acceptance": [
+        "The report names the node that hid the lemmings (record offset, blend and depth state), the cause in the clone, the static evidence or provisional rule with its reason, the production call path changed, and the other levels and node kinds affected.",
+        "Clone framebuffers under build/ of M04_KF_1 from the left-side view before and after show a lemming between the lantern and the exit hidden before and visible up to the exit jump after, the lantern glow still drawn, and solid scenery still hiding actors.",
+        "The level sweep frames of levels without these billboards are unchanged, the promoted replays reproduce, the smoke profile passes, and the report ends with a what-to-check note."
+      ]
+    },
+    {
       "id": "builder-brick-rotate-001",
       "title": "Carried builder plank rotates into place as it grows (playtest 25 Q11)",
       "status": "ready",
       "depends_on": [
-        "disc-volume-warning-001"
+        "lantern-occlusion-001"
       ],
       "requires_original_execution": false,
       "verification": "smoke",

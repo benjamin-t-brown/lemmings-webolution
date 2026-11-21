@@ -55,8 +55,11 @@ build/cmake/dev-debug/webolution.exe --frontend
   rather than a running simulation. Use `--sim` for simulation.
 - `--sim`: optional simulation, actor drawing/picking, counters and skill input.
   Click the first eight plates or press 1–8, then click a lemming. The last two
-  commands are inactive. P toggles pause; paused ESC resumes. Standalone unpaused
-  ESC closes. Native gameplay and complete input fidelity remain unaccepted.
+  commands are inactive. P toggles standard pause. Enter (including keypad Enter)
+  or Pause/Break toggles examine pause, a clone addition. In examine pause,
+  drag with either mouse button to look around, scroll to zoom, and point at a
+  switch to see what it controls. P or Esc resumes play. Standalone unpaused Esc
+  closes. Native gameplay and complete input fidelity remain unaccepted.
 - Frontend entry: New Game → confirmation → map → simulated retail level.
   Press Return twice, then click the first unlocked node near 206,204. Results
   connect to map/retry.

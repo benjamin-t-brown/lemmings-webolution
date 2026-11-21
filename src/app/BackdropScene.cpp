@@ -1100,14 +1100,29 @@ std::vector<HatchHoverTarget> BackdropScene::hatchHoverTargets(
  return targets;
 }
 
-void BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
+std::optional<PickBox> BackdropScene::exitHoverTarget(
+    const CameraBasis& camera, const Raster& raster, int x, int y) const {
+  if (raster.framebuffer().width != camera.width || raster.framebuffer().height != camera.height ||
+      !pointerOverSceneBounds(x, y, 0, 0, camera.width, camera.height)) return std::nullopt;
+  const auto context = predicateContext(camera);
+  for (const auto& owned : roots_) {
+    if (owned.source.owner != "entities_426c6b" || !owned.visible) continue;
+    // Use the current root pose for the envelope, ropes and basket together.
+    const auto box = visibleMeshBounds(owned.node, camera, raster.depthBuffer(), context);
+    if (box && pointerOverSceneBounds(x, y, box->left, box->top, box->right, box->bottom))
+      return box;
+  }
+  return std::nullopt;
+}
+
+bool BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, const Raster& raster,
     const sim::LevelSetup& level, const LeverPresentation* levers,
     const PressurePadPresentation* pads, int pointerX, int pointerY,
     const std::function<void(const sim::OccupancySensor&)>& drawSensor) const {
   const auto pixels = raster.highlightPixels();
   if (pixels.empty() || pixels.size() != image.rgba.size() / 4 ||
-      image.width != camera.width || image.height != camera.height) return;
-  if ((!levers || levers->bindings.empty()) && (!pads || pads->bindings.empty())) return;
+      image.width != camera.width || image.height != camera.height) return false;
+  if ((!levers || levers->bindings.empty()) && (!pads || pads->bindings.empty())) return false;
   const auto context = predicateContext(camera);
   const auto pick = [&](std::size_t root) {
     const auto bounds = visibleMeshBounds(roots_[root].node, camera, raster.depthBuffer(), context);
@@ -1138,7 +1153,7 @@ void BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, con
     if (pad != level.pressurePads.end()) first = pad->messages;
     break;
   }
-  if (!hovered) return;
+  if (!hovered) return false;
 
   // Clone addition. Like drawHoveredWalker, add the source RGB once on the
   // completed frame, using ownership from the original geometry submission.
@@ -1195,6 +1210,7 @@ void BackdropScene::drawSwitchHover(Image& image, const CameraBasis& camera, con
   }
   for (const auto index : sensors)
     drawSensor(level.occupancySensors[index]);
+  return true;
 }
 std::vector<std::size_t> BackdropScene::fluidEntityIndices() const {
  std::vector<std::size_t> out;
@@ -1521,6 +1537,9 @@ void BackdropScene::renderStage(Raster& target,const CameraBasis& camera,const A
     // in 0x47261F. The node's independent blend selector reaches 0x414D80,
     // where selector 2 adds the texture RGB to the backdrop with ONE/ONE.
     auto st=conditionalCaretFlags8Policy(blendOptions(false,b.blendSelector));
+    // Provisional clone policy: depth-test additive light and retain the
+    // underlying scene depth for later scenery and actor clipping.
+    if (st.destinationBlend == SceneBlendFactor::One) st.depthWrite = false;
     if (depthOutput) st.depthOutput = *depthOutput;
     st.highlight = highlightOwner(b.sourceOffset);
     st.highlightTextureRgb = !name.empty();

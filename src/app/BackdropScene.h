@@ -220,7 +220,8 @@ class BackdropScene {
                             bool arrival, int facing, double levelSeconds);
   void animateGadgets(const GadgetPresentation&, double levelSeconds);
   std::vector<HatchHoverTarget> hatchHoverTargets(const CameraBasis&, const Raster&) const;
-  void drawSwitchHover(Image&, const CameraBasis&, const Raster&, const sim::LevelSetup&,
+  std::optional<PickBox> exitHoverTarget(const CameraBasis&, const Raster&, int x, int y) const;
+  bool drawSwitchHover(Image&, const CameraBasis&, const Raster&, const sim::LevelSetup&,
                        const LeverPresentation*, const PressurePadPresentation*,
                        int pointerX, int pointerY,
                        const std::function<void(const sim::OccupancySensor&)>& drawSensor) const;

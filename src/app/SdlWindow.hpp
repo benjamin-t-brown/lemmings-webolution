@@ -43,7 +43,7 @@ class SdlWindow {
       if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) return error("SDL_Init");
       initialized_ = true;
 #ifdef __EMSCRIPTEN__
-      // The game has no wheel action. Let the page scroll oversized canvases.
+      // The level loop enables wheel zoom during examine pause.
       SDL_EventState(SDL_MOUSEWHEEL, SDL_IGNORE);
 #endif
     }

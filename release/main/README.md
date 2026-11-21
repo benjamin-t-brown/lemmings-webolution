@@ -17,6 +17,9 @@ The browser stores imported data and saved progress on this device.
 
 Select **Start game**, then start a new game and choose an unlocked level.
 Select a skill on the panel or press **1–8**, then click a lemming to assign it.
+Press **Enter** (including keypad Enter) or **Pause/Break** to toggle examine
+pause. While paused, drag with either mouse button, scroll to zoom, and point
+at a switch to see what it controls. **P** or **Esc** resumes play.
 
 ## Play on Windows or Linux
 

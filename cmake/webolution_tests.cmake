@@ -258,6 +258,12 @@ add_executable(test_runtimehud src/__test__/test_runtimehud.cpp src/app/RuntimeH
 target_link_libraries(test_runtimehud PRIVATE webolution_objects)
 add_test(NAME runtimehud COMMAND test_runtimehud)
 
+add_executable(test_examine_pause src/__test__/test_examine_pause.cpp src/app/RuntimeHud.cpp
+  src/app/SimClock.cpp src/app/LevelEndTransition.cpp src/shell/HudText.cpp
+  src/shell/PauseCaption.cpp src/shell/MenuRender.cpp)
+target_link_libraries(test_examine_pause PRIVATE webolution_objects)
+add_test(NAME examine_pause COMMAND test_examine_pause)
+
 add_executable(test_levelend src/__test__/test_levelend.cpp src/app/LevelEndTransition.cpp)
 target_include_directories(test_levelend PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_test(NAME levelend COMMAND test_levelend)
@@ -816,6 +822,10 @@ add_test(NAME backdropscene COMMAND test_backdropscene WORKING_DIRECTORY ${CMAKE
 
 set(SCENE_ADMISSION_DIR "${CMAKE_SOURCE_DIR}/build/scene-admission-001")
 if(DEFINED WEBOLUTION_GAME_DIR)
+  add_executable(test_exit_hover src/__test__/test_exit_hover.cpp)
+  target_link_libraries(test_exit_hover PRIVATE webolution_app webolution_objects)
+  add_test(NAME exit_hover COMMAND test_exit_hover "${WEBOLUTION_GAME_DIR}")
+
   add_executable(test_waterfall_facing src/__test__/test_waterfall_facing.cpp)
   target_link_libraries(test_waterfall_facing PRIVATE webolution_app webolution_objects)
   add_test(NAME waterfall_facing COMMAND test_waterfall_facing "${WEBOLUTION_GAME_DIR}")

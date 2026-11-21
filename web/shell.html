@@ -17,14 +17,18 @@
         oncontextmenu="event.preventDefault()"></canvas>
 <div>
   <kbd>1</kbd>–<kbd>8</kbd> skill · <kbd>click</kbd> assign ·
-  <kbd>A</kbd>/<kbd>D</kbd> pan · <kbd>space</kbd> pause ·
-  <kbd>.</kbd> step · <kbd>N</kbd> nuke · <kbd>R</kbd> restart
+  <kbd>right-drag</kbd> rotate · <kbd>P</kbd> pause ·
+  <kbd>Enter</kbd> or <kbd>Pause/Break</kbd> examine pause ·
+  <kbd>drag</kbd> look around while examining
 </div>
 <script>
   var statusEl = document.getElementById('status');
   var Module = {
     canvas: (function () {
       var c = document.getElementById('canvas');
+      c.addEventListener('keydown', function (e) {
+        if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Pause') e.preventDefault();
+      });
       c.addEventListener('webglcontextlost', function (e) {
         alert('WebGL context lost; reload to continue.');
         e.preventDefault();

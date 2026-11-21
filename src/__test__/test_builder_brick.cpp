@@ -8,11 +8,44 @@
 #include "assets/Png.h"
 
 #include <cassert>
+#include <cmath>
 #include <filesystem>
 #include <iostream>
+#include <numbers>
 
 using namespace webo;
 using namespace webo::app;
+
+void checkCarriedRotation(int facing, int gravity) {
+  constexpr Vec3 offset{3, 2, 1};
+  constexpr Vec3 inward{0, 0, 1};
+  const auto expectRotation = [&](double travel, Vec3 expected) {
+    const auto rotation = builderBrickRotation(travel, facing, gravity);
+    const auto result = rotation.apply(offset, inward);
+    assert(std::abs(result.x - expected.x) < 1e-12);
+    assert(std::abs(result.y - expected.y) < 1e-12);
+    assert(std::abs(result.z - expected.z) < 1e-12);
+    const auto side = rotation.apply({offset.z, offset.y, -offset.x}, {1, 0, 0});
+    assert(std::abs(side.x - expected.z) < 1e-12);
+    assert(std::abs(side.y - expected.y) < 1e-12);
+    assert(std::abs(side.z + expected.x) < 1e-12);
+  };
+  const bool positiveYaw = facing != gravity;
+  const double root2 = std::numbers::sqrt2;
+  const auto start = builderBrickShape(2.0 / 16.0);
+  const auto halfway = builderBrickShape(7.5 / 16.0);
+  const auto turning = builderBrickShape(10.25 / 16.0);
+  const auto lastCarry = builderBrickShape(std::nextafter(13.0 / 16.0, 0.0));
+  assert(start.scale == 1.0 / 3.0 && halfway.scale > start.scale);
+  assert(lastCarry.scale > turning.scale && std::abs(lastCarry.scale - 1.0) < 1e-12);
+  const Vec3 pulledOut = positiveYaw ? Vec3{2, -1, -3} : Vec3{-2, -1, 3};
+  expectRotation(start.travel, pulledOut);
+  expectRotation(halfway.travel, pulledOut);
+  expectRotation(turning.travel, positiveYaw ? Vec3{2 + root2, root2 - 2, -root2}
+                                             : Vec3{1 - root2, root2 + 1, 2 * root2});
+  expectRotation(lastCarry.travel, offset);
+  expectRotation(1.0, offset);
+}
 
 void checkBuilderHeadroom(int facing) {
   using namespace sim;
@@ -59,6 +92,7 @@ int main(int argc, char** argv) {
   assert(builderBrickShape(13.0/16).scale == 0);
   assert(builderBrickShape(0.7).scale > builderBrickShape(0.3).scale);
   for (int facing : {-1, 1}) {
+    for (int gravity : {-1, 1}) checkCarriedRotation(facing, gravity);
     checkBuilderHeadroom(facing);
     sim::LevelSetup setup;
     setup.terrain = sim::Terrain(256, 96);

@@ -1,9 +1,11 @@
 #pragma once
 
+#include "assets/Cylinder.h"
 #include "sim/World.h"
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 namespace webo::app {
 
@@ -54,6 +56,34 @@ inline BuilderBrickShape builderBrickShape(double phase) {
   // PROVISIONAL: a uniformly scaled cuboid replaces its folded 12-vertex mesh.
   return {1.0 / 3.0 + progress * 2.0 / 3.0, travel,
           std::min(1.0, (1.0 - travel) * 2.0)};
+}
+
+struct BuilderBrickRotation {
+  double cosine;
+  double sine;
+
+  Vec3 apply(Vec3 offset, Vec3 inward) const {
+    // Express the offset in an orthonormal frame with world up and the
+    // cylinder's inward radial direction as its Y and Z axes.
+    const double x = inward.z * offset.x - inward.x * offset.z;
+    const double z = inward.x * offset.x + inward.z * offset.z;
+    // 410B84 composes the turn about normal 0 (up) before normal 4 (inward).
+    const double yawX = cosine * x + sine * z;
+    const double yawZ = cosine * z - sine * x;
+    const double rollX = cosine * yawX + sine * offset.y;
+    const double rollY = cosine * offset.y - sine * yawX;
+    return {inward.z * rollX + inward.x * yawZ, rollY,
+            inward.z * yawZ - inward.x * rollX};
+  }
+};
+
+inline BuilderBrickRotation builderBrickRotation(double travel, int facing, int verticalDir) {
+  // 4109C8..410B1D selects four pairs of quarter-turns. Expressed relative
+  // to each pair's placed pose, the turns have opposite signs and reach
+  // identity together. Mirroring either facing or gravity reverses both.
+  const double yaw = -(facing > 0 ? 1 : -1) * (verticalDir < 0 ? -1 : 1) *
+                     (1.0 - travel) * std::numbers::pi / 2.0;
+  return {std::cos(yaw), std::sin(yaw)};
 }
 
 } // namespace webo::app

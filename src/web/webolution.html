@@ -134,6 +134,9 @@
   canvas.addEventListener('mouseup', refreshMousePosition, true);
   canvas.addEventListener('keydown', event => {
     if (event.key === 'F11') event.stopPropagation();
+    // SDL listens on window and maps these DOM codes to its pause/Enter scancodes.
+    if (event.code === 'Enter' || event.code === 'NumpadEnter' || event.code === 'Pause')
+      event.preventDefault();
   });
   function message(text) {
     statusLine.hidden = false;

@@ -1084,10 +1084,12 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   app::CameraController controls(params, terrainHeight > 0 ? terrainHeight :
                                  static_cast<int>(params.levelEyeHeight));
   app::Raster windowRaster(640, 480);
-  bool running = true, leftDown = false, rightDown = false, focused = true;
-  // The logical SDL pointer drives hover, clicks and zoom. Right-drag freezes it.
+  bool running = true, leftDown = false, focused = true;
+  Uint8 dragButton = 0;
+  // The logical SDL pointer drives hover, clicks and zoom. Camera drag freezes it.
   int pointerX = 320, pointerY = 240;
   app::PendingCameraEvents pending;
+  bool examineDragMotionPending = false;
   int rendered = 0;
   const Uint64 frequency = SDL_GetPerformanceFrequency();
   Uint64 previous = SDL_GetPerformanceCounter();
@@ -1263,12 +1265,33 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     const auto targets = backdrop->hatchHoverTargets(displayedCamera, windowRaster);
     releaseControl->advance(elapsed, targets, pointerX, pointerY, *world);
   };
-  const auto resetMenuInput = [&] {
+  const auto cancelGameplayHolds = [&] {
     nukeInput.reset();
     if (releaseControl) releaseControl->reset();
     cancelFastForwardHold();
-    rightDown = false; pending.clear(); fixedClock = app::FixedCameraClock{};
+  };
+  const auto beginCameraDrag = [&](Uint8 button) {
+    dragButton = button;
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+  };
+  const auto endCameraDrag = [&] {
+    dragButton = 0;
     SDL_SetRelativeMouseMode(SDL_FALSE);
+    // Restore the frozen pointer in window pixels for subsequent motion.
+    const int scale = presentation.scale();
+    SDL_WarpMouseInWindow(SDL_RenderGetWindow(presenter),
+                          pointerX * scale + scale / 2, pointerY * scale + scale / 2);
+  };
+  const auto cancelCameraDrag = [&] {
+    dragButton = 0;
+    pending.clear();
+    examineDragMotionPending = false;
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+  };
+  const auto resetMenuInput = [&] {
+    cancelGameplayHolds();
+    cancelCameraDrag();
+    fixedClock = app::FixedCameraClock{};
     previous = SDL_GetPerformanceCounter();
   };
   const auto openMenu = [&] {
@@ -1318,11 +1341,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       if (persistentFrontend) app::updateFrontendCursorInput(*persistentFrontend, event);
       if (event.type == SDL_QUIT) { disposition = LegDisposition::Exit; running = false; break; }
       else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-        nukeInput.reset();
-        if (releaseControl) releaseControl->reset();
-        cancelFastForwardHold();
-        focused = false; rightDown = false; pending.clear();
-        SDL_SetRelativeMouseMode(SDL_FALSE);
+        cancelGameplayHolds();
+        focused = false;
+        cancelCameraDrag();
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
         focused = true;
       } else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_LEAVE) {
@@ -1368,39 +1389,41 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
             levelMenu->moveFocus(key == SDL_SCANCODE_UP ? -1 : 1);
         }
         if (!running) break;
+      } else if (runtimeSim.examining() &&
+                 (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)) {
+        if (focused && event.type == SDL_MOUSEBUTTONDOWN && !dragButton &&
+            (event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT)) {
+          pointerX = event.button.x; pointerY = event.button.y;
+          beginCameraDrag(event.button.button);
+        } else if (event.type == SDL_MOUSEBUTTONUP && dragButton == event.button.button) {
+          endCameraDrag();
+        }
       } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
-        if (focused && !rightDown && tryHatchPress(event.button.x, event.button.y, SDL_BUTTON_RIGHT, false)) {
+        if (focused && !dragButton && tryHatchPress(event.button.x, event.button.y, SDL_BUTTON_RIGHT, false)) {
           pointerX = event.button.x; pointerY = event.button.y;
           updateFastForwardHold();
         } else {
-          nukeInput.reset();
-          if (releaseControl) releaseControl->reset();
-          cancelFastForwardHold();
-          if (focused) { rightDown = true; SDL_SetRelativeMouseMode(SDL_TRUE); }
+          cancelGameplayHolds();
+          if (focused) beginCameraDrag(SDL_BUTTON_RIGHT);
         }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_RIGHT) {
         if (releaseControl) releaseControl->release(event.button.button);
-        if (rightDown) {
-          rightDown = false; SDL_SetRelativeMouseMode(SDL_FALSE);
-          // SDL moves its own cursor through the drag and restores it there. Put
-          // it back on the frozen pointer so motion continues from that spot.
-          const int scale = presentation.scale();
-          SDL_WarpMouseInWindow(SDL_RenderGetWindow(presenter),
-                                pointerX * scale + scale / 2, pointerY * scale + scale / 2);
+        if (dragButton == SDL_BUTTON_RIGHT) {
+          endCameraDrag();
         } else if (focused) {
           pointerX = event.button.x; pointerY = event.button.y;
         }
       } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
         if (releaseControl) releaseControl->release(event.button.button);
         cancelFastForwardHold();
-        if (args.sim && world && focused && !rightDown) {
+        if (args.sim && world && focused && !dragButton) {
           pointerX = event.button.x; pointerY = event.button.y;
           nukeInput.release(pointerX, pointerY, event.button.timestamp, *world);
         } else nukeInput.reset();
       } else if (args.sim && world && event.type == SDL_MOUSEBUTTONDOWN &&
                  event.button.button == SDL_BUTTON_LEFT) {
         // Consume panel clicks before actor picking, including command plates.
-        if (focused && !rightDown) {
+        if (focused && !dragButton) {
           leftDown = true;
           pointerX = event.button.x; pointerY = event.button.y;
           nukeInput.press(pointerX, pointerY);
@@ -1425,8 +1448,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
               const bool assigned = hit && world->assign(*hit, skill);
               if (before) recorder->assignment(*hit, skill, assigned, *before);
               drainCues();
-              // READ 0x455756: only a successful assignment resumes native UI1.
-              // Failed picks/assignments and panel selections leave pause intact.
+              // Preserve the standard clone pause's resume on a successful assignment.
               if (assigned && runtimeSim.paused()) {
                 runtimeSim.resume();
                 previous = SDL_GetPerformanceCounter();
@@ -1436,15 +1458,24 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         }
       } else if (event.type == SDL_MOUSEMOTION) {
         if (focused) {
-          pending.mouse(double(event.motion.xrel) / presentation.scale(),
-                        double(event.motion.yrel) / presentation.scale());
-          if (!rightDown) {
+          if (dragButton || !runtimeSim.examining()) {
+            pending.mouse(double(event.motion.xrel) / presentation.scale(),
+                          double(event.motion.yrel) / presentation.scale());
+            if (runtimeSim.examining() && (event.motion.xrel || event.motion.yrel))
+              examineDragMotionPending = true;
+          }
+          if (!dragButton) {
             pointerX = event.motion.x; pointerY = event.motion.y;
             advanceReleaseHold(0.0);
             leftDown = leftDown && (event.motion.state & SDL_BUTTON_LMASK);
             updateFastForwardHold();
           }
         }
+      } else if (event.type == SDL_MOUSEWHEEL && focused && pointerInWindow && runtimeSim.examining()) {
+        const double y = event.wheel.preciseY != 0 ? event.wheel.preciseY : event.wheel.y;
+        const double direction = event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -y : y;
+        if (direction != 0 && (direction > 0) != (controls.camera().zoomShift != 0))
+          pending.zoom(zoomAtPointer());
       } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
         const auto key = event.key.keysym.scancode;
         if (focused && (key == SDL_SCANCODE_SPACE || key == SDL_SCANCODE_LCTRL || key == SDL_SCANCODE_RCTRL))
@@ -1453,6 +1484,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         if (key == SDL_SCANCODE_ESCAPE) {
           if (persistentFrontend && !focused) continue;
           if (args.sim && world && runtimeSim.paused()) {
+            if (dragButton == SDL_BUTTON_LEFT) endCameraDrag();
             runtimeSim.resume();
             previous = SDL_GetPerformanceCounter();
             uiClick();
@@ -1462,12 +1494,18 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
         if (levelMenu && focused && key == SDL_SCANCODE_O && runtimeSim.paused()) {
           openMenu();
         }
-        if (args.sim && world && focused && key == SDL_SCANCODE_P) {
-          runtimeSim.togglePause();
+        const bool examineKey = key == SDL_SCANCODE_RETURN || key == SDL_SCANCODE_KP_ENTER || key == SDL_SCANCODE_PAUSE;
+        if (args.sim && world && focused && (examineKey || key == SDL_SCANCODE_P)) {
+          if (examineKey) runtimeSim.toggleExaminePause();
+          else runtimeSim.togglePause();
+          if (runtimeSim.examining()) {
+            cancelGameplayHolds();
+            if (!dragButton && !examineDragMotionPending) pending.clearMouse();
+          } else if (dragButton == SDL_BUTTON_LEFT) endCameraDrag();
           previous = SDL_GetPerformanceCounter();
           uiClick();
         }
-        if (args.sim && world && focused) {
+        if (args.sim && world && focused && !runtimeSim.examining()) {
           int selected = -1;
           switch (key) {
             case SDL_SCANCODE_1: selected = 0; break;
@@ -1490,6 +1528,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
       }
       recordCommands();
     }
+#ifdef __EMSCRIPTEN__
+    // Consume wheel events over the canvas only while they control examine zoom.
+    SDL_EventState(SDL_MOUSEWHEEL, runtimeSim.examining() && focused && !menuOpen() ? SDL_ENABLE : SDL_IGNORE);
+#endif
     if (running) {
       const auto choice = persistentFrontend ? std::optional{persistentFrontend->windowScale()} : std::nullopt;
       presentation.updateWindowScale(choice, displayChanged);
@@ -1517,14 +1559,13 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     input.numpad4 = focused && !menuOpen() && keys[SDL_SCANCODE_KP_4] != 0;
     input.numpad6 = focused && !menuOpen() && keys[SDL_SCANCODE_KP_6] != 0;
     input.leftShift = focused && !menuOpen() && keys[SDL_SCANCODE_LSHIFT] != 0;
-    input.rightMouseDown = rightDown;
     const Uint64 now = SDL_GetPerformanceCounter();
     double elapsed = static_cast<double>(now - previous) / static_cast<double>(frequency);
     previous = now;
     if (args.frames > 0) elapsed = app::FixedCameraClock::stepSeconds;
     if (runOptions.frameSeconds > 0) elapsed = runOptions.frameSeconds;
     if (panelIconAnimation) {
-      const int hover = focused && !menuOpen() && !rightDown ?
+      const int hover = focused && !menuOpen() && !dragButton ?
           app::runtimeSkillPanelIndex(pointerX, pointerY) : -1;
       // UI animation uses frame time independently of simulation pause and fast-forward.
       // Provisional policy suspends it while a menu is open or focus is lost.
@@ -1542,7 +1583,10 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
     fixedClock.advance(elapsed);
     bool updated = false;
     while (fixedClock.takeStep()) {
+      // Apply queued examine motion even if mouse-up preceded this camera tick.
+      input.rightMouseDown = dragButton || examineDragMotionPending;
       input = pending.consumeInto(input);
+      examineDragMotionPending = false;
       controls.update(input, app::FixedCameraClock::stepSeconds);
       updated = true;
     }
@@ -1644,8 +1688,8 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           app::profile::Scope profileHud(app::profile::Hud);
           image = toImage(windowRaster.framebuffer());
           const int panelIndex = app::runtimeSkillPanelIndex(pointerX, pointerY);
-          const bool canHover = focused && !menuOpen() && !rightDown && panelIndex < 0;
-          if (canHover && pointerInWindow && backdrop)
+          const bool canHover = focused && !menuOpen() && !dragButton && panelIndex < 0;
+          const bool switchHover = canHover && pointerInWindow && backdrop &&
             backdrop->drawSwitchHover(image, displayedCamera, windowRaster, world->setup(),
                 leverPresentation ? &*leverPresentation : nullptr,
                 pressurePadPresentation ? &*pressurePadPresentation : nullptr, pointerX, pointerY,
@@ -1656,7 +1700,7 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
               std::vector<app::HatchHoverTarget>{};
           for (auto& h : hatches)
             h.remaining = world->remainingFromEntrance(h.index);
-          const auto heldHatch = releaseControl && pointerInWindow && focused && !menuOpen() && !rightDown
+          const auto heldHatch = releaseControl && pointerInWindow && focused && !menuOpen() && !dragButton
               ? releaseControl->heldTarget(hatches, pointerX, pointerY) : std::nullopt;
           const auto selectedSkill = skillSelection.selectedSkill();
           auto hover = canHover && !heldHatch ?
@@ -1683,6 +1727,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           if (hatchHover) {
             const auto adjustingRate = heldHatch ? std::optional{releaseControl->current()} : std::nullopt;
             app::drawHatchHover(image, *runtimeFont, hatches[*hatchHover], adjustingRate);
+          } else if (canHover && pointerInWindow && backdrop && !hover && !switchHover) {
+            if (const auto exit = backdrop->exitHoverTarget(displayedCamera, windowRaster, pointerX, pointerY))
+              app::drawExitHover(image, *runtimeFont, *exit, world->setup().saveTarget);
           }
           app::drawRuntimeSkillPanel(image, *runtimePanel, *world, skillSelection, runtimeSim.fastForward(),
                                      &*panelIconAnimation);
@@ -1732,11 +1779,14 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
           const auto counts = app::runtimeSkillPanelCounts(*world);
           const int panelAvailability = panelIndex >= 0 && panelIndex < 8 ? counts[panelIndex] : 0;
           const auto cursorState = menuOpen() ? persistentFrontend->cursorState() :
-              app::runtimeCursorState(focused, rightDown, hover.has_value(),
+              app::runtimeCursorState(focused, dragButton != 0, hover.has_value(),
                   runtimeSim.paused(), heldHatch ? -1 : panelIndex, panelAvailability, hatchHover.has_value());
           runtimeCursor->draw(image, cursorState, pointerX, pointerY);
           // READ45E2B5/45E342: cue is below the later cursor and pause caption.
-          if (runtimeSim.paused() && !menuOpen()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
+          if (!menuOpen()) {
+            if (runtimeSim.examining()) shell::drawExamineCaption(image, *runtimeFont, shell::fontCells());
+            else if (runtimeSim.paused()) shell::drawCaption(image, *runtimeFont, shell::fontCells());
+          }
           if (levelObserver) {
             const auto boxes = scene->injectedWalkerScreenBoxes(displayedCamera, options, *library, windowRaster);
             actors.clear();
@@ -1807,6 +1857,9 @@ static int runApplicationLeg(Args args, app::FrontendWindowObserver observer,
   cancelFastForwardHold();
   recordCommands();
   SDL_SetRelativeMouseMode(SDL_FALSE);
+#ifdef __EMSCRIPTEN__
+  SDL_EventState(SDL_MOUSEWHEEL, SDL_IGNORE);
+#endif
   if (runtimeCursor && previousCursorVisibility >= 0) SDL_ShowCursor(previousCursorVisibility);
   if (recorder) {
     const char* reason = disposition == LegDisposition::Completed ? "completed" :

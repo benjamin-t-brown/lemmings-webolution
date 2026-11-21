@@ -19,8 +19,11 @@ Press Enter on New Game and again on Continue?, then click an unlocked
 level on the map.
 Select a skill on the panel or with 1-8, then click a lemming to assign it.
 Left-click a hatch to slow releases or right-click to speed them up.
-Right-drag to rotate the view. Space or Ctrl zooms, Backspace flips the view,
-P pauses, and Esc opens the level menu when paused. Hold Fast Forward on the
+Right-drag to rotate the view. Space or Ctrl zooms and Backspace flips the view.
+P toggles standard pause. Enter (including keypad Enter) or Pause/Break toggles
+examine pause. While examining, drag with either mouse button, scroll to zoom,
+and point at a switch to see what it controls. P or Esc resumes play. Use O to
+open the level menu while paused, or Esc during play. Hold Fast Forward on the
 panel to speed up play.
 
 This is an unofficial reimplementation. The MIT license in LICENSE covers

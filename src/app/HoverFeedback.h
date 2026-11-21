@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/Pick.h"
 #include "assets/Bitmap.h"
 #include <algorithm>
 #include <cstddef>
@@ -39,5 +40,6 @@ inline std::optional<std::size_t> hoveredHatch(std::span<const HatchHoverTarget>
 }
 void drawHatchHover(Image&, const Image& font, const HatchHoverTarget&,
                     std::optional<int> adjustingRate = std::nullopt);
+void drawExitHover(Image&, const Image& font, const PickBox&, int saveTarget);
 
 } // namespace webo::app
